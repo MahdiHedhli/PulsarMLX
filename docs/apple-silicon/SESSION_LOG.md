@@ -422,3 +422,20 @@ cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
 The Python suite ran 28 tests and the Rust synthetic protocol suite ran 4,
 all with zero failures. The evaluated output and maximum error matched the
 T045 results. Committed evidence is generated separately by T048.
+
+Task T048 executed the exact committed-evidence command on immutable commit
+`8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd` and wrote
+`docs/validation/synthetic-moe-v1.json`. It records native arm64 MLX 0.32.0,
+explicit GPU selection with no fallback, evaluated and synchronized work,
+routes `[[1, 2], [3, 1]]`, normalized weights, three exact expert payload
+SHA-256 identities, the four-value actual output, comparison errors, and
+independent memory gauges. The command exited zero:
+
+```sh
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
+  --fixture fixtures/mlx/routed-moe-v1.json \
+  --evidence docs/validation/synthetic-moe-v1.json
+```
+
+This is synthetic-only evidence; it does not establish a model loader,
+tokenization, token generation, serving, or Linux/CUDA runtime behavior.

@@ -1,0 +1,119 @@
+{
+  "command": "cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence docs/validation/synthetic-moe-v1.json",
+  "generated_at_utc": "2026-08-05T13:26:35Z",
+  "host": {
+    "architecture": "arm64",
+    "chip_model": "Apple M1 Ultra",
+    "macos_version": "26.0"
+  },
+  "tested_commit": "8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd",
+  "actual": [
+    2.0,
+    2.0,
+    4.069116592407227,
+    4.0378828048706055
+  ],
+  "backend_id": "apple-mlx",
+  "comparison": {
+    "absolute_tolerance": 0.00001,
+    "compared_count": 4,
+    "first_mismatch_index": null,
+    "max_absolute_error": 4.759696965450644e-7,
+    "max_relative_error": 1.1697127408636623e-7,
+    "non_finite_policy": "reject",
+    "oracle_id": "committed-scalar-routed-moe-v1",
+    "passed": true,
+    "relative_tolerance": 0.00001
+  },
+  "evaluated": true,
+  "exclusions": [
+    "The fixture is synthetic and does not contain model weights.",
+    "No tokenizer, model loader, token generation, or serving path was exercised.",
+    "Only dense float32 expert matrices and the committed two-token route were evaluated."
+  ],
+  "fallback_used": false,
+  "fetched_experts": [
+    {
+      "expert_id": 1,
+      "length": 16,
+      "offset": 16,
+      "payload_sha256": "59f6b8505959d216462694b9e7b20728e6ce4199aa6fcf652386b0774e22f1c7",
+      "shard_id": "experts-00001-of-00002"
+    },
+    {
+      "expert_id": 2,
+      "length": 16,
+      "offset": 32,
+      "payload_sha256": "a527f6c2fbde17555714773e4d5ce06608d7f336389de936d73f09383fd17960",
+      "shard_id": "experts-00002-of-00002"
+    },
+    {
+      "expert_id": 3,
+      "length": 16,
+      "offset": 48,
+      "payload_sha256": "7cc507b4e456b5c69819f532111018c3d428adc29485bf9ec6b38112d66acbba",
+      "shard_id": "experts-00002-of-00002"
+    }
+  ],
+  "fixture": "fixtures/mlx/routed-moe-v1.json",
+  "fixture_id": "synthetic-routed-moe-v1",
+  "fixture_kind": "synthetic",
+  "memory_gauges": {
+    "mlx_active_bytes": 320,
+    "mlx_cache_bytes": 64,
+    "mlx_peak_bytes": 384,
+    "process_footprint_bytes": 42778624,
+    "process_footprint_source": "ps-rss",
+    "reported_summed_total_bytes": null,
+    "system_pressure": "normal"
+  },
+  "normalized_weights": [
+    [
+      0.5,
+      0.5
+    ],
+    [
+      0.7310585975646973,
+      0.26894140243530273
+    ]
+  ],
+  "passed": true,
+  "request_ids": {
+    "health": 1
+  },
+  "requested_device": "gpu",
+  "runtime": {
+    "gpu_count": 1,
+    "macos_version": "26.0",
+    "metal_available": true,
+    "mlx_version": "0.32.0",
+    "protocol": 1,
+    "python_arch": "arm64",
+    "python_version": "3.12.13",
+    "worker_version": "0.1.0"
+  },
+  "schema_version": 1,
+  "selected_device": "gpu",
+  "selected_expert_ids": [
+    [
+      1,
+      2
+    ],
+    [
+      3,
+      1
+    ]
+  ],
+  "status": "passed",
+  "synchronized": true,
+  "topology": {
+    "expert_count": 4,
+    "hidden_size": 2,
+    "token_count": 2,
+    "top_k": 2
+  },
+  "validation": "synthetic-routed-moe",
+  "warnings": [
+    "Linux and CUDA execution are not established by this command."
+  ]
+}
