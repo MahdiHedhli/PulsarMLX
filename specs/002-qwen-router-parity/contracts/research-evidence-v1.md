@@ -1,7 +1,8 @@
 # Contract: Research Evidence v1
 
-**Status**: Proposed; MUST be implemented, validated, and committed before the
-first Feature 002 measurement
+**Status**: Normative v1 methodology with fixture-only schemas, statistics,
+validation, generation, and publication boundaries implemented. Real evidence
+remains prohibited until every pre-access gate passes.
 
 **Feature**: `002-qwen-router-parity`
 

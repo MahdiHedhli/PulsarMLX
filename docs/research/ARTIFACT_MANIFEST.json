@@ -1,0 +1,64 @@
+{
+  "feature_id": "002-qwen-router-parity",
+  "fixture_sources": [
+    {
+      "path": "fixtures/research/router-v1/evidence/f002-router-fixture-0001.json",
+      "purpose": "synthetic_methodology_validation",
+      "sha256": null,
+      "status": "awaiting_methodology_commit_seal"
+    }
+  ],
+  "generated_artifacts": [],
+  "hash_placeholder_policy": "null_means_not_yet_sealed_and_never_means_zero_or_observed",
+  "manifest_schema": "pulsarmlx.research.artifact-manifest",
+  "manifest_schema_version": "1.0.0",
+  "measured_source_commit": null,
+  "protocols": [
+    {
+      "path": "docs/research/EXPERIMENT_PROTOCOL.md",
+      "sha256": null,
+      "status": "awaiting_methodology_commit_seal"
+    }
+  ],
+  "raw_evidence": [],
+  "reports": [
+    {
+      "path": "docs/research/RESULTS.md",
+      "sha256": null,
+      "status": "empty_structure_unsealed"
+    },
+    {
+      "path": "docs/research/LIMITATIONS.md",
+      "sha256": null,
+      "status": "empty_structure_unsealed"
+    },
+    {
+      "path": "docs/research/CLAIMS_LEDGER.md",
+      "sha256": null,
+      "status": "zero_claim_structure_unsealed"
+    },
+    {
+      "path": "docs/research/REVIEWER_INDEX.md",
+      "sha256": null,
+      "status": "methodology_index_unsealed"
+    }
+  ],
+  "schemas": [
+    {
+      "path": "schemas/research/v1/experiment.schema.json",
+      "sha256": null,
+      "status": "awaiting_methodology_commit_seal"
+    },
+    {
+      "path": "schemas/research/v1/router-parity.schema.json",
+      "sha256": null,
+      "status": "awaiting_methodology_commit_seal"
+    }
+  ],
+  "status": "placeholder_unsealed_no_published_model_evidence",
+  "verification": {
+    "command": "python3 scripts/research/verify_package.py --feature 002-qwen-router-parity --fixture-only",
+    "last_result": null,
+    "source_commit": null
+  }
+}

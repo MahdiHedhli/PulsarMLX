@@ -5,7 +5,9 @@ incremental branch)
 
 **Created**: 2026-08-05
 
-**Status**: Specified and planned; implementation not started
+**Status**: Implementation in progress. The model-free research methodology is
+implemented locally; the router runtime, external-checkpoint admission, and
+real result remain unimplemented or unverified at their explicit task gates.
 
 **Input**: Define and verify the next bounded real-checkpoint slice after
 Feature 001: complete layer-0 router projection, deterministic top-8 expert

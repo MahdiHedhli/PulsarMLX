@@ -1,0 +1,61 @@
+{
+  "feature_id": "002-qwen-router-parity",
+  "manifest_schema": "pulsarmlx.research.model-manifest",
+  "manifest_schema_version": "1.0.0",
+  "model_identity": {
+    "architecture": "qwen3moe",
+    "access_policy": "caller_supplied_external_read_only_no_automatic_download",
+    "external_locator": "$PULSARMLX_MODEL_GGUF",
+    "filename": "Qwen3-30B-A3B-Q8_0.gguf",
+    "license": "Apache-2.0",
+    "license_reference": "docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json",
+    "repository": "Qwen/Qwen3-30B-A3B-GGUF",
+    "revision": "e4d4bafdfb96a411a163846265362aceb0b9c63a",
+    "sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    "size_bytes": 32483931648,
+    "source": "reused_from_feature_001_committed_evidence",
+    "source_record": "docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json"
+  },
+  "observed_feature_002_model_access": false,
+  "router_tensor_admission": {
+    "expectation_status": "pre_access_contract_not_observation",
+    "expected": {
+      "bias": "absent",
+      "correction_bias": "absent",
+      "encoded_length_bytes": 1048576,
+      "expert_count": 128,
+      "gguf_dimensions": [
+        2048,
+        128
+      ],
+      "logical_element_count": 262144,
+      "name": "blk.0.ffn_gate_inp.weight",
+      "orientation": "expert_major_rows_input_columns",
+      "quantization": "none_f32",
+      "reader_shape": [
+        128,
+        2048
+      ],
+      "selected_expert_count": 8,
+      "semantic_role": "layer_0_router_projection",
+      "storage": "F32",
+      "weight_scale": 1.0
+    },
+    "observed": null,
+    "status": "awaiting_notified_read_only_inspection"
+  },
+  "status": "placeholder_unsealed_no_feature_002_model_access",
+  "unsupported_interpretations": [
+    "expert_execution",
+    "routed_moe_aggregation",
+    "complete_transformer_layer",
+    "language_model_head_or_model_output_logits",
+    "generation",
+    "serving",
+    "custom_metal",
+    "complete_model_inference",
+    "full_or_giant_model_inference",
+    "projected_tokens_per_second",
+    "linux_cuda_runtime_parity"
+  ]
+}

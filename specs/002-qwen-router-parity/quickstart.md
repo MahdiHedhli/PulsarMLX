@@ -1,8 +1,9 @@
 # Validation Quickstart: Qwen3MoE Layer-0 Router Parity
 
-**Status**: Design-stage guide. Feature 002 commands are planned and MUST NOT be
-reported as runnable or passing until their implementing task and exact result
-are committed. Feature 001 remains the verified baseline.
+**Status**: Sections 1 through 3 describe implemented model-free methodology
+commands. Later router and external-checkpoint commands remain planned until
+their implementing tasks and exact results are committed. Feature 001 remains
+the verified baseline; no Feature 002 checkpoint result exists.
 
 ## 1. Confirm the active bounded feature
 
@@ -65,7 +66,7 @@ scripts/research/setup.sh
 python3 -m unittest discover -s scripts/research/tests -v
 python3 scripts/research/validate_evidence.py \
   --schema-dir schemas/research/v1 \
-  --input fixtures/research/router-v1/golden
+  --input fixtures/research/router-v1/evidence
 python3 scripts/research/verify_package.py \
   --feature 002-qwen-router-parity \
   --fixture-only

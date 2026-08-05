@@ -1,6 +1,8 @@
 # Contract: Feature 002 Commands v1
 
-**Status**: Planned; command names and outcomes are frozen before implementation
+**Status**: Model-free setup, validation, generation, publication, and package
+verification commands are implemented. Router/model commands remain planned
+and prohibited until their dependency and notification gates pass.
 
 All commands run from the repository root. External model, oracle-build, and
 temporary evidence paths remain local and are represented as placeholders in

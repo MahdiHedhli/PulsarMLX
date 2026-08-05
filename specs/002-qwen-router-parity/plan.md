@@ -5,7 +5,9 @@
 **Input**: Feature specification from
 `specs/002-qwen-router-parity/spec.md`
 
-**Status**: Design complete; implementation not started
+**Status**: Design complete; foundational model-free methodology implementation
+in progress. No external checkpoint has been accessed for Feature 002 and no
+real router result exists.
 
 ## Summary
 

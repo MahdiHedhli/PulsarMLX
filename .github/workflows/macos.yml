@@ -44,6 +44,18 @@ jobs:
           test -f docs/validation/mlx-device-smoke.json
           test -f docs/validation/mlx-tensor-fixtures.json
           test -f docs/validation/synthetic-moe-v1.json
+      - name: Validate Feature 002 research methodology
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          scripts/research/setup.sh
+          python3 -m unittest discover -s scripts/research/tests -v
+          python3 scripts/research/validate_evidence.py \
+            --schema-dir schemas/research/v1 \
+            --input fixtures/research/router-v1/evidence
+          python3 scripts/research/verify_package.py \
+            --feature 002-qwen-router-parity \
+            --fixture-only
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Install pinned uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:

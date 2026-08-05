@@ -1479,3 +1479,93 @@ The Phase 1 setup commit `423b0e4` completed successfully in run
 Both used the existing arm64 macOS workflow; neither accessed an external
 model. These actual conclusions were recorded in this next focused milestone
 as required by the CI-attestation policy.
+
+### T013 schema/statistics publication checkpoint
+
+The schema/statistics/validator slice was staged alone and passed the required
+secret, private-path, model-artifact, binary, cache, large-file, and inherited
+Linux/CUDA-selection review. Commit `aeeb5af` (`test(research): freeze evidence
+schema and statistics`) was pushed to `origin/main` without force.
+
+GitHub Actions run
+[`31035040229`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31035040229)
+completed successfully for exact commit
+`aeeb5afa9942601652a1b6f9ea941c4490ae63bf`. The existing arm64 macOS baseline
+workflow passed both its Cargo workspace and frozen-environment fixture jobs.
+The run did not receive, locate, or access an external model. This CI result
+was learned after the T013 push and is being carried into the next focused
+methodology commit under the non-recursive attestation rule.
+
+### T014–T020 frozen methodology implementation
+
+The dependency-free table and figure generators now derive deterministic
+Markdown, CSV, bounded static SVG, and per-output source sidecars from raw JSON;
+two independent temporary generations compare byte-for-byte. Candidate
+publication validates full evidence records, removes only declared local
+metadata, rejects private or secret values, installs with exclusive atomic
+append-only semantics, and refuses symlink or overwrite targets. The read-only
+package verifier checks the zero-claim ledger/reviewer structure and regenerated
+six fixture artifacts twice without writing publication output into the tree.
+
+The safe shell layer now provides idempotent ignored setup, filesystem-blind
+lexical validation of explicitly supplied external paths, and a standardized
+staged-index scanner. Its focused suite passed 9 tests covering idempotence,
+symlink refusal, non-creation of supplied model paths, absolute/disjoint path
+rules, and positive and negative staged-scan cases. `sh -n`, `dash -n`, and
+`zsh -n` passed for all three shell entrypoints.
+
+The version-1 experiment protocol now freezes direct token IDs `[0,1]`,
+positions `[0,1]`, context/batch/ubatch `2`, one thread, the single-row and
+two-row case IDs, the two-row/16,384-byte bound, numeric tolerances, exact two-
+benchmark matrix, 5/10 and 5/30 policies, clean-process replication, timing and
+cache labels, grouping, interference, exclusion, amendment, retention,
+privacy, resources, and stop conditions. Reproducibility, empty results and
+limitations, the zero-row claims ledger, reviewer index, and unsealed model and
+artifact manifest placeholders were completed without presenting expectations
+as observations.
+
+The exact model-free replay was:
+
+```sh
+PULSARMLX_MODEL_GGUF='' scripts/research/setup.sh
+PULSARMLX_MODEL_GGUF='' python3 -m unittest discover \
+  -s scripts/research/tests -v
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity \
+  --fixture-only
+```
+
+Setup passed; all 41 research tests passed; the validator accepted one
+full-schema synthetic methodology record; and package verification reported
+one record, zero claims, and six byte-identical regenerated artifacts. The same
+commands were added to the arm64 macOS fixture job with
+`PULSARMLX_MODEL_GGUF` explicitly empty. No checkpoint was resolved, statted,
+hashed, opened, or executed and no MLX model operation ran.
+
+### T021 pre-commit validation
+
+These exact gates exited zero against the complete methodology worktree:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+python3 -m unittest discover -s scripts/research/tests -v
+git diff --check
+```
+
+`cargo check` passed. The workspace test again executed 43 harnesses with 171
+active passes, zero failures, and one intentionally ignored native MLX smoke.
+The Python worker suite passed 44 tests and the research suite passed 41. The
+inherited quant `unused_mut` and 13 macOS serve dead-code warnings remained
+unchanged. Python compilation, all research JSON parsing, POSIX/zsh syntax, and
+`git diff --check` also passed. The complete 27-file methodology slice was then
+staged and `scripts/research/check_staged.sh` passed its whitespace, secret,
+private-path, machine-identifier, model/tensor, cache/log, symlink, binary,
+object-mode, per-file/aggregate-size, file-count, and inherited Linux/CUDA-
+selection gates. The final staged diff check passed after recording this task
+state.
