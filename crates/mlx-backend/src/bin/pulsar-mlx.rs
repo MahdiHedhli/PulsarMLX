@@ -388,12 +388,17 @@ fn load_frozen_reference(project_root: &Path) -> Result<FrozenReferenceResult, S
         .ok_or_else(|| "the trusted-reference output values are missing".to_owned())?
         .iter()
         .map(|value| {
-            value
+            let number = value
                 .as_f64()
-                .filter(|number| number.is_finite() && f64::from(*number as f32) == *number)
+                .filter(|number| number.is_finite())
                 .ok_or_else(|| {
-                    "the trusted-reference output contains a non-canonical float32 value".to_owned()
-                })
+                    "the trusted-reference output contains a non-finite value".to_owned()
+                })?;
+            let canonical = number as f32;
+            if !canonical.is_finite() {
+                return Err("the trusted-reference output is outside float32 range".to_owned());
+            }
+            Ok(f64::from(canonical))
         })
         .collect::<Result<Vec<_>, _>>()?;
     if values.len() != REAL_OUTPUT_COUNT {
@@ -1547,5 +1552,23 @@ mod tests {
         assert!(ensure_no_private_paths(&safe).is_ok());
         let private = json!({"nested": [{"model": "/Users/private/model.gguf"}]});
         assert!(ensure_no_private_paths(&private).is_err());
+    }
+
+    #[test]
+    fn committed_reference_result_matches_the_frozen_loader_contract() {
+        let reference = load_frozen_reference(&project_root()).expect("committed reference result");
+        assert_eq!(
+            reference.encoded_slice_sha256,
+            "14e9e5efa5b8cc65f02c6445f3697e729a045408af25b579a2e1d007c336fadf"
+        );
+        assert_eq!(
+            reference.decoded_slice_sha256,
+            "5aa54eb798fdf16d79b112a58338211fbab393b94161b9219b19c4700f46d91b"
+        );
+        assert_eq!(
+            reference.output_sha256,
+            "610357fb4919bf3906f869c81e13abaa46e6ab71dbe2741bc411037506045b51"
+        );
+        assert_eq!(reference.values.len(), REAL_OUTPUT_COUNT);
     }
 }

@@ -744,3 +744,65 @@ inspection: it did not dequantize weights, run the trusted reference, execute
 the Apple slice, tokenize, route, generate, serve, or benchmark. T061 remains
 the first permitted real-model numerical execution and must precede any Apple
 real-model output.
+
+### T061 trusted-reference execution
+
+Before the first numerical model operation, an NTFY message to topic
+`Mahdi-Dev` asked the operator to pause concurrent local inference. The server
+acknowledged the notification. The source worktree was clean at commit
+`fc77d57b8542757c238c637718712ba99fcc2ffd`; memory pressure was normal.
+
+The preselected oracle contract remained byte-for-byte unchanged at Git blob
+`fe3eed5c3bb3a86b67b06d30afe88504af420814`. Its 216 `oracle_shell_lines`
+reconstructed to 10,261 UTF-8 bytes with SHA-256
+`9ae200dd7d72b6b1d79dd46c880816b8f767f26d5f22475807407e218e728092`.
+The exact LF-joined script ran through the pinned external CPython 3.12.13,
+llama.cpp `gguf-py` 0.19.0 revision `b06aa774…`, and NumPy 2.3.2 environment:
+
+```sh
+set -o pipefail
+jq -j '.exact_reproduction.oracle_shell_lines | join("\n"), "\n"' \
+  docs/validation/models/qwen3-30b-a3b-q8_0-oracle.json |
+  env PULSARMLX_ORACLE_ROOT=<external-oracle> \
+      PULSARMLX_MODEL_GGUF=<external-model>/Qwen3-30B-A3B-Q8_0.gguf \
+      /bin/zsh > <external-capture>/stdout.json \
+      2> <external-capture>/stderr.txt
+```
+
+The command ran from `2026-08-05T15:12:38Z` to
+`2026-08-05T15:13:04Z` and exited zero. Stdout contained exactly one 2,760-byte
+JSON object; stderr was empty and no `ORACLE_STOP` occurred. The complete
+artifact identity, typed metadata, tensor layout, and bounded encoded slice
+matched admission. The encoded-slice SHA-256 was the same
+`14e9e5ef…` observed independently by T060. Pinned Q8_0 decode produced a
+131,072-byte float32 slice with SHA-256
+`5aa54eb798fdf16d79b112a58338211fbab393b94161b9219b19c4700f46d91b`.
+
+The canonical scalar left-to-right float32 matvec emitted exactly 16 finite
+values with output SHA-256
+`610357fb4919bf3906f869c81e13abaa46e6ab71dbe2741bc411037506045b51`.
+Its independent NumPy float32 cross-check had zero mismatches under the frozen
+`0.0002 + 0.0002 * abs(scalar)` rule; maximum absolute error was
+`0.0000016093254089355469` and maximum reported relative error was
+`0.0000016640896902432634`.
+
+The sanitized committed result is
+`docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json`. An
+independent standard-library validator rederived the prompt activation,
+float32 output checksum, every field mapping, self-check metrics, checksum
+syntax, encoded-slice agreement, byte bound, and private-path exclusion. A
+Rust unit test also loads the committed document through the exact private
+schema parser used by `validate-model-slice`.
+
+That Rust test initially exposed a JSON-number boundary: requiring parsed f64
+decimals to be bit-identical to their source float32 values rejected one valid
+serialized value before any model execution. The loader and worker readback
+now reject non-finite or out-of-range values and canonicalize every accepted
+value through finite float32 before checksum or comparison. The focused CLI,
+client, and strict-Clippy suites then passed.
+
+This is reference CPU evidence only. No Apple real-model output was viewed
+before the oracle completed, and T061 did not run MLX or Metal. It does not
+establish Qwen tokenization, routing, a full expert/layer/model, generation,
+serving, giant-model inference, or performance. T062 is now eligible to run
+the identical bounded slice on Apple MLX against this fixed result.

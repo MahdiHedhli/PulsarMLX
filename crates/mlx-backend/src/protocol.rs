@@ -849,9 +849,23 @@ pub(crate) fn parse_model_slice_result(
             "expected model-slice checksum is not lowercase SHA-256",
         ));
     }
-    let result: ModelSliceResult = serde_json::from_value(value).map_err(|_| {
+    let mut result: ModelSliceResult = serde_json::from_value(value).map_err(|_| {
         fixture_protocol_error("model-slice result does not match its bounded schema")
     })?;
+    for value in &mut result.actual {
+        if !value.is_finite() {
+            return Err(fixture_protocol_error(
+                "model-slice readback contains a non-finite value",
+            ));
+        }
+        let canonical = *value as f32;
+        if !canonical.is_finite() {
+            return Err(fixture_protocol_error(
+                "model-slice readback is outside float32 range",
+            ));
+        }
+        *value = f64::from(canonical);
+    }
     validate_model_slice_result(&result, request, expected_encoded_sha256)?;
     Ok(result)
 }
