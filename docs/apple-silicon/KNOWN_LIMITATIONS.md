@@ -77,21 +77,21 @@ that every one is required by the eventual MLX integration.
 
 ## CI and repository publication status
 
-- `.github/workflows/macos.yml` is configured for GitHub's documented
-  standard `macos-15` arm64/M1 runner and asserts that `uname -m` is `arm64`.
-  At this documentation checkpoint it had not run on GitHub Actions, so it is
-  configured CI rather than verified CI.
-- The revised workflow runs the exact required commands with `--all-targets`
-  and `--no-fail-fast`. The previous local commit used narrower commands;
-  only a completed Actions run can verify the published workflow.
-- The public, independent `MahdiHedhli/PulsarMLX` repository existed at this
-  checkpoint, but it had no pushed `main` ref and local `main` still tracked
-  `upstream/main`. Repository creation is therefore not evidence of a
-  completed publication.
-
-Update these CI and publication entries only from GitHub-confirmed results.
-Never report a configured workflow, local commit, or repository shell as a
-successful remote run or push.
+- The public independent repository is published at
+  <https://github.com/MahdiHedhli/PulsarMLX>. GitHub reports `isFork: false`,
+  visibility `PUBLIC`, and default branch `main`. Local `main` tracks
+  `origin/main`; the original Pulsar remote remains `upstream`.
+- [GitHub Actions run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+  completed successfully for commit `733dce5`. Its job reported image
+  `macos-15-arm64` release `20260727.0256`, `arm64`, macOS 15.7.7 build 24G720,
+  rustc 1.97.1, Cargo 1.97.1, and host `aarch64-apple-darwin`.
+- The remote run passed `cargo check --workspace --all-targets` and
+  `cargo test --workspace --no-fail-fast`; 32 tests ran. It reproduced the
+  inherited `quant` warning and macOS serve dead-code warnings.
+- Standard `macos-15` is an Apple Silicon runner but is not equivalent to the
+  local 128 GiB M1 Ultra. This job validates only the Cargo baseline. It does
+  not install MLX, run an MLX device fixture, download a checkpoint, exercise
+  Linux/CUDA, or establish model correctness or performance.
 
 ## Deliberately unsupported in the first milestone
 

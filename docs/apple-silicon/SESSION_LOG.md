@@ -149,6 +149,39 @@ pre-US4 admission gate, not a blocker for the earlier device, tensor, storage,
 quantization, or synthetic milestones. No implementation was performed by the
 analysis step.
 
+### Publication and CI result
+
+The complete pre-report change set was reviewed in four staged groups. Each
+group passed `git diff --cached --check` plus credential-prefix,
+forbidden-file, model-weight, and large-diff checks before commit. A final
+`upstream/main...HEAD` scan also passed, the retained `LICENSE` was unchanged,
+and no model file, credential, private key, private machine identifier, cache,
+or generated binary was committed.
+
+Focused commits before the report:
+
+- `530e3068563775672d7e75f7e9e5437b7f915408` —
+  `build: prepare reproducible PulsarMLX workspace`;
+- `aa9ae0524d215d0d5055ff18881cb8814ffec5fc` —
+  `docs: initialize PulsarMLX project and upstream attribution`;
+- `5c1370f2ac29bedd7418c26be3c3a86342467796` —
+  `docs: bootstrap GitHub Spec Kit workflow`; and
+- `733dce565c8b2700d500e8e14fdf36f7fac2dd47` —
+  `ci: add macOS baseline validation`.
+
+`git push -u origin main` succeeded without force. GitHub confirmed the public,
+independent `MahdiHedhli/PulsarMLX` repository, default branch `main`, commit
+`733dce5` at `origin/main`, and the preserved `upstream` remote. Private
+vulnerability reporting is enabled.
+
+No automatic run appeared after the initial push. After GitHub reported the
+workflow as active, the configured `workflow_dispatch` trigger was invoked
+explicitly. [Run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+then completed successfully in 1 minute 8 seconds. The job reported
+`macos-15-arm64`, native `arm64`, macOS 15.7.7 build 24G720, rustc/Cargo 1.97.1,
+and passed the exact all-target check and no-fail-fast test commands with 32
+tests. It is a Cargo baseline only, not MLX or model evidence.
+
 ### Implementation stop
 
 No MLX package was installed during the initial audit, no Apple backend source

@@ -201,8 +201,9 @@ that snapshot, `.github/workflows/macos.yml`, using `macos-15`, asserting
 `arm64`, and running the narrower `cargo check --workspace` and
 `cargo test --workspace`. The bootstrap revision now configures the exact
 required commands, `cargo check --workspace --all-targets` and
-`cargo test --workspace --no-fail-fast`; remote execution remains unverified
-until a GitHub Actions run completes.
+`cargo test --workspace --no-fail-fast`. After publication, GitHub Actions run
+[30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+completed successfully on the `macos-15-arm64` image and ran 32 tests.
 
 ## Verification performed in this session
 
@@ -235,6 +236,8 @@ Verified locally:
 - All 32 tests selected by the macOS cfg set pass.
 - Both preserved local commits are free of whitespace errors reported by
   `git show --check`.
+- The published macOS workflow passed both exact Cargo commands on an arm64
+  GitHub-hosted runner in run 30977589181.
 
 Not yet verified:
 
@@ -243,7 +246,8 @@ Not yet verified:
 - Any real or synthetic MLX model execution.
 - Linux/CUDA build or runtime parity on this machine.
 - CUDA and `io_uring` tests excluded by macOS cfgs.
-- A remote GitHub Actions run of the new macOS workflow.
+- Any MLX package, device, or model validation in GitHub Actions; the published
+  job is the Cargo baseline only.
 - Giant-model correctness, performance, memory-pressure behavior, or SSD
   streaming on Apple Silicon.
 - Repository-wide rustfmt conformance is not achieved; formatting cleanup
