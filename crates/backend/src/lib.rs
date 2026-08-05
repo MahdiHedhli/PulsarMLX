@@ -9,10 +9,12 @@ pub mod tensor;
 pub use capability::{BackendCapabilityReport, BackendSelection, CapabilityProbe, DeviceState};
 pub use error::{ContractError, ErrorCategory, MAX_ERROR_MESSAGE_CHARS};
 pub use evidence::{
-    ActualStatus, BenchmarkDescriptor, BenchmarkRecord, EvidenceStatus, GitDirtyState,
-    MemoryGaugeDescriptor, MemoryGauges, ModelCompatibilityDescriptor, ModelCompatibilityRecord,
-    ModelSupportStatus, QuantizationCompatibilityDescriptor, QuantizationCompatibilityRecord,
-    QuantizationStatus, ValidationCase, ValidationDescriptor,
+    ActualStatus, BenchmarkDescriptor, BenchmarkRecord, CompatibilityCellDescriptor,
+    CompatibilityEvidenceLevel, CompatibilityMatrix, CompatibilityMatrixDescriptor,
+    CompatibilityStatus, EvidenceStatus, GitDirtyState, MemoryGaugeDescriptor, MemoryGauges,
+    ModelCompatibilityDescriptor, ModelCompatibilityRecord, ModelSupportStatus,
+    QuantizationCompatibilityDescriptor, QuantizationCompatibilityRecord, QuantizationStatus,
+    ValidationCase, ValidationDescriptor,
 };
 pub use routing::RoutingPlan;
 pub use tensor::{

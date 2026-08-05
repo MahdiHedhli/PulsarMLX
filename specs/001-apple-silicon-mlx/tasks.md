@@ -234,7 +234,7 @@ exclusions.
 
 ### Implementation for User Story 5
 
-- [ ] T066 [US5] Implement reusable validation-record, compatibility-matrix, and benchmark-record validation with bounded diagnostics in `crates/backend/src/evidence.rs`
+- [X] T066 [US5] Implement reusable validation-record, compatibility-matrix, and benchmark-record validation with bounded diagnostics in `crates/backend/src/evidence.rs`
 - [ ] T067 [P] [US5] Populate the architecture/quantization/evidence-level matrix using only linked actual records in `docs/apple-silicon/COMPATIBILITY.md`
 - [ ] T068 [P] [US5] Create a reviewer index mapping case IDs to exact commands, immutable inputs, oracles, results, warnings, exclusions, and artifacts in `docs/validation/README.md`
 - [ ] T069 [US5] Record one post-correctness bounded benchmark with every constitution field, or an explicit `not_run` record with no performance claim, in `docs/validation/benchmark-initial.json`

@@ -916,3 +916,34 @@ not-yet-implemented compatibility matrix API and the same validation fields.
 `rustfmt --check` on both new test files and `git diff --check` passed. These
 failures are the T066 implementation target, not a claim that the backend test
 suite currently passes. No model or MLX execution occurred in this milestone.
+
+### T066 reusable evidence and compatibility validation
+
+The backend evidence contract now requires a bounded actual-result summary for
+every executed validation case and validates any attached raw memory gauges
+through the existing independent-gauge rules. A validation case may carry one
+typed evidence level. The six compatibility levels are exact and non-ordered:
+scalar fixture, evaluated MLX tensor fixture, synthetic routed-MoE, bounded
+real-model slice, giant-model execution, and production serving.
+
+A compatibility matrix must contain exactly one unique cell for each level.
+Verified cells require supplied, executed, passed, explicitly verified evidence
+whose typed level exactly matches the cell. Planned, unsupported, and blocked
+cells require a bounded explanation. Existing benchmark admission continues to
+require every named correctness prerequisite to be supplied, passed, and
+verified. Diagnostics retain the shared bounded/redacted `ContractError` path.
+
+Validation after implementation:
+
+```sh
+cargo test -p backend --test evidence_contract \
+  --test validation_records --test compatibility_matrix
+cargo test -p backend
+cargo clippy -p backend --all-targets -- -D warnings
+git diff --check
+```
+
+The three focused targets passed 8, 7, and 10 tests respectively. The complete
+backend crate passed 57 tests with zero failures, and strict backend Clippy and
+the diff check both exited zero. This is evidence-schema enforcement only; it
+does not execute a backend, model, MLX, Linux, or CUDA workload.

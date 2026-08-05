@@ -347,6 +347,29 @@ pub enum EvidenceStatus {
     Superseded,
 }
 
+/// Exact depth at which a compatibility claim was exercised.
+///
+/// These levels are deliberately non-ordered: evidence at one level never
+/// implies evidence at another level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum CompatibilityEvidenceLevel {
+    ScalarFixture,
+    EvaluatedMlxTensorFixture,
+    SyntheticRoutedMoe,
+    BoundedRealModelSlice,
+    GiantModelExecution,
+    ProductionServing,
+}
+
+const COMPATIBILITY_EVIDENCE_LEVELS: [CompatibilityEvidenceLevel; 6] = [
+    CompatibilityEvidenceLevel::ScalarFixture,
+    CompatibilityEvidenceLevel::EvaluatedMlxTensorFixture,
+    CompatibilityEvidenceLevel::SyntheticRoutedMoe,
+    CompatibilityEvidenceLevel::BoundedRealModelSlice,
+    CompatibilityEvidenceLevel::GiantModelExecution,
+    CompatibilityEvidenceLevel::ProductionServing,
+];
+
 /// Caller-provided fields for one validation execution.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValidationDescriptor {
@@ -354,9 +377,12 @@ pub struct ValidationDescriptor {
     pub claim_scope: String,
     pub commit: String,
     pub git_dirty_state: GitDirtyState,
+    pub evidence_level: Option<CompatibilityEvidenceLevel>,
     pub command: String,
     pub oracle_id: Option<String>,
     pub actual_status: ActualStatus,
+    pub actual_values_or_bounded_summary: Option<String>,
+    pub memory_gauges: Option<MemoryGaugeDescriptor>,
     pub warnings: Vec<String>,
     pub exclusions: Vec<String>,
     pub artifact_paths: Vec<String>,
@@ -367,6 +393,7 @@ pub struct ValidationDescriptor {
 pub struct ValidationCase {
     descriptor: ValidationDescriptor,
     evidence_status: EvidenceStatus,
+    memory_gauges: Option<MemoryGauges>,
 }
 
 impl ValidationCase {
@@ -414,6 +441,29 @@ impl ValidationCase {
             "missing_validation_oracle",
         )?;
 
+        let actual_summary = descriptor
+            .actual_values_or_bounded_summary
+            .as_deref()
+            .ok_or_else(|| {
+                error(
+                    ErrorCategory::InvalidEvidence,
+                    "missing_actual_result",
+                    "validation evidence requires actual values or a bounded result summary",
+                )
+            })?;
+        validate_text(
+            actual_summary,
+            "actual_values_or_bounded_summary",
+            ErrorCategory::InvalidEvidence,
+            "missing_actual_result",
+        )?;
+
+        let memory_gauges = descriptor
+            .memory_gauges
+            .clone()
+            .map(MemoryGauges::try_new)
+            .transpose()?;
+
         validate_optional_unique_list(
             &descriptor.warnings,
             "warnings",
@@ -444,6 +494,7 @@ impl ValidationCase {
         Ok(Self {
             descriptor,
             evidence_status,
+            memory_gauges,
         })
     }
 
@@ -484,6 +535,10 @@ impl ValidationCase {
         self.descriptor.git_dirty_state
     }
 
+    pub fn evidence_level(&self) -> Option<CompatibilityEvidenceLevel> {
+        self.descriptor.evidence_level
+    }
+
     pub fn command(&self) -> &str {
         &self.descriptor.command
     }
@@ -494,6 +549,17 @@ impl ValidationCase {
 
     pub fn actual_status(&self) -> ActualStatus {
         self.descriptor.actual_status
+    }
+
+    pub fn actual_values_or_bounded_summary(&self) -> &str {
+        self.descriptor
+            .actual_values_or_bounded_summary
+            .as_deref()
+            .expect("validated validation cases contain an actual result summary")
+    }
+
+    pub fn memory_gauges(&self) -> Option<&MemoryGauges> {
+        self.memory_gauges.as_ref()
     }
 
     pub fn evidence_status(&self) -> EvidenceStatus {
@@ -510,6 +576,160 @@ impl ValidationCase {
 
     pub fn artifact_paths(&self) -> &[String] {
         &self.descriptor.artifact_paths
+    }
+}
+
+/// Publication state for one exact compatibility evidence level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CompatibilityStatus {
+    Planned,
+    Verified,
+    Unsupported,
+    Blocked,
+}
+
+/// Caller-provided state and evidence links for one exact matrix cell.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompatibilityCellDescriptor {
+    pub level: CompatibilityEvidenceLevel,
+    pub status: CompatibilityStatus,
+    pub evidence_case_ids: Vec<String>,
+    pub explanation: Option<String>,
+}
+
+/// Caller-provided compatibility matrix for one architecture/quantization pair.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompatibilityMatrixDescriptor {
+    pub architecture: String,
+    pub quantization: String,
+    pub cells: Vec<CompatibilityCellDescriptor>,
+}
+
+/// A complete six-cell compatibility matrix with no ordered implication.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompatibilityMatrix {
+    descriptor: CompatibilityMatrixDescriptor,
+}
+
+impl CompatibilityMatrix {
+    pub fn try_new(
+        descriptor: CompatibilityMatrixDescriptor,
+        evidence: &[&ValidationCase],
+    ) -> Result<Self, ContractError> {
+        validate_text(
+            &descriptor.architecture,
+            "architecture",
+            ErrorCategory::InvalidEvidence,
+            "invalid_compatibility_identity",
+        )?;
+        validate_text(
+            &descriptor.quantization,
+            "quantization",
+            ErrorCategory::InvalidEvidence,
+            "invalid_compatibility_identity",
+        )?;
+
+        if descriptor.cells.len() != COMPATIBILITY_EVIDENCE_LEVELS.len() {
+            return Err(error(
+                ErrorCategory::InvalidEvidence,
+                "incomplete_compatibility_matrix",
+                "compatibility matrix requires one explicit cell for every evidence level",
+            ));
+        }
+
+        let mut seen_levels = HashSet::with_capacity(descriptor.cells.len());
+        for cell in &descriptor.cells {
+            if !seen_levels.insert(cell.level) {
+                return Err(error(
+                    ErrorCategory::InvalidEvidence,
+                    "duplicate_compatibility_level",
+                    "compatibility matrix contains a duplicate evidence level",
+                ));
+            }
+
+            validate_optional_unique_list(
+                &cell.evidence_case_ids,
+                "evidence_case_ids",
+                ErrorCategory::InvalidEvidence,
+                "invalid_compatibility_evidence",
+            )?;
+            if let Some(explanation) = cell.explanation.as_deref() {
+                validate_text(
+                    explanation,
+                    "compatibility explanation",
+                    ErrorCategory::InvalidEvidence,
+                    "invalid_compatibility_explanation",
+                )?;
+            }
+
+            match cell.status {
+                CompatibilityStatus::Verified => {
+                    require_verified_evidence(
+                        &cell.evidence_case_ids,
+                        evidence,
+                        ErrorCategory::InvalidEvidence,
+                        "invalid_compatibility_evidence",
+                    )?;
+                    require_exact_evidence_level(cell, evidence)?;
+                }
+                CompatibilityStatus::Planned
+                | CompatibilityStatus::Unsupported
+                | CompatibilityStatus::Blocked => {
+                    if cell.explanation.is_none() {
+                        return Err(error(
+                            ErrorCategory::InvalidEvidence,
+                            "missing_compatibility_explanation",
+                            "every nonverified compatibility cell requires an explanation",
+                        ));
+                    }
+                }
+            }
+        }
+
+        if !COMPATIBILITY_EVIDENCE_LEVELS
+            .into_iter()
+            .all(|level| seen_levels.contains(&level))
+        {
+            return Err(error(
+                ErrorCategory::InvalidEvidence,
+                "incomplete_compatibility_matrix",
+                "compatibility matrix is missing a required evidence level",
+            ));
+        }
+
+        Ok(Self { descriptor })
+    }
+
+    pub fn descriptor(&self) -> &CompatibilityMatrixDescriptor {
+        &self.descriptor
+    }
+
+    pub fn architecture(&self) -> &str {
+        &self.descriptor.architecture
+    }
+
+    pub fn quantization(&self) -> &str {
+        &self.descriptor.quantization
+    }
+
+    pub fn cells(&self) -> &[CompatibilityCellDescriptor] {
+        &self.descriptor.cells
+    }
+
+    pub fn status(&self, level: CompatibilityEvidenceLevel) -> CompatibilityStatus {
+        self.cell(level).status
+    }
+
+    pub fn is_verified(&self, level: CompatibilityEvidenceLevel) -> bool {
+        self.status(level) == CompatibilityStatus::Verified
+    }
+
+    pub fn cell(&self, level: CompatibilityEvidenceLevel) -> &CompatibilityCellDescriptor {
+        self.descriptor
+            .cells
+            .iter()
+            .find(|cell| cell.level == level)
+            .expect("validated compatibility matrices contain every evidence level")
     }
 }
 
@@ -1064,6 +1284,34 @@ fn require_verified_evidence(
                 category,
                 code,
                 "all referenced correctness evidence must be executed, passed, and verified",
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn require_exact_evidence_level(
+    cell: &CompatibilityCellDescriptor,
+    evidence: &[&ValidationCase],
+) -> Result<(), ContractError> {
+    for required in &cell.evidence_case_ids {
+        let record = evidence
+            .iter()
+            .copied()
+            .find(|record| record.case_id() == required)
+            .ok_or_else(|| {
+                error(
+                    ErrorCategory::InvalidEvidence,
+                    "invalid_compatibility_evidence",
+                    "a referenced compatibility evidence case was not supplied",
+                )
+            })?;
+        if record.evidence_level() != Some(cell.level) {
+            return Err(error(
+                ErrorCategory::InvalidEvidence,
+                "compatibility_evidence_level_mismatch",
+                "compatibility evidence must match the exact matrix level it verifies",
             ));
         }
     }
