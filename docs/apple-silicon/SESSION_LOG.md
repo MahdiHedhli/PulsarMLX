@@ -1094,3 +1094,24 @@ no-exit-code classification boundary. `WorkerClient` still reports
 macOS Crash Reporter. The focused test passed, the recent Python diagnostic-
 report count remained 1 before and after, the full worker-contract target
 passed 12 tests, and strict focused Clippy passed. No model or MLX work ran.
+
+### T073 lockfile-backed Apple MLX fixture CI
+
+The existing `macos-15-arm64` Cargo baseline job remains byte-for-byte
+unchanged. A second `macos-15` job now asserts `arm64`, verifies the committed
+US1–US3 evidence/fixture inputs, installs the official `setup-uv` action at the
+immutable v8.1.0 action commit, pins uv 0.11.17 and CPython 3.12.13, and runs
+`uv sync --frozen` from the committed lockfile.
+
+The job runs the bounded Python worker suite, the explicitly ignored native
+device smoke, seven tensor fixtures, and the synthetic routed-MoE fixture. It
+writes generated evidence only under `RUNNER_TEMP` and validates pass/device
+boundaries there. `PULSARMLX_MODEL_GGUF` is explicitly empty; the job contains
+no inspect, model-slice, downloader, Hugging Face, GGUF, or external-path
+command.
+
+Local validation parsed the workflow YAML and every shell block, confirmed the
+three prerequisite evidence records are passing at their exact scopes, checked
+that the new job contains only small-fixture commands, and passed
+`git diff --check`. This establishes workflow configuration only. T074 must run
+the pushed workflow before any remote CI success is claimed.

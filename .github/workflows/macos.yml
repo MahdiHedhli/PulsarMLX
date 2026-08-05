@@ -25,3 +25,76 @@ jobs:
         run: cargo check --workspace --all-targets
       - name: Test workspace
         run: cargo test --workspace --no-fail-fast
+
+  apple-mlx-small-fixtures:
+    name: Apple MLX small-fixture validation
+    runs-on: macos-15
+    env:
+      PULSARMLX_MODEL_GGUF: ""
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify Apple Silicon fixture-only boundary
+        run: |
+          test "$(uname -m)" = arm64
+          sw_vers
+          test -z "$PULSARMLX_MODEL_GGUF"
+          test -f uv.lock
+          test -f fixtures/mlx/manifest.json
+          test -f fixtures/mlx/routed-moe-v1.json
+          test -f docs/validation/mlx-device-smoke.json
+          test -f docs/validation/mlx-tensor-fixtures.json
+          test -f docs/validation/synthetic-moe-v1.json
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.17"
+          python-version: "3.12.13"
+          enable-cache: true
+      - name: Sync lockfile-backed MLX environment
+        run: |
+          uv python install 3.12.13
+          uv sync --frozen --python 3.12.13
+          .venv/bin/python - <<'PY'
+          import platform
+          from importlib.metadata import version
+
+          assert platform.machine() == "arm64"
+          assert version("mlx") == "0.32.0"
+          assert version("mlx-metal") == "0.32.0"
+          PY
+      - name: Test bounded worker contract
+        run: |
+          PYTHONPATH=python .venv/bin/python -m unittest discover \
+            -s python/pulsar_mlx_worker/tests -v
+      - name: Execute native MLX device smoke
+        run: |
+          cargo test -p mlx-backend --test device_smoke \
+            native_device_smoke_command_emits_evaluated_evidence -- \
+            --ignored --exact
+      - name: Execute bounded MLX tensor fixtures
+        run: |
+          cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
+            --manifest fixtures/mlx/manifest.json \
+            --evidence "$RUNNER_TEMP/mlx-tensor-fixtures.json"
+      - name: Execute synthetic routed-MoE fixture
+        run: |
+          cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
+            --fixture fixtures/mlx/routed-moe-v1.json \
+            --evidence "$RUNNER_TEMP/synthetic-moe-v1.json"
+      - name: Verify bounded evidence and external-model exclusion
+        run: |
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          tensor = json.loads((root / "mlx-tensor-fixtures.json").read_text())
+          synthetic = json.loads((root / "synthetic-moe-v1.json").read_text())
+          assert tensor["status"] == "passed"
+          assert tensor["case_count"] == 7
+          assert synthetic["status"] == "passed"
+          assert synthetic["fixture_kind"] == "synthetic"
+          assert synthetic["fallback_used"] is False
+          assert os.environ.get("PULSARMLX_MODEL_GGUF", "") == ""
+          PY
