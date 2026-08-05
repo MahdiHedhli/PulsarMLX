@@ -988,3 +988,26 @@ speedup, bandwidth, memory-efficiency, thermal, power, Linux/CUDA, giant-model,
 and serving claims. This satisfies the specification's permitted explicit
 not-run branch without converting available correctness evidence into
 performance evidence.
+
+### T070 independent portable-source replay
+
+From a clean worktree at commit
+`0cf71ba8dd4ffc66c6e49c3dfa0cd9d23dbb04a7`, the exact command recorded by the
+portable expert-source evidence was replayed independently:
+
+```sh
+cargo test -p stream --test positional_source
+```
+
+It ran on arm64 macOS 26.0 (build 25A354) with Rust 1.97.1 and Cargo 1.97.1,
+exited zero, and reported 14 passed, zero failed, and zero ignored. This exactly
+matched the source record's compared cardinalities. The replay commit is later
+than the source evidence commit, but `git diff` confirmed that no file under
+`crates/stream` changed between them. Cached build duration and nondeterministic
+test-report ordering were deliberately not treated as correctness fields.
+
+The sanitized result is `docs/validation/reproduction-check.json`. The replay
+does not cover the inherited Linux `io_uring` implementation, the 32-bit-only
+branch, MLX, model execution, serving, Linux/CUDA, or performance. The file
+reserves a separate `final_story_validation` object for T072's exact workspace
+and evidence-validator rerun.

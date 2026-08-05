@@ -26,6 +26,7 @@ recorded prerequisites and authorization.
 | `qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-oracle-v1` — oracle contract | `frozen_not_executed` | Artifact SHA-256 `4ad960…743c`, tensor `blk.0.ffn_gate_exps.weight`, prompt SHA-256 `e55164…14bd`, activation SHA-256 `382179…a92e` | `ggml-org/llama.cpp` `gguf-py` at revision `b06aa774c03dbbb624e726664b714a57d1f49815`; tolerances fixed before Apple output | The oracle, deterministic input, bounded output, and comparison policy were frozen; this contract itself contains no executed result | Embedded 216-line recipe only; execution is C32 in the result record | [qwen3-30b-a3b-q8_0-oracle.json](models/qwen3-30b-a3b-q8_0-oracle.json) |
 | `qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-v1` — trusted-reference result | `passed` at commit `fc77d57b8542757c238c637718712ba99fcc2ffd` | Artifact, encoded slice, prompt, and activation hashes recorded in `input_identity` | Frozen oracle contract Git blob `fe3eed5c3bb3a86b67b06d30afe88504af420814`; oracle script SHA-256 `9ae200…8092` | 16 reference values; output SHA-256 `610357…b51`; scalar/NumPy self-check passed with zero mismatches | C32 | [qwen3-30b-a3b-q8_0-reference-result.json](models/qwen3-30b-a3b-q8_0-reference-result.json) |
 | `portable-expert-source` — portable storage record | `passed` at commit `8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd` | Deterministic ranges and temporary shard bytes encoded by the committed `positional_source` test suite; no dedicated input-ID field | Test expectations are the exact byte/range/ownership oracle | 14 portable-source tests passed; one stream library test passed; recorded workspace result was 140 passed and 0 failed | C33–C37 | [portable-expert-source.json](portable-expert-source.json) |
+| `portable-expert-source-replay-v1` — independent reproduction | `passed` at commit `0cf71ba8dd4ffc66c6e49c3dfa0cd9d23dbb04a7` | The same committed `positional_source` test target; relevant `crates/stream` files are unchanged from the source record | The source record's exact 14-test result | 14 passed, 0 failed, 0 ignored; exact cardinalities matched | C43 | [reproduction-check.json](reproduction-check.json) |
 | `qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-v1` — bounded Apple result | `passed` at source commit `5db6bdf1069785aee8ed2682cd18110df9bbeb84` | Same artifact, prompt, activation, encoded-slice, and decoded-slice hashes as the trusted reference | `gguf-py` reference revision `b06aa774c03dbbb624e726664b714a57d1f49815`, output SHA-256 `610357…b51` | 16 MLX values; zero mismatches; max absolute error `1.6093254089355469e-6`; max relative error `1.7527402999126447e-6`; later workspace gate recorded 154 active passes and 1 ignored | C38–C41 | [qwen3-30b-a3b-q8_0-slice.json](qwen3-30b-a3b-q8_0-slice.json) |
 | `synthetic-routed-moe` — synthetic routed-MoE record | `passed` at commit `8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd` | Fixture `synthetic-routed-moe-v1` at `fixtures/mlx/routed-moe-v1.json` in the tested commit | `committed-scalar-routed-moe-v1` | 4 compared values; max absolute error `4.759696965450644e-7`; max relative error `1.1697127408636623e-7`; evaluated and synchronized on GPU | C42 | [synthetic-moe-v1.json](synthetic-moe-v1.json) |
 
@@ -63,6 +64,7 @@ standalone JSON files. Their exact execution commands are C13 and C20.
 | `qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-oracle-v1` | No top-level `warnings` field | Frozen contract, not an executed oracle or reproducibility result; no Apple/model-depth/serving/performance claim |
 | `qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-v1` — reference | Prompt uses a transparent SHA-256 probe adapter; the reference is CPU-only | One tensor, one expert, rows 0–15 only; no Apple result before reference, routing, full graph, generation, serving, or benchmark |
 | `portable-expert-source` | Empty warning list | Portable macOS source only; no inherited Linux fetcher, 32-bit allocation branch, model, MLX graph, serving, or benchmark execution |
+| `portable-expert-source-replay-v1` | Empty warning list; later clean commit used with unchanged relevant source files | Portable-source replay only; no inherited Linux fetcher, 32-bit branch, MLX, model, serving, or performance execution |
 | `qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-v1` — Apple | Linux/CUDA not established; inherited workspace warnings are retained in the post-slice gate | Prompt adapter is not tokenization; no router, full expert/layer/model, attention, logits, tokens, generation, serving, benchmark, or giant-model proof |
 | `synthetic-routed-moe` | Linux/CUDA not established | Synthetic float32 fixture only; no model weights, tokenizer, model loader, generation, or serving; only the recorded two-token route |
 
@@ -203,6 +205,9 @@ cargo test --workspace -- --list | rg ': test$' | wc -l
 
 # C42
 cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence docs/validation/synthetic-moe-v1.json
+
+# C43
+cargo test -p stream --test positional_source
 ```
 
 ## Schema notes

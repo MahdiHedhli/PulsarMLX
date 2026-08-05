@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "record_type": "independent_reproduction_check",
+  "case_id": "portable-expert-source-replay-v1",
+  "claim_scope": "Independent replay of the committed portable expert-source validation command",
+  "source_evidence": {
+    "case_id": "portable-expert-source",
+    "artifact": "docs/validation/portable-expert-source.json",
+    "tested_commit": "8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd",
+    "exact_command": "cargo test -p stream --test positional_source",
+    "recorded_result": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0
+    }
+  },
+  "reproducer": {
+    "commit": "0cf71ba8dd4ffc66c6e49c3dfa0cd9d23dbb04a7",
+    "git_dirty_state_before_execution": "clean",
+    "started_at_utc": "2026-08-05T15:51:39Z",
+    "completed_at_utc": "2026-08-05T15:51:39Z",
+    "host_architecture": "arm64",
+    "rust_host": "aarch64-apple-darwin",
+    "macos_version": "26.0",
+    "macos_build": "25A354",
+    "rustc": "1.97.1 (8bab26f4f 2026-07-14, Homebrew)",
+    "cargo": "1.97.1 (c980f4866 2026-06-30, Homebrew)"
+  },
+  "replay": {
+    "exact_command": "cargo test -p stream --test positional_source",
+    "exit_code": 0,
+    "actual_status": "passed",
+    "actual_result": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0
+    }
+  },
+  "comparison": {
+    "actual_status": "matched",
+    "mismatches": [],
+    "differences": [
+      "The replay used a later clean repository commit; no file under crates/stream changed between the recorded and replay commits.",
+      "Build-cache and wall-time observations were not correctness fields and were not compared.",
+      "Concurrent Rust test output order was not compared; the exact test cardinalities and status were compared."
+    ]
+  },
+  "warnings": [],
+  "failures": [],
+  "exclusions": [
+    "The replay exercised the additive portable positional source, not the inherited Linux io_uring implementation.",
+    "The 32-bit-only allocation-width branch was not compiled on this 64-bit arm64 host.",
+    "No MLX, model weight, model inference, Linux, CUDA, serving, or performance workload was executed.",
+    "The replay establishes only that the committed 14-test portable-source result reproduces on the recorded macOS environment."
+  ],
+  "artifact_paths": [
+    "docs/validation/portable-expert-source.json",
+    "docs/validation/reproduction-check.json"
+  ],
+  "final_story_validation": {
+    "actual_status": "not_run",
+    "reason": "Reserved for the exact T072 workspace and evidence-validator rerun.",
+    "commands": []
+  }
+}
