@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "validation": "mlx-device-smoke",
+  "status": "passed",
+  "recorded_at_utc": "2026-08-05T12:38:19Z",
+  "tested_commit": "4ff4301af56904d4125f72ebeddee60e13f706d0",
+  "backend_id": "apple-mlx",
+  "selected_device": "gpu",
+  "device_state": "evaluated",
+  "runtime": {
+    "protocol": 1,
+    "worker_version": "0.1.0",
+    "python_version": "3.12.13",
+    "python_arch": "arm64",
+    "mlx_version": "0.32.0",
+    "macos_version": "26.0",
+    "metal_available": true,
+    "gpu_count": 1
+  },
+  "probe": {
+    "fixture_id": "nonsymmetric-f32-matmul-v1",
+    "operation_id": "nonsymmetric-f32-matmul",
+    "input_shapes": [
+      [2, 3],
+      [3, 2]
+    ],
+    "output_shape": [2, 2],
+    "input_dtype": "float32",
+    "accumulation_dtype": "float32",
+    "output_dtype": "float32",
+    "evaluated": true,
+    "synchronized": true,
+    "fallback_used": false,
+    "expected": [58.0, 64.0, 139.0, 154.0],
+    "actual": [58.0, 64.0, 139.0, 154.0],
+    "comparison_passed": true,
+    "comparison": {
+      "oracle_id": "hard-coded-scalar:nonsymmetric-f32-matmul-v1",
+      "absolute_tolerance": 0.00001,
+      "relative_tolerance": 0.00001,
+      "non_finite_policy": "reject",
+      "compared_count": 4,
+      "max_absolute_error": 0.0,
+      "max_relative_error": 0.0,
+      "first_mismatch_index": null,
+      "passed": true
+    },
+    "memory_gauges": {
+      "mlx_active_bytes": 64,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 64,
+      "process_footprint_bytes": 39583744,
+      "process_footprint_source": "ps-rss",
+      "system_pressure": "normal",
+      "reported_summed_total_bytes": null
+    },
+    "passed": true
+  },
+  "request_ids": {
+    "health": 1,
+    "tensor_probe": 2
+  },
+  "commands": [
+    {
+      "command": "PYTHONPATH=python uv run python -m unittest discover -s python/pulsar_mlx_worker/tests -v",
+      "exit_code": 0,
+      "result": "13 passed; 0 failed"
+    },
+    {
+      "command": "cargo test -p mlx-backend --test worker_contract",
+      "exit_code": 0,
+      "result": "12 passed; 0 failed"
+    },
+    {
+      "command": "cargo run -p mlx-backend --bin pulsar-mlx -- device-smoke --backend apple-mlx --device gpu --evidence docs/validation/mlx-device-smoke.json",
+      "exit_code": 0,
+      "result": "evaluated apple-mlx GPU probe passed"
+    },
+    {
+      "command": "cargo check --workspace --all-targets",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --workspace --no-fail-fast",
+      "exit_code": 0,
+      "result": "93 passed; 0 failed"
+    }
+  ],
+  "warnings": [
+    "Inherited crates/quant/src/iq.rs unused_mut warning remains.",
+    "Thirteen inherited macOS serve dead-code warnings remain."
+  ],
+  "exclusions": [
+    "No model was loaded.",
+    "No quantized operation was exercised.",
+    "No token generation or inference serving was exercised.",
+    "Linux and CUDA behavior were not executed by this validation."
+  ]
+}

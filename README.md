@@ -5,22 +5,21 @@
 > **Project status:** PulsarMLX is an experimental Apple Silicon and MLX
 > derivative of [Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar).
 > It preserves Pulsar's MIT license, attribution, Git history, and Linux/CUDA
-> path while an additive Apple backend is developed. The current baseline
-> compiles on macOS; MLX inference is not implemented yet.
+> path while an additive Apple backend is developed. A bounded MLX GPU device
+> proof is verified; model inference is not implemented yet.
 
 ## PulsarMLX capability status
 
 | Category | Current status |
 | --- | --- |
 | Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
-| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, `cargo check --workspace --all-targets` passes and `cargo test --workspace --no-fail-fast` passes with 32 tests. The same commands pass in [push-triggered GitHub Actions run 30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362) on the standard `macos-15-arm64` image. The source-level macOS stub builds, the Linux-only `handle_chat` signature is gated, and Spec Kit planning is initialized. |
-| Planned capabilities | An MLX device proof, tensor-reference operations, portable expert storage, quantized parity, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
+| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, exact workspace check passes and the workspace suite passes with 93 Rust tests; 13 Python protocol tests also pass. A supervised native arm64 worker using MLX 0.32.0 explicitly selected `gpu`, evaluated and synchronized a nonsymmetric float32 matmul, and matched four independent expected values exactly without fallback. The earlier Cargo-only [GitHub Actions baseline](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362) remains green. |
+| Planned capabilities | Tensor-reference operations, portable expert storage, quantized parity, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
 | Unsupported or unverified | MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
 
-No successful MLX inference claim appears in this repository baseline. See
-[the baseline validation report](docs/preflight/BASELINE_VALIDATION.md) and
-[known limitations](docs/apple-silicon/KNOWN_LIMITATIONS.md) for the exact
-evidence boundary.
+The verified MLX result is a tiny device proof, not model inference. See
+[the device evidence](docs/validation/mlx-device-smoke.json) and [known
+limitations](docs/apple-silicon/KNOWN_LIMITATIONS.md) for the exact boundary.
 
 ## Verify and continue development
 
@@ -54,10 +53,9 @@ sed -n '1,220p' specs/001-apple-silicon-mlx/spec.md
 sed -n '1,260p' specs/001-apple-silicon-mlx/tasks.md
 ```
 
-After the preflight report is reviewed and implementation is explicitly
-authorized, start Codex in this directory and continue from the active Spec Kit
-task list. The planned implementation command is `$speckit-implement`; do not
-run it merely to inspect the project.
+Continue implementation from the first incomplete active Spec Kit task. The
+implementation command is `$speckit-implement`; validation evidence must stay
+bounded to the capability actually exercised.
 
 ## Inherited upstream overview (Linux + CUDA)
 

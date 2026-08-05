@@ -1,9 +1,9 @@
 # Validation Quickstart: Apple Silicon MLX Backend Bring-Up
 
-**Status**: The Cargo baseline, Spec Kit inspection, and pinned worker
-environment commands are runnable. The MLX worker/device and later backend
-commands remain implementation targets until their corresponding task evidence
-is committed.
+**Status**: The Cargo baseline, pinned worker environment, protocol/lifecycle
+tests, and evaluated MLX GPU device smoke are runnable and verified. Tensor,
+quantization, storage, routed-MoE, and model commands remain implementation
+targets until their corresponding task evidence is committed.
 
 ## 1. Inspect the current source of truth
 
@@ -105,21 +105,20 @@ comparisons, compatibility/evidence invariants, independent memory gauges, and
 correctness-gated benchmarks. These are semantic contract tests and do not
 execute MLX.
 
-## 5. Run the worker contract tests (planned)
-
-These commands are target interfaces; they become runnable only after their
-corresponding tasks are completed:
+## 5. Run the verified worker contract tests
 
 ```sh
-uv run python -m unittest discover -s python/pulsar_mlx_worker/tests -v
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
 cargo test -p mlx-backend --test worker_contract
 ```
 
-They must cover version negotiation, frame limits, request IDs, malformed
-messages, stdout contamination, worker exit/timeout, controlled shutdown, and
-structured unsupported results without needing a model file.
+On tested commit `4ff4301`, these ran 13 Python tests and 12 Rust fake-worker
+tests with zero failures. They cover version negotiation, frame limits,
+request IDs, malformed messages, stdout contamination, worker exit/timeout,
+controlled shutdown, and structured errors without a model file.
 
-## 6. Prove evaluated GPU execution (planned)
+## 6. Reproduce evaluated GPU execution
 
 ```sh
 cargo run -p mlx-backend --bin pulsar-mlx -- device-smoke \
@@ -128,10 +127,11 @@ cargo run -p mlx-backend --bin pulsar-mlx -- device-smoke \
   --evidence docs/validation/mlx-device-smoke.json
 ```
 
-A passing record must show the pinned MLX/Python versions, native architecture,
-Metal availability, selected GPU, explicit matrix operation, evaluated and
-synchronized result, independent expected values, and actual comparison. An
-import-only or CPU result is not a pass.
+The committed record at `docs/validation/mlx-device-smoke.json` shows native
+arm64 Python 3.12.13, MLX 0.32.0, Metal and one GPU, explicit `apple-mlx`/`gpu`
+selection, evaluated and synchronized nonsymmetric float32 matmul, exact
+oracle parity over four values, and no fallback. An import-only or CPU result
+is not a pass.
 
 Stop if the report is not `evaluated` or if the numeric assertion fails.
 
@@ -229,10 +229,10 @@ MLX or the external checkpoint until separately specified jobs actually run.
 
 ## Exact continuation instruction
 
-After this preflight is reviewed, begin a new development session with:
+Continue from the next incomplete Spec Kit task with:
 
 ```text
-Use the speckit-implement skill for specs/001-apple-silicon-mlx. Start at T001,
-stop after the first independently validated Apple baseline/device milestone,
-and do not bypass any stop condition.
+Use the speckit-implement skill for specs/001-apple-silicon-mlx. Start at the
+first incomplete task, preserve the verified US1 evidence boundary, and do not
+bypass any stop condition.
 ```

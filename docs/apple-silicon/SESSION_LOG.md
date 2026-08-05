@@ -257,3 +257,37 @@ workspace test gate then executed 64 tests with zero failures (the inherited
 `serve` warnings remained unchanged. The public API exports no CUDA handles,
 Python objects, MLX arrays, device pointers, streams, or allocation mechanisms.
 This checkpoint proves contract invariants only; no backend work was executed.
+
+## Implementation session: US1 evaluated device checkpoint
+
+Tasks T015–T023 added test-first bounded protocol, worker lifecycle, runtime
+discovery, explicit MLX GPU probing, and the `pulsar-mlx device-smoke` command.
+The worker uses exact MLX 0.32.0 in native arm64 CPython 3.12.13, emits NDJSON
+only on its protocol stdout, negotiates protocol and capability limits, assigns
+monotonic request IDs, and has bounded timeout/crash/EOF/cleanup handling.
+
+On immutable code commit `4ff4301af56904d4125f72ebeddee60e13f706d0`,
+the real device command selected `apple-mlx` and `gpu`, evaluated and
+synchronized a nonsymmetric float32 matmul, and matched the independent scalar
+oracle `[58, 64, 139, 154]` exactly. MLX active/cache/peak and process RSS are
+recorded as independent gauges; no overlapping total is reported. The command
+did not load a model, execute a quantized operation, generate tokens, serve a
+request, or exercise Linux/CUDA.
+
+Exact post-commit validation passed:
+
+```sh
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+cargo test -p mlx-backend --test worker_contract
+cargo run -p mlx-backend --bin pulsar-mlx -- device-smoke \
+  --backend apple-mlx --device gpu \
+  --evidence docs/validation/mlx-device-smoke.json
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+```
+
+The Python suite ran 13 tests, the fake-worker suite ran 12, and the exact
+workspace test gate ran 93 Rust tests, all with zero failures. The inherited
+`quant` `unused_mut` and 13 macOS `serve` dead-code warnings remained. The
+sanitized actual result is in `docs/validation/mlx-device-smoke.json`.

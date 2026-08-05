@@ -8,16 +8,21 @@ in [../preflight/BASELINE_VALIDATION.md](../preflight/BASELINE_VALIDATION.md),
 and the source audit in
 [UPSTREAM_ARCHITECTURE.md](UPSTREAM_ARCHITECTURE.md).
 
-## Apple execution is not implemented
+## Verified Apple execution boundary
 
-- No Apple Silicon or MLX inference backend exists in the inspected source.
-  The real `engine` implementation and CUDA `kernels` wrapper are Linux-gated;
-  the engine crate exposes no real implementation on macOS.
+- PulsarMLX now has a bounded Apple worker/client and device-smoke path. On
+  tested commit `4ff4301`, a native arm64 Python 3.12.13 worker using exact
+  MLX 0.32.0 selected `gpu`, evaluated and synchronized a nonsymmetric float32
+  matmul, and matched four independently fixed expected values exactly without
+  fallback. This is a device proof, not model inference.
+- The inherited real `engine` implementation and CUDA `kernels` wrapper remain
+  Linux-gated; the new path is additive and does not make the inherited engine
+  execute models on macOS.
 - The non-Linux CLI and server are compatibility stubs. A successful macOS
   workspace build does not provide inference or serving.
-- MLX was not importable and no MLX distribution metadata was present in the
-  active Python 3.14 environment. No MLX device, tensor operation, model load,
-  or inference was executed.
+- The ignored project environment contains native MLX/MLX-Metal 0.32.0 and the
+  device probe executed successfully. Quantized operations, model loading,
+  token generation, and serving have not been executed.
 - No real-model fixture is present in the repository. Synthetic validation,
   when added, will not establish checkpoint compatibility.
 - Mapped GGUF-to-MLX aliasing, unified-memory residency behavior, giant-model
@@ -26,9 +31,10 @@ and the source audit in
 
 ## Platform and test coverage
 
-- `cargo check --workspace --all-targets` passed on native arm64 macOS, and
-  `cargo test --workspace --no-fail-fast` ran 32 tests: 32 passed, 0 failed.
-  These results cover only targets selected by the macOS configuration.
+- After US1, `cargo check --workspace --all-targets` passed on native arm64
+  macOS, and `cargo test --workspace --no-fail-fast` ran 93 tests: 93 passed,
+  0 failed. The Python protocol suite separately ran 13 passing tests. These
+  results cover only targets selected by the macOS configuration.
 - Engine, kernel, and Linux-gated server test targets each ran zero tests on
   macOS. The test run does not exercise the Linux server, CUDA execution,
   `io_uring`, or `handle_chat` behavior.
@@ -62,12 +68,14 @@ and should not be swept into an unrelated Apple backend change.
 - The filesystem had 210 GiB available and was 89% full at inspection time.
   That headroom can be insufficient for giant checkpoints plus conversions,
   caches, and benchmark output; it must be rechecked before acquiring data.
-- No Python virtual environment was active, and MLX was absent from the active
-  interpreter.
-- The implementation setup now creates an ignored `.venv` from `uv.lock` with
+- The system Python snapshot remains separate; the implementation uses the
+  ignored, lock-resolved project `.venv` and an explicit `PYTHONPATH=python`
+  because this filesystem marks editable `.pth` files hidden.
+- The implementation setup creates an ignored `.venv` from `uv.lock` with
   CPython 3.12.13 and native arm64 `mlx==0.32.0`/`mlx-metal==0.32.0` wheels.
-  Version import and artifact inspection do not establish Metal availability,
-  selected-device identity, evaluated GPU work, tensor parity, or inference.
+  The committed US1 evidence establishes Metal availability, selected-device
+  identity, evaluated GPU work, and parity only for its four-value float32
+  probe; it does not establish broader tensor, quantized, or model inference.
 - The backend-neutral capability, tensor, comparison, compatibility, evidence,
   memory-gauge, and benchmark-admission contracts are implemented and tested.
   They carry no execution implementation and therefore do not establish any

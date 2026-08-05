@@ -91,9 +91,9 @@ matmul, evaluation, synchronization, and independent numeric comparison pass.
 - [X] T021 [P] [US1] Implement Rust protocol-v1 envelopes, limits, response-ID matching, error decoding, and capability negotiation in `crates/mlx-backend/src/protocol.rs`
 - [X] T022 [US1] Implement one-worker-per-context spawn, pipe ownership, deadlines, lifecycle state machine, crash handling, and controlled shutdown in `crates/mlx-backend/src/client.rs`
 - [X] T023 [US1] Implement explicit `apple-mlx` construction and the `device-smoke` CLI without inherited-backend auto-selection in `crates/mlx-backend/src/lib.rs` and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
-- [ ] T024 [US1] Run the exact fake-worker, Python, and real Apple device commands and commit the sanitized actual capability/comparison result, warnings, and exclusions in `docs/validation/mlx-device-smoke.json`
-- [ ] T025 [US1] Update the runnable device command, stop conditions, actual capability boundary, and remaining exclusions in `specs/001-apple-silicon-mlx/quickstart.md`, `docs/apple-silicon/SESSION_LOG.md`, and `docs/apple-silicon/KNOWN_LIMITATIONS.md`
-- [ ] T026 [US1] Re-run the exact workspace check/test gates and record their actual result alongside the US1 evidence in `docs/validation/mlx-device-smoke.json`
+- [X] T024 [US1] Run the exact fake-worker, Python, and real Apple device commands and commit the sanitized actual capability/comparison result, warnings, and exclusions in `docs/validation/mlx-device-smoke.json`
+- [X] T025 [US1] Update the runnable device command, stop conditions, actual capability boundary, and remaining exclusions in `specs/001-apple-silicon-mlx/quickstart.md`, `docs/apple-silicon/SESSION_LOG.md`, and `docs/apple-silicon/KNOWN_LIMITATIONS.md`
+- [X] T026 [US1] Re-run the exact workspace check/test gates and record their actual result alongside the US1 evidence in `docs/validation/mlx-device-smoke.json`
 
 **Checkpoint**: US1 is complete only when worker contract tests pass and the
 real evidence says either `passed` with an evaluated GPU proof or a truthful
