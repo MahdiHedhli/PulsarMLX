@@ -475,3 +475,18 @@ Linux fetcher. The payload-short CQE assertion remains explicitly ignored and
 unverified because the inherited fetcher currently accepts that case. A
 supported Linux host and a Linux/NVIDIA/CUDA host or suitable CI are required
 to advance this boundary; `cross_platform_safe` remains false.
+
+### Native smoke CI boundary correction
+
+The first post-US3 macOS baseline run exposed a packaging-boundary regression:
+`cargo test --workspace --no-fail-fast` reached the native device integration
+test on the arm64 runner, but the baseline job intentionally does not create a
+project `.venv` or install MLX. The test failed with the explicit worker error
+`the frozen project Python environment is unavailable; run uv sync --frozen`;
+this was not an accelerator or numerical failure.
+
+The native integration test is now marked ignored by default with its frozen
+MLX prerequisite stated in the test metadata. It remains runnable explicitly
+after `uv sync --frozen`, while the ordinary Cargo baseline continues to run
+all Rust-only device identity, fallback, lifecycle, and comparison contracts.
+The workflow commands and inherited Linux/CUDA behavior were not changed.

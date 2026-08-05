@@ -166,6 +166,7 @@ fn admits_only_a_matching_evaluated_synchronized_gpu_probe() {
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 #[test]
+#[ignore = "requires `uv sync --frozen` and the pinned native MLX runtime"]
 fn native_device_smoke_command_emits_evaluated_evidence() {
     use std::fs;
     use std::process::Command;

@@ -229,6 +229,17 @@ For every completed slice:
 No benchmark is published until its correctness prerequisites pass. Standard
 `macos-15` CI initially covers only the Cargo baseline; it does not validate
 MLX or the external checkpoint until separately specified jobs actually run.
+The native device integration test is therefore explicit and opt-in after the
+frozen environment has been prepared:
+
+```sh
+cargo test -p mlx-backend --test device_smoke \
+  native_device_smoke_command_emits_evaluated_evidence -- --ignored --exact
+```
+
+The ordinary workspace command still runs the device contract tests and
+reports this single native-runtime test as ignored rather than treating an
+absent CI-only `.venv` as a device failure.
 
 ## Exact continuation instruction
 
