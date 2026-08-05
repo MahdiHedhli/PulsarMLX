@@ -806,3 +806,58 @@ before the oracle completed, and T061 did not run MLX or Metal. It does not
 establish Qwen tokenization, routing, a full expert/layer/model, generation,
 serving, giant-model inference, or performance. T062 is now eligible to run
 the identical bounded slice on Apple MLX against this fixed result.
+
+### T062 bounded real-model Apple MLX slice
+
+The first Apple execution ran only after the T061 reference was committed.
+It passed numerically, but review found that its generated evidence used
+approximate aliases for several normative validation-contract fields and
+recorded a debug Cargo command although the actual invocation used the release
+binary. The valid first result remains in Git history at commit `5db6bdf`; the
+generator was tightened in `f84a887`, then the exact documented command was
+rerun from a clean worktree at source commit
+`5db6bdf1069785aee8ed2682cd18110df9bbeb84`:
+
+```sh
+cargo run --release -p mlx-backend --bin pulsar-mlx -- \
+  validate-model-slice \
+  --model <external-model>/Qwen3-30B-A3B-Q8_0.gguf \
+  --evidence docs/validation/qwen3-30b-a3b-q8_0-slice.json
+```
+
+The final command ran from `2026-08-05T15:24:28Z` through
+`2026-08-05T15:27:50Z` and exited zero. It rehashed and read-only admitted the
+complete artifact, inherited the same regular read-only file description,
+read exactly 34,816 admitted bytes, decoded exactly 131,072 float32 bytes,
+constructed the frozen 8,192-byte prompt activation, evaluated the 16-value
+matvec on explicit MLX GPU, synchronized, and rehashed the complete open
+artifact after execution. No fallback occurred.
+
+All input identities matched the independent reference: encoded slice
+`14e9e5ef…`, decoded slice `5aa54eb7…`, and activation `3821796e…`. The MLX
+float32 output SHA-256 was
+`7d6548f999b730da122756f8ed8d242bcb4eb4cbead7c3b764b56b5a3256f2f4`.
+All 16 values passed the preselected additive
+`0.0005 + 0.0005 * abs(reference)` rule with zero mismatches. Maximum absolute
+error was `0.0000016093254089355469`; maximum reported relative error was
+`0.0000017527402999126447`.
+
+Observed non-overlapping gauges were 34,816 owned compressed bytes, 131,072
+decoded-array bytes, 8,192 activation bytes, 64 output bytes, and 135,168
+current/peak declared temporary bytes. MLX reported 274,496 active bytes, zero
+cache bytes, and 274,496 peak bytes. The RSS proxy was 44,302,336 bytes;
+Darwin `proc_pid_rusage:RUSAGE_INFO_V4` reported a 27,641,408-byte current and
+peak physical footprint. Memory pressure remained normal and every frozen cap
+passed. The external 32,483,931,648-byte file-size gauge is recorded
+separately and no overlapping summed total is reported.
+
+An independent validator recomputed the Apple output checksum and every error,
+confirmed all exact artifact/prompt/tensor identities, checked every memory
+cap and normative evidence field, and recursively rejected private paths. The
+final record is `docs/validation/qwen3-30b-a3b-q8_0-slice.json`.
+
+This verifies one bounded real-checkpoint intermediate only. It does not verify
+Qwen tokenization or embeddings, routing, a full expert, a full transformer
+layer, attention, logits, tokens, generation, serving, giant-model inference,
+Linux/CUDA behavior, or performance. T063 must reconcile those boundaries in
+the public compatibility and limitations documentation.
