@@ -330,3 +330,29 @@ fixture contract ran 7, and the workspace gate ran 114 Rust tests, all with
 zero failures. The existing `quant` `unused_mut` and 13 macOS `serve`
 dead-code warnings remain. Linux/CUDA execution of the shared change is
 pending and is not claimed safe by runtime evidence.
+
+## Implementation session: US3 contract checkpoint
+
+Tasks T039–T041 added focused contracts before implementation. The portable
+source suite covers validated layouts, checked exact ranges, partial and
+interrupted positional reads, zero-progress and truncation failures, ordered
+all-or-error batches, owned payload lifetime, and a non-cloneable result type.
+Its focused command failed only because the new additive source API was not
+yet present. The scalar and worker routed-MoE suites likewise failed only on
+the absent `RoutingPlan` and worker `moe` module.
+
+```sh
+cargo test -p stream --test positional_source
+cargo test -p backend --test routing_contract
+PYTHONPATH=python uv run python -m unittest \
+  python/pulsar_mlx_worker/tests/test_routed_moe.py -v
+cargo test -p stream --test linux_uring_preservation
+```
+
+The Linux-only preservation suite keeps the inherited `io_uring` API,
+target selection, split routing, aligned payload windows, and payload-covered
+EOF behavior explicit. On this macOS host its focused command passed with zero
+tests executed due to the target gate. Desired rejection of a completion
+shorter than the logical payload is encoded as an ignored Linux test because
+the inherited implementation currently accepts it. No Linux runtime result or
+cross-platform safety claim is made.
