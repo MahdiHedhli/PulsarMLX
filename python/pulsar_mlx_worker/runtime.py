@@ -271,7 +271,13 @@ def discover_runtime() -> RuntimeIdentity:
         metal_available=True,
         gpu_count=1,
         devices=(gpu,),
-        capabilities=("health", "tensor_probe", "run_fixture", "shutdown"),
+        capabilities=(
+            "health",
+            "tensor_probe",
+            "run_fixture",
+            "run_synthetic_moe",
+            "shutdown",
+        ),
         supported_dtypes=("float32", "q8_0"),
     )
 

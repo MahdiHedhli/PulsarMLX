@@ -135,6 +135,7 @@ fn control_only_request_and_exact_routed_output_are_preserved() {
     assert_eq!(request.device(), "gpu");
     assert!(!request.allow_fallback());
     assert!(SyntheticMoeRequest::new("", "gpu").is_err());
+    assert!(SyntheticMoeRequest::new("different-synthetic-fixture", "gpu").is_err());
     assert!(SyntheticMoeRequest::new(FIXTURE_ID, "cpu").is_err());
 
     let worker = FakeWorker::returning(&valid_result());
@@ -216,6 +217,33 @@ fn comparison_and_memory_evidence_cannot_contradict_success() {
     assert_eq!(
         run_result(&summed_memory)
             .expect_err("summed memory")
+            .kind(),
+        WorkerErrorKind::Protocol
+    );
+
+    let mut wrong_output = valid_result();
+    wrong_output["actual"][2] = json!(3.0);
+    assert_eq!(
+        run_result(&wrong_output)
+            .expect_err("wrong committed output")
+            .kind(),
+        WorkerErrorKind::Protocol
+    );
+
+    let mut wrong_payload = valid_result();
+    wrong_payload["fetched_experts"][0]["payload_sha256"] = json!("0".repeat(64));
+    assert_eq!(
+        run_result(&wrong_payload)
+            .expect_err("wrong committed payload digest")
+            .kind(),
+        WorkerErrorKind::Protocol
+    );
+
+    let mut plausible_wrong_weights = valid_result();
+    plausible_wrong_weights["normalized_weights"][0] = json!([0.6, 0.4]);
+    assert_eq!(
+        run_result(&plausible_wrong_weights)
+            .expect_err("wrong normalized routing oracle")
             .kind(),
         WorkerErrorKind::Protocol
     );

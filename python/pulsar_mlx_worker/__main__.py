@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 from typing import Any, BinaryIO
 
+from .moe import RoutedMoeError, run_routed_moe_fixture
 from .protocol import (
     DEFAULT_LIMITS,
     MAX_REQUEST_ID,
@@ -37,6 +38,9 @@ from .tensor_ops import load_fixture_manifest, run_fixture_operation
 
 
 WORKER_VERSION = "0.1.0"
+_SYNTHETIC_MOE_FIXTURE_ID = "synthetic-routed-moe-v1"
+_SYNTHETIC_MOE_FIXTURE_PATH = Path("fixtures/mlx/routed-moe-v1.json")
+_MAX_SYNTHETIC_MOE_FIXTURE_BYTES = 1024 * 1024
 _READ_LIMIT = DEFAULT_LIMITS.max_request_bytes + 2
 _EXIT_PROTOCOL_ERROR = 2
 _EXIT_RUNTIME_ERROR = 3
@@ -253,6 +257,38 @@ def _dispatch(
         )
         return result.to_protocol_result(), False
 
+    if request.op == "run_synthetic_moe":
+        _require_exact_params(
+            request.params,
+            frozenset({"fixture_id", "device", "allow_fallback"}),
+        )
+        fixture_id = request.params["fixture_id"]
+        requested_device = request.params["device"]
+        allow_fallback = request.params["allow_fallback"]
+        if fixture_id != _SYNTHETIC_MOE_FIXTURE_ID:
+            raise ProtocolError(
+                "malformed_request",
+                "run_synthetic_moe fixture_id is not the admitted fixture",
+            )
+        if not isinstance(requested_device, str) or not isinstance(
+            allow_fallback, bool
+        ):
+            raise ProtocolError(
+                "malformed_request",
+                "run_synthetic_moe device and fallback fields have invalid types",
+            )
+        fixture = _load_synthetic_moe_fixture()
+        try:
+            result = run_routed_moe_fixture(
+                fixture,
+                expected_fixture_id=fixture_id,
+                requested_device=requested_device,
+                allow_fallback=allow_fallback,
+            )
+        except RoutedMoeError as error:
+            raise ProtocolError(error.code, error.message) from error
+        return result.to_protocol_result(), False
+
     if request.op == "shutdown":
         _require_exact_params(request.params, frozenset())
         return {"shutdown": True, "cleanup": "graceful"}, True
@@ -272,6 +308,38 @@ def _require_exact_params(
             "malformed_request",
             "operation parameters do not match the required schema",
         )
+
+
+def _load_synthetic_moe_fixture() -> dict[str, object]:
+    try:
+        payload = _SYNTHETIC_MOE_FIXTURE_PATH.read_bytes()
+    except OSError as error:
+        raise ProtocolError(
+            "internal_worker_error",
+            "the committed synthetic MoE fixture is unavailable",
+        ) from error
+    if not payload or len(payload) > _MAX_SYNTHETIC_MOE_FIXTURE_BYTES:
+        raise ProtocolError(
+            "resource_limit",
+            "the committed synthetic MoE fixture violates its byte bound",
+        )
+    try:
+        fixture = json.loads(
+            payload.decode("utf-8", errors="strict"),
+            object_pairs_hook=_object_without_duplicates,
+            parse_constant=_reject_nonfinite,
+        )
+    except (UnicodeDecodeError, ValueError, RecursionError, json.JSONDecodeError) as error:
+        raise ProtocolError(
+            "internal_worker_error",
+            "the committed synthetic MoE fixture is not strict JSON",
+        ) from error
+    if not isinstance(fixture, dict):
+        raise ProtocolError(
+            "internal_worker_error",
+            "the committed synthetic MoE fixture root is not an object",
+        )
+    return fixture
 
 
 def _encode_hello(identity: RuntimeIdentity) -> bytes:

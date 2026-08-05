@@ -400,3 +400,25 @@ python3 -m py_compile python/pulsar_mlx_worker/moe.py
 PYTHONPATH=python uv run --frozen python -m unittest \
   python/pulsar_mlx_worker/tests/test_routed_moe.py -v
 ```
+
+Task T046 connected that graph through a control-only
+`run_synthetic_moe` request and the `validate-synthetic-moe` CLI. The request
+carries only the fixture ID, `gpu`, and `allow_fallback=false`. The worker and
+Rust client independently enforce the committed topology, routes, weights,
+expert offsets, exact SHA-256 payload identities, scalar output oracle,
+evaluated/synchronized lifecycle, and non-overlapping memory gauges. A real
+end-to-end command wrote bounded temporary evidence and passed:
+
+```sh
+PYTHONPATH=python uv run --frozen python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+cargo test -p mlx-backend --test synthetic_moe
+cargo clippy -p mlx-backend --all-targets -- -D warnings
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
+  --fixture fixtures/mlx/routed-moe-v1.json \
+  --evidence /tmp/pulsarmlx-t046.Kdstqo/evidence.json
+```
+
+The Python suite ran 28 tests and the Rust synthetic protocol suite ran 4,
+all with zero failures. The evaluated output and maximum error matched the
+T045 results. Committed evidence is generated separately by T048.

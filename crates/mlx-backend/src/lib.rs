@@ -13,6 +13,7 @@ pub use device::{
     DeviceSmokeReport, PINNED_MLX_VERSION,
 };
 pub use protocol::{
+    FetchedExpertEvidence, SyntheticMoeComparison, SyntheticMoeRequest, SyntheticMoeResult,
     TensorFixtureComparison, TensorFixtureMemoryGauges, TensorFixtureRequest, TensorFixtureResult,
     WorkerError, WorkerErrorKind, WorkerHello,
 };

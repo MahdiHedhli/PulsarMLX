@@ -1,9 +1,10 @@
 //! Supervised lifecycle for one persistent MLX worker process.
 
 use crate::protocol::{
-    parse_hello_line, parse_response_line, parse_tensor_fixture_result, HelloExpectation,
-    ProtocolLimits, RequestEnvelope, TensorFixtureRequest, TensorFixtureResult, WorkerError,
-    WorkerErrorKind, WorkerHello, MAX_RESPONSE_BYTES, PROTOCOL_VERSION,
+    parse_hello_line, parse_response_line, parse_synthetic_moe_result, parse_tensor_fixture_result,
+    HelloExpectation, ProtocolLimits, RequestEnvelope, SyntheticMoeRequest, SyntheticMoeResult,
+    TensorFixtureRequest, TensorFixtureResult, WorkerError, WorkerErrorKind, WorkerHello,
+    MAX_RESPONSE_BYTES, PROTOCOL_VERSION,
 };
 use serde_json::{Map, Value};
 use std::ffi::OsString;
@@ -339,6 +340,39 @@ impl WorkerClient {
             self.timeouts.request,
         )?;
         match parse_tensor_fixture_result(value, request, max_fixture_elements) {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                self.state = WorkerState::Failed;
+                Err(error)
+            }
+        }
+    }
+
+    /// Execute the committed synthetic routed-MoE case through one bounded,
+    /// control-only request and validate the complete evidence response.
+    pub fn run_synthetic_moe(
+        &mut self,
+        request: &SyntheticMoeRequest,
+    ) -> Result<SyntheticMoeResult, WorkerError> {
+        if !self
+            .hello()
+            .capabilities()
+            .operations()
+            .iter()
+            .any(|operation| operation == "run_synthetic_moe")
+        {
+            return Err(WorkerError::new(
+                WorkerErrorKind::Protocol,
+                "negotiated worker does not advertise synthetic MoE execution",
+            ));
+        }
+        let max_fixture_elements = self.hello().limits().max_fixture_elements();
+        let (_, value) = self.request_with_timeout(
+            "run_synthetic_moe",
+            request.protocol_params(),
+            self.timeouts.request,
+        )?;
+        match parse_synthetic_moe_result(value, request, max_fixture_elements) {
             Ok(result) => Ok(result),
             Err(error) => {
                 self.state = WorkerState::Failed;

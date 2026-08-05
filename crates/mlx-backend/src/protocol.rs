@@ -569,6 +569,247 @@ pub(crate) fn parse_tensor_fixture_result(
     Ok(result)
 }
 
+/// Control-only request for the committed synthetic routed-MoE fixture.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SyntheticMoeRequest {
+    fixture_id: String,
+    device: String,
+}
+
+impl SyntheticMoeRequest {
+    pub fn new(
+        fixture_id: impl Into<String>,
+        device: impl Into<String>,
+    ) -> Result<Self, WorkerError> {
+        let fixture_id = fixture_id.into();
+        let device = device.into();
+        validate_fixture_identifier(&fixture_id, "synthetic fixture ID")?;
+        if fixture_id != "synthetic-routed-moe-v1" {
+            return Err(fixture_protocol_error(
+                "synthetic MoE validation accepts only the committed fixture",
+            ));
+        }
+        if device != APPLE_MLX_DEVICE_ID {
+            return Err(fixture_protocol_error(
+                "synthetic MoE validation requires the explicit MLX GPU device",
+            ));
+        }
+        Ok(Self { fixture_id, device })
+    }
+
+    pub fn fixture_id(&self) -> &str {
+        &self.fixture_id
+    }
+
+    pub fn device(&self) -> &str {
+        &self.device
+    }
+
+    pub const fn allow_fallback(&self) -> bool {
+        false
+    }
+
+    pub(crate) fn protocol_params(&self) -> Map<String, Value> {
+        Map::from_iter([
+            (
+                "fixture_id".to_owned(),
+                Value::String(self.fixture_id.clone()),
+            ),
+            ("device".to_owned(), Value::String(self.device.clone())),
+            ("allow_fallback".to_owned(), Value::Bool(false)),
+        ])
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct FetchedExpertEvidence {
+    expert_id: u64,
+    offset: u64,
+    length: u64,
+    shard_id: String,
+    payload_sha256: String,
+}
+
+impl FetchedExpertEvidence {
+    pub fn expert_id(&self) -> u64 {
+        self.expert_id
+    }
+
+    pub fn offset(&self) -> u64 {
+        self.offset
+    }
+
+    pub fn length(&self) -> u64 {
+        self.length
+    }
+
+    pub fn shard_id(&self) -> &str {
+        &self.shard_id
+    }
+
+    pub fn payload_sha256(&self) -> &str {
+        &self.payload_sha256
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct SyntheticMoeComparison {
+    oracle_id: String,
+    absolute_tolerance: f64,
+    relative_tolerance: f64,
+    compared_count: u64,
+    max_absolute_error: f64,
+    max_relative_error: f64,
+    first_mismatch_index: Option<u64>,
+    passed: bool,
+}
+
+impl SyntheticMoeComparison {
+    pub fn oracle_id(&self) -> &str {
+        &self.oracle_id
+    }
+
+    pub fn absolute_tolerance(&self) -> f64 {
+        self.absolute_tolerance
+    }
+
+    pub fn relative_tolerance(&self) -> f64 {
+        self.relative_tolerance
+    }
+
+    pub fn compared_count(&self) -> u64 {
+        self.compared_count
+    }
+
+    pub fn max_absolute_error(&self) -> f64 {
+        self.max_absolute_error
+    }
+
+    pub fn max_relative_error(&self) -> f64 {
+        self.max_relative_error
+    }
+
+    pub fn first_mismatch_index(&self) -> Option<u64> {
+        self.first_mismatch_index
+    }
+
+    pub fn passed(&self) -> bool {
+        self.passed
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct SyntheticMoeResult {
+    fixture_id: String,
+    fixture_kind: String,
+    backend_id: String,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    evaluated: bool,
+    synchronized: bool,
+    token_count: u64,
+    hidden_size: u64,
+    expert_count: u64,
+    top_k: u64,
+    selected_expert_ids: Vec<Vec<u64>>,
+    normalized_weights: Vec<Vec<f64>>,
+    fetched_experts: Vec<FetchedExpertEvidence>,
+    actual: Vec<f64>,
+    comparison: SyntheticMoeComparison,
+    memory_gauges: TensorFixtureMemoryGauges,
+    passed: bool,
+}
+
+impl SyntheticMoeResult {
+    pub fn fixture_id(&self) -> &str {
+        &self.fixture_id
+    }
+
+    pub fn backend_id(&self) -> &str {
+        &self.backend_id
+    }
+
+    pub fn requested_device(&self) -> &str {
+        &self.requested_device
+    }
+
+    pub fn selected_device(&self) -> &str {
+        &self.selected_device
+    }
+
+    pub fn fallback_used(&self) -> bool {
+        self.fallback_used
+    }
+
+    pub fn token_count(&self) -> u64 {
+        self.token_count
+    }
+
+    pub fn hidden_size(&self) -> u64 {
+        self.hidden_size
+    }
+
+    pub fn expert_count(&self) -> u64 {
+        self.expert_count
+    }
+
+    pub fn top_k(&self) -> u64 {
+        self.top_k
+    }
+
+    pub fn selected_expert_ids(&self) -> &[Vec<u64>] {
+        &self.selected_expert_ids
+    }
+
+    pub fn normalized_weights(&self) -> &[Vec<f64>] {
+        &self.normalized_weights
+    }
+
+    pub fn fetched_experts(&self) -> &[FetchedExpertEvidence] {
+        &self.fetched_experts
+    }
+
+    pub fn actual(&self) -> &[f64] {
+        &self.actual
+    }
+
+    pub fn comparison(&self) -> &SyntheticMoeComparison {
+        &self.comparison
+    }
+
+    pub fn memory_gauges(&self) -> &TensorFixtureMemoryGauges {
+        &self.memory_gauges
+    }
+
+    pub fn evaluated(&self) -> bool {
+        self.evaluated
+    }
+
+    pub fn synchronized(&self) -> bool {
+        self.synchronized
+    }
+
+    pub fn passed(&self) -> bool {
+        self.passed
+    }
+}
+
+pub(crate) fn parse_synthetic_moe_result(
+    value: Value,
+    request: &SyntheticMoeRequest,
+    max_fixture_elements: u64,
+) -> Result<SyntheticMoeResult, WorkerError> {
+    let result: SyntheticMoeResult = serde_json::from_value(value).map_err(|_| {
+        fixture_protocol_error("synthetic MoE result does not match its bounded schema")
+    })?;
+    validate_synthetic_moe_result(&result, request, max_fixture_elements)?;
+    Ok(result)
+}
+
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct WorkerDevice {
@@ -1038,6 +1279,238 @@ fn validate_tensor_fixture_result(
             "worker fixture result contradicts its comparison status",
         ));
     }
+    Ok(())
+}
+
+fn validate_synthetic_moe_result(
+    result: &SyntheticMoeResult,
+    request: &SyntheticMoeRequest,
+    max_fixture_elements: u64,
+) -> Result<(), WorkerError> {
+    if result.fixture_id != request.fixture_id
+        || result.fixture_kind != "synthetic"
+        || result.backend_id != APPLE_MLX_BACKEND_ID
+        || result.requested_device != request.device
+        || result.selected_device != request.device
+    {
+        return Err(fixture_protocol_error(
+            "synthetic MoE result identity does not match its request",
+        ));
+    }
+    if result.fallback_used || !result.evaluated || !result.synchronized {
+        return Err(fixture_protocol_error(
+            "synthetic MoE result lacks explicit evaluated GPU execution",
+        ));
+    }
+    if result.token_count == 0
+        || result.hidden_size == 0
+        || result.expert_count == 0
+        || result.top_k == 0
+        || result.top_k > result.expert_count
+    {
+        return Err(fixture_protocol_error(
+            "synthetic MoE dimensions or top-k are invalid",
+        ));
+    }
+    if result.token_count != 2
+        || result.hidden_size != 2
+        || result.expert_count != 4
+        || result.top_k != 2
+    {
+        return Err(fixture_protocol_error(
+            "synthetic MoE dimensions differ from the committed fixture",
+        ));
+    }
+    let output_count = result
+        .token_count
+        .checked_mul(result.hidden_size)
+        .ok_or_else(|| fixture_protocol_error("synthetic MoE output cardinality overflows"))?;
+    if output_count > max_fixture_elements
+        || usize::try_from(output_count).ok() != Some(result.actual.len())
+        || result.actual.iter().any(|value| !value.is_finite())
+    {
+        return Err(fixture_protocol_error(
+            "synthetic MoE output is invalid or exceeds its bound",
+        ));
+    }
+    let token_count = usize::try_from(result.token_count)
+        .map_err(|_| fixture_protocol_error("synthetic token count is not representable"))?;
+    let top_k = usize::try_from(result.top_k)
+        .map_err(|_| fixture_protocol_error("synthetic top-k is not representable"))?;
+    if result.selected_expert_ids.len() != token_count
+        || result.normalized_weights.len() != token_count
+    {
+        return Err(fixture_protocol_error(
+            "synthetic route row count does not match token count",
+        ));
+    }
+    if result.selected_expert_ids != [vec![1, 2], vec![3, 1]] {
+        return Err(fixture_protocol_error(
+            "synthetic routes differ from the committed scalar oracle",
+        ));
+    }
+
+    let mut routed_experts = BTreeSet::new();
+    for (ids, weights) in result
+        .selected_expert_ids
+        .iter()
+        .zip(&result.normalized_weights)
+    {
+        if ids.len() != top_k || weights.len() != top_k {
+            return Err(fixture_protocol_error(
+                "synthetic route width does not match top-k",
+            ));
+        }
+        for id in ids {
+            if *id >= result.expert_count {
+                return Err(fixture_protocol_error(
+                    "synthetic route contains an out-of-range expert",
+                ));
+            }
+            routed_experts.insert(*id);
+        }
+        if weights
+            .iter()
+            .any(|weight| !weight.is_finite() || *weight < 0.0)
+            || (weights.iter().sum::<f64>() - 1.0).abs() > 1.0e-6
+        {
+            return Err(fixture_protocol_error(
+                "synthetic route weights are non-finite, negative, or unnormalized",
+            ));
+        }
+    }
+
+    let expected_weights = [0.5, 0.5, 0.731_058_578_630_004_8, 0.268_941_421_369_995_2];
+    if result
+        .normalized_weights
+        .iter()
+        .flatten()
+        .zip(expected_weights)
+        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-6)
+    {
+        return Err(fixture_protocol_error(
+            "synthetic route weights differ from the committed scalar oracle",
+        ));
+    }
+
+    let mut fetched_experts = BTreeSet::new();
+    for fetched in &result.fetched_experts {
+        validate_fixture_identifier(&fetched.shard_id, "synthetic shard ID")?;
+        if fetched.expert_id >= result.expert_count
+            || fetched.length == 0
+            || fetched.offset.checked_add(fetched.length).is_none()
+            || fetched.payload_sha256.len() != 64
+            || !fetched
+                .payload_sha256
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+            || !fetched_experts.insert(fetched.expert_id)
+        {
+            return Err(fixture_protocol_error(
+                "synthetic fetched-expert evidence is malformed or duplicated",
+            ));
+        }
+    }
+    if fetched_experts != routed_experts {
+        return Err(fixture_protocol_error(
+            "synthetic fetched experts do not match the unique routed experts",
+        ));
+    }
+    let expected_fetches = [
+        (
+            1,
+            16,
+            16,
+            "experts-00001-of-00002",
+            "59f6b8505959d216462694b9e7b20728e6ce4199aa6fcf652386b0774e22f1c7",
+        ),
+        (
+            2,
+            32,
+            16,
+            "experts-00002-of-00002",
+            "a527f6c2fbde17555714773e4d5ce06608d7f336389de936d73f09383fd17960",
+        ),
+        (
+            3,
+            48,
+            16,
+            "experts-00002-of-00002",
+            "7cc507b4e456b5c69819f532111018c3d428adc29485bf9ec6b38112d66acbba",
+        ),
+    ];
+    if result.fetched_experts.len() != expected_fetches.len()
+        || result
+            .fetched_experts
+            .iter()
+            .zip(expected_fetches)
+            .any(|(actual, expected)| {
+                actual.expert_id != expected.0
+                    || actual.offset != expected.1
+                    || actual.length != expected.2
+                    || actual.shard_id != expected.3
+                    || actual.payload_sha256 != expected.4
+            })
+    {
+        return Err(fixture_protocol_error(
+            "synthetic fetch evidence differs from the committed fixture",
+        ));
+    }
+
+    validate_fixture_identifier(&result.comparison.oracle_id, "synthetic oracle ID")?;
+    for value in [
+        result.comparison.absolute_tolerance,
+        result.comparison.relative_tolerance,
+        result.comparison.max_absolute_error,
+        result.comparison.max_relative_error,
+    ] {
+        if !value.is_finite() || value < 0.0 {
+            return Err(fixture_protocol_error(
+                "synthetic comparison contains an invalid metric",
+            ));
+        }
+    }
+    if result.comparison.compared_count != output_count
+        || result.comparison.first_mismatch_index.is_some() == result.comparison.passed
+        || result.passed != result.comparison.passed
+    {
+        return Err(fixture_protocol_error(
+            "synthetic comparison contradicts its output or pass status",
+        ));
+    }
+    if result.comparison.oracle_id != "committed-scalar-routed-moe-v1"
+        || result.comparison.absolute_tolerance != 1.0e-5
+        || result.comparison.relative_tolerance != 1.0e-5
+    {
+        return Err(fixture_protocol_error(
+            "synthetic comparison contract differs from the committed oracle",
+        ));
+    }
+    let expected_output = [2.0, 2.0, 4.069_116_116_437_53, 4.037_882_842_739_99];
+    if result
+        .actual
+        .iter()
+        .zip(expected_output)
+        .any(|(actual, expected)| {
+            let absolute_error = (actual - expected).abs();
+            let relative_error = absolute_error / expected.abs().max(f64::MIN_POSITIVE);
+            absolute_error > result.comparison.absolute_tolerance
+                && relative_error > result.comparison.relative_tolerance
+        })
+    {
+        return Err(fixture_protocol_error(
+            "synthetic output differs from the committed scalar oracle",
+        ));
+    }
+    if result.comparison.passed
+        && result.comparison.max_absolute_error > result.comparison.absolute_tolerance
+        && result.comparison.max_relative_error > result.comparison.relative_tolerance
+    {
+        return Err(fixture_protocol_error(
+            "synthetic comparison exceeds its declared tolerances",
+        ));
+    }
+    validate_fixture_memory_gauges(&result.memory_gauges)?;
     Ok(())
 }
 

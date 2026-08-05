@@ -1,6 +1,6 @@
 use mlx_backend::{
-    validate_device_smoke, CleanupOutcome, DeviceHello, DeviceProbe, TensorFixtureRequest,
-    WorkerClient, WorkerConfig, PINNED_MLX_VERSION,
+    validate_device_smoke, CleanupOutcome, DeviceHello, DeviceProbe, SyntheticMoeRequest,
+    TensorFixtureRequest, WorkerClient, WorkerConfig, PINNED_MLX_VERSION,
 };
 use serde::Deserialize;
 use serde_json::{json, Map, Value};
@@ -14,6 +14,7 @@ const BACKEND_ID: &str = "apple-mlx";
 const GPU_DEVICE: &str = "gpu";
 const FIXTURE_ID: &str = "nonsymmetric-f32-matmul-v1";
 const FIXTURE_SET_ID: &str = "mlx-tensor-fixtures-v1";
+const SYNTHETIC_MOE_FIXTURE_ID: &str = "synthetic-routed-moe-v1";
 const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
 
 fn main() {
@@ -27,6 +28,9 @@ fn run(arguments: Vec<OsString>) -> Result<(), String> {
     match arguments.first().and_then(|value| value.to_str()) {
         Some("device-smoke") => run_device_smoke(parse_device_smoke(arguments)?),
         Some("validate-fixtures") => run_validate_fixtures(parse_validate_fixtures(arguments)?),
+        Some("validate-synthetic-moe") => {
+            run_validate_synthetic_moe(parse_validate_synthetic_moe(arguments)?)
+        }
         _ => Err(usage()),
     }
 }
@@ -134,7 +138,7 @@ fn parse_device_smoke(arguments: Vec<OsString>) -> Result<DeviceSmokeCommand, St
 }
 
 fn usage() -> String {
-    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH".to_owned()
+    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH".to_owned()
 }
 
 struct ValidateFixturesCommand {
@@ -170,6 +174,45 @@ fn parse_validate_fixtures(arguments: Vec<OsString>) -> Result<ValidateFixturesC
     }
     Ok(ValidateFixturesCommand {
         manifest: manifest.ok_or_else(usage)?,
+        evidence: evidence.ok_or_else(usage)?,
+    })
+}
+
+struct ValidateSyntheticMoeCommand {
+    fixture: PathBuf,
+    evidence: PathBuf,
+}
+
+fn parse_validate_synthetic_moe(
+    arguments: Vec<OsString>,
+) -> Result<ValidateSyntheticMoeCommand, String> {
+    let values = arguments
+        .into_iter()
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| "command arguments must be valid UTF-8".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if values.len() != 5 || values.first().map(String::as_str) != Some("validate-synthetic-moe") {
+        return Err(usage());
+    }
+
+    let mut fixture = None;
+    let mut evidence = None;
+    let mut index = 1;
+    while index < values.len() {
+        let key = &values[index];
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match key.as_str() {
+            "--fixture" if fixture.is_none() => fixture = Some(PathBuf::from(value)),
+            "--evidence" if evidence.is_none() => evidence = Some(PathBuf::from(value)),
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+    Ok(ValidateSyntheticMoeCommand {
+        fixture: fixture.ok_or_else(usage)?,
         evidence: evidence.ok_or_else(usage)?,
     })
 }
@@ -355,6 +398,153 @@ fn execute_fixture_suite(
             "Fixtures are synthetic bounded tensors, not model weights.",
             "Q8_0 evidence covers only strict row decode and one row dot role.",
             "Linux and CUDA execution is not established by this command."
+        ]
+    }))
+}
+
+fn validate_synthetic_fixture_path(
+    project_root: &Path,
+    requested_path: &Path,
+) -> Result<(), String> {
+    let expected = fs::canonicalize(project_root.join("fixtures/mlx/routed-moe-v1.json"))
+        .map_err(|_| "the committed synthetic MoE fixture is unavailable")?;
+    let requested = fs::canonicalize(requested_path)
+        .map_err(|_| "the requested synthetic MoE fixture is unavailable")?;
+    if requested != expected {
+        return Err(
+            "validate-synthetic-moe accepts only the committed synthetic fixture".to_owned(),
+        );
+    }
+    let bytes =
+        fs::read(&requested).map_err(|_| "the committed synthetic fixture could not be read")?;
+    if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
+        return Err("the synthetic fixture violates its byte bound".to_owned());
+    }
+    let fixture: Value = serde_json::from_slice(&bytes)
+        .map_err(|_| "the synthetic fixture is not valid bounded JSON")?;
+    if fixture.get("schema_version").and_then(Value::as_u64) != Some(1)
+        || fixture.get("fixture_id").and_then(Value::as_str) != Some(SYNTHETIC_MOE_FIXTURE_ID)
+        || fixture.get("fixture_kind").and_then(Value::as_str) != Some("synthetic")
+    {
+        return Err("the synthetic fixture identity is not admitted".to_owned());
+    }
+    Ok(())
+}
+
+fn run_validate_synthetic_moe(command: ValidateSyntheticMoeCommand) -> Result<(), String> {
+    let project_root = project_root();
+    validate_synthetic_fixture_path(&project_root, &command.fixture)?;
+    let config = worker_config(&project_root)?;
+    let mut client = WorkerClient::spawn(config).map_err(|error| error.to_string())?;
+    let validation = execute_synthetic_moe(&mut client);
+    let cleanup = client.shutdown();
+    let evidence = validation?;
+    if cleanup.outcome() != CleanupOutcome::Graceful || cleanup.exit_code() != Some(0) {
+        return Err(cleanup
+            .error()
+            .map(ToString::to_string)
+            .unwrap_or_else(|| "MLX worker did not shut down cleanly".to_owned()));
+    }
+    write_evidence(&command.evidence, &evidence)?;
+    println!("validate-synthetic-moe: evaluated routed MoE fixture passed");
+    Ok(())
+}
+
+fn execute_synthetic_moe(client: &mut WorkerClient) -> Result<Value, String> {
+    let hello = client.hello().clone();
+    let health = client.health().map_err(|error| error.to_string())?;
+    if !health.ready() {
+        return Err("the negotiated MLX worker is not ready".to_owned());
+    }
+    let request = SyntheticMoeRequest::new(SYNTHETIC_MOE_FIXTURE_ID, GPU_DEVICE)
+        .map_err(|error| error.to_string())?;
+    let result = client
+        .run_synthetic_moe(&request)
+        .map_err(|error| error.to_string())?;
+    if !result.passed() {
+        return Err("the synthetic MoE result did not pass its committed oracle".to_owned());
+    }
+
+    let comparison = result.comparison();
+    let memory = result.memory_gauges();
+    let fetched_experts = result
+        .fetched_experts()
+        .iter()
+        .map(|expert| {
+            json!({
+                "expert_id": expert.expert_id(),
+                "offset": expert.offset(),
+                "length": expert.length(),
+                "shard_id": expert.shard_id(),
+                "payload_sha256": expert.payload_sha256(),
+            })
+        })
+        .collect::<Vec<_>>();
+
+    Ok(json!({
+        "schema_version": 1,
+        "validation": "synthetic-routed-moe",
+        "status": "passed",
+        "fixture": "fixtures/mlx/routed-moe-v1.json",
+        "fixture_id": result.fixture_id(),
+        "fixture_kind": "synthetic",
+        "backend_id": result.backend_id(),
+        "requested_device": result.requested_device(),
+        "selected_device": result.selected_device(),
+        "fallback_used": result.fallback_used(),
+        "evaluated": result.evaluated(),
+        "synchronized": result.synchronized(),
+        "runtime": {
+            "protocol": hello.protocol(),
+            "worker_version": hello.worker_version(),
+            "python_version": hello.python_version(),
+            "python_arch": hello.python_arch(),
+            "mlx_version": hello.mlx_version(),
+            "macos_version": hello.macos_version(),
+            "metal_available": hello.metal_available(),
+            "gpu_count": hello.gpu_count(),
+        },
+        "topology": {
+            "token_count": result.token_count(),
+            "hidden_size": result.hidden_size(),
+            "expert_count": result.expert_count(),
+            "top_k": result.top_k(),
+        },
+        "selected_expert_ids": result.selected_expert_ids(),
+        "normalized_weights": result.normalized_weights(),
+        "fetched_experts": fetched_experts,
+        "actual": result.actual(),
+        "comparison": {
+            "oracle_id": comparison.oracle_id(),
+            "absolute_tolerance": comparison.absolute_tolerance(),
+            "relative_tolerance": comparison.relative_tolerance(),
+            "non_finite_policy": "reject",
+            "compared_count": comparison.compared_count(),
+            "max_absolute_error": comparison.max_absolute_error(),
+            "max_relative_error": comparison.max_relative_error(),
+            "first_mismatch_index": comparison.first_mismatch_index(),
+            "passed": comparison.passed(),
+        },
+        "memory_gauges": {
+            "mlx_active_bytes": memory.mlx_active_bytes(),
+            "mlx_cache_bytes": memory.mlx_cache_bytes(),
+            "mlx_peak_bytes": memory.mlx_peak_bytes(),
+            "process_footprint_bytes": memory.process_footprint_bytes(),
+            "process_footprint_source": memory.process_footprint_source(),
+            "system_pressure": memory.system_pressure(),
+            "reported_summed_total_bytes": memory.reported_summed_total_bytes(),
+        },
+        "request_ids": {
+            "health": health.request_id(),
+        },
+        "passed": true,
+        "warnings": [
+            "Linux and CUDA execution are not established by this command."
+        ],
+        "exclusions": [
+            "The fixture is synthetic and does not contain model weights.",
+            "No tokenizer, model loader, token generation, or serving path was exercised.",
+            "Only dense float32 expert matrices and the committed two-token route were evaluated."
         ]
     }))
 }
