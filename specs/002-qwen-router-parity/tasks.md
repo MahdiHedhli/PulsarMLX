@@ -143,7 +143,7 @@ T084.
 - [X] T035 [US1] Run focused Rust, worker, generated-fixture MLX, oracle-stub, schema, and package tests and confirm all T023 through T025 failures now pass without checkpoint access using `specs/002-qwen-router-parity/quickstart.md`
 - [X] T036 [US1] Document the offline router seam, explicit compatibility level, oracle boundary, unverified real-checkpoint status, exact commands, and unsupported depths in `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/BACKEND_DESIGN.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
 - [X] T037 [US1] Run exact workspace gates, Python discovery, research validation, `git diff --check`, Feature 001 preservation review, and staged safety scans over `crates/mlx-backend/`, `python/pulsar_mlx_worker/`, `scripts/research/`, and `fixtures/research/router-v1/`
-- [ ] T038 [US1] Create focused router-core and oracle-tooling commits, push `main`, wait for every fixture-only/workspace CI job, and record actual results in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T038 [US1] Create focused router-core and oracle-tooling commits, push `main`, wait for every fixture-only/workspace CI job, and record actual results in `docs/apple-silicon/SESSION_LOG.md`
 
 **Checkpoint**: Offline router and oracle contracts pass. No real-router
 capability is claimed and no external model has been accessed.

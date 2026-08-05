@@ -1775,3 +1775,24 @@ Every recovery and validation command above kept the external-model variable
 empty or used committed generated data only. Feature 002 has not resolved,
 statted, hashed, opened, or executed the external checkpoint, and the NTFY
 hardware-pause notification is not yet eligible.
+
+### T038 pushed router-core CI attestation
+
+The four focused T038 commits were pushed to `origin/main` without force:
+
+- `eb00753` — `feat(mlx): add generated complete-router path`;
+- `3f49a35` — `feat(research): add independent router oracle tooling`;
+- `03c8456` — `ci: exercise generated router bridge`; and
+- `2d331f2` — `docs: record offline router milestone`.
+
+GitHub Actions run
+[31047672003](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31047672003)
+executed for exact head SHA `2d331f2043157165a5017d9e94b6f60aac0697b9`
+and completed successfully. Its `Apple Silicon workspace baseline` job passed
+the exact workspace check and test commands. Its `Apple MLX small-fixture
+validation` job passed the fixture-only boundary and research checks, the
+lockfile-backed worker tests, the explicit Rust-to-real-Python generated-router
+integration, native MLX device/tensor/routed-MoE fixtures, and bounded evidence
+verification. Both jobs concluded `success`; no external checkpoint or model
+weight was accessed. T038 is therefore complete and the fail-closed T039–T049
+safety slice is eligible to begin.
