@@ -2129,3 +2129,51 @@ step completed successfully. This fixture-only CI run did not access an
 external checkpoint and does not authorize one by itself: the later T060,
 T071, T072, and T073 gates remain required before T074 can touch the model.
 No NTFY notification was sent.
+
+### T050–T051 publication-contract red tests
+
+The fixture-only publication slice began with production-seam tests and an
+explicitly empty `PULSARMLX_MODEL_GGUF`. The exact commands were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts/research/tests/test_feature002_records.py
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts/research/tests/test_generators.py
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts/research/tests/test_verify_package.py
+git diff --check
+```
+
+T050 ran six test methods and produced 15 intentional failure records. Two
+expected-green subcases showed that retained failed and aborted observations
+are not yet admitted with their bounded failure metadata. Nine mutation
+subcases showed missing enforcement for the frozen model, protocol, and
+artifact identities. Non-contiguous attempt indices, mathematically impossible
+correctness metrics, overlap between a supported capability and an unsupported
+interpretation, and verified promotion from a dirty post-run tree were also
+accepted incorrectly. Four existing tensor/input/oracle cross-link mutation
+subcases already failed closed as expected.
+
+T051's generator suite ran five methods: four passed and one intentionally
+failed because provenance sidecars still name raw sources by basename rather
+than repository-relative package path. Its package/publication suite ran 16
+methods: eight passed and eight red methods produced 18 intentional failure
+records. The missing seams are package-relative claim-link containment,
+complete sidecar provenance validation, duplicate logical experiment and claim
+IDs, recursive private-identifier/secret-shaped-key rejection, reviewer-index
+completeness, exact-scope claim enforcement, and refusal to promote provisional
+linked evidence as verified.
+
+An independent review found four medium test-design issues in the first draft.
+The final tests make top-level failed/aborted state coherent with retained
+attempts, cover protocol/artifact identity in addition to the inherited model
+and existing cross-links, separate scope overclaim from verified promotion,
+and mutate every required sidecar provenance field plus missing/absolute/parent
+link escapes. Re-review passed with no remaining high or medium finding. The
+final 34 failure records are deliberate tests-first evidence rather than
+accidental setup errors, and `git diff --check` passed.
+
+No command accessed a checkpoint, started model inference, or sent NTFY. These
+red tests establish required behavior only; none of the missing production
+seams is claimed implemented yet.

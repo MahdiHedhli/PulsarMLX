@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import importlib
 import json
 import os
@@ -8,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 RESEARCH_DIR = Path(__file__).resolve().parents[1]
@@ -66,6 +68,17 @@ def _candidate(experiment_id: str = "fixture-publish-v1") -> dict:
     }
 
 
+def _claim_scope(record: dict) -> str:
+    return ";".join(
+        (
+            f"checkpoint={record['model']['repository']}@{record['model']['revision']}",
+            f"tensor={record['tensor']['name']}",
+            f"case={record['summaries'][0]['group']['case_id']}",
+            f"depth={record['claim_boundary']['operation']}",
+        )
+    )
+
+
 class PublicationBoundaryTests(unittest.TestCase):
     def setUp(self) -> None:
         try:
@@ -82,6 +95,114 @@ class PublicationBoundaryTests(unittest.TestCase):
             encoding="utf-8",
         )
         return path
+
+    def _materialize_publication_package(self, root: Path) -> dict[str, Path]:
+        research_root = root / "docs" / "research"
+        raw_dir = research_root / "raw" / "002-router-parity"
+        table_dir = research_root / "tables"
+        figure_dir = research_root / "figures"
+        raw_dir.mkdir(parents=True)
+        raw_path = raw_dir / FULL_FIXTURE.name
+        raw_path.write_bytes(FULL_FIXTURE.read_bytes())
+        evidence = json.loads(raw_path.read_text(encoding="utf-8"))
+
+        previous_directory = Path.cwd()
+        try:
+            os.chdir(root)
+            self.verifier.generate_tables.generate_tables(
+                Path("docs/research/raw/002-router-parity"),
+                Path("docs/research/tables"),
+            )
+            self.verifier.generate_figures.generate_figures(
+                Path("docs/research/raw/002-router-parity"),
+                Path("docs/research/figures"),
+            )
+        finally:
+            os.chdir(previous_directory)
+        table_paths = sorted(path for path in table_dir.iterdir() if path.is_file())
+        figure_paths = sorted(path for path in figure_dir.iterdir() if path.is_file())
+        generated_paths = table_paths + figure_paths
+
+        claims_path = research_root / "CLAIMS_LEDGER.md"
+        claims_path.write_text(
+            "\n".join(
+                (
+                    "# Feature 002 Claims Ledger",
+                    "",
+                    "| Claim | Evidence files | Commit | Scope | Status | Caveat |",
+                    "| --- | --- | --- | --- | --- | --- |",
+                    (
+                        "| F002-C01 Synthetic router methodology is reproducible | "
+                        f"[raw evidence](raw/002-router-parity/{raw_path.name}) | "
+                        f"{evidence['source_commit']} | {_claim_scope(evidence)} | "
+                        "provisional | Does not establish real-checkpoint routing. |"
+                    ),
+                    "",
+                )
+            ),
+            encoding="utf-8",
+        )
+
+        reproduction_path = research_root / "REPRODUCIBILITY.md"
+        reproduction_path.write_text(
+            "# Reproduction\n\nRun the checked-in fixture-only package verifier.\n",
+            encoding="utf-8",
+        )
+        reviewer_path = research_root / "REVIEWER_INDEX.md"
+        table_links = "\n".join(
+            f"- [{path.name}]({path.relative_to(research_root).as_posix()})"
+            for path in table_paths
+        )
+        figure_links = "\n".join(
+            f"- [{path.name}]({path.relative_to(research_root).as_posix()})"
+            for path in figure_paths
+        )
+        reviewer_path.write_text(
+            "\n".join(
+                (
+                    "# Feature 002 Reviewer Index",
+                    "",
+                    "## Raw evidence",
+                    f"- [{raw_path.name}](raw/002-router-parity/{raw_path.name})",
+                    "",
+                    "## Generated tables",
+                    table_links,
+                    "",
+                    "## Generated figures",
+                    figure_links,
+                    "",
+                    "## Claims and reproduction links",
+                    "- [claims](CLAIMS_LEDGER.md)",
+                    "- [reproduction](REPRODUCIBILITY.md)",
+                    "",
+                )
+            ),
+            encoding="utf-8",
+        )
+        return {
+            "research_root": research_root,
+            "raw": raw_path,
+            "claims": claims_path,
+            "reviewer": reviewer_path,
+            "reproduction": reproduction_path,
+            "generated": generated_paths[0],
+            "sidecar": next(
+                path for path in generated_paths if path.name.endswith(".sources.json")
+            ),
+        }
+
+    def _verify_publication_index(
+        self,
+        root: Path,
+        paths: dict[str, Path],
+    ) -> dict[str, int]:
+        with mock.patch.multiple(
+            self.verifier,
+            REPOSITORY_ROOT=root,
+            CLAIMS_LEDGER=paths["claims"],
+            REVIEWER_INDEX=paths["reviewer"],
+        ):
+            return self.verifier.verify_publication_index()
 
     def test_candidate_sanitization_drops_only_declared_local_metadata(self) -> None:
         record = _candidate()
@@ -116,6 +237,48 @@ class PublicationBoundaryTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 self.publisher.publish_candidate(changed_path, raw_dir)
             self.assertEqual(installed.read_bytes(), original)
+
+    def test_publish_rejects_duplicate_identity_under_an_existing_filename(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw_dir = root / "raw"
+            raw_dir.mkdir()
+            existing = raw_dir / "historical-attempt.json"
+            existing.write_text(
+                json.dumps(
+                    self.publisher.sanitize_candidate(_candidate()),
+                    allow_nan=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            before = {path.name: path.read_bytes() for path in raw_dir.iterdir()}
+            candidate_path = self._write_candidate(root / "candidate", _candidate())
+
+            with self.assertRaises((self.publisher.PublicationError, FileExistsError)):
+                self.publisher.publish_candidate(candidate_path, raw_dir)
+
+            self.assertEqual(
+                {path.name: path.read_bytes() for path in raw_dir.iterdir()},
+                before,
+                msg="duplicate identity admission changed append-only history",
+            )
+
+    def test_private_identifier_and_secret_shaped_keys_are_rejected(self) -> None:
+        mutations = (
+            ("host" + "name", "fixture-machine.local"),
+            ("RUNNER_" + "TOKEN" + "_ALIAS", "fixture-sensitive-marker"),
+        )
+        for key, value in mutations:
+            with self.subTest(key=key):
+                leaked = _candidate(f"fixture-private-{len(key)}")
+                leaked["environment"] = {key: value}
+                with self.assertRaises(self.publisher.PublicationError) as raised:
+                    self.publisher.sanitize_candidate(leaked)
+                self.assertRegex(str(raised.exception).lower(), r"private|secret")
+                self.assertNotIn(value, str(raised.exception))
 
     def test_failed_validation_leaves_no_partial_publication(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -206,6 +369,160 @@ class PublicationBoundaryTests(unittest.TestCase):
             for path in FULL_FIXTURE.parent.glob("*.json")
         }
         self.assertEqual(after, before)
+
+    def test_complete_publication_index_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+
+            result = self._verify_publication_index(root, paths)
+
+            self.assertEqual(result, {"claim_count": 1})
+
+    def test_claim_evidence_links_must_be_existing_package_relative_paths(self) -> None:
+        link_mutations = {
+            "missing": "raw/002-router-parity/missing-evidence.json",
+            "absolute_escape": Path("/", "outside", FULL_FIXTURE.name).as_posix(),
+            "parent_escape": f"../../outside/{FULL_FIXTURE.name}",
+        }
+        for name, replacement in link_mutations.items():
+            with (
+                self.subTest(mutation=name),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                root = Path(temporary)
+                paths = self._materialize_publication_package(root)
+                claims = paths["claims"].read_text(encoding="utf-8")
+                claims = claims.replace(
+                    f"raw/002-router-parity/{paths['raw'].name}",
+                    replacement,
+                )
+                paths["claims"].write_text(claims, encoding="utf-8")
+
+                with self.assertRaises(self.verifier.VerificationError):
+                    self._verify_publication_index(root, paths)
+
+    def test_reviewer_index_must_name_every_raw_and_generated_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+            omitted = paths["generated"].relative_to(paths["research_root"]).as_posix()
+            reviewer = paths["reviewer"].read_text(encoding="utf-8")
+            paths["reviewer"].write_text(
+                "\n".join(
+                    line for line in reviewer.splitlines() if omitted not in line
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(self.verifier.VerificationError):
+                self._verify_publication_index(root, paths)
+
+    def test_generated_sidecar_provenance_mutations_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+            original = json.loads(paths["sidecar"].read_text(encoding="utf-8"))
+            source_path, source_sha256 = next(iter(original["sources"].items()))
+            mutations = {
+                "source_hash": lambda sidecar: sidecar["sources"].__setitem__(
+                    source_path,
+                    "0" * 64,
+                ),
+                "source_parent_escape": lambda sidecar: sidecar.__setitem__(
+                    "sources",
+                    {f"../{Path(source_path).name}": source_sha256},
+                ),
+                "source_absolute_escape": lambda sidecar: sidecar.__setitem__(
+                    "sources",
+                    {
+                        Path("/", "outside", Path(source_path).name).as_posix(): (
+                            source_sha256
+                        )
+                    },
+                ),
+                "generator_identity": lambda sidecar: sidecar.__setitem__(
+                    "generator",
+                    "scripts/research/unreviewed_generator.py",
+                ),
+                "generator_hash": lambda sidecar: sidecar.__setitem__(
+                    "generator_sha256",
+                    "0" * 64,
+                ),
+                "generation_command": lambda sidecar: sidecar.__setitem__(
+                    "generation_command",
+                    "python3 scripts/research/unreviewed_generator.py",
+                ),
+                "source_commit": lambda sidecar: sidecar.__setitem__(
+                    "source_commits",
+                    ["0" * 40],
+                ),
+                "output_hash": lambda sidecar: sidecar.__setitem__(
+                    "output_sha256",
+                    "0" * 64,
+                ),
+            }
+            for name, mutate in mutations.items():
+                with self.subTest(mutation=name):
+                    sidecar = deepcopy(original)
+                    mutate(sidecar)
+                    paths["sidecar"].write_text(
+                        json.dumps(sidecar, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+
+                    with self.assertRaises(self.verifier.VerificationError):
+                        self._verify_publication_index(root, paths)
+
+    def test_duplicate_claim_ids_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+            evidence = json.loads(paths["raw"].read_text(encoding="utf-8"))
+            duplicate = (
+                "| F002-C01 Duplicate public statement | "
+                f"[raw evidence](raw/002-router-parity/{paths['raw'].name}) | "
+                f"{evidence['source_commit']} | {_claim_scope(evidence)} | "
+                "provisional | Duplicate identities are ambiguous. |\n"
+            )
+            with paths["claims"].open("a", encoding="utf-8") as handle:
+                handle.write(duplicate)
+
+            with self.assertRaises(self.verifier.VerificationError):
+                self._verify_publication_index(root, paths)
+
+    def test_provisional_claim_scope_cannot_exceed_linked_evidence_depth(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+            evidence = json.loads(paths["raw"].read_text(encoding="utf-8"))
+            claims = paths["claims"].read_text(encoding="utf-8")
+            self.assertIn("| provisional |", claims)
+            claims = claims.replace(
+                _claim_scope(evidence),
+                _claim_scope(evidence).replace(
+                    "depth=layer_0_router_only",
+                    "depth=full_model_generation",
+                ),
+            )
+            paths["claims"].write_text(claims, encoding="utf-8")
+
+            with self.assertRaises(self.verifier.VerificationError):
+                self._verify_publication_index(root, paths)
+
+    def test_verified_claim_cannot_promote_provisional_linked_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+            evidence = json.loads(paths["raw"].read_text(encoding="utf-8"))
+            self.assertEqual(evidence["claim_boundary"]["status"], "provisional")
+            claims = paths["claims"].read_text(encoding="utf-8")
+            claims = claims.replace("| provisional |", "| verified |")
+            paths["claims"].write_text(claims, encoding="utf-8")
+
+            with self.assertRaises(self.verifier.VerificationError):
+                self._verify_publication_index(root, paths)
 
 
 if __name__ == "__main__":

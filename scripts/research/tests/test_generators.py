@@ -4,6 +4,7 @@ import csv
 import hashlib
 import importlib
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -149,6 +150,38 @@ class DeterministicGeneratorTests(unittest.TestCase):
                 if not path.name.endswith(".sources.json")
             ]
             self.assertTrue(output_paths)
+
+    def test_sidecars_name_repository_relative_raw_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            previous_directory = Path.cwd()
+            try:
+                os.chdir(root)
+                raw_dir = Path("docs/research/raw/002-router-parity")
+                table_dir = Path("docs/research/tables")
+                figure_dir = Path("docs/research/figures")
+                self._write_inputs(raw_dir)
+                self.tables.generate_tables(raw_dir, table_dir)
+                self.figures.generate_figures(raw_dir, figure_dir)
+            finally:
+                os.chdir(previous_directory)
+
+            expected_sources = {
+                f"docs/research/raw/002-router-parity/{path.name}": _sha256(path)
+                for path in sorted((root / raw_dir).glob("*.json"))
+            }
+            sidecars = sorted((root / "docs/research").rglob("*.sources.json"))
+            self.assertTrue(sidecars)
+            for sidecar_path in sidecars:
+                sidecar = json.loads(sidecar_path.read_text(encoding="utf-8"))
+                self.assertEqual(
+                    sidecar["sources"],
+                    expected_sources,
+                    msg=(
+                        "sidecar does not retain repository-relative source links: "
+                        f"{sidecar_path.name}"
+                    ),
+                )
 
     def test_svg_is_bounded_static_and_changes_when_raw_measurement_changes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -193,8 +193,8 @@ privacy or scope violations.
 
 ### Tests First
 
-- [ ] T050 [P] [US3] Write and run failing Feature 002 tests for immutable identities, raw attempts, failed/aborted retention, correctness metrics, unsupported interpretations, and clean-commit promotion in `scripts/research/tests/test_feature002_records.py`
-- [ ] T051 [P] [US3] Write and run failing tests for claim links, reviewer-index completeness, sidecars, append-only install, duplicate IDs, overclaims, and private-value rejection in `scripts/research/tests/test_generators.py` and `scripts/research/tests/test_verify_package.py`
+- [X] T050 [P] [US3] Write and run failing Feature 002 tests for immutable identities, raw attempts, failed/aborted retention, correctness metrics, unsupported interpretations, and clean-commit promotion in `scripts/research/tests/test_feature002_records.py`
+- [X] T051 [P] [US3] Write and run failing tests for claim links, reviewer-index completeness, sidecars, append-only install, duplicate IDs, overclaims, and private-value rejection in `scripts/research/tests/test_generators.py` and `scripts/research/tests/test_verify_package.py`
 
 ### Implementation
 
