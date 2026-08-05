@@ -115,7 +115,7 @@ independent oracle and all malformed cases fail before MLX execution.
 ### Tests for User Story 2 (write and observe failure first)
 
 - [X] T027 [US2] Freeze nonsymmetric inputs, expected values, tensor orientation, dtypes, synchronization rules, and pre-result tolerances for elementwise, matmul, embedding, RMS norm, residual, routing, and Q8_0 cases in `fixtures/mlx/manifest.json`
-- [ ] T028 [P] [US2] Write failing strict Q8_0 decode/matvec tests for hand-built blocks, signed extrema, two scales, exact byte counts, divisibility, overflow, destination size, and non-finite rejection in `crates/quant/tests/q8_0_reference.rs`
+- [X] T028 [P] [US2] Write failing strict Q8_0 decode/matvec tests for hand-built blocks, signed extrema, two scales, exact byte counts, divisibility, overflow, destination size, and non-finite rejection in `crates/quant/tests/q8_0_reference.rs`
 - [ ] T029 [P] [US2] Write failing Python fixture-operation tests that use independent expected values and prove malformed descriptors are rejected before MLX scheduling in `python/pulsar_mlx_worker/tests/test_tensor_ops.py`
 - [ ] T030 [P] [US2] Write failing Rust integration tests for bounded tensor requests, orientation-visible outputs, evaluated readback, error metrics, and request/result schema enforcement in `crates/mlx-backend/tests/tensor_contract.rs`
 
