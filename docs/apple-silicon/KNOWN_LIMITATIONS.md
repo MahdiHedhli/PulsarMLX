@@ -112,6 +112,11 @@ and the source audit in
 - `cargo clippy --workspace --all-targets -- -D warnings` failed with exit
   status 101 at `crates/kernels/build.rs:41` on
   `clippy::needless_borrows_for_generic_args`.
+- The T075 rerun retained the same 25-file rustfmt boundary. Strict workspace
+  Clippy reported 25 diagnostics across six inherited tokenizer, kernels,
+  GGUF, and quant files. No diagnostic named a PulsarMLX-added crate or source
+  target, but inherited errors prevented a complete strict-Clippy pass for the
+  whole workspace.
 - Workspace checking emitted an inherited `unused_mut` warning in
   `crates/quant/src/iq.rs` and 13 dead-code warnings from Linux-oriented serve
   helpers compiled on macOS.

@@ -1144,3 +1144,29 @@ available disk, thermals, and power were not measured. No external checkpoint,
 full or giant model, production serving, benchmark, Linux, CUDA, or `io_uring`
 runtime workload ran, so no claim was promoted beyond the small-fixture CI
 scope.
+
+### T075 format and strict-Clippy diagnostics
+
+Both requested diagnostics ran from a clean worktree at pushed commit
+`8a21f2b`. They remain observations rather than merge gates:
+
+- `cargo fmt --all -- --check` exited 1 and reported differences in exactly 25
+  files, matching the pre-flight count. Every reported file is inherited from
+  upstream; no newly added Rust file appeared. The reported hunks in
+  `crates/quant/src/lib.rs` and `crates/stream/src/lib.rs` are outside the
+  additive PulsarMLX module/export lines.
+- `cargo clippy --workspace --all-targets -- -D warnings` exited 101 with
+  Clippy 0.1.97. It emitted 25 primary diagnostics in six inherited files:
+  four in `crates/tokenizer/src/lib.rs`, one in `crates/kernels/build.rs`, one
+  in `crates/gguf/tests/hy3_header.rs`, eight in
+  `crates/quant/src/cpu_dot.rs`, four in `crates/quant/src/iq.rs`, and seven in
+  inherited regions of `crates/quant/src/lib.rs`.
+
+The previously recorded kernels build-script
+`clippy::needless_borrows_for_generic_args` and quant `unused_mut` reproduced.
+The other diagnostics were newly surfaced by this complete diagnostic output,
+but every cited line was unchanged from the upstream baseline. No diagnostic
+named `backend`, `mlx-backend`, `q8_0_ref`, the portable positional source, or
+their tests. Because inherited errors stopped workspace Clippy, this result is
+only “no PulsarMLX-attributable failure reported,” not a strict-Clippy pass for
+every new target. No formatting or lint cleanup was applied.
