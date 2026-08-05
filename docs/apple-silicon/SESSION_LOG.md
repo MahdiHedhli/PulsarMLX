@@ -1569,3 +1569,20 @@ private-path, machine-identifier, model/tensor, cache/log, symlink, binary,
 object-mode, per-file/aggregate-size, file-count, and inherited Linux/CUDA-
 selection gates. The final staged diff check passed after recording this task
 state.
+
+### T022 frozen-methodology commit and CI attestation
+
+Commit `1cb9d39` (`docs(research): freeze router publication methodology`)
+was pushed to `origin/main` without force. GitHub Actions run
+[`31037215729`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31037215729)
+completed successfully for exact commit
+`1cb9d39a6d55527fbbe1e90db7e77d921deeea59`.
+
+Both required jobs passed: `Apple Silicon workspace baseline` completed its
+Cargo check and test steps, and `Apple MLX small-fixture validation` completed
+the new Feature 002 model-empty methodology step plus the inherited bounded
+worker, native MLX device, tensor, and synthetic routed-MoE fixture steps. The
+run did not receive or access an external checkpoint. This result completes
+the frozen-methodology checkpoint; the CI outcome for this attestation-only
+commit is intentionally reported out of tree under the non-recursive
+attestation rule.

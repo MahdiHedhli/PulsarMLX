@@ -104,7 +104,7 @@ task.
 - [X] T019 Run safe setup, all research unit tests, positive evidence-fixture validation, and fixture-only package verification exactly as documented in `specs/002-qwen-router-parity/quickstart.md`
 - [X] T020 Add fixture-only schema, mutation, statistics, generation, privacy, and package checks with an explicitly empty model variable to `.github/workflows/macos.yml`
 - [X] T021 Run the CI-equivalent fixture suite, exact Cargo workspace gates, Python worker suite, `git diff --check`, and staged safety scans, then update `docs/apple-silicon/SESSION_LOG.md` and `specs/002-qwen-router-parity/tasks.md`
-- [ ] T022 Commit the complete frozen methodology, push `main` without force, wait for every `.github/workflows/macos.yml` job, and record the commit/run identity in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T022 Commit the complete frozen methodology, push `main` without force, wait for every `.github/workflows/macos.yml` job, and record the commit/run identity in `docs/apple-silicon/SESSION_LOG.md`
 
 **Checkpoint**: Methodology, schemas, validators, generators, fixtures,
 documentation, and fixture-only CI are committed and green. No external model
