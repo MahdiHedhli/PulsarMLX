@@ -43,9 +43,9 @@ and the source audit in
 
 ## Platform and test coverage
 
-- After the bounded real-checkpoint slice and T063 reconciliation,
+- At the final US5 T072 gate,
   `cargo check --workspace --all-targets` passed on native arm64 macOS, and
-  `cargo test --workspace --no-fail-fast` listed 155 tests: 154 active tests
+  `cargo test --workspace --no-fail-fast` listed 172 tests: 171 active tests
   passed, zero failed, and one native MLX integration test was explicitly
   ignored by the baseline. That test passed when run directly with `--ignored`
   against the frozen local environment. The most recent complete Python worker
@@ -99,9 +99,11 @@ and the source audit in
   [benchmark-initial.json](../validation/benchmark-initial.json). Latency,
   throughput, speedup, bandwidth, memory-efficiency, thermal, and power claims
   remain unsupported.
-- At T070, the final US5 workspace and evidence-validator rerun remained
-  reserved for T072 and was recorded as `not_run`; the T063 post-slice
-  workspace result below remains the latest completed exact workspace gate.
+- The final T072 gate passed 25 typed evidence tests, one committed-reference
+  parser test, all 13 JSON syntax and cross-record/link checks, the exact
+  workspace check, and the exact workspace test command. Linux/CUDA runtime,
+  external-model re-execution, and benchmarking remained explicitly not run;
+  their absence was not converted into a successful claim.
 
 ## Existing source-quality debt
 

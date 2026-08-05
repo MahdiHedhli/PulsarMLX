@@ -1037,3 +1037,43 @@ explicit not-run benchmark. All changed local documentation links and command
 paths exist, documented CLI subcommands exist, changed shell blocks passed
 `zsh -n`, and `git diff --check` passed. No validation command or model was run
 for this documentation-only reconciliation; T072 remains the final exact gate.
+
+### T072 final US5 workspace and evidence gate
+
+From a clean worktree at pushed commit
+`e0b965233a7cd1aa111d8f061b5b125cfcb326e3`, the final story validation ran from
+`2026-08-05T15:59:47Z` through `2026-08-05T16:01:00Z`. The typed evidence
+targets passed 25 tests, and the committed trusted-reference loader test passed
+one test with four unrelated CLI tests filtered out. All 13 committed
+validation JSON documents parsed, the benchmark remained an explicit zero-
+sample `not_run`, the portable replay still matched its source record, the
+Qwen reference/slice identities and 16-value zero-mismatch result agreed, and
+all 13 reviewer-index JSON links matched the inventory.
+
+The exact workspace commands both exited zero:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+cargo test --workspace -- --list | rg ': test$' | wc -l
+```
+
+The workspace listed 172 tests: 171 passed, zero failed, and the native MLX
+device smoke remained explicitly ignored by the general command. Output
+retained the inherited `crates/quant/src/iq.rs` `unused_mut` warning and 13
+macOS `serve` dead-code warnings. No broad cleanup was performed.
+
+The final result and every exact validator command are recorded in
+`docs/validation/reproduction-check.json`. Linux/CUDA runtime behavior, an
+external-model rerun, giant-model execution, production serving, and a
+performance benchmark were not run during T072 and remain explicitly
+unverified, unsupported, or not run as applicable. No unavailable evidence was
+converted into success.
+
+The workspace run also exposed a test-harness side effect: the
+`nonzero_exit_and_process_crash_are_distinguished` fake worker deliberately
+called Python `os.abort()`. macOS displayed its resulting Crash Reporter dialog.
+The report identified `worker_contract` as the parent, Homebrew Python 3.14 as
+the child, and no loaded MLX or Metal library. The test still passed its intended
+classification assertion, but a focused follow-up must replace the abort-based
+simulation before another general workspace run.

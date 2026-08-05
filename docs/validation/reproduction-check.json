@@ -62,8 +62,100 @@
     "docs/validation/reproduction-check.json"
   ],
   "final_story_validation": {
-    "actual_status": "not_run",
-    "reason": "Reserved for the exact T072 workspace and evidence-validator rerun.",
-    "commands": []
+    "actual_status": "passed",
+    "source_commit": "e0b965233a7cd1aa111d8f061b5b125cfcb326e3",
+    "git_dirty_state_before_execution": "clean",
+    "started_at_utc": "2026-08-05T15:59:47Z",
+    "completed_at_utc": "2026-08-05T16:01:00Z",
+    "commands": [
+      {
+        "exact_command": "cargo test -p backend --test evidence_contract --test validation_records --test compatibility_matrix",
+        "exit_code": 0,
+        "actual_result": "25 passed; 0 failed; 0 ignored"
+      },
+      {
+        "exact_command": "cargo test -p mlx-backend --bin pulsar-mlx committed_reference_result_matches_the_frozen_loader_contract",
+        "exit_code": 0,
+        "actual_result": "1 passed; 0 failed; 4 filtered out"
+      },
+      {
+        "exact_command": "for evidence_file in docs/validation/*.json docs/validation/models/*.json; do jq empty \"$evidence_file\"; done",
+        "exit_code": 0,
+        "actual_result": "13 JSON documents parsed"
+      },
+      {
+        "exact_command": "jq -e '.actual_status == \"not_run\" and .exact_command == null and .benchmark_configuration.sample_count == 0 and (.benchmark_configuration.raw_samples | length) == 0 and .actual_result.performance_claim == null' docs/validation/benchmark-initial.json",
+        "exit_code": 0,
+        "actual_result": "true"
+      },
+      {
+        "exact_command": "jq -e --slurp '.[0].replay.actual_status == \"passed\" and .[0].comparison.actual_status == \"matched\" and (.[0].comparison.mismatches | length) == 0 and .[0].replay.actual_result == .[0].source_evidence.recorded_result and .[0].source_evidence.exact_command == .[1].commands[0].command' docs/validation/reproduction-check.json docs/validation/portable-expert-source.json",
+        "exit_code": 0,
+        "actual_result": "true"
+      },
+      {
+        "exact_command": "jq -e --slurp '.[0].actual_status == \"passed\" and .[1].actual_status == \"passed\" and .[1].comparison.passed == true and .[1].comparison.mismatch_count == 0 and .[1].comparison.compared_count == 16 and .[1].reference.output_sha256 == .[0].output.sha256 and .[1].slice.encoded_slice_sha256 == .[0].tensor.encoded_slice_sha256 and .[1].slice.decoded_slice_sha256 == .[0].tensor.decoded_slice_sha256' docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json docs/validation/qwen3-30b-a3b-q8_0-slice.json",
+        "exit_code": 0,
+        "actual_result": "true"
+      },
+      {
+        "exact_command": "inventory_file=$(mktemp); links_file=$(mktemp); rg --files docs/validation -g '*.json' | sort > \"$inventory_file\"; rg -o '\\]\\([^)]+\\.json\\)' docs/validation/README.md | sed -E 's/^.*\\]\\(([^)]+)\\)$/docs\\/validation\\/\\1/' | sort -u > \"$links_file\"; diff -u \"$inventory_file\" \"$links_file\"",
+        "exit_code": 0,
+        "actual_result": "13 inventory paths matched 13 reviewer-index JSON links"
+      },
+      {
+        "exact_command": "cargo check --workspace --all-targets",
+        "exit_code": 0,
+        "actual_result": "passed"
+      },
+      {
+        "exact_command": "cargo test --workspace --no-fail-fast",
+        "exit_code": 0,
+        "actual_result": "171 passed; 0 failed; 1 ignored"
+      },
+      {
+        "exact_command": "cargo test --workspace -- --list | rg ': test$' | wc -l",
+        "exit_code": 0,
+        "actual_result": "172"
+      }
+    ],
+    "evidence_summary": {
+      "typed_evidence_tests_passed": 25,
+      "committed_reference_parser_tests_passed": 1,
+      "json_documents_parsed": 13,
+      "reviewer_index_json_links": 13,
+      "workspace_listed_tests": 172,
+      "workspace_passed_tests": 171,
+      "workspace_failed_tests": 0,
+      "workspace_ignored_tests": 1
+    },
+    "warnings": [
+      "Inherited unused_mut warning in crates/quant/src/iq.rs.",
+      "Thirteen inherited dead-code warnings from Linux-oriented serve items compiled on macOS.",
+      "The worker_contract fake-worker crash-classification case deliberately called Python os.abort(), which triggered macOS Crash Reporter. The report loaded no MLX or Metal library; this was a test-harness side effect queued for a focused follow-up fix."
+    ],
+    "failures": [],
+    "unavailable_or_unexecuted_evidence": [
+      {
+        "scope": "Linux and CUDA runtime behavior",
+        "actual_status": "not_run",
+        "reason": "The final story gate ran only macOS-selected targets on an Apple host."
+      },
+      {
+        "scope": "External Qwen model execution during T072",
+        "actual_status": "not_run",
+        "reason": "T072 validated the committed bounded result and its identities; it did not rerun external weights or promote execution depth."
+      },
+      {
+        "scope": "Performance benchmark",
+        "actual_status": "not_run",
+        "reason": "The committed benchmark record remains an explicit zero-sample no-performance-claim decision."
+      }
+    ],
+    "exclusions": [
+      "The workspace result covers only targets selected by macOS.",
+      "The ignored native MLX smoke test was not executed by the exact general workspace command.",
+      "No external model, giant-model, production-serving, Linux, CUDA, or performance workload ran during the final story gate."
+    ]
   }
 }

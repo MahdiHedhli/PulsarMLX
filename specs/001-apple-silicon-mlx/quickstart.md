@@ -42,12 +42,12 @@ cargo check --workspace --all-targets
 cargo test --workspace --no-fail-fast
 ```
 
-The post-slice record in
-`docs/validation/qwen3-30b-a3b-q8_0-slice.json` shows that both commands passed
-from clean commit `31ee7e5`. That snapshot listed 155 tests: 154 active tests
-passed, one native MLX smoke test was ignored by the general workspace run,
-and zero failed. Treat those counts as committed historical evidence, not a
-hard-coded expectation for a later commit; always report the new actual result.
+The final US5 record in `docs/validation/reproduction-check.json` shows that
+both commands passed from clean commit `e0b9652`. That snapshot listed 172
+tests: 171 active tests passed, one native MLX smoke test was ignored by the
+general workspace run, and zero failed. Treat those counts as committed
+historical evidence, not a hard-coded expectation for a later commit; always
+report the new actual result.
 
 The following are diagnostic inspections, not current merge gates:
 
