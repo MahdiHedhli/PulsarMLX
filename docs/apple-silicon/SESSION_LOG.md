@@ -589,3 +589,34 @@ No tensor was dequantized and neither the trusted oracle nor Apple slice was
 executed. Post-acquisition observations were 187,187,339,264 available disk
 bytes and 81% system-wide memory free. T055 therefore passes identity,
 license, and required-inventory admission; T056 and T057 are next.
+
+### T056-T057 real-model contract tests
+
+The real-model slice now has intentionally failing Rust and Python contract
+tests before production implementation. The Rust suite freezes immutable
+artifact identity and license, typed GGUF metadata, the single admitted tensor
+role and Q8_0 layout, every named memory budget, the one bounded execution
+depth, path-redacted diagnostics, and the prohibition on automatic downloads.
+This command exited 101 only because the new admission API did not yet exist:
+
+```sh
+cargo test -p mlx-backend --test real_model_contract
+```
+
+The worker suite uses a generated 34,816-byte Q8_0 stand-in with the exact
+16-by-2,048 decoded shape. It freezes independent encoded, decoded,
+activation, and scalar-output identities; rejects wrong names, shapes,
+orientation, quantization, ranges, device fallback, and non-finite scales
+before MLX scheduling; and requires evaluated work followed by explicit
+synchronization and bounded memory gauges. This command exited 1 only because
+the new worker module did not yet exist:
+
+```sh
+PYTHONPATH=python uv run --frozen python -m unittest \
+  python/pulsar_mlx_worker/tests/test_model_slice.py
+```
+
+These are observed red tests, not passing capability claims. They use no model
+weights, do not open the external artifact, and do not execute the trusted
+oracle. T058 and T059 own the minimum implementations needed to turn them
+green.

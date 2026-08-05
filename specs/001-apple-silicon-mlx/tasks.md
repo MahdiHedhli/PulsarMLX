@@ -196,8 +196,8 @@ and deterministic prompt; the named output must satisfy its predeclared rule.
 
 ### Tests for User Story 4 (write and observe failure before implementation)
 
-- [ ] T056 [P] [US4] Write failing Rust contract tests for immutable identity, metadata/quantization admission, missing-role rejection, budget rejection, unsupported execution depth, and absence of automatic downloads in `crates/mlx-backend/tests/real_model_contract.rs`
-- [ ] T057 [P] [US4] Write failing worker tests using bounded stand-ins for tensor-name/orientation checks, deterministic slice construction, unsupported-operation rejection, and oracle-shaped output in `python/pulsar_mlx_worker/tests/test_model_slice.py`
+- [X] T056 [P] [US4] Write failing Rust contract tests for immutable identity, metadata/quantization admission, missing-role rejection, budget rejection, unsupported execution depth, and absence of automatic downloads in `crates/mlx-backend/tests/real_model_contract.rs`
+- [X] T057 [P] [US4] Write failing worker tests using bounded stand-ins for tensor-name/orientation checks, deterministic slice construction, unsupported-operation rejection, and oracle-shaped output in `python/pulsar_mlx_worker/tests/test_model_slice.py`
 
 ### Implementation for User Story 4
 
