@@ -1,6 +1,6 @@
 # Contract: Portable Exact Expert Source
 
-**Status**: Proposed for implementation
+**Status**: Implemented and validated at the bounded portable-source scope
 
 **Owner**: `crates/stream`
 
@@ -14,7 +14,7 @@ or MLX arrays. The source deals in byte ranges. Model-specific expert topology
 stays in the model/expert directory and is associated by request order or a
 separate semantic key.
 
-## Proposed Rust surface
+## Implemented Rust surface
 
 The existing public `stream::Read { offset: u64, len: u64 }` remains the range
 type. The additive surface is equivalent to:
@@ -49,8 +49,9 @@ impl PositionalSource {
 }
 ```
 
-Exact names may change during implementation review, but the ownership, range,
-ordering, validation, and error semantics in this document are normative.
+Future versioned revisions may change exact names, but the ownership, range,
+ordering, validation, and error semantics in this document are normative for
+v1.
 
 ## Construction invariants
 

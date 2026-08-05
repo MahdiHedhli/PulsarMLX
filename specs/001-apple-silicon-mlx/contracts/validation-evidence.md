@@ -1,6 +1,6 @@
 # Contract: Validation, Compatibility, and Benchmark Evidence
 
-**Status**: Proposed for implementation and documentation
+**Status**: Implemented and validated at the bounded v1 evidence scope
 
 ## Claim rule
 

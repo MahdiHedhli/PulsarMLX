@@ -1285,3 +1285,66 @@ evidence contained no private path and was not committed; the existing
 historical evidence records were not overwritten. The quickstart now reflects
 the current backend count and the pushed small-fixture CI result while retaining
 all model admission and unsupported-stage stop instructions.
+
+### T078 final Spec Kit reconciliation
+
+Feature `001-apple-silicon-mlx` is complete at 78 of 78 tasks. The requirements
+checklist remains 16 of 16 complete and the design-readiness checklist remains
+40 of 40 complete. FR-001 through FR-024 and SC-001 through SC-012 resolve
+through the final specification assessment and plan traceability table. The
+constitution recheck passed at the declared bounded scope with no exception:
+unavailable Linux/CUDA runtime evidence, a zero-sample benchmark, and all
+deeper model levels remain explicit rather than being promoted to success.
+
+The reviewer index and filesystem inventory match at 14 of 14 committed JSON
+records. The latest pushed pre-reconciliation verification, GitHub Actions run
+[`31026431975`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31026431975)
+at commit `5a43cf0`, completed successfully in both arm64 macOS jobs. The Cargo
+job passed the exact workspace check and reported 171 active tests passed, zero
+failed, and one ignored. The frozen-environment fixture job passed 44 Python
+worker tests, one explicitly selected native MLX device smoke, seven tensor
+cases, and the synthetic routed-MoE case with the external-model variable
+empty.
+
+After the reconciliation edits, these focused and exact release commands all
+exited zero:
+
+```sh
+cargo test -p backend --test evidence_contract --test validation_records --test compatibility_matrix
+cargo test -p mlx-backend --bin pulsar-mlx committed_reference_result_matches_the_frozen_loader_contract
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+git diff --check
+```
+
+The focused backend command passed 25 tests and the committed-reference parser
+passed one. The exact workspace run again summarized 43 harnesses, 171 active
+passes, zero failures, and one ignored native smoke. The inherited quant
+`unused_mut` and 13 macOS serve dead-code warnings remained. Specify health and
+Codex integration checks passed; all 14 validation JSON documents parsed; all
+edited local Markdown links resolved; and the quickstart shell blocks passed
+`zsh -n`. No model command ran during T078.
+
+The completed feature verifies only the evaluated Apple MLX device path,
+bounded tensor semantics, strict admitted Q8_0 references, portable exact
+storage, one synthetic routed-MoE fixture, and one 16-row Qwen3MoE Q8_0
+gate-projection prefix against its frozen CPU oracle. It does not verify
+checkpoint tokenization or routing, a complete tensor/expert/layer/model,
+logits, tokens, generation, serving, full or giant model inference, benchmark
+performance, custom Metal, or Linux/CUDA runtime parity. No implementation for
+any of those excluded levels began during reconciliation.
+
+There is no next incomplete task in feature 001. The recommended next bounded
+milestone is a newly specified feature for the same immutable checkpoint's
+layer-0 router projection and deterministic top-8 expert IDs and normalized
+weights, gated by an independent frozen CPU oracle and exact tensor/memory
+admission. Before any external-model access, notify NTFY topic `Mahdi-Dev`.
+The exact continuation instruction is:
+
+```text
+Use $speckit-specify to define a bounded Qwen3MoE layer-0 router parity
+feature for the same immutable checkpoint. Preserve feature 001's verified
+scopes and exclusions. Then run $speckit-plan and $speckit-tasks and review
+their gates before implementation; do not run $speckit-implement against the
+completed specs/001-apple-silicon-mlx task list.
+```

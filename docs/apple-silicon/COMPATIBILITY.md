@@ -94,7 +94,8 @@ serving, or performance result.
 
 ## Post-slice workspace baseline
 
-From clean pushed commit `31ee7e55daadb5d1d7b3d0e278b8ccac114836d9`,
+The historical first post-slice gate at clean pushed commit
+`31ee7e55daadb5d1d7b3d0e278b8ccac114836d9`,
 `cargo check --workspace --all-targets` and
 `cargo test --workspace --no-fail-fast` both exited zero on arm64 macOS. The
 test workspace listed 155 tests: 154 active tests passed, one native MLX smoke
@@ -102,6 +103,17 @@ test remained explicitly ignored in the general baseline, and zero failed.
 The check/test output retained the inherited `quant` `unused_mut` warning and
 13 macOS `serve` dead-code warnings. These gates cover only macOS-selected
 targets and do not establish Linux/CUDA compilation or runtime behavior.
+
+The later T076 and T077 local gates passed the same exact commands with 171
+active tests, zero failures, and one ignored native smoke; the smoke passed
+when explicitly selected. Push-triggered arm64 CI run
+[`31026431975`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31026431975)
+at commit `5a43cf0` repeated 171 passed, zero failed, and one ignored in the
+Cargo job, while the separate frozen-environment fixture job passed 44 Python
+worker tests, one native device smoke, seven tensor cases, and the synthetic
+routed-MoE case. No CI job accessed the external checkpoint, and no result
+establishes Linux/CUDA runtime parity, full or giant model inference, serving,
+or performance.
 
 ## Unsupported claim levels
 

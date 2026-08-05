@@ -7,7 +7,7 @@ commit, platform, and execution depth in its record. Synthetic, bounded
 real-model, giant-model, Linux/CUDA, serving, and performance evidence do not
 imply one another.
 
-Command references `C01` through `C42` below reproduce the exact command text
+Command references `C01` through `C43` below reproduce the exact command text
 stored in the records. They are historical evidence commands, not an
 instruction to rerun downloads or hardware-sensitive model work without the
 recorded prerequisites and authorization.

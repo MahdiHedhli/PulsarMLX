@@ -1,14 +1,15 @@
 # Apple Silicon backend design
 
-Status: pre-implementation design. Nothing in this document is evidence that
-an MLX backend, MLX device execution, or model inference currently works.
+Status: implemented and reconciled for the initial bounded bring-up. This
+design document is not evidence by itself; actual capabilities resolve through
+the linked validation records and retain their stated exclusions.
 
 This document defines a correctness-first route from the inherited
 Linux/CUDA implementation to an additive Apple Silicon backend. The source
 audit behind the design is
 [UPSTREAM_ARCHITECTURE.md](UPSTREAM_ARCHITECTURE.md). GitHub Spec Kit owns the
 feature requirements and implementation plan; this document supplies the
-engineering constraints and proposed seams.
+engineering constraints, implemented seams, and remaining boundaries.
 
 ## Design rules
 
@@ -92,8 +93,9 @@ every projection boundary.
 Owned tensor handles must not expose backend allocation details. Backend
 objects own their resources and cannot outlive the backend context. Readback
 is an explicit synchronization point. Research selected one persistent Python
-MLX worker as the first reference mechanism, but it has not been implemented or
-executed. Its process boundary must use a versioned framed protocol with
+MLX worker as the first reference mechanism. It is implemented and exercised
+through focused lifecycle tests, evaluated device/tensor fixtures, and bounded
+evidence commands. Its process boundary uses a versioned framed protocol with
 bounded messages, shape and dtype validation, controlled shutdown, and
 structured errors; spawning a process per operation is outside the contract.
 
@@ -169,7 +171,7 @@ import or CPU arithmetic alone is not proof of intended Apple GPU execution.
 ### Stage 2: tensor execution proof
 
 Run deterministic elementwise, matrix multiplication, normalization, and
-readback fixtures through the proposed tensor boundary. Compare all outputs
+readback fixtures through the implemented tensor boundary. Compare all outputs
 with independently calculated host references. This stage proves execution,
 shape/orientation handling, synchronization, and error propagation without a
 model loader.
@@ -203,7 +205,7 @@ weights. Validate:
 The result must be labeled synthetic. It does not demonstrate compatibility
 with a real checkpoint.
 
-### Stage 6: first compatible real-model vertical slice
+### Stage 6: bounded compatible real-model vertical slice
 
 Select the legally accessible `qwen3moe` GGUF candidate with the lowest bounded
 cost that satisfies the architecture, quantization, provenance, and memory
@@ -212,22 +214,23 @@ its immutable
 identity, source, license, hash, architecture metadata, tensor inventory, and
 required disk/memory budget outside Git-tracked model data.
 
-The first slice should parse metadata and tokenizer data, load one minimal
-forward boundary, resolve at least one real routed-expert set, execute it
-through MLX, and emit deterministic intermediate tensors for comparison. It
-need not implement serving, long-context generation, speculative decoding,
-GDN-family models, or giant-model streaming. Those are separate milestones.
+The delivered first slice is deliberately narrower than the original richer
+target: it verifies immutable metadata and inventory, reads one exact
+34,816-byte Q8_0 gate-projection prefix, executes 16 outputs through MLX, and
+compares them with a frozen independent CPU result. It does not tokenize input,
+execute checkpoint routing, resolve a routed-expert set, or complete a tensor,
+expert, layer, or model. Those steps require separately specified milestones
+rather than promotion from the prefix result.
 
-### Stage 7: correctness comparison
+### Stage 7: bounded correctness comparison
 
-Compare named intermediate tensors and, once available, logits against a
-trusted implementation using identical weights, tokens, positions, dtypes,
-and deterministic settings. Record per-tensor error summaries, tolerances,
-tool versions, backend/device identity, and fixture hashes. Only the proven
-graph depth may be described as verified; end-to-end inference requires a
+The delivered comparison covers the named 16-row intermediate against the
+precommitted CPU oracle with the same weight bytes, activation, dtype, and
+tolerance. The record includes hashes, versions, device identity, and errors.
+Only that graph depth is verified; end-to-end inference still requires a
 validated logits or token boundary.
 
-### Stage 8: measured optimization
+### Stage 8: measured optimization (not run)
 
 Establish reproducible latency, throughput, peak-memory, page-fault, and I/O
 baselines. Optimize only a measured bottleneck while keeping the reference
@@ -252,7 +255,7 @@ independent correctness test.
 
 | Risk | Required control |
 | --- | --- |
-| The selected persistent Python worker is not yet validated | Require pinned installation, handshake, lifecycle, failure, and evaluated-device evidence before admitting tensor claims. |
+| The persistent Python worker remains a bounded reference mechanism rather than a production runtime | Keep pinned installation, handshake, lifecycle, failure, and evaluated-device evidence as gates before expanding tensor or model claims. |
 | CUDA objects permeate `Model`, `LayerW`, and `State` | Build an Apple vertical graph beside the current engine, then extract shared semantics incrementally. |
 | GGUF/MLX orientation mismatch produces plausible values | Use nonsymmetric fixtures and compare every projection with a scalar reference. |
 | Quantized tails or malformed payloads are silently truncated | Validate exact byte counts and block rules at every public boundary. |

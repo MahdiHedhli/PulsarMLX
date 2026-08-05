@@ -259,11 +259,18 @@ repository-wide debt cleanup, or broader model support.
 - [X] T075 [P] Run `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` as diagnostics, separate new failures from recorded upstream debt, and append actual results without broad cleanup in `docs/apple-silicon/SESSION_LOG.md`
 - [X] T076 Run all focused tests plus exact workspace gates and `git diff --check`, inspect the staged diff for secrets, weights, private IDs, caches, generated binaries, and unintended Linux/CUDA selection changes, and record the sanitized review in `docs/apple-silicon/SESSION_LOG.md`
 - [X] T077 Execute every currently supported command in `specs/001-apple-silicon-mlx/quickstart.md`, replace planned wording only where actual committed evidence exists, and retain explicit stop instructions for unexecuted stages
-- [ ] T078 Reconcile completed task status, requirement traceability, constitutional gates, evidence links, capability boundaries, and next bounded milestone in `specs/001-apple-silicon-mlx/tasks.md`, `specs/001-apple-silicon-mlx/spec.md`, `specs/001-apple-silicon-mlx/plan.md`, and `docs/apple-silicon/SESSION_LOG.md`
+- [X] T078 Reconcile completed task status, requirement traceability, constitutional gates, evidence links, capability boundaries, and next bounded milestone in `specs/001-apple-silicon-mlx/tasks.md`, `specs/001-apple-silicon-mlx/spec.md`, `specs/001-apple-silicon-mlx/plan.md`, and `docs/apple-silicon/SESSION_LOG.md`
 
 **Checkpoint**: The branch is buildable, evidence and docs agree, CI outcomes
 are actual, the Linux/CUDA boundary is explicit, no forbidden files are staged,
 and the next session cannot mistake planned work for implemented capability.
+
+**Implementation result**: All 78 tasks are complete. This task list is closed
+at the verified bounded scope; there is no next incomplete task here. The next
+recommended work is a newly specified Qwen layer-0 router-only parity feature,
+not an implicit extension of this plan. Full-checkpoint inference, complete
+experts/layers, generation, serving, giant-model execution, performance,
+custom Metal, and Linux/CUDA runtime parity remain outside this completion.
 
 ---
 

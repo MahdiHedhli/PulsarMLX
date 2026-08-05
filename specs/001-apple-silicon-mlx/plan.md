@@ -1,6 +1,6 @@
 # Implementation Plan: Apple Silicon MLX Backend Bring-Up
 
-**Branch**: `main` (planning only; implementation branch not created)
+**Branch**: `main` (implemented and validated in focused commits)
 
 **Date**: 2026-08-05
 
@@ -9,27 +9,28 @@
 **Input**: Feature specification from
 `/specs/001-apple-silicon-mlx/spec.md`
 
-**Status**: Implementation in progress. Setup and foundational semantic
-contracts are complete; this document does not claim that an MLX device
-operation, tensor graph, or model inference has run.
+**Status**: Complete for the specified initial bounded bring-up. All 78 tasks
+are complete; the exact verified depth and exclusions below are authoritative.
 
 ## Summary
 
-Bring up an additive Apple Silicon backend in correctness-gated stages while
-leaving the inherited Linux/CUDA path and defaults intact. The reference path
-will use MLX 0.32.0 through one persistent Python worker controlled by Rust,
-with a versioned bounded protocol. Shared Rust types will express backend
-capabilities and tensor semantics; `crates/stream` will gain an additive exact
-positional-read source; `crates/quant` will provide independent scalar
-oracles. Validation proceeds from an evaluated GPU smoke probe to tensor and
-quantized fixtures, a synthetic routed-MoE layer, and one bounded real-model
-slice using an immutable external checkpoint.
+The delivered additive Apple Silicon reference backend uses MLX 0.32.0 through
+one persistent Python worker controlled by Rust and a versioned bounded
+protocol. Shared Rust types express backend capabilities and tensor semantics;
+`crates/stream` provides an additive exact positional-read source; and
+`crates/quant` provides independent scalar Q8_0 oracles. Executed validation
+progressed from an evaluated GPU smoke probe through seven tensor fixtures,
+portable storage, synthetic routed-MoE, and one 16-row Qwen3MoE Q8_0
+gate-projection prefix. Inherited Linux/CUDA source selection and defaults are
+unchanged, while their compile/runtime parity remains explicitly unverified.
 
 ## Technical Context
 
 **Language/Version**: Rust 2021 edition with the audited rustc 1.97.1 baseline;
-CPython 3.14.6 for the first local worker environment, while the worker contract
-requires native CPython 3.10 or newer supported by the pinned MLX wheel.
+the lock-resolved evaluated worker uses native CPython 3.12.13. CPython 3.14.6
+is the separate preflight system interpreter, not the MLX worker runtime. The
+worker contract admits native CPython 3.10 or newer only when supported by the
+pinned MLX wheel.
 
 **Primary Dependencies**: Existing Cargo workspace dependencies; pinned
 `mlx==0.32.0` in a project-local Python virtual environment; Python standard
@@ -47,9 +48,12 @@ oracles, and named real-model comparison evidence. The existing exact macOS
 workspace commands remain release gates.
 
 **Target Platform**: Native arm64 Apple Silicon on macOS 14 or newer for MLX;
-the audited host is macOS 26.0 on Apple M1 Ultra. Existing Linux/CUDA targets
-remain supported and behaviorally unchanged. Minimal CI uses GitHub's standard
-`macos-15` arm64 runner, whose resource limits exclude giant-model validation.
+the audited host is macOS 26.0 on Apple M1 Ultra. Static review confirms that
+inherited Linux/CUDA selectors and defaults are unchanged, but supported-host
+compile/runtime parity was unavailable and remains unverified. GitHub's
+standard `macos-15` arm64 CI runs the exact Cargo baseline and a separate
+lockfile-backed small-MLX-fixture job; external models and giant-model
+validation remain excluded.
 
 **Project Type**: Multi-crate Rust runtime plus a local Python worker package.
 
@@ -71,26 +75,27 @@ production HTTP/MCP serving in this feature.
 
 ## Constitution Check
 
-*GATE: Passed before Phase 0 research and re-evaluated after Phase 1 design.*
+*GATE: Passed before Phase 0 research, after Phase 1 design, and against actual
+T078 completion evidence.*
 
 | Principle | Design evidence | Gate |
 | --- | --- | --- |
 | Correctness before optimization | Every stage has an independent oracle; performance starts only after parity | PASS |
-| Preserve Linux/CUDA behavior | Apple path is additive; existing fetcher, engine, defaults, and CUDA interfaces stay intact | PASS |
-| Verified claims only | Capability states separate unavailable, unevaluated, and evaluated; evidence records actual commands/results | PASS |
-| Apple Silicon first class | Explicit MLX selection, Metal proof, native memory gauges, arm64 CI | PASS |
-| Portable, non-flattened interfaces | Common types express model/storage semantics; backend extensions remain optional | PASS |
-| MLX before custom Metal | Worker reference path precedes and gates any Metal proposal | PASS |
-| Reproducible benchmarks | Benchmark entity records commit, input, warmup, samples, statistics, device, memory, and correctness prerequisite | PASS |
-| Explicit compatibility | Quantization and model records are required before claims or execution | PASS |
+| Preserve Linux/CUDA behavior | Protected inherited runtime paths are unchanged; additive shared exports were reviewed; runtime parity remains unverified and no cross-platform-safe claim is made | PASS |
+| Verified claims only | Fourteen indexed records and the exact-level matrix separate evaluated, synthetic, bounded-real, unavailable, and not-run states | PASS |
+| Apple Silicon first class | Explicit MLX GPU selection, Metal proof, native memory gauges, local evidence, and arm64 fixture CI passed | PASS |
+| Portable, non-flattened interfaces | Tested common types express tensor/routing/storage semantics while backend mechanisms remain private | PASS |
+| MLX before custom Metal | Every Apple execution used the MLX reference path; no custom Metal was added | PASS |
+| Reproducible benchmarks | The correctness-gated schema is tested; the initial record is explicitly zero-sample `not_run` with no performance claim | PASS |
+| Explicit compatibility | A complete six-level exact matrix prevents fixture, synthetic, bounded-real, giant, and serving implication | PASS |
 | License and attribution | External model provenance/license is mandatory; upstream MIT/NOTICE remain intact | PASS |
-| Incremental test-backed commits | Stages are bounded and independently testable | PASS |
-| No secrets or weights | `.gitignore`, external immutable model identity, and pre-commit secret review are required | PASS |
-| Documentation is implementation | Each slice updates Spec Kit, validation, session log, compatibility, and limitations | PASS |
+| Incremental test-backed commits | All 78 dependency-ordered tasks landed in focused validated commits | PASS |
+| No secrets or weights | Weights stayed external; staged scans found no secrets, private identifiers, caches, or generated binaries | PASS |
+| Documentation is implementation | Spec Kit, validation, session, compatibility, CI, and limitations were reconciled with actual results | PASS |
 
-Post-design re-check: no constitutional exception is required. Two separate
-runtime components are justified by failure isolation and official MLX package
-availability, not by bypassing a shared semantic contract.
+Final implementation re-check: no constitutional exception is required. Two
+separate runtime components remain justified by failure isolation and official
+MLX package availability, not by bypassing a shared semantic contract.
 
 ## Project Structure
 
@@ -114,7 +119,7 @@ specs/001-apple-silicon-mlx/
 └── tasks.md
 ```
 
-### Proposed source layout
+### Implemented source layout
 
 ```text
 Cargo.toml
@@ -145,7 +150,7 @@ fixtures/
 └── mlx/                        # small deterministic, reviewable generated fixtures only
 docs/
 ├── apple-silicon/
-└── validation/                 # future committed evidence records, never model weights
+└── validation/                 # committed bounded evidence records, never model weights
 ```
 
 **Structure Decision**: Use a small semantic Rust crate and a separate
@@ -172,11 +177,12 @@ Research is recorded in [research.md](research.md). Resolved decisions:
    separate focused change with Linux evidence.
 6. Target the official Qwen3-30B-A3B-GGUF Q8_0 artifact for the first real-model
    candidate because its `qwen3moe` metadata is recognized upstream and Q8_0
-   has the simplest portable reference path. The artifact is not downloaded in
-   this preflight.
-7. Use standard `macos-15` arm64 CI for Cargo baseline evidence; keep MLX and
-   real-model validation outside that resource-constrained baseline until a
-   bounded fixture job is specified.
+   has the simplest portable reference path. The artifact was later authorized,
+   acquired outside Git, identified immutably, and used only for the admitted
+   bounded prefix.
+7. Use standard `macos-15` arm64 CI for Cargo baseline evidence and a separately
+   pinned small-MLX-fixture job. The fixture job now passes; the external
+   checkpoint remains excluded from resource-constrained CI.
 
 ## Phase 1: Design Outputs
 
@@ -190,8 +196,8 @@ Research is recorded in [research.md](research.md). Resolved decisions:
   orientation, synchronization, strict Q8_0 layout, routing, and parity rules.
 - [validation-evidence.md](contracts/validation-evidence.md) defines the
   evidence schema required before capability or performance claims.
-- [quickstart.md](quickstart.md) gives the implementation-session sequence and
-  validation stop points without claiming that unbuilt commands work today.
+- [quickstart.md](quickstart.md) gives the replayed validation sequence, actual
+  results, and retained stop points for unsupported or deeper stages.
 
 ## Delivery Sequence
 
@@ -208,27 +214,37 @@ Research is recorded in [research.md](research.md). Resolved decisions:
    with a named trusted reference.
 10. Publish reproducible evidence; only then propose measured optimization.
 
-Every step stops at the specification's mandatory conditions and lands as a
-focused, test-backed change. The task breakdown is in [tasks.md](tasks.md).
+Every step stopped at the specification's mandatory conditions and landed as a
+focused, test-backed change. The completed breakdown is in [tasks.md](tasks.md).
 
 ## Requirement-to-Stage Traceability
 
-| Stage / story | Primary requirements | Measurable gates | Design authority |
+| Stage / story | Requirements | Criteria | Final evidence and status |
 | --- | --- | --- | --- |
-| Stage 0 / US1 Cargo baseline | FR-001, FR-003 | SC-001, SC-011 | Preflight baseline and constitution II |
-| Stage 1 / US1 worker and device | FR-002, FR-005, FR-024 | SC-002 | Backend/worker contract |
-| Stage 2 / US2 tensor proof | FR-004, FR-006, FR-007, FR-016 | SC-003 | Tensor/quant contract |
-| Stage 3 / US3 exact storage | FR-010, FR-011, FR-013 | SC-006, SC-012 | Expert-source contract |
-| Stage 4 / US2 Q8_0 reference | FR-008, FR-009, FR-016 | SC-004 | Tensor/quant contract |
-| Stage 5 / US3 synthetic MoE | FR-012, FR-013, FR-016 | SC-005, SC-012 | Tensor/quant and evidence contracts |
-| Stage 6 / US4 model admission | FR-014, FR-017, FR-021, FR-022 | SC-008, SC-010 | Model compatibility record and quickstart gate |
-| Stage 7 / US4 bounded parity | FR-015, FR-016 | SC-007 | Preselected trusted oracle and evidence contract |
-| Stage 8 / US5 evidence/benchmark | FR-018, FR-019, FR-020, FR-021, FR-022, FR-023 | SC-008, SC-009, SC-010, SC-011, SC-012 | Evidence contract and project constitution |
+| Stage 0 / US1 Cargo baseline | FR-001, FR-003 | SC-001, SC-011 | **Passed on macOS** — [final replay](../../docs/validation/reproduction-check.json) and [arm64 CI](../../docs/validation/ci-mlx-smoke.json); Linux/CUDA runtime remains unverified. |
+| Stage 1 / US1 worker and device | FR-002, FR-005, FR-024 | SC-002 | **Passed** — [device record](../../docs/validation/mlx-device-smoke.json), 44 Python tests, 12 Rust lifecycle tests, evaluated GPU/no fallback. |
+| Stage 2 / US2 tensor proof | FR-004, FR-006, FR-007, FR-016 | SC-003 | **Passed at fixture scope** — [seven tensor cases](../../docs/validation/mlx-tensor-fixtures.json) and malformed-input contract tests. |
+| Stage 3 / US3 exact storage | FR-010, FR-011, FR-013 | SC-006, SC-012 | **Passed at portable-source scope** — [source record](../../docs/validation/portable-expert-source.json) and [independent replay](../../docs/validation/reproduction-check.json). |
+| Stage 4 / US2 Q8_0 reference | FR-008, FR-009, FR-016 | SC-004 | **Passed for declared Q8_0 roles** — strict scalar tests and evaluated Q8_0 fixture in the [tensor record](../../docs/validation/mlx-tensor-fixtures.json). |
+| Stage 5 / US3 synthetic MoE | FR-012, FR-013, FR-016 | SC-005, SC-012 | **Passed for the exact synthetic fixture** — [routed-MoE record](../../docs/validation/synthetic-moe-v1.json); no real-checkpoint routing implication. |
+| Stage 6 / US4 model admission | FR-014, FR-017, FR-021, FR-022 | SC-008, SC-010 | **Passed for one immutable external artifact and depth** — [admission chain](../../docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json), external weights, no secret or custom Metal. |
+| Stage 7 / US4 bounded parity | FR-015, FR-016 | SC-007 | **Passed at one 16-row intermediate** — [trusted reference](../../docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json) and [Apple result](../../docs/validation/qwen3-30b-a3b-q8_0-slice.json); no complete model graph. |
+| Stage 8 / US5 evidence/benchmark | FR-018, FR-019, FR-020, FR-021, FR-022, FR-023 | SC-008, SC-009, SC-010, SC-011, SC-012 | **Passed at the declared evidence boundary** — [14-record index](../../docs/validation/README.md), exact-level [matrix](../../docs/apple-silicon/COMPATIBILITY.md), and explicit zero-sample [not-run benchmark](../../docs/validation/benchmark-initial.json). |
 
 Cross-cutting FR-019 prevents custom Metal work before the corresponding MLX
 reference passes. FR-020 requires every stage to publish explicit unsupported
 scope. FR-023 requires source-of-truth and handoff documentation to change with
 each completed slice.
+
+## Next Bounded Milestone
+
+This feature plan is closed; there is no next incomplete task in its 78-task
+list. The recommended follow-on is a new Spec Kit feature for the same immutable
+Qwen checkpoint's layer-0 router projection and deterministic top-8 expert IDs
+and weights. It must freeze an independent CPU oracle and exact tensor/memory
+admission before Apple output, notify `Mahdi-Dev` before model access, and stop
+short of expert MLP execution, a complete layer/model, generation, serving,
+performance work, custom Metal, or a Linux/CUDA parity claim.
 
 ## Complexity Tracking
 

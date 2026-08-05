@@ -1,6 +1,6 @@
 # Contract: Tensor Semantics and Q8_0 Reference v1
 
-**Status**: Proposed for implementation
+**Status**: Implemented and validated at the bounded v1 fixture and Q8_0 scope
 
 **Initial quantization**: GGUF Q8_0
 
@@ -125,8 +125,8 @@ do not replace this strict Apple boundary suite.
   value and comparison behavior.
 - A checksum may supplement but cannot replace tolerance evidence.
 
-The implementation task must choose concrete per-operation tolerances from
-reference behavior and commit them with the fixture. This design does not
+Implemented fixtures use concrete per-operation tolerances chosen from
+reference behavior and committed before Apple output. This contract does not
 invent unmeasured universal tolerances.
 
 ## Router contract used by synthetic MoE

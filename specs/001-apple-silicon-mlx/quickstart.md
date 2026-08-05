@@ -319,10 +319,17 @@ absent CI-only `.venv` as a device failure.
 
 ## Exact continuation instruction
 
-Continue from the next incomplete Spec Kit task with:
+Feature `001-apple-silicon-mlx` is complete; do not reopen its task list. Start
+a separately numbered Spec Kit feature with:
 
 ```text
-Use the speckit-implement skill for specs/001-apple-silicon-mlx. Start at the
-first incomplete task, preserve every verified US1-US5 scope and the explicit
-not-run/unsupported boundaries, and do not bypass any stop condition.
+Use $speckit-specify to define a bounded Qwen3MoE layer-0 router parity
+feature for the same immutable checkpoint. Cover one router projection plus
+deterministic top-8 expert IDs and normalized weights against a frozen,
+independent CPU oracle, with exact tensor and memory admission. Preserve every
+verified 001 scope and exclude expert MLP execution, a complete layer/model,
+generation, serving, performance work, custom Metal, and Linux/CUDA parity.
+Notify NTFY topic Mahdi-Dev before accessing the external model. Then use
+$speckit-plan and $speckit-tasks; do not implement until those artifacts pass
+their review gates.
 ```

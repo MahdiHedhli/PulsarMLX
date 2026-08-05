@@ -1,6 +1,8 @@
 # Data Model: Apple Silicon MLX Backend Bring-Up
 
-**Status**: Interface-level design. These records are not yet implemented.
+**Status**: Implemented at the bounded v1 scope and validated by focused tests
+and committed evidence records. Fields for deeper model stages remain contract
+definitions, not capability claims.
 
 The feature has no database. “Entities” are versioned Rust/Python protocol
 values and committed Markdown or JSON evidence records. Model data and weights
@@ -225,8 +227,11 @@ across tokens are valid and must not change deterministic result ordering.
 | `status` | enum | `candidate`, `compatible`, `verified`, `unsupported`, `blocked` |
 | `evidence` | validation IDs | Required for `verified` |
 
-The planned Qwen3-30B-A3B Q8_0 artifact remains `candidate` until its immutable
-identity, local checksum, inventory, budget, and parity are actually recorded.
+The admitted Qwen3-30B-A3B Q8_0 artifact has a recorded immutable identity,
+local checksum, tensor inventory, budget, frozen CPU oracle, and matching Apple
+result for one 16-row gate-projection prefix. Its status is verified only at
+that bounded depth; checkpoint routing, a complete tensor/expert/layer/model,
+generation, serving, and performance remain unsupported or not run.
 
 ## ValidationCase
 

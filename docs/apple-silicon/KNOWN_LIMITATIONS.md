@@ -2,7 +2,7 @@
 
 The original host and upstream observations were captured on 2026-08-05 at
 revision `12c2406`; implementation-specific sections are updated through the
-T070 evidence publication and independent replay. This list separates
+T078 final reconciliation. This list separates
 demonstrated limits from planned work. See the exact host snapshot in
 [../preflight/ENVIRONMENT.md](../preflight/ENVIRONMENT.md), validation output
 in [../preflight/BASELINE_VALIDATION.md](../preflight/BASELINE_VALIDATION.md),
@@ -43,13 +43,13 @@ and the source audit in
 
 ## Platform and test coverage
 
-- At the final US5 T072 gate,
+- At the T076 final focused gate and T077 literal quickstart replay,
   `cargo check --workspace --all-targets` passed on native arm64 macOS, and
   `cargo test --workspace --no-fail-fast` listed 172 tests: 171 active tests
   passed, zero failed, and one native MLX integration test was explicitly
   ignored by the baseline. That test passed when run directly with `--ignored`
-  against the frozen local environment. The most recent complete Python worker
-  suite separately ran 44 passing tests during T060. These results cover only
+  against the frozen local environment. The complete Python worker suite
+  separately ran 44 passing tests during T077. These results cover only
   targets selected by macOS.
 - Engine, kernel, and Linux-gated server test targets each ran zero tests on
   macOS. The test run does not exercise the Linux server, CUDA execution,
@@ -99,11 +99,13 @@ and the source audit in
   [benchmark-initial.json](../validation/benchmark-initial.json). Latency,
   throughput, speedup, bandwidth, memory-efficiency, thermal, and power claims
   remain unsupported.
-- The final T072 gate passed 25 typed evidence tests, one committed-reference
-  parser test, all 13 JSON syntax and cross-record/link checks, the exact
-  workspace check, and the exact workspace test command. Linux/CUDA runtime,
-  external-model re-execution, and benchmarking remained explicitly not run;
-  their absence was not converted into a successful claim.
+- The T076 gate passed 25 typed evidence tests, one committed-reference parser
+  test, all 14 JSON syntax and cross-record/link checks, the exact workspace
+  check, and the exact workspace test command. T077 then replayed every
+  supported quickstart command, including the separately authorized bounded
+  model prefix. Linux/CUDA runtime, giant-model execution, serving, and
+  benchmarking remained explicitly not run; their absence was not converted
+  into a successful claim.
 
 ## Existing source-quality debt
 
@@ -181,6 +183,11 @@ that every one is required by the eventual MLX integration.
   passed 44 Python worker tests, one explicitly selected native device smoke,
   seven evaluated tensor cases, and the synthetic routed-MoE case using the
   frozen environment.
+- [Push-triggered GitHub Actions run 31026431975](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31026431975)
+  passed the same two-job boundary at quickstart commit `5a43cf0`: the Cargo
+  job reported 171 passed, zero failed, and one ignored; the fixture job passed
+  44 Python worker tests, one native device smoke, seven tensor cases, and the
+  synthetic routed-MoE case. The external-model variable remained empty.
 - Standard `macos-15` is an Apple Silicon runner but is not equivalent to the
   local 128 GiB M1 Ultra. The newer fixture job explicitly kept the external
   model variable empty and did not download a checkpoint. Its CPU model/count,

@@ -1,6 +1,6 @@
 # Contract: Backend Selection and MLX Worker v1
 
-**Status**: Proposed for implementation
+**Status**: Implemented and validated at the bounded v1 scope
 
 **Protocol version**: `1`
 

@@ -1,16 +1,25 @@
 # Feature Specification: Apple Silicon MLX Backend Bring-Up
 
-**Feature Branch**: `main` (preflight planning; no feature branch created)
+**Feature Branch**: `main` (implemented and validated in focused commits)
 
 **Created**: 2026-08-05
 
-**Status**: Implementation in progress; setup and foundational contracts complete
+**Status**: Complete for the specified initial bounded bring-up
 
 **Input**: Establish a correctness-first Apple Silicon backend using MLX,
 progressing from the verified macOS build baseline through device and tensor
 proofs, portable expert storage, quantized references, synthetic routed-MoE
 validation, and the lowest-cost compatible real-model vertical slice without
 changing the inherited Linux/CUDA behavior.
+
+**Completion boundary**: All 78 tasks in this feature plan are complete. The
+verified runtime depth is an evaluated Apple MLX device proof, seven tensor
+fixtures, strict Q8_0 references, portable expert storage, synthetic routed-MoE,
+and one 16-row Qwen3MoE Q8_0 gate-projection prefix. Full-checkpoint inference,
+checkpoint routing, a complete expert/layer, generation, serving, giant-model
+execution, performance, and Linux/CUDA runtime parity are not implied. Actual
+records are indexed in
+[`docs/validation/README.md`](../../docs/validation/README.md).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -333,6 +342,26 @@ Work on a slice MUST stop and be recorded as blocked when any of these applies:
   all applicable memory gauges required by FR-013, marks unavailable gauges,
   records separate budgets/headroom, and does not publish a summed overlapping
   total.
+
+### Completion Assessment
+
+| Success criteria | Final result | Evidence boundary |
+| --- | --- | --- |
+| SC-001 | **Passed** | Local T077 and arm64 CI passed the exact Cargo gates; 171 active tests passed and one opt-in native smoke remained ignored by the ordinary workspace command. |
+| SC-002 | **Passed** | The [device record](../../docs/validation/mlx-device-smoke.json) captures evaluated, synchronized MLX GPU work with no fallback. |
+| SC-003–SC-004 | **Passed** | The [tensor record](../../docs/validation/mlx-tensor-fixtures.json) and strict Q8_0 tests cover all admitted primitive cases and malformed-input rejection. |
+| SC-005 | **Passed** | The [synthetic record](../../docs/validation/synthetic-moe-v1.json) matches the independent routed-MoE oracle for the exact committed fixture. |
+| SC-006 | **Passed** | The [portable-source record](../../docs/validation/portable-expert-source.json) plus its independent replay cover exact and invalid positional-read cases. |
+| SC-007 | **Passed at bounded depth** | The pinned CPU reference and Apple result match for one 34,816-byte Qwen tensor prefix and 16 outputs; no deeper model claim follows. |
+| SC-008 | **Passed** | The [compatibility matrix](../../docs/apple-silicon/COMPATIBILITY.md) uses exact independent evidence levels backed by the reviewer index. |
+| SC-009 | **Passed by explicit no-result path** | The [benchmark record](../../docs/validation/benchmark-initial.json) is `not_run`, has zero samples, and makes no performance claim. |
+| SC-010 | **Passed** | The real-model proof uses MLX, no custom Metal, external weights only, and sanitized staged reviews. |
+| SC-011 | **Passed at the required boundary** | Inherited selection/defaults are unchanged; unavailable Linux/CUDA runtime evidence remains explicitly unverified, never cross-platform-safe. |
+| SC-012 | **Passed** | Storage, synthetic, and bounded-model records retain applicable independent gauges and prohibit an overlapping summed total. |
+
+FR-001 through FR-024 map to these outcomes through the finalized
+requirement-to-stage table in [`plan.md`](plan.md). No mandatory stop condition
+was bypassed and no constitutional exception was taken.
 
 ## Assumptions
 
