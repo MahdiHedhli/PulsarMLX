@@ -1,0 +1,10 @@
+{
+  "base_fixture": "../f002-router-fixture-0001.json",
+  "expected_error": "incompatible_summary_group",
+  "fixture_kind": "mutation_descriptor",
+  "mutation": {
+    "operation": "replace",
+    "path": "/raw_observations/14/condition",
+    "value": "first_read_new_process_os_cache_uncontrolled"
+  }
+}

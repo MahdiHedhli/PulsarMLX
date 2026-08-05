@@ -1,0 +1,10 @@
+{
+  "base_fixture": "../f002-router-fixture-0001.json",
+  "expected_error": "schema_violation",
+  "fixture_kind": "mutation_descriptor",
+  "mutation": {
+    "operation": "add",
+    "path": "/unreviewed_extension",
+    "value": true
+  }
+}

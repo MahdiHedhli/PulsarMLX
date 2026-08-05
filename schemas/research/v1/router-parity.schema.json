@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/schemas/research/v1/router-parity.schema.json",
+  "title": "PulsarMLX bounded router-parity payload v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "model",
+    "tensor",
+    "input",
+    "oracle",
+    "correctness",
+    "claim_boundary"
+  ],
+  "properties": {
+    "model": { "$ref": "#/$defs/model" },
+    "tensor": { "$ref": "#/$defs/tensor" },
+    "input": { "$ref": "#/$defs/input" },
+    "oracle": { "$ref": "#/$defs/oracle" },
+    "correctness": { "$ref": "#/$defs/correctness" },
+    "claim_boundary": { "$ref": "#/$defs/claimBoundary" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "stableId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "revision",
+        "filename",
+        "size_bytes",
+        "sha256",
+        "architecture",
+        "external_locator"
+      ],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "revision": { "$ref": "#/$defs/commit" },
+        "filename": { "type": "string", "pattern": "^[^/\\\\]+\\.gguf$" },
+        "size_bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "architecture": { "const": "qwen3moe" },
+        "external_locator": { "const": "$PULSARMLX_MODEL_GGUF" }
+      }
+    },
+    "tensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "semantic_role",
+        "occurrence_count",
+        "gguf_dimensions",
+        "reader_shape",
+        "execution_shape",
+        "dtype",
+        "quantization",
+        "absolute_offset",
+        "encoded_length",
+        "end_offset",
+        "encoded_sha256"
+      ],
+      "properties": {
+        "name": { "const": "blk.0.ffn_gate_inp.weight" },
+        "semantic_role": { "const": "layer_0_router_projection" },
+        "occurrence_count": { "const": 1 },
+        "gguf_dimensions": { "const": [2048, 128] },
+        "reader_shape": { "const": [128, 2048] },
+        "execution_shape": { "const": [2048, 128] },
+        "dtype": { "const": "F32" },
+        "quantization": { "const": "none_f32" },
+        "absolute_offset": { "type": "integer", "minimum": 0 },
+        "encoded_length": { "type": "integer", "minimum": 1 },
+        "end_offset": { "type": "integer", "minimum": 1 },
+        "encoded_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id",
+        "graph_node",
+        "input_adapter",
+        "tokenizer_identity",
+        "token_ids",
+        "positions",
+        "shape",
+        "dtype",
+        "byte_order",
+        "byte_length",
+        "canonical_sha256",
+        "selected_rows"
+      ],
+      "properties": {
+        "fixture_id": { "$ref": "#/$defs/stableId" },
+        "graph_node": { "const": "ffn_norm-0" },
+        "input_adapter": { "const": "direct_token_ids_v1" },
+        "tokenizer_identity": { "const": "not_used_direct_token_ids" },
+        "token_ids": { "const": [0, 1] },
+        "positions": { "const": [0, 1] },
+        "shape": { "const": [2, 2048] },
+        "dtype": { "const": "float32" },
+        "byte_order": { "const": "little" },
+        "byte_length": { "const": 16384 },
+        "canonical_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_rows": {
+          "oneOf": [
+            { "const": [0] },
+            { "const": [0, 1] }
+          ]
+        }
+      }
+    },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oracle_id",
+        "project",
+        "revision",
+        "generation_command",
+        "input_fixture_sha256",
+        "tensor_sha256",
+        "output_sha256",
+        "independence_statement"
+      ],
+      "properties": {
+        "oracle_id": { "$ref": "#/$defs/stableId" },
+        "project": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "revision": { "$ref": "#/$defs/commit" },
+        "generation_command": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "input_fixture_sha256": { "$ref": "#/$defs/sha256" },
+        "tensor_sha256": { "$ref": "#/$defs/sha256" },
+        "output_sha256": { "$ref": "#/$defs/sha256" },
+        "independence_statement": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    },
+    "correctness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passed",
+        "compared_count",
+        "id_mismatch_count",
+        "order_mismatch_count",
+        "numeric_mismatch_count",
+        "first_mismatch",
+        "maximum_absolute_error",
+        "mean_absolute_error",
+        "rmse",
+        "maximum_relative_error",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "non_finite_policy",
+        "non_finite_count",
+        "deterministic_repeat_count",
+        "repeat_output_hashes"
+      ],
+      "properties": {
+        "passed": { "type": "boolean" },
+        "compared_count": { "type": "integer", "minimum": 1 },
+        "id_mismatch_count": { "type": "integer", "minimum": 0 },
+        "order_mismatch_count": { "type": "integer", "minimum": 0 },
+        "numeric_mismatch_count": { "type": "integer", "minimum": 0 },
+        "first_mismatch": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "object" }
+          ]
+        },
+        "maximum_absolute_error": { "type": "number", "minimum": 0 },
+        "mean_absolute_error": { "type": "number", "minimum": 0 },
+        "rmse": { "type": "number", "minimum": 0 },
+        "maximum_relative_error": { "type": "number", "minimum": 0 },
+        "absolute_tolerance": { "type": "number", "minimum": 0 },
+        "relative_tolerance": { "type": "number", "minimum": 0 },
+        "non_finite_policy": { "const": "reject" },
+        "non_finite_count": { "type": "integer", "minimum": 0 },
+        "deterministic_repeat_count": { "type": "integer", "minimum": 10 },
+        "repeat_output_hashes": {
+          "type": "array",
+          "minItems": 10,
+          "items": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "claimBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "operation",
+        "capabilities",
+        "unsupported_interpretations"
+      ],
+      "properties": {
+        "status": { "enum": ["provisional", "verified", "failed", "blocked"] },
+        "operation": { "const": "layer_0_router_only" },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "router_logits",
+              "router_full_softmax",
+              "router_top8_selection",
+              "router_selected_weight_normalization"
+            ]
+          }
+        },
+        "unsupported_interpretations": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+        }
+      }
+    }
+  }
+}

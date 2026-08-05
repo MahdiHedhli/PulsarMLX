@@ -1,0 +1,9 @@
+{
+  "base_fixture": "../f002-router-fixture-0001.json",
+  "expected_error": "private_value",
+  "fixture_kind": "mutation_descriptor",
+  "mutation": {
+    "operation": "replace_with_private_home_fixture",
+    "path": "/model/external_locator"
+  }
+}

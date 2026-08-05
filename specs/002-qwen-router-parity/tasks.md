@@ -84,17 +84,17 @@ task.
 
 ### Tests First
 
-- [ ] T005 [P] Write and run failing known-vector tests for Type-7 percentiles, mean, sample standard deviation, coefficient of variation, null reasons, and raw-observation grouping in `scripts/research/tests/test_statistics.py`
-- [ ] T006 [P] Write and run failing structural, semantic, privacy, non-finite, repetition, append-only, and incompatible-condition mutation tests in `scripts/research/tests/test_validate_evidence.py`
-- [ ] T007 [P] Write and run failing deterministic Markdown, CSV, SVG, and provenance-sidecar regeneration tests in `scripts/research/tests/test_generators.py`
-- [ ] T008 [P] Write and run failing package-verification, overwrite-refusal, candidate-sanitization, and atomic-publication tests in `scripts/research/tests/test_verify_package.py`
+- [X] T005 [P] Write and run failing known-vector tests for Type-7 percentiles, mean, sample standard deviation, coefficient of variation, null reasons, and raw-observation grouping in `scripts/research/tests/test_statistics.py`
+- [X] T006 [P] Write and run failing structural, semantic, privacy, non-finite, repetition, append-only, and incompatible-condition mutation tests in `scripts/research/tests/test_validate_evidence.py`
+- [X] T007 [P] Write and run failing deterministic Markdown, CSV, SVG, and provenance-sidecar regeneration tests in `scripts/research/tests/test_generators.py`
+- [X] T008 [P] Write and run failing package-verification, overwrite-refusal, candidate-sanitization, and atomic-publication tests in `scripts/research/tests/test_verify_package.py`
 
 ### Implementation
 
-- [ ] T009 Create closed version-1 schemas and small positive/mutated fixtures in `schemas/research/v1/experiment.schema.json`, `schemas/research/v1/router-parity.schema.json`, and `fixtures/research/router-v1/evidence/`
-- [ ] T010 Implement the frozen statistics rules using raw integer nanoseconds and no plotting dependency in `scripts/research/statistics.py`
-- [ ] T011 Implement fail-closed schema, semantic, privacy, capability-boundary, repetition, correctness, and statistics validation in `scripts/research/validate_evidence.py`
-- [ ] T012 Run T005 through T011 tests to red-then-green completion and record exact counts and exclusions in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T009 Create closed version-1 schemas and small positive/mutated fixtures in `schemas/research/v1/experiment.schema.json`, `schemas/research/v1/router-parity.schema.json`, and `fixtures/research/router-v1/evidence/`
+- [X] T010 Implement the frozen statistics rules using raw integer nanoseconds and no plotting dependency in `scripts/research/statistics.py`
+- [X] T011 Implement fail-closed schema, semantic, privacy, capability-boundary, repetition, correctness, and statistics validation in `scripts/research/validate_evidence.py`
+- [X] T012 Run the T005 statistics and T006 validator contracts to red-then-green completion, confirm the intentionally later T007–T008 generator/publication contracts remain at their recorded red boundary until T014–T015, and record exact counts and exclusions in `docs/apple-silicon/SESSION_LOG.md`
 - [ ] T013 Stage only the schema/statistics/validator slice, scan for secrets, private paths, model bytes, binaries, and large files, then commit, push, and record actual CI in `docs/apple-silicon/SESSION_LOG.md`
 - [ ] T014 [P] Implement deterministic table and SVG generation with source hashes and no embedded measurements in `scripts/research/generate_tables.py` and `scripts/research/generate_figures.py`
 - [ ] T015 Implement candidate validation, byte-for-byte regeneration, ledger/index checking, atomic append-only installation, and overwrite refusal in `scripts/research/verify_package.py` and `scripts/research/publish_evidence.py`

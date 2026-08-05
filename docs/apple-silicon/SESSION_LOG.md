@@ -1410,3 +1410,72 @@ Six publication documents were created with status-only content:
 zero claim rows. All local links resolved and `git diff --check` passed. No
 model path, checkpoint, network download, MLX model operation, measurement, or
 capability promotion occurred.
+
+### T005–T008 planned-failure evidence
+
+The four foundational test contracts were written and executed before their
+implementations. Their focused red runs failed only at the planned missing
+module or command boundary:
+
+```sh
+python3 -m unittest scripts/research/tests/test_statistics.py -v
+python3 -m unittest discover -s scripts/research/tests \
+  -p 'test_validate_evidence.py' -v
+python3 -m unittest scripts/research/tests/test_generators.py -v
+python3 -m unittest scripts/research/tests/test_verify_package.py -v
+```
+
+The statistics suite ran eight tests and reported eight expected failures
+because `statistics.py` did not exist. The validator suite ran 13 tests and
+reported 18 expected failures including subtests because
+`validate_evidence.py` did not exist. The generator suite ran four tests and
+reported four expected failures because the table and figure modules did not
+exist. The publication suite ran five tests and reported five expected failures
+because the publisher and package verifier did not exist. These failures froze
+the intended Type-7 statistics, grouping, closed-schema, semantic, privacy,
+non-finite, repetition, deterministic generation, provenance, append-only,
+sanitization, and atomic-publication contracts; they are not reported as
+passing validation. No model or MLX operation ran.
+
+### T009–T012 schema, statistics, and validator gate
+
+Two draft-2020-12 version-1 schemas now close the research experiment and
+router-parity objects. A bounded synthetic positive record plus three compact
+mutation descriptors cover unknown-field, private-value, and incompatible-
+condition failures. All six JSON documents parsed successfully. The positive
+record is fixture-only and contains no real measurement or model bytes.
+
+The dependency-free statistics implementation uses positive integer
+nanoseconds, Hyndman-Fan Type-7 percentiles, sample standard deviation,
+explicit coefficient-of-variation null reasons, and compatibility keys that
+prevent pooling different cases, conditions, instrumentation modes, commits,
+or batches. The fail-closed validator checks schema identity, closed structure,
+immutable identities, private and non-finite values, repetitions, raw-summary
+agreement, observation grouping, correctness relationships, and bounded router
+claim scope with stable error codes that do not echo private values.
+
+The green gate was:
+
+```sh
+python3 -m unittest \
+  scripts/research/tests/test_statistics.py \
+  scripts/research/tests/test_validate_evidence.py -v
+python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence/f002-router-fixture-0001.json
+```
+
+The focused suites passed 21 tests: eight statistics tests and 13 validator
+tests. The validator accepted exactly one positive record. Python compilation,
+JSON parsing, and `git diff --check` passed. T007 and T008 remain only at their
+already recorded planned-red boundary until their dependency-ordered T014 and
+T015 implementations; they are not misreported as green.
+
+The preceding pushed documentation commit `4e1ca2c` completed successfully in
+GitHub Actions run
+[`31033183126`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31033183126).
+The Phase 1 setup commit `423b0e4` completed successfully in run
+[`31033532161`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31033532161).
+Both used the existing arm64 macOS workflow; neither accessed an external
+model. These actual conclusions were recorded in this next focused milestone
+as required by the CI-attestation policy.

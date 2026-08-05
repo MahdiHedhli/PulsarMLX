@@ -1,0 +1,650 @@
+{
+  "actual_status": "passed",
+  "artifacts": [],
+  "batch_id": "batch-a",
+  "claim_boundary": {
+    "capabilities": [
+      "router_logits",
+      "router_full_softmax",
+      "router_top8_selection",
+      "router_selected_weight_normalization"
+    ],
+    "operation": "layer_0_router_only",
+    "status": "provisional",
+    "unsupported_interpretations": [
+      "expert_execution",
+      "routed_moe_aggregation",
+      "complete_transformer_layer",
+      "full_model_generation",
+      "serving",
+      "token_throughput",
+      "linux_cuda_runtime_parity"
+    ]
+  },
+  "completed_at_utc": "2026-08-05T18:10:00Z",
+  "correctness": {
+    "absolute_tolerance": 0.0005,
+    "compared_count": 128,
+    "deterministic_repeat_count": 10,
+    "first_mismatch": null,
+    "id_mismatch_count": 0,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "non_finite_count": 0,
+    "non_finite_policy": "reject",
+    "numeric_mismatch_count": 0,
+    "order_mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0005,
+    "repeat_output_hashes": [
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    ],
+    "rmse": 0.0
+  },
+  "environment": {
+    "interference_admission": "admitted",
+    "platform": "macos-arm64",
+    "safe_environment": {
+      "PULSARMLX_MODEL_GGUF": "$PULSARMLX_MODEL_GGUF"
+    },
+    "selected_backend": "apple-mlx",
+    "selected_device": "gpu"
+  },
+  "evidence_schema": "pulsarmlx.research.experiment",
+  "evidence_schema_version": "1.0.0",
+  "execution": {
+    "argv": [
+      "python3",
+      "scripts/research/run_router_experiment.py",
+      "--model",
+      "$PULSARMLX_MODEL_GGUF"
+    ],
+    "benchmark_order_policy": "deterministic_seeded",
+    "build_profile": "release",
+    "command": "python3 scripts/research/run_router_experiment.py --model $PULSARMLX_MODEL_GGUF",
+    "exit_code": 0,
+    "features": [
+      "mlx-backend"
+    ],
+    "shell": "zsh",
+    "working_directory_policy": "repository_root"
+  },
+  "experiment_id": "f002-router-fixture-0001",
+  "failures": [],
+  "feature_id": "002-qwen-router-parity",
+  "input": {
+    "byte_length": 16384,
+    "byte_order": "little",
+    "canonical_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "dtype": "float32",
+    "fixture_id": "qwen3moe-layer0-router-direct-tokens-v1",
+    "graph_node": "ffn_norm-0",
+    "input_adapter": "direct_token_ids_v1",
+    "positions": [
+      0,
+      1
+    ],
+    "selected_rows": [
+      0
+    ],
+    "shape": [
+      2,
+      2048
+    ],
+    "token_ids": [
+      0,
+      1
+    ],
+    "tokenizer_identity": "not_used_direct_token_ids"
+  },
+  "model": {
+    "architecture": "qwen3moe",
+    "external_locator": "$PULSARMLX_MODEL_GGUF",
+    "filename": "Qwen3-30B-A3B-Q8_0.gguf",
+    "repository": "Qwen/Qwen3-30B-A3B-GGUF",
+    "revision": "dddddddddddddddddddddddddddddddddddddddd",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "size_bytes": 1
+  },
+  "oracle": {
+    "generation_command": "python3 scripts/research/router_oracle.py --fixture $PULSARMLX_ROUTER_FIXTURE",
+    "independence_statement": "Does not import or invoke MLX or the PulsarMLX worker.",
+    "input_fixture_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "oracle_id": "f002-scalar-f32-v1",
+    "output_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "project": "llama.cpp-plus-standalone-scalar-oracle",
+    "revision": "dddddddddddddddddddddddddddddddddddddddd",
+    "tensor_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "payload_schema": "pulsarmlx.research.router-parity",
+  "payload_schema_version": "1.0.0",
+  "process_replication_id": "process-warm-a",
+  "protocol": {
+    "order_seed": 22002,
+    "path": "docs/research/EXPERIMENT_PROTOCOL.md",
+    "protocol_id": "f002-router-protocol",
+    "protocol_version": "1.0.0",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "raw_observations": [
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 900
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "warmup-00",
+      "observation_kind": "warmup",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 0,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 901
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "warmup-01",
+      "observation_kind": "warmup",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 1,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 902
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "warmup-02",
+      "observation_kind": "warmup",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 2,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 903
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "warmup-03",
+      "observation_kind": "warmup",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 3,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 904
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "warmup-04",
+      "observation_kind": "warmup",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 4,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1000
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-00",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 0,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1001
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-01",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 1,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1002
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-02",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 2,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1003
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-03",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 3,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1004
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-04",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 4,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1005
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-05",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 5,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1006
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-06",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 6,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1007
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-07",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 7,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1008
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-08",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 8,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1009
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "measurement-09",
+      "observation_kind": "measurement",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 9,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": true,
+      "durations_ns": {
+        "total_evaluated_router": 1025
+      },
+      "evaluated": true,
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "clean-process-00",
+      "observation_kind": "clean_process_replication",
+      "output_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "process_replication_id": "process-clean-a",
+      "process_state": "fresh_process",
+      "requested_device": "gpu",
+      "run_index": 0,
+      "selected_device": "gpu",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "passed",
+      "synchronized": true
+    }
+  ],
+  "record_kind": "combined",
+  "source_commit": "dddddddddddddddddddddddddddddddddddddddd",
+  "source_worktree_after": {
+    "paths": [
+      "docs/research/raw/002-router-parity/f002-router-fixture-0001.json"
+    ],
+    "state": "declared_evidence_outputs_only"
+  },
+  "source_worktree_before": "clean",
+  "started_at_utc": "2026-08-05T17:59:00Z",
+  "summaries": [
+    {
+      "excluded_observation_ids": [],
+      "group": {
+        "batch_id": "batch-a",
+        "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+        "condition": "warm",
+        "instrumentation_mode": "minimally_instrumented",
+        "observation_kind": "measurement",
+        "stage": "total_evaluated_router"
+      },
+      "included_observation_ids": [
+        "measurement-00",
+        "measurement-01",
+        "measurement-02",
+        "measurement-03",
+        "measurement-04",
+        "measurement-05",
+        "measurement-06",
+        "measurement-07",
+        "measurement-08",
+        "measurement-09"
+      ],
+      "statistics_algorithm": "pulsarmlx-type7-v1",
+      "summary_id": "warm-measurement-total",
+      "unfiltered_summary": {
+        "coefficient_of_variation": 0.003014086962765049,
+        "coefficient_of_variation_reason": null,
+        "maximum_ns": 1009,
+        "mean_ns": 1004.5,
+        "median_ns": 1004.5,
+        "minimum_ns": 1000,
+        "p25_ns": 1002.25,
+        "p5_ns": 1000.45,
+        "p75_ns": 1006.75,
+        "p95_ns": 1008.55,
+        "sample_count": 10,
+        "sample_standard_deviation_ns": 3.0276503540974917,
+        "sample_standard_deviation_reason": null
+      }
+    },
+    {
+      "excluded_observation_ids": [],
+      "group": {
+        "batch_id": "batch-a",
+        "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+        "condition": "warm",
+        "instrumentation_mode": "minimally_instrumented",
+        "observation_kind": "clean_process_replication",
+        "stage": "total_evaluated_router"
+      },
+      "included_observation_ids": [
+        "clean-process-00"
+      ],
+      "statistics_algorithm": "pulsarmlx-type7-v1",
+      "summary_id": "clean-process-total",
+      "unfiltered_summary": {
+        "coefficient_of_variation": null,
+        "coefficient_of_variation_reason": "sample_standard_deviation_unavailable",
+        "maximum_ns": 1025,
+        "mean_ns": 1025.0,
+        "median_ns": 1025.0,
+        "minimum_ns": 1025,
+        "p25_ns": 1025.0,
+        "p5_ns": 1025.0,
+        "p75_ns": 1025.0,
+        "p95_ns": 1025.0,
+        "sample_count": 1,
+        "sample_standard_deviation_ns": null,
+        "sample_standard_deviation_reason": "requires_at_least_two_samples"
+      }
+    }
+  ],
+  "tensor": {
+    "absolute_offset": 0,
+    "dtype": "F32",
+    "encoded_length": 1048576,
+    "encoded_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "end_offset": 1048576,
+    "execution_shape": [
+      2048,
+      128
+    ],
+    "gguf_dimensions": [
+      2048,
+      128
+    ],
+    "name": "blk.0.ffn_gate_inp.weight",
+    "occurrence_count": 1,
+    "quantization": "none_f32",
+    "reader_shape": [
+      128,
+      2048
+    ],
+    "semantic_role": "layer_0_router_projection"
+  },
+  "warnings": [
+    "Fixture-only evidence; no real checkpoint measurement."
+  ]
+}

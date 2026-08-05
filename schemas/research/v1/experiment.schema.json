@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/schemas/research/v1/experiment.schema.json",
+  "title": "PulsarMLX research experiment envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_schema",
+    "evidence_schema_version",
+    "payload_schema",
+    "payload_schema_version",
+    "experiment_id",
+    "feature_id",
+    "record_kind",
+    "actual_status",
+    "started_at_utc",
+    "completed_at_utc",
+    "source_commit",
+    "source_worktree_before",
+    "source_worktree_after",
+    "protocol",
+    "execution",
+    "batch_id",
+    "process_replication_id",
+    "model",
+    "tensor",
+    "input",
+    "oracle",
+    "environment",
+    "correctness",
+    "raw_observations",
+    "summaries",
+    "claim_boundary",
+    "warnings",
+    "failures",
+    "artifacts"
+  ],
+  "properties": {
+    "evidence_schema": { "const": "pulsarmlx.research.experiment" },
+    "evidence_schema_version": { "const": "1.0.0" },
+    "payload_schema": { "const": "pulsarmlx.research.router-parity" },
+    "payload_schema_version": { "const": "1.0.0" },
+    "experiment_id": { "$ref": "#/$defs/stableId" },
+    "feature_id": { "const": "002-qwen-router-parity" },
+    "record_kind": { "enum": ["correctness", "timing", "resource", "combined"] },
+    "actual_status": { "enum": ["passed", "failed", "aborted", "excluded"] },
+    "started_at_utc": { "$ref": "#/$defs/utc" },
+    "completed_at_utc": { "$ref": "#/$defs/utc" },
+    "source_commit": { "$ref": "#/$defs/commit" },
+    "source_worktree_before": { "enum": ["clean", "dirty", "unknown"] },
+    "source_worktree_after": { "$ref": "#/$defs/worktreeAfter" },
+    "protocol": { "$ref": "#/$defs/protocol" },
+    "execution": { "$ref": "#/$defs/execution" },
+    "batch_id": { "$ref": "#/$defs/stableId" },
+    "process_replication_id": { "$ref": "#/$defs/stableId" },
+    "model": { "$ref": "router-parity.schema.json#/$defs/model" },
+    "tensor": { "$ref": "router-parity.schema.json#/$defs/tensor" },
+    "input": { "$ref": "router-parity.schema.json#/$defs/input" },
+    "oracle": { "$ref": "router-parity.schema.json#/$defs/oracle" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "correctness": { "$ref": "router-parity.schema.json#/$defs/correctness" },
+    "raw_observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "summaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/summary" }
+    },
+    "claim_boundary": { "$ref": "router-parity.schema.json#/$defs/claimBoundary" },
+    "warnings": { "type": "array", "items": { "type": "string", "maxLength": 512 } },
+    "failures": { "type": "array", "items": { "$ref": "#/$defs/failure" } },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "worktreeAfter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "paths"],
+      "properties": {
+        "state": { "enum": ["clean", "declared_evidence_outputs_only", "dirty", "unknown"] },
+        "paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^(docs|fixtures)/research/" }
+        }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol_id", "protocol_version", "path", "sha256", "order_seed"],
+      "properties": {
+        "protocol_id": { "$ref": "#/$defs/stableId" },
+        "protocol_version": { "const": "1.0.0" },
+        "path": { "const": "docs/research/EXPERIMENT_PROTOCOL.md" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "order_seed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shell",
+        "command",
+        "argv",
+        "working_directory_policy",
+        "exit_code",
+        "build_profile",
+        "features",
+        "benchmark_order_policy"
+      ],
+      "properties": {
+        "shell": { "enum": ["sh", "zsh", "bash"] },
+        "command": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "argv": { "type": "array", "minItems": 1, "items": { "type": "string", "maxLength": 512 } },
+        "working_directory_policy": { "const": "repository_root" },
+        "exit_code": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "build_profile": { "enum": ["debug", "release", "not_applicable"] },
+        "features": { "type": "array", "uniqueItems": true, "items": { "type": "string", "maxLength": 128 } },
+        "benchmark_order_policy": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform",
+        "selected_backend",
+        "selected_device",
+        "safe_environment",
+        "interference_admission"
+      ],
+      "properties": {
+        "platform": { "const": "macos-arm64" },
+        "selected_backend": { "const": "apple-mlx" },
+        "selected_device": { "const": "gpu" },
+        "safe_environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["PULSARMLX_MODEL_GGUF"],
+          "properties": {
+            "PULSARMLX_MODEL_GGUF": { "const": "$PULSARMLX_MODEL_GGUF" }
+          }
+        },
+        "interference_admission": { "enum": ["admitted", "postponed", "observed_interference"] }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "run_index",
+        "batch_id",
+        "case_id",
+        "process_replication_id",
+        "observation_kind",
+        "process_state",
+        "condition",
+        "instrumentation_mode",
+        "started_at_utc",
+        "completed_at_utc",
+        "monotonic_clock",
+        "durations_ns",
+        "status",
+        "requested_device",
+        "selected_device",
+        "fallback_used",
+        "evaluated",
+        "synchronized",
+        "output_sha256",
+        "correctness_passed"
+      ],
+      "properties": {
+        "observation_id": { "$ref": "#/$defs/stableId" },
+        "run_index": { "type": "integer", "minimum": 0 },
+        "batch_id": { "$ref": "#/$defs/stableId" },
+        "case_id": { "$ref": "#/$defs/stableId" },
+        "process_replication_id": { "$ref": "#/$defs/stableId" },
+        "observation_kind": { "enum": ["warmup", "measurement", "clean_process_replication"] },
+        "process_state": { "enum": ["fresh_process", "reused_process"] },
+        "condition": { "enum": ["warm", "first_read_new_process_os_cache_uncontrolled", "controlled_cold"] },
+        "instrumentation_mode": { "enum": ["minimally_instrumented", "stage_instrumented"] },
+        "started_at_utc": { "$ref": "#/$defs/utc" },
+        "completed_at_utc": { "$ref": "#/$defs/utc" },
+        "monotonic_clock": { "const": "perf_counter_ns" },
+        "durations_ns": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 16,
+          "additionalProperties": { "type": "integer", "minimum": 1 }
+        },
+        "status": { "enum": ["passed", "failed", "aborted", "excluded"] },
+        "requested_device": { "enum": ["gpu", "not_applicable"] },
+        "selected_device": { "enum": ["gpu", "not_available", "not_applicable"] },
+        "fallback_used": { "type": "boolean" },
+        "evaluated": { "type": "boolean" },
+        "synchronized": { "type": "boolean" },
+        "output_sha256": {
+          "oneOf": [
+            { "$ref": "#/$defs/sha256" },
+            { "type": "null" }
+          ]
+        },
+        "correctness_passed": { "type": ["boolean", "null"] }
+      }
+    },
+    "summaryValues": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_count",
+        "minimum_ns",
+        "maximum_ns",
+        "mean_ns",
+        "sample_standard_deviation_ns",
+        "sample_standard_deviation_reason",
+        "p5_ns",
+        "p25_ns",
+        "median_ns",
+        "p75_ns",
+        "p95_ns",
+        "coefficient_of_variation",
+        "coefficient_of_variation_reason"
+      ],
+      "properties": {
+        "sample_count": { "type": "integer", "minimum": 1 },
+        "minimum_ns": { "type": "integer", "minimum": 1 },
+        "maximum_ns": { "type": "integer", "minimum": 1 },
+        "mean_ns": { "type": "number", "exclusiveMinimum": 0 },
+        "sample_standard_deviation_ns": { "type": ["number", "null"], "minimum": 0 },
+        "sample_standard_deviation_reason": { "type": ["string", "null"] },
+        "p5_ns": { "type": "number", "exclusiveMinimum": 0 },
+        "p25_ns": { "type": "number", "exclusiveMinimum": 0 },
+        "median_ns": { "type": "number", "exclusiveMinimum": 0 },
+        "p75_ns": { "type": "number", "exclusiveMinimum": 0 },
+        "p95_ns": { "type": "number", "exclusiveMinimum": 0 },
+        "coefficient_of_variation": { "type": ["number", "null"], "minimum": 0 },
+        "coefficient_of_variation_reason": { "type": ["string", "null"] }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "statistics_algorithm",
+        "group",
+        "included_observation_ids",
+        "excluded_observation_ids",
+        "unfiltered_summary"
+      ],
+      "properties": {
+        "summary_id": { "$ref": "#/$defs/stableId" },
+        "statistics_algorithm": { "const": "pulsarmlx-type7-v1" },
+        "group": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["case_id", "batch_id", "observation_kind", "condition", "instrumentation_mode", "stage"],
+          "properties": {
+            "case_id": { "$ref": "#/$defs/stableId" },
+            "batch_id": { "$ref": "#/$defs/stableId" },
+            "observation_kind": { "enum": ["measurement", "clean_process_replication"] },
+            "condition": { "enum": ["warm", "first_read_new_process_os_cache_uncontrolled", "controlled_cold"] },
+            "instrumentation_mode": { "enum": ["minimally_instrumented", "stage_instrumented"] },
+            "stage": { "type": "string", "minLength": 1, "maxLength": 128 }
+          }
+        },
+        "included_observation_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/stableId" } },
+        "excluded_observation_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/stableId" } },
+        "unfiltered_summary": { "$ref": "#/$defs/summaryValues" }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/stableId" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "stage": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "path": { "type": "string", "pattern": "^(docs|fixtures)/research/" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}
