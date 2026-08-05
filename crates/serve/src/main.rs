@@ -1389,6 +1389,7 @@ fn prefix_common(
     Ok(common)
 }
 
+#[cfg(target_os = "linux")]
 fn handle_chat(
     stream: &mut std::net::TcpStream,
     body: &[u8],
