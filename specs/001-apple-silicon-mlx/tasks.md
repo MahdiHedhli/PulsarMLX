@@ -121,7 +121,7 @@ independent oracle and all malformed cases fail before MLX execution.
 
 ### Implementation for User Story 2
 
-- [ ] T031 [P] [US2] Implement panic-free strict Q8_0 row decode and scalar matvec with checked 32-element/34-byte block arithmetic in `crates/quant/src/q8_0_ref.rs` and export only the reviewed entry points from `crates/quant/src/lib.rs`
+- [X] T031 [P] [US2] Implement panic-free strict Q8_0 row decode and scalar matvec with checked 32-element/34-byte block arithmetic in `crates/quant/src/q8_0_ref.rs` and export only the reviewed entry points from `crates/quant/src/lib.rs`
 - [ ] T032 [P] [US2] Implement explicit-device fixture tensor operations, forced evaluation/synchronization, bounded readback, and comparison summaries in `python/pulsar_mlx_worker/tensor_ops.py`
 - [ ] T033 [US2] Add the version-compatible fixture operation schemas and Rust client methods without allowing numeric-list or base64 weight transfer in `python/pulsar_mlx_worker/protocol.py`, `crates/mlx-backend/src/protocol.rs`, and `crates/mlx-backend/src/client.rs`
 - [ ] T034 [US2] Implement `validate-fixtures` with exact manifest identity, result cardinality, maximum errors, and first bounded mismatch in `crates/mlx-backend/src/bin/pulsar-mlx.rs`

@@ -10,6 +10,9 @@
 pub mod cpu_dot;
 pub mod cpu_dot_tables;
 pub mod iq;
+mod q8_0_ref;
+
+pub use q8_0_ref::{decode_q8_0_row, matvec_q8_0, Q8_0Error};
 
 pub const QK8_0: usize = 32;
 pub const QK_K: usize = 256;
