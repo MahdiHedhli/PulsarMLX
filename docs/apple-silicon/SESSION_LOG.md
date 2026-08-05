@@ -641,3 +641,30 @@ cargo clippy -p mlx-backend --all-targets -- -D warnings
 The contract suite ran 6 tests with zero failures. This proves descriptor
 admission and rejection behavior only; it does not prove that a local file was
 parsed by this implementation or that either oracle executed.
+
+### T059 bounded worker slice
+
+The worker now implements only the admitted layer-0, expert-0, rows-0:16 Q8_0
+gate-projection operation. It validates the complete request, exact
+orientation, prompt adapter, device/no-fallback policy, encoded byte count,
+and every float16 scale before accessing MLX. The implementation constructs
+the no-transpose decode on MLX, evaluates both decoded weights and output,
+synchronizes the GPU, reads back exactly 16 float32 values, and records
+independent component, MLX allocator, RSS-proxy, and Darwin physical-footprint
+gauges without summing overlapping measurements.
+
+These commands exited zero:
+
+```sh
+PYTHONPATH=python uv run --frozen python -m unittest \
+  python/pulsar_mlx_worker/tests/test_model_slice.py -v
+PYTHONPATH=python uv run --frozen python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+```
+
+The focused suite ran 8 tests and the complete worker suite ran 36, all with
+zero failures. The generated stand-in's 16-value native MLX result matched its
+independent scalar tuple exactly; its output SHA-256 was
+`2b44d0a66f8c4d2be5e6bd28cd2f1df9d99acbbfdc99cab82accaa40489e6c18`.
+This validates a generated exact-shape stand-in only. No GGUF file was opened,
+no model weights were used, and neither real-model oracle ran.
