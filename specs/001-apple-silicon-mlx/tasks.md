@@ -149,7 +149,7 @@ and final output must match their independent contracts.
 
 ### Tests for User Story 3 (write and observe failure first)
 
-- [ ] T038 [US3] Define a deterministic reviewable multi-expert split-shard fixture, generation recipe, expected logical ranges, routes, tie order, weights, output, and license/provenance in `fixtures/mlx/routed-moe-v1.json`
+- [X] T038 [US3] Define a deterministic reviewable multi-expert split-shard fixture, generation recipe, expected logical ranges, routes, tie order, weights, output, and license/provenance in `fixtures/mlx/routed-moe-v1.json`
 - [ ] T039 [P] [US3] Write failing portable-source contract tests for layouts, checked ranges, exact boundaries, injected partial/Interrupted/zero reads, truncation, batch ordering/all-or-error, and owned-payload lifetime in `crates/stream/tests/positional_source.rs`
 - [ ] T040 [P] [US3] Write Linux-only regression tests that keep the existing `io_uring` API, selection, aligned payload mapping, and short-payload failure semantics explicit in `crates/stream/tests/linux_uring_preservation.rs`
 - [ ] T041 [P] [US3] Write failing scalar and worker tests for finite scores, top-k bounds, score-descending/expert-ID-ascending ties, repeated experts, normalized weights, and weighted aggregation in `crates/backend/tests/routing_contract.rs` and `python/pulsar_mlx_worker/tests/test_routed_moe.py`
