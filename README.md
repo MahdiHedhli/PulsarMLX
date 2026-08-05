@@ -1,17 +1,81 @@
-# Pulsar
+# PulsarMLX
 
 ![pulsar](docs/assets/pulsar-poster.png)
 
-An inference engine for giant Mixture-of-Experts models on hardware that
+> **Project status:** PulsarMLX is an experimental Apple Silicon and MLX
+> derivative of [Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar).
+> It preserves Pulsar's MIT license, attribution, Git history, and Linux/CUDA
+> path while an additive Apple backend is developed. The current baseline
+> compiles on macOS; MLX inference is not implemented yet.
+
+## PulsarMLX capability status
+
+| Category | Current status |
+| --- | --- |
+| Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
+| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, `cargo check --workspace --all-targets` passes and `cargo test --workspace --no-fail-fast` passes with 32 tests. The source-level macOS stub builds, the Linux-only `handle_chat` signature is gated, and Spec Kit planning is initialized. |
+| Planned capabilities | An MLX device proof, tensor-reference operations, portable expert storage, quantized parity, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
+| Unsupported or unverified | MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
+
+No successful MLX inference claim appears in this repository baseline. See
+[the baseline validation report](docs/preflight/BASELINE_VALIDATION.md) and
+[known limitations](docs/apple-silicon/KNOWN_LIMITATIONS.md) for the exact
+evidence boundary.
+
+## Verify and continue development
+
+Inspect the host without installing anything:
+
+```sh
+sw_vers
+uname -m
+sysctl -n hw.memsize
+df -h .
+xcode-select -p
+rustc -vV
+cargo -V
+specify --version
+```
+
+Run the macOS workspace baseline:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+```
+
+Locate the Spec Kit source of truth and inspect the active feature:
+
+```sh
+specify integration status --json
+cat .specify/feature.json
+find specs/001-apple-silicon-mlx -maxdepth 2 -type f -print
+sed -n '1,220p' specs/001-apple-silicon-mlx/spec.md
+sed -n '1,260p' specs/001-apple-silicon-mlx/tasks.md
+```
+
+After the preflight report is reviewed and implementation is explicitly
+authorized, start Codex in this directory and continue from the active Spec Kit
+task list. The planned implementation command is `$speckit-implement`; do not
+run it merely to inspect the project.
+
+## Inherited upstream overview (Linux + CUDA)
+
+Upstream Pulsar is an inference engine for giant Mixture-of-Experts models on hardware that
 has no business running them. The routed experts live on NVMe and stream
 per token; everything that makes decisions stays resident in VRAM. No
 llama.cpp anywhere in the stack.
+
+> The technical descriptions, model results, benchmarks, requirements,
+> acquisition examples, and roadmap below are retained upstream documentation
+> for the Linux/CUDA runtime. They have not been reproduced as PulsarMLX Apple
+> or MLX results.
 
 Successor to [NeutronStar](https://github.com/giannisanni/neutronstar),
 rebuilt as its own engine in Rust + CUDA instead of a C fork. A pulsar is
 a neutron star that spins fast and emits beams.
 
-## What it does today
+## Inherited upstream capabilities (Linux + CUDA)
 
 Eleven model architectures running on consumer GPUs: **Hy3 295B**
 (hy-v3, GQA), **GLM-5.2 743B** (glm-dsa, MLA + DSA sparse attention),
@@ -215,7 +279,7 @@ GLM, every miss at a <0.09-logit tie), byte-identical greedy ids across
 single-GPU vs attn-offload configurations, and bit-exact decode
 determinism on a fixed code path (`--decode-consistency`, below).
 
-## Requirements
+## Inherited upstream requirements (Linux + CUDA)
 
 - Linux (io_uring and CUDA are load-bearing; the workspace *compiles* on
   macOS but the engine is stubbed out there)
@@ -231,7 +295,7 @@ determinism on a fixed code path (`--decode-consistency`, below).
 - ~16GB system RAM for the host-side expert cache (more helps; the cache
   budget is the single biggest knob after the disk)
 
-## Get a model
+## Inherited upstream model acquisition
 
 Pulsar reads standard llama.cpp ggufs: ten routed-expert quant
 formats (q2_K, q3_K, q4_0, q4_K, q5_K, q5_1, q6_K, iq2_xxs, iq2_xs,
@@ -256,11 +320,11 @@ curl -L -C - -o GLM-5.2-UD-IQ2_XXS_RoutedIQ2XXS_blk78Q2K.gguf \
 
 Put the file on your fastest NVMe - decode speed is read speed.
 
-## Quick start
+## Inherited upstream quick start (Linux + CUDA)
 
 ```sh
-git clone https://github.com/giannisanni/pulsar
-cd pulsar
+git clone https://github.com/MahdiHedhli/PulsarMLX
+cd PulsarMLX
 
 # build (CXX only needed if your default gcc is too new for nvcc)
 CXX=g++-12 cargo build --release -p engine
@@ -389,7 +453,7 @@ launch.
   exact path. Attention offload does NOT drift: ids are byte-identical
   with and without it.
 
-## Status / roadmap
+## Inherited upstream status / roadmap
 
 Done: gguf reader · io_uring disk path (parity with C at 4.8GB/s) ·
 hy-v3 + glm-dsa (MLA compact-KV) forward graphs with GPU-vs-CPU kernel
@@ -475,7 +539,11 @@ Not yet:
 
 ## License
 
-MIT. The CUDA kernels derive from the
+PulsarMLX is derived from
+[Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar)
+and retains its original Git history and attribution under the
+[MIT license](LICENSE). See [NOTICE.md](NOTICE.md) for the derivative-project,
+upstream contributor, and third-party notices. The CUDA kernels derive from the
 [ds4](https://github.com/antirez/ds4) lineage (MIT) and carry their
 attribution:
 Copyright (c) 2026 The ds4.c authors · Copyright (c) 2023–2026 The ggml
