@@ -1235,3 +1235,53 @@ safetensors, `.env`, cache, or generated binary. The ignored local `.venv`,
 `target`, and Python cache directories remained unstaged. This sanitized
 review records only categories and outcomes; it contains no credential value
 or private path.
+
+### T077 literal validation-quickstart replay
+
+Every currently supported shell command in
+`specs/001-apple-silicon-mlx/quickstart.md` was executed from clean pushed
+commit `31a8bf9`. Safe and small-fixture blocks ran first; the external-model
+block ran only after the requested operator notification. The source-of-truth
+reads completed; Specify
+0.15.2 reported a healthy Codex integration and prerequisite set; the native
+host reported arm64 macOS 26.0; the system Python was arm64 3.14.6; and the
+filesystem reported 356 GiB available at the prerequisite snapshot.
+
+The exact workspace check and test passed with 171 active tests, zero failures,
+and one ignored native smoke. `uv sync --frozen` completed, MLX resolved to
+0.32.0, 57 backend tests passed, and strict backend Clippy passed. The two
+documented diagnostics retained their non-gate results: rustfmt exit 1 for the
+same 25 inherited files and strict workspace Clippy exit 101 on inherited
+debt. No cleanup was applied.
+
+The executable small-fixture blocks all passed: 44 Python worker tests, 12 Rust
+worker tests, the evaluated GPU device command, 14 strict Q8_0 tests, 7 Rust
+tensor-contract tests, 7 evaluated MLX tensor fixtures, 14 positional-source
+tests plus its check and stream unit test, the evaluated synthetic routed-MoE
+fixture, evidence/matrix/benchmark reads, and the explicitly selected native
+device test. Fresh generated records were written only below a temporary
+directory outside Git.
+
+Before the external-model block, an acknowledged NTFY message to topic
+`Mahdi-Dev` asked the operator to pause local inference. The exact external
+artifact remained 32,483,931,648 bytes with SHA-256
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`;
+the source was clean and memory pressure was normal. Read-only inspection
+admitted the exact Qwen3MoE Q8_0 tensor inventory without execution.
+
+The bounded slice then ran from `2026-08-05T16:35:16Z` through
+`2026-08-05T16:38:40Z`. It read 34,816 encoded bytes, selected MLX GPU with no
+fallback, evaluated and synchronized 16 values, and matched the frozen
+reference with zero mismatches. Maximum absolute error was
+`1.6093254089355469e-6`; maximum relative error was
+`1.7527402999126447e-6`. The result retained the exact encoded, decoded,
+activation, and reference-output identities. A completion NTFY message then
+released the hardware for local inference.
+
+This was a bounded real-checkpoint prefix replay, not tokenization, routing, a
+complete tensor/expert/layer/model, logits, tokens, generation, serving,
+giant-model inference, Linux/CUDA validation, or a benchmark. Temporary model
+evidence contained no private path and was not committed; the existing
+historical evidence records were not overwritten. The quickstart now reflects
+the current backend count and the pushed small-fixture CI result while retaining
+all model admission and unsupported-stage stop instructions.

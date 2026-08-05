@@ -258,7 +258,7 @@ repository-wide debt cleanup, or broader model support.
 - [X] T074 Run the pushed macOS workflow, record the exact run identity, runner architecture, commands, actual results, and resource/model exclusions in `docs/validation/ci-mlx-smoke.json`
 - [X] T075 [P] Run `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` as diagnostics, separate new failures from recorded upstream debt, and append actual results without broad cleanup in `docs/apple-silicon/SESSION_LOG.md`
 - [X] T076 Run all focused tests plus exact workspace gates and `git diff --check`, inspect the staged diff for secrets, weights, private IDs, caches, generated binaries, and unintended Linux/CUDA selection changes, and record the sanitized review in `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T077 Execute every currently supported command in `specs/001-apple-silicon-mlx/quickstart.md`, replace planned wording only where actual committed evidence exists, and retain explicit stop instructions for unexecuted stages
+- [X] T077 Execute every currently supported command in `specs/001-apple-silicon-mlx/quickstart.md`, replace planned wording only where actual committed evidence exists, and retain explicit stop instructions for unexecuted stages
 - [ ] T078 Reconcile completed task status, requirement traceability, constitutional gates, evidence links, capability boundaries, and next bounded milestone in `specs/001-apple-silicon-mlx/tasks.md`, `specs/001-apple-silicon-mlx/spec.md`, `specs/001-apple-silicon-mlx/plan.md`, and `docs/apple-silicon/SESSION_LOG.md`
 
 **Checkpoint**: The branch is buildable, evidence and docs agree, CI outcomes

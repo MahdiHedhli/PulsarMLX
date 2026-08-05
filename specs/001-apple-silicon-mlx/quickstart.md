@@ -43,11 +43,11 @@ cargo test --workspace --no-fail-fast
 ```
 
 The final US5 record in `docs/validation/reproduction-check.json` shows that
-both commands passed from clean commit `e0b9652`. That snapshot listed 172
-tests: 171 active tests passed, one native MLX smoke test was ignored by the
-general workspace run, and zero failed. Treat those counts as committed
-historical evidence, not a hard-coded expectation for a later commit; always
-report the new actual result.
+both commands passed from clean commit `e0b9652`. The literal T077 quickstart
+replay from clean commit `31a8bf9` passed them again with 171 active tests, one
+native MLX smoke ignored by the general workspace run, and zero failures.
+Treat counts as commit-scoped evidence, not a hard-coded expectation for a
+later revision; always report the new actual result.
 
 The following are diagnostic inspections, not current merge gates:
 
@@ -104,7 +104,7 @@ cargo test -p backend
 cargo clippy -p backend --all-targets -- -D warnings
 ```
 
-The implementation checkpoint passed 32 focused tests covering explicit
+The T077 quickstart replay passed 57 focused tests covering explicit
 selection and immutable device states, checked tensor semantics, bounded
 comparisons, compatibility/evidence invariants, independent memory gauges, and
 correctness-gated benchmarks. These are semantic contract tests and do not
@@ -118,8 +118,8 @@ PYTHONPATH=python uv run python -m unittest discover \
 cargo test -p mlx-backend --test worker_contract
 ```
 
-The complete Python discovery command passed 44 tests at T060. The focused
-Rust fake-worker record passed 12 tests at the US1 checkpoint. They cover
+The T077 literal replay passed 44 Python tests and 12 focused Rust worker
+tests, matching the current suite cardinalities. They cover
 version negotiation, frame limits, request IDs, malformed messages, stdout
 contamination, worker exit/timeout, controlled shutdown, and structured errors
 without a model file. Later test additions may change cardinality; retain the
@@ -153,8 +153,8 @@ cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
   --evidence "${TMPDIR:-/tmp}/pulsarmlx-tensor-fixtures.json"
 ```
 
-On tested commit `c53f21e`, these commands pass 14 strict Q8_0 tests, 7 Rust
-fixture contract tests, and 7 evaluated MLX cases. Review exact shape,
+The T077 replay at `31a8bf9` passed 57 backend tests, 14 strict Q8_0 tests, 7
+Rust fixture contract tests, and 7 evaluated MLX cases. Review exact shape,
 orientation, input/accumulation/output dtype, encoded byte count,
 malformed-input rejection, synchronization, compared element count, maximum
 absolute/relative errors, and first mismatch in
@@ -176,6 +176,9 @@ below/end/overflow/straddle ranges, partial reads, interruption, truncation,
 batch ordering, all-or-error behavior, and owned-payload lifetime. The
 independent [reproduction record](../../docs/validation/reproduction-check.json)
 replayed the 14-test command with matching cardinality.
+
+The T077 quickstart replay again passed all 14 positional-source tests, the
+focused check, and the stream library test.
 
 This verifies the additive portable macOS source. The inherited Linux
 `io_uring` fetcher remains selected by static review, but suitable Linux,
@@ -232,8 +235,9 @@ cargo run --release -p mlx-backend --bin pulsar-mlx -- validate-model-slice \
   --evidence "$PULSARMLX_SLICE_EVIDENCE"
 ```
 
-Replace both angle-bracket placeholders before execution; do not paste them
-literally into a shell. The accepted artifact is exactly 32,483,931,648 bytes
+Replace all three variables, which contain two distinct angle-bracket path
+roots, before execution; do not paste the placeholders literally into a shell.
+The accepted artifact is exactly 32,483,931,648 bytes
 with SHA-256
 `4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`.
 The command also requires a clean source worktree, normal memory pressure, the
@@ -251,6 +255,15 @@ expert-0 gate-projection prefix, produced 16 float32 values, and matched the
 pinned CPU reference with zero mismatches. It did not execute tokenization,
 embeddings, routing, a complete expert or layer, attention, logits, tokens,
 generation, giant-model inference, or serving.
+
+T077 notified the operator through `Mahdi-Dev`, then replayed this block from
+clean commit `31a8bf9` with evidence written to a fresh temporary directory
+outside Git. Size, SHA-256, read-only inventory, normal memory pressure, and
+source cleanliness passed. The Apple slice ran from `2026-08-05T16:35:16Z` to
+`16:38:40Z`, selected MLX GPU without fallback, evaluated and synchronized 16
+values, and again passed with zero mismatches. Its maximum absolute and
+relative errors were respectively `1.6093254089355469e-6` and
+`1.7527402999126447e-6`. No committed historical evidence was overwritten.
 
 ## 11. Review evidence before making a claim
 
@@ -286,9 +299,14 @@ For every completed slice:
    and
 6. make a focused test-backed commit.
 
-The current standard `macos-15` CI workflow covers the exact Cargo baseline; it
-does not validate MLX or the external checkpoint. The native device integration
-test is explicit and opt-in after the frozen environment has been prepared:
+The current standard `macos-15` CI workflow has separate exact Cargo-baseline
+and lockfile-backed small-fixture jobs. Push run `31023865090` passed the
+worker suite, explicit native device smoke, seven tensor fixtures, and the
+synthetic routed-MoE fixture on arm64; exact evidence is in
+`docs/validation/ci-mlx-smoke.json`. CI keeps the external-model variable empty
+and does not validate the Qwen checkpoint. The native device integration test
+remains explicit and opt-in for ordinary local/workspace execution after the
+frozen environment has been prepared:
 
 ```sh
 cargo test -p mlx-backend --test device_smoke \
