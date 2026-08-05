@@ -16,6 +16,8 @@ const MAX_NESTING_DEPTH: usize = 16;
 const MAX_LIST_ITEMS: usize = 4096;
 const MAX_DEVICE_COUNT: usize = 64;
 const MAX_CAPABILITY_COUNT: usize = 256;
+const APPLE_MLX_BACKEND_ID: &str = "apple-mlx";
+const APPLE_MLX_DEVICE_ID: &str = "gpu";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkerErrorKind {
@@ -274,6 +276,297 @@ impl RequestEnvelope {
         encoded.push(b'\n');
         Ok(encoded)
     }
+}
+
+/// Bounded control-only request for one committed tensor fixture.
+///
+/// Tensor values and encoded weights deliberately are not members of this
+/// type. The worker resolves the immutable fixture from its negotiated local
+/// fixture set.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TensorFixtureRequest {
+    fixture_set_id: String,
+    case_id: String,
+    operation: String,
+    device: String,
+}
+
+impl TensorFixtureRequest {
+    pub fn new(
+        fixture_set_id: impl Into<String>,
+        case_id: impl Into<String>,
+        operation: impl Into<String>,
+        device: impl Into<String>,
+    ) -> Result<Self, WorkerError> {
+        let fixture_set_id = fixture_set_id.into();
+        let case_id = case_id.into();
+        let operation = operation.into();
+        let device = device.into();
+
+        validate_fixture_identifier(&fixture_set_id, "fixture-set ID")?;
+        validate_fixture_identifier(&case_id, "fixture case ID")?;
+        validate_fixture_operation(&operation)?;
+        if device != APPLE_MLX_DEVICE_ID {
+            return Err(fixture_protocol_error(
+                "tensor fixtures require the explicit MLX GPU device",
+            ));
+        }
+
+        Ok(Self {
+            fixture_set_id,
+            case_id,
+            operation,
+            device,
+        })
+    }
+
+    pub fn fixture_set_id(&self) -> &str {
+        &self.fixture_set_id
+    }
+
+    pub fn case_id(&self) -> &str {
+        &self.case_id
+    }
+
+    pub fn operation(&self) -> &str {
+        &self.operation
+    }
+
+    pub fn device(&self) -> &str {
+        &self.device
+    }
+
+    pub const fn allow_fallback(&self) -> bool {
+        false
+    }
+
+    pub(crate) fn protocol_params(&self) -> Map<String, Value> {
+        Map::from_iter([
+            (
+                "fixture_set_id".to_owned(),
+                Value::String(self.fixture_set_id.clone()),
+            ),
+            ("case_id".to_owned(), Value::String(self.case_id.clone())),
+            ("device".to_owned(), Value::String(self.device.clone())),
+            ("allow_fallback".to_owned(), Value::Bool(false)),
+        ])
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct TensorFixtureComparison {
+    oracle_id: String,
+    mode: String,
+    absolute_tolerance: f64,
+    relative_tolerance: f64,
+    non_finite_policy: String,
+    compared_count: u64,
+    max_absolute_error: f64,
+    max_relative_error: f64,
+    first_mismatch_index: Option<u64>,
+    passed: bool,
+}
+
+impl TensorFixtureComparison {
+    pub fn oracle_id(&self) -> &str {
+        &self.oracle_id
+    }
+
+    pub fn mode(&self) -> &str {
+        &self.mode
+    }
+
+    pub fn absolute_tolerance(&self) -> f64 {
+        self.absolute_tolerance
+    }
+
+    pub fn relative_tolerance(&self) -> f64 {
+        self.relative_tolerance
+    }
+
+    pub fn non_finite_policy(&self) -> &str {
+        &self.non_finite_policy
+    }
+
+    pub fn compared_count(&self) -> u64 {
+        self.compared_count
+    }
+
+    pub fn max_absolute_error(&self) -> f64 {
+        self.max_absolute_error
+    }
+
+    pub fn max_relative_error(&self) -> f64 {
+        self.max_relative_error
+    }
+
+    pub fn first_mismatch_index(&self) -> Option<u64> {
+        self.first_mismatch_index
+    }
+
+    pub fn passed(&self) -> bool {
+        self.passed
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct TensorFixtureMemoryGauges {
+    mlx_active_bytes: Option<u64>,
+    mlx_cache_bytes: Option<u64>,
+    mlx_peak_bytes: Option<u64>,
+    process_footprint_bytes: Option<u64>,
+    process_footprint_source: Option<String>,
+    system_pressure: Option<String>,
+    reported_summed_total_bytes: Option<u64>,
+}
+
+impl TensorFixtureMemoryGauges {
+    pub fn mlx_active_bytes(&self) -> Option<u64> {
+        self.mlx_active_bytes
+    }
+
+    pub fn mlx_cache_bytes(&self) -> Option<u64> {
+        self.mlx_cache_bytes
+    }
+
+    pub fn mlx_peak_bytes(&self) -> Option<u64> {
+        self.mlx_peak_bytes
+    }
+
+    pub fn process_footprint_bytes(&self) -> Option<u64> {
+        self.process_footprint_bytes
+    }
+
+    pub fn process_footprint_source(&self) -> Option<&str> {
+        self.process_footprint_source.as_deref()
+    }
+
+    pub fn system_pressure(&self) -> Option<&str> {
+        self.system_pressure.as_deref()
+    }
+
+    pub fn reported_summed_total_bytes(&self) -> Option<u64> {
+        self.reported_summed_total_bytes
+    }
+}
+
+/// Validated bounded readback and comparison summary for one fixture case.
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct TensorFixtureResult {
+    fixture_set_id: String,
+    case_id: String,
+    operation: String,
+    backend_id: String,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    output_shape: Vec<u64>,
+    input_dtype: String,
+    accumulation_dtype: String,
+    output_dtype: String,
+    evaluated: bool,
+    synchronized: bool,
+    actual: Vec<f64>,
+    comparison: TensorFixtureComparison,
+    memory_gauges: TensorFixtureMemoryGauges,
+    #[serde(default)]
+    selected_expert_ids: Option<Vec<u64>>,
+    #[serde(default)]
+    decoded: Option<Vec<f64>>,
+    passed: bool,
+}
+
+impl TensorFixtureResult {
+    pub fn fixture_set_id(&self) -> &str {
+        &self.fixture_set_id
+    }
+
+    pub fn case_id(&self) -> &str {
+        &self.case_id
+    }
+
+    pub fn operation(&self) -> &str {
+        &self.operation
+    }
+
+    pub fn backend_id(&self) -> &str {
+        &self.backend_id
+    }
+
+    pub fn requested_device(&self) -> &str {
+        &self.requested_device
+    }
+
+    pub fn selected_device(&self) -> &str {
+        &self.selected_device
+    }
+
+    pub fn fallback_used(&self) -> bool {
+        self.fallback_used
+    }
+
+    pub fn output_shape(&self) -> &[u64] {
+        &self.output_shape
+    }
+
+    pub fn input_dtype(&self) -> &str {
+        &self.input_dtype
+    }
+
+    pub fn accumulation_dtype(&self) -> &str {
+        &self.accumulation_dtype
+    }
+
+    pub fn output_dtype(&self) -> &str {
+        &self.output_dtype
+    }
+
+    pub fn evaluated(&self) -> bool {
+        self.evaluated
+    }
+
+    pub fn synchronized(&self) -> bool {
+        self.synchronized
+    }
+
+    pub fn actual(&self) -> &[f64] {
+        &self.actual
+    }
+
+    pub fn comparison(&self) -> &TensorFixtureComparison {
+        &self.comparison
+    }
+
+    pub fn memory_gauges(&self) -> &TensorFixtureMemoryGauges {
+        &self.memory_gauges
+    }
+
+    pub fn selected_expert_ids(&self) -> Option<&[u64]> {
+        self.selected_expert_ids.as_deref()
+    }
+
+    pub fn decoded(&self) -> Option<&[f64]> {
+        self.decoded.as_deref()
+    }
+
+    pub fn passed(&self) -> bool {
+        self.passed
+    }
+}
+
+pub(crate) fn parse_tensor_fixture_result(
+    value: Value,
+    request: &TensorFixtureRequest,
+    max_fixture_elements: u64,
+) -> Result<TensorFixtureResult, WorkerError> {
+    let result: TensorFixtureResult = serde_json::from_value(value).map_err(|_| {
+        fixture_protocol_error("worker fixture result does not match the protocol-v1 schema")
+    })?;
+    validate_tensor_fixture_result(&result, request, max_fixture_elements)?;
+    Ok(result)
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
@@ -666,6 +959,315 @@ fn validate_value_limits(value: &Value, limits: &ProtocolLimits) -> Result<(), W
         Ok(())
     }
     visit(value, 1, limits)
+}
+
+fn validate_tensor_fixture_result(
+    result: &TensorFixtureResult,
+    request: &TensorFixtureRequest,
+    max_fixture_elements: u64,
+) -> Result<(), WorkerError> {
+    if max_fixture_elements == 0 {
+        return Err(fixture_protocol_error(
+            "worker advertised an invalid fixture element bound",
+        ));
+    }
+    if result.fixture_set_id != request.fixture_set_id {
+        return Err(fixture_protocol_error(
+            "worker fixture-set identity does not match the request",
+        ));
+    }
+    if result.case_id != request.case_id {
+        return Err(fixture_protocol_error(
+            "worker fixture case identity does not match the request",
+        ));
+    }
+    if result.operation != request.operation {
+        return Err(fixture_protocol_error(
+            "worker fixture operation does not match the request",
+        ));
+    }
+    if result.backend_id != APPLE_MLX_BACKEND_ID {
+        return Err(fixture_protocol_error(
+            "worker fixture result identifies the wrong backend",
+        ));
+    }
+    if result.requested_device != request.device || result.selected_device != request.device {
+        return Err(fixture_protocol_error(
+            "worker fixture result identifies the wrong device",
+        ));
+    }
+    if result.fallback_used {
+        return Err(fixture_protocol_error(
+            "worker fixture result reports forbidden fallback",
+        ));
+    }
+    if !result.evaluated || !result.synchronized {
+        return Err(fixture_protocol_error(
+            "worker fixture result lacks evaluated synchronized readback",
+        ));
+    }
+
+    let output_elements = checked_fixture_shape_product(&result.output_shape)?;
+    if output_elements > max_fixture_elements {
+        return Err(WorkerError::new(
+            WorkerErrorKind::MessageTooLarge,
+            "worker fixture output exceeds the negotiated element bound",
+        ));
+    }
+    let output_elements = usize::try_from(output_elements).map_err(|_| {
+        fixture_protocol_error("worker fixture output cardinality is not representable")
+    })?;
+    if result.actual.len() != output_elements {
+        return Err(fixture_protocol_error(
+            "worker fixture readback cardinality does not match its shape",
+        ));
+    }
+    if result.actual.iter().any(|value| !value.is_finite()) {
+        return Err(fixture_protocol_error(
+            "worker fixture readback contains a non-finite value",
+        ));
+    }
+
+    validate_fixture_dtypes(result)?;
+    validate_fixture_comparison(&result.comparison, output_elements)?;
+    validate_fixture_memory_gauges(&result.memory_gauges)?;
+    validate_operation_specific_result(result, max_fixture_elements)?;
+
+    if result.passed != result.comparison.passed {
+        return Err(fixture_protocol_error(
+            "worker fixture result contradicts its comparison status",
+        ));
+    }
+    Ok(())
+}
+
+fn checked_fixture_shape_product(shape: &[u64]) -> Result<u64, WorkerError> {
+    if shape.is_empty() || shape.len() > MAX_NESTING_DEPTH || shape.contains(&0) {
+        return Err(fixture_protocol_error(
+            "worker fixture output shape is empty, zero, or too deep",
+        ));
+    }
+    shape.iter().try_fold(1_u64, |product, dimension| {
+        product
+            .checked_mul(*dimension)
+            .ok_or_else(|| fixture_protocol_error("worker fixture output shape product overflows"))
+    })
+}
+
+fn validate_fixture_dtypes(result: &TensorFixtureResult) -> Result<(), WorkerError> {
+    let expected_input = if result.operation == "q8_0_decode_dot" {
+        "q8_0"
+    } else {
+        "float32"
+    };
+    if result.input_dtype != expected_input
+        || result.accumulation_dtype != "float32"
+        || result.output_dtype != "float32"
+    {
+        return Err(fixture_protocol_error(
+            "worker fixture result contains an unsupported dtype contract",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_fixture_comparison(
+    comparison: &TensorFixtureComparison,
+    output_elements: usize,
+) -> Result<(), WorkerError> {
+    validate_fixture_identifier(&comparison.oracle_id, "fixture oracle ID")?;
+    if !matches!(comparison.mode.as_str(), "exact" | "abs_rel") {
+        return Err(fixture_protocol_error(
+            "worker fixture comparison mode is unsupported",
+        ));
+    }
+    if comparison.non_finite_policy != "reject" {
+        return Err(fixture_protocol_error(
+            "worker fixture comparison must reject non-finite values",
+        ));
+    }
+    for metric in [
+        comparison.absolute_tolerance,
+        comparison.relative_tolerance,
+        comparison.max_absolute_error,
+        comparison.max_relative_error,
+    ] {
+        if !metric.is_finite() || metric < 0.0 {
+            return Err(fixture_protocol_error(
+                "worker fixture comparison contains an invalid numeric metric",
+            ));
+        }
+    }
+    if comparison.mode == "exact"
+        && (comparison.absolute_tolerance != 0.0 || comparison.relative_tolerance != 0.0)
+    {
+        return Err(fixture_protocol_error(
+            "exact fixture comparison cannot declare nonzero tolerances",
+        ));
+    }
+
+    let output_elements_u64 = u64::try_from(output_elements).map_err(|_| {
+        fixture_protocol_error("worker fixture comparison cardinality is not representable")
+    })?;
+    if comparison.compared_count != output_elements_u64 {
+        return Err(fixture_protocol_error(
+            "worker fixture comparison cardinality does not match readback",
+        ));
+    }
+    if let Some(index) = comparison.first_mismatch_index {
+        if index >= comparison.compared_count {
+            return Err(fixture_protocol_error(
+                "worker fixture first mismatch index is out of bounds",
+            ));
+        }
+    }
+
+    if comparison.passed {
+        if comparison.first_mismatch_index.is_some() {
+            return Err(fixture_protocol_error(
+                "passing fixture comparison reports a mismatch",
+            ));
+        }
+        let within_policy = match comparison.mode.as_str() {
+            "exact" => comparison.max_absolute_error == 0.0 && comparison.max_relative_error == 0.0,
+            "abs_rel" => {
+                comparison.max_absolute_error <= comparison.absolute_tolerance
+                    || comparison.max_relative_error <= comparison.relative_tolerance
+            }
+            _ => false,
+        };
+        if !within_policy {
+            return Err(fixture_protocol_error(
+                "passing fixture comparison exceeds its declared tolerance",
+            ));
+        }
+    } else if comparison.first_mismatch_index.is_none() {
+        return Err(fixture_protocol_error(
+            "failing fixture comparison omits its first mismatch",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_fixture_memory_gauges(memory: &TensorFixtureMemoryGauges) -> Result<(), WorkerError> {
+    if memory.reported_summed_total_bytes.is_some() {
+        return Err(fixture_protocol_error(
+            "worker fixture memory gauges contain a forbidden summed total",
+        ));
+    }
+    if let (Some(active), Some(peak)) = (memory.mlx_active_bytes, memory.mlx_peak_bytes) {
+        if peak < active {
+            return Err(fixture_protocol_error(
+                "worker fixture MLX peak memory is below active memory",
+            ));
+        }
+    }
+    match (
+        memory.process_footprint_bytes,
+        memory.process_footprint_source.as_deref(),
+    ) {
+        (Some(_), Some(source)) => {
+            validate_fixture_identifier(source, "process-footprint source")?;
+        }
+        (None, None) => {}
+        _ => {
+            return Err(fixture_protocol_error(
+                "worker fixture process footprint and source are inconsistent",
+            ));
+        }
+    }
+    if let Some(pressure) = memory.system_pressure.as_deref() {
+        validate_fixture_identifier(pressure, "system-pressure state")?;
+    }
+    Ok(())
+}
+
+fn validate_operation_specific_result(
+    result: &TensorFixtureResult,
+    max_fixture_elements: u64,
+) -> Result<(), WorkerError> {
+    match result.operation.as_str() {
+        "router_topk_softmax" => {
+            let ids = result.selected_expert_ids.as_deref().ok_or_else(|| {
+                fixture_protocol_error("router fixture result omits selected expert IDs")
+            })?;
+            if ids.is_empty() || ids.len() != result.actual.len() {
+                return Err(fixture_protocol_error(
+                    "router fixture expert-ID cardinality is invalid",
+                ));
+            }
+            if result.decoded.is_some() {
+                return Err(fixture_protocol_error(
+                    "router fixture result contains an unrelated Q8_0 decode",
+                ));
+            }
+        }
+        "q8_0_decode_dot" => {
+            let decoded = result.decoded.as_deref().ok_or_else(|| {
+                fixture_protocol_error("Q8_0 fixture result omits bounded decoded values")
+            })?;
+            let decoded_len = u64::try_from(decoded.len()).map_err(|_| {
+                fixture_protocol_error("Q8_0 decoded cardinality is not representable")
+            })?;
+            if decoded.is_empty()
+                || decoded_len > max_fixture_elements
+                || decoded.iter().any(|value| !value.is_finite())
+            {
+                return Err(fixture_protocol_error(
+                    "Q8_0 fixture decoded readback is invalid or oversized",
+                ));
+            }
+            if result.selected_expert_ids.is_some() {
+                return Err(fixture_protocol_error(
+                    "Q8_0 fixture result contains unrelated router IDs",
+                ));
+            }
+        }
+        _ => {
+            if result.selected_expert_ids.is_some() || result.decoded.is_some() {
+                return Err(fixture_protocol_error(
+                    "fixture result contains operation-inapplicable fields",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_fixture_identifier(value: &str, label: &str) -> Result<(), WorkerError> {
+    validate_identifier(value, label, WorkerErrorKind::Protocol)?;
+    if !value
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':'))
+    {
+        return Err(fixture_protocol_error(format!(
+            "{label} is not a stable bounded identifier"
+        )));
+    }
+    Ok(())
+}
+
+fn validate_fixture_operation(operation: &str) -> Result<(), WorkerError> {
+    validate_operation(operation)?;
+    if !matches!(
+        operation,
+        "elementwise_fma"
+            | "matmul"
+            | "embedding_gather"
+            | "rms_norm"
+            | "residual_add"
+            | "router_topk_softmax"
+            | "q8_0_decode_dot"
+    ) {
+        return Err(fixture_protocol_error(
+            "fixture operation is not part of the protocol-v1 manifest",
+        ));
+    }
+    Ok(())
+}
+
+fn fixture_protocol_error(message: impl AsRef<str>) -> WorkerError {
+    WorkerError::new(WorkerErrorKind::Protocol, message)
 }
 
 fn validate_identifier(value: &str, label: &str, kind: WorkerErrorKind) -> Result<(), WorkerError> {

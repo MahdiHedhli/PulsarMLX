@@ -1,9 +1,10 @@
 use mlx_backend::{
-    validate_device_smoke, CleanupOutcome, DeviceHello, DeviceProbe, WorkerClient, WorkerConfig,
-    PINNED_MLX_VERSION,
+    validate_device_smoke, CleanupOutcome, DeviceHello, DeviceProbe, TensorFixtureRequest,
+    WorkerClient, WorkerConfig, PINNED_MLX_VERSION,
 };
 use serde::Deserialize;
 use serde_json::{json, Map, Value};
+use std::collections::BTreeSet;
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -12,6 +13,8 @@ use std::path::{Path, PathBuf};
 const BACKEND_ID: &str = "apple-mlx";
 const GPU_DEVICE: &str = "gpu";
 const FIXTURE_ID: &str = "nonsymmetric-f32-matmul-v1";
+const FIXTURE_SET_ID: &str = "mlx-tensor-fixtures-v1";
+const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
 
 fn main() {
     if let Err(error) = run(env::args_os().skip(1).collect()) {
@@ -21,8 +24,18 @@ fn main() {
 }
 
 fn run(arguments: Vec<OsString>) -> Result<(), String> {
-    let command = parse_device_smoke(arguments)?;
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    match arguments.first().and_then(|value| value.to_str()) {
+        Some("device-smoke") => run_device_smoke(parse_device_smoke(arguments)?),
+        Some("validate-fixtures") => run_validate_fixtures(parse_validate_fixtures(arguments)?),
+        _ => Err(usage()),
+    }
+}
+
+fn project_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+fn worker_config(project_root: &Path) -> Result<WorkerConfig, String> {
     let python = project_root.join(".venv/bin/python");
     if !python.is_file() {
         return Err(
@@ -31,7 +44,7 @@ fn run(arguments: Vec<OsString>) -> Result<(), String> {
         );
     }
 
-    let config = WorkerConfig::new(
+    Ok(WorkerConfig::new(
         python,
         vec![
             OsString::from("-u"),
@@ -41,9 +54,13 @@ fn run(arguments: Vec<OsString>) -> Result<(), String> {
     )
     .with_expected_worker_version(env!("CARGO_PKG_VERSION"))
     .with_expected_mlx_version(PINNED_MLX_VERSION)
-    .with_current_dir(&project_root)
-    .with_env("PYTHONPATH", "python");
+    .with_current_dir(project_root)
+    .with_env("PYTHONPATH", "python"))
+}
 
+fn run_device_smoke(command: DeviceSmokeCommand) -> Result<(), String> {
+    let project_root = project_root();
+    let config = worker_config(&project_root)?;
     let mut client = WorkerClient::spawn(config).map_err(|error| error.to_string())?;
     let validation = execute_device_smoke(&mut client, &command);
     let cleanup = client.shutdown();
@@ -117,7 +134,229 @@ fn parse_device_smoke(arguments: Vec<OsString>) -> Result<DeviceSmokeCommand, St
 }
 
 fn usage() -> String {
-    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH".to_owned()
+    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH".to_owned()
+}
+
+struct ValidateFixturesCommand {
+    manifest: PathBuf,
+    evidence: PathBuf,
+}
+
+fn parse_validate_fixtures(arguments: Vec<OsString>) -> Result<ValidateFixturesCommand, String> {
+    let values = arguments
+        .into_iter()
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| "command arguments must be valid UTF-8".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if values.len() != 5 || values.first().map(String::as_str) != Some("validate-fixtures") {
+        return Err(usage());
+    }
+
+    let mut manifest = None;
+    let mut evidence = None;
+    let mut index = 1;
+    while index < values.len() {
+        let key = &values[index];
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match key.as_str() {
+            "--manifest" if manifest.is_none() => manifest = Some(PathBuf::from(value)),
+            "--evidence" if evidence.is_none() => evidence = Some(PathBuf::from(value)),
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+    Ok(ValidateFixturesCommand {
+        manifest: manifest.ok_or_else(usage)?,
+        evidence: evidence.ok_or_else(usage)?,
+    })
+}
+
+#[derive(Debug, Deserialize)]
+struct FixtureManifestIndex {
+    schema_version: u32,
+    fixture_set_id: String,
+    backend_id: String,
+    requested_device: String,
+    allow_fallback: bool,
+    maximum_fixture_elements: u64,
+    operations: Vec<FixtureCaseIndex>,
+}
+
+#[derive(Debug, Deserialize)]
+struct FixtureCaseIndex {
+    case_id: String,
+    operation: String,
+}
+
+fn load_fixture_index(
+    project_root: &Path,
+    requested_path: &Path,
+) -> Result<FixtureManifestIndex, String> {
+    let expected = fs::canonicalize(project_root.join("fixtures/mlx/manifest.json"))
+        .map_err(|_| "the committed fixture manifest is unavailable")?;
+    let requested = fs::canonicalize(requested_path)
+        .map_err(|_| "the requested fixture manifest is unavailable")?;
+    if requested != expected {
+        return Err("validate-fixtures accepts only the committed fixture manifest".to_owned());
+    }
+    let bytes =
+        fs::read(&requested).map_err(|_| "the committed fixture manifest could not be read")?;
+    if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
+        return Err("the fixture manifest violates its byte bound".to_owned());
+    }
+    let manifest: FixtureManifestIndex = serde_json::from_slice(&bytes)
+        .map_err(|_| "the fixture manifest is not valid bounded JSON")?;
+    let expected_operations = [
+        ("elementwise-fma-nonsymmetric-f32-v1", "elementwise_fma"),
+        ("matmul-nonsymmetric-f32-v1", "matmul"),
+        ("embedding-gather-order-f32-v1", "embedding_gather"),
+        ("rms-norm-weighted-f32-v1", "rms_norm"),
+        ("residual-add-nonsymmetric-f32-v1", "residual_add"),
+        ("router-topk-tie-f32-v1", "router_topk_softmax"),
+        ("q8-0-two-block-row-v1", "q8_0_decode_dot"),
+    ];
+    if manifest.schema_version != 1
+        || manifest.fixture_set_id != FIXTURE_SET_ID
+        || manifest.backend_id != BACKEND_ID
+        || manifest.requested_device != GPU_DEVICE
+        || manifest.allow_fallback
+        || manifest.maximum_fixture_elements != 4096
+        || manifest.operations.len() != expected_operations.len()
+        || manifest
+            .operations
+            .iter()
+            .map(|case| (case.case_id.as_str(), case.operation.as_str()))
+            .ne(expected_operations)
+    {
+        return Err(
+            "the fixture manifest identity or ordered case inventory is not admitted".to_owned(),
+        );
+    }
+    let unique = manifest
+        .operations
+        .iter()
+        .map(|case| case.case_id.as_str())
+        .collect::<BTreeSet<_>>();
+    if unique.len() != manifest.operations.len() {
+        return Err("the fixture manifest contains duplicate case identities".to_owned());
+    }
+    Ok(manifest)
+}
+
+fn run_validate_fixtures(command: ValidateFixturesCommand) -> Result<(), String> {
+    let project_root = project_root();
+    let manifest = load_fixture_index(&project_root, &command.manifest)?;
+    let config = worker_config(&project_root)?;
+    let mut client = WorkerClient::spawn(config).map_err(|error| error.to_string())?;
+    let validation = execute_fixture_suite(&mut client, &manifest);
+    let cleanup = client.shutdown();
+    let evidence = validation?;
+    if cleanup.outcome() != CleanupOutcome::Graceful || cleanup.exit_code() != Some(0) {
+        return Err(cleanup
+            .error()
+            .map(ToString::to_string)
+            .unwrap_or_else(|| "MLX worker did not shut down cleanly".to_owned()));
+    }
+    write_evidence(&command.evidence, &evidence)?;
+    println!("validate-fixtures: 7 evaluated MLX cases passed");
+    Ok(())
+}
+
+fn execute_fixture_suite(
+    client: &mut WorkerClient,
+    manifest: &FixtureManifestIndex,
+) -> Result<Value, String> {
+    let hello = client.hello().clone();
+    let health = client.health().map_err(|error| error.to_string())?;
+    if !health.ready() {
+        return Err("the negotiated MLX worker is not ready".to_owned());
+    }
+    let mut cases = Vec::with_capacity(manifest.operations.len());
+    for case in &manifest.operations {
+        let request = TensorFixtureRequest::new(
+            &manifest.fixture_set_id,
+            &case.case_id,
+            &case.operation,
+            GPU_DEVICE,
+        )
+        .map_err(|error| error.to_string())?;
+        let result = client
+            .run_fixture(&request)
+            .map_err(|error| format!("{}: {error}", case.case_id))?;
+        if !result.passed() {
+            return Err(format!("{} did not produce passing evidence", case.case_id));
+        }
+        let comparison = result.comparison();
+        let memory = result.memory_gauges();
+        cases.push(json!({
+            "case_id": result.case_id(),
+            "operation": result.operation(),
+            "backend_id": result.backend_id(),
+            "requested_device": result.requested_device(),
+            "selected_device": result.selected_device(),
+            "fallback_used": result.fallback_used(),
+            "output_shape": result.output_shape(),
+            "input_dtype": result.input_dtype(),
+            "accumulation_dtype": result.accumulation_dtype(),
+            "output_dtype": result.output_dtype(),
+            "evaluated": result.evaluated(),
+            "synchronized": result.synchronized(),
+            "actual": result.actual(),
+            "comparison": {
+                "oracle_id": comparison.oracle_id(),
+                "mode": comparison.mode(),
+                "absolute_tolerance": comparison.absolute_tolerance(),
+                "relative_tolerance": comparison.relative_tolerance(),
+                "non_finite_policy": comparison.non_finite_policy(),
+                "compared_count": comparison.compared_count(),
+                "max_absolute_error": comparison.max_absolute_error(),
+                "max_relative_error": comparison.max_relative_error(),
+                "first_mismatch_index": comparison.first_mismatch_index(),
+                "passed": comparison.passed(),
+            },
+            "selected_expert_ids": result.selected_expert_ids(),
+            "decoded": result.decoded(),
+            "memory_gauges": {
+                "mlx_active_bytes": memory.mlx_active_bytes(),
+                "mlx_cache_bytes": memory.mlx_cache_bytes(),
+                "mlx_peak_bytes": memory.mlx_peak_bytes(),
+                "process_footprint_bytes": memory.process_footprint_bytes(),
+                "process_footprint_source": memory.process_footprint_source(),
+                "system_pressure": memory.system_pressure(),
+                "reported_summed_total_bytes": memory.reported_summed_total_bytes(),
+            },
+            "passed": result.passed(),
+        }));
+    }
+    Ok(json!({
+        "schema_version": 1,
+        "validation": "mlx-tensor-fixtures",
+        "status": "passed",
+        "fixture_set_id": manifest.fixture_set_id,
+        "manifest": "fixtures/mlx/manifest.json",
+        "backend_id": BACKEND_ID,
+        "selected_device": GPU_DEVICE,
+        "runtime": {
+            "protocol": hello.protocol(),
+            "worker_version": hello.worker_version(),
+            "python_version": hello.python_version(),
+            "python_arch": hello.python_arch(),
+            "mlx_version": hello.mlx_version(),
+            "macos_version": hello.macos_version(),
+            "metal_available": hello.metal_available(),
+            "gpu_count": hello.gpu_count(),
+        },
+        "case_count": cases.len(),
+        "cases": cases,
+        "exclusions": [
+            "Fixtures are synthetic bounded tensors, not model weights.",
+            "Q8_0 evidence covers only strict row decode and one row dot role.",
+            "Linux and CUDA execution is not established by this command."
+        ]
+    }))
 }
 
 #[derive(Debug, Deserialize)]

@@ -12,4 +12,7 @@ pub use device::{
     validate_device_smoke, DeviceHello, DeviceProbe, DeviceSmokeError, DeviceSmokeErrorCode,
     DeviceSmokeReport, PINNED_MLX_VERSION,
 };
-pub use protocol::{WorkerError, WorkerErrorKind, WorkerHello};
+pub use protocol::{
+    TensorFixtureComparison, TensorFixtureMemoryGauges, TensorFixtureRequest, TensorFixtureResult,
+    WorkerError, WorkerErrorKind, WorkerHello,
+};

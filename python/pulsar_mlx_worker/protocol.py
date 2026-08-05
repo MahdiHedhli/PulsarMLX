@@ -33,7 +33,9 @@ STABLE_ERROR_CODES = frozenset(
     }
 )
 
-REQUIRED_OPERATIONS = frozenset({"health", "tensor_probe", "shutdown"})
+REQUIRED_OPERATIONS = frozenset(
+    {"health", "tensor_probe", "run_fixture", "shutdown"}
+)
 _SHAPE_KEYS = frozenset({"shape", "logical_shape", "storage_shape"})
 _MAX_IDENTIFIER_CHARS = 128
 

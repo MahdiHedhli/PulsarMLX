@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 import json
 import os
+from pathlib import Path
 import sys
 from typing import Any, BinaryIO
 
@@ -32,6 +33,7 @@ from .runtime import (
     discover_runtime,
     run_tensor_probe,
 )
+from .tensor_ops import load_fixture_manifest, run_fixture_operation
 
 
 WORKER_VERSION = "0.1.0"
@@ -199,6 +201,57 @@ def _dispatch(
             )
         probe = probe_runner(identity, requested_device=requested_device)
         return probe.to_protocol_result(), False
+
+    if request.op == "run_fixture":
+        _require_exact_params(
+            request.params,
+            frozenset(
+                {"fixture_set_id", "case_id", "device", "allow_fallback"}
+            ),
+        )
+        fixture_set_id = request.params["fixture_set_id"]
+        case_id = request.params["case_id"]
+        requested_device = request.params["device"]
+        allow_fallback = request.params["allow_fallback"]
+        if not isinstance(fixture_set_id, str) or not isinstance(case_id, str):
+            raise ProtocolError(
+                "malformed_request",
+                "run_fixture identities must be stable strings",
+            )
+        if not isinstance(requested_device, str) or not isinstance(
+            allow_fallback, bool
+        ):
+            raise ProtocolError(
+                "malformed_request",
+                "run_fixture device and fallback fields have invalid types",
+            )
+
+        manifest = load_fixture_manifest(
+            Path("fixtures/mlx/manifest.json"),
+            expected_fixture_set_id=fixture_set_id,
+        )
+        case = next(
+            (
+                candidate
+                for candidate in manifest.operations
+                if candidate.get("case_id") == case_id
+            ),
+            None,
+        )
+        if case is None:
+            raise ProtocolError(
+                "malformed_request",
+                "run_fixture case_id is not present in the admitted fixture set",
+            )
+        result = run_fixture_operation(
+            case,
+            fixture_set_id=manifest.fixture_set_id,
+            synchronization_rule=manifest.synchronization_rule,
+            maximum_fixture_elements=manifest.maximum_fixture_elements,
+            requested_device=requested_device,
+            allow_fallback=allow_fallback,
+        )
+        return result.to_protocol_result(), False
 
     if request.op == "shutdown":
         _require_exact_params(request.params, frozenset())

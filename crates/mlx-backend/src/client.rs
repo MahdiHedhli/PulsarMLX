@@ -1,8 +1,9 @@
 //! Supervised lifecycle for one persistent MLX worker process.
 
 use crate::protocol::{
-    parse_hello_line, parse_response_line, HelloExpectation, ProtocolLimits, RequestEnvelope,
-    WorkerError, WorkerErrorKind, WorkerHello, MAX_RESPONSE_BYTES, PROTOCOL_VERSION,
+    parse_hello_line, parse_response_line, parse_tensor_fixture_result, HelloExpectation,
+    ProtocolLimits, RequestEnvelope, TensorFixtureRequest, TensorFixtureResult, WorkerError,
+    WorkerErrorKind, WorkerHello, MAX_RESPONSE_BYTES, PROTOCOL_VERSION,
 };
 use serde_json::{Map, Value};
 use std::ffi::OsString;
@@ -310,6 +311,40 @@ impl WorkerClient {
         params: Map<String, Value>,
     ) -> Result<(u64, Value), WorkerError> {
         self.request_with_timeout(operation, params, self.timeouts.request)
+    }
+
+    /// Execute one committed fixture through the negotiated control-only
+    /// protocol and validate its bounded readback before exposing it.
+    pub fn run_fixture(
+        &mut self,
+        request: &TensorFixtureRequest,
+    ) -> Result<TensorFixtureResult, WorkerError> {
+        if !self
+            .hello()
+            .capabilities()
+            .operations()
+            .iter()
+            .any(|operation| operation == "run_fixture")
+        {
+            return Err(WorkerError::new(
+                WorkerErrorKind::Protocol,
+                "negotiated worker does not advertise fixture execution",
+            ));
+        }
+
+        let max_fixture_elements = self.hello().limits().max_fixture_elements();
+        let (_, value) = self.request_with_timeout(
+            "run_fixture",
+            request.protocol_params(),
+            self.timeouts.request,
+        )?;
+        match parse_tensor_fixture_result(value, request, max_fixture_elements) {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                self.state = WorkerState::Failed;
+                Err(error)
+            }
+        }
     }
 
     /// Request graceful shutdown and forcibly terminate only when the bounded
