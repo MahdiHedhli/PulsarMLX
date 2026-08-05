@@ -2,8 +2,8 @@
 
 The original host and upstream observations were captured on 2026-08-05 at
 revision `12c2406`; implementation-specific sections are updated through the
-current Spec Kit stop point. This list separates demonstrated limits from
-planned work. See the exact host snapshot in
+T063 bounded real-checkpoint reconciliation. This list separates demonstrated
+limits from planned work. See the exact host snapshot in
 [../preflight/ENVIRONMENT.md](../preflight/ENVIRONMENT.md), validation output
 in [../preflight/BASELINE_VALIDATION.md](../preflight/BASELINE_VALIDATION.md),
 and the source audit in
@@ -23,29 +23,33 @@ and the source audit in
   workspace build does not provide inference or serving.
 - The ignored project environment contains native MLX/MLX-Metal 0.32.0; the
   device probe and seven bounded tensor fixtures executed successfully. Q8_0
-  is verified only for strict complete-row scalar decode/matvec and one bounded
-  evaluated MLX decoded-row dot. Model loading, quantized model roles, token
-  generation, and serving have not been executed.
+  is verified for strict complete-row scalar decode/matvec, one bounded
+  evaluated MLX decoded-row dot, and one named real-checkpoint expert gate
+  projection prefix covering 16 output rows. Tokenization, complete tensors,
+  routing, full layers, generation, and serving have not been executed.
 - No real-model fixture is present in the repository. An external
   Qwen3-30B-A3B Q8_0 artifact now has verified complete size, SHA-256, and the
-  exact required tensor inventory, but it has not been dequantized or executed
-  by either the trusted oracle or Apple slice. The evaluated synthetic
-  routed-MoE fixture establishes only its committed expert bytes, routes,
-  aggregation, and four-value output; it does not establish checkpoint
-  compatibility.
+  exact required tensor inventory. A pinned CPU oracle and Apple MLX both
+  executed the same admitted 34,816-byte prefix of one layer-0 expert-0 gate
+  tensor and agreed for all 16 outputs under the frozen tolerance. That bounded
+  intermediate does not establish complete-tensor, routed-layer, checkpoint,
+  or giant-model compatibility. The evaluated synthetic routed-MoE fixture
+  separately establishes only its committed expert bytes, routes, aggregation,
+  and four-value output.
 - Mapped GGUF-to-MLX aliasing, unified-memory residency behavior, giant-model
   correctness, memory pressure, and SSD streaming performance have not been
   measured.
 
 ## Platform and test coverage
 
-- After US3 and the native-test boundary correction,
+- After the bounded real-checkpoint slice and T063 reconciliation,
   `cargo check --workspace --all-targets` passed on native arm64 macOS, and
-  `cargo test --workspace --no-fail-fast` ran 139 active tests: 139 passed,
-  0 failed, with one native MLX integration test explicitly ignored by the
-  baseline. That test passed when run directly with `--ignored` against the
-  frozen local environment. The Python worker suite separately ran 28 passing
-  tests. These results cover only targets selected by macOS.
+  `cargo test --workspace --no-fail-fast` listed 155 tests: 154 active tests
+  passed, zero failed, and one native MLX integration test was explicitly
+  ignored by the baseline. That test passed when run directly with `--ignored`
+  against the frozen local environment. The most recent complete Python worker
+  suite separately ran 44 passing tests during T060. These results cover only
+  targets selected by macOS.
 - Engine, kernel, and Linux-gated server test targets each ran zero tests on
   macOS. The test run does not exercise the Linux server, CUDA execution,
   `io_uring`, or `handle_chat` behavior.
@@ -91,8 +95,9 @@ and should not be swept into an unrelated Apple backend change.
   scoped Q8_0 reference operations; neither record establishes model inference.
 - The backend-neutral capability, tensor, comparison, compatibility, evidence,
   memory-gauge, and benchmark-admission contracts are implemented and tested.
-  They carry no execution implementation and therefore do not establish any
-  Apple, Linux, CUDA, or model runtime capability by themselves.
+  They do not establish any Apple, Linux, CUDA, or model runtime capability by
+  themselves; capability claims require the separately linked execution
+  records.
 - Ninja and `rustup` were not installed. Rust 1.97.1 and Cargo 1.97.1 came
   from Homebrew. The revised workflow selects GitHub's `macos-15` OS and arm64
   runner label but does not pin its Rust toolchain contents, so local and CI

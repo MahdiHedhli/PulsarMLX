@@ -861,3 +861,32 @@ Qwen tokenization or embeddings, routing, a full expert, a full transformer
 layer, attention, logits, tokens, generation, serving, giant-model inference,
 Linux/CUDA behavior, or performance. T063 must reconcile those boundaries in
 the public compatibility and limitations documentation.
+
+### T063 real-model support boundary and post-slice baseline
+
+The public compatibility and limitations documents now classify the T062
+result as one bounded real-checkpoint intermediate: one Q8_0 tensor, expert 0,
+the gate projection, output rows 0 through 15, and one deterministic activation.
+It is deliberately separate from synthetic routed-MoE evidence and does not
+advance giant-model or production-serving support.
+
+From a clean worktree at pushed commit
+`31ee7e55daadb5d1d7b3d0e278b8ccac114836d9`, the exact post-slice gates ran:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+cargo test --workspace -- --list | rg ': test$' | wc -l
+```
+
+Both workspace gates exited zero. The listing contained 155 tests: 154 active
+tests passed, one native MLX integration smoke test remained explicitly ignored
+by the general baseline, and zero failed. Output retained the inherited
+`crates/quant/src/iq.rs` `unused_mut` warning and 13 macOS `serve` dead-code
+warnings. No repository-wide warning cleanup was performed. The result covers
+only targets selected on macOS; Linux/CUDA compilation and execution were not
+run.
+
+The exact workspace result is also attached to the committed bounded-slice
+record. No model execution, benchmark, or additional hardware-sensitive work
+was performed for T063.

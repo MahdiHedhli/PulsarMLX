@@ -206,7 +206,7 @@ and deterministic prompt; the named output must satisfy its predeclared rule.
 - [X] T060 [US4] Implement explicit external-path `inspect-model` and `validate-model-slice` commands with no downloader, token handling, full-output dump, or depth promotion in `crates/mlx-backend/src/bin/pulsar-mlx.rs` and `crates/mlx-backend/src/client.rs`
 - [X] T061 [US4] Execute the preselected trusted-reference command and commit its sanitized immutable identity and bounded actual comparison output in `docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json`; stop if the oracle is not reproducible
 - [X] T062 [US4] Execute the Apple slice against the same external artifact and prompt, compare only the preselected named output, and commit exact commands, actual errors/result, memory gauges, warnings, and execution-depth exclusions in `docs/validation/qwen3-30b-a3b-q8_0-slice.json`
-- [ ] T063 [US4] Update real-model versus giant-model support boundaries and exact post-slice workspace results in `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/SESSION_LOG.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, and `docs/validation/qwen3-30b-a3b-q8_0-slice.json`
+- [X] T063 [US4] Update real-model versus giant-model support boundaries and exact post-slice workspace results in `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/SESSION_LOG.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, and `docs/validation/qwen3-30b-a3b-q8_0-slice.json`
 
 **Checkpoint**: US4 passes only when every admission record is complete, the
 artifact remains outside Git, the trusted oracle was chosen first, and the
