@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "fixture_set_id": "mlx-tensor-fixtures-v1",
+  "oracle_id": "committed-independent-scalar-v1",
+  "backend_id": "apple-mlx",
+  "requested_device": "gpu",
+  "allow_fallback": false,
+  "synchronization_rule": "explicit_eval_then_gpu_synchronize",
+  "maximum_fixture_elements": 4096,
+  "operations": [
+    {
+      "case_id": "elementwise-fma-nonsymmetric-f32-v1",
+      "operation": "elementwise_fma",
+      "logical_shape": [2, 3],
+      "storage_shape": [2, 3],
+      "layout": "row_major",
+      "input_dtype": "float32",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "inputs": {
+        "left": [1.0, -2.0, 3.5, 4.0, 0.25, -6.0],
+        "right": [0.5, 3.0, -1.5, 2.0, -4.0, 1.0],
+        "bias": 0.25
+      },
+      "expected": [0.75, -5.75, -5.0, 8.25, -0.75, -5.75],
+      "comparison": {
+        "mode": "abs_rel",
+        "absolute_tolerance": 0.000001,
+        "relative_tolerance": 0.000001,
+        "non_finite_policy": "reject"
+      }
+    },
+    {
+      "case_id": "matmul-nonsymmetric-f32-v1",
+      "operation": "matmul",
+      "logical_shape": [2, 2],
+      "storage_shape": [2, 2],
+      "layout": "row_major",
+      "input_dtype": "float32",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "inputs": {
+        "left_shape": [2, 3],
+        "left": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+        "right_shape": [3, 2],
+        "right": [7.0, 8.0, 9.0, 10.0, 11.0, 12.0]
+      },
+      "expected": [58.0, 64.0, 139.0, 154.0],
+      "comparison": {
+        "mode": "abs_rel",
+        "absolute_tolerance": 0.00001,
+        "relative_tolerance": 0.00001,
+        "non_finite_policy": "reject"
+      }
+    },
+    {
+      "case_id": "embedding-gather-order-f32-v1",
+      "operation": "embedding_gather",
+      "logical_shape": [3, 3],
+      "storage_shape": [4, 3],
+      "layout": "row_major",
+      "input_dtype": "float32",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "inputs": {
+        "table_shape": [4, 3],
+        "table": [1.0, -1.0, 2.0, 3.0, 5.0, -2.0, 7.0, 0.5, 4.0, -3.0, 8.0, 6.0],
+        "token_ids": [3, 0, 2],
+        "invalid_token_ids": [-1, 4]
+      },
+      "expected": [-3.0, 8.0, 6.0, 1.0, -1.0, 2.0, 7.0, 0.5, 4.0],
+      "comparison": {
+        "mode": "exact",
+        "absolute_tolerance": 0.0,
+        "relative_tolerance": 0.0,
+        "non_finite_policy": "reject"
+      }
+    },
+    {
+      "case_id": "rms-norm-weighted-f32-v1",
+      "operation": "rms_norm",
+      "logical_shape": [2, 4],
+      "storage_shape": [2, 4],
+      "layout": "row_major",
+      "input_dtype": "float32",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "inputs": {
+        "values": [1.0, 2.0, -1.0, -2.0, 3.0, -1.0, 0.5, 2.0],
+        "weight": [1.0, 0.5, 2.0, -1.0],
+        "epsilon": 0.00001
+      },
+      "expected": [
+        0.6324542671264065,
+        0.6324542671264065,
+        -1.264908534252813,
+        1.264908534252813,
+        1.5894365976914109,
+        -0.26490609961523515,
+        0.5298121992304703,
+        -1.0596243984609406
+      ],
+      "comparison": {
+        "mode": "abs_rel",
+        "absolute_tolerance": 0.00002,
+        "relative_tolerance": 0.00002,
+        "non_finite_policy": "reject"
+      }
+    },
+    {
+      "case_id": "residual-add-nonsymmetric-f32-v1",
+      "operation": "residual_add",
+      "logical_shape": [2, 3],
+      "storage_shape": [2, 3],
+      "layout": "row_major",
+      "input_dtype": "float32",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "inputs": {
+        "residual": [10.0, -3.0, 0.5, 8.0, -7.0, 2.0],
+        "update": [-1.0, 4.0, 2.5, -3.0, 1.0, -5.0]
+      },
+      "expected": [9.0, 1.0, 3.0, 5.0, -6.0, -3.0],
+      "comparison": {
+        "mode": "abs_rel",
+        "absolute_tolerance": 0.000001,
+        "relative_tolerance": 0.000001,
+        "non_finite_policy": "reject"
+      }
+    },
+    {
+      "case_id": "router-topk-tie-f32-v1",
+      "operation": "router_topk_softmax",
+      "logical_shape": [2, 4],
+      "storage_shape": [2, 4],
+      "layout": "row_major",
+      "input_dtype": "float32",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "inputs": {
+        "scores": [1.0, 3.0, 3.0, -1.0, 2.0, 0.0, 1.0, 4.0],
+        "token_count": 2,
+        "expert_count": 4,
+        "top_k": 2,
+        "tie_rule": "score_descending_then_expert_id_ascending"
+      },
+      "expected_expert_ids": [1, 2, 3, 0],
+      "expected": [0.5, 0.5, 0.8807970779778824, 0.11920292202211756],
+      "comparison": {
+        "mode": "abs_rel",
+        "absolute_tolerance": 0.000001,
+        "relative_tolerance": 0.000001,
+        "non_finite_policy": "reject"
+      }
+    },
+    {
+      "case_id": "q8-0-two-block-row-v1",
+      "operation": "q8_0_decode_dot",
+      "logical_shape": [1, 64],
+      "storage_shape": [64, 1],
+      "layout": "gguf_fastest_dimension_first",
+      "input_dtype": "q8_0",
+      "accumulation_dtype": "float32",
+      "output_dtype": "float32",
+      "encoded_byte_count": 68,
+      "quantization": {
+        "id": "Q8_0",
+        "block_elements": 32,
+        "block_bytes": 34,
+        "scale_dtype": "float16_little_endian"
+      },
+      "inputs": {
+        "encoded_hex": "0038f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff000102030405060708090a0b0c0d0e0f004001ff02fe03fd04fc05fb06fa07f908f809f70af60bf50cf40df30ef20ff110f0",
+        "activation": [
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+        ]
+      },
+      "expected_decoded": [
+        -8.0, -7.5, -7.0, -6.5, -6.0, -5.5, -5.0, -4.5,
+        -4.0, -3.5, -3.0, -2.5, -2.0, -1.5, -1.0, -0.5,
+        0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5,
+        4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5,
+        2.0, -2.0, 4.0, -4.0, 6.0, -6.0, 8.0, -8.0,
+        10.0, -10.0, 12.0, -12.0, 14.0, -14.0, 16.0, -16.0,
+        18.0, -18.0, 20.0, -20.0, 22.0, -22.0, 24.0, -24.0,
+        26.0, -26.0, 28.0, -28.0, 30.0, -30.0, 32.0, -32.0
+      ],
+      "expected": [-8.0],
+      "comparison": {
+        "mode": "abs_rel",
+        "absolute_tolerance": 0.00001,
+        "relative_tolerance": 0.00001,
+        "non_finite_policy": "reject"
+      }
+    }
+  ]
+}
