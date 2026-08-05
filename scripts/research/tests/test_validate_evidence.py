@@ -8,6 +8,7 @@ the closed schemas and validator that make them green.
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -21,10 +22,17 @@ import unittest
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 VALIDATOR = REPOSITORY_ROOT / "scripts" / "research" / "validate_evidence.py"
 SCHEMA_DIR = REPOSITORY_ROOT / "schemas" / "research" / "v1"
+MODEL_MANIFEST = REPOSITORY_ROOT / "docs" / "research" / "MODEL_MANIFEST.json"
+PROTOCOL = REPOSITORY_ROOT / "docs" / "research" / "EXPERIMENT_PROTOCOL.md"
+ROUTER_MANIFEST = REPOSITORY_ROOT / "fixtures" / "research" / "router-v1" / "manifest.json"
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 SHA_C = "c" * 64
 SOURCE_COMMIT = "d" * 40
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _type7(values: list[int], probability: float) -> float:
@@ -131,6 +139,8 @@ def _summary(
 
 
 def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str, object]:
+    model_identity = json.loads(MODEL_MANIFEST.read_text(encoding="utf-8"))["model_identity"]
+    protocol_sha256 = _sha256(PROTOCOL)
     observations = [
         _observation(f"warmup-{index:02d}", index, "warmup", 900 + index)
         for index in range(5)
@@ -170,7 +180,7 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
             "protocol_id": "f002-router-protocol",
             "protocol_version": "1.0.0",
             "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-            "sha256": SHA_A,
+            "sha256": protocol_sha256,
             "order_seed": 22002,
         },
         "execution": {
@@ -191,13 +201,16 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
         "batch_id": "batch-a",
         "process_replication_id": "process-warm-a",
         "model": {
-            "repository": "Qwen/Qwen3-30B-A3B-GGUF",
-            "revision": SOURCE_COMMIT,
-            "filename": "Qwen3-30B-A3B-Q8_0.gguf",
-            "size_bytes": 1,
-            "sha256": SHA_A,
-            "architecture": "qwen3moe",
-            "external_locator": "$PULSARMLX_MODEL_GGUF",
+            field: model_identity[field]
+            for field in (
+                "repository",
+                "revision",
+                "filename",
+                "size_bytes",
+                "sha256",
+                "architecture",
+                "external_locator",
+            )
         },
         "tensor": {
             "name": "blk.0.ffn_gate_inp.weight",
@@ -230,7 +243,7 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
         "oracle": {
             "oracle_id": "f002-scalar-f32-v1",
             "project": "llama.cpp-plus-standalone-scalar-oracle",
-            "revision": SOURCE_COMMIT,
+            "revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
             "generation_command": "python3 scripts/research/router_oracle.py --fixture $PULSARMLX_ROUTER_FIXTURE",
             "input_fixture_sha256": SHA_C,
             "tensor_sha256": SHA_B,
@@ -284,15 +297,33 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
                 "expert_execution",
                 "routed_moe_aggregation",
                 "complete_transformer_layer",
+                "language_model_head_or_model_output_logits",
+                "generation",
                 "full_model_generation",
                 "serving",
+                "custom_metal",
+                "complete_model_inference",
+                "full_or_giant_model_inference",
+                "projected_tokens_per_second",
                 "token_throughput",
                 "linux_cuda_runtime_parity",
+                "real_checkpoint_routing",
             ],
         },
         "warnings": ["Fixture-only evidence; no real checkpoint measurement."],
         "failures": [],
-        "artifacts": [],
+        "artifacts": [
+            {
+                "kind": "frozen_protocol",
+                "path": "docs/research/EXPERIMENT_PROTOCOL.md",
+                "sha256": protocol_sha256,
+            },
+            {
+                "kind": "router_fixture_manifest",
+                "path": "fixtures/research/router-v1/manifest.json",
+                "sha256": _sha256(ROUTER_MANIFEST),
+            },
+        ],
     }
 
 

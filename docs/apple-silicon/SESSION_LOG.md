@@ -2240,3 +2240,68 @@ machine-readable real-routing exclusion, and an evaluated-stage label on
 unevaluated terminal attempts. All three were corrected and re-review passed
 with no remaining high or medium issue. No model path was resolved or opened,
 no MLX/model execution occurred, and no NTFY notification was sent.
+
+### T053 fail-closed evidence semantics
+
+The Feature 002 validator now pins the exact model revision and SHA-256, frozen
+protocol hash and seed, pinned oracle revision, and repository artifact
+identities without resolving `$PULSARMLX_MODEL_GGUF`. Repository links are
+canonical, bounded, regular, non-symlinked paths whose content hashes are
+recomputed. Fixture records require the exact protocol and fixture-manifest
+bindings. Raw attempt indices are contiguous per compatible series; repetition
+counts cannot be pooled across condition or instrumentation boundaries;
+summaries cannot pool process states; failed and aborted attempts retain
+bounded failure identities; and evaluated comparison failures may retain their
+GPU output and false correctness result.
+
+Correctness validation now rejects non-finite or malformed scalars, widened
+v1 logit tolerances, impossible `mean <= RMSE <= maximum` relationships,
+contradictory mismatch counts, and nondeterministic passing hashes. Claim
+boundaries require every FR-032 exclusion plus the earlier stable
+`full_model_generation` and `token_throughput` spellings, reject supported and
+unsupported overlap, and reject raw-v1 `verified` status because the raw schema
+cannot prove committed/indexed clean-checkout reproduction. Verified promotion
+remains a package-level responsibility. Frozen protocol v1 continues to reject
+all exclusions because it declares no exclusion rule.
+
+The final model-free validation commands were:
+
+```sh
+python3 -m py_compile scripts/research/validate_evidence.py \
+  scripts/research/tests/test_validate_evidence.py \
+  scripts/research/tests/test_feature002_records.py
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts.research.tests.test_validate_evidence \
+  scripts.research.tests.test_feature002_records
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence/mutations/f002-router-fixture-excluded-0001.json
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity --fixture-only
+PULSARMLX_MODEL_GGUF='' python3 -m unittest discover \
+  -s scripts/research/tests -v
+git diff --check
+```
+
+Compilation passed. The focused suite passed 29 of 29 tests in 3.108 seconds;
+the accepted fixture directory reported exactly three records; the excluded
+mutation exited 1 with bounded `semantic_relationship` output and no traceback
+or private path; and fixture-only package verification accepted three records,
+zero claims, and six deterministic generated artifacts. Full research
+discovery ran 79 methods and retained exactly 19 intentional red-contract
+failures, all assigned to the still-incomplete T054/T055 publication,
+sidecar, claim-link, and reviewer-index seams. `git diff --check` passed.
+
+Two independent review rounds found and closed fixture-promotion laundering,
+evaluated-failure loss, malformed-scalar tracebacks, mutable identity pins,
+noncanonical artifact aliases, incomplete fixture links, cross-series count
+pooling, cross-process-state summaries, inferred clean-process requirements for
+auxiliary diagnostics, schema recursion/size exposure, and silently widened
+tolerances. The final review reported no remaining high or medium finding.
+
+No command accessed a checkpoint, resolved or opened a model path, executed
+MLX/model code, consumed Apple GPU memory, or sent NTFY. Local inference did
+not need to pause.

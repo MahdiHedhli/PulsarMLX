@@ -199,7 +199,7 @@ privacy or scope violations.
 ### Implementation
 
 - [X] T052 [US3] Add small schema-valid passing, failed, aborted, excluded, and mutation evidence fixtures with no real measurements in `fixtures/research/router-v1/evidence/`
-- [ ] T053 [US3] Implement Feature 002 identity, correctness, repetition, artifact-link, unsupported-depth, and claim-promotion checks in `scripts/research/validate_evidence.py`
+- [X] T053 [US3] Implement Feature 002 identity, correctness, repetition, artifact-link, unsupported-depth, and claim-promotion checks in `scripts/research/validate_evidence.py`
 - [ ] T054 [US3] Implement exclusive append-only publication, stable experiment IDs, path sanitization, legal bounded-copy rules, and atomic failure in `scripts/research/publish_evidence.py`
 - [ ] T055 [US3] Implement deterministic correctness/timing tables, bounded SVGs, source sidecars, ledger verification, and reviewer-index verification in `scripts/research/generate_tables.py`, `scripts/research/generate_figures.py`, and `scripts/research/verify_package.py`
 - [ ] T056 [US3] Generate and commit only fixture-derived expected publication outputs under `fixtures/research/router-v1/expected/`
