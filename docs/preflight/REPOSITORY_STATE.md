@@ -201,8 +201,9 @@ that snapshot, `.github/workflows/macos.yml`, using `macos-15`, asserting
 `arm64`, and running the narrower `cargo check --workspace` and
 `cargo test --workspace`. The bootstrap revision now configures the exact
 required commands, `cargo check --workspace --all-targets` and
-`cargo test --workspace --no-fail-fast`. After publication, GitHub Actions run
-[30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+`cargo test --workspace --no-fail-fast`. After publication, push-triggered
+GitHub Actions run
+[30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362)
 completed successfully on the `macos-15-arm64` image and ran 32 tests.
 
 ## Verification performed in this session
@@ -237,7 +238,7 @@ Verified locally:
 - Both preserved local commits are free of whitespace errors reported by
   `git show --check`.
 - The published macOS workflow passed both exact Cargo commands on an arm64
-  GitHub-hosted runner in run 30977589181.
+  GitHub-hosted runner in push run 30977591362.
 
 Not yet verified:
 

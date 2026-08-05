@@ -95,7 +95,7 @@ preserved `12c2406` commit; its signature and body were not changed in this
 session.
 
 The final pre-commit rerun again passed the exact workspace commands with 32
-tests. [GitHub Actions run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+tests. [Push-triggered GitHub Actions run 30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362)
 also passed both commands and ran 32 tests on the published commit.
 
 Full results are in
@@ -169,12 +169,13 @@ GitHub's standard `macos-15` Apple Silicon runner, asserts `arm64`, records
 macOS/Rust/Cargo identity, and deliberately does not gate on broad upstream
 rustfmt or Clippy debt.
 
-Confirmed run:
+Confirmed runs:
 
-- run: [30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181);
-- event: manual `workflow_dispatch`; no automatic run appeared after the
-  initial push, and dispatch occurred after GitHub reported the workflow active;
-- conclusion: success in 1 minute 8 seconds;
+- primary run: [30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362);
+- event: automatic `push`; the run completed successfully;
+- corroborating run: manual
+  [`workflow_dispatch` run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+  also completed successfully for the same commit;
 - commit: `733dce565c8b2700d500e8e14fdf36f7fac2dd47`;
 - image: `macos-15-arm64`, release `20260727.0256`;
 - environment: arm64, macOS 15.7.7 build 24G720, rustc/Cargo 1.97.1, host

@@ -13,7 +13,7 @@
 | Category | Current status |
 | --- | --- |
 | Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
-| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, `cargo check --workspace --all-targets` passes and `cargo test --workspace --no-fail-fast` passes with 32 tests. The same commands pass in [GitHub Actions run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181) on the standard `macos-15-arm64` image. The source-level macOS stub builds, the Linux-only `handle_chat` signature is gated, and Spec Kit planning is initialized. |
+| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, `cargo check --workspace --all-targets` passes and `cargo test --workspace --no-fail-fast` passes with 32 tests. The same commands pass in [push-triggered GitHub Actions run 30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362) on the standard `macos-15-arm64` image. The source-level macOS stub builds, the Linux-only `handle_chat` signature is gated, and Spec Kit planning is initialized. |
 | Planned capabilities | An MLX device proof, tensor-reference operations, portable expert storage, quantized parity, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
 | Unsupported or unverified | MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
 

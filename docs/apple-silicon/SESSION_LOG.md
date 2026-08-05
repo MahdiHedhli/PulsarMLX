@@ -174,13 +174,15 @@ independent `MahdiHedhli/PulsarMLX` repository, default branch `main`, commit
 `733dce5` at `origin/main`, and the preserved `upstream` remote. Private
 vulnerability reporting is enabled.
 
-No automatic run appeared after the initial push. After GitHub reported the
-workflow as active, the configured `workflow_dispatch` trigger was invoked
-explicitly. [Run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
-then completed successfully in 1 minute 8 seconds. The job reported
+The push-triggered run was not visible in the first immediate query. After
+GitHub reported the workflow as active, the configured `workflow_dispatch`
+trigger was invoked explicitly. GitHub subsequently showed both
+[push run 30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362)
+and [manual run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+for the same commit; both completed successfully. The jobs reported
 `macos-15-arm64`, native `arm64`, macOS 15.7.7 build 24G720, rustc/Cargo 1.97.1,
 and passed the exact all-target check and no-fail-fast test commands with 32
-tests. It is a Cargo baseline only, not MLX or model evidence.
+tests. They are Cargo baselines only, not MLX or model evidence.
 
 ### Implementation stop
 

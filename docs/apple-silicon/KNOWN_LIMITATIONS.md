@@ -81,7 +81,7 @@ that every one is required by the eventual MLX integration.
   <https://github.com/MahdiHedhli/PulsarMLX>. GitHub reports `isFork: false`,
   visibility `PUBLIC`, and default branch `main`. Local `main` tracks
   `origin/main`; the original Pulsar remote remains `upstream`.
-- [GitHub Actions run 30977589181](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977589181)
+- [Push-triggered GitHub Actions run 30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362)
   completed successfully for commit `733dce5`. Its job reported image
   `macos-15-arm64` release `20260727.0256`, `arm64`, macOS 15.7.7 build 24G720,
   rustc 1.97.1, Cargo 1.97.1, and host `aarch64-apple-darwin`.
