@@ -1,8 +1,9 @@
 # Contract: Feature 002 Commands v1
 
-**Status**: Model-free setup, validation, generation, publication, and package
-verification commands are implemented. Router/model commands remain planned
-and prohibited until their dependency and notification gates pass.
+**Status**: Offline research/package utilities, generated control-only router
+execution, and lexical fail-closed command parsers are implemented. Retained
+router-fixture execution, Feature 002 result publication, and every model
+command remain gated until their dependency and notification gates pass.
 
 All commands run from the repository root. External model, oracle-build, and
 temporary evidence paths remain local and are represented as placeholders in
@@ -84,8 +85,10 @@ These four safe commands are required in fixture-only CI.
 
 ## External model inventory
 
-External access begins only after the methodology commit is pushed and an
-acknowledged NTFY notification is sent.
+External access begins only after T022, T038, T049, T060, and T071 are pushed
+and green; T072 has re-established the clean/equal offline and resource gates;
+and the T073 NTFY notification is acknowledged. T074 is the first command
+permitted to resolve, stat, hash, open, or otherwise access the checkpoint.
 
 ```sh
 cargo run --release -p mlx-backend --bin pulsar-mlx -- inspect-router \
@@ -121,9 +124,10 @@ scripts/research/capture_router_oracle.sh \
 
 The script:
 
-- obtains a clean external checkout of `ggml-org/llama.cpp` at exactly
-  `b06aa774c03dbbb624e726664b714a57d1f49815` without placing it in this
-  repository;
+- requires an operator-prepared clean external checkout of
+  `ggml-org/llama.cpp` at exactly
+  `b06aa774c03dbbb624e726664b714a57d1f49815`, verifies that identity, and does
+  not place or initialize the checkout in this repository;
 - verifies the checkout and license;
 - builds the CPU-only callback helper with no Metal/GPU offload;
 - directly supplies token IDs `[0,1]` at positions `[0,1]` without tokenizer
@@ -145,7 +149,17 @@ The script:
   and computes float32 logits, full softmax, top-8, selected probabilities, and
   renormalized weights without importing the MLX worker;
 - validates the capture independently and records the standalone oracle result
-  under the frozen policy; and
+  under the frozen policy;
+- retains both complete 16,384-byte `capture-{a,b}.f32le` attempts, both raw
+  callback records, and both bounded marker-delimited scheduler traces so the
+  two independent executions remain directly reviewable. Retained traces are
+  reconstructed only from the parsed split ID, CPU backend, and bounded input
+  count; raw diagnostic lines, suffixes, and paths are never copied;
+- assembles, rehashes, and fsyncs the complete candidate in a freshly created
+  hidden sibling directory, then publishes it with an atomic no-replace
+  directory rename. The requested output directory remains absent on any
+  pre-publication failure or crash, and an existing destination is never
+  replaced; and
 - writes bounded legal fixture/oracle values, raw attempts, hashes, source
   identities, and exclusions to the external output directory.
 
@@ -204,11 +218,12 @@ cargo run -p mlx-backend --bin pulsar-mlx -- validate-router-fixtures \
   --evidence "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE"
 ```
 
-Fixture validation covers 128-expert/top-8 exact ties, near ties at the 8/9
-boundary, single and batch rows, malformed cardinality/type/range/orientation,
-invalid top-k, non-finite values, short reads, file mutation, and explicit
-evaluated GPU/no-fallback behavior for bounded generated weights. Synthetic
-results remain a separate evidence level.
+The focused tests already cover the generated single-row/batch seam and an
+all-equal deterministic ordering case. Once T039 through T045 complete, the
+retained fixture command will also cover near ties at the 8/9 boundary,
+malformed cardinality/type/range/orientation, invalid top-k, non-finite values,
+short reads, file mutation, and explicit evaluated GPU/no-fallback behavior.
+Synthetic results remain a separate evidence level.
 
 ## Publication installation
 

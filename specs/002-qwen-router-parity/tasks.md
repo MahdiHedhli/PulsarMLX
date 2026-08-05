@@ -125,24 +125,24 @@ T084.
 
 ### Tests First
 
-- [ ] T023 [P] [US1] Write and run failing Rust tests for tensor admission, complete logits/probabilities, top-8 IDs/order, selected probabilities, normalized weights, canonical hashes, comparisons, and ten-repeat identity in `crates/mlx-backend/tests/router_contract.rs`
-- [ ] T024 [P] [US1] Write and run failing worker tests for single-row and bounded-batch evaluated MLX router execution, explicit GPU, synchronization, complete outputs, and no fallback in `python/pulsar_mlx_worker/tests/test_router.py`
-- [ ] T025 [P] [US1] Write and run failing stub tests for pinned-source verification, two identical captures, cancellation proof, scalar F32 accumulation, NumPy cross-checking, oracle independence, and no model auto-download in `scripts/research/tests/test_router_oracle.py`
+- [X] T023 [P] [US1] Write and run failing Rust tests for tensor admission, complete logits/probabilities, top-8 IDs/order, selected probabilities, normalized weights, canonical hashes, comparisons, and ten-repeat identity in `crates/mlx-backend/tests/router_contract.rs`
+- [X] T024 [P] [US1] Write and run failing worker tests for single-row and bounded-batch evaluated MLX router execution, explicit GPU, synchronization, complete outputs, and no fallback in `python/pulsar_mlx_worker/tests/test_router.py`
+- [X] T025 [P] [US1] Write and run failing stub tests for pinned-source verification, two identical captures, cancellation proof, scalar F32 accumulation, NumPy cross-checking, oracle independence, and no model auto-download in `scripts/research/tests/test_router_oracle.py`
 
 ### Implementation
 
-- [ ] T026 [US1] Create the generated 128-expert/top-8 fixture README, manifest, finite hidden rows, F32 weight fixture recipe, independent expected results, and canonical hashes in `fixtures/research/router-v1/README.md`, `fixtures/research/router-v1/manifest.json`, and `fixtures/research/router-v1/golden/`
-- [ ] T027 [US1] Implement immutable router identity, positional-read admission, canonical F32 hashing, full-output comparison metrics, and bounded evidence types in `crates/mlx-backend/src/router.rs`
-- [ ] T028 [US1] Add the control-only router request/result, strict frame bounds, complete response validation, and stable error parsing in `crates/mlx-backend/src/protocol.rs`
-- [ ] T029 [US1] Add the supervised router request method without changing Feature 001 methods or descriptor inheritance in `crates/mlx-backend/src/client.rs`
-- [ ] T030 [US1] Implement evaluated MLX F32 projection, full 128-way softmax, deterministic top-8, selected-probability renormalization, evaluation, synchronization, and memory gauges in `python/pulsar_mlx_worker/router.py`
-- [ ] T031 [US1] Register the additive router operation without changing existing operations or startup semantics in `python/pulsar_mlx_worker/protocol.py`, `python/pulsar_mlx_worker/runtime.py`, and `python/pulsar_mlx_worker/__main__.py`
-- [ ] T032 [US1] Add strict parsers and safe planned commands for `inspect-router`, `validate-router-fixtures`, and `validate-router` in `crates/mlx-backend/src/bin/pulsar-mlx.rs`
-- [ ] T033 [US1] Export only the additive Feature 002 router API and retain Feature 001 exports unchanged in `crates/mlx-backend/src/lib.rs`
-- [ ] T034 [US1] Implement the pinned llama.cpp capture source, shell orchestration, standalone scalar oracle, and no-MLX import guard in `scripts/research/llama_capture/router_capture.cpp`, `scripts/research/capture_router_oracle.sh`, and `scripts/research/router_oracle.py`
-- [ ] T035 [US1] Run focused Rust, worker, generated-fixture MLX, oracle-stub, schema, and package tests and confirm all T023 through T025 failures now pass without checkpoint access using `specs/002-qwen-router-parity/quickstart.md`
-- [ ] T036 [US1] Document the offline router seam, explicit compatibility level, oracle boundary, unverified real-checkpoint status, exact commands, and unsupported depths in `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/BACKEND_DESIGN.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
-- [ ] T037 [US1] Run exact workspace gates, Python discovery, research validation, `git diff --check`, Feature 001 preservation review, and staged safety scans over `crates/mlx-backend/`, `python/pulsar_mlx_worker/`, `scripts/research/`, and `fixtures/research/router-v1/`
+- [X] T026 [US1] Create the generated 128-expert/top-8 fixture README, manifest, finite hidden rows, F32 weight fixture recipe, independent expected results, and canonical hashes in `fixtures/research/router-v1/README.md`, `fixtures/research/router-v1/manifest.json`, and `fixtures/research/router-v1/golden/`
+- [X] T027 [US1] Implement immutable router identity, positional-read admission, canonical F32 hashing, full-output comparison metrics, and bounded evidence types in `crates/mlx-backend/src/router.rs`
+- [X] T028 [US1] Add the control-only router request/result, strict frame bounds, complete response validation, and stable error parsing in `crates/mlx-backend/src/protocol.rs`
+- [X] T029 [US1] Add the supervised router request method without changing Feature 001 methods or descriptor inheritance in `crates/mlx-backend/src/client.rs`
+- [X] T030 [US1] Implement evaluated MLX F32 projection, full 128-way softmax, deterministic top-8, selected-probability renormalization, evaluation, synchronization, and memory gauges in `python/pulsar_mlx_worker/router.py`
+- [X] T031 [US1] Register the additive router operation without changing existing operations or startup semantics in `python/pulsar_mlx_worker/protocol.py`, `python/pulsar_mlx_worker/runtime.py`, and `python/pulsar_mlx_worker/__main__.py`
+- [X] T032 [US1] Add strict parsers and safe planned commands for `inspect-router`, `validate-router-fixtures`, and `validate-router` in `crates/mlx-backend/src/bin/pulsar-mlx.rs`
+- [X] T033 [US1] Export only the additive Feature 002 router API and retain Feature 001 exports unchanged in `crates/mlx-backend/src/lib.rs`
+- [X] T034 [US1] Implement the pinned llama.cpp capture source, shell orchestration, standalone scalar oracle, and no-MLX import guard in `scripts/research/llama_capture/router_capture.cpp`, `scripts/research/capture_router_oracle.sh`, and `scripts/research/router_oracle.py`
+- [X] T035 [US1] Run focused Rust, worker, generated-fixture MLX, oracle-stub, schema, and package tests and confirm all T023 through T025 failures now pass without checkpoint access using `specs/002-qwen-router-parity/quickstart.md`
+- [X] T036 [US1] Document the offline router seam, explicit compatibility level, oracle boundary, unverified real-checkpoint status, exact commands, and unsupported depths in `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/BACKEND_DESIGN.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
+- [X] T037 [US1] Run exact workspace gates, Python discovery, research validation, `git diff --check`, Feature 001 preservation review, and staged safety scans over `crates/mlx-backend/`, `python/pulsar_mlx_worker/`, `scripts/research/`, and `fixtures/research/router-v1/`
 - [ ] T038 [US1] Create focused router-core and oracle-tooling commits, push `main`, wait for every fixture-only/workspace CI job, and record actual results in `docs/apple-silicon/SESSION_LOG.md`
 
 **Checkpoint**: Offline router and oracle contracts pass. No real-router

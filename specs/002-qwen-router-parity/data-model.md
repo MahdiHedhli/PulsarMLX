@@ -1,8 +1,10 @@
 # Data Model: Qwen3MoE Layer-0 Router Parity
 
-**Status**: The v1 evidence/statistics foundation is implemented for committed
-fixtures. Router runtime entities and real-checkpoint observations remain
-planned; no Feature 002 real-router result exists.
+**Status**: The v1 evidence/statistics foundation and the generated model-free
+subset of the router request/result entities are implemented for committed
+fixtures. The complete real `RouterExecutionResult`, external-artifact
+observations, and real-checkpoint evidence remain planned; no Feature 002
+real-router result exists.
 
 Feature 002 has no database. Its entities are versioned Rust/Python protocol
 values, bounded committed JSON evidence, generated publication artifacts, and

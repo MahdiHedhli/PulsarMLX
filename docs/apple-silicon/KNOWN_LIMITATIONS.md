@@ -41,6 +41,45 @@ and the source audit in
   correctness, behavior under elevated memory pressure, and SSD streaming
   performance have not been measured.
 
+## Feature 002 offline-router boundary
+
+- The complete-router path is currently verified only against two committed,
+  generated f32 fixtures: one `[1,2048]` row and one `[2,2048]` batch using
+  generated expert-major `[128,2048]` weights. It evaluates all 128 logits and
+  full-softmax probabilities, deterministic top-8 selection, selected
+  probabilities, and selected-sum-normalized weights on explicit MLX GPU. This
+  is model-free fixture execution, not Qwen checkpoint routing.
+- A raw router response with `passed: true` establishes only that `gpu` was
+  requested and selected, fallback was false, and the returned operation was
+  evaluated and synchronized. It does not establish independent-oracle parity,
+  checkpoint admission, genuine hidden-state provenance, repeatability, or
+  timing.
+- The independent [`router oracle`](../../scripts/research/router_oracle.py)
+  source and orchestration contract pass their twelve
+  model-free tests, including pinned-revision, two-capture, cancellation,
+  scalar-f32 accumulation, injected NumPy cross-check, import-independence, and
+  no-download checks. The pinned llama.cpp checkout and helper have not been
+  built or run against the live checkpoint, so no `ffn_norm-0` capture or real
+  oracle result exists.
+- No Feature 002 command resolved, statted, hashed, opened, or executed an
+  external checkpoint. Exact router-tensor occurrence, type, offsets, encoded
+  range/hash, scale/bias metadata, genuine real hidden states, real rank-8/9
+  tie state, Apple parity, ten-repeat identity, and timing all remain
+  unverified at their explicit gates.
+- Router-only evidence does not establish any selected expert projection,
+  expert MLP, weighted expert aggregation, routed-MoE block, transformer layer,
+  attention or earlier hidden-state computation in PulsarMLX, language-model
+  logits, token generation, serving, full/giant-model inference, custom Metal,
+  tokens per second, or Linux/CUDA runtime parity.
+
+The current model-free validation results were: 8 Rust backend routing tests,
+6 Rust router-contract tests, 9 `mlx-backend` library tests, 9 `pulsar-mlx`
+CLI tests, 9 Python worker-router tests, 12 independent-oracle tests, 53
+research tests, and one explicit Rust-to-Python generated-router integration,
+all passing. The generated-fixture check reported four byte-identical files,
+and both the fixture evidence validator and fixture-only package verifier
+passed. These results establish only their generated and contract-test scopes.
+
 ## Platform and test coverage
 
 - At the T076 final focused gate and T077 literal quickstart replay,

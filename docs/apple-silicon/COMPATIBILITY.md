@@ -19,6 +19,7 @@ checkpoint slice does not imply giant-model execution or production serving.
 | Architecture-independent dense primitive fixtures | f32 | **Verified** — independent expected values in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Verified** — six evaluated, synchronized dense/routing GPU cases in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Unsupported** — isolated primitive cases do not execute the routed expert graph | **Unsupported** — primitive cases do not open a checkpoint | **Unsupported** — no model execution occurs | **Unsupported** — no serving path is involved |
 | Architecture-independent strict Q8_0 primitive | GGUF Q8_0, complete 32-element/34-byte blocks | **Verified** — malformed-input, decode, and scalar matvec cases recorded in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Verified** — one evaluated, synchronized two-block decode/dot case in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Unsupported** — no synthetic routed graph uses Q8_0 expert weights | **Unsupported** — the primitive record does not open a checkpoint | **Unsupported** — no model execution occurs | **Unsupported** — no serving path is involved |
 | Architecture-independent `synthetic-routed-moe-v1` | f32 dense expert weights | **Verified** — independent scalar routes, weights, and aggregate in [`synthetic-moe-v1.json`](../validation/synthetic-moe-v1.json) | **Verified** — evaluated and synchronized MLX expert graph in [`synthetic-moe-v1.json`](../validation/synthetic-moe-v1.json) | **Verified** — exact split-shard payloads, top-2 routes, normalized weights, and aggregate in [`synthetic-moe-v1.json`](../validation/synthetic-moe-v1.json) | **Unsupported** — the fixture contains generated synthetic weights, not a checkpoint | **Unsupported** — no checkpoint is loaded or executed | **Unsupported** — tokenizer, generation, and server paths are excluded |
+| Generated Feature 002 complete-router fixtures, `generated-qwen3moe-router-{single-row,two-row}-v1` | f32 generated expert-major `[128,2048]` weights | **Verified** — the committed [`router-v1` manifest](../../fixtures/research/router-v1/manifest.json) and expected results retain all 128 logits and full-softmax probabilities, ordered top-8 IDs, selected probabilities, normalized weights, and canonical f32le hashes | **Verified** — the [worker router contract](../../python/pulsar_mlx_worker/tests/test_router.py) executed the one-row and two-row complete f32 projection, full 128-way softmax, deterministic top-8, and selected-probability renormalization on explicit MLX GPU with evaluation, synchronization, and no fallback | **Unsupported** — the operation stops at router outputs and executes no expert | **Unsupported** — no external checkpoint or real hidden-state fixture was accessed | **Unsupported** — generated router dimensions do not establish checkpoint or giant-model execution | **Unsupported** — no serving path is involved |
 | `qwen3moe`, exact `blk.0.ffn_gate_exps.weight` expert-0 gate-projection rows 0–15 | GGUF Q8_0; identity and exact tensor inventory in [`qwen3-30b-a3b-q8_0-compatibility.json`](../validation/models/qwen3-30b-a3b-q8_0-compatibility.json) | **Unsupported** — generic Q8_0 scalar fixtures are prerequisites, while the pinned CPU checkpoint oracle belongs to the bounded real-slice cell rather than a separate architecture-level scalar fixture | **Unsupported** — generic two-block Q8_0 MLX parity is a prerequisite, not an executed Qwen graph at this evidence level | **Unsupported** — the routed fixture uses synthetic f32 weights and does not execute Qwen routing or Q8_0 experts | **Verified** — the trusted reference and evaluated Apple result match for the exact 34,816-byte prefix in [`qwen3-30b-a3b-q8_0-reference-result.json`](../validation/models/qwen3-30b-a3b-q8_0-reference-result.json) and [`qwen3-30b-a3b-q8_0-slice.json`](../validation/qwen3-30b-a3b-q8_0-slice.json) | **Unsupported** — no complete tensor, expert, layer, or model was executed | **Unsupported** — no logits, tokens, generation, HTTP, or MCP serving was executed |
 
 The official Qwen artifact is a large checkpoint, but its size does not promote
@@ -80,9 +81,53 @@ aggregation, and an independent scalar comparison. Its routes were
 fixture evidence, not a real GGUF model-loader, tokenizer, logits, generation,
 serving, or performance result.
 
+## Feature 002 offline complete-router seam
+
+The Feature 002 worker now accepts a control-only request for one of two
+committed generated cases. The request contains only the case ID, explicit
+`gpu` device, and `allow_fallback: false`; it contains no path, checkpoint
+bytes, tensor values, hidden-state values, oracle values, or caller-selected
+measurement counts. The worker reconstructs only the committed generated
+fixture, evaluates the complete f32 projection and router operation, retains
+all 128 logits and full-softmax probabilities per row, returns ordered top-8
+IDs plus selected and normalized probabilities, and supplies canonical f32le
+hashes and bounded memory gauges.
+
+For this raw worker result, `passed: true` has a deliberately narrow meaning:
+the requested and selected device are both `gpu`, fallback was not used, and
+the returned arrays were explicitly evaluated and synchronized. It does not
+mean that a real checkpoint was admitted, that a genuine Qwen hidden state was
+used, or that an independent real-model oracle comparison passed. The current
+independent expected values are generated-fixture values only.
+
+The following model-free commands were executed from the repository root for
+the current offline slice:
+
+| Command | Actual result |
+| --- | --- |
+| `cargo test -p backend --test routing_contract` | 8 passed, 0 failed |
+| `cargo test -p mlx-backend --test router_contract` | 6 passed, 0 failed |
+| `cargo test -p mlx-backend --lib` | 9 passed, 0 failed |
+| `cargo test -p mlx-backend --bin pulsar-mlx` | 9 passed, 0 failed |
+| `PULSARMLX_MODEL_GGUF='' PYTHONPATH=python uv run python -m unittest python/pulsar_mlx_worker/tests/test_router.py -v` | 9 passed, 0 failed |
+| `PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend --test router_worker_integration real_python_worker_two_row_router_matches_committed_golden -- --ignored --exact` | 1 passed, 0 failed |
+| `PULSARMLX_MODEL_GGUF='' python3 -m unittest scripts/research/tests/test_router_oracle.py -v` | 12 passed, 0 failed |
+| `PULSARMLX_MODEL_GGUF='' python3 -m unittest discover -s scripts/research/tests -v` | 53 passed, 0 failed |
+| `python3 fixtures/research/router-v1/golden/generate.py --check` | 4 generated files were byte-identical |
+| `PULSARMLX_MODEL_GGUF='' python3 scripts/research/validate_evidence.py --schema-dir schemas/research/v1 --input fixtures/research/router-v1/evidence` | passed |
+| `PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py --feature 002-qwen-router-parity --fixture-only` | passed |
+
+Every command above kept the external-model variable empty or operated only on
+committed generated data. No external checkpoint was resolved, statted,
+hashed, opened, or executed for Feature 002.
+
 ## Platform boundary
 
 - macOS arm64 and MLX 0.32.0: the cases above passed locally.
+- Feature 002 complete-router execution is verified only for its two generated
+  f32 cases. Real `blk.0.ffn_gate_inp.weight` admission, genuine `ffn_norm-0`
+  inputs, checkpoint parity, repeatability evidence, and router timing remain
+  unverified.
 - Linux/CUDA after shared Q8_0 additions: pending, not run on this Apple host.
 - The external Qwen3-30B-A3B Q8_0 artifact's complete size and SHA-256 match
   immutable published values, and the exact required Q8_0 expert tensor role

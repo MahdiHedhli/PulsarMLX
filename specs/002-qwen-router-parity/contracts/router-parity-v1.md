@@ -1,7 +1,9 @@
 # Router Parity Contract v1
 
-**Status**: Normative design contract; external-artifact observations remain a
-mandatory admission gate until frozen in the Feature 002 tensor manifest.
+**Status**: Normative design contract. Only its generated model-free
+protocol/execution subset is implemented; the complete real-result contract
+and external-artifact observations remain mandatory later gates until frozen
+in the Feature 002 tensor manifest.
 
 **Feature**: [Qwen3MoE layer-0 router parity](../spec.md)
 
@@ -121,6 +123,12 @@ manifest MUST record:
 - input row count, shape `[N,2048]`, float32 dtype, and little-endian byte order;
 - every row's exact float32 byte hash and the full fixture hash;
 - two independent captures with identical hashes;
+- both complete bounded capture byte files, both raw callback records, and both
+  marker-delimited scheduler trace proofs, retained as separately hashed
+  candidate artifacts. Each retained scheduler proof MUST be reconstructed only
+  from exact markers and normalized parsed split ID, CPU backend, and bounded
+  input count; arbitrary stderr text, suffixes, and private paths MUST NOT be
+  copied;
 - timestamp, clean source commit, and a statement that MLX was not imported or
   called during capture;
 - license and redistribution basis for the bounded derived fixture.
@@ -142,6 +150,12 @@ Required real cases are:
 The complete capture MUST be exactly two `[2048]` rows and no more than 16,384
 canonical F32 bytes. The two rows MUST differ byte-for-byte. Failure of a token
 bounds, size, row-selection, or distinctness check stops real capture.
+
+The oracle candidate MUST be assembled and fully revalidated in a fresh hidden
+sibling directory. Only after every raw attempt, provenance record, oracle,
+and bundle-manifest hash passes and the files and directory are fsynced may an
+atomic no-replace directory rename expose the requested destination. Failure or
+interruption before that rename MUST leave the requested destination absent.
 
 Every value MUST be finite before MLX is imported or accessed. Shape, byte
 length, and SHA-256 MUST match the fixture manifest exactly.

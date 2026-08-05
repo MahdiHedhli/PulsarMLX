@@ -230,6 +230,91 @@ tolerance. The record includes hashes, versions, device identity, and errors.
 Only that graph depth is verified; end-to-end inference still requires a
 validated logits or token boundary.
 
+### Feature 002 offline router seam
+
+Feature 002 adds a separate complete-router reference operation without
+reopening the Feature 001 model-slice contract or changing inherited
+Linux/CUDA selection. Its current executable boundary is deliberately
+model-free:
+
+```text
+committed generated case ID
+          |
+          v
+control-only Rust request and supervised persistent worker
+          |
+          v
+generated finite hidden rows [N,2048] and f32 weights [128,2048]
+          |
+          v
+explicit MLX GPU projection -> full 128-way softmax -> ordered top-8
+          |
+          v
+selected probabilities -> selected-sum renormalization -> eval/sync/readback
+          |
+          v
+complete arrays, canonical f32le hashes, and bounded memory gauges
+```
+
+The protocol request contains exactly `router_case_id`, `device: "gpu"`, and
+`allow_fallback: false`. It carries no filesystem path, model or hidden-state
+bytes, oracle output, checksum supplied as authority, output-depth selector,
+or benchmark-count override. The registered offline cases are the generated
+single-row and two-row fixtures only. Their exact `[N,2048] × [2048,128]`
+dimensions exercise all 128 router outputs but do not give the generated
+values checkpoint provenance.
+
+The worker validates generated fixture identity and finite shapes before
+router-specific MLX array construction, creates the hidden and expert-major
+weight arrays on the explicit GPU stream, computes the complete f32 matrix
+product and full softmax, assigns an explicit probability-descending/expert-ID-
+ascending lexicographic rank that does not depend on sort stability, gathers
+eight probabilities, renormalizes by their
+selected sum, explicitly evaluates every returned array, synchronizes the GPU,
+and then reads values back. The Rust boundary validates the bounded response,
+relationships, hashes, and no-fallback device state before exposing it.
+
+The raw result's `passed` field is an execution-state predicate only. It means
+explicit GPU was requested and selected, fallback was false, and evaluation
+and synchronization completed. Independent expected-value comparison remains
+a separate fixture/oracle gate; `passed` alone is not real-router parity,
+checkpoint compatibility, deterministic-repeatability evidence, or a
+performance result.
+
+### Independent oracle boundary
+
+The committed [`router_oracle.py`](../../scripts/research/router_oracle.py)
+tooling is intentionally separate from the MLX worker. The
+[`capture_router_oracle.sh`](../../scripts/research/capture_router_oracle.sh)
+orchestration contract pins llama.cpp revision
+`b06aa774c03dbbb624e726664b714a57d1f49815`, requires CPU-only direct token IDs
+`[0,1]`, captures only the named `ffn_norm-0` boundary twice, proves identical
+captures and cancellation before router or expert execution, and then invokes
+a standalone scalar-f32 router oracle with an injected NumPy cross-check. The
+standalone oracle must not import MLX or `pulsar_mlx_worker`, must not download
+a model, and must freeze its output before the corresponding Apple output is
+inspected.
+
+Each capture attempt owns fresh temporary source-overlay and build directories;
+the orchestration records hashes for the committed and copied capture source,
+build inputs, tools, logs, and helper binary. Every native-capture consumer is
+surrounded by full-file SHA-256 plus device/inode/size checks, and the helper
+independently validates the admitted POSIX identity. The Python oracle rejects
+duplicate JSON keys and surrounds its pinned GGUF reader with read-only,
+no-follow, descriptor-bound full-hash admission checks. These controls bind a
+later real result to the admitted external bytes; they do not themselves prove
+that the gated pinned build or model run succeeds.
+
+The complete frozen boundary is specified in the
+[router parity contract](../../specs/002-qwen-router-parity/contracts/router-parity-v1.md).
+
+Only the model-free oracle contract and stubbed calculations have been tested
+so far. The live pinned llama.cpp checkout, helper build, external GGUF
+inspection, real `ffn_norm-0` capture, and real scalar oracle have not run.
+They remain prohibited until the dependency-ordered pre-access gate sends and
+confirms the required NTFY notification. No external checkpoint was accessed
+while implementing or validating this offline seam.
+
 ### Stage 8: measured optimization (not run)
 
 Establish reproducible latency, throughput, peak-memory, page-fault, and I/O

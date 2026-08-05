@@ -1,9 +1,10 @@
 # Validation Quickstart: Qwen3MoE Layer-0 Router Parity
 
-**Status**: Sections 1 through 3 describe implemented model-free methodology
-commands. Later router and external-checkpoint commands remain planned until
-their implementing tasks and exact results are committed. Feature 001 remains
-the verified baseline; no Feature 002 checkpoint result exists.
+**Status**: Sections 1 through 3 and the focused generated-router tests in
+Section 6 describe implemented model-free work. The retained fixture command
+and every external-checkpoint command remain gated until their implementing
+tasks and exact results are committed. Feature 001 remains the verified
+real-checkpoint baseline; no Feature 002 checkpoint result exists.
 
 ## 1. Confirm the active bounded feature
 
@@ -91,6 +92,11 @@ Do not retrofit Feature 001's heterogeneous JSON records to the new schema.
 The same immutable external checkpoint from Feature 001 is required. Do not
 download another model or quantization.
 
+Do not send the start notification or touch the checkpoint until T022, T038,
+T049, T060, and T071 are pushed and green and T072 records a clean/equal
+offline and resource admission. T073 is the notification gate; T074 is the
+first permitted checkpoint resolve/stat/hash/open operation.
+
 Before opening it, send and confirm the NTFY notification:
 
 ```sh
@@ -144,6 +150,18 @@ bytes remain assumptions until this command observes them.
 
 ## 5. Freeze the independent real CPU oracle
 
+Before running the command, prepare these local-only prerequisites under
+`$PULSARMLX_ORACLE_WORK` without placing them in the repository:
+
+- `llama.cpp/`: a clean checkout at
+  `b06aa774c03dbbb624e726664b714a57d1f49815` with the recorded upstream origin
+  and MIT license; and
+- `oracle-python/bin/python`: the pinned external Python environment with
+  NumPy available for the independent cross-check.
+
+The script verifies these prerequisites and does not clone, download, or
+initialize them.
+
 ```sh
 scripts/research/capture_router_oracle.sh \
   --model "$PULSARMLX_MODEL_GGUF" \
@@ -160,7 +178,15 @@ observed vocabulary and both rows differ, and retains at most two rows or 16,384
 canonical F32 bytes. It then independently uses pinned `gguf-py` plus
 standalone scalar/NumPy calculations for all 128 logits, full softmax, top-8,
 and selected-probability renormalization. It must not import or call the MLX
-worker.
+worker. The final external directory retains both complete capture byte files,
+both callback records, and both sanitized marker-delimited scheduler traces.
+Each retained trace is reconstructed as exact markers around one normalized CPU
+split line using only parsed bounded fields; arbitrary diagnostic text and
+suffixes from stderr are never retained.
+All files, provenance, and the bundle manifest are completed and fsynced in a
+fresh hidden sibling directory before one atomic no-replace rename makes the
+requested output visible; a failed or interrupted run must leave that requested
+path absent.
 
 Stop before Apple execution if:
 
@@ -188,10 +214,21 @@ cargo test -p mlx-backend --test router_contract
 PYTHONPATH=python uv run python -m unittest \
   python/pulsar_mlx_worker/tests/test_router.py -v
 
+# Explicit generated Rust-to-worker integration; still model-free.
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+  --test router_worker_integration \
+  real_python_worker_two_row_router_matches_committed_golden -- \
+  --ignored --exact
+
 cargo run -p mlx-backend --bin pulsar-mlx -- validate-router-fixtures \
   --manifest fixtures/research/router-v1/manifest.json \
   --evidence "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE"
 ```
+
+The focused tests and explicit generated integration are implemented. The
+retained `validate-router-fixtures` command remains deliberately fail-closed
+until T045 completes its malformed-fixture and retained-evidence behavior.
+Running the focused commands does not locate or access an external checkpoint.
 
 The generated 128-expert/top-8 fixture must pass exact ties, near ties,
 single-row and batch evaluation, while malformed lengths, shapes, orientation,
