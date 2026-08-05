@@ -1,0 +1,37 @@
+{
+  "bounds": {
+    "expert_count": 128,
+    "hidden_width": 2048,
+    "maximum_fixture_bytes": 65536,
+    "maximum_hidden_rows": 2,
+    "router_tensor_byte_length": 1048576,
+    "top_k": 8
+  },
+  "case": {
+    "category": "truncated_router_range",
+    "expected_failure": {
+      "accepted_result": false,
+      "code": "invalid_byte_count",
+      "must_precede": "before_router_mlx_array_construction",
+      "router_runner_called": false
+    },
+    "mutation": {
+      "field": "router_tensor.observed_byte_count",
+      "operation": "replace_observed_byte_count",
+      "original": 1048576,
+      "replacement": 1048572
+    },
+    "validation_surface": "host_positional_range_read"
+  },
+  "contract_id": "qwen3moe-layer0-router-parity-v1",
+  "fixture_id": "generated-qwen3moe-router-truncated-range-v1",
+  "provenance": {
+    "evidence_level": "synthetic_negative_fixture_only",
+    "external_checkpoint_access_required": false,
+    "kind": "synthetic_generated_malformed",
+    "model_free": true,
+    "raw_model_or_tensor_bytes_committed": false
+  },
+  "schema": "pulsarmlx.fixture.router-negative-case",
+  "schema_version": "1.0.0"
+}

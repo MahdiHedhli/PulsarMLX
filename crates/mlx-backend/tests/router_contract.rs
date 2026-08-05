@@ -1,7 +1,23 @@
+use backend::ContractError;
 use mlx_backend::router::{
-    admit_router_tensor, canonical_f32le_sha256, compare_router_outputs,
+    admit_router_tensor, canonical_f32le_sha256, compare_router_outputs, positional_read_exact,
     validate_repeat_identities, RouterOutput, RouterTensorDescriptor, RouterTolerancePolicy,
 };
+#[cfg(unix)]
+use mlx_backend::router::{with_admitted_router_tensor_f32, RouterResourceAdmission};
+#[cfg(unix)]
+use sha2::{Digest, Sha256};
+use std::cell::Cell;
+#[cfg(unix)]
+use std::fs::{self, File, OpenOptions};
+#[cfg(unix)]
+use std::io::Write;
+#[cfg(unix)]
+use std::path::{Path, PathBuf};
+#[cfg(unix)]
+use std::sync::atomic::{AtomicU64, Ordering};
+#[cfg(unix)]
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const MODEL_FILE_BYTES: u64 = 32_483_931_648;
 const ROUTER_TENSOR_BYTES: u64 = 1_048_576;
@@ -28,6 +44,94 @@ fn fixture_tensor_descriptor() -> RouterTensorDescriptor {
         weight_scale: 1.0,
         bias_present: false,
         correction_bias_present: false,
+    }
+}
+
+fn bounded_error_code(error: ContractError) -> String {
+    assert!(
+        error.message().chars().count() <= 512,
+        "router failures must remain bounded"
+    );
+    error.code().to_owned()
+}
+
+#[cfg(unix)]
+fn encoded_sha256(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+#[cfg(unix)]
+fn execution_descriptor_for_bytes(bytes: &[u8]) -> RouterTensorDescriptor {
+    assert_eq!(bytes.len(), ROUTER_TENSOR_BYTES as usize);
+    let mut descriptor = fixture_tensor_descriptor();
+    descriptor.absolute_data_offset = 0;
+    descriptor.encoded_sha256 = encoded_sha256(bytes);
+    descriptor
+}
+
+#[cfg(unix)]
+fn admitted_resources() -> RouterResourceAdmission {
+    RouterResourceAdmission {
+        disk_headroom_satisfied: true,
+        unified_memory_headroom_satisfied: true,
+        memory_pressure_normal: true,
+    }
+}
+
+#[cfg(unix)]
+fn production_preflight_with_bytes(
+    label: &str,
+    bytes: &[u8],
+    descriptor: &RouterTensorDescriptor,
+    resources: &RouterResourceAdmission,
+    runner: impl FnOnce(&[f32]),
+) -> Result<(), ContractError> {
+    let directory = IsolatedDirectory::new(label);
+    let path = directory.path().join("synthetic-router.bin");
+    fs::write(&path, bytes).expect("write bounded synthetic router fixture");
+    let file = File::open(&path).expect("open synthetic router fixture read-only");
+    with_admitted_router_tensor_f32(
+        &file,
+        descriptor,
+        bytes.len() as u64,
+        resources,
+        |_admitted, values| {
+            runner(values);
+            Ok(())
+        },
+    )
+}
+
+#[cfg(unix)]
+struct IsolatedDirectory(PathBuf);
+
+#[cfg(unix)]
+impl IsolatedDirectory {
+    fn new(label: &str) -> Self {
+        static NEXT_ID: AtomicU64 = AtomicU64::new(0);
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("test clock is after the Unix epoch")
+            .as_nanos();
+        let sequence = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "pulsarmlx-router-contract-{label}-{}-{nonce}-{sequence}",
+            std::process::id()
+        ));
+        fs::create_dir(&path).expect("create isolated router-contract directory");
+        Self(path)
+    }
+
+    fn path(&self) -> &Path {
+        &self.0
+    }
+}
+
+#[cfg(unix)]
+impl Drop for IsolatedDirectory {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
     }
 }
 
@@ -168,6 +272,420 @@ fn exact_f32_router_tensor_contract_is_admitted_without_checkpoint_access() {
     assert_eq!(admitted.weight_scale(), 1.0);
     assert!(!admitted.bias_present());
     assert!(!admitted.correction_bias_present());
+}
+
+#[test]
+#[cfg(unix)]
+fn missing_and_duplicate_router_occurrences_have_distinct_stable_codes_before_runner() {
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    let cases = [(0, "missing_tensor_role"), (2, "duplicate_tensor_role")];
+    let mut observed = Vec::new();
+
+    for (occurrence_count, expected_code) in cases {
+        let mut descriptor = execution_descriptor_for_bytes(&bytes);
+        descriptor.occurrence_count = occurrence_count;
+        let runner_calls = Cell::new(0_u32);
+        let error = production_preflight_with_bytes(
+            "occurrence",
+            &bytes,
+            &descriptor,
+            &admitted_resources(),
+            |_| runner_calls.set(runner_calls.get() + 1),
+        )
+        .expect_err("a missing or duplicate router role must fail before execution");
+
+        assert_eq!(
+            runner_calls.get(),
+            0,
+            "occurrence count {occurrence_count} reached the router runner"
+        );
+        observed.push((expected_code, bounded_error_code(error)));
+    }
+
+    assert_eq!(
+        observed,
+        [
+            ("missing_tensor_role", "missing_tensor_role".to_owned()),
+            ("duplicate_tensor_role", "duplicate_tensor_role".to_owned()),
+        ],
+        "missing and duplicate tensor roles must remain distinguishable"
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn tensor_name_and_semantic_role_aliases_are_missing_not_generic_mismatches() {
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    let mut name_alias = execution_descriptor_for_bytes(&bytes);
+    name_alias.name = "blk.0.ffn_gate_exps.weight".to_owned();
+    let mut role_alias = execution_descriptor_for_bytes(&bytes);
+    role_alias.semantic_role = "layer_0_routed_expert_gate_projection".to_owned();
+
+    let mut observed = Vec::new();
+    for (label, descriptor) in [("tensor-name", name_alias), ("semantic-role", role_alias)] {
+        let runner_calls = Cell::new(0_u32);
+        let error = production_preflight_with_bytes(
+            label,
+            &bytes,
+            &descriptor,
+            &admitted_resources(),
+            |_| runner_calls.set(runner_calls.get() + 1),
+        )
+        .expect_err("an aliased tensor identity must not be admitted");
+        assert_eq!(runner_calls.get(), 0, "{label} alias reached the runner");
+        observed.push((label, bounded_error_code(error)));
+    }
+
+    assert_eq!(
+        observed,
+        [
+            ("tensor-name", "missing_tensor_role".to_owned()),
+            ("semantic-role", "missing_tensor_role".to_owned()),
+        ],
+        "a different tensor or semantic role is not the required router role"
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn truncated_overlong_and_out_of_file_ranges_fail_before_runner() {
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    let mut truncated = execution_descriptor_for_bytes(&bytes);
+    truncated.encoded_length = ROUTER_TENSOR_BYTES - 4;
+    let mut overlong = execution_descriptor_for_bytes(&bytes);
+    overlong.encoded_length = ROUTER_TENSOR_BYTES + 4;
+    let mut out_of_file = execution_descriptor_for_bytes(&bytes);
+    out_of_file.absolute_data_offset = 1;
+    let mut overflowing = execution_descriptor_for_bytes(&bytes);
+    overflowing.absolute_data_offset = u64::MAX - ROUTER_TENSOR_BYTES + 1;
+
+    let cases = [
+        ("truncated", truncated, "model_tensor_mismatch"),
+        ("overlong", overlong, "model_tensor_mismatch"),
+        ("out-of-file", out_of_file, "invalid_tensor_range"),
+        ("overflowing", overflowing, "invalid_tensor_range"),
+    ];
+    for (label, descriptor, expected_code) in cases {
+        let runner_calls = Cell::new(0_u32);
+        let error = production_preflight_with_bytes(
+            label,
+            &bytes,
+            &descriptor,
+            &admitted_resources(),
+            |_| runner_calls.set(runner_calls.get() + 1),
+        )
+        .expect_err("a malformed range must fail before execution");
+        assert_eq!(runner_calls.get(), 0, "{label} range reached the runner");
+        assert_eq!(bounded_error_code(error), expected_code, "{label} range");
+    }
+}
+
+#[test]
+fn positional_reads_reject_short_overlong_and_overflowing_ranges_before_runner() {
+    let mut first_read = true;
+    let truncated = positional_read_exact(64, 4, |_position, destination| {
+        if first_read {
+            first_read = false;
+            destination[..2].copy_from_slice(&[1, 2]);
+            Ok(2)
+        } else {
+            Ok(0)
+        }
+    })
+    .expect_err("a short positional read must fail closed");
+    assert_eq!(bounded_error_code(truncated), "invalid_byte_count");
+
+    let overlong = positional_read_exact(64, 4, |_position, destination| Ok(destination.len() + 1))
+        .expect_err("an impossible overlong read result must fail closed");
+    assert_eq!(bounded_error_code(overlong), "invalid_byte_count");
+
+    let overflowing = positional_read_exact(u64::MAX, 1, |_position, _destination| {
+        panic!("overflow must fail before the reader is called")
+    })
+    .expect_err("an overflowing positional range must fail closed");
+    assert_eq!(bounded_error_code(overflowing), "invalid_tensor_range");
+}
+
+#[test]
+#[cfg(unix)]
+fn wrong_f32_type_dimensions_and_orientation_have_exact_failure_codes() {
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    let mut wrong_type = execution_descriptor_for_bytes(&bytes);
+    wrong_type.gguf_type = "Q8_0".to_owned();
+    let mut wrong_quantization = execution_descriptor_for_bytes(&bytes);
+    wrong_quantization.quantization = "Q8_0".to_owned();
+    let mut wrong_gguf_dimensions = execution_descriptor_for_bytes(&bytes);
+    wrong_gguf_dimensions.gguf_dimensions_fastest_axis_first = vec![128, 2_048];
+    let mut wrong_reader_shape = execution_descriptor_for_bytes(&bytes);
+    wrong_reader_shape.reader_shape = vec![2_048, 128];
+    let mut wrong_execution_shape = execution_descriptor_for_bytes(&bytes);
+    wrong_execution_shape.execution_shape = vec![2_048, 128];
+    let mut wrong_orientation = execution_descriptor_for_bytes(&bytes);
+    wrong_orientation.orientation = "input_major_rows_expert_columns".to_owned();
+
+    let cases = [
+        ("gguf-type", wrong_type, "unsupported_tensor_quantization"),
+        (
+            "quantization",
+            wrong_quantization,
+            "unsupported_tensor_quantization",
+        ),
+        (
+            "gguf-dimensions",
+            wrong_gguf_dimensions,
+            "model_tensor_mismatch",
+        ),
+        ("reader-shape", wrong_reader_shape, "model_tensor_mismatch"),
+        (
+            "execution-shape",
+            wrong_execution_shape,
+            "model_tensor_mismatch",
+        ),
+        ("orientation", wrong_orientation, "invalid_layout"),
+    ];
+
+    for (label, descriptor, expected_code) in cases {
+        let runner_calls = Cell::new(0_u32);
+        let error = production_preflight_with_bytes(
+            label,
+            &bytes,
+            &descriptor,
+            &admitted_resources(),
+            |_| runner_calls.set(runner_calls.get() + 1),
+        )
+        .expect_err("an incompatible F32 tensor contract must fail before execution");
+        assert_eq!(runner_calls.get(), 0, "{label} reached the runner");
+        assert_eq!(bounded_error_code(error), expected_code, "{label}");
+    }
+}
+
+#[test]
+#[cfg(unix)]
+fn invalid_top_k_values_fail_before_runner() {
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    for top_k in [0, 7, 9, 128, 129] {
+        let mut descriptor = execution_descriptor_for_bytes(&bytes);
+        descriptor.top_k = top_k;
+        let runner_calls = Cell::new(0_u32);
+        let error = production_preflight_with_bytes(
+            "top-k",
+            &bytes,
+            &descriptor,
+            &admitted_resources(),
+            |_| runner_calls.set(runner_calls.get() + 1),
+        )
+        .expect_err("only the exact top-8 contract may be admitted");
+        assert_eq!(runner_calls.get(), 0, "top_k={top_k} reached the runner");
+        assert_eq!(bounded_error_code(error), "model_tensor_mismatch");
+    }
+}
+
+#[test]
+fn non_finite_canonical_f32_data_is_rejected() {
+    for value in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+        let error = canonical_f32le_sha256(&[0.0, value, 1.0])
+            .expect_err("canonical router data must be finite");
+        assert_eq!(bounded_error_code(error), "invalid_dtype");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn changed_range_identity_rejects_execution_after_exact_admission() {
+    let directory = IsolatedDirectory::new("changed-identity");
+    let path = directory.path().join("synthetic-router.bin");
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    fs::write(&path, &bytes).expect("write bounded synthetic router bytes");
+
+    let mut descriptor = execution_descriptor_for_bytes(&bytes);
+    descriptor.encoded_sha256 = "b".repeat(64);
+    let file = File::open(&path).expect("open synthetic router fixture read-only");
+    let runner_calls = Cell::new(0_u32);
+    let error = with_admitted_router_tensor_f32(
+        &file,
+        &descriptor,
+        ROUTER_TENSOR_BYTES,
+        &admitted_resources(),
+        |_admitted, _values| {
+            runner_calls.set(runner_calls.get() + 1);
+            Ok(())
+        },
+    )
+    .expect_err("bytes that differ from the frozen range identity must fail");
+
+    assert_eq!(runner_calls.get(), 0);
+    assert_eq!(bounded_error_code(error), "model_checksum_mismatch");
+}
+
+#[cfg(unix)]
+#[test]
+fn changed_file_length_and_resource_failures_precede_production_runner() {
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    let descriptor = execution_descriptor_for_bytes(&bytes);
+    let directory = IsolatedDirectory::new("file-length-and-resources");
+    let path = directory.path().join("synthetic-router.bin");
+    fs::write(&path, &bytes).expect("write bounded synthetic router fixture");
+    let file = File::open(&path).expect("open synthetic router fixture read-only");
+
+    let runner_calls = Cell::new(0_u32);
+    let size_error = with_admitted_router_tensor_f32(
+        &file,
+        &descriptor,
+        ROUTER_TENSOR_BYTES + 4,
+        &admitted_resources(),
+        |_admitted, _values| {
+            runner_calls.set(runner_calls.get() + 1);
+            Ok(())
+        },
+    )
+    .expect_err("a changed artifact length must fail before execution");
+    assert_eq!(runner_calls.get(), 0);
+    assert_eq!(bounded_error_code(size_error), "model_size_mismatch");
+
+    for (label, resources) in [
+        (
+            "disk",
+            RouterResourceAdmission {
+                disk_headroom_satisfied: false,
+                ..admitted_resources()
+            },
+        ),
+        (
+            "unified-memory",
+            RouterResourceAdmission {
+                unified_memory_headroom_satisfied: false,
+                ..admitted_resources()
+            },
+        ),
+        (
+            "memory-pressure",
+            RouterResourceAdmission {
+                memory_pressure_normal: false,
+                ..admitted_resources()
+            },
+        ),
+    ] {
+        let error = with_admitted_router_tensor_f32(
+            &file,
+            &descriptor,
+            ROUTER_TENSOR_BYTES,
+            &resources,
+            |_admitted, _values| {
+                runner_calls.set(runner_calls.get() + 1);
+                Ok(())
+            },
+        )
+        .expect_err("a failed resource gate must precede execution");
+        assert_eq!(runner_calls.get(), 0, "{label} gate reached the runner");
+        assert_eq!(
+            bounded_error_code(error),
+            "model_budget_exceeded",
+            "{label}"
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn matching_non_finite_f32_tensor_bytes_fail_before_runner() {
+    let directory = IsolatedDirectory::new("non-finite");
+    let path = directory.path().join("synthetic-router.bin");
+    let mut bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    bytes[..4].copy_from_slice(&f32::NAN.to_le_bytes());
+    fs::write(&path, &bytes).expect("write bounded non-finite router fixture");
+    let descriptor = execution_descriptor_for_bytes(&bytes);
+    let file = File::open(&path).expect("open synthetic router fixture read-only");
+    let runner_calls = Cell::new(0_u32);
+    let error = with_admitted_router_tensor_f32(
+        &file,
+        &descriptor,
+        ROUTER_TENSOR_BYTES,
+        &admitted_resources(),
+        |_admitted, _values| {
+            runner_calls.set(runner_calls.get() + 1);
+            Ok(())
+        },
+    )
+    .expect_err("a hash-matching tensor with non-finite F32 data must fail");
+
+    assert_eq!(runner_calls.get(), 0);
+    assert_eq!(bounded_error_code(error), "invalid_dtype");
+}
+
+#[cfg(unix)]
+#[test]
+fn hard_link_and_symlink_mutations_cannot_bypass_range_identity_or_reach_runner() {
+    use std::os::unix::fs::symlink;
+
+    for alias_kind in ["hard-link", "symlink"] {
+        let directory = IsolatedDirectory::new(alias_kind);
+        let path = directory.path().join("synthetic-router.bin");
+        let alias = directory.path().join("router-alias.bin");
+        let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+        fs::write(&path, &bytes).expect("write bounded synthetic router bytes");
+        let descriptor = execution_descriptor_for_bytes(&bytes);
+        let file = File::open(&path).expect("retain the original read-only file description");
+
+        match alias_kind {
+            "hard-link" => fs::hard_link(&path, &alias).expect("create hard-link alias"),
+            "symlink" => symlink(&path, &alias).expect("create symbolic-link alias"),
+            _ => unreachable!("bounded alias inventory"),
+        }
+        let mut alias_writer = OpenOptions::new()
+            .write(true)
+            .open(&alias)
+            .expect("open alias for the synthetic mutation");
+        alias_writer
+            .write_all(&1.0_f32.to_le_bytes())
+            .expect("mutate the admitted range through its alias");
+        alias_writer
+            .sync_all()
+            .expect("synchronize the synthetic alias mutation");
+
+        let runner_calls = Cell::new(0_u32);
+        let error = with_admitted_router_tensor_f32(
+            &file,
+            &descriptor,
+            ROUTER_TENSOR_BYTES,
+            &admitted_resources(),
+            |_admitted, _values| {
+                runner_calls.set(runner_calls.get() + 1);
+                Ok(())
+            },
+        )
+        .expect_err("alias mutation must invalidate the frozen range identity");
+        assert_eq!(runner_calls.get(), 0, "{alias_kind} reached the runner");
+        assert_eq!(
+            bounded_error_code(error),
+            "model_checksum_mismatch",
+            "{alias_kind} mutation"
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn exact_finite_range_reaches_the_test_runner_once_as_a_control() {
+    let directory = IsolatedDirectory::new("valid-control");
+    let path = directory.path().join("synthetic-router.bin");
+    let bytes = vec![0_u8; ROUTER_TENSOR_BYTES as usize];
+    fs::write(&path, &bytes).expect("write bounded finite router fixture");
+    let descriptor = execution_descriptor_for_bytes(&bytes);
+    let file = File::open(&path).expect("open synthetic router fixture read-only");
+    let runner_calls = Cell::new(0_u32);
+    with_admitted_router_tensor_f32(
+        &file,
+        &descriptor,
+        ROUTER_TENSOR_BYTES,
+        &admitted_resources(),
+        |_admitted, values| {
+            assert_eq!(values.len(), 262_144);
+            runner_calls.set(runner_calls.get() + 1);
+            Ok(())
+        },
+    )
+    .expect("the exact finite range reaches the execution seam");
+    assert_eq!(runner_calls.get(), 1);
 }
 
 #[test]

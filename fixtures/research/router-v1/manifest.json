@@ -58,6 +58,46 @@
       "byte_length": 1195,
       "path": "golden/weight_recipe.json",
       "sha256": "4055fd4029742c3820e02a08a48fb3b32bff08ee9ae1aa9d79725cadf739fd63"
+    },
+    {
+      "byte_length": 1137,
+      "path": "malformed/invalid-control-type.json",
+      "sha256": "c58fb86aec62a7ab7ab25d6e184c7cef721fb96cf8dc1f64bf593123fa68120f"
+    },
+    {
+      "byte_length": 1167,
+      "path": "malformed/invalid-hidden-shape.json",
+      "sha256": "97758ba28a9fb7e1ffd7393abd5e43940e88d827cc7343bfced301bb80f05112"
+    },
+    {
+      "byte_length": 1184,
+      "path": "malformed/invalid-orientation.json",
+      "sha256": "68301a24f13784d9697286f8b91d1fd80c8b788ae3b794a37895b3b41f21d5be"
+    },
+    {
+      "byte_length": 1099,
+      "path": "malformed/invalid-top-k.json",
+      "sha256": "7030506506bc755507a1bc6f72d533f0f0c928ca077cb9dcee1f390df2e919fa"
+    },
+    {
+      "byte_length": 1280,
+      "path": "malformed/non-finite-hidden-state.json",
+      "sha256": "3823846c75a20fc6b8ac9046e2ab2521479acfbf2b28040527a9be1950dbe679"
+    },
+    {
+      "byte_length": 1138,
+      "path": "malformed/overlong-router-range.json",
+      "sha256": "b6b626ebc17379228b23c135ce7472c9ff41958d72382cbfabc6db705759fd76"
+    },
+    {
+      "byte_length": 1140,
+      "path": "malformed/truncated-router-range.json",
+      "sha256": "18efd4c2ffe3ce41e1edf6e3ec36096447c93798ca3f7e73f756b38f47146adc"
+    },
+    {
+      "byte_length": 18665,
+      "path": "synthetic-tie.json",
+      "sha256": "7a0854f3d7c5104725b20bde381007f3f2ae911529e6b21a5276a88a8ad01a2b"
     }
   ],
   "fixture_id": "generated-qwen3moe-router-v1",
@@ -76,7 +116,7 @@
     "external_checkpoint_access_required": false,
     "generation_command": "python3 fixtures/research/router-v1/golden/generate.py --write",
     "generator": "golden/generate.py",
-    "generator_sha256": "fd7330fb7e6918ec48b224ca3df1e5a317165ae4cd21f704b91c350188b4c355",
+    "generator_sha256": "5ce107d6dd0ce926f0f4fd6d3e25f3e68d2f93896f2e1a4cb79df3770b664923",
     "independence": "standard-library scalar generator; imports no MLX, worker, NumPy, model parser, or checkpoint reader",
     "kind": "synthetic_generated",
     "license": "MIT",
@@ -97,7 +137,9 @@
     "proves": [
       "generated complete-router fixture construction",
       "independent scalar expected-output construction",
-      "deterministic byte-for-byte regeneration"
+      "deterministic byte-for-byte regeneration",
+      "bounded negative-fixture inventory",
+      "synthetic exact-tie and near-tie cutoff expectations"
     ]
   },
   "weight_fixture": {

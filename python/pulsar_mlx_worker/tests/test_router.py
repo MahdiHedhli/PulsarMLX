@@ -11,10 +11,14 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from pathlib import Path
 import platform
 import struct
+import tempfile
 import unittest
+from unittest.mock import patch
 
+import pulsar_mlx_worker.router as router_module
 from pulsar_mlx_worker.__main__ import _dispatch
 from pulsar_mlx_worker.protocol import (
     PROTOCOL_VERSION,
@@ -110,6 +114,24 @@ def _canonical_f32le_sha256(rows) -> str:
     return digest.hexdigest()
 
 
+def _replace_matrix_value(matrix, row_index: int, column_index: int, value):
+    """Return a bounded matrix copy with one deliberately malformed value."""
+
+    rows = list(matrix)
+    row = list(rows[row_index])
+    row[column_index] = value
+    rows[row_index] = tuple(row)
+    return tuple(rows)
+
+
+def _json_bytes(document: object) -> bytes:
+    """Encode a temporary mutated fixture deterministically for admission tests."""
+
+    return (
+        json.dumps(document, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    ).encode("utf-8")
+
+
 class MlxEventSpy:
     """Delegate to native MLX while recording the explicit GPU boundary."""
 
@@ -134,7 +156,7 @@ class MlxEventSpy:
 
 
 class SchedulingTrap:
-    """Fail if a rejected device or fallback request touches MLX."""
+    """Fail if any rejected router input touches an MLX surface."""
 
     def __init__(self) -> None:
         self.access_count = 0
@@ -293,6 +315,81 @@ class RouterControlContractTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, expected_code)
                 self.assertEqual(runner.calls, [])
 
+    def test_every_malformed_control_field_precedes_router_runner(self) -> None:
+        base = {
+            "router_case_id": SINGLE_ROW_CASE_ID,
+            "device": "gpu",
+            "allow_fallback": False,
+        }
+        malformed_cases = (
+            ("missing case ID", {"device": "gpu", "allow_fallback": False}),
+            (
+                "missing device",
+                {
+                    "router_case_id": SINGLE_ROW_CASE_ID,
+                    "allow_fallback": False,
+                },
+            ),
+            (
+                "missing fallback",
+                {"router_case_id": SINGLE_ROW_CASE_ID, "device": "gpu"},
+            ),
+            ("extra field", {**base, "top_k": TOP_K}),
+            ("null case ID", {**base, "router_case_id": None}),
+            ("boolean case ID", {**base, "router_case_id": False}),
+            ("list case ID", {**base, "router_case_id": []}),
+            ("empty case ID", {**base, "router_case_id": ""}),
+            ("spaced case ID", {**base, "router_case_id": " bad-id"}),
+            ("path-like case ID", {**base, "router_case_id": "bad/id"}),
+            ("overlong case ID", {**base, "router_case_id": "x" * 129}),
+            ("null device", {**base, "device": None}),
+            ("boolean device", {**base, "device": True}),
+            ("integer device", {**base, "device": 1}),
+            ("null fallback", {**base, "allow_fallback": None}),
+            ("integer fallback", {**base, "allow_fallback": 0}),
+            ("string fallback", {**base, "allow_fallback": "false"}),
+        )
+        for label, params in malformed_cases:
+            with self.subTest(label=label):
+                runner = DispatchRunnerSpy()
+                with self.assertRaises(ProtocolError) as caught:
+                    self.dispatch(params, runner)
+                self.assertEqual(caught.exception.code, "malformed_request")
+                self.assertLessEqual(len(caught.exception.message), 512)
+                self.assertEqual(runner.calls, [])
+
+    def test_invalid_identity_and_fallback_precede_router_runner(self) -> None:
+        base = {
+            "router_case_id": SINGLE_ROW_CASE_ID,
+            "device": "gpu",
+            "allow_fallback": False,
+        }
+        cases = (
+            (
+                "uncommitted stable case",
+                {**base, "router_case_id": "generated-router-unknown-v1"},
+                "unsupported_operation",
+            ),
+            (
+                "CPU device",
+                {**base, "device": "cpu"},
+                "device_unavailable",
+            ),
+            (
+                "fallback enabled",
+                {**base, "allow_fallback": True},
+                "device_unavailable",
+            ),
+        )
+        for label, params, expected_code in cases:
+            with self.subTest(label=label):
+                runner = DispatchRunnerSpy()
+                with self.assertRaises(ProtocolError) as caught:
+                    self.dispatch(params, runner)
+                self.assertEqual(caught.exception.code, expected_code)
+                self.assertLessEqual(len(caught.exception.message), 512)
+                self.assertEqual(runner.calls, [])
+
     def test_committed_cases_reconstruct_only_bounded_generated_inputs(self) -> None:
         for case_id, expected_rows in (
             (SINGLE_ROW_CASE_ID, 1),
@@ -342,6 +439,72 @@ class RouterControlContractTests(unittest.TestCase):
 
 
 class RouterAdmissionContractTests(unittest.TestCase):
+    def assert_rejected_before_mlx(
+        self,
+        expected_code: str,
+        *,
+        router_case_id: object = SINGLE_ROW_CASE_ID,
+        hidden_states: object = SINGLE_ROW_HIDDEN,
+        router_weights: object = ROUTER_WEIGHTS,
+        requested_device: object = "gpu",
+        allow_fallback: object = False,
+    ) -> None:
+        trap = SchedulingTrap()
+        with self.assertRaises(RouterError) as caught:
+            run_router(
+                router_case_id=router_case_id,
+                hidden_states=hidden_states,
+                router_weights=router_weights,
+                requested_device=requested_device,
+                allow_fallback=allow_fallback,
+                mx_module=trap,
+            )
+        self.assertEqual(caught.exception.code, expected_code)
+        self.assertLessEqual(len(caught.exception.message), 512)
+        self.assertEqual(
+            trap.access_count,
+            0,
+            "rejected router input reached MLX array construction or scheduling",
+        )
+
+    def assert_committed_fixture_rejected_before_runner(
+        self,
+        expected_code: str,
+        *,
+        manifest_payload: bytes,
+        hidden_payload: bytes,
+        recipe_payload: bytes,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            fixture_root = Path(temporary_directory)
+            manifest_path = fixture_root / "manifest.json"
+            hidden_path = fixture_root / "hidden_states.json"
+            recipe_path = fixture_root / "weight_recipe.json"
+            manifest_path.write_bytes(manifest_payload)
+            hidden_path.write_bytes(hidden_payload)
+            recipe_path.write_bytes(recipe_payload)
+
+            runner = CoreRunnerSpy()
+            with (
+                patch.object(router_module, "_MANIFEST_PATH", manifest_path),
+                patch.object(router_module, "_HIDDEN_PATH", hidden_path),
+                patch.object(router_module, "_WEIGHT_RECIPE_PATH", recipe_path),
+            ):
+                with self.assertRaises(RouterError) as caught:
+                    run_committed_router(
+                        router_case_id=SINGLE_ROW_CASE_ID,
+                        requested_device="gpu",
+                        allow_fallback=False,
+                        router_runner=runner,
+                    )
+            self.assertEqual(caught.exception.code, expected_code)
+            self.assertLessEqual(len(caught.exception.message), 512)
+            self.assertEqual(
+                runner.calls,
+                [],
+                "invalid committed bytes reached the router runner",
+            )
+
     def test_explicit_gpu_without_fallback_is_required_before_mlx(self) -> None:
         for label, requested_device, allow_fallback in (
             ("CPU request", "cpu", False),
@@ -361,6 +524,245 @@ class RouterAdmissionContractTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, "device_unavailable")
                 self.assertLessEqual(len(caught.exception.message), 512)
                 self.assertEqual(trap.access_count, 0)
+
+    def test_invalid_device_scalar_types_precede_mlx(self) -> None:
+        for label, requested_device, allow_fallback in (
+            ("null device", None, False),
+            ("boolean device", True, False),
+            ("integer device", 1, False),
+            ("null fallback", "gpu", None),
+            ("integer fallback", "gpu", 0),
+            ("string fallback", "gpu", "false"),
+        ):
+            with self.subTest(label=label):
+                self.assert_rejected_before_mlx(
+                    "malformed_request",
+                    requested_device=requested_device,
+                    allow_fallback=allow_fallback,
+                )
+
+    def test_invalid_case_ids_precede_mlx(self) -> None:
+        cases = (
+            ("null", None, "malformed_request"),
+            ("boolean", False, "malformed_request"),
+            ("integer", 7, "malformed_request"),
+            ("empty", "", "malformed_request"),
+            ("leading whitespace", " bad-id", "malformed_request"),
+            ("path-like", "bad/id", "malformed_request"),
+            ("overlong", "x" * 129, "malformed_request"),
+            (
+                "stable but uncommitted",
+                "generated-router-unknown-v1",
+                "unsupported_operation",
+            ),
+        )
+        for label, router_case_id, expected_code in cases:
+            with self.subTest(label=label):
+                self.assert_rejected_before_mlx(
+                    expected_code,
+                    router_case_id=router_case_id,
+                )
+
+    def test_hidden_state_shape_failures_precede_mlx(self) -> None:
+        malformed = (
+            ("null matrix", None),
+            ("mapping matrix", {"row": SINGLE_ROW_HIDDEN[0]}),
+            ("byte matrix", b"\x00" * (HIDDEN_WIDTH * 4)),
+            ("no rows", ()),
+            ("too many rows", BOUNDED_BATCH_HIDDEN),
+            ("scalar row", (1.0,)),
+            ("short row", (SINGLE_ROW_HIDDEN[0][:-1],)),
+            ("overlong row", (SINGLE_ROW_HIDDEN[0] + (0.0,),)),
+        )
+        for label, hidden_states in malformed:
+            with self.subTest(label=label):
+                self.assert_rejected_before_mlx(
+                    "invalid_shape",
+                    hidden_states=hidden_states,
+                )
+
+    def test_weight_shape_failures_precede_mlx(self) -> None:
+        malformed = (
+            ("null matrix", None),
+            ("mapping matrix", {"row": ROUTER_WEIGHTS[0]}),
+            ("byte matrix", b"\x00" * 16),
+            ("no rows", ()),
+            ("too few rows", ROUTER_WEIGHTS[:-1]),
+            ("too many rows", ROUTER_WEIGHTS + (ROUTER_WEIGHTS[0],)),
+            (
+                "short row",
+                (ROUTER_WEIGHTS[0][:-1],) + ROUTER_WEIGHTS[1:],
+            ),
+            (
+                "overlong row",
+                (ROUTER_WEIGHTS[0] + (0.0,),) + ROUTER_WEIGHTS[1:],
+            ),
+        )
+        for label, router_weights in malformed:
+            with self.subTest(label=label):
+                self.assert_rejected_before_mlx(
+                    "invalid_shape",
+                    router_weights=router_weights,
+                )
+
+    def test_invalid_decoded_dtypes_precede_mlx(self) -> None:
+        cases = (
+            (
+                "boolean hidden value",
+                _replace_matrix_value(SINGLE_ROW_HIDDEN, 0, 0, True),
+                ROUTER_WEIGHTS,
+            ),
+            (
+                "string hidden value",
+                _replace_matrix_value(SINGLE_ROW_HIDDEN, 0, 0, "1.0"),
+                ROUTER_WEIGHTS,
+            ),
+            (
+                "complex hidden value",
+                _replace_matrix_value(SINGLE_ROW_HIDDEN, 0, 0, 1.0 + 0.0j),
+                ROUTER_WEIGHTS,
+            ),
+            (
+                "boolean weight value",
+                SINGLE_ROW_HIDDEN,
+                _replace_matrix_value(ROUTER_WEIGHTS, 0, 0, False),
+            ),
+            (
+                "string weight value",
+                SINGLE_ROW_HIDDEN,
+                _replace_matrix_value(ROUTER_WEIGHTS, 0, 0, "0.0"),
+            ),
+            (
+                "complex weight value",
+                SINGLE_ROW_HIDDEN,
+                _replace_matrix_value(ROUTER_WEIGHTS, 0, 0, 0.0 + 0.0j),
+            ),
+        )
+        for label, hidden_states, router_weights in cases:
+            with self.subTest(label=label):
+                self.assert_rejected_before_mlx(
+                    "invalid_dtype",
+                    hidden_states=hidden_states,
+                    router_weights=router_weights,
+                )
+
+    def test_nonfinite_and_non_f32_values_precede_mlx(self) -> None:
+        for label, value in (
+            ("NaN", math.nan),
+            ("positive infinity", math.inf),
+            ("negative infinity", -math.inf),
+            ("positive float32 overflow", 3.5e38),
+            ("negative float32 overflow", -3.5e38),
+        ):
+            with self.subTest(location="hidden", label=label):
+                self.assert_rejected_before_mlx(
+                    "invalid_dtype",
+                    hidden_states=_replace_matrix_value(
+                        SINGLE_ROW_HIDDEN,
+                        0,
+                        0,
+                        value,
+                    ),
+                )
+            with self.subTest(location="weight", label=label):
+                self.assert_rejected_before_mlx(
+                    "invalid_dtype",
+                    router_weights=_replace_matrix_value(
+                        ROUTER_WEIGHTS,
+                        0,
+                        0,
+                        value,
+                    ),
+                )
+
+    def test_encoded_file_byte_count_failures_precede_router_runner(self) -> None:
+        manifest_payload = router_module._MANIFEST_PATH.read_bytes()
+        hidden_payload = router_module._HIDDEN_PATH.read_bytes()
+        recipe_payload = router_module._WEIGHT_RECIPE_PATH.read_bytes()
+
+        self.assertTrue(hidden_payload.endswith(b"\n"))
+        cases = (
+            ("truncated hidden document", hidden_payload[:-1]),
+            ("overlong hidden document", hidden_payload + b" "),
+        )
+        for label, mutated_hidden in cases:
+            with self.subTest(label=label):
+                self.assert_committed_fixture_rejected_before_runner(
+                    "invalid_byte_count",
+                    manifest_payload=manifest_payload,
+                    hidden_payload=mutated_hidden,
+                    recipe_payload=recipe_payload,
+                )
+
+        changed_manifest = json.loads(manifest_payload)
+        hidden_entry = next(
+            entry
+            for entry in changed_manifest["files"]
+            if entry["path"] == "golden/hidden_states.json"
+        )
+        hidden_entry["byte_length"] += 4
+        with self.subTest(label="changed manifest byte count"):
+            self.assert_committed_fixture_rejected_before_runner(
+                "invalid_byte_count",
+                manifest_payload=_json_bytes(changed_manifest),
+                hidden_payload=hidden_payload,
+                recipe_payload=recipe_payload,
+            )
+
+    def test_canonical_tensor_byte_count_failures_precede_router_runner(self) -> None:
+        original_manifest = json.loads(router_module._MANIFEST_PATH.read_bytes())
+        original_hidden = json.loads(router_module._HIDDEN_PATH.read_bytes())
+        original_recipe = json.loads(router_module._WEIGHT_RECIPE_PATH.read_bytes())
+
+        cases = []
+        changed_hidden = dict(original_hidden)
+        changed_hidden["canonical_byte_length"] -= 4
+        changed_hidden_payload = _json_bytes(changed_hidden)
+        hidden_manifest = json.loads(json.dumps(original_manifest))
+        hidden_entry = next(
+            entry
+            for entry in hidden_manifest["files"]
+            if entry["path"] == "golden/hidden_states.json"
+        )
+        hidden_entry["byte_length"] = len(changed_hidden_payload)
+        hidden_entry["sha256"] = hashlib.sha256(changed_hidden_payload).hexdigest()
+        cases.append(
+            (
+                "hidden tensor canonical byte count",
+                _json_bytes(hidden_manifest),
+                changed_hidden_payload,
+                router_module._WEIGHT_RECIPE_PATH.read_bytes(),
+            )
+        )
+
+        changed_recipe = dict(original_recipe)
+        changed_recipe["canonical_byte_length"] += 4
+        changed_recipe_payload = _json_bytes(changed_recipe)
+        recipe_manifest = json.loads(json.dumps(original_manifest))
+        recipe_entry = next(
+            entry
+            for entry in recipe_manifest["files"]
+            if entry["path"] == "golden/weight_recipe.json"
+        )
+        recipe_entry["byte_length"] = len(changed_recipe_payload)
+        recipe_entry["sha256"] = hashlib.sha256(changed_recipe_payload).hexdigest()
+        cases.append(
+            (
+                "weight tensor canonical byte count",
+                _json_bytes(recipe_manifest),
+                router_module._HIDDEN_PATH.read_bytes(),
+                changed_recipe_payload,
+            )
+        )
+
+        for label, manifest_payload, hidden_payload, recipe_payload in cases:
+            with self.subTest(label=label):
+                self.assert_committed_fixture_rejected_before_runner(
+                    "invalid_byte_count",
+                    manifest_payload=manifest_payload,
+                    hidden_payload=hidden_payload,
+                    recipe_payload=recipe_payload,
+                )
 
     def test_runtime_gpu_evidence_precedes_tensor_scheduling(self) -> None:
         for label, target_name, metal_available in (

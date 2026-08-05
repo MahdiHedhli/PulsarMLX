@@ -1796,3 +1796,67 @@ integration, native MLX device/tensor/routed-MoE fixtures, and bounded evidence
 verification. Both jobs concluded `success`; no external checkpoint or model
 weight was accessed. T038 is therefore complete and the fail-closed T039–T049
 safety slice is eligible to begin.
+
+The non-recursive documentation attestation was committed as `b337d8c`
+(`docs: attest offline router CI`) and pushed to `origin/main`. Its exact
+follow-up GitHub Actions run
+[31047832024](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31047832024)
+also concluded `success`: `Apple MLX small-fixture validation` passed in 37
+seconds and `Apple Silicon workspace baseline` passed in 1 minute 40 seconds.
+This later run is reported here but does not recursively require another
+attestation-only commit.
+
+### T039–T041 fail-closed red tests and fixtures
+
+The fail-closed safety slice began without model access. T039 added production-
+seam-directed Rust tests for role occurrence and aliases, type, quantization,
+dimensions, layout, range count/overflow, top-k, full-range identity, file-size
+mutation, non-finite F32 data, symlink/hard-link mutation, resource admission,
+and runner invocation. The final tests-first command was:
+
+```sh
+export PULSARMLX_MODEL_GGUF=''
+cargo test -p mlx-backend --test router_contract -- --nocapture
+```
+
+It failed at compilation as intended because the tests require the new
+production `with_admitted_router_tensor_f32` execution gate and
+`RouterResourceAdmission` type that T042 must implement. Earlier in the same
+red iteration, before replacing test-local runner helpers with that production
+seam, 17 tests ran: 14 passed and three failed on the missing/duplicate role,
+tensor-role alias, and F32/quantization stable-code gaps. The compile-red state
+is therefore deliberate test-first evidence, not a claimed passing result.
+
+T040 added bounded worker/protocol rejection tests and ran:
+
+```sh
+export PULSARMLX_MODEL_GGUF=''
+PYTHONPATH=python uv run python -m unittest \
+  python/pulsar_mlx_worker/tests/test_router.py -v
+```
+
+The run executed 19 test methods and produced 15 intentional failing subcases:
+five file/canonical byte-count mutations returned `internal_worker_error`
+instead of `invalid_byte_count`; six invalid device/fallback scalar types
+returned `device_unavailable` instead of `malformed_request`; and four
+syntactically malformed case IDs returned `unsupported_operation` instead of
+`malformed_request`. All new shape, dtype, non-finite, fallback, stable-unknown
+identity, and access-trap cases otherwise passed. The spies verified no router
+runner or MLX array/scheduling surface was reached by rejected inputs.
+
+T041 added seven bounded strict-JSON negative fixture descriptions and one
+complete synthetic tie document containing both exact-cutoff and one-F32-logit-
+ULP near-tie cases across all 128 experts. A review found and corrected one
+initial non-finite mutation coordinate; the regenerated fixture now targets an
+authoritative positive-zero cell. The exact check:
+
+```sh
+python3 fixtures/research/router-v1/golden/generate.py --check
+```
+
+reported 12 generated files byte-identical. Strict parsing, manifest byte
+lengths and SHA-256 identities, exact/near-tie ordering, existing worker case
+loading, byte bounds, and `git diff --check` passed. Independent read-only
+reviews found no remaining high or medium issue in the Python tests or fixture
+slice. No command in T039–T041 resolved, statted, opened, or executed an
+external checkpoint; the NTFY hardware-pause gate remains ineligible.

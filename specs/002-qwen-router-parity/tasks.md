@@ -162,9 +162,9 @@ router MLX arrays. Existing startup runtime discovery remains unchanged.
 
 ### Tests First
 
-- [ ] T039 [P] [US2] Write and run failing Rust tests for truncated/overlong ranges, duplicate/missing tensors, changed identity, wrong F32 type/dimensions/orientation, invalid top-k, non-finite data, aliases, and runner-not-called behavior in `crates/mlx-backend/tests/router_contract.rs`
-- [ ] T040 [P] [US2] Write and run failing Python tests proving malformed fields, invalid shapes/dtypes, non-finite values, fallback requests, invalid case IDs, and byte-count failures occur before router MLX array construction, scheduling, or runner access in `python/pulsar_mlx_worker/tests/test_router.py`
-- [ ] T041 [US2] Add bounded malformed, truncated, overlong, orientation, invalid-top-k, non-finite, exact-tie, and near-tie fixtures in `fixtures/research/router-v1/malformed/` and `fixtures/research/router-v1/synthetic-tie.json`
+- [X] T039 [P] [US2] Write and run failing Rust tests for truncated/overlong ranges, duplicate/missing tensors, changed identity, wrong F32 type/dimensions/orientation, invalid top-k, non-finite data, aliases, and runner-not-called behavior in `crates/mlx-backend/tests/router_contract.rs`
+- [X] T040 [P] [US2] Write and run failing Python tests proving malformed fields, invalid shapes/dtypes, non-finite values, fallback requests, invalid case IDs, and byte-count failures occur before router MLX array construction, scheduling, or runner access in `python/pulsar_mlx_worker/tests/test_router.py`
+- [X] T041 [US2] Add bounded malformed, truncated, overlong, orientation, invalid-top-k, non-finite, exact-tie, and near-tie fixtures in `fixtures/research/router-v1/malformed/` and `fixtures/research/router-v1/synthetic-tie.json`
 
 ### Implementation
 

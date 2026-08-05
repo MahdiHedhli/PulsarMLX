@@ -40,8 +40,19 @@ GENERATED_PATHS = (
     Path("golden/hidden_states.json"),
     Path("golden/weight_recipe.json"),
     Path("golden/expected_results.json"),
+    Path("malformed/invalid-control-type.json"),
+    Path("malformed/invalid-hidden-shape.json"),
+    Path("malformed/truncated-router-range.json"),
+    Path("malformed/overlong-router-range.json"),
+    Path("malformed/invalid-orientation.json"),
+    Path("malformed/invalid-top-k.json"),
+    Path("malformed/non-finite-hidden-state.json"),
+    Path("synthetic-tie.json"),
     Path("manifest.json"),
 )
+
+NEGATIVE_FIXTURE_MAXIMUM_BYTES = 65_536
+NEGATIVE_FAILURE_STAGE = "before_router_mlx_array_construction"
 
 
 def f32(value: float | Decimal) -> float:
@@ -85,6 +96,24 @@ def canonical_u32le_sha256(values: Iterable[int]) -> str:
             raise ValueError("selected expert ID is outside the fixture range")
         output.extend(struct.pack("<I", value))
     return hashlib.sha256(output).hexdigest()
+
+
+def f32_bits_hex(value: float) -> str:
+    """Return the conventional eight-digit binary32 bit pattern."""
+
+    finite = f32(value)
+    bits = struct.unpack("<I", struct.pack("<f", finite))[0]
+    return f"{bits:08x}"
+
+
+def next_positive_f32(value: float) -> float:
+    """Return the next representable positive finite binary32 value."""
+
+    finite = f32(value)
+    if finite <= 0.0:
+        raise ValueError("next_positive_f32 requires a positive input")
+    bits = struct.unpack("<I", struct.pack("<f", finite))[0]
+    return f32(struct.unpack("<f", struct.pack("<I", bits + 1))[0])
 
 
 def weight_value(expert_id: int, input_column: int) -> float:
@@ -260,6 +289,283 @@ def build_case(
     }
 
 
+def negative_fixture_bounds() -> dict[str, object]:
+    """Return the common hard bounds carried by every negative fixture."""
+
+    return {
+        "expert_count": EXPERT_COUNT,
+        "hidden_width": HIDDEN_WIDTH,
+        "maximum_fixture_bytes": NEGATIVE_FIXTURE_MAXIMUM_BYTES,
+        "maximum_hidden_rows": 2,
+        "router_tensor_byte_length": EXPERT_COUNT * HIDDEN_WIDTH * 4,
+        "top_k": TOP_K,
+    }
+
+
+def build_negative_case(
+    *,
+    fixture_id: str,
+    category: str,
+    validation_surface: str,
+    expected_code: str,
+    mutation: dict[str, object],
+) -> dict[str, object]:
+    """Describe one bounded mutation without embedding model or tensor bytes."""
+
+    if not fixture_id or not category or not validation_surface or not expected_code:
+        raise ValueError("negative fixture identity fields must be nonempty")
+    if set(mutation) != {"field", "operation", "original", "replacement"}:
+        raise ValueError("negative fixture mutations use one exact bounded schema")
+    return {
+        "bounds": negative_fixture_bounds(),
+        "case": {
+            "category": category,
+            "expected_failure": {
+                "accepted_result": False,
+                "code": expected_code,
+                "must_precede": NEGATIVE_FAILURE_STAGE,
+                "router_runner_called": False,
+            },
+            "mutation": mutation,
+            "validation_surface": validation_surface,
+        },
+        "contract_id": "qwen3moe-layer0-router-parity-v1",
+        "fixture_id": fixture_id,
+        "provenance": {
+            "evidence_level": "synthetic_negative_fixture_only",
+            "external_checkpoint_access_required": False,
+            "kind": "synthetic_generated_malformed",
+            "model_free": True,
+            "raw_model_or_tensor_bytes_committed": False,
+        },
+        "schema": "pulsarmlx.fixture.router-negative-case",
+        "schema_version": "1.0.0",
+    }
+
+
+def build_negative_documents() -> dict[Path, bytes]:
+    """Build the complete bounded malformed-input inventory."""
+
+    expected_tensor_bytes = EXPERT_COUNT * HIDDEN_WIDTH * 4
+    documents = {
+        Path("malformed/invalid-control-type.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-invalid-control-type-v1",
+            category="malformed_scalar_type",
+            validation_surface="worker_control_admission",
+            expected_code="malformed_request",
+            mutation={
+                "field": "router_case_id",
+                "operation": "replace_scalar",
+                "original": SINGLE_ROW_CASE_ID,
+                "replacement": 7,
+            },
+        ),
+        Path("malformed/invalid-hidden-shape.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-invalid-hidden-shape-v1",
+            category="malformed_hidden_shape",
+            validation_surface="worker_hidden_state_admission",
+            expected_code="invalid_shape",
+            mutation={
+                "field": "hidden_states.shape",
+                "operation": "replace_shape",
+                "original": [1, HIDDEN_WIDTH],
+                "replacement": [1, HIDDEN_WIDTH - 1],
+            },
+        ),
+        Path("malformed/truncated-router-range.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-truncated-range-v1",
+            category="truncated_router_range",
+            validation_surface="host_positional_range_read",
+            expected_code="invalid_byte_count",
+            mutation={
+                "field": "router_tensor.observed_byte_count",
+                "operation": "replace_observed_byte_count",
+                "original": expected_tensor_bytes,
+                "replacement": expected_tensor_bytes - 4,
+            },
+        ),
+        Path("malformed/overlong-router-range.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-overlong-range-v1",
+            category="overlong_router_range",
+            validation_surface="host_positional_range_read",
+            expected_code="invalid_byte_count",
+            mutation={
+                "field": "router_tensor.observed_byte_count",
+                "operation": "replace_observed_byte_count",
+                "original": expected_tensor_bytes,
+                "replacement": expected_tensor_bytes + 4,
+            },
+        ),
+        Path("malformed/invalid-orientation.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-invalid-orientation-v1",
+            category="transposed_router_orientation",
+            validation_surface="host_tensor_descriptor_admission",
+            expected_code="invalid_layout",
+            mutation={
+                "field": "router_tensor.orientation",
+                "operation": "replace_scalar",
+                "original": "expert_major_rows_input_columns",
+                "replacement": "input_major_rows_expert_columns",
+            },
+        ),
+        Path("malformed/invalid-top-k.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-invalid-top-k-v1",
+            category="invalid_top_k",
+            validation_surface="host_tensor_descriptor_admission",
+            expected_code="model_tensor_mismatch",
+            mutation={
+                "field": "router_tensor.top_k",
+                "operation": "replace_scalar",
+                "original": TOP_K,
+                "replacement": TOP_K - 1,
+            },
+        ),
+        Path("malformed/non-finite-hidden-state.json"): build_negative_case(
+            fixture_id="generated-qwen3moe-router-non-finite-hidden-state-v1",
+            category="non_finite_hidden_state",
+            validation_surface="worker_hidden_state_admission",
+            expected_code="invalid_dtype",
+            mutation={
+                "field": "hidden_states[0][1]",
+                "operation": "replace_f32_bits_before_decode",
+                "original": {
+                    "f32_bits_hex": "00000000",
+                    "semantic": "positive_zero",
+                },
+                "replacement": {
+                    "f32_bits_hex": "7fc00000",
+                    "semantic": "quiet_nan",
+                },
+            },
+        ),
+    }
+    encoded: dict[Path, bytes] = {}
+    for path, document in documents.items():
+        payload = json_bytes(document)
+        if len(payload) > NEGATIVE_FIXTURE_MAXIMUM_BYTES:
+            raise ValueError(f"negative fixture exceeds its bound: {path.as_posix()}")
+        encoded[path] = payload
+    return encoded
+
+
+def synthetic_tie_logits(*, near_tie: bool) -> list[float]:
+    """Build complete logits with the only cutoff ambiguity at experts 7/8."""
+
+    logits: list[float] = []
+    for expert_id in range(EXPERT_COUNT):
+        if expert_id < 7:
+            value = 16.0 - expert_id
+        elif expert_id in (7, 8):
+            value = 9.0
+        else:
+            value = 8.0 - (expert_id / EXPERT_COUNT)
+        logits.append(f32(value))
+    if near_tie:
+        logits[8] = next_positive_f32(logits[8])
+    return logits
+
+
+def build_synthetic_tie_case(*, near_tie: bool) -> dict[str, object]:
+    logits = synthetic_tie_logits(near_tie=near_tie)
+    probabilities = full_softmax_f32(logits)
+    selected_ids, selected_probabilities, normalized_weights = select_and_normalize(
+        probabilities
+    )
+    if near_tie:
+        expected_ids = [0, 1, 2, 3, 4, 5, 6, 8]
+        rank_8_expert_id = 8
+        rank_9_expert_id = 7
+        relation = "one_f32_ulp_logit_above"
+        if not probabilities[8] > probabilities[7]:
+            raise ValueError("near-tie probabilities must remain representably ordered")
+    else:
+        expected_ids = [0, 1, 2, 3, 4, 5, 6, 7]
+        rank_8_expert_id = 7
+        rank_9_expert_id = 8
+        relation = "exact_f32_equal"
+        if f32_bits_hex(probabilities[7]) != f32_bits_hex(probabilities[8]):
+            raise ValueError("exact-tie probabilities must have identical F32 bits")
+    if selected_ids != expected_ids:
+        raise ValueError("synthetic cutoff fixture selected unexpected experts")
+    if abs(sum(normalized_weights) - 1.0) > 1.0e-6:
+        raise ValueError("synthetic cutoff weights do not sum to one")
+
+    case_id = (
+        "generated-qwen3moe-router-near-tie-v1"
+        if near_tie
+        else "generated-qwen3moe-router-exact-tie-v1"
+    )
+    return {
+        "case_id": case_id,
+        "cutoff": {
+            "rank_8_expert_id": rank_8_expert_id,
+            "rank_8_logit_f32_bits": f32_bits_hex(logits[rank_8_expert_id]),
+            "rank_8_probability_f32_bits": f32_bits_hex(
+                probabilities[rank_8_expert_id]
+            ),
+            "rank_9_expert_id": rank_9_expert_id,
+            "rank_9_logit_f32_bits": f32_bits_hex(logits[rank_9_expert_id]),
+            "rank_9_probability_f32_bits": f32_bits_hex(
+                probabilities[rank_9_expert_id]
+            ),
+            "relation": relation,
+        },
+        "full_softmax_probabilities": [probabilities],
+        "hashes": hash_output_groups(
+            [logits],
+            [probabilities],
+            [selected_ids],
+            [selected_probabilities],
+            [normalized_weights],
+        ),
+        "kind": "near_tie" if near_tie else "exact_tie",
+        "logits": [logits],
+        "logits_shape": [1, EXPERT_COUNT],
+        "normalized_weights": [normalized_weights],
+        "provenance": "synthetic_generated_model_free",
+        "selected_expert_ids": [selected_ids],
+        "selected_probabilities": [selected_probabilities],
+    }
+
+
+def build_synthetic_tie_document() -> bytes:
+    document = {
+        "bounds": {
+            "case_count": 2,
+            "expert_count": EXPERT_COUNT,
+            "maximum_fixture_bytes": NEGATIVE_FIXTURE_MAXIMUM_BYTES,
+            "maximum_rows_per_case": 1,
+            "top_k": TOP_K,
+        },
+        "cases": [
+            build_synthetic_tie_case(near_tie=False),
+            build_synthetic_tie_case(near_tie=True),
+        ],
+        "contract": {
+            "contract_id": "qwen3moe-layer0-router-parity-v1",
+            "non_finite_policy": "reject",
+            "normalization": (
+                "full_128_way_softmax_then_selected_probability_renormalization"
+            ),
+            "tie_rule": "probability_descending_then_expert_id_ascending",
+        },
+        "fixture_id": "generated-qwen3moe-router-synthetic-cutoff-v1",
+        "provenance": {
+            "evidence_level": "synthetic_tie_fixture_only",
+            "external_checkpoint_access_required": False,
+            "kind": "synthetic_generated",
+            "model_free": True,
+            "proves_real_checkpoint_routing": False,
+        },
+        "schema": "pulsarmlx.fixture.router-synthetic-tie",
+        "schema_version": "1.0.0",
+    }
+    payload = json_bytes(document)
+    if len(payload) > NEGATIVE_FIXTURE_MAXIMUM_BYTES:
+        raise ValueError("synthetic tie fixture exceeds its bound")
+    return payload
+
+
 def json_bytes(value: object) -> bytes:
     return (
         json.dumps(
@@ -405,6 +711,8 @@ def build_generated_documents() -> dict[Path, bytes]:
         Path("golden/weight_recipe.json"): json_bytes(weight_document),
         Path("golden/expected_results.json"): json_bytes(expected_document),
     }
+    documents.update(build_negative_documents())
+    documents[Path("synthetic-tie.json")] = build_synthetic_tie_document()
     generator_bytes = Path(__file__).read_bytes()
     file_records = [
         {
@@ -497,6 +805,8 @@ def build_generated_documents() -> dict[Path, bytes]:
                 "generated complete-router fixture construction",
                 "independent scalar expected-output construction",
                 "deterministic byte-for-byte regeneration",
+                "bounded negative-fixture inventory",
+                "synthetic exact-tie and near-tie cutoff expectations",
             ],
             "does_not_prove": [
                 "external checkpoint access or identity",
