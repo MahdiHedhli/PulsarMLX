@@ -363,7 +363,7 @@ class PublicationBoundaryTests(unittest.TestCase):
         result = json.loads(completed.stdout)
         self.assertTrue(result["passed"])
         self.assertTrue(result["fixture_only"])
-        self.assertEqual(result["record_count"], 1)
+        self.assertEqual(result["record_count"], 3)
         after = {
             path.relative_to(REPOSITORY_ROOT): path.read_bytes()
             for path in FULL_FIXTURE.parent.glob("*.json")

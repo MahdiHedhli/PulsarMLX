@@ -1,5 +1,5 @@
 {
-  "actual_status": "passed",
+  "actual_status": "aborted",
   "artifacts": [
     {
       "kind": "frozen_protocol",
@@ -21,7 +21,7 @@
       "router_selected_weight_normalization"
     ],
     "operation": "layer_0_router_only",
-    "status": "provisional",
+    "status": "blocked",
     "unsupported_interpretations": [
       "expert_execution",
       "routed_moe_aggregation",
@@ -40,9 +40,9 @@
     "deterministic_repeat_count": 10,
     "first_mismatch": null,
     "id_mismatch_count": 0,
-    "maximum_absolute_error": 0.0,
-    "maximum_relative_error": 0.0,
-    "mean_absolute_error": 0.0,
+    "maximum_absolute_error": 0,
+    "maximum_relative_error": 0,
+    "mean_absolute_error": 0,
     "non_finite_count": 0,
     "non_finite_policy": "reject",
     "numeric_mismatch_count": 0,
@@ -61,7 +61,7 @@
       "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
     ],
-    "rmse": 0.0
+    "rmse": 0
   },
   "environment": {
     "interference_admission": "admitted",
@@ -84,15 +84,21 @@
     "benchmark_order_policy": "deterministic_seeded",
     "build_profile": "release",
     "command": "python3 scripts/research/run_router_experiment.py --model $PULSARMLX_MODEL_GGUF",
-    "exit_code": 0,
+    "exit_code": 130,
     "features": [
       "mlx-backend"
     ],
     "shell": "zsh",
     "working_directory_policy": "repository_root"
   },
-  "experiment_id": "f002-router-fixture-0001",
-  "failures": [],
+  "experiment_id": "f002-router-fixture-aborted-0001",
+  "failures": [
+    {
+      "code": "fixture_aborted",
+      "message": "Synthetic fixture-only aborted experiment; no external checkpoint was accessed.",
+      "stage": "fixture_contract_validation"
+    }
+  ],
   "feature_id": "002-qwen-router-parity",
   "input": {
     "byte_length": 16384,
@@ -548,13 +554,43 @@
       "started_at_utc": "2026-08-05T18:00:00Z",
       "status": "passed",
       "synchronized": true
+    },
+    {
+      "batch_id": "batch-a",
+      "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+      "completed_at_utc": "2026-08-05T18:00:01Z",
+      "condition": "warm",
+      "correctness_passed": null,
+      "durations_ns": {
+        "fixture_contract_validation": 900
+      },
+      "evaluated": false,
+      "failure": {
+        "code": "fixture_aborted",
+        "message": "Synthetic fixture-only aborted experiment; no external checkpoint was accessed.",
+        "stage": "fixture_contract_validation"
+      },
+      "fallback_used": false,
+      "instrumentation_mode": "minimally_instrumented",
+      "monotonic_clock": "perf_counter_ns",
+      "observation_id": "warmup-aborted-05",
+      "observation_kind": "warmup",
+      "output_sha256": null,
+      "process_replication_id": "process-warm-a",
+      "process_state": "reused_process",
+      "requested_device": "gpu",
+      "run_index": 5,
+      "selected_device": "not_available",
+      "started_at_utc": "2026-08-05T18:00:00Z",
+      "status": "aborted",
+      "synchronized": false
     }
   ],
   "record_kind": "combined",
   "source_commit": "b8eabcbdc4ba4bc23478b1f8d103dabf2c65f9e7",
   "source_worktree_after": {
     "paths": [
-      "docs/research/raw/002-router-parity/f002-router-fixture-0001.json"
+      "fixtures/research/router-v1/evidence/f002-router-fixture-aborted-0001.json"
     ],
     "state": "declared_evidence_outputs_only"
   },
@@ -620,13 +656,13 @@
         "coefficient_of_variation": null,
         "coefficient_of_variation_reason": "sample_standard_deviation_unavailable",
         "maximum_ns": 1025,
-        "mean_ns": 1025.0,
-        "median_ns": 1025.0,
+        "mean_ns": 1025,
+        "median_ns": 1025,
         "minimum_ns": 1025,
-        "p25_ns": 1025.0,
-        "p5_ns": 1025.0,
-        "p75_ns": 1025.0,
-        "p95_ns": 1025.0,
+        "p25_ns": 1025,
+        "p5_ns": 1025,
+        "p75_ns": 1025,
+        "p95_ns": 1025,
         "sample_count": 1,
         "sample_standard_deviation_ns": null,
         "sample_standard_deviation_reason": "requires_at_least_two_samples"
@@ -658,6 +694,7 @@
   },
   "warnings": [
     "Synthetic fixture-only evidence; no external checkpoint was accessed.",
-    "Deterministic fixture timing values are policy test data, not real measurements."
+    "Deterministic fixture timing values are policy test data, not real measurements.",
+    "The terminal aborted attempt is retained and cannot support a passing claim."
   ]
 }

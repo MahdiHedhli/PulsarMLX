@@ -405,6 +405,8 @@ OBSERVATION_FIELDS = {
     "synchronized",
     "output_sha256",
     "correctness_passed",
+    "failure",
+    "exclusion_rule_id",
 }
 
 
@@ -414,7 +416,11 @@ def _validate_observations(record: dict[str, Any]) -> dict[str, dict[str, Any]]:
         _fail("schema_violation", "raw observations are missing")
     by_id: dict[str, dict[str, Any]] = {}
     for observation in observations:
-        item = _closed_object(observation, allowed=OBSERVATION_FIELDS)
+        item = _closed_object(
+            observation,
+            allowed=OBSERVATION_FIELDS,
+            required=OBSERVATION_FIELDS - {"failure", "exclusion_rule_id"},
+        )
         observation_id = item["observation_id"]
         if not isinstance(observation_id, str) or not ID_RE.fullmatch(observation_id):
             _fail("schema_violation", "observation identity is invalid")

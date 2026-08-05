@@ -2177,3 +2177,66 @@ accidental setup errors, and `git diff --check` passed.
 No command accessed a checkpoint, started model inference, or sent NTFY. These
 red tests establish required behavior only; none of the missing production
 seams is claimed implemented yet.
+
+### T052 bounded evidence outcome fixtures
+
+The direct fixture collection now contains three full-schema, model-free
+records: one passing methodology record, one failed record with its terminal
+attempt retained, and one aborted record with its terminal attempt retained.
+The passing record is bound to the inherited Feature 001 model identity, actual
+protocol and fixture-manifest hashes, real pre-fixture source commit
+`b8eabcbdc4ba4bc23478b1f8d103dabf2c65f9e7`, and pinned llama.cpp oracle-source
+revision `b06aa774c03dbbb624e726664b714a57d1f49815`. All three machine-readable claim
+boundaries explicitly list `real_checkpoint_routing` as unsupported and label
+their timings as deterministic policy data rather than measurements.
+
+The experiment schema and structural validator now admit optional bounded
+observation `failure` and `exclusion_rule_id` fields. Failed and aborted
+terminal attempts report `fixture_contract_validation` duration rather than an
+evaluated-router stage because they were neither evaluated nor synchronized.
+A fourth full-schema excluded record lives only under `evidence/mutations/`.
+It declares itself an expected semantic rejection: frozen v1 has no exclusion
+rule, so it is not discovered as accepted fixture evidence and cannot support a
+claim. T053 must add that semantic rejection rather than amend the protocol.
+
+The exact model-free validation included:
+
+```sh
+find fixtures/research/router-v1/evidence -type f -name '*.json' \
+  -print0 | xargs -0 -n1 jq -e .
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts/research/tests/test_validate_evidence.py
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_fixture_only_package_cli_is_model_independent_and_read_only
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity \
+  --fixture-only
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts/research/tests/test_feature002_records.py
+python3 -m py_compile scripts/research/validate_evidence.py \
+  scripts/research/tests/test_verify_package.py
+git diff --check
+```
+
+All JSON parsed; the accepted collection reported three records; all 13 prior
+validator tests and the one focused fixture-package test passed. The direct
+package verifier reported three full-schema records, six deterministic
+artifacts, and zero claims. Source/oracle revisions, protocol/artifact hashes,
+scope exclusions, file bounds, non-link status, Python compilation, and diff
+checks passed. T050's retained failed/aborted method is now green while 13
+intentional T053 semantic failures remain.
+
+One initial focused-unittest invocation incorrectly supplied the class method
+as a second module name after a file path. It therefore ran the expected-red
+T051 module and ended with one `ModuleNotFoundError`; the corrected fully dotted
+selector above passed one of one. This was an invocation error, not a fixture
+or implementation failure.
+
+An independent review found placeholder commit provenance, an omitted
+machine-readable real-routing exclusion, and an evaluated-stage label on
+unevaluated terminal attempts. All three were corrected and re-review passed
+with no remaining high or medium issue. No model path was resolved or opened,
+no MLX/model execution occurred, and no NTFY notification was sent.

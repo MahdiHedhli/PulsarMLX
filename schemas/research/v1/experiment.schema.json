@@ -223,7 +223,9 @@
             { "type": "null" }
           ]
         },
-        "correctness_passed": { "type": ["boolean", "null"] }
+        "correctness_passed": { "type": ["boolean", "null"] },
+        "failure": { "$ref": "#/$defs/failure" },
+        "exclusion_rule_id": { "$ref": "#/$defs/stableId" }
       }
     },
     "summaryValues": {
