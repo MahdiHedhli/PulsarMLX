@@ -369,3 +369,19 @@ cargo test -p backend --test routing_contract
 cargo test -p backend --all-targets
 cargo clippy -p backend --all-targets -- -D warnings
 ```
+
+Task T043 added an independent portable positional source without changing the
+inherited Linux fetcher. It validates contiguous single/split layouts and every
+batch range before reading, advances through partial reads, retries
+`Interrupted`, rejects zero progress and post-open truncation, preserves input
+order, and returns owned non-cloneable payloads. The focused suite passed 14
+tests; the full stream package passed 15 active tests on macOS, with the
+Linux-only preservation suite correctly selecting zero tests. Strict focused
+Clippy also passed:
+
+```sh
+cargo test -p stream --test positional_source
+cargo check -p stream --all-targets
+cargo test -p stream
+cargo clippy -p stream --all-targets -- -D warnings
+```

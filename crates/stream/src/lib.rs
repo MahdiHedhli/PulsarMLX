@@ -11,6 +11,11 @@ pub struct Read {
     pub len: u64,
 }
 
+mod positional;
+pub use positional::{
+    ExpertSource, OwnedSlab, PositionalRead, PositionalSource, ReaderShard, ShardPath, SourceError,
+};
+
 /// Build the universe of per-expert slab reads for every streamed layer of
 /// a MoE gguf: for each routed-expert tensor (gate/up/down) of each layer,
 /// one Read per expert. Mirrors ds4's expert addressing: slab e lives at
