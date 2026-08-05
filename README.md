@@ -15,7 +15,7 @@
 | --- | --- |
 | Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
 | Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, the exact workspace check passes and 139 macOS-selected Rust tests pass; one native MLX integration test is intentionally opt-in and also passes when run explicitly. The Python worker suite passes 28 tests. Native MLX 0.32.0 evidence covers the device proof, seven bounded tensor fixtures, and one synthetic routed-MoE graph with exact expert-byte identities, deterministic routes, evaluated output, and no fallback. A portable exact positional expert source and strict scalar Q8_0 decode/matvec references are also test-verified. |
-| Planned capabilities | The Qwen3-30B-A3B Q8_0 candidate has frozen pre-download oracle, provenance, memory, and shared-boundary records. Acquiring and inventorying the external artifact requires explicit operator authorization before the first bounded real-model vertical slice can proceed. |
+| Planned capabilities | The external Qwen3-30B-A3B Q8_0 artifact now matches its immutable published size and SHA-256, and its exact required Q8_0 expert tensor role is inventoried. The trusted oracle and Apple slice remain unexecuted; test-first bounded implementation is next. |
 | Unsupported or unverified | Real-model MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
 
 The verified MLX results are bounded device/tensor and synthetic-model

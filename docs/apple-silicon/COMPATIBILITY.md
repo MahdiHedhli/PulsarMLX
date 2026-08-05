@@ -52,7 +52,8 @@ tokenizer, logits, generation, serving, or performance result.
 
 - macOS arm64 and MLX 0.32.0: the cases above passed locally.
 - Linux/CUDA after shared Q8_0 additions: pending, not run on this Apple host.
-- Qwen3-30B-A3B Q8_0 has pre-download candidate records only. No local artifact
-  identity or tensor inventory exists, so no model architecture or checkpoint
-  is marked compatible yet.
+- The external Qwen3-30B-A3B Q8_0 artifact's complete size and SHA-256 match
+  immutable published values, and the exact required Q8_0 expert tensor role
+  passes read-only inventory. Neither the trusted oracle nor the Apple slice
+  has executed, so no checkpoint execution compatibility is claimed yet.
 - No correctness-gated benchmark has been run.

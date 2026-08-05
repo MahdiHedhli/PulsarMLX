@@ -3,8 +3,8 @@
   "record_type": "model_compatibility",
   "record_id": "qwen3-30b-a3b-q8_0-candidate-v1",
   "recorded_at_utc": "2026-08-05T13:34:23Z",
-  "status": "candidate",
-  "evidence_state": "official_metadata_verified_pre_download",
+  "status": "artifact_identity_and_required_slice_inventory_verified",
+  "evidence_state": "t055_local_identity_and_required_inventory_verified_not_executed",
   "source": {
     "publisher": "Qwen",
     "repository_id": "Qwen/Qwen3-30B-A3B-GGUF",
@@ -33,24 +33,28 @@
   "published_artifact_identity": {
     "size_bytes": 32483931648,
     "size_value_kind": "published_expected",
-    "size_locally_verified": false,
-    "size_state": "published_expected_not_locally_verified",
+    "size_locally_verified": true,
+    "size_state": "published_expected_matches_complete_local_file",
     "lfs_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
     "lfs_sha256_value_kind": "published_expected",
-    "lfs_sha256_locally_verified": false,
-    "lfs_sha256_state": "published_expected_not_locally_verified",
+    "lfs_sha256_locally_verified": true,
+    "lfs_sha256_state": "published_expected_matches_complete_local_file",
     "metadata_source": "https://huggingface.co/api/models/Qwen/Qwen3-30B-A3B-GGUF/revision/e4d4bafdfb96a411a163846265362aceb0b9c63a?blobs=true",
-    "interpretation": "These are the official repository's published LFS values. They are expected identity values only and are not a checksum or size measurement of a local artifact."
+    "interpretation": "These values originated in official immutable LFS metadata and now match an independent stat and complete SHA-256 pass over the externally stored local artifact."
   },
   "local_artifact_identity": {
-    "operator_download_authorization_recorded": false,
-    "download_performed": false,
-    "local_path": null,
-    "actual_size_bytes": null,
-    "actual_sha256": null,
-    "actual_identity_state": "unresolved_until_t055",
-    "tensor_inventory_state": "unresolved_until_t055",
-    "quantization_inventory_state": "unresolved_until_t055"
+    "operator_download_authorization_recorded": true,
+    "authorization_basis": "The active implementation directive permits a very large model download when the active task explicitly requires it and a smaller fixture cannot validate the milestone; T055 requires the exact artifact for local identity and inventory.",
+    "download_performed": true,
+    "download_authentication": "none_public_ungated",
+    "local_path": "<external-path>/Qwen3-30B-A3B-Q8_0.gguf",
+    "local_path_redacted": true,
+    "inside_repository": false,
+    "actual_size_bytes": 32483931648,
+    "actual_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    "actual_identity_state": "verified_matches_published_expected",
+    "tensor_inventory_state": "required_slice_roles_verified",
+    "quantization_inventory_state": "required_slice_q8_0_verified"
   },
   "related_admission_records": {
     "trusted_oracle": {
@@ -67,7 +71,7 @@
   },
   "architecture": {
     "gguf_architecture": "qwen3moe",
-    "architecture_state": "verified_from_official_repository_api",
+    "architecture_state": "verified_from_official_repository_api_and_local_gguf_metadata",
     "official_model_summary": {
       "total_parameters": "30.5B",
       "activated_parameters": "3.3B",
@@ -76,15 +80,15 @@
       "activated_experts_per_token": 8
     },
     "summary_source": "https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/blob/e4d4bafdfb96a411a163846265362aceb0b9c63a/README.md",
-    "interpretation": "The repository-level architecture and model-card summary are verified metadata. They do not establish that the selected file's complete tensor inventory is supported by PulsarMLX."
+    "interpretation": "Repository-level architecture and model-card summary are verified metadata. T055 separately verifies only the exact local tensor role required by the bounded slice, not support for every tensor in the checkpoint."
   },
   "planned_slice": {
-    "state": "planned_not_executed",
+    "state": "artifact_admitted_not_executed",
     "execution_depth": "one bounded Q8_0 expert gate-projection matvec",
     "input_boundary": {
-      "kind": "deterministic_float32_activation",
+      "kind": "deterministic_prompt_derived_float32_probe_activation",
       "element_count": 2048,
-      "source": "predeclared_oracle_fixture",
+      "source": "sha256-indexed-f32-v1 adapter frozen by the trusted oracle",
       "model_tokenization_required": false
     },
     "model_tensor_boundary": {
@@ -110,9 +114,21 @@
         2048
       ],
       "required_quantization": "Q8_0",
-      "actual_dimensions": null,
-      "actual_quantization": null,
-      "admission_state": "candidate_pending_t055_inventory"
+      "actual_dimensions": [
+        2048,
+        768,
+        128
+      ],
+      "actual_reader_encoded_shape": [
+        128,
+        768,
+        2176
+      ],
+      "actual_quantization": "Q8_0",
+      "actual_logical_elements": 201326592,
+      "actual_encoded_bytes": 213909504,
+      "actual_absolute_data_offset": 901175808,
+      "admission_state": "verified_for_exact_bounded_slice"
     },
     "output_boundary": {
       "name": "blk0_ffn_gate_expert0_rows0_16_matvec",
@@ -128,9 +144,9 @@
         "required_quantization": "Q8_0",
         "required_operation": "strict_32_element_34_byte_block_decode_and_scalar_or_mlx_matvec",
         "scope": "expert_0_rows_0_through_15_all_2048_input_columns",
-        "actual_tensor_presence": "unresolved_until_t055",
-        "actual_tensor_type": "unresolved_until_t055",
-        "compatibility": "candidate_not_admitted"
+        "actual_tensor_presence": "exactly_one",
+        "actual_tensor_type": "Q8_0",
+        "compatibility": "admitted_for_exact_bounded_slice_not_executed"
       }
     ],
     "explicit_exclusions": [
@@ -152,7 +168,7 @@
     ]
   },
   "admission": {
-    "current_decision": "candidate_only_do_not_execute",
+    "current_decision": "local_identity_and_required_inventory_passed_proceed_to_test_first_slice_implementation",
     "verified_before_download": [
       "official public and ungated repository identity",
       "immutable repository revision",
@@ -163,14 +179,14 @@
       "repository-level qwen3moe architecture metadata",
       "official 30.5B total, 3.3B activated, 48-layer, 128-expert, 8-active-expert summary"
     ],
-    "unresolved_until_t055": [
-      "operator authorization for external acquisition",
-      "actual local artifact byte size",
-      "actual local artifact SHA-256",
-      "complete local GGUF metadata and tensor inventory",
-      "presence and exact dimensions of blk.0.ffn_gate_exps.weight",
-      "actual GGUF type and layout of blk.0.ffn_gate_exps.weight",
-      "compatibility of every tensor byte range used by the bounded slice"
+    "verified_at_t055": [
+      "conditional operator authorization for the exact active-task artifact",
+      "complete local artifact byte size",
+      "complete local artifact SHA-256",
+      "local GGUF architecture and required model-dimension metadata",
+      "exactly one blk.0.ffn_gate_exps.weight tensor",
+      "exact tensor dimensions, encoded orientation, Q8_0 type, element count, byte count, and in-file range",
+      "every tensor role and quantization used by the bounded gate-projection slice"
     ],
     "stop_before_download_if": [
       "the repository, immutable revision, or exact filename cannot be resolved from the official source",
@@ -179,16 +195,18 @@
       "published expected size or LFS SHA-256 is absent or differs from this record",
       "the architecture is not qwen3moe",
       "the independent oracle or conservative disk and memory admission records are incomplete",
-      "explicit operator authorization has not been recorded"
+      "the active-task conditional authorization does not apply"
     ],
     "stop_after_authorized_download_before_execution_if": [
       "actual local byte size differs from 32483931648",
       "actual local SHA-256 differs from 4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
-      "the complete tensor inventory is unavailable",
+      "the complete required-slice tensor inventory is unavailable",
       "blk.0.ffn_gate_exps.weight is absent",
       "the candidate tensor's dimensions, orientation, or quantization differ from the predeclared slice contract",
       "any required tensor role or quantization would need an unvalidated interpretation"
-    ]
+    ],
+    "execution_state": "not_started",
+    "next_gate": "T056 and T057 must establish failing bounded contract tests before T058 and T059 implementation; the trusted oracle remains unexecuted until T061."
   },
   "source_verification": {
     "verified_at_utc": "2026-08-05T13:34:23Z",
@@ -213,16 +231,116 @@
       "pinned_license_file_present": true
     }
   },
+  "t055_local_verification": {
+    "verified_at_utc": "2026-08-05T14:08:18Z",
+    "location_policy": "The artifact and all downloader/tool caches are outside the repository; the private absolute path is intentionally omitted from committed evidence.",
+    "acquisition": {
+      "client": "huggingface_hub hf CLI 1.26.0 with hf_xet",
+      "authentication": "none_public_ungated",
+      "high_performance_xet": true,
+      "command": "HF_XET_HIGH_PERFORMANCE=1 HF_HOME=<external-cache> uvx --from huggingface_hub hf download Qwen/Qwen3-30B-A3B-GGUF Qwen3-30B-A3B-Q8_0.gguf --revision e4d4bafdfb96a411a163846265362aceb0b9c63a --local-dir <external-dir>",
+      "exit_code": 0,
+      "initial_transport_note": "A resumable curl attempt was interrupted with exit 130 after throughput degraded; its 976437248-byte partial file was preserved outside the repository and was not used for identity or inventory."
+    },
+    "identity_commands": [
+      {
+        "command": "stat -f '%N %z bytes' <external-file>/Qwen3-30B-A3B-Q8_0.gguf",
+        "exit_code": 0,
+        "actual_size_bytes": 32483931648,
+        "passed": true
+      },
+      {
+        "command": "shasum -a 256 <external-file>/Qwen3-30B-A3B-Q8_0.gguf",
+        "exit_code": 0,
+        "actual_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+        "passed": true
+      }
+    ],
+    "inventory_runtime": {
+      "project": "ggml-org/llama.cpp gguf-py",
+      "revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+      "component_version": "0.19.0",
+      "python": "CPython 3.12.13",
+      "operation": "read-only GGUFReader metadata and mmap inventory",
+      "dequantized": false,
+      "executed": false
+    },
+    "gguf_inventory": {
+      "endianness": "LITTLE",
+      "data_offset": 5969408,
+      "tensor_count": 579,
+      "tensor_type_counts": {
+        "F32": 241,
+        "Q8_0": 338
+      },
+      "required_metadata": {
+        "general.architecture": {
+          "type": "STRING",
+          "value": "qwen3moe"
+        },
+        "qwen3moe.embedding_length": {
+          "type": "UINT32",
+          "value": 2048
+        },
+        "qwen3moe.expert_feed_forward_length": {
+          "type": "UINT32",
+          "value": 768
+        },
+        "qwen3moe.expert_count": {
+          "type": "UINT32",
+          "value": 128
+        }
+      },
+      "required_slice_roles": [
+        {
+          "role": "layer_0_routed_expert_gate_projection",
+          "tensor_name": "blk.0.ffn_gate_exps.weight",
+          "occurrences": 1,
+          "gguf_type": "Q8_0",
+          "gguf_dimensions_fastest_axis_first": [
+            2048,
+            768,
+            128
+          ],
+          "reader_encoded_shape": [
+            128,
+            768,
+            2176
+          ],
+          "logical_elements": 201326592,
+          "encoded_bytes": 213909504,
+          "absolute_data_offset": 901175808,
+          "relative_tensor_data_offset": 895206400,
+          "end_offset_exclusive": 1115085312,
+          "range_inside_file": true,
+          "admitted_expert": 0,
+          "admitted_output_rows": [
+            0,
+            16
+          ],
+          "admitted_input_columns": [
+            0,
+            2048
+          ]
+        }
+      ]
+    },
+    "post_acquisition_environment": {
+      "available_disk_bytes": 187187339264,
+      "system_wide_memory_free_percentage": 81,
+      "note": "These are point-in-time post-acquisition observations, not execution gauges."
+    },
+    "decision": "pass_local_identity_and_required_slice_inventory",
+    "stop_condition_reached": false
+  },
   "claim_boundary": {
-    "verified_claim": "Official pre-download identity, access, license, repository architecture, published expected size, and published expected LFS SHA-256 were verified from immutable public metadata.",
+    "verified_claim": "The exact public artifact's complete local byte size and SHA-256 match immutable published values, and read-only pinned gguf-py inventory verifies every metadata, tensor, layout, range, and Q8_0 role required by the bounded expert gate-projection slice.",
     "prohibited_claims": [
-      "the artifact has been downloaded",
-      "the published expected size or SHA-256 has been verified against local bytes",
-      "the selected tensor exists with the required dimensions or Q8_0 type",
-      "the checkpoint is compatible, verified, or executable in PulsarMLX",
+      "the checkpoint is compatible beyond the exact admitted tensor role and bounded slice",
+      "the trusted oracle or Apple slice has been executed",
       "real-model MLX inference works",
       "the bounded slice, full model, giant-model inference, or serving works"
     ],
-    "next_gate": "T055 must be explicitly authorized and must establish actual local identity plus complete required tensor and quantization inventory before execution."
+    "next_gate": "T056 and T057 must encode failing Rust and worker contracts before the exact T058/T059 bounded implementation begins."
   }
 }

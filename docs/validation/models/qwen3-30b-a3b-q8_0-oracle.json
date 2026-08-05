@@ -54,7 +54,7 @@
     "published_expected_size_bytes": 32483931648,
     "published_expected_lfs_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
     "local_path_policy": "An operator-authorized absolute external path supplied through PULSARMLX_MODEL_GGUF. The file must remain outside the repository and is opened read-only.",
-    "local_identity_state": "unresolved_until_authorized_acquisition_and_t055",
+    "local_identity_state": "verified_at_t055_matches_published_expected",
     "identity_gate": "Before parsing, the command requires the exact basename and byte size and computes the complete local SHA-256. Any difference from the published expected identity stops the oracle.",
     "automatic_download": false
   },
@@ -78,7 +78,7 @@
         "value": 128
       }
     },
-    "admission_state": "predeclared_not_observed_in_local_artifact",
+    "admission_state": "verified_at_t055_from_local_artifact",
     "rule": "general.architecture must be an exact GGUF STRING/Python str equal to qwen3moe. Each numeric key must be an exact GGUF UINT32/Python int (bool rejected) equal to its predeclared value. GGUFReader rejects duplicate field names while parsing; missing, duplicate, differently typed, or different values stop before dequantization."
   },
   "tensor_admission": {
@@ -106,10 +106,33 @@
     "required_logical_element_count": 201326592,
     "required_encoded_tensor_bytes": 213909504,
     "orientation": "GGUF dimensions are fastest-axis-first [input_columns, output_rows, experts]. GGUFReader reverses them for NumPy; dequantized indexing is [expert, output_row, input_column]. No transpose is permitted.",
-    "actual_presence": null,
-    "actual_type": null,
-    "actual_dimensions": null,
-    "admission_state": "pending_t055_inventory"
+    "actual_presence": "exactly_one",
+    "actual_type": "Q8_0",
+    "actual_dimensions": [
+      2048,
+      768,
+      128
+    ],
+    "actual_reader_encoded_shape": [
+      128,
+      768,
+      2176
+    ],
+    "actual_logical_element_count": 201326592,
+    "actual_encoded_tensor_bytes": 213909504,
+    "actual_absolute_data_offset": 901175808,
+    "admission_state": "verified_at_t055_not_dequantized_or_executed"
+  },
+  "t055_post_freeze_admission": {
+    "recorded_at_utc": "2026-08-05T14:08:18Z",
+    "artifact_size_and_sha256_verified": true,
+    "required_metadata_and_tensor_inventory_verified": true,
+    "oracle_contract_changed_after_output": false,
+    "trusted_reference_output_observed": false,
+    "apple_real_model_output_observed": false,
+    "artifact_dequantized_by_oracle": false,
+    "artifact_executed": false,
+    "evidence_record": "docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json"
   },
   "deterministic_input": {
     "kind": "prompt_digest_probe_activation",
@@ -433,7 +456,7 @@
       "PY"
     ],
     "capture_policy": "Capture the single stdout JSON object without adding private absolute paths. Diagnostics and ORACLE_STOP messages go to the invoking terminal and are not reference results.",
-    "expected_current_state": "Do not run until T055 has explicit operator authorization, the external artifact has been acquired, and local identity/inventory admission has passed."
+    "expected_current_state": "T055 identity and required-inventory admission has passed. Do not execute this oracle before T056-T060 implement and validate the exact bounded slice; T061 owns the first trusted-reference execution."
   },
   "stop_conditions": [
     "The clean llama.cpp checkout cannot be reproduced at b06aa774c03dbbb624e726664b714a57d1f49815 or its gguf-py project version is not 0.19.0.",
@@ -449,6 +472,7 @@
   ],
   "source_verification": {
     "verified_at_utc": "2026-08-05T13:46:06Z",
+    "scope": "Historical T051 pre-download source verification; later T055 artifact admission is recorded separately above.",
     "effect": "read_only_official_source_and_metadata_requests_only",
     "model_artifact_downloaded": false,
     "packages_installed": false,
@@ -499,12 +523,11 @@
   "claim_boundary": {
     "verified_claim": "An independent official gguf-py Q8_0 oracle, exact deterministic prompt and transparent prompt-derived activation, named bounded tensor slice, scalar/NumPy self-check, and Apple comparison rule were selected and frozen before any real-model Apple output.",
     "claims_not_made": [
-      "the external GGUF has been downloaded, locally hashed, inventoried, opened, or executed",
-      "the named tensor is present or actually has the predeclared type, dimensions, or orientation",
+      "the trusted oracle has dequantized or executed the artifact",
       "the trusted-reference output is reproducible",
       "the Apple slice has been implemented or executed",
       "real-model inference, logits, token generation, full-layer execution, full-model execution, giant-model inference, serving, or performance works"
     ],
-    "next_gate": "T055 requires explicit operator authorization and must establish local artifact identity plus complete required tensor inventory. T061 may execute this exact oracle only after every admission gate passes."
+    "next_gate": "T056-T060 must implement and validate the exact bounded contracts. T061 may then execute this unchanged oracle for the first trusted-reference output."
   }
 }

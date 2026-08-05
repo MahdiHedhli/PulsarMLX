@@ -152,9 +152,9 @@
     "disk_gate": "pass",
     "unified_memory_gate": "pass",
     "bounded_slice_admission": "pass_pre_download_budget_only",
-    "download_authorized": false,
-    "proceed_now": false,
-    "reason": "The conservative disk and unified-memory bounds fit the observed host, but this record neither authorizes acquisition nor proves the artifact identity, tensor inventory, execution, or correctness.",
+    "download_authorized_at_t053_record_time": false,
+    "proceed_at_t053_record_time": false,
+    "reason": "At T053 record time, the conservative disk and unified-memory bounds fit the observed host, but the budget itself neither authorized acquisition nor proved artifact identity, tensor inventory, execution, or correctness.",
     "next_gate": "Obtain explicit operator authorization, recheck disk and memory pressure, then apply the separate immutable identity, checksum, license, and tensor-inventory gates before any model execution.",
     "stop_before_download_if": [
       "fresh available disk is less than 134761081856 bytes",
@@ -163,8 +163,22 @@
       "any required predeclared tensor bound, required layout, provenance, or other mandatory pre-download admission input is unresolved"
     ]
   },
+  "t055_acquisition_update": {
+    "recorded_at_utc": "2026-08-05T14:08:18Z",
+    "conditional_operator_authorization_satisfied": true,
+    "pre_acquisition_available_disk_bytes": 224608104448,
+    "pre_acquisition_system_wide_memory_free_percentage": 95,
+    "post_acquisition_available_disk_bytes": 187187339264,
+    "post_acquisition_system_wide_memory_free_percentage": 81,
+    "disk_gate_rechecked_and_passed": true,
+    "unified_memory_gate_rechecked_and_passed": true,
+    "actual_artifact_size_bytes": 32483931648,
+    "actual_identity_and_required_inventory": "verified_in_qwen3-30b-a3b-q8_0-compatibility.json",
+    "model_execution_performed": false,
+    "note": "The historical T053 budget decision remains scoped to pre-download admission. T055 satisfied the separate authorization, identity, and required-inventory gates without running the model."
+  },
   "claims_not_made": [
-    "No model file was downloaded, opened, mapped, hashed, or executed for this budget.",
+    "At T053 record time no model file was downloaded, opened, mapped, hashed, or executed; T055 later acquired, fully hashed, and read-only inventoried the external artifact without executing it.",
     "No actual mapped-resident, owned-compressed, decoded-array, temporary, MLX allocator, or physical-footprint model-run gauge exists yet.",
     "The budget does not verify real-model compatibility, output parity, full inference, giant-model inference, serving, or performance."
   ]

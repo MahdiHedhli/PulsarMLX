@@ -26,7 +26,10 @@ and the source audit in
   is verified only for strict complete-row scalar decode/matvec and one bounded
   evaluated MLX decoded-row dot. Model loading, quantized model roles, token
   generation, and serving have not been executed.
-- No real-model fixture is present in the repository. The evaluated synthetic
+- No real-model fixture is present in the repository. An external
+  Qwen3-30B-A3B Q8_0 artifact now has verified complete size, SHA-256, and the
+  exact required tensor inventory, but it has not been dequantized or executed
+  by either the trusted oracle or Apple slice. The evaluated synthetic
   routed-MoE fixture establishes only its committed expert bytes, routes,
   aggregation, and four-value output; it does not establish checkpoint
   compatibility.

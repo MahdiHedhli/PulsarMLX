@@ -548,3 +548,44 @@ smaller fixture, so that condition authorizes acquisition of this exact public
 artifact outside the repository. Before transfer, recheck disk and pressure;
 after transfer, verify the complete local size and SHA-256 and inventory every
 tensor role/type before executing anything.
+
+### T055 external artifact identity and inventory
+
+The active-task authorization condition was applied only to the exact public,
+ungated Qwen artifact pinned by T051-T053. Fresh pre-transfer observations were
+224,608,104,448 available disk bytes, 137,438,953,472 unified-memory bytes,
+and 95% system-wide memory free. All admission margins still passed.
+
+An initial resumable `curl` transfer was interrupted with exit 130 after its
+throughput degraded; the 976,437,248-byte partial file remains outside the
+repository and was not used for evidence. The official Hugging Face CLI 1.26.0
+with `hf_xet` and `HF_XET_HIGH_PERFORMANCE=1` then downloaded the exact file
+from immutable revision `e4d4bafd…` without authentication. This command exited
+zero:
+
+```sh
+HF_XET_HIGH_PERFORMANCE=1 HF_HOME=<external-cache> \
+  uvx --from huggingface_hub hf download \
+  Qwen/Qwen3-30B-A3B-GGUF Qwen3-30B-A3B-Q8_0.gguf \
+  --revision e4d4bafdfb96a411a163846265362aceb0b9c63a \
+  --local-dir <external-dir>
+```
+
+The complete local file is outside Git. Independent `stat` and `shasum -a 256`
+passes reported exactly 32,483,931,648 bytes and
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`,
+matching immutable published LFS metadata.
+
+Pinned llama.cpp `gguf-py` 0.19.0 then opened the file read-only for metadata
+and mmap inventory only. It reported little-endian GGUF, data offset 5,969,408,
+579 tensors (241 F32 and 338 Q8_0), exact typed `qwen3moe` metadata, and exactly
+one `blk.0.ffn_gate_exps.weight`. That tensor is Q8_0 with fastest-axis-first
+dimensions `[2048, 768, 128]`, reader encoded shape `[128, 768, 2176]`,
+201,326,592 logical elements, 213,909,504 encoded bytes, and a complete in-file
+range beginning at byte 901,175,808. These values satisfy every tensor role and
+quantization used by the frozen 16-row expert gate-projection slice.
+
+No tensor was dequantized and neither the trusted oracle nor Apple slice was
+executed. Post-acquisition observations were 187,187,339,264 available disk
+bytes and 81% system-wide memory free. T055 therefore passes identity,
+license, and required-inventory admission; T056 and T057 are next.
