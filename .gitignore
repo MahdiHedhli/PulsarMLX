@@ -1,6 +1,11 @@
 # Rust build output. Cargo.lock is tracked in PulsarMLX for reproducibility.
 target/
 *.bin.tmp
+debug/
+release/
+*.rs.bk
+*.rlib
+*.prof*
 
 # Python environments and caches
 .venv/
@@ -11,12 +16,18 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.egg-info/
+dist/
 
 # macOS metadata
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
+*.tmp
+*.swp
+.vscode/
+.idea/
 
 # Local model weights and model caches
 models/

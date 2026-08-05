@@ -193,3 +193,37 @@ only after the pre-flight report is reviewed and an explicit implementation
 session begins. The next implementation session should take its requirements
 from Spec Kit and use [BACKEND_DESIGN.md](BACKEND_DESIGN.md) as supporting
 engineering guidance.
+
+## Implementation session: setup checkpoint
+
+The explicitly authorized implementation session began from clean commit
+`372b9dd433f61e17048e75eda9505dd65e263275`. The Spec Kit prerequisites and
+both committed checklists passed before source changes. No extension pre-hook
+was registered.
+
+Task T001 re-ran the exact baseline before implementation:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+```
+
+Both exited zero; the test command ran 32 tests with zero failures. The same
+inherited `quant` `unused_mut` and 13 macOS `serve` dead-code warnings remained.
+The sanitized environment, remotes, commit, exact commands, results, warnings,
+and exclusions are committed in
+`docs/validation/implementation-baseline.json`.
+
+Tasks T002–T004 added empty backend-neutral `backend` and Apple worker-client
+`mlx-backend` crates as additive workspace members. Focused
+`cargo check -p backend -p mlx-backend --all-targets` passed. No inherited
+workspace member, default, Linux/CUDA feature, or runtime selection changed.
+
+Tasks T005–T006 added the native Python package policy and `uv.lock`. The lock
+pins `mlx==0.32.0`, `mlx-metal==0.32.0`, and Darwin arm64 wheels only. The local
+ignored environment selected native CPython 3.12.13; `uv sync --frozen` and a
+subsequent offline frozen sync passed. Installed wheel metadata reported
+`cp312-cp312-macosx_26_0_arm64` for MLX and
+`py3-none-macosx_26_0_arm64` for MLX-Metal; the extension inspected as Mach-O
+arm64. This setup evidence does not claim Metal availability, GPU selection,
+evaluated work, numerical correctness, or inference.

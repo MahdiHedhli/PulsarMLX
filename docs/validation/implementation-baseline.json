@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "case_id": "implementation-baseline-2026-08-05",
+  "claim_scope": "clean Apple Silicon workspace baseline before MLX implementation",
+  "commit": "372b9dd433f61e17048e75eda9505dd65e263275",
+  "git_dirty_state_before": "clean",
+  "recorded_at": "2026-08-05T11:40:38Z",
+  "environment": {
+    "working_directory": "<repository-root>",
+    "host_architecture": "arm64",
+    "macos_version": "26.0",
+    "macos_build": "25A354",
+    "rustc": "1.97.1 (8bab26f4f 2026-07-14, Homebrew)",
+    "rust_host": "aarch64-apple-darwin",
+    "cargo": "1.97.1 (c980f4866 2026-06-30, Homebrew)",
+    "python": "3.14.6 arm64",
+    "uv": "0.11.17",
+    "specify": "0.15.2",
+    "available_disk": "210 GiB"
+  },
+  "repository": {
+    "branch": "main",
+    "origin": "https://github.com/MahdiHedhli/PulsarMLX.git",
+    "upstream": "https://github.com/giannisanni/pulsar.git"
+  },
+  "commands": [
+    {
+      "command": "cargo check --workspace --all-targets",
+      "exit_code": 0,
+      "actual_status": "passed",
+      "warnings": [
+        "one inherited unused_mut warning in crates/quant/src/iq.rs:133",
+        "13 inherited macOS dead-code warnings in crates/serve/src/main.rs"
+      ]
+    },
+    {
+      "command": "cargo test --workspace --no-fail-fast",
+      "exit_code": 0,
+      "actual_status": "passed",
+      "tests_passed": 32,
+      "tests_failed": 0,
+      "warnings": [
+        "one inherited unused_mut warning in crates/quant/src/iq.rs:133",
+        "13 inherited macOS dead-code warnings in crates/serve/src/main.rs"
+      ]
+    }
+  ],
+  "actual_status": "passed",
+  "failures": [],
+  "exclusions": [
+    "MLX was not imported or executed by this baseline",
+    "Linux, CUDA, and io_uring runtime behavior was not exercised on this host",
+    "macOS-selected engine, kernel, and Linux server test targets contain zero runtime tests"
+  ],
+  "artifacts": [
+    "docs/validation/implementation-baseline.json",
+    "docs/preflight/BASELINE_VALIDATION.md"
+  ]
+}

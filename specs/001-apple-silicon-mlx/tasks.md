@@ -28,12 +28,12 @@ outside Git throughout.
 crate roots, and pin the local Python worker environment without touching the
 Linux/CUDA defaults.
 
-- [ ] T001 Record a fresh clean-checkout status, remotes, tool versions, exact `cargo check --workspace --all-targets`, and exact `cargo test --workspace --no-fail-fast` actual result in `docs/validation/implementation-baseline.json`; stop setup if the verified macOS baseline regresses
-- [ ] T002 [P] Create the backend-neutral crate manifest and empty compiling library target in `crates/backend/Cargo.toml` and `crates/backend/src/lib.rs`
-- [ ] T003 [P] Create the Apple worker-client crate manifest, empty compiling library target, and CLI target in `crates/mlx-backend/Cargo.toml`, `crates/mlx-backend/src/lib.rs`, and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
-- [ ] T004 Add `crates/backend` and `crates/mlx-backend` as additive workspace members without changing inherited members, features, or defaults in `Cargo.toml`
-- [ ] T005 [P] Define the native CPython package and exact `mlx==0.32.0` Darwin arm64 dependency policy in `pyproject.toml` and create the package marker in `python/pulsar_mlx_worker/__init__.py`
-- [ ] T006 Resolve and commit the reproducible worker dependency graph with a matching prebuilt arm64 MLX wheel in `uv.lock`; stop if resolution requires an unpinned version, source build, unsupported Python, or non-arm64 artifact
+- [X] T001 Record a fresh clean-checkout status, remotes, tool versions, exact `cargo check --workspace --all-targets`, and exact `cargo test --workspace --no-fail-fast` actual result in `docs/validation/implementation-baseline.json`; stop setup if the verified macOS baseline regresses
+- [X] T002 [P] Create the backend-neutral crate manifest and empty compiling library target in `crates/backend/Cargo.toml` and `crates/backend/src/lib.rs`
+- [X] T003 [P] Create the Apple worker-client crate manifest, empty compiling library target, and CLI target in `crates/mlx-backend/Cargo.toml`, `crates/mlx-backend/src/lib.rs`, and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
+- [X] T004 Add `crates/backend` and `crates/mlx-backend` as additive workspace members without changing inherited members, features, or defaults in `Cargo.toml`
+- [X] T005 [P] Define the native CPython package and exact `mlx==0.32.0` Darwin arm64 dependency policy in `pyproject.toml` and create the package marker in `python/pulsar_mlx_worker/__init__.py`
+- [X] T006 Resolve and commit the reproducible worker dependency graph with a matching prebuilt arm64 MLX wheel in `uv.lock`; stop if resolution requires an unpinned version, source build, unsupported Python, or non-arm64 artifact
 
 **Checkpoint**: Both new crates compile as empty additive members, `uv sync
 --frozen` is resolvable on the supported host, the inherited baseline remains

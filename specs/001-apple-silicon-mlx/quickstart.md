@@ -1,8 +1,9 @@
 # Validation Quickstart: Apple Silicon MLX Backend Bring-Up
 
-**Status**: The Cargo baseline and Spec Kit inspection commands are runnable
-now. MLX/backend commands below are planned implementation targets and have not
-been executed in this preflight session.
+**Status**: The Cargo baseline, Spec Kit inspection, and pinned worker
+environment commands are runnable. The MLX worker/device and later backend
+commands remain implementation targets until their corresponding task evidence
+is committed.
 
 ## 1. Inspect the current source of truth
 
@@ -75,10 +76,10 @@ Phase-one MLX support requires all of:
 Stop and create a blocked validation record if a prerequisite fails. Do not
 install a source build or switch silently to CPU to bypass it.
 
-## 4. Create the pinned project environment (planned T tasks)
+## 4. Create the pinned project environment
 
-The implementation tasks first add `pyproject.toml` and `uv.lock`. Once those
-committed files exist, create only a repository-local environment:
+The project commits `pyproject.toml` and `uv.lock`. Create only a
+repository-local environment:
 
 ```sh
 uv sync --frozen
@@ -86,7 +87,10 @@ uv sync --frozen
 ```
 
 The printed version must be exactly `0.32.0`. `.venv/` is local state and is
-not committed. If the lock cannot resolve a matching arm64 wheel, stop.
+not committed. Setup validation resolved CPython 3.12.13 and native
+`macosx_26_0_arm64` MLX/MLX-Metal wheels; this proves reproducible packaging,
+not Metal availability or evaluated GPU execution. If a later frozen sync
+cannot resolve a matching arm64 wheel, stop.
 
 ## 5. Run the worker contract tests (planned)
 
