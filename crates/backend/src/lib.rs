@@ -3,6 +3,7 @@
 pub mod capability;
 pub mod error;
 pub mod evidence;
+pub mod routing;
 pub mod tensor;
 
 pub use capability::{BackendCapabilityReport, BackendSelection, CapabilityProbe, DeviceState};
@@ -13,6 +14,7 @@ pub use evidence::{
     ModelSupportStatus, QuantizationCompatibilityDescriptor, QuantizationCompatibilityRecord,
     QuantizationStatus, ValidationCase, ValidationDescriptor,
 };
+pub use routing::RoutingPlan;
 pub use tensor::{
     BroadcastRule, ComparisonMode, ComparisonPolicy, ComparisonResult, DType, FirstMismatch,
     NonFinitePolicy, QuantizationId, SynchronizationRule, TensorContract, TensorDescriptor,

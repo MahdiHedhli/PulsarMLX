@@ -356,3 +356,16 @@ tests executed due to the target gate. Desired rejection of a completion
 shorter than the logical payload is encoded as an ignored Linux test because
 the inherited implementation currently accepts it. No Linux runtime result or
 cross-platform safety claim is made.
+
+Task T044 implemented the backend-neutral scalar routing oracle. It rejects
+invalid dimensions, cardinality overflow, and non-finite inputs; selects by
+score descending with expert ID ascending for exact ties; normalizes only the
+selected scores; emits an ascending deduplicated expert request plan; and
+performs checked scalar weighted aggregation. Validation passed with 8 focused
+routing tests, 40 total backend tests, and strict focused Clippy:
+
+```sh
+cargo test -p backend --test routing_contract
+cargo test -p backend --all-targets
+cargo clippy -p backend --all-targets -- -D warnings
+```

@@ -158,7 +158,7 @@ and final output must match their independent contracts.
 ### Implementation for User Story 3
 
 - [ ] T043 [P] [US3] Implement validated single/split shard layouts, exact positional-read loops, structured errors, non-cloneable owned payloads, and ordered all-or-error batches in `crates/stream/src/positional.rs` and export the additive surface from `crates/stream/src/lib.rs`
-- [ ] T044 [P] [US3] Implement deterministic backend-neutral top-k selection, tie-breaking, normalization, request planning, and scalar aggregation oracle in `crates/backend/src/routing.rs` and export it from `crates/backend/src/lib.rs`
+- [X] T044 [P] [US3] Implement deterministic backend-neutral top-k selection, tie-breaking, normalization, request planning, and scalar aggregation oracle in `crates/backend/src/routing.rs` and export it from `crates/backend/src/lib.rs`
 - [ ] T045 [P] [US3] Implement the evaluated MLX routed-expert fixture graph and bounded result/memory summary in `python/pulsar_mlx_worker/moe.py`
 - [ ] T046 [US3] Add bounded synthetic-MoE protocol/client operations and `validate-synthetic-moe` CLI wiring in `python/pulsar_mlx_worker/protocol.py`, `crates/mlx-backend/src/client.rs`, and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
 - [ ] T047 [P] [US3] Execute the portable source suite and commit exact byte/range/error/ownership results in `docs/validation/portable-expert-source.json`
