@@ -54,6 +54,30 @@ and the source audit in
   evaluated and synchronized. It does not establish independent-oracle parity,
   checkpoint admission, genuine hidden-state provenance, repeatability, or
   timing.
+- The host admission seam now rejects missing or duplicate router roles,
+  aliases, identity and file mutations, wrong F32 type or quantization, wrong
+  dimensions or orientation, invalid top-k, truncated/overlong/overflowing
+  positional ranges, non-finite values, and failed disk/unified-memory/pressure
+  admission before calling a router runner. This was exercised with bounded
+  generated resources only; it is not evidence that an external GGUF router
+  tensor has the assumed identity, type, shape, offset, or length.
+- Worker control validation rejects malformed fields, unsupported case
+  identities, committed-byte-count disagreement, explicit CPU selection, and
+  fallback requests before core-runner dispatch. Direct matrix shape, dtype,
+  and finiteness checks plus runtime selected-device validation occur inside
+  the router runner but still stop before constructing or scheduling a router
+  MLX array. These traps prove the tested boundaries, not arbitrary malformed-
+  input coverage beyond the admitted protocol.
+- Synthetic exact ties are deterministically ordered by probability descending
+  and then expert ID ascending. A real-checkpoint exact F32 tie across ranks
+  eight and nine is deliberately a `comparison_failed` stop condition; the
+  synthetic policy cannot be used to waive or relabel that stop.
+- Retained fixture evidence distinguishes two evaluated MLX positive cases,
+  two host-contract tie cases, and seven fixture-contract negative cases. The
+  negative manifest entries retain expected codes and links to focused tests;
+  they are not mislabeled as seven separate MLX mutation executions. Failed or
+  aborted command evidence is retained, but the retained format itself does
+  not promote a checkpoint or performance claim.
 - The independent [`router oracle`](../../scripts/research/router_oracle.py)
   source and orchestration contract pass their twelve
   model-free tests, including pinned-revision, two-capture, cancellation,
@@ -72,13 +96,19 @@ and the source audit in
   logits, token generation, serving, full/giant-model inference, custom Metal,
   tokens per second, or Linux/CUDA runtime parity.
 
-The current model-free validation results were: 8 Rust backend routing tests,
-6 Rust router-contract tests, 9 `mlx-backend` library tests, 9 `pulsar-mlx`
-CLI tests, 9 Python worker-router tests, 12 independent-oracle tests, 53
-research tests, and one explicit Rust-to-Python generated-router integration,
-all passing. The generated-fixture check reported four byte-identical files,
-and both the fixture evidence validator and fixture-only package verifier
-passed. These results establish only their generated and contract-test scopes.
+The latest model-free safety replay reported 8 Rust backend routing tests, 21
+Rust router-contract tests, 23 focused Python router tests, and one explicitly
+selected Rust-to-Python generated-router integration passing. The fixture
+generator reported 12 files byte-identical; retained validation observed two
+MLX positive, two host tie, and seven negative contract cases over all 11
+manifest files. The exact workspace gate separately reported 204 active tests
+passing, zero failed, and two native integrations ignored; complete Python
+worker discovery passed 67 tests. All 53 research tests, the one-record schema
+validation, and the fixture-only six-artifact package verification also
+passed. Feature 001's requested Cargo regressions passed 120 tests, and its
+`specs/001-apple-silicon-mlx` tree is unchanged from its actual closing commit
+`8e10012`. These results establish only their generated, contract-test, and
+model-free scopes.
 
 ## Platform and test coverage
 

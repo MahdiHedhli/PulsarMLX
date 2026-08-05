@@ -172,9 +172,9 @@ router MLX arrays. Existing startup runtime discovery remains unchanged.
 - [X] T043 [US2] Implement pre-router-array worker validation, bounded failures, and router-runner-not-called enforcement while preserving startup discovery in `python/pulsar_mlx_worker/router.py` and `python/pulsar_mlx_worker/protocol.py`
 - [X] T044 [US2] Implement probability-descending/expert-ID-ascending synthetic tie behavior while preserving any real rank-8/rank-9 tie as a stop condition in `python/pulsar_mlx_worker/router.py` and `crates/mlx-backend/src/router.rs`
 - [X] T045 [US2] Complete `validate-router-fixtures` failure retention and synthetic-versus-real evidence labeling in `crates/mlx-backend/src/bin/pulsar-mlx.rs`
-- [ ] T046 [US2] Run all focused negative tests, backend-neutral routing regression tests, worker tests, and generated MLX fixture validation from `fixtures/research/router-v1/manifest.json`
-- [ ] T047 [US2] Run schema/package validation, exact Cargo workspace gates, Python discovery, and Feature 001 regression tests, then record actual results in `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T048 [US2] Update failure coverage and exclusions, mark task state, and perform staged safety/Linux-CUDA selection review in `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
+- [X] T046 [US2] Run all focused negative tests, backend-neutral routing regression tests, worker tests, and generated MLX fixture validation from `fixtures/research/router-v1/manifest.json`
+- [X] T047 [US2] Run schema/package validation, exact Cargo workspace gates, Python discovery, and Feature 001 regression tests, then record actual results in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T048 [US2] Update failure coverage and exclusions, mark task state, and perform staged safety/Linux-CUDA selection review in `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
 - [ ] T049 [US2] Commit the fail-closed safety slice, push `main`, and wait for every `.github/workflows/macos.yml` job before allowing external-model access
 
 **Checkpoint**: Unsafe cases fail before accepted execution. Synthetic tie

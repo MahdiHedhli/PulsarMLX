@@ -1,10 +1,10 @@
 # Validation Quickstart: Qwen3MoE Layer-0 Router Parity
 
-**Status**: Sections 1 through 3 and the focused generated-router tests in
-Section 6 describe implemented model-free work. The retained fixture command
-and every external-checkpoint command remain gated until their implementing
-tasks and exact results are committed. Feature 001 remains the verified
-real-checkpoint baseline; no Feature 002 checkpoint result exists.
+**Status**: Sections 1 through 3 and the complete generated-router boundary in
+Section 6 describe implemented model-free work. Every external-checkpoint
+command remains gated until its implementing tasks and exact prerequisites are
+committed and green. Feature 001 remains the verified real-checkpoint baseline;
+no Feature 002 checkpoint result exists.
 
 ## 1. Confirm the active bounded feature
 
@@ -225,10 +225,12 @@ cargo run -p mlx-backend --bin pulsar-mlx -- validate-router-fixtures \
   --evidence "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE"
 ```
 
-The focused tests and explicit generated integration are implemented. The
-retained `validate-router-fixtures` command remains deliberately fail-closed
-until T045 completes its malformed-fixture and retained-evidence behavior.
-Running the focused commands does not locate or access an external checkpoint.
+The focused tests, explicit generated integration, and retained
+`validate-router-fixtures` command are implemented. The retained command is
+fail-closed, labels positive MLX execution separately from host tie and
+fixture-contract negative validation, preserves partial failure/abort evidence,
+and keeps the external-model descriptor closed. Running these focused commands
+does not locate or access an external checkpoint.
 
 The generated 128-expert/top-8 fixture must pass exact ties, near ties,
 single-row and batch evaluation, while malformed lengths, shapes, orientation,

@@ -1975,3 +1975,128 @@ review case returned exit 2, retained bounded aborted evidence, and started no
 worker. An independent read-only review found no high or medium issue. The
 temporary evidence was inspected and removed. No checkpoint path or model byte
 was accessed, and the T073 NTFY gate remains ineligible.
+
+### T046–T047 fail-closed safety validation
+
+T046 replayed the complete model-free router fixture boundary with
+`PULSARMLX_MODEL_GGUF` explicitly empty. The exact focused commands were:
+
+```sh
+python3 fixtures/research/router-v1/golden/generate.py --check
+cargo test -p backend --test routing_contract --no-fail-fast
+cargo test -p mlx-backend --test router_contract --no-fail-fast
+PYTHONPATH=python uv run python -m unittest \
+  python/pulsar_mlx_worker/tests/test_router.py -v
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+  --test router_worker_integration \
+  real_python_worker_two_row_router_matches_committed_golden -- \
+  --ignored --exact
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-router-fixtures \
+  --manifest fixtures/research/router-v1/manifest.json \
+  --evidence <external-temporary-directory>/router-fixtures.json
+```
+
+The generator reported 12 files byte-identical. Eight backend-neutral routing
+tests, 21 Rust router-contract tests, 23 focused Python router tests, and the
+one explicitly selected generated Rust-to-Python integration test passed. The
+retained fixture command again recorded two evaluated MLX GPU positive cases,
+two host-contract tie cases, seven fixture-contract negative cases, and all 11
+manifest files. Its seven stable negative codes were, in manifest order,
+`malformed_request`, `invalid_shape`, `invalid_layout`,
+`model_tensor_mismatch`, `invalid_dtype`, `invalid_byte_count`, and
+`invalid_byte_count`. Both positive cases requested and selected GPU, reported
+no fallback, evaluated and synchronized, and matched the independent Rust
+golden comparison. Cleanup was graceful with worker exit zero. The bounded
+13,256-byte temporary evidence reported `model_free: true`,
+`real_checkpoint_evidence: false`, and `external_checkpoint_accessed: false`;
+it was inspected and removed rather than committed.
+
+T047 then ran the exact model-free research, workspace, and Feature 001
+regression gates:
+
+```sh
+scripts/research/setup.sh
+python3 -m unittest discover -s scripts/research/tests -v
+python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence
+python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity \
+  --fixture-only
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+cargo test --workspace -- --list | rg ': test$' | wc -l
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+cargo test -p backend --all-targets
+cargo test -p quant --test q8_0_reference
+cargo test -p stream --test positional_source
+cargo test -p stream --lib
+cargo test -p mlx-backend --test worker_contract
+cargo test -p mlx-backend --test tensor_contract
+cargo test -p mlx-backend --test synthetic_moe
+cargo test -p mlx-backend --test model_slice_client
+cargo test -p mlx-backend --test real_model_contract
+cargo test -p mlx-backend --bin pulsar-mlx \
+  tests::committed_reference_result_matches_the_frozen_loader_contract \
+  -- --exact
+git diff --exit-code 8e10012 -- specs/001-apple-silicon-mlx
+git diff --check
+```
+
+Research setup reported ready in offline mode. All 53 research tests passed in
+3.736 seconds; the schema validator accepted its one fixture record. The
+fixture-only verifier accepted one full-schema record, zero promoted claims,
+and six generated artifacts; its candidate and sanitized SHA-256 were both
+`c9205fb118429d39cca6339b8cba9d45aa60c01e0f96820d5dca56aaaffa119e`.
+
+The workspace check passed. The workspace test command reported 204 active
+tests passed, zero failed, and two explicit native integrations ignored across
+45 harness result lines. Independent inventory listed 206 test cases, exactly
+the 204 active plus two ignored cases. The complete Python worker discovery
+passed all 67 tests. The requested Feature 001 Cargo regressions passed 120
+tests with zero failures or ignores: backend 57, Q8_0 reference 14, positional
+source 14, stream library 1, worker contract 12, tensor contract 7, synthetic
+MoE 4, model-slice client 4, real-model contract 6, and the exact frozen CLI
+reference 1. That exact CLI invocation filtered 12 unrelated tests.
+
+The initially requested preservation comparison against quickstart commit
+`5a43cf0` returned exit 1 because the later legitimate Feature 001 closing
+commit `8e10012` updated its status and completion documents. The corrected
+path-scoped comparison against `8e10012` passed, proving the
+`specs/001-apple-silicon-mlx` artifacts are unchanged since that closing
+commit; the 120 requested regressions provide behavioral preservation evidence
+only for their exercised paths. Workspace commands reproduced the inherited
+`unused_mut` warning in `crates/quant/src/iq.rs` and 13 macOS `serve` dead-code
+warnings; no new failure was hidden as inherited debt. Diff checks passed and
+the worktree remained clean after validation.
+
+No T046 or T047 command resolved, statted, hashed, opened, or executed an
+external checkpoint. No NTFY notification was sent, and local inference did
+not need to pause.
+
+### T048 failure coverage and selection review
+
+The limitations and validation quickstart now distinguish host admission,
+worker control admission, in-runner pre-array validation, positive MLX
+execution, host-only tie validation, fixture-contract negative validation, and
+real-checkpoint exclusions. An independent read-only review found two wording
+overclaims: direct matrix/runtime-device checks had been described as occurring
+before router-runner dispatch, and a path-scoped Feature 001 specification diff
+had been described as proving the whole feature unchanged. Both were corrected
+to their actual boundaries before completion.
+
+The staged set contained only this session log, the known-limitations document,
+the Feature 002 quickstart, and Feature 002 task state. It contained no Rust,
+Python, Cargo, workflow, research-scanner, platform-selector, or inherited
+execution-path change. The standardized staged safety scan passed, the staged
+diff check passed, and an explicit selection-path diff was empty. Spec Kit
+0.15.2 health, Codex integration status, and feature prerequisite resolution
+also passed; prerequisites continued to resolve
+`specs/002-qwen-router-parity` with its research, data-model, contract, and
+quickstart artifacts.
+
+This review did not execute the inherited Linux or CUDA runtime and makes no
+runtime-parity claim. It verified that this safety slice did not alter their
+selection behavior. No checkpoint was accessed and no NTFY notification was
+sent.
