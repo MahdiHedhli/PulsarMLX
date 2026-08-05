@@ -48,17 +48,17 @@ evidence types that every story uses. This phase blocks all user-story work.
 
 ### Tests for foundational contracts
 
-- [ ] T007 [P] Write failing tests for explicit backend selection, `allow_fallback=false`, capability-state transitions, and rejection of an unevaluated success claim in `crates/backend/tests/capability_contract.rs`
-- [ ] T008 [P] Write failing tests for checked tensor shapes, storage orientation, exact byte counts, dtype/layout admission, synchronization metadata, and bounded comparison policies in `crates/backend/tests/tensor_contract.rs`
-- [ ] T009 [P] Write failing tests for validation, quantization, model-compatibility, benchmark, and evidence-status invariants in `crates/backend/tests/evidence_contract.rs`
+- [X] T007 [P] Write failing tests for explicit backend selection, `allow_fallback=false`, capability-state transitions, and rejection of an unevaluated success claim in `crates/backend/tests/capability_contract.rs`
+- [X] T008 [P] Write failing tests for checked tensor shapes, storage orientation, exact byte counts, dtype/layout admission, synchronization metadata, and bounded comparison policies in `crates/backend/tests/tensor_contract.rs`
+- [X] T009 [P] Write failing tests for validation, quantization, model-compatibility, benchmark, and evidence-status invariants in `crates/backend/tests/evidence_contract.rs`
 
 ### Implementation for foundational contracts
 
-- [ ] T010 Implement bounded common error categories without backend-specific objects or private path disclosure in `crates/backend/src/error.rs`
-- [ ] T011 Implement `BackendSelection`, `BackendCapabilityReport`, device states, explicit exclusions, and legal immutable transitions in `crates/backend/src/capability.rs`
-- [ ] T012 Implement checked `TensorContract`, comparison policy/result, shape-product, layout, dtype, byte-count, and synchronization validation in `crates/backend/src/tensor.rs`
-- [ ] T013 Implement quantization/model compatibility records, validation cases, evidence states, independent memory gauges, and correctness-gated benchmark records in `crates/backend/src/evidence.rs`
-- [ ] T014 Export the foundational API and pass all foundational tests without exposing CUDA, Python, or MLX implementation types in `crates/backend/src/lib.rs`
+- [X] T010 Implement bounded common error categories without backend-specific objects or private path disclosure in `crates/backend/src/error.rs`
+- [X] T011 Implement `BackendSelection`, `BackendCapabilityReport`, device states, explicit exclusions, and legal immutable transitions in `crates/backend/src/capability.rs`
+- [X] T012 Implement checked `TensorContract`, comparison policy/result, shape-product, layout, dtype, byte-count, and synchronization validation in `crates/backend/src/tensor.rs`
+- [X] T013 Implement quantization/model compatibility records, validation cases, evidence states, independent memory gauges, and correctness-gated benchmark records in `crates/backend/src/evidence.rs`
+- [X] T014 Export the foundational API and pass all foundational tests without exposing CUDA, Python, or MLX implementation types in `crates/backend/src/lib.rs`
 
 **Checkpoint**: `cargo test -p backend` passes, every invalid foundational
 state is rejected, and the common contract remains semantic rather than a

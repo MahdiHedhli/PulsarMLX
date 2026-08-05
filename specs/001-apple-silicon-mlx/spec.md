@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-05
 
-**Status**: Specified
+**Status**: Implementation in progress; setup and foundational contracts complete
 
 **Input**: Establish a correctness-first Apple Silicon backend using MLX,
 progressing from the verified macOS build baseline through device and tensor

@@ -92,6 +92,19 @@ not committed. Setup validation resolved CPython 3.12.13 and native
 not Metal availability or evaluated GPU execution. If a later frozen sync
 cannot resolve a matching arm64 wheel, stop.
 
+Foundational backend-neutral contracts are independently runnable:
+
+```sh
+cargo test -p backend
+cargo clippy -p backend --all-targets -- -D warnings
+```
+
+The implementation checkpoint passed 32 focused tests covering explicit
+selection and immutable device states, checked tensor semantics, bounded
+comparisons, compatibility/evidence invariants, independent memory gauges, and
+correctness-gated benchmarks. These are semantic contract tests and do not
+execute MLX.
+
 ## 5. Run the worker contract tests (planned)
 
 These commands are target interfaces; they become runnable only after their

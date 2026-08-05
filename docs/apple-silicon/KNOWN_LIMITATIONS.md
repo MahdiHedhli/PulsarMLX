@@ -68,6 +68,10 @@ and should not be swept into an unrelated Apple backend change.
   CPython 3.12.13 and native arm64 `mlx==0.32.0`/`mlx-metal==0.32.0` wheels.
   Version import and artifact inspection do not establish Metal availability,
   selected-device identity, evaluated GPU work, tensor parity, or inference.
+- The backend-neutral capability, tensor, comparison, compatibility, evidence,
+  memory-gauge, and benchmark-admission contracts are implemented and tested.
+  They carry no execution implementation and therefore do not establish any
+  Apple, Linux, CUDA, or model runtime capability by themselves.
 - Ninja and `rustup` were not installed. Rust 1.97.1 and Cargo 1.97.1 came
   from Homebrew. The revised workflow selects GitHub's `macos-15` OS and arm64
   runner label but does not pin its Rust toolchain contents, so local and CI

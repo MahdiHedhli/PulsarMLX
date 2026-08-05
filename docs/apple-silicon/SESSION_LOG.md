@@ -227,3 +227,33 @@ subsequent offline frozen sync passed. Installed wheel metadata reported
 `py3-none-macosx_26_0_arm64` for MLX-Metal; the extension inspected as Mach-O
 arm64. This setup evidence does not claim Metal availability, GPU selection,
 evaluated work, numerical correctness, or inference.
+
+## Implementation session: foundational contract checkpoint
+
+Tasks T007–T009 added the required contract tests first. Each focused suite was
+run before its implementation and failed with unresolved public API imports,
+establishing the intended red state. Tasks T010–T014 then added only semantic,
+backend-neutral Rust types:
+
+- bounded errors with private-path redaction;
+- explicit backend/device selection and immutable unavailable,
+  available-unevaluated, and evaluated capability reports;
+- checked tensor shapes, orientation, dtypes, layouts, dense/Q8_0 byte counts,
+  synchronization, and bounded exact or absolute/relative comparisons; and
+- quantization/model compatibility, validation/evidence lifecycle, independent
+  memory gauges, and correctness-gated benchmark records.
+
+Validation passed:
+
+```sh
+cargo test -p backend
+cargo clippy -p backend --all-targets -- -D warnings
+```
+
+The focused test run executed 32 tests with zero failures, and strict focused
+Clippy passed. The exact workspace check passed, and the exact no-fail-fast
+workspace test gate then executed 64 tests with zero failures (the inherited
+32 plus 32 new backend contract tests). The known inherited `quant` and macOS
+`serve` warnings remained unchanged. The public API exports no CUDA handles,
+Python objects, MLX arrays, device pointers, streams, or allocation mechanisms.
+This checkpoint proves contract invariants only; no backend work was executed.

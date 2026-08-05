@@ -9,8 +9,9 @@
 **Input**: Feature specification from
 `/specs/001-apple-silicon-mlx/spec.md`
 
-**Status**: Pre-implementation plan. This document does not claim that MLX is
-installed, that an MLX operation has run, or that model inference works.
+**Status**: Implementation in progress. Setup and foundational semantic
+contracts are complete; this document does not claim that an MLX device
+operation, tensor graph, or model inference has run.
 
 ## Summary
 
