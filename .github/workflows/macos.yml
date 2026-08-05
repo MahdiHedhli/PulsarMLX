@@ -1,25 +1,27 @@
-name: macOS
+name: macOS baseline
 
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  workspace:
-    name: Apple Silicon workspace
+  macos-15-arm64:
+    name: Apple Silicon workspace baseline
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
-      - name: Select stable Rust
+      - uses: actions/checkout@v7
+      - name: Verify runner architecture and toolchain
         run: |
-          rustup toolchain install stable --profile minimal --no-self-update
-          rustup default stable
-      - name: Confirm Apple Silicon runner
-        run: test "$(uname -m)" = arm64
+          uname -m
+          sw_vers
+          rustc -Vv
+          cargo -V
+          test "$(uname -m)" = arm64
       - name: Check workspace
-        run: cargo check --workspace
+        run: cargo check --workspace --all-targets
       - name: Test workspace
-        run: cargo test --workspace
+        run: cargo test --workspace --no-fail-fast
