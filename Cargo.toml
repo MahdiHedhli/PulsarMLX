@@ -5,7 +5,7 @@ members = ["crates/gguf", "crates/stream", "crates/kernels", "crates/tokenizer",
 [workspace.package]
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/giannisanni/pulsar"
+repository = "https://github.com/MahdiHedhli/PulsarMLX"
 
 [profile.release]
 lto = "thin"

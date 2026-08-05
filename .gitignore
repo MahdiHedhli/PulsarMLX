@@ -1,6 +1,72 @@
+# Rust build output. Cargo.lock is tracked in PulsarMLX for reproducibility.
 target/
-Cargo.lock
 *.bin.tmp
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# macOS metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Local model weights and model caches
+models/
+weights/
+checkpoints/
+*.gguf
+*.gguf.warm
+*.ctx-state
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+.cache/huggingface/
+.huggingface/
+
+# Local benchmark output, profiles, traces, and logs
+bench/results/
+benchmarks/results/
+artifacts/benchmarks/
+*.bench.json
+*.benchmark.json
+*.trace.json
+*.prof
+*.perf
+logs/
+*.log
+
+# Secrets and private local configuration
+.env
+.env.*
+!.env.example
+!.env.template
+.ssh/
+id_rsa*
+id_ed25519*
+*.pem
+*.key
+credentials.json
+secrets.*
+mcp.json
+mcp.local.json
+
+# Spec Kit's generated specifications, templates, scripts, manifests, active
+# feature state, and Codex skills are committed. Ignore any other future
+# agent-local state under .agents/ while retaining the official skills.
+.agents/*
+!.agents/skills/
+!.agents/skills/**
+
 .gitnexus
 
 # gitnexus local code-intelligence (tooling, not for the public repo)
