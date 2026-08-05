@@ -153,7 +153,7 @@ and final output must match their independent contracts.
 - [ ] T039 [P] [US3] Write failing portable-source contract tests for layouts, checked ranges, exact boundaries, injected partial/Interrupted/zero reads, truncation, batch ordering/all-or-error, and owned-payload lifetime in `crates/stream/tests/positional_source.rs`
 - [ ] T040 [P] [US3] Write Linux-only regression tests that keep the existing `io_uring` API, selection, aligned payload mapping, and short-payload failure semantics explicit in `crates/stream/tests/linux_uring_preservation.rs`
 - [ ] T041 [P] [US3] Write failing scalar and worker tests for finite scores, top-k bounds, score-descending/expert-ID-ascending ties, repeated experts, normalized weights, and weighted aggregation in `crates/backend/tests/routing_contract.rs` and `python/pulsar_mlx_worker/tests/test_routed_moe.py`
-- [ ] T042 [P] [US3] Write a failing end-to-end contract test for exact expert payloads and the synthetic routed output in `crates/mlx-backend/tests/synthetic_moe.rs`
+- [X] T042 [P] [US3] Write a failing end-to-end contract test for exact expert payloads and the synthetic routed output in `crates/mlx-backend/tests/synthetic_moe.rs`
 
 ### Implementation for User Story 3
 
