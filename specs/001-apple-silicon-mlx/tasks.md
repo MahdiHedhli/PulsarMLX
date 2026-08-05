@@ -229,8 +229,8 @@ exclusions.
 
 ### Tests for User Story 5 (write and observe failure first)
 
-- [ ] T064 [P] [US5] Write failing schema/state tests that reject missing actual results, dirty/unknown commits, absent oracle fields, overlapping summed memory gauges, premature verified states, and benchmarks without passed correctness prerequisites in `crates/backend/tests/validation_records.rs`
-- [ ] T065 [P] [US5] Write failing claim-matrix tests that prevent synthetic, bounded real-model, giant-model, and production-serving evidence from implying one another in `crates/backend/tests/compatibility_matrix.rs`
+- [X] T064 [P] [US5] Write failing schema/state tests that reject missing actual results, dirty/unknown commits, absent oracle fields, overlapping summed memory gauges, premature verified states, and benchmarks without passed correctness prerequisites in `crates/backend/tests/validation_records.rs`
+- [X] T065 [P] [US5] Write failing claim-matrix tests that prevent synthetic, bounded real-model, giant-model, and production-serving evidence from implying one another in `crates/backend/tests/compatibility_matrix.rs`
 
 ### Implementation for User Story 5
 

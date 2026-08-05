@@ -890,3 +890,29 @@ run.
 The exact workspace result is also attached to the committed bounded-slice
 record. No model execution, benchmark, or additional hardware-sensitive work
 was performed for T063.
+
+### T064–T065 evidence-validation red phase
+
+Two additive backend test targets now express the remaining evidence-publication
+rules before implementation. `validation_records` requires a bounded actual
+result in addition to a passing status, a known clean full commit, an
+independent oracle, independently validated memory gauges, a legal verification
+transition, and passed verified correctness prerequisites for a benchmark.
+`compatibility_matrix` defines six exact, non-ordered evidence levels and proves
+that scalar, evaluated MLX tensor, synthetic routed-MoE, bounded real-model,
+giant-model, and production-serving evidence cannot imply one another.
+
+The required red-phase commands were run exactly:
+
+```sh
+cargo test -p backend --test validation_records
+cargo test -p backend --test compatibility_matrix
+```
+
+Both exited 101 at compile time as intended. The first reported six errors for
+the not-yet-implemented typed evidence level, bounded actual-result summary,
+and nested memory-gauge fields. The second reported seven errors for the
+not-yet-implemented compatibility matrix API and the same validation fields.
+`rustfmt --check` on both new test files and `git diff --check` passed. These
+failures are the T066 implementation target, not a claim that the backend test
+suite currently passes. No model or MLX execution occurred in this milestone.
