@@ -478,6 +478,7 @@ fn compare_model_slice(reference: &[f64], candidate: &[f64]) -> AdditiveComparis
 
 fn run_validate_model_slice(command: ExternalModelCommand) -> Result<(), String> {
     let project_root = project_root();
+    let started_at = utc_now()?;
     ensure_distinct_model_and_evidence(&command.model, &command.evidence)?;
     let reference = load_frozen_reference(&project_root)?;
     let source_commit = clean_source_commit(&project_root)?;
@@ -518,14 +519,47 @@ fn run_validate_model_slice(command: ExternalModelCommand) -> Result<(), String>
     let passed = numeric.passed && identities_passed;
     let memory = serde_json::to_value(result.memory_gauges())
         .map_err(|_| "model-slice memory evidence could not be serialized".to_owned())?;
+    let failures = if passed {
+        Vec::<String>::new()
+    } else {
+        vec!["The bounded Apple/reference comparison did not pass.".to_owned()]
+    };
     let evidence = json!({
         "schema_version": 1,
+        "case_id": MODEL_SLICE_ID,
         "validation": "qwen3-30b-a3b-q8_0-bounded-mlx-slice",
+        "claim_scope": "Evaluated Apple MLX Q8_0 reference parity for one layer-0 expert-0 gate-projection matvec over output rows 0 through 15",
         "status": if passed { "passed" } else { "failed" },
+        "actual_status": if passed { "passed" } else { "failed" },
         "recorded_at_utc": utc_now()?,
+        "started_at_and_timezone": {
+            "value": started_at,
+            "timezone": "UTC",
+        },
+        "commit": source_commit,
+        "git_dirty_state": "clean_before_execution",
         "source_commit": source_commit,
         "source_worktree_clean_before_execution": true,
-        "command": format!("cargo run -p mlx-backend --bin pulsar-mlx -- validate-model-slice --model <external-model>/{QWEN_FILENAME} --evidence docs/validation/qwen3-30b-a3b-q8_0-slice.json"),
+        "host_architecture": hello.python_arch(),
+        "os_version": format!("macOS {}", hello.macos_version()),
+        "tool_and_dependency_versions": {
+            "pulsar_mlx_worker": hello.worker_version(),
+            "protocol": hello.protocol(),
+            "python": hello.python_version(),
+            "mlx": hello.mlx_version(),
+        },
+        "backend_and_selected_device": {
+            "backend": BACKEND_ID,
+            "requested_device": GPU_DEVICE,
+            "selected_device": result.selected_device(),
+            "fallback_used": result.fallback_used(),
+        },
+        "command": format!("cargo run --release -p mlx-backend --bin pulsar-mlx -- validate-model-slice --model <external-model>/{QWEN_FILENAME} --evidence docs/validation/qwen3-30b-a3b-q8_0-slice.json"),
+        "exact_command": {
+            "shell": "zsh",
+            "command": format!("cargo run --release -p mlx-backend --bin pulsar-mlx -- validate-model-slice --model <external-model>/{QWEN_FILENAME} --evidence docs/validation/qwen3-30b-a3b-q8_0-slice.json"),
+            "exit_code_from_status": if passed { 0 } else { 2 },
+        },
         "artifact": {
             "repository_id": QWEN_REPOSITORY_ID,
             "revision": QWEN_REVISION,
@@ -534,6 +568,21 @@ fn run_validate_model_slice(command: ExternalModelCommand) -> Result<(), String>
             "sha256": QWEN_SHA256,
             "location": format!("<external-model>/{QWEN_FILENAME}"),
             "identity_rechecked_after_execution": true,
+        },
+        "input_identity": {
+            "artifact_sha256": QWEN_SHA256,
+            "tensor_name": REAL_TENSOR_NAME,
+            "encoded_slice_sha256": result.encoded_slice_sha256(),
+            "decoded_slice_sha256": result.decoded_slice_sha256(),
+            "prompt_utf8_sha256": PROMPT_SHA256,
+            "activation_sha256": result.activation_sha256(),
+        },
+        "oracle_identity": {
+            "record": REFERENCE_RESULT_PATH,
+            "project": "ggml-org/llama.cpp",
+            "component": "gguf-py",
+            "immutable_revision": REFERENCE_REVISION,
+            "output_sha256": reference.output_sha256,
         },
         "runtime": {
             "protocol": hello.protocol(),
@@ -583,6 +632,23 @@ fn run_validate_model_slice(command: ExternalModelCommand) -> Result<(), String>
             "input_identities_passed": identities_passed,
             "passed": passed,
         },
+        "comparison_policy": {
+            "mode": "absolute_plus_relative",
+            "pass_expression": "abs(candidate-reference) <= absolute_tolerance + relative_tolerance * abs(reference)",
+            "absolute_tolerance": REAL_ATOL,
+            "relative_tolerance": REAL_RTOL,
+            "non_finite_policy": "reject",
+            "required_compared_count": REAL_OUTPUT_COUNT,
+            "allowed_mismatch_count": 0,
+        },
+        "actual_values_or_bounded_summary": {
+            "output_value_count": result.actual().len(),
+            "output_sha256": result.output_sha256(),
+            "mismatch_count": numeric.mismatch_count,
+            "max_absolute_error": numeric.max_absolute_error,
+            "max_relative_error": numeric.max_relative_error,
+            "passed": passed,
+        },
         "memory_gauges": memory,
         "fresh_admission_observations": {
             "available_disk_bytes": inspection.admission_descriptor().memory_budget.available_disk_bytes,
@@ -594,11 +660,17 @@ fn run_validate_model_slice(command: ExternalModelCommand) -> Result<(), String>
         "warnings": [
             "Linux and CUDA execution are not established by this Apple-only command."
         ],
+        "failures": failures,
         "exclusions": [
             "The prompt is consumed by a transparent SHA-256 probe adapter, not Qwen tokenization or embedding.",
             "No router, full expert, full layer, attention, logits, tokens, generation, serving, or benchmark was exercised.",
             "This bounded intermediate does not establish giant-model inference."
-        ]
+        ],
+        "artifact_paths": [
+            "docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json",
+            "docs/validation/qwen3-30b-a3b-q8_0-slice.json",
+            format!("<external-model>/{QWEN_FILENAME}"),
+        ],
     });
     ensure_no_private_paths(&evidence)?;
     write_evidence(&command.evidence, &evidence)?;
