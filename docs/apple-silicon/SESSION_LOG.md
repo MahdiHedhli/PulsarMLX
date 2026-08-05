@@ -2100,3 +2100,32 @@ This review did not execute the inherited Linux or CUDA runtime and makes no
 runtime-parity claim. It verified that this safety slice did not alter their
 selection behavior. No checkpoint was accessed and no NTFY notification was
 sent.
+
+### T049 fail-closed safety CI
+
+The safety slice was committed in four focused commits and pushed to
+`origin/main` without force:
+
+- `09e021a` — `test(mlx): specify fail-closed router inputs`
+- `75a5e84` — `feat(mlx): enforce fail-closed router admission`
+- `1337d5f` — `feat(mlx): retain router fixture evidence`
+- `d0b092e` — `test(mlx): close fail-closed router safety gate`
+
+Push-triggered GitHub Actions run
+[31052297102](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31052297102)
+completed with conclusion `success` for full commit
+`d0b092e7ba7bee054e869a2a2b13ecce0baa8d26`. `Apple MLX small-fixture
+validation` passed in 48 seconds: 53 research tests, one schema record, the
+fixture-only six-artifact package, 67 worker tests, the explicitly selected
+generated router integration, native MLX device smoke, seven bounded tensor
+fixtures, synthetic routed-MoE execution, and the final external-model
+exclusion check all passed. `PULSARMLX_MODEL_GGUF` remained empty throughout
+that job. `Apple Silicon workspace baseline` passed in 1 minute 13 seconds;
+the exact workspace check succeeded and 45 test harnesses reported 204 passed,
+zero failed, and two ignored tests.
+
+Both required jobs ran on the workflow's `macos-15` arm64 boundary and every
+step completed successfully. This fixture-only CI run did not access an
+external checkpoint and does not authorize one by itself: the later T060,
+T071, T072, and T073 gates remain required before T074 can touch the model.
+No NTFY notification was sent.

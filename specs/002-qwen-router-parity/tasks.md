@@ -175,7 +175,7 @@ router MLX arrays. Existing startup runtime discovery remains unchanged.
 - [X] T046 [US2] Run all focused negative tests, backend-neutral routing regression tests, worker tests, and generated MLX fixture validation from `fixtures/research/router-v1/manifest.json`
 - [X] T047 [US2] Run schema/package validation, exact Cargo workspace gates, Python discovery, and Feature 001 regression tests, then record actual results in `docs/apple-silicon/SESSION_LOG.md`
 - [X] T048 [US2] Update failure coverage and exclusions, mark task state, and perform staged safety/Linux-CUDA selection review in `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
-- [ ] T049 [US2] Commit the fail-closed safety slice, push `main`, and wait for every `.github/workflows/macos.yml` job before allowing external-model access
+- [X] T049 [US2] Commit the fail-closed safety slice, push `main`, and wait for every `.github/workflows/macos.yml` job before allowing external-model access
 
 **Checkpoint**: Unsafe cases fail before accepted execution. Synthetic tie
 behavior is verified but is not checkpoint evidence.
