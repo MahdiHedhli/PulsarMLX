@@ -78,6 +78,14 @@ jobs:
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \
             -s python/pulsar_mlx_worker/tests -v
+      - name: Execute Rust-to-worker generated router integration
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+            --test router_worker_integration \
+            real_python_worker_two_row_router_matches_committed_golden -- \
+            --ignored --exact
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Execute native MLX device smoke
         run: |
           cargo test -p mlx-backend --test device_smoke \
