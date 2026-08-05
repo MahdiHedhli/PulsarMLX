@@ -201,7 +201,7 @@ and deterministic prompt; the named output must satisfy its predeclared rule.
 
 ### Implementation for User Story 4
 
-- [ ] T058 [P] [US4] Implement checked external model identity, GGUF metadata/tensor inventory admission, exact supported-role matching, and memory-budget enforcement in `crates/mlx-backend/src/model.rs`
+- [X] T058 [P] [US4] Implement checked external model identity, GGUF metadata/tensor inventory admission, exact supported-role matching, and memory-budget enforcement in `crates/mlx-backend/src/model.rs`
 - [ ] T059 [P] [US4] Implement only the admitted named Qwen3MoE worker slice with explicit tensor orientation, Q8_0 parity prerequisites, evaluated synchronization, bounded output, and memory gauges in `python/pulsar_mlx_worker/model_slice.py`
 - [ ] T060 [US4] Implement explicit external-path `inspect-model` and `validate-model-slice` commands with no downloader, token handling, full-output dump, or depth promotion in `crates/mlx-backend/src/bin/pulsar-mlx.rs` and `crates/mlx-backend/src/client.rs`
 - [ ] T061 [US4] Execute the preselected trusted-reference command and commit its sanitized immutable identity and bounded actual comparison output in `docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json`; stop if the oracle is not reproducible

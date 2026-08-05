@@ -620,3 +620,24 @@ These are observed red tests, not passing capability claims. They use no model
 weights, do not open the external artifact, and do not execute the trusted
 oracle. T058 and T059 own the minimum implementations needed to turn them
 green.
+
+### T058 bounded model admission
+
+The Rust admission layer now accepts only the frozen external Qwen artifact
+descriptor, exact typed `qwen3moe` metadata, the unique layer-0 routed-expert
+gate projection in its observed Q8_0 layout and byte range, every conservative
+disk/unified-memory/allocator/footprint bound, and the single expert-0
+rows-0:16 matvec depth. It rejects automatic acquisition and all depth
+promotion. The layer performs no file access or execution; T060 owns checked
+external-file inspection and command integration.
+
+These focused commands exited zero:
+
+```sh
+cargo test -p mlx-backend --test real_model_contract
+cargo clippy -p mlx-backend --all-targets -- -D warnings
+```
+
+The contract suite ran 6 tests with zero failures. This proves descriptor
+admission and rejection behavior only; it does not prove that a local file was
+parsed by this implementation or that either oracle executed.
