@@ -161,9 +161,9 @@ and final output must match their independent contracts.
 - [X] T044 [P] [US3] Implement deterministic backend-neutral top-k selection, tie-breaking, normalization, request planning, and scalar aggregation oracle in `crates/backend/src/routing.rs` and export it from `crates/backend/src/lib.rs`
 - [X] T045 [P] [US3] Implement the evaluated MLX routed-expert fixture graph and bounded result/memory summary in `python/pulsar_mlx_worker/moe.py`
 - [X] T046 [US3] Add bounded synthetic-MoE protocol/client operations and `validate-synthetic-moe` CLI wiring in `python/pulsar_mlx_worker/protocol.py`, `crates/mlx-backend/src/client.rs`, and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
-- [ ] T047 [P] [US3] Execute the portable source suite and commit exact byte/range/error/ownership results in `docs/validation/portable-expert-source.json`
+- [X] T047 [P] [US3] Execute the portable source suite and commit exact byte/range/error/ownership results in `docs/validation/portable-expert-source.json`
 - [X] T048 [P] [US3] Execute the synthetic routed-MoE command and commit expert IDs, weights, output parity, memory gauges, actual result, warnings, and synthetic-only exclusions in `docs/validation/synthetic-moe-v1.json`
-- [ ] T049 [US3] Re-run the exact macOS workspace gates after shared storage/routing changes and append actual results to `docs/validation/portable-expert-source.json`
+- [X] T049 [US3] Re-run the exact macOS workspace gates after shared storage/routing changes and append actual results to `docs/validation/portable-expert-source.json`
 - [ ] T050 [US3] Run the named Linux-only tests and applicable inherited CUDA checks on supported hardware/CI, or record the exact unavailable/not-run boundary; preserve selection/default behavior and prohibit a cross-platform-safe claim unless executed evidence passes in `docs/validation/linux-cuda-shared-boundary.json`
 
 **Checkpoint**: US3 is independently complete on Apple when exact source and

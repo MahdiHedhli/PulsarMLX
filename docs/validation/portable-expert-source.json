@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "validation": "portable-expert-source",
+  "status": "passed",
+  "recorded_at_utc": "2026-08-05T13:26:43Z",
+  "tested_commit": "8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd",
+  "environment": {
+    "chip": "Apple M1 Ultra",
+    "host_architecture": "arm64",
+    "rust_host": "aarch64-apple-darwin",
+    "macos_version": "26.0",
+    "macos_build": "25A354",
+    "rustc": "1.97.1 (8bab26f4f 2026-07-14, Homebrew)",
+    "cargo": "1.97.1 (c980f4866 2026-06-30, Homebrew)"
+  },
+  "commands": [
+    {
+      "command": "cargo test -p stream --test positional_source",
+      "exit_code": 0,
+      "result": "14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"
+    },
+    {
+      "command": "cargo check -p stream --test positional_source",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "cargo test -p stream --lib",
+      "exit_code": 0,
+      "result": "1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"
+    }
+  ],
+  "workspace_gates": {
+    "tested_commit": "8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd",
+    "commands": [
+      {
+        "command": "cargo check --workspace --all-targets",
+        "exit_code": 0,
+        "result": "passed"
+      },
+      {
+        "command": "cargo test --workspace --no-fail-fast",
+        "exit_code": 0,
+        "result": "140 passed; 0 failed"
+      }
+    ],
+    "warnings": [
+      "One inherited unused_mut warning remains in crates/quant/src/iq.rs.",
+      "Thirteen inherited macOS serve dead-code warnings remain in crates/serve/src/main.rs."
+    ]
+  },
+  "portable_source_suite": {
+    "active_test_count": 14,
+    "passed": 14,
+    "failed": 0,
+    "ignored": 0,
+    "compile_time_exclusions": [
+      {
+        "test": "range_length_must_fit_the_allocation_size",
+        "reason": "This checked-allocation-width test is cfg(target_pointer_width = \"32\") and was not compiled on the 64-bit arm64 host."
+      }
+    ],
+    "coverage": {
+      "bytes_and_boundaries": {
+        "test_count": 4,
+        "tests": [
+          {
+            "name": "single_shard_reads_first_last_and_exact_end",
+            "result": "passed",
+            "observed_contract": "Reads returned [10] at offset 0 length 1, [12, 13, 14] at offset 2 through the exact shard end, and [14] for the final byte."
+          },
+          {
+            "name": "split_layout_routes_exact_boundaries_without_concatenation",
+            "result": "passed",
+            "observed_contract": "Reads returned [11, 12, 13] through the first shard end, [20, 21, 22] from the second shard base, and [22] for the final logical byte; offset 103 length 2 was rejected as StraddlesShard with shard_end 104."
+          },
+          {
+            "name": "split_layout_may_start_at_a_nonzero_base",
+            "result": "passed",
+            "observed_contract": "A shard based at logical offset 4096 returned [1, 2, 3] for offset 4096 length 3."
+          },
+          {
+            "name": "batch_preserves_input_order_and_duplicate_ranges",
+            "result": "passed",
+            "observed_contract": "The requested offset order [4, 0, 4, 2] was preserved, including the duplicate, with payloads [\"ef\", \"ab\", \"ef\", \"cd\"]."
+          }
+        ]
+      },
+      "ranges_and_layout": {
+        "test_count": 5,
+        "tests": [
+          {
+            "name": "layout_rejects_empty_and_zero_length_shard_sets",
+            "result": "passed",
+            "observed_contract": "EmptyShardSet and ZeroLengthShard { shard: 0 } were returned for invalid layouts."
+          },
+          {
+            "name": "layout_rejects_duplicate_descending_gapped_and_overlapping_bases",
+            "result": "passed",
+            "observed_contract": "Duplicate and descending bases returned UnsortedShards; a 14-to-15 discontinuity returned ShardGap; a prior end of 15 with next base 14 returned ShardOverlap."
+          },
+          {
+            "name": "layout_end_arithmetic_is_checked",
+            "result": "passed",
+            "observed_contract": "Base u64::MAX - 1 with length 2 returned LayoutOverflow instead of wrapping."
+          },
+          {
+            "name": "ranges_reject_zero_overflow_below_base_and_beyond_end",
+            "result": "passed",
+            "observed_contract": "Zero length, u64 overflow, offset below base 100, and reads at or beyond virtual end 108 returned structured errors and issued zero reader calls."
+          },
+          {
+            "name": "invalid_batch_is_prevalidated_before_any_reader_io",
+            "result": "passed",
+            "observed_contract": "A batch whose second range crossed virtual end 508 failed before the valid first range issued any I/O."
+          }
+        ]
+      },
+      "exact_io_and_errors": {
+        "test_count": 4,
+        "tests": [
+          {
+            "name": "positional_loop_retries_interrupted_and_advances_after_partial_reads",
+            "result": "passed",
+            "observed_contract": "The exact payload \"bcdef\" was assembled across partial and Interrupted reads; requests were [(1, 5), (3, 3), (3, 3), (4, 2)]."
+          },
+          {
+            "name": "zero_read_before_completion_is_a_structured_short_read",
+            "result": "passed",
+            "observed_contract": "A zero read after 2 of 6 bytes returned ShortRead { shard: 0, local_offset: 0, expected: 6, actual: 2 }."
+          },
+          {
+            "name": "truncation_after_open_is_a_short_read_not_partial_success",
+            "result": "passed",
+            "observed_contract": "Truncating an opened 8-byte file to 3 bytes returned ShortRead with expected 8 and actual 3; no partial payload was reported as success."
+          },
+          {
+            "name": "batch_io_failure_returns_only_the_error",
+            "result": "passed",
+            "observed_contract": "A later batch read that stopped after 1 of 4 bytes returned only ShortRead for logical offset 2 after three reader calls."
+          }
+        ]
+      },
+      "ownership": {
+        "test_count": 1,
+        "tests": [
+          {
+            "name": "owned_payload_survives_source_drop_and_thread_move",
+            "result": "passed",
+            "observed_contract": "OwnedSlab and PositionalSource satisfied Send; the slab survived source drop and moved to another thread with range offset 6 length 7 and payload \"payload\". The test also contains a compile-time assertion that OwnedSlab does not implement Clone."
+          }
+        ]
+      }
+    }
+  },
+  "warnings": [],
+  "failures": [],
+  "exclusions": [
+    "The macOS run exercised the additive portable positional source, not the inherited Linux io_uring source.",
+    "No Linux or CUDA runtime behavior was executed or claimed by this validation.",
+    "The 32-bit allocation-width branch was not compiled or executed on this 64-bit host.",
+    "No real model, model weights, MLX tensor execution, inference serving, or performance benchmark was exercised by this source validation."
+  ]
+}

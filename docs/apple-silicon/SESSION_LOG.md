@@ -439,3 +439,24 @@ cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
 
 This is synthetic-only evidence; it does not establish a model loader,
 tokenization, token generation, serving, or Linux/CUDA runtime behavior.
+
+Tasks T047 and T049 recorded the exact portable-source and post-change
+workspace results on implementation commit
+`8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd`. The focused positional suite ran
+14 active tests with zero failures, covering exact single/split-shard bytes,
+boundaries, invalid layouts and ranges, partial/interrupted/zero reads,
+truncation, all-or-error batches, ordering, duplicate ranges, and owned payload
+lifetime. The 32-bit allocation-width test was not compiled on this arm64
+64-bit host.
+
+The exact post-change workspace gates both exited zero:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+```
+
+The workspace test command executed 140 Rust tests with zero failures. The
+inherited `quant` `unused_mut` and 13 macOS `serve` dead-code warnings remain.
+The detailed results are in `docs/validation/portable-expert-source.json`;
+they do not claim Linux `io_uring` or CUDA execution.
