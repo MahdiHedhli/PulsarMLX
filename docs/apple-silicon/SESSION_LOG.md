@@ -460,3 +460,18 @@ The workspace test command executed 140 Rust tests with zero failures. The
 inherited `quant` `unused_mut` and 13 macOS `serve` dead-code warnings remain.
 The detailed results are in `docs/validation/portable-expert-source.json`;
 they do not claim Linux `io_uring` or CUDA execution.
+
+Task T050 established the exact shared-boundary status in
+`docs/validation/linux-cuda-shared-boundary.json`. The named Linux preservation
+command and inherited kernel selftest subcommand both exited zero on this
+macOS host, but every relevant target was cfg-excluded: the former ran zero
+tests and the latter emitted three zero-test results. No Linux, `io_uring`,
+`O_DIRECT`, CUDA compile, or CUDA runtime claim follows from those exits.
+
+Static comparison found the inherited engine, kernels, Linux-only stream
+dependencies, selection, and defaults unchanged from the locally recorded
+`upstream/main`. The additive positional source does not replace the inherited
+Linux fetcher. The payload-short CQE assertion remains explicitly ignored and
+unverified because the inherited fetcher currently accepts that case. A
+supported Linux host and a Linux/NVIDIA/CUDA host or suitable CI are required
+to advance this boundary; `cross_platform_safe` remains false.

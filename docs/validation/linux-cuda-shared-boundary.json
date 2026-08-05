@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "validation": "linux-cuda-shared-boundary",
+  "status": "unavailable_unverified",
+  "recorded_at_utc": "2026-08-05T13:28:28Z",
+  "tested_commit": "8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd",
+  "upstream_comparison": {
+    "ref": "upstream/main",
+    "merge_base": "183a54bd707ad086ecfa380aee48142c89cd3305",
+    "note": "The comparison used the locally configured upstream/main ref; no remote fetch was performed for this evidence run."
+  },
+  "environment": {
+    "operating_system": "macOS 26.0 (25A354)",
+    "kernel": "Darwin 25.0.0",
+    "chip": "Apple M1 Ultra",
+    "host_architecture": "arm64",
+    "unified_memory_bytes": 137438953472,
+    "rust_host": "aarch64-apple-darwin",
+    "rustc": "1.97.1 (8bab26f4f 2026-07-14, Homebrew)",
+    "cargo": "1.97.1 (c980f4866 2026-06-30, Homebrew)",
+    "xcode_command_line_tools": "/Library/Developer/CommandLineTools",
+    "compiler": "Apple clang 17.0.0, target arm64-apple-darwin25.0.0",
+    "linux_runtime_available": false,
+    "nvidia_gpu_available": false,
+    "nvcc": "unavailable",
+    "nvidia_smi": "unavailable",
+    "cuda_root": "/usr/local/cuda absent",
+    "configured_ci": "The inspected repository workflow uses macos-15 only; no Linux/CUDA runner is configured."
+  },
+  "evidence_boundary": [
+    {
+      "scope": "Inherited Linux io_uring preservation test binary on the current macOS host",
+      "state": "zero_tests",
+      "actual": "The command exited 0, but crate-level cfg(target_os = \"linux\") excluded the entire test binary: 0 passed, 0 failed, 0 ignored, 0 measured, 0 filtered out.",
+      "claim": "This proves only that the macOS workspace can omit the Linux-only test target cleanly. It is not Linux or io_uring runtime evidence."
+    },
+    {
+      "scope": "Inherited CUDA kernel selftest command on the current macOS host",
+      "state": "zero_tests",
+      "actual": "The command exited 0 and reported three test-target results, each with 0 passed, 0 failed, 0 ignored, 0 measured, and 0 filtered out.",
+      "claim": "The non-Linux kernel build-script early return and Linux cfg gates were selected. No CUDA source was compiled, linked, or executed."
+    },
+    {
+      "scope": "Inherited Linux/CUDA runtime on supported hardware or CI",
+      "state": "not_run_unavailable",
+      "actual": "No Linux runtime, NVIDIA GPU, CUDA toolkit, nvcc, nvidia-smi, or suitable configured CI runner was available in this local evidence run.",
+      "claim": "Linux, io_uring, O_DIRECT, CUDA compilation, CUDA selftests, and Linux engine execution remain unverified."
+    },
+    {
+      "scope": "Inherited engine, kernel, and target-specific dependency source identity",
+      "state": "passed_static_comparison",
+      "actual": "A git diff against upstream/main exited 0 for crates/engine, crates/kernels, and crates/stream/Cargo.toml; their blobs at tested commit 8abdfe0 match upstream/main exactly.",
+      "claim": "This is source-preservation evidence only, not runtime compatibility evidence."
+    },
+    {
+      "scope": "Portable source integration into inherited Linux engine selection",
+      "state": "passed_static_review",
+      "actual": "crates/stream/src/lib.rs adds only the positional module and public re-exports relative to upstream; inherited uring/fetch modules remain Linux-gated, and inherited engine call sites still use stream::fetch::Fetcher.",
+      "claim": "The portable source is additive and does not replace the inherited Linux fetcher at this commit."
+    }
+  ],
+  "commands": [
+    {
+      "command": "cargo test -p stream --test linux_uring_preservation",
+      "exit_code": 0,
+      "result_state": "zero_tests",
+      "actual_result": "0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
+      "interpretation": "The named Linux-only suite was invoked, but no test was compiled or executed on target_os=macos."
+    },
+    {
+      "command": "cargo test --release -q -p kernels -- --test-threads=1",
+      "exit_code": 0,
+      "result_state": "zero_tests",
+      "actual_result": "Three emitted test-target results, each reporting 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
+      "interpretation": "This is the inherited kernel command from scripts/check.sh. On macOS it selected the empty non-Linux crate and did not run any of the 11 integration CUDA selftests or 8 ignored in-crate CUDA tests."
+    },
+    {
+      "command": "git diff --exit-code upstream/main...8abdfe0 -- crates/engine crates/kernels crates/stream/Cargo.toml",
+      "exit_code": 0,
+      "result_state": "passed_static_comparison",
+      "actual_result": "No differences",
+      "interpretation": "Inherited engine code, kernel code/build/defaults, and the Linux-only stream dependency selection are unchanged from the locally recorded upstream/main merge base."
+    },
+    {
+      "command": "git diff upstream/main...8abdfe0 -- crates/stream/src/lib.rs",
+      "exit_code": 0,
+      "result_state": "passed_static_review",
+      "actual_result": "One five-line additive hunk declares and re-exports the portable positional source; no inherited uring or fetch line is changed.",
+      "interpretation": "The legacy Linux io_uring public surface remains present and selected only on Linux."
+    },
+    {
+      "command": "rustc --print cfg | rg '^(target_arch|target_os|target_env|target_vendor)'",
+      "exit_code": 0,
+      "result_state": "passed_host_identification",
+      "actual_result": "target_arch=\"aarch64\", target_env=\"\", target_os=\"macos\", target_vendor=\"apple\"",
+      "interpretation": "Confirms why Linux/CUDA implementation and test cfgs were excluded."
+    }
+  ],
+  "not_run": [
+    {
+      "command": "cargo test -p stream --test linux_uring_preservation",
+      "required_environment": "supported Linux host with io_uring and O_DIRECT",
+      "state": "not_run_on_required_environment",
+      "reason": "Only a macOS Apple Silicon host was available. The local invocation ran zero tests."
+    },
+    {
+      "command": "cargo test --release -p kernels -- --test-threads=1",
+      "required_environment": "Linux host with a supported NVIDIA GPU and CUDA toolkit",
+      "state": "not_run_on_required_environment",
+      "reason": "The local invocation ran zero tests because CUDA implementation and tests are Linux-gated; nvcc, nvidia-smi, /usr/local/cuda, and NVIDIA hardware were unavailable."
+    },
+    {
+      "command": "cargo test -p kernels -- --ignored --test-threads=1",
+      "required_environment": "Linux host with a supported NVIDIA GPU and CUDA toolkit",
+      "state": "not_run_unavailable",
+      "reason": "The eight ignored in-crate device tests cannot compile or execute on this non-Linux, non-CUDA host."
+    },
+    {
+      "command": "scripts/check.sh",
+      "required_environment": "the CUDA box specified by the script",
+      "state": "not_run_unavailable",
+      "reason": "The script explicitly identifies itself as a CUDA-box gate. Running the whole script on macOS could print PASS after cfg-excluded zero-test kernel targets and would therefore be misleading as CUDA evidence. Its kernel subcommand was run separately and recorded above."
+    },
+    {
+      "command": "scripts/check.sh MODEL.gguf",
+      "required_environment": "Linux/CUDA host plus an authorized compatible external model",
+      "state": "not_run_unavailable",
+      "reason": "No Linux/CUDA host or authorized local model artifact was available; no weight download was attempted."
+    }
+  ],
+  "inherited_selection_and_defaults": {
+    "source_identity": [
+      {
+        "path": "crates/engine/src/lib.rs",
+        "upstream_blob": "7c7afbbcfbf6a71c10d982b466bf395cce91db6d",
+        "tested_commit_blob": "7c7afbbcfbf6a71c10d982b466bf395cce91db6d",
+        "unchanged": true
+      },
+      {
+        "path": "crates/kernels/Cargo.toml",
+        "upstream_blob": "48a4635b4d95b9485d1401b5b86bd1a9ee41863c",
+        "tested_commit_blob": "48a4635b4d95b9485d1401b5b86bd1a9ee41863c",
+        "unchanged": true
+      },
+      {
+        "path": "crates/kernels/build.rs",
+        "upstream_blob": "42b1ed7643114ab00ff72b0ad8d48766e6cf7b2b",
+        "tested_commit_blob": "42b1ed7643114ab00ff72b0ad8d48766e6cf7b2b",
+        "unchanged": true
+      },
+      {
+        "path": "crates/kernels/src/lib.rs",
+        "upstream_blob": "dad17f76af86491f2d5839875d45cd1cf3ba685f",
+        "tested_commit_blob": "dad17f76af86491f2d5839875d45cd1cf3ba685f",
+        "unchanged": true
+      },
+      {
+        "path": "crates/stream/Cargo.toml",
+        "upstream_blob": "f4087ba72af42510874ce0730c27ff45de0ab64e",
+        "tested_commit_blob": "f4087ba72af42510874ce0730c27ff45de0ab64e",
+        "unchanged": true
+      }
+    ],
+    "linux_stream_selection": {
+      "status": "unchanged_by_static_review",
+      "details": [
+        "io-uring 0.7 and libc 0.2 remain target_os=linux dependencies.",
+        "stream::uring and stream::fetch remain cfg(target_os=linux).",
+        "The inherited engine real module remains cfg(target_os=linux).",
+        "Inherited engine storage and prefetch call sites continue to construct stream::fetch::Fetcher with the existing split-shard API.",
+        "The new PositionalSource is additive; no inherited Linux engine call site selects it by default."
+      ]
+    },
+    "cuda_selection": {
+      "status": "unchanged_by_static_review",
+      "details": [
+        "The kernel build continues to return immediately unless CARGO_CFG_TARGET_OS is linux.",
+        "PULSAR_CUDA_ARCH remains an explicit override; the inherited default request remains 61,75,80,86,89 filtered against nvcc support when available.",
+        "PULSAR_GPU remains the explicit device override; otherwise inherited primary-device selection remains measured H2D bandwidth with the existing tie-breaks and CUDA device-zero fallback.",
+        "The engine continues to use the inherited CUDA-backed implementation only inside its Linux-gated real module."
+      ]
+    }
+  },
+  "short_payload_boundary": {
+    "test_file": "crates/stream/tests/linux_uring_preservation.rs",
+    "test": "completion_shorter_than_the_logical_payload_must_fail",
+    "source_state": "ignored",
+    "ignore_reason": "inherited fetch_each currently accepts short CQE; requires separately evidenced Linux hardening",
+    "current_host_state": "not_compiled_zero_tests",
+    "supported_linux_state": "not_run",
+    "observed_implementation_debt": "The inherited fetch_each completion path does not currently compare the CQE byte count with payload_offset + payload_len before reporting success.",
+    "claim": "Short-payload failure semantics are not verified and are not fixed by this feature. The ignored test must remain visible until a separately reviewed Linux hardening change is executed on suitable hardware."
+  },
+  "warnings": [
+    "Exit code 0 from either cargo test command is not a Linux/CUDA pass because every relevant test was cfg-excluded and the observed count was zero.",
+    "The Linux preservation test helpers may report an in-test SKIP when io_uring or O_DIRECT is unavailable even on Linux; future evidence must record such skips rather than counting them as executed semantic coverage.",
+    "Static source identity and additive-surface review cannot establish compiler, runtime, I/O, numerical, or performance parity on Linux/CUDA.",
+    "The ignored short-payload test records inherited unresolved behavior and prevents a claim that all named Linux storage semantics have passed."
+  ],
+  "failures": [],
+  "blockers": [
+    "A supported Linux host with io_uring and O_DIRECT is required to execute the named stream preservation suite.",
+    "A supported NVIDIA GPU, CUDA toolkit, and Linux host or suitable CI are required to compile and execute inherited CUDA selftests.",
+    "The inherited short-CQE behavior requires separately reviewed Linux hardening before the ignored short-payload assertion can be enabled and evidenced."
+  ],
+  "claim_policy": {
+    "cross_platform_safe": false,
+    "prohibited_claim": "The shared storage or routing changes are Linux/CUDA-safe.",
+    "required_claim": "Inherited Linux/CUDA selection and defaults are unchanged by static review, but Linux, io_uring, O_DIRECT, and CUDA runtime compatibility remain unavailable and unverified at tested commit 8abdfe0."
+  }
+}
