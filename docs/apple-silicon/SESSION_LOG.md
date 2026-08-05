@@ -385,3 +385,18 @@ cargo check -p stream --all-targets
 cargo test -p stream
 cargo clippy -p stream --all-targets -- -D warnings
 ```
+
+Task T045 implemented the bounded synthetic routed-MoE MLX graph. The worker
+fully validates fixture structure, split-shard bytes and SHA-256 identities,
+expert ranges, routing and aggregation oracles, and the deduplicated fetch plan
+before importing or accessing MLX. Native execution explicitly selected the
+GPU, evaluated and synchronized the graph, preserved routes `[1, 2, 3, 1]`,
+and returned `[2.0, 2.0, 4.069116592407227, 4.0378828048706055]`. The maximum
+output absolute error was `4.759696965450644e-07`, within the committed
+`1e-5` tolerance. All 7 focused tests passed:
+
+```sh
+python3 -m py_compile python/pulsar_mlx_worker/moe.py
+PYTHONPATH=python uv run --frozen python -m unittest \
+  python/pulsar_mlx_worker/tests/test_routed_moe.py -v
+```
