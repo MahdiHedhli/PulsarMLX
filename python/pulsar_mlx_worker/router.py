@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import json
 import math
@@ -18,6 +19,7 @@ import stat
 import struct
 from typing import Any
 
+from .protocol import is_stable_identifier
 from .runtime import (
     GPU_DEVICE_ID,
     MemoryGauges,
@@ -56,7 +58,6 @@ _MAX_HIDDEN_DOCUMENT_BYTES = 128 * 1024
 _MAX_RECIPE_BYTES = 16 * 1024
 _WEIGHT_ELEMENT_COUNT = EXPERT_COUNT * HIDDEN_WIDTH
 _WEIGHT_BYTES = _WEIGHT_ELEMENT_COUNT * 4
-_MAX_IDENTIFIER_CHARS = 128
 _PROBABILITY_SUM_TOLERANCE = 1.0e-6
 _PROBABILITY_RELATIVE_TOLERANCE = 1.0e-6
 
@@ -72,6 +73,13 @@ _EXPECTED_TOP8_IDS = (
     (83, 38, 121, 76, 31, 114, 69, 24),
     (24, 123, 94, 65, 36, 7, 106, 77),
 )
+
+
+class RouterCaseScope(Enum):
+    """Internal provenance boundary controlling the cutoff-tie policy."""
+
+    SYNTHETIC_FIXTURE = "synthetic_fixture"
+    REAL_CHECKPOINT = "real_checkpoint"
 
 
 class RouterError(RuntimeContractError):
@@ -172,16 +180,23 @@ def run_router(
     router_weights: object,
     requested_device: object,
     allow_fallback: object,
+    case_scope: RouterCaseScope,
     mx_module: Any | None = None,
 ) -> RouterResult:
     """Validate and evaluate one complete synthetic router case on MLX GPU."""
 
+    if not isinstance(case_scope, RouterCaseScope):
+        raise RouterError(
+            "internal_worker_error",
+            "router execution requires an explicit internal case scope",
+        )
+    _validate_control_scalars(
+        router_case_id=router_case_id,
+        requested_device=requested_device,
+        allow_fallback=allow_fallback,
+    )
     expected_rows = _expected_case_rows(router_case_id)
-    if (
-        not isinstance(requested_device, str)
-        or requested_device != GPU_DEVICE_ID
-        or allow_fallback is not False
-    ):
+    if requested_device != GPU_DEVICE_ID or allow_fallback:
         raise RouterError(
             "device_unavailable",
             "router execution requires explicit GPU selection without fallback",
@@ -352,6 +367,7 @@ def run_router(
         selected_expert_ids,
         selected_probabilities,
         normalized_weights,
+        case_scope=case_scope,
     )
     return RouterResult(
         router_case_id=router_case_id,
@@ -433,8 +449,13 @@ def run_committed_router(
 ) -> RouterResult:
     """Resolve one committed generated case and execute no caller data."""
 
+    _validate_control_scalars(
+        router_case_id=router_case_id,
+        requested_device=requested_device,
+        allow_fallback=allow_fallback,
+    )
     expected_rows = _expected_case_rows(router_case_id)
-    if requested_device != GPU_DEVICE_ID or allow_fallback is not False:
+    if requested_device != GPU_DEVICE_ID or allow_fallback:
         raise RouterError(
             "device_unavailable",
             "router execution requires explicit GPU selection without fallback",
@@ -447,15 +468,28 @@ def run_committed_router(
         router_weights=committed.router_weights,
         requested_device=GPU_DEVICE_ID,
         allow_fallback=False,
+        case_scope=RouterCaseScope.SYNTHETIC_FIXTURE,
     )
 
 
-def _expected_case_rows(router_case_id: object) -> int:
-    if not isinstance(router_case_id, str) or not _valid_identifier(router_case_id):
+def _validate_control_scalars(
+    *,
+    router_case_id: object,
+    requested_device: object,
+    allow_fallback: object,
+) -> None:
+    if (
+        not is_stable_identifier(router_case_id)
+        or not is_stable_identifier(requested_device)
+        or not isinstance(allow_fallback, bool)
+    ):
         raise RouterError(
             "malformed_request",
-            "router case identity must be a bounded stable string",
+            "router control fields must be bounded scalar values",
         )
+
+
+def _expected_case_rows(router_case_id: object) -> int:
     expected_rows = _CASE_ROWS.get(router_case_id)
     if expected_rows is None:
         raise RouterError(
@@ -627,7 +661,14 @@ def _validate_complete_result(
     selected_ids: tuple[tuple[int, ...], ...],
     selected_probabilities: tuple[tuple[float, ...], ...],
     normalized_weights: tuple[tuple[float, ...], ...],
+    *,
+    case_scope: RouterCaseScope,
 ) -> None:
+    if not isinstance(case_scope, RouterCaseScope):
+        raise RouterError(
+            "internal_worker_error",
+            "router result validation requires an explicit internal case scope",
+        )
     for row_index, probability_row in enumerate(probabilities):
         logit_row = logits[row_index]
         selected_id_row = selected_ids[row_index]
@@ -661,15 +702,25 @@ def _validate_complete_result(
                     "evaluation_failed",
                     "complete router probabilities are not the full softmax of logits",
                 )
-        expected_ids = tuple(
+        ranked_ids = tuple(
             sorted(
                 range(EXPERT_COUNT),
                 key=lambda expert_id: (
                     -probability_row[expert_id],
                     expert_id,
                 ),
-            )[:TOP_K]
+            )
         )
+        if (
+            case_scope is RouterCaseScope.REAL_CHECKPOINT
+            and probability_row[ranked_ids[TOP_K - 1]]
+            == probability_row[ranked_ids[TOP_K]]
+        ):
+            raise RouterError(
+                "comparison_failed",
+                "an exact float32 probability tie crosses real router ranks eight and nine",
+            )
+        expected_ids = ranked_ids[:TOP_K]
         if selected_id_row != expected_ids or len(set(selected_id_row)) != TOP_K:
             raise RouterError(
                 "evaluation_failed",
@@ -881,7 +932,18 @@ def _validate_manifest(manifest: Mapping[str, object]) -> None:
             "internal_worker_error",
             "the committed router fixture contract is invalid",
         )
-    if manifest.get("hidden_state_fixture") != {
+    hidden_state_fixture = manifest.get("hidden_state_fixture")
+    if not isinstance(hidden_state_fixture, Mapping):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router hidden-state manifest is invalid",
+        )
+    _require_byte_count(
+        hidden_state_fixture.get("canonical_byte_length"),
+        MAXIMUM_ROWS * HIDDEN_WIDTH * 4,
+        "router hidden-state manifest canonical range",
+    )
+    if dict(hidden_state_fixture) != {
         "canonical_byte_length": MAXIMUM_ROWS * HIDDEN_WIDTH * 4,
         "canonical_f32le_sha256": (
             "c2237ebd53872efd59a481129db6ce422a3af96193eeba65c834af6ebfb314e8"
@@ -895,7 +957,18 @@ def _validate_manifest(manifest: Mapping[str, object]) -> None:
             "internal_worker_error",
             "the committed router hidden-state manifest is invalid",
         )
-    if manifest.get("weight_fixture") != {
+    weight_fixture = manifest.get("weight_fixture")
+    if not isinstance(weight_fixture, Mapping):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router weight manifest is invalid",
+        )
+    _require_byte_count(
+        weight_fixture.get("canonical_byte_length"),
+        _WEIGHT_BYTES,
+        "router weight manifest canonical range",
+    )
+    if dict(weight_fixture) != {
         "canonical_byte_length": _WEIGHT_BYTES,
         "canonical_f32le_sha256": (
             "b625762a76a6dab4df249cc56a97946847710e59155585329c7dfa350c8c294f"
@@ -955,10 +1028,12 @@ def _validate_manifest_file(
     payload: bytes,
 ) -> None:
     entry = _manifest_file(manifest, relative_path)
-    if (
-        entry.get("byte_length") != len(payload)
-        or entry.get("sha256") != hashlib.sha256(payload).hexdigest()
-    ):
+    _require_byte_count(
+        len(payload),
+        entry.get("byte_length"),
+        "router fixture encoded file",
+    )
+    if entry.get("sha256") != hashlib.sha256(payload).hexdigest():
         raise RouterError(
             "internal_worker_error",
             "a committed router fixture file differs from its manifest",
@@ -1018,6 +1093,11 @@ def _validate_hidden_document(
         },
         "router hidden-state fixture",
     )
+    _require_byte_count(
+        document.get("canonical_byte_length"),
+        MAXIMUM_ROWS * HIDDEN_WIDTH * 4,
+        "router hidden-state canonical tensor",
+    )
     if (
         document.get("schema") != "pulsarmlx.fixture.router-hidden-states"
         or document.get("schema_version") != "1.0.0"
@@ -1026,7 +1106,6 @@ def _validate_hidden_document(
         or document.get("shape") != [MAXIMUM_ROWS, HIDDEN_WIDTH]
         or document.get("dtype") != OUTPUT_DTYPE
         or document.get("byte_order") != "little"
-        or document.get("canonical_byte_length") != MAXIMUM_ROWS * HIDDEN_WIDTH * 4
     ):
         raise RouterError(
             "internal_worker_error",
@@ -1082,9 +1161,13 @@ def _validate_hidden_document(
                 "a committed router hidden-state row hash is invalid",
             )
     canonical = _canonical_f32le_bytes(admitted)
+    _require_byte_count(
+        len(canonical),
+        document.get("canonical_byte_length"),
+        "router hidden-state canonical tensor",
+    )
     if (
-        len(canonical) != document.get("canonical_byte_length")
-        or hashlib.sha256(canonical).hexdigest()
+        hashlib.sha256(canonical).hexdigest()
         != document.get("canonical_f32le_sha256")
     ):
         raise RouterError(
@@ -1118,6 +1201,11 @@ def _build_weights_from_recipe(
         },
         "router weight recipe",
     )
+    _require_byte_count(
+        recipe.get("canonical_byte_length"),
+        _WEIGHT_BYTES,
+        "router weight canonical tensor",
+    )
     if (
         recipe.get("schema") != "pulsarmlx.fixture.router-weight-recipe"
         or recipe.get("schema_version") != "1.0.0"
@@ -1128,7 +1216,6 @@ def _build_weights_from_recipe(
         or recipe.get("byte_order") != "little"
         or recipe.get("layout") != "expert_major_rows_input_columns"
         or recipe.get("logical_element_count") != _WEIGHT_ELEMENT_COUNT
-        or recipe.get("canonical_byte_length") != _WEIGHT_BYTES
         or recipe.get("raw_weight_bytes_committed") is not False
     ):
         raise RouterError(
@@ -1178,9 +1265,13 @@ def _build_weights_from_recipe(
         for expert_id in range(EXPERT_COUNT)
     )
     canonical = _canonical_f32le_bytes(weights)
+    _require_byte_count(
+        len(canonical),
+        _WEIGHT_BYTES,
+        "reconstructed router weight tensor",
+    )
     if (
-        len(canonical) != _WEIGHT_BYTES
-        or hashlib.sha256(canonical).hexdigest()
+        hashlib.sha256(canonical).hexdigest()
         != recipe.get("canonical_f32le_sha256")
     ):
         raise RouterError(
@@ -1206,12 +1297,40 @@ def _require_exact_keys(
         )
 
 
-def _valid_identifier(value: str) -> bool:
-    return (
-        0 < len(value) <= _MAX_IDENTIFIER_CHARS
-        and value.strip() == value
-        and all(character.isalnum() or character in "-_.:" for character in value)
-    )
+def _require_byte_count(
+    actual: object,
+    expected: object,
+    label: str,
+) -> None:
+    if (
+        isinstance(actual, bool)
+        or not isinstance(actual, int)
+        or isinstance(expected, bool)
+        or not isinstance(expected, int)
+        or actual != expected
+    ):
+        bounded_actual = (
+            actual
+            if isinstance(actual, int)
+            and not isinstance(actual, bool)
+            and -(1 << 63) <= actual < 1 << 64
+            else None
+        )
+        bounded_expected = (
+            expected
+            if isinstance(expected, int)
+            and not isinstance(expected, bool)
+            and -(1 << 63) <= expected < 1 << 64
+            else None
+        )
+        raise RouterError(
+            "invalid_byte_count",
+            f"{label} has an invalid byte count",
+            details={
+                "expected_bytes": bounded_expected,
+                "actual_bytes": bounded_actual,
+            },
+        )
 
 
 def _object_without_duplicates(

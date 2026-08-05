@@ -27,6 +27,7 @@ from pulsar_mlx_worker.protocol import (
     RequestEnvelope,
 )
 from pulsar_mlx_worker.router import (
+    RouterCaseScope,
     RouterError,
     run_committed_router,
     run_router,
@@ -48,6 +49,48 @@ EXPECTED_TOP8_IDS = (
     (83, 38, 121, 76, 31, 114, 69, 24),
     (24, 123, 94, 65, 36, 7, 106, 77),
 )
+SYNTHETIC_TIE_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "fixtures"
+    / "research"
+    / "router-v1"
+    / "synthetic-tie.json"
+)
+
+
+def _synthetic_tie_case(kind: str) -> dict[str, object]:
+    document = json.loads(SYNTHETIC_TIE_FIXTURE_PATH.read_bytes())
+    if (
+        document.get("schema") != "pulsarmlx.fixture.router-synthetic-tie"
+        or document.get("provenance")
+        != {
+            "evidence_level": "synthetic_tie_fixture_only",
+            "external_checkpoint_access_required": False,
+            "kind": "synthetic_generated",
+            "model_free": True,
+            "proves_real_checkpoint_routing": False,
+        }
+    ):
+        raise AssertionError("synthetic tie fixture provenance is invalid")
+    matches = [case for case in document.get("cases", []) if case.get("kind") == kind]
+    if len(matches) != 1:
+        raise AssertionError(f"synthetic tie fixture must contain one {kind} case")
+    case = matches[0]
+    if case.get("provenance") != "synthetic_generated_model_free":
+        raise AssertionError("synthetic tie case provenance is invalid")
+    return case
+
+
+def _fixture_matrix(case: dict[str, object], field: str) -> tuple[tuple, ...]:
+    return tuple(tuple(row) for row in case[field])
+
+
+def _weights_for_fixture_logits(case: dict[str, object]) -> tuple[tuple[float, ...], ...]:
+    logits = _fixture_matrix(case, "logits")
+    if len(logits) != 1 or len(logits[0]) != EXPERT_COUNT:
+        raise AssertionError("synthetic tie fixture logits have an invalid shape")
+    zero_tail = (0.0,) * (HIDDEN_WIDTH - 1)
+    return tuple((float(value), *zero_tail) for value in logits[0])
 
 
 def _row_zero_logit(expert_id: int) -> float:
@@ -409,6 +452,10 @@ class RouterControlContractTests(unittest.TestCase):
                 self.assertEqual(call["router_case_id"], case_id)
                 self.assertEqual(call["requested_device"], "gpu")
                 self.assertFalse(call["allow_fallback"])
+                self.assertIs(
+                    call["case_scope"],
+                    RouterCaseScope.SYNTHETIC_FIXTURE,
+                )
                 hidden_states = call["hidden_states"]
                 router_weights = call["router_weights"]
                 self.assertEqual(len(hidden_states), expected_rows)
@@ -448,6 +495,7 @@ class RouterAdmissionContractTests(unittest.TestCase):
         router_weights: object = ROUTER_WEIGHTS,
         requested_device: object = "gpu",
         allow_fallback: object = False,
+        case_scope: object = RouterCaseScope.SYNTHETIC_FIXTURE,
     ) -> None:
         trap = SchedulingTrap()
         with self.assertRaises(RouterError) as caught:
@@ -457,6 +505,7 @@ class RouterAdmissionContractTests(unittest.TestCase):
                 router_weights=router_weights,
                 requested_device=requested_device,
                 allow_fallback=allow_fallback,
+                case_scope=case_scope,
                 mx_module=trap,
             )
         self.assertEqual(caught.exception.code, expected_code)
@@ -519,6 +568,7 @@ class RouterAdmissionContractTests(unittest.TestCase):
                         router_weights=ROUTER_WEIGHTS,
                         requested_device=requested_device,
                         allow_fallback=allow_fallback,
+                        case_scope=RouterCaseScope.SYNTHETIC_FIXTURE,
                         mx_module=trap,
                     )
                 self.assertEqual(caught.exception.code, "device_unavailable")
@@ -539,6 +589,14 @@ class RouterAdmissionContractTests(unittest.TestCase):
                     "malformed_request",
                     requested_device=requested_device,
                     allow_fallback=allow_fallback,
+                )
+
+    def test_internal_case_scope_must_be_explicit_before_mlx(self) -> None:
+        for case_scope in (None, "synthetic_fixture", "real_checkpoint"):
+            with self.subTest(case_scope=case_scope):
+                self.assert_rejected_before_mlx(
+                    "internal_worker_error",
+                    case_scope=case_scope,
                 )
 
     def test_invalid_case_ids_precede_mlx(self) -> None:
@@ -781,11 +839,50 @@ class RouterAdmissionContractTests(unittest.TestCase):
                         router_weights=ROUTER_WEIGHTS,
                         requested_device="gpu",
                         allow_fallback=False,
+                        case_scope=RouterCaseScope.SYNTHETIC_FIXTURE,
                         mx_module=trap,
                     )
                 self.assertEqual(caught.exception.code, "device_unavailable")
                 self.assertEqual(trap.device_info_calls, 1)
                 self.assertEqual(trap.stream_calls, 0)
+
+
+class RouterTiePolicyTests(unittest.TestCase):
+    def validate_fixture_case(
+        self,
+        case: dict[str, object],
+        case_scope: RouterCaseScope,
+    ) -> None:
+        router_module._validate_complete_result(
+            _fixture_matrix(case, "logits"),
+            _fixture_matrix(case, "full_softmax_probabilities"),
+            _fixture_matrix(case, "selected_expert_ids"),
+            _fixture_matrix(case, "selected_probabilities"),
+            _fixture_matrix(case, "normalized_weights"),
+            case_scope=case_scope,
+        )
+
+    def test_synthetic_exact_and_near_cutoff_fixtures_are_admitted(self) -> None:
+        for kind in ("exact_tie", "near_tie"):
+            with self.subTest(kind=kind):
+                self.validate_fixture_case(
+                    _synthetic_tie_case(kind),
+                    RouterCaseScope.SYNTHETIC_FIXTURE,
+                )
+
+    def test_real_cutoff_policy_stops_exact_tie_and_allows_near_tie(self) -> None:
+        with self.assertRaises(RouterError) as caught:
+            self.validate_fixture_case(
+                _synthetic_tie_case("exact_tie"),
+                RouterCaseScope.REAL_CHECKPOINT,
+            )
+        self.assertEqual(caught.exception.code, "comparison_failed")
+        self.assertLessEqual(len(caught.exception.message), 512)
+
+        self.validate_fixture_case(
+            _synthetic_tie_case("near_tie"),
+            RouterCaseScope.REAL_CHECKPOINT,
+        )
 
 
 @unittest.skipUnless(
@@ -964,16 +1061,23 @@ class RouterExecutionContractTests(unittest.TestCase):
                 gauges["mlx_active_bytes"],
             )
 
-    def run_generated_case(self, case_id: str, hidden_states):
+    def run_generated_case(
+        self,
+        case_id: str,
+        hidden_states,
+        *,
+        router_weights=ROUTER_WEIGHTS,
+    ):
         import mlx.core as native_mx
 
         mx = MlxEventSpy(native_mx)
         result = run_router(
             router_case_id=case_id,
             hidden_states=hidden_states,
-            router_weights=ROUTER_WEIGHTS,
+            router_weights=router_weights,
             requested_device="gpu",
             allow_fallback=False,
+            case_scope=RouterCaseScope.SYNTHETIC_FIXTURE,
             mx_module=mx,
         )
         return result, mx
@@ -1039,6 +1143,31 @@ class RouterExecutionContractTests(unittest.TestCase):
                 for probability in result.selected_probabilities[0]
             )
         )
+
+    def test_committed_synthetic_cutoff_fixtures_execute_normative_order(self) -> None:
+        expected = {
+            "exact_tie": (0, 1, 2, 3, 4, 5, 6, 7),
+            "near_tie": (0, 1, 2, 3, 4, 5, 6, 8),
+        }
+        for kind, expected_ids in expected.items():
+            with self.subTest(kind=kind):
+                case = _synthetic_tie_case(kind)
+                result, mx = self.run_generated_case(
+                    SINGLE_ROW_CASE_ID,
+                    SINGLE_ROW_HIDDEN,
+                    router_weights=_weights_for_fixture_logits(case),
+                )
+                self.assert_evaluated_gpu_boundary(result, mx)
+                self.assertEqual(result.selected_expert_ids, (expected_ids,))
+                self.assertEqual(
+                    result.selected_expert_ids,
+                    _fixture_matrix(case, "selected_expert_ids"),
+                )
+                probabilities = result.full_probabilities[0]
+                if kind == "exact_tie":
+                    self.assertEqual(probabilities[7], probabilities[8])
+                else:
+                    self.assertGreater(probabilities[8], probabilities[7])
 
     def test_two_row_batch_is_complete_and_deterministic(self) -> None:
         first, first_mx = self.run_generated_case(

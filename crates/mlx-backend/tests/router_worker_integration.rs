@@ -1,6 +1,8 @@
 #![cfg(all(target_os = "macos", target_arch = "aarch64"))]
 
-use mlx_backend::router::{compare_router_outputs, RouterOutput, RouterTolerancePolicy};
+use mlx_backend::router::{
+    compare_router_outputs, RouterCaseScope, RouterOutput, RouterTolerancePolicy,
+};
 use mlx_backend::{
     CleanupOutcome, RouterRequest, RouterResult, WorkerClient, WorkerConfig, WorkerTimeouts,
     MODEL_FILE_DESCRIPTOR, ROUTER_TWO_ROW_CASE_ID,
@@ -149,6 +151,7 @@ fn output_from_golden(case: &Value) -> RouterOutput {
 
     RouterOutput::try_new(
         case_id,
+        RouterCaseScope::SyntheticFixture,
         logits.len(),
         flatten(&logits),
         flatten(&probabilities),
@@ -185,6 +188,7 @@ fn output_from_worker(result: &RouterResult) -> RouterOutput {
 
     RouterOutput::try_new(
         result.router_case_id(),
+        RouterCaseScope::SyntheticFixture,
         usize::try_from(result.batch_size()).expect("bounded batch size fits usize"),
         logits,
         probabilities,

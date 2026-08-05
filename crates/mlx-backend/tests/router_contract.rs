@@ -1,10 +1,12 @@
 use backend::ContractError;
 use mlx_backend::router::{
     admit_router_tensor, canonical_f32le_sha256, compare_router_outputs, positional_read_exact,
-    validate_repeat_identities, RouterOutput, RouterTensorDescriptor, RouterTolerancePolicy,
+    validate_repeat_identities, RouterCaseScope, RouterOutput, RouterTensorDescriptor,
+    RouterTolerancePolicy,
 };
 #[cfg(unix)]
 use mlx_backend::router::{with_admitted_router_tensor_f32, RouterResourceAdmission};
+use serde::Deserialize;
 #[cfg(unix)]
 use sha2::{Digest, Sha256};
 use std::cell::Cell;
@@ -22,6 +24,72 @@ use std::time::{SystemTime, UNIX_EPOCH};
 const MODEL_FILE_BYTES: u64 = 32_483_931_648;
 const ROUTER_TENSOR_BYTES: u64 = 1_048_576;
 const ROUTER_OFFSET_FIXTURE: u64 = 8_388_608;
+const SYNTHETIC_TIE_FIXTURE: &str =
+    include_str!("../../../fixtures/research/router-v1/synthetic-tie.json");
+
+#[derive(Debug, Deserialize)]
+struct SyntheticTieDocument {
+    schema: String,
+    provenance: SyntheticTieProvenance,
+    cases: Vec<SyntheticTieCase>,
+}
+
+#[derive(Debug, Deserialize)]
+struct SyntheticTieProvenance {
+    evidence_level: String,
+    model_free: bool,
+    proves_real_checkpoint_routing: bool,
+}
+
+#[derive(Debug, Deserialize)]
+struct SyntheticTieCase {
+    case_id: String,
+    kind: String,
+    provenance: String,
+    logits: Vec<Vec<f32>>,
+    full_softmax_probabilities: Vec<Vec<f32>>,
+    selected_expert_ids: Vec<Vec<u64>>,
+    selected_probabilities: Vec<Vec<f32>>,
+    normalized_weights: Vec<Vec<f32>>,
+}
+
+fn synthetic_tie_case(kind: &str) -> SyntheticTieCase {
+    let document: SyntheticTieDocument =
+        serde_json::from_str(SYNTHETIC_TIE_FIXTURE).expect("parse synthetic tie fixture");
+    assert_eq!(document.schema, "pulsarmlx.fixture.router-synthetic-tie");
+    assert_eq!(
+        document.provenance.evidence_level,
+        "synthetic_tie_fixture_only"
+    );
+    assert!(document.provenance.model_free);
+    assert!(!document.provenance.proves_real_checkpoint_routing);
+    document
+        .cases
+        .into_iter()
+        .find(|case| case.kind == kind)
+        .unwrap_or_else(|| panic!("synthetic tie fixture must contain {kind}"))
+}
+
+fn output_from_synthetic_tie_case(
+    case: SyntheticTieCase,
+    case_scope: RouterCaseScope,
+) -> Result<RouterOutput, ContractError> {
+    assert_eq!(case.provenance, "synthetic_generated_model_free");
+    let row_count = case.logits.len();
+    RouterOutput::try_new(
+        case.case_id,
+        case_scope,
+        row_count,
+        case.logits.into_iter().flatten().collect(),
+        case.full_softmax_probabilities
+            .into_iter()
+            .flatten()
+            .collect(),
+        case.selected_expert_ids,
+        case.selected_probabilities,
+        case.normalized_weights,
+    )
+}
 
 fn fixture_tensor_descriptor() -> RouterTensorDescriptor {
     RouterTensorDescriptor {
@@ -156,7 +224,8 @@ fn selected_row(probabilities: &[f32]) -> (Vec<u64>, Vec<f32>, Vec<f32>) {
     let mut ids: Vec<usize> = (0..probabilities.len()).collect();
     ids.sort_by(|left, right| {
         probabilities[*right]
-            .total_cmp(&probabilities[*left])
+            .partial_cmp(&probabilities[*left])
+            .expect("fixture probabilities are finite")
             .then_with(|| left.cmp(right))
     });
     ids.truncate(8);
@@ -209,6 +278,7 @@ fn fixture_output_with_last_logit_delta(delta: f32) -> RouterOutput {
 
     RouterOutput::try_new(
         "synthetic-two-row-router-v1",
+        RouterCaseScope::SyntheticFixture,
         2,
         logits,
         full_probabilities,
@@ -235,6 +305,7 @@ fn complete_output_rejects_probabilities_unrelated_to_logits() {
 
     let error = RouterOutput::try_new(
         "synthetic-invalid-softmax-v1",
+        RouterCaseScope::SyntheticFixture,
         1,
         logits,
         probabilities,
@@ -404,6 +475,14 @@ fn positional_reads_reject_short_overlong_and_overflowing_ranges_before_runner()
     })
     .expect_err("an overflowing positional range must fail closed");
     assert_eq!(bounded_error_code(overflowing), "invalid_tensor_range");
+
+    let unbounded = positional_read_exact(
+        0,
+        ROUTER_TENSOR_BYTES as usize + 1,
+        |_position, _destination| panic!("an unbounded read must fail before allocation or I/O"),
+    )
+    .expect_err("a read larger than the complete router range must fail closed");
+    assert_eq!(bounded_error_code(unbounded), "invalid_byte_count");
 }
 
 #[test]
@@ -727,6 +806,75 @@ fn complete_outputs_preserve_all_128_values_and_ordered_top8_per_row() {
 
         assert!((output.normalized_weights()[row_index].iter().sum::<f32>() - 1.0).abs() <= 1.0e-6);
     }
+}
+
+#[test]
+fn synthetic_exact_and_near_cutoff_fixtures_follow_normative_order() {
+    let exact = output_from_synthetic_tie_case(
+        synthetic_tie_case("exact_tie"),
+        RouterCaseScope::SyntheticFixture,
+    )
+    .expect("the synthetic exact cutoff tie uses the deterministic lower-ID rule");
+    assert_eq!(exact.case_scope(), RouterCaseScope::SyntheticFixture);
+    assert_eq!(exact.selected_expert_ids(), &[vec![0, 1, 2, 3, 4, 5, 6, 7]]);
+    let exact_probabilities = exact.full_probabilities();
+    assert_eq!(exact_probabilities[7], exact_probabilities[8]);
+
+    let near = output_from_synthetic_tie_case(
+        synthetic_tie_case("near_tie"),
+        RouterCaseScope::SyntheticFixture,
+    )
+    .expect("the synthetic representable near tie remains strictly ordered");
+    assert_eq!(near.case_scope(), RouterCaseScope::SyntheticFixture);
+    assert_eq!(near.selected_expert_ids(), &[vec![0, 1, 2, 3, 4, 5, 6, 8]]);
+    let near_probabilities = near.full_probabilities();
+    assert!(near_probabilities[8] > near_probabilities[7]);
+}
+
+#[test]
+fn real_cutoff_scope_stops_exact_f32_tie_and_allows_near_tie() {
+    let error = output_from_synthetic_tie_case(
+        synthetic_tie_case("exact_tie"),
+        RouterCaseScope::RealCheckpoint,
+    )
+    .expect_err("a real rank-8/rank-9 exact F32 probability tie must stop parity");
+    assert_eq!(bounded_error_code(error), "comparison_failed");
+
+    let near = output_from_synthetic_tie_case(
+        synthetic_tie_case("near_tie"),
+        RouterCaseScope::RealCheckpoint,
+    )
+    .expect("a representable real-policy near tie remains admissible");
+    assert_eq!(near.case_scope(), RouterCaseScope::RealCheckpoint);
+    assert_eq!(near.selected_expert_ids(), &[vec![0, 1, 2, 3, 4, 5, 6, 8]]);
+}
+
+#[test]
+fn scope_is_part_of_comparison_and_repeat_identity() {
+    let synthetic = output_from_synthetic_tie_case(
+        synthetic_tie_case("near_tie"),
+        RouterCaseScope::SyntheticFixture,
+    )
+    .expect("synthetic near-tie output");
+    let real = output_from_synthetic_tie_case(
+        synthetic_tie_case("near_tie"),
+        RouterCaseScope::RealCheckpoint,
+    )
+    .expect("real-policy near-tie output");
+
+    let comparison_error =
+        compare_router_outputs(&synthetic, &real, &RouterTolerancePolicy::contract_v1())
+            .expect_err("synthetic and real-checkpoint scopes must never compare as peers");
+    assert_eq!(bounded_error_code(comparison_error), "comparison_failed");
+
+    let synthetic_identity = synthetic.repeat_identity();
+    let real_identity = real.repeat_identity();
+    assert_ne!(synthetic_identity, real_identity);
+    let mut identities = vec![synthetic_identity; 10];
+    identities[9] = real_identity;
+    let repeat_error = validate_repeat_identities(&identities)
+        .expect_err("repeat identity must retain the synthetic-versus-real scope");
+    assert_eq!(bounded_error_code(repeat_error), "comparison_failed");
 }
 
 #[test]

@@ -56,6 +56,18 @@ pub struct RouterTensorDescriptor {
     pub correction_bias_present: bool,
 }
 
+/// Host-observed resource gates required before router tensor execution.
+///
+/// The observations themselves are collected outside this model-neutral
+/// module. This value only carries their fail-closed admission result so no
+/// router runner can be reached after a failed disk, memory, or pressure gate.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RouterResourceAdmission {
+    pub disk_headroom_satisfied: bool,
+    pub unified_memory_headroom_satisfied: bool,
+    pub memory_pressure_normal: bool,
+}
+
 /// A structurally admitted tensor range. External artifact identity remains a
 /// separate pre-execution gate.
 #[derive(Debug, Clone, PartialEq)]
@@ -144,14 +156,26 @@ pub fn admit_router_tensor(
     descriptor: &RouterTensorDescriptor,
     model_file_bytes: u64,
 ) -> Result<AdmittedRouterTensor, ContractError> {
-    if descriptor.name != ROUTER_TENSOR_NAME
-        || descriptor.semantic_role != ROUTER_SEMANTIC_ROLE
-        || descriptor.occurrence_count != 1
-    {
+    if descriptor.name != ROUTER_TENSOR_NAME || descriptor.semantic_role != ROUTER_SEMANTIC_ROLE {
         return Err(router_tensor_error(
-            "model_tensor_mismatch",
-            "router tensor identity or occurrence count differs from contract v1",
+            "missing_tensor_role",
+            "the exact layer-0 router tensor role is missing",
         ));
+    }
+    match descriptor.occurrence_count {
+        0 => {
+            return Err(router_tensor_error(
+                "missing_tensor_role",
+                "the exact layer-0 router tensor role is missing",
+            ));
+        }
+        1 => {}
+        _ => {
+            return Err(router_tensor_error(
+                "duplicate_tensor_role",
+                "the exact layer-0 router tensor role is not unique",
+            ));
+        }
     }
     if descriptor.gguf_dimensions_fastest_axis_first != [2_048, 128]
         || descriptor.reader_shape != [128, 2_048]
@@ -163,17 +187,14 @@ pub fn admit_router_tensor(
             "router tensor dimensions or element count differ from contract v1",
         ));
     }
-    if descriptor.gguf_type != ROUTER_GGUF_TYPE {
+    if descriptor.gguf_type != ROUTER_GGUF_TYPE || descriptor.quantization != ROUTER_QUANTIZATION {
         return Err(ContractError::new(
             ErrorCategory::InvalidQuantization,
             "unsupported_tensor_quantization",
             "router contract v1 admits only a complete F32 tensor",
         ));
     }
-    if descriptor.quantization != ROUTER_QUANTIZATION
-        || descriptor.byte_order != ROUTER_BYTE_ORDER
-        || descriptor.orientation != ROUTER_ORIENTATION
-    {
+    if descriptor.byte_order != ROUTER_BYTE_ORDER || descriptor.orientation != ROUTER_ORIENTATION {
         return Err(ContractError::new(
             ErrorCategory::InvalidTensor,
             "invalid_layout",
@@ -312,6 +333,43 @@ pub fn read_admitted_router_tensor_f32(
     Ok(values)
 }
 
+/// Validate, resource-admit, read, and finite-decode one router tensor before
+/// invoking its execution seam.
+///
+/// The callback is never called unless the descriptor, declared artifact
+/// length, resource observations, positional range hash, byte count, and all
+/// decoded F32 values satisfy the complete version-1 contract.
+#[cfg(unix)]
+pub fn with_admitted_router_tensor_f32<T, F>(
+    file: &File,
+    descriptor: &RouterTensorDescriptor,
+    model_file_bytes: u64,
+    resources: &RouterResourceAdmission,
+    runner: F,
+) -> Result<T, ContractError>
+where
+    F: FnOnce(&AdmittedRouterTensor, &[f32]) -> Result<T, ContractError>,
+{
+    let admitted = admit_router_tensor(descriptor, model_file_bytes)?;
+    validate_router_resources(resources)?;
+    let values = read_admitted_router_tensor_f32(file, &admitted)?;
+    runner(&admitted, &values)
+}
+
+fn validate_router_resources(resources: &RouterResourceAdmission) -> Result<(), ContractError> {
+    if !resources.disk_headroom_satisfied
+        || !resources.unified_memory_headroom_satisfied
+        || !resources.memory_pressure_normal
+    {
+        return Err(ContractError::new(
+            ErrorCategory::ResourceLimit,
+            "model_budget_exceeded",
+            "router execution requires sufficient disk and unified-memory headroom under normal memory pressure",
+        ));
+    }
+    Ok(())
+}
+
 /// Testable core for an exact positional range read.
 pub fn positional_read_exact<F>(
     offset: u64,
@@ -323,6 +381,11 @@ where
 {
     if length == 0 {
         return Err(invalid_byte_count("router tensor reads must be nonempty"));
+    }
+    if (length as u128) > u128::from(ROUTER_TENSOR_BYTES) {
+        return Err(invalid_byte_count(
+            "router tensor read exceeds the complete bounded F32 range",
+        ));
     }
     let length_u64 = u64::try_from(length).map_err(|_| {
         ContractError::new(
@@ -339,7 +402,15 @@ where
         )
     })?;
 
-    let mut bytes = vec![0_u8; length];
+    let mut bytes = Vec::new();
+    bytes.try_reserve_exact(length).map_err(|_| {
+        ContractError::new(
+            ErrorCategory::ResourceLimit,
+            "model_budget_exceeded",
+            "router tensor read buffer could not be reserved within resource limits",
+        )
+    })?;
+    bytes.resize(length, 0_u8);
     let mut consumed = 0_usize;
     while consumed < length {
         let position = offset
@@ -396,10 +467,22 @@ pub fn canonical_f32le_sha256(values: &[f32]) -> Result<String, ContractError> {
     Ok(format!("{:x}", digest.finalize()))
 }
 
+/// Provenance boundary controlling the version-1 rank-8/rank-9 tie policy.
+///
+/// Synthetic fixtures exercise the deterministic lower-expert-ID rule. A
+/// real-checkpoint cutoff tie is instead a cross-runtime stop condition and
+/// must never be converted into passing evidence by that synthetic rule.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum RouterCaseScope {
+    SyntheticFixture,
+    RealCheckpoint,
+}
+
 /// Complete bounded router output for one generated or admitted case.
 #[derive(Debug, Clone, PartialEq)]
 pub struct RouterOutput {
     case_id: String,
+    case_scope: RouterCaseScope,
     row_count: usize,
     logits_shape: [usize; 2],
     full_probabilities_shape: [usize; 2],
@@ -418,6 +501,7 @@ impl RouterOutput {
     #[allow(clippy::too_many_arguments)]
     pub fn try_new(
         case_id: impl Into<String>,
+        case_scope: RouterCaseScope,
         row_count: usize,
         logits: Vec<f32>,
         full_probabilities: Vec<f32>,
@@ -490,13 +574,24 @@ impl RouterOutput {
                 [row_index * ROUTER_EXPERT_COUNT..(row_index + 1) * ROUTER_EXPERT_COUNT];
             validate_complete_softmax(logits_row, probability_row)?;
 
-            let mut expected_ids = (0..ROUTER_EXPERT_COUNT).collect::<Vec<_>>();
-            expected_ids.sort_by(|left, right| {
+            let mut ranked_ids = (0..ROUTER_EXPERT_COUNT).collect::<Vec<_>>();
+            ranked_ids.sort_by(|left, right| {
                 probability_row[*right]
-                    .total_cmp(&probability_row[*left])
+                    .partial_cmp(&probability_row[*left])
+                    .expect("router probabilities were proven finite")
                     .then_with(|| left.cmp(right))
             });
-            expected_ids.truncate(ROUTER_TOP_K);
+            if case_scope == RouterCaseScope::RealCheckpoint
+                && probability_row[ranked_ids[ROUTER_TOP_K - 1]]
+                    == probability_row[ranked_ids[ROUTER_TOP_K]]
+            {
+                return Err(ContractError::new(
+                    ErrorCategory::InvalidComparison,
+                    "comparison_failed",
+                    "an exact float32 probability tie crosses real router ranks eight and nine",
+                ));
+            }
+            let expected_ids = &ranked_ids[..ROUTER_TOP_K];
             if ids
                 .iter()
                 .copied()
@@ -571,6 +666,7 @@ impl RouterOutput {
 
         Ok(Self {
             case_id,
+            case_scope,
             row_count,
             logits_shape: [row_count, ROUTER_EXPERT_COUNT],
             full_probabilities_shape: [row_count, ROUTER_EXPERT_COUNT],
@@ -588,6 +684,10 @@ impl RouterOutput {
 
     pub fn case_id(&self) -> &str {
         &self.case_id
+    }
+
+    pub fn case_scope(&self) -> RouterCaseScope {
+        self.case_scope
     }
 
     pub fn row_count(&self) -> usize {
@@ -641,6 +741,7 @@ impl RouterOutput {
     pub fn repeat_identity(&self) -> RouterRepeatIdentity {
         RouterRepeatIdentity {
             case_id: self.case_id.clone(),
+            case_scope: self.case_scope,
             row_count: self.row_count,
             logits_f32le_sha256: self.logits_f32le_sha256.clone(),
             full_probabilities_f32le_sha256: self.full_probabilities_f32le_sha256.clone(),
@@ -654,6 +755,7 @@ impl RouterOutput {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RouterRepeatIdentity {
     case_id: String,
+    case_scope: RouterCaseScope,
     row_count: usize,
     logits_f32le_sha256: String,
     full_probabilities_f32le_sha256: String,
@@ -699,6 +801,7 @@ pub fn validate_repeat_identities(
         .map(|identity| {
             (
                 identity.case_id.as_str(),
+                identity.case_scope,
                 identity.row_count,
                 identity.logits_f32le_sha256.as_str(),
                 identity.full_probabilities_f32le_sha256.as_str(),
@@ -889,6 +992,7 @@ pub fn compare_router_outputs(
     policy: &RouterTolerancePolicy,
 ) -> Result<RouterOutputComparison, ContractError> {
     if reference.case_id != candidate.case_id
+        || reference.case_scope != candidate.case_scope
         || reference.row_count != candidate.row_count
         || reference.logits_shape != candidate.logits_shape
         || reference.full_probabilities_shape != candidate.full_probabilities_shape

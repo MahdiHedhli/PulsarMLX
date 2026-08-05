@@ -1860,3 +1860,65 @@ loading, byte bounds, and `git diff --check` passed. Independent read-only
 reviews found no remaining high or medium issue in the Python tests or fixture
 slice. No command in T039–T041 resolved, statted, opened, or executed an
 external checkpoint; the NTFY hardware-pause gate remains ineligible.
+
+### T042–T044 fail-closed router admission and tie policy
+
+T042 implemented one production pre-execution seam that admits the exact
+router descriptor, resource state, positional range, SHA-256 identity, byte
+count, and finite F32 values before invoking a caller-supplied router runner.
+Missing and duplicate tensor roles, aliases, wrong F32 type or quantization,
+shape/layout/top-k mismatches, changed size or hash, short/overlong/overflowing
+ranges, non-finite data, and failed disk/unified-memory/pressure admission now
+return their frozen bounded codes without reaching that runner. A read-only
+review identified that the public positional-read helper could otherwise try
+an arbitrary allocation; it now rejects ranges larger than the complete
+1,048,576-byte router tensor and reserves its bounded buffer fallibly.
+
+T043 moved worker control, shape, dtype, finiteness, canonical/encoded byte
+count, explicit-GPU, and no-fallback checks ahead of MLX array construction or
+router-runner access. It shares the protocol's bounded identifier validator,
+distinguishes malformed from stable-but-unsupported case IDs, and preserves
+normal startup discovery and graceful shutdown.
+
+T044 introduced an explicit `SyntheticFixture` versus `RealCheckpoint` scope
+at both Rust and Python result-validation seams. Scope is never inferred from
+a case-ID prefix. Synthetic results rank all 128 probabilities by probability
+descending then expert ID ascending; an exact F32 equality across real ranks
+eight and nine returns `comparison_failed`. Rust stores the scope in output,
+comparison, and repeat identities so synthetic and real evidence cannot be
+mixed. The committed exact-tie and representable near-tie fixture is consumed
+only as an independent test expectation; the bounded MLX execution still
+performs route selection on GPU and host policy validation only after evaluated
+synchronization.
+
+The following exact model-free checks passed with the external-model variable
+empty:
+
+```sh
+export PULSARMLX_MODEL_GGUF=''
+cargo test -p mlx-backend --test router_contract --no-fail-fast
+cargo test -p mlx-backend --test router_worker_integration --no-run
+cargo test -p mlx-backend --all-targets
+cargo fmt -p mlx-backend -- --check
+cargo clippy -p mlx-backend --all-targets -- -D warnings
+PYTHONPATH=python uv run python -m unittest \
+  python/pulsar_mlx_worker/tests/test_router.py -v
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+python3 fixtures/research/router-v1/golden/generate.py --check
+python3 -m py_compile python/pulsar_mlx_worker/__main__.py \
+  python/pulsar_mlx_worker/protocol.py \
+  python/pulsar_mlx_worker/router.py \
+  python/pulsar_mlx_worker/tests/test_router.py
+git diff --check
+```
+
+Actual results were 21 Rust router-contract tests passing; the generated
+worker integration compiling; 83 active `mlx-backend` all-target tests
+passing with two explicit native integrations ignored; focused rustfmt and
+strict Clippy passing; 23 focused router-worker tests and all 67 worker tests
+passing; 12 generated files byte-identical; Python compilation and diff checks
+passing. Independent read-only reviews found no remaining high or medium issue
+in T042, T043, or T044. These checks used committed generated fixtures only;
+Feature 002 still has not resolved, statted, hashed, opened, or executed an
+external checkpoint, and no NTFY hardware-pause notification was sent.

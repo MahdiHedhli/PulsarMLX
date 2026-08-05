@@ -168,9 +168,9 @@ router MLX arrays. Existing startup runtime discovery remains unchanged.
 
 ### Implementation
 
-- [ ] T042 [US2] Implement exact host-side identity, range, shape, F32 type, count, finite-value, alias, mutation, and resource failure codes in `crates/mlx-backend/src/router.rs`
-- [ ] T043 [US2] Implement pre-router-array worker validation, bounded failures, and router-runner-not-called enforcement while preserving startup discovery in `python/pulsar_mlx_worker/router.py` and `python/pulsar_mlx_worker/protocol.py`
-- [ ] T044 [US2] Implement probability-descending/expert-ID-ascending synthetic tie behavior while preserving any real rank-8/rank-9 tie as a stop condition in `python/pulsar_mlx_worker/router.py` and `crates/mlx-backend/src/router.rs`
+- [X] T042 [US2] Implement exact host-side identity, range, shape, F32 type, count, finite-value, alias, mutation, and resource failure codes in `crates/mlx-backend/src/router.rs`
+- [X] T043 [US2] Implement pre-router-array worker validation, bounded failures, and router-runner-not-called enforcement while preserving startup discovery in `python/pulsar_mlx_worker/router.py` and `python/pulsar_mlx_worker/protocol.py`
+- [X] T044 [US2] Implement probability-descending/expert-ID-ascending synthetic tie behavior while preserving any real rank-8/rank-9 tie as a stop condition in `python/pulsar_mlx_worker/router.py` and `crates/mlx-backend/src/router.rs`
 - [ ] T045 [US2] Complete `validate-router-fixtures` failure retention and synthetic-versus-real evidence labeling in `crates/mlx-backend/src/bin/pulsar-mlx.rs`
 - [ ] T046 [US2] Run all focused negative tests, backend-neutral routing regression tests, worker tests, and generated MLX fixture validation from `fixtures/research/router-v1/manifest.json`
 - [ ] T047 [US2] Run schema/package validation, exact Cargo workspace gates, Python discovery, and Feature 001 regression tests, then record actual results in `docs/apple-silicon/SESSION_LOG.md`

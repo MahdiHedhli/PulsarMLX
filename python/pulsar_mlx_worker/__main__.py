@@ -29,6 +29,7 @@ from .protocol import (
     RequestEnvelope,
     encode_error,
     encode_success,
+    is_stable_identifier,
 )
 from .router import (
     BOUNDED_BATCH_CASE_ID as ROUTER_BATCH_CASE_ID,
@@ -321,10 +322,14 @@ def _dispatch(
         router_case_id = request.params["router_case_id"]
         requested_device = request.params["device"]
         allow_fallback = request.params["allow_fallback"]
-        if not isinstance(router_case_id, str):
+        if (
+            not is_stable_identifier(router_case_id)
+            or not is_stable_identifier(requested_device)
+            or not isinstance(allow_fallback, bool)
+        ):
             raise ProtocolError(
                 "malformed_request",
-                "run_router identity must be a stable string",
+                "run_router control fields have invalid scalar values",
             )
         if router_case_id not in {
             ROUTER_SINGLE_CASE_ID,
@@ -333,13 +338,6 @@ def _dispatch(
             raise ProtocolError(
                 "unsupported_operation",
                 "run_router identity is not a committed generated fixture",
-            )
-        if not isinstance(requested_device, str) or not isinstance(
-            allow_fallback, bool
-        ):
-            raise ProtocolError(
-                "malformed_request",
-                "run_router device and fallback fields have invalid types",
             )
         if requested_device != GPU_DEVICE_ID or allow_fallback:
             raise ProtocolError(

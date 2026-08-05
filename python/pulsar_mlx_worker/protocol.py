@@ -120,7 +120,9 @@ class RequestDecoder:
         if not isinstance(limits, ProtocolLimits):
             raise TypeError("limits must be ProtocolLimits")
         operations = frozenset(allowed_operations)
-        if not operations or any(not _valid_identifier(op) for op in operations):
+        if not operations or any(
+            not is_stable_identifier(op) for op in operations
+        ):
             raise ValueError("allowed operations must be bounded stable identifiers")
 
         self._limits = limits
@@ -211,7 +213,7 @@ class RequestDecoder:
         _validate_request_id(request_id)
 
         op = value["op"]
-        if not isinstance(op, str) or not _valid_identifier(op):
+        if not is_stable_identifier(op):
             raise ProtocolError(
                 "malformed_request", "operation must be a bounded stable identifier"
             )
@@ -377,7 +379,9 @@ def _validate_shape(value: Any, limits: ProtocolLimits) -> None:
         elements *= dimension
 
 
-def _valid_identifier(value: Any) -> bool:
+def is_stable_identifier(value: object) -> bool:
+    """Return whether a control scalar is a bounded protocol identifier."""
+
     return (
         isinstance(value, str)
         and 0 < len(value) <= _MAX_IDENTIFIER_CHARS
