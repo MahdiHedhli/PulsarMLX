@@ -132,7 +132,7 @@
     "warnings": [
       "Inherited unused_mut warning in crates/quant/src/iq.rs.",
       "Thirteen inherited dead-code warnings from Linux-oriented serve items compiled on macOS.",
-      "The worker_contract fake-worker crash-classification case deliberately called Python os.abort(), which triggered macOS Crash Reporter. The report loaded no MLX or Metal library; this was a test-harness side effect queued for a focused follow-up fix."
+      "The T072 worker_contract fake-worker crash-classification case deliberately called Python os.abort(), which triggered macOS Crash Reporter. The report loaded no MLX or Metal library. Follow-up commit c7ef8a56beda29307a809720a87c22d990f68d83 replaced the abort with SIGTERM while preserving ProcessCrashed coverage."
     ],
     "failures": [],
     "unavailable_or_unexecuted_evidence": [
@@ -156,6 +156,34 @@
       "The workspace result covers only targets selected by macOS.",
       "The ignored native MLX smoke test was not executed by the exact general workspace command.",
       "No external model, giant-model, production-serving, Linux, CUDA, or performance workload ran during the final story gate."
+    ]
+  },
+  "test_harness_follow_up": {
+    "actual_status": "passed",
+    "commit": "c7ef8a56beda29307a809720a87c22d990f68d83",
+    "root_cause": "The fake Python worker in the worker-contract crash-classification test intentionally called os.abort(), causing macOS Crash Reporter to display an unexpected-quit dialog.",
+    "attribution_evidence": [
+      "The crash report named the worker_contract test binary as the parent process.",
+      "The Python stack ended in os_abort after a roughly 114 millisecond process lifetime.",
+      "Loaded images included Python, _json, and system libraries, with no MLX, Metal, Accelerate, NumPy, or model runtime library."
+    ],
+    "change": "The fake worker now terminates itself with SIGTERM. The client still observes no exit code and classifies the event as ProcessCrashed, without invoking macOS Crash Reporter.",
+    "validation": [
+      {
+        "exact_command": "cargo test -p mlx-backend --test worker_contract nonzero_exit_and_signal_termination_are_distinguished -- --exact",
+        "actual_result": "1 passed; 0 failed; 11 filtered out; no new recent Python diagnostic report"
+      },
+      {
+        "exact_command": "cargo test -p mlx-backend --test worker_contract",
+        "actual_result": "12 passed; 0 failed; 0 ignored"
+      },
+      {
+        "exact_command": "cargo clippy -p mlx-backend --test worker_contract -- -D warnings",
+        "actual_result": "passed"
+      }
+    ],
+    "exclusions": [
+      "No model, MLX, Metal, or external inference process was involved in the reported incident or the focused fix validation."
     ]
   }
 }

@@ -1077,3 +1077,20 @@ The report identified `worker_contract` as the parent, Homebrew Python 3.14 as
 the child, and no loaded MLX or Metal library. The test still passed its intended
 classification assertion, but a focused follow-up must replace the abort-based
 simulation before another general workspace run.
+
+### Worker-contract macOS crash-dialog follow-up
+
+The attached macOS report confirmed that the popup was produced by the test
+harness rather than MLX or concurrent inference. It named the `worker_contract`
+test binary as parent, Homebrew Python 3.14 as the approximately 114 ms child,
+and `EXC_CRASH (SIGABRT)` with `abort -> os_abort` on the only thread. Its loaded
+images contained Python, `_json`, and system libraries only—no MLX, Metal,
+Accelerate, NumPy, or model runtime library. The repository's sole `os.abort()`
+was the matching fake-worker case.
+
+Commit `c7ef8a56beda29307a809720a87c22d990f68d83` now uses `SIGTERM` for the same
+no-exit-code classification boundary. `WorkerClient` still reports
+`ProcessCrashed`, so the behavior under test is preserved without invoking
+macOS Crash Reporter. The focused test passed, the recent Python diagnostic-
+report count remained 1 before and after, the full worker-contract target
+passed 12 tests, and strict focused Clippy passed. No model or MLX work ran.
