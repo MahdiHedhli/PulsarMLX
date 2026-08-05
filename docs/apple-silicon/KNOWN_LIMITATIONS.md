@@ -169,10 +169,21 @@ that every one is required by the eventual MLX integration.
   `cargo test --workspace --no-fail-fast`; 139 tests passed and one native MLX
   integration test was explicitly ignored. It reproduced the inherited
   `quant` warning and macOS serve dead-code warnings.
+- [Push-triggered GitHub Actions run 31023865090](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31023865090)
+  later completed successfully for commit `751eb7d` with both the unchanged
+  Cargo baseline job and the bounded Apple MLX fixture job. The Cargo job
+  reported 171 passed tests, one ignored, and zero failed. The fixture job
+  passed 44 Python worker tests, one explicitly selected native device smoke,
+  seven evaluated tensor cases, and the synthetic routed-MoE case using the
+  frozen environment.
 - Standard `macos-15` is an Apple Silicon runner but is not equivalent to the
-  local 128 GiB M1 Ultra. This job validates only the Cargo baseline. It does
-  not install MLX, run an MLX device fixture, download a checkpoint, exercise
-  Linux/CUDA, or establish model correctness or performance.
+  local 128 GiB M1 Ultra. The newer fixture job explicitly kept the external
+  model variable empty and did not download a checkpoint. Its CPU model/count,
+  unified-memory capacity, available disk, thermals, and power were not
+  measured. Neither run establishes full-checkpoint or giant-model execution,
+  serving, performance, Linux, CUDA, or `io_uring` runtime behavior. Exact run
+  evidence and exclusions are in
+  [`ci-mlx-smoke.json`](../validation/ci-mlx-smoke.json).
 
 ## Deliberately unsupported in the first milestone
 

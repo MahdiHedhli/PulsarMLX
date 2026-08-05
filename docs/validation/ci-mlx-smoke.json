@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "record_type": "github_actions_ci_validation",
+  "case_id": "apple-mlx-small-fixture-ci-v1",
+  "claim_scope": "Pushed arm64 macOS Cargo baseline plus bounded Apple MLX worker, device, tensor-fixture, and synthetic routed-MoE validation",
+  "actual_status": "passed",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "workflow": {
+    "name": "macOS baseline",
+    "workflow_database_id": 327547523,
+    "workflow_path": ".github/workflows/macos.yml",
+    "run_number": 42,
+    "run_database_id": 31023865090,
+    "run_attempt": 1,
+    "event": "push",
+    "head_branch": "main",
+    "head_sha": "751eb7dabe5ed463c8133f0f93e69f6f99703d95",
+    "display_title": "ci: add Apple MLX fixture validation",
+    "created_at_utc": "2026-08-05T16:09:04Z",
+    "started_at_utc": "2026-08-05T16:09:04Z",
+    "completed_at_utc": "2026-08-05T16:10:23Z",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31023865090"
+  },
+  "jobs": [
+    {
+      "name": "Apple Silicon workspace baseline",
+      "job_database_id": 92367189261,
+      "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31023865090/job/92367189261",
+      "started_at_utc": "2026-08-05T16:09:07Z",
+      "completed_at_utc": "2026-08-05T16:10:22Z",
+      "status": "completed",
+      "conclusion": "success",
+      "runner": {
+        "requested_label": "macos-15",
+        "image": "macos-15-arm64",
+        "image_version": "20260727.0256.1",
+        "architecture": "arm64",
+        "architecture_assertion": "passed",
+        "macos_version": "15.7.7",
+        "macos_build": "24G720",
+        "rustc": "1.97.1 (8bab26f4f 2026-07-14)",
+        "rust_host": "aarch64-apple-darwin",
+        "llvm": "22.1.6",
+        "cargo": "1.97.1 (c980f4866 2026-06-30)",
+        "resource_observation": {
+          "cpu_model": null,
+          "cpu_count": null,
+          "unified_memory_bytes": null,
+          "available_disk_bytes": null,
+          "status": "not_measured",
+          "reason": "The workflow asserted architecture and recorded the runner image, OS, and toolchain, but did not run hardware-capacity or disk-capacity probes. No capacity value is inferred from the hosted-runner label."
+        }
+      },
+      "commands": [
+        {
+          "exact_command": "uname -m\nsw_vers\nrustc -Vv\ncargo -V\ntest \"$(uname -m)\" = arm64",
+          "step_conclusion": "success",
+          "actual_result": "The shell reported arm64; macOS 15.7.7 build 24G720; rustc 1.97.1; Cargo 1.97.1; the arm64 assertion passed."
+        },
+        {
+          "exact_command": "cargo check --workspace --all-targets",
+          "step_conclusion": "success",
+          "actual_result": "Workspace check completed successfully."
+        },
+        {
+          "exact_command": "cargo test --workspace --no-fail-fast",
+          "step_conclusion": "success",
+          "actual_result": {
+            "test_harness_summaries": 43,
+            "passed": 171,
+            "failed": 0,
+            "ignored": 1,
+            "measured": 0,
+            "filtered_out": 0
+          },
+          "count_method": "Summed every Cargo 'test result:' summary in the downloaded job log; the workflow itself did not run a separate --list command."
+        }
+      ],
+      "warnings": [
+        "The inherited crates/quant/src/iq.rs unused_mut warning appeared during both workspace commands.",
+        "The inherited macOS serve target emitted 13 dead-code warnings during both workspace commands."
+      ]
+    },
+    {
+      "name": "Apple MLX small-fixture validation",
+      "job_database_id": 92367189182,
+      "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31023865090/job/92367189182",
+      "started_at_utc": "2026-08-05T16:09:07Z",
+      "completed_at_utc": "2026-08-05T16:09:41Z",
+      "status": "completed",
+      "conclusion": "success",
+      "runner": {
+        "requested_label": "macos-15",
+        "image": "macos-15-arm64",
+        "image_version": "20260727.0256.1",
+        "architecture": "arm64",
+        "architecture_assertion": "passed",
+        "macos_version": "15.7.7",
+        "macos_build": "24G720",
+        "python": "CPython 3.12.13",
+        "uv": "0.11.17",
+        "mlx": "0.32.0",
+        "mlx_metal": "0.32.0",
+        "resource_observation": {
+          "cpu_model": null,
+          "cpu_count": null,
+          "unified_memory_bytes": null,
+          "available_disk_bytes": null,
+          "status": "not_measured",
+          "reason": "This was a small-fixture correctness job. It did not probe or benchmark hosted-runner capacity."
+        }
+      },
+      "environment_boundary": {
+        "model_environment_variable": "PULSARMLX_MODEL_GGUF",
+        "model_environment_value": "",
+        "generated_evidence_root": "RUNNER_TEMP",
+        "python_lockfile": "uv.lock",
+        "setup_action": "astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b",
+        "external_model_exclusion_asserted": true,
+        "uploaded_artifact_count": 0,
+        "uploaded_artifact_note": "The generated temporary JSON records were asserted during the job but were not uploaded or retained as workflow artifacts."
+      },
+      "commands": [
+        {
+          "exact_command": "test \"$(uname -m)\" = arm64\nsw_vers\ntest -z \"$PULSARMLX_MODEL_GGUF\"\ntest -f uv.lock\ntest -f fixtures/mlx/manifest.json\ntest -f fixtures/mlx/routed-moe-v1.json\ntest -f docs/validation/mlx-device-smoke.json\ntest -f docs/validation/mlx-tensor-fixtures.json\ntest -f docs/validation/synthetic-moe-v1.json",
+          "step_conclusion": "success",
+          "actual_result": "The arm64, empty-model-variable, lockfile, fixture, and prerequisite-evidence assertions passed."
+        },
+        {
+          "exact_command": "uv python install 3.12.13\nuv sync --frozen --python 3.12.13\n.venv/bin/python - <<'PY'\nimport platform\nfrom importlib.metadata import version\n\nassert platform.machine() == \"arm64\"\nassert version(\"mlx\") == \"0.32.0\"\nassert version(\"mlx-metal\") == \"0.32.0\"\nPY",
+          "step_conclusion": "success",
+          "actual_result": "CPython 3.12.13, mlx 0.32.0, and mlx-metal 0.32.0 were installed from the frozen environment and the version/architecture assertions passed."
+        },
+        {
+          "exact_command": "PYTHONPATH=python .venv/bin/python -m unittest discover -s python/pulsar_mlx_worker/tests -v",
+          "step_conclusion": "success",
+          "actual_result": "44 tests ran in 1.892 seconds; OK."
+        },
+        {
+          "exact_command": "cargo test -p mlx-backend --test device_smoke native_device_smoke_command_emits_evaluated_evidence -- --ignored --exact",
+          "step_conclusion": "success",
+          "actual_result": "1 passed; 0 failed; 0 ignored; 11 filtered out; finished in 0.45 seconds."
+        },
+        {
+          "exact_command": "cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures --manifest fixtures/mlx/manifest.json --evidence \"$RUNNER_TEMP/mlx-tensor-fixtures.json\"",
+          "step_conclusion": "success",
+          "actual_result": "Seven evaluated MLX fixture cases passed."
+        },
+        {
+          "exact_command": "cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence \"$RUNNER_TEMP/synthetic-moe-v1.json\"",
+          "step_conclusion": "success",
+          "actual_result": "The evaluated synthetic routed-MoE fixture passed."
+        },
+        {
+          "exact_command": ".venv/bin/python - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nroot = Path(os.environ[\"RUNNER_TEMP\"])\ntensor = json.loads((root / \"mlx-tensor-fixtures.json\").read_text())\nsynthetic = json.loads((root / \"synthetic-moe-v1.json\").read_text())\nassert tensor[\"status\"] == \"passed\"\nassert tensor[\"case_count\"] == 7\nassert synthetic[\"status\"] == \"passed\"\nassert synthetic[\"fixture_kind\"] == \"synthetic\"\nassert synthetic[\"fallback_used\"] is False\nassert os.environ.get(\"PULSARMLX_MODEL_GGUF\", \"\") == \"\"\nPY",
+          "step_conclusion": "success",
+          "actual_result": "Generated tensor and synthetic records reported passed; seven tensor cases were present; the synthetic record had no fallback; the external-model variable remained empty."
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "model_and_resource_exclusions": [
+    "No external model path was configured and no model weight, GGUF file, Hugging Face artifact, tokenizer, or downloader was used.",
+    "The CI run did not execute inspect-model or validate-model-slice and does not reproduce the bounded Qwen checkpoint result.",
+    "The standard hosted runner's CPU count, CPU model, unified-memory capacity, and available disk were not measured, so this record makes no capacity or local-M1-Ultra equivalence claim.",
+    "No complete expert, complete layer, checkpoint routing, attention, logits, generation, giant-model execution, production serving, performance benchmark, Linux runtime, or CUDA runtime was exercised.",
+    "The fixture job proves only its committed small deterministic cases on the recorded arm64 runner and dependency versions."
+  ],
+  "failures": [],
+  "warnings": [
+    "The exact Cargo baseline retained known upstream warnings; they did not fail this non-strict workflow.",
+    "GitHub job success establishes the recorded commands on the recorded hosted runner, not performance or broad model compatibility."
+  ],
+  "artifact_paths": [
+    ".github/workflows/macos.yml",
+    "docs/validation/ci-mlx-smoke.json",
+    "fixtures/mlx/manifest.json",
+    "fixtures/mlx/routed-moe-v1.json"
+  ]
+}

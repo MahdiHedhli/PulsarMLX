@@ -1115,3 +1115,32 @@ three prerequisite evidence records are passing at their exact scopes, checked
 that the new job contains only small-fixture commands, and passed
 `git diff --check`. This establishes workflow configuration only. T074 must run
 the pushed workflow before any remote CI success is claimed.
+
+### T074 pushed Apple MLX fixture CI result
+
+Push-triggered GitHub Actions run
+[`31023865090`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31023865090)
+completed successfully at commit
+`751eb7dabe5ed463c8133f0f93e69f6f99703d95`. Both jobs used the
+`macos-15-arm64` image version `20260727.0256.1` on macOS 15.7.7 build
+24G720 and passed their `arm64` assertions.
+
+The unchanged workspace job passed `cargo check --workspace --all-targets`
+and `cargo test --workspace --no-fail-fast`. Summing all 43 Cargo harness
+summaries in the downloaded log gives 171 passed, zero failed, and one ignored.
+The same inherited `quant` `unused_mut` warning and 13 macOS `serve` dead-code
+warnings remained.
+
+The fixture job resolved CPython 3.12.13, MLX 0.32.0, and mlx-metal 0.32.0
+from the frozen uv environment. It passed 44 Python worker tests, one explicitly
+selected native MLX device smoke, seven evaluated MLX tensor cases, and the
+synthetic routed-MoE case. The initial and final assertions both confirmed that
+`PULSARMLX_MODEL_GGUF` was empty. Generated records lived only under
+`RUNNER_TEMP` and no workflow artifacts were uploaded.
+
+The exact run/job identities, commands, results, and exclusions are recorded
+in `docs/validation/ci-mlx-smoke.json`. Runner CPU/count, unified memory,
+available disk, thermals, and power were not measured. No external checkpoint,
+full or giant model, production serving, benchmark, Linux, CUDA, or `io_uring`
+runtime workload ran, so no claim was promoted beyond the small-fixture CI
+scope.

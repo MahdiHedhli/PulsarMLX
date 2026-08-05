@@ -255,7 +255,7 @@ a scoped implementation handoff. This phase does not authorize custom Metal,
 repository-wide debt cleanup, or broader model support.
 
 - [X] T073 [P] Add a lockfile-backed, small-fixture-only Apple MLX job after local US1-US3 evidence exists, keep the exact Cargo baseline job intact, assert `arm64`, and exclude external models in `.github/workflows/macos.yml`
-- [ ] T074 Run the pushed macOS workflow, record the exact run identity, runner architecture, commands, actual results, and resource/model exclusions in `docs/validation/ci-mlx-smoke.json`
+- [X] T074 Run the pushed macOS workflow, record the exact run identity, runner architecture, commands, actual results, and resource/model exclusions in `docs/validation/ci-mlx-smoke.json`
 - [ ] T075 [P] Run `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` as diagnostics, separate new failures from recorded upstream debt, and append actual results without broad cleanup in `docs/apple-silicon/SESSION_LOG.md`
 - [ ] T076 Run all focused tests plus exact workspace gates and `git diff --check`, inspect the staged diff for secrets, weights, private IDs, caches, generated binaries, and unintended Linux/CUDA selection changes, and record the sanitized review in `docs/apple-silicon/SESSION_LOG.md`
 - [ ] T077 Execute every currently supported command in `specs/001-apple-silicon-mlx/quickstart.md`, replace planned wording only where actual committed evidence exists, and retain explicit stop instructions for unexecuted stages
