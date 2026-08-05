@@ -44,6 +44,17 @@ checkpoints/
 .cache/huggingface/
 .huggingface/
 
+# Local-only research scratch space. These paths are defense-in-depth for an
+# accidentally repo-local run; validated specifications, schemas, fixtures,
+# and evidence under specs/, schemas/, fixtures/, and docs/ remain tracked.
+.pulsarmlx-local/research-work/
+.pulsarmlx-local/candidate-output/
+.pulsarmlx-local/oracle-build/
+.pulsarmlx-local/external-model/
+.pulsarmlx-local/cache/
+.pulsarmlx-local/logs/
+.pulsarmlx-local/secrets/
+
 # Versioned model admission records are documentation, not model artifacts.
 !docs/validation/models/
 docs/validation/models/*

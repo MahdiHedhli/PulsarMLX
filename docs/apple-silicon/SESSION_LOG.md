@@ -1348,3 +1348,65 @@ scopes and exclusions. Then run $speckit-plan and $speckit-tasks and review
 their gates before implementation; do not run $speckit-implement against the
 completed specs/001-apple-silicon-mlx task list.
 ```
+
+## Feature 002: Qwen3MoE Layer-0 Router Parity
+
+### T001 safe baseline
+
+Feature 002 began from clean, pushed commit `4e1ca2c`. The active Spec Kit
+metadata resolved to `specs/002-qwen-router-parity`; all 16 requirements-
+checklist items were complete; and the reviewed task list contained 97 unique,
+contiguous tasks. No external checkpoint was resolved, opened, hashed, or
+executed during this baseline.
+
+The exact Spec Kit checks passed:
+
+```sh
+specify version
+specify check
+specify integration status --json
+.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks
+```
+
+Specify reported version 0.15.2 on arm64 Darwin with Python 3.12.13. Codex was
+the healthy default integration with zero missing or modified managed files and
+no findings. Prerequisites returned the Feature 002 directory and its research,
+data-model, contracts, quickstart, and task artifacts.
+
+The exact safe workspace baseline passed:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+```
+
+`cargo check` exited zero. The workspace test executed 43 harnesses with 171
+active passes, zero failures, and one intentionally ignored native MLX smoke.
+The Python worker suite passed 44 tests. The inherited quant `unused_mut` and 13
+macOS serve dead-code warnings remained unchanged; they are observations, not
+Feature 002 failures. The former `os.abort()` worker-test side effect did not
+recur because current `main` uses signal termination instead.
+
+### T002–T004 offline setup
+
+The initial Feature 002 setup remained entirely offline. The new idempotent
+`scripts/research/setup.sh` verifies committed Cargo, uv, and active-feature
+metadata; refuses an unignored scratch root; and creates only ignored local
+cache, candidate, log, oracle-build, and temporary directories below
+`.pulsarmlx-local/research-work/`. Two consecutive executions both exited zero
+with the same bounded ready message. `sh -n` and `zsh -n` also passed.
+
+`.gitignore` now excludes the dedicated local research-work, candidate-output,
+oracle-build, external-model, cache, log, and secret roots. Seven representative
+scratch paths were ignored, while six representative versioned paths under
+`specs/`, `schemas/`, `fixtures/`, and `docs/research/` remained trackable.
+
+Six publication documents were created with status-only content:
+`EXPERIMENT_PROTOCOL.md`, `REPRODUCIBILITY.md`, `RESULTS.md`, `LIMITATIONS.md`,
+`CLAIMS_LEDGER.md`, and `REVIEWER_INDEX.md`. Each states that neither Feature
+002 implementation nor real-router results exist. The claims ledger contains
+zero claim rows. All local links resolved and `git diff --check` passed. No
+model path, checkpoint, network download, MLX model operation, measurement, or
+capability promotion occurred.

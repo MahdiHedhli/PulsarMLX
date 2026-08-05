@@ -64,10 +64,10 @@ and final report without changing the clean branch.
 **Purpose**: Re-establish the completed Feature 001 baseline and create the
 Feature 002 research structure without model access.
 
-- [ ] T001 Run Spec Kit health, Git status, Cargo workspace, and Python worker baseline commands and append exact actual results to `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T002 Create the no-network research tooling skeleton and idempotent entrypoint in `scripts/research/setup.sh`
-- [ ] T003 [P] Add explicit local research-work, candidate-output, oracle-build, model, cache, log, and secret exclusions without ignoring publishable evidence in `.gitignore`
-- [ ] T004 [P] Create status-only skeletons in `docs/research/EXPERIMENT_PROTOCOL.md`, `docs/research/REPRODUCIBILITY.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/research/CLAIMS_LEDGER.md`, and `docs/research/REVIEWER_INDEX.md`
+- [X] T001 Run Spec Kit health, Git status, Cargo workspace, and Python worker baseline commands and append exact actual results to `docs/apple-silicon/SESSION_LOG.md`
+- [X] T002 Create the no-network research tooling skeleton and idempotent entrypoint in `scripts/research/setup.sh`
+- [X] T003 [P] Add explicit local research-work, candidate-output, oracle-build, model, cache, log, and secret exclusions without ignoring publishable evidence in `.gitignore`
+- [X] T004 [P] Create status-only skeletons in `docs/research/EXPERIMENT_PROTOCOL.md`, `docs/research/REPRODUCIBILITY.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/research/CLAIMS_LEDGER.md`, and `docs/research/REVIEWER_INDEX.md`
 
 **Checkpoint**: Baseline results are recorded and every new document says that
 implementation and real-router results do not yet exist.
