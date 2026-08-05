@@ -1,0 +1,480 @@
+{
+  "backend_id": "apple-mlx",
+  "case_count": 7,
+  "cases": [
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        0.75,
+        -5.75,
+        -5.0,
+        8.25,
+        -0.75,
+        -5.75
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "elementwise-fma-nonsymmetric-f32-v1",
+      "comparison": {
+        "absolute_tolerance": 0.000001,
+        "compared_count": 6,
+        "first_mismatch_index": null,
+        "max_absolute_error": 0.0,
+        "max_relative_error": 0.0,
+        "mode": "abs_rel",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.000001
+      },
+      "decoded": null,
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "float32",
+      "memory_gauges": {
+        "mlx_active_bytes": 24,
+        "mlx_cache_bytes": 28,
+        "mlx_peak_bytes": 52,
+        "process_footprint_bytes": 39272448,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "elementwise_fma",
+      "output_dtype": "float32",
+      "output_shape": [
+        2,
+        3
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": null,
+      "synchronized": true
+    },
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        58.0,
+        64.0,
+        139.0,
+        154.0
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "matmul-nonsymmetric-f32-v1",
+      "comparison": {
+        "absolute_tolerance": 0.00001,
+        "compared_count": 4,
+        "first_mismatch_index": null,
+        "max_absolute_error": 0.0,
+        "max_relative_error": 0.0,
+        "mode": "abs_rel",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.00001
+      },
+      "decoded": null,
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "float32",
+      "memory_gauges": {
+        "mlx_active_bytes": 16,
+        "mlx_cache_bytes": 52,
+        "mlx_peak_bytes": 64,
+        "process_footprint_bytes": 39731200,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "matmul",
+      "output_dtype": "float32",
+      "output_shape": [
+        2,
+        2
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": null,
+      "synchronized": true
+    },
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        -3.0,
+        8.0,
+        6.0,
+        1.0,
+        -1.0,
+        2.0,
+        7.0,
+        0.5,
+        4.0
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "embedding-gather-order-f32-v1",
+      "comparison": {
+        "absolute_tolerance": 0.0,
+        "compared_count": 9,
+        "first_mismatch_index": null,
+        "max_absolute_error": 0.0,
+        "max_relative_error": 0.0,
+        "mode": "exact",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.0
+      },
+      "decoded": null,
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "float32",
+      "memory_gauges": {
+        "mlx_active_bytes": 36,
+        "mlx_cache_bytes": 116,
+        "mlx_peak_bytes": 100,
+        "process_footprint_bytes": 40108032,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "embedding_gather",
+      "output_dtype": "float32",
+      "output_shape": [
+        3,
+        3
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": null,
+      "synchronized": true
+    },
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        0.6324542760848999,
+        0.6324542760848999,
+        -1.2649085521697998,
+        1.2649085521697998,
+        1.589436650276184,
+        -0.264906108379364,
+        0.529812216758728,
+        -1.059624433517456
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "rms-norm-weighted-f32-v1",
+      "comparison": {
+        "absolute_tolerance": 0.00002,
+        "compared_count": 8,
+        "first_mismatch_index": null,
+        "max_absolute_error": 5.258477320246868E-8,
+        "max_relative_error": 3.3083907391364864E-8,
+        "mode": "abs_rel",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.00002
+      },
+      "decoded": null,
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "float32",
+      "memory_gauges": {
+        "mlx_active_bytes": 32,
+        "mlx_cache_bytes": 164,
+        "mlx_peak_bytes": 148,
+        "process_footprint_bytes": 40599552,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "rms_norm",
+      "output_dtype": "float32",
+      "output_shape": [
+        2,
+        4
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": null,
+      "synchronized": true
+    },
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        9.0,
+        1.0,
+        3.0,
+        5.0,
+        -6.0,
+        -3.0
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "residual-add-nonsymmetric-f32-v1",
+      "comparison": {
+        "absolute_tolerance": 0.000001,
+        "compared_count": 6,
+        "first_mismatch_index": null,
+        "max_absolute_error": 0.0,
+        "max_relative_error": 0.0,
+        "mode": "abs_rel",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.000001
+      },
+      "decoded": null,
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "float32",
+      "memory_gauges": {
+        "mlx_active_bytes": 24,
+        "mlx_cache_bytes": 172,
+        "mlx_peak_bytes": 148,
+        "process_footprint_bytes": 40697856,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "residual_add",
+      "output_dtype": "float32",
+      "output_shape": [
+        2,
+        3
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": null,
+      "synchronized": true
+    },
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        0.5,
+        0.5,
+        0.8807971477508545,
+        0.11920291930437088
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "router-topk-tie-f32-v1",
+      "comparison": {
+        "absolute_tolerance": 0.000001,
+        "compared_count": 4,
+        "first_mismatch_index": null,
+        "max_absolute_error": 6.977297206667289E-8,
+        "max_relative_error": 7.921571700357632E-8,
+        "mode": "abs_rel",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.000001
+      },
+      "decoded": null,
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "float32",
+      "memory_gauges": {
+        "mlx_active_bytes": 64,
+        "mlx_cache_bytes": 132,
+        "mlx_peak_bytes": 148,
+        "process_footprint_bytes": 41041920,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "router_topk_softmax",
+      "output_dtype": "float32",
+      "output_shape": [
+        2,
+        2
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": [
+        1,
+        2,
+        3,
+        0
+      ],
+      "synchronized": true
+    },
+    {
+      "accumulation_dtype": "float32",
+      "actual": [
+        -8.0
+      ],
+      "backend_id": "apple-mlx",
+      "case_id": "q8-0-two-block-row-v1",
+      "comparison": {
+        "absolute_tolerance": 0.00001,
+        "compared_count": 1,
+        "first_mismatch_index": null,
+        "max_absolute_error": 0.0,
+        "max_relative_error": 0.0,
+        "mode": "abs_rel",
+        "non_finite_policy": "reject",
+        "oracle_id": "committed-independent-scalar-v1",
+        "passed": true,
+        "relative_tolerance": 0.00001
+      },
+      "decoded": [
+        -8.0,
+        -7.5,
+        -7.0,
+        -6.5,
+        -6.0,
+        -5.5,
+        -5.0,
+        -4.5,
+        -4.0,
+        -3.5,
+        -3.0,
+        -2.5,
+        -2.0,
+        -1.5,
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        2.5,
+        3.0,
+        3.5,
+        4.0,
+        4.5,
+        5.0,
+        5.5,
+        6.0,
+        6.5,
+        7.0,
+        7.5,
+        2.0,
+        -2.0,
+        4.0,
+        -4.0,
+        6.0,
+        -6.0,
+        8.0,
+        -8.0,
+        10.0,
+        -10.0,
+        12.0,
+        -12.0,
+        14.0,
+        -14.0,
+        16.0,
+        -16.0,
+        18.0,
+        -18.0,
+        20.0,
+        -20.0,
+        22.0,
+        -22.0,
+        24.0,
+        -24.0,
+        26.0,
+        -26.0,
+        28.0,
+        -28.0,
+        30.0,
+        -30.0,
+        32.0,
+        -32.0
+      ],
+      "evaluated": true,
+      "fallback_used": false,
+      "input_dtype": "q8_0",
+      "memory_gauges": {
+        "mlx_active_bytes": 260,
+        "mlx_cache_bytes": 448,
+        "mlx_peak_bytes": 524,
+        "process_footprint_bytes": 41091072,
+        "process_footprint_source": "ps-rss",
+        "reported_summed_total_bytes": null,
+        "system_pressure": "normal"
+      },
+      "operation": "q8_0_decode_dot",
+      "output_dtype": "float32",
+      "output_shape": [
+        1
+      ],
+      "passed": true,
+      "requested_device": "gpu",
+      "selected_device": "gpu",
+      "selected_expert_ids": null,
+      "synchronized": true
+    }
+  ],
+  "exclusions": [
+    "Fixtures are synthetic bounded tensors, not model weights.",
+    "Q8_0 scalar evidence covers complete row decode and row-major matvec only.",
+    "Q8_0 evaluated MLX evidence covers a bounded decoded-row dot only.",
+    "No real model, token generation, serving, benchmark, Linux, or CUDA execution was performed."
+  ],
+  "fixture_set_id": "mlx-tensor-fixtures-v1",
+  "manifest": "fixtures/mlx/manifest.json",
+  "runtime": {
+    "gpu_count": 1,
+    "macos_version": "26.0",
+    "metal_available": true,
+    "mlx_version": "0.32.0",
+    "protocol": 1,
+    "python_arch": "arm64",
+    "python_version": "3.12.13",
+    "worker_version": "0.1.0"
+  },
+  "schema_version": 1,
+  "selected_device": "gpu",
+  "status": "passed",
+  "validation": "mlx-tensor-fixtures",
+  "recorded_at_utc": "2026-08-05T13:02:35Z",
+  "tested_commit": "c53f21e7c98bfa2288690a3662c6f6e10857a685",
+  "commands": [
+    {
+      "command": "cargo test -p backend",
+      "exit_code": 0,
+      "result": "32 passed; 0 failed"
+    },
+    {
+      "command": "cargo test -p quant --test q8_0_reference",
+      "exit_code": 0,
+      "result": "14 passed; 0 failed"
+    },
+    {
+      "command": "PYTHONPATH=python uv run python -m unittest discover -s python/pulsar_mlx_worker/tests -v",
+      "exit_code": 0,
+      "result": "21 passed; 0 failed"
+    },
+    {
+      "command": "cargo test -p mlx-backend --test tensor_contract",
+      "exit_code": 0,
+      "result": "7 passed; 0 failed"
+    },
+    {
+      "command": "cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures --manifest fixtures/mlx/manifest.json --evidence docs/validation/mlx-tensor-fixtures.json",
+      "exit_code": 0,
+      "result": "7 evaluated MLX cases passed"
+    },
+    {
+      "command": "cargo check --workspace --all-targets",
+      "exit_code": 0,
+      "result": "passed"
+    },
+    {
+      "command": "cargo test --workspace --no-fail-fast",
+      "exit_code": 0,
+      "result": "114 passed; 0 failed"
+    }
+  ],
+  "warnings": [
+    "Inherited crates/quant/src/iq.rs unused_mut warning remains.",
+    "Thirteen inherited macOS serve dead-code warnings remain."
+  ],
+  "linux_cuda_evidence_status": "pending_not_run"
+}

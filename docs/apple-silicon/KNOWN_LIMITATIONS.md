@@ -20,9 +20,11 @@ and the source audit in
   execute models on macOS.
 - The non-Linux CLI and server are compatibility stubs. A successful macOS
   workspace build does not provide inference or serving.
-- The ignored project environment contains native MLX/MLX-Metal 0.32.0 and the
-  device probe executed successfully. Quantized operations, model loading,
-  token generation, and serving have not been executed.
+- The ignored project environment contains native MLX/MLX-Metal 0.32.0; the
+  device probe and seven bounded tensor fixtures executed successfully. Q8_0
+  is verified only for strict complete-row scalar decode/matvec and one bounded
+  evaluated MLX decoded-row dot. Model loading, quantized model roles, token
+  generation, and serving have not been executed.
 - No real-model fixture is present in the repository. Synthetic validation,
   when added, will not establish checkpoint compatibility.
 - Mapped GGUF-to-MLX aliasing, unified-memory residency behavior, giant-model
@@ -31,9 +33,9 @@ and the source audit in
 
 ## Platform and test coverage
 
-- After US1, `cargo check --workspace --all-targets` passed on native arm64
-  macOS, and `cargo test --workspace --no-fail-fast` ran 93 tests: 93 passed,
-  0 failed. The Python protocol suite separately ran 13 passing tests. These
+- After US2, `cargo check --workspace --all-targets` passed on native arm64
+  macOS, and `cargo test --workspace --no-fail-fast` ran 114 tests: 114 passed,
+  0 failed. The Python worker suite separately ran 21 passing tests. These
   results cover only targets selected by the macOS configuration.
 - Engine, kernel, and Linux-gated server test targets each ran zero tests on
   macOS. The test run does not exercise the Linux server, CUDA execution,
@@ -75,7 +77,8 @@ and should not be swept into an unrelated Apple backend change.
   CPython 3.12.13 and native arm64 `mlx==0.32.0`/`mlx-metal==0.32.0` wheels.
   The committed US1 evidence establishes Metal availability, selected-device
   identity, evaluated GPU work, and parity only for its four-value float32
-  probe; it does not establish broader tensor, quantized, or model inference.
+  probe. US2 separately establishes its seven committed tensor fixtures and
+  scoped Q8_0 reference operations; neither record establishes model inference.
 - The backend-neutral capability, tensor, comparison, compatibility, evidence,
   memory-gauge, and benchmark-admission contracts are implemented and tested.
   They carry no execution implementation and therefore do not establish any

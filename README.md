@@ -13,12 +13,13 @@
 | Category | Current status |
 | --- | --- |
 | Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
-| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, exact workspace check passes and the workspace suite passes with 93 Rust tests; 13 Python protocol tests also pass. A supervised native arm64 worker using MLX 0.32.0 explicitly selected `gpu`, evaluated and synchronized a nonsymmetric float32 matmul, and matched four independent expected values exactly without fallback. The earlier Cargo-only [GitHub Actions baseline](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362) remains green. |
-| Planned capabilities | Tensor-reference operations, portable expert storage, quantized parity, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
+| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, exact workspace check passes and the workspace suite passes with 114 Rust tests; 21 Python worker tests also pass. A supervised native arm64 MLX 0.32.0 worker has an evaluated device proof plus seven evaluated tensor fixtures covering dense primitives, deterministic top-k routing, and a scoped Q8_0 decoded-row dot. Strict scalar Q8_0 row decode/matvec passes 14 malformed and oracle cases. No fallback is allowed. |
+| Planned capabilities | Portable expert storage, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
 | Unsupported or unverified | MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
 
-The verified MLX result is a tiny device proof, not model inference. See
-[the device evidence](docs/validation/mlx-device-smoke.json) and [known
+The verified MLX results are bounded device/tensor fixtures, not model
+inference. See [device evidence](docs/validation/mlx-device-smoke.json),
+[tensor evidence](docs/validation/mlx-tensor-fixtures.json), and [known
 limitations](docs/apple-silicon/KNOWN_LIMITATIONS.md) for the exact boundary.
 
 ## Verify and continue development

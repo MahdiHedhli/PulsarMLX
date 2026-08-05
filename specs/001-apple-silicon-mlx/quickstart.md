@@ -1,9 +1,9 @@
 # Validation Quickstart: Apple Silicon MLX Backend Bring-Up
 
 **Status**: The Cargo baseline, pinned worker environment, protocol/lifecycle
-tests, and evaluated MLX GPU device smoke are runnable and verified. Tensor,
-quantization, storage, routed-MoE, and model commands remain implementation
-targets until their corresponding task evidence is committed.
+tests, evaluated MLX GPU device smoke, seven tensor fixtures, and scoped Q8_0
+reference operations are runnable and verified. Storage, routed-MoE, and model
+commands remain implementation targets until their evidence is committed.
 
 ## 1. Inspect the current source of truth
 
@@ -135,21 +135,24 @@ is not a pass.
 
 Stop if the report is not `evaluated` or if the numeric assertion fails.
 
-## 7. Prove tensor and Q8_0 semantics (planned)
+## 7. Reproduce verified tensor and Q8_0 semantics
 
 ```sh
 cargo test -p backend
-cargo test -p quant q8_0
+cargo test -p quant --test q8_0_reference
 cargo test -p mlx-backend --test tensor_contract
 cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
   --manifest fixtures/mlx/manifest.json \
   --evidence docs/validation/mlx-tensor-fixtures.json
 ```
 
-Review exact shape, orientation, input/accumulation/output dtype, encoded byte
-count, malformed-input rejection, synchronization, compared element count,
-maximum absolute/relative errors, and first mismatch. Concrete tolerances must
-already be committed in each fixture; do not tune them after observing output.
+On tested commit `c53f21e`, these commands pass 14 strict Q8_0 tests, 7 Rust
+fixture contract tests, and 7 evaluated MLX cases. Review exact shape,
+orientation, input/accumulation/output dtype, encoded byte count,
+malformed-input rejection, synchronization, compared element count, maximum
+absolute/relative errors, and first mismatch in
+`docs/validation/mlx-tensor-fixtures.json`. Tolerances are committed in
+`fixtures/mlx/manifest.json`; do not tune them after observing output.
 
 ## 8. Prove portable expert storage (planned)
 

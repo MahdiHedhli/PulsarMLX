@@ -291,3 +291,42 @@ The Python suite ran 13 tests, the fake-worker suite ran 12, and the exact
 workspace test gate ran 93 Rust tests, all with zero failures. The inherited
 `quant` `unused_mut` and 13 macOS `serve` dead-code warnings remained. The
 sanitized actual result is in `docs/validation/mlx-device-smoke.json`.
+
+## Implementation session: US2 tensor and Q8_0 checkpoint
+
+Tasks T027–T034 froze seven nonsymmetric fixtures, observed the strict scalar
+and worker suites fail before implementation, then added panic-free Q8_0 row
+decode/matvec, evaluated MLX tensor operations, a control-only `run_fixture`
+protocol, and `validate-fixtures`. Fixture requests contain only bounded IDs,
+device selection, and `allow_fallback=false`; tensors, weights, encoded bytes,
+and base64 data do not cross NDJSON.
+
+On immutable code commit `c53f21e7c98bfa2288690a3662c6f6e10857a685`,
+all seven MLX cases were evaluated and synchronized on `gpu`. Elementwise,
+matmul, embedding, residual, and Q8_0 dot matched exactly. RMS norm had maximum
+absolute error `5.258477320246868e-08`; router softmax had maximum absolute
+error `6.977297206667289e-08`, and its tied top-k IDs matched exactly. Both
+were inside their predeclared tolerances. The strict Rust Q8_0 suite passed 14
+cases covering complete blocks, signed extrema, two scales, exact sizes,
+overflow, non-finite rejection, and unchanged destinations on error.
+
+Exact validation passed:
+
+```sh
+cargo test -p backend
+cargo test -p quant --test q8_0_reference
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+cargo test -p mlx-backend --test tensor_contract
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
+  --manifest fixtures/mlx/manifest.json \
+  --evidence docs/validation/mlx-tensor-fixtures.json
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+```
+
+The backend suite ran 32 tests, strict Q8_0 ran 14, Python ran 21, the Rust
+fixture contract ran 7, and the workspace gate ran 114 Rust tests, all with
+zero failures. The existing `quant` `unused_mut` and 13 macOS `serve`
+dead-code warnings remain. Linux/CUDA execution of the shared change is
+pending and is not claimed safe by runtime evidence.
