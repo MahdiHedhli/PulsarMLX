@@ -1,9 +1,11 @@
 # Validation Quickstart: Apple Silicon MLX Backend Bring-Up
 
 **Status**: The Cargo baseline, pinned worker environment, protocol/lifecycle
-tests, evaluated MLX GPU device smoke, seven tensor fixtures, and scoped Q8_0
-reference operations are runnable and verified. Storage, routed-MoE, and model
-commands remain implementation targets until their evidence is committed.
+tests, evaluated MLX GPU device smoke, seven tensor fixtures, strict Q8_0
+references, portable positional storage, synthetic routed-MoE graph, and one
+exact external Qwen checkpoint prefix are runnable and verified at their
+documented scopes. The initial benchmark is explicitly `not_run`; complete
+model inference, giant-model execution, and production serving are unsupported.
 
 ## 1. Inspect the current source of truth
 
@@ -40,9 +42,12 @@ cargo check --workspace --all-targets
 cargo test --workspace --no-fail-fast
 ```
 
-Before implementation, compare the actual results with
-`docs/preflight/BASELINE_VALIDATION.md`. Record differences; never substitute
-the expected 32-test count for an actual result.
+The post-slice record in
+`docs/validation/qwen3-30b-a3b-q8_0-slice.json` shows that both commands passed
+from clean commit `31ee7e5`. That snapshot listed 155 tests: 154 active tests
+passed, one native MLX smoke test was ignored by the general workspace run,
+and zero failed. Treat those counts as committed historical evidence, not a
+hard-coded expectation for a later commit; always report the new actual result.
 
 The following are diagnostic inspections, not current merge gates:
 
@@ -113,10 +118,12 @@ PYTHONPATH=python uv run python -m unittest discover \
 cargo test -p mlx-backend --test worker_contract
 ```
 
-On tested commit `4ff4301`, these ran 13 Python tests and 12 Rust fake-worker
-tests with zero failures. They cover version negotiation, frame limits,
-request IDs, malformed messages, stdout contamination, worker exit/timeout,
-controlled shutdown, and structured errors without a model file.
+The complete Python discovery command passed 44 tests at T060. The focused
+Rust fake-worker record passed 12 tests at the US1 checkpoint. They cover
+version negotiation, frame limits, request IDs, malformed messages, stdout
+contamination, worker exit/timeout, controlled shutdown, and structured errors
+without a model file. Later test additions may change cardinality; retain the
+exact command and report its actual count.
 
 ## 6. Reproduce evaluated GPU execution
 
@@ -124,7 +131,7 @@ controlled shutdown, and structured errors without a model file.
 cargo run -p mlx-backend --bin pulsar-mlx -- device-smoke \
   --backend apple-mlx \
   --device gpu \
-  --evidence docs/validation/mlx-device-smoke.json
+  --evidence "${TMPDIR:-/tmp}/pulsarmlx-device-smoke.json"
 ```
 
 The committed record at `docs/validation/mlx-device-smoke.json` shows native
@@ -143,7 +150,7 @@ cargo test -p quant --test q8_0_reference
 cargo test -p mlx-backend --test tensor_contract
 cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
   --manifest fixtures/mlx/manifest.json \
-  --evidence docs/validation/mlx-tensor-fixtures.json
+  --evidence "${TMPDIR:-/tmp}/pulsarmlx-tensor-fixtures.json"
 ```
 
 On tested commit `c53f21e`, these commands pass 14 strict Q8_0 tests, 7 Rust
@@ -154,65 +161,118 @@ absolute/relative errors, and first mismatch in
 `docs/validation/mlx-tensor-fixtures.json`. Tolerances are committed in
 `fixtures/mlx/manifest.json`; do not tune them after observing output.
 
-## 8. Prove portable expert storage (planned)
+## 8. Reproduce verified portable expert storage
 
 ```sh
-cargo test -p stream positional_source
-cargo test -p mlx-backend --test expert_source_contract
+cargo test -p stream --test positional_source
+cargo check -p stream --test positional_source
+cargo test -p stream --lib
 ```
 
-The suite must include single and split shards, exact boundaries, invalid
-layouts, below/end/overflow/straddle ranges, partial reads, interruption,
-truncation, batch ordering, all-or-error behavior, and owned-payload lifetime.
-The inherited Linux fetcher stays selected on its existing path.
+The committed [portable-source record](../../docs/validation/portable-expert-source.json)
+shows 14 positional-source tests and one stream library test passing. The suite
+covers single and split shards, exact boundaries, invalid layouts,
+below/end/overflow/straddle ranges, partial reads, interruption, truncation,
+batch ordering, all-or-error behavior, and owned-payload lifetime. The
+independent [reproduction record](../../docs/validation/reproduction-check.json)
+replayed the 14-test command with matching cardinality.
 
-## 9. Prove a synthetic routed-MoE layer (planned)
+This verifies the additive portable macOS source. The inherited Linux
+`io_uring` fetcher remains selected by static review, but suitable Linux,
+`io_uring`, `O_DIRECT`, and CUDA runtime validation was unavailable and remains
+unverified.
+
+## 9. Reproduce the verified synthetic routed-MoE layer
 
 ```sh
 cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
   --fixture fixtures/mlx/routed-moe-v1.json \
-  --evidence docs/validation/synthetic-moe-v1.json
+  --evidence "${TMPDIR:-/tmp}/pulsarmlx-synthetic-moe-v1.json"
 ```
 
-Require exact expert IDs and score-descending/expert-ID-ascending tie order,
-finite scores, valid top-k, declared route-weight tolerance, exact expert
-ranges, scalar expert computation, weighted output parity, and separate memory
-gauges. Label the evidence `synthetic`.
+The committed [synthetic record](../../docs/validation/synthetic-moe-v1.json)
+passed with exact split-shard expert payloads, routes `[[1,2],[3,1]]`, declared
+route weights, evaluated and synchronized MLX expert work, four compared output
+values, and no fallback. It enforces finite scores, valid top-k,
+score-descending/expert-ID-ascending ties, exact ranges, an independent scalar
+aggregate, and separate memory gauges.
 
-## 10. Gate the external real-model slice (planned; no automatic download)
+This command uses generated f32 fixture weights. It does not establish Qwen
+routing, Q8_0 routed experts, a real checkpoint graph, generation, serving, or
+performance.
 
-The current candidate is the official
-`Qwen/Qwen3-30B-A3B-GGUF` Q8_0 artifact. Before any download, create a model
-compatibility record with:
+## 10. Reproduce the verified bounded real-checkpoint slice
 
-- immutable repository revision and exact filename;
-- source and license;
-- published size plus sufficient disk headroom;
-- intended bounded graph depth;
-- required tensor roles and quant types;
-- a trusted reference runtime/version and reproducible comparison command; and
-- conservative compressed, decoded, temporary, cache, and system-headroom
-  budgets.
+There is no automatic downloader. Use only an explicitly authorized external
+copy of the official `Qwen/Qwen3-30B-A3B-GGUF` Q8_0 artifact and keep it outside
+Git. The committed admission chain consists of:
 
-After an explicitly authorized external download, keep the artifact outside
-Git and capture its actual identity:
+- [provenance, immutable identity, and tensor inventory](../../docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json);
+- [disk and unified-memory budget](../../docs/validation/models/qwen3-30b-a3b-q8_0-memory-budget.json);
+- [preselected oracle contract](../../docs/validation/models/qwen3-30b-a3b-q8_0-oracle.json);
+- [executed trusted-reference result](../../docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json); and
+- [executed Apple MLX result](../../docs/validation/qwen3-30b-a3b-q8_0-slice.json).
+
+Set the variables to absolute external paths. Use a fresh evidence destination
+outside Git when reproducing so the committed record is not overwritten:
 
 ```sh
-shasum -a 256 /absolute/external/model/path/Qwen3-30B-A3B-Q8_0.gguf
-stat -f '%z bytes' /absolute/external/model/path/Qwen3-30B-A3B-Q8_0.gguf
+PULSARMLX_MODEL_GGUF="<external-model>/Qwen3-30B-A3B-Q8_0.gguf"
+PULSARMLX_INSPECT_EVIDENCE="<external-evidence>/qwen-inspection.json"
+PULSARMLX_SLICE_EVIDENCE="<external-evidence>/qwen-slice.json"
+
+stat -f '%z bytes' "$PULSARMLX_MODEL_GGUF"
+shasum -a 256 "$PULSARMLX_MODEL_GGUF"
+
+cargo run --release -p mlx-backend --bin pulsar-mlx -- inspect-model \
+  --model "$PULSARMLX_MODEL_GGUF" \
+  --evidence "$PULSARMLX_INSPECT_EVIDENCE"
+cargo run --release -p mlx-backend --bin pulsar-mlx -- validate-model-slice \
+  --model "$PULSARMLX_MODEL_GGUF" \
+  --evidence "$PULSARMLX_SLICE_EVIDENCE"
 ```
 
-The path shown is illustrative and must remain outside the repository. Do not
-place an access token in a command, record, or shell history. Stop if the
-trusted oracle, provenance, immutable revision, checksum, tensor coverage, or
-memory fit is unresolved.
+Replace both angle-bracket placeholders before execution; do not paste them
+literally into a shell. The accepted artifact is exactly 32,483,931,648 bytes
+with SHA-256
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`.
+The command also requires a clean source worktree, normal memory pressure, the
+admitted Q8_0 tensor identity, explicit MLX GPU selection, and no fallback.
 
-Only after that gate passes, run the implemented bounded command recorded by
-its task. The result may verify only its named graph depth. An intermediate
-tensor does not prove end-to-end inference; that requires a validated logits or
-token boundary.
+Stop before execution if provenance, revision, size, checksum, tensor layout,
+trusted reference, disk/unified-memory headroom, or worktree cleanliness does
+not match the committed gate. Stop after execution on any identity change,
+fallback, unsynchronized result, non-finite value, tolerance mismatch, or
+memory-cap violation. Do not place an access token, private path, or output
+weights in evidence.
 
-## 11. Record evidence before making a claim
+The recorded Apple command read exactly 34,816 encoded bytes for one layer-0,
+expert-0 gate-projection prefix, produced 16 float32 values, and matched the
+pinned CPU reference with zero mismatches. It did not execute tokenization,
+embeddings, routing, a complete expert or layer, attention, logits, tokens,
+generation, giant-model inference, or serving.
+
+## 11. Review evidence before making a claim
+
+The [validation index](../../docs/validation/README.md) maps stable case IDs to
+commands, immutable inputs, oracles, results, warnings, exclusions, and
+artifacts. The [compatibility matrix](../../docs/apple-silicon/COMPATIBILITY.md)
+keeps scalar, MLX fixture, synthetic, bounded real-checkpoint, giant-model, and
+production-serving states independent.
+
+```sh
+sed -n '1,260p' docs/validation/README.md
+sed -n '1,220p' docs/apple-silicon/COMPATIBILITY.md
+jq '{case_id, actual_status, reason, actual_result, warnings, exclusions}' \
+  docs/validation/benchmark-initial.json
+```
+
+The [benchmark record](../../docs/validation/benchmark-initial.json) is
+intentionally `actual_status: not_run`: no timing command, samples, statistics,
+cache/storage state, or performance measurement exists. It must not support a
+latency, throughput, speedup, bandwidth, memory, thermal, or power claim. A
+future benchmark needs an exact workload and linked passing correctness
+prerequisite before timing.
 
 For every completed slice:
 
@@ -226,11 +286,9 @@ For every completed slice:
    and
 6. make a focused test-backed commit.
 
-No benchmark is published until its correctness prerequisites pass. Standard
-`macos-15` CI initially covers only the Cargo baseline; it does not validate
-MLX or the external checkpoint until separately specified jobs actually run.
-The native device integration test is therefore explicit and opt-in after the
-frozen environment has been prepared:
+The current standard `macos-15` CI workflow covers the exact Cargo baseline; it
+does not validate MLX or the external checkpoint. The native device integration
+test is explicit and opt-in after the frozen environment has been prepared:
 
 ```sh
 cargo test -p mlx-backend --test device_smoke \
@@ -247,6 +305,6 @@ Continue from the next incomplete Spec Kit task with:
 
 ```text
 Use the speckit-implement skill for specs/001-apple-silicon-mlx. Start at the
-first incomplete task, preserve the verified US1 evidence boundary, and do not
-bypass any stop condition.
+first incomplete task, preserve every verified US1-US5 scope and the explicit
+not-run/unsupported boundaries, and do not bypass any stop condition.
 ```

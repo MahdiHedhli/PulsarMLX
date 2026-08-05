@@ -2,8 +2,8 @@
 
 The original host and upstream observations were captured on 2026-08-05 at
 revision `12c2406`; implementation-specific sections are updated through the
-T063 bounded real-checkpoint reconciliation. This list separates demonstrated
-limits from planned work. See the exact host snapshot in
+T070 evidence publication and independent replay. This list separates
+demonstrated limits from planned work. See the exact host snapshot in
 [../preflight/ENVIRONMENT.md](../preflight/ENVIRONMENT.md), validation output
 in [../preflight/BASELINE_VALIDATION.md](../preflight/BASELINE_VALIDATION.md),
 and the source audit in
@@ -19,8 +19,9 @@ and the source audit in
 - The inherited real `engine` implementation and CUDA `kernels` wrapper remain
   Linux-gated; the new path is additive and does not make the inherited engine
   execute models on macOS.
-- The non-Linux CLI and server are compatibility stubs. A successful macOS
-  workspace build does not provide inference or serving.
+- The inherited non-Linux `serve` CLI and server path remains a compatibility
+  stub. The separate `pulsar-mlx` validation CLI does not provide inference
+  serving, so a successful macOS workspace build does not provide serving.
 - The ignored project environment contains native MLX/MLX-Metal 0.32.0; the
   device probe and seven bounded tensor fixtures executed successfully. Q8_0
   is verified for strict complete-row scalar decode/matvec, one bounded
@@ -37,8 +38,8 @@ and the source audit in
   separately establishes only its committed expert bytes, routes, aggregation,
   and four-value output.
 - Mapped GGUF-to-MLX aliasing, unified-memory residency behavior, giant-model
-  correctness, memory pressure, and SSD streaming performance have not been
-  measured.
+  correctness, behavior under elevated memory pressure, and SSD streaming
+  performance have not been measured.
 
 ## Platform and test coverage
 
@@ -60,6 +61,47 @@ and the source audit in
   descriptors, and aligned reads. An additive portable exact positional source
   now passes its macOS reference tests, but it is not wired into or claimed as
   a replacement for the inherited Linux engine path.
+
+## Evidence publication, replay, and performance boundary
+
+- The backend evidence constructors now require a bounded actual-result
+  summary, a known-clean full commit identity, an independent oracle, valid
+  state transitions, and validated independent memory gauges when supplied.
+  They reject a reported sum of overlapping memory gauges. Benchmark records
+  are admitted as performance evidence only when every named correctness
+  prerequisite is executed, passed, and verified.
+- The compatibility validator uses six independent, non-ordered evidence
+  levels: scalar fixture, evaluated MLX tensor fixture, synthetic routed-MoE,
+  bounded real-model slice, giant-model execution, and production serving. A
+  complete matrix needs one unique cell for every level, and a verified cell
+  must link passing verified evidence for that exact level. No state is
+  promoted upward or backfilled from another level.
+- These Rust types validate records constructed through the backend API; they
+  are not a general JSON deserializer that automatically audits every document
+  in `docs/validation`. The committed
+  [reviewer index](../validation/README.md) maps current JSON records, commands,
+  inputs, oracles, results, warnings, and exclusions for human review. The
+  index does not turn missing legacy schema fields or non-executed states into
+  success.
+- The independent T070 replay reran
+  `cargo test -p stream --test positional_source` from a later clean commit
+  with no intervening `crates/stream` change. Its 14 passed, 0 failed result
+  matched the original record exactly. The
+  [reproduction record](../validation/reproduction-check.json) covers only the
+  additive portable positional source on macOS; it does not reproduce the MLX
+  device/tensor cases, the real-checkpoint slice, the inherited Linux fetcher,
+  CUDA, serving, or performance.
+- The initial benchmark decision is explicitly `not_run`: no command,
+  workload, timing boundary, cache/storage policy, samples, statistics, or
+  performance claim exists. Passing synthetic and bounded real-checkpoint
+  correctness records were noted but were not bound as benchmark
+  prerequisites because no benchmark case was selected. See
+  [benchmark-initial.json](../validation/benchmark-initial.json). Latency,
+  throughput, speedup, bandwidth, memory-efficiency, thermal, and power claims
+  remain unsupported.
+- At T070, the final US5 workspace and evidence-validator rerun remained
+  reserved for T072 and was recorded as `not_run`; the T063 post-slice
+  workspace result below remains the latest completed exact workspace gate.
 
 ## Existing source-quality debt
 
@@ -95,9 +137,11 @@ and should not be swept into an unrelated Apple backend change.
   scoped Q8_0 reference operations; neither record establishes model inference.
 - The backend-neutral capability, tensor, comparison, compatibility, evidence,
   memory-gauge, and benchmark-admission contracts are implemented and tested.
-  They do not establish any Apple, Linux, CUDA, or model runtime capability by
-  themselves; capability claims require the separately linked execution
-  records.
+  The compatibility surface now also enforces complete exact-level matrices
+  without implication between scalar, MLX, synthetic, bounded real-model,
+  giant-model, and serving states. These semantic validators do not establish
+  any Apple, Linux, CUDA, model, serving, or performance runtime capability by
+  themselves; capability claims require separately linked execution records.
 - Ninja and `rustup` were not installed. Rust 1.97.1 and Cargo 1.97.1 came
   from Homebrew. The revised workflow selects GitHub's `macos-15` OS and arm64
   runner label but does not pin its Rust toolchain contents, so local and CI
@@ -133,6 +177,10 @@ that every one is required by the eventual MLX integration.
 The initial bring-up does not promise production serving, MCP, every model
 family or quantization format, Qwen3.5/3.6 recurrent GDN support, speculative
 decoding, long-context performance, custom Metal kernels, or giant-model
-performance. These are exclusions in the proposed design, not implemented
-features. The staged scope and stop conditions are in
+correctness or performance. No committed result establishes Qwen tokenization,
+embeddings, checkpoint routing, a complete expert, attention, a complete
+transformer layer, logits, tokens, generation, full-checkpoint execution or
+streaming, Linux/CUDA runtime parity, or any executed benchmark or performance
+result. These are exclusions in the current design, not implemented features.
+The staged scope and stop conditions are in
 [BACKEND_DESIGN.md](BACKEND_DESIGN.md).

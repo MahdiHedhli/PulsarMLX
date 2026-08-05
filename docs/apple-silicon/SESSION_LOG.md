@@ -1011,3 +1011,29 @@ does not cover the inherited Linux `io_uring` implementation, the 32-bit-only
 branch, MLX, model execution, serving, Linux/CUDA, or performance. The file
 reserves a separate `final_story_validation` object for T072's exact workspace
 and evidence-validator rerun.
+
+### T071 public claim and command reconciliation
+
+The README and feature quickstart now describe the exact verified boundary:
+the historical post-slice workspace result, the T060 44-test Python worker
+suite, portable positional storage, synthetic routed-MoE, and one external
+Qwen3MoE Q8_0 gate-projection prefix. End-to-end checkpoint execution,
+tokenization, routing over the checkpoint, complete experts/layers, generation,
+serving, giant-model execution, performance, and Linux/CUDA runtime parity for
+fork changes remain unsupported or unverified.
+
+The three stale planned sections now contain the implemented portable-source,
+synthetic-MoE, inspection, and bounded-slice commands. Reproduction commands
+write evidence outside the repository so they do not overwrite committed
+historical records. The model section retains immutable size/SHA-256, clean
+worktree, provenance, tensor-layout, memory, no-fallback, synchronization, and
+comparison stop conditions; it does not present the bounded prefix as model
+inference.
+
+Known limitations now distinguish the inherited non-Linux `serve` stub from
+the separate validation CLI, explain the typed evidence/matrix validators and
+their legacy-JSON boundary, link the independent replay, and retain the
+explicit not-run benchmark. All changed local documentation links and command
+paths exist, documented CLI subcommands exist, changed shell blocks passed
+`zsh -n`, and `git diff --check` passed. No validation command or model was run
+for this documentation-only reconciliation; T072 remains the final exact gate.
