@@ -199,7 +199,7 @@ sys.exit(0)
 }
 
 #[test]
-fn nonzero_exit_and_process_crash_are_distinguished() {
+fn nonzero_exit_and_signal_termination_are_distinguished() {
     let worker = FakeWorker::new(worker_script(
         r#"sys.stdin.readline()
 sys.exit(17)
@@ -211,12 +211,16 @@ sys.exit(17)
     assert_eq!(error.exit_code(), Some(17));
 
     let worker = FakeWorker::new(worker_script(
-        r#"sys.stdin.readline()
-os.abort()
+        r#"import signal
+sys.stdin.readline()
+# Preserve signal-termination coverage without invoking macOS Crash Reporter.
+os.kill(os.getpid(), signal.SIGTERM)
 "#,
     ));
     let mut client = WorkerClient::spawn(worker.config()).expect("valid worker starts");
-    let error = client.health().expect_err("worker crash must fail");
+    let error = client
+        .health()
+        .expect_err("signal-terminated worker must fail");
     assert_kind(&error, WorkerErrorKind::ProcessCrashed);
     assert_eq!(error.exit_code(), None);
 }
