@@ -1,6 +1,9 @@
 //! Bounded protocol-v1 envelopes for the persistent MLX worker.
 
 use crate::model::{QWEN_ENCODED_SLICE_BYTES, QWEN_FILE_BYTES};
+use crate::router::{
+    canonical_f32le_sha256, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH, ROUTER_MAX_ROWS, ROUTER_TOP_K,
+};
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Number, Value};
@@ -36,6 +39,13 @@ const MODEL_MLX_ACTIVE_CAP: u64 = 3_221_225_472;
 const MODEL_MLX_CACHE_CAP: u64 = 1_342_177_280;
 const MODEL_MLX_PEAK_CAP: u64 = 4_294_967_296;
 const MODEL_PHYSICAL_FOOTPRINT_CAP: u64 = 8_589_934_592;
+pub const ROUTER_SINGLE_ROW_CASE_ID: &str = "generated-qwen3moe-router-single-row-v1";
+pub const ROUTER_TWO_ROW_CASE_ID: &str = "generated-qwen3moe-router-two-row-v1";
+const ROUTER_OPERATION: &str = "complete_router_projection_topk";
+const ROUTER_OUTPUT_DTYPE: &str = "float32";
+const ROUTER_PROBABILITY_SUM_TOLERANCE: f64 = 1.0e-6;
+const ROUTER_PROBABILITY_ABSOLUTE_TOLERANCE: f64 = 1.0e-6;
+const ROUTER_PROBABILITY_RELATIVE_TOLERANCE: f64 = 1.0e-6;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkerErrorKind {
@@ -643,6 +653,216 @@ impl ModelSliceRequest {
             ("allow_fallback".to_owned(), Value::Bool(false)),
         ])
     }
+}
+
+/// Control-only request for one committed bounded router case.
+///
+/// Hidden states, tensor values, model paths, output-depth selectors, hashes,
+/// and benchmark-count overrides are deliberately absent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RouterRequest {
+    router_case_id: String,
+    device: String,
+}
+
+impl RouterRequest {
+    pub fn new(
+        router_case_id: impl Into<String>,
+        device: impl Into<String>,
+    ) -> Result<Self, WorkerError> {
+        let router_case_id = router_case_id.into();
+        let device = device.into();
+        if !matches!(
+            router_case_id.as_str(),
+            ROUTER_SINGLE_ROW_CASE_ID | ROUTER_TWO_ROW_CASE_ID
+        ) {
+            return Err(fixture_protocol_error(
+                "router validation accepts only a committed bounded case identity",
+            ));
+        }
+        if device != APPLE_MLX_DEVICE_ID {
+            return Err(fixture_protocol_error(
+                "router validation requires the explicit MLX GPU device",
+            ));
+        }
+        Ok(Self {
+            router_case_id,
+            device,
+        })
+    }
+
+    pub fn router_case_id(&self) -> &str {
+        &self.router_case_id
+    }
+
+    pub fn device(&self) -> &str {
+        &self.device
+    }
+
+    pub const fn allow_fallback(&self) -> bool {
+        false
+    }
+
+    pub(crate) fn protocol_params(&self) -> Map<String, Value> {
+        Map::from_iter([
+            (
+                "router_case_id".to_owned(),
+                Value::String(self.router_case_id.clone()),
+            ),
+            ("device".to_owned(), Value::String(self.device.clone())),
+            ("allow_fallback".to_owned(), Value::Bool(false)),
+        ])
+    }
+
+    fn expected_rows(&self) -> usize {
+        match self.router_case_id.as_str() {
+            ROUTER_SINGLE_ROW_CASE_ID => 1,
+            ROUTER_TWO_ROW_CASE_ID => 2,
+            _ => unreachable!("constructor admits only registered router cases"),
+        }
+    }
+}
+
+/// Strict complete raw-worker result for one bounded router request.
+///
+/// `passed` confirms the evaluated GPU/no-fallback execution envelope and the
+/// internal complete-output invariants. Golden-fixture or oracle agreement is
+/// an independent host evidence gate.
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RouterResult {
+    router_case_id: String,
+    operation: String,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    evaluated: bool,
+    synchronized: bool,
+    batch_size: u64,
+    hidden_width: u64,
+    expert_count: u64,
+    top_k: u64,
+    output_dtype: String,
+    logits: Vec<Vec<f64>>,
+    full_probabilities: Vec<Vec<f64>>,
+    selected_expert_ids: Vec<Vec<u64>>,
+    selected_probabilities: Vec<Vec<f64>>,
+    normalized_weights: Vec<Vec<f64>>,
+    logits_f32le_sha256: String,
+    full_probabilities_f32le_sha256: String,
+    selected_probabilities_f32le_sha256: String,
+    normalized_weights_f32le_sha256: String,
+    memory_gauges: TensorFixtureMemoryGauges,
+    passed: bool,
+}
+
+impl RouterResult {
+    pub fn router_case_id(&self) -> &str {
+        &self.router_case_id
+    }
+
+    pub fn operation(&self) -> &str {
+        &self.operation
+    }
+
+    pub fn requested_device(&self) -> &str {
+        &self.requested_device
+    }
+
+    pub fn selected_device(&self) -> &str {
+        &self.selected_device
+    }
+
+    pub fn fallback_used(&self) -> bool {
+        self.fallback_used
+    }
+
+    pub fn evaluated(&self) -> bool {
+        self.evaluated
+    }
+
+    pub fn synchronized(&self) -> bool {
+        self.synchronized
+    }
+
+    pub fn batch_size(&self) -> u64 {
+        self.batch_size
+    }
+
+    pub fn hidden_width(&self) -> u64 {
+        self.hidden_width
+    }
+
+    pub fn expert_count(&self) -> u64 {
+        self.expert_count
+    }
+
+    pub fn top_k(&self) -> u64 {
+        self.top_k
+    }
+
+    pub fn output_dtype(&self) -> &str {
+        &self.output_dtype
+    }
+
+    pub fn logits(&self) -> &[Vec<f64>] {
+        &self.logits
+    }
+
+    pub fn full_probabilities(&self) -> &[Vec<f64>] {
+        &self.full_probabilities
+    }
+
+    pub fn selected_expert_ids(&self) -> &[Vec<u64>] {
+        &self.selected_expert_ids
+    }
+
+    pub fn selected_probabilities(&self) -> &[Vec<f64>] {
+        &self.selected_probabilities
+    }
+
+    pub fn normalized_weights(&self) -> &[Vec<f64>] {
+        &self.normalized_weights
+    }
+
+    pub fn logits_f32le_sha256(&self) -> &str {
+        &self.logits_f32le_sha256
+    }
+
+    pub fn full_probabilities_f32le_sha256(&self) -> &str {
+        &self.full_probabilities_f32le_sha256
+    }
+
+    pub fn selected_probabilities_f32le_sha256(&self) -> &str {
+        &self.selected_probabilities_f32le_sha256
+    }
+
+    pub fn normalized_weights_f32le_sha256(&self) -> &str {
+        &self.normalized_weights_f32le_sha256
+    }
+
+    pub fn memory_gauges(&self) -> &TensorFixtureMemoryGauges {
+        &self.memory_gauges
+    }
+
+    pub fn passed(&self) -> bool {
+        self.passed
+    }
+}
+
+pub(crate) fn parse_router_result(
+    value: Value,
+    request: &RouterRequest,
+) -> Result<RouterResult, WorkerError> {
+    let result: RouterResult = serde_json::from_value(value).map_err(|_| {
+        fixture_protocol_error("router result does not match its bounded protocol-v1 schema")
+    })?;
+    validate_router_numeric_rows(&result.logits)?;
+    validate_router_numeric_rows(&result.full_probabilities)?;
+    validate_router_numeric_rows(&result.selected_probabilities)?;
+    validate_router_numeric_rows(&result.normalized_weights)?;
+    validate_router_result(&result, request)?;
+    Ok(result)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -1949,6 +2169,216 @@ fn validate_fixture_memory_gauges(memory: &TensorFixtureMemoryGauges) -> Result<
     Ok(())
 }
 
+fn validate_router_numeric_rows(rows: &[Vec<f64>]) -> Result<(), WorkerError> {
+    for row in rows {
+        for value in row {
+            if !value.is_finite() {
+                return Err(fixture_protocol_error(
+                    "router result contains a non-finite numeric value",
+                ));
+            }
+            let canonical = *value as f32;
+            if !canonical.is_finite() {
+                return Err(fixture_protocol_error(
+                    "router result contains a value outside float32 range",
+                ));
+            }
+            if f64::from(canonical).to_bits() != value.to_bits() {
+                return Err(fixture_protocol_error(
+                    "router result contains a noncanonical float32 wire value",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_router_result(
+    result: &RouterResult,
+    request: &RouterRequest,
+) -> Result<(), WorkerError> {
+    let expected_rows = request.expected_rows();
+    if result.router_case_id != request.router_case_id
+        || result.operation != ROUTER_OPERATION
+        || result.requested_device != request.device
+        || result.selected_device != APPLE_MLX_DEVICE_ID
+        || result.fallback_used
+        || !result.evaluated
+        || !result.synchronized
+        || result.batch_size != expected_rows as u64
+        || result.batch_size == 0
+        || result.batch_size > ROUTER_MAX_ROWS as u64
+        || result.hidden_width != ROUTER_HIDDEN_WIDTH as u64
+        || result.expert_count != ROUTER_EXPERT_COUNT as u64
+        || result.top_k != ROUTER_TOP_K as u64
+        || result.output_dtype != ROUTER_OUTPUT_DTYPE
+        || !result.passed
+    {
+        return Err(fixture_protocol_error(
+            "router result contradicts the exact admitted execution boundary",
+        ));
+    }
+    if result.logits.len() != expected_rows
+        || result.full_probabilities.len() != expected_rows
+        || result.selected_expert_ids.len() != expected_rows
+        || result.selected_probabilities.len() != expected_rows
+        || result.normalized_weights.len() != expected_rows
+    {
+        return Err(fixture_protocol_error(
+            "router result row count differs from the requested bounded case",
+        ));
+    }
+
+    for row_index in 0..expected_rows {
+        let logits = &result.logits[row_index];
+        let probabilities = &result.full_probabilities[row_index];
+        let ids = &result.selected_expert_ids[row_index];
+        let selected = &result.selected_probabilities[row_index];
+        let normalized = &result.normalized_weights[row_index];
+        if logits.len() != ROUTER_EXPERT_COUNT
+            || probabilities.len() != ROUTER_EXPERT_COUNT
+            || ids.len() != ROUTER_TOP_K
+            || selected.len() != ROUTER_TOP_K
+            || normalized.len() != ROUTER_TOP_K
+        {
+            return Err(fixture_protocol_error(
+                "router result omits a required complete or selected output",
+            ));
+        }
+        if probabilities.iter().any(|value| *value < 0.0)
+            || selected.iter().any(|value| *value < 0.0)
+            || normalized.iter().any(|value| *value < 0.0)
+        {
+            return Err(fixture_protocol_error(
+                "router probabilities or weights contain a negative value",
+            ));
+        }
+        let probability_sum = probabilities.iter().sum::<f64>();
+        let selected_sum = selected.iter().sum::<f64>();
+        let normalized_sum = normalized.iter().sum::<f64>();
+        if !probability_sum.is_finite()
+            || (probability_sum - 1.0).abs() > ROUTER_PROBABILITY_SUM_TOLERANCE
+            || !selected_sum.is_finite()
+            || selected_sum <= 0.0
+            || !normalized_sum.is_finite()
+            || (normalized_sum - 1.0).abs() > ROUTER_PROBABILITY_SUM_TOLERANCE
+        {
+            return Err(fixture_protocol_error(
+                "router probability or normalized-weight sum is invalid",
+            ));
+        }
+        validate_router_softmax(logits, probabilities)?;
+
+        let mut expected_ids = (0..ROUTER_EXPERT_COUNT).collect::<Vec<_>>();
+        expected_ids.sort_by(|left, right| {
+            let left_value = probabilities[*left] as f32;
+            let right_value = probabilities[*right] as f32;
+            right_value
+                .total_cmp(&left_value)
+                .then_with(|| left.cmp(right))
+        });
+        expected_ids.truncate(ROUTER_TOP_K);
+        let unique = ids.iter().copied().collect::<BTreeSet<_>>();
+        if unique.len() != ROUTER_TOP_K
+            || ids
+                .iter()
+                .any(|expert_id| *expert_id >= ROUTER_EXPERT_COUNT as u64)
+            || ids
+                .iter()
+                .copied()
+                .ne(expected_ids.iter().map(|value| *value as u64))
+        {
+            return Err(fixture_protocol_error(
+                "router selected expert IDs or ordering differ from complete probabilities",
+            ));
+        }
+        for (rank, expert_id) in ids.iter().enumerate() {
+            let expert_index = usize::try_from(*expert_id)
+                .map_err(|_| fixture_protocol_error("router expert ID is not representable"))?;
+            if (selected[rank] as f32).to_bits() != (probabilities[expert_index] as f32).to_bits() {
+                return Err(fixture_protocol_error(
+                    "router selected probability differs from its complete-softmax value",
+                ));
+            }
+            let expected_weight = selected[rank] / selected_sum;
+            if (normalized[rank] - expected_weight).abs() > ROUTER_PROBABILITY_SUM_TOLERANCE {
+                return Err(fixture_protocol_error(
+                    "router normalized weight differs from selected-probability normalization",
+                ));
+            }
+        }
+    }
+
+    for checksum in [
+        result.logits_f32le_sha256.as_str(),
+        result.full_probabilities_f32le_sha256.as_str(),
+        result.selected_probabilities_f32le_sha256.as_str(),
+        result.normalized_weights_f32le_sha256.as_str(),
+    ] {
+        if !valid_sha256(checksum) {
+            return Err(fixture_protocol_error(
+                "router result contains a malformed SHA-256 identity",
+            ));
+        }
+    }
+    if hash_router_rows(&result.logits)? != result.logits_f32le_sha256
+        || hash_router_rows(&result.full_probabilities)? != result.full_probabilities_f32le_sha256
+        || hash_router_rows(&result.selected_probabilities)?
+            != result.selected_probabilities_f32le_sha256
+        || hash_router_rows(&result.normalized_weights)? != result.normalized_weights_f32le_sha256
+    {
+        return Err(fixture_protocol_error(
+            "router result checksum does not match its complete float32 readback",
+        ));
+    }
+    validate_fixture_memory_gauges(&result.memory_gauges)
+}
+
+fn validate_router_softmax(logits: &[f64], probabilities: &[f64]) -> Result<(), WorkerError> {
+    if logits.len() != ROUTER_EXPERT_COUNT || probabilities.len() != ROUTER_EXPERT_COUNT {
+        return Err(fixture_protocol_error(
+            "router softmax inputs omit a required expert value",
+        ));
+    }
+    let maximum = logits
+        .iter()
+        .copied()
+        .reduce(f64::max)
+        .expect("complete router row is nonempty");
+    let exponentials = logits
+        .iter()
+        .map(|value| (*value - maximum).exp())
+        .collect::<Vec<_>>();
+    let denominator = exponentials.iter().sum::<f64>();
+    if !denominator.is_finite() || denominator <= 0.0 {
+        return Err(fixture_protocol_error(
+            "router logits do not define a finite complete softmax",
+        ));
+    }
+    for (candidate, exponential) in probabilities.iter().zip(exponentials) {
+        let expected = exponential / denominator;
+        let error = (*candidate - expected).abs();
+        let admitted = ROUTER_PROBABILITY_ABSOLUTE_TOLERANCE
+            + ROUTER_PROBABILITY_RELATIVE_TOLERANCE * expected.abs();
+        if error > admitted {
+            return Err(fixture_protocol_error(
+                "router probabilities are not the full softmax of the complete logits",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn hash_router_rows(rows: &[Vec<f64>]) -> Result<String, WorkerError> {
+    let values = rows
+        .iter()
+        .flatten()
+        .map(|value| *value as f32)
+        .collect::<Vec<_>>();
+    canonical_f32le_sha256(&values)
+        .map_err(|_| fixture_protocol_error("router result could not be canonically hashed"))
+}
+
 fn validate_model_slice_result(
     result: &ModelSliceResult,
     request: &ModelSliceRequest,
@@ -2393,12 +2823,79 @@ impl<'de> Visitor<'de> for NoDuplicateVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     const HELLO: &str = r#"{"protocol":1,"op":"hello","worker_version":"fake-worker-v1","python_version":"3.12.0","python_arch":"arm64","mlx_version":"0.32.0","macos_version":"15.0","metal_available":true,"gpu_count":1,"devices":[{"id":"gpu","kind":"gpu"}],"capabilities":{"operations":["health","shutdown"],"dtypes":["float32"]},"limits":{"max_request_bytes":65536,"max_response_bytes":1048576,"max_fixture_elements":1024}}
 "#;
 
     fn expectation() -> HelloExpectation {
         HelloExpectation::new(PROTOCOL_VERSION, "fake-worker-v1", "0.32.0").expect("valid pins")
+    }
+
+    fn router_result_value() -> Value {
+        let logits = (0..ROUTER_EXPERT_COUNT)
+            .map(|expert_id| (((expert_id * 37) % 128) as f32 - 64.0) / 16.0)
+            .collect::<Vec<_>>();
+        let maximum = logits.iter().copied().reduce(f32::max).expect("nonempty");
+        let exponentials = logits
+            .iter()
+            .map(|value| (*value - maximum).exp())
+            .collect::<Vec<_>>();
+        let denominator = exponentials.iter().copied().sum::<f32>();
+        let probabilities = exponentials
+            .iter()
+            .map(|value| *value / denominator)
+            .collect::<Vec<_>>();
+        let mut ids = (0..ROUTER_EXPERT_COUNT).collect::<Vec<_>>();
+        ids.sort_by(|left, right| {
+            probabilities[*right]
+                .total_cmp(&probabilities[*left])
+                .then_with(|| left.cmp(right))
+        });
+        ids.truncate(ROUTER_TOP_K);
+        let selected = ids
+            .iter()
+            .map(|expert_id| probabilities[*expert_id])
+            .collect::<Vec<_>>();
+        let selected_sum = selected.iter().copied().sum::<f32>();
+        let normalized = selected
+            .iter()
+            .map(|value| *value / selected_sum)
+            .collect::<Vec<_>>();
+
+        json!({
+            "router_case_id": ROUTER_SINGLE_ROW_CASE_ID,
+            "operation": ROUTER_OPERATION,
+            "requested_device": "gpu",
+            "selected_device": "gpu",
+            "fallback_used": false,
+            "evaluated": true,
+            "synchronized": true,
+            "batch_size": 1,
+            "hidden_width": ROUTER_HIDDEN_WIDTH,
+            "expert_count": ROUTER_EXPERT_COUNT,
+            "top_k": ROUTER_TOP_K,
+            "output_dtype": "float32",
+            "logits": [logits],
+            "full_probabilities": [probabilities],
+            "selected_expert_ids": [ids],
+            "selected_probabilities": [selected],
+            "normalized_weights": [normalized],
+            "logits_f32le_sha256": canonical_f32le_sha256(&logits).expect("hash"),
+            "full_probabilities_f32le_sha256": canonical_f32le_sha256(&probabilities).expect("hash"),
+            "selected_probabilities_f32le_sha256": canonical_f32le_sha256(&selected).expect("hash"),
+            "normalized_weights_f32le_sha256": canonical_f32le_sha256(&normalized).expect("hash"),
+            "memory_gauges": {
+                "mlx_active_bytes": null,
+                "mlx_cache_bytes": null,
+                "mlx_peak_bytes": null,
+                "process_footprint_bytes": null,
+                "process_footprint_source": null,
+                "system_pressure": "normal",
+                "reported_summed_total_bytes": null
+            },
+            "passed": true
+        })
     }
 
     #[test]
@@ -2499,5 +2996,66 @@ mod tests {
                 .kind(),
             WorkerErrorKind::MessageTooLarge
         );
+    }
+
+    #[test]
+    fn router_request_is_control_only_and_complete_result_is_validated() {
+        let request = RouterRequest::new(ROUTER_SINGLE_ROW_CASE_ID, "gpu")
+            .expect("registered router request");
+        let params = request.protocol_params();
+        assert_eq!(
+            params.keys().map(String::as_str).collect::<BTreeSet<_>>(),
+            BTreeSet::from(["allow_fallback", "device", "router_case_id"])
+        );
+        assert_eq!(params.get("allow_fallback"), Some(&Value::Bool(false)));
+
+        let result = parse_router_result(router_result_value(), &request)
+            .expect("complete bounded router response");
+        assert_eq!(result.logits().len(), 1);
+        assert_eq!(result.logits()[0].len(), ROUTER_EXPERT_COUNT);
+        assert_eq!(result.selected_expert_ids()[0].len(), ROUTER_TOP_K);
+        assert!(result.passed());
+
+        let mut incomplete = router_result_value();
+        incomplete["logits"] = json!([[0.0]]);
+        assert_eq!(
+            parse_router_result(incomplete, &request)
+                .expect_err("incomplete response")
+                .kind(),
+            WorkerErrorKind::Protocol
+        );
+
+        let mut unrelated_probabilities = router_result_value();
+        let uniform = vec![1.0_f32 / ROUTER_EXPERT_COUNT as f32; ROUTER_EXPERT_COUNT];
+        let ids = (0..ROUTER_TOP_K).collect::<Vec<_>>();
+        let selected = vec![1.0_f32 / ROUTER_EXPERT_COUNT as f32; ROUTER_TOP_K];
+        let normalized = vec![1.0_f32 / ROUTER_TOP_K as f32; ROUTER_TOP_K];
+        let uniform_hash = canonical_f32le_sha256(&uniform).expect("uniform hash");
+        let selected_hash = canonical_f32le_sha256(&selected).expect("selected hash");
+        let normalized_hash = canonical_f32le_sha256(&normalized).expect("normalized hash");
+        unrelated_probabilities["full_probabilities"] = json!([uniform]);
+        unrelated_probabilities["selected_expert_ids"] = json!([ids]);
+        unrelated_probabilities["selected_probabilities"] = json!([selected]);
+        unrelated_probabilities["normalized_weights"] = json!([normalized]);
+        unrelated_probabilities["full_probabilities_f32le_sha256"] = json!(uniform_hash);
+        unrelated_probabilities["selected_probabilities_f32le_sha256"] = json!(selected_hash);
+        unrelated_probabilities["normalized_weights_f32le_sha256"] = json!(normalized_hash);
+        assert_eq!(
+            parse_router_result(unrelated_probabilities, &request)
+                .expect_err("self-consistent probabilities unrelated to logits must fail")
+                .kind(),
+            WorkerErrorKind::Protocol
+        );
+
+        let mut noncanonical_wire_value = router_result_value();
+        noncanonical_wire_value["logits"][0][0] = json!(0.1_f64);
+        assert_eq!(
+            parse_router_result(noncanonical_wire_value, &request)
+                .expect_err("higher-precision wire value must fail")
+                .kind(),
+            WorkerErrorKind::Protocol
+        );
+        assert!(RouterRequest::new("unregistered-router", "gpu").is_err());
+        assert!(RouterRequest::new(ROUTER_SINGLE_ROW_CASE_ID, "cpu").is_err());
     }
 }

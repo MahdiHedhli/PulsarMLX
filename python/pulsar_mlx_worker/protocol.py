@@ -39,6 +39,7 @@ REQUIRED_OPERATIONS = frozenset(
         "tensor_probe",
         "run_fixture",
         "run_model_slice",
+        "run_router",
         "run_synthetic_moe",
         "shutdown",
     }

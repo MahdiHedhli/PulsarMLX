@@ -1,0 +1,1229 @@
+"""Bounded model-free Feature 002 complete-router execution.
+
+The public worker operation resolves only committed synthetic fixtures.  This
+module never accepts a model path through the control protocol, never imports
+MLX before host validation completes, and never reads the independent golden
+router outputs used to judge the implementation.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
+import hashlib
+import json
+import math
+from pathlib import Path
+import stat
+import struct
+from typing import Any
+
+from .runtime import (
+    GPU_DEVICE_ID,
+    MemoryGauges,
+    RuntimeContractError,
+    collect_memory_gauges,
+    sanitize_gpu_descriptor,
+)
+
+
+ROUTER_CONTRACT_ID = "qwen3moe-layer0-router-parity-v1"
+ROUTER_OPERATION_ID = "complete_router_projection_topk"
+SINGLE_ROW_CASE_ID = "generated-qwen3moe-router-single-row-v1"
+BOUNDED_BATCH_CASE_ID = "generated-qwen3moe-router-two-row-v1"
+HIDDEN_WIDTH = 2_048
+EXPERT_COUNT = 128
+TOP_K = 8
+MAXIMUM_ROWS = 2
+OUTPUT_DTYPE = "float32"
+TIE_RULE = "probability_descending_then_expert_id_ascending"
+NORMALIZATION_RULE = (
+    "full_128_way_softmax_then_selected_probability_renormalization"
+)
+
+_FIXTURE_ID = "generated-qwen3moe-router-v1"
+_HIDDEN_FIXTURE_ID = "generated-qwen3moe-router-hidden-states-v1"
+_WEIGHT_FIXTURE_ID = "generated-qwen3moe-router-weights-v1"
+_PROVENANCE = "synthetic_generated_model_free"
+_FIXTURE_ROOT = (
+    Path(__file__).resolve().parents[2] / "fixtures" / "research" / "router-v1"
+)
+_MANIFEST_PATH = _FIXTURE_ROOT / "manifest.json"
+_HIDDEN_PATH = _FIXTURE_ROOT / "golden" / "hidden_states.json"
+_WEIGHT_RECIPE_PATH = _FIXTURE_ROOT / "golden" / "weight_recipe.json"
+_MAX_MANIFEST_BYTES = 64 * 1024
+_MAX_HIDDEN_DOCUMENT_BYTES = 128 * 1024
+_MAX_RECIPE_BYTES = 16 * 1024
+_WEIGHT_ELEMENT_COUNT = EXPERT_COUNT * HIDDEN_WIDTH
+_WEIGHT_BYTES = _WEIGHT_ELEMENT_COUNT * 4
+_MAX_IDENTIFIER_CHARS = 128
+_PROBABILITY_SUM_TOLERANCE = 1.0e-6
+_PROBABILITY_RELATIVE_TOLERANCE = 1.0e-6
+
+_CASE_ROWS = {
+    SINGLE_ROW_CASE_ID: 1,
+    BOUNDED_BATCH_CASE_ID: 2,
+}
+_ROW_IDS = (
+    "generated-qwen3moe-router-one-hot-column-0-v1",
+    "generated-qwen3moe-router-one-hot-column-1-v1",
+)
+_EXPECTED_TOP8_IDS = (
+    (83, 38, 121, 76, 31, 114, 69, 24),
+    (24, 123, 94, 65, 36, 7, 106, 77),
+)
+
+
+class RouterError(RuntimeContractError):
+    """Stable bounded failure at the Feature 002 router boundary."""
+
+
+@dataclass(frozen=True, slots=True)
+class RouterResult:
+    """One complete evaluated and synchronized bounded router result."""
+
+    router_case_id: str
+    operation: str
+    requested_device: str
+    selected_device: str
+    fallback_used: bool
+    evaluated: bool
+    synchronized: bool
+    batch_size: int
+    hidden_width: int
+    expert_count: int
+    top_k: int
+    output_dtype: str
+    logits: tuple[tuple[float, ...], ...]
+    full_probabilities: tuple[tuple[float, ...], ...]
+    selected_expert_ids: tuple[tuple[int, ...], ...]
+    selected_probabilities: tuple[tuple[float, ...], ...]
+    normalized_weights: tuple[tuple[float, ...], ...]
+    logits_f32le_sha256: str
+    full_probabilities_f32le_sha256: str
+    selected_probabilities_f32le_sha256: str
+    normalized_weights_f32le_sha256: str
+    memory_gauges: MemoryGauges
+
+    @property
+    def passed(self) -> bool:
+        """Report only the raw evaluated GPU execution-envelope status."""
+
+        return (
+            self.requested_device == GPU_DEVICE_ID
+            and self.selected_device == GPU_DEVICE_ID
+            and not self.fallback_used
+            and self.evaluated
+            and self.synchronized
+        )
+
+    def to_protocol_result(self) -> dict[str, object]:
+        """Return the strict control-response schema consumed by Rust."""
+
+        return {
+            "router_case_id": self.router_case_id,
+            "operation": self.operation,
+            "requested_device": self.requested_device,
+            "selected_device": self.selected_device,
+            "fallback_used": self.fallback_used,
+            "evaluated": self.evaluated,
+            "synchronized": self.synchronized,
+            "batch_size": self.batch_size,
+            "hidden_width": self.hidden_width,
+            "expert_count": self.expert_count,
+            "top_k": self.top_k,
+            "output_dtype": self.output_dtype,
+            "logits": [list(row) for row in self.logits],
+            "full_probabilities": [list(row) for row in self.full_probabilities],
+            "selected_expert_ids": [list(row) for row in self.selected_expert_ids],
+            "selected_probabilities": [
+                list(row) for row in self.selected_probabilities
+            ],
+            "normalized_weights": [list(row) for row in self.normalized_weights],
+            "logits_f32le_sha256": self.logits_f32le_sha256,
+            "full_probabilities_f32le_sha256": (
+                self.full_probabilities_f32le_sha256
+            ),
+            "selected_probabilities_f32le_sha256": (
+                self.selected_probabilities_f32le_sha256
+            ),
+            "normalized_weights_f32le_sha256": (
+                self.normalized_weights_f32le_sha256
+            ),
+            "memory_gauges": self.memory_gauges.to_protocol_result(),
+            "passed": self.passed,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class _CommittedRouterCase:
+    router_case_id: str
+    hidden_states: tuple[tuple[float, ...], ...]
+    router_weights: tuple[tuple[float, ...], ...]
+
+
+RouterCoreRunner = Callable[..., RouterResult]
+
+
+def run_router(
+    *,
+    router_case_id: object,
+    hidden_states: object,
+    router_weights: object,
+    requested_device: object,
+    allow_fallback: object,
+    mx_module: Any | None = None,
+) -> RouterResult:
+    """Validate and evaluate one complete synthetic router case on MLX GPU."""
+
+    expected_rows = _expected_case_rows(router_case_id)
+    if (
+        not isinstance(requested_device, str)
+        or requested_device != GPU_DEVICE_ID
+        or allow_fallback is not False
+    ):
+        raise RouterError(
+            "device_unavailable",
+            "router execution requires explicit GPU selection without fallback",
+        )
+
+    # All shape, type, cardinality, and finite-value checks finish before the
+    # MLX module is imported, dereferenced, or used to construct an array.
+    admitted_hidden = _validate_float32_matrix(
+        hidden_states,
+        expected_rows=expected_rows,
+        expected_columns=HIDDEN_WIDTH,
+        label="router hidden states",
+    )
+    admitted_weights = _validate_float32_matrix(
+        router_weights,
+        expected_rows=EXPERT_COUNT,
+        expected_columns=HIDDEN_WIDTH,
+        label="router weights",
+    )
+
+    mx = mx_module if mx_module is not None else _import_mlx()
+    try:
+        selected_device, fallback_used, gpu = _validate_explicit_gpu_selection(
+            mx,
+            requested_device=requested_device,
+        )
+        with mx.stream(gpu):
+            hidden_array = mx.array(admitted_hidden, dtype=mx.float32)
+            weight_array = mx.array(admitted_weights, dtype=mx.float32)
+            transposed_weights = mx.transpose(
+                weight_array,
+                (1, 0),
+                stream=gpu,
+            )
+            logits_array = mx.matmul(
+                hidden_array,
+                transposed_weights,
+                stream=gpu,
+            )
+            probability_array = mx.softmax(
+                logits_array,
+                axis=1,
+                stream=gpu,
+            )
+            # Assign every expert its exact lexicographic rank under
+            # (probability descending, expert ID ascending).  Ranks are
+            # unique even when probabilities tie, so argsort never has to
+            # choose an order among equal keys or rely on sort stability.
+            expert_ids = mx.arange(
+                EXPERT_COUNT,
+                dtype=mx.uint32,
+                stream=gpu,
+            )
+            candidate_probabilities = probability_array[:, :, None]
+            competing_probabilities = probability_array[:, None, :]
+            strictly_better = competing_probabilities > candidate_probabilities
+            equal_with_lower_id = (
+                competing_probabilities == candidate_probabilities
+            ) & (expert_ids[None, None, :] < expert_ids[None, :, None])
+            lexicographic_rank = mx.sum(
+                strictly_better | equal_with_lower_id,
+                axis=2,
+                stream=gpu,
+            )
+            order_array = mx.argsort(
+                lexicographic_rank,
+                axis=1,
+                stream=gpu,
+            )
+            selected_id_array = order_array[:, :TOP_K]
+            selected_probability_array = mx.take_along_axis(
+                probability_array,
+                selected_id_array,
+                axis=1,
+                stream=gpu,
+            )
+            selected_sum_array = mx.sum(
+                selected_probability_array,
+                axis=1,
+                keepdims=True,
+                stream=gpu,
+            )
+            normalized_weight_array = (
+                selected_probability_array / selected_sum_array
+            )
+
+        mx.eval(
+            logits_array,
+            probability_array,
+            selected_id_array,
+            selected_probability_array,
+            normalized_weight_array,
+        )
+        evaluated = True
+        mx.synchronize(gpu)
+        synchronized = True
+
+        _require_array_metadata(
+            mx,
+            logits_array,
+            (expected_rows, EXPERT_COUNT),
+            require_float32=True,
+        )
+        _require_array_metadata(
+            mx,
+            probability_array,
+            (expected_rows, EXPERT_COUNT),
+            require_float32=True,
+        )
+        _require_array_metadata(
+            mx,
+            selected_id_array,
+            (expected_rows, TOP_K),
+            require_float32=False,
+        )
+        _require_array_metadata(
+            mx,
+            selected_probability_array,
+            (expected_rows, TOP_K),
+            require_float32=True,
+        )
+        _require_array_metadata(
+            mx,
+            normalized_weight_array,
+            (expected_rows, TOP_K),
+            require_float32=True,
+        )
+
+        logits = _float_matrix_readback(
+            logits_array.tolist(),
+            expected_rows=expected_rows,
+            expected_columns=EXPERT_COUNT,
+        )
+        full_probabilities = _float_matrix_readback(
+            probability_array.tolist(),
+            expected_rows=expected_rows,
+            expected_columns=EXPERT_COUNT,
+        )
+        selected_expert_ids = _integer_matrix_readback(
+            selected_id_array.tolist(),
+            expected_rows=expected_rows,
+            expected_columns=TOP_K,
+        )
+        selected_probabilities = _float_matrix_readback(
+            selected_probability_array.tolist(),
+            expected_rows=expected_rows,
+            expected_columns=TOP_K,
+        )
+        normalized_weights = _float_matrix_readback(
+            normalized_weight_array.tolist(),
+            expected_rows=expected_rows,
+            expected_columns=TOP_K,
+        )
+        memory_gauges = collect_memory_gauges(mx)
+    except RouterError:
+        raise
+    except RuntimeContractError as error:
+        raise RouterError(error.code, error.message) from error
+    except Exception as error:
+        raise RouterError(
+            "evaluation_failed",
+            "the complete MLX router operation did not complete",
+        ) from error
+
+    _validate_complete_result(
+        logits,
+        full_probabilities,
+        selected_expert_ids,
+        selected_probabilities,
+        normalized_weights,
+    )
+    return RouterResult(
+        router_case_id=router_case_id,
+        operation=ROUTER_OPERATION_ID,
+        requested_device=requested_device,
+        selected_device=selected_device,
+        fallback_used=fallback_used,
+        evaluated=evaluated,
+        synchronized=synchronized,
+        batch_size=expected_rows,
+        hidden_width=HIDDEN_WIDTH,
+        expert_count=EXPERT_COUNT,
+        top_k=TOP_K,
+        output_dtype=OUTPUT_DTYPE,
+        logits=logits,
+        full_probabilities=full_probabilities,
+        selected_expert_ids=selected_expert_ids,
+        selected_probabilities=selected_probabilities,
+        normalized_weights=normalized_weights,
+        logits_f32le_sha256=_canonical_f32le_sha256(logits),
+        full_probabilities_f32le_sha256=_canonical_f32le_sha256(
+            full_probabilities
+        ),
+        selected_probabilities_f32le_sha256=_canonical_f32le_sha256(
+            selected_probabilities
+        ),
+        normalized_weights_f32le_sha256=_canonical_f32le_sha256(
+            normalized_weights
+        ),
+        memory_gauges=memory_gauges,
+    )
+
+
+def _validate_explicit_gpu_selection(
+    mx: Any,
+    *,
+    requested_device: str,
+) -> tuple[str, bool, Any]:
+    """Resolve and validate the exact MLX GPU target without fallback."""
+
+    try:
+        gpu = mx.gpu
+        selected_device = gpu.name
+        metal_available = bool(mx.metal.is_available())
+        descriptor = sanitize_gpu_descriptor(mx.device_info(gpu))
+    except RuntimeContractError as error:
+        raise RouterError(error.code, error.message) from error
+    except Exception as error:
+        raise RouterError(
+            "device_unavailable",
+            "MLX could not validate the explicitly selected GPU",
+        ) from error
+
+    if (
+        selected_device != GPU_DEVICE_ID
+        or descriptor.device_id != selected_device
+        or not metal_available
+    ):
+        raise RouterError(
+            "device_unavailable",
+            "MLX could not validate the explicitly selected GPU",
+        )
+
+    fallback_used = selected_device != requested_device
+    if fallback_used:
+        raise RouterError(
+            "device_unavailable",
+            "router execution cannot fall back from the requested GPU",
+        )
+    return selected_device, fallback_used, gpu
+
+
+def run_committed_router(
+    *,
+    router_case_id: object,
+    requested_device: object,
+    allow_fallback: object,
+    router_runner: RouterCoreRunner | None = None,
+) -> RouterResult:
+    """Resolve one committed generated case and execute no caller data."""
+
+    expected_rows = _expected_case_rows(router_case_id)
+    if requested_device != GPU_DEVICE_ID or allow_fallback is not False:
+        raise RouterError(
+            "device_unavailable",
+            "router execution requires explicit GPU selection without fallback",
+        )
+    committed = _load_committed_router_case(router_case_id, expected_rows)
+    runner = run_router if router_runner is None else router_runner
+    return runner(
+        router_case_id=committed.router_case_id,
+        hidden_states=committed.hidden_states,
+        router_weights=committed.router_weights,
+        requested_device=GPU_DEVICE_ID,
+        allow_fallback=False,
+    )
+
+
+def _expected_case_rows(router_case_id: object) -> int:
+    if not isinstance(router_case_id, str) or not _valid_identifier(router_case_id):
+        raise RouterError(
+            "malformed_request",
+            "router case identity must be a bounded stable string",
+        )
+    expected_rows = _CASE_ROWS.get(router_case_id)
+    if expected_rows is None:
+        raise RouterError(
+            "unsupported_operation",
+            "router case identity is not a committed generated fixture",
+        )
+    return expected_rows
+
+
+def _validate_float32_matrix(
+    value: object,
+    *,
+    expected_rows: int,
+    expected_columns: int,
+    label: str,
+) -> tuple[tuple[float, ...], ...]:
+    if (
+        not isinstance(value, Sequence)
+        or isinstance(value, (str, bytes, bytearray, memoryview))
+        or len(value) != expected_rows
+    ):
+        raise RouterError(
+            "invalid_shape",
+            f"{label} has an invalid row count",
+        )
+    result: list[tuple[float, ...]] = []
+    for row in value:
+        if (
+            not isinstance(row, Sequence)
+            or isinstance(row, (str, bytes, bytearray, memoryview))
+            or len(row) != expected_columns
+        ):
+            raise RouterError(
+                "invalid_shape",
+                f"{label} has an invalid column count",
+            )
+        converted: list[float] = []
+        for element in row:
+            if isinstance(element, bool) or not isinstance(element, (int, float)):
+                raise RouterError(
+                    "invalid_dtype",
+                    f"{label} contains a nonnumeric value",
+                )
+            try:
+                number = float(element)
+                canonical = struct.unpack("<f", struct.pack("<f", number))[0]
+            except (OverflowError, struct.error, ValueError) as error:
+                raise RouterError(
+                    "invalid_dtype",
+                    f"{label} contains a value outside float32 range",
+                ) from error
+            if not math.isfinite(number) or not math.isfinite(canonical):
+                raise RouterError(
+                    "invalid_dtype",
+                    f"{label} contains a non-finite value",
+                )
+            converted.append(canonical)
+        result.append(tuple(converted))
+    return tuple(result)
+
+
+def _import_mlx() -> Any:
+    try:
+        import mlx.core as mx
+    except Exception as error:
+        raise RouterError(
+            "device_unavailable",
+            "the pinned MLX runtime could not be imported for router execution",
+        ) from error
+    return mx
+
+
+def _require_array_metadata(
+    mx: Any,
+    array: Any,
+    expected_shape: tuple[int, int],
+    *,
+    require_float32: bool,
+) -> None:
+    try:
+        shape = tuple(array.shape)
+        dtype = array.dtype
+    except Exception as error:
+        raise RouterError(
+            "evaluation_failed",
+            "an evaluated router array lacks bounded metadata",
+        ) from error
+    if shape != expected_shape:
+        raise RouterError(
+            "invalid_shape",
+            "an evaluated router array has an invalid shape",
+        )
+    if require_float32 and dtype != mx.float32:
+        raise RouterError(
+            "invalid_dtype",
+            "an evaluated router array is not float32",
+        )
+
+
+def _float_matrix_readback(
+    value: object,
+    *,
+    expected_rows: int,
+    expected_columns: int,
+) -> tuple[tuple[float, ...], ...]:
+    if not isinstance(value, (list, tuple)) or len(value) != expected_rows:
+        raise RouterError(
+            "invalid_shape",
+            "router float readback has an invalid row count",
+        )
+    result: list[tuple[float, ...]] = []
+    for row in value:
+        if not isinstance(row, (list, tuple)) or len(row) != expected_columns:
+            raise RouterError(
+                "invalid_shape",
+                "router float readback has an invalid column count",
+            )
+        converted: list[float] = []
+        for element in row:
+            if isinstance(element, bool) or not isinstance(element, (int, float)):
+                raise RouterError(
+                    "evaluation_failed",
+                    "router float readback contains a nonnumeric value",
+                )
+            number = float(element)
+            if not math.isfinite(number):
+                raise RouterError(
+                    "evaluation_failed",
+                    "router float readback contains a non-finite value",
+                )
+            converted.append(number)
+        result.append(tuple(converted))
+    return tuple(result)
+
+
+def _integer_matrix_readback(
+    value: object,
+    *,
+    expected_rows: int,
+    expected_columns: int,
+) -> tuple[tuple[int, ...], ...]:
+    if not isinstance(value, (list, tuple)) or len(value) != expected_rows:
+        raise RouterError(
+            "invalid_shape",
+            "router ID readback has an invalid row count",
+        )
+    result: list[tuple[int, ...]] = []
+    for row in value:
+        if not isinstance(row, (list, tuple)) or len(row) != expected_columns:
+            raise RouterError(
+                "invalid_shape",
+                "router ID readback has an invalid column count",
+            )
+        converted: list[int] = []
+        for element in row:
+            if isinstance(element, bool) or not isinstance(element, int):
+                raise RouterError(
+                    "evaluation_failed",
+                    "router ID readback contains a non-integer value",
+                )
+            converted.append(element)
+        result.append(tuple(converted))
+    return tuple(result)
+
+
+def _validate_complete_result(
+    logits: tuple[tuple[float, ...], ...],
+    probabilities: tuple[tuple[float, ...], ...],
+    selected_ids: tuple[tuple[int, ...], ...],
+    selected_probabilities: tuple[tuple[float, ...], ...],
+    normalized_weights: tuple[tuple[float, ...], ...],
+) -> None:
+    for row_index, probability_row in enumerate(probabilities):
+        logit_row = logits[row_index]
+        selected_id_row = selected_ids[row_index]
+        selected_row = selected_probabilities[row_index]
+        normalized_row = normalized_weights[row_index]
+        if any(value < 0.0 for value in probability_row):
+            raise RouterError(
+                "evaluation_failed",
+                "complete router probabilities contain a negative value",
+            )
+        if abs(sum(probability_row) - 1.0) > _PROBABILITY_SUM_TOLERANCE:
+            raise RouterError(
+                "evaluation_failed",
+                "complete router probabilities do not sum to one",
+            )
+        maximum = max(logit_row)
+        exponentials = tuple(math.exp(value - maximum) for value in logit_row)
+        denominator = sum(exponentials)
+        if not math.isfinite(denominator) or denominator <= 0.0:
+            raise RouterError(
+                "evaluation_failed",
+                "complete router logits do not define a finite softmax",
+            )
+        for candidate, exponential in zip(probability_row, exponentials):
+            expected = exponential / denominator
+            admitted_error = _PROBABILITY_SUM_TOLERANCE + (
+                _PROBABILITY_RELATIVE_TOLERANCE * abs(expected)
+            )
+            if abs(candidate - expected) > admitted_error:
+                raise RouterError(
+                    "evaluation_failed",
+                    "complete router probabilities are not the full softmax of logits",
+                )
+        expected_ids = tuple(
+            sorted(
+                range(EXPERT_COUNT),
+                key=lambda expert_id: (
+                    -probability_row[expert_id],
+                    expert_id,
+                ),
+            )[:TOP_K]
+        )
+        if selected_id_row != expected_ids or len(set(selected_id_row)) != TOP_K:
+            raise RouterError(
+                "evaluation_failed",
+                "router expert IDs do not follow the deterministic top-k rule",
+            )
+        selected_sum = sum(selected_row)
+        if not math.isfinite(selected_sum) or selected_sum <= 0.0:
+            raise RouterError(
+                "evaluation_failed",
+                "selected router probabilities have an invalid denominator",
+            )
+        if abs(sum(normalized_row) - 1.0) > _PROBABILITY_SUM_TOLERANCE:
+            raise RouterError(
+                "evaluation_failed",
+                "normalized router weights do not sum to one",
+            )
+        for rank, expert_id in enumerate(selected_id_row):
+            if not 0 <= expert_id < EXPERT_COUNT:
+                raise RouterError(
+                    "evaluation_failed",
+                    "router result contains an out-of-range expert ID",
+                )
+            if _f32_bits(selected_row[rank]) != _f32_bits(
+                probability_row[expert_id]
+            ):
+                raise RouterError(
+                    "evaluation_failed",
+                    "selected probability differs from complete softmax output",
+                )
+            expected_weight = selected_row[rank] / selected_sum
+            if abs(normalized_row[rank] - expected_weight) > _PROBABILITY_SUM_TOLERANCE:
+                raise RouterError(
+                    "evaluation_failed",
+                    "router weight differs from selected-probability normalization",
+                )
+
+
+def _canonical_f32le_sha256(rows: Sequence[Sequence[float]]) -> str:
+    digest = hashlib.sha256()
+    for row in rows:
+        for value in row:
+            try:
+                digest.update(struct.pack("<f", value))
+            except (OverflowError, struct.error) as error:
+                raise RouterError(
+                    "internal_worker_error",
+                    "router result could not be canonically hashed",
+                ) from error
+    return digest.hexdigest()
+
+
+def _canonical_f32le_bytes(rows: Sequence[Sequence[float]]) -> bytes:
+    output = bytearray()
+    for row in rows:
+        for value in row:
+            output.extend(struct.pack("<f", value))
+    return bytes(output)
+
+
+def _f32_bits(value: float) -> bytes:
+    return struct.pack("<f", value)
+
+
+def _load_committed_router_case(
+    router_case_id: object,
+    expected_rows: int,
+) -> _CommittedRouterCase:
+    manifest, _ = _read_strict_json(
+        _MANIFEST_PATH,
+        maximum_bytes=_MAX_MANIFEST_BYTES,
+        label="router fixture manifest",
+    )
+    _validate_manifest(manifest)
+
+    hidden_document, hidden_payload = _read_strict_json(
+        _HIDDEN_PATH,
+        maximum_bytes=_MAX_HIDDEN_DOCUMENT_BYTES,
+        label="router hidden-state fixture",
+    )
+    recipe, recipe_payload = _read_strict_json(
+        _WEIGHT_RECIPE_PATH,
+        maximum_bytes=_MAX_RECIPE_BYTES,
+        label="router weight recipe",
+    )
+    _validate_manifest_file(
+        manifest,
+        relative_path="golden/hidden_states.json",
+        payload=hidden_payload,
+    )
+    _validate_manifest_file(
+        manifest,
+        relative_path="golden/weight_recipe.json",
+        payload=recipe_payload,
+    )
+
+    hidden_rows = _validate_hidden_document(hidden_document)
+    router_weights = _build_weights_from_recipe(recipe)
+    selected_hidden = hidden_rows[:expected_rows]
+    case = _manifest_case(manifest, router_case_id)
+    if (
+        case.get("expected_result_key") != router_case_id
+        or case.get("hidden_shape") != [expected_rows, HIDDEN_WIDTH]
+        or case.get("hidden_row_ids") != list(_ROW_IDS[:expected_rows])
+        or case.get("hidden_f32le_sha256")
+        != hashlib.sha256(_canonical_f32le_bytes(selected_hidden)).hexdigest()
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router case contradicts its generated inputs",
+        )
+    return _CommittedRouterCase(
+        router_case_id=router_case_id,
+        hidden_states=selected_hidden,
+        router_weights=router_weights,
+    )
+
+
+def _read_strict_json(
+    path: Path,
+    *,
+    maximum_bytes: int,
+    label: str,
+) -> tuple[dict[str, object], bytes]:
+    try:
+        observed = path.lstat()
+        if not stat.S_ISREG(observed.st_mode):
+            raise OSError("not a regular file")
+        payload = path.read_bytes()
+    except OSError as error:
+        raise RouterError(
+            "internal_worker_error",
+            f"the committed {label} is unavailable",
+        ) from error
+    if not payload or len(payload) > maximum_bytes:
+        raise RouterError(
+            "resource_limit",
+            f"the committed {label} violates its byte bound",
+        )
+    try:
+        document = json.loads(
+            payload.decode("utf-8", errors="strict"),
+            object_pairs_hook=_object_without_duplicates,
+            parse_constant=_reject_nonfinite,
+        )
+    except (UnicodeDecodeError, ValueError, RecursionError, json.JSONDecodeError) as error:
+        raise RouterError(
+            "internal_worker_error",
+            f"the committed {label} is not strict JSON",
+        ) from error
+    if not isinstance(document, dict):
+        raise RouterError(
+            "internal_worker_error",
+            f"the committed {label} root is not an object",
+        )
+    return document, payload
+
+
+def _validate_manifest(manifest: Mapping[str, object]) -> None:
+    _require_exact_keys(
+        manifest,
+        {
+            "schema",
+            "schema_version",
+            "fixture_id",
+            "provenance",
+            "contract",
+            "hidden_state_fixture",
+            "weight_fixture",
+            "cases",
+            "expected_results",
+            "files",
+            "scope",
+        },
+        "router fixture manifest",
+    )
+    if (
+        manifest.get("schema") != "pulsarmlx.fixture.router-manifest"
+        or manifest.get("schema_version") != "1.0.0"
+        or manifest.get("fixture_id") != _FIXTURE_ID
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router fixture identity is invalid",
+        )
+    provenance = manifest.get("provenance")
+    if not isinstance(provenance, Mapping) or (
+        provenance.get("model_free") is not True
+        or provenance.get("external_checkpoint_access_required") is not False
+        or provenance.get("kind") != "synthetic_generated"
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router fixture provenance is invalid",
+        )
+    contract = manifest.get("contract")
+    expected_contract = {
+        "contract_id": ROUTER_CONTRACT_ID,
+        "expert_count": EXPERT_COUNT,
+        "hidden_width": HIDDEN_WIDTH,
+        "normalization": NORMALIZATION_RULE,
+        "tie_rule": TIE_RULE,
+        "top_k": TOP_K,
+        "weight_byte_order": "little",
+        "weight_dtype": OUTPUT_DTYPE,
+        "weight_layout": "expert_major_rows_input_columns",
+    }
+    if contract != expected_contract:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router fixture contract is invalid",
+        )
+    if manifest.get("hidden_state_fixture") != {
+        "canonical_byte_length": MAXIMUM_ROWS * HIDDEN_WIDTH * 4,
+        "canonical_f32le_sha256": (
+            "c2237ebd53872efd59a481129db6ce422a3af96193eeba65c834af6ebfb314e8"
+        ),
+        "complete_shape": [MAXIMUM_ROWS, HIDDEN_WIDTH],
+        "finite": True,
+        "path": "golden/hidden_states.json",
+        "rows_distinct": True,
+    }:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router hidden-state manifest is invalid",
+        )
+    if manifest.get("weight_fixture") != {
+        "canonical_byte_length": _WEIGHT_BYTES,
+        "canonical_f32le_sha256": (
+            "b625762a76a6dab4df249cc56a97946847710e59155585329c7dfa350c8c294f"
+        ),
+        "raw_weight_bytes_committed": False,
+        "recipe_path": "golden/weight_recipe.json",
+        "shape": [EXPERT_COUNT, HIDDEN_WIDTH],
+    }:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router weight manifest is invalid",
+        )
+    cases = manifest.get("cases")
+    if (
+        not isinstance(cases, list)
+        or len(cases) != len(_CASE_ROWS)
+        or {
+            case.get("case_id")
+            for case in cases
+            if isinstance(case, Mapping)
+        }
+        != set(_CASE_ROWS)
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router case inventory is invalid",
+        )
+
+
+def _manifest_file(
+    manifest: Mapping[str, object],
+    relative_path: str,
+) -> Mapping[str, object]:
+    files = manifest.get("files")
+    if not isinstance(files, list):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router manifest file inventory is invalid",
+        )
+    matches = [
+        entry
+        for entry in files
+        if isinstance(entry, Mapping) and entry.get("path") == relative_path
+    ]
+    if len(matches) != 1:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router manifest file identity is ambiguous",
+        )
+    return matches[0]
+
+
+def _validate_manifest_file(
+    manifest: Mapping[str, object],
+    *,
+    relative_path: str,
+    payload: bytes,
+) -> None:
+    entry = _manifest_file(manifest, relative_path)
+    if (
+        entry.get("byte_length") != len(payload)
+        or entry.get("sha256") != hashlib.sha256(payload).hexdigest()
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "a committed router fixture file differs from its manifest",
+        )
+
+
+def _manifest_case(
+    manifest: Mapping[str, object],
+    router_case_id: object,
+) -> Mapping[str, object]:
+    cases = manifest.get("cases")
+    if not isinstance(cases, list):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router case inventory is invalid",
+        )
+    matches = [
+        case
+        for case in cases
+        if isinstance(case, Mapping) and case.get("case_id") == router_case_id
+    ]
+    if len(matches) != 1:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router case identity is missing or duplicated",
+        )
+    _require_exact_keys(
+        matches[0],
+        {
+            "case_id",
+            "expected_result_key",
+            "hidden_f32le_sha256",
+            "hidden_row_ids",
+            "hidden_shape",
+        },
+        "router case",
+    )
+    return matches[0]
+
+
+def _validate_hidden_document(
+    document: Mapping[str, object],
+) -> tuple[tuple[float, ...], ...]:
+    _require_exact_keys(
+        document,
+        {
+            "schema",
+            "schema_version",
+            "fixture_id",
+            "provenance",
+            "shape",
+            "dtype",
+            "byte_order",
+            "canonical_byte_length",
+            "canonical_f32le_sha256",
+            "rows",
+        },
+        "router hidden-state fixture",
+    )
+    if (
+        document.get("schema") != "pulsarmlx.fixture.router-hidden-states"
+        or document.get("schema_version") != "1.0.0"
+        or document.get("fixture_id") != _HIDDEN_FIXTURE_ID
+        or document.get("provenance") != _PROVENANCE
+        or document.get("shape") != [MAXIMUM_ROWS, HIDDEN_WIDTH]
+        or document.get("dtype") != OUTPUT_DTYPE
+        or document.get("byte_order") != "little"
+        or document.get("canonical_byte_length") != MAXIMUM_ROWS * HIDDEN_WIDTH * 4
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router hidden-state contract is invalid",
+        )
+    rows = document.get("rows")
+    if not isinstance(rows, list) or len(rows) != MAXIMUM_ROWS:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router hidden-state rows are invalid",
+        )
+    raw_values: list[object] = []
+    for row_index, row in enumerate(rows):
+        if not isinstance(row, Mapping):
+            raise RouterError(
+                "internal_worker_error",
+                "a committed router hidden-state row is invalid",
+            )
+        _require_exact_keys(
+            row,
+            {"row_id", "one_hot_column", "values", "canonical_f32le_sha256"},
+            "router hidden-state row",
+        )
+        if (
+            row.get("row_id") != _ROW_IDS[row_index]
+            or row.get("one_hot_column") != row_index
+        ):
+            raise RouterError(
+                "internal_worker_error",
+                "a committed router hidden-state row identity is invalid",
+            )
+        raw_values.append(row.get("values"))
+    admitted = _validate_float32_matrix(
+        raw_values,
+        expected_rows=MAXIMUM_ROWS,
+        expected_columns=HIDDEN_WIDTH,
+        label="committed router hidden states",
+    )
+    for row_index, row in enumerate(admitted):
+        if any(
+            value != (1.0 if column == row_index else 0.0)
+            for column, value in enumerate(row)
+        ):
+            raise RouterError(
+                "internal_worker_error",
+                "a committed router hidden-state row is not its frozen one-hot input",
+            )
+        if rows[row_index].get("canonical_f32le_sha256") != hashlib.sha256(
+            _canonical_f32le_bytes((row,))
+        ).hexdigest():
+            raise RouterError(
+                "internal_worker_error",
+                "a committed router hidden-state row hash is invalid",
+            )
+    canonical = _canonical_f32le_bytes(admitted)
+    if (
+        len(canonical) != document.get("canonical_byte_length")
+        or hashlib.sha256(canonical).hexdigest()
+        != document.get("canonical_f32le_sha256")
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router hidden-state hash is invalid",
+        )
+    return admitted
+
+
+def _build_weights_from_recipe(
+    recipe: Mapping[str, object],
+) -> tuple[tuple[float, ...], ...]:
+    _require_exact_keys(
+        recipe,
+        {
+            "schema",
+            "schema_version",
+            "fixture_id",
+            "provenance",
+            "shape",
+            "dtype",
+            "byte_order",
+            "layout",
+            "logical_element_count",
+            "canonical_byte_length",
+            "canonical_encoding",
+            "canonical_f32le_sha256",
+            "raw_weight_bytes_committed",
+            "columns",
+            "remaining_columns",
+        },
+        "router weight recipe",
+    )
+    if (
+        recipe.get("schema") != "pulsarmlx.fixture.router-weight-recipe"
+        or recipe.get("schema_version") != "1.0.0"
+        or recipe.get("fixture_id") != _WEIGHT_FIXTURE_ID
+        or recipe.get("provenance") != _PROVENANCE
+        or recipe.get("shape") != [EXPERT_COUNT, HIDDEN_WIDTH]
+        or recipe.get("dtype") != OUTPUT_DTYPE
+        or recipe.get("byte_order") != "little"
+        or recipe.get("layout") != "expert_major_rows_input_columns"
+        or recipe.get("logical_element_count") != _WEIGHT_ELEMENT_COUNT
+        or recipe.get("canonical_byte_length") != _WEIGHT_BYTES
+        or recipe.get("raw_weight_bytes_committed") is not False
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router weight recipe contract is invalid",
+        )
+    columns = recipe.get("columns")
+    expected_columns = (
+        {
+            "center": 64,
+            "divisor": 16,
+            "formula": "f32((((expert_id * 37) % 128) - 64) / 16.0)",
+            "input_column": 0,
+            "modulus": 128,
+            "multiplier": 37,
+            "offset": 0,
+        },
+        {
+            "center": 64,
+            "divisor": 16,
+            "formula": "f32((((expert_id * 53 + 7) % 128) - 64) / 16.0)",
+            "input_column": 1,
+            "modulus": 128,
+            "multiplier": 53,
+            "offset": 7,
+        },
+    )
+    if columns != list(expected_columns) or recipe.get("remaining_columns") != {
+        "end_exclusive": HIDDEN_WIDTH,
+        "start_inclusive": 2,
+        "value": 0.0,
+    }:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router weight formula is invalid",
+        )
+
+    zero_tail = (0.0,) * (HIDDEN_WIDTH - 2)
+    weights = tuple(
+        (
+            _canonical_float32((((expert_id * 37) % EXPERT_COUNT) - 64) / 16.0),
+            _canonical_float32(
+                (((expert_id * 53 + 7) % EXPERT_COUNT) - 64) / 16.0
+            ),
+            *zero_tail,
+        )
+        for expert_id in range(EXPERT_COUNT)
+    )
+    canonical = _canonical_f32le_bytes(weights)
+    if (
+        len(canonical) != _WEIGHT_BYTES
+        or hashlib.sha256(canonical).hexdigest()
+        != recipe.get("canonical_f32le_sha256")
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "the reconstructed router weight hash is invalid",
+        )
+    return weights
+
+
+def _canonical_float32(value: float) -> float:
+    return struct.unpack("<f", struct.pack("<f", value))[0]
+
+
+def _require_exact_keys(
+    value: Mapping[str, object],
+    expected: set[str],
+    label: str,
+) -> None:
+    if set(value) != expected:
+        raise RouterError(
+            "internal_worker_error",
+            f"the committed {label} fields are invalid",
+        )
+
+
+def _valid_identifier(value: str) -> bool:
+    return (
+        0 < len(value) <= _MAX_IDENTIFIER_CHARS
+        and value.strip() == value
+        and all(character.isalnum() or character in "-_.:" for character in value)
+    )
+
+
+def _object_without_duplicates(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite(value: str) -> None:
+    raise ValueError(f"non-finite JSON number is forbidden: {value}")

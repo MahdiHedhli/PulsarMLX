@@ -1,0 +1,43 @@
+{
+  "byte_order": "little",
+  "canonical_byte_length": 1048576,
+  "canonical_encoding": "concatenate IEEE-754 binary32 little-endian values in expert-major row order, then input-column order",
+  "canonical_f32le_sha256": "b625762a76a6dab4df249cc56a97946847710e59155585329c7dfa350c8c294f",
+  "columns": [
+    {
+      "center": 64,
+      "divisor": 16,
+      "formula": "f32((((expert_id * 37) % 128) - 64) / 16.0)",
+      "input_column": 0,
+      "modulus": 128,
+      "multiplier": 37,
+      "offset": 0
+    },
+    {
+      "center": 64,
+      "divisor": 16,
+      "formula": "f32((((expert_id * 53 + 7) % 128) - 64) / 16.0)",
+      "input_column": 1,
+      "modulus": 128,
+      "multiplier": 53,
+      "offset": 7
+    }
+  ],
+  "dtype": "float32",
+  "fixture_id": "generated-qwen3moe-router-weights-v1",
+  "layout": "expert_major_rows_input_columns",
+  "logical_element_count": 262144,
+  "provenance": "synthetic_generated_model_free",
+  "raw_weight_bytes_committed": false,
+  "remaining_columns": {
+    "end_exclusive": 2048,
+    "start_inclusive": 2,
+    "value": 0.0
+  },
+  "schema": "pulsarmlx.fixture.router-weight-recipe",
+  "schema_version": "1.0.0",
+  "shape": [
+    128,
+    2048
+  ]
+}

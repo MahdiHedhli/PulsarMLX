@@ -1,0 +1,113 @@
+{
+  "cases": [
+    {
+      "case_id": "generated-qwen3moe-router-single-row-v1",
+      "expected_result_key": "generated-qwen3moe-router-single-row-v1",
+      "hidden_f32le_sha256": "161ee712006a049cf992bfa9d41606fe115cb5551d5787f6bd381544ecd22dd0",
+      "hidden_row_ids": [
+        "generated-qwen3moe-router-one-hot-column-0-v1"
+      ],
+      "hidden_shape": [
+        1,
+        2048
+      ]
+    },
+    {
+      "case_id": "generated-qwen3moe-router-two-row-v1",
+      "expected_result_key": "generated-qwen3moe-router-two-row-v1",
+      "hidden_f32le_sha256": "c2237ebd53872efd59a481129db6ce422a3af96193eeba65c834af6ebfb314e8",
+      "hidden_row_ids": [
+        "generated-qwen3moe-router-one-hot-column-0-v1",
+        "generated-qwen3moe-router-one-hot-column-1-v1"
+      ],
+      "hidden_shape": [
+        2,
+        2048
+      ]
+    }
+  ],
+  "contract": {
+    "contract_id": "qwen3moe-layer0-router-parity-v1",
+    "expert_count": 128,
+    "hidden_width": 2048,
+    "normalization": "full_128_way_softmax_then_selected_probability_renormalization",
+    "tie_rule": "probability_descending_then_expert_id_ascending",
+    "top_k": 8,
+    "weight_byte_order": "little",
+    "weight_dtype": "float32",
+    "weight_layout": "expert_major_rows_input_columns"
+  },
+  "expected_results": {
+    "arithmetic": "scalar_float32",
+    "complete_values": true,
+    "independently_computed": true,
+    "path": "golden/expected_results.json"
+  },
+  "files": [
+    {
+      "byte_length": 25386,
+      "path": "golden/expected_results.json",
+      "sha256": "1ea60064a5a495f590614f917f9375b35faf75cd139de4082596d755aad1b56c"
+    },
+    {
+      "byte_length": 54134,
+      "path": "golden/hidden_states.json",
+      "sha256": "02d3b326ee84f3dc7082c073ee4dbbef6a2b3aabb1f7c57471ea415cb5cb7945"
+    },
+    {
+      "byte_length": 1195,
+      "path": "golden/weight_recipe.json",
+      "sha256": "4055fd4029742c3820e02a08a48fb3b32bff08ee9ae1aa9d79725cadf739fd63"
+    }
+  ],
+  "fixture_id": "generated-qwen3moe-router-v1",
+  "hidden_state_fixture": {
+    "canonical_byte_length": 16384,
+    "canonical_f32le_sha256": "c2237ebd53872efd59a481129db6ce422a3af96193eeba65c834af6ebfb314e8",
+    "complete_shape": [
+      2,
+      2048
+    ],
+    "finite": true,
+    "path": "golden/hidden_states.json",
+    "rows_distinct": true
+  },
+  "provenance": {
+    "external_checkpoint_access_required": false,
+    "generation_command": "python3 fixtures/research/router-v1/golden/generate.py --write",
+    "generator": "golden/generate.py",
+    "generator_sha256": "fd7330fb7e6918ec48b224ca3df1e5a317165ae4cd21f704b91c350188b4c355",
+    "independence": "standard-library scalar generator; imports no MLX, worker, NumPy, model parser, or checkpoint reader",
+    "kind": "synthetic_generated",
+    "license": "MIT",
+    "model_free": true,
+    "redistributable": true
+  },
+  "schema": "pulsarmlx.fixture.router-manifest",
+  "schema_version": "1.0.0",
+  "scope": {
+    "does_not_prove": [
+      "external checkpoint access or identity",
+      "real Qwen hidden-state provenance",
+      "MLX execution or Apple GPU behavior",
+      "expert execution, a complete layer, model inference, or generation",
+      "Linux or CUDA runtime parity"
+    ],
+    "evidence_level": "synthetic_fixture_only",
+    "proves": [
+      "generated complete-router fixture construction",
+      "independent scalar expected-output construction",
+      "deterministic byte-for-byte regeneration"
+    ]
+  },
+  "weight_fixture": {
+    "canonical_byte_length": 1048576,
+    "canonical_f32le_sha256": "b625762a76a6dab4df249cc56a97946847710e59155585329c7dfa350c8c294f",
+    "raw_weight_bytes_committed": false,
+    "recipe_path": "golden/weight_recipe.json",
+    "shape": [
+      128,
+      2048
+    ]
+  }
+}

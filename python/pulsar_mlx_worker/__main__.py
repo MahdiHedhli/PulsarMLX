@@ -30,6 +30,12 @@ from .protocol import (
     encode_error,
     encode_success,
 )
+from .router import (
+    BOUNDED_BATCH_CASE_ID as ROUTER_BATCH_CASE_ID,
+    SINGLE_ROW_CASE_ID as ROUTER_SINGLE_CASE_ID,
+    RouterResult,
+    run_committed_router,
+)
 from .runtime import (
     GPU_DEVICE_ID,
     PROBE_FIXTURE_ID,
@@ -53,6 +59,7 @@ _EXIT_INTERNAL_ERROR = 70
 
 ProbeRunner = Callable[..., TensorProbeResult]
 ModelSliceRunner = Callable[..., ModelSliceResult]
+RouterRunner = Callable[..., RouterResult]
 
 
 def main() -> int:
@@ -94,6 +101,7 @@ def _serve(
     *,
     probe_runner: ProbeRunner = run_tensor_probe,
     model_slice_runner: ModelSliceRunner = run_inherited_model_slice,
+    router_runner: RouterRunner = run_committed_router,
 ) -> int:
     """Serve requests sequentially until shutdown or clean stdin EOF.
 
@@ -150,6 +158,7 @@ def _serve(
                 identity,
                 probe_runner=probe_runner,
                 model_slice_runner=model_slice_runner,
+                router_runner=router_runner,
             )
         except ProtocolError as error:
             _write_protocol_error(protocol_stdout, request.request_id, error)
@@ -186,6 +195,7 @@ def _dispatch(
     *,
     probe_runner: ProbeRunner,
     model_slice_runner: ModelSliceRunner = run_inherited_model_slice,
+    router_runner: RouterRunner = run_committed_router,
 ) -> tuple[dict[str, object], bool]:
     if request.op == "health":
         _require_exact_params(request.params, frozenset())
@@ -298,6 +308,46 @@ def _dispatch(
             )
         result = model_slice_runner(
             slice_id=slice_id,
+            requested_device=requested_device,
+            allow_fallback=allow_fallback,
+        )
+        return result.to_protocol_result(), False
+
+    if request.op == "run_router":
+        _require_exact_params(
+            request.params,
+            frozenset({"router_case_id", "device", "allow_fallback"}),
+        )
+        router_case_id = request.params["router_case_id"]
+        requested_device = request.params["device"]
+        allow_fallback = request.params["allow_fallback"]
+        if not isinstance(router_case_id, str):
+            raise ProtocolError(
+                "malformed_request",
+                "run_router identity must be a stable string",
+            )
+        if router_case_id not in {
+            ROUTER_SINGLE_CASE_ID,
+            ROUTER_BATCH_CASE_ID,
+        }:
+            raise ProtocolError(
+                "unsupported_operation",
+                "run_router identity is not a committed generated fixture",
+            )
+        if not isinstance(requested_device, str) or not isinstance(
+            allow_fallback, bool
+        ):
+            raise ProtocolError(
+                "malformed_request",
+                "run_router device and fallback fields have invalid types",
+            )
+        if requested_device != GPU_DEVICE_ID or allow_fallback:
+            raise ProtocolError(
+                "device_unavailable",
+                "run_router requires explicit GPU selection without fallback",
+            )
+        result = router_runner(
+            router_case_id=router_case_id,
             requested_device=requested_device,
             allow_fallback=allow_fallback,
         )

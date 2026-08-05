@@ -1,11 +1,11 @@
 //! Supervised lifecycle for one persistent MLX worker process.
 
 use crate::protocol::{
-    parse_hello_line, parse_model_slice_result, parse_response_line, parse_synthetic_moe_result,
-    parse_tensor_fixture_result, HelloExpectation, ModelSliceRequest, ModelSliceResult,
-    ProtocolLimits, RequestEnvelope, SyntheticMoeRequest, SyntheticMoeResult, TensorFixtureRequest,
-    TensorFixtureResult, WorkerError, WorkerErrorKind, WorkerHello, MAX_RESPONSE_BYTES,
-    PROTOCOL_VERSION,
+    parse_hello_line, parse_model_slice_result, parse_response_line, parse_router_result,
+    parse_synthetic_moe_result, parse_tensor_fixture_result, HelloExpectation, ModelSliceRequest,
+    ModelSliceResult, ProtocolLimits, RequestEnvelope, RouterRequest, RouterResult,
+    SyntheticMoeRequest, SyntheticMoeResult, TensorFixtureRequest, TensorFixtureResult,
+    WorkerError, WorkerErrorKind, WorkerHello, MAX_RESPONSE_BYTES, PROTOCOL_VERSION,
 };
 use serde_json::{Map, Value};
 use std::ffi::OsString;
@@ -425,6 +425,35 @@ impl WorkerClient {
             self.timeouts.request,
         )?;
         match parse_model_slice_result(value, request, expected_encoded_sha256) {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                self.state = WorkerState::Failed;
+                Err(error)
+            }
+        }
+    }
+
+    /// Execute one committed bounded router case through a control-only
+    /// request and validate every complete output before exposing it.
+    pub fn run_router(&mut self, request: &RouterRequest) -> Result<RouterResult, WorkerError> {
+        if !self
+            .hello()
+            .capabilities()
+            .operations()
+            .iter()
+            .any(|operation| operation == "run_router")
+        {
+            return Err(WorkerError::new(
+                WorkerErrorKind::Protocol,
+                "negotiated worker does not advertise bounded router execution",
+            ));
+        }
+        let (_, value) = self.request_with_timeout(
+            "run_router",
+            request.protocol_params(),
+            self.timeouts.request,
+        )?;
+        match parse_router_result(value, request) {
             Ok(result) => Ok(result),
             Err(error) => {
                 self.state = WorkerState::Failed;

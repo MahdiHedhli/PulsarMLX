@@ -270,6 +270,7 @@ def discover_runtime() -> RuntimeIdentity:
         "health",
         "tensor_probe",
         "run_fixture",
+        "run_router",
         "run_synthetic_moe",
         "shutdown",
     ]

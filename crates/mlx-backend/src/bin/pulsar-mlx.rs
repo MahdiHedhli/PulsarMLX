@@ -13,7 +13,7 @@ use std::env;
 use std::ffi::OsString;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
 const BACKEND_ID: &str = "apple-mlx";
@@ -55,12 +55,24 @@ fn run(arguments: Vec<OsString>) -> Result<(), String> {
             arguments,
             "validate-model-slice",
         )?),
+        Some("inspect-router") => run_planned_inspect_router(parse_inspect_router(arguments)?),
+        Some("validate-router-fixtures") => {
+            run_planned_validate_router_fixtures(parse_validate_router_fixtures(arguments)?)
+        }
+        Some("validate-router") => run_planned_validate_router(parse_validate_router(arguments)?),
         _ => Err(usage()),
     }
 }
 
 fn project_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+fn lexical_project_root() -> &'static Path {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(Path::parent)
+        .expect("the mlx-backend manifest has a workspace root")
 }
 
 fn worker_config(project_root: &Path) -> Result<WorkerConfig, String> {
@@ -162,7 +174,347 @@ fn parse_device_smoke(arguments: Vec<OsString>) -> Result<DeviceSmokeCommand, St
 }
 
 fn usage() -> String {
-    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH\n       pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH".to_owned()
+    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH\n       pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx inspect-router --model ABSOLUTE_EXTERNAL_GGUF --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router-fixtures --manifest fixtures/research/router-v1/manifest.json --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router --model ABSOLUTE_EXTERNAL_GGUF --oracle ABSOLUTE_EXTERNAL_JSON --evidence-dir ABSOLUTE_EXTERNAL_DIRECTORY".to_owned()
+}
+
+const ROUTER_FIXTURE_MANIFEST: &str = "fixtures/research/router-v1/manifest.json";
+
+#[derive(Debug, PartialEq, Eq)]
+struct InspectRouterCommand {
+    model: PathBuf,
+    evidence: PathBuf,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct ValidateRouterFixturesCommand {
+    manifest: PathBuf,
+    evidence: PathBuf,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct ValidateRouterCommand {
+    model: PathBuf,
+    oracle: PathBuf,
+    evidence_dir: PathBuf,
+}
+
+fn parse_router_arguments(arguments: Vec<OsString>) -> Result<Vec<String>, String> {
+    arguments
+        .into_iter()
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| "command arguments must be valid UTF-8".to_owned())
+        })
+        .collect()
+}
+
+#[derive(Debug)]
+struct CanonicalPathIdentity {
+    resolved: PathBuf,
+    #[cfg(unix)]
+    existing_object: Option<(u64, u64)>,
+}
+
+impl CanonicalPathIdentity {
+    fn aliases_or_contains(&self, other: &Self) -> bool {
+        if self.resolved == other.resolved
+            || self.resolved.starts_with(&other.resolved)
+            || other.resolved.starts_with(&self.resolved)
+        {
+            return true;
+        }
+
+        #[cfg(unix)]
+        if self.existing_object.is_some() && self.existing_object == other.existing_object {
+            return true;
+        }
+
+        false
+    }
+}
+
+fn canonical_path_identity(path: &Path, kind: &str) -> Result<CanonicalPathIdentity, String> {
+    let direct_metadata = match fs::symlink_metadata(path) {
+        Ok(metadata) => {
+            if metadata.file_type().is_symlink() {
+                return Err(format!("the {kind} path must not be a symbolic-link alias"));
+            }
+            Some(metadata)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(_) => return Err(format!("the {kind} path metadata could not be inspected")),
+    };
+
+    let mut existing_prefix = path;
+    while fs::symlink_metadata(existing_prefix)
+        .is_err_and(|error| error.kind() == std::io::ErrorKind::NotFound)
+    {
+        existing_prefix = existing_prefix
+            .parent()
+            .ok_or_else(|| format!("the {kind} path has no resolvable parent"))?;
+    }
+    let resolved_prefix = fs::canonicalize(existing_prefix)
+        .map_err(|_| format!("the {kind} path could not be resolved without following it"))?;
+    let unresolved_suffix = path
+        .strip_prefix(existing_prefix)
+        .map_err(|_| format!("the {kind} path could not be resolved safely"))?;
+    let resolved = resolved_prefix.join(unresolved_suffix);
+
+    #[cfg(unix)]
+    let existing_object = direct_metadata.as_ref().map(|metadata| {
+        use std::os::unix::fs::MetadataExt;
+
+        (metadata.dev(), metadata.ino())
+    });
+
+    Ok(CanonicalPathIdentity {
+        resolved,
+        #[cfg(unix)]
+        existing_object,
+    })
+}
+
+fn validate_external_path_syntax(path: &Path, kind: &str) -> Result<(), String> {
+    if !path.is_absolute() {
+        return Err(format!("the {kind} path must be absolute and external"));
+    }
+    if path.components().any(|component| {
+        matches!(
+            component,
+            Component::CurDir | Component::ParentDir | Component::Prefix(_)
+        )
+    }) {
+        return Err(format!(
+            "the {kind} path must not contain ambiguous path components"
+        ));
+    }
+    if path.starts_with(lexical_project_root()) || lexical_project_root().starts_with(path) {
+        return Err(format!(
+            "the {kind} path must remain outside the repository"
+        ));
+    }
+    Ok(())
+}
+
+fn validate_external_json_path_syntax(path: &Path, kind: &str) -> Result<(), String> {
+    validate_external_path_syntax(path, kind)?;
+    if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
+        return Err(format!("the {kind} path must name a JSON file"));
+    }
+    Ok(())
+}
+
+fn validate_router_model_path_syntax(path: &Path) -> Result<(), String> {
+    validate_external_path_syntax(path, "external model")?;
+    if path.file_name().and_then(|name| name.to_str()) != Some(QWEN_FILENAME) {
+        return Err("the external model must use the exact admitted filename".to_owned());
+    }
+    Ok(())
+}
+
+fn paths_are_lexically_distinct(paths: &[&Path]) -> bool {
+    paths.iter().enumerate().all(|(index, path)| {
+        paths[index + 1..]
+            .iter()
+            .all(|other| path != other && !path.starts_with(other) && !other.starts_with(path))
+    })
+}
+
+fn validate_external_path_identity(
+    path: &Path,
+    kind: &str,
+) -> Result<CanonicalPathIdentity, String> {
+    validate_external_path_syntax(path, kind)?;
+    let identity = canonical_path_identity(path, kind)?;
+    let repository_root = fs::canonicalize(lexical_project_root())
+        .map_err(|_| "the repository root could not be resolved safely".to_owned())?;
+    if identity.resolved.starts_with(&repository_root)
+        || repository_root.starts_with(&identity.resolved)
+    {
+        return Err(format!(
+            "the {kind} path must remain outside the repository"
+        ));
+    }
+    Ok(identity)
+}
+
+fn validate_external_json_path_identity(
+    path: &Path,
+    kind: &str,
+) -> Result<CanonicalPathIdentity, String> {
+    validate_external_json_path_syntax(path, kind)?;
+    validate_external_path_identity(path, kind)
+}
+
+fn validate_router_model_path_identity(path: &Path) -> Result<CanonicalPathIdentity, String> {
+    validate_router_model_path_syntax(path)?;
+    validate_external_path_identity(path, "external model")
+}
+
+fn paths_are_distinct(paths: &[&CanonicalPathIdentity]) -> bool {
+    paths.iter().enumerate().all(|(index, path)| {
+        paths[index + 1..]
+            .iter()
+            .all(|other| !path.aliases_or_contains(other))
+    })
+}
+
+#[allow(dead_code)] // Called only after the T074 external-access gate is implemented.
+fn validate_inspect_router_path_identities(command: &InspectRouterCommand) -> Result<(), String> {
+    let model_identity = validate_router_model_path_identity(&command.model)?;
+    let evidence_identity =
+        validate_external_json_path_identity(&command.evidence, "router inspection evidence")?;
+    if !paths_are_distinct(&[&model_identity, &evidence_identity]) {
+        return Err("router inspection paths must be distinct".to_owned());
+    }
+    Ok(())
+}
+
+#[allow(dead_code)] // Called only after retained fixture execution is implemented at T045.
+fn validate_router_fixture_path_identities(
+    command: &ValidateRouterFixturesCommand,
+) -> Result<(), String> {
+    let manifest_identity = canonical_path_identity(
+        &lexical_project_root().join(&command.manifest),
+        "committed router manifest",
+    )?;
+    let evidence_identity =
+        validate_external_json_path_identity(&command.evidence, "router fixture evidence")?;
+    if !paths_are_distinct(&[&manifest_identity, &evidence_identity]) {
+        return Err("router fixture paths must be distinct".to_owned());
+    }
+    Ok(())
+}
+
+#[allow(dead_code)] // Called only after the T083 external-execution gate is implemented.
+fn validate_router_path_identities(command: &ValidateRouterCommand) -> Result<(), String> {
+    let model_identity = validate_router_model_path_identity(&command.model)?;
+    let oracle_identity = validate_external_json_path_identity(&command.oracle, "router oracle")?;
+    let evidence_identity =
+        validate_external_path_identity(&command.evidence_dir, "router evidence directory")?;
+    if !paths_are_distinct(&[&model_identity, &oracle_identity, &evidence_identity]) {
+        return Err("router model, oracle, and evidence paths must be distinct".to_owned());
+    }
+    Ok(())
+}
+
+fn parse_inspect_router(arguments: Vec<OsString>) -> Result<InspectRouterCommand, String> {
+    let values = parse_router_arguments(arguments)?;
+    if values.len() != 5 || values.first().map(String::as_str) != Some("inspect-router") {
+        return Err(usage());
+    }
+
+    let mut model = None;
+    let mut evidence = None;
+    let mut index = 1;
+    while index < values.len() {
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match values[index].as_str() {
+            "--model" if model.is_none() => model = Some(PathBuf::from(value)),
+            "--evidence" if evidence.is_none() => evidence = Some(PathBuf::from(value)),
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+
+    let model = model.ok_or_else(usage)?;
+    let evidence = evidence.ok_or_else(usage)?;
+    validate_router_model_path_syntax(&model)?;
+    validate_external_json_path_syntax(&evidence, "router inspection evidence")?;
+    if !paths_are_lexically_distinct(&[&model, &evidence]) {
+        return Err("router inspection paths must be distinct".to_owned());
+    }
+    Ok(InspectRouterCommand { model, evidence })
+}
+
+fn parse_validate_router_fixtures(
+    arguments: Vec<OsString>,
+) -> Result<ValidateRouterFixturesCommand, String> {
+    let values = parse_router_arguments(arguments)?;
+    if values.len() != 5 || values.first().map(String::as_str) != Some("validate-router-fixtures") {
+        return Err(usage());
+    }
+
+    let mut manifest = None;
+    let mut evidence = None;
+    let mut index = 1;
+    while index < values.len() {
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match values[index].as_str() {
+            "--manifest" if manifest.is_none() => manifest = Some(PathBuf::from(value)),
+            "--evidence" if evidence.is_none() => evidence = Some(PathBuf::from(value)),
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+
+    let manifest = manifest.ok_or_else(usage)?;
+    let evidence = evidence.ok_or_else(usage)?;
+    if manifest != Path::new(ROUTER_FIXTURE_MANIFEST) {
+        return Err(
+            "validate-router-fixtures accepts only the committed router manifest".to_owned(),
+        );
+    }
+    validate_external_json_path_syntax(&evidence, "router fixture evidence")?;
+    Ok(ValidateRouterFixturesCommand { manifest, evidence })
+}
+
+fn parse_validate_router(arguments: Vec<OsString>) -> Result<ValidateRouterCommand, String> {
+    let values = parse_router_arguments(arguments)?;
+    if values.len() != 7 || values.first().map(String::as_str) != Some("validate-router") {
+        return Err(usage());
+    }
+
+    let mut model = None;
+    let mut oracle = None;
+    let mut evidence_dir = None;
+    let mut index = 1;
+    while index < values.len() {
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match values[index].as_str() {
+            "--model" if model.is_none() => model = Some(PathBuf::from(value)),
+            "--oracle" if oracle.is_none() => oracle = Some(PathBuf::from(value)),
+            "--evidence-dir" if evidence_dir.is_none() => evidence_dir = Some(PathBuf::from(value)),
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+
+    let model = model.ok_or_else(usage)?;
+    let oracle = oracle.ok_or_else(usage)?;
+    let evidence_dir = evidence_dir.ok_or_else(usage)?;
+    validate_router_model_path_syntax(&model)?;
+    validate_external_json_path_syntax(&oracle, "router oracle")?;
+    validate_external_path_syntax(&evidence_dir, "router evidence directory")?;
+    if !paths_are_lexically_distinct(&[&model, &oracle, &evidence_dir]) {
+        return Err("router model, oracle, and evidence paths must be distinct".to_owned());
+    }
+    Ok(ValidateRouterCommand {
+        model,
+        oracle,
+        evidence_dir,
+    })
+}
+
+fn run_planned_inspect_router(command: InspectRouterCommand) -> Result<(), String> {
+    // Keep this pre-gate path lexical-only: the filesystem identity validator
+    // above must not run until T074 authorizes resolving the checkpoint.
+    let _parsed_paths = (command.model, command.evidence);
+    Err("inspect-router is parsed but remains blocked until the notified T074 external-artifact admission; no checkpoint was accessed".to_owned())
+}
+
+fn run_planned_validate_router_fixtures(
+    command: ValidateRouterFixturesCommand,
+) -> Result<(), String> {
+    let _parsed_paths = (command.manifest, command.evidence);
+    Err("validate-router-fixtures is parsed but its retained-result execution is deferred to T045; no MLX worker was started".to_owned())
+}
+
+fn run_planned_validate_router(command: ValidateRouterCommand) -> Result<(), String> {
+    // As with inspection, resolving any path here would cross the T074 gate.
+    let _parsed_paths = (command.model, command.oracle, command.evidence_dir);
+    Err("validate-router is parsed but correctness-gated orchestration remains deferred to T066 and execution to T083; no checkpoint was accessed and no MLX worker was started".to_owned())
 }
 
 struct ExternalModelCommand {
@@ -1564,6 +1916,327 @@ mod tests {
                 .to_owned();
             assert!(parse_external_model_command(invalid, &command).is_err());
         }
+    }
+
+    #[test]
+    fn feature_002_router_commands_accept_only_the_frozen_argument_surfaces() {
+        let model = format!("/tmp/pulsarmlx-feature-002/{QWEN_FILENAME}");
+        let inspection = parse_inspect_router(args(&[
+            "inspect-router",
+            "--evidence",
+            "/tmp/pulsarmlx-feature-002/router-inspection.json",
+            "--model",
+            &model,
+        ]))
+        .expect("exact inspect-router surface");
+        assert_eq!(inspection.model, PathBuf::from(&model));
+
+        let fixtures = parse_validate_router_fixtures(args(&[
+            "validate-router-fixtures",
+            "--manifest",
+            ROUTER_FIXTURE_MANIFEST,
+            "--evidence",
+            "/tmp/pulsarmlx-feature-002/router-fixtures.json",
+        ]))
+        .expect("exact fixture surface");
+        assert_eq!(fixtures.manifest, PathBuf::from(ROUTER_FIXTURE_MANIFEST));
+
+        let validation = parse_validate_router(args(&[
+            "validate-router",
+            "--oracle",
+            "/tmp/pulsarmlx-feature-002/oracle.json",
+            "--evidence-dir",
+            "/tmp/pulsarmlx-feature-002/attempts",
+            "--model",
+            &model,
+        ]))
+        .expect("exact validate-router surface");
+        assert_eq!(validation.model, PathBuf::from(model));
+
+        let repository_evidence = lexical_project_root().join("router-inspection.json");
+        for invalid in [
+            args(&[
+                "inspect-router",
+                "--model",
+                QWEN_FILENAME,
+                "--evidence",
+                "/tmp/router-inspection.json",
+            ]),
+            args(&[
+                "inspect-router",
+                "--model",
+                &format!("/tmp/../tmp/{QWEN_FILENAME}"),
+                "--evidence",
+                "/tmp/router-inspection.json",
+            ]),
+            args(&[
+                "inspect-router",
+                "--model",
+                "/tmp/not-the-admitted-model.gguf",
+                "--evidence",
+                "/tmp/router-inspection.json",
+            ]),
+            args(&[
+                "inspect-router",
+                "--model",
+                &format!("/tmp/{QWEN_FILENAME}"),
+                "--evidence",
+                repository_evidence
+                    .to_str()
+                    .expect("repository test path is UTF-8"),
+            ]),
+            args(&[
+                "validate-router-fixtures",
+                "--manifest",
+                "fixtures/research/router-v1/other.json",
+                "--evidence",
+                "/tmp/router-fixtures.json",
+            ]),
+            args(&[
+                "validate-router-fixtures",
+                "--manifest",
+                ROUTER_FIXTURE_MANIFEST,
+                "--evidence",
+                "relative-router-fixtures.json",
+            ]),
+            args(&[
+                "validate-router",
+                "--model",
+                &format!("/tmp/{QWEN_FILENAME}"),
+                "--oracle",
+                "/tmp/oracle.json",
+                "--warmups",
+                "1",
+            ]),
+            args(&[
+                "validate-router",
+                "--model",
+                &format!("/tmp/{QWEN_FILENAME}"),
+                "--oracle",
+                "/tmp/oracle.json",
+                "--evidence-dir",
+                &format!("/tmp/{QWEN_FILENAME}"),
+            ]),
+        ] {
+            let command = invalid
+                .first()
+                .and_then(|value| value.to_str())
+                .expect("test command");
+            let result = match command {
+                "inspect-router" => parse_inspect_router(invalid).map(|_| ()),
+                "validate-router-fixtures" => parse_validate_router_fixtures(invalid).map(|_| ()),
+                "validate-router" => parse_validate_router(invalid).map(|_| ()),
+                _ => unreachable!("bounded command inventory"),
+            };
+            assert!(result.is_err());
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn feature_002_router_paths_reject_symlink_hard_link_and_containment_aliases() {
+        use std::os::unix::fs::symlink;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-router-path-safety-{}-{nonce}",
+            std::process::id()
+        ));
+        let model_directory = directory.join("model");
+        fs::create_dir_all(&model_directory).expect("create model directory");
+        let model = model_directory.join(QWEN_FILENAME);
+        fs::write(&model, b"bounded-model-stand-in").expect("write model stand-in");
+
+        let ordinary_evidence = directory.join("ordinary-evidence.json");
+        let ordinary_command = parse_inspect_router(args(&[
+            "inspect-router",
+            "--model",
+            model.to_str().expect("UTF-8 model path"),
+            "--evidence",
+            ordinary_evidence.to_str().expect("UTF-8 evidence path"),
+        ]))
+        .expect("ordinary distinct external paths remain accepted");
+        validate_inspect_router_path_identities(&ordinary_command)
+            .expect("ordinary filesystem identities remain accepted");
+
+        let symlink_directory = directory.join("symlink-model");
+        fs::create_dir(&symlink_directory).expect("create symlink directory");
+        let symlink_model = symlink_directory.join(QWEN_FILENAME);
+        symlink(&model, &symlink_model).expect("create model symlink");
+        let symlink_command = parse_inspect_router(args(&[
+            "inspect-router",
+            "--model",
+            symlink_model.to_str().expect("UTF-8 symlink path"),
+            "--evidence",
+            ordinary_evidence.to_str().expect("UTF-8 evidence path"),
+        ]))
+        .expect("the pre-T074 parser remains lexical-only");
+        let gated_error = run(args(&[
+            "inspect-router",
+            "--model",
+            symlink_model.to_str().expect("UTF-8 symlink path"),
+            "--evidence",
+            ordinary_evidence.to_str().expect("UTF-8 evidence path"),
+        ]))
+        .expect_err("pre-T074 dispatch remains task gated");
+        assert!(gated_error.contains("T074"));
+        assert!(gated_error.contains("no checkpoint was accessed"));
+        let symlink_error = validate_inspect_router_path_identities(&symlink_command)
+            .expect_err("post-gate symbolic-link model alias must fail closed");
+        assert!(symlink_error.contains("symbolic-link alias"));
+
+        let hard_link_evidence = directory.join("hard-link-evidence.json");
+        fs::hard_link(&model, &hard_link_evidence).expect("create evidence hard link");
+        let hard_link_command = parse_inspect_router(args(&[
+            "inspect-router",
+            "--model",
+            model.to_str().expect("UTF-8 model path"),
+            "--evidence",
+            hard_link_evidence
+                .to_str()
+                .expect("UTF-8 hard-link evidence path"),
+        ]))
+        .expect("the pre-T074 parser remains lexical-only");
+        let hard_link_error = validate_inspect_router_path_identities(&hard_link_command)
+            .expect_err("post-gate hard-link model/evidence alias must fail closed");
+        assert_eq!(hard_link_error, "router inspection paths must be distinct");
+
+        let oracle = model_directory.join("oracle.json");
+        fs::write(&oracle, b"{}").expect("write oracle stand-in");
+        let containment_command = ValidateRouterCommand {
+            model: model.clone(),
+            oracle: oracle.clone(),
+            evidence_dir: model_directory.clone(),
+        };
+        let containment_error = validate_router_path_identities(&containment_command)
+            .expect_err("a result directory containing inputs must fail closed");
+        assert_eq!(
+            containment_error,
+            "router model, oracle, and evidence paths must be distinct"
+        );
+        assert!(parse_validate_router(args(&[
+            "validate-router",
+            "--model",
+            model.to_str().expect("UTF-8 model path"),
+            "--oracle",
+            oracle.to_str().expect("UTF-8 oracle path"),
+            "--evidence-dir",
+            model_directory
+                .to_str()
+                .expect("UTF-8 containing directory path"),
+        ]))
+        .is_err());
+
+        let repository_link = directory.join("repository-link");
+        symlink(
+            fs::canonicalize(lexical_project_root()).expect("canonical repository root"),
+            &repository_link,
+        )
+        .expect("create repository link");
+        let linked_repository_command = parse_validate_router_fixtures(args(&[
+            "validate-router-fixtures",
+            "--manifest",
+            ROUTER_FIXTURE_MANIFEST,
+            "--evidence",
+            repository_link
+                .join("router-evidence.json")
+                .to_str()
+                .expect("UTF-8 linked repository path"),
+        ]))
+        .expect("the pre-T045 parser remains lexical-only");
+        let linked_repository_error =
+            validate_router_fixture_path_identities(&linked_repository_command)
+                .expect_err("a symlinked path into the repository must fail closed");
+        assert!(linked_repository_error.contains("outside the repository"));
+
+        let committed_manifest = lexical_project_root().join(ROUTER_FIXTURE_MANIFEST);
+        let manifest_hard_link = directory.join("manifest-hard-link.json");
+        fs::hard_link(&committed_manifest, &manifest_hard_link)
+            .expect("create committed-manifest hard link");
+        let manifest_alias_command = parse_validate_router_fixtures(args(&[
+            "validate-router-fixtures",
+            "--manifest",
+            ROUTER_FIXTURE_MANIFEST,
+            "--evidence",
+            manifest_hard_link
+                .to_str()
+                .expect("UTF-8 manifest hard-link path"),
+        ]))
+        .expect("the pre-T045 parser remains lexical-only");
+        let manifest_alias_error = validate_router_fixture_path_identities(&manifest_alias_command)
+            .expect_err("hard-link alias to committed input must fail closed");
+        assert_eq!(
+            manifest_alias_error,
+            "router fixture paths must be distinct"
+        );
+
+        fs::remove_dir_all(&directory).expect("remove path-safety fixture directory");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn feature_002_router_parsers_reject_non_utf8_arguments() {
+        use std::os::unix::ffi::OsStringExt;
+
+        let invalid = vec![
+            OsString::from("inspect-router"),
+            OsString::from("--model"),
+            OsString::from_vec(vec![0xff]),
+            OsString::from("--evidence"),
+            OsString::from("/tmp/router-inspection.json"),
+        ];
+        assert_eq!(
+            parse_inspect_router(invalid).expect_err("non-UTF-8 must fail"),
+            "command arguments must be valid UTF-8"
+        );
+    }
+
+    #[test]
+    fn feature_002_planned_dispatch_is_fail_closed_without_external_access() {
+        let model = format!("/tmp/pulsarmlx-never-accessed/{QWEN_FILENAME}");
+        let inspect_error = run(args(&[
+            "inspect-router",
+            "--model",
+            &model,
+            "--evidence",
+            "/tmp/pulsarmlx-never-accessed/inspection.json",
+        ]))
+        .expect_err("inspection remains task gated");
+        assert!(inspect_error.contains("T074"));
+        assert!(inspect_error.contains("no checkpoint was accessed"));
+
+        let fixture_error = run(args(&[
+            "validate-router-fixtures",
+            "--manifest",
+            ROUTER_FIXTURE_MANIFEST,
+            "--evidence",
+            "/tmp/pulsarmlx-never-accessed/fixtures.json",
+        ]))
+        .expect_err("fixture retention remains task gated");
+        assert!(fixture_error.contains("T045"));
+        assert!(fixture_error.contains("no MLX worker was started"));
+
+        let router_error = run(args(&[
+            "validate-router",
+            "--model",
+            &model,
+            "--oracle",
+            "/tmp/pulsarmlx-never-accessed/oracle.json",
+            "--evidence-dir",
+            "/tmp/pulsarmlx-never-accessed/attempts",
+        ]))
+        .expect_err("router execution remains task gated");
+        assert!(router_error.contains("T066"));
+        assert!(router_error.contains("T083"));
+        assert!(router_error.contains("no checkpoint was accessed"));
+
+        assert!(run(args(&["--help"]))
+            .expect_err("help is usage-only")
+            .starts_with("usage:"));
     }
 
     #[test]

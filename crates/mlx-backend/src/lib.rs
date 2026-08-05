@@ -4,6 +4,7 @@ pub mod client;
 pub mod device;
 pub mod model;
 pub mod protocol;
+pub mod router;
 
 pub use backend::DeviceState;
 pub use client::{
@@ -23,7 +24,8 @@ pub use model::{
 };
 pub use protocol::{
     FetchedExpertEvidence, ModelSliceMemoryGauges, ModelSliceRequest, ModelSliceResult,
-    SyntheticMoeComparison, SyntheticMoeRequest, SyntheticMoeResult, TensorFixtureComparison,
-    TensorFixtureMemoryGauges, TensorFixtureRequest, TensorFixtureResult, WorkerError,
-    WorkerErrorKind, WorkerHello, MODEL_SLICE_ID,
+    RouterRequest, RouterResult, SyntheticMoeComparison, SyntheticMoeRequest, SyntheticMoeResult,
+    TensorFixtureComparison, TensorFixtureMemoryGauges, TensorFixtureRequest, TensorFixtureResult,
+    WorkerError, WorkerErrorKind, WorkerHello, MODEL_SLICE_ID, ROUTER_SINGLE_ROW_CASE_ID,
+    ROUTER_TWO_ROW_CASE_ID,
 };
