@@ -1170,3 +1170,68 @@ named `backend`, `mlx-backend`, `q8_0_ref`, the portable positional source, or
 their tests. Because inherited errors stopped workspace Clippy, this result is
 only “no PulsarMLX-attributable failure reported,” not a strict-Clippy pass for
 every new target. No formatting or lint cleanup was applied.
+
+### T076 focused, workspace, and staged-safety gate
+
+The final focused gate began from a clean worktree at pushed commit
+`07a5268`. Every executed correctness command exited zero:
+
+```sh
+PYTHONPATH=python uv run python -m unittest discover -s python/pulsar_mlx_worker/tests -v
+cargo test -p backend --all-targets
+cargo test -p quant --test q8_0_reference
+cargo test -p stream --test positional_source
+cargo test -p stream --lib
+cargo test -p mlx-backend --all-targets
+cargo test -p mlx-backend --test device_smoke native_device_smoke_command_emits_evaluated_evidence -- --ignored --exact
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures --manifest fixtures/mlx/manifest.json --evidence <temporary-directory>/mlx-tensor-fixtures.json
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence <temporary-directory>/synthetic-moe-v1.json
+```
+
+Actual results were 44 Python tests; 57 backend tests; 14 Q8_0 reference
+tests; 14 positional-source tests; one stream unit test; and 54 active
+`mlx-backend` Rust tests with one native smoke ignored by the package-wide
+command. Selecting that native smoke explicitly passed one test. The generated
+temporary evidence reported seven passed evaluated MLX tensor cases and one
+passed evaluated synthetic routed-MoE case with no fallback.
+
+The de-duplicated evidence gate also passed 25 typed compatibility/evidence
+tests and one committed-reference parser test. All 14 committed validation JSON
+documents parsed; the zero-sample benchmark remained `not_run`; portable-source
+replay and Qwen reference/slice identity checks remained matched; and the 14
+reviewer-index JSON links exactly matched the 14-file inventory.
+
+The named Linux-preservation target and release kernels harness were also
+inspected. Each selected zero tests on macOS. Their exit-zero harness status is
+recorded only as cfg exclusion, not Linux, `io_uring`, or CUDA runtime evidence.
+
+The exact final workspace commands then passed:
+
+```sh
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+git diff --check
+```
+
+The workspace test output contained 171 active passes, zero failures, and one
+ignored native MLX smoke. The inherited quant `unused_mut` and 13 macOS serve
+dead-code warnings remained. The separate explicit smoke above proves that the
+ignored case passed in the pinned local environment; the ordinary workspace
+command intentionally retains its opt-in boundary.
+
+Static source review confirmed no fork changes under `crates/engine`,
+`crates/kernels`, `crates/tokenizer`, `crates/gguf`, or
+`crates/stream/Cargo.toml` relative to `upstream/main`. The only shared-source
+diffs remain additive backend workspace membership, Q8_0 exports, portable
+positional-source exports, and the macOS build gate above the Linux-only serve
+handler. No inherited Linux or CUDA selector, engine, kernel, tokenizer, GGUF,
+or stream dependency behavior was changed.
+
+The staged review passed `git diff --cached --check`. Staged names and content
+contained no credential/token marker, private home path, private-key header,
+model-weight file, cache, virtual environment, Python bytecode, macOS metadata,
+or generated binary. Tracked-file review likewise found no GGUF,
+safetensors, `.env`, cache, or generated binary. The ignored local `.venv`,
+`target`, and Python cache directories remained unstaged. This sanitized
+review records only categories and outcomes; it contains no credential value
+or private path.
