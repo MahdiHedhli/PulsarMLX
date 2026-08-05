@@ -614,6 +614,11 @@ dependencies = [
 [[package]]
 name = "mlx-backend"
 version = "0.1.0"
+dependencies = [
+ "backend",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "nix"

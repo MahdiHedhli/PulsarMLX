@@ -79,18 +79,18 @@ matmul, evaluation, synchronization, and independent numeric comparison pass.
 
 ### Tests for User Story 1 (write and observe failure first)
 
-- [ ] T015 [P] [US1] Write failing Python protocol tests for fragmentation, size/depth/list limits, invalid UTF-8/JSON/envelopes, request IDs, protocol/version mismatch, stdout purity, and shutdown in `python/pulsar_mlx_worker/tests/test_protocol.py`
-- [ ] T016 [P] [US1] Write failing Rust fake-worker contract tests for hello negotiation, timeout, EOF, crash, nonzero exit, stdout contamination, request ordering, structured errors, and forced-cleanup reporting in `crates/mlx-backend/tests/worker_contract.rs`
-- [ ] T017 [P] [US1] Write a failing Apple-only device test that rejects non-arm64, wrong MLX version, unavailable Metal/GPU, CPU fallback, unevaluated work, and numerical mismatch in `crates/mlx-backend/tests/device_smoke.rs`
+- [X] T015 [P] [US1] Write failing Python protocol tests for fragmentation, size/depth/list limits, invalid UTF-8/JSON/envelopes, request IDs, protocol/version mismatch, stdout purity, and shutdown in `python/pulsar_mlx_worker/tests/test_protocol.py`
+- [X] T016 [P] [US1] Write failing Rust fake-worker contract tests for hello negotiation, timeout, EOF, crash, nonzero exit, stdout contamination, request ordering, structured errors, and forced-cleanup reporting in `crates/mlx-backend/tests/worker_contract.rs`
+- [X] T017 [P] [US1] Write a failing Apple-only device test that rejects non-arm64, wrong MLX version, unavailable Metal/GPU, CPU fallback, unevaluated work, and numerical mismatch in `crates/mlx-backend/tests/device_smoke.rs`
 
 ### Implementation for User Story 1
 
-- [ ] T018 [P] [US1] Implement bounded UTF-8 NDJSON v1 framing, envelopes, stable error codes, request validation, and protocol-only stdout in `python/pulsar_mlx_worker/protocol.py`
-- [ ] T019 [P] [US1] Implement sanitized host/runtime discovery, explicit GPU selection, Metal availability checks, evaluated nonsymmetric matmul, synchronization, comparison, and independent memory gauges in `python/pulsar_mlx_worker/runtime.py`
-- [ ] T020 [US1] Implement the persistent hello/health/tensor_probe/shutdown loop with diagnostics only on stderr and bounded graceful cleanup in `python/pulsar_mlx_worker/__main__.py`
-- [ ] T021 [P] [US1] Implement Rust protocol-v1 envelopes, limits, response-ID matching, error decoding, and capability negotiation in `crates/mlx-backend/src/protocol.rs`
-- [ ] T022 [US1] Implement one-worker-per-context spawn, pipe ownership, deadlines, lifecycle state machine, crash handling, and controlled shutdown in `crates/mlx-backend/src/client.rs`
-- [ ] T023 [US1] Implement explicit `apple-mlx` construction and the `device-smoke` CLI without inherited-backend auto-selection in `crates/mlx-backend/src/lib.rs` and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
+- [X] T018 [P] [US1] Implement bounded UTF-8 NDJSON v1 framing, envelopes, stable error codes, request validation, and protocol-only stdout in `python/pulsar_mlx_worker/protocol.py`
+- [X] T019 [P] [US1] Implement sanitized host/runtime discovery, explicit GPU selection, Metal availability checks, evaluated nonsymmetric matmul, synchronization, comparison, and independent memory gauges in `python/pulsar_mlx_worker/runtime.py`
+- [X] T020 [US1] Implement the persistent hello/health/tensor_probe/shutdown loop with diagnostics only on stderr and bounded graceful cleanup in `python/pulsar_mlx_worker/__main__.py`
+- [X] T021 [P] [US1] Implement Rust protocol-v1 envelopes, limits, response-ID matching, error decoding, and capability negotiation in `crates/mlx-backend/src/protocol.rs`
+- [X] T022 [US1] Implement one-worker-per-context spawn, pipe ownership, deadlines, lifecycle state machine, crash handling, and controlled shutdown in `crates/mlx-backend/src/client.rs`
+- [X] T023 [US1] Implement explicit `apple-mlx` construction and the `device-smoke` CLI without inherited-backend auto-selection in `crates/mlx-backend/src/lib.rs` and `crates/mlx-backend/src/bin/pulsar-mlx.rs`
 - [ ] T024 [US1] Run the exact fake-worker, Python, and real Apple device commands and commit the sanitized actual capability/comparison result, warnings, and exclusions in `docs/validation/mlx-device-smoke.json`
 - [ ] T025 [US1] Update the runnable device command, stop conditions, actual capability boundary, and remaining exclusions in `specs/001-apple-silicon-mlx/quickstart.md`, `docs/apple-silicon/SESSION_LOG.md`, and `docs/apple-silicon/KNOWN_LIMITATIONS.md`
 - [ ] T026 [US1] Re-run the exact workspace check/test gates and record their actual result alongside the US1 evidence in `docs/validation/mlx-device-smoke.json`
