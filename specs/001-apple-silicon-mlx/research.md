@@ -208,7 +208,7 @@ standard CI runner cannot.
 
 - [Qwen3-30B-A3B model card](https://huggingface.co/Qwen/Qwen3-30B-A3B)
 - [Official Qwen3-30B-A3B GGUF card](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF)
-- [Official Q8_0 artifact](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/blob/514a59606e483e4e0d22d4e4e7b39715a41786bb/Qwen3-30B-A3B-Q8_0.gguf)
+- [Official Q8_0 artifact](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/blob/e4d4bafdfb96a411a163846265362aceb0b9c63a/Qwen3-30B-A3B-Q8_0.gguf)
 - [Qwen3 technical announcement](https://qwenlm.github.io/blog/qwen3/)
 - [Qwen3-235B-A22B GGUF card](https://huggingface.co/Qwen/Qwen3-235B-A22B-GGUF)
 - [Qwen1.5-MoE-A2.7B card](https://huggingface.co/Qwen/Qwen1.5-MoE-A2.7B)

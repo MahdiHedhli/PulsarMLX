@@ -5,21 +5,24 @@
 > **Project status:** PulsarMLX is an experimental Apple Silicon and MLX
 > derivative of [Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar).
 > It preserves Pulsar's MIT license, attribution, Git history, and Linux/CUDA
-> path while an additive Apple backend is developed. A bounded MLX GPU device
-> proof is verified; model inference is not implemented yet.
+> path while an additive Apple backend is developed. Bounded MLX GPU device,
+> tensor, and synthetic routed-MoE proofs are verified; real-model inference
+> is not implemented or verified.
 
 ## PulsarMLX capability status
 
 | Category | Current status |
 | --- | --- |
 | Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
-| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, exact workspace check passes and the workspace suite passes with 114 Rust tests; 21 Python worker tests also pass. A supervised native arm64 MLX 0.32.0 worker has an evaluated device proof plus seven evaluated tensor fixtures covering dense primitives, deterministic top-k routing, and a scoped Q8_0 decoded-row dot. Strict scalar Q8_0 row decode/matvec passes 14 malformed and oracle cases. No fallback is allowed. |
-| Planned capabilities | Portable expert storage, a synthetic routed-MoE layer, and the first compatible real-model vertical slice. |
-| Unsupported or unverified | MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
+| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, the exact workspace check passes and 139 macOS-selected Rust tests pass; one native MLX integration test is intentionally opt-in and also passes when run explicitly. The Python worker suite passes 28 tests. Native MLX 0.32.0 evidence covers the device proof, seven bounded tensor fixtures, and one synthetic routed-MoE graph with exact expert-byte identities, deterministic routes, evaluated output, and no fallback. A portable exact positional expert source and strict scalar Q8_0 decode/matvec references are also test-verified. |
+| Planned capabilities | The Qwen3-30B-A3B Q8_0 candidate has frozen pre-download oracle, provenance, memory, and shared-boundary records. Acquiring and inventorying the external artifact requires explicit operator authorization before the first bounded real-model vertical slice can proceed. |
+| Unsupported or unverified | Real-model MLX inference, macOS model serving, custom Metal kernels, Apple multi-device execution, giant-model Apple performance, and Linux/CUDA runtime parity for fork changes. |
 
-The verified MLX results are bounded device/tensor fixtures, not model
-inference. See [device evidence](docs/validation/mlx-device-smoke.json),
-[tensor evidence](docs/validation/mlx-tensor-fixtures.json), and [known
+The verified MLX results are bounded device/tensor and synthetic-model
+fixtures, not real-model inference. See [device evidence](docs/validation/mlx-device-smoke.json),
+[tensor evidence](docs/validation/mlx-tensor-fixtures.json), [synthetic MoE
+evidence](docs/validation/synthetic-moe-v1.json), [portable-source
+evidence](docs/validation/portable-expert-source.json), and [known
 limitations](docs/apple-silicon/KNOWN_LIMITATIONS.md) for the exact boundary.
 
 ## Verify and continue development

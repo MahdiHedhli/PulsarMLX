@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "record_type": "model_compatibility",
+  "record_id": "qwen3-30b-a3b-q8_0-candidate-v1",
+  "recorded_at_utc": "2026-08-05T13:34:23Z",
+  "status": "candidate",
+  "evidence_state": "official_metadata_verified_pre_download",
+  "source": {
+    "publisher": "Qwen",
+    "repository_id": "Qwen/Qwen3-30B-A3B-GGUF",
+    "repository_url": "https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/tree/e4d4bafdfb96a411a163846265362aceb0b9c63a",
+    "immutable_revision": "e4d4bafdfb96a411a163846265362aceb0b9c63a",
+    "revision_kind": "git_commit_sha",
+    "filename": "Qwen3-30B-A3B-Q8_0.gguf",
+    "artifact_url": "https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/blob/e4d4bafdfb96a411a163846265362aceb0b9c63a/Qwen3-30B-A3B-Q8_0.gguf",
+    "official_repository": true,
+    "access": {
+      "visibility": "public",
+      "gated": false,
+      "authentication_required_for_public_metadata": false,
+      "disabled": false,
+      "verification_state": "verified_from_official_hugging_face_api"
+    }
+  },
+  "license": {
+    "spdx_id": "Apache-2.0",
+    "repository_card_value": "apache-2.0",
+    "immutable_license_url": "https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/blob/e4d4bafdfb96a411a163846265362aceb0b9c63a/LICENSE",
+    "immutable_license_raw_url": "https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/raw/e4d4bafdfb96a411a163846265362aceb0b9c63a/LICENSE",
+    "license_file_present": true,
+    "verification_state": "official_metadata_and_pinned_license_file_verified"
+  },
+  "published_artifact_identity": {
+    "size_bytes": 32483931648,
+    "size_value_kind": "published_expected",
+    "size_locally_verified": false,
+    "size_state": "published_expected_not_locally_verified",
+    "lfs_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    "lfs_sha256_value_kind": "published_expected",
+    "lfs_sha256_locally_verified": false,
+    "lfs_sha256_state": "published_expected_not_locally_verified",
+    "metadata_source": "https://huggingface.co/api/models/Qwen/Qwen3-30B-A3B-GGUF/revision/e4d4bafdfb96a411a163846265362aceb0b9c63a?blobs=true",
+    "interpretation": "These are the official repository's published LFS values. They are expected identity values only and are not a checksum or size measurement of a local artifact."
+  },
+  "local_artifact_identity": {
+    "operator_download_authorization_recorded": false,
+    "download_performed": false,
+    "local_path": null,
+    "actual_size_bytes": null,
+    "actual_sha256": null,
+    "actual_identity_state": "unresolved_until_t055",
+    "tensor_inventory_state": "unresolved_until_t055",
+    "quantization_inventory_state": "unresolved_until_t055"
+  },
+  "related_admission_records": {
+    "trusted_oracle": {
+      "path": "docs/validation/models/qwen3-30b-a3b-q8_0-oracle.json",
+      "record_id": "qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-oracle-v1",
+      "status": "frozen_not_executed"
+    },
+    "memory_budget": {
+      "path": "docs/validation/models/qwen3-30b-a3b-q8_0-memory-budget.json",
+      "record_id": "qwen3-30b-a3b-q8_0-first-expert-matvec-memory-budget-v1",
+      "status": "admitted_pre_download"
+    },
+    "traceability": "Both records refer to the same immutable repository revision, artifact filename, published expected size, and bounded expert-projection slice. Neither is execution evidence."
+  },
+  "architecture": {
+    "gguf_architecture": "qwen3moe",
+    "architecture_state": "verified_from_official_repository_api",
+    "official_model_summary": {
+      "total_parameters": "30.5B",
+      "activated_parameters": "3.3B",
+      "layers": 48,
+      "experts": 128,
+      "activated_experts_per_token": 8
+    },
+    "summary_source": "https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/blob/e4d4bafdfb96a411a163846265362aceb0b9c63a/README.md",
+    "interpretation": "The repository-level architecture and model-card summary are verified metadata. They do not establish that the selected file's complete tensor inventory is supported by PulsarMLX."
+  },
+  "planned_slice": {
+    "state": "planned_not_executed",
+    "execution_depth": "one bounded Q8_0 expert gate-projection matvec",
+    "input_boundary": {
+      "kind": "deterministic_float32_activation",
+      "element_count": 2048,
+      "source": "predeclared_oracle_fixture",
+      "model_tokenization_required": false
+    },
+    "model_tensor_boundary": {
+      "tensor_name": "blk.0.ffn_gate_exps.weight",
+      "semantic_role": "layer_0_routed_expert_gate_projection",
+      "expert_index": 0,
+      "output_rows": {
+        "start_inclusive": 0,
+        "end_exclusive": 16
+      },
+      "input_columns": {
+        "start_inclusive": 0,
+        "end_exclusive": 2048
+      },
+      "required_gguf_dimensions": [
+        2048,
+        768,
+        128
+      ],
+      "required_reader_dequantized_layout": [
+        128,
+        768,
+        2048
+      ],
+      "required_quantization": "Q8_0",
+      "actual_dimensions": null,
+      "actual_quantization": null,
+      "admission_state": "candidate_pending_t055_inventory"
+    },
+    "output_boundary": {
+      "name": "blk0_ffn_gate_expert0_rows0_16_matvec",
+      "dtype": "float32",
+      "shape": [
+        16
+      ]
+    },
+    "candidate_tensor_quantization_roles": [
+      {
+        "tensor_name": "blk.0.ffn_gate_exps.weight",
+        "role": "routed_expert_gate_projection",
+        "required_quantization": "Q8_0",
+        "required_operation": "strict_32_element_34_byte_block_decode_and_scalar_or_mlx_matvec",
+        "scope": "expert_0_rows_0_through_15_all_2048_input_columns",
+        "actual_tensor_presence": "unresolved_until_t055",
+        "actual_tensor_type": "unresolved_until_t055",
+        "compatibility": "candidate_not_admitted"
+      }
+    ],
+    "explicit_exclusions": [
+      "router execution and top-k selection",
+      "expert up projection",
+      "expert activation",
+      "expert down projection",
+      "weighted expert aggregation",
+      "attention",
+      "residual connections",
+      "tokenization and embeddings",
+      "logits",
+      "token selection",
+      "generation",
+      "full-layer inference",
+      "full-model inference",
+      "serving",
+      "performance claims"
+    ]
+  },
+  "admission": {
+    "current_decision": "candidate_only_do_not_execute",
+    "verified_before_download": [
+      "official public and ungated repository identity",
+      "immutable repository revision",
+      "exact artifact filename",
+      "published expected artifact byte size",
+      "published expected artifact LFS SHA-256",
+      "Apache-2.0 repository license metadata and pinned license file",
+      "repository-level qwen3moe architecture metadata",
+      "official 30.5B total, 3.3B activated, 48-layer, 128-expert, 8-active-expert summary"
+    ],
+    "unresolved_until_t055": [
+      "operator authorization for external acquisition",
+      "actual local artifact byte size",
+      "actual local artifact SHA-256",
+      "complete local GGUF metadata and tensor inventory",
+      "presence and exact dimensions of blk.0.ffn_gate_exps.weight",
+      "actual GGUF type and layout of blk.0.ffn_gate_exps.weight",
+      "compatibility of every tensor byte range used by the bounded slice"
+    ],
+    "stop_before_download_if": [
+      "the repository, immutable revision, or exact filename cannot be resolved from the official source",
+      "the repository becomes private, gated, disabled, or requires unresolved credentials",
+      "the pinned Apache-2.0 license source is missing or conflicts with repository metadata",
+      "published expected size or LFS SHA-256 is absent or differs from this record",
+      "the architecture is not qwen3moe",
+      "the independent oracle or conservative disk and memory admission records are incomplete",
+      "explicit operator authorization has not been recorded"
+    ],
+    "stop_after_authorized_download_before_execution_if": [
+      "actual local byte size differs from 32483931648",
+      "actual local SHA-256 differs from 4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+      "the complete tensor inventory is unavailable",
+      "blk.0.ffn_gate_exps.weight is absent",
+      "the candidate tensor's dimensions, orientation, or quantization differ from the predeclared slice contract",
+      "any required tensor role or quantization would need an unvalidated interpretation"
+    ]
+  },
+  "source_verification": {
+    "verified_at_utc": "2026-08-05T13:34:23Z",
+    "network_effect": "read_only_official_metadata_requests_only",
+    "artifact_bytes_downloaded": false,
+    "commands": [
+      "curl -fsSL 'https://huggingface.co/api/models/Qwen/Qwen3-30B-A3B-GGUF/revision/e4d4bafdfb96a411a163846265362aceb0b9c63a?blobs=true' | jq '{id, sha, private, gated, disabled, tags, cardData: {license: .cardData.license}, gguf_architecture: .gguf.architecture, target_sibling: (.siblings[] | select(.rfilename == \"Qwen3-30B-A3B-Q8_0.gguf\"))}'",
+      "curl -fsSL 'https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/raw/e4d4bafdfb96a411a163846265362aceb0b9c63a/README.md' | rg -n -C 1 'Number of Parameters|Number of Layers|Number of Experts|Activated Experts|license:'",
+      "curl -fsSL 'https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF/raw/e4d4bafdfb96a411a163846265362aceb0b9c63a/LICENSE' | sed -n '1,12p'"
+    ],
+    "actual_observations": {
+      "api_repository_id": "Qwen/Qwen3-30B-A3B-GGUF",
+      "api_revision": "e4d4bafdfb96a411a163846265362aceb0b9c63a",
+      "api_private": false,
+      "api_gated": false,
+      "api_disabled": false,
+      "api_license": "apache-2.0",
+      "api_architecture": "qwen3moe",
+      "artifact_sibling_present": true,
+      "artifact_published_size_bytes": 32483931648,
+      "artifact_published_lfs_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+      "pinned_license_file_present": true
+    }
+  },
+  "claim_boundary": {
+    "verified_claim": "Official pre-download identity, access, license, repository architecture, published expected size, and published expected LFS SHA-256 were verified from immutable public metadata.",
+    "prohibited_claims": [
+      "the artifact has been downloaded",
+      "the published expected size or SHA-256 has been verified against local bytes",
+      "the selected tensor exists with the required dimensions or Q8_0 type",
+      "the checkpoint is compatible, verified, or executable in PulsarMLX",
+      "real-model MLX inference works",
+      "the bounded slice, full model, giant-model inference, or serving works"
+    ],
+    "next_gate": "T055 must be explicitly authorized and must establish actual local identity plus complete required tensor and quantization inventory before execution."
+  }
+}

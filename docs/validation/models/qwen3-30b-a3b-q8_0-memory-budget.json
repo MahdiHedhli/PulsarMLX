@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "record_id": "qwen3-30b-a3b-q8_0-first-expert-matvec-memory-budget-v1",
+  "status": "admitted_pre_download",
+  "recorded_at_utc": "2026-08-05T13:33:50Z",
+  "scope": {
+    "model_id": "Qwen/Qwen3-30B-A3B-GGUF",
+    "revision": "e4d4bafdfb96a411a163846265362aceb0b9c63a",
+    "filename": "Qwen3-30B-A3B-Q8_0.gguf",
+    "published_file_size_bytes": 32483931648,
+    "execution_depth": "blk.0.ffn_gate_exps.weight expert 0, output rows 0 through 15, all 2048 input columns, one Q8_0 matrix-vector slice",
+    "allowed": [
+      "open the externally supplied immutable GGUF read-only",
+      "map at most the single model file virtually",
+      "read and decode only the admitted Q8_0 tensor range needed for one expert matrix-vector operation",
+      "evaluate one bounded MLX intermediate and collect memory gauges"
+    ],
+    "excluded": [
+      "automatic or currently authorized model download",
+      "full model load",
+      "full expert block",
+      "full transformer layer",
+      "attention, KV cache, logits, token generation, serving, and benchmarking",
+      "more than one expert or more than one Q8_0 matrix-vector operation",
+      "a claim that mapped virtual bytes are resident bytes or additional unified-memory consumption"
+    ]
+  },
+  "observation": {
+    "commands": [
+      {
+        "command": "sysctl -n hw.memsize",
+        "exit_code": 0,
+        "stdout": "137438953472"
+      },
+      {
+        "command": "memory_pressure -Q",
+        "exit_code": 0,
+        "reported_total_bytes": 137438953472,
+        "reported_page_count": 8388608,
+        "reported_page_size_bytes": 16384,
+        "system_wide_memory_free_percentage": 95,
+        "note": "The percentage is a pressure heuristic, not a byte-valued allocation budget. It is not added to or subtracted from any gauge."
+      },
+      {
+        "command": "df -k .",
+        "exit_code": 0,
+        "filesystem": "/dev/disk3s5",
+        "mounted_on": "/System/Volumes/Data",
+        "available_1024_byte_blocks": 219227628,
+        "available_bytes": 224489091072,
+        "capacity_percent": 89
+      }
+    ],
+    "host_total_unified_memory_bytes": 137438953472,
+    "available_disk_bytes": 224489091072,
+    "system_memory_pressure_at_observation": "95 percent free reported by memory_pressure -Q",
+    "caveat": "Disk availability and memory pressure are point-in-time observations and MUST be rechecked immediately before acquisition and execution."
+  },
+  "disk_budget": {
+    "units": "bytes",
+    "inputs": {
+      "final_model_file_bytes": 32483931648,
+      "temporary_download_staging_bytes": 32483931648,
+      "local_validation_output_reserve_bytes": 1073741824,
+      "mandatory_free_after_staging_bytes": 68719476736
+    },
+    "non_overlapping_formula": "final_model_file_bytes + temporary_download_staging_bytes + local_validation_output_reserve_bytes + mandatory_free_after_staging_bytes",
+    "required_available_bytes": 134761081856,
+    "observed_available_bytes": 224489091072,
+    "margin_bytes": 89728009216,
+    "fits": true,
+    "policy": [
+      "The final file and a complete temporary staging file are budgeted simultaneously even if the acquisition tool normally renames rather than copies.",
+      "The 64 GiB mandatory free-space reserve is not available to model acquisition or validation outputs.",
+      "Stop before acquisition if a fresh df -k observation is below 134761081856 available bytes.",
+      "Any converted checkpoint, duplicate cache entry, or additional shard requires a new budget and is not admitted by this record."
+    ]
+  },
+  "unified_memory_budget": {
+    "units": "bytes",
+    "host_total_bytes": 137438953472,
+    "mandatory_system_headroom_bytes": 34359738368,
+    "mapped_file": {
+      "mapped_virtual_bytes_cap": 32483931648,
+      "mapped_resident_bytes_cap": 536870912,
+      "mapped_resident_observation_before_execution": null,
+      "accounting": "Mapped virtual bytes are address-space coverage only and are excluded from the physical admission formula. Mapped resident pages are bounded inside both the component envelope and the process-footprint envelope; they are not added again as an independent total."
+    },
+    "owned_compressed_bytes": {
+      "working_set_cap": 268435456,
+      "cache_cap": 268435456,
+      "accounting": "The working tensor range and compressed cache are distinct caps. A range retained in the cache MUST NOT also be reported as an additional working allocation."
+    },
+    "decoded_arrays": {
+      "active_cap": 1073741824,
+      "cache_cap": 1073741824,
+      "q8_0_bound_formula": "floor(owned_compressed_working_set_cap / 34) * 128 <= decoded_active_cap",
+      "q8_0_max_decoded_bytes_under_formula": 1010580480,
+      "accounting": "Q8_0 uses 34 stored bytes per 32 float values and 128 decoded float32 bytes per block. Actual tensor dimensions and block divisibility remain a later inventory gate."
+    },
+    "activations_and_temporaries": {
+      "activation_arrays_peak_cap": 67108864,
+      "temporary_current_cap": 1073741824,
+      "temporary_peak_cap": 2147483648,
+      "accounting": "Current and peak temporaries are overlapping gauges; only the peak cap participates in the component-envelope formula."
+    },
+    "runtime_base": {
+      "rust_python_mlx_base_cap": 2147483648,
+      "accounting": "This cap covers runtime code, interpreter state, stacks, and other process-resident bytes not assigned to the explicit model-data categories."
+    },
+    "mlx_allocator_gauges": {
+      "active_bytes_cap": 3221225472,
+      "cache_bytes_cap": 1342177280,
+      "peak_bytes_cap": 4294967296,
+      "observed_before_execution": {
+        "active_bytes": null,
+        "cache_bytes": null,
+        "peak_bytes": null
+      },
+      "accounting": "MLX active, cache, and peak gauges overlap decoded arrays, activations, temporaries, caches, and process footprint. They are mandatory runtime observations and caps but are not summed into the physical admission requirement."
+    },
+    "process_footprint": {
+      "physical_footprint_cap": 8589934592,
+      "observed_before_execution_bytes": null,
+      "observed_peak_bytes": null,
+      "measurement_policy": "macOS physical footprint is mandatory for execution evidence. RSS alone is not an admissible substitute because it may omit MLX or Metal allocations; stop if physical footprint cannot be observed.",
+      "accounting": "Physical footprint contains resident mappings and allocator-backed arrays. It is an inclusive envelope and is never added to those component observations."
+    },
+    "component_envelope": {
+      "non_overlapping_formula": "runtime_base + mapped_resident_cap + owned_compressed_working_set_cap + decoded_active_cap + activation_arrays_peak_cap + temporary_peak_cap + compressed_cache_cap + decoded_cache_cap",
+      "component_cap_sum_bytes": 7583301632,
+      "process_envelope_slack_bytes": 1006632960,
+      "fits_inside_process_footprint_cap": true
+    },
+    "physical_admission": {
+      "non_overlapping_formula": "max(component_envelope_sum, process_footprint_cap) + mandatory_system_headroom",
+      "required_host_bytes": 42949672960,
+      "host_total_bytes": 137438953472,
+      "margin_bytes": 94489280512,
+      "fits": true,
+      "reported_summed_overlapping_total_bytes": null
+    },
+    "runtime_stop_rules": [
+      "Stop if system pressure is not normal immediately before execution or worsens materially during the slice.",
+      "Stop if the actual Q8_0 range exceeds 268435456 compressed bytes, its checked float32 decode exceeds 1073741824 bytes, or its metadata cannot prove exact block layout and tensor orientation.",
+      "Stop if mapped resident pages exceed 536870912 bytes, process physical footprint exceeds 8589934592 bytes, or any MLX active/cache/peak cap is exceeded.",
+      "Stop rather than expanding execution depth, adding experts, or evicting the mandatory 34359738368-byte system headroom reserve.",
+      "A missing runtime gauge is recorded as unavailable; it does not authorize exceeding the corresponding allocation cap."
+    ]
+  },
+  "decision": {
+    "disk_gate": "pass",
+    "unified_memory_gate": "pass",
+    "bounded_slice_admission": "pass_pre_download_budget_only",
+    "download_authorized": false,
+    "proceed_now": false,
+    "reason": "The conservative disk and unified-memory bounds fit the observed host, but this record neither authorizes acquisition nor proves the artifact identity, tensor inventory, execution, or correctness.",
+    "next_gate": "Obtain explicit operator authorization, recheck disk and memory pressure, then apply the separate immutable identity, checksum, license, and tensor-inventory gates before any model execution.",
+    "stop_before_download_if": [
+      "fresh available disk is less than 134761081856 bytes",
+      "host unified memory is less than 42949672960 bytes",
+      "the scope requires more than the single admitted Q8_0 expert matvec",
+      "any required predeclared tensor bound, required layout, provenance, or other mandatory pre-download admission input is unresolved"
+    ]
+  },
+  "claims_not_made": [
+    "No model file was downloaded, opened, mapped, hashed, or executed for this budget.",
+    "No actual mapped-resident, owned-compressed, decoded-array, temporary, MLX allocator, or physical-footprint model-run gauge exists yet.",
+    "The budget does not verify real-model compatibility, output parity, full inference, giant-model inference, serving, or performance."
+  ]
+}

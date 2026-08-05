@@ -1,8 +1,9 @@
 # Known limitations
 
-Observed on 2026-08-05 at upstream-derived revision `12c2406`, before MLX
-backend implementation. This list separates demonstrated limits from planned
-work. See the exact host snapshot in
+The original host and upstream observations were captured on 2026-08-05 at
+revision `12c2406`; implementation-specific sections are updated through the
+current Spec Kit stop point. This list separates demonstrated limits from
+planned work. See the exact host snapshot in
 [../preflight/ENVIRONMENT.md](../preflight/ENVIRONMENT.md), validation output
 in [../preflight/BASELINE_VALIDATION.md](../preflight/BASELINE_VALIDATION.md),
 and the source audit in
@@ -25,18 +26,23 @@ and the source audit in
   is verified only for strict complete-row scalar decode/matvec and one bounded
   evaluated MLX decoded-row dot. Model loading, quantized model roles, token
   generation, and serving have not been executed.
-- No real-model fixture is present in the repository. Synthetic validation,
-  when added, will not establish checkpoint compatibility.
+- No real-model fixture is present in the repository. The evaluated synthetic
+  routed-MoE fixture establishes only its committed expert bytes, routes,
+  aggregation, and four-value output; it does not establish checkpoint
+  compatibility.
 - Mapped GGUF-to-MLX aliasing, unified-memory residency behavior, giant-model
   correctness, memory pressure, and SSD streaming performance have not been
   measured.
 
 ## Platform and test coverage
 
-- After US2, `cargo check --workspace --all-targets` passed on native arm64
-  macOS, and `cargo test --workspace --no-fail-fast` ran 114 tests: 114 passed,
-  0 failed. The Python worker suite separately ran 21 passing tests. These
-  results cover only targets selected by the macOS configuration.
+- After US3 and the native-test boundary correction,
+  `cargo check --workspace --all-targets` passed on native arm64 macOS, and
+  `cargo test --workspace --no-fail-fast` ran 139 active tests: 139 passed,
+  0 failed, with one native MLX integration test explicitly ignored by the
+  baseline. That test passed when run directly with `--ignored` against the
+  frozen local environment. The Python worker suite separately ran 28 passing
+  tests. These results cover only targets selected by macOS.
 - Engine, kernel, and Linux-gated server test targets each ran zero tests on
   macOS. The test run does not exercise the Linux server, CUDA execution,
   `io_uring`, or `handle_chat` behavior.
@@ -44,8 +50,9 @@ and the source audit in
   Multi-GPU, CUDA graphs, device caches, and GPU kernel parity are unverified.
 - There is no checked-in code-coverage configuration or report.
 - The inherited Linux expert fetcher depends on `io_uring`, `O_DIRECT`, Unix
-  descriptors, and aligned reads. No portable or macOS expert fetch
-  implementation exists yet.
+  descriptors, and aligned reads. An additive portable exact positional source
+  now passes its macOS reference tests, but it is not wired into or claimed as
+  a replacement for the inherited Linux engine path.
 
 ## Existing source-quality debt
 
@@ -100,13 +107,14 @@ that every one is required by the eventual MLX integration.
   <https://github.com/MahdiHedhli/PulsarMLX>. GitHub reports `isFork: false`,
   visibility `PUBLIC`, and default branch `main`. Local `main` tracks
   `origin/main`; the original Pulsar remote remains `upstream`.
-- [Push-triggered GitHub Actions run 30977591362](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/30977591362)
-  completed successfully for commit `733dce5`. Its job reported image
-  `macos-15-arm64` release `20260727.0256`, `arm64`, macOS 15.7.7 build 24G720,
-  rustc 1.97.1, Cargo 1.97.1, and host `aarch64-apple-darwin`.
+- [Push-triggered GitHub Actions run 31010989312](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31010989312)
+  completed successfully for commit `892fc30` on the standard arm64
+  `macos-15` runner after the native MLX integration test was made explicitly
+  opt-in.
 - The remote run passed `cargo check --workspace --all-targets` and
-  `cargo test --workspace --no-fail-fast`; 32 tests ran. It reproduced the
-  inherited `quant` warning and macOS serve dead-code warnings.
+  `cargo test --workspace --no-fail-fast`; 139 tests passed and one native MLX
+  integration test was explicitly ignored. It reproduced the inherited
+  `quant` warning and macOS serve dead-code warnings.
 - Standard `macos-15` is an Apple Silicon runner but is not equivalent to the
   local 128 GiB M1 Ultra. This job validates only the Cargo baseline. It does
   not install MLX, run an MLX device fixture, download a checkpoint, exercise

@@ -490,3 +490,61 @@ MLX prerequisite stated in the test metadata. It remains runnable explicitly
 after `uv sync --frozen`, while the ordinary Cargo baseline continues to run
 all Rust-only device identity, fallback, lifecycle, and comparison contracts.
 The workflow commands and inherited Linux/CUDA behavior were not changed.
+
+GitHub Actions run
+[`31010989312`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31010989312)
+then passed on the arm64 `macos-15` runner for commit `892fc30`. Runner
+architecture verification, `cargo check --workspace --all-targets`, and
+`cargo test --workspace --no-fail-fast` all completed successfully.
+
+### US4 pre-download admission milestone
+
+Tasks T051-T054 freeze the real-model admission boundary without acquiring,
+opening, inventorying, or executing any model bytes.
+
+T051 selects the independent oracle before any Apple real-model output. It
+pins official llama.cpp `gguf-py` at commit
+`b06aa774c03dbbb624e726664b714a57d1f49815`, component version 0.19.0, and a
+strict Q8_0 expert-projection case. The exact UTF-8 prompt is transformed by a
+specified SHA-256-based float32 probe adapter into 2,048 values; this is
+transparently not Qwen tokenization, embedding, or prompt inference. The named
+comparison is expert 0, output rows 0 through 15 of
+`blk.0.ffn_gate_exps.weight`, with 16 float32 outputs, scalar left-to-right
+accumulation, an independent NumPy self-check, and frozen absolute/relative
+tolerances. The oracle command is specified but has not been executed.
+
+T052 records official immutable Qwen repository revision
+`e4d4bafdfb96a411a163846265362aceb0b9c63a`, exact filename
+`Qwen3-30B-A3B-Q8_0.gguf`, public ungated access, Apache-2.0 license,
+`qwen3moe` metadata, published size 32,483,931,648 bytes, and published
+expected LFS SHA-256
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`.
+The size and digest are not local measurements; local identity and tensor
+inventory remain unresolved by design until T055.
+
+T053 admits only the same 16-row expert gate projection under conservative,
+non-overlapping budgets. At observation time 224,489,091,072 disk bytes were
+available; the acquisition/staging/output/headroom gate requires
+134,761,081,856 bytes. The host has 137,438,953,472 unified-memory bytes; the
+bounded process envelope plus mandatory 32 GiB system headroom requires
+42,949,672,960 bytes. Both pre-download budget gates pass, but every disk,
+pressure, allocator, mapping, and footprint observation must be rechecked at
+execution time.
+
+T054 reviewed inherited parsing, tokenization, Linux engine, CUDA kernels,
+target-specific stream dependencies, selection, and defaults at commit
+`892fc3000349bfd7e314bcf8c15f21084db82051`. The parser, tokenizer, engine,
+kernels, and Linux-only stream dependency configuration remain identical to
+the locally recorded `upstream/main`. Portable storage and Q8_0 reference
+modules are additive, and the new routing oracle is not wired into inherited
+selection. No observed regression triggered the stop rule. No suitable
+Linux/CUDA runtime result exists, so `cross_platform_safe` remains false.
+
+The next task is T055. The active implementation directive explicitly permits
+a very large model download when the active task requires it and a smaller
+fixture cannot validate the milestone. T055 requires the exact real artifact,
+and its local identity and tensor inventory cannot be established from a
+smaller fixture, so that condition authorizes acquisition of this exact public
+artifact outside the repository. Before transfer, recheck disk and pressure;
+after transfer, verify the complete local size and SHA-256 and inventory every
+tensor role/type before executing anything.

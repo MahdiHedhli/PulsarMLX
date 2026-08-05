@@ -44,6 +44,11 @@ checkpoints/
 .cache/huggingface/
 .huggingface/
 
+# Versioned model admission records are documentation, not model artifacts.
+!docs/validation/models/
+docs/validation/models/*
+!docs/validation/models/*.json
+
 # Local benchmark output, profiles, traces, and logs
 bench/results/
 benchmarks/results/

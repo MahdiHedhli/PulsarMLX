@@ -191,6 +191,45 @@
     "observed_implementation_debt": "The inherited fetch_each completion path does not currently compare the CQE byte count with payload_offset + payload_len before reporting success.",
     "claim": "Short-payload failure semantics are not verified and are not fixed by this feature. The ignored test must remain visible until a separately reviewed Linux hardening change is executed on suitable hardware."
   },
+  "t054_us4_admission_review": {
+    "reviewed_at_utc": "2026-08-05T13:37:45Z",
+    "reviewed_commit": "892fc3000349bfd7e314bcf8c15f21084db82051",
+    "scope": "All shared parsing, tokenization, storage, quantization, routing, and inherited model-semantics changes through the US4 pre-download gate",
+    "commands": [
+      {
+        "command": "git diff --exit-code upstream/main...HEAD -- crates/engine crates/kernels crates/tokenizer crates/gguf crates/stream/Cargo.toml",
+        "exit_code": 0,
+        "actual_result": "No differences at reviewed commit 892fc3000349bfd7e314bcf8c15f21084db82051",
+        "interpretation": "Inherited parser, tokenizer, engine, CUDA kernel sources and build configuration, and target-specific stream dependency selection remain byte-for-byte unchanged from the locally recorded upstream/main ref."
+      },
+      {
+        "command": "git diff --name-status upstream/main...HEAD -- Cargo.toml crates/quant crates/stream crates/serve/src/main.rs crates/backend crates/mlx-backend python fixtures",
+        "exit_code": 0,
+        "actual_result": "Only the two additive backend crates, bounded MLX worker and fixtures, additive q8_0_ref and positional source modules/tests, root workspace membership and repository identity, and the macOS handle_chat cfg gate differ.",
+        "interpretation": "No inherited parser, tokenizer, Linux engine, CUDA kernel, model loader, routing default, or quantization implementation was replaced."
+      },
+      {
+        "command": "git diff --name-status 8abdfe0..HEAD -- crates python fixtures Cargo.toml Cargo.lock pyproject.toml uv.lock",
+        "exit_code": 0,
+        "actual_result": "M crates/mlx-backend/tests/device_smoke.rs",
+        "interpretation": "After the evaluated US3 implementation commit, the only source-tree change was making the native MLX integration test explicitly opt-in when its frozen Python environment is present; production behavior is unchanged."
+      }
+    ],
+    "shared_boundary_findings": {
+      "gguf_parsing": "unchanged_inherited_source",
+      "tokenization": "unchanged_inherited_source",
+      "linux_engine_and_model_semantics": "unchanged_inherited_source_and_selection",
+      "cuda_kernels_and_defaults": "unchanged_inherited_source_build_and_selection",
+      "storage": "The portable positional source is additive; inherited Linux engine call sites still select stream::fetch::Fetcher and Linux-only io_uring dependencies are unchanged.",
+      "quantization": "The independent strict scalar q8_0_ref module and its re-export are additive. Existing cpu_dot, iq, writer, constants, and inherited CUDA quantization paths are unchanged.",
+      "routing": "The backend-neutral scalar routing oracle exists only in the new backend crate and is not wired into inherited Linux engine selection or defaults.",
+      "serve": "The sole inherited serve change gates handle_chat on Linux so Linux behavior is unchanged while macOS no longer resolves Linux-only engine and MCP types."
+    },
+    "actual_supported_hardware_result": "No additional Linux or CUDA command was executed on suitable hardware; the exact unavailable boundary and zero-test macOS invocations remain recorded above.",
+    "observed_regression": false,
+    "stop_condition_reached": false,
+    "decision": "Static review passes the T054 admission gate. This does not change cross_platform_safe=false and does not verify Linux, io_uring, O_DIRECT, or CUDA runtime behavior."
+  },
   "warnings": [
     "Exit code 0 from either cargo test command is not a Linux/CUDA pass because every relevant test was cfg-excluded and the observed count was zero.",
     "The Linux preservation test helpers may report an in-test SKIP when io_uring or O_DIRECT is unavailable even on Linux; future evidence must record such skips rather than counting them as executed semantic coverage.",
