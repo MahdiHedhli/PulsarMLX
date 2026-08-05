@@ -1,16 +1,28 @@
 //! Admission contract for the first bounded external Qwen model slice.
 //!
-//! This module validates caller-observed artifact metadata. It deliberately
-//! performs no file access, model acquisition, parsing, or execution.
+//! This module validates caller-observed descriptors and can inspect one
+//! explicit external artifact read-only. It never acquires or executes a model.
 
 use backend::{ContractError, ErrorCategory};
+use gguf::{Gguf, TensorType, Value};
+use sha2::{Digest, Sha256};
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
+use std::path::Path;
 
-const REPOSITORY_ID: &str = "Qwen/Qwen3-30B-A3B-GGUF";
-const REVISION: &str = "e4d4bafdfb96a411a163846265362aceb0b9c63a";
-const FILENAME: &str = "Qwen3-30B-A3B-Q8_0.gguf";
-const LICENSE_SPDX: &str = "Apache-2.0";
-const SHA256: &str = "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c";
-const FILE_BYTES: u64 = 32_483_931_648;
+pub const QWEN_REPOSITORY_ID: &str = "Qwen/Qwen3-30B-A3B-GGUF";
+pub const QWEN_REVISION: &str = "e4d4bafdfb96a411a163846265362aceb0b9c63a";
+pub const QWEN_FILENAME: &str = "Qwen3-30B-A3B-Q8_0.gguf";
+pub const QWEN_LICENSE_SPDX: &str = "Apache-2.0";
+pub const QWEN_SHA256: &str = "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c";
+pub const QWEN_FILE_BYTES: u64 = 32_483_931_648;
+
+const REPOSITORY_ID: &str = QWEN_REPOSITORY_ID;
+const REVISION: &str = QWEN_REVISION;
+const FILENAME: &str = QWEN_FILENAME;
+const LICENSE_SPDX: &str = QWEN_LICENSE_SPDX;
+const SHA256: &str = QWEN_SHA256;
+const FILE_BYTES: u64 = QWEN_FILE_BYTES;
 
 const ARCHITECTURE: &str = "qwen3moe";
 const STRING_VALUE_TYPE: &str = "STRING";
@@ -26,9 +38,11 @@ const TENSOR_DIMENSIONS: [u64; 3] = [2_048, 768, 128];
 const TENSOR_ENCODED_SHAPE: [u64; 3] = [128, 768, 2_176];
 const TENSOR_ELEMENTS: u64 = 201_326_592;
 const TENSOR_BYTES: u64 = 213_909_504;
-const TENSOR_DATA_OFFSET: u64 = 901_175_808;
+pub const QWEN_TENSOR_DATA_OFFSET: u64 = 901_175_808;
+const TENSOR_DATA_OFFSET: u64 = QWEN_TENSOR_DATA_OFFSET;
 
-const ENCODED_SLICE_BYTES: u64 = 34_816;
+pub const QWEN_ENCODED_SLICE_BYTES: u64 = 34_816;
+const ENCODED_SLICE_BYTES: u64 = QWEN_ENCODED_SLICE_BYTES;
 const DECODED_SLICE_BYTES: u64 = 131_072;
 const ACTIVATION_BYTES: u64 = 8_192;
 const OUTPUT_BYTES: u64 = 64;
@@ -45,6 +59,14 @@ const MLX_ACTIVE_BYTES_MAX: u64 = 3_221_225_472;
 const MLX_CACHE_BYTES_MAX: u64 = 1_342_177_280;
 const MLX_PEAK_BYTES_MAX: u64 = 4_294_967_296;
 const PROCESS_PHYSICAL_FOOTPRINT_BYTES_MAX: u64 = 8_589_934_592;
+const HEADER_READ_START: usize = 8 * 1024 * 1024;
+const HEADER_READ_MAX: usize = 64 * 1024 * 1024;
+const HASH_BUFFER_BYTES: usize = 8 * 1024 * 1024;
+const EXPECTED_GGUF_VERSION: u32 = 3;
+const EXPECTED_DATA_OFFSET: u64 = 5_969_408;
+const EXPECTED_TENSOR_COUNT: usize = 579;
+const EXPECTED_F32_TENSOR_COUNT: usize = 241;
+const EXPECTED_Q8_0_TENSOR_COUNT: usize = 338;
 
 /// Immutable source and locally observed identity for the admitted artifact.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -130,6 +152,93 @@ pub struct ModelAdmissionDescriptor {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AdmittedModelSlice {
     _private: (),
+}
+
+/// Read-only inspection of the immutable external artifact.
+///
+/// Only the already-opened file is retained. Its private external path is not
+/// exposed to the worker protocol or evidence layer.
+pub struct ExternalModelInspection {
+    file: File,
+    admission_descriptor: ModelAdmissionDescriptor,
+    admitted: AdmittedModelSlice,
+    gguf_version: u32,
+    data_offset: u64,
+    tensor_count: usize,
+    f32_tensor_count: usize,
+    q8_0_tensor_count: usize,
+    encoded_slice_sha256: String,
+}
+
+impl ExternalModelInspection {
+    pub fn try_clone_file(&self) -> Result<File, ContractError> {
+        self.file.try_clone().map_err(|_| {
+            invalid_model(
+                "model_read_failed",
+                "the admitted external model handle could not be cloned",
+            )
+        })
+    }
+
+    pub fn admission_descriptor(&self) -> &ModelAdmissionDescriptor {
+        &self.admission_descriptor
+    }
+
+    pub fn admitted(&self) -> AdmittedModelSlice {
+        self.admitted
+    }
+
+    pub fn gguf_version(&self) -> u32 {
+        self.gguf_version
+    }
+
+    pub fn data_offset(&self) -> u64 {
+        self.data_offset
+    }
+
+    pub fn tensor_count(&self) -> usize {
+        self.tensor_count
+    }
+
+    pub fn f32_tensor_count(&self) -> usize {
+        self.f32_tensor_count
+    }
+
+    pub fn q8_0_tensor_count(&self) -> usize {
+        self.q8_0_tensor_count
+    }
+
+    pub fn encoded_slice_sha256(&self) -> &str {
+        &self.encoded_slice_sha256
+    }
+
+    /// Recheck the exact open artifact after execution without reopening its
+    /// private path. This detects mutation while preserving the same inode.
+    pub fn verify_unchanged(&self) -> Result<(), ContractError> {
+        let metadata = self.file.metadata().map_err(|_| {
+            invalid_model(
+                "model_unavailable",
+                "the admitted external model metadata could not be rechecked",
+            )
+        })?;
+        if !metadata.is_file() || metadata.len() != FILE_BYTES {
+            return Err(invalid_model(
+                "model_size_mismatch",
+                "the admitted external model size changed during validation",
+            ));
+        }
+        let mut file = self.try_clone_file()?;
+        if sha256_reader(&mut file)? != SHA256
+            || sha256_exact_range(&self.file, TENSOR_DATA_OFFSET, ENCODED_SLICE_BYTES as usize)?
+                != self.encoded_slice_sha256
+        {
+            return Err(invalid_model(
+                "model_checksum_mismatch",
+                "the admitted external model changed during validation",
+            ));
+        }
+        Ok(())
+    }
 }
 
 impl AdmittedModelSlice {
@@ -218,6 +327,406 @@ pub fn admit_qwen3_q8_0_slice(
     }
 
     Ok(AdmittedModelSlice { _private: () })
+}
+
+/// Construct the exact frozen budget with fresh disk and host observations.
+pub fn frozen_qwen_model_memory_budget(
+    available_disk_bytes: u64,
+    host_unified_memory_bytes: u64,
+) -> ModelMemoryBudget {
+    ModelMemoryBudget {
+        available_disk_bytes,
+        required_disk_bytes: REQUIRED_DISK_BYTES,
+        host_unified_memory_bytes,
+        required_host_bytes: REQUIRED_HOST_BYTES,
+        owned_compressed_bytes_cap: OWNED_COMPRESSED_BYTES_MAX,
+        decoded_array_bytes_cap: DECODED_ARRAY_BYTES_MAX,
+        temporary_peak_bytes_cap: TEMPORARY_PEAK_BYTES_MAX,
+        mlx_active_bytes_cap: MLX_ACTIVE_BYTES_MAX,
+        mlx_cache_bytes_cap: MLX_CACHE_BYTES_MAX,
+        mlx_peak_bytes_cap: MLX_PEAK_BYTES_MAX,
+        process_physical_footprint_bytes_cap: PROCESS_PHYSICAL_FOOTPRINT_BYTES_MAX,
+        mandatory_system_headroom_bytes: SYSTEM_HEADROOM_BYTES,
+    }
+}
+
+/// Hash, parse, inventory, and admit the exact external Qwen artifact.
+///
+/// The file is opened read-only, never downloaded, mapped, or executed. The
+/// complete SHA-256 and the exact consumed slice SHA-256 are both calculated
+/// from the same open file description.
+pub fn inspect_external_qwen_model(
+    requested_path: &Path,
+    repository_root: &Path,
+    memory_budget: ModelMemoryBudget,
+) -> Result<ExternalModelInspection, ContractError> {
+    if !requested_path.is_absolute() {
+        return Err(invalid_model(
+            "model_path_not_absolute",
+            "the external model path must be absolute",
+        ));
+    }
+    let canonical_path = requested_path.canonicalize().map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the external model file is unavailable",
+        )
+    })?;
+    let canonical_root = repository_root.canonicalize().map_err(|_| {
+        invalid_model(
+            "repository_unavailable",
+            "the source repository root is unavailable",
+        )
+    })?;
+    if canonical_path.starts_with(&canonical_root) {
+        return Err(invalid_model(
+            "model_path_not_external",
+            "model weights must remain outside the source repository",
+        ));
+    }
+    if canonical_path.file_name().and_then(|name| name.to_str()) != Some(FILENAME) {
+        return Err(invalid_model(
+            "model_identity_mismatch",
+            "the external model filename does not match the immutable artifact",
+        ));
+    }
+
+    let mut file = File::open(&canonical_path).map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the external model file could not be opened read-only",
+        )
+    })?;
+    let metadata = file.metadata().map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the external model metadata could not be read",
+        )
+    })?;
+    if !metadata.is_file() || metadata.len() != FILE_BYTES {
+        return Err(invalid_model(
+            "model_size_mismatch",
+            "the external model byte size does not match the immutable artifact",
+        ));
+    }
+
+    let actual_sha256 = sha256_reader(&mut file)?;
+    if actual_sha256 != SHA256 {
+        return Err(invalid_model(
+            "model_checksum_mismatch",
+            "the external model checksum does not match the immutable artifact",
+        ));
+    }
+
+    let gguf = parse_bounded_header(&file)?;
+    let (metadata_descriptor, tensor_descriptor, f32_count, q8_0_count) =
+        inspect_gguf_inventory(&gguf, metadata.len())?;
+    let encoded_slice_sha256 = sha256_exact_range(
+        &file,
+        TENSOR_DATA_OFFSET,
+        usize::try_from(ENCODED_SLICE_BYTES).map_err(|_| {
+            invalid_model(
+                "invalid_tensor_range",
+                "the encoded model slice size is not representable",
+            )
+        })?,
+    )?;
+
+    let admission_descriptor = ModelAdmissionDescriptor {
+        identity: ModelIdentityDescriptor {
+            repository_id: REPOSITORY_ID.to_owned(),
+            revision: REVISION.to_owned(),
+            filename: FILENAME.to_owned(),
+            license_spdx: LICENSE_SPDX.to_owned(),
+            expected_size_bytes: FILE_BYTES,
+            actual_size_bytes: metadata.len(),
+            expected_sha256: SHA256.to_owned(),
+            actual_sha256,
+            stored_outside_repository: true,
+        },
+        metadata: metadata_descriptor,
+        tensors: vec![tensor_descriptor],
+        memory_budget,
+        execution_depth: ModelExecutionDepth::Layer0Expert0GateRows0To16Matvec,
+        automatic_download_requested: false,
+    };
+    let admitted = admit_qwen3_q8_0_slice(&admission_descriptor)?;
+
+    Ok(ExternalModelInspection {
+        file,
+        admission_descriptor,
+        admitted,
+        gguf_version: gguf.version,
+        data_offset: gguf.data_offset,
+        tensor_count: gguf.tensors.len(),
+        f32_tensor_count: f32_count,
+        q8_0_tensor_count: q8_0_count,
+        encoded_slice_sha256,
+    })
+}
+
+fn sha256_reader(file: &mut File) -> Result<String, ContractError> {
+    file.seek(SeekFrom::Start(0)).map_err(|_| {
+        invalid_model(
+            "model_read_failed",
+            "the external model could not be positioned for hashing",
+        )
+    })?;
+    let mut digest = Sha256::new();
+    let mut buffer = vec![0_u8; HASH_BUFFER_BYTES];
+    loop {
+        let count = file.read(&mut buffer).map_err(|_| {
+            invalid_model(
+                "model_read_failed",
+                "the external model could not be read completely for hashing",
+            )
+        })?;
+        if count == 0 {
+            break;
+        }
+        digest.update(&buffer[..count]);
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+
+fn parse_bounded_header(file: &File) -> Result<Gguf, ContractError> {
+    let mut read_size = HEADER_READ_START;
+    loop {
+        let mut reader = file.try_clone().map_err(|_| {
+            invalid_model(
+                "model_read_failed",
+                "the external model handle could not be cloned for header inspection",
+            )
+        })?;
+        reader.seek(SeekFrom::Start(0)).map_err(|_| {
+            invalid_model(
+                "model_read_failed",
+                "the external model could not be positioned for header inspection",
+            )
+        })?;
+        let mut header = Vec::with_capacity(read_size);
+        reader
+            .take(read_size as u64)
+            .read_to_end(&mut header)
+            .map_err(|_| {
+                invalid_model(
+                    "model_read_failed",
+                    "the external model header could not be read completely",
+                )
+            })?;
+        match Gguf::parse(&header) {
+            Ok(gguf) => return Ok(gguf),
+            Err(gguf::Error::Truncated { .. })
+                if header.len() == read_size && read_size < HEADER_READ_MAX =>
+            {
+                read_size = (read_size * 2).min(HEADER_READ_MAX);
+            }
+            Err(_) => {
+                return Err(invalid_model(
+                    "model_metadata_mismatch",
+                    "the external model GGUF header is invalid or exceeds its byte bound",
+                ));
+            }
+        }
+    }
+}
+
+fn inspect_gguf_inventory(
+    gguf: &Gguf,
+    file_bytes: u64,
+) -> Result<(ModelMetadataDescriptor, ModelTensorDescriptor, usize, usize), ContractError> {
+    if gguf.version != EXPECTED_GGUF_VERSION
+        || gguf.data_offset != EXPECTED_DATA_OFFSET
+        || gguf.tensors.len() != EXPECTED_TENSOR_COUNT
+    {
+        return Err(invalid_model(
+            "model_metadata_mismatch",
+            "the GGUF version, data offset, or tensor count differs from the frozen inventory",
+        ));
+    }
+    let architecture = match gguf.metadata.get("general.architecture") {
+        Some(Value::String(value)) if value == ARCHITECTURE => value.clone(),
+        Some(Value::String(_)) => {
+            return Err(invalid_model(
+                "model_metadata_mismatch",
+                "the GGUF architecture value differs from the admitted model",
+            ));
+        }
+        _ => {
+            return Err(invalid_model(
+                "model_metadata_type_mismatch",
+                "the GGUF architecture metadata is missing or not STRING",
+            ));
+        }
+    };
+    let embedding_length = exact_u32_metadata(gguf, "qwen3moe.embedding_length", EMBEDDING_LENGTH)?;
+    let expert_feed_forward_length = exact_u32_metadata(
+        gguf,
+        "qwen3moe.expert_feed_forward_length",
+        EXPERT_FEED_FORWARD_LENGTH,
+    )?;
+    let expert_count = exact_u32_metadata(gguf, "qwen3moe.expert_count", EXPERT_COUNT)?;
+
+    let f32_count = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| tensor.ty == TensorType::F32)
+        .count();
+    let q8_0_count = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| tensor.ty == TensorType::Q8_0)
+        .count();
+    if f32_count != EXPECTED_F32_TENSOR_COUNT || q8_0_count != EXPECTED_Q8_0_TENSOR_COUNT {
+        return Err(invalid_model(
+            "model_metadata_mismatch",
+            "the GGUF tensor-type inventory differs from the immutable artifact",
+        ));
+    }
+
+    let matching = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| tensor.name == TENSOR_NAME)
+        .collect::<Vec<_>>();
+    if matching.is_empty() {
+        return Err(invalid_model(
+            "missing_tensor_role",
+            "the required Qwen expert-gate tensor is missing",
+        ));
+    }
+    if matching.len() != 1 {
+        return Err(invalid_model(
+            "duplicate_tensor_role",
+            "the required Qwen expert-gate tensor is not unique",
+        ));
+    }
+    let tensor = matching[0];
+    if tensor.ty != TensorType::Q8_0 || tensor.dims != TENSOR_DIMENSIONS {
+        return Err(invalid_model(
+            "model_tensor_mismatch",
+            "the required tensor type or shape differs from the frozen inventory",
+        ));
+    }
+    let logical_elements = tensor
+        .dims
+        .iter()
+        .try_fold(1_u64, |product, dimension| product.checked_mul(*dimension))
+        .ok_or_else(|| {
+            invalid_model(
+                "model_tensor_mismatch",
+                "the required tensor element count overflows",
+            )
+        })?;
+    let encoded_row_bytes = tensor.ty.row_bytes(tensor.dims[0]).ok_or_else(|| {
+        invalid_model(
+            "unsupported_tensor_quantization",
+            "the required tensor row layout is not supported",
+        )
+    })?;
+    let encoded_rows = tensor.dims[1].checked_mul(tensor.dims[2]).ok_or_else(|| {
+        invalid_model(
+            "model_tensor_mismatch",
+            "the required tensor row count overflows",
+        )
+    })?;
+    let encoded_bytes = encoded_row_bytes.checked_mul(encoded_rows).ok_or_else(|| {
+        invalid_model(
+            "model_tensor_mismatch",
+            "the required tensor encoded byte count overflows",
+        )
+    })?;
+    let absolute_data_offset = gguf.data_offset.checked_add(tensor.offset).ok_or_else(|| {
+        invalid_model(
+            "invalid_tensor_range",
+            "the required tensor offset overflows the model file",
+        )
+    })?;
+    let end = absolute_data_offset
+        .checked_add(encoded_bytes)
+        .ok_or_else(|| {
+            invalid_model(
+                "invalid_tensor_range",
+                "the required tensor range overflows the model file",
+            )
+        })?;
+    if logical_elements != TENSOR_ELEMENTS
+        || encoded_bytes != TENSOR_BYTES
+        || absolute_data_offset != TENSOR_DATA_OFFSET
+        || end > file_bytes
+    {
+        return Err(invalid_model(
+            "model_tensor_mismatch",
+            "the required tensor type, shape, size, or range differs from the frozen inventory",
+        ));
+    }
+    Ok((
+        ModelMetadataDescriptor {
+            architecture,
+            architecture_value_type: STRING_VALUE_TYPE.to_owned(),
+            embedding_length,
+            embedding_length_value_type: UINT32_VALUE_TYPE.to_owned(),
+            expert_feed_forward_length,
+            expert_feed_forward_length_value_type: UINT32_VALUE_TYPE.to_owned(),
+            expert_count,
+            expert_count_value_type: UINT32_VALUE_TYPE.to_owned(),
+            little_endian: true,
+        },
+        ModelTensorDescriptor {
+            role: TENSOR_ROLE.to_owned(),
+            name: TENSOR_NAME.to_owned(),
+            occurrences: 1,
+            quantization: TENSOR_QUANTIZATION.to_owned(),
+            gguf_dimensions_fastest_axis_first: tensor.dims.clone(),
+            reader_encoded_shape: vec![tensor.dims[2], tensor.dims[1], encoded_row_bytes],
+            logical_elements,
+            encoded_bytes,
+            absolute_data_offset,
+        },
+        f32_count,
+        q8_0_count,
+    ))
+}
+
+fn exact_u32_metadata(gguf: &Gguf, key: &str, expected: u64) -> Result<u64, ContractError> {
+    match gguf.metadata.get(key) {
+        Some(Value::U32(value)) if u64::from(*value) == expected => Ok(u64::from(*value)),
+        Some(Value::U32(_)) => Err(invalid_model(
+            "model_metadata_mismatch",
+            "a required GGUF UINT32 metadata value differs from the frozen inventory",
+        )),
+        _ => Err(invalid_model(
+            "model_metadata_type_mismatch",
+            "required GGUF metadata is missing or not UINT32",
+        )),
+    }
+}
+
+fn sha256_exact_range(
+    file: &File,
+    offset: u64,
+    byte_count: usize,
+) -> Result<String, ContractError> {
+    let mut reader = file.try_clone().map_err(|_| {
+        invalid_model(
+            "model_read_failed",
+            "the external model handle could not be cloned for the bounded slice",
+        )
+    })?;
+    reader.seek(SeekFrom::Start(offset)).map_err(|_| {
+        invalid_model(
+            "model_read_failed",
+            "the external model could not be positioned at the bounded slice",
+        )
+    })?;
+    let mut bytes = vec![0_u8; byte_count];
+    reader.read_exact(&mut bytes).map_err(|_| {
+        invalid_model(
+            "model_read_failed",
+            "the external model did not provide the complete bounded slice",
+        )
+    })?;
+    Ok(format!("{:x}", Sha256::digest(bytes)))
 }
 
 fn validate_identity(identity: &ModelIdentityDescriptor) -> Result<(), ContractError> {

@@ -7,8 +7,11 @@ repository.workspace = true
 
 [dependencies]
 backend = { path = "../backend" }
+gguf = { path = "../gguf" }
+libc = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha2 = "0.10"
 
 [[bin]]
 name = "pulsar-mlx"

@@ -1,17 +1,24 @@
 //! Supervised lifecycle for one persistent MLX worker process.
 
 use crate::protocol::{
-    parse_hello_line, parse_response_line, parse_synthetic_moe_result, parse_tensor_fixture_result,
-    HelloExpectation, ProtocolLimits, RequestEnvelope, SyntheticMoeRequest, SyntheticMoeResult,
-    TensorFixtureRequest, TensorFixtureResult, WorkerError, WorkerErrorKind, WorkerHello,
-    MAX_RESPONSE_BYTES, PROTOCOL_VERSION,
+    parse_hello_line, parse_model_slice_result, parse_response_line, parse_synthetic_moe_result,
+    parse_tensor_fixture_result, HelloExpectation, ModelSliceRequest, ModelSliceResult,
+    ProtocolLimits, RequestEnvelope, SyntheticMoeRequest, SyntheticMoeResult, TensorFixtureRequest,
+    TensorFixtureResult, WorkerError, WorkerErrorKind, WorkerHello, MAX_RESPONSE_BYTES,
+    PROTOCOL_VERSION,
 };
 use serde_json::{Map, Value};
 use std::ffi::OsString;
+use std::fs::File;
 use std::io::{Read, Write};
+#[cfg(unix)]
+use std::os::fd::AsRawFd;
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender, TryRecvError};
+use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
@@ -20,6 +27,7 @@ const DEFAULT_MLX_VERSION: &str = "0.32.0";
 const READER_CHANNEL_CAPACITY: usize = 1;
 const READER_JOIN_BUDGET: Duration = Duration::from_millis(50);
 const CHILD_STATUS_POLL_INTERVAL: Duration = Duration::from_millis(2);
+pub const MODEL_FILE_DESCRIPTOR: i32 = 198;
 
 /// Deadlines for startup negotiation, ordinary requests, and shutdown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,6 +80,7 @@ pub struct WorkerConfig {
     timeouts: WorkerTimeouts,
     environment: Vec<(OsString, OsString)>,
     current_dir: Option<PathBuf>,
+    model_file: Option<Arc<File>>,
 }
 
 impl WorkerConfig {
@@ -85,6 +94,7 @@ impl WorkerConfig {
             timeouts: WorkerTimeouts::default(),
             environment: Vec::new(),
             current_dir: None,
+            model_file: None,
         }
     }
 
@@ -115,6 +125,12 @@ impl WorkerConfig {
 
     pub fn with_current_dir(mut self, current_dir: impl Into<PathBuf>) -> Self {
         self.current_dir = Some(current_dir.into());
+        self
+    }
+
+    /// Inherit an already-opened, read-only model on the fixed worker fd.
+    pub fn with_model_file(mut self, model_file: File) -> Self {
+        self.model_file = Some(Arc::new(model_file));
         self
     }
 
@@ -229,6 +245,9 @@ impl WorkerClient {
         }
         if let Some(current_dir) = &config.current_dir {
             command.current_dir(current_dir);
+        }
+        if let Some(model_file) = &config.model_file {
+            configure_inherited_model_file(&mut command, model_file)?;
         }
 
         let mut child = command.spawn().map_err(|error| {
@@ -373,6 +392,39 @@ impl WorkerClient {
             self.timeouts.request,
         )?;
         match parse_synthetic_moe_result(value, request, max_fixture_elements) {
+            Ok(result) => Ok(result),
+            Err(error) => {
+                self.state = WorkerState::Failed;
+                Err(error)
+            }
+        }
+    }
+
+    /// Execute the one admitted real-model slice. The request remains
+    /// control-only; model bytes are read from the inherited fixed fd.
+    pub fn run_model_slice(
+        &mut self,
+        request: &ModelSliceRequest,
+        expected_encoded_sha256: &str,
+    ) -> Result<ModelSliceResult, WorkerError> {
+        if !self
+            .hello()
+            .capabilities()
+            .operations()
+            .iter()
+            .any(|operation| operation == "run_model_slice")
+        {
+            return Err(WorkerError::new(
+                WorkerErrorKind::Protocol,
+                "negotiated worker does not advertise real-model slice execution",
+            ));
+        }
+        let (_, value) = self.request_with_timeout(
+            "run_model_slice",
+            request.protocol_params(),
+            self.timeouts.request,
+        )?;
+        match parse_model_slice_result(value, request, expected_encoded_sha256) {
             Ok(result) => Ok(result),
             Err(error) => {
                 self.state = WorkerState::Failed;
@@ -609,6 +661,68 @@ impl Drop for WorkerClient {
         self.state = WorkerState::Stopped;
         self.finish_reader();
     }
+}
+
+#[cfg(unix)]
+fn configure_inherited_model_file(
+    command: &mut Command,
+    model_file: &Arc<File>,
+) -> Result<(), WorkerError> {
+    let source_fd = model_file.as_raw_fd();
+    let flags = unsafe { libc::fcntl(source_fd, libc::F_GETFL) };
+    if flags == -1 {
+        return Err(WorkerError::new(
+            WorkerErrorKind::Io,
+            "the inherited model descriptor flags could not be inspected",
+        ));
+    }
+    if flags & libc::O_ACCMODE != libc::O_RDONLY {
+        return Err(WorkerError::new(
+            WorkerErrorKind::Spawn,
+            "the inherited model descriptor must be opened read-only",
+        ));
+    }
+    if !model_file
+        .metadata()
+        .map_err(|_| {
+            WorkerError::new(
+                WorkerErrorKind::Io,
+                "the inherited model descriptor metadata could not be inspected",
+            )
+        })?
+        .is_file()
+    {
+        return Err(WorkerError::new(
+            WorkerErrorKind::Spawn,
+            "the inherited model descriptor must identify a regular file",
+        ));
+    }
+    // SAFETY: the closure runs after fork and before exec and calls only the
+    // async-signal-safe dup2/fcntl functions. The Arc in WorkerConfig keeps
+    // source_fd open through Command::spawn.
+    unsafe {
+        command.pre_exec(move || {
+            if libc::dup2(source_fd, MODEL_FILE_DESCRIPTOR) == -1 {
+                return Err(std::io::Error::last_os_error());
+            }
+            if libc::fcntl(MODEL_FILE_DESCRIPTOR, libc::F_SETFD, 0) == -1 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn configure_inherited_model_file(
+    _command: &mut Command,
+    _model_file: &Arc<File>,
+) -> Result<(), WorkerError> {
+    Err(WorkerError::new(
+        WorkerErrorKind::Spawn,
+        "real-model slice file inheritance requires a Unix worker host",
+    ))
 }
 
 fn spawn_stdout_reader(stdout: ChildStdout) -> (Receiver<ReaderEvent>, JoinHandle<()>) {

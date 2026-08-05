@@ -11,18 +11,23 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import ctypes
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+import errno
 import hashlib
 import math
 import os
 import platform
+import stat
 import struct
-from typing import Any
+from typing import Any, Callable
 
 from .runtime import (
     GPU_DEVICE_ID,
+    INHERITED_MODEL_FILE_BYTES,
+    INHERITED_MODEL_FILE_FD,
     RuntimeContractError,
     collect_memory_gauges,
+    current_system_pressure,
 )
 
 
@@ -50,6 +55,30 @@ ENCODED_SLICE_BYTES = OUTPUT_ROWS * ENCODED_ROW_BYTES
 DECODED_SLICE_BYTES = OUTPUT_ROWS * INPUT_COLUMNS * 4
 ACTIVATION_BYTES = INPUT_COLUMNS * 4
 OUTPUT_BYTES = OUTPUT_ROWS * 4
+
+# T060 passes the already-opened, Rust-inspected model through this fixed
+# inherited descriptor.  Neither the private external path nor model bytes are
+# part of the NDJSON control request.
+MODEL_FILE_FD = INHERITED_MODEL_FILE_FD
+MODEL_FILE_BYTES = INHERITED_MODEL_FILE_BYTES
+MODEL_SLICE_OFFSET = 901_175_808
+
+# Frozen T053 execution caps.  Inclusive allocator/process gauges overlap the
+# named arrays and therefore remain separate rather than being added together.
+OWNED_COMPRESSED_BYTES_CAP = 268_435_456
+DECODED_ARRAY_BYTES_CAP = 1_073_741_824
+ACTIVATION_ARRAY_BYTES_CAP = 67_108_864
+TEMPORARY_CURRENT_BYTES_CAP = 1_073_741_824
+TEMPORARY_PEAK_BYTES_CAP = 2_147_483_648
+MLX_ACTIVE_BYTES_CAP = 3_221_225_472
+MLX_CACHE_BYTES_CAP = 1_342_177_280
+MLX_PEAK_BYTES_CAP = 4_294_967_296
+PROCESS_PHYSICAL_FOOTPRINT_BYTES_CAP = 8_589_934_592
+PROCESS_FOOTPRINT_BYTES_CAP = PROCESS_PHYSICAL_FOOTPRINT_BYTES_CAP
+
+_ACTIVATION_SHA256 = (
+    "3821796e8415d1214890e0e2fc97cddbb9ec773f2e941203dac41c1c7b36a92e"
+)
 
 _GGUF_DIMS = (INPUT_COLUMNS, EXPERT_ROWS, EXPERT_COUNT)
 _READER_ENCODED_SHAPE = (EXPERT_COUNT, EXPERT_ROWS, ENCODED_ROW_BYTES)
@@ -215,6 +244,423 @@ class ModelSliceResult:
             "output_sha256": self.output_sha256,
             "memory_gauges": self.memory_gauges.to_protocol_result(),
         }
+
+
+def admitted_model_slice_request() -> dict[str, object]:
+    """Build the one internal T059 tensor contract admitted by T060.
+
+    The public worker request carries only the immutable slice identity and
+    device/fallback selection.  Tensor semantics remain fixed here, so callers
+    cannot promote depth, alter orientation, or substitute another tensor.
+    """
+
+    return {
+        "slice_id": SLICE_ID,
+        "operation": OPERATION_ID,
+        "tensor_name": TENSOR_NAME,
+        "gguf_dimensions_fastest_axis_first": list(_GGUF_DIMS),
+        "reader_encoded_shape": list(_READER_ENCODED_SHAPE),
+        "reader_dequantized_shape": list(_READER_DEQUANTIZED_SHAPE),
+        "orientation": ORIENTATION,
+        "quantization": {
+            "id": "Q8_0",
+            "block_elements": Q8_BLOCK_ELEMENTS,
+            "block_bytes": Q8_BLOCK_BYTES,
+            "scale_dtype": "float16_little_endian",
+        },
+        "expert_index": 0,
+        "output_row_start": 0,
+        "output_row_end": OUTPUT_ROWS,
+        "input_column_start": 0,
+        "input_column_end": INPUT_COLUMNS,
+        "prompt": PROMPT,
+        "prompt_adapter": PROMPT_ADAPTER,
+        "output_name": OUTPUT_NAME,
+    }
+
+
+def run_inherited_model_slice(
+    *,
+    slice_id: object,
+    requested_device: object,
+    allow_fallback: object,
+    model_fd: int = MODEL_FILE_FD,
+    model_runner: Callable[..., ModelSliceResult] | None = None,
+    fstat_func: Callable[[int], Any] = os.fstat,
+    pread_func: Callable[[int, int, int], bytes] = os.pread,
+    pressure_func: Callable[[], str | None] = current_system_pressure,
+) -> ModelSliceResult:
+    """Read and execute the admitted range from one inherited read-only file.
+
+    Rust opens, identifies, and hashes the external artifact before spawning
+    the worker.  This boundary accepts only its inherited descriptor, snapshots
+    the exact regular-file identity around both I/O and execution, and owns the
+    34,816-byte result of positional reads before invoking MLX.
+    """
+
+    if slice_id != SLICE_ID:
+        raise ModelSliceError(
+            "unsupported_operation",
+            "the requested model-slice identity is not supported",
+        )
+    if requested_device != GPU_DEVICE_ID or allow_fallback is not False:
+        raise ModelSliceError(
+            "device_unavailable",
+            "the model slice accepts only an explicit GPU with fallback disabled",
+        )
+    if isinstance(model_fd, bool) or not isinstance(model_fd, int) or model_fd < 0:
+        raise ModelSliceError(
+            "internal_worker_error",
+            "the inherited model descriptor is invalid",
+        )
+    try:
+        pressure_before = pressure_func()
+    except Exception as error:
+        raise ModelSliceError(
+            "resource_limit",
+            "system memory pressure could not be observed before execution",
+        ) from error
+    if pressure_before != "normal":
+        raise ModelSliceError(
+            "resource_limit",
+            "system memory pressure is not normal before model-slice execution",
+        )
+
+    before = _snapshot_model_file(model_fd, fstat_func)
+    encoded_bytes = _pread_exact_model_slice(model_fd, pread_func)
+    after_read = _snapshot_model_file(model_fd, fstat_func)
+    if after_read != before:
+        raise ModelSliceError(
+            "invalid_byte_count",
+            "the inherited model file changed while its bounded slice was read",
+        )
+
+    runner = run_model_slice if model_runner is None else model_runner
+    result = runner(
+        admitted_model_slice_request(),
+        encoded_bytes,
+        requested_device=GPU_DEVICE_ID,
+        allow_fallback=False,
+    )
+
+    after_execution = _snapshot_model_file(model_fd, fstat_func)
+    if after_execution != before:
+        raise ModelSliceError(
+            "invalid_byte_count",
+            "the inherited model file changed during bounded execution",
+        )
+    return _admit_real_model_result(result, encoded_bytes)
+
+
+def _snapshot_model_file(
+    model_fd: int,
+    fstat_func: Callable[[int], Any],
+) -> tuple[int, int, int, int, int, int]:
+    try:
+        observed = fstat_func(model_fd)
+    except (OSError, TypeError, ValueError) as error:
+        raise ModelSliceError(
+            "internal_worker_error",
+            "the inherited model descriptor could not be inspected",
+        ) from error
+
+    fields = (
+        getattr(observed, "st_dev", None),
+        getattr(observed, "st_ino", None),
+        getattr(observed, "st_mode", None),
+        getattr(observed, "st_size", None),
+        getattr(observed, "st_mtime_ns", None),
+        getattr(observed, "st_ctime_ns", None),
+    )
+    if any(isinstance(value, bool) or not isinstance(value, int) for value in fields):
+        raise ModelSliceError(
+            "internal_worker_error",
+            "the inherited model descriptor returned invalid metadata",
+        )
+    device, inode, mode, size, modified_ns, changed_ns = fields
+    if not stat.S_ISREG(mode):
+        raise ModelSliceError(
+            "invalid_byte_count",
+            "the inherited model descriptor is not a regular file",
+        )
+    if size != MODEL_FILE_BYTES:
+        raise ModelSliceError(
+            "invalid_byte_count",
+            "the inherited model file byte size does not match admission",
+        )
+    return device, inode, mode, size, modified_ns, changed_ns
+
+
+def _pread_exact_model_slice(
+    model_fd: int,
+    pread_func: Callable[[int, int, int], bytes],
+) -> bytes:
+    payload = bytearray(ENCODED_SLICE_BYTES)
+    actual = 0
+    interrupted_retries = 0
+    while actual < ENCODED_SLICE_BYTES:
+        remaining = ENCODED_SLICE_BYTES - actual
+        try:
+            chunk = pread_func(
+                model_fd,
+                remaining,
+                MODEL_SLICE_OFFSET + actual,
+            )
+        except InterruptedError:
+            interrupted_retries += 1
+            if interrupted_retries > 64:
+                raise ModelSliceError(
+                    "resource_limit",
+                    "the inherited model slice read exceeded its retry bound",
+                )
+            continue
+        except OSError as error:
+            if error.errno == errno.EINTR:
+                interrupted_retries += 1
+                if interrupted_retries <= 64:
+                    continue
+            raise ModelSliceError(
+                "internal_worker_error",
+                "the inherited model slice could not be read",
+            ) from error
+
+        if not isinstance(chunk, bytes):
+            raise ModelSliceError(
+                "internal_worker_error",
+                "the inherited positional reader returned invalid data",
+            )
+        if not chunk:
+            raise ModelSliceError(
+                "invalid_byte_count",
+                "the inherited model slice ended before its exact byte count",
+            )
+        if len(chunk) > remaining:
+            raise ModelSliceError(
+                "internal_worker_error",
+                "the inherited positional reader exceeded its destination bound",
+            )
+        payload[actual : actual + len(chunk)] = chunk
+        actual += len(chunk)
+
+    return bytes(payload)
+
+
+def _admit_real_model_result(
+    result: object,
+    encoded_bytes: bytes,
+) -> ModelSliceResult:
+    if not isinstance(result, ModelSliceResult):
+        raise ModelSliceError(
+            "internal_worker_error",
+            "the model-slice runner returned an invalid result type",
+        )
+    if (
+        result.slice_id != SLICE_ID
+        or result.operation != OPERATION_ID
+        or result.tensor_name != TENSOR_NAME
+        or result.output_name != OUTPUT_NAME
+        or result.requested_device != GPU_DEVICE_ID
+        or result.selected_device != GPU_DEVICE_ID
+        or result.fallback_used
+        or result.output_shape != _OUTPUT_SHAPE
+        or result.output_dtype != "float32"
+        or not result.evaluated
+        or not result.synchronized
+    ):
+        raise ModelSliceError(
+            "evaluation_failed",
+            "the model-slice result contradicts its admitted execution contract",
+        )
+    actual = validate_model_slice_output(result.actual)
+    for label, digest in (
+        ("encoded slice", result.encoded_slice_sha256),
+        ("decoded slice", result.decoded_slice_sha256),
+        ("activation", result.activation_sha256),
+        ("output", result.output_sha256),
+    ):
+        if not _is_lower_sha256(digest):
+            raise ModelSliceError(
+                "evaluation_failed",
+                f"the {label} digest is invalid",
+            )
+    if result.activation_sha256 != _ACTIVATION_SHA256:
+        raise ModelSliceError(
+            "evaluation_failed",
+            "the model-slice activation identity does not match admission",
+        )
+    if result.encoded_slice_sha256 != hashlib.sha256(encoded_bytes).hexdigest():
+        raise ModelSliceError(
+            "evaluation_failed",
+            "the model-slice encoded payload identity does not match its bytes",
+        )
+    try:
+        output_identity = struct.pack(f"<{OUTPUT_ROWS}f", *actual)
+    except (OverflowError, struct.error) as error:
+        raise ModelSliceError(
+            "evaluation_failed",
+            "the model-slice output cannot be represented as float32",
+        ) from error
+    if result.output_sha256 != hashlib.sha256(output_identity).hexdigest():
+        raise ModelSliceError(
+            "evaluation_failed",
+            "the model-slice output identity does not match its values",
+        )
+
+    gauges = result.memory_gauges
+    if not isinstance(gauges, ModelSliceMemoryGauges):
+        raise ModelSliceError(
+            "internal_worker_error",
+            "the model-slice memory evidence has an invalid type",
+        )
+    if gauges.model_file_bytes is not None:
+        raise ModelSliceError(
+            "internal_worker_error",
+            "the tensor runner must not invent the external model-file gauge",
+        )
+    real_gauges = replace(gauges, model_file_bytes=MODEL_FILE_BYTES)
+    _validate_real_model_memory_gauges(real_gauges)
+    return replace(result, memory_gauges=real_gauges)
+
+
+def _validate_real_model_memory_gauges(gauges: ModelSliceMemoryGauges) -> None:
+    exact = (
+        (gauges.model_file_bytes, MODEL_FILE_BYTES),
+        (gauges.mapped_virtual_bytes, 0),
+        (gauges.mapped_resident_bytes, 0),
+        (gauges.owned_compressed_bytes, ENCODED_SLICE_BYTES),
+        (gauges.decoded_array_bytes, DECODED_SLICE_BYTES),
+        (gauges.activation_array_bytes, ACTIVATION_BYTES),
+        (gauges.output_bytes, OUTPUT_BYTES),
+    )
+    if any(actual != expected for actual, expected in exact):
+        raise ModelSliceError(
+            "resource_limit",
+            "the model-slice exact memory gauges do not match admission",
+        )
+    if gauges.owned_compressed_bytes > OWNED_COMPRESSED_BYTES_CAP:
+        raise ModelSliceError(
+            "resource_limit",
+            "the model-slice compressed allocation exceeds its frozen cap",
+        )
+    if gauges.decoded_array_bytes > DECODED_ARRAY_BYTES_CAP:
+        raise ModelSliceError(
+            "resource_limit",
+            "the model-slice decoded allocation exceeds its frozen cap",
+        )
+    if gauges.activation_array_bytes > ACTIVATION_ARRAY_BYTES_CAP:
+        raise ModelSliceError(
+            "resource_limit",
+            "the model-slice activation allocation exceeds its frozen cap",
+        )
+    if not _within_u64_cap(
+        gauges.temporary_current_bytes,
+        TEMPORARY_CURRENT_BYTES_CAP,
+    ) or not _within_u64_cap(
+        gauges.temporary_peak_bytes,
+        TEMPORARY_PEAK_BYTES_CAP,
+    ):
+        raise ModelSliceError(
+            "resource_limit",
+            "the model-slice temporary allocation exceeds its frozen cap",
+        )
+    if gauges.temporary_peak_bytes < gauges.temporary_current_bytes:
+        raise ModelSliceError(
+            "resource_limit",
+            "the model-slice temporary peak is below its current allocation",
+        )
+
+    mlx_gauges = (
+        (gauges.mlx_active_bytes, MLX_ACTIVE_BYTES_CAP),
+        (gauges.mlx_cache_bytes, MLX_CACHE_BYTES_CAP),
+        (gauges.mlx_peak_bytes, MLX_PEAK_BYTES_CAP),
+    )
+    if any(
+        value is None or not _within_u64_cap(value, cap)
+        for value, cap in mlx_gauges
+    ):
+        raise ModelSliceError(
+            "resource_limit",
+            "an MLX allocator gauge is unavailable or exceeds its frozen cap",
+        )
+    if (
+        gauges.mlx_active_bytes is not None
+        and gauges.mlx_peak_bytes is not None
+        and gauges.mlx_peak_bytes < gauges.mlx_active_bytes
+    ):
+        raise ModelSliceError(
+            "resource_limit",
+            "the MLX peak gauge is below its active gauge",
+        )
+
+    if gauges.process_footprint_bytes is None:
+        if gauges.process_footprint_source is not None:
+            raise ModelSliceError(
+                "resource_limit",
+                "the process RSS source is present without a gauge",
+            )
+    elif (
+        not _within_u64_cap(
+            gauges.process_footprint_bytes,
+            PROCESS_FOOTPRINT_BYTES_CAP,
+        )
+        or gauges.process_footprint_source != "ps-rss"
+    ):
+        raise ModelSliceError(
+            "resource_limit",
+            "the optional process RSS gauge is invalid",
+        )
+
+    physical = gauges.process_physical_footprint_bytes
+    physical_peak = gauges.process_physical_footprint_peak_bytes
+    if (
+        physical is None
+        or physical_peak is None
+        or not _within_u64_cap(
+            physical,
+            PROCESS_PHYSICAL_FOOTPRINT_BYTES_CAP,
+            require_positive=True,
+        )
+        or not _within_u64_cap(
+            physical_peak,
+            PROCESS_PHYSICAL_FOOTPRINT_BYTES_CAP,
+            require_positive=True,
+        )
+        or physical_peak < physical
+        or gauges.process_physical_footprint_source
+        != "proc_pid_rusage:RUSAGE_INFO_V4"
+    ):
+        raise ModelSliceError(
+            "resource_limit",
+            "mandatory Darwin physical-footprint evidence is unavailable "
+            "or out of bounds",
+        )
+    if gauges.system_pressure != "normal":
+        raise ModelSliceError(
+            "resource_limit",
+            "system memory pressure is not normal after model-slice execution",
+        )
+
+
+def _within_u64_cap(
+    value: object,
+    cap: int,
+    *,
+    require_positive: bool = False,
+) -> bool:
+    minimum = 1 if require_positive else 0
+    return (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and minimum <= value <= cap
+    )
+
+
+def _is_lower_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 
 
 def build_prompt_activation(prompt: object) -> tuple[float, ...]:

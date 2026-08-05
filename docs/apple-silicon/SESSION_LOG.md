@@ -668,3 +668,79 @@ independent scalar tuple exactly; its output SHA-256 was
 `2b44d0a66f8c4d2be5e6bd28cd2f1df9d99acbbfdc99cab82accaa40489e6c18`.
 This validates a generated exact-shape stand-in only. No GGUF file was opened,
 no model weights were used, and neither real-model oracle ran.
+
+### T060 external model command integration
+
+The CLI now exposes only two strict real-model surfaces:
+
+```sh
+pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH
+pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH
+```
+
+Both accept the single immutable Qwen filename and reject extra downloader,
+token, payload, output-dump, and execution-depth arguments. Rust opens the
+artifact read-only, hashes the complete file, parses a bounded GGUF header,
+admits the exact tensor inventory and fresh model-volume/host budget, and
+retains the same open file description. For execution, the worker inherits
+that handle as fixed descriptor 198; NDJSON carries only `slice_id`, `device`,
+and `allow_fallback`. Python performs an exact positional 34,816-byte read and
+file-identity snapshots before and after the bounded operation. No private
+external path or model bytes cross the control protocol.
+
+The evidence path is checked against canonical, symlink, and hard-link model
+aliases, the inherited descriptor must be a regular read-only file, and
+evidence is installed by a same-directory atomic rename. Rust and Python
+independently enforce exact component gauges, separate temporary-current and
+temporary-peak caps, MLX allocator caps, mandatory positive Darwin physical
+footprint, normal memory pressure, and the prohibition on a summed overlapping
+total. Reference and candidate values must be canonical finite float32 values;
+numeric validation uses the predeclared additive absolute-plus-relative rule.
+
+The first read-only inspection was launched through the unoptimized debug
+binary. Sampling showed it progressing entirely inside software SHA-256; it
+was interrupted with exit 130 after about 18 minutes and replaced by the
+reviewed release binary. The release command performed the complete identity
+pass, header/tensor inspection, bounded-slice hash, and final complete
+immutability recheck, then exited zero:
+
+```sh
+target/release/pulsar-mlx inspect-model \
+  --model <external-model>/Qwen3-30B-A3B-Q8_0.gguf \
+  --evidence /tmp/pulsarmlx-t060-inspect.json
+```
+
+It observed the exact 32,483,931,648-byte artifact and published SHA-256,
+little-endian GGUF v3, data offset 5,969,408, 579 tensors (241 F32 and 338
+Q8_0), the frozen typed `qwen3moe` metadata, and the exact admitted tensor.
+The bounded encoded-slice SHA-256 was
+`14e9e5efa5b8cc65f02c6445f3697e729a045408af25b579a2e1d007c336fadf`.
+Fresh observations were 382,544,916,480 available bytes on the model volume,
+137,438,953,472 unified-memory bytes, and normal pressure. The generated
+evidence contained no private path.
+
+Focused validation passed with 4 CLI unit tests, 4 Rust worker-client tests, 6
+Rust model-admission tests, and 44 Python worker tests. The first Python
+discovery invocation incorrectly supplied an import-root argument and failed
+without running tests; the corrected command below ran all 44 with zero
+failures. A new Clippy `filter_next` diagnostic was fixed locally; the final
+focused strict-Clippy run exited zero.
+
+```sh
+cargo test -p mlx-backend --bin pulsar-mlx
+cargo test -p mlx-backend --test model_slice_client
+cargo test -p mlx-backend --test real_model_contract
+PYTHONPATH=python .venv/bin/python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+cargo clippy -p mlx-backend --all-targets -- -D warnings
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+git diff --check
+```
+
+The exact workspace gates passed with the inherited `quant` `unused_mut` and
+13 macOS `serve` dead-code warnings. T060 performed only read-only artifact
+inspection: it did not dequantize weights, run the trusted reference, execute
+the Apple slice, tokenize, route, generate, serve, or benchmark. T061 remains
+the first permitted real-model numerical execution and must precede any Apple
+real-model output.

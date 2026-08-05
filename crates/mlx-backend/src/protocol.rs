@@ -1,8 +1,10 @@
 //! Bounded protocol-v1 envelopes for the persistent MLX worker.
 
+use crate::model::{QWEN_ENCODED_SLICE_BYTES, QWEN_FILE_BYTES};
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Number, Value};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::fmt;
 
@@ -18,6 +20,22 @@ const MAX_DEVICE_COUNT: usize = 64;
 const MAX_CAPABILITY_COUNT: usize = 256;
 const APPLE_MLX_BACKEND_ID: &str = "apple-mlx";
 const APPLE_MLX_DEVICE_ID: &str = "gpu";
+pub const MODEL_SLICE_ID: &str = "qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-v1";
+const MODEL_SLICE_OPERATION: &str = "q8_0_expert_projection_matvec";
+const MODEL_SLICE_TENSOR: &str = "blk.0.ffn_gate_exps.weight";
+const MODEL_SLICE_OUTPUT: &str = "blk0_ffn_gate_expert0_rows0_16_matvec";
+const MODEL_SLICE_ACTIVATION_SHA256: &str =
+    "3821796e8415d1214890e0e2fc97cddbb9ec773f2e941203dac41c1c7b36a92e";
+const MODEL_SLICE_OUTPUT_COUNT: usize = 16;
+const MODEL_SLICE_DECODED_BYTES: u64 = 131_072;
+const MODEL_SLICE_ACTIVATION_BYTES: u64 = 8_192;
+const MODEL_SLICE_OUTPUT_BYTES: u64 = 64;
+const MODEL_TEMPORARY_CURRENT_CAP: u64 = 1_073_741_824;
+const MODEL_TEMPORARY_PEAK_CAP: u64 = 2_147_483_648;
+const MODEL_MLX_ACTIVE_CAP: u64 = 3_221_225_472;
+const MODEL_MLX_CACHE_CAP: u64 = 1_342_177_280;
+const MODEL_MLX_PEAK_CAP: u64 = 4_294_967_296;
+const MODEL_PHYSICAL_FOOTPRINT_CAP: u64 = 8_589_934_592;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkerErrorKind {
@@ -574,6 +592,268 @@ pub(crate) fn parse_tensor_fixture_result(
 pub struct SyntheticMoeRequest {
     fixture_id: String,
     device: String,
+}
+
+/// Control-only request for the one admitted real-model slice.
+///
+/// The model file is inherited on a fixed descriptor. No path, model bytes,
+/// checksum, prompt, or depth selector is admitted to the NDJSON request.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModelSliceRequest {
+    slice_id: String,
+    device: String,
+}
+
+impl ModelSliceRequest {
+    pub fn new(
+        slice_id: impl Into<String>,
+        device: impl Into<String>,
+    ) -> Result<Self, WorkerError> {
+        let slice_id = slice_id.into();
+        let device = device.into();
+        if slice_id != MODEL_SLICE_ID {
+            return Err(fixture_protocol_error(
+                "model-slice validation accepts only the frozen slice identity",
+            ));
+        }
+        if device != APPLE_MLX_DEVICE_ID {
+            return Err(fixture_protocol_error(
+                "model-slice validation requires the explicit MLX GPU device",
+            ));
+        }
+        Ok(Self { slice_id, device })
+    }
+
+    pub fn slice_id(&self) -> &str {
+        &self.slice_id
+    }
+
+    pub fn device(&self) -> &str {
+        &self.device
+    }
+
+    pub const fn allow_fallback(&self) -> bool {
+        false
+    }
+
+    pub(crate) fn protocol_params(&self) -> Map<String, Value> {
+        Map::from_iter([
+            ("slice_id".to_owned(), Value::String(self.slice_id.clone())),
+            ("device".to_owned(), Value::String(self.device.clone())),
+            ("allow_fallback".to_owned(), Value::Bool(false)),
+        ])
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ModelSliceMemoryGauges {
+    model_file_bytes: Option<u64>,
+    mapped_virtual_bytes: u64,
+    mapped_resident_bytes: u64,
+    owned_compressed_bytes: u64,
+    decoded_array_bytes: u64,
+    activation_array_bytes: u64,
+    output_bytes: u64,
+    temporary_current_bytes: u64,
+    temporary_peak_bytes: u64,
+    mlx_active_bytes: Option<u64>,
+    mlx_cache_bytes: Option<u64>,
+    mlx_peak_bytes: Option<u64>,
+    process_footprint_bytes: Option<u64>,
+    process_footprint_source: Option<String>,
+    process_physical_footprint_bytes: Option<u64>,
+    process_physical_footprint_peak_bytes: Option<u64>,
+    process_physical_footprint_source: Option<String>,
+    system_pressure: Option<String>,
+    reported_summed_total_bytes: Option<u64>,
+}
+
+impl ModelSliceMemoryGauges {
+    pub fn model_file_bytes(&self) -> Option<u64> {
+        self.model_file_bytes
+    }
+
+    pub fn mapped_virtual_bytes(&self) -> u64 {
+        self.mapped_virtual_bytes
+    }
+
+    pub fn mapped_resident_bytes(&self) -> u64 {
+        self.mapped_resident_bytes
+    }
+
+    pub fn owned_compressed_bytes(&self) -> u64 {
+        self.owned_compressed_bytes
+    }
+
+    pub fn decoded_array_bytes(&self) -> u64 {
+        self.decoded_array_bytes
+    }
+
+    pub fn activation_array_bytes(&self) -> u64 {
+        self.activation_array_bytes
+    }
+
+    pub fn output_bytes(&self) -> u64 {
+        self.output_bytes
+    }
+
+    pub fn temporary_current_bytes(&self) -> u64 {
+        self.temporary_current_bytes
+    }
+
+    pub fn temporary_peak_bytes(&self) -> u64 {
+        self.temporary_peak_bytes
+    }
+
+    pub fn mlx_active_bytes(&self) -> Option<u64> {
+        self.mlx_active_bytes
+    }
+
+    pub fn mlx_cache_bytes(&self) -> Option<u64> {
+        self.mlx_cache_bytes
+    }
+
+    pub fn mlx_peak_bytes(&self) -> Option<u64> {
+        self.mlx_peak_bytes
+    }
+
+    pub fn process_footprint_bytes(&self) -> Option<u64> {
+        self.process_footprint_bytes
+    }
+
+    pub fn process_footprint_source(&self) -> Option<&str> {
+        self.process_footprint_source.as_deref()
+    }
+
+    pub fn process_physical_footprint_bytes(&self) -> Option<u64> {
+        self.process_physical_footprint_bytes
+    }
+
+    pub fn process_physical_footprint_peak_bytes(&self) -> Option<u64> {
+        self.process_physical_footprint_peak_bytes
+    }
+
+    pub fn process_physical_footprint_source(&self) -> Option<&str> {
+        self.process_physical_footprint_source.as_deref()
+    }
+
+    pub fn system_pressure(&self) -> Option<&str> {
+        self.system_pressure.as_deref()
+    }
+
+    pub fn reported_summed_total_bytes(&self) -> Option<u64> {
+        self.reported_summed_total_bytes
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ModelSliceResult {
+    slice_id: String,
+    operation: String,
+    tensor_name: String,
+    output_name: String,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    output_shape: Vec<u64>,
+    output_dtype: String,
+    evaluated: bool,
+    synchronized: bool,
+    actual: Vec<f64>,
+    encoded_slice_sha256: String,
+    decoded_slice_sha256: String,
+    activation_sha256: String,
+    output_sha256: String,
+    memory_gauges: ModelSliceMemoryGauges,
+}
+
+impl ModelSliceResult {
+    pub fn slice_id(&self) -> &str {
+        &self.slice_id
+    }
+
+    pub fn operation(&self) -> &str {
+        &self.operation
+    }
+
+    pub fn tensor_name(&self) -> &str {
+        &self.tensor_name
+    }
+
+    pub fn output_name(&self) -> &str {
+        &self.output_name
+    }
+
+    pub fn requested_device(&self) -> &str {
+        &self.requested_device
+    }
+
+    pub fn selected_device(&self) -> &str {
+        &self.selected_device
+    }
+
+    pub fn fallback_used(&self) -> bool {
+        self.fallback_used
+    }
+
+    pub fn output_shape(&self) -> &[u64] {
+        &self.output_shape
+    }
+
+    pub fn output_dtype(&self) -> &str {
+        &self.output_dtype
+    }
+
+    pub fn evaluated(&self) -> bool {
+        self.evaluated
+    }
+
+    pub fn synchronized(&self) -> bool {
+        self.synchronized
+    }
+
+    pub fn actual(&self) -> &[f64] {
+        &self.actual
+    }
+
+    pub fn encoded_slice_sha256(&self) -> &str {
+        &self.encoded_slice_sha256
+    }
+
+    pub fn decoded_slice_sha256(&self) -> &str {
+        &self.decoded_slice_sha256
+    }
+
+    pub fn activation_sha256(&self) -> &str {
+        &self.activation_sha256
+    }
+
+    pub fn output_sha256(&self) -> &str {
+        &self.output_sha256
+    }
+
+    pub fn memory_gauges(&self) -> &ModelSliceMemoryGauges {
+        &self.memory_gauges
+    }
+}
+
+pub(crate) fn parse_model_slice_result(
+    value: Value,
+    request: &ModelSliceRequest,
+    expected_encoded_sha256: &str,
+) -> Result<ModelSliceResult, WorkerError> {
+    if !valid_sha256(expected_encoded_sha256) {
+        return Err(fixture_protocol_error(
+            "expected model-slice checksum is not lowercase SHA-256",
+        ));
+    }
+    let result: ModelSliceResult = serde_json::from_value(value).map_err(|_| {
+        fixture_protocol_error("model-slice result does not match its bounded schema")
+    })?;
+    validate_model_slice_result(&result, request, expected_encoded_sha256)?;
+    Ok(result)
 }
 
 impl SyntheticMoeRequest {
@@ -1653,6 +1933,150 @@ fn validate_fixture_memory_gauges(memory: &TensorFixtureMemoryGauges) -> Result<
         validate_fixture_identifier(pressure, "system-pressure state")?;
     }
     Ok(())
+}
+
+fn validate_model_slice_result(
+    result: &ModelSliceResult,
+    request: &ModelSliceRequest,
+    expected_encoded_sha256: &str,
+) -> Result<(), WorkerError> {
+    if result.slice_id != request.slice_id
+        || result.slice_id != MODEL_SLICE_ID
+        || result.operation != MODEL_SLICE_OPERATION
+        || result.tensor_name != MODEL_SLICE_TENSOR
+        || result.output_name != MODEL_SLICE_OUTPUT
+        || result.requested_device != request.device
+        || result.selected_device != APPLE_MLX_DEVICE_ID
+        || result.fallback_used
+        || !result.evaluated
+        || !result.synchronized
+        || result.output_shape != [MODEL_SLICE_OUTPUT_COUNT as u64]
+        || result.output_dtype != "float32"
+    {
+        return Err(fixture_protocol_error(
+            "model-slice result contradicts the exact admitted execution boundary",
+        ));
+    }
+    if result.actual.len() != MODEL_SLICE_OUTPUT_COUNT
+        || result
+            .actual
+            .iter()
+            .any(|value| !value.is_finite() || f64::from(*value as f32) != *value)
+    {
+        return Err(fixture_protocol_error(
+            "model-slice readback is non-finite or has invalid cardinality",
+        ));
+    }
+    for checksum in [
+        result.encoded_slice_sha256.as_str(),
+        result.decoded_slice_sha256.as_str(),
+        result.activation_sha256.as_str(),
+        result.output_sha256.as_str(),
+    ] {
+        if !valid_sha256(checksum) {
+            return Err(fixture_protocol_error(
+                "model-slice result contains a malformed SHA-256 identity",
+            ));
+        }
+    }
+    if result.encoded_slice_sha256 != expected_encoded_sha256
+        || result.activation_sha256 != MODEL_SLICE_ACTIVATION_SHA256
+    {
+        return Err(fixture_protocol_error(
+            "model-slice input identities differ from the admitted artifact and prompt",
+        ));
+    }
+    let mut output_bytes = Vec::with_capacity(MODEL_SLICE_OUTPUT_BYTES as usize);
+    for value in &result.actual {
+        output_bytes.extend_from_slice(&(*value as f32).to_le_bytes());
+    }
+    if format!("{:x}", Sha256::digest(output_bytes)) != result.output_sha256 {
+        return Err(fixture_protocol_error(
+            "model-slice output checksum does not match its bounded float32 readback",
+        ));
+    }
+    validate_model_slice_memory_gauges(&result.memory_gauges)
+}
+
+fn validate_model_slice_memory_gauges(memory: &ModelSliceMemoryGauges) -> Result<(), WorkerError> {
+    if memory.model_file_bytes != Some(QWEN_FILE_BYTES)
+        || memory.mapped_virtual_bytes != 0
+        || memory.mapped_resident_bytes != 0
+        || memory.owned_compressed_bytes != QWEN_ENCODED_SLICE_BYTES
+        || memory.decoded_array_bytes != MODEL_SLICE_DECODED_BYTES
+        || memory.activation_array_bytes != MODEL_SLICE_ACTIVATION_BYTES
+        || memory.output_bytes != MODEL_SLICE_OUTPUT_BYTES
+        || memory.temporary_current_bytes > MODEL_TEMPORARY_CURRENT_CAP
+        || memory.temporary_current_bytes > memory.temporary_peak_bytes
+        || memory.temporary_peak_bytes > MODEL_TEMPORARY_PEAK_CAP
+        || memory.reported_summed_total_bytes.is_some()
+    {
+        return Err(fixture_protocol_error(
+            "model-slice component memory gauges violate the frozen budget",
+        ));
+    }
+    let (Some(mlx_active), Some(mlx_cache), Some(mlx_peak)) = (
+        memory.mlx_active_bytes,
+        memory.mlx_cache_bytes,
+        memory.mlx_peak_bytes,
+    ) else {
+        return Err(fixture_protocol_error(
+            "model-slice evidence omits required MLX allocator gauges",
+        ));
+    };
+    if mlx_active > MODEL_MLX_ACTIVE_CAP
+        || mlx_cache > MODEL_MLX_CACHE_CAP
+        || mlx_peak > MODEL_MLX_PEAK_CAP
+        || mlx_peak < mlx_active
+    {
+        return Err(fixture_protocol_error(
+            "model-slice MLX allocator gauges violate the frozen budget",
+        ));
+    }
+    match (
+        memory.process_footprint_bytes,
+        memory.process_footprint_source.as_deref(),
+    ) {
+        (Some(bytes), Some("ps-rss")) if bytes <= MODEL_PHYSICAL_FOOTPRINT_CAP => {}
+        (None, None) => {}
+        _ => {
+            return Err(fixture_protocol_error(
+                "model-slice RSS proxy gauge is malformed or exceeds its envelope",
+            ));
+        }
+    }
+    let (Some(physical), Some(physical_peak), Some(source)) = (
+        memory.process_physical_footprint_bytes,
+        memory.process_physical_footprint_peak_bytes,
+        memory.process_physical_footprint_source.as_deref(),
+    ) else {
+        return Err(fixture_protocol_error(
+            "model-slice evidence omits mandatory Darwin physical-footprint gauges",
+        ));
+    };
+    if source != "proc_pid_rusage:RUSAGE_INFO_V4"
+        || physical == 0
+        || physical_peak == 0
+        || physical > physical_peak
+        || physical_peak > MODEL_PHYSICAL_FOOTPRINT_CAP
+    {
+        return Err(fixture_protocol_error(
+            "model-slice physical-footprint gauges violate the frozen budget",
+        ));
+    }
+    if memory.system_pressure.as_deref() != Some("normal") {
+        return Err(fixture_protocol_error(
+            "model-slice execution requires normal system memory pressure",
+        ));
+    }
+    Ok(())
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
 fn validate_operation_specific_result(

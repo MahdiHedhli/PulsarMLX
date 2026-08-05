@@ -11,6 +11,7 @@ from importlib import metadata
 import math
 import os
 import platform
+import stat
 import subprocess
 from typing import Any, Mapping, Sequence
 
@@ -24,6 +25,8 @@ PROBE_FIXTURE_ID = "nonsymmetric-f32-matmul-v1"
 PROBE_OPERATION_ID = "nonsymmetric-f32-matmul"
 PROBE_ABSOLUTE_TOLERANCE = 1.0e-5
 PROBE_RELATIVE_TOLERANCE = 1.0e-5
+INHERITED_MODEL_FILE_FD = 198
+INHERITED_MODEL_FILE_BYTES = 32_483_931_648
 
 _MAX_DIAGNOSTIC_CHARS = 512
 _MAX_IDENTITY_CHARS = 256
@@ -263,6 +266,16 @@ def discover_runtime() -> RuntimeIdentity:
 
     macos_version = _bounded_identity(platform.mac_ver()[0], "macOS version")
     python_version = _bounded_identity(platform.python_version(), "Python version")
+    capabilities = [
+        "health",
+        "tensor_probe",
+        "run_fixture",
+        "run_synthetic_moe",
+        "shutdown",
+    ]
+    if _inherited_model_file_is_admitted():
+        capabilities.insert(-2, "run_model_slice")
+
     return RuntimeIdentity(
         python_version=python_version,
         python_arch=architecture,
@@ -271,13 +284,7 @@ def discover_runtime() -> RuntimeIdentity:
         metal_available=True,
         gpu_count=1,
         devices=(gpu,),
-        capabilities=(
-            "health",
-            "tensor_probe",
-            "run_fixture",
-            "run_synthetic_moe",
-            "shutdown",
-        ),
+        capabilities=tuple(capabilities),
         supported_dtypes=("float32", "q8_0"),
     )
 
@@ -474,7 +481,26 @@ def collect_memory_gauges(mx: Any) -> MemoryGauges:
         mlx_peak_bytes=peak,
         process_footprint_bytes=process_footprint,
         process_footprint_source="ps-rss" if process_footprint is not None else None,
-        system_pressure=_optional_system_pressure(),
+        system_pressure=current_system_pressure(),
+    )
+
+
+def current_system_pressure() -> str | None:
+    """Return the current sanitized Darwin memory-pressure level, if known."""
+
+    return _optional_system_pressure()
+
+
+def _inherited_model_file_is_admitted() -> bool:
+    """Advertise the real slice only when its fixed descriptor is present."""
+
+    try:
+        observed = os.fstat(INHERITED_MODEL_FILE_FD)
+    except OSError:
+        return False
+    return (
+        stat.S_ISREG(observed.st_mode)
+        and observed.st_size == INHERITED_MODEL_FILE_BYTES
     )
 
 

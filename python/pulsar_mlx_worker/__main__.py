@@ -14,6 +14,11 @@ from pathlib import Path
 import sys
 from typing import Any, BinaryIO
 
+from .model_slice import (
+    SLICE_ID as MODEL_SLICE_ID,
+    ModelSliceResult,
+    run_inherited_model_slice,
+)
 from .moe import RoutedMoeError, run_routed_moe_fixture
 from .protocol import (
     DEFAULT_LIMITS,
@@ -47,6 +52,7 @@ _EXIT_RUNTIME_ERROR = 3
 _EXIT_INTERNAL_ERROR = 70
 
 ProbeRunner = Callable[..., TensorProbeResult]
+ModelSliceRunner = Callable[..., ModelSliceResult]
 
 
 def main() -> int:
@@ -87,6 +93,7 @@ def _serve(
     protocol_stdout: BinaryIO,
     *,
     probe_runner: ProbeRunner = run_tensor_probe,
+    model_slice_runner: ModelSliceRunner = run_inherited_model_slice,
 ) -> int:
     """Serve requests sequentially until shutdown or clean stdin EOF.
 
@@ -142,6 +149,7 @@ def _serve(
                 request,
                 identity,
                 probe_runner=probe_runner,
+                model_slice_runner=model_slice_runner,
             )
         except ProtocolError as error:
             _write_protocol_error(protocol_stdout, request.request_id, error)
@@ -177,6 +185,7 @@ def _dispatch(
     identity: RuntimeIdentity,
     *,
     probe_runner: ProbeRunner,
+    model_slice_runner: ModelSliceRunner = run_inherited_model_slice,
 ) -> tuple[dict[str, object], bool]:
     if request.op == "health":
         _require_exact_params(request.params, frozenset())
@@ -252,6 +261,43 @@ def _dispatch(
             fixture_set_id=manifest.fixture_set_id,
             synchronization_rule=manifest.synchronization_rule,
             maximum_fixture_elements=manifest.maximum_fixture_elements,
+            requested_device=requested_device,
+            allow_fallback=allow_fallback,
+        )
+        return result.to_protocol_result(), False
+
+    if request.op == "run_model_slice":
+        _require_exact_params(
+            request.params,
+            frozenset({"slice_id", "device", "allow_fallback"}),
+        )
+        slice_id = request.params["slice_id"]
+        requested_device = request.params["device"]
+        allow_fallback = request.params["allow_fallback"]
+        if not isinstance(slice_id, str):
+            raise ProtocolError(
+                "malformed_request",
+                "run_model_slice identity must be a stable string",
+            )
+        if slice_id != MODEL_SLICE_ID:
+            raise ProtocolError(
+                "unsupported_operation",
+                "run_model_slice identity is not the admitted bounded slice",
+            )
+        if not isinstance(requested_device, str) or not isinstance(
+            allow_fallback, bool
+        ):
+            raise ProtocolError(
+                "malformed_request",
+                "run_model_slice device and fallback fields have invalid types",
+            )
+        if requested_device != GPU_DEVICE_ID or allow_fallback:
+            raise ProtocolError(
+                "device_unavailable",
+                "run_model_slice requires explicit GPU selection without fallback",
+            )
+        result = model_slice_runner(
+            slice_id=slice_id,
             requested_device=requested_device,
             allow_fallback=allow_fallback,
         )
