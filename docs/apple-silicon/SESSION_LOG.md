@@ -947,3 +947,27 @@ The three focused targets passed 8, 7, and 10 tests respectively. The complete
 backend crate passed 57 tests with zero failures, and strict backend Clippy and
 the diff check both exited zero. This is evidence-schema enforcement only; it
 does not execute a backend, model, MLX, Linux, or CUDA workload.
+
+### T067–T068 compatibility matrix and reviewer index
+
+The public compatibility document now has one explicit six-level matrix for
+architecture-independent f32 primitives, strict Q8_0 primitives, the synthetic
+routed-MoE fixture, and the exact bounded Qwen3MoE/Q8_0 tensor prefix. Every
+verified cell links a committed passing record. Generic Q8_0 fixtures remain
+prerequisites rather than Qwen architecture evidence; only the exact bounded
+real-checkpoint cell is verified for Qwen. Giant-model execution and production
+serving remain independently unsupported.
+
+`docs/validation/README.md` indexes all 11 committed validation JSON artifacts,
+the embedded device case, and seven embedded tensor cases. It maps stable IDs
+to immutable input locators, oracle/reference identity or an explicit absence,
+actual status/result, exact command references, warnings, exclusions, and the
+authoritative artifact. Frozen, admission-only, zero-test, unavailable, and
+not-run states remain visibly non-executed or non-success states.
+
+All 11 JSON documents passed `jq empty`. Every unique local JSON link in the
+reviewer index exists, and the link inventory exactly matches the committed
+validation JSON inventory. A private-path pattern check, Markdown whitespace
+check, and `git diff --check` passed. This milestone only organizes committed
+evidence; it does not rerun a model, MLX workload, Linux/CUDA command, or
+benchmark.

@@ -5,6 +5,27 @@ the exact fixture, tensor role, and operation named here; it is not a model-wide
 support claim. Evidence records carry their own clean immutable source commit
 and are linked below.
 
+## Architecture, quantization, and evidence depth
+
+Each cell is independent. **Verified** means that the exact cell has a linked,
+executed, passing record. **Unsupported** means that the cell is outside the
+implemented or evidenced scope described in its explanation. No row or column
+has promotion semantics: scalar evidence does not imply MLX execution,
+synthetic evidence does not imply checkpoint execution, and a bounded
+checkpoint slice does not imply giant-model execution or production serving.
+
+| Architecture and exact scope | Quantization | Deterministic scalar fixture | Evaluated MLX tensor fixture | Synthetic routed-MoE fixture | Bounded real-checkpoint slice | Giant-model execution | Production serving |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Architecture-independent dense primitive fixtures | f32 | **Verified** — independent expected values in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Verified** — six evaluated, synchronized dense/routing GPU cases in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Unsupported** — isolated primitive cases do not execute the routed expert graph | **Unsupported** — primitive cases do not open a checkpoint | **Unsupported** — no model execution occurs | **Unsupported** — no serving path is involved |
+| Architecture-independent strict Q8_0 primitive | GGUF Q8_0, complete 32-element/34-byte blocks | **Verified** — malformed-input, decode, and scalar matvec cases recorded in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Verified** — one evaluated, synchronized two-block decode/dot case in [`mlx-tensor-fixtures.json`](../validation/mlx-tensor-fixtures.json) | **Unsupported** — no synthetic routed graph uses Q8_0 expert weights | **Unsupported** — the primitive record does not open a checkpoint | **Unsupported** — no model execution occurs | **Unsupported** — no serving path is involved |
+| Architecture-independent `synthetic-routed-moe-v1` | f32 dense expert weights | **Verified** — independent scalar routes, weights, and aggregate in [`synthetic-moe-v1.json`](../validation/synthetic-moe-v1.json) | **Verified** — evaluated and synchronized MLX expert graph in [`synthetic-moe-v1.json`](../validation/synthetic-moe-v1.json) | **Verified** — exact split-shard payloads, top-2 routes, normalized weights, and aggregate in [`synthetic-moe-v1.json`](../validation/synthetic-moe-v1.json) | **Unsupported** — the fixture contains generated synthetic weights, not a checkpoint | **Unsupported** — no checkpoint is loaded or executed | **Unsupported** — tokenizer, generation, and server paths are excluded |
+| `qwen3moe`, exact `blk.0.ffn_gate_exps.weight` expert-0 gate-projection rows 0–15 | GGUF Q8_0; identity and exact tensor inventory in [`qwen3-30b-a3b-q8_0-compatibility.json`](../validation/models/qwen3-30b-a3b-q8_0-compatibility.json) | **Unsupported** — generic Q8_0 scalar fixtures are prerequisites, while the pinned CPU checkpoint oracle belongs to the bounded real-slice cell rather than a separate architecture-level scalar fixture | **Unsupported** — generic two-block Q8_0 MLX parity is a prerequisite, not an executed Qwen graph at this evidence level | **Unsupported** — the routed fixture uses synthetic f32 weights and does not execute Qwen routing or Q8_0 experts | **Verified** — the trusted reference and evaluated Apple result match for the exact 34,816-byte prefix in [`qwen3-30b-a3b-q8_0-reference-result.json`](../validation/models/qwen3-30b-a3b-q8_0-reference-result.json) and [`qwen3-30b-a3b-q8_0-slice.json`](../validation/qwen3-30b-a3b-q8_0-slice.json) | **Unsupported** — no complete tensor, expert, layer, or model was executed | **Unsupported** — no logits, tokens, generation, HTTP, or MCP serving was executed |
+
+The official Qwen artifact is a large checkpoint, but its size does not promote
+the bounded prefix result into giant-model execution evidence. Likewise, the
+f32 synthetic route demonstrates routing semantics only for its committed
+fixture; it is not Qwen3MoE routing or Q8_0 routed-expert evidence.
+
 ## Dense and routing operations
 
 | Operation | Input / accumulation / output | Apple MLX evidence | Boundary |
@@ -50,13 +71,14 @@ checkpoint as a whole is executable.
 
 ## Synthetic routed-MoE boundary
 
-The committed `routed-moe-v1` fixture passed exact split-shard identities,
-deterministic top-2 routing, deduplicated expert selection, evaluated and
-synchronized MLX expert work, weighted aggregation, and an independent scalar
-comparison. Its routes were `[[1, 2], [3, 1]]`; its four-value output had a
-maximum absolute error of `4.759696965450644e-07` under the frozen `1e-5`
-tolerance. This is synthetic fixture evidence, not a real GGUF model-loader,
-tokenizer, logits, generation, serving, or performance result.
+The committed [`routed-moe-v1` evidence](../validation/synthetic-moe-v1.json)
+passed exact split-shard identities, deterministic top-2 routing, deduplicated
+expert selection, evaluated and synchronized MLX expert work, weighted
+aggregation, and an independent scalar comparison. Its routes were
+`[[1, 2], [3, 1]]`; its four-value output had a maximum absolute error of
+`4.759696965450644e-07` under the frozen `1e-5` tolerance. This is synthetic
+fixture evidence, not a real GGUF model-loader, tokenizer, logits, generation,
+serving, or performance result.
 
 ## Platform boundary
 
