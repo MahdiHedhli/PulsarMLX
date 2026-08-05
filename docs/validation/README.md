@@ -17,6 +17,7 @@ recorded prerequisites and authorization.
 | Stable ID and kind | Recorded status | Immutable input identity | Oracle or reference | Actual result | Command refs | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
 | `implementation-baseline-2026-08-05` — workspace baseline | `passed` at commit `372b9dd433f61e17048e75eda9505dd65e263275` | No dedicated `input_identity` field; the input is the repository at the recorded commit | No numerical oracle field; command exit status and test assertions are the checks | Workspace check passed; workspace tests reported 32 passed and 0 failed | C01–C02 | [implementation-baseline.json](implementation-baseline.json) |
+| `apple-mlx-initial-benchmark-v1` — benchmark decision | `not_run` at commit `7c16dc0fa1d92d0f7160118b97d49020d10b35a7` | No benchmark input was selected | No benchmark oracle or bound correctness prerequisite because no case was selected | Zero samples, no statistics, and no performance claim | None — explicitly not run | [benchmark-initial.json](benchmark-initial.json) |
 | `linux-cuda-shared-boundary` — platform boundary | `unavailable_unverified` at commit `8abdfe0450e9cfa44ef7d6e52c58e7f58f74e4fd` | Tested commit plus upstream merge base `183a54bd707ad086ecfa380aee48142c89cd3305`; no model input | Static upstream comparison only; no Linux/CUDA runtime oracle | Linux and CUDA commands selected zero relevant tests on macOS; static source checks passed; supported Linux/CUDA execution was not run | C03–C10; N01–N05 not run | [linux-cuda-shared-boundary.json](linux-cuda-shared-boundary.json) |
 | `mlx-device-smoke` — evaluated device record | `passed`, device state `evaluated`, at commit `4ff4301af56904d4125f72ebeddee60e13f706d0` | Fixture `nonsymmetric-f32-matmul-v1`, float32 shapes `[2,3] × [3,2]`, explicit `apple-mlx`/`gpu` | `hard-coded-scalar:nonsymmetric-f32-matmul-v1` | Evaluated and synchronized GPU result `[58,64,139,154]`; 4 compared, zero error, no fallback | C11–C15 | [mlx-device-smoke.json](mlx-device-smoke.json) |
 | `mlx-tensor-fixtures` — fixture-set record | `passed` at commit `c53f21e7c98bfa2288690a3662c6f6e10857a685` | `mlx-tensor-fixtures-v1` in `fixtures/mlx/manifest.json` at the tested commit | Each embedded case names `committed-independent-scalar-v1` | Seven evaluated and synchronized MLX cases passed; workspace result recorded as 114 passed and 0 failed | C16–C22 | [mlx-tensor-fixtures.json](mlx-tensor-fixtures.json) |
@@ -53,6 +54,7 @@ standalone JSON files. Their exact execution commands are C13 and C20.
 | Stable ID | Recorded warnings | Recorded exclusions or claim boundary |
 | --- | --- | --- |
 | `implementation-baseline-2026-08-05` | Warnings are nested per command: one inherited `unused_mut` and 13 inherited macOS serve dead-code warnings | No MLX execution; no Linux/CUDA/io_uring runtime; selected engine/kernel/server targets had no runtime tests |
+| `apple-mlx-initial-benchmark-v1` | The record is not benchmark evidence and cannot support a performance claim | No command, workload, samples, statistics, timing, cache/storage, memory, thermal/power, Linux/CUDA, giant-model, or serving performance result |
 | `linux-cuda-shared-boundary` | Zero-test exit codes are not passes; static review is not runtime parity; Linux helpers may skip; inherited short-payload behavior remains unresolved | No supported Linux, io_uring, O_DIRECT, or CUDA execution. `cross_platform_safe` remains false |
 | `mlx-device-smoke` | Inherited quant and serve warnings | No model, quantized operation, generation, serving, Linux, or CUDA execution |
 | `mlx-tensor-fixtures` | Inherited quant and serve warnings | Synthetic bounded tensors only; scoped Q8_0 roles; no real model, generation, serving, benchmark, Linux, or CUDA execution |
@@ -215,8 +217,9 @@ cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe --fixture fi
   comparisons, command results, boundary objects, and claim-policy fields; it
   does not manufacture missing schema fields.
 - `frozen_not_executed`, `admitted_pre_download`, `unavailable_unverified`,
-  `zero_tests`, and `not_run_*` remain non-success execution states even when
-  an associated static check or admission gate passed.
+  `zero_tests`, `not_run`, and `not_run_*` remain non-success execution states
+  even when an associated static check, admission gate, or correctness record
+  passed.
 - External model and oracle locations use committed placeholders such as
   `<external-model>` and `<external-oracle>`. No private local path is included
   here, and model weights remain outside Git.

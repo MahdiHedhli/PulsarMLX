@@ -237,7 +237,7 @@ exclusions.
 - [X] T066 [US5] Implement reusable validation-record, compatibility-matrix, and benchmark-record validation with bounded diagnostics in `crates/backend/src/evidence.rs`
 - [X] T067 [P] [US5] Populate the architecture/quantization/evidence-level matrix using only linked actual records in `docs/apple-silicon/COMPATIBILITY.md`
 - [X] T068 [P] [US5] Create a reviewer index mapping case IDs to exact commands, immutable inputs, oracles, results, warnings, exclusions, and artifacts in `docs/validation/README.md`
-- [ ] T069 [US5] Record one post-correctness bounded benchmark with every constitution field, or an explicit `not_run` record with no performance claim, in `docs/validation/benchmark-initial.json`
+- [X] T069 [US5] Record one post-correctness bounded benchmark with every constitution field, or an explicit `not_run` record with no performance claim, in `docs/validation/benchmark-initial.json`
 - [ ] T070 [US5] Independently replay one committed validation command and record the reproducer environment, actual result, differences, and exclusions in `docs/validation/reproduction-check.json`
 - [ ] T071 [US5] Reconcile verified/planned/unsupported language and executable commands across `README.md`, `specs/001-apple-silicon-mlx/quickstart.md`, `docs/apple-silicon/SESSION_LOG.md`, and `docs/apple-silicon/KNOWN_LIMITATIONS.md`
 - [ ] T072 [US5] Re-run the exact workspace gates and evidence validators, then record actual final story results without converting unavailable Linux/CUDA, model, or benchmark evidence into success in `docs/validation/reproduction-check.json`

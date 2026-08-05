@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "record_type": "benchmark",
+  "case_id": "apple-mlx-initial-benchmark-v1",
+  "claim_scope": "Explicit not-run record for the initial Apple MLX benchmark option; no performance capability is claimed",
+  "commit": "7c16dc0fa1d92d0f7160118b97d49020d10b35a7",
+  "git_dirty_state": "clean",
+  "recorded_at_utc": "2026-08-05T15:50:18Z",
+  "actual_status": "not_run",
+  "reason": "The completed feature slices answer bounded correctness questions, but no benchmark input, timing boundary, cache policy, or performance hypothesis was selected. The specification permits an explicit not_run record, so timing is deferred rather than publishing an unreproducible or interpretation-free number.",
+  "correctness_context": {
+    "available_passing_records": [
+      {
+        "case_id": "synthetic-routed-moe",
+        "artifact": "docs/validation/synthetic-moe-v1.json",
+        "scope": "Synthetic two-token routed-MoE correctness only"
+      },
+      {
+        "case_id": "qwen3-30b-a3b-q8_0-blk0-gate-expert0-prefix-v1",
+        "artifact": "docs/validation/qwen3-30b-a3b-q8_0-slice.json",
+        "scope": "One bounded 16-output real-checkpoint intermediate only"
+      }
+    ],
+    "bound_prerequisite_case_ids": [],
+    "explanation": "No benchmark case was selected, so no correctness record is represented as a benchmark prerequisite. Any future benchmark must bind its exact input to passed verified correctness before timing."
+  },
+  "exact_command": null,
+  "benchmark_configuration": {
+    "build_profile": null,
+    "feature_flags": [],
+    "backend_id": null,
+    "device_id": null,
+    "input_identity": null,
+    "model_identity_and_checksum_or_revision": null,
+    "quantization": null,
+    "context_shape": null,
+    "cache_state": null,
+    "storage_placement": null,
+    "warmup_method": null,
+    "warmup_count": 0,
+    "sample_count": 0,
+    "raw_samples": [],
+    "timing_boundary": null,
+    "synchronization_point": null,
+    "statistic_definitions": [],
+    "input_and_output_sizes": null,
+    "memory_gauges": null,
+    "process_footprint_and_system_pressure": null,
+    "thermal_and_power_context": null
+  },
+  "actual_result": {
+    "samples_recorded": 0,
+    "statistics": null,
+    "performance_claim": null
+  },
+  "warnings": [
+    "This record is not benchmark evidence and must not be cited for latency, throughput, speedup, bandwidth, memory-efficiency, thermal, or power claims."
+  ],
+  "failures": [],
+  "exclusions": [
+    "No timing command was executed.",
+    "No model or synthetic workload was executed for this record.",
+    "No cache, storage, thermal, power, memory, latency, throughput, or speedup measurement was made.",
+    "No Linux, CUDA, giant-model, or production-serving performance claim is established."
+  ],
+  "artifact_paths": [
+    "docs/validation/benchmark-initial.json",
+    "docs/validation/synthetic-moe-v1.json",
+    "docs/validation/qwen3-30b-a3b-q8_0-slice.json"
+  ]
+}

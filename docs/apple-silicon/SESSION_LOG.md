@@ -971,3 +971,20 @@ validation JSON inventory. A private-path pattern check, Markdown whitespace
 check, and `git diff --check` passed. This milestone only organizes committed
 evidence; it does not rerun a model, MLX workload, Linux/CUDA command, or
 benchmark.
+
+### T069 explicit not-run benchmark record
+
+The initial benchmark option is committed as `actual_status: not_run`. Although
+passing synthetic and bounded real-checkpoint correctness records exist, no
+benchmark input, timing boundary, cache policy, storage policy, or performance
+hypothesis was selected for this correctness-first feature. No timing command
+was executed.
+
+`docs/validation/benchmark-initial.json` enumerates every constitution benchmark
+field with `null`, zero, or an empty list as appropriate, records zero samples,
+binds no correctness prerequisite to an unselected benchmark, and sets the
+performance claim to `null`. It explicitly excludes latency, throughput,
+speedup, bandwidth, memory-efficiency, thermal, power, Linux/CUDA, giant-model,
+and serving claims. This satisfies the specification's permitted explicit
+not-run branch without converting available correctness evidence into
+performance evidence.
