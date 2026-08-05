@@ -1922,3 +1922,56 @@ passing. Independent read-only reviews found no remaining high or medium issue
 in T042, T043, or T044. These checks used committed generated fixtures only;
 Feature 002 still has not resolved, statted, hashed, opened, or executed an
 external checkpoint, and no NTFY hardware-pause notification was sent.
+
+### T045 retained model-free router fixture evidence
+
+`validate-router-fixtures` now admits only the canonical committed manifest,
+rejects duplicate JSON keys recursively, checks the exact ordered 11-file
+inventory, byte lengths, SHA-256 identities, non-link containment, generator
+identity, golden outputs, synthetic tie declarations, and seven negative
+contracts. Before worker startup it proves inherited model descriptor 198 is
+closed, explicitly passes an empty `PULSARMLX_MODEL_GGUF`, and rejects a worker
+that advertises the model-slice operation. Both positive cases run through one
+evaluated MLX GPU worker and are reconstructed and compared independently in
+Rust under `SyntheticFixture` scope.
+
+The retained evidence distinguishes execution depth honestly: two positive
+cases are labeled MLX GPU execution plus host golden comparison; exact and
+near tie cases are labeled host contract validation; negative records are
+labeled fixture contract validation and point to the focused rejection tests
+rather than claiming mutation execution. Every record states that it is
+synthetic/model-free and not real-checkpoint evidence. Started workers are
+always cleaned up, partial passing observations survive a later failure, and
+failed or aborted evidence is written before the command returns nonzero. The
+external evidence install is bounded, private-path checked, atomic, and
+exclusive; an existing destination is never replaced.
+
+The exact model-free validation commands included:
+
+```sh
+export PULSARMLX_MODEL_GGUF=''
+cargo test -p mlx-backend --bin pulsar-mlx --no-fail-fast
+cargo test -p mlx-backend --all-targets
+cargo check -p mlx-backend --all-targets
+cargo fmt -p mlx-backend -- --check
+cargo clippy -p mlx-backend --all-targets -- -D warnings
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-router-fixtures \
+  --manifest fixtures/research/router-v1/manifest.json \
+  --evidence <external-temporary-directory>/router-fixtures.json
+python3 -m json.tool \
+  <external-temporary-directory>/router-fixtures.json
+git diff --check
+```
+
+Actual results were 13 CLI tests passing; 87 active `mlx-backend` all-target
+tests passing with two native tests ignored; package check, focused rustfmt,
+strict Clippy, JSON parsing, and diff checks passing. The real command retained
+two MLX/golden positive cases, two host-contract synthetic tie cases, seven
+negative contracts, and 11 hashed manifest files. Worker cleanup was graceful
+with exit code zero. The evidence was 13,250 bytes and reported `status` as
+`passed`, `model_free` as true, and both `real_checkpoint_evidence` and
+`external_checkpoint_accessed` as false. A separate forced-open descriptor-198
+review case returned exit 2, retained bounded aborted evidence, and started no
+worker. An independent read-only review found no high or medium issue. The
+temporary evidence was inspected and removed. No checkpoint path or model byte
+was accessed, and the T073 NTFY gate remains ineligible.

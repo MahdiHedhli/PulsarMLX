@@ -1,16 +1,23 @@
+use mlx_backend::router::{
+    compare_router_outputs, RouterCaseScope, RouterNumericComparison, RouterOutput,
+    RouterOutputComparison, RouterTolerancePolicy,
+};
 use mlx_backend::{
     frozen_qwen_model_memory_budget, inspect_external_qwen_model, validate_device_smoke,
     CleanupOutcome, DeviceHello, DeviceProbe, ExternalModelInspection, ModelSliceRequest,
-    ModelSliceResult, SyntheticMoeRequest, TensorFixtureRequest, WorkerClient, WorkerConfig,
-    MODEL_SLICE_ID, PINNED_MLX_VERSION, QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_REPOSITORY_ID,
-    QWEN_REVISION, QWEN_SHA256,
+    ModelSliceResult, RouterRequest, RouterResult, SyntheticMoeRequest, TensorFixtureRequest,
+    WorkerClient, WorkerConfig, MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID, PINNED_MLX_VERSION,
+    QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256,
+    ROUTER_SINGLE_ROW_CASE_ID, ROUTER_TWO_ROW_CASE_ID,
 };
-use serde::Deserialize;
+use serde::de::{DeserializeOwned, Error as DeError, MapAccess, SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsString;
+use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
@@ -33,6 +40,67 @@ const REAL_OUTPUT_NAME: &str = "blk0_ffn_gate_expert0_rows0_16_matvec";
 const REAL_OUTPUT_COUNT: usize = 16;
 const REAL_ATOL: f64 = 0.0005;
 const REAL_RTOL: f64 = 0.0005;
+const ROUTER_FIXTURE_ID: &str = "generated-qwen3moe-router-v1";
+const ROUTER_EXPECTED_RESULTS_ID: &str = "generated-qwen3moe-router-expected-results-v1";
+const ROUTER_SYNTHETIC_TIE_ID: &str = "generated-qwen3moe-router-synthetic-cutoff-v1";
+const ROUTER_FIXTURE_MAX_EVIDENCE_BYTES: usize = 256 * 1024;
+const ROUTER_FIXTURE_FILES: [&str; 11] = [
+    "golden/expected_results.json",
+    "golden/hidden_states.json",
+    "golden/weight_recipe.json",
+    "malformed/invalid-control-type.json",
+    "malformed/invalid-hidden-shape.json",
+    "malformed/invalid-orientation.json",
+    "malformed/invalid-top-k.json",
+    "malformed/non-finite-hidden-state.json",
+    "malformed/overlong-router-range.json",
+    "malformed/truncated-router-range.json",
+    "synthetic-tie.json",
+];
+const ROUTER_NEGATIVE_EXPECTATIONS: [(&str, &str, &str, &str); 7] = [
+    (
+        "malformed/invalid-control-type.json",
+        "malformed_scalar_type",
+        "malformed_request",
+        "worker_control_admission",
+    ),
+    (
+        "malformed/invalid-hidden-shape.json",
+        "malformed_hidden_shape",
+        "invalid_shape",
+        "worker_hidden_state_admission",
+    ),
+    (
+        "malformed/invalid-orientation.json",
+        "transposed_router_orientation",
+        "invalid_layout",
+        "host_tensor_descriptor_admission",
+    ),
+    (
+        "malformed/invalid-top-k.json",
+        "invalid_top_k",
+        "model_tensor_mismatch",
+        "host_tensor_descriptor_admission",
+    ),
+    (
+        "malformed/non-finite-hidden-state.json",
+        "non_finite_hidden_state",
+        "invalid_dtype",
+        "worker_hidden_state_admission",
+    ),
+    (
+        "malformed/overlong-router-range.json",
+        "overlong_router_range",
+        "invalid_byte_count",
+        "host_positional_range_read",
+    ),
+    (
+        "malformed/truncated-router-range.json",
+        "truncated_router_range",
+        "invalid_byte_count",
+        "host_positional_range_read",
+    ),
+];
 
 fn main() {
     if let Err(error) = run(env::args_os().skip(1).collect()) {
@@ -196,6 +264,383 @@ struct ValidateRouterCommand {
     model: PathBuf,
     oracle: PathBuf,
     evidence_dir: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterFixtureManifestIndex {
+    schema: String,
+    schema_version: String,
+    fixture_id: String,
+    provenance: RouterFixtureProvenanceIndex,
+    contract: RouterFixtureContractIndex,
+    cases: Vec<RouterFixtureCaseIndex>,
+    expected_results: RouterExpectedResultsIndex,
+    hidden_state_fixture: Value,
+    weight_fixture: Value,
+    files: Vec<RouterFixtureFileIndex>,
+    scope: Value,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterFixtureProvenanceIndex {
+    kind: String,
+    generator: String,
+    generator_sha256: String,
+    generation_command: String,
+    independence: String,
+    model_free: bool,
+    external_checkpoint_access_required: bool,
+    redistributable: bool,
+    license: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterFixtureContractIndex {
+    contract_id: String,
+    hidden_width: u64,
+    expert_count: u64,
+    top_k: u64,
+    weight_dtype: String,
+    weight_byte_order: String,
+    weight_layout: String,
+    tie_rule: String,
+    normalization: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterFixtureCaseIndex {
+    case_id: String,
+    hidden_shape: [u64; 2],
+    hidden_row_ids: Vec<String>,
+    hidden_f32le_sha256: String,
+    expected_result_key: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterExpectedResultsIndex {
+    path: String,
+    arithmetic: String,
+    independently_computed: bool,
+    complete_values: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterFixtureFileIndex {
+    path: String,
+    byte_length: u64,
+    sha256: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterGoldenDocument {
+    schema: String,
+    schema_version: String,
+    fixture_id: String,
+    contract: Value,
+    cases: BTreeMap<String, RouterGoldenCase>,
+    provenance: Value,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterGoldenCase {
+    case_id: String,
+    hidden_row_ids: Vec<String>,
+    hidden_shape: [usize; 2],
+    logits_shape: [usize; 2],
+    logits: Vec<Vec<f64>>,
+    full_softmax_probabilities: Vec<Vec<f64>>,
+    selected_expert_ids: Vec<Vec<u64>>,
+    selected_probabilities: Vec<Vec<f64>>,
+    normalized_weights: Vec<Vec<f64>>,
+    hashes: RouterGoldenHashes,
+    provenance: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterGoldenHashes {
+    logits_f32le_sha256: String,
+    full_softmax_probabilities_f32le_sha256: String,
+    selected_expert_ids_u32le_sha256: String,
+    selected_probabilities_f32le_sha256: String,
+    normalized_weights_f32le_sha256: String,
+    float_output_bundle_f32le_sha256: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterTieDocument {
+    schema: String,
+    schema_version: String,
+    fixture_id: String,
+    contract: Value,
+    bounds: Value,
+    provenance: Value,
+    cases: Vec<RouterTieCase>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterTieCase {
+    case_id: String,
+    kind: String,
+    provenance: String,
+    logits_shape: [usize; 2],
+    logits: Vec<Vec<f64>>,
+    full_softmax_probabilities: Vec<Vec<f64>>,
+    selected_expert_ids: Vec<Vec<u64>>,
+    selected_probabilities: Vec<Vec<f64>>,
+    normalized_weights: Vec<Vec<f64>>,
+    hashes: RouterGoldenHashes,
+    cutoff: RouterTieCutoff,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterTieCutoff {
+    rank_8_expert_id: u64,
+    rank_9_expert_id: u64,
+    rank_8_logit_f32_bits: String,
+    rank_9_logit_f32_bits: String,
+    rank_8_probability_f32_bits: String,
+    rank_9_probability_f32_bits: String,
+    relation: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterNegativeDocument {
+    schema: String,
+    schema_version: String,
+    fixture_id: String,
+    contract_id: String,
+    bounds: Value,
+    provenance: RouterNegativeProvenance,
+    case: RouterNegativeCase,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterNegativeProvenance {
+    kind: String,
+    evidence_level: String,
+    model_free: bool,
+    external_checkpoint_access_required: bool,
+    raw_model_or_tensor_bytes_committed: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterNegativeCase {
+    category: String,
+    validation_surface: String,
+    mutation: Value,
+    expected_failure: RouterExpectedFailure,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RouterExpectedFailure {
+    code: String,
+    accepted_result: bool,
+    router_runner_called: bool,
+    must_precede: String,
+}
+
+struct RouterFixtureBundle {
+    manifest_sha256: String,
+    manifest_files: Vec<Value>,
+    case_order: Vec<String>,
+    golden_cases: BTreeMap<String, RouterGoldenCase>,
+    tie_cases: Vec<RouterTieCase>,
+    negative_cases: Vec<Value>,
+}
+
+#[derive(Debug, Clone)]
+struct RetainedRouterFixtureFailure {
+    status: &'static str,
+    stage: &'static str,
+    code: String,
+    message: String,
+}
+
+struct RouterFixtureAttempt {
+    manifest_sha256: Option<String>,
+    manifest_files: Vec<Value>,
+    runtime: Option<Value>,
+    positive_cases: Vec<Value>,
+    tie_cases: Vec<Value>,
+    negative_cases: Vec<Value>,
+    cleanup: Value,
+    failure: Option<RetainedRouterFixtureFailure>,
+}
+
+struct UniqueJsonValue(Value);
+
+impl<'de> Deserialize<'de> for UniqueJsonValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct UniqueValueVisitor;
+
+        impl<'de> Visitor<'de> for UniqueValueVisitor {
+            type Value = Value;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("JSON without duplicate object keys")
+            }
+
+            fn visit_bool<E>(self, value: bool) -> Result<Self::Value, E> {
+                Ok(Value::Bool(value))
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E> {
+                Ok(Value::Number(value.into()))
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E> {
+                Ok(Value::Number(value.into()))
+            }
+
+            fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
+            where
+                E: DeError,
+            {
+                serde_json::Number::from_f64(value)
+                    .map(Value::Number)
+                    .ok_or_else(|| E::custom("JSON number is not finite"))
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: DeError,
+            {
+                Ok(Value::String(value.to_owned()))
+            }
+
+            fn visit_string<E>(self, value: String) -> Result<Self::Value, E> {
+                Ok(Value::String(value))
+            }
+
+            fn visit_none<E>(self) -> Result<Self::Value, E> {
+                Ok(Value::Null)
+            }
+
+            fn visit_unit<E>(self) -> Result<Self::Value, E> {
+                Ok(Value::Null)
+            }
+
+            fn visit_seq<A>(self, mut sequence: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                let mut values = Vec::new();
+                while let Some(value) = sequence.next_element::<UniqueJsonValue>()? {
+                    values.push(value.0);
+                }
+                Ok(Value::Array(values))
+            }
+
+            fn visit_map<A>(self, mut object: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut values = Map::new();
+                while let Some((key, value)) = object.next_entry::<String, UniqueJsonValue>()? {
+                    if values.insert(key, value.0).is_some() {
+                        return Err(A::Error::custom("duplicate JSON object key"));
+                    }
+                }
+                Ok(Value::Object(values))
+            }
+        }
+
+        deserializer.deserialize_any(UniqueValueVisitor).map(Self)
+    }
+}
+
+fn parse_unique_json<T: DeserializeOwned>(bytes: &[u8], label: &str) -> Result<T, String> {
+    let value: UniqueJsonValue = serde_json::from_slice(bytes)
+        .map_err(|_| format!("the {label} is not duplicate-free bounded JSON"))?;
+    serde_json::from_value(value.0)
+        .map_err(|_| format!("the {label} does not match its frozen contract"))
+}
+
+impl RouterFixtureAttempt {
+    fn new() -> Self {
+        Self {
+            manifest_sha256: None,
+            manifest_files: Vec::new(),
+            runtime: None,
+            positive_cases: Vec::new(),
+            tie_cases: Vec::new(),
+            negative_cases: Vec::new(),
+            cleanup: json!({
+                "attempted": false,
+                "outcome": "not_started",
+                "exit_code": null,
+            }),
+            failure: None,
+        }
+    }
+
+    fn retain_failure(&mut self, failure: RetainedRouterFixtureFailure) {
+        if self.failure.is_none() {
+            self.failure = Some(failure);
+        }
+    }
+
+    fn evidence(&self) -> Value {
+        let status = self
+            .failure
+            .as_ref()
+            .map_or("passed", |failure| failure.status);
+        let failure = self.failure.as_ref().map(|failure| {
+            json!({
+                "stage": failure.stage,
+                "code": failure.code,
+                "message": failure.message,
+            })
+        });
+        json!({
+            "schema_version": 1,
+            "validation": "qwen3moe-router-fixtures",
+            "status": status,
+            "passed": self.failure.is_none(),
+            "fixture_kind": "synthetic",
+            "evidence_level": "synthetic_fixture_only",
+            "model_free": true,
+            "real_checkpoint_evidence": false,
+            "external_checkpoint_accessed": false,
+            "manifest": ROUTER_FIXTURE_MANIFEST,
+            "manifest_sha256": self.manifest_sha256,
+            "manifest_files": self.manifest_files,
+            "runtime": self.runtime,
+            "positive_cases": self.positive_cases,
+            "synthetic_tie_cases": self.tie_cases,
+            "negative_cases": self.negative_cases,
+            "cleanup": self.cleanup,
+            "failure": failure,
+            "warnings": [
+                "Tie cases use host contract validation and are not represented as MLX execution.",
+                "Negative fixture records verify the frozen failure contract; focused tests prove rejection ordering and runner-not-called behavior."
+            ],
+            "exclusions": [
+                "No external checkpoint, model descriptor, model weight, or real hidden state was accessed.",
+                "Synthetic results are not real-checkpoint router evidence.",
+                "No expert, complete layer, generation, serving, or non-Apple backend execution was established."
+            ]
+        })
+    }
 }
 
 fn parse_router_arguments(arguments: Vec<OsString>) -> Result<Vec<String>, String> {
@@ -371,7 +816,6 @@ fn validate_inspect_router_path_identities(command: &InspectRouterCommand) -> Re
     Ok(())
 }
 
-#[allow(dead_code)] // Called only after retained fixture execution is implemented at T045.
 fn validate_router_fixture_path_identities(
     command: &ValidateRouterFixturesCommand,
 ) -> Result<(), String> {
@@ -497,6 +941,782 @@ fn parse_validate_router(arguments: Vec<OsString>) -> Result<ValidateRouterComma
     })
 }
 
+fn retained_fixture_failure(
+    status: &'static str,
+    stage: &'static str,
+    code: impl Into<String>,
+    message: impl Into<String>,
+) -> RetainedRouterFixtureFailure {
+    RetainedRouterFixtureFailure {
+        status,
+        stage,
+        code: code.into(),
+        message: message.into(),
+    }
+}
+
+fn sha256_bytes(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+fn canonical_sha256(value: &str) -> bool {
+    value.len() == 64
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+}
+
+fn read_bounded_regular_file(
+    fixture_root: &Path,
+    relative_path: &str,
+    maximum_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    let relative = Path::new(relative_path);
+    if relative.as_os_str().is_empty()
+        || relative.is_absolute()
+        || relative
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err("a router fixture path is not a bounded relative file path".to_owned());
+    }
+    let path = fixture_root.join(relative);
+    let metadata = fs::symlink_metadata(&path)
+        .map_err(|_| "a committed router fixture file is unavailable".to_owned())?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("a committed router fixture must be a regular non-link file".to_owned());
+    }
+    let resolved = fs::canonicalize(&path)
+        .map_err(|_| "a committed router fixture file could not be resolved".to_owned())?;
+    if !resolved.starts_with(fixture_root) {
+        return Err("a committed router fixture escapes its fixture root".to_owned());
+    }
+    let bytes = fs::read(&resolved)
+        .map_err(|_| "a committed router fixture file could not be read".to_owned())?;
+    if bytes.is_empty() || bytes.len() > maximum_bytes {
+        return Err("a committed router fixture file violates its byte bound".to_owned());
+    }
+    Ok(bytes)
+}
+
+fn load_router_fixture_bundle(
+    root: &Path,
+    requested_manifest: &Path,
+) -> Result<RouterFixtureBundle, String> {
+    let expected_manifest = fs::canonicalize(root.join(ROUTER_FIXTURE_MANIFEST))
+        .map_err(|_| "the committed router fixture manifest is unavailable".to_owned())?;
+    let requested = fs::canonicalize(root.join(requested_manifest))
+        .map_err(|_| "the requested router fixture manifest is unavailable".to_owned())?;
+    if requested != expected_manifest {
+        return Err(
+            "validate-router-fixtures accepts only the committed router manifest".to_owned(),
+        );
+    }
+    let manifest_metadata = fs::symlink_metadata(root.join(requested_manifest))
+        .map_err(|_| "the router fixture manifest metadata is unavailable".to_owned())?;
+    if manifest_metadata.file_type().is_symlink() || !manifest_metadata.is_file() {
+        return Err(
+            "the committed router fixture manifest must be a regular non-link file".to_owned(),
+        );
+    }
+    let manifest_bytes = fs::read(&requested)
+        .map_err(|_| "the committed router fixture manifest could not be read".to_owned())?;
+    if manifest_bytes.is_empty() || manifest_bytes.len() > MAX_MANIFEST_BYTES {
+        return Err("the router fixture manifest violates its byte bound".to_owned());
+    }
+    let manifest: RouterFixtureManifestIndex =
+        parse_unique_json(&manifest_bytes, "router fixture manifest")?;
+    validate_router_fixture_manifest(&manifest)?;
+
+    let fixture_root = requested
+        .parent()
+        .ok_or_else(|| "the router fixture manifest has no fixture root".to_owned())?;
+    let mut payloads = BTreeMap::new();
+    let mut manifest_files = Vec::with_capacity(manifest.files.len());
+    for (entry, expected_path) in manifest.files.iter().zip(ROUTER_FIXTURE_FILES) {
+        if entry.path != expected_path || entry.byte_length == 0 || !canonical_sha256(&entry.sha256)
+        {
+            return Err("the router fixture file inventory is not admitted".to_owned());
+        }
+        let bytes = read_bounded_regular_file(fixture_root, &entry.path, MAX_MANIFEST_BYTES)?;
+        let observed_length = u64::try_from(bytes.len())
+            .map_err(|_| "a router fixture byte length is not representable".to_owned())?;
+        let observed_sha256 = sha256_bytes(&bytes);
+        if observed_length != entry.byte_length || observed_sha256 != entry.sha256 {
+            return Err("a committed router fixture file differs from its manifest".to_owned());
+        }
+        manifest_files.push(json!({
+            "path": entry.path,
+            "byte_length": observed_length,
+            "sha256": observed_sha256,
+        }));
+        payloads.insert(entry.path.clone(), bytes);
+    }
+
+    let generator_bytes = read_bounded_regular_file(
+        fixture_root,
+        &manifest.provenance.generator,
+        MAX_MANIFEST_BYTES,
+    )?;
+    if sha256_bytes(&generator_bytes) != manifest.provenance.generator_sha256 {
+        return Err("the router fixture generator differs from its manifest".to_owned());
+    }
+
+    let expected_bytes = payloads
+        .get(&manifest.expected_results.path)
+        .ok_or_else(|| "the router fixture expected results are absent".to_owned())?;
+    let expected: RouterGoldenDocument =
+        parse_unique_json(expected_bytes, "router expected results")?;
+    validate_router_golden_document(&manifest, &expected)?;
+
+    let tie_bytes = payloads
+        .get("synthetic-tie.json")
+        .ok_or_else(|| "the synthetic router tie fixture is absent".to_owned())?;
+    let ties: RouterTieDocument = parse_unique_json(tie_bytes, "synthetic router tie fixture")?;
+    validate_router_tie_document(&ties)?;
+
+    let mut negative_cases = Vec::with_capacity(ROUTER_NEGATIVE_EXPECTATIONS.len());
+    for (path, expected_category, expected_code, expected_surface) in ROUTER_NEGATIVE_EXPECTATIONS {
+        let bytes = payloads
+            .get(path)
+            .ok_or_else(|| "a required negative router fixture is absent".to_owned())?;
+        let negative: RouterNegativeDocument = parse_unique_json(bytes, "negative router fixture")?;
+        validate_router_negative_document(
+            &negative,
+            expected_category,
+            expected_code,
+            expected_surface,
+        )?;
+        negative_cases.push(json!({
+            "fixture": path,
+            "fixture_id": negative.fixture_id,
+            "category": negative.case.category,
+            "validation_surface": negative.case.validation_surface,
+            "expected_code": negative.case.expected_failure.code,
+            "must_precede": negative.case.expected_failure.must_precede,
+            "accepted_result": false,
+            "router_runner_called": false,
+            "validation_mode": "fixture_contract_validation",
+            "mlx_executed": false,
+            "mutation": negative.case.mutation,
+            "status": "covered",
+        }));
+    }
+
+    Ok(RouterFixtureBundle {
+        manifest_sha256: sha256_bytes(&manifest_bytes),
+        manifest_files,
+        case_order: manifest
+            .cases
+            .iter()
+            .map(|case| case.case_id.clone())
+            .collect(),
+        golden_cases: expected.cases,
+        tie_cases: ties.cases,
+        negative_cases,
+    })
+}
+
+fn validate_router_fixture_manifest(manifest: &RouterFixtureManifestIndex) -> Result<(), String> {
+    let expected_case_ids = [ROUTER_SINGLE_ROW_CASE_ID, ROUTER_TWO_ROW_CASE_ID];
+    if manifest.schema != "pulsarmlx.fixture.router-manifest"
+        || manifest.schema_version != "1.0.0"
+        || manifest.fixture_id != ROUTER_FIXTURE_ID
+        || manifest.provenance.kind != "synthetic_generated"
+        || manifest.provenance.generator != "golden/generate.py"
+        || !canonical_sha256(&manifest.provenance.generator_sha256)
+        || manifest.provenance.generation_command
+            != "python3 fixtures/research/router-v1/golden/generate.py --write"
+        || manifest.provenance.independence.trim().is_empty()
+        || !manifest.provenance.model_free
+        || manifest.provenance.external_checkpoint_access_required
+        || !manifest.provenance.redistributable
+        || manifest.provenance.license != "MIT"
+        || manifest.contract.contract_id != "qwen3moe-layer0-router-parity-v1"
+        || manifest.contract.hidden_width != 2_048
+        || manifest.contract.expert_count != 128
+        || manifest.contract.top_k != 8
+        || manifest.contract.weight_dtype != "float32"
+        || manifest.contract.weight_byte_order != "little"
+        || manifest.contract.weight_layout != "expert_major_rows_input_columns"
+        || manifest.contract.tie_rule != "probability_descending_then_expert_id_ascending"
+        || manifest.contract.normalization
+            != "full_128_way_softmax_then_selected_probability_renormalization"
+        || manifest.expected_results.path != "golden/expected_results.json"
+        || manifest.expected_results.arithmetic != "scalar_float32"
+        || !manifest.expected_results.independently_computed
+        || !manifest.expected_results.complete_values
+        || !manifest.hidden_state_fixture.is_object()
+        || !manifest.weight_fixture.is_object()
+        || !manifest.scope.is_object()
+        || manifest.files.len() != ROUTER_FIXTURE_FILES.len()
+        || manifest.cases.len() != expected_case_ids.len()
+    {
+        return Err("the router fixture manifest identity or contract is not admitted".to_owned());
+    }
+    for (index, (case, expected_id)) in manifest.cases.iter().zip(expected_case_ids).enumerate() {
+        let rows = index + 1;
+        if case.case_id != expected_id
+            || case.expected_result_key != expected_id
+            || case.hidden_shape != [rows as u64, 2_048]
+            || case.hidden_row_ids.len() != rows
+            || !canonical_sha256(&case.hidden_f32le_sha256)
+        {
+            return Err("the router fixture case inventory is not admitted".to_owned());
+        }
+    }
+    Ok(())
+}
+
+fn validate_router_golden_document(
+    manifest: &RouterFixtureManifestIndex,
+    document: &RouterGoldenDocument,
+) -> Result<(), String> {
+    if document.schema != "pulsarmlx.fixture.router-expected-results"
+        || document.schema_version != "1.0.0"
+        || document.fixture_id != ROUTER_EXPECTED_RESULTS_ID
+        || !document.contract.is_object()
+        || document.provenance.as_str() != Some("synthetic_generated_model_free_independent_scalar")
+        || document.cases.len() != manifest.cases.len()
+    {
+        return Err("the router expected-results identity is not admitted".to_owned());
+    }
+    for case in &manifest.cases {
+        let golden = document
+            .cases
+            .get(&case.expected_result_key)
+            .ok_or_else(|| "a router expected result is missing".to_owned())?;
+        if golden.case_id != case.case_id
+            || golden.hidden_shape != case.hidden_shape.map(|value| value as usize)
+            || golden.hidden_row_ids != case.hidden_row_ids
+            || golden.logits_shape != [golden.hidden_shape[0], 128]
+            || golden.provenance != "synthetic_generated_model_free"
+        {
+            return Err("a router expected result contradicts its manifest case".to_owned());
+        }
+        let _ = output_from_router_values(
+            &golden.case_id,
+            golden.logits_shape,
+            &golden.logits,
+            &golden.full_softmax_probabilities,
+            &golden.selected_expert_ids,
+            &golden.selected_probabilities,
+            &golden.normalized_weights,
+            &golden.hashes,
+        )?;
+    }
+    Ok(())
+}
+
+fn validate_router_tie_document(document: &RouterTieDocument) -> Result<(), String> {
+    if document.schema != "pulsarmlx.fixture.router-synthetic-tie"
+        || document.schema_version != "1.0.0"
+        || document.fixture_id != ROUTER_SYNTHETIC_TIE_ID
+        || document.contract
+            != json!({
+                "contract_id": "qwen3moe-layer0-router-parity-v1",
+                "non_finite_policy": "reject",
+                "normalization": "full_128_way_softmax_then_selected_probability_renormalization",
+                "tie_rule": "probability_descending_then_expert_id_ascending",
+            })
+        || document.bounds
+            != json!({
+                "case_count": 2,
+                "expert_count": 128,
+                "maximum_fixture_bytes": 65_536,
+                "maximum_rows_per_case": 1,
+                "top_k": 8,
+            })
+        || document.provenance
+            != json!({
+                "evidence_level": "synthetic_tie_fixture_only",
+                "external_checkpoint_access_required": false,
+                "kind": "synthetic_generated",
+                "model_free": true,
+                "proves_real_checkpoint_routing": false,
+            })
+        || document.cases.len() != 2
+        || document.cases[0].kind != "exact_tie"
+        || document.cases[1].kind != "near_tie"
+    {
+        return Err("the synthetic router tie fixture identity is not admitted".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_router_negative_document(
+    document: &RouterNegativeDocument,
+    category: &str,
+    code: &str,
+    validation_surface: &str,
+) -> Result<(), String> {
+    if document.schema != "pulsarmlx.fixture.router-negative-case"
+        || document.schema_version != "1.0.0"
+        || document.contract_id != "qwen3moe-layer0-router-parity-v1"
+        || document.fixture_id.len() > 128
+        || !document
+            .fixture_id
+            .starts_with("generated-qwen3moe-router-")
+        || !document.bounds.is_object()
+        || document.provenance.kind != "synthetic_generated_malformed"
+        || document.provenance.evidence_level != "synthetic_negative_fixture_only"
+        || !document.provenance.model_free
+        || document.provenance.external_checkpoint_access_required
+        || document.provenance.raw_model_or_tensor_bytes_committed
+        || document.case.category != category
+        || document.case.validation_surface != validation_surface
+        || !document.case.mutation.is_object()
+        || document.case.expected_failure.code != code
+        || document.case.expected_failure.accepted_result
+        || document.case.expected_failure.router_runner_called
+        || document.case.expected_failure.must_precede != "before_router_mlx_array_construction"
+    {
+        return Err("a negative router fixture contract is not admitted".to_owned());
+    }
+    Ok(())
+}
+
+fn f32_rows(rows: &[Vec<f64>], label: &str) -> Result<Vec<Vec<f32>>, String> {
+    rows.iter()
+        .enumerate()
+        .map(|(row_index, row)| {
+            row.iter()
+                .enumerate()
+                .map(|(column_index, value)| {
+                    let canonical = *value as f32;
+                    if !value.is_finite()
+                        || !canonical.is_finite()
+                        || f64::from(canonical) != *value
+                    {
+                        return Err(format!(
+                            "{label}[{row_index}][{column_index}] is not canonical finite F32"
+                        ));
+                    }
+                    Ok(canonical)
+                })
+                .collect()
+        })
+        .collect()
+}
+
+fn flatten_f32(rows: &[Vec<f32>]) -> Vec<f32> {
+    rows.iter().flatten().copied().collect()
+}
+
+fn selected_id_sha256(rows: &[Vec<u64>]) -> Result<String, String> {
+    let mut digest = Sha256::new();
+    for expert_id in rows.iter().flatten() {
+        let value = u32::try_from(*expert_id)
+            .map_err(|_| "a router expert ID is outside the bounded U32 range".to_owned())?;
+        digest.update(value.to_le_bytes());
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+
+fn float_output_bundle_sha256(output: &RouterOutput) -> String {
+    let mut digest = Sha256::new();
+    for value in output.logits() {
+        digest.update(value.to_le_bytes());
+    }
+    for value in output.full_probabilities() {
+        digest.update(value.to_le_bytes());
+    }
+    for value in output.selected_probabilities().iter().flatten() {
+        digest.update(value.to_le_bytes());
+    }
+    for value in output.normalized_weights().iter().flatten() {
+        digest.update(value.to_le_bytes());
+    }
+    format!("{:x}", digest.finalize())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn output_from_router_values(
+    case_id: &str,
+    logits_shape: [usize; 2],
+    logits: &[Vec<f64>],
+    probabilities: &[Vec<f64>],
+    selected_ids: &[Vec<u64>],
+    selected_probabilities: &[Vec<f64>],
+    normalized_weights: &[Vec<f64>],
+    hashes: &RouterGoldenHashes,
+) -> Result<RouterOutput, String> {
+    if logits_shape[0] == 0 || logits_shape[1] != 128 || logits.len() != logits_shape[0] {
+        return Err("a router fixture has an invalid complete-output shape".to_owned());
+    }
+    let logits = f32_rows(logits, "router logits")?;
+    let probabilities = f32_rows(probabilities, "router probabilities")?;
+    let selected_probabilities = f32_rows(selected_probabilities, "selected probabilities")?;
+    let normalized_weights = f32_rows(normalized_weights, "normalized weights")?;
+    let output = RouterOutput::try_new(
+        case_id,
+        RouterCaseScope::SyntheticFixture,
+        logits_shape[0],
+        flatten_f32(&logits),
+        flatten_f32(&probabilities),
+        selected_ids.to_vec(),
+        selected_probabilities,
+        normalized_weights,
+    )
+    .map_err(|_| "a committed router output violates the bounded Rust contract".to_owned())?;
+    if ![
+        &hashes.logits_f32le_sha256,
+        &hashes.full_softmax_probabilities_f32le_sha256,
+        &hashes.selected_expert_ids_u32le_sha256,
+        &hashes.selected_probabilities_f32le_sha256,
+        &hashes.normalized_weights_f32le_sha256,
+        &hashes.float_output_bundle_f32le_sha256,
+    ]
+    .iter()
+    .all(|hash| canonical_sha256(hash))
+        || output.logits_f32le_sha256() != hashes.logits_f32le_sha256
+        || output.full_probabilities_f32le_sha256()
+            != hashes.full_softmax_probabilities_f32le_sha256
+        || selected_id_sha256(output.selected_expert_ids())?
+            != hashes.selected_expert_ids_u32le_sha256
+        || output.selected_probabilities_f32le_sha256()
+            != hashes.selected_probabilities_f32le_sha256
+        || output.normalized_weights_f32le_sha256() != hashes.normalized_weights_f32le_sha256
+        || float_output_bundle_sha256(&output) != hashes.float_output_bundle_f32le_sha256
+    {
+        return Err("a committed router output differs from its canonical hashes".to_owned());
+    }
+    Ok(output)
+}
+
+fn output_from_worker_result(result: &RouterResult) -> Result<RouterOutput, String> {
+    let logits = f32_rows(result.logits(), "worker router logits")?;
+    let probabilities = f32_rows(result.full_probabilities(), "worker router probabilities")?;
+    let selected = f32_rows(
+        result.selected_probabilities(),
+        "worker selected probabilities",
+    )?;
+    let normalized = f32_rows(result.normalized_weights(), "worker normalized weights")?;
+    let output = RouterOutput::try_new(
+        result.router_case_id(),
+        RouterCaseScope::SyntheticFixture,
+        usize::try_from(result.batch_size())
+            .map_err(|_| "the worker router batch size is not representable".to_owned())?,
+        flatten_f32(&logits),
+        flatten_f32(&probabilities),
+        result.selected_expert_ids().to_vec(),
+        selected,
+        normalized,
+    )
+    .map_err(|_| "the worker router output violates the bounded Rust contract".to_owned())?;
+    if output.logits_f32le_sha256() != result.logits_f32le_sha256()
+        || output.full_probabilities_f32le_sha256() != result.full_probabilities_f32le_sha256()
+        || output.selected_probabilities_f32le_sha256()
+            != result.selected_probabilities_f32le_sha256()
+        || output.normalized_weights_f32le_sha256() != result.normalized_weights_f32le_sha256()
+    {
+        return Err("the worker router output differs from its protocol hashes".to_owned());
+    }
+    Ok(output)
+}
+
+fn numeric_comparison_evidence(comparison: &RouterNumericComparison) -> Value {
+    let first_mismatch = comparison.first_mismatch().map(|mismatch| {
+        json!({
+            "row_index": mismatch.row_index(),
+            "column_index": mismatch.column_index(),
+            "reference": mismatch.reference(),
+            "candidate": mismatch.candidate(),
+        })
+    });
+    json!({
+        "compared_count": comparison.compared_count(),
+        "mismatch_count": comparison.mismatch_count(),
+        "first_mismatch": first_mismatch,
+        "maximum_absolute_error": comparison.maximum_absolute_error(),
+        "mean_absolute_error": comparison.mean_absolute_error(),
+        "rmse": comparison.rmse(),
+        "maximum_relative_error": comparison.maximum_relative_error(),
+        "absolute_tolerance": comparison.tolerance().absolute(),
+        "relative_tolerance": comparison.tolerance().relative(),
+    })
+}
+
+fn router_comparison_evidence(comparison: &RouterOutputComparison) -> Value {
+    json!({
+        "logits": numeric_comparison_evidence(comparison.logits()),
+        "full_probabilities": numeric_comparison_evidence(comparison.full_probabilities()),
+        "selected_probabilities": numeric_comparison_evidence(comparison.selected_probabilities()),
+        "normalized_weights": numeric_comparison_evidence(comparison.normalized_weights()),
+        "id_mismatch_count": comparison.id_mismatch_count(),
+        "order_mismatch_count": comparison.order_mismatch_count(),
+        "passed": comparison.passed(),
+    })
+}
+
+fn router_memory_evidence(result: &RouterResult) -> Value {
+    let memory = result.memory_gauges();
+    json!({
+        "mlx_active_bytes": memory.mlx_active_bytes(),
+        "mlx_cache_bytes": memory.mlx_cache_bytes(),
+        "mlx_peak_bytes": memory.mlx_peak_bytes(),
+        "process_footprint_bytes": memory.process_footprint_bytes(),
+        "process_footprint_source": memory.process_footprint_source(),
+        "system_pressure": memory.system_pressure(),
+        "reported_summed_total_bytes": memory.reported_summed_total_bytes(),
+    })
+}
+
+fn ensure_model_free_worker_descriptor() -> Result<(), String> {
+    #[cfg(unix)]
+    {
+        let status = unsafe { libc::fcntl(MODEL_FILE_DESCRIPTOR, libc::F_GETFD) };
+        if status != -1 || std::io::Error::last_os_error().raw_os_error() != Some(libc::EBADF) {
+            return Err("the model-free worker descriptor boundary is not closed".to_owned());
+        }
+    }
+    Ok(())
+}
+
+fn validate_tie_cases(bundle: &RouterFixtureBundle) -> Result<Vec<Value>, String> {
+    let mut evidence = Vec::with_capacity(bundle.tie_cases.len());
+    let expected = [
+        (
+            "generated-qwen3moe-router-exact-tie-v1",
+            "exact_tie",
+            7_u64,
+            8_u64,
+            "exact_f32_equal",
+        ),
+        (
+            "generated-qwen3moe-router-near-tie-v1",
+            "near_tie",
+            8_u64,
+            7_u64,
+            "one_f32_ulp_logit_above",
+        ),
+    ];
+    for (case, (case_id, kind, rank_8_id, rank_9_id, relation)) in
+        bundle.tie_cases.iter().zip(expected)
+    {
+        if case.provenance != "synthetic_generated_model_free"
+            || case.case_id != case_id
+            || case.kind != kind
+            || case.logits_shape != [1, 128]
+            || case.cutoff.rank_8_expert_id != rank_8_id
+            || case.cutoff.rank_9_expert_id != rank_9_id
+            || case.cutoff.relation != relation
+            || ![
+                &case.cutoff.rank_8_logit_f32_bits,
+                &case.cutoff.rank_9_logit_f32_bits,
+                &case.cutoff.rank_8_probability_f32_bits,
+                &case.cutoff.rank_9_probability_f32_bits,
+            ]
+            .iter()
+            .all(|bits| bits.len() == 8 && bits.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        {
+            return Err("a synthetic router tie case is not admitted".to_owned());
+        }
+        let output = output_from_router_values(
+            &case.case_id,
+            case.logits_shape,
+            &case.logits,
+            &case.full_softmax_probabilities,
+            &case.selected_expert_ids,
+            &case.selected_probabilities,
+            &case.normalized_weights,
+            &case.hashes,
+        )?;
+        let probability_row = output.full_probabilities();
+        let logit_row = output.logits();
+        let mut ranked_ids = (0..128_usize).collect::<Vec<_>>();
+        ranked_ids.sort_by(|left, right| {
+            probability_row[*right]
+                .partial_cmp(&probability_row[*left])
+                .expect("validated finite synthetic probabilities")
+                .then_with(|| left.cmp(right))
+        });
+        let rank_8 = ranked_ids[7];
+        let rank_9 = ranked_ids[8];
+        if rank_8 as u64 != case.cutoff.rank_8_expert_id
+            || rank_9 as u64 != case.cutoff.rank_9_expert_id
+            || format!("{:08x}", logit_row[rank_8].to_bits()) != case.cutoff.rank_8_logit_f32_bits
+            || format!("{:08x}", logit_row[rank_9].to_bits()) != case.cutoff.rank_9_logit_f32_bits
+            || format!("{:08x}", probability_row[rank_8].to_bits())
+                != case.cutoff.rank_8_probability_f32_bits
+            || format!("{:08x}", probability_row[rank_9].to_bits())
+                != case.cutoff.rank_9_probability_f32_bits
+            || (case.kind == "exact_tie" && probability_row[rank_8] != probability_row[rank_9])
+            || (case.kind == "near_tie" && probability_row[rank_8] <= probability_row[rank_9])
+        {
+            return Err("a synthetic router tie cutoff declaration is inconsistent".to_owned());
+        }
+        evidence.push(json!({
+            "case_id": output.case_id(),
+            "kind": case.kind,
+            "fixture_kind": "synthetic",
+            "case_scope": "synthetic_fixture",
+            "validation_mode": "host_contract_validation",
+            "mlx_executed": false,
+            "real_checkpoint_evidence": false,
+            "cutoff": {
+                "rank_8_expert_id": case.cutoff.rank_8_expert_id,
+                "rank_9_expert_id": case.cutoff.rank_9_expert_id,
+                "relation": case.cutoff.relation,
+            },
+            "selected_expert_ids": output.selected_expert_ids(),
+            "hashes": {
+                "logits_f32le_sha256": output.logits_f32le_sha256(),
+                "full_probabilities_f32le_sha256": output.full_probabilities_f32le_sha256(),
+                "selected_probabilities_f32le_sha256": output.selected_probabilities_f32le_sha256(),
+                "normalized_weights_f32le_sha256": output.normalized_weights_f32le_sha256(),
+            },
+            "status": "passed",
+        }));
+    }
+    Ok(evidence)
+}
+
+fn execute_router_positive_cases(
+    client: &mut WorkerClient,
+    bundle: &RouterFixtureBundle,
+    attempt: &mut RouterFixtureAttempt,
+) -> Result<(), RetainedRouterFixtureFailure> {
+    let hello = client.hello().clone();
+    let operations = hello.capabilities().operations();
+    if !operations.iter().any(|operation| operation == "run_router")
+        || operations
+            .iter()
+            .any(|operation| operation == "run_model_slice")
+    {
+        return Err(retained_fixture_failure(
+            "aborted",
+            "worker_negotiation",
+            "unsupported_operation",
+            "the model-free worker capability boundary is not admitted",
+        ));
+    }
+    attempt.runtime = Some(json!({
+        "protocol": hello.protocol(),
+        "worker_version": hello.worker_version(),
+        "python_version": hello.python_version(),
+        "python_arch": hello.python_arch(),
+        "mlx_version": hello.mlx_version(),
+        "macos_version": hello.macos_version(),
+        "metal_available": hello.metal_available(),
+        "gpu_count": hello.gpu_count(),
+        "operations": operations,
+        "model_operation_advertised": false,
+    }));
+    let health = client.health().map_err(|error| {
+        retained_fixture_failure(
+            "aborted",
+            "worker_health",
+            error.worker_code().unwrap_or("device_unavailable"),
+            error.message(),
+        )
+    })?;
+    if !health.ready() {
+        return Err(retained_fixture_failure(
+            "aborted",
+            "worker_health",
+            "device_unavailable",
+            "the negotiated model-free MLX worker is not ready",
+        ));
+    }
+
+    for case_id in &bundle.case_order {
+        let request = RouterRequest::new(case_id, GPU_DEVICE).map_err(|error| {
+            retained_fixture_failure(
+                "failed",
+                "router_request",
+                error.worker_code().unwrap_or("malformed_request"),
+                error.message(),
+            )
+        })?;
+        let result = client.run_router(&request).map_err(|error| {
+            retained_fixture_failure(
+                "failed",
+                "router_execution",
+                error.worker_code().unwrap_or("evaluation_failed"),
+                error.message(),
+            )
+        })?;
+        let golden = bundle.golden_cases.get(case_id).ok_or_else(|| {
+            retained_fixture_failure(
+                "failed",
+                "golden_comparison",
+                "comparison_failed",
+                "the committed golden router case is unavailable",
+            )
+        })?;
+        let reference = output_from_router_values(
+            &golden.case_id,
+            golden.logits_shape,
+            &golden.logits,
+            &golden.full_softmax_probabilities,
+            &golden.selected_expert_ids,
+            &golden.selected_probabilities,
+            &golden.normalized_weights,
+            &golden.hashes,
+        )
+        .map_err(|message| {
+            retained_fixture_failure("failed", "golden_comparison", "comparison_failed", message)
+        })?;
+        let candidate = output_from_worker_result(&result).map_err(|message| {
+            retained_fixture_failure("failed", "worker_result", "comparison_failed", message)
+        })?;
+        let comparison = compare_router_outputs(
+            &reference,
+            &candidate,
+            &RouterTolerancePolicy::contract_v1(),
+        )
+        .map_err(|error| {
+            retained_fixture_failure("failed", "golden_comparison", error.code(), error.message())
+        })?;
+        if !comparison.passed() || !result.passed() {
+            return Err(retained_fixture_failure(
+                "failed",
+                "golden_comparison",
+                "comparison_failed",
+                "the evaluated synthetic router output differs from its committed golden case",
+            ));
+        }
+        attempt.positive_cases.push(json!({
+            "case_id": result.router_case_id(),
+            "fixture_kind": "synthetic",
+            "case_scope": "synthetic_fixture",
+            "validation_mode": "mlx_gpu_execution_and_host_golden_comparison",
+            "real_checkpoint_evidence": false,
+            "requested_device": result.requested_device(),
+            "selected_device": result.selected_device(),
+            "fallback_used": result.fallback_used(),
+            "evaluated": result.evaluated(),
+            "synchronized": result.synchronized(),
+            "operation": result.operation(),
+            "batch_size": result.batch_size(),
+            "hidden_width": result.hidden_width(),
+            "expert_count": result.expert_count(),
+            "top_k": result.top_k(),
+            "output_dtype": result.output_dtype(),
+            "selected_expert_ids": result.selected_expert_ids(),
+            "hashes": {
+                "logits_f32le_sha256": result.logits_f32le_sha256(),
+                "full_probabilities_f32le_sha256": result.full_probabilities_f32le_sha256(),
+                "selected_probabilities_f32le_sha256": result.selected_probabilities_f32le_sha256(),
+                "normalized_weights_f32le_sha256": result.normalized_weights_f32le_sha256(),
+            },
+            "comparison": router_comparison_evidence(&comparison),
+            "memory_gauges": router_memory_evidence(&result),
+            "status": "passed",
+        }));
+    }
+    Ok(())
+}
+
+fn cleanup_outcome_name(outcome: CleanupOutcome) -> &'static str {
+    match outcome {
+        CleanupOutcome::Graceful => "graceful",
+        CleanupOutcome::ForcedTermination => "forced_termination",
+        CleanupOutcome::Failed => "failed",
+    }
+}
+
 fn run_planned_inspect_router(command: InspectRouterCommand) -> Result<(), String> {
     // Keep this pre-gate path lexical-only: the filesystem identity validator
     // above must not run until T074 authorizes resolving the checkpoint.
@@ -507,8 +1727,122 @@ fn run_planned_inspect_router(command: InspectRouterCommand) -> Result<(), Strin
 fn run_planned_validate_router_fixtures(
     command: ValidateRouterFixturesCommand,
 ) -> Result<(), String> {
-    let _parsed_paths = (command.manifest, command.evidence);
-    Err("validate-router-fixtures is parsed but its retained-result execution is deferred to T045; no MLX worker was started".to_owned())
+    validate_router_fixture_path_identities(&command)?;
+    if fs::symlink_metadata(&command.evidence).is_ok() {
+        return Err("the router fixture evidence destination already exists".to_owned());
+    }
+
+    let root = project_root();
+    let mut attempt = RouterFixtureAttempt::new();
+    let bundle = match load_router_fixture_bundle(&root, &command.manifest) {
+        Ok(bundle) => {
+            attempt.manifest_sha256 = Some(bundle.manifest_sha256.clone());
+            attempt.manifest_files = bundle.manifest_files.clone();
+            attempt.negative_cases = bundle.negative_cases.clone();
+            match validate_tie_cases(&bundle) {
+                Ok(tie_cases) => attempt.tie_cases = tie_cases,
+                Err(message) => attempt.retain_failure(retained_fixture_failure(
+                    "failed",
+                    "synthetic_tie_validation",
+                    "comparison_failed",
+                    message,
+                )),
+            }
+            Some(bundle)
+        }
+        Err(message) => {
+            attempt.retain_failure(retained_fixture_failure(
+                "failed",
+                "manifest_admission",
+                "comparison_failed",
+                message,
+            ));
+            None
+        }
+    };
+
+    if attempt.failure.is_none() {
+        if let Err(message) = ensure_model_free_worker_descriptor() {
+            attempt.retain_failure(retained_fixture_failure(
+                "aborted",
+                "model_free_boundary",
+                "model_identity_mismatch",
+                message,
+            ));
+        }
+    }
+
+    if attempt.failure.is_none() {
+        let config = match worker_config(&root) {
+            Ok(config) => Some(config.with_env("PULSARMLX_MODEL_GGUF", "")),
+            Err(message) => {
+                attempt.retain_failure(retained_fixture_failure(
+                    "aborted",
+                    "worker_configuration",
+                    "device_unavailable",
+                    message,
+                ));
+                None
+            }
+        };
+        if let (Some(config), Some(bundle)) = (config, bundle.as_ref()) {
+            match WorkerClient::spawn(config) {
+                Ok(mut client) => {
+                    let validation =
+                        execute_router_positive_cases(&mut client, bundle, &mut attempt);
+                    let cleanup = client.shutdown();
+                    let cleanup_message = cleanup.error().map(|error| error.message().to_owned());
+                    attempt.cleanup = json!({
+                        "attempted": true,
+                        "outcome": cleanup_outcome_name(cleanup.outcome()),
+                        "exit_code": cleanup.exit_code(),
+                        "message": cleanup_message,
+                    });
+                    if let Err(failure) = validation {
+                        attempt.retain_failure(failure);
+                    }
+                    if cleanup.outcome() != CleanupOutcome::Graceful
+                        || cleanup.exit_code() != Some(0)
+                    {
+                        attempt.retain_failure(retained_fixture_failure(
+                            "aborted",
+                            "worker_cleanup",
+                            "evaluation_failed",
+                            cleanup
+                                .error()
+                                .map(|error| error.message())
+                                .unwrap_or("the model-free MLX worker did not shut down cleanly"),
+                        ));
+                    }
+                }
+                Err(error) => attempt.retain_failure(retained_fixture_failure(
+                    "aborted",
+                    "worker_spawn",
+                    error.worker_code().unwrap_or("device_unavailable"),
+                    error.message(),
+                )),
+            }
+        }
+    }
+
+    let evidence = attempt.evidence();
+    ensure_no_private_paths(&evidence)?;
+    let encoded = serde_json::to_vec(&evidence)
+        .map_err(|_| "the router fixture evidence could not be encoded".to_owned())?;
+    if encoded.len() > ROUTER_FIXTURE_MAX_EVIDENCE_BYTES {
+        return Err("the router fixture evidence exceeds its byte bound".to_owned());
+    }
+    validate_router_fixture_path_identities(&command)?;
+    write_evidence_exclusive(&command.evidence, &evidence)?;
+
+    if let Some(failure) = attempt.failure {
+        return Err(format!(
+            "validate-router-fixtures: {} evidence retained ({} at {})",
+            failure.status, failure.code, failure.stage
+        ));
+    }
+    println!("validate-router-fixtures: 2 evaluated MLX router cases passed; synthetic tie and negative contracts retained");
+    Ok(())
 }
 
 fn run_planned_validate_router(command: ValidateRouterCommand) -> Result<(), String> {
@@ -1855,6 +3189,68 @@ fn write_evidence(path: &Path, evidence: &Value) -> Result<(), String> {
     Ok(())
 }
 
+fn write_evidence_exclusive(path: &Path, evidence: &Value) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    if !parent.is_dir() {
+        return Err("the evidence parent directory does not exist".to_owned());
+    }
+    if fs::symlink_metadata(path).is_ok() {
+        return Err("the router fixture evidence destination already exists".to_owned());
+    }
+    let filename = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| "the evidence path must name a UTF-8 file".to_owned())?;
+    let mut encoded = serde_json::to_vec(evidence)
+        .map_err(|_| "the validated evidence could not be encoded".to_owned())?;
+    encoded.push(b'\n');
+
+    let mut temporary = None;
+    for attempt in 0..32_u32 {
+        let candidate = parent.join(format!(
+            ".{filename}.pulsarmlx-exclusive-{}-{attempt}.tmp",
+            std::process::id()
+        ));
+        match OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&candidate)
+        {
+            Ok(file) => {
+                temporary = Some((candidate, file));
+                break;
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(_) => return Err("the temporary evidence file could not be created".to_owned()),
+        }
+    }
+    let (temporary_path, mut temporary_file) = temporary
+        .ok_or_else(|| "a unique temporary evidence file could not be created".to_owned())?;
+    if temporary_file
+        .write_all(&encoded)
+        .and_then(|()| temporary_file.sync_all())
+        .is_err()
+    {
+        drop(temporary_file);
+        let _ = fs::remove_file(&temporary_path);
+        return Err("the requested evidence file could not be written".to_owned());
+    }
+    drop(temporary_file);
+
+    let installed = fs::hard_link(&temporary_path, path);
+    let _ = fs::remove_file(&temporary_path);
+    match installed {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+            Err("the router fixture evidence destination already exists".to_owned())
+        }
+        Err(_) => Err("the requested evidence file could not be installed atomically".to_owned()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2196,7 +3592,7 @@ mod tests {
     }
 
     #[test]
-    fn feature_002_planned_dispatch_is_fail_closed_without_external_access() {
+    fn feature_002_external_dispatch_remains_fail_closed_without_access() {
         let model = format!("/tmp/pulsarmlx-never-accessed/{QWEN_FILENAME}");
         let inspect_error = run(args(&[
             "inspect-router",
@@ -2208,17 +3604,6 @@ mod tests {
         .expect_err("inspection remains task gated");
         assert!(inspect_error.contains("T074"));
         assert!(inspect_error.contains("no checkpoint was accessed"));
-
-        let fixture_error = run(args(&[
-            "validate-router-fixtures",
-            "--manifest",
-            ROUTER_FIXTURE_MANIFEST,
-            "--evidence",
-            "/tmp/pulsarmlx-never-accessed/fixtures.json",
-        ]))
-        .expect_err("fixture retention remains task gated");
-        assert!(fixture_error.contains("T045"));
-        assert!(fixture_error.contains("no MLX worker was started"));
 
         let router_error = run(args(&[
             "validate-router",
@@ -2237,6 +3622,91 @@ mod tests {
         assert!(run(args(&["--help"]))
             .expect_err("help is usage-only")
             .starts_with("usage:"));
+    }
+
+    #[test]
+    fn router_fixture_bundle_admits_exact_inventory_and_honest_scopes() {
+        let bundle =
+            load_router_fixture_bundle(&project_root(), Path::new(ROUTER_FIXTURE_MANIFEST))
+                .expect("committed router fixture bundle");
+        assert_eq!(bundle.case_order.len(), 2);
+        assert_eq!(bundle.manifest_files.len(), ROUTER_FIXTURE_FILES.len());
+        assert_eq!(bundle.negative_cases.len(), 7);
+        assert!(canonical_sha256(&bundle.manifest_sha256));
+
+        let ties = validate_tie_cases(&bundle).expect("synthetic tie contracts");
+        assert_eq!(ties.len(), 2);
+        assert!(ties.iter().all(|case| {
+            case["fixture_kind"] == "synthetic"
+                && case["validation_mode"] == "host_contract_validation"
+                && case["mlx_executed"] == false
+                && case["real_checkpoint_evidence"] == false
+        }));
+        assert!(bundle.negative_cases.iter().all(|case| {
+            case["validation_mode"] == "fixture_contract_validation"
+                && case["mlx_executed"] == false
+                && case["accepted_result"] == false
+                && case["router_runner_called"] == false
+        }));
+    }
+
+    #[test]
+    fn router_fixture_json_rejects_duplicate_keys_at_any_depth() {
+        let duplicate_root = br#"{"schema":"one","schema":"two"}"#;
+        assert!(parse_unique_json::<Value>(duplicate_root, "test document").is_err());
+        let duplicate_nested = br#"{"outer":{"code":"one","code":"two"}}"#;
+        assert!(parse_unique_json::<Value>(duplicate_nested, "test document").is_err());
+    }
+
+    #[test]
+    fn router_fixture_failure_evidence_retains_partial_success_without_overclaim() {
+        let mut attempt = RouterFixtureAttempt::new();
+        attempt.positive_cases.push(json!({
+            "case_id": ROUTER_SINGLE_ROW_CASE_ID,
+            "status": "passed",
+        }));
+        attempt.retain_failure(retained_fixture_failure(
+            "failed",
+            "router_execution",
+            "comparison_failed",
+            "bounded synthetic failure",
+        ));
+        let evidence = attempt.evidence();
+        assert_eq!(evidence["status"], "failed");
+        assert_eq!(evidence["passed"], false);
+        assert_eq!(evidence["positive_cases"].as_array().unwrap().len(), 1);
+        assert_eq!(evidence["fixture_kind"], "synthetic");
+        assert_eq!(evidence["model_free"], true);
+        assert_eq!(evidence["real_checkpoint_evidence"], false);
+        assert_eq!(evidence["external_checkpoint_accessed"], false);
+        assert_eq!(evidence["failure"]["code"], "comparison_failed");
+        ensure_no_private_paths(&evidence).expect("retained failure remains private-safe");
+    }
+
+    #[test]
+    fn router_fixture_evidence_install_is_exclusive_and_leaves_no_temporary_file() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-router-evidence-exclusive-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&directory).expect("create exclusive evidence directory");
+        let destination = directory.join("router-fixtures.json");
+        write_evidence_exclusive(&destination, &json!({"status": "passed"}))
+            .expect("first exclusive install");
+        let original = fs::read(&destination).expect("read installed evidence");
+        let error = write_evidence_exclusive(&destination, &json!({"status": "failed"}))
+            .expect_err("existing destination must be refused");
+        assert!(error.contains("already exists"));
+        assert_eq!(fs::read(&destination).unwrap(), original);
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 1);
+        fs::remove_file(destination).expect("remove evidence");
+        fs::remove_dir(directory).expect("remove evidence directory");
     }
 
     #[test]
