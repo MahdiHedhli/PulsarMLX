@@ -2424,3 +2424,52 @@ passed all 28 focused methods and reported no remaining high or medium issue.
 No model path was resolved or opened, no checkpoint or MLX execution occurred,
 no Apple GPU memory was used, and no NTFY notification was sent. Local
 inference did not need to pause.
+
+### T056 frozen fixture-derived publication outputs
+
+Six small expected artifacts are now committed under
+`fixtures/research/router-v1/expected/`: CSV and Markdown tables, one bounded
+status-aware SVG, and one canonical provenance sidecar per generated output.
+They derive only from the three checked-in full-schema methodology fixtures.
+No mutation fixture, external candidate, model file, or local measurement was
+an input. The artifact-only commit is `ed9846a` (`test(research): freeze fixture
+publication outputs`).
+
+The exact generation and reproduction commands were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_tables.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir fixtures/research/router-v1/expected/tables
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_figures.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir fixtures/research/router-v1/expected/figures
+t056_tmp=$(mktemp -d "${TMPDIR:-/tmp}/pulsarmlx-t056.XXXXXX")
+case "$t056_tmp" in
+  */pulsarmlx-t056.*) ;;
+  *) exit 1 ;;
+esac
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_tables.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir "$t056_tmp/expected/tables"
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_figures.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir "$t056_tmp/expected/figures"
+diff -ru fixtures/research/router-v1/expected "$t056_tmp/expected"
+find fixtures/research/router-v1/expected -type f -print0 | sort -z | \
+  xargs -0 shasum -a 256
+rm -r -- "$t056_tmp"
+scripts/research/check_staged.sh
+git diff --cached --check
+```
+
+Both generation commands passed with four table-side and two figure-side
+outputs. Independent temporary regeneration produced no `diff` output. The
+six committed files total 15,638 bytes; their SHA-256 values are recorded in
+their sidecars and were recomputed before staging. The staged safety scan and
+cached diff check passed, and the artifact commit contains only those six
+fixture-derived files.
+
+No model path was resolved or opened, no checkpoint or MLX execution occurred,
+no Apple GPU memory was used, and no NTFY notification was sent. Local
+inference did not need to pause.
