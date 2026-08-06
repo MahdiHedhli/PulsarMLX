@@ -1730,6 +1730,58 @@ def _record_scopes(record: dict[str, Any]) -> set[str]:
     }
 
 
+def _promotion_case_output_identity(record: dict[str, Any]) -> dict[str, str]:
+    """Bind every passed case to one deterministic output, independent of list order."""
+
+    try:
+        observations = record["raw_observations"]
+        correctness = record["correctness"]
+        repeat_count = correctness["deterministic_repeat_count"]
+        repeat_hashes = correctness["repeat_output_hashes"]
+    except (KeyError, TypeError) as error:
+        raise VerificationError("linked evidence lacks promotion identity") from error
+    if (
+        not isinstance(observations, list)
+        or type(repeat_count) is not int
+        or not isinstance(repeat_hashes, list)
+        or repeat_count != len(repeat_hashes)
+        or any(
+            not isinstance(value, str) or SHA256_RE.fullmatch(value) is None
+            for value in repeat_hashes
+        )
+    ):
+        raise VerificationError("linked evidence lacks promotion identity")
+
+    hashes_by_case: dict[str, set[str]] = {}
+    for observation in observations:
+        if not isinstance(observation, dict) or observation.get("status") != "passed":
+            continue
+        case_id = observation.get("case_id")
+        output_sha256 = observation.get("output_sha256")
+        if (
+            not isinstance(case_id, str)
+            or not isinstance(output_sha256, str)
+            or SHA256_RE.fullmatch(output_sha256) is None
+        ):
+            raise VerificationError("linked evidence lacks promotion identity")
+        hashes_by_case.setdefault(case_id, set()).add(output_sha256)
+    if not hashes_by_case or any(len(values) != 1 for values in hashes_by_case.values()):
+        raise VerificationError("linked evidence has non-deterministic case outputs")
+
+    case_outputs = {
+        case_id: next(iter(hashes_by_case[case_id]))
+        for case_id in sorted(hashes_by_case)
+    }
+    expected_repeat_hashes = sorted(
+        output_sha256
+        for output_sha256 in case_outputs.values()
+        for _ in range(10)
+    )
+    if sorted(repeat_hashes) != expected_repeat_hashes:
+        raise VerificationError("linked evidence has incomplete case determinism")
+    return case_outputs
+
+
 def _promotion_identity(record: dict[str, Any]) -> str:
     """Return the immutable identity that an independent reproduction must match."""
 
@@ -1751,9 +1803,9 @@ def _promotion_identity(record: dict[str, Any]) -> str:
                 key: record["oracle"][key]
                 for key in ("oracle_id", "input_fixture_sha256", "tensor_sha256", "output_sha256")
             },
-            "output_sha256": record["correctness"]["repeat_output_hashes"][0],
+            "output_sha256_by_case": _promotion_case_output_identity(record),
         }
-    except (IndexError, KeyError, TypeError) as error:
+    except (KeyError, TypeError) as error:
         raise VerificationError("linked evidence lacks promotion identity") from error
     return json.dumps(identity, allow_nan=False, sort_keys=True, separators=(",", ":"))
 

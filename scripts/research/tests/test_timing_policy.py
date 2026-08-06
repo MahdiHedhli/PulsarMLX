@@ -47,6 +47,10 @@ validator = _load_module(
     RESEARCH_DIR / "validate_evidence.py",
 )
 
+SINGLE_CASE, TWO_CASE = validator.SECOND_BATCH_CASE_ORDER
+SINGLE_OUTPUT_SHA256 = "b" * 64
+TWO_OUTPUT_SHA256 = "c" * 64
+
 
 def _external_evidence(experiment_id: str) -> dict[str, object]:
     """Return model-free evidence shaped like an admitted external run."""
@@ -95,6 +99,68 @@ def _external_evidence(experiment_id: str) -> dict[str, object]:
             },
         }
     return record
+
+
+def _first_process_repetition_record(
+    *,
+    single_count: int = 10,
+    two_count: int = 10,
+    condition: str = "first_read_new_process_os_cache_uncontrolled",
+) -> dict[str, object]:
+    """Return a two-case record with flat 0+1 fresh-process cohorts."""
+
+    record = fixtures.valid_evidence("timing-first-process-cohorts")
+    record["evidence_scope"] = "external_checkpoint"
+    single_case_observations = deepcopy(record["raw_observations"])
+    two_case_observations = deepcopy(single_case_observations)
+    for observation in two_case_observations:
+        observation["observation_id"] = f"two-{observation['observation_id']}"
+        observation["case_id"] = TWO_CASE
+        observation["process_replication_id"] = (
+            f"two-{observation['process_replication_id']}"
+        )
+        observation["output_sha256"] = TWO_OUTPUT_SHA256
+    record["raw_observations"] = single_case_observations + two_case_observations
+    record["correctness"]["deterministic_repeat_count"] = 20
+    record["correctness"]["repeat_output_hashes"] = (
+        [SINGLE_OUTPUT_SHA256] * 10 + [TWO_OUTPUT_SHA256] * 10
+    )
+
+    template = next(
+        observation
+        for observation in single_case_observations
+        if observation["observation_kind"] == "measurement"
+    )
+    for case_id, output_sha256, prefix, count in (
+        (SINGLE_CASE, SINGLE_OUTPUT_SHA256, "single", single_count),
+        (TWO_CASE, TWO_OUTPUT_SHA256, "two", two_count),
+    ):
+        for index in range(count):
+            observation = deepcopy(template)
+            observation.update(
+                {
+                    "observation_id": f"{prefix}-first-read-{index:02d}",
+                    "case_id": case_id,
+                    "process_replication_id": (
+                        f"{prefix}-first-read-process-{index:02d}"
+                    ),
+                    "observation_kind": "measurement",
+                    "process_state": "fresh_process",
+                    "condition": condition,
+                    "instrumentation_mode": "minimally_instrumented",
+                    "run_index": 0,
+                    "output_sha256": output_sha256,
+                }
+            )
+            record["raw_observations"].append(observation)
+    return record
+
+
+def _observation_index(record: dict[str, object]) -> dict[str, dict[str, object]]:
+    return {
+        str(observation["observation_id"]): observation
+        for observation in record["raw_observations"]
+    }
 
 
 class TimingPolicyContractTests(unittest.TestCase):
@@ -244,6 +310,53 @@ class TimingPolicyContractTests(unittest.TestCase):
         )
 
         self._assert_rejected(record, "insufficient_repetitions")
+
+    def test_first_process_cohorts_use_distinct_fresh_process_zero_plus_one_series(
+        self,
+    ) -> None:
+        # The flat raw ledger can contain two predeclared ten-series cohorts for
+        # one case (primary plus clean-process) and one cohort for the other.
+        record = _first_process_repetition_record(single_count=20, two_count=10)
+        validator._validate_repetitions(record, _observation_index(record))
+
+        for invalid in (
+            _first_process_repetition_record(two_count=9),
+            _first_process_repetition_record(two_count=11),
+        ):
+            with self.assertRaises(validator.EvidenceValidationError) as captured:
+                validator._validate_repetitions(invalid, _observation_index(invalid))
+            self.assertEqual(captured.exception.code, "insufficient_repetitions")
+
+    def test_first_process_series_reject_reuse_warmups_and_multiple_measurements(
+        self,
+    ) -> None:
+        reused_state = _first_process_repetition_record()
+        reused_state["raw_observations"][-1]["process_state"] = "reused_process"
+
+        warmup = _first_process_repetition_record()
+        warmup["raw_observations"][-1]["observation_kind"] = "warmup"
+
+        multiple = _first_process_repetition_record()
+        extra = deepcopy(multiple["raw_observations"][-1])
+        extra["observation_id"] = "two-first-read-extra-measurement"
+        extra["run_index"] = 1
+        multiple["raw_observations"].append(extra)
+
+        duplicate_process = _first_process_repetition_record()
+        duplicate_process["raw_observations"][-1]["process_replication_id"] = (
+            duplicate_process["raw_observations"][-2]["process_replication_id"]
+        )
+
+        for invalid in (reused_state, warmup, multiple, duplicate_process):
+            with self.assertRaises(validator.EvidenceValidationError) as captured:
+                validator._validate_repetitions(invalid, _observation_index(invalid))
+            self.assertEqual(captured.exception.code, "insufficient_repetitions")
+
+    def test_controlled_cold_uses_the_same_fresh_process_zero_plus_one_contract(
+        self,
+    ) -> None:
+        record = _first_process_repetition_record(condition="controlled_cold")
+        validator._validate_repetitions(record, _observation_index(record))
 
     def test_unavailable_phases_use_status_and_reason_while_total_remains_observed(self) -> None:
         record = fixtures.valid_evidence("timing-explicit-phases")

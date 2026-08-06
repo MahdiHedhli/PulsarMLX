@@ -24,6 +24,10 @@ FULL_FIXTURE = (
     / "evidence"
     / "f002-router-fixture-0001.json"
 )
+SINGLE_CASE = "qwen3moe-layer0-router-token0-row0-v1"
+TWO_CASE = "qwen3moe-layer0-router-token0-token1-batch-v1"
+SINGLE_OUTPUT_SHA256 = "b" * 64
+TWO_OUTPUT_SHA256 = "c" * 64
 VERIFY_COMMAND = RESEARCH_DIR / "verify_package.py"
 if str(RESEARCH_DIR) not in sys.path:
     # Preserve standard-library import precedence during full test discovery.
@@ -82,6 +86,21 @@ def _claim_scope(record: dict) -> str:
             f"depth={record['claim_boundary']['operation']}",
         )
     )
+
+
+def _two_case_promotion_record() -> dict:
+    record = json.loads(FULL_FIXTURE.read_text(encoding="utf-8"))
+    two_row_observations = deepcopy(record["raw_observations"])
+    for observation in two_row_observations:
+        observation["observation_id"] = f"two-{observation['observation_id']}"
+        observation["case_id"] = TWO_CASE
+        observation["output_sha256"] = TWO_OUTPUT_SHA256
+    record["raw_observations"].extend(two_row_observations)
+    record["correctness"]["deterministic_repeat_count"] = 20
+    record["correctness"]["repeat_output_hashes"] = (
+        [SINGLE_OUTPUT_SHA256] * 10 + [TWO_OUTPUT_SHA256] * 10
+    )
+    return record
 
 
 def _f32(value: float) -> float:
@@ -1154,6 +1173,40 @@ class PublicationBoundaryTests(unittest.TestCase):
             result = self._verify_publication_index(root, paths)
 
             self.assertEqual(result, {"claim_count": 1})
+
+    def test_promotion_identity_binds_every_case_without_array_order_dependence(self) -> None:
+        record = _two_case_promotion_record()
+        identity = self.verifier._promotion_identity(record)
+
+        reordered = deepcopy(record)
+        reordered["correctness"]["repeat_output_hashes"] = (
+            [TWO_OUTPUT_SHA256] * 10 + [SINGLE_OUTPUT_SHA256] * 10
+        )
+        self.assertEqual(self.verifier._promotion_identity(reordered), identity)
+
+        changed_two_row = deepcopy(record)
+        changed_hash = "e" * 64
+        for observation in changed_two_row["raw_observations"]:
+            if observation["case_id"] == TWO_CASE:
+                observation["output_sha256"] = changed_hash
+        changed_two_row["correctness"]["repeat_output_hashes"] = (
+            [SINGLE_OUTPUT_SHA256] * 10 + [changed_hash] * 10
+        )
+        self.assertNotEqual(self.verifier._promotion_identity(changed_two_row), identity)
+
+        incomplete = deepcopy(record)
+        incomplete["correctness"]["deterministic_repeat_count"] = 19
+        incomplete["correctness"]["repeat_output_hashes"] = (
+            [SINGLE_OUTPUT_SHA256] * 10 + [TWO_OUTPUT_SHA256] * 9
+        )
+        with self.assertRaises(self.verifier.VerificationError):
+            self.verifier._promotion_identity(incomplete)
+
+        fixture = json.loads(FULL_FIXTURE.read_text(encoding="utf-8"))
+        self.assertEqual(
+            self.verifier._promotion_identity(fixture),
+            self.verifier._promotion_identity(deepcopy(fixture)),
+        )
 
     def test_fresh_regeneration_must_equal_committed_publication_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

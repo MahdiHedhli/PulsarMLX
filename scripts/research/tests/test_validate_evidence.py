@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import hashlib
+import importlib.util
 import json
 import math
 from pathlib import Path
@@ -25,10 +26,27 @@ SCHEMA_DIR = REPOSITORY_ROOT / "schemas" / "research" / "v1"
 MODEL_MANIFEST = REPOSITORY_ROOT / "docs" / "research" / "MODEL_MANIFEST.json"
 PROTOCOL = REPOSITORY_ROOT / "docs" / "research" / "EXPERIMENT_PROTOCOL.md"
 ROUTER_MANIFEST = REPOSITORY_ROOT / "fixtures" / "research" / "router-v1" / "manifest.json"
+REAL_ORACLE_PUBLICATION = (
+    REPOSITORY_ROOT
+    / "fixtures"
+    / "research"
+    / "router-v1"
+    / "real"
+    / "f002-router-oracle-freeze-0001.json"
+)
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 SHA_C = "c" * 64
 SOURCE_COMMIT = "d" * 40
+
+
+_VALIDATOR_SPEC = importlib.util.spec_from_file_location(
+    "pulsarmlx_evidence_validator_contract", VALIDATOR
+)
+if _VALIDATOR_SPEC is None or _VALIDATOR_SPEC.loader is None:
+    raise RuntimeError("cannot load the research evidence validator")
+validator = importlib.util.module_from_spec(_VALIDATOR_SPEC)
+_VALIDATOR_SPEC.loader.exec_module(validator)
 
 
 def _sha256(path: Path) -> str:
@@ -328,6 +346,23 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
     }
 
 
+def external_oracle_identity() -> tuple[dict[str, object], dict[str, object]]:
+    """Return the experiment projection of the committed real-oracle publication."""
+
+    publication = json.loads(REAL_ORACLE_PUBLICATION.read_text(encoding="utf-8"))
+    identity = {
+        "oracle_id": "qwen3moe-layer0-router-cpu-oracle-v1",
+        "project": "llama.cpp-plus-standalone-scalar-oracle",
+        "revision": publication["source"]["revision"],
+        "generation_command": publication["generator"]["generation_command"],
+        "input_fixture_sha256": publication["input"]["canonical_f32le_sha256"],
+        "tensor_sha256": publication["tensor"]["encoded_sha256"],
+        "output_sha256": publication["result"]["hashes"]["output_bundle_sha256"],
+        "independence_statement": publication["generator"]["independence"],
+    }
+    return publication, identity
+
+
 class EvidenceValidatorContractTests(unittest.TestCase):
     maxDiff = None
 
@@ -384,6 +419,51 @@ class EvidenceValidatorContractTests(unittest.TestCase):
 
     def test_accepts_a_structurally_and_semantically_valid_fixture(self) -> None:
         self._assert_accepted(valid_evidence())
+
+    def test_external_oracle_identity_is_bound_to_the_frozen_publication(self) -> None:
+        publication, identity = external_oracle_identity()
+        record = valid_evidence("f002-router-real-oracle-identity")
+        record["evidence_scope"] = "external_checkpoint"
+        record["input"]["canonical_sha256"] = publication["input"][  # type: ignore[index]
+            "canonical_f32le_sha256"
+        ]
+        record["tensor"]["encoded_sha256"] = publication["tensor"][  # type: ignore[index]
+            "encoded_sha256"
+        ]
+        record["oracle"] = identity
+
+        validator._validate_oracle_identity(record, REPOSITORY_ROOT)
+
+        mutations = {
+            "oracle_id": "f002-scalar-f32-v1",
+            "revision": "0" * 40,
+            "generation_command": "python3 scripts/research/router_oracle.py --changed",
+            "input_fixture_sha256": "0" * 64,
+            "tensor_sha256": "1" * 64,
+            "output_sha256": "2" * 64,
+            "independence_statement": "unverified implementation",
+        }
+        for field, value in mutations.items():
+            with self.subTest(field=field):
+                mutated = deepcopy(record)
+                mutated["oracle"][field] = value  # type: ignore[index]
+                with self.assertRaises(validator.EvidenceValidationError):
+                    validator._validate_oracle_identity(mutated, REPOSITORY_ROOT)
+
+        with tempfile.TemporaryDirectory(prefix="pulsarmlx-mutated-oracle-") as temp:
+            repository_root = Path(temp)
+            publication_path = repository_root / REAL_ORACLE_PUBLICATION.relative_to(
+                REPOSITORY_ROOT
+            )
+            publication_path.parent.mkdir(parents=True)
+            mutated_publication = deepcopy(publication)
+            mutated_publication["status"] = "failed"
+            publication_path.write_text(
+                json.dumps(mutated_publication, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(validator.EvidenceValidationError):
+                validator._load_real_oracle_identity(repository_root)
 
     def test_execution_shape_names_the_weight_before_matmul_transpose(self) -> None:
         record = valid_evidence()

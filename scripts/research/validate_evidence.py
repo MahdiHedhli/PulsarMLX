@@ -61,6 +61,14 @@ FROZEN_MODEL_SHA256 = "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc
 FROZEN_LOGIT_ABSOLUTE_TOLERANCE = 5e-4
 FROZEN_LOGIT_RELATIVE_TOLERANCE = 5e-4
 PINNED_ORACLE_REVISION = "b06aa774c03dbbb624e726664b714a57d1f49815"
+REAL_ORACLE_ID = "qwen3moe-layer0-router-cpu-oracle-v1"
+REAL_ORACLE_PROJECT = "llama.cpp-plus-standalone-scalar-oracle"
+REAL_ORACLE_PUBLICATION_PATH = (
+    "fixtures/research/router-v1/real/f002-router-oracle-freeze-0001.json"
+)
+REAL_ORACLE_PUBLICATION_SHA256 = (
+    "3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133"
+)
 ROUTER_FIXTURE_MANIFEST_PATH = "fixtures/research/router-v1/manifest.json"
 ROUTER_FIXTURE_MANIFEST_SHA256 = (
     "b953d9c1c86357612b757b41e22a33b80cdb5da412522ae4ca93508945ebc9ba"
@@ -172,6 +180,13 @@ SECOND_BATCH_CASE_ORDER = (
     "qwen3moe-layer0-router-token0-row0-v1",
     "qwen3moe-layer0-router-token0-token1-batch-v1",
 )
+FIRST_PROCESS_CONDITIONS = frozenset(
+    {
+        "first_read_new_process_os_cache_uncontrolled",
+        "controlled_cold",
+    }
+)
+FIRST_PROCESS_COHORT_SIZE = 10
 SECOND_BATCH_ENVIRONMENT_OBSERVATIONS = (
     "repository_commit",
     "worktree_dirty",
@@ -575,6 +590,57 @@ def _load_model_identity(repository_root: Path) -> dict[str, Any]:
     ):
         _fail("semantic_relationship", "the frozen model identity is invalid")
     return {field: identity[field] for field in required}
+
+
+def _load_real_oracle_identity(repository_root: Path) -> dict[str, Any]:
+    """Project the immutable public oracle into the experiment identity shape."""
+
+    publication_bytes, publication_sha256 = _read_repository_file(
+        repository_root,
+        REAL_ORACLE_PUBLICATION_PATH,
+        allowed_prefixes=(("fixtures", "research"),),
+        maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
+    )
+    if publication_sha256 != REAL_ORACLE_PUBLICATION_SHA256:
+        _fail("semantic_relationship", "the frozen real oracle publication changed")
+    try:
+        publication = json.loads(publication_bytes.decode("utf-8"))
+        source = publication["source"]
+        generator = publication["generator"]
+        fixture = publication["input"]
+        tensor = publication["tensor"]
+        result_hashes = publication["result"]["hashes"]
+        identity = {
+            "oracle_id": REAL_ORACLE_ID,
+            "project": REAL_ORACLE_PROJECT,
+            "revision": source["revision"],
+            "generation_command": generator["generation_command"],
+            "input_fixture_sha256": fixture["canonical_f32le_sha256"],
+            "tensor_sha256": tensor["encoded_sha256"],
+            "output_sha256": result_hashes["output_bundle_sha256"],
+            "independence_statement": generator["independence"],
+        }
+    except (KeyError, TypeError, UnicodeError, json.JSONDecodeError, RecursionError, ValueError):
+        _fail("semantic_relationship", "the frozen real oracle publication is invalid")
+    if (
+        not isinstance(publication, dict)
+        or publication.get("schema") != "pulsarmlx.research.router-oracle-publication"
+        or publication.get("schema_version") != "1.0.0"
+        or publication.get("publication_id") != "f002-router-oracle-freeze-0001"
+        or publication.get("feature_id") != FEATURE_ID
+        or publication.get("status") != "passed"
+        or identity["revision"] != PINNED_ORACLE_REVISION
+        or any(
+            not isinstance(identity[name], str) or not SHA256_RE.fullmatch(identity[name])
+            for name in ("input_fixture_sha256", "tensor_sha256", "output_sha256")
+        )
+        or any(
+            not isinstance(identity[name], str) or not identity[name]
+            for name in ("generation_command", "independence_statement")
+        )
+    ):
+        _fail("semantic_relationship", "the frozen real oracle publication is invalid")
+    return identity
 
 
 TOP_LEVEL_FIELDS = {
@@ -1155,6 +1221,36 @@ def _validate_environment_semantics(record: dict[str, Any]) -> None:
         _fail("semantic_relationship", "paired environment admission facts contradict")
 
 
+def _validate_oracle_identity(record: dict[str, Any], repository_root: Path) -> None:
+    """Validate fixture or real-checkpoint oracle identity without conflating them."""
+
+    oracle = record["oracle"]
+    fixture = record["input"]
+    tensor = record["tensor"]
+    for name in ("input_fixture_sha256", "tensor_sha256", "output_sha256"):
+        if not isinstance(oracle[name], str) or not SHA256_RE.fullmatch(oracle[name]):
+            _fail("semantic_relationship", "oracle identity is invalid")
+
+    if _evidence_scope(record) == "synthetic_fixture":
+        if (
+            oracle["oracle_id"] != "f002-scalar-f32-v1"
+            or oracle["project"] != REAL_ORACLE_PROJECT
+            or oracle["revision"] != PINNED_ORACLE_REVISION
+            or "$PULSARMLX_ROUTER_FIXTURE" not in oracle["generation_command"]
+            or not isinstance(oracle["independence_statement"], str)
+            or "does not import or invoke mlx"
+            not in oracle["independence_statement"].lower()
+        ):
+            _fail("semantic_relationship", "oracle identity is invalid")
+    elif oracle != _load_real_oracle_identity(repository_root):
+        _fail("semantic_relationship", "oracle identity is invalid")
+
+    if oracle["input_fixture_sha256"] != fixture["canonical_sha256"]:
+        _fail("semantic_relationship", "oracle input identity does not match")
+    if oracle["tensor_sha256"] != tensor["encoded_sha256"]:
+        _fail("semantic_relationship", "oracle tensor identity does not match")
+
+
 def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
     evidence_scope = _evidence_scope(record)
     source_commit = record["source_commit"]
@@ -1298,23 +1394,7 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
     ):
         _fail("semantic_relationship", "router input fixture is invalid")
 
-    oracle = record["oracle"]
-    for name in ("input_fixture_sha256", "tensor_sha256", "output_sha256"):
-        if not isinstance(oracle[name], str) or not SHA256_RE.fullmatch(oracle[name]):
-            _fail("semantic_relationship", "oracle identity is invalid")
-    if (
-        oracle["oracle_id"] != "f002-scalar-f32-v1"
-        or oracle["project"] != "llama.cpp-plus-standalone-scalar-oracle"
-        or oracle["revision"] != PINNED_ORACLE_REVISION
-        or "$PULSARMLX_ROUTER_FIXTURE" not in oracle["generation_command"]
-        or not isinstance(oracle["independence_statement"], str)
-        or "does not import or invoke mlx" not in oracle["independence_statement"].lower()
-    ):
-        _fail("semantic_relationship", "oracle identity is invalid")
-    if oracle["input_fixture_sha256"] != fixture["canonical_sha256"]:
-        _fail("semantic_relationship", "oracle input identity does not match")
-    if oracle["tensor_sha256"] != tensor["encoded_sha256"]:
-        _fail("semantic_relationship", "oracle tensor identity does not match")
+    _validate_oracle_identity(record, repository_root)
 
 
 def _is_fixture_scoped(record: dict[str, Any]) -> bool:
@@ -1689,9 +1769,40 @@ def _validate_repetitions(record: dict[str, Any], by_id: dict[str, dict[str, Any
         or any(not isinstance(value, str) or not SHA256_RE.fullmatch(value) for value in hashes)
     ):
         _fail("insufficient_repetitions", "deterministic repetition policy is not met")
-    if len(set(hashes)) != 1:
-        _fail("semantic_relationship", "deterministic output hashes differ")
     passed = [item for item in by_id.values() if item["status"] == "passed"]
+    passed_by_case: dict[str, list[dict[str, Any]]] = {}
+    for item in passed:
+        passed_by_case.setdefault(item["case_id"], []).append(item)
+    case_output_hashes: dict[str, str] = {}
+    for case_id, observations in passed_by_case.items():
+        observed_hashes = {str(item["output_sha256"]) for item in observations}
+        if len(observed_hashes) != 1:
+            _fail(
+                "semantic_relationship",
+                "deterministic output hashes differ within one case",
+            )
+        case_output_hashes[case_id] = observed_hashes.pop()
+    if not case_output_hashes:
+        _fail("insufficient_repetitions", "deterministic repetition policy is not met")
+    if _evidence_scope(record) == "external_checkpoint":
+        required_real_cases = set(SECOND_BATCH_CASE_ORDER)
+        if set(case_output_hashes) != required_real_cases or len(
+            {case_output_hashes[case_id] for case_id in required_real_cases}
+        ) != len(required_real_cases):
+            _fail(
+                "semantic_relationship",
+                "external evidence does not retain two distinct real-case outputs",
+            )
+    expected_repeat_hashes = sorted(
+        output_sha256
+        for output_sha256 in case_output_hashes.values()
+        for _ in range(10)
+    )
+    if sorted(hashes) != expected_repeat_hashes:
+        _fail(
+            "semantic_relationship",
+            "raw and repeated output identities differ by case",
+        )
     timing_series: dict[tuple[Any, ...], dict[str, list[dict[str, Any]]]] = {}
     for item in passed:
         base = (
@@ -1705,25 +1816,58 @@ def _validate_repetitions(record: dict[str, Any], by_id: dict[str, dict[str, Any
         timing_series.setdefault(base, {}).setdefault(item["observation_kind"], []).append(
             item
         )
-    measurement_series = [
-        (base, kinds)
-        for base, kinds in timing_series.items()
-        if kinds.get("measurement")
-    ]
-    if not measurement_series:
-        _fail("insufficient_repetitions", "timing repetition policy is not met")
-    for base, kinds in measurement_series:
-        measurements = kinds["measurement"]
+    has_measurement_series = False
+    first_process_cohorts: dict[tuple[Any, ...], list[str]] = {}
+    first_process_ids: set[str] = set()
+    for base, kinds in timing_series.items():
+        case_id, batch_id, process_id, process_state, condition, mode = base
+        measurements = kinds.get("measurement", [])
         warmups = kinds.get("warmup", [])
-        condition = base[4]
-        case_id = base[0]
+        if condition in FIRST_PROCESS_CONDITIONS:
+            # A first-process series is 0+1 by construction. The flat raw
+            # ledger can collapse multiple separately named schedule cohorts
+            # for the same case, so cohort multiplicity is checked below.
+            if (
+                process_state != "fresh_process"
+                or len(measurements) != 1
+                or warmups
+                or kinds.get("clean_process_replication")
+                or process_id in first_process_ids
+            ):
+                _fail(
+                    "insufficient_repetitions",
+                    "first-process timing policy is not met",
+                )
+            first_process_ids.add(process_id)
+            first_process_cohorts.setdefault(
+                (case_id, batch_id, condition, mode), []
+            ).append(process_id)
+            has_measurement_series = True
+            continue
+        if not measurements:
+            continue
+        has_measurement_series = True
         required_measurements = 30 if case_id.startswith("generated-") else 10
         if len(measurements) < required_measurements or (
             condition == "warm" and len(warmups) < 5
         ):
             _fail("insufficient_repetitions", "timing repetition policy is not met")
-    if any(item["output_sha256"] != hashes[0] for item in passed):
-        _fail("semantic_relationship", "raw and repeated output identities differ")
+    if not has_measurement_series:
+        _fail("insufficient_repetitions", "timing repetition policy is not met")
+    for process_ids in first_process_cohorts.values():
+        # Exactly ten series form one frozen cohort. A count of 20 is valid in
+        # the flat ledger when primary and clean-process cohorts share the same
+        # case/condition dimensions; the detailed candidate proves their
+        # individual schedule identities before publication.
+        if (
+            len(process_ids) < FIRST_PROCESS_COHORT_SIZE
+            or len(process_ids) % FIRST_PROCESS_COHORT_SIZE != 0
+            or len(set(process_ids)) != len(process_ids)
+        ):
+            _fail(
+                "insufficient_repetitions",
+                "first-process timing cohort policy is not met",
+            )
 
 
 SUMMARY_FIELDS = {

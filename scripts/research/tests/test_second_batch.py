@@ -19,6 +19,8 @@ SCHEMA_DIR = REPOSITORY_ROOT / "schemas" / "research" / "v1"
 VALIDATOR = RESEARCH_DIR / "validate_evidence.py"
 SINGLE_CASE = "qwen3moe-layer0-router-token0-row0-v1"
 TWO_CASE = "qwen3moe-layer0-router-token0-token1-batch-v1"
+SINGLE_OUTPUT_SHA256 = "b" * 64
+TWO_OUTPUT_SHA256 = "c" * 64
 
 
 def _load_module(name: str, path: Path):
@@ -90,6 +92,7 @@ def _prepare_batch(
         observation["process_replication_id"] = str(
             observation["process_replication_id"]
         ).replace("process-single-", "process-two-", 1)
+        observation["output_sha256"] = TWO_OUTPUT_SHA256
 
     two_summaries = deepcopy(single_summaries)
     for summary in two_summaries:
@@ -108,6 +111,10 @@ def _prepare_batch(
         else single_observations + two_observations
     )
     record["summaries"] = single_summaries + two_summaries
+    record["correctness"]["deterministic_repeat_count"] = 20
+    record["correctness"]["repeat_output_hashes"] = (
+        [SINGLE_OUTPUT_SHA256] * 10 + [TWO_OUTPUT_SHA256] * 10
+    )
 
 
 def _valid_pair() -> tuple[dict[str, object], dict[str, object]]:
@@ -189,6 +196,38 @@ class SecondBatchContractTests(unittest.TestCase):
 
     def test_accepts_a_valid_resolved_counterbalanced_pair(self) -> None:
         source, target = _valid_pair()
+
+        completed = self._run_validator([source, target])
+
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+
+    def test_rejects_case_internal_drift_and_incomplete_hash_population(self) -> None:
+        source, target = _valid_pair()
+        two_row = next(
+            observation
+            for observation in source["raw_observations"]
+            if observation["case_id"] == TWO_CASE
+        )
+        two_row["output_sha256"] = "e" * 64
+
+        completed = self._run_validator([source, target])
+
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("semantic_relationship", completed.stdout + completed.stderr)
+
+        source, target = _valid_pair()
+        source["correctness"]["repeat_output_hashes"] = [SINGLE_OUTPUT_SHA256] * 20
+
+        completed = self._run_validator([source, target])
+
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("semantic_relationship", completed.stdout + completed.stderr)
+
+    def test_repeat_hash_population_is_independent_of_array_order(self) -> None:
+        source, target = _valid_pair()
+        source["correctness"]["repeat_output_hashes"] = (
+            [TWO_OUTPUT_SHA256] * 10 + [SINGLE_OUTPUT_SHA256] * 10
+        )
 
         completed = self._run_validator([source, target])
 
