@@ -3506,3 +3506,12 @@ performed no MLX initialization, worker spawn, router projection, softmax,
 top-k, router output, expert execution, network access, or automatic download.
 This milestone is immutable checkpoint/tensor admission only and does not
 promote a router-execution or model-inference claim.
+
+The sealed admission and T073-T076 task state were committed as
+`fe69e4a0949d0bbb0336d9e90b7a5f67065cda7c`. GitHub Actions run
+`31084884347` passed both jobs for that exact commit: Apple MLX small-fixture
+validation completed successfully in 42 seconds, and the Apple Silicon
+workspace baseline completed successfully in 1 minute 15 seconds. This
+documentation-only record is the deliberately non-recursive T077 CI
+attestation. Its own CI conclusion is verified out of tree before the two
+independently started CPU-only captures and is not appended recursively.
