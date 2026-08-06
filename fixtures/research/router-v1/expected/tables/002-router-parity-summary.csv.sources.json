@@ -1,0 +1,17 @@
+{
+  "generation_command": "python3 scripts/research/generate_tables.py --raw-dir <raw-dir> --output-dir <output-dir>",
+  "generator": "scripts/research/generate_tables.py",
+  "generator_sha256": "e7dab712cf3109ebc2233a10f4f626d5b3506f879060393cb422be0ce35c6ea5",
+  "output": "002-router-parity-summary.csv",
+  "output_sha256": "dd2466b58d69748f1cc64e0012f2b73592ebaeb6e7ed4a7233689772b2eb474d",
+  "schema_id": "pulsarmlx.research.generated-sources",
+  "schema_version": "1.0.0",
+  "source_commits": [
+    "b8eabcbdc4ba4bc23478b1f8d103dabf2c65f9e7"
+  ],
+  "sources": {
+    "fixtures/research/router-v1/evidence/f002-router-fixture-0001.json": "62c0dc8929b3bc8d07d97ec53929cd05bb7b5212c6c6e4edcb8e5288088b2455",
+    "fixtures/research/router-v1/evidence/f002-router-fixture-aborted-0001.json": "b6608dea9c556db324f9ed55a85223e5d74179038312745a39334b859a78a17c",
+    "fixtures/research/router-v1/evidence/f002-router-fixture-failed-0001.json": "c10cf995c159520bf781911040cd87a96dae60faab0e84de172b72e4bfd79c26"
+  }
+}
