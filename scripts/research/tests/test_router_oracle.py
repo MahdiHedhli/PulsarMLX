@@ -9,8 +9,10 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -608,6 +610,24 @@ class RouterOracleContractTests(unittest.TestCase):
         self.assertIn("capture-b.scheduler-trace.txt", source)
         self.assertIn("publish_oracle_candidate", source)
         self.assertNotIn('mkdir "$output_dir"', source)
+        for pin in (
+            "pinned_python_version=3.12.13",
+            "pinned_numpy_version=2.4.5",
+            "pinned_pyyaml_version=6.0.3",
+            "pinned_tqdm_version=4.67.1",
+            "pinned_requests_version=2.32.5",
+        ):
+            self.assertIn(pin, source)
+        self.assertIn('importlib.import_module("gguf")', source)
+        self.assertIn("pinned oracle Python dependencies differ", source)
+        self.assertLess(
+            source.index('importlib.import_module("gguf")'),
+            source.index("# Model I/O begins only after"),
+        )
+        self.assertLess(
+            source.index('importlib.import_module("gguf")'),
+            source.index('admitted_model=$(file_snapshot "$model_path")'),
+        )
         for forbidden in (
             "hf_hub_download",
             "huggingface-cli download",
@@ -615,6 +635,85 @@ class RouterOracleContractTests(unittest.TestCase):
             "wget ",
         ):
             self.assertNotIn(forbidden, source)
+
+    def test_dependency_failure_is_bounded_and_precedes_model_io(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            work = root / "oracle-work"
+            source = work / "llama.cpp"
+            output = root / "oracle-output"
+            fake_bin = root / "bin"
+            source.joinpath(".git").mkdir(parents=True)
+            source.joinpath("LICENSE").write_text("MIT License\n", encoding="utf-8")
+            fake_bin.mkdir()
+
+            private_marker = "/" + "Users" + "/private/oracle-work/gguf.py"
+            oracle_python = work / "oracle-python" / "bin" / "python"
+            oracle_python.parent.mkdir(parents=True)
+            oracle_python.write_text(
+                "#!/bin/sh\n"
+                f"echo 'dependency traceback at {private_marker}' >&2\n"
+                "exit 1\n",
+                encoding="utf-8",
+            )
+            oracle_python.chmod(0o700)
+
+            fake_git = fake_bin / "git"
+            fake_git.write_text(
+                "#!/bin/sh\n"
+                "case \"$*\" in\n"
+                "  *\"rev-parse HEAD^{tree}\"*) printf '%040d\\n' 0 ;;\n"
+                f"  *\"rev-parse HEAD\"*) printf '%s\\n' '{PINNED_LLAMA_CPP_REVISION}' ;;\n"
+                "  *\"status --porcelain\"*) exit 0 ;;\n"
+                "  *\"config --get remote.origin.url\"*) "
+                "printf '%s\\n' 'https://github.com/ggml-org/llama.cpp' ;;\n"
+                "  *) exit 3 ;;\n"
+                "esac\n",
+                encoding="utf-8",
+            )
+            fake_git.chmod(0o700)
+
+            model = root / "Qwen3-30B-A3B-Q8_0.gguf"
+            model.write_bytes(b"sentinel-not-a-model")
+            model_io_marker = root / "model-io-occurred"
+            fake_shasum = fake_bin / "shasum"
+            fake_shasum.write_text(
+                "#!/bin/sh\n"
+                f"case \"${{3-}}\" in *Qwen3-30B-A3B-Q8_0.gguf) : >'{model_io_marker}' ;; esac\n"
+                "exec /usr/bin/shasum \"$@\"\n",
+                encoding="utf-8",
+            )
+            fake_shasum.chmod(0o700)
+
+            environment = os.environ.copy()
+            environment["PATH"] = f"{fake_bin}:{environment['PATH']}"
+            completed = subprocess.run(
+                [
+                    str(CAPTURE_SCRIPT),
+                    "--model",
+                    str(model),
+                    "--work-dir",
+                    str(work),
+                    "--output-dir",
+                    str(output),
+                ],
+                cwd=REPOSITORY_ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 2)
+            self.assertEqual(completed.stdout, "")
+            self.assertEqual(
+                completed.stderr,
+                "router oracle capture: pinned oracle Python dependencies differ\n",
+            )
+            self.assertNotIn(private_marker, completed.stderr)
+            self.assertFalse(model_io_marker.exists())
+            self.assertFalse(output.exists())
 
     def test_complete_candidate_publication_is_atomic_and_failure_safe(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

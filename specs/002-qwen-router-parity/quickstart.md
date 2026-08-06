@@ -261,8 +261,23 @@ Before running the command, prepare these local-only prerequisites under
 - `llama.cpp/`: a clean checkout at
   `b06aa774c03dbbb624e726664b714a57d1f49815` with the recorded upstream origin
   and MIT license; and
-- `oracle-python/bin/python`: the pinned external Python environment with
-  NumPy available for the independent cross-check.
+- `oracle-python/bin/python`: external CPython 3.12.13 with the exact bounded
+  reader/cross-check dependencies `numpy==2.4.5`, `PyYAML==6.0.3`,
+  `tqdm==4.67.1`, and `requests==2.32.5`.
+
+One reproducible external-only setup is:
+
+```sh
+uv venv --python 3.12.13 "$PULSARMLX_ORACLE_WORK/oracle-python"
+uv pip install \
+  --python "$PULSARMLX_ORACLE_WORK/oracle-python/bin/python" \
+  'numpy==2.4.5' 'PyYAML==6.0.3' 'tqdm==4.67.1' 'requests==2.32.5'
+```
+
+The capture entry point verifies the Python and all four package versions and
+imports pinned `gguf-py` before the first checkpoint stat or hash. A missing or
+drifted dependency therefore fails as a prerequisite rather than after costly
+capture work.
 
 The script verifies these prerequisites and does not clone, download, or
 initialize them.

@@ -11,6 +11,11 @@ pinned_revision=b06aa774c03dbbb624e726664b714a57d1f49815
 pinned_model_name=Qwen3-30B-A3B-Q8_0.gguf
 pinned_model_size=32483931648
 pinned_model_sha256=4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c
+pinned_python_version=3.12.13
+pinned_numpy_version=2.4.5
+pinned_pyyaml_version=6.0.3
+pinned_tqdm_version=4.67.1
+pinned_requests_version=2.32.5
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repository_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
@@ -26,7 +31,7 @@ Usage: scripts/research/capture_router_oracle.sh \
 
 The work directory must already contain:
   llama.cpp/                 clean pinned source checkout
-  oracle-python/bin/python   pinned local Python environment with NumPy
+  oracle-python/bin/python   pinned CPython with NumPy, PyYAML, tqdm, requests
 
 The command creates CPU-only build and attempt state below --work-dir and a
 new append-only candidate below --output-dir. It never acquires a model or
@@ -201,7 +206,45 @@ verify_source_checkout() {
     [ -z "$(git -C "$llama_source" status --porcelain --untracked-files=all 2>/dev/null)" ] || return 1
 }
 
-# Model I/O begins only after argument, alias, symlink, source, and tool gates.
+source_tree=$(git -C "$llama_source" rev-parse 'HEAD^{tree}' 2>/dev/null) || fail "pinned source tree cannot be read"
+verify_source_checkout || fail "pinned source changed during admission"
+capture_source_sha256=$(sha256_file "$capture_source") || fail "capture helper source cannot be hashed"
+oracle_source_sha256=$(sha256_file "$oracle_source") || fail "oracle source cannot be hashed"
+
+# Fail before the first model stat/hash when the externally prepared oracle
+# environment is incomplete or has drifted. gguf-py imports these declared
+# runtime dependencies even though the bounded reader itself primarily uses
+# NumPy; checking the complete pinned set prevents an expensive late failure.
+PULSARMLX_PINNED_PYTHON_VERSION="$pinned_python_version" \
+PULSARMLX_PINNED_NUMPY_VERSION="$pinned_numpy_version" \
+PULSARMLX_PINNED_PYYAML_VERSION="$pinned_pyyaml_version" \
+PULSARMLX_PINNED_TQDM_VERSION="$pinned_tqdm_version" \
+PULSARMLX_PINNED_REQUESTS_VERSION="$pinned_requests_version" \
+PYTHONPATH="$llama_source/gguf-py" \
+"$oracle_python" - >/dev/null 2>&1 <<'PY' || fail "pinned oracle Python dependencies differ"
+import importlib
+import os
+import platform
+
+expected = {
+    "numpy": os.environ["PULSARMLX_PINNED_NUMPY_VERSION"],
+    "yaml": os.environ["PULSARMLX_PINNED_PYYAML_VERSION"],
+    "tqdm": os.environ["PULSARMLX_PINNED_TQDM_VERSION"],
+    "requests": os.environ["PULSARMLX_PINNED_REQUESTS_VERSION"],
+}
+if platform.python_version() != os.environ["PULSARMLX_PINNED_PYTHON_VERSION"]:
+    raise SystemExit(2)
+for module_name, version in expected.items():
+    module = importlib.import_module(module_name)
+    if str(getattr(module, "__version__", "")) != version:
+        raise SystemExit(2)
+gguf = importlib.import_module("gguf")
+if not callable(getattr(gguf, "GGUFReader", None)):
+    raise SystemExit(2)
+PY
+
+# Model I/O begins only after argument, alias, symlink, source, tool, and
+# external dependency gates.
 [ -f "$model_path" ] && [ ! -L "$model_path" ] && [ -r "$model_path" ] || fail "model is unavailable or unsafe"
 admitted_model=$(file_snapshot "$model_path") || fail "model identity cannot be read"
 old_ifs=$IFS
@@ -215,11 +258,6 @@ actual_model_size=$3
 actual_model_sha256=$4
 [ "$actual_model_size" = "$pinned_model_size" ] || fail "model byte size differs"
 [ "$actual_model_sha256" = "$pinned_model_sha256" ] || fail "model SHA-256 differs"
-
-source_tree=$(git -C "$llama_source" rev-parse 'HEAD^{tree}' 2>/dev/null) || fail "pinned source tree cannot be read"
-verify_source_checkout || fail "pinned source changed during admission"
-capture_source_sha256=$(sha256_file "$capture_source") || fail "capture helper source cannot be hashed"
-oracle_source_sha256=$(sha256_file "$oracle_source") || fail "oracle source cannot be hashed"
 
 attempt_dir=$(mktemp -d "$work_dir/router-capture-attempt.XXXXXXXX") || fail "external attempt state cannot be created"
 reject_symlink_components generated-state "$attempt_dir"
