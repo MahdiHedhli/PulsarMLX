@@ -3824,3 +3824,62 @@ verification reproduced six artifacts with zero promoted claims, the protocol
 SHA-256 remained
 `c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423`,
 and `git diff --check` passed.
+
+### Second T083 execution and clean-replication role correction
+
+The bounded collector correction was committed as
+`70f782ab47b531ccb8a69f12156b83b1237584de` and pushed without force.
+[GitHub Actions run 31111574542](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31111574542)
+passed for that exact commit: Apple MLX small-fixture validation completed in
+1 minute 41 seconds and the Apple Silicon workspace baseline completed in
+1 minute 56 seconds. Local and remote `main` were equal and clean before the
+next checkpoint run.
+
+A fresh second T083 attempt at that exact source commit passed the exact
+release `validate-router` command and its internal correctness-before-timing
+gate. The retained external internal-orchestration candidate is 2,903,814
+bytes with SHA-256
+`8f2e0147c671f14580862cb293baf0808e2145f6c1b17e6e9555acc1eb3d57d3`.
+The public-safe before and after snapshots were admitted; resource extraction
+and environment combination passed; the intended MLX GPU was selected; and
+the checkpoint, router range, and frozen independent CPU-oracle identities
+remained unchanged. The candidate and environment records remain external.
+
+The independent sanitizer then failed closed with a
+`semantic_relationship` error: the passing router timing schedule matrix
+differed from the frozen contract. It produced no installed public record,
+staged no evidence, and promoted no correctness or performance claim. Review
+of the untouched candidate found that each batch retained the correct 30
+first-process `0+1` series but labeled all 30 as `primary`; the frozen matrix
+requires ten primary first-process series followed by twenty
+`clean_process_replication` first-process series associated with the two clean
+major replications. The failed attempt is preserved externally and will not be
+reused after the source correction.
+
+The model-free correction carries the clean-replication role from the frozen
+schedule into the live timing plan and retained series, admits that role only
+for the same fresh-process/OS-cache-uncontrolled `0+1` contract, and validates
+the expected role at both primary and clean schedule positions, including the
+reversed later batch. Focused validation passed:
+
+- `cargo test -p mlx-backend --test research_evidence`: 5 passed;
+- `cargo test -p mlx-backend --bin pulsar-mlx`: 34 passed;
+- `cargo check -p mlx-backend --all-targets`: passed;
+- `cargo test -p mlx-backend --tests --no-fail-fast`: 128 passed, 2 ignored
+  native opt-ins, 0 failed;
+- `cargo check --workspace --all-targets`: passed with the previously recorded
+  `quant` `unused_mut` warning and macOS-gated `serve` dead-code warnings;
+- `cargo test --workspace --no-fail-fast`: 245 passed, 2 ignored native
+  opt-ins, 0 failed, with the same inherited warnings;
+- research discovery: 254 passed;
+- committed fixture evidence: 3 records passed and fixture-only package
+  regeneration reproduced 6 artifacts with 0 claims;
+- `git diff --check`: passed.
+
+The new assertions require ten primary plus twenty clean-replication
+first-process series per batch, reject swapped roles in both schedule
+positions, and reject a relabeled later-batch clean cohort. No checkpoint was
+accessed while implementing or testing this correction. The frozen protocol,
+tolerances, model identity, tensor identity, input, and independent oracle are
+unchanged. T083 remains incomplete until a new clean-source attempt passes the
+producer, sanitizer, evidence validator, and candidate package verifier.

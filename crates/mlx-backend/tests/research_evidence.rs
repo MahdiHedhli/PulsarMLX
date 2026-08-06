@@ -305,7 +305,7 @@ fn fixed_sample_policies_reject_count_overrides() {
     );
     assert_costly_external_stages(&costly);
     parse_series(costly.clone());
-    let mut costly_with_microbenchmark_count = costly;
+    let mut costly_with_microbenchmark_count = costly.clone();
     costly_with_microbenchmark_count["measurement_count"] = json!(30);
     assert!(RouterTimingSeries::try_from_value(costly_with_microbenchmark_count).is_err());
 
@@ -361,6 +361,60 @@ fn fixed_sample_policies_reject_count_overrides() {
     }));
 
     let first_process = first_process_values[0].clone();
+    let mut clean_first_process = first_process.clone();
+    clean_first_process["replication_role"] = json!("clean_process_replication");
+    parse_series(clean_first_process.clone());
+
+    for (label, mutate) in [
+        (
+            "clean first-process reused state",
+            ("process_state", "reused_process"),
+        ),
+        (
+            "clean first-process warm condition",
+            ("condition", "warm"),
+        ),
+    ] {
+        let mut changed = clean_first_process.clone();
+        changed[mutate.0] = json!(mutate.1);
+        for observation in changed["raw_timing_observations"]
+            .as_array_mut()
+            .expect("clean first-process observations")
+        {
+            observation[mutate.0] = json!(mutate.1);
+        }
+        assert!(
+            RouterTimingSeries::try_from_value(changed).is_err(),
+            "{label} must not pass the first-process role policy"
+        );
+    }
+
+    for (label, mut changed) in [
+        ("clean-role costly series", costly.clone()),
+        (
+            "clean-role stage series",
+            timing_series(
+                "f002-stage-single-row-v1",
+                SINGLE_CASE_ID,
+                1,
+                "stage_diagnostic",
+                "stage_instrumented",
+                "primary",
+                "stage-process",
+                "reused_process",
+                "warm",
+                5,
+                10,
+            ),
+        ),
+    ] {
+        changed["replication_role"] = json!("clean_process_replication");
+        assert!(
+            RouterTimingSeries::try_from_value(changed).is_err(),
+            "{label} must remain outside the admitted auxiliary role matrix"
+        );
+    }
+
     let mut first_process_without_read = first_process.clone();
     for observation in first_process_without_read["raw_timing_observations"]
         .as_array_mut()

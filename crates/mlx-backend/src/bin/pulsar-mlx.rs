@@ -3947,10 +3947,11 @@ impl RouterBenchmarkOrchestrator {
                     .to_owned(),
             );
         }
-        let validation = validate_auxiliary_series_identity(
+        let validation = validate_auxiliary_series_identity_with_role(
             &series,
             expected.0,
             RouterTimingSeriesKind::FirstProcessCostly,
+            expected.1,
             RouterTimingInstrumentationMode::MinimallyInstrumented,
         )
         .and_then(|()| {
@@ -3960,10 +3961,11 @@ impl RouterBenchmarkOrchestrator {
             )
         })
         .and_then(|()| {
-            self.validate_auxiliary_series(
+            self.validate_auxiliary_series_with_role(
                 &series,
                 expected.0,
                 RouterTimingSeriesKind::FirstProcessCostly,
+                expected.1,
                 RouterTimingInstrumentationMode::MinimallyInstrumented,
             )
         });
@@ -4305,10 +4307,11 @@ impl RouterBenchmarkOrchestrator {
             .zip(ROUTER_SECOND_CLEAN_MAJOR_ORDER)
         {
             for (index, series) in series_group.iter().enumerate() {
-                validate_auxiliary_series_against_gates(
+                validate_auxiliary_series_against_gates_with_role(
                     series,
                     expected.0,
                     RouterTimingSeriesKind::FirstProcessCostly,
+                    expected.1,
                     RouterTimingInstrumentationMode::MinimallyInstrumented,
                     &candidate.correctness_gates,
                 )?;
@@ -4576,10 +4579,28 @@ impl RouterBenchmarkOrchestrator {
         series_kind: RouterTimingSeriesKind,
         instrumentation_mode: RouterTimingInstrumentationMode,
     ) -> Result<(), String> {
-        validate_auxiliary_series_against_gates(
+        self.validate_auxiliary_series_with_role(
             series,
             case,
             series_kind,
+            RouterTimingReplicationRole::Primary,
+            instrumentation_mode,
+        )
+    }
+
+    fn validate_auxiliary_series_with_role(
+        &self,
+        series: &RouterTimingSeries,
+        case: OrchestratedRouterCase,
+        series_kind: RouterTimingSeriesKind,
+        replication_role: RouterTimingReplicationRole,
+        instrumentation_mode: RouterTimingInstrumentationMode,
+    ) -> Result<(), String> {
+        validate_auxiliary_series_against_gates_with_role(
+            series,
+            case,
+            series_kind,
+            replication_role,
             instrumentation_mode,
             &self.correctness_gates,
         )
@@ -4694,9 +4715,26 @@ fn validate_auxiliary_series_identity(
     series_kind: RouterTimingSeriesKind,
     instrumentation_mode: RouterTimingInstrumentationMode,
 ) -> Result<(), String> {
+    validate_auxiliary_series_identity_with_role(
+        series,
+        case,
+        series_kind,
+        RouterTimingReplicationRole::Primary,
+        instrumentation_mode,
+    )
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_auxiliary_series_identity_with_role(
+    series: &RouterTimingSeries,
+    case: OrchestratedRouterCase,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+) -> Result<(), String> {
     if series.case_id() != case.case_id()
         || series.series_kind() != series_kind
-        || series.replication_role() != RouterTimingReplicationRole::Primary
+        || series.replication_role() != replication_role
         || series.instrumentation_mode() != instrumentation_mode
     {
         return Err("router auxiliary series violates its frozen step identity".to_owned());
@@ -4728,7 +4766,32 @@ fn validate_auxiliary_series_against_gates(
     instrumentation_mode: RouterTimingInstrumentationMode,
     gates: &[RouterCorrectnessGate],
 ) -> Result<(), String> {
-    validate_auxiliary_series_identity(series, case, series_kind, instrumentation_mode)?;
+    validate_auxiliary_series_against_gates_with_role(
+        series,
+        case,
+        series_kind,
+        RouterTimingReplicationRole::Primary,
+        instrumentation_mode,
+        gates,
+    )
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_auxiliary_series_against_gates_with_role(
+    series: &RouterTimingSeries,
+    case: OrchestratedRouterCase,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    gates: &[RouterCorrectnessGate],
+) -> Result<(), String> {
+    validate_auxiliary_series_identity_with_role(
+        series,
+        case,
+        series_kind,
+        replication_role,
+        instrumentation_mode,
+    )?;
     let gate = gates
         .iter()
         .find(|gate| gate.case == case)
@@ -5486,7 +5549,7 @@ fn execute_router_batch_schedule<A: RouterScheduleAdapter>(
                 &batch_id,
                 case,
                 RouterTimingSeriesKind::FirstProcessCostly,
-                RouterTimingReplicationRole::Primary,
+                role,
                 clean_first_process_identity(&batch_id, case, repetition_index),
                 "fresh_process",
                 "first_read_new_process_os_cache_uncontrolled",
@@ -10003,9 +10066,10 @@ mod tests {
         .expect("valid orchestration timing series")
     }
 
-    fn orchestration_auxiliary_series(
+    fn orchestration_auxiliary_series_with_role(
         case: OrchestratedRouterCase,
         series_kind: RouterTimingSeriesKind,
+        replication_role: RouterTimingReplicationRole,
         process_replication_id: &str,
     ) -> RouterTimingSeries {
         let (kind, mode, benchmark_prefix, process_state, condition, warmups, measurements) =
@@ -10088,7 +10152,7 @@ mod tests {
             "case_id": case.case_id(),
             "row_count": case.row_count(),
             "series_kind": kind,
-            "replication_role": "primary",
+            "replication_role": replication_role.as_str(),
             "process_replication_id": process_replication_id,
             "process_state": process_state,
             "condition": condition,
@@ -10098,6 +10162,19 @@ mod tests {
             "raw_timing_observations": observations
         }))
         .expect("valid orchestration auxiliary series")
+    }
+
+    fn orchestration_auxiliary_series(
+        case: OrchestratedRouterCase,
+        series_kind: RouterTimingSeriesKind,
+        process_replication_id: &str,
+    ) -> RouterTimingSeries {
+        orchestration_auxiliary_series_with_role(
+            case,
+            series_kind,
+            RouterTimingReplicationRole::Primary,
+            process_replication_id,
+        )
     }
 
     fn retained_failed_series(
@@ -10183,9 +10260,10 @@ mod tests {
             let clean_process = clean_process_identity(ROUTER_PRIMARY_BATCH_ID, case);
             for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
                 orchestration
-                    .record_clean_first_process_series(orchestration_auxiliary_series(
+                    .record_clean_first_process_series(orchestration_auxiliary_series_with_role(
                         case,
                         RouterTimingSeriesKind::FirstProcessCostly,
+                        role,
                         &clean_first_process_identity(
                             ROUTER_PRIMARY_BATCH_ID,
                             case,
@@ -10259,9 +10337,10 @@ mod tests {
             let clean_process = clean_process_identity(batch_id, case);
             for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
                 candidate
-                    .record_clean_first_process_series(orchestration_auxiliary_series(
+                    .record_clean_first_process_series(orchestration_auxiliary_series_with_role(
                         case,
                         RouterTimingSeriesKind::FirstProcessCostly,
+                        role,
                         &clean_first_process_identity(batch_id, case, repetition_index),
                     ))
                     .expect("second clean first-process cohort");
@@ -10351,11 +10430,14 @@ mod tests {
                 }
                 RouterTimingSeriesKind::CostlyReal
                 | RouterTimingSeriesKind::FirstProcessCostly
-                | RouterTimingSeriesKind::StageDiagnostic => orchestration_auxiliary_series(
-                    plan.case,
-                    plan.series_kind,
-                    &plan.process_replication_id,
-                ),
+                | RouterTimingSeriesKind::StageDiagnostic => {
+                    orchestration_auxiliary_series_with_role(
+                        plan.case,
+                        plan.series_kind,
+                        plan.replication_role,
+                        &plan.process_replication_id,
+                    )
+                }
                 RouterTimingSeriesKind::InexpensiveSynthetic => {
                     return Err(RouterLiveFailure::new(
                         "internal_worker_error",
@@ -10389,6 +10471,7 @@ mod tests {
                 .with_retained_series(plan.schedule_step, retained));
             }
             if series.benchmark_id() != plan.benchmark_id
+                || series.replication_role() != plan.replication_role
                 || series.process_state().as_str() != plan.process_state
                 || series.condition().as_str() != plan.condition
                 || series.instrumentation_mode() != plan.instrumentation_mode
@@ -10505,6 +10588,91 @@ mod tests {
     }
 
     #[test]
+    fn first_process_series_roles_are_enforced_by_schedule_position() {
+        let single = OrchestratedRouterCase::SingleRow;
+
+        let mut primary_position = orchestrator_with_correctness_gates();
+        let clean_role_in_primary_position = orchestration_auxiliary_series_with_role(
+            single,
+            RouterTimingSeriesKind::FirstProcessCostly,
+            RouterTimingReplicationRole::CleanProcessReplication,
+            &primary_first_process_identity(ROUTER_PRIMARY_BATCH_ID, 0),
+        );
+        assert!(primary_position
+            .record_primary_first_process_series(clean_role_in_primary_position)
+            .is_err());
+        let primary_failure = primary_position
+            .evidence()
+            .expect("the primary-position role mismatch is retained");
+        assert_eq!(primary_failure["failure"]["code"], "comparison_failed");
+        assert_eq!(
+            primary_failure["raw_observations"][30]["orchestration_status"],
+            "rejected"
+        );
+
+        let mut clean_position = orchestrator_with_correctness();
+        let costly_process = costly_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        for case in ROUTER_COSTLY_ORDER {
+            clean_position
+                .record_costly_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::CostlyReal,
+                    &costly_process,
+                ))
+                .expect("costly series before clean-role gate");
+        }
+        let primary_process = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        for (case, role) in ROUTER_PRIMARY_MAJOR_ORDER {
+            clean_position
+                .record_primary_major_series(orchestration_major_series(
+                    case,
+                    role,
+                    &primary_process,
+                    orchestration_hash(case),
+                ))
+                .expect("primary major series before clean-role gate");
+        }
+        let stage_process = stage_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        for case in ROUTER_STAGE_DIAGNOSTIC_ORDER {
+            clean_position
+                .record_stage_diagnostic_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::StageDiagnostic,
+                    &stage_process,
+                ))
+                .expect("stage diagnostic before clean-role gate");
+        }
+        let primary_role_in_clean_position = orchestration_auxiliary_series(
+            single,
+            RouterTimingSeriesKind::FirstProcessCostly,
+            &clean_first_process_identity(ROUTER_PRIMARY_BATCH_ID, single, 0),
+        );
+        assert!(clean_position
+            .record_clean_first_process_series(primary_role_in_clean_position)
+            .is_err());
+        let clean_failure = clean_position
+            .evidence()
+            .expect("the clean-position role mismatch is retained");
+        assert_eq!(clean_failure["failure"]["code"], "comparison_failed");
+        assert_eq!(
+            clean_failure["retained_timing"]["first_process_series"]
+                .as_array()
+                .expect("primary cohort plus rejected clean-position series")
+                .last()
+                .expect("rejected clean-position series")["replication_role"],
+            "primary"
+        );
+        assert_eq!(
+            clean_failure["raw_observations"]
+                .as_array()
+                .expect("ordered role-mismatch ledger")
+                .last()
+                .expect("rejected clean-position observation")["orchestration_status"],
+            "rejected"
+        );
+    }
+
+    #[test]
     fn live_schedule_issues_the_exact_profile_process_and_observation_matrix() {
         let mut adapter = RecordingScheduleAdapter::default();
         let orchestration =
@@ -10534,6 +10702,46 @@ mod tests {
                 .filter(|plan| plan.profile == RouterWorkerTimingProfile::Stage)
                 .count(),
             2
+        );
+        let first_process_plans = adapter
+            .timing_plans
+            .iter()
+            .filter(|plan| plan.series_kind == RouterTimingSeriesKind::FirstProcessCostly)
+            .collect::<Vec<_>>();
+        assert_eq!(first_process_plans.len(), 30);
+        assert!(first_process_plans[..ROUTER_FIRST_PROCESS_REPETITIONS]
+            .iter()
+            .all(|plan| {
+                plan.schedule_step == "primary_first_process"
+                    && plan.replication_role == RouterTimingReplicationRole::Primary
+            }));
+        assert!(first_process_plans[ROUTER_FIRST_PROCESS_REPETITIONS..]
+            .iter()
+            .all(|plan| {
+                plan.schedule_step == "clean_first_process"
+                    && plan.replication_role
+                        == RouterTimingReplicationRole::CleanProcessReplication
+            }));
+        assert_eq!(
+            adapter
+                .timing_plans
+                .iter()
+                .filter(|plan| {
+                    plan.replication_role == RouterTimingReplicationRole::Primary
+                })
+                .count(),
+            16
+        );
+        assert_eq!(
+            adapter
+                .timing_plans
+                .iter()
+                .filter(|plan| {
+                    plan.replication_role
+                        == RouterTimingReplicationRole::CleanProcessReplication
+                })
+                .count(),
+            22
         );
         let lifecycle_ids = adapter
             .timing_plans
@@ -11613,10 +11821,11 @@ mod tests {
             ))
             .is_err());
         let failed_clean_first = retained_failed_series(
-            &orchestration_auxiliary_series(
+            &orchestration_auxiliary_series_with_role(
                 single,
                 RouterTimingSeriesKind::FirstProcessCostly,
-                &clean_process_identity(ROUTER_PRIMARY_BATCH_ID, single),
+                RouterTimingReplicationRole::CleanProcessReplication,
+                &clean_first_process_identity(ROUTER_PRIMARY_BATCH_ID, single, 0),
             ),
             "resource_limit",
             "resource_admission",
@@ -11932,6 +12141,25 @@ mod tests {
             first_process_series.len(),
             ROUTER_FIRST_PROCESS_REPETITIONS * 3
         );
+        assert!(first_process_series[..ROUTER_FIRST_PROCESS_REPETITIONS]
+            .iter()
+            .all(|series| {
+                series["replication_role"] == "primary"
+                    && series["case_id"] == single.case_id()
+            }));
+        assert!(first_process_series
+            [ROUTER_FIRST_PROCESS_REPETITIONS..ROUTER_FIRST_PROCESS_REPETITIONS * 2]
+            .iter()
+            .all(|series| {
+                series["replication_role"] == "clean_process_replication"
+                    && series["case_id"] == single.case_id()
+            }));
+        assert!(first_process_series[ROUTER_FIRST_PROCESS_REPETITIONS * 2..]
+            .iter()
+            .all(|series| {
+                series["replication_role"] == "clean_process_replication"
+                    && series["case_id"] == two_row.case_id()
+            }));
         let process_ids = first_process_series
             .iter()
             .map(|series| {
@@ -12186,6 +12414,19 @@ mod tests {
         primary_order.primary_major_series.swap(0, 1);
         assert!(wrong_order.record_later_batch(&primary_order).is_err());
 
+        let mut wrong_clean_role = base.clone();
+        let mut relabeled_clean_cohort = second_batch_candidate("batch-clean-role");
+        let mut relabeled_series = relabeled_clean_cohort.clean_first_process_series[0]
+            .try_to_value()
+            .expect("serialized clean first-process series");
+        relabeled_series["replication_role"] = json!("primary");
+        relabeled_clean_cohort.clean_first_process_series[0] =
+            RouterTimingSeries::try_from_value(relabeled_series)
+                .expect("primary remains a locally valid first-process role");
+        assert!(wrong_clean_role
+            .record_later_batch(&relabeled_clean_cohort)
+            .is_err());
+
         let mut reused_process = base.clone();
         let mut relabeled_process = second_batch_candidate("batch-b");
         relabeled_process.costly_series[0] = orchestration_auxiliary_series(
@@ -12242,13 +12483,32 @@ mod tests {
                 .len(),
             2
         );
+        let second_first_process_series = evidence["second_batch"]["first_process_series"]
+            .as_array()
+            .expect("second first-process series");
         assert_eq!(
-            evidence["second_batch"]["first_process_series"]
-                .as_array()
-                .expect("second first-process series")
-                .len(),
+            second_first_process_series.len(),
             ROUTER_FIRST_PROCESS_REPETITIONS * 3
         );
+        assert!(second_first_process_series[..ROUTER_FIRST_PROCESS_REPETITIONS]
+            .iter()
+            .all(|series| {
+                series["replication_role"] == "primary"
+                    && series["case_id"] == OrchestratedRouterCase::TwoRow.case_id()
+            }));
+        assert!(second_first_process_series
+            [ROUTER_FIRST_PROCESS_REPETITIONS..ROUTER_FIRST_PROCESS_REPETITIONS * 2]
+            .iter()
+            .all(|series| {
+                series["replication_role"] == "clean_process_replication"
+                    && series["case_id"] == OrchestratedRouterCase::TwoRow.case_id()
+            }));
+        assert!(second_first_process_series[ROUTER_FIRST_PROCESS_REPETITIONS * 2..]
+            .iter()
+            .all(|series| {
+                series["replication_role"] == "clean_process_replication"
+                    && series["case_id"] == OrchestratedRouterCase::SingleRow.case_id()
+            }));
         assert_eq!(
             evidence["second_batch"]["stage_diagnostic_series"]
                 .as_array()

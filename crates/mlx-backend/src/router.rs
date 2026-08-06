@@ -1653,7 +1653,11 @@ fn validate_timing_series_policy(raw: &RawRouterTimingSeries) -> Result<(), Cont
             raw.process_state == RouterTimingProcessState::FreshProcess
                 && raw.condition == RouterTimingCondition::Warm
         }
-        (RouterTimingSeriesKind::FirstProcessCostly, RouterTimingReplicationRole::Primary) => {
+        (
+            RouterTimingSeriesKind::FirstProcessCostly,
+            RouterTimingReplicationRole::Primary
+            | RouterTimingReplicationRole::CleanProcessReplication,
+        ) => {
             raw.process_state == RouterTimingProcessState::FreshProcess
                 && raw.condition == RouterTimingCondition::FirstReadNewProcessOsCacheUncontrolled
         }
