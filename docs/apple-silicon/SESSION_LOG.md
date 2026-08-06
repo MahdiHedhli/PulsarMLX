@@ -3982,3 +3982,43 @@ quiet-window gate failed. It also stated that T083 through T096 remain
 incomplete, no Apple parity claim was admitted, and local inference may
 resume. No checkpoint or model file was accessed while sending or recording
 the notification. T097 is complete; T083 remains the first incomplete task.
+
+
+### T083-T088 fresh candidate admission (2026-08-06)
+
+Resumed after the earlier resource-admission blocker with a new Mahdi-Dev
+hardware-window notification (`VD4TY5Xp9sGh`). Host admission passed with
+one-minute load about 7.4 and five-minute load about 7.4, normal memory
+pressure, and nominal thermal state. The immutable checkpoint SHA-256
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c` and the
+frozen independent CPU oracle identities were rechecked before execution.
+
+The exact release `validate-router` command on a fresh external evidence
+directory returned the success message
+`real MLX router correctness and frozen timing schedule passed` and retained
+internal-orchestration candidate SHA-256
+`b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4`
+(2,904,454 bytes). Correctness summary: zero ID/order/numeric mismatches,
+max abs error `1.239776611328125e-05`, MAE `2.8392920891443887e-06`, RMSE
+`3.584568198272296e-06`, twenty deterministic measured hashes, evaluated
+synchronized `apple-mlx`/`gpu`, no fallback.
+
+Independent sanitization wrote two public records. Package verification
+initially rejected schema-required public `host_*` timing field names as
+private identifiers; a bounded privacy allowlist fix was committed as
+`778028c` with regression coverage. After that fix, sanitizer, evidence
+validation, and package verification accepted the candidate.
+
+Append-only raw publication:
+
+- `docs/research/raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-a.json`
+  SHA-256 `b5925db8ba68d90a42507e00be6d3159457a2b97d9fc827f0200245cb20851fa`
+- `docs/research/raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-b.json`
+  SHA-256 `99346e8be81b4975cb355759be20872aefdea05baa9960f28aa272d970116801`
+
+Generated tables/figures, provisional claims F002-C01 through F002-C03,
+reviewer index, results, and limitations were updated and package verification
+passed with `claim_count: 3`. T089 clean-checkout reproduction was started but
+postponed when load rose above the frozen 15.0 ceiling; it remains the next
+incomplete task. Prior rejected producer candidates were not reused.
+

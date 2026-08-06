@@ -263,12 +263,12 @@ CI.
 - [X] T080 [US1] Validate the external oracle candidate's complete tensor/input/output hashes, all 128 logits/probabilities, exact top-8, frozen tolerances, distinct real rows, no rank-8/rank-9 tie, and redistribution scope without writing committed fixture/raw paths using `scripts/research/verify_package.py`
 - [X] T081 [US1] After all oracle/schema/privacy/model-byte/path/workspace/package checks pass, atomically publish bounded fixture/oracle values to `fixtures/research/router-v1/real/` and `docs/research/raw/002-router-parity/`, run the staged scan, update task/session state, commit/push before Apple output, and wait for CI using `docs/apple-silicon/SESSION_LOG.md` and `specs/002-qwen-router-parity/tasks.md`
 - [X] T082 [US1] Append the actual T081 CI result, complete a scanned non-recursive documentation-only CI attestation, then reconfirm clean/equal `main`, green CI, unchanged model/router, intended GPU, normal pressure/thermal/load, and continued operator pause using `specs/002-qwen-router-parity/quickstart.md`
-- [ ] T083 [US1] Run the exact local `validate-router` command into an external candidate and require its internal correctness gate before timing as defined in `specs/002-qwen-router-parity/contracts/commands-v1.md`
-- [ ] T084 [US1] Evaluate all real stop conditions: exact single-row/batch IDs and order, complete 128-output metrics, ranges `0..16` and `64..80`, frozen tolerances, finite values, five passing correctness warm-ups followed by ten identical measured hashes, GPU/sync/no-fallback, immutable identity, and no expert execution in the external candidate
-- [ ] T085 [US4] After T084 passes, verify every warmup/measurement, first-process/warm condition, minimal/stage mode, F32 `not_applicable` dequantization, one clean-process replication for each single-row and two-row minimally instrumented major benchmark, later-batch reason, interference policy, and statistic in the external candidate
-- [ ] T086 [US3] Validate and sanitize the real candidate, preserve failed/aborted attempts, assign append-only IDs, and stage only bounded legal raw records under `docs/research/raw/002-router-parity/`
-- [ ] T087 [US3] Run raw-package/privacy/model-byte checks, commit and push the append-only raw evidence before generation, wait for CI, and record the committed raw SHA in `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T088 [US3] Generate tables, figures, sidecars, results, limitations, ledger, and reviewer index only from the committed raw SHA, verify deterministic output, scan staged content for secrets/private paths/model bytes/binaries/large files, commit/push, and wait for CI under `docs/research/`
+- [X] T083 [US1] Run the exact local `validate-router` command into an external candidate and require its internal correctness gate before timing as defined in `specs/002-qwen-router-parity/contracts/commands-v1.md`
+- [X] T084 [US1] Evaluate all real stop conditions: exact single-row/batch IDs and order, complete 128-output metrics, ranges `0..16` and `64..80`, frozen tolerances, finite values, five passing correctness warm-ups followed by ten identical measured hashes, GPU/sync/no-fallback, immutable identity, and no expert execution in the external candidate
+- [X] T085 [US4] After T084 passes, verify every warmup/measurement, first-process/warm condition, minimal/stage mode, F32 `not_applicable` dequantization, one clean-process replication for each single-row and two-row minimally instrumented major benchmark, later-batch reason, interference policy, and statistic in the external candidate
+- [X] T086 [US3] Validate and sanitize the real candidate, preserve failed/aborted attempts, assign append-only IDs, and stage only bounded legal raw records under `docs/research/raw/002-router-parity/`
+- [X] T087 [US3] Run raw-package/privacy/model-byte checks, commit and push the append-only raw evidence before generation, wait for CI, and record the committed raw SHA in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T088 [US3] Generate tables, figures, sidecars, results, limitations, ledger, and reviewer index only from the committed raw SHA, verify deterministic output, scan staged content for secrets/private paths/model bytes/binaries/large files, commit/push, and wait for CI under `docs/research/`
 - [ ] T089 [US3] From a temporary clean checkout at the recorded source commit, rerun the exact authorized model reproduction command, compare identities/outputs, and retain a new external candidate instead of overwriting evidence according to `docs/research/REPRODUCIBILITY.md`
 
 **Checkpoint**: The deepest valid real boundary is frozen. A failure after T073
@@ -290,15 +290,14 @@ push a clean branch, and release the operator's hardware.
 - [ ] T096 Commit final reconciliation, push `main` without force, wait for every `.github/workflows/macos.yml` job, and verify a clean worktree with `HEAD == origin/main` using `docs/apple-silicon/SESSION_LOG.md`
 - [X] T097 After T096 is green OR immediately after any documented Feature 002 stop condition in any phase, send the completion or exact-blocker NTFY to `https://ntfy.sh/Mahdi-Dev`, state whether model access began and that local inference may continue/resume, require an acknowledged response, and leave the clean branch unchanged as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
 
-**Current stop disposition (2026-08-06)**: T083 remains the first incomplete
-dependency. At clean/equal source `ed245542a827974f4c6822e68114f34aca70ee67`,
-a fresh attempt failed the frozen pre-checkpoint quiet-window admission after a
-14-minute bounded monitor and a retained public-safe postponed snapshot. No
-candidate was created and the checkpoint was not accessed in that attempt.
-This is the documented resource stop condition that makes T097 immediately
-eligible. T097 completed with an acknowledged exact-blocker notification;
-T084 through T096 remain ineligible and incomplete. Resume from T083 in a
-newly notified quiet window rather than reusing a prior candidate.
+**Current disposition (2026-08-06)**: T083 through T088 are complete. A fresh
+Apple MLX validate-router candidate passed internal correctness and the frozen
+timing schedule, independent sanitization, raw publication, generated
+artifacts, and package verification with three provisional claims. T089
+clean-checkout reproduction is the next incomplete task and is gated on a
+quiet-window resource admission (load ceiling 15.0). T097 remains complete
+from the earlier resource blocker; a completion notification is still required
+after T096.
 
 ---
 
