@@ -225,7 +225,7 @@ enforces 5/10 and 5/30 policies, and reproduces every statistic.
 ### Tests First
 
 - [X] T061 [P] [US4] Write and run failing worker tests for monotonic nanosecond timing, evaluated barriers, minimally instrumented totals, synchronization, F32 dequantization `not_applicable`, warmup retention, and all-attempt retention in `python/pulsar_mlx_worker/tests/test_router.py`
-- [ ] T062 [P] [US4] Write and run failing Rust tests for timing payloads, fixed sample policies, exact single-row and two-row minimally instrumented major benchmarks, per-major-benchmark clean-process replication, process/condition labels, output hashes, and response bounds in `crates/mlx-backend/tests/research_evidence.rs`
+- [X] T062 [P] [US4] Write and run failing Rust tests for timing payloads, fixed sample policies, exact single-row and two-row minimally instrumented major benchmarks, per-major-benchmark clean-process replication, process/condition labels, output hashes, and response bounds in `crates/mlx-backend/tests/research_evidence.rs`
 - [ ] T063 [P] [US4] Write and run failing tests for incompatible grouping, interference labels, unfiltered/filtered summaries, sample counts, unavailable phases, and second-batch reasons in `scripts/research/tests/test_timing_policy.py`
 
 ### Implementation

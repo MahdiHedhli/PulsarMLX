@@ -2772,3 +2772,33 @@ retention order required of the implementation.
 
 No MLX module was evaluated, no GPU or model path was accessed, and no NTFY
 hardware notice was needed. Local inference remained available.
+
+### T062 red Rust timing-evidence contract
+
+A new bounded Rust integration test freezes the cross-process timing payload
+before T065. Four tests require the exact 5+30 single-row and two-row major
+benchmarks, one complete clean-process replication for each, distinct
+process/condition/instrumentation labels, evaluated and synchronized GPU
+envelopes without fallback, identical canonical output hashes, positive stage
+durations, F32 dequantization marked `not_applicable`, and the existing 1 MiB
+response cap. The same parser admits the separate frozen 5+10 costly and 0+10
+first-process policies without allowing either to replace a major series.
+
+The exact red command and final formatting checks were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+  --test research_evidence
+# expected red: exit 101 before execution
+# missing: RouterTimingSeries and validate_major_router_timing_series
+
+rustfmt --edition 2021 crates/mlx-backend/tests/research_evidence.rs
+cargo fmt -p mlx-backend -- --check
+git diff --check -- crates/mlx-backend/tests/research_evidence.rs
+# passed
+```
+
+The compiler reported only the two intentionally absent T065 API symbols; no
+test subprocess, worker, Python interpreter, MLX device, or checkpoint was
+opened. The initially drafted file needed targeted rustfmt; no unrelated crate
+or repository-wide formatting change was made.
