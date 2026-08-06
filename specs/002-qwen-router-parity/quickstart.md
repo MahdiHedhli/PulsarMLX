@@ -117,8 +117,10 @@ python3 scripts/research/environment.py capture \
   --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json"
 
 # A postponed admission is retained and exits nonzero. Stop here in that case.
-# T068 adds and freezes the generated 5+30 benchmark entry point before it is
-# legal to replace this comment with an execution command.
+PULSARMLX_MODEL_GGUF='' cargo run --release -p mlx-backend \
+  --bin pulsar-mlx -- validate-router-fixtures \
+  --manifest fixtures/research/router-v1/manifest.json \
+  --evidence "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE"
 
 python3 scripts/research/environment.py extract-resources \
   --candidate "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE" \
@@ -148,6 +150,12 @@ latency, correctness, or checkpoint evidence. A passing executed record must
 retain both snapshots and worker-supplied process/MLX gauges. Collector-process
 RSS/CPU fields remain explicitly collector-scoped. The one- and five-minute
 load averages must each be no greater than `0.75 × logical CPU count`.
+The fixture command uses protocol-fixed counts and retains one model-free
+single-row synthetic series with five warm-ups followed by thirty measured
+evaluated/synchronized MLX GPU attempts; callers cannot select or shorten the
+counts. Every attempt is compared with the committed manifest/golden output,
+and the candidate remains external until T069 validates its timing contract
+and regenerated statistics.
 The resource extractor also binds the selected backend/device, fallback,
 evaluation, and synchronization facts from the validated worker records; the
 combine command has no caller-controlled backend/device override.

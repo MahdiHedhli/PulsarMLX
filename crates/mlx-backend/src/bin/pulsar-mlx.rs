@@ -48,6 +48,11 @@ const ROUTER_FIXTURE_ID: &str = "generated-qwen3moe-router-v1";
 const ROUTER_EXPECTED_RESULTS_ID: &str = "generated-qwen3moe-router-expected-results-v1";
 const ROUTER_SYNTHETIC_TIE_ID: &str = "generated-qwen3moe-router-synthetic-cutoff-v1";
 const ROUTER_FIXTURE_MAX_EVIDENCE_BYTES: usize = 256 * 1024;
+const ROUTER_GENERATED_BENCHMARK_ID: &str = "f002-generated-router-single-row-minimal-v1";
+const ROUTER_GENERATED_PROCESS_ID: &str = "generated-router-persistent-worker-v1";
+const ROUTER_GENERATED_WARMUPS: usize = 5;
+const ROUTER_GENERATED_MEASUREMENTS: usize = 30;
+const ROUTER_GENERATED_ATTEMPTS: usize = ROUTER_GENERATED_WARMUPS + ROUTER_GENERATED_MEASUREMENTS;
 #[cfg_attr(not(test), allow(dead_code))]
 const ROUTER_CORRECTNESS_WARMUPS: usize = 5;
 #[cfg_attr(not(test), allow(dead_code))]
@@ -496,7 +501,15 @@ struct RouterFixtureAttempt {
     positive_cases: Vec<Value>,
     tie_cases: Vec<Value>,
     negative_cases: Vec<Value>,
+    generated_microbenchmark: Option<Value>,
     cleanup: Value,
+    failure: Option<RetainedRouterFixtureFailure>,
+}
+
+struct GeneratedRouterBenchmarkAttempt {
+    raw_timing_observations: Vec<Value>,
+    resource_records: Vec<Value>,
+    output_sha256: Option<String>,
     failure: Option<RetainedRouterFixtureFailure>,
 }
 
@@ -601,6 +614,7 @@ impl RouterFixtureAttempt {
             positive_cases: Vec::new(),
             tie_cases: Vec::new(),
             negative_cases: Vec::new(),
+            generated_microbenchmark: None,
             cleanup: json!({
                 "attempted": false,
                 "outcome": "not_started",
@@ -624,8 +638,8 @@ impl RouterFixtureAttempt {
         let failure = self.failure.as_ref().map(|failure| {
             json!({
                 "stage": failure.stage,
-                "code": failure.code,
-                "message": failure.message,
+                "code": &failure.code,
+                "message": &failure.message,
             })
         });
         json!({
@@ -645,6 +659,7 @@ impl RouterFixtureAttempt {
             "positive_cases": self.positive_cases,
             "synthetic_tie_cases": self.tie_cases,
             "negative_cases": self.negative_cases,
+            "generated_router_microbenchmark": self.generated_microbenchmark,
             "cleanup": self.cleanup,
             "failure": failure,
             "warnings": [
@@ -1873,6 +1888,301 @@ fn execute_router_positive_cases(
     Ok(())
 }
 
+impl GeneratedRouterBenchmarkAttempt {
+    fn new() -> Self {
+        Self {
+            raw_timing_observations: Vec::with_capacity(ROUTER_GENERATED_ATTEMPTS),
+            resource_records: Vec::with_capacity(ROUTER_GENERATED_ATTEMPTS),
+            output_sha256: None,
+            failure: None,
+        }
+    }
+
+    fn observation_role(attempt_index: usize) -> (&'static str, usize) {
+        if attempt_index < ROUTER_GENERATED_WARMUPS {
+            ("warmup", attempt_index)
+        } else {
+            ("measurement", attempt_index - ROUTER_GENERATED_WARMUPS)
+        }
+    }
+
+    fn observation_id(attempt_index: usize) -> String {
+        let (kind, run_index) = Self::observation_role(attempt_index);
+        format!("generated-router-{kind}-{run_index:02}")
+    }
+
+    fn retain_unavailable_result(
+        &mut self,
+        attempt_index: usize,
+        failure: RetainedRouterFixtureFailure,
+    ) {
+        let (observation_kind, run_index) = Self::observation_role(attempt_index);
+        self.raw_timing_observations.push(json!({
+            "observation_id": Self::observation_id(attempt_index),
+            "run_index": run_index,
+            "observation_kind": observation_kind,
+            "process_replication_id": ROUTER_GENERATED_PROCESS_ID,
+            "process_state": "reused_process",
+            "condition": "warm",
+            "instrumentation_mode": "minimally_instrumented",
+            "monotonic_clock": "perf_counter_ns",
+            "stages": {
+                "dequantization": {
+                    "status": "not_applicable",
+                    "reason": "f32_router_requires_no_dequantization"
+                }
+            },
+            "status": failure.status,
+            "requested_device": GPU_DEVICE,
+            "selected_device": "not_available",
+            "fallback_used": false,
+            "evaluated": false,
+            "synchronized": false,
+            "output_sha256": null,
+            "correctness_passed": null,
+            "failure": {
+                "code": failure.code,
+                "message": failure.message,
+                "stage": failure.stage
+            }
+        }));
+        self.failure = Some(failure);
+    }
+
+    fn timing_series_value(&self) -> Value {
+        json!({
+            "benchmark_id": ROUTER_GENERATED_BENCHMARK_ID,
+            "case_id": ROUTER_SINGLE_ROW_CASE_ID,
+            "row_count": 1,
+            "series_kind": "inexpensive_synthetic",
+            "replication_role": "primary",
+            "process_replication_id": ROUTER_GENERATED_PROCESS_ID,
+            "process_state": "reused_process",
+            "condition": "warm",
+            "instrumentation_mode": "minimally_instrumented",
+            "warmup_count": ROUTER_GENERATED_WARMUPS,
+            "measurement_count": ROUTER_GENERATED_MEASUREMENTS,
+            "raw_timing_observations": self.raw_timing_observations,
+        })
+    }
+
+    fn evidence(&self, manifest_sha256: &str) -> Result<Value, String> {
+        let timing_series = RouterTimingSeries::try_from_value(self.timing_series_value())
+            .map_err(|error| error.to_string())?;
+        let timing_series = timing_series
+            .try_to_value()
+            .map_err(|error| error.to_string())?;
+        let failure = self.failure.as_ref().map(|failure| {
+            json!({
+                "stage": failure.stage,
+                "code": failure.code,
+                "message": failure.message,
+            })
+        });
+        Ok(json!({
+            "benchmark_id": ROUTER_GENERATED_BENCHMARK_ID,
+            "case_id": ROUTER_SINGLE_ROW_CASE_ID,
+            "fixture_kind": "synthetic",
+            "evidence_level": "synthetic_fixture_only",
+            "model_free": true,
+            "real_checkpoint_evidence": false,
+            "manifest_sha256": manifest_sha256,
+            "status": self.failure.as_ref().map_or("passed", |failure| failure.status),
+            "passed": self.failure.is_none(),
+            "warmup_count": ROUTER_GENERATED_WARMUPS,
+            "measurement_count": ROUTER_GENERATED_MEASUREMENTS,
+            "retained_observation_count": self.raw_timing_observations.len(),
+            "complete_output_sha256": self.output_sha256,
+            "stage_sum_claimed": false,
+            "timing_series": timing_series,
+            "result_records": self.resource_records,
+            "failure": failure,
+            "exclusions": [
+                "This generated fixture timing is not real-checkpoint latency.",
+                "No external checkpoint, expert, layer, generation, or serving operation was accessed."
+            ]
+        }))
+    }
+}
+
+fn router_worker_timing_stages(result: &RouterResult) -> Value {
+    let stages = result
+        .timing()
+        .stages()
+        .iter()
+        .map(|(name, stage)| {
+            let evidence = match stage {
+                mlx_backend::protocol::RouterTimingStage::Observed { duration_ns } => json!({
+                    "status": "observed",
+                    "duration_ns": duration_ns,
+                }),
+                mlx_backend::protocol::RouterTimingStage::Unavailable { reason } => json!({
+                    "status": "unavailable",
+                    "reason": reason,
+                }),
+                mlx_backend::protocol::RouterTimingStage::NotApplicable { reason } => json!({
+                    "status": "not_applicable",
+                    "reason": reason,
+                }),
+            };
+            (name.clone(), evidence)
+        })
+        .collect::<Map<String, Value>>();
+    Value::Object(stages)
+}
+
+fn generated_single_row_reference(bundle: &RouterFixtureBundle) -> Result<RouterOutput, String> {
+    let golden = bundle
+        .golden_cases
+        .get(ROUTER_SINGLE_ROW_CASE_ID)
+        .ok_or_else(|| "the generated single-row golden result is unavailable".to_owned())?;
+    output_from_router_values(
+        &golden.case_id,
+        golden.logits_shape,
+        &golden.logits,
+        &golden.full_softmax_probabilities,
+        &golden.selected_expert_ids,
+        &golden.selected_probabilities,
+        &golden.normalized_weights,
+        &golden.hashes,
+    )
+}
+
+fn execute_generated_router_microbenchmark<F>(
+    bundle: &RouterFixtureBundle,
+    mut execute: F,
+) -> GeneratedRouterBenchmarkAttempt
+where
+    F: FnMut(&RouterRequest) -> Result<RouterResult, RetainedRouterFixtureFailure>,
+{
+    let mut attempt = GeneratedRouterBenchmarkAttempt::new();
+    let reference = match generated_single_row_reference(bundle) {
+        Ok(reference) => reference,
+        Err(message) => {
+            attempt.retain_unavailable_result(
+                0,
+                retained_fixture_failure(
+                    "failed",
+                    "correctness_gate",
+                    "comparison_failed",
+                    message,
+                ),
+            );
+            return attempt;
+        }
+    };
+
+    for attempt_index in 0..ROUTER_GENERATED_ATTEMPTS {
+        let request = match RouterRequest::new(ROUTER_SINGLE_ROW_CASE_ID, GPU_DEVICE) {
+            Ok(request) => request,
+            Err(error) => {
+                attempt.retain_unavailable_result(
+                    attempt_index,
+                    retained_fixture_failure(
+                        "failed",
+                        "protocol",
+                        error.worker_code().unwrap_or("malformed_request"),
+                        error.message(),
+                    ),
+                );
+                break;
+            }
+        };
+        let result = match execute(&request) {
+            Ok(result) => result,
+            Err(failure) => {
+                attempt.retain_unavailable_result(attempt_index, failure);
+                break;
+            }
+        };
+        let (observation_kind, run_index) =
+            GeneratedRouterBenchmarkAttempt::observation_role(attempt_index);
+        let observation_id = GeneratedRouterBenchmarkAttempt::observation_id(attempt_index);
+        let candidate = output_from_worker_result(&result);
+        let candidate_hash = candidate
+            .as_ref()
+            .ok()
+            .and_then(|output| complete_router_output_sha256(output).ok());
+        let comparison = candidate.as_ref().ok().and_then(|output| {
+            compare_router_outputs(&reference, output, &RouterTolerancePolicy::contract_v1()).ok()
+        });
+        let exact_repeat = candidate_hash.as_ref().is_some_and(|hash| {
+            attempt
+                .output_sha256
+                .as_ref()
+                .is_none_or(|expected| expected == hash)
+        });
+        let passed = result.passed()
+            && result.requested_device() == GPU_DEVICE
+            && result.selected_device() == GPU_DEVICE
+            && !result.fallback_used()
+            && result.evaluated()
+            && result.synchronized()
+            && result.timing().evaluated()
+            && result.timing().synchronized()
+            && result.timing().monotonic_clock() == "perf_counter_ns"
+            && result.timing().instrumentation_mode().as_str() == "minimally_instrumented"
+            && comparison
+                .as_ref()
+                .is_some_and(|comparison| comparison.passed())
+            && exact_repeat;
+
+        attempt.resource_records.push(json!({
+            "observation_id": observation_id,
+            "backend": BACKEND_ID,
+            "requested_device": result.requested_device(),
+            "selected_device": result.selected_device(),
+            "fallback_used": result.fallback_used(),
+            "evaluated": result.evaluated(),
+            "synchronized": result.synchronized(),
+            "golden_comparison_passed": comparison.as_ref().is_some_and(|comparison| comparison.passed()),
+            "output_sha256": candidate_hash,
+            "memory_gauges": router_memory_evidence(&result),
+            "status": if passed { "passed" } else { "failed" },
+        }));
+        let mut timing_observation = json!({
+            "observation_id": GeneratedRouterBenchmarkAttempt::observation_id(attempt_index),
+            "run_index": run_index,
+            "observation_kind": observation_kind,
+            "process_replication_id": ROUTER_GENERATED_PROCESS_ID,
+            "process_state": "reused_process",
+            "condition": "warm",
+            "instrumentation_mode": "minimally_instrumented",
+            "monotonic_clock": result.timing().monotonic_clock(),
+            "stages": router_worker_timing_stages(&result),
+            "status": if passed { "passed" } else { "failed" },
+            "requested_device": result.requested_device(),
+            "selected_device": result.selected_device(),
+            "fallback_used": result.fallback_used(),
+            "evaluated": result.evaluated(),
+            "synchronized": result.synchronized(),
+            "output_sha256": candidate_hash,
+            "correctness_passed": passed,
+        });
+        if !passed {
+            timing_observation["failure"] = json!({
+                "code": "comparison_failed",
+                "message": "the generated router result failed golden, repeatability, or execution-envelope validation",
+                "stage": "correctness_gate"
+            });
+        }
+        attempt.raw_timing_observations.push(timing_observation);
+        if !passed {
+            attempt.failure = Some(retained_fixture_failure(
+                "failed",
+                "generated_router_microbenchmark",
+                "comparison_failed",
+                "the generated router microbenchmark failed its frozen correctness gate",
+            ));
+            break;
+        }
+        if attempt.output_sha256.is_none() {
+            attempt.output_sha256 = candidate_hash;
+        }
+    }
+    attempt
+}
+
 fn cleanup_outcome_name(outcome: CleanupOutcome) -> &'static str {
     match outcome {
         CleanupOutcome::Graceful => "graceful",
@@ -1954,6 +2264,31 @@ fn run_planned_validate_router_fixtures(
                 Ok(mut client) => {
                     let validation =
                         execute_router_positive_cases(&mut client, bundle, &mut attempt);
+                    if validation.is_ok() {
+                        let benchmark =
+                            execute_generated_router_microbenchmark(bundle, |request| {
+                                client.run_router(request).map_err(|error| {
+                                    retained_fixture_failure(
+                                        "failed",
+                                        "router_execution",
+                                        error.worker_code().unwrap_or("evaluation_failed"),
+                                        error.message(),
+                                    )
+                                })
+                            });
+                        match benchmark.evidence(&bundle.manifest_sha256) {
+                            Ok(evidence) => attempt.generated_microbenchmark = Some(evidence),
+                            Err(message) => attempt.retain_failure(retained_fixture_failure(
+                                "failed",
+                                "generated_router_microbenchmark",
+                                "comparison_failed",
+                                message,
+                            )),
+                        }
+                        if let Some(failure) = benchmark.failure {
+                            attempt.retain_failure(failure);
+                        }
+                    }
                     let cleanup = client.shutdown();
                     let cleanup_message = cleanup.error().map(|error| error.message().to_owned());
                     attempt.cleanup = json!({
@@ -2005,7 +2340,7 @@ fn run_planned_validate_router_fixtures(
             failure.status, failure.code, failure.stage
         ));
     }
-    println!("validate-router-fixtures: 2 evaluated MLX router cases passed; synthetic tie and negative contracts retained");
+    println!("validate-router-fixtures: 2 evaluated MLX router cases and fixed single-row 5+30 microbenchmark passed; synthetic tie and negative contracts retained");
     Ok(())
 }
 
@@ -5769,6 +6104,141 @@ mod tests {
             "passed": true
         }))
         .expect("bounded worker result fixture")
+    }
+
+    fn generated_router_bundle() -> RouterFixtureBundle {
+        load_router_fixture_bundle(&project_root(), Path::new(ROUTER_FIXTURE_MANIFEST))
+            .expect("committed generated router bundle")
+    }
+
+    fn generated_single_row_result(bundle: &RouterFixtureBundle) -> RouterResult {
+        let output = generated_single_row_reference(bundle).expect("generated single-row golden");
+        router_result_from_output(&output)
+    }
+
+    #[test]
+    fn generated_router_microbenchmark_producer_has_fixed_shape_and_counts() {
+        let bundle = generated_router_bundle();
+        let result = generated_single_row_result(&bundle);
+        let mut requested_cases = Vec::new();
+        let benchmark = execute_generated_router_microbenchmark(&bundle, |request| {
+            requested_cases.push(request.router_case_id().to_owned());
+            Ok(result.clone())
+        });
+        let evidence = benchmark
+            .evidence(&bundle.manifest_sha256)
+            .expect("valid generated benchmark evidence");
+
+        assert!(benchmark.failure.is_none());
+        assert_eq!(requested_cases.len(), ROUTER_GENERATED_ATTEMPTS);
+        assert!(requested_cases
+            .iter()
+            .all(|case_id| case_id == ROUTER_SINGLE_ROW_CASE_ID));
+        assert_eq!(evidence["benchmark_id"], ROUTER_GENERATED_BENCHMARK_ID);
+        assert_eq!(evidence["case_id"], ROUTER_SINGLE_ROW_CASE_ID);
+        assert_eq!(evidence["warmup_count"], ROUTER_GENERATED_WARMUPS);
+        assert_eq!(evidence["measurement_count"], ROUTER_GENERATED_MEASUREMENTS);
+        assert_eq!(evidence["retained_observation_count"], 35);
+        assert_eq!(evidence["stage_sum_claimed"], false);
+        assert_eq!(evidence["timing_series"]["row_count"], 1);
+        assert_eq!(
+            evidence["timing_series"]["series_kind"],
+            "inexpensive_synthetic"
+        );
+        assert_eq!(
+            evidence["timing_series"]["instrumentation_mode"],
+            "minimally_instrumented"
+        );
+        let observations = evidence["timing_series"]["raw_timing_observations"]
+            .as_array()
+            .expect("raw timing observations");
+        assert_eq!(observations.len(), 35);
+        assert_eq!(
+            observations
+                .iter()
+                .filter(|observation| observation["observation_kind"] == "warmup")
+                .count(),
+            5
+        );
+        assert_eq!(
+            observations
+                .iter()
+                .filter(|observation| observation["observation_kind"] == "measurement")
+                .count(),
+            30
+        );
+        let hashes = observations
+            .iter()
+            .map(|observation| observation["output_sha256"].as_str().unwrap())
+            .collect::<BTreeSet<_>>();
+        assert_eq!(hashes.len(), 1, "every generated result hash is identical");
+    }
+
+    #[test]
+    fn generated_router_microbenchmark_retains_worker_resource_provenance() {
+        let bundle = generated_router_bundle();
+        let result = generated_single_row_result(&bundle);
+        let benchmark = execute_generated_router_microbenchmark(&bundle, |_| Ok(result.clone()));
+        let evidence = benchmark
+            .evidence(&bundle.manifest_sha256)
+            .expect("valid generated benchmark evidence");
+        let records = evidence["result_records"]
+            .as_array()
+            .expect("worker resource records");
+        assert_eq!(records.len(), 35);
+        assert!(records.iter().all(|record| {
+            record["backend"] == BACKEND_ID
+                && record["requested_device"] == GPU_DEVICE
+                && record["selected_device"] == GPU_DEVICE
+                && record["fallback_used"] == false
+                && record["evaluated"] == true
+                && record["synchronized"] == true
+                && record["golden_comparison_passed"] == true
+                && record["memory_gauges"].is_object()
+        }));
+    }
+
+    #[test]
+    fn generated_router_microbenchmark_retains_partial_results_on_failure() {
+        let bundle = generated_router_bundle();
+        let result = generated_single_row_result(&bundle);
+        let mut call_count = 0_usize;
+        let benchmark = execute_generated_router_microbenchmark(&bundle, |_| {
+            if call_count == 7 {
+                return Err(retained_fixture_failure(
+                    "aborted",
+                    "router_execution",
+                    "resource_limit",
+                    "bounded test interruption",
+                ));
+            }
+            call_count += 1;
+            Ok(result.clone())
+        });
+        let evidence = benchmark
+            .evidence(&bundle.manifest_sha256)
+            .expect("failed generated benchmark remains structurally valid");
+        let observations = evidence["timing_series"]["raw_timing_observations"]
+            .as_array()
+            .expect("retained timing attempts");
+
+        assert!(benchmark.failure.is_some());
+        assert_eq!(evidence["status"], "aborted");
+        assert_eq!(evidence["passed"], false);
+        assert_eq!(observations.len(), 8);
+        assert_eq!(evidence["result_records"].as_array().unwrap().len(), 7);
+        assert!(observations[..7]
+            .iter()
+            .all(|observation| observation["status"] == "passed"));
+        assert_eq!(observations[7]["status"], "aborted");
+        assert_eq!(observations[7]["observation_kind"], "measurement");
+        assert_eq!(observations[7]["run_index"], 2);
+        assert_eq!(observations[7]["failure"]["code"], "resource_limit");
+        assert_eq!(
+            observations[7]["failure"]["message"],
+            "bounded test interruption"
+        );
+        assert_eq!(observations[7]["failure"]["stage"], "router_execution");
     }
 
     fn correctness_attempts(

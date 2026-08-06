@@ -3175,3 +3175,62 @@ Python worker, or execute GPU work. No hardware pause or NTFY message was
 needed for this T067 model-free implementation. The next hardware-using step
 is T068; it requires the requested `Mahdi-Dev` pause notification before the
 generated MLX microbenchmark runs.
+
+The complete recovered stack plus T067 was published at commit
+`246e3da87d56d2f346f7b5c3547694005e5c89fe`. GitHub Actions run
+`31075801331` (`macOS baseline`) passed on 2026-08-06: the Apple Silicon
+workspace-baseline job passed in 1 minute 29 seconds and the native Apple MLX
+small-fixture job passed in 42 seconds. The latter included the fixture-only
+research methodology gate, pinned worker environment, Rust-to-worker generated
+router integration, native MLX device smoke, tensor fixtures, synthetic routed
+MoE fixture, and external-model exclusion check. This hosted result remains
+fixture-only and is not local T068 latency evidence.
+
+### T068 fixed generated-router microbenchmark harness
+
+Before any local hardware-active run, the existing model-free
+`validate-router-fixtures` command was extended with a protocol-fixed
+single-row synthetic series. It uses the already admitted manifest and golden
+output, runs exactly five retained warm-ups followed by thirty retained
+measurements in one persistent worker, and does not accept caller-selected
+counts. Every result must retain worker-derived `apple-mlx`/GPU/no-fallback/
+evaluated/synchronized provenance, pass the complete golden comparison, and
+match one complete-output hash. Raw timing observations and per-result memory
+gauges remain in the external candidate; a failed result retains the exact
+failure and all earlier observations. The evidence explicitly records that no
+stage-sum claim is made.
+
+The pre-hardware NTFY request to topic `Mahdi-Dev` was acknowledged at
+`2026-08-06T06:01:45Z`. Its message asked the operator to pause local inference
+for the model-free 5+30 MLX/GPU run and promised a resume notice. This was not
+the later T073 external-checkpoint notification, and no checkpoint path was
+resolved, statted, hashed, or opened.
+
+The harness-only validation commands and actual results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' cargo test -q -p mlx-backend --bin pulsar-mlx
+# passed: 19 of 19 tests
+
+PULSARMLX_MODEL_GGUF='' cargo check -q -p mlx-backend --all-targets
+# passed
+
+PULSARMLX_MODEL_GGUF='' cargo clippy -q -p mlx-backend \
+  --all-targets -- -D warnings
+# passed
+
+rustfmt --edition 2021 --check crates/mlx-backend/src/bin/pulsar-mlx.rs
+# passed
+
+PYTHONDONTWRITEBYTECODE=1 PULSARMLX_MODEL_GGUF='' \
+  python3 -B -m unittest discover -s scripts/research/tests -q
+# passed: 118 of 118 tests
+
+git diff --check
+# passed
+```
+
+These checks constructed only fake or committed generated fixture values; they
+did not launch the MLX worker or use the GPU. Final T068 samples remain pending
+until this exact harness is committed, pushed, green in CI, and run from a clean
+source tree with the public-safe before/after collector.
