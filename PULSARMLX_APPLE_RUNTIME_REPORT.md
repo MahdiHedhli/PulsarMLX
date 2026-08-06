@@ -16,7 +16,8 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 | F002 Layer-0 router parity | Complete (verified claims F002-C01–C03) |
 | F003 Single routed expert full MLP | Complete (F003-C01, expert 114) |
 | F004 Top-8 aggregation | Complete (F004-C01) |
-| F005+ Complete MoE residual, layers, logits, tokens | **Not started / blocked on residual stream capture** |
+| F005 Complete MoE residual block | Complete (F005-C01) |
+| F006+ Complete layer, multi-layer, logits, tokens | **Not started** |
 | GLM-5.2 | **Not admitted** |
 
 ## Feature completion
@@ -44,6 +45,15 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 - I/O gauges: 40,108,032 bytes/pass; cold ~3.76 ms, warm ~3.28 ms wall  
 - Evidence: `docs/research/raw/004-top8-moe/`
 
+### Feature 005 — Complete MoE residual block
+
+- Form: `y = ffn_inp-0 + top-8 MoE(ffn_norm-0)`  
+- Residual capture sha256 `673441ded7…832d` (two independent matches)  
+- ffn_norm freeze identity retained from F002  
+- RMSNorm cross-check max abs ~**8.5e-8**  
+- MLX vs CPU max abs ~**6.2e-8**, 0 mismatches  
+- Evidence: `docs/research/raw/005-moe-block/`
+
 ## Correctness
 
 All MLX results compared to independent CPU oracles (no MLX imports in oracle
@@ -65,9 +75,8 @@ router, experts, logits, or greedy token evidence exists.
 
 ## Limitations
 
-- No residual-add into MoE block (need residual stream capture before
-  `ffn_norm`).  
-- No attention, multi-layer, logits, sampling, generation, serving.  
+- No attention, complete transformer layer, multi-layer, logits, sampling,
+  generation, or serving.  
 - No giant-model or multi-device claims.  
 - Hosted CI is fixture-only; real checkpoint runs are local.
 
@@ -81,16 +90,15 @@ router, experts, logits, or greedy token evidence exists.
 
 ## Future work (roadmap order)
 
-1. **F005** Residual-aware MoE block (requires residual capture)  
-2. **F006** Complete transformer layer  
+1. **F006** Complete transformer layer (attention + residual path)  
 3. **F007** Multi-layer replay  
 4. **F008–F010** Logits → greedy token → prompt replay  
 5. **F011–F012** Benchmark harness + scaling (GLM only after all succeed)
 
 ## Publication checklist
 
-- [x] Raw evidence for F002–F004  
-- [x] Claims ledgers F002–F004  
+- [x] Raw evidence for F002–F005  
+- [x] Claims ledgers F002–F005  
 - [x] Reviewer index updates  
 - [x] Focused git commits pushed to main  
 - [ ] Full clean-checkout automation for F003/F004 (F003 partial; F004 single run)  
@@ -122,5 +130,21 @@ PYTHONPATH=scripts/research uv run python -B scripts/research/expert_parity_mlx.
   --model "$PULSARMLX_MODEL_GGUF" \
   --oracle /tmp/f003-oracle.json \
   --evidence /tmp/f003-parity.json \
+  --source-commit "$(git rev-parse HEAD)"
+```
+
+## Feature 005 reproduction
+
+```sh
+export PULSARMLX_MODEL_GGUF=/path/to/Qwen3-30B-A3B-Q8_0.gguf
+# residual capture (optional if using published ffn_inp-0.f32le):
+# ./scripts/research/capture_residual_oracle.sh --model ... --llama-source ... --work-dir ... --output-dir ...
+PYTHONPATH=scripts/research uv run python -B scripts/research/moe_block_parity.py \
+  --model "$PULSARMLX_MODEL_GGUF" \
+  --f002-oracle docs/research/raw/002-router-parity/oracle/f002-router-oracle-freeze-0001.json \
+  --residual-f32le docs/research/raw/005-moe-block/ffn_inp-0.f32le \
+  --norm-f32le docs/research/raw/005-moe-block/ffn_norm-0.f32le \
+  --oracle-out /tmp/f005-oracle.json \
+  --evidence-out /tmp/f005-parity.json \
   --source-commit "$(git rev-parse HEAD)"
 ```

@@ -1,7 +1,7 @@
 # Feature Specification: Complete MoE FFN Sublayer / Residual Block
 
 **Created**: 2026-08-06  
-**Status**: Blocked pending residual stream capture  
+**Status**: Complete (verified)  
 **Depends on**: Feature 004 top-8 aggregation
 
 ## Goal
@@ -9,35 +9,36 @@
 Complete the layer-0 **MoE block** as used in the transformer FFN residual
 slot: residual add of routed MoE output onto the pre-norm residual stream.
 
-## Current verified boundary
+## Verified form
 
-Feature 004 already verifies:
+```
+ffn_inp-0 = post-attention residual (pre-FFN)
+ffn_norm-0 = RMSNorm(ffn_inp-0)   # Feature 002 freeze
+aggregate  = top-8 MoE(ffn_norm-0) # Feature 004
+y          = ffn_inp-0 + aggregate
+```
 
-`ffn_norm-0 → top-8 expert MLPs → weighted aggregate`
+## Capture strategy
 
-That is the **post-norm MoE FFN sublayer output**.
+Single-target CPU capture of `ffn_inp-0` (pinned llama.cpp revision
+`b06aa774…`) with the same tokens/positions as Feature 002. Dual-ask capture
+of `ffn_inp` + `ffn_norm` is **not** used: returning true for `ffn_inp` as a
+scheduler leaf truncates the graph before `ffn_norm`.
 
-## Blocker
+`ffn_norm-0` identity is the Feature 002 freeze
+(`978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7`).
 
-The residual form `x + MoE(ffn_norm(x))` requires the **pre-norm residual
-activation `x`** for the same token positions. Feature 002 capture only retains
-`ffn_norm-0` (post-norm) activations, not the residual stream entering the FFN
-block.
+Cross-check: independent RMSNorm(`ffn_inp-0`, `blk.0.ffn_norm.weight`,
+eps=1e-6) matches F002 row-0 within ~8.5e-8 max abs error.
 
-## Required next evidence
+## Success evidence
 
-1. Extend capture orchestration to record residual (pre-`ffn_norm`) and
-   `ffn_norm` for the same tokens.  
-2. Recompute aggregate from Feature 004 path.  
-3. CPU: `y = residual + aggregate`.  
-4. MLX parity on `y`.  
-5. Publish F005 claim only for residual MoE block depth.
+- Independent residual captures match (sha256
+  `673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d`)
+- CPU oracle `y = residual + aggregate`
+- MLX parity max abs error ~6.2e-8, 0 mismatches
+- Evidence: `docs/research/raw/005-moe-block/`
 
-## Until then
+## Out of scope
 
-Do **not** claim “complete MoE block” or “transformer layer.” Feature 004 claim
-stands for top-8 aggregation only.
-
-## Out of scope until residual exists
-
-Attention, multi-layer, logits, generation.
+Attention, complete transformer layer output, multi-layer, logits, generation.

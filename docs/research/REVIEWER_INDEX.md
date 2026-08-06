@@ -97,3 +97,30 @@ Aggregation and generation remain unsupported.
 - [Top-8 MLX parity](raw/004-top8-moe/f004-top8-aggregate-parity-0001.json)
 Claims: [CLAIMS_LEDGER_004.md](CLAIMS_LEDGER_004.md)
 
+---
+
+# Feature 005 Reviewer Index
+
+**Status**: Layer-0 MoE residual block `y = ffn_inp + top-8 MoE(ffn_norm)` is
+verified on Apple MLX against an independent CPU oracle. Attention, complete
+transformer layer, multi-layer, logits, and generation remain unsupported.
+
+## Raw evidence
+
+- [capture summary](raw/005-moe-block/capture-summary.json)
+- [ffn_inp-0 capture](raw/005-moe-block/ffn_inp-0.f32le)
+  SHA-256 `673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d`
+- [ffn_norm-0 freeze bytes](raw/005-moe-block/ffn_norm-0.f32le)
+  SHA-256 `978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7` (F002 identity)
+- [oracle](raw/005-moe-block/f005-moe-block-oracle-0001.json)
+- [parity](raw/005-moe-block/f005-moe-block-parity-0001.json)
+
+## Claims
+
+See [CLAIMS_LEDGER_005.md](CLAIMS_LEDGER_005.md) claim F005-C01.
+
+## Capture note
+
+Single-target `ffn_inp-0` capture only. Dual-ask of `ffn_inp`+`ffn_norm` makes
+`ffn_inp` a scheduler leaf and drops `ffn_norm` from the compute graph.
+RMSNorm cross-check (eps=1e-6) of residual vs F002 freeze: max abs ≈ 8.5e-8.

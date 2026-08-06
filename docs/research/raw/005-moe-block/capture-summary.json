@@ -1,0 +1,29 @@
+{
+  "capture_strategy": "single_target_ffn_inp_plus_f002_ffn_norm_freeze",
+  "direct_token_ids": [
+    0,
+    1
+  ],
+  "dtype": "float32_little_endian",
+  "feature_id": "005-moe-block",
+  "ffn_norm_matches_f002_freeze": true,
+  "ffn_norm_sha256": "978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7",
+  "independent_residual_captures": 2,
+  "norm_node": "ffn_norm-0",
+  "positions": [
+    0,
+    1
+  ],
+  "residual_node": "ffn_inp-0",
+  "residual_sha256": "673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d",
+  "rms_norm_cross_check": {
+    "eps": 1e-06,
+    "max_abs_vs_f002_row0": 8.516854e-08,
+    "status": "passed"
+  },
+  "shape": [
+    2,
+    2048
+  ],
+  "source_revision": "b06aa774c03dbbb624e726664b714a57d1f49815"
+}

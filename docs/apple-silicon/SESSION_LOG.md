@@ -4088,3 +4088,13 @@ Executed all eight Feature 002 routed experts on CPU oracle and Apple MLX,
 aggregated weighted down-projections. Parity passed (max abs 6.20e-08).
 Recorded cold/warm I/O gauges over expert tensor ranges. Claim F004-C01.
 
+## 2026-08-06 — Feature 005 MoE residual block
+
+Unblocked residual stream capture via single-target `ffn_inp-0` CPU capture
+(pinned llama.cpp `b06aa774…`). Dual-ask of `ffn_inp`+`ffn_norm` truncates the
+scheduler graph before `ffn_norm` and was rejected as a capture strategy.
+
+Verified `y = ffn_inp + top-8 MoE(ffn_norm)` CPU/MLX parity (max abs ~6.2e-8).
+RMSNorm cross-check of residual vs F002 freeze: max abs ~8.5e-8. Claim F005-C01
+published under `docs/research/raw/005-moe-block/`.
+
