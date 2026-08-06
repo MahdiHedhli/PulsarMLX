@@ -4045,3 +4045,26 @@ F002-C03 were promoted to package-level `verified`. Full package verification
 passed with four records and three claims. Feature 002 is complete for the
 bounded layer-0 router scope only.
 
+
+### T092 capability documentation and final CI (2026-08-06)
+
+T092 capability-claim surfaces were updated to match published Feature 002
+evidence without expanding scope past the layer-0 router:
+
+- `README.md` capability table now includes verified real layer-0 router parity
+  and keeps experts/generation/serving unsupported.
+- `docs/apple-silicon/COMPATIBILITY.md` adds a real `blk.0.ffn_gate_inp.weight`
+  matrix row and records four published raw records plus claims F002-C01–C03.
+- `docs/apple-silicon/BACKEND_DESIGN.md` and
+  `docs/apple-silicon/KNOWN_LIMITATIONS.md` distinguish model-free CI fixtures
+  from the admitted real Apple path and restate the router-only stop.
+
+Final package verification on four raw records and three verified claims
+passed. Workspace cargo tests reported 245 passed, 2 ignored, 0 failed.
+Research discovery reported 255 passed. GitHub Actions for final main tip
+`8fa9b07` completed successfully via workflow_dispatch as
+[run 31128482900](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31128482900)
+(Apple Silicon workspace baseline and Apple MLX small-fixture validation both
+success). Worktree remained clean with `HEAD == origin/main` after push.
+T097 completion NTFY was sent; local inference may resume.
+

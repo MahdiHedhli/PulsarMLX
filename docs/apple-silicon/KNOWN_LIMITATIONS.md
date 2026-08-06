@@ -41,59 +41,33 @@ and the source audit in
   correctness, behavior under elevated memory pressure, and SSD streaming
   performance have not been measured.
 
-## Feature 002 offline-router boundary
+## Feature 002 router boundary
 
-- The complete-router path is currently verified only against two committed,
-  generated f32 fixtures: one `[1,2048]` row and one `[2,2048]` batch using
-  generated expert-major `[128,2048]` weights. It evaluates all 128 logits and
-  full-softmax probabilities, deterministic top-8 selection, selected
-  probabilities, and selected-sum-normalized weights on explicit MLX GPU. This
-  is model-free fixture execution, not Qwen checkpoint routing.
-- A raw router response with `passed: true` establishes only that `gpu` was
-  requested and selected, fallback was false, and the returned operation was
-  evaluated and synchronized. It does not establish independent-oracle parity,
-  checkpoint admission, genuine hidden-state provenance, repeatability, or
-  timing.
-- The host admission seam now rejects missing or duplicate router roles,
-  aliases, identity and file mutations, wrong F32 type or quantization, wrong
-  dimensions or orientation, invalid top-k, truncated/overlong/overflowing
-  positional ranges, non-finite values, and failed disk/unified-memory/pressure
-  admission before calling a router runner. This was exercised with bounded
-  generated resources only; it is not evidence that an external GGUF router
-  tensor has the assumed identity, type, shape, offset, or length.
-- Worker control validation rejects malformed fields, unsupported case
-  identities, committed-byte-count disagreement, explicit CPU selection, and
-  fallback requests before core-runner dispatch. Direct matrix shape, dtype,
-  and finiteness checks plus runtime selected-device validation occur inside
-  the router runner but still stop before constructing or scheduling a router
-  MLX array. These traps prove the tested boundaries, not arbitrary malformed-
-  input coverage beyond the admitted protocol.
+- Model-free complete-router fixtures remain verified for two generated f32
+  cases (`[1,2048]` and `[2,2048]`) with full 128-way softmax, deterministic
+  top-8, and selected-sum renormalization on explicit MLX GPU.
+- Real-checkpoint Feature 002 evidence is also published: four raw experiment
+  records under [`docs/research/raw/002-router-parity/`](../research/raw/002-router-parity/)
+  (primary plus clean-checkout reproduction) verify the complete layer-0
+  router over `blk.0.ffn_gate_inp.weight` on Apple MLX GPU against the frozen
+  independent CPU oracle. Package claims F002-C01–C03 cover exact top-8
+  IDs/order, numerical tolerances, and deterministic repeats. See
+  [`RESULTS.md`](../research/RESULTS.md) and
+  [`CLAIMS_LEDGER.md`](../research/CLAIMS_LEDGER.md).
+- A raw worker `passed: true` still means only GPU selection, no fallback, and
+  eval/sync. Public claims require independent sanitization, package
+  verification, and (for verified status) clean-checkout reproduction.
+- Host admission, identity, and privacy gates remain fail-closed. Earlier
+  unadmitted producer candidates and a resource-blocked quiet-window attempt
+  are preserved externally and are not public evidence.
 - Synthetic exact ties are deterministically ordered by probability descending
-  and then expert ID ascending. A real-checkpoint exact F32 tie across ranks
-  eight and nine is deliberately a `comparison_failed` stop condition; the
-  synthetic policy cannot be used to waive or relabel that stop.
-- Retained fixture evidence distinguishes two evaluated MLX positive cases,
-  two host-contract tie cases, and seven fixture-contract negative cases. The
-  negative manifest entries retain expected codes and links to focused tests;
-  they are not mislabeled as seven separate MLX mutation executions. Failed or
-  aborted command evidence is retained, but the retained format itself does
-  not promote a checkpoint or performance claim.
-- The independent [`router oracle`](../../scripts/research/router_oracle.py)
-  source and orchestration contract pass their tests. The pinned llama.cpp
-  helper produced two identical genuine `ffn_norm-0` captures; the standalone
-  scalar-F32 oracle and its NumPy cross-check froze the complete real router
-  reference before Apple output was inspected.
-- Feature 002 admitted the exact external checkpoint and committed bounded
-  router-tensor identity, real hidden-state, and CPU-oracle values. Two Apple
-  producer attempts later executed and emitted candidates, but both failed
-  closed before independent evidence admission. Apple parity, ten-repeat
-  identity, clean-process replication, and timing therefore remain unverified
-  at T083 and later gates.
-- Router-only evidence does not establish any selected expert projection,
+  then expert ID ascending. A real-checkpoint exact F32 tie across ranks eight
+  and nine remains a `comparison_failed` stop condition.
+- Router-only evidence does **not** establish any selected expert projection,
   expert MLP, weighted expert aggregation, routed-MoE block, transformer layer,
   attention or earlier hidden-state computation in PulsarMLX, language-model
   logits, token generation, serving, full/giant-model inference, custom Metal,
-  tokens per second, or Linux/CUDA runtime parity.
+  tokens per second, NVMe load benchmarks, or Linux/CUDA runtime parity.
 
 The latest model-free safety replay reported 8 Rust backend routing tests, 21
 Rust router-contract tests, 23 focused Python router tests, and one explicitly

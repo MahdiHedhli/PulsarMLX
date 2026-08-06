@@ -230,12 +230,14 @@ tolerance. The record includes hashes, versions, device identity, and errors.
 Only that graph depth is verified; end-to-end inference still requires a
 validated logits or token boundary.
 
-### Feature 002 offline router seam
+### Feature 002 router seam
 
 Feature 002 adds a separate complete-router reference operation without
 reopening the Feature 001 model-slice contract or changing inherited
-Linux/CUDA selection. Its current executable boundary is deliberately
-model-free:
+Linux/CUDA selection. It has two executable boundaries: a model-free
+generated-fixture seam used by CI, and a gated real-checkpoint Apple path
+that freezes an independent CPU oracle then runs `validate-router` on MLX
+GPU. The model-free path remains:
 
 ```text
 committed generated case ID
@@ -310,11 +312,14 @@ The complete frozen boundary is specified in the
 
 The live pinned llama.cpp helper, external GGUF inspection, two identical real
 `ffn_norm-0` captures, and the independent scalar/NumPy CPU oracle have run and
-their bounded redistributable outputs are committed. Two later external Apple
-producer attempts executed the complete bounded router but failed closed
-before independent evidence admission, so they do not establish Apple parity.
-A third fresh attempt stopped at the quiet-window resource gate before it
-reopened the checkpoint.
+their bounded redistributable outputs are committed. A later admitted Apple
+`validate-router` path produced primary and clean-checkout reproduction
+candidates that passed independent sanitization and package verification with
+claims F002-C01–C03 (exact top-8, numerical tolerances, deterministic
+repeats). Two earlier producer candidates and one resource-blocked attempt
+remain external rejected or postponed history only. The verified boundary is
+still router-only: no expert MLP, aggregation, complete MoE block, layer,
+logits, generation, or serving path is part of Feature 002.
 
 ### Stage 8: measured optimization (not run)
 

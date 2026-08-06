@@ -6,23 +6,26 @@
 > derivative of [Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar).
 > It preserves Pulsar's MIT license, attribution, Git history, and Linux/CUDA
 > path while an additive Apple backend is developed. Bounded MLX GPU device,
-> tensor, portable-storage, synthetic routed-MoE, and one external Qwen
-> checkpoint tensor-prefix proof are verified. End-to-end model inference is
-> not implemented or verified.
+> tensor, portable-storage, synthetic routed-MoE, one external Qwen
+> checkpoint tensor-prefix proof, and Feature 002 real layer-0 **router**
+> parity are verified. End-to-end model inference is not implemented or
+> verified.
 
 ## PulsarMLX capability status
 
 | Category | Current status |
 | --- | --- |
 | Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
-| Verified PulsarMLX capabilities | On the recorded M1 Ultra environment, the T077 quickstart replay listed 172 Rust tests: 171 active tests passed, one native MLX smoke test was explicitly ignored by the general workspace run, and zero failed. The same replay's Python worker discovery suite passed 44 tests. Native MLX 0.32.0 evidence covers an evaluated device proof, seven bounded tensor fixtures, strict Q8_0 reference operations, a portable exact positional source, one synthetic f32 routed-MoE graph, and one evaluated Qwen3MoE Q8_0 gate-projection prefix with zero comparison mismatches and no fallback. |
-| Planned or deferred | Any deeper Qwen graph slice requires a new explicit compatibility, oracle, memory, and correctness scope. The initial benchmark decision is committed as `actual_status: not_run`; it carries zero samples and no performance claim. |
-| Unsupported or unverified | End-to-end Qwen tokenization, embeddings, routing over the checkpoint, complete experts or layers, logits, token generation, macOS serving, giant-model Apple inference, custom Metal kernels, and Apple multi-device execution are unsupported. Linux/CUDA runtime validation of fork changes remains unavailable and unverified; inherited upstream behavior is not relabeled as Apple evidence. |
+| Verified PulsarMLX capabilities | Native MLX 0.32.0 evidence covers device proof, bounded tensor fixtures, strict Q8_0 operations, portable positional source, synthetic f32 routed-MoE, and one evaluated Qwen3MoE Q8_0 gate-projection prefix. Feature 002 additionally verifies the complete real Qwen3MoE **layer-0 router** (`blk.0.ffn_gate_inp.weight`) on Apple MLX GPU against an independent CPU oracle: exact top-8 IDs/order, full 128-output metrics within frozen tolerances, twenty deterministic measured hashes, primary plus clean-checkout reproduction, and package claims F002-C01–C03. Workspace baseline at closeout: 245 active tests passed, 2 ignored, 0 failed. |
+| Planned or deferred | Expert MLP execution, routed expert aggregation, complete MoE block, full layer/model, generation, and serving require a new explicit Spec Kit feature. The initial Feature 001 benchmark decision remains `actual_status: not_run` with zero performance claim. |
+| Unsupported or unverified | End-to-end Qwen tokenization/embeddings as a serving path, complete experts or layers, language-model logits, token generation, macOS serving, giant-model Apple inference, custom Metal kernels, Apple multi-device execution, and tokens/sec remain unsupported. Linux/CUDA runtime validation of fork changes remains unavailable and unverified. |
 
-The Qwen result is one named real-checkpoint intermediate, not complete-model
-inference. See the [validation index](docs/validation/README.md), [compatibility
-matrix](docs/apple-silicon/COMPATIBILITY.md), [device
-evidence](docs/validation/mlx-device-smoke.json), [tensor
+The Qwen results are named real-checkpoint **intermediates** (tensor prefix and
+layer-0 router), not complete-model inference. See the [validation
+index](docs/validation/README.md), [compatibility
+matrix](docs/apple-silicon/COMPATIBILITY.md), [Feature 002 research
+results](docs/research/RESULTS.md), [claims ledger](docs/research/CLAIMS_LEDGER.md),
+[device evidence](docs/validation/mlx-device-smoke.json), [tensor
 evidence](docs/validation/mlx-tensor-fixtures.json), [synthetic MoE
 evidence](docs/validation/synthetic-moe-v1.json), [portable-source
 evidence](docs/validation/portable-expert-source.json), [trusted Qwen
