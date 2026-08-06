@@ -78,6 +78,8 @@ in [MODEL_MANIFEST.json](MODEL_MANIFEST.json).
 
 ---
 
+Feature 003 claims: [CLAIMS_LEDGER_003.md](CLAIMS_LEDGER_003.md).
+
 ## Feature 003 raw evidence
 
 - [Expert 114 CPU oracle freeze](raw/003-expert-mlp/f003-expert-oracle-114-freeze-0001.json)
