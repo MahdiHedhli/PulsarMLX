@@ -532,6 +532,52 @@ class PublicationBoundaryTests(unittest.TestCase):
 
             self.assertEqual(result, {"claim_count": 1})
 
+    def test_fresh_regeneration_must_equal_committed_publication_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = self._materialize_publication_package(root)
+            previous_directory = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.multiple(
+                    self.verifier,
+                    REPOSITORY_ROOT=root,
+                    CLAIMS_LEDGER=paths["claims"],
+                    REVIEWER_INDEX=paths["reviewer"],
+                ):
+                    result = self.verifier.verify_committed_regeneration(
+                        paths["raw"].parent
+                    )
+                    self.assertEqual(result["artifact_count"], 6)
+
+                    paths["generated"].write_bytes(
+                        paths["generated"].read_bytes() + b"bounded mutation\n"
+                    )
+                    with self.assertRaises(self.verifier.VerificationError):
+                        self.verifier.verify_committed_regeneration(
+                            paths["raw"].parent
+                        )
+            finally:
+                os.chdir(previous_directory)
+
+    def test_publication_documents_reject_private_values(self) -> None:
+        private_path = str(
+            Path("/", "Users", "fixture-private", "publication-note.log")
+        )
+        for document_key in ("claims", "reviewer"):
+            with (
+                self.subTest(document=document_key),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                root = Path(temporary)
+                paths = self._materialize_publication_package(root)
+                with paths[document_key].open("a", encoding="utf-8") as handle:
+                    handle.write(f"\nPrivate diagnostic: {private_path}\n")
+
+                with self.assertRaises(self.verifier.VerificationError) as raised:
+                    self._verify_publication_index(root, paths)
+                self.assertNotIn(private_path, str(raised.exception))
+
     def test_claim_evidence_links_must_be_existing_package_relative_paths(self) -> None:
         link_mutations = {
             "missing": "raw/002-router-parity/missing-evidence.json",

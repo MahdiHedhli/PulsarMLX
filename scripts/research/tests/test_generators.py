@@ -9,9 +9,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 RESEARCH_DIR = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+FULL_SCHEMA_RAW = REPOSITORY_ROOT / "fixtures" / "research" / "router-v1" / "evidence"
 if str(RESEARCH_DIR) not in sys.path:
     # Keep the standard library ahead of the project directory so the local
     # statistics.py cannot shadow Python's statistics module during discovery.
@@ -206,6 +209,98 @@ class DeterministicGeneratorTests(unittest.TestCase):
             self.figures.generate_figures(raw_dir, changed_figures)
             changed_svg = next(path for path in changed_figures.iterdir() if path.suffix == ".svg")
             self.assertNotEqual(original, changed_svg.read_text(encoding="utf-8"))
+
+    def test_full_schema_outputs_retain_statistics_status_and_claim_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            table_dir = root / "tables"
+            figure_dir = root / "figures"
+            self.tables.generate_tables(FULL_SCHEMA_RAW, table_dir)
+            self.figures.generate_figures(FULL_SCHEMA_RAW, figure_dir)
+
+            csv_path = next(path for path in table_dir.iterdir() if path.suffix == ".csv")
+            with csv_path.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertTrue(rows)
+            self.assertEqual(
+                {row["status"] for row in rows},
+                {"aborted", "failed", "passed"},
+            )
+            for field in (
+                "p5_ns",
+                "p25_ns",
+                "p75_ns",
+                "p95_ns",
+                "deterministic_repeat_count",
+                "mean_absolute_error",
+                "rmse",
+            ):
+                self.assertTrue(all(row[field] for row in rows), field)
+            for row in rows:
+                self.assertTrue(
+                    row["sample_standard_deviation_ns"]
+                    or row["sample_standard_deviation_reason"]
+                )
+                self.assertTrue(
+                    row["coefficient_of_variation"]
+                    or row["coefficient_of_variation_reason"]
+                )
+
+            svg = next(path for path in figure_dir.iterdir() if path.suffix == ".svg")
+            svg_text = svg.read_text(encoding="utf-8")
+            self.assertIn("status=passed", svg_text)
+            self.assertIn("status=failed", svg_text)
+            self.assertIn("status=aborted", svg_text)
+            self.assertIn("correctness=true", svg_text)
+            self.assertIn('class="bar-pass"', svg_text)
+            self.assertIn('class="bar-nonpass"', svg_text)
+
+    def test_symlinked_ancestor_and_partial_package_are_rejected(self) -> None:
+        for module, output_name in (
+            (self.tables, "tables"),
+            (self.figures, "figures"),
+        ):
+            with self.subTest(generator=module.GENERATOR_ID):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    real = root / "real"
+                    raw_dir = real / "raw"
+                    self._write_inputs(raw_dir)
+                    alias = root / "alias"
+                    alias.symlink_to(real, target_is_directory=True)
+                    with self.assertRaises(module.GenerationError):
+                        if module is self.tables:
+                            module.generate_tables(alias / "raw", root / output_name)
+                        else:
+                            module.generate_figures(alias / "raw", root / output_name)
+
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    raw_dir = root / "raw"
+                    self._write_inputs(raw_dir)
+                    output_dir = root / output_name
+                    original_write = module._write_exclusive
+                    call_count = 0
+
+                    def fail_second_write(path: Path, content: bytes) -> None:
+                        nonlocal call_count
+                        call_count += 1
+                        if call_count == 2:
+                            raise module.GenerationError("bounded injected failure")
+                        original_write(path, content)
+
+                    with mock.patch.object(
+                        module,
+                        "_write_exclusive",
+                        side_effect=fail_second_write,
+                    ):
+                        with self.assertRaises(module.GenerationError):
+                            if module is self.tables:
+                                module.generate_tables(raw_dir, output_dir)
+                            else:
+                                module.generate_figures(raw_dir, output_dir)
+                    self.assertTrue(output_dir.is_dir())
+                    self.assertEqual(list(output_dir.iterdir()), [])
 
 
 if __name__ == "__main__":
