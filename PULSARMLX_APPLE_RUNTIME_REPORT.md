@@ -156,3 +156,31 @@ PYTHONPATH=scripts/research uv run python -B scripts/research/moe_block_parity.p
   --evidence-out /tmp/f005-parity.json \
   --source-commit "$(git rev-parse HEAD)"
 ```
+
+## Continuation instructions (post-F006 blocker)
+
+Deepest verified boundary: **Feature 005** residual MoE block
+(`y = ffn_inp + independent top-8 MoE(ffn_norm)`).
+
+### Unblock Feature 006
+
+1. Diff independent Q8_0 expert matvec / SwiGLU / weight application against
+   llama.cpp fused `build_moe_ffn` for expert 114 alone using captured
+   `ffn_moe_out` contribution isolation if available.
+2. Check expert tensor layout (row-major vs packed), Q8_0 block decode, and
+   whether llama accumulates expert outputs in f16/f32 differently.
+3. Do **not** loosen 5e-4 tolerances or replace the independent oracle with
+   llama outputs without a new admitted contract.
+4. When max abs vs `ffn_moe_out-0` is within frozen tolerances, re-run residual
+   add and `l_out-0` parity; only then open F007 multi-layer.
+
+### Reproduction of rejection
+
+```sh
+# published captures under docs/research/raw/006-layer-out/
+python3 -c "import json; print(json.load(open('docs/research/raw/006-layer-out/f006-layer-out-parity-0001.json'))['comparison_f004_agg_vs_llama_ffn_moe_out'])"
+```
+
+### GLM
+
+Not admitted. No attempt until F006–F011 succeed on admitted Qwen checkpoints.
