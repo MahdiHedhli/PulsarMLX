@@ -36,6 +36,30 @@ The two case IDs match the worker contract tests:
 These generated IDs are deliberately different from the reserved real-case
 IDs in the Feature 002 protocol.
 
+## Real oracle support package
+
+`real/` is reserved for the bounded, redistributable projection of the
+independent CPU oracle. Once published, it contains the complete two-row
+hidden-state input and complete router outputs needed for offline review, but
+no GGUF bytes, router weights, capture binaries, private paths, or runtime
+device identities. Its record is byte-identical to the support copy under
+`docs/research/raw/002-router-parity/oracle/`; `real/manifest.json` binds both
+copies and is installed last as the transaction-completion marker.
+
+The support record is not a measured Apple experiment and therefore is kept in
+the dedicated `oracle/` subtree rather than being parsed as a top-level
+`pulsarmlx.research.experiment` record. Validate an installed package without
+checkpoint access with:
+
+```sh
+PULSARMLX_MODEL_GGUF='' python3 -B \
+  scripts/research/oracle_publication.py --check
+```
+
+A passing check establishes only the frozen CPU reference input and output. It
+does not establish Apple MLX execution, parity, performance, expert execution,
+or any deeper inference boundary.
+
 ## Exact weight recipe
 
 For expert ID `e` in `0..128`, the logical expert-major row is generated in

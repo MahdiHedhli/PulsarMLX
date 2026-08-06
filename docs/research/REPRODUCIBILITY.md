@@ -160,6 +160,27 @@ Any identity, cancellation, tie, correctness, repeatability, fallback, or
 resource failure stops the sequence and retains a new failed or aborted
 attempt. Synthetic input is never substituted for a blocked real capture.
 
+After the external oracle bundle passes the complete read-only verifier, its
+bounded public projection is installed from a clean commit with:
+
+```sh
+PULSARMLX_MODEL_GGUF='' python3 -B \
+  scripts/research/oracle_publication.py \
+  --oracle-candidate "$PULSARMLX_ORACLE_OUTPUT"
+PULSARMLX_MODEL_GGUF='' python3 -B \
+  scripts/research/oracle_publication.py --check
+```
+
+The publisher independently reconstructs the input and router hashes, full
+softmax, ordered top-8 IDs, selected probabilities, and normalized weights. It
+retains only public derived values and immutable source/model/tensor identity.
+It writes byte-identical records to `fixtures/research/router-v1/real/` and the
+dedicated `docs/research/raw/002-router-parity/oracle/` support subtree, then
+installs the fixture manifest last. Existing conflicting bytes, symlinks,
+partial completed state, private paths, model/tensor bytes, and unknown files
+are rejected. The nested support record is not an Apple experiment and is not
+input to the result table or figure generators.
+
 ## Evidence validation and publication
 
 External commands first write candidates outside the repository. Candidate

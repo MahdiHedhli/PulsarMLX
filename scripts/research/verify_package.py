@@ -18,6 +18,7 @@ from typing import Any
 
 import generate_figures
 import generate_tables
+import oracle_publication
 import router_oracle
 from publish_evidence import (
     PublicationError,
@@ -1302,6 +1303,61 @@ def _flat_files(directory: Path, *, subject: str) -> list[Path]:
     return files
 
 
+def _publication_raw_inventory(
+    directory: Path,
+) -> tuple[list[Path], list[Path]]:
+    """Inventory flat experiments plus the one bounded oracle-support package."""
+
+    if directory.is_symlink():
+        raise VerificationError("raw evidence directory cannot be a symbolic link")
+    support_paths = [
+        REPOSITORY_ROOT / oracle_publication.FIXTURE_RECORD_RELATIVE,
+        REPOSITORY_ROOT / oracle_publication.RAW_RECORD_RELATIVE,
+        REPOSITORY_ROOT / oracle_publication.MANIFEST_RELATIVE,
+    ]
+    support_present = any(path.exists() or path.is_symlink() for path in support_paths)
+    if not directory.exists():
+        if support_present:
+            raise VerificationError("oracle support package is incomplete")
+        return [], []
+    _reject_symlink_components(directory)
+    try:
+        if not directory.is_dir():
+            raise VerificationError("raw evidence directory must be a directory")
+        entries = sorted(directory.iterdir(), key=lambda item: item.name)
+    except OSError as error:
+        raise VerificationError("raw evidence directory is unavailable") from error
+    if len(entries) > MAX_PACKAGE_FILES:
+        raise VerificationError("raw evidence directory contains too many entries")
+
+    experiments: list[Path] = []
+    oracle_directory: Path | None = None
+    for entry in entries:
+        _reject_symlink_components(entry)
+        try:
+            mode = entry.stat().st_mode
+        except OSError as error:
+            raise VerificationError(
+                "raw evidence directory contains an unavailable entry"
+            ) from error
+        if stat.S_ISREG(mode):
+            experiments.append(entry)
+        elif stat.S_ISDIR(mode) and entry.name == "oracle":
+            oracle_directory = entry
+        else:
+            raise VerificationError(
+                "raw evidence directory contains an unsupported entry"
+            )
+
+    if support_present or oracle_directory is not None:
+        try:
+            oracle_publication.verify_committed_publication(REPOSITORY_ROOT)
+        except oracle_publication.OraclePublicationError as error:
+            raise VerificationError("oracle support package is invalid") from error
+        return experiments, support_paths
+    return experiments, []
+
+
 def verify_candidate(
     candidate_path: Path | str,
     *,
@@ -1833,20 +1889,30 @@ def verify_publication_index() -> dict[str, int]:
     if REVIEWER_INDEX.parent.resolve(strict=True) != research_root.resolve(strict=True):
         raise VerificationError("publication index documents do not share a package root")
 
-    raw_files = _flat_files(
-        research_root / "raw" / "002-router-parity",
-        subject="raw evidence directory",
+    raw_files, oracle_support_files = _publication_raw_inventory(
+        research_root / "raw" / "002-router-parity"
     )
     table_files = _flat_files(research_root / "tables", subject="generated tables")
     figure_files = _flat_files(research_root / "figures", subject="generated figures")
-    if len(raw_files) + len(table_files) + len(figure_files) > MAX_PACKAGE_FILES:
+    if (
+        len(raw_files)
+        + len(oracle_support_files)
+        + len(table_files)
+        + len(figure_files)
+        > MAX_PACKAGE_FILES
+    ):
         raise VerificationError("publication package contains too many files")
     if len(raw_files) > MAX_PUBLICATION_RAW_FILES:
         raise VerificationError("publication package contains too many raw records")
     try:
         package_bytes = sum(
             path.stat().st_size
-            for path in (*raw_files, *table_files, *figure_files)
+            for path in (
+                *raw_files,
+                *oracle_support_files,
+                *table_files,
+                *figure_files,
+            )
         )
     except OSError as error:
         raise VerificationError("publication package size cannot be inspected") from error
@@ -1878,7 +1944,11 @@ def verify_publication_index() -> dict[str, int]:
     table_links = _resolved_section_links(sections["## Generated tables"])
     figure_links = _resolved_section_links(sections["## Generated figures"])
     claim_links = _resolved_section_links(sections["## Claims and reproduction links"])
-    _require_exact_reviewer_coverage(raw_links, raw_files, subject="raw artifact")
+    _require_exact_reviewer_coverage(
+        raw_links,
+        [*raw_files, *oracle_support_files],
+        subject="raw/support artifact",
+    )
     _require_exact_reviewer_coverage(table_links, table_files, subject="table artifact")
     _require_exact_reviewer_coverage(figure_links, figure_files, subject="figure artifact")
     _require_exact_reviewer_coverage(
