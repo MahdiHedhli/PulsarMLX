@@ -3293,3 +3293,118 @@ reproduce its statistics before any timing summary is accepted. No checkpoint
 path was resolved, statted, hashed, opened, or read. The completion/resume NTFY
 to `Mahdi-Dev` was acknowledged at `2026-08-06T06:26:41Z`; local inference may
 resume until the separate T073 checkpoint notification.
+
+### T069 generated-candidate validation and T070 timing documentation
+
+T069 first attempted an independent complete-output hash from the committed
+golden values. That hash did not equal the runtime hash because the MLX
+softmax, selected probabilities, and normalized weights differed from the
+scalar golden by small tolerance-passing float32 amounts. The original
+candidate therefore could not support an independent comparison by hash alone:
+it retained producer metrics and component hashes but not the actual bounded
+values needed to recompute them. Validation stopped rather than trusting
+`golden_comparison_passed`. The original 58,335-byte candidate is preserved
+outside Git with SHA-256
+`97be50f3e5a657c0446e3a39e8e219de924a8991e814f0df14367f994f90815e`;
+its combined environment SHA-256 is
+`7b6011f73fe451cf4f68d75f096c2b2d9cce62c773449f3fc678845f778aa9c1`.
+
+The producer was tightened to retain one canonical actual output and bind all
+35 attempts to it without duplicating the arrays per attempt. The dedicated
+closed candidate schema and validator now verify the complete manifest
+inventory, recompute actual component/selected-ID/complete hashes, recompute
+the golden comparison and producer metrics from retained values, require the
+exact 5+30 timing/result bijection, reject component or stage-sum fields, reuse
+the public resource extractor, and route the raw total through the canonical
+timing projection, compatibility grouping, and Type-7 statistics helper.
+Unavailable power mode is retained as an explicit compatibility tuple instead
+of fabricated as normal. This work was scanned, committed, and pushed as
+`42ab53e6f36ae5f94f0cd0ba92ca48f75238e1fb`. GitHub Actions run
+`31078633852` passed the native Apple MLX fixture job in 38 seconds and the
+workspace job in 1 minute 50 seconds.
+
+Independent review of the initially implemented second-batch linkage found
+three fail-open cases before any real evidence existed: execution identity and
+admitted load drift were omitted from compatibility, duplicate JSON keys could
+shadow a private value, and `single,two,single,two` interleaving could pass the
+order check. The repaired validator compares the complete execution object,
+all three before/after load averages, device and environment facts; rejects
+duplicate keys before privacy validation; and requires one exact contiguous
+case block per paired step. The original reviewer reran all prior exploits:
+six execution mutations, admitted `1.0/0.5` to `14.0/14.0` load drift,
+duplicate-key private shadowing, and interleaved order all failed closed. The
+focused suite passed 13 of 13 tests, the research suite passed 145 of 145, and
+three committed fixture records validated. The scanned repair was committed
+and pushed as `49183bd96b612a2090f472aba4dee089755bf730`; GitHub Actions run
+`31079042611` passed the native Apple MLX fixture job in 48 seconds and the
+workspace job in 1 minute 43 seconds. This enforces the already frozen v1.1
+method before external evidence and does not amend its content or SHA-256.
+
+Because the earlier NTFY pause had been released, a replacement model-free
+hardware request was sent and acknowledged at `2026-08-06T06:58:40Z`. A fresh
+external attempt then captured an admitted before snapshot at
+`2026-08-06T06:58:56.591687Z` from clean/equal commit `49183bd`. Memory pressure
+was normal, thermal state nominal, load within the precommitted bound, no
+material concurrent workload was declared, and unprivileged power mode was
+explicitly unavailable. The corrected release command again passed two MLX
+router fixture cases plus the fixed single-row 5+30 benchmark. Resource
+extraction, the admitted after snapshot at `2026-08-06T06:59:42.469331Z`,
+environment combination, and the exact dedicated validation command all
+exited zero:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 PULSARMLX_MODEL_GGUF='' \
+  PYTHONPATH=python uv run python -B \
+  scripts/research/validate_generated_candidate.py \
+  --candidate "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE" \
+  --environment "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/generated-validation.json"
+# passed
+```
+
+The replacement candidate is 63,218 bytes with SHA-256
+`c2ebaf76ce976f3d7dffd03c123dd7624d83b52ace51e6af889f39052eb86ee3`.
+The validation report SHA-256 is
+`3adaab6cb9244050f6ea566b94e7383c9f437bb3c633c620c516574f594df8d5`;
+the combined environment SHA-256 is
+`a2971f1d14603f3da8810574fd0b5490194afea4ff49a4f146df5bcae7b0d951`.
+The independently recomputed runtime complete-output hash is
+`ae502f0820f6bbc869eb75b27cd16e302fc150a5c6665bc6e37ff568a46f3d8e`;
+the independently recomputed scalar-golden complete hash is intentionally
+different, `c3fee3b5e638fc906a8ce141943f7b2f31e2b988f0cf49a900c8dfe680c61f3d`.
+All 128 logits matched exactly. The 128 full probabilities, eight selected
+probabilities, and eight normalized weights had zero mismatches under their
+frozen `1e-6` absolute/relative tolerances; maximum absolute errors were
+`2.2351741790771484e-8`, `2.2351741790771484e-8`, and
+`2.9802322387695312e-8`, respectively. Expert-ID and ordering mismatch counts
+were zero.
+
+The raw replacement samples remain external. For audit only, the independently
+reproduced warm-up group (`n=5`) had median 1,698,750 ns and coefficient of
+variation 0.0653674; the measurement group (`n=30`) had median 1,691,624.5 ns,
+mean 1,641,823.67 ns, sample standard deviation 156,754.69 ns, minimum
+1,214,166 ns, maximum 1,844,667 ns, p5 1,263,633.45 ns, p25 1,593,083.25 ns,
+p75 1,729,521.25 ns, p95 1,792,121.05 ns, and coefficient of variation
+0.0954760. Worker maxima were 67,371,008 bytes process footprint, 1,068,160
+bytes MLX active memory, 152,716 bytes MLX cache memory, and 1,184,392 bytes
+MLX peak memory. Worker bytes read and CPU time remained explicitly
+unavailable. These generated-fixture observations are not checkpoint latency,
+model inference, throughput, or a publishable performance claim.
+
+Additional T069 gates passed: 76 Python worker tests, 13 generated-candidate
+tests, 145 total research tests, 19 Rust CLI tests, 10 Rust library tests, 21
+router-contract tests, 5 research-evidence tests, strict package Clippy,
+package check, scoped rustfmt, fixture publication verification, and
+`git diff --check`. The replacement completion/resume NTFY was acknowledged at
+`2026-08-06T06:59:56Z`; local inference may resume. No checkpoint path was
+resolved, searched, statted, hashed, opened, or read. T071 remains the exact
+workspace/package/staged gate before the pre-access T072 attestation.
+
+T070 also reviewed the frozen experiment protocol against the implemented
+timing behavior. Run-history prose was intentionally kept in this session log
+and `RESULTS.md`, not added to the normative protocol: changing that file would
+invalidate its precommitted SHA-256
+`c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863` and
+would require a formal amendment plus fresh experiment identities. The
+protocol therefore remains byte-identical while the observed fixture behavior,
+limitations, and task state are updated in their appropriate records.

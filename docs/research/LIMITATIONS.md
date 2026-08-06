@@ -35,15 +35,20 @@ exists under `docs/research/raw/002-router-parity/`.
 ## Unavailable observations
 
 Feature 002 router-tensor admission, genuine `ffn_norm-0` captures, real CPU
-oracle values, Apple router outputs, repeatability, latency, memory gauges,
-model-work admission resources, power mode, thermal state, and interference
-observations are all unavailable until their dependency-ordered tasks run.
-Unavailable values are never encoded as measured zero.
+oracle values, real Apple router outputs, real-checkpoint repeatability and
+latency, model-work admission resources, and checkpoint-run power, thermal,
+and interference observations are all unavailable until their
+dependency-ordered tasks run. Unavailable values are never encoded as measured
+zero.
 
 Fixture model and tensor identities are frozen contract metadata, not observed
-checkpoint facts. No checkpoint bytes, router tensor, real CPU oracle, MLX
-device, Apple GPU operation, hardware timing, memory gauge, capacity result, or
-thermal reading was accessed to create the fixture package.
+checkpoint facts. The committed fixture package itself used no checkpoint
+bytes, router tensor, real CPU oracle, or hardware measurement. A later
+external model-free timing-mechanics candidate did execute the generated
+single-row fixture on Apple MLX/GPU and retained bounded resource and timing
+observations. Its power mode remained explicitly unavailable because the
+unprivileged `pmset` probe did not expose it. That synthetic observation cannot
+be substituted for any real-checkpoint capability or performance result.
 
 ## Unsupported interpretations
 

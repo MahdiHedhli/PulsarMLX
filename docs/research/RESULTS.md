@@ -46,13 +46,31 @@ clean-process replications have not been measured.
 
 ## Model-backed timing and resources
 
-No router timing has been collected. There are no first-process
+No real-checkpoint router timing has been collected. There are no first-process
 OS-cache-uncontrolled, warm, minimally instrumented, stage-instrumented,
 resource, power, or thermal results to publish.
 
 Future timing entries must be generated from committed raw samples and keep
 condition, instrumentation mode, case, batch, and process replication
 separate. There are currently zero entries.
+
+### Generated timing-mechanics validation
+
+A model-free generated single-row router candidate executed on Apple MLX/GPU
+from source commit `49183bd96b612a2090f472aba4dee089755bf730` and passed the
+dedicated candidate validator. It retained exactly five warm-ups and thirty
+measurements, one canonical actual output, 35 matching result records, one
+identical complete-output SHA-256, synchronized/evaluated GPU selection, no
+fallback, and no stage-sum claim. The validator independently recomputed the
+actual output hashes and golden comparison, reproduced the two compatible
+warm-up/measurement Type-7 groups, and bound admitted before/after environment
+and worker-resource observations.
+
+The candidate and validation report remain outside Git, identified in the
+session log by SHA-256. Therefore this section intentionally publishes no
+latency statistic from that external raw sample set. The run validates timing
+mechanics only; it is not checkpoint routing, model inference, a throughput
+measurement, or evidence for the model-backed sections above.
 
 ## Failed, aborted, and excluded attempts
 

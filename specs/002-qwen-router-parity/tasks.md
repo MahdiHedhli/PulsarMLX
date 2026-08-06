@@ -235,8 +235,8 @@ enforces 5/10 and 5/30 policies, and reproduces every statistic.
 - [X] T066 [US4] Implement correctness-gated orchestration for the single-row and two-row minimally instrumented major benchmarks, one clean-process replication per major benchmark, and later-batch/unavailable recording in `crates/mlx-backend/src/bin/pulsar-mlx.rs`
 - [X] T067 [US4] Implement public-safe environment, load, storage, pressure, power, thermal, and resource observations with unavailable reasons in `scripts/research/environment.py`
 - [X] T068 [US4] Run the inexpensive generated router microbenchmark with five retained warmups and thirty measurements and keep its candidate outside Git until validated through `fixtures/research/router-v1/manifest.json`
-- [ ] T069 [US4] Validate the generated timing candidate, reproduce statistics/grouping, verify no stage-sum claim, and run focused Rust/Python/research tests using `specs/002-qwen-router-parity/quickstart.md`
-- [ ] T070 [US4] Update timing methods, fixture behavior, unavailable observations, task state, and staged review in `docs/research/EXPERIMENT_PROTOCOL.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
+- [X] T069 [US4] Validate the generated timing candidate, reproduce statistics/grouping, verify no stage-sum claim, and run focused Rust/Python/research tests using `specs/002-qwen-router-parity/quickstart.md`
+- [X] T070 [US4] Update timing methods, fixture behavior, unavailable observations, task state, and staged review in `docs/research/EXPERIMENT_PROTOCOL.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
 - [ ] T071 [US4] Run exact workspace/package gates and the standardized staged safety scan, commit timing instrumentation, push `main`, and wait for every `.github/workflows/macos.yml` job
 
 **Checkpoint**: Timing mechanics are fixture-verified. No real router latency
