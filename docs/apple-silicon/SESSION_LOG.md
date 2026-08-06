@@ -3893,3 +3893,76 @@ passed for that exact commit: Apple MLX small-fixture validation completed in
 workspace step passed. This documentation-only update is the non-recursive
 pre-T083 CI attestation; its own CI result is verified out of tree before the
 next checkpoint run rather than appended recursively.
+
+### T083 resource-admission stop condition
+
+The non-recursive attestation's own
+[GitHub Actions run 31114392419](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31114392419)
+passed at exact commit `ed245542a827974f4c6822e68114f34aca70ee67`:
+the Apple Silicon workspace baseline completed in 1 minute 35 seconds and the
+Apple MLX small-fixture validation completed in 2 minutes 10 seconds. Local
+and remote `main` were clean and equal. A third fresh external attempt
+directory was created with absent candidate and environment destinations; both
+earlier failed external attempts remained preserved.
+
+The required quiet-window admission then failed before this attempt reopened
+the checkpoint. The machine has 20 logical CPUs, so the frozen
+`0.75 × logical CPU count` ceiling is `15.0` for both one- and five-minute load
+averages. Initial observations were approximately 45 for both averages with
+only 14% idle CPU. A separate read-only 4 minute 37 second monitor collected
+ten samples: one-minute load remained 34.41–41.06, five-minute load remained
+39.59–44.63, and CPU idle remained 11.20–26.68%. A further predefined
+10-minute, twenty-sample monitor never admitted the host; one-minute load
+remained 31.11–49.90, five-minute load remained 35.88–42.58, and CPU idle
+fell as low as 9.79%. The rebound after an initial decline was consistent with
+an ongoing material concurrent workload rather than a decaying build/test
+tail, so the window was treated as non-admissible.
+
+The collector was then invoked truthfully with
+`--workload-category other_material`. It returned nonzero with
+`environment admission postponed: inspect the retained snapshot` and wrote a
+4,052-byte public-safe external before snapshot with SHA-256
+`bf2443a1f49c8b52d187ba3c66b92ec11161079de4b23a4ba3608066a996f027`.
+That snapshot observed one-minute load `48.16357421875`, five-minute load
+`43.2705078125`, normal memory pressure, nominal thermal state, and the exact
+reasons `load_average_1m_admission_failed`,
+`load_average_5m_admission_failed`, and
+`material_concurrent_workload_declared`. No internal-orchestration candidate,
+after snapshot, combined environment, sanitizer output, or public raw record
+was created for this attempt. No checkpoint file was resolved, statted,
+hashed, or opened during this third attempt.
+
+Minimal reproduction from a clean checkout, using a fresh external directory:
+
+```sh
+export PULSARMLX_ROUTER_EVIDENCE='<fresh-external-attempt>'
+mkdir -p "$PULSARMLX_ROUTER_EVIDENCE/environment"
+sysctl -n vm.loadavg
+top -l 1 -n 0 | awk '/CPU usage/ {print}'
+PULSARMLX_ROUTER_EVIDENCE="$PULSARMLX_ROUTER_EVIDENCE" \
+  PYTHONPATH=python uv run python scripts/research/environment.py capture \
+  --repository-root . \
+  --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
+  --storage-role candidate_evidence_storage \
+  --storage-locator '$PULSARMLX_ROUTER_EVIDENCE' \
+  --capture-phase before \
+  --workload-category other_material \
+  --benchmark-concurrency 1 \
+  --output "$PULSARMLX_ROUTER_EVIDENCE/environment/before.json"
+```
+
+This is the protocol-defined resource-admission stop condition, not a router,
+MLX, model, oracle, numerical, determinism, or sanitizer failure. T083 remains
+open. The deepest committed verified Feature 002 boundary remains the genuine
+real `ffn_norm-0` input and independent scalar/NumPy CPU router oracle. Two
+earlier external `validate-router` commands reached complete real MLX router
+execution and returned zero, but neither candidate completed the independent
+sanitization/publication gate, so neither supports a verified public
+correctness or performance claim.
+
+Exact continuation point: after the material workload ends, begin a new
+notified hardware window, require both load averages at or below `15.0`, use a
+new external attempt rather than overwriting this postponed snapshot, recheck
+the immutable model/router/oracle identities, and resume at T083 with the exact
+Section 7 command in `specs/002-qwen-router-parity/quickstart.md`. Do not resume
+from T084 and do not reuse either prior internal candidate.

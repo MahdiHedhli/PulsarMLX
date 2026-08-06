@@ -117,16 +117,20 @@ the current offline slice:
 | `PULSARMLX_MODEL_GGUF='' python3 scripts/research/validate_evidence.py --schema-dir schemas/research/v1 --input fixtures/research/router-v1/evidence` | passed |
 | `PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py --feature 002-qwen-router-parity --fixture-only` | passed |
 
-Every command above kept the external-model variable empty or operated only on
-committed generated data. No external checkpoint was resolved, statted,
-hashed, opened, or executed for Feature 002.
+Every command in the table above kept the external-model variable empty or
+operated only on committed generated data. Separately, gated Feature 002 work
+admitted the immutable external checkpoint, committed the bounded real input
+and independent CPU oracle, and produced two unadmitted Apple router
+candidates. Neither candidate passed independent sanitization/publication, so
+there is still no verified Apple checkpoint-parity result.
 
 ## Platform boundary
 
 - macOS arm64 and MLX 0.32.0: the cases above passed locally.
 - Feature 002 complete-router execution is verified only for its two generated
   f32 cases. Real `blk.0.ffn_gate_inp.weight` admission, genuine `ffn_norm-0`
-  inputs, checkpoint parity, repeatability evidence, and router timing remain
+  inputs, and the independent CPU oracle are bounded and committed. Apple
+  checkpoint parity, repeatability evidence, and router timing remain
   unverified.
 - Linux/CUDA after shared Q8_0 additions: pending, not run on this Apple host.
 - The external Qwen3-30B-A3B Q8_0 artifact's complete size and SHA-256 match

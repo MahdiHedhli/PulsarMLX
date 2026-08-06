@@ -5,9 +5,11 @@
 **Input**: Feature specification from
 `specs/002-qwen-router-parity/spec.md`
 
-**Status**: Design complete; the foundational methodology and generated
-model-free router seam are implemented and validated locally. No external
-checkpoint has been accessed for Feature 002 and no real router result exists.
+**Status**: Design complete; the methodology, generated router seam, immutable
+checkpoint admission, real input capture, and independent CPU oracle are
+implemented and validated. Two Apple producer attempts failed closed before
+evidence admission, and a later fresh attempt stopped at the quiet-window gate;
+no validated public Apple router result exists.
 
 ## Summary
 

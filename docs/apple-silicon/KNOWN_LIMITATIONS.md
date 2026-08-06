@@ -79,17 +79,16 @@ and the source audit in
   aborted command evidence is retained, but the retained format itself does
   not promote a checkpoint or performance claim.
 - The independent [`router oracle`](../../scripts/research/router_oracle.py)
-  source and orchestration contract pass their twelve
-  model-free tests, including pinned-revision, two-capture, cancellation,
-  scalar-f32 accumulation, injected NumPy cross-check, import-independence, and
-  no-download checks. The pinned llama.cpp checkout and helper have not been
-  built or run against the live checkpoint, so no `ffn_norm-0` capture or real
-  oracle result exists.
-- No Feature 002 command resolved, statted, hashed, opened, or executed an
-  external checkpoint. Exact router-tensor occurrence, type, offsets, encoded
-  range/hash, scale/bias metadata, genuine real hidden states, real rank-8/9
-  tie state, Apple parity, ten-repeat identity, and timing all remain
-  unverified at their explicit gates.
+  source and orchestration contract pass their tests. The pinned llama.cpp
+  helper produced two identical genuine `ffn_norm-0` captures; the standalone
+  scalar-F32 oracle and its NumPy cross-check froze the complete real router
+  reference before Apple output was inspected.
+- Feature 002 admitted the exact external checkpoint and committed bounded
+  router-tensor identity, real hidden-state, and CPU-oracle values. Two Apple
+  producer attempts later executed and emitted candidates, but both failed
+  closed before independent evidence admission. Apple parity, ten-repeat
+  identity, clean-process replication, and timing therefore remain unverified
+  at T083 and later gates.
 - Router-only evidence does not establish any selected expert projection,
   expert MLP, weighted expert aggregation, routed-MoE block, transformer layer,
   attention or earlier hidden-state computation in PulsarMLX, language-model

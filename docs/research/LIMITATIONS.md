@@ -1,8 +1,8 @@
 # Feature 002 Research Limitations
 
-**Status**: Methodology limitations only. No Feature 002 checkpoint experiment
-has run, so this document contains no measured limitation disguised as a
-result.
+**Status**: No validated or published Feature 002 Apple router experiment
+exists. External attempts have executed, but failed closed before public
+evidence admission; they do not support a correctness or performance claim.
 
 Normative boundaries and stop conditions remain in the [Feature 002
 specification](../../specs/002-qwen-router-parity/spec.md) and [experiment
@@ -10,8 +10,10 @@ protocol](EXPERIMENT_PROTOCOL.md).
 
 ## Evidence-derived limitations
 
-No Feature 002 model evidence exists, so there are zero evidence-derived
-limitation entries.
+No validated Feature 002 Apple execution evidence exists, so there are zero
+Apple correctness or timing limitation entries derived from committed raw
+evidence. The committed real input and independent CPU oracle establish only
+the pre-Apple reference boundary.
 
 The frozen passed, failed, and aborted fixtures are constructed policy data.
 Their timing and error values do not estimate real accuracy, failure frequency,
@@ -34,12 +36,12 @@ exists under `docs/research/raw/002-router-parity/`.
 
 ## Unavailable observations
 
-Feature 002 router-tensor admission, genuine `ffn_norm-0` captures, real CPU
-oracle values, real Apple router outputs, real-checkpoint repeatability and
-latency, model-work admission resources, and checkpoint-run power, thermal,
-and interference observations are all unavailable until their
-dependency-ordered tasks run. Unavailable values are never encoded as measured
-zero.
+Router-tensor admission, two identical genuine `ffn_norm-0` captures, and the
+independent scalar/NumPy CPU oracle are now committed and bounded. Real Apple
+router outputs, independently sanitized MLX/CPU parity, real-checkpoint
+repeatability and latency, clean-process performance, and a clean-checkout
+Apple reproduction remain unavailable as public evidence. Unavailable values
+are never encoded as measured zero.
 
 Fixture model and tensor identities are frozen contract metadata, not observed
 checkpoint facts. The committed fixture package itself used no checkpoint
@@ -63,6 +65,21 @@ The fixture package cannot establish checkpoint availability or admission,
 router correctness, device selection, or any capability named above. Real
 hardware work remains behind the clean resource gate and acknowledged NTFY
 notification; local inference need not pause for fixture-only validation.
+
+## Observed resource-admission blocker
+
+At clean source commit `ed245542a827974f4c6822e68114f34aca70ee67`, a fresh
+T083 attempt stopped before checkpoint access because a sustained material
+concurrent workload violated the frozen load gate. Across the final retained
+public-safe snapshot, one-minute load was `48.16357421875` and five-minute load
+was `43.2705078125`, versus the exact `15.0` ceiling for this 20-logical-CPU
+host. Memory pressure was normal and thermal state nominal; neither healthy
+observation overrides the failed workload/load admission.
+
+The external snapshot remains outside Git and is identified in the session
+log by size and SHA-256. No candidate or timing sample was created from this
+window. This observation does not estimate model resource use, latency, or
+throughput; it records only why the experiment was not admitted.
 
 ## Open reproducibility constraints
 

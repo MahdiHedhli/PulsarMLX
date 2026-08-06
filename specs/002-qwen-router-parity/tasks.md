@@ -290,6 +290,15 @@ push a clean branch, and release the operator's hardware.
 - [ ] T096 Commit final reconciliation, push `main` without force, wait for every `.github/workflows/macos.yml` job, and verify a clean worktree with `HEAD == origin/main` using `docs/apple-silicon/SESSION_LOG.md`
 - [ ] T097 After T096 is green OR immediately after any documented Feature 002 stop condition in any phase, send the completion or exact-blocker NTFY to `https://ntfy.sh/Mahdi-Dev`, state whether model access began and that local inference may continue/resume, require an acknowledged response, and leave the clean branch unchanged as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
 
+**Current stop disposition (2026-08-06)**: T083 remains the first incomplete
+dependency. At clean/equal source `ed245542a827974f4c6822e68114f34aca70ee67`,
+a fresh attempt failed the frozen pre-checkpoint quiet-window admission after a
+14-minute bounded monitor and a retained public-safe postponed snapshot. No
+candidate was created and the checkpoint was not accessed in that attempt.
+This is the documented resource stop condition that makes T097 immediately
+eligible; T084 through T096 remain ineligible and incomplete. Resume from T083
+in a newly notified quiet window rather than reusing a prior candidate.
+
 ---
 
 ## Dependencies and Execution Order

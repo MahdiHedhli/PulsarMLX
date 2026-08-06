@@ -5,11 +5,11 @@ incremental branch)
 
 **Created**: 2026-08-05
 
-**Status**: Implementation in progress. The model-free research methodology
-and generated complete-router reference seam are implemented and validated
-locally. External-checkpoint admission, genuine hidden-state capture, and any
-real-router result remain unimplemented or unverified at their explicit task
-gates.
+**Status**: Implementation stopped at the T083 resource-admission gate. The
+methodology, generated complete-router seam, immutable-checkpoint admission,
+genuine hidden-state capture, and independent CPU oracle are implemented and
+validated. No Apple candidate has passed independent evidence admission, so
+real Apple router parity remains unverified.
 
 **Input**: Define and verify the next bounded real-checkpoint slice after
 Feature 001: complete layer-0 router projection, deterministic top-8 expert

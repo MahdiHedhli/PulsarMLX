@@ -1,9 +1,10 @@
 # Feature 002 Reproducibility Guide
 
-**Status**: Frozen methodology and fixture-only workflow. No external
-checkpoint has been accessed for Feature 002, no real router result exists, and
-the model-backed commands remain unavailable until their implementation tasks
-and admission gates pass.
+**Status**: Frozen methodology, fixture-only workflow, and bounded real CPU
+oracle. The immutable external checkpoint was accessed for inspection,
+capture, oracle construction, and two unadmitted Apple producer attempts; no
+validated public Apple router result exists. A new real run remains unavailable
+until T083 passes its quiet-window admission gate.
 
 This guide follows the [Feature 002 evidence
 contract](../../specs/002-qwen-router-parity/contracts/research-evidence-v1.md)
@@ -17,7 +18,7 @@ candidate output always remain outside Git.
 - Native arm64 macOS for any later Apple execution. The fixture-only workflow
   uses Python 3 and does not need a model or MLX device.
 - The checked-in schemas, fixtures, scripts, and Spec Kit package.
-- For later real work only, the already authorized immutable checkpoint from
+- For resumed real work only, the already authorized immutable checkpoint from
   Feature 001 at a caller-supplied absolute external path. Nothing in this
   repository downloads or searches for it.
 

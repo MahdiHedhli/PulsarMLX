@@ -1,8 +1,9 @@
 # Feature 002 Reviewer Index
 
 **Status**: The independent CPU-oracle support package is frozen and indexed.
-No Apple MLX checkpoint experiment, generated real result, or promoted router
-capability is indexed.
+Two external Apple MLX producer attempts failed closed before evidence
+admission, so no Apple experiment record, generated real result, or promoted
+router capability is indexed.
 
 The governing package is the [Feature 002 specification](../../specs/002-qwen-router-parity/spec.md),
 [plan](../../specs/002-qwen-router-parity/plan.md), [quickstart](../../specs/002-qwen-router-parity/quickstart.md),

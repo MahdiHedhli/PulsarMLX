@@ -308,12 +308,13 @@ that the gated pinned build or model run succeeds.
 The complete frozen boundary is specified in the
 [router parity contract](../../specs/002-qwen-router-parity/contracts/router-parity-v1.md).
 
-Only the model-free oracle contract and stubbed calculations have been tested
-so far. The live pinned llama.cpp checkout, helper build, external GGUF
-inspection, real `ffn_norm-0` capture, and real scalar oracle have not run.
-They remain prohibited until the dependency-ordered pre-access gate sends and
-confirms the required NTFY notification. No external checkpoint was accessed
-while implementing or validating this offline seam.
+The live pinned llama.cpp helper, external GGUF inspection, two identical real
+`ffn_norm-0` captures, and the independent scalar/NumPy CPU oracle have run and
+their bounded redistributable outputs are committed. Two later external Apple
+producer attempts executed the complete bounded router but failed closed
+before independent evidence admission, so they do not establish Apple parity.
+A third fresh attempt stopped at the quiet-window resource gate before it
+reopened the checkpoint.
 
 ### Stage 8: measured optimization (not run)
 

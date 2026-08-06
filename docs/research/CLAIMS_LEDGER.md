@@ -1,8 +1,9 @@
 # Feature 002 Claims Ledger
 
 **Status**: The independent CPU oracle support package is frozen, with zero
-public Feature 002 claims. No Apple MLX checkpoint experiment has run and no
-router capability has been promoted.
+public Feature 002 claims. Two external Apple MLX producer attempts executed
+the bounded real router but failed closed before independent evidence
+admission; no router capability has been promoted.
 
 There are zero public Feature 002 capability or performance claims. The table
 below intentionally has no data rows. A row may be added only when its status

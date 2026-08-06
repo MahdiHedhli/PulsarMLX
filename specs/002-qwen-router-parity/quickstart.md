@@ -1,10 +1,10 @@
 # Validation Quickstart: Qwen3MoE Layer-0 Router Parity
 
-**Status**: Sections 1 through 3 and the complete generated-router boundary in
-Section 6 describe implemented model-free work. Every external-checkpoint
-command remains gated until its implementing tasks and exact prerequisites are
-committed and green. Feature 001 remains the verified real-checkpoint baseline;
-no Feature 002 checkpoint result exists.
+**Status**: The model-free workflow, immutable checkpoint admission, real
+capture, and independent CPU oracle are implemented. Feature 001 remains the
+verified real-checkpoint baseline; Feature 002 has no validated public Apple
+checkpoint result, and any resumed T083 run remains gated by a new notified
+quiet hardware window.
 
 ## 1. Confirm the active bounded feature
 

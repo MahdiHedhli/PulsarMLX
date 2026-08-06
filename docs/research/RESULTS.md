@@ -1,7 +1,8 @@
 # Feature 002 Results
 
-**Status**: Publication structure initialized; no real Feature 002 experiment
-has run and there are no checkpoint correctness or timing results.
+**Status**: The real input and independent CPU oracle are committed, but no
+real Apple execution record has passed independent sanitization and
+publication. There are no verified checkpoint correctness or timing results.
 
 Only validated, committed raw evidence governed by the [Feature 002 evidence
 contract](../../specs/002-qwen-router-parity/contracts/research-evidence-v1.md)
@@ -30,9 +31,15 @@ outcome.
 
 ## Correctness records
 
-No real router records exist. Exact top-8 IDs/order, complete logits and
-probabilities, normalized weights, numeric errors, device selection, and
-fallback status are unobserved.
+No validated public Apple router record exists. Two external
+internal-orchestration candidates reached the complete bounded MLX router and
+their producer commands returned zero, but post-processing failed closed before
+independent candidate admission: the first exposed a bounded resource-extractor
+intake defect, and the second exposed incorrect clean first-process role
+labels. Both are preserved externally and intentionally excluded from this
+result section. Exact public Apple top-8 parity, numerical errors, device
+selection, fallback status, and deterministic repeatability therefore remain
+unverified.
 
 Future entries must link their raw evidence and measured source commit; report
 the exact checkpoint, tensor, case, execution depth, comparison metrics, and
@@ -41,14 +48,19 @@ zero entries.
 
 ## Model-backed repeatability
 
-No real repetition record exists. Ten-run output identity and the required
-clean-process replications have not been measured.
+No admitted real repetition record exists. Producer candidates cannot replace
+sanitizer validation, append-only publication, and clean-checkout reproduction;
+therefore ten-run output identity and clean-process replications are not
+published results.
 
 ## Model-backed timing and resources
 
-No real-checkpoint router timing has been collected. There are no first-process
-OS-cache-uncontrolled, warm, minimally instrumented, stage-instrumented,
-resource, power, or thermal results to publish.
+No real-checkpoint router timing has been admitted. There are no
+first-process OS-cache-uncontrolled, warm, minimally instrumented,
+stage-instrumented, resource, power, or thermal results to publish. A later
+fresh attempt stopped before checkpoint access because sustained one- and
+five-minute load averages exceeded the frozen quiet-window ceiling; its
+public-safe postponed snapshot is a blocker observation, not model timing.
 
 Future timing entries must be generated from committed raw samples and keep
 condition, instrumentation mode, case, batch, and process replication
@@ -74,11 +86,24 @@ measurement, or evidence for the model-backed sections above.
 
 ## Failed, aborted, and excluded attempts
 
-No Feature 002 model attempt exists. Future unsuccessful attempts remain
-append-only evidence and must appear here rather than being removed. Protocol
-v1 admits no production exclusion rule; the separate excluded fixture is a
-mutation expected to be rejected and is not part of the frozen expected-output
-package.
+Three external T083 attempts are retained outside Git and are not silently
+deleted or relabeled:
+
+1. the first complete producer candidate could not pass the originally shared
+   resource-extractor input bound;
+2. the second complete producer candidate was independently rejected because
+   all first-process series were labeled `primary` instead of the frozen
+   10-primary/20-clean-replication matrix; and
+3. the third fresh attempt stopped before checkpoint access when the
+   public-safe environment gate observed a material concurrent workload and
+   load averages above the exact ceiling.
+
+The first two failures required source corrections and therefore cannot be
+published as passing evidence from a different commit. The third created no
+router candidate. Available hashes and bounded observations, together with
+continuation details, are in the session log. Protocol v1 admits no production
+exclusion rule; the separate excluded fixture remains a mutation expected to
+be rejected and is not part of the frozen expected-output package.
 
 ## Claim boundary
 
