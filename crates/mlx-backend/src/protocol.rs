@@ -8,7 +8,7 @@ use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Number, Value};
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 pub const PROTOCOL_VERSION: u32 = 1;
@@ -46,6 +46,9 @@ const ROUTER_OUTPUT_DTYPE: &str = "float32";
 const ROUTER_PROBABILITY_SUM_TOLERANCE: f64 = 1.0e-6;
 const ROUTER_PROBABILITY_ABSOLUTE_TOLERANCE: f64 = 1.0e-6;
 const ROUTER_PROBABILITY_RELATIVE_TOLERANCE: f64 = 1.0e-6;
+const ROUTER_TIMING_CLOCK: &str = "perf_counter_ns";
+const ROUTER_F32_DEQUANTIZATION_REASON: &str = "f32_router_requires_no_dequantization";
+const MAX_ROUTER_TIMING_STAGES: usize = 13;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkerErrorKind {
@@ -723,6 +726,172 @@ impl RouterRequest {
     }
 }
 
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterInstrumentationMode {
+    MinimallyInstrumented,
+    StageInstrumented,
+}
+
+impl RouterInstrumentationMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::MinimallyInstrumented => "minimally_instrumented",
+            Self::StageInstrumented => "stage_instrumented",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+enum RouterMonotonicClock {
+    #[serde(rename = "perf_counter_ns")]
+    PerfCounterNs,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RouterTimingStageStatus {
+    Observed,
+    Unavailable,
+    NotApplicable,
+}
+
+impl RouterTimingStageStatus {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Observed => "observed",
+            Self::Unavailable => "unavailable",
+            Self::NotApplicable => "not_applicable",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RouterTimingStage {
+    Observed { duration_ns: u64 },
+    Unavailable { reason: String },
+    NotApplicable { reason: String },
+}
+
+impl RouterTimingStage {
+    pub const fn status(&self) -> RouterTimingStageStatus {
+        match self {
+            Self::Observed { .. } => RouterTimingStageStatus::Observed,
+            Self::Unavailable { .. } => RouterTimingStageStatus::Unavailable,
+            Self::NotApplicable { .. } => RouterTimingStageStatus::NotApplicable,
+        }
+    }
+
+    pub const fn duration_ns(&self) -> Option<u64> {
+        match self {
+            Self::Observed { duration_ns } => Some(*duration_ns),
+            Self::Unavailable { .. } | Self::NotApplicable { .. } => None,
+        }
+    }
+
+    pub fn reason(&self) -> Option<&str> {
+        match self {
+            Self::Observed { .. } => None,
+            Self::Unavailable { reason } | Self::NotApplicable { reason } => Some(reason),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRouterTimingStage {
+    status: String,
+    #[serde(default)]
+    duration_ns: PresentRouterTimingField<u64>,
+    #[serde(default)]
+    reason: PresentRouterTimingField<String>,
+}
+
+#[derive(Default)]
+enum PresentRouterTimingField<T> {
+    #[default]
+    Missing,
+    Present(T),
+}
+
+impl<'de, T> Deserialize<'de> for PresentRouterTimingField<T>
+where
+    T: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        T::deserialize(deserializer).map(Self::Present)
+    }
+}
+
+impl<'de> Deserialize<'de> for RouterTimingStage {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw = RawRouterTimingStage::deserialize(deserializer)?;
+        match (raw.status.as_str(), raw.duration_ns, raw.reason) {
+            (
+                "observed",
+                PresentRouterTimingField::Present(duration_ns),
+                PresentRouterTimingField::Missing,
+            ) => Ok(Self::Observed { duration_ns }),
+            (
+                "unavailable",
+                PresentRouterTimingField::Missing,
+                PresentRouterTimingField::Present(reason),
+            ) => Ok(Self::Unavailable { reason }),
+            (
+                "not_applicable",
+                PresentRouterTimingField::Missing,
+                PresentRouterTimingField::Present(reason),
+            ) => Ok(Self::NotApplicable { reason }),
+            _ => Err(de::Error::custom(
+                "router timing stage fields contradict its status",
+            )),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct RouterExecutionTiming {
+    monotonic_clock: RouterMonotonicClock,
+    instrumentation_mode: RouterInstrumentationMode,
+    evaluated: bool,
+    synchronized: bool,
+    stages: BTreeMap<String, RouterTimingStage>,
+}
+
+impl RouterExecutionTiming {
+    pub const fn monotonic_clock(&self) -> &'static str {
+        match self.monotonic_clock {
+            RouterMonotonicClock::PerfCounterNs => ROUTER_TIMING_CLOCK,
+        }
+    }
+
+    pub const fn instrumentation_mode(&self) -> RouterInstrumentationMode {
+        self.instrumentation_mode
+    }
+
+    pub const fn evaluated(&self) -> bool {
+        self.evaluated
+    }
+
+    pub const fn synchronized(&self) -> bool {
+        self.synchronized
+    }
+
+    pub fn stages(&self) -> &BTreeMap<String, RouterTimingStage> {
+        &self.stages
+    }
+
+    pub fn stage(&self, name: &str) -> Option<&RouterTimingStage> {
+        self.stages.get(name)
+    }
+}
+
 /// Strict complete raw-worker result for one bounded router request.
 ///
 /// `passed` confirms the evaluated GPU/no-fallback execution envelope and the
@@ -753,6 +922,7 @@ pub struct RouterResult {
     selected_probabilities_f32le_sha256: String,
     normalized_weights_f32le_sha256: String,
     memory_gauges: TensorFixtureMemoryGauges,
+    timing: RouterExecutionTiming,
     passed: bool,
 }
 
@@ -843,6 +1013,10 @@ impl RouterResult {
 
     pub fn memory_gauges(&self) -> &TensorFixtureMemoryGauges {
         &self.memory_gauges
+    }
+
+    pub fn timing(&self) -> &RouterExecutionTiming {
+        &self.timing
     }
 
     pub fn passed(&self) -> bool {
@@ -2193,10 +2367,108 @@ fn validate_router_numeric_rows(rows: &[Vec<f64>]) -> Result<(), WorkerError> {
     Ok(())
 }
 
+fn validate_router_execution_timing(timing: &RouterExecutionTiming) -> Result<(), WorkerError> {
+    // The frozen `run_router` protocol-v1 operation is the minimally
+    // instrumented execution boundary. Stage-instrumented observations are a
+    // separate evidence-series mode and must never be relabeled as this result.
+    if timing.monotonic_clock() != ROUTER_TIMING_CLOCK
+        || timing.instrumentation_mode != RouterInstrumentationMode::MinimallyInstrumented
+        || !timing.evaluated
+        || !timing.synchronized
+        || timing.stages.len() != 2
+        || timing.stages.len() > MAX_ROUTER_TIMING_STAGES
+    {
+        return Err(fixture_protocol_error(
+            "router timing contradicts the admitted minimal execution boundary",
+        ));
+    }
+
+    for (stage_name, stage) in &timing.stages {
+        if !valid_router_timing_stage_name(stage_name) {
+            return Err(fixture_protocol_error(
+                "router timing contains an unknown stage identity",
+            ));
+        }
+        match stage {
+            RouterTimingStage::Observed { duration_ns } => {
+                if *duration_ns == 0 {
+                    return Err(fixture_protocol_error(
+                        "router timing contains a nonpositive observed duration",
+                    ));
+                }
+            }
+            RouterTimingStage::Unavailable { reason } => {
+                validate_router_timing_reason(reason)?;
+            }
+            RouterTimingStage::NotApplicable { reason } => {
+                validate_router_timing_reason(reason)?;
+                if stage_name != "dequantization" {
+                    return Err(fixture_protocol_error(
+                        "router timing marks an unsupported stage not applicable",
+                    ));
+                }
+            }
+        }
+    }
+
+    match timing.stages.get("dequantization") {
+        Some(RouterTimingStage::NotApplicable { reason })
+            if reason == ROUTER_F32_DEQUANTIZATION_REASON => {}
+        _ => {
+            return Err(fixture_protocol_error(
+                "router timing lacks canonical F32 dequantization evidence",
+            ));
+        }
+    }
+    match timing.stages.get("total_evaluated_router") {
+        Some(RouterTimingStage::Observed { duration_ns }) if *duration_ns > 0 => {}
+        _ => {
+            return Err(fixture_protocol_error(
+                "router timing lacks its positive evaluated total",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn valid_router_timing_stage_name(stage: &str) -> bool {
+    matches!(
+        stage,
+        "setup_admission"
+            | "file_io"
+            | "storage_validation_f32_decode"
+            | "dequantization"
+            | "host_to_device"
+            | "graph_construction"
+            | "compilation"
+            | "router_projection"
+            | "top_k"
+            | "normalization"
+            | "total_evaluated_router"
+            | "synchronized_readback"
+            | "end_to_end_router_command"
+    )
+}
+
+fn validate_router_timing_reason(reason: &str) -> Result<(), WorkerError> {
+    if reason.is_empty()
+        || reason.trim() != reason
+        || reason.chars().count() > MAX_PROTOCOL_MESSAGE_CHARS
+        || reason.chars().any(char::is_control)
+        || sanitize_message(reason) != reason
+    {
+        return Err(fixture_protocol_error(
+            "router timing contains an invalid or private reason",
+        ));
+    }
+    Ok(())
+}
+
 fn validate_router_result(
     result: &RouterResult,
     request: &RouterRequest,
 ) -> Result<(), WorkerError> {
+    validate_router_execution_timing(&result.timing)?;
     let expected_rows = request.expected_rows();
     if result.router_case_id != request.router_case_id
         || result.operation != ROUTER_OPERATION
@@ -2212,6 +2484,8 @@ fn validate_router_result(
         || result.expert_count != ROUTER_EXPERT_COUNT as u64
         || result.top_k != ROUTER_TOP_K as u64
         || result.output_dtype != ROUTER_OUTPUT_DTYPE
+        || result.evaluated != result.timing.evaluated
+        || result.synchronized != result.timing.synchronized
         || !result.passed
     {
         return Err(fixture_protocol_error(
@@ -2894,6 +3168,22 @@ mod tests {
                 "system_pressure": "normal",
                 "reported_summed_total_bytes": null
             },
+            "timing": {
+                "monotonic_clock": "perf_counter_ns",
+                "instrumentation_mode": "minimally_instrumented",
+                "evaluated": true,
+                "synchronized": true,
+                "stages": {
+                    "dequantization": {
+                        "status": "not_applicable",
+                        "reason": "f32_router_requires_no_dequantization"
+                    },
+                    "total_evaluated_router": {
+                        "status": "observed",
+                        "duration_ns": 1_337
+                    }
+                }
+            },
             "passed": true
         })
     }
@@ -3014,6 +3304,33 @@ mod tests {
         assert_eq!(result.logits().len(), 1);
         assert_eq!(result.logits()[0].len(), ROUTER_EXPERT_COUNT);
         assert_eq!(result.selected_expert_ids()[0].len(), ROUTER_TOP_K);
+        let timing = result.timing();
+        assert_eq!(timing.monotonic_clock(), "perf_counter_ns");
+        assert_eq!(
+            timing.instrumentation_mode(),
+            RouterInstrumentationMode::MinimallyInstrumented
+        );
+        assert!(timing.evaluated());
+        assert!(timing.synchronized());
+        assert_eq!(timing.stages().len(), 2);
+        let dequantization = timing
+            .stage("dequantization")
+            .expect("dequantization stage");
+        assert_eq!(
+            dequantization.status(),
+            RouterTimingStageStatus::NotApplicable
+        );
+        assert_eq!(
+            dequantization.reason(),
+            Some("f32_router_requires_no_dequantization")
+        );
+        assert_eq!(dequantization.duration_ns(), None);
+        let total = timing
+            .stage("total_evaluated_router")
+            .expect("evaluated total stage");
+        assert_eq!(total.status(), RouterTimingStageStatus::Observed);
+        assert_eq!(total.duration_ns(), Some(1_337));
+        assert_eq!(total.reason(), None);
         assert!(result.passed());
 
         let mut incomplete = router_result_value();
@@ -3057,5 +3374,116 @@ mod tests {
         );
         assert!(RouterRequest::new("unregistered-router", "gpu").is_err());
         assert!(RouterRequest::new(ROUTER_SINGLE_ROW_CASE_ID, "cpu").is_err());
+    }
+
+    #[test]
+    fn router_timing_envelope_is_closed_positive_and_semantically_coherent() {
+        let request = RouterRequest::new(ROUTER_SINGLE_ROW_CASE_ID, "gpu")
+            .expect("registered router request");
+
+        let mut missing = router_result_value();
+        missing
+            .as_object_mut()
+            .expect("router result object")
+            .remove("timing");
+
+        let mut wrong_clock = router_result_value();
+        wrong_clock["timing"]["monotonic_clock"] = json!("system_time_ns");
+
+        let mut unknown_field = router_result_value();
+        unknown_field["timing"]["unreviewed"] = json!(true);
+
+        let mut mismatched_barrier = router_result_value();
+        mismatched_barrier["timing"]["synchronized"] = json!(false);
+
+        let mut wrong_mode = router_result_value();
+        wrong_mode["timing"]["instrumentation_mode"] = json!("stage_instrumented");
+
+        let mut zero_total = router_result_value();
+        zero_total["timing"]["stages"]["total_evaluated_router"]["duration_ns"] = json!(0);
+
+        let mut contradictory_total = router_result_value();
+        contradictory_total["timing"]["stages"]["total_evaluated_router"]["reason"] =
+            json!("an observed stage cannot have a reason");
+
+        let mut null_observed_reason = router_result_value();
+        null_observed_reason["timing"]["stages"]["total_evaluated_router"]["reason"] = Value::Null;
+
+        let mut wrong_dequantization = router_result_value();
+        wrong_dequantization["timing"]["stages"]["dequantization"]["reason"] =
+            json!("dequantization was skipped");
+
+        let mut null_unavailable_duration = router_result_value();
+        null_unavailable_duration["timing"]["stages"]["file_io"] = json!({
+            "status": "unavailable",
+            "duration_ns": null,
+            "reason": "the phase was outside this operation"
+        });
+
+        let mut extra_stage = router_result_value();
+        extra_stage["timing"]["stages"]["file_io"] = json!({
+            "status": "unavailable",
+            "reason": "the phase was outside this operation"
+        });
+
+        for (label, value) in [
+            ("missing timing", missing),
+            ("wrong clock", wrong_clock),
+            ("unknown timing field", unknown_field),
+            ("mismatched barrier", mismatched_barrier),
+            ("unrequested timing mode", wrong_mode),
+            ("zero total", zero_total),
+            ("contradictory total", contradictory_total),
+            ("null observed reason", null_observed_reason),
+            ("wrong F32 dequantization", wrong_dequantization),
+            ("null unavailable duration", null_unavailable_duration),
+            ("extra minimal stage", extra_stage),
+        ] {
+            assert_eq!(
+                parse_router_result(value, &request)
+                    .expect_err(label)
+                    .kind(),
+                WorkerErrorKind::Protocol,
+                "{label} must fail closed"
+            );
+        }
+
+        let unavailable: RouterTimingStage = serde_json::from_value(json!({
+            "status": "unavailable",
+            "reason": "the phase is outside this operation"
+        }))
+        .expect("missing duration is valid for an unavailable stage");
+        assert_eq!(unavailable.status(), RouterTimingStageStatus::Unavailable);
+        assert_eq!(
+            unavailable.reason(),
+            Some("the phase is outside this operation")
+        );
+        assert_eq!(unavailable.duration_ns(), None);
+
+        for (label, stage) in [
+            (
+                "null unavailable duration",
+                json!({
+                    "status": "unavailable",
+                    "duration_ns": null,
+                    "reason": "the phase is outside this operation"
+                }),
+            ),
+            (
+                "unknown stage field",
+                json!({
+                    "status": "observed",
+                    "duration_ns": 1,
+                    "unreviewed": true
+                }),
+            ),
+            ("unknown stage status", json!({"status": "estimated"})),
+            ("missing stage status", json!({"duration_ns": 1})),
+        ] {
+            assert!(
+                serde_json::from_value::<RouterTimingStage>(stage).is_err(),
+                "{label} must fail the timing-stage union directly"
+            );
+        }
     }
 }

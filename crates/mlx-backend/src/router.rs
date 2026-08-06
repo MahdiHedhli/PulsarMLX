@@ -5,8 +5,10 @@
 //! or execute an external checkpoint.
 
 use backend::{ContractError, ErrorCategory};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
 use std::io::{self, ErrorKind};
 use std::mem::size_of;
@@ -31,6 +33,1138 @@ const WEIGHT_SUM_TOLERANCE: f64 = 1.0e-6;
 const PROBABILITY_ABSOLUTE_TOLERANCE: f64 = 1.0e-6;
 const PROBABILITY_RELATIVE_TOLERANCE: f64 = 1.0e-6;
 const MAX_CASE_ID_CHARS: usize = 128;
+const MAX_TIMING_REASON_CHARS: usize = 512;
+const MAX_TIMING_OBSERVATIONS: usize = 1_024;
+const MAX_TIMING_SERIES_BYTES: usize = 1_024 * 1_024;
+const ROUTER_TIMING_CLOCK: &str = "perf_counter_ns";
+const ROUTER_F32_DEQUANTIZATION_REASON: &str = "f32_router_requires_no_dequantization";
+
+pub const ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID: &str = "f002-major-single-row-minimal-v1";
+pub const ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID: &str = "f002-major-two-row-minimal-v1";
+pub const ROUTER_REAL_SINGLE_ROW_CASE_ID: &str = "qwen3moe-layer0-router-token0-row0-v1";
+pub const ROUTER_REAL_TWO_ROW_CASE_ID: &str = "qwen3moe-layer0-router-token0-token1-batch-v1";
+pub const ROUTER_GENERATED_SINGLE_ROW_CASE_ID: &str = "generated-qwen3moe-router-single-row-v1";
+pub const ROUTER_GENERATED_TWO_ROW_CASE_ID: &str = "generated-qwen3moe-router-two-row-v1";
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingSeriesKind {
+    MajorMinimallyInstrumented,
+    InexpensiveSynthetic,
+    CostlyReal,
+    FirstProcessCostly,
+    StageDiagnostic,
+}
+
+impl RouterTimingSeriesKind {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::MajorMinimallyInstrumented => "major_minimally_instrumented",
+            Self::InexpensiveSynthetic => "inexpensive_synthetic",
+            Self::CostlyReal => "costly_real",
+            Self::FirstProcessCostly => "first_process_costly",
+            Self::StageDiagnostic => "stage_diagnostic",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingReplicationRole {
+    Primary,
+    CleanProcessReplication,
+}
+
+impl RouterTimingReplicationRole {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Primary => "primary",
+            Self::CleanProcessReplication => "clean_process_replication",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingProcessState {
+    FreshProcess,
+    ReusedProcess,
+}
+
+impl RouterTimingProcessState {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::FreshProcess => "fresh_process",
+            Self::ReusedProcess => "reused_process",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingCondition {
+    Warm,
+    FirstReadNewProcessOsCacheUncontrolled,
+    ControlledCold,
+}
+
+impl RouterTimingCondition {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Warm => "warm",
+            Self::FirstReadNewProcessOsCacheUncontrolled => {
+                "first_read_new_process_os_cache_uncontrolled"
+            }
+            Self::ControlledCold => "controlled_cold",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingInstrumentationMode {
+    MinimallyInstrumented,
+    StageInstrumented,
+}
+
+impl RouterTimingInstrumentationMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::MinimallyInstrumented => "minimally_instrumented",
+            Self::StageInstrumented => "stage_instrumented",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingObservationKind {
+    Warmup,
+    Measurement,
+    CleanProcessReplication,
+}
+
+impl RouterTimingObservationKind {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Warmup => "warmup",
+            Self::Measurement => "measurement",
+            Self::CleanProcessReplication => "clean_process_replication",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTimingObservationStatus {
+    Passed,
+    Failed,
+    Aborted,
+    Excluded,
+}
+
+impl RouterTimingObservationStatus {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Passed => "passed",
+            Self::Failed => "failed",
+            Self::Aborted => "aborted",
+            Self::Excluded => "excluded",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum RouterTimingStageObservation {
+    Observed { duration_ns: u64 },
+    Unavailable { reason: String },
+    NotApplicable { reason: String },
+}
+
+impl RouterTimingStageObservation {
+    pub const fn duration_ns(&self) -> Option<u64> {
+        match self {
+            Self::Observed { duration_ns } => Some(*duration_ns),
+            Self::Unavailable { .. } | Self::NotApplicable { .. } => None,
+        }
+    }
+
+    pub fn reason(&self) -> Option<&str> {
+        match self {
+            Self::Observed { .. } => None,
+            Self::Unavailable { reason } | Self::NotApplicable { reason } => Some(reason),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct RouterTimingFailure {
+    code: String,
+    message: String,
+    stage: String,
+}
+
+impl RouterTimingFailure {
+    pub fn code(&self) -> &str {
+        &self.code
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
+    pub fn stage(&self) -> &str {
+        &self.stage
+    }
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct RouterTimingObservation {
+    observation_id: String,
+    run_index: usize,
+    observation_kind: RouterTimingObservationKind,
+    process_replication_id: String,
+    process_state: RouterTimingProcessState,
+    condition: RouterTimingCondition,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    monotonic_clock: String,
+    stages: BTreeMap<String, RouterTimingStageObservation>,
+    status: RouterTimingObservationStatus,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    evaluated: bool,
+    synchronized: bool,
+    output_sha256: Option<String>,
+    correctness_passed: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    failure: Option<RouterTimingFailure>,
+}
+
+impl RouterTimingObservation {
+    pub fn observation_id(&self) -> &str {
+        &self.observation_id
+    }
+
+    pub fn run_index(&self) -> usize {
+        self.run_index
+    }
+
+    pub const fn observation_kind(&self) -> RouterTimingObservationKind {
+        self.observation_kind
+    }
+
+    pub fn process_replication_id(&self) -> &str {
+        &self.process_replication_id
+    }
+
+    pub const fn process_state(&self) -> RouterTimingProcessState {
+        self.process_state
+    }
+
+    pub const fn condition(&self) -> RouterTimingCondition {
+        self.condition
+    }
+
+    pub const fn instrumentation_mode(&self) -> RouterTimingInstrumentationMode {
+        self.instrumentation_mode
+    }
+
+    pub fn monotonic_clock(&self) -> &str {
+        &self.monotonic_clock
+    }
+
+    pub fn stages(&self) -> &BTreeMap<String, RouterTimingStageObservation> {
+        &self.stages
+    }
+
+    pub const fn status(&self) -> RouterTimingObservationStatus {
+        self.status
+    }
+
+    pub fn requested_device(&self) -> &str {
+        &self.requested_device
+    }
+
+    pub fn selected_device(&self) -> &str {
+        &self.selected_device
+    }
+
+    pub const fn fallback_used(&self) -> bool {
+        self.fallback_used
+    }
+
+    pub const fn evaluated(&self) -> bool {
+        self.evaluated
+    }
+
+    pub const fn synchronized(&self) -> bool {
+        self.synchronized
+    }
+
+    pub fn output_sha256(&self) -> Option<&str> {
+        self.output_sha256.as_deref()
+    }
+
+    pub fn correctness_passed(&self) -> Option<bool> {
+        self.correctness_passed
+    }
+
+    pub fn failure(&self) -> Option<&RouterTimingFailure> {
+        self.failure.as_ref()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct RouterTimingSeries {
+    benchmark_id: String,
+    case_id: String,
+    row_count: usize,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    process_replication_id: String,
+    process_state: RouterTimingProcessState,
+    condition: RouterTimingCondition,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    warmup_count: usize,
+    measurement_count: usize,
+    raw_timing_observations: Vec<RouterTimingObservation>,
+}
+
+impl RouterTimingSeries {
+    pub fn try_from_value(value: Value) -> Result<Self, ContractError> {
+        let raw: RawRouterTimingSeries = serde_json::from_value(value).map_err(|_| {
+            invalid_timing_evidence("router timing series does not match its closed schema")
+        })?;
+        Self::try_from_raw(raw)
+    }
+
+    pub fn benchmark_id(&self) -> &str {
+        &self.benchmark_id
+    }
+
+    pub fn case_id(&self) -> &str {
+        &self.case_id
+    }
+
+    pub fn row_count(&self) -> usize {
+        self.row_count
+    }
+
+    pub const fn series_kind(&self) -> RouterTimingSeriesKind {
+        self.series_kind
+    }
+
+    pub const fn replication_role(&self) -> RouterTimingReplicationRole {
+        self.replication_role
+    }
+
+    pub fn process_replication_id(&self) -> &str {
+        &self.process_replication_id
+    }
+
+    pub const fn process_state(&self) -> RouterTimingProcessState {
+        self.process_state
+    }
+
+    pub const fn condition(&self) -> RouterTimingCondition {
+        self.condition
+    }
+
+    pub const fn instrumentation_mode(&self) -> RouterTimingInstrumentationMode {
+        self.instrumentation_mode
+    }
+
+    pub fn warmup_count(&self) -> usize {
+        self.warmup_count
+    }
+
+    pub fn measurement_count(&self) -> usize {
+        self.measurement_count
+    }
+
+    pub fn raw_timing_observations(&self) -> &[RouterTimingObservation] {
+        &self.raw_timing_observations
+    }
+
+    pub fn try_to_value(&self) -> Result<Value, ContractError> {
+        let encoded = serde_json::to_vec(self)
+            .map_err(|_| invalid_timing_evidence("router timing series could not be serialized"))?;
+        if encoded.len() > MAX_TIMING_SERIES_BYTES {
+            return Err(invalid_timing_evidence(
+                "router timing series exceeds the bounded response size",
+            ));
+        }
+        serde_json::from_slice(&encoded)
+            .map_err(|_| invalid_timing_evidence("router timing series could not be serialized"))
+    }
+
+    pub fn successful_warmup_count(&self) -> usize {
+        self.successful_count(RouterTimingObservationKind::Warmup)
+    }
+
+    pub fn successful_measurement_count(&self) -> usize {
+        self.successful_count(RouterTimingObservationKind::Measurement)
+    }
+
+    pub fn has_complete_success_samples(&self) -> bool {
+        self.successful_warmup_count() == self.warmup_count
+            && self.successful_measurement_count() == self.measurement_count
+    }
+
+    fn try_from_raw(mut raw: RawRouterTimingSeries) -> Result<Self, ContractError> {
+        validate_timing_series_identity(&raw)?;
+        validate_timing_series_policy(&raw)?;
+        let required_successes = raw
+            .warmup_count
+            .checked_add(raw.measurement_count)
+            .ok_or_else(|| invalid_timing_evidence("router timing sample count overflows"))?;
+        if required_successes == 0
+            || required_successes > MAX_TIMING_OBSERVATIONS
+            || raw.raw_timing_observations.is_empty()
+            || raw.raw_timing_observations.len() > MAX_TIMING_OBSERVATIONS
+        {
+            return Err(invalid_timing_evidence(
+                "router timing observations violate the frozen response bounds",
+            ));
+        }
+
+        let mut observations = Vec::with_capacity(raw.raw_timing_observations.len());
+        let mut observation_ids = BTreeSet::new();
+        let mut passed_hash = None::<String>;
+        let mut next_warmup_index = 0_usize;
+        let mut next_measurement_index = 0_usize;
+        let mut successful_warmups = 0_usize;
+        let mut successful_measurements = 0_usize;
+        let mut retained_unsuccessful = false;
+        let mut measurements_started = false;
+        let raw_observations = std::mem::take(&mut raw.raw_timing_observations);
+        for raw_observation in raw_observations {
+            let (expected_kind, expected_index) = match raw_observation.observation_kind {
+                RouterTimingObservationKind::Warmup if !measurements_started => {
+                    let index = next_warmup_index;
+                    next_warmup_index += 1;
+                    (RouterTimingObservationKind::Warmup, index)
+                }
+                RouterTimingObservationKind::Measurement => {
+                    measurements_started = true;
+                    let index = next_measurement_index;
+                    next_measurement_index += 1;
+                    (RouterTimingObservationKind::Measurement, index)
+                }
+                _ => {
+                    return Err(invalid_timing_evidence(
+                        "router timing observations violate their frozen kind order",
+                    ));
+                }
+            };
+            let observation =
+                validate_timing_observation(raw_observation, expected_kind, expected_index, &raw)?;
+            if !observation_ids.insert(observation.observation_id.clone()) {
+                return Err(invalid_timing_evidence(
+                    "router timing observation identity is duplicated",
+                ));
+            }
+            if observation.status == RouterTimingObservationStatus::Passed {
+                match observation.observation_kind {
+                    RouterTimingObservationKind::Warmup => successful_warmups += 1,
+                    RouterTimingObservationKind::Measurement => successful_measurements += 1,
+                    RouterTimingObservationKind::CleanProcessReplication => unreachable!(
+                        "the closed kind-order validation rejects replication observations"
+                    ),
+                }
+                match (&passed_hash, &observation.output_sha256) {
+                    (None, Some(hash)) => passed_hash = Some(hash.clone()),
+                    (Some(expected), Some(actual)) if expected == actual => {}
+                    _ => {
+                        return Err(invalid_timing_evidence(
+                            "passing router timing output hashes are inconsistent",
+                        ));
+                    }
+                }
+            } else {
+                retained_unsuccessful = true;
+            }
+            observations.push(observation);
+        }
+
+        if successful_warmups > raw.warmup_count
+            || successful_measurements > raw.measurement_count
+            || (!retained_unsuccessful
+                && (successful_warmups != raw.warmup_count
+                    || successful_measurements != raw.measurement_count))
+        {
+            return Err(invalid_timing_evidence(
+                "router timing successful samples do not match the frozen policy",
+            ));
+        }
+
+        Ok(Self {
+            benchmark_id: raw.benchmark_id,
+            case_id: raw.case_id,
+            row_count: raw.row_count,
+            series_kind: raw.series_kind,
+            replication_role: raw.replication_role,
+            process_replication_id: raw.process_replication_id,
+            process_state: raw.process_state,
+            condition: raw.condition,
+            instrumentation_mode: raw.instrumentation_mode,
+            warmup_count: raw.warmup_count,
+            measurement_count: raw.measurement_count,
+            raw_timing_observations: observations,
+        })
+    }
+
+    fn passed_output_sha256(&self) -> Option<&str> {
+        self.raw_timing_observations
+            .iter()
+            .find(|observation| observation.status == RouterTimingObservationStatus::Passed)
+            .and_then(|observation| observation.output_sha256())
+    }
+
+    fn successful_count(&self, kind: RouterTimingObservationKind) -> usize {
+        self.raw_timing_observations
+            .iter()
+            .filter(|observation| {
+                observation.observation_kind == kind
+                    && observation.status == RouterTimingObservationStatus::Passed
+            })
+            .count()
+    }
+}
+
+pub fn validate_major_router_timing_series(
+    series: &[RouterTimingSeries],
+) -> Result<(), ContractError> {
+    if series.len() != 4 {
+        return Err(invalid_timing_evidence(
+            "the exact two major benchmarks and clean replications are incomplete",
+        ));
+    }
+
+    let required = BTreeSet::from([
+        (
+            ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
+            RouterTimingReplicationRole::Primary,
+        ),
+        (
+            ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID,
+            RouterTimingReplicationRole::Primary,
+        ),
+        (
+            ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
+            RouterTimingReplicationRole::CleanProcessReplication,
+        ),
+        (
+            ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID,
+            RouterTimingReplicationRole::CleanProcessReplication,
+        ),
+    ]);
+    let mut actual = BTreeSet::new();
+    for item in series {
+        if item.series_kind != RouterTimingSeriesKind::MajorMinimallyInstrumented
+            || !actual.insert((item.benchmark_id.as_str(), item.replication_role))
+        {
+            return Err(invalid_timing_evidence(
+                "major router timing series are duplicated or mislabeled",
+            ));
+        }
+        if item
+            .raw_timing_observations
+            .iter()
+            .any(|observation| observation.status != RouterTimingObservationStatus::Passed)
+            || !item.has_complete_success_samples()
+        {
+            return Err(invalid_timing_evidence(
+                "major router timing series contains an unsuccessful attempt",
+            ));
+        }
+    }
+    if actual != required {
+        return Err(invalid_timing_evidence(
+            "the exact two major benchmarks and clean replications are incomplete",
+        ));
+    }
+
+    let primary_process_ids = series
+        .iter()
+        .filter(|item| item.replication_role == RouterTimingReplicationRole::Primary)
+        .map(|item| item.process_replication_id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut clean_process_ids = BTreeSet::new();
+    for replica in series.iter().filter(|item| {
+        item.replication_role == RouterTimingReplicationRole::CleanProcessReplication
+    }) {
+        if primary_process_ids.contains(replica.process_replication_id.as_str())
+            || !clean_process_ids.insert(replica.process_replication_id.as_str())
+        {
+            return Err(invalid_timing_evidence(
+                "major router clean-process identity is not independent",
+            ));
+        }
+    }
+
+    for benchmark_id in [
+        ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
+        ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID,
+    ] {
+        let primary = series.iter().find(|item| {
+            item.benchmark_id == benchmark_id
+                && item.replication_role == RouterTimingReplicationRole::Primary
+        });
+        let replica = series.iter().find(|item| {
+            item.benchmark_id == benchmark_id
+                && item.replication_role == RouterTimingReplicationRole::CleanProcessReplication
+        });
+        let Some(primary_hash) = primary.and_then(RouterTimingSeries::passed_output_sha256) else {
+            return Err(invalid_timing_evidence(
+                "major router primary series lacks a passing output identity",
+            ));
+        };
+        let Some(replica_hash) = replica.and_then(RouterTimingSeries::passed_output_sha256) else {
+            return Err(invalid_timing_evidence(
+                "major router clean-process series lacks a passing output identity",
+            ));
+        };
+        if primary_hash != replica_hash {
+            return Err(invalid_timing_evidence(
+                "major router clean-process output identity differs from its primary series",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRouterTimingSeries {
+    benchmark_id: String,
+    case_id: String,
+    row_count: usize,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    process_replication_id: String,
+    process_state: RouterTimingProcessState,
+    condition: RouterTimingCondition,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    warmup_count: usize,
+    measurement_count: usize,
+    raw_timing_observations: Vec<RawRouterTimingObservation>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRouterTimingObservation {
+    observation_id: String,
+    run_index: usize,
+    observation_kind: RouterTimingObservationKind,
+    process_replication_id: String,
+    process_state: RouterTimingProcessState,
+    condition: RouterTimingCondition,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    monotonic_clock: String,
+    stages: BTreeMap<String, RawRouterTimingStage>,
+    status: RouterTimingObservationStatus,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    evaluated: bool,
+    synchronized: bool,
+    output_sha256: Value,
+    correctness_passed: Value,
+    #[serde(default)]
+    failure: PresentTimingField<RawRouterTimingFailure>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRouterTimingFailure {
+    code: String,
+    message: String,
+    stage: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawRouterTimingStage {
+    status: String,
+    #[serde(default)]
+    duration_ns: PresentTimingField<u64>,
+    #[serde(default)]
+    reason: PresentTimingField<String>,
+}
+
+#[derive(Default)]
+enum PresentTimingField<T> {
+    #[default]
+    Missing,
+    Present(T),
+}
+
+impl<'de, T> Deserialize<'de> for PresentTimingField<T>
+where
+    T: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        T::deserialize(deserializer).map(Self::Present)
+    }
+}
+
+fn validate_timing_series_identity(raw: &RawRouterTimingSeries) -> Result<(), ContractError> {
+    for value in [
+        raw.benchmark_id.as_str(),
+        raw.case_id.as_str(),
+        raw.process_replication_id.as_str(),
+    ] {
+        if !is_timing_identifier(value) {
+            return Err(invalid_timing_evidence(
+                "router timing series identity is invalid",
+            ));
+        }
+    }
+    let (expected_rows, generated_case) = match raw.case_id.as_str() {
+        ROUTER_REAL_SINGLE_ROW_CASE_ID => (1, false),
+        ROUTER_REAL_TWO_ROW_CASE_ID => (2, false),
+        ROUTER_GENERATED_SINGLE_ROW_CASE_ID => (1, true),
+        ROUTER_GENERATED_TWO_ROW_CASE_ID => (2, true),
+        _ => {
+            return Err(invalid_timing_evidence(
+                "router timing case is outside the frozen real-router scope",
+            ));
+        }
+    };
+    if raw.row_count != expected_rows {
+        return Err(invalid_timing_evidence(
+            "router timing row count contradicts its case identity",
+        ));
+    }
+    if generated_case != (raw.series_kind == RouterTimingSeriesKind::InexpensiveSynthetic) {
+        return Err(invalid_timing_evidence(
+            "router timing series kind contradicts its fixture provenance",
+        ));
+    }
+    if raw.series_kind == RouterTimingSeriesKind::MajorMinimallyInstrumented {
+        let expected_benchmark = if expected_rows == 1 {
+            ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID
+        } else {
+            ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID
+        };
+        if raw.benchmark_id != expected_benchmark {
+            return Err(invalid_timing_evidence(
+                "major router timing benchmark identity is invalid",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_timing_series_policy(raw: &RawRouterTimingSeries) -> Result<(), ContractError> {
+    let expected_counts = match raw.series_kind {
+        RouterTimingSeriesKind::MajorMinimallyInstrumented
+        | RouterTimingSeriesKind::InexpensiveSynthetic => (5, 30),
+        RouterTimingSeriesKind::CostlyReal | RouterTimingSeriesKind::StageDiagnostic => (5, 10),
+        RouterTimingSeriesKind::FirstProcessCostly => (0, 10),
+    };
+    if (raw.warmup_count, raw.measurement_count) != expected_counts {
+        return Err(invalid_timing_evidence(
+            "router timing series overrides its frozen sample policy",
+        ));
+    }
+
+    let expected_mode = if raw.series_kind == RouterTimingSeriesKind::StageDiagnostic {
+        RouterTimingInstrumentationMode::StageInstrumented
+    } else {
+        RouterTimingInstrumentationMode::MinimallyInstrumented
+    };
+    if raw.instrumentation_mode != expected_mode {
+        return Err(invalid_timing_evidence(
+            "router timing series mixes instrumentation modes",
+        ));
+    }
+
+    let labels_are_valid = match (raw.series_kind, raw.replication_role) {
+        (
+            RouterTimingSeriesKind::MajorMinimallyInstrumented,
+            RouterTimingReplicationRole::CleanProcessReplication,
+        ) => {
+            raw.process_state == RouterTimingProcessState::FreshProcess
+                && raw.condition == RouterTimingCondition::Warm
+        }
+        (RouterTimingSeriesKind::FirstProcessCostly, RouterTimingReplicationRole::Primary) => {
+            raw.process_state == RouterTimingProcessState::FreshProcess
+                && raw.condition == RouterTimingCondition::FirstReadNewProcessOsCacheUncontrolled
+        }
+        (_, RouterTimingReplicationRole::Primary) => {
+            raw.process_state == RouterTimingProcessState::ReusedProcess
+                && raw.condition == RouterTimingCondition::Warm
+        }
+        _ => false,
+    };
+    if !labels_are_valid {
+        return Err(invalid_timing_evidence(
+            "router timing process, condition, and replication labels are incompatible",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_timing_observation(
+    raw: RawRouterTimingObservation,
+    expected_kind: RouterTimingObservationKind,
+    expected_index: usize,
+    series: &RawRouterTimingSeries,
+) -> Result<RouterTimingObservation, ContractError> {
+    if !is_timing_identifier(&raw.observation_id)
+        || raw.run_index != expected_index
+        || raw.observation_kind != expected_kind
+        || raw.process_replication_id != series.process_replication_id
+        || raw.process_state != series.process_state
+        || raw.condition != series.condition
+        || raw.instrumentation_mode != series.instrumentation_mode
+        || raw.monotonic_clock != ROUTER_TIMING_CLOCK
+        || raw.requested_device != "gpu"
+        || raw.fallback_used
+        || (raw.synchronized && !raw.evaluated)
+    {
+        return Err(invalid_timing_evidence(
+            "router timing observation labels or execution envelope are invalid",
+        ));
+    }
+    let output_sha256 = match raw.output_sha256 {
+        Value::String(value) if is_lower_hex_sha256(&value) => Some(value),
+        Value::Null => None,
+        _ => {
+            return Err(invalid_timing_evidence(
+                "router timing output hash is invalid",
+            ));
+        }
+    };
+    let correctness_passed = match raw.correctness_passed {
+        Value::Bool(value) => Some(value),
+        Value::Null => None,
+        _ => {
+            return Err(invalid_timing_evidence(
+                "router timing correctness state is invalid",
+            ));
+        }
+    };
+    let failure = match raw.failure {
+        PresentTimingField::Missing => None,
+        PresentTimingField::Present(value) => {
+            if !valid_timing_failure_code(&value.code)
+                || !valid_timing_failure_stage(&value.stage)
+                || !valid_timing_text(&value.message)
+            {
+                return Err(invalid_timing_evidence(
+                    "router timing failure evidence is invalid",
+                ));
+            }
+            Some(RouterTimingFailure {
+                code: value.code,
+                message: value.message,
+                stage: value.stage,
+            })
+        }
+    };
+    let stages = validate_timing_stages(
+        raw.stages,
+        series.instrumentation_mode,
+        raw.status,
+        raw.evaluated,
+        raw.synchronized,
+        failure.as_ref().map(RouterTimingFailure::stage),
+    )?;
+
+    match raw.status {
+        RouterTimingObservationStatus::Passed => {
+            if raw.selected_device != "gpu"
+                || !raw.evaluated
+                || !raw.synchronized
+                || output_sha256.is_none()
+                || correctness_passed != Some(true)
+                || failure.is_some()
+            {
+                return Err(invalid_timing_evidence(
+                    "passing router timing observation contradicts its evidence",
+                ));
+            }
+        }
+        RouterTimingObservationStatus::Failed | RouterTimingObservationStatus::Aborted => {
+            if failure.is_none() || correctness_passed == Some(true) {
+                return Err(invalid_timing_evidence(
+                    "unsuccessful router timing observation lacks failure evidence",
+                ));
+            }
+            if raw.selected_device == "not_available" {
+                if raw.evaluated
+                    || raw.synchronized
+                    || output_sha256.is_some()
+                    || correctness_passed.is_some()
+                {
+                    return Err(invalid_timing_evidence(
+                        "unavailable router timing observation contradicts completed work",
+                    ));
+                }
+            } else if raw.selected_device != "gpu" {
+                return Err(invalid_timing_evidence(
+                    "unsuccessful router timing selected device is invalid",
+                ));
+            } else if output_sha256.is_some()
+                && (raw.status != RouterTimingObservationStatus::Failed
+                    || !raw.evaluated
+                    || !raw.synchronized
+                    || correctness_passed != Some(false))
+            {
+                return Err(invalid_timing_evidence(
+                    "unsuccessful router timing output evidence is inconsistent",
+                ));
+            } else if output_sha256.is_none() && correctness_passed.is_some() {
+                return Err(invalid_timing_evidence(
+                    "unsuccessful router timing correctness evidence is incomplete",
+                ));
+            }
+        }
+        RouterTimingObservationStatus::Excluded => {
+            return Err(invalid_timing_evidence(
+                "frozen router timing protocol declares no exclusion rule",
+            ));
+        }
+    }
+
+    Ok(RouterTimingObservation {
+        observation_id: raw.observation_id,
+        run_index: raw.run_index,
+        observation_kind: raw.observation_kind,
+        process_replication_id: raw.process_replication_id,
+        process_state: raw.process_state,
+        condition: raw.condition,
+        instrumentation_mode: raw.instrumentation_mode,
+        monotonic_clock: raw.monotonic_clock,
+        stages,
+        status: raw.status,
+        requested_device: raw.requested_device,
+        selected_device: raw.selected_device,
+        fallback_used: raw.fallback_used,
+        evaluated: raw.evaluated,
+        synchronized: raw.synchronized,
+        output_sha256,
+        correctness_passed,
+        failure,
+    })
+}
+
+fn validate_timing_stages(
+    raw: BTreeMap<String, RawRouterTimingStage>,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    status: RouterTimingObservationStatus,
+    evaluated: bool,
+    synchronized: bool,
+    failure_stage: Option<&str>,
+) -> Result<BTreeMap<String, RouterTimingStageObservation>, ContractError> {
+    if raw.is_empty() || raw.len() > 13 {
+        return Err(invalid_timing_evidence(
+            "router timing stage set is empty or unbounded",
+        ));
+    }
+    let mut stages = BTreeMap::new();
+    for (name, stage) in raw {
+        if !valid_timing_stage_name(&name) {
+            return Err(invalid_timing_evidence(
+                "router timing stage name is invalid",
+            ));
+        }
+        let value = match (stage.status.as_str(), stage.duration_ns, stage.reason) {
+            ("observed", PresentTimingField::Present(duration_ns), PresentTimingField::Missing)
+                if duration_ns > 0 =>
+            {
+                RouterTimingStageObservation::Observed { duration_ns }
+            }
+            ("unavailable", PresentTimingField::Missing, PresentTimingField::Present(reason))
+                if valid_timing_text(&reason) =>
+            {
+                RouterTimingStageObservation::Unavailable { reason }
+            }
+            (
+                "not_applicable",
+                PresentTimingField::Missing,
+                PresentTimingField::Present(reason),
+            ) if name == "dequantization" && reason == ROUTER_F32_DEQUANTIZATION_REASON => {
+                RouterTimingStageObservation::NotApplicable { reason }
+            }
+            _ => {
+                return Err(invalid_timing_evidence(
+                    "router timing stage fields contradict their status",
+                ));
+            }
+        };
+        stages.insert(name, value);
+    }
+
+    if (!evaluated || !synchronized)
+        && stages.iter().any(|(name, value)| {
+            evaluated_timing_stage_name(name)
+                && matches!(value, RouterTimingStageObservation::Observed { .. })
+        })
+    {
+        return Err(invalid_timing_evidence(
+            "router timing reports evaluated stage duration without both barriers",
+        ));
+    }
+    if let Some(stage_name) = failure_stage.filter(|stage| valid_timing_stage_name(stage)) {
+        if !matches!(
+            stages.get(stage_name),
+            Some(RouterTimingStageObservation::Unavailable { .. })
+        ) {
+            return Err(invalid_timing_evidence(
+                "router timing failure stage lacks matching unavailable evidence",
+            ));
+        }
+    }
+
+    match stages.get("dequantization") {
+        Some(RouterTimingStageObservation::NotApplicable { reason })
+            if reason == ROUTER_F32_DEQUANTIZATION_REASON => {}
+        _ => {
+            return Err(invalid_timing_evidence(
+                "router timing lacks canonical F32 dequantization evidence",
+            ));
+        }
+    }
+    if status == RouterTimingObservationStatus::Passed {
+        match instrumentation_mode {
+            RouterTimingInstrumentationMode::MinimallyInstrumented => {
+                if stages.len() != 2
+                    || !matches!(
+                        stages.get("total_evaluated_router"),
+                        Some(RouterTimingStageObservation::Observed { .. })
+                    )
+                {
+                    return Err(invalid_timing_evidence(
+                        "minimal router timing lacks its isolated evaluated total",
+                    ));
+                }
+            }
+            RouterTimingInstrumentationMode::StageInstrumented => {
+                let observed_diagnostic = stages.iter().any(|(name, value)| {
+                    name != "total_evaluated_router"
+                        && name != "dequantization"
+                        && matches!(value, RouterTimingStageObservation::Observed { .. })
+                        && evaluated_timing_stage_name(name)
+                });
+                if !observed_diagnostic {
+                    return Err(invalid_timing_evidence(
+                        "stage router timing lacks an evaluated diagnostic",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(stages)
+}
+
+fn valid_timing_stage_name(name: &str) -> bool {
+    matches!(
+        name,
+        "setup_admission"
+            | "file_io"
+            | "storage_validation_f32_decode"
+            | "dequantization"
+            | "host_to_device"
+            | "graph_construction"
+            | "compilation"
+            | "router_projection"
+            | "top_k"
+            | "normalization"
+            | "total_evaluated_router"
+            | "synchronized_readback"
+            | "end_to_end_router_command"
+    )
+}
+
+fn evaluated_timing_stage_name(name: &str) -> bool {
+    matches!(
+        name,
+        "host_to_device"
+            | "graph_construction"
+            | "compilation"
+            | "router_projection"
+            | "top_k"
+            | "normalization"
+            | "total_evaluated_router"
+            | "synchronized_readback"
+    )
+}
+
+fn valid_timing_failure_code(code: &str) -> bool {
+    matches!(
+        code,
+        "protocol_mismatch"
+            | "message_too_large"
+            | "malformed_request"
+            | "unsupported_operation"
+            | "invalid_shape"
+            | "invalid_dtype"
+            | "invalid_layout"
+            | "invalid_byte_count"
+            | "runtime_version_mismatch"
+            | "unsupported_host"
+            | "metal_unavailable"
+            | "device_unavailable"
+            | "evaluation_failed"
+            | "comparison_failed"
+            | "resource_limit"
+            | "internal_worker_error"
+    )
+}
+
+fn valid_timing_failure_stage(stage: &str) -> bool {
+    valid_timing_stage_name(stage)
+        || matches!(
+            stage,
+            "protocol"
+                | "worker_startup"
+                | "resource_admission"
+                | "router_execution"
+                | "correctness_gate"
+                | "orchestration"
+        )
+}
+
+fn is_timing_identifier(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= MAX_CASE_ID_CHARS
+        && value.trim() == value
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':'))
+}
+
+fn valid_timing_text(value: &str) -> bool {
+    !value.is_empty()
+        && value.trim() == value
+        && value.chars().count() <= MAX_TIMING_REASON_CHARS
+        && !value.chars().any(char::is_control)
+        && !value.starts_with('/')
+        && !value.starts_with("~/")
+        && !value.contains("/Users/")
+        && !value.contains("/home/")
+        && !value.contains("\\Users\\")
+        && value.split_whitespace().all(|token| {
+            let uppercase = token.to_ascii_uppercase();
+            !((uppercase.contains("TOKEN")
+                || uppercase.contains("SECRET")
+                || uppercase.contains("PASSWORD"))
+                && token.contains('='))
+        })
+}
+
+fn invalid_timing_evidence(message: &'static str) -> ContractError {
+    ContractError::new(ErrorCategory::InvalidEvidence, "invalid_evidence", message)
+}
 
 /// Exact caller-observed identity for a complete router tensor range.
 #[derive(Debug, Clone, PartialEq)]

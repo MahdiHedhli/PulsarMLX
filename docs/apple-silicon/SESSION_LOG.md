@@ -2899,3 +2899,68 @@ latency benchmark or performance claim, does not complete the major benchmark
 matrix, and does not establish real-checkpoint router correctness. Rust timing
 deserialization and sample validation remain T065; benchmark orchestration and
 host-owned labels remain T066.
+
+### T065 Rust timing-evidence implementation
+
+Rust now deserializes and independently validates the worker-owned minimal
+timing envelope and the host-owned timing-series evidence model. The closed
+types preserve monotonic-clock identity, positive stage durations, the exact
+F32 dequantization `not_applicable` reason, device/evaluation/synchronization
+state, stable failures, output hashes, and process, condition, replication,
+instrumentation, case, and benchmark identities. The frozen `run_router`
+protocol remains the exact three-field control-only request and admits only its
+minimally instrumented execution result; stage-instrumented observations remain
+a separately labeled evidence-series mode and cannot be substituted for that
+result.
+
+Sample validation now distinguishes required successful samples from retained
+failed or aborted attempts. It enforces the 5+30 inexpensive/major, 5+10 costly,
+and 0+10 first-process policies, contiguous kind-local attempt indices, warm-up
+before measurement ordering, bounded all-attempt retention, and consistent
+passing output identity. Generated fixture series are explicitly distinct from
+real-checkpoint series. A completed major matrix requires exactly the two
+single-row/two-row primaries and their independent clean-worker replications,
+permits both primaries to share one persistent worker, and rejects every
+unsuccessful or incomplete major series.
+
+The validator also rejects unknown, missing, null, contradictory, private, or
+secret-like timing fields; observed evaluated stages without both evaluation
+and synchronization; invented failure codes/stages; and timing-stage failures
+without matching unavailable stage evidence. Validated timing series have a
+bounded serialization path, and the framed response test reparses and validates
+the complete four-series major payload under the existing 1 MiB protocol cap.
+
+The exact model-disabled validation commands and actual results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend --test research_evidence
+# passed: 5 of 5 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend --lib
+# passed: 10 of 10 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend --test router_contract
+# passed: 21 of 21 tests
+
+PULSARMLX_MODEL_GGUF='' cargo check -p mlx-backend --all-targets
+# passed with no warnings
+
+PULSARMLX_MODEL_GGUF='' cargo clippy -p mlx-backend --all-targets -- -D warnings
+# passed with no warnings
+
+git diff --check
+# passed
+```
+
+The first compile exposed one partial-move error in the new series parser; it
+was corrected before any test passed. A strict Clippy pass then exposed two
+derivable `Default` implementations and one test-only type-complexity warning;
+all three introduced issues were corrected locally without broad formatting or
+lint cleanup. Independent review additionally found and drove fixes for
+all-attempt accounting, evaluated-stage barriers, generated-series admission,
+clean-worker identity, stable failure vocabulary, strict-schema regression
+coverage, and validated serialization.
+
+No checkpoint path was resolved, no model bytes were accessed, and no Python,
+MLX, or GPU process ran. This is contract/fixture evidence only, so local
+inference remained available and no NTFY hardware pause was requested.

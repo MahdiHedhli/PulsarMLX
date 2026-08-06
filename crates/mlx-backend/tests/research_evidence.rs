@@ -8,6 +8,7 @@ const SINGLE_BENCHMARK_ID: &str = "f002-major-single-row-minimal-v1";
 const TWO_ROW_BENCHMARK_ID: &str = "f002-major-two-row-minimal-v1";
 const SINGLE_CASE_ID: &str = "qwen3moe-layer0-router-token0-row0-v1";
 const TWO_ROW_CASE_ID: &str = "qwen3moe-layer0-router-token0-token1-batch-v1";
+const GENERATED_SINGLE_CASE_ID: &str = "generated-qwen3moe-router-single-row-v1";
 const OUTPUT_SHA256: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
 fn timing_observation(
@@ -16,18 +17,26 @@ fn timing_observation(
     process_replication_id: &str,
     process_state: &str,
     condition: &str,
+    instrumentation_mode: &str,
     output_sha256: &str,
 ) -> Value {
-    json!({
-        "observation_id": format!("{process_replication_id}-{kind}-{run_index:02}"),
-        "run_index": run_index,
-        "observation_kind": kind,
-        "process_replication_id": process_replication_id,
-        "process_state": process_state,
-        "condition": condition,
-        "instrumentation_mode": "minimally_instrumented",
-        "monotonic_clock": "perf_counter_ns",
-        "stages": {
+    let stages = if instrumentation_mode == "stage_instrumented" {
+        json!({
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization"
+            },
+            "router_projection": {
+                "status": "observed",
+                "duration_ns": 500_u64 + u64::try_from(run_index).unwrap()
+            },
+            "total_evaluated_router": {
+                "status": "observed",
+                "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
+            }
+        })
+    } else {
+        json!({
             "dequantization": {
                 "status": "not_applicable",
                 "reason": "f32_router_requires_no_dequantization"
@@ -36,14 +45,27 @@ fn timing_observation(
                 "status": "observed",
                 "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
             }
-        },
+        })
+    };
+
+    json!({
+        "observation_id": format!("{process_replication_id}-{kind}-{run_index:02}"),
+        "run_index": run_index,
+        "observation_kind": kind,
+        "process_replication_id": process_replication_id,
+        "process_state": process_state,
+        "condition": condition,
+        "instrumentation_mode": instrumentation_mode,
+        "monotonic_clock": "perf_counter_ns",
+        "stages": stages,
         "status": "passed",
         "requested_device": "gpu",
         "selected_device": "gpu",
         "fallback_used": false,
         "evaluated": true,
         "synchronized": true,
-        "output_sha256": output_sha256
+        "output_sha256": output_sha256,
+        "correctness_passed": true
     })
 }
 
@@ -53,6 +75,7 @@ fn timing_series(
     case_id: &str,
     row_count: usize,
     series_kind: &str,
+    instrumentation_mode: &str,
     replication_role: &str,
     process_replication_id: &str,
     process_state: &str,
@@ -68,6 +91,7 @@ fn timing_series(
             process_replication_id,
             process_state,
             condition,
+            instrumentation_mode,
             OUTPUT_SHA256,
         )
     }));
@@ -78,6 +102,7 @@ fn timing_series(
             process_replication_id,
             process_state,
             condition,
+            instrumentation_mode,
             OUTPUT_SHA256,
         )
     }));
@@ -91,7 +116,7 @@ fn timing_series(
         "process_replication_id": process_replication_id,
         "process_state": process_state,
         "condition": condition,
-        "instrumentation_mode": "minimally_instrumented",
+        "instrumentation_mode": instrumentation_mode,
         "warmup_count": warmup_count,
         "measurement_count": measurement_count,
         "raw_timing_observations": observations
@@ -104,6 +129,7 @@ fn primary_major(benchmark_id: &str, case_id: &str, row_count: usize) -> Value {
         case_id,
         row_count,
         "major_minimally_instrumented",
+        "minimally_instrumented",
         "primary",
         &format!("primary-{row_count}-row"),
         "reused_process",
@@ -119,6 +145,7 @@ fn clean_replica(benchmark_id: &str, case_id: &str, row_count: usize) -> Value {
         case_id,
         row_count,
         "major_minimally_instrumented",
+        "minimally_instrumented",
         "clean_process_replication",
         &format!("clean-{row_count}-row"),
         "fresh_process",
@@ -165,6 +192,7 @@ fn fixed_sample_policies_reject_count_overrides() {
         SINGLE_CASE_ID,
         1,
         "costly_real",
+        "minimally_instrumented",
         "primary",
         "costly-process",
         "reused_process",
@@ -182,6 +210,7 @@ fn fixed_sample_policies_reject_count_overrides() {
         SINGLE_CASE_ID,
         1,
         "first_process_costly",
+        "minimally_instrumented",
         "primary",
         "first-read-process",
         "fresh_process",
@@ -193,6 +222,63 @@ fn fixed_sample_policies_reject_count_overrides() {
     let mut invented_warmup = first_process;
     invented_warmup["warmup_count"] = json!(1);
     assert!(RouterTimingSeries::try_from_value(invented_warmup).is_err());
+
+    let generated = timing_series(
+        "f002-generated-router-single-row-minimal-v1",
+        GENERATED_SINGLE_CASE_ID,
+        1,
+        "inexpensive_synthetic",
+        "minimally_instrumented",
+        "primary",
+        "generated-process",
+        "reused_process",
+        "warm",
+        5,
+        30,
+    );
+    let generated_series = parse_series(generated.clone());
+    assert!(generated_series.has_complete_success_samples());
+
+    let mut generated_with_retained_failure = generated;
+    let mut failed_attempt = timing_observation(
+        "measurement",
+        30,
+        "generated-process",
+        "reused_process",
+        "warm",
+        "minimally_instrumented",
+        OUTPUT_SHA256,
+    );
+    failed_attempt["status"] = json!("aborted");
+    failed_attempt["selected_device"] = json!("not_available");
+    failed_attempt["evaluated"] = json!(false);
+    failed_attempt["synchronized"] = json!(false);
+    failed_attempt["output_sha256"] = Value::Null;
+    failed_attempt["correctness_passed"] = Value::Null;
+    failed_attempt["stages"] = json!({
+        "dequantization": {
+            "status": "not_applicable",
+            "reason": "f32_router_requires_no_dequantization"
+        }
+    });
+    failed_attempt["failure"] = json!({
+        "code": "resource_limit",
+        "message": "bounded resource admission stopped the attempt",
+        "stage": "resource_admission"
+    });
+    generated_with_retained_failure["raw_timing_observations"]
+        .as_array_mut()
+        .expect("observation array")
+        .push(failed_attempt);
+    let retained = parse_series(generated_with_retained_failure);
+    assert_eq!(retained.raw_timing_observations().len(), 36);
+    assert_eq!(retained.successful_warmup_count(), 5);
+    assert_eq!(retained.successful_measurement_count(), 30);
+    assert_eq!(
+        parse_series(retained.try_to_value().expect("bounded serialization")),
+        retained,
+        "validated timing evidence must round-trip without a parallel raw JSON tree"
+    );
 }
 
 #[test]
@@ -219,6 +305,7 @@ fn exact_major_benchmarks_require_a_complete_clean_process_replication_each() {
         SINGLE_CASE_ID,
         1,
         "stage_diagnostic",
+        "stage_instrumented",
         "primary",
         "diagnostic-process",
         "reused_process",
@@ -226,12 +313,197 @@ fn exact_major_benchmarks_require_a_complete_clean_process_replication_each() {
         5,
         10,
     );
+    parse_series(diagnostic.clone());
+
+    let mut wrong_series_mode = diagnostic.clone();
+    wrong_series_mode["instrumentation_mode"] = json!("minimally_instrumented");
+    assert!(
+        RouterTimingSeries::try_from_value(wrong_series_mode).is_err(),
+        "a stage diagnostic cannot claim minimally instrumented series timing"
+    );
+
+    let mut wrong_observation_mode = diagnostic.clone();
+    wrong_observation_mode["raw_timing_observations"][0]["instrumentation_mode"] =
+        json!("minimally_instrumented");
+    assert!(
+        RouterTimingSeries::try_from_value(wrong_observation_mode).is_err(),
+        "a stage diagnostic cannot contain minimally instrumented observations"
+    );
+
     let mut missing_two_row_replica = complete[..3].to_vec();
     missing_two_row_replica.push(parse_series(diagnostic));
     assert!(
         validate_major_router_timing_series(&missing_two_row_replica).is_err(),
         "a stage diagnostic cannot become a third major or replace a clean replica"
     );
+
+    let mut failed_primary = primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1);
+    failed_primary["raw_timing_observations"][6]["status"] = json!("failed");
+    failed_primary["raw_timing_observations"][6]["correctness_passed"] = json!(false);
+    failed_primary["raw_timing_observations"][6]["failure"] = json!({
+        "code": "comparison_failed",
+        "message": "bounded correctness failure",
+        "stage": "correctness_gate"
+    });
+    let mut unsuccessful_major = complete_major_series();
+    unsuccessful_major[0] = parse_series(failed_primary);
+    assert!(
+        validate_major_router_timing_series(&unsuccessful_major).is_err(),
+        "retained failed attempts must prevent a major timing series from passing"
+    );
+
+    let mut shared_single = primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1);
+    let mut shared_two = primary_major(TWO_ROW_BENCHMARK_ID, TWO_ROW_CASE_ID, 2);
+    for value in [&mut shared_single, &mut shared_two] {
+        value["process_replication_id"] = json!("shared-primary-process");
+        for observation in value["raw_timing_observations"]
+            .as_array_mut()
+            .expect("observation array")
+        {
+            observation["process_replication_id"] = json!("shared-primary-process");
+        }
+    }
+    let shared_primary_process = vec![
+        parse_series(shared_single),
+        parse_series(shared_two),
+        parse_series(clean_replica(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1)),
+        parse_series(clean_replica(TWO_ROW_BENCHMARK_ID, TWO_ROW_CASE_ID, 2)),
+    ];
+    validate_major_router_timing_series(&shared_primary_process)
+        .expect("both primary cases may share one persistent worker");
+}
+
+#[test]
+fn timing_schema_labels_order_and_failures_are_closed() {
+    let valid = primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1);
+    let mut mutations: Vec<(&str, Value)> = Vec::new();
+
+    let mut missing_series_field = valid.clone();
+    missing_series_field
+        .as_object_mut()
+        .expect("series object")
+        .remove("condition");
+    mutations.push(("missing series field", missing_series_field));
+
+    let mut unknown_series_field = valid.clone();
+    unknown_series_field["unreviewed"] = json!(true);
+    mutations.push(("unknown series field", unknown_series_field));
+
+    let mut missing_observation_field = valid.clone();
+    missing_observation_field["raw_timing_observations"][0]
+        .as_object_mut()
+        .expect("observation object")
+        .remove("output_sha256");
+    mutations.push(("missing observation field", missing_observation_field));
+
+    let mut unknown_observation_field = valid.clone();
+    unknown_observation_field["raw_timing_observations"][0]["unreviewed"] = json!(true);
+    mutations.push(("unknown observation field", unknown_observation_field));
+
+    let mut unknown_stage_field = valid.clone();
+    unknown_stage_field["raw_timing_observations"][0]["stages"]["total_evaluated_router"]
+        ["unreviewed"] = json!(true);
+    mutations.push(("unknown stage field", unknown_stage_field));
+
+    let mut null_required = valid.clone();
+    null_required["raw_timing_observations"][0]["process_state"] = Value::Null;
+    mutations.push(("null required field", null_required));
+
+    let mut null_optional_union = valid.clone();
+    null_optional_union["raw_timing_observations"][0]["failure"] = Value::Null;
+    mutations.push(("explicit null failure", null_optional_union));
+
+    let mut mismatched_process = valid.clone();
+    mismatched_process["raw_timing_observations"][0]["process_replication_id"] =
+        json!("different-process");
+    mutations.push(("observation process mismatch", mismatched_process));
+
+    let mut wrong_index = valid.clone();
+    wrong_index["raw_timing_observations"][1]["run_index"] = json!(9);
+    mutations.push(("noncontiguous index", wrong_index));
+
+    let mut duplicate_id = valid.clone();
+    duplicate_id["raw_timing_observations"][1]["observation_id"] =
+        duplicate_id["raw_timing_observations"][0]["observation_id"].clone();
+    mutations.push(("duplicate observation ID", duplicate_id));
+
+    let mut wrong_order = valid.clone();
+    wrong_order["raw_timing_observations"]
+        .as_array_mut()
+        .expect("observation array")
+        .swap(4, 5);
+    mutations.push(("warmup after measurement", wrong_order));
+
+    let mut short_series = valid.clone();
+    short_series["raw_timing_observations"]
+        .as_array_mut()
+        .expect("observation array")
+        .pop();
+    mutations.push(("missing successful measurement", short_series));
+
+    let mut unbarriered_failure = valid.clone();
+    unbarriered_failure["raw_timing_observations"][0]["status"] = json!("failed");
+    unbarriered_failure["raw_timing_observations"][0]["evaluated"] = json!(false);
+    unbarriered_failure["raw_timing_observations"][0]["synchronized"] = json!(false);
+    unbarriered_failure["raw_timing_observations"][0]["output_sha256"] = Value::Null;
+    unbarriered_failure["raw_timing_observations"][0]["correctness_passed"] = Value::Null;
+    unbarriered_failure["raw_timing_observations"][0]["failure"] = json!({
+        "code": "evaluation_failed",
+        "message": "the evaluated boundary failed",
+        "stage": "router_execution"
+    });
+    mutations.push((
+        "observed evaluated stage without barriers",
+        unbarriered_failure,
+    ));
+
+    let mut unknown_failure_code = valid.clone();
+    unknown_failure_code["raw_timing_observations"][0]["status"] = json!("failed");
+    unknown_failure_code["raw_timing_observations"][0]["correctness_passed"] = json!(false);
+    unknown_failure_code["raw_timing_observations"][0]["failure"] = json!({
+        "code": "invented_failure",
+        "message": "bounded failure",
+        "stage": "correctness_gate"
+    });
+    mutations.push(("unknown failure code", unknown_failure_code));
+
+    let mut unknown_failure_stage = valid.clone();
+    unknown_failure_stage["raw_timing_observations"][0]["status"] = json!("failed");
+    unknown_failure_stage["raw_timing_observations"][0]["correctness_passed"] = json!(false);
+    unknown_failure_stage["raw_timing_observations"][0]["failure"] = json!({
+        "code": "comparison_failed",
+        "message": "bounded failure",
+        "stage": "invented_stage"
+    });
+    mutations.push(("unknown failure stage", unknown_failure_stage));
+
+    let mut unsanitized_failure = valid.clone();
+    unsanitized_failure["raw_timing_observations"][0]["status"] = json!("failed");
+    unsanitized_failure["raw_timing_observations"][0]["correctness_passed"] = json!(false);
+    let sensitive_marker = ["HF_", "TOKEN", "=private"].concat();
+    unsanitized_failure["raw_timing_observations"][0]["failure"] = json!({
+        "code": "comparison_failed",
+        "message": format!("bounded failure {sensitive_marker}"),
+        "stage": "correctness_gate"
+    });
+    mutations.push(("unsanitized failure message", unsanitized_failure));
+
+    let mut observed_failed_stage = valid.clone();
+    observed_failed_stage["raw_timing_observations"][0]["status"] = json!("failed");
+    observed_failed_stage["raw_timing_observations"][0]["correctness_passed"] = json!(false);
+    observed_failed_stage["raw_timing_observations"][0]["failure"] = json!({
+        "code": "evaluation_failed",
+        "message": "bounded failure",
+        "stage": "total_evaluated_router"
+    });
+    mutations.push(("observed failed stage", observed_failed_stage));
+
+    for (label, changed) in mutations {
+        assert!(
+            RouterTimingSeries::try_from_value(changed).is_err(),
+            "{label} must fail closed"
+        );
+    }
 }
 
 #[test]
@@ -239,7 +511,8 @@ fn labels_evaluated_envelope_and_output_hashes_fail_closed() {
     let valid = primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1);
     parse_series(valid.clone());
 
-    let mutations: [(&str, Box<dyn Fn(&mut Value)>); 9] = [
+    type TimingMutation = (&'static str, Box<dyn Fn(&mut Value)>);
+    let mutations: [TimingMutation; 11] = [
         (
             "unregistered process state",
             Box::new(|value| {
@@ -274,6 +547,18 @@ fn labels_evaluated_envelope_and_output_hashes_fail_closed() {
             "changed output hash",
             Box::new(|value| {
                 value["raw_timing_observations"][6]["output_sha256"] = json!("c".repeat(64));
+            }),
+        ),
+        (
+            "missing correctness result",
+            Box::new(|value| {
+                value["raw_timing_observations"][0]["correctness_passed"] = Value::Null;
+            }),
+        ),
+        (
+            "failed correctness result",
+            Box::new(|value| {
+                value["raw_timing_observations"][0]["correctness_passed"] = json!(false);
             }),
         ),
         (
@@ -352,8 +637,19 @@ fn timing_response_is_bounded_by_the_existing_protocol_cap() {
     .expect("bounded timing response serializes");
     bounded.push(b'\n');
     assert!(bounded.len() <= MAX_RESPONSE_BYTES);
-    parse_response_line(&bounded, 7, &ProtocolLimits::default())
-        .expect("bounded timing response stays inside protocol v1");
+    let parsed = parse_response_line(&bounded, 7, &ProtocolLimits::default())
+        .expect("bounded timing response stays inside protocol v1")
+        .into_result()
+        .expect("bounded timing response is successful");
+    let parsed_series = parsed["timing_series"]
+        .as_array()
+        .expect("timing series array")
+        .iter()
+        .cloned()
+        .map(parse_series)
+        .collect::<Vec<_>>();
+    validate_major_router_timing_series(&parsed_series)
+        .expect("framed timing response retains the complete major contract");
 
     let mut oversized = vec![b' '; MAX_RESPONSE_BYTES + 1];
     oversized.push(b'\n');
