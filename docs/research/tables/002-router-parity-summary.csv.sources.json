@@ -3,13 +3,15 @@
   "generator": "scripts/research/generate_tables.py",
   "generator_sha256": "9ff85856fd61bae3457599cfbf75ecfd4e74c2b217af81fd47e5b69d915c8db7",
   "output": "002-router-parity-summary.csv",
-  "output_sha256": "1476c2a39217365fe93ea84f5851308e2201c179198cf1179309d0d7333eb4f4",
+  "output_sha256": "64c6bd7cf305be32f54ec78032e748043d9ec3d1da0b61916ccab74e4ff15ff7",
   "schema_id": "pulsarmlx.research.generated-sources",
   "schema_version": "1.0.0",
   "source_commits": [
     "04b3502aa5cfbe48cda66d1a5b0b07a45902f762"
   ],
   "sources": {
+    "docs/research/raw/002-router-parity/f002-router-real-3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3-batch-a.json": "0cc828bb77f2dca62d039c700a575ec123cef1367e1d942956f1a6fe8481c616",
+    "docs/research/raw/002-router-parity/f002-router-real-3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3-batch-b.json": "ce8e6d71d2a8a209d5119b3a6c886f3f1e65e2d75d4b8502a363dd44edc67a44",
     "docs/research/raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-a.json": "b5925db8ba68d90a42507e00be6d3159457a2b97d9fc827f0200245cb20851fa",
     "docs/research/raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-b.json": "99346e8be81b4975cb355759be20872aefdea05baa9960f28aa272d970116801"
   }

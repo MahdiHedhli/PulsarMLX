@@ -29,7 +29,9 @@ MAX_INPUT_BYTES = 4 * 1024 * 1024
 MAX_TOTAL_INPUT_BYTES = 64 * 1024 * 1024
 MAX_RECORDS = 1_024
 MAX_PLOTTED_ROWS = 1_024
-MAX_SVG_BYTES = 128 * 1024
+# Real dual-batch primary+reproduction packages exceed the original 128 KiB
+# synthetic-fixture bound while remaining a single static SVG artifact.
+MAX_SVG_BYTES = 256 * 1024
 MAX_SIDECAR_BYTES = 4 * 1024 * 1024
 
 

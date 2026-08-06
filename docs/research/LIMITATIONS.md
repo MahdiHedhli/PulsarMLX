@@ -1,8 +1,8 @@
 # Feature 002 Research Limitations
 
-**Status**: Real Apple MLX layer-0 router evidence is published, but claims are
-provisional and the capability boundary stops at the router. Deeper model
-operations remain unsupported.
+**Status**: Real Apple MLX layer-0 router evidence is published with verified
+package-level claims. The capability boundary still stops at the router.
+Deeper model operations remain unsupported.
 
 Normative boundaries and stop conditions remain in the [Feature 002
 specification](../../specs/002-qwen-router-parity/spec.md) and [experiment
@@ -13,8 +13,9 @@ protocol](EXPERIMENT_PROTOCOL.md).
 - Scope is exactly `layer_0_router_only` over `blk.0.ffn_gate_inp.weight` for the
   frozen two-row `ffn_norm-0` input. No expert MLP, aggregation, attention,
   full layer, logits head, or generation path was executed.
-- Claims F002-C01 through F002-C03 are provisional until a clean-checkout
-  reproduction record is published and package verification promotes them.
+- Claims F002-C01 through F002-C03 are package-level verified for the bounded
+  layer-0 router only; raw records retain provisional claim_boundary status by
+  protocol while package promotion uses matching clean-checkout evidence.
 - Timing labels retain OS-cache-uncontrolled first-process semantics; they are
   not controlled cold-filesystem measurements and are not tokens/sec.
 - Hosted CI does not receive the external checkpoint. Fixture-only CI cannot
@@ -39,9 +40,8 @@ protocol](EXPERIMENT_PROTOCOL.md).
 
 ## Unavailable observations
 
-Clean-checkout reproduction raw evidence is not yet installed. Power-mode
-fields may remain unavailable when the unprivileged `pmset` probe does not
-expose them. Expert outputs, routed aggregation outputs, complete-layer
+Power-mode fields may remain unavailable when the unprivileged `pmset` probe
+does not expose them. Expert outputs, routed aggregation outputs, complete-layer
 activations, model logits, and generated tokens remain unavailable by design.
 
 ## Unsupported interpretations

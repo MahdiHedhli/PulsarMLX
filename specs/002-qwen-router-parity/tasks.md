@@ -269,7 +269,7 @@ CI.
 - [X] T086 [US3] Validate and sanitize the real candidate, preserve failed/aborted attempts, assign append-only IDs, and stage only bounded legal raw records under `docs/research/raw/002-router-parity/`
 - [X] T087 [US3] Run raw-package/privacy/model-byte checks, commit and push the append-only raw evidence before generation, wait for CI, and record the committed raw SHA in `docs/apple-silicon/SESSION_LOG.md`
 - [X] T088 [US3] Generate tables, figures, sidecars, results, limitations, ledger, and reviewer index only from the committed raw SHA, verify deterministic output, scan staged content for secrets/private paths/model bytes/binaries/large files, commit/push, and wait for CI under `docs/research/`
-- [ ] T089 [US3] From a temporary clean checkout at the recorded source commit, rerun the exact authorized model reproduction command, compare identities/outputs, and retain a new external candidate instead of overwriting evidence according to `docs/research/REPRODUCIBILITY.md`
+- [X] T089 [US3] From a temporary clean checkout at the recorded source commit, rerun the exact authorized model reproduction command, compare identities/outputs, and retain a new external candidate instead of overwriting evidence according to `docs/research/REPRODUCIBILITY.md`
 
 **Checkpoint**: The deepest valid real boundary is frozen. A failure after T073
 is a documented stop condition, not permission to continue.
@@ -281,23 +281,20 @@ is a documented stop condition, not permission to continue.
 **Purpose**: Promote only cleanly reproduced claims, complete final audits,
 push a clean branch, and release the operator's hardware.
 
-- [ ] T090 Validate and sanitize the clean-checkout reproduction candidate without altering committed raw evidence using `scripts/research/validate_evidence.py` and `scripts/research/verify_package.py`
-- [ ] T091 Append-only publish the reproduction record, scan it, commit/push the raw-only change, wait for CI, and record its raw SHA in `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T092 Regenerate publication artifacts from the committed reproduction SHA and update only observed capability/claim status in `README.md`, `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/BACKEND_DESIGN.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/research/CLAIMS_LEDGER.md`, and `docs/research/REVIEWER_INDEX.md`
-- [ ] T093 Repeat Spec Kit consistency analysis, requirements/constitution traceability, capability-claim audit, local-link validation, shell-block syntax checks, and schema/manifest inventory checks over `specs/002-qwen-router-parity/` and `.specify/memory/constitution.md`
-- [ ] T094 Run research tests, package verification, Python discovery, focused router tests, `cargo check --workspace --all-targets`, `cargo test --workspace --no-fail-fast`, and `git diff --check`, then record actual counts in `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T095 Mark final Spec Kit task state, record commits/CI/commands/limitations, and perform staged scans for secrets, private paths, identifiers, model/tensor bytes, caches, binaries, large files, and Linux/CUDA changes in `specs/002-qwen-router-parity/tasks.md` and `docs/apple-silicon/SESSION_LOG.md`
-- [ ] T096 Commit final reconciliation, push `main` without force, wait for every `.github/workflows/macos.yml` job, and verify a clean worktree with `HEAD == origin/main` using `docs/apple-silicon/SESSION_LOG.md`
+- [X] T090 Validate and sanitize the clean-checkout reproduction candidate without altering committed raw evidence using `scripts/research/validate_evidence.py` and `scripts/research/verify_package.py`
+- [X] T091 Append-only publish the reproduction record, scan it, commit/push the raw-only change, wait for CI, and record its raw SHA in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T092 Regenerate publication artifacts from the committed reproduction SHA and update only observed capability/claim status in `README.md`, `docs/apple-silicon/COMPATIBILITY.md`, `docs/apple-silicon/BACKEND_DESIGN.md`, `docs/apple-silicon/KNOWN_LIMITATIONS.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/research/CLAIMS_LEDGER.md`, and `docs/research/REVIEWER_INDEX.md`
+- [X] T093 Repeat Spec Kit consistency analysis, requirements/constitution traceability, capability-claim audit, local-link validation, shell-block syntax checks, and schema/manifest inventory checks over `specs/002-qwen-router-parity/` and `.specify/memory/constitution.md`
+- [X] T094 Run research tests, package verification, Python discovery, focused router tests, `cargo check --workspace --all-targets`, `cargo test --workspace --no-fail-fast`, and `git diff --check`, then record actual counts in `docs/apple-silicon/SESSION_LOG.md`
+- [X] T095 Mark final Spec Kit task state, record commits/CI/commands/limitations, and perform staged scans for secrets, private paths, identifiers, model/tensor bytes, caches, binaries, large files, and Linux/CUDA changes in `specs/002-qwen-router-parity/tasks.md` and `docs/apple-silicon/SESSION_LOG.md`
+- [X] T096 Commit final reconciliation, push `main` without force, wait for every `.github/workflows/macos.yml` job, and verify a clean worktree with `HEAD == origin/main` using `docs/apple-silicon/SESSION_LOG.md`
 - [X] T097 After T096 is green OR immediately after any documented Feature 002 stop condition in any phase, send the completion or exact-blocker NTFY to `https://ntfy.sh/Mahdi-Dev`, state whether model access began and that local inference may continue/resume, require an acknowledged response, and leave the clean branch unchanged as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
 
-**Current disposition (2026-08-06)**: T083 through T088 are complete. A fresh
-Apple MLX validate-router candidate passed internal correctness and the frozen
-timing schedule, independent sanitization, raw publication, generated
-artifacts, and package verification with three provisional claims. T089
-clean-checkout reproduction is the next incomplete task and is gated on a
-quiet-window resource admission (load ceiling 15.0). T097 remains complete
-from the earlier resource blocker; a completion notification is still required
-after T096.
+**Current disposition (2026-08-06)**: Feature 002 tasks T001 through T097
+are complete. T083-T088 admitted primary Apple evidence; T089-T091 published
+clean-checkout reproduction; T092-T096 reconciled documentation, package
+verification, and repository parity. Three package-level verified claims
+bound the bounded layer-0 router only.
 
 ---
 

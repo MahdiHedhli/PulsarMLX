@@ -4022,3 +4022,26 @@ passed with `claim_count: 3`. T089 clean-checkout reproduction was started but
 postponed when load rose above the frozen 15.0 ceiling; it remains the next
 incomplete task. Prior rejected producer candidates were not reused.
 
+
+
+### T089-T096 completion (2026-08-06)
+
+After a quiet-window wait, a clean checkout at measured source
+`04b3502aa5cfbe48cda66d1a5b0b07a45902f762` re-ran the exact release
+`validate-router` command. The reproduction retained candidate SHA-256
+`3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3` and
+passed independent sanitization. Promotion identity and both case output
+hashes exactly matched the primary candidate. Append-only raw records:
+
+- `f002-router-real-3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3-batch-a.json`
+  SHA-256 `0cc828bb77f2dca62d039c700a575ec123cef1367e1d942956f1a6fe8481c616`
+- `f002-router-real-3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3-batch-b.json`
+  SHA-256 `ce8e6d71d2a8a209d5119b3a6c886f3f1e65e2d75d4b8502a363dd44edc67a44`
+
+Tables and figures were regenerated from all four real raw records. The SVG
+generator bound was raised from 128 KiB to 256 KiB so dual-batch primary plus
+reproduction packages remain a single static figure. Claims F002-C01 through
+F002-C03 were promoted to package-level `verified`. Full package verification
+passed with four records and three claims. Feature 002 is complete for the
+bounded layer-0 router scope only.
+

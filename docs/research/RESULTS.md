@@ -1,10 +1,10 @@
 # Feature 002 Results
 
-**Status**: Two independently sanitized Apple MLX layer-0 router experiment
-records are published under `docs/research/raw/002-router-parity/`. Claims are
-provisional until clean-checkout reproduction is installed. No expert,
-aggregation, full-layer, generation, serving, or tokens-per-second result is
-claimed.
+**Status**: Four independently sanitized Apple MLX layer-0 router experiment
+records are published under `docs/research/raw/002-router-parity/` (primary
+plus clean-checkout reproduction). Package-level claims F002-C01 through
+F002-C03 are verified. No expert, aggregation, full-layer, generation,
+serving, or tokens-per-second result is claimed.
 
 Only validated, committed raw evidence governed by the [Feature 002 evidence
 contract](../../specs/002-qwen-router-parity/contracts/research-evidence-v1.md)
@@ -38,9 +38,12 @@ Measured source commit: `04b3502aa5cfbe48cda66d1a5b0b07a45902f762`.
 | Mean abs error | `2.8392920891443887e-06` |
 | RMSE | `3.584568198272296e-06` |
 | Deterministic repeats | 20 measured hashes (10 identical single-row + 10 identical two-row) |
-| Raw batch-a | [record](raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-a.json) SHA-256 `b5925db8ba68d90a42507e00be6d3159457a2b97d9fc827f0200245cb20851fa` |
-| Raw batch-b | [record](raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-b.json) SHA-256 `99346e8be81b4975cb355759be20872aefdea05baa9960f28aa272d970116801` |
-| Source candidate | SHA-256 `b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4` |
+| Primary raw batch-a | [record](raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-a.json) SHA-256 `b5925db8ba68d90a42507e00be6d3159457a2b97d9fc827f0200245cb20851fa` |
+| Primary raw batch-b | [record](raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-b.json) SHA-256 `99346e8be81b4975cb355759be20872aefdea05baa9960f28aa272d970116801` |
+| Repro raw batch-a | [record](raw/002-router-parity/f002-router-real-3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3-batch-a.json) SHA-256 `0cc828bb77f2dca62d039c700a575ec123cef1367e1d942956f1a6fe8481c616` |
+| Repro raw batch-b | [record](raw/002-router-parity/f002-router-real-3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3-batch-b.json) SHA-256 `ce8e6d71d2a8a209d5119b3a6c886f3f1e65e2d75d4b8502a363dd44edc67a44` |
+| Primary source candidate | SHA-256 `b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4` |
+| Repro source candidate | SHA-256 `3dc290b5a02daf673eb00e7c47e9428cf3aa1b935401db2327c0e59c03a3e3f3` |
 
 Generated summaries:
 
@@ -56,8 +59,9 @@ labels). They are preserved externally and are not result rows.
 
 Within each admitted record, the protocol's twenty measured hashes are
 deterministic per case. Clean-process replications are retained inside the same
-raw records. A separate clean-checkout reproduction command has not yet been
-published as an additional raw record, so claim status remains provisional.
+raw records. A clean-checkout reproduction at measured source `04b3502`
+produced an independent candidate whose promotion identity and case output
+hashes exactly match the primary admitted candidate.
 
 ## Model-backed timing and resources
 
