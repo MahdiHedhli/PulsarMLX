@@ -1506,6 +1506,18 @@ class RouterExecutionContractTests(unittest.TestCase):
         self.assertIs(type(total_timing["duration_ns"]), int)
         self.assertGreater(total_timing["duration_ns"], 0)
         self.assertEqual(result.to_protocol_result()["timing"], timing)
+        # Synthetic cases perform no inherited model-file positional read but
+        # retain the same strict wire fields as real-checkpoint results.
+        self.assertEqual(result.router_tensor_bytes_read, 0)
+        self.assertEqual(result.router_tensor_cache_status, "not_applicable")
+        self.assertEqual(
+            result.to_protocol_result()["router_tensor_bytes_read"],
+            0,
+        )
+        self.assertEqual(
+            result.to_protocol_result()["router_tensor_cache_status"],
+            "not_applicable",
+        )
         gauges = result.memory_gauges.to_protocol_result()
         self.assertEqual(
             set(gauges),

@@ -1,9 +1,10 @@
-"""Bounded model-free Feature 002 complete-router execution.
+"""Bounded Feature 002 complete-router execution.
 
-The public worker operation resolves only committed synthetic fixtures.  This
-module never accepts a model path through the control protocol, never imports
-MLX before host validation completes, and never reads the independent golden
-router outputs used to judge the implementation.
+The public worker operation resolves committed synthetic cases or the two
+frozen real-input cases.  It never accepts a model path through the control
+protocol, never imports MLX before host validation completes, and reads only
+the input-object byte range of the public oracle publication--never the
+independent outputs used to judge the implementation.
 """
 
 from __future__ import annotations
@@ -11,12 +12,16 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
+import errno
+import fcntl
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import stat
 import struct
+import threading
 import time
 from types import MappingProxyType
 from typing import Any
@@ -35,6 +40,8 @@ ROUTER_CONTRACT_ID = "qwen3moe-layer0-router-parity-v1"
 ROUTER_OPERATION_ID = "complete_router_projection_topk"
 SINGLE_ROW_CASE_ID = "generated-qwen3moe-router-single-row-v1"
 BOUNDED_BATCH_CASE_ID = "generated-qwen3moe-router-two-row-v1"
+REAL_SINGLE_ROW_CASE_ID = "qwen3moe-layer0-router-token0-row0-v1"
+REAL_BATCH_CASE_ID = "qwen3moe-layer0-router-token0-token1-batch-v1"
 HIDDEN_WIDTH = 2_048
 EXPERT_COUNT = 128
 TOP_K = 8
@@ -52,6 +59,9 @@ _PROVENANCE = "synthetic_generated_model_free"
 _FIXTURE_ROOT = (
     Path(__file__).resolve().parents[2] / "fixtures" / "research" / "router-v1"
 )
+_REAL_FIXTURE_PATH = (
+    _FIXTURE_ROOT / "real" / "f002-router-oracle-freeze-0001.json"
+)
 _MANIFEST_PATH = _FIXTURE_ROOT / "manifest.json"
 _HIDDEN_PATH = _FIXTURE_ROOT / "golden" / "hidden_states.json"
 _WEIGHT_RECIPE_PATH = _FIXTURE_ROOT / "golden" / "weight_recipe.json"
@@ -60,6 +70,35 @@ _MAX_HIDDEN_DOCUMENT_BYTES = 128 * 1024
 _MAX_RECIPE_BYTES = 16 * 1024
 _WEIGHT_ELEMENT_COUNT = EXPERT_COUNT * HIDDEN_WIDTH
 _WEIGHT_BYTES = _WEIGHT_ELEMENT_COUNT * 4
+_MODEL_FILE_FD = 198
+_MODEL_FILE_BYTES = 32_483_931_648
+_ROUTER_TENSOR_OFFSET = 1_115_085_312
+_ROUTER_TENSOR_BYTES = 1_048_576
+_ROUTER_TENSOR_END = 1_116_133_888
+_ROUTER_TENSOR_SHA256 = (
+    "98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c"
+)
+_REAL_FIXTURE_BYTES = 148_909
+_REAL_INPUT_FRAGMENT_OFFSET = 6_669
+_REAL_INPUT_FRAGMENT_BYTES = 121_540
+_REAL_INPUT_FRAGMENT_END = 128_209
+_REAL_INPUT_FRAGMENT_SHA256 = (
+    "8d16f0839248c8579d3307cdb43be95d144b2af7f6e6e71f23faaf6610af9a1a"
+)
+_REAL_INPUT_SHA256 = (
+    "978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7"
+)
+_REAL_INPUT_ROW_SHA256 = (
+    "062e42f277e26af0042d52e5e30f895523c7f26cffb866b970dc0ae1c1dbe296",
+    "278810be1143949ef019448e352c8bf74c7ab0c1c7bb8dd7b526dbafbacf0eaf",
+)
+_TIMING_PROFILE_ENV = "PULSARMLX_ROUTER_TIMING_PROFILE"
+_TIMING_PROFILE_MINIMAL = "minimal"
+_TIMING_PROFILE_COSTLY = "costly"
+_TIMING_PROFILE_STAGE = "stage"
+_TIMING_PROFILES = frozenset(
+    {_TIMING_PROFILE_MINIMAL, _TIMING_PROFILE_COSTLY, _TIMING_PROFILE_STAGE}
+)
 _PROBABILITY_SUM_TOLERANCE = 1.0e-6
 _PROBABILITY_RELATIVE_TOLERANCE = 1.0e-6
 _MAX_U64 = (1 << 64) - 1
@@ -108,10 +147,24 @@ _INSTRUMENTATION_MODES = frozenset(
 )
 _OBSERVATION_STATUSES = frozenset({"passed", "failed", "aborted"})
 _F32_DEQUANTIZATION_REASON = "f32_router_requires_no_dequantization"
+_CACHE_FILE_IO_REASON = "validated_router_tensor_cache_hit_no_file_read"
+_CACHE_DECODE_REASON = "validated_router_tensor_cache_hit_no_decode"
+_ROUTER_TENSOR_CACHE_HIT = "cache_hit"
+_ROUTER_TENSOR_READ_AND_CACHED = "read_and_cached"
+_ROUTER_TENSOR_NOT_APPLICABLE = "not_applicable"
+_INSEPARABLE_TRANSFER_REASON = "host_to_device_not_separable_from_evaluated_total"
+_LAZY_GRAPH_REASON = "lazy_graph_construction_not_separable_from_evaluation"
+_COMPILATION_REASON = "mlx_compilation_not_independently_observable"
+_SETUP_REASON = "host_admission_completed_outside_router_timing"
 
-_CASE_ROWS = {
+_SYNTHETIC_CASE_ROWS = {
     SINGLE_ROW_CASE_ID: 1,
     BOUNDED_BATCH_CASE_ID: 2,
+}
+_CASE_ROWS = {
+    **_SYNTHETIC_CASE_ROWS,
+    REAL_SINGLE_ROW_CASE_ID: 1,
+    REAL_BATCH_CASE_ID: 2,
 }
 _ROW_IDS = (
     "generated-qwen3moe-router-one-hot-column-0-v1",
@@ -121,6 +174,21 @@ _EXPECTED_TOP8_IDS = (
     (83, 38, 121, 76, 31, 114, 69, 24),
     (24, 123, 94, 65, 36, 7, 106, 77),
 )
+
+_MINIMAL_TIMING_STAGES = frozenset(
+    {"dequantization", "total_evaluated_router"}
+)
+_COSTLY_TIMING_STAGES = frozenset(
+    {
+        "file_io",
+        "storage_validation_f32_decode",
+        "dequantization",
+        "host_to_device",
+        "total_evaluated_router",
+        "end_to_end_router_command",
+    }
+)
+_STAGE_TIMING_STAGES = _TIMING_STAGES
 
 
 class RouterCaseScope(Enum):
@@ -132,6 +200,26 @@ class RouterCaseScope(Enum):
 
 class RouterError(RuntimeContractError):
     """Stable bounded failure at the Feature 002 router boundary."""
+
+
+@dataclass(frozen=True, slots=True)
+class _ModelFileSnapshot:
+    device: int
+    inode: int
+    mode: int
+    size: int
+    modified_ns: int
+    changed_ns: int
+
+
+@dataclass(frozen=True, slots=True)
+class _CachedRouterTensor:
+    snapshot: _ModelFileSnapshot
+    weights: tuple[tuple[float, ...], ...]
+
+
+_REAL_ROUTER_CACHE_LOCK = threading.Lock()
+_REAL_ROUTER_CACHE: _CachedRouterTensor | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -216,26 +304,35 @@ class RouterExecutionTiming:
                 "router execution timing lacks F32 dequantization evidence"
             )
         if self.instrumentation_mode == "minimally_instrumented":
-            if set(frozen_stages) != {
-                "dequantization",
-                "total_evaluated_router",
+            stage_names = frozenset(frozen_stages)
+            if stage_names not in {
+                _MINIMAL_TIMING_STAGES,
+                _COSTLY_TIMING_STAGES,
             }:
                 raise _timing_contract_error(
-                    "minimal router execution timing contains diagnostic stages"
+                    "minimal router execution timing has an invalid stage profile"
                 )
             if frozen_stages["total_evaluated_router"].status != "observed":
                 raise _timing_contract_error(
                     "minimal router execution timing lacks its observed total"
                 )
-        elif not any(
-            stage in _EVALUATED_TIMING_STAGES
-            and stage != "total_evaluated_router"
-            and value.status == "observed"
-            for stage, value in frozen_stages.items()
-        ):
-            raise _timing_contract_error(
-                "stage router execution timing lacks an evaluated diagnostic"
-            )
+            if stage_names == _COSTLY_TIMING_STAGES:
+                _validate_costly_execution_stages(frozen_stages)
+        else:
+            if frozenset(frozen_stages) != _STAGE_TIMING_STAGES:
+                raise _timing_contract_error(
+                    "stage router execution timing lacks its exact stage inventory"
+                )
+            if not any(
+                stage in _EVALUATED_TIMING_STAGES
+                and stage != "total_evaluated_router"
+                and value.status == "observed"
+                for stage, value in frozen_stages.items()
+            ):
+                raise _timing_contract_error(
+                    "stage router execution timing lacks an evaluated diagnostic"
+                )
+            _validate_stage_execution_stages(frozen_stages)
         object.__setattr__(self, "stages", MappingProxyType(frozen_stages))
 
     def to_protocol_result(self) -> dict[str, object]:
@@ -409,12 +506,12 @@ class RouterTimingObservation:
                 raise _timing_contract_error(
                     "passing minimal router timing lacks its evaluated total"
                 )
-            if self.status == "passed" and set(frozen_stages) != {
-                "dequantization",
-                "total_evaluated_router",
+            if self.status == "passed" and frozenset(frozen_stages) not in {
+                _MINIMAL_TIMING_STAGES,
+                _COSTLY_TIMING_STAGES,
             }:
                 raise _timing_contract_error(
-                    "passing minimal router timing contains diagnostic stages"
+                    "passing minimal router timing has an invalid stage profile"
                 )
         elif self.status == "passed" and not any(
             stage in _EVALUATED_TIMING_STAGES
@@ -541,6 +638,76 @@ class RouterTimingRecorder:
             duration_ns=completed_ns - started_ns,
         )
         return outputs
+
+    def measure_host(
+        self,
+        *,
+        stage: str,
+        operation: Callable[[], object],
+    ) -> object:
+        """Measure one host-only stage with the same monotonic clock."""
+
+        self._require_open()
+        _validate_timing_stage_name(stage)
+        if stage in _EVALUATED_TIMING_STAGES or stage == "dequantization":
+            raise _timing_contract_error(
+                "router host timing stage requires an unevaluated boundary"
+            )
+        self._require_new_stage(stage)
+        if self._failed_stage is not None:
+            raise _timing_contract_error(
+                "router timing cannot continue after a stage failure"
+            )
+        if not callable(operation):
+            raise _timing_contract_error("router timing operation is not callable")
+        try:
+            started_ns = self._read_clock()
+            result = operation()
+            completed_ns = self._read_clock()
+            if completed_ns <= started_ns:
+                raise _timing_contract_error(
+                    "router timing clock did not advance monotonically"
+                )
+        except RouterError as error:
+            self._failed_stage = stage
+            self._stages[stage] = RouterTimingStage(
+                status="unavailable",
+                reason=error.message,
+            )
+            raise
+        except RuntimeContractError as error:
+            self._failed_stage = stage
+            self._stages[stage] = RouterTimingStage(
+                status="unavailable",
+                reason=error.message,
+            )
+            raise RouterError(error.code, error.message) from error
+        except Exception as error:
+            self._failed_stage = stage
+            self._stages[stage] = RouterTimingStage(
+                status="unavailable",
+                reason="the host router timing stage did not complete",
+            )
+            raise RouterError(
+                "internal_worker_error",
+                "the host router timing stage did not complete",
+            ) from error
+        self._stages[stage] = RouterTimingStage(
+            status="observed",
+            duration_ns=completed_ns - started_ns,
+        )
+        return result
+
+    def record_observed(self, *, stage: str, duration_ns: int) -> None:
+        """Retain a positive duration measured around a composite boundary."""
+
+        self._require_open()
+        _validate_timing_stage_name(stage)
+        self._require_new_stage(stage)
+        self._stages[stage] = RouterTimingStage(
+            status="observed",
+            duration_ns=duration_ns,
+        )
 
     def record_not_applicable(self, *, stage: str, reason: str) -> None:
         if stage != "dequantization" or reason != _F32_DEQUANTIZATION_REASON:
@@ -731,6 +898,85 @@ def _timing_contract_error(message: str) -> RouterError:
     return RouterError("internal_worker_error", message)
 
 
+def _validate_costly_execution_stages(
+    stages: Mapping[str, RouterTimingStage],
+) -> None:
+    if any(
+        stages[name].status != "observed"
+        for name in (
+            "file_io",
+            "storage_validation_f32_decode",
+            "total_evaluated_router",
+            "end_to_end_router_command",
+        )
+    ):
+        raise _timing_contract_error(
+            "costly router execution lacks an observed measured boundary"
+        )
+    transfer = stages["host_to_device"]
+    if (
+        transfer.status != "unavailable"
+        or transfer.reason != _INSEPARABLE_TRANSFER_REASON
+    ):
+        raise _timing_contract_error(
+            "costly router execution has invalid transfer evidence"
+        )
+
+
+def _validate_stage_execution_stages(
+    stages: Mapping[str, RouterTimingStage],
+) -> None:
+    setup = stages["setup_admission"]
+    graph = stages["graph_construction"]
+    compilation = stages["compilation"]
+    if setup.status != "unavailable" or setup.reason != _SETUP_REASON:
+        raise _timing_contract_error(
+            "stage router execution has invalid setup evidence"
+        )
+    if graph.status != "unavailable" or graph.reason != _LAZY_GRAPH_REASON:
+        raise _timing_contract_error(
+            "stage router execution has invalid graph-construction evidence"
+        )
+    if (
+        compilation.status != "unavailable"
+        or compilation.reason != _COMPILATION_REASON
+    ):
+        raise _timing_contract_error(
+            "stage router execution has invalid compilation evidence"
+        )
+    file_io = stages["file_io"]
+    decode = stages["storage_validation_f32_decode"]
+    file_cache_hit = (
+        file_io.status == "unavailable" and file_io.reason == _CACHE_FILE_IO_REASON
+    )
+    decode_cache_hit = (
+        decode.status == "unavailable" and decode.reason == _CACHE_DECODE_REASON
+    )
+    if (file_io.status == "observed") != (decode.status == "observed"):
+        raise _timing_contract_error(
+            "stage router file and decode evidence disagree"
+        )
+    if file_io.status != "observed" and not (file_cache_hit and decode_cache_hit):
+        raise _timing_contract_error(
+            "stage router execution has invalid cache evidence"
+        )
+    if any(
+        stages[name].status != "observed"
+        for name in (
+            "host_to_device",
+            "router_projection",
+            "top_k",
+            "normalization",
+            "total_evaluated_router",
+            "synchronized_readback",
+            "end_to_end_router_command",
+        )
+    ):
+        raise _timing_contract_error(
+            "stage router execution lacks an observed evaluated boundary"
+        )
+
+
 def _validate_positive_nanoseconds(value: object, label: str) -> None:
     if (
         isinstance(value, bool)
@@ -821,10 +1067,27 @@ class RouterResult:
     full_probabilities_f32le_sha256: str
     selected_probabilities_f32le_sha256: str
     normalized_weights_f32le_sha256: str
+    router_tensor_bytes_read: int
+    router_tensor_cache_status: str
     memory_gauges: MemoryGauges
     timing: RouterExecutionTiming
 
     def __post_init__(self) -> None:
+        permitted_access = (
+            {(0, _ROUTER_TENSOR_NOT_APPLICABLE)}
+            if self.router_case_id in _SYNTHETIC_CASE_ROWS
+            else {
+                (0, _ROUTER_TENSOR_CACHE_HIT),
+                (_ROUTER_TENSOR_BYTES, _ROUTER_TENSOR_READ_AND_CACHED),
+            }
+        )
+        if (
+            self.router_tensor_bytes_read,
+            self.router_tensor_cache_status,
+        ) not in permitted_access:
+            raise _timing_contract_error(
+                "router tensor application-read evidence is invalid"
+            )
         if not isinstance(self.timing, RouterExecutionTiming):
             raise _timing_contract_error("router result timing envelope is invalid")
         if (
@@ -880,6 +1143,10 @@ class RouterResult:
             "normalized_weights_f32le_sha256": (
                 self.normalized_weights_f32le_sha256
             ),
+            # This is the exact inherited positional-read byte count performed
+            # by this application, not a claim about physical disk I/O.
+            "router_tensor_bytes_read": self.router_tensor_bytes_read,
+            "router_tensor_cache_status": self.router_tensor_cache_status,
             "memory_gauges": self.memory_gauges.to_protocol_result(),
             "timing": self.timing.to_protocol_result(),
             "passed": self.passed,
@@ -906,12 +1173,78 @@ def run_router(
     case_scope: RouterCaseScope,
     mx_module: Any | None = None,
 ) -> RouterResult:
-    """Validate and evaluate one complete synthetic router case on MLX GPU."""
+    """Validate and evaluate one complete in-memory router case on MLX GPU."""
+
+    return _run_router_with_profile(
+        router_case_id=router_case_id,
+        hidden_states=hidden_states,
+        router_weights=router_weights,
+        requested_device=requested_device,
+        allow_fallback=allow_fallback,
+        case_scope=case_scope,
+        timing_profile=_TIMING_PROFILE_MINIMAL,
+        mx_module=mx_module,
+    )
+
+
+def _run_router_with_profile(
+    *,
+    router_case_id: object,
+    hidden_states: object,
+    router_weights: object,
+    requested_device: object,
+    allow_fallback: object,
+    case_scope: RouterCaseScope,
+    timing_profile: str,
+    router_tensor_bytes_read: int = 0,
+    router_tensor_cache_status: str = _ROUTER_TENSOR_NOT_APPLICABLE,
+    mx_module: Any | None = None,
+    timing_recorder: RouterTimingRecorder | None = None,
+    end_to_end_started_ns: int | None = None,
+    clock_ns: Callable[[], int] = time.perf_counter_ns,
+) -> RouterResult:
+    """Internal execution seam for exact minimal, costly, and stage profiles."""
 
     if not isinstance(case_scope, RouterCaseScope):
         raise RouterError(
             "internal_worker_error",
             "router execution requires an explicit internal case scope",
+        )
+    if timing_profile not in _TIMING_PROFILES:
+        raise RouterError(
+            "internal_worker_error",
+            "router execution timing profile is invalid",
+        )
+    permitted_access = (
+        {(0, _ROUTER_TENSOR_NOT_APPLICABLE)}
+        if case_scope is RouterCaseScope.SYNTHETIC_FIXTURE
+        else {
+            (0, _ROUTER_TENSOR_CACHE_HIT),
+            (_ROUTER_TENSOR_BYTES, _ROUTER_TENSOR_READ_AND_CACHED),
+        }
+    )
+    if (router_tensor_bytes_read, router_tensor_cache_status) not in permitted_access:
+        raise RouterError(
+            "internal_worker_error",
+            "router tensor application-read evidence contradicts the case scope",
+        )
+    if timing_profile == _TIMING_PROFILE_MINIMAL and (
+        timing_recorder is not None or end_to_end_started_ns is not None
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "minimal router execution received external timing state",
+        )
+    if timing_profile != _TIMING_PROFILE_MINIMAL and (
+        not isinstance(timing_recorder, RouterTimingRecorder)
+        or isinstance(end_to_end_started_ns, bool)
+        or not isinstance(end_to_end_started_ns, int)
+        or not 0 <= end_to_end_started_ns <= _MAX_U64
+        or not callable(clock_ns)
+    ):
+        raise RouterError(
+            "internal_worker_error",
+            "real router execution lacks its timing state",
         )
     _validate_control_scalars(
         router_case_id=router_case_id,
@@ -946,78 +1279,92 @@ def run_router(
             mx,
             requested_device=requested_device,
         )
-        timing_recorder = RouterTimingRecorder()
-        timing_recorder.record_not_applicable(
-            stage="dequantization",
-            reason=_F32_DEQUANTIZATION_REASON,
-        )
-        with mx.stream(gpu):
-            hidden_array = mx.array(admitted_hidden, dtype=mx.float32)
-            weight_array = mx.array(admitted_weights, dtype=mx.float32)
-            transposed_weights = mx.transpose(
-                weight_array,
-                (1, 0),
-                stream=gpu,
+        recorder = timing_recorder or RouterTimingRecorder()
+        if timing_profile == _TIMING_PROFILE_MINIMAL:
+            recorder.record_not_applicable(
+                stage="dequantization",
+                reason=_F32_DEQUANTIZATION_REASON,
             )
 
-            def build_router_outputs() -> tuple[object, ...]:
-                logits_array = mx.matmul(
+        with mx.stream(gpu):
+            if timing_profile == _TIMING_PROFILE_STAGE:
+                (
                     hidden_array,
+                    weight_array,
                     transposed_weights,
-                    stream=gpu,
+                ) = recorder.measure_evaluated(
+                    stage="host_to_device",
+                    mx_module=mx,
+                    gpu=gpu,
+                    operation=lambda: _construct_router_arrays(
+                        mx,
+                        gpu,
+                        admitted_hidden,
+                        admitted_weights,
+                    ),
                 )
-                probability_array = mx.softmax(
-                    logits_array,
-                    axis=1,
-                    stream=gpu,
+                recorder.record_unavailable(
+                    stage="graph_construction",
+                    reason=_LAZY_GRAPH_REASON,
                 )
-                # Assign every expert its exact lexicographic rank under
-                # (probability descending, expert ID ascending). Ranks are
-                # unique even when probabilities tie, so argsort never has to
-                # choose an order among equal keys or rely on sort stability.
-                expert_ids = mx.arange(
-                    EXPERT_COUNT,
-                    dtype=mx.uint32,
-                    stream=gpu,
+                recorder.record_unavailable(
+                    stage="compilation",
+                    reason=_COMPILATION_REASON,
                 )
-                candidate_probabilities = probability_array[:, :, None]
-                competing_probabilities = probability_array[:, None, :]
-                strictly_better = competing_probabilities > candidate_probabilities
-                equal_with_lower_id = (
-                    competing_probabilities == candidate_probabilities
-                ) & (expert_ids[None, None, :] < expert_ids[None, :, None])
-                lexicographic_rank = mx.sum(
-                    strictly_better | equal_with_lower_id,
-                    axis=2,
-                    stream=gpu,
+                (diagnostic_logits,) = recorder.measure_evaluated(
+                    stage="router_projection",
+                    mx_module=mx,
+                    gpu=gpu,
+                    operation=lambda: (
+                        mx.matmul(
+                            hidden_array,
+                            transposed_weights,
+                            stream=gpu,
+                        ),
+                    ),
                 )
-                order_array = mx.argsort(
-                    lexicographic_rank,
-                    axis=1,
-                    stream=gpu,
+                (
+                    diagnostic_probabilities,
+                    diagnostic_ids,
+                    diagnostic_selected,
+                ) = recorder.measure_evaluated(
+                    stage="top_k",
+                    mx_module=mx,
+                    gpu=gpu,
+                    operation=lambda: _build_router_selection(
+                        mx,
+                        gpu,
+                        diagnostic_logits,
+                    ),
                 )
-                selected_id_array = order_array[:, :TOP_K]
-                selected_probability_array = mx.take_along_axis(
-                    probability_array,
-                    selected_id_array,
-                    axis=1,
-                    stream=gpu,
+                (diagnostic_normalized,) = recorder.measure_evaluated(
+                    stage="normalization",
+                    mx_module=mx,
+                    gpu=gpu,
+                    operation=lambda: (
+                        _normalize_selected_probabilities(
+                            mx,
+                            gpu,
+                            diagnostic_selected,
+                        ),
+                    ),
                 )
-                selected_sum_array = mx.sum(
-                    selected_probability_array,
-                    axis=1,
-                    keepdims=True,
-                    stream=gpu,
+                # Retain references until after all diagnostic barriers.  This
+                # prevents an optimizer from treating a diagnostic stage as
+                # dead work, while the final minimally synchronized graph
+                # below remains the output used for correctness comparison.
+                _ = (
+                    weight_array,
+                    diagnostic_probabilities,
+                    diagnostic_ids,
+                    diagnostic_normalized,
                 )
-                normalized_weight_array = (
-                    selected_probability_array / selected_sum_array
-                )
-                return (
-                    logits_array,
-                    probability_array,
-                    selected_id_array,
-                    selected_probability_array,
-                    normalized_weight_array,
+            else:
+                hidden_array, _, transposed_weights = _construct_router_arrays(
+                    mx,
+                    gpu,
+                    admitted_hidden,
+                    admitted_weights,
                 )
 
             (
@@ -1026,18 +1373,17 @@ def run_router(
                 selected_id_array,
                 selected_probability_array,
                 normalized_weight_array,
-            ) = timing_recorder.measure_evaluated(
+            ) = recorder.measure_evaluated(
                 stage="total_evaluated_router",
                 mx_module=mx,
                 gpu=gpu,
-                operation=build_router_outputs,
+                operation=lambda: _build_complete_router_outputs(
+                    mx,
+                    gpu,
+                    hidden_array,
+                    transposed_weights,
+                ),
             )
-
-        timing = timing_recorder.execution_timing(
-            instrumentation_mode="minimally_instrumented"
-        )
-        evaluated = timing.evaluated
-        synchronized = timing.synchronized
 
         _require_array_metadata(
             mx,
@@ -1070,31 +1416,70 @@ def run_router(
             require_float32=True,
         )
 
-        logits = _float_matrix_readback(
-            logits_array.tolist(),
-            expected_rows=expected_rows,
-            expected_columns=EXPERT_COUNT,
+        def readback() -> tuple[tuple[tuple, ...], ...]:
+            return (
+                _float_matrix_readback(
+                    logits_array.tolist(),
+                    expected_rows=expected_rows,
+                    expected_columns=EXPERT_COUNT,
+                ),
+                _float_matrix_readback(
+                    probability_array.tolist(),
+                    expected_rows=expected_rows,
+                    expected_columns=EXPERT_COUNT,
+                ),
+                _integer_matrix_readback(
+                    selected_id_array.tolist(),
+                    expected_rows=expected_rows,
+                    expected_columns=TOP_K,
+                ),
+                _float_matrix_readback(
+                    selected_probability_array.tolist(),
+                    expected_rows=expected_rows,
+                    expected_columns=TOP_K,
+                ),
+                _float_matrix_readback(
+                    normalized_weight_array.tolist(),
+                    expected_rows=expected_rows,
+                    expected_columns=TOP_K,
+                ),
+            )
+
+        if timing_profile == _TIMING_PROFILE_STAGE:
+            readback_result = recorder.measure_host(
+                stage="synchronized_readback",
+                operation=readback,
+            )
+        else:
+            readback_result = readback()
+        (
+            logits,
+            full_probabilities,
+            selected_expert_ids,
+            selected_probabilities,
+            normalized_weights,
+        ) = readback_result
+
+        if timing_profile != _TIMING_PROFILE_MINIMAL:
+            completed_ns = _read_external_clock(clock_ns)
+            if end_to_end_started_ns is None:
+                raise RouterError(
+                    "internal_worker_error",
+                    "real router execution lost its timing boundary",
+                )
+            recorder.record_observed(
+                stage="end_to_end_router_command",
+                duration_ns=completed_ns - end_to_end_started_ns,
+            )
+        timing = recorder.execution_timing(
+            instrumentation_mode=(
+                "stage_instrumented"
+                if timing_profile == _TIMING_PROFILE_STAGE
+                else "minimally_instrumented"
+            )
         )
-        full_probabilities = _float_matrix_readback(
-            probability_array.tolist(),
-            expected_rows=expected_rows,
-            expected_columns=EXPERT_COUNT,
-        )
-        selected_expert_ids = _integer_matrix_readback(
-            selected_id_array.tolist(),
-            expected_rows=expected_rows,
-            expected_columns=TOP_K,
-        )
-        selected_probabilities = _float_matrix_readback(
-            selected_probability_array.tolist(),
-            expected_rows=expected_rows,
-            expected_columns=TOP_K,
-        )
-        normalized_weights = _float_matrix_readback(
-            normalized_weight_array.tolist(),
-            expected_rows=expected_rows,
-            expected_columns=TOP_K,
-        )
+        evaluated = timing.evaluated
+        synchronized = timing.synchronized
         memory_gauges = collect_memory_gauges(mx)
     except RouterError:
         raise
@@ -1142,9 +1527,111 @@ def run_router(
         normalized_weights_f32le_sha256=_canonical_f32le_sha256(
             normalized_weights
         ),
+        router_tensor_bytes_read=router_tensor_bytes_read,
+        router_tensor_cache_status=router_tensor_cache_status,
         memory_gauges=memory_gauges,
         timing=timing,
     )
+
+
+def _construct_router_arrays(
+    mx: Any,
+    gpu: Any,
+    hidden_states: tuple[tuple[float, ...], ...],
+    router_weights: tuple[tuple[float, ...], ...],
+) -> tuple[object, object, object]:
+    hidden_array = mx.array(hidden_states, dtype=mx.float32)
+    weight_array = mx.array(router_weights, dtype=mx.float32)
+    transposed_weights = mx.transpose(weight_array, (1, 0), stream=gpu)
+    return hidden_array, weight_array, transposed_weights
+
+
+def _build_router_selection(
+    mx: Any,
+    gpu: Any,
+    logits_array: object,
+) -> tuple[object, object, object]:
+    probability_array = mx.softmax(logits_array, axis=1, stream=gpu)
+    # Assign each expert its exact lexicographic rank under probability
+    # descending, then expert ID ascending.  The ranks are unique even for
+    # ties, so argsort need not rely on implementation-specific stability.
+    expert_ids = mx.arange(EXPERT_COUNT, dtype=mx.uint32, stream=gpu)
+    candidate_probabilities = probability_array[:, :, None]
+    competing_probabilities = probability_array[:, None, :]
+    strictly_better = competing_probabilities > candidate_probabilities
+    equal_with_lower_id = (
+        competing_probabilities == candidate_probabilities
+    ) & (expert_ids[None, None, :] < expert_ids[None, :, None])
+    lexicographic_rank = mx.sum(
+        strictly_better | equal_with_lower_id,
+        axis=2,
+        stream=gpu,
+    )
+    order_array = mx.argsort(lexicographic_rank, axis=1, stream=gpu)
+    selected_id_array = order_array[:, :TOP_K]
+    selected_probability_array = mx.take_along_axis(
+        probability_array,
+        selected_id_array,
+        axis=1,
+        stream=gpu,
+    )
+    return probability_array, selected_id_array, selected_probability_array
+
+
+def _normalize_selected_probabilities(
+    mx: Any,
+    gpu: Any,
+    selected_probability_array: object,
+) -> object:
+    selected_sum_array = mx.sum(
+        selected_probability_array,
+        axis=1,
+        keepdims=True,
+        stream=gpu,
+    )
+    return selected_probability_array / selected_sum_array
+
+
+def _build_complete_router_outputs(
+    mx: Any,
+    gpu: Any,
+    hidden_array: object,
+    transposed_weights: object,
+) -> tuple[object, ...]:
+    logits_array = mx.matmul(hidden_array, transposed_weights, stream=gpu)
+    (
+        probability_array,
+        selected_id_array,
+        selected_probability_array,
+    ) = _build_router_selection(mx, gpu, logits_array)
+    normalized_weight_array = _normalize_selected_probabilities(
+        mx,
+        gpu,
+        selected_probability_array,
+    )
+    return (
+        logits_array,
+        probability_array,
+        selected_id_array,
+        selected_probability_array,
+        normalized_weight_array,
+    )
+
+
+def _read_external_clock(clock_ns: Callable[[], int]) -> int:
+    try:
+        value = clock_ns()
+    except Exception as error:
+        raise RouterError(
+            "internal_worker_error",
+            "router timing clock could not be read",
+        ) from error
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= _MAX_U64:
+        raise RouterError(
+            "internal_worker_error",
+            "router timing clock returned invalid nanoseconds",
+        )
+    return value
 
 
 def _validate_explicit_gpu_selection(
@@ -1192,8 +1679,14 @@ def run_committed_router(
     requested_device: object,
     allow_fallback: object,
     router_runner: RouterCoreRunner | None = None,
+    model_fd: int = _MODEL_FILE_FD,
+    fstat_func: Callable[[int], Any] = os.fstat,
+    pread_func: Callable[[int, int, int], bytes] = os.pread,
+    getfl_func: Callable[[int, int], int] = fcntl.fcntl,
+    clock_ns: Callable[[], int] = time.perf_counter_ns,
+    environ: Mapping[str, str] | None = None,
 ) -> RouterResult:
-    """Resolve one committed generated case and execute no caller data."""
+    """Resolve one committed case and execute no caller-supplied tensor data."""
 
     _validate_control_scalars(
         router_case_id=router_case_id,
@@ -1206,6 +1699,18 @@ def run_committed_router(
             "device_unavailable",
             "router execution requires explicit GPU selection without fallback",
         )
+    if router_case_id in {REAL_SINGLE_ROW_CASE_ID, REAL_BATCH_CASE_ID}:
+        return _run_inherited_real_router(
+            router_case_id=router_case_id,
+            expected_rows=expected_rows,
+            model_fd=model_fd,
+            fstat_func=fstat_func,
+            pread_func=pread_func,
+            getfl_func=getfl_func,
+            clock_ns=clock_ns,
+            environ=os.environ if environ is None else environ,
+            router_runner=router_runner,
+        )
     committed = _load_committed_router_case(router_case_id, expected_rows)
     runner = run_router if router_runner is None else router_runner
     return runner(
@@ -1216,6 +1721,555 @@ def run_committed_router(
         allow_fallback=False,
         case_scope=RouterCaseScope.SYNTHETIC_FIXTURE,
     )
+
+
+def _run_inherited_real_router(
+    *,
+    router_case_id: str,
+    expected_rows: int,
+    model_fd: int,
+    fstat_func: Callable[[int], Any],
+    pread_func: Callable[[int, int, int], bytes],
+    getfl_func: Callable[[int, int], int],
+    clock_ns: Callable[[], int],
+    environ: Mapping[str, str],
+    router_runner: RouterCoreRunner | None,
+) -> RouterResult:
+    """Load the exact inherited F32 range and committed real hidden input."""
+
+    if isinstance(model_fd, bool) or not isinstance(model_fd, int) or model_fd < 0:
+        raise RouterError(
+            "internal_worker_error",
+            "the inherited router model descriptor is invalid",
+        )
+    if not all(callable(value) for value in (fstat_func, pread_func, getfl_func, clock_ns)):
+        raise RouterError(
+            "internal_worker_error",
+            "the inherited router I/O adapter is invalid",
+        )
+    if not isinstance(environ, Mapping):
+        raise RouterError(
+            "internal_worker_error",
+            "the router timing environment is invalid",
+        )
+
+    timing_profile = _timing_profile_from_environment(environ)
+    end_to_end_started_ns = (
+        None
+        if timing_profile == _TIMING_PROFILE_MINIMAL
+        else _read_external_clock(clock_ns)
+    )
+    recorder = (
+        None
+        if timing_profile == _TIMING_PROFILE_MINIMAL
+        else RouterTimingRecorder(clock_ns=clock_ns)
+    )
+    if timing_profile == _TIMING_PROFILE_STAGE:
+        if recorder is None:
+            raise RouterError(
+                "internal_worker_error",
+                "stage router execution lacks its timing recorder",
+            )
+        recorder.record_unavailable(
+            stage="setup_admission",
+            reason=_SETUP_REASON,
+        )
+
+    (
+        snapshot,
+        router_weights,
+        router_tensor_bytes_read,
+        router_tensor_cache_status,
+    ) = _resolve_real_router_weights(
+        model_fd=model_fd,
+        force_read=timing_profile == _TIMING_PROFILE_COSTLY,
+        timing_profile=timing_profile,
+        recorder=recorder,
+        fstat_func=fstat_func,
+        pread_func=pread_func,
+        getfl_func=getfl_func,
+    )
+    hidden_states = _load_real_hidden_case(router_case_id, expected_rows)
+
+    if recorder is not None:
+        recorder.record_not_applicable(
+            stage="dequantization",
+            reason=_F32_DEQUANTIZATION_REASON,
+        )
+        if timing_profile == _TIMING_PROFILE_COSTLY:
+            recorder.record_unavailable(
+                stage="host_to_device",
+                reason=_INSEPARABLE_TRANSFER_REASON,
+            )
+
+    runner = _run_router_with_profile if router_runner is None else router_runner
+    result = runner(
+        router_case_id=router_case_id,
+        hidden_states=hidden_states,
+        router_weights=router_weights,
+        requested_device=GPU_DEVICE_ID,
+        allow_fallback=False,
+        case_scope=RouterCaseScope.REAL_CHECKPOINT,
+        timing_profile=timing_profile,
+        router_tensor_bytes_read=router_tensor_bytes_read,
+        router_tensor_cache_status=router_tensor_cache_status,
+        timing_recorder=recorder,
+        end_to_end_started_ns=end_to_end_started_ns,
+        clock_ns=clock_ns,
+    )
+    after_execution = _snapshot_model_file(
+        model_fd,
+        fstat_func=fstat_func,
+        getfl_func=getfl_func,
+    )
+    if after_execution != snapshot:
+        raise RouterError(
+            "invalid_byte_count",
+            "the inherited model file changed during router execution",
+        )
+    return result
+
+
+def _timing_profile_from_environment(environ: Mapping[str, str]) -> str:
+    value = environ.get(_TIMING_PROFILE_ENV, _TIMING_PROFILE_MINIMAL)
+    if not isinstance(value, str) or value not in _TIMING_PROFILES:
+        raise RouterError(
+            "malformed_request",
+            "the router timing profile is not one of the committed modes",
+        )
+    return value
+
+
+def _resolve_real_router_weights(
+    *,
+    model_fd: int,
+    force_read: bool,
+    timing_profile: str,
+    recorder: RouterTimingRecorder | None,
+    fstat_func: Callable[[int], Any],
+    pread_func: Callable[[int, int, int], bytes],
+    getfl_func: Callable[[int, int], int],
+) -> tuple[
+    _ModelFileSnapshot,
+    tuple[tuple[float, ...], ...],
+    int,
+    str,
+]:
+    """Return an identity-bound cache hit or one exact positional read."""
+
+    global _REAL_ROUTER_CACHE
+    snapshot = _snapshot_model_file(
+        model_fd,
+        fstat_func=fstat_func,
+        getfl_func=getfl_func,
+    )
+    with _REAL_ROUTER_CACHE_LOCK:
+        cached = _REAL_ROUTER_CACHE
+        if not force_read and cached is not None and cached.snapshot == snapshot:
+            if timing_profile == _TIMING_PROFILE_STAGE:
+                if recorder is None:
+                    raise RouterError(
+                        "internal_worker_error",
+                        "stage router cache evidence lacks its timing recorder",
+                    )
+                recorder.record_unavailable(
+                    stage="file_io",
+                    reason=_CACHE_FILE_IO_REASON,
+                )
+                recorder.record_unavailable(
+                    stage="storage_validation_f32_decode",
+                    reason=_CACHE_DECODE_REASON,
+                )
+            return snapshot, cached.weights, 0, _ROUTER_TENSOR_CACHE_HIT
+
+        if recorder is None:
+            payload = _pread_exact_router_tensor(model_fd, pread_func)
+        else:
+            payload_value = recorder.measure_host(
+                stage="file_io",
+                operation=lambda: _pread_exact_router_tensor(model_fd, pread_func),
+            )
+            if not isinstance(payload_value, bytes):
+                raise RouterError(
+                    "internal_worker_error",
+                    "the timed router tensor read returned invalid data",
+                )
+            payload = payload_value
+        after_read = _snapshot_model_file(
+            model_fd,
+            fstat_func=fstat_func,
+            getfl_func=getfl_func,
+        )
+        if after_read != snapshot:
+            raise RouterError(
+                "invalid_byte_count",
+                "the inherited model file changed while its router tensor was read",
+            )
+
+        if recorder is None:
+            weights = _decode_real_router_tensor(payload)
+        else:
+            weights_value = recorder.measure_host(
+                stage="storage_validation_f32_decode",
+                operation=lambda: _decode_real_router_tensor(payload),
+            )
+            if not isinstance(weights_value, tuple):
+                raise RouterError(
+                    "internal_worker_error",
+                    "the timed router tensor decode returned invalid data",
+                )
+            weights = weights_value
+
+        _REAL_ROUTER_CACHE = _CachedRouterTensor(snapshot=snapshot, weights=weights)
+        return (
+            snapshot,
+            weights,
+            _ROUTER_TENSOR_BYTES,
+            _ROUTER_TENSOR_READ_AND_CACHED,
+        )
+
+
+def _snapshot_model_file(
+    model_fd: int,
+    *,
+    fstat_func: Callable[[int], Any],
+    getfl_func: Callable[[int, int], int],
+) -> _ModelFileSnapshot:
+    try:
+        observed = fstat_func(model_fd)
+        flags = getfl_func(model_fd, fcntl.F_GETFL)
+    except (OSError, TypeError, ValueError) as error:
+        raise RouterError(
+            "internal_worker_error",
+            "the inherited router model descriptor could not be inspected",
+        ) from error
+    fields = (
+        getattr(observed, "st_dev", None),
+        getattr(observed, "st_ino", None),
+        getattr(observed, "st_mode", None),
+        getattr(observed, "st_size", None),
+        getattr(observed, "st_mtime_ns", None),
+        getattr(observed, "st_ctime_ns", None),
+    )
+    if any(isinstance(value, bool) or not isinstance(value, int) for value in fields):
+        raise RouterError(
+            "internal_worker_error",
+            "the inherited router model descriptor returned invalid metadata",
+        )
+    if isinstance(flags, bool) or not isinstance(flags, int):
+        raise RouterError(
+            "internal_worker_error",
+            "the inherited router model descriptor returned invalid flags",
+        )
+    device, inode, mode, size, modified_ns, changed_ns = fields
+    if not stat.S_ISREG(mode):
+        raise RouterError(
+            "invalid_byte_count",
+            "the inherited router model descriptor is not a regular file",
+        )
+    if size != _MODEL_FILE_BYTES:
+        raise RouterError(
+            "invalid_byte_count",
+            "the inherited router model file byte size does not match admission",
+        )
+    if flags & os.O_ACCMODE != os.O_RDONLY:
+        raise RouterError(
+            "invalid_byte_count",
+            "the inherited router model descriptor is not read only",
+        )
+    if (
+        _ROUTER_TENSOR_OFFSET < 0
+        or _ROUTER_TENSOR_BYTES != _WEIGHT_BYTES
+        or _ROUTER_TENSOR_END != _ROUTER_TENSOR_OFFSET + _ROUTER_TENSOR_BYTES
+        or _ROUTER_TENSOR_END > size
+    ):
+        raise RouterError(
+            "invalid_byte_count",
+            "the frozen router tensor range is outside the inherited model file",
+        )
+    return _ModelFileSnapshot(
+        device=device,
+        inode=inode,
+        mode=mode,
+        size=size,
+        modified_ns=modified_ns,
+        changed_ns=changed_ns,
+    )
+
+
+def _pread_exact_router_tensor(
+    model_fd: int,
+    pread_func: Callable[[int, int, int], bytes],
+) -> bytes:
+    payload = bytearray(_ROUTER_TENSOR_BYTES)
+    actual = 0
+    interrupted_retries = 0
+    while actual < _ROUTER_TENSOR_BYTES:
+        remaining = _ROUTER_TENSOR_BYTES - actual
+        try:
+            chunk = pread_func(
+                model_fd,
+                remaining,
+                _ROUTER_TENSOR_OFFSET + actual,
+            )
+        except InterruptedError:
+            interrupted_retries += 1
+            if interrupted_retries > 64:
+                raise RouterError(
+                    "resource_limit",
+                    "the inherited router tensor read exceeded its retry bound",
+                )
+            continue
+        except OSError as error:
+            if error.errno == errno.EINTR:
+                interrupted_retries += 1
+                if interrupted_retries <= 64:
+                    continue
+            raise RouterError(
+                "internal_worker_error",
+                "the inherited router tensor could not be read",
+            ) from error
+        if not isinstance(chunk, bytes):
+            raise RouterError(
+                "internal_worker_error",
+                "the inherited positional router reader returned invalid data",
+            )
+        if not chunk:
+            raise RouterError(
+                "invalid_byte_count",
+                "the inherited router tensor ended before its exact byte count",
+            )
+        if len(chunk) > remaining:
+            raise RouterError(
+                "invalid_byte_count",
+                "the inherited positional router reader exceeded its range",
+            )
+        payload[actual : actual + len(chunk)] = chunk
+        actual += len(chunk)
+    return bytes(payload)
+
+
+def _decode_real_router_tensor(
+    payload: bytes,
+) -> tuple[tuple[float, ...], ...]:
+    if not isinstance(payload, bytes) or len(payload) != _ROUTER_TENSOR_BYTES:
+        raise RouterError(
+            "invalid_byte_count",
+            "the inherited router tensor has an invalid byte count",
+        )
+    if hashlib.sha256(payload).hexdigest() != _ROUTER_TENSOR_SHA256:
+        raise RouterError(
+            "invalid_byte_count",
+            "the inherited router tensor differs from its frozen hash",
+        )
+    try:
+        flat = tuple(value[0] for value in struct.iter_unpack("<f", payload))
+    except struct.error as error:
+        raise RouterError(
+            "invalid_dtype",
+            "the inherited router tensor is not exact little-endian F32",
+        ) from error
+    if len(flat) != _WEIGHT_ELEMENT_COUNT:
+        raise RouterError(
+            "invalid_shape",
+            "the decoded router tensor has an invalid element count",
+        )
+    if any(not math.isfinite(value) for value in flat):
+        raise RouterError(
+            "invalid_dtype",
+            "the decoded router tensor contains a non-finite F32 value",
+        )
+    return tuple(
+        flat[start : start + HIDDEN_WIDTH]
+        for start in range(0, len(flat), HIDDEN_WIDTH)
+    )
+
+
+def _load_real_hidden_case(
+    router_case_id: str,
+    expected_rows: int,
+    *,
+    fixture_path: Path = _REAL_FIXTURE_PATH,
+    open_func: Callable[[str, int], int] = os.open,
+    fstat_func: Callable[[int], Any] = os.fstat,
+    pread_func: Callable[[int, int, int], bytes] = os.pread,
+    close_func: Callable[[int], None] = os.close,
+) -> tuple[tuple[float, ...], ...]:
+    """Read only the committed input-object byte range, never oracle output."""
+
+    if router_case_id not in {REAL_SINGLE_ROW_CASE_ID, REAL_BATCH_CASE_ID}:
+        raise RouterError(
+            "unsupported_operation",
+            "the real router hidden-state case identity is invalid",
+        )
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = open_func(os.fspath(fixture_path), flags)
+    except (OSError, TypeError, ValueError) as error:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed real router input could not be opened",
+        ) from error
+    try:
+        try:
+            observed = fstat_func(descriptor)
+        except (OSError, TypeError, ValueError) as error:
+            raise RouterError(
+                "internal_worker_error",
+                "the committed real router input could not be inspected",
+            ) from error
+        mode = getattr(observed, "st_mode", None)
+        size = getattr(observed, "st_size", None)
+        if (
+            isinstance(mode, bool)
+            or not isinstance(mode, int)
+            or isinstance(size, bool)
+            or not isinstance(size, int)
+            or not stat.S_ISREG(mode)
+            or size != _REAL_FIXTURE_BYTES
+            or _REAL_INPUT_FRAGMENT_END
+            != _REAL_INPUT_FRAGMENT_OFFSET + _REAL_INPUT_FRAGMENT_BYTES
+            or _REAL_INPUT_FRAGMENT_END >= size
+        ):
+            raise RouterError(
+                "invalid_byte_count",
+                "the committed real router input container is invalid",
+            )
+        payload = _pread_exact_range(
+            descriptor,
+            offset=_REAL_INPUT_FRAGMENT_OFFSET,
+            length=_REAL_INPUT_FRAGMENT_BYTES,
+            pread_func=pread_func,
+            label="committed real router input",
+        )
+    finally:
+        try:
+            close_func(descriptor)
+        except OSError:
+            pass
+    if hashlib.sha256(payload).hexdigest() != _REAL_INPUT_FRAGMENT_SHA256:
+        raise RouterError(
+            "invalid_byte_count",
+            "the committed real router input fragment differs from its hash",
+        )
+    if b'"result"' in payload or b'"oracle"' in payload:
+        raise RouterError(
+            "internal_worker_error",
+            "the committed router input projection crossed its data boundary",
+        )
+    try:
+        document = json.loads(
+            payload.decode("utf-8", errors="strict"),
+            object_pairs_hook=_object_without_duplicates,
+            parse_constant=_reject_nonfinite,
+        )
+    except (UnicodeDecodeError, ValueError, TypeError, json.JSONDecodeError) as error:
+        raise RouterError(
+            "invalid_dtype",
+            "the committed real router input fragment is invalid JSON",
+        ) from error
+    if not isinstance(document, Mapping) or set(document) != {
+        "byte_order",
+        "canonical_f32le_sha256",
+        "case_ids",
+        "dtype",
+        "row_sha256",
+        "shape",
+        "values",
+    }:
+        raise RouterError(
+            "invalid_shape",
+            "the committed real router input contract is invalid",
+        )
+    if (
+        document.get("byte_order") != "little"
+        or document.get("canonical_f32le_sha256") != _REAL_INPUT_SHA256
+        or document.get("case_ids")
+        != [REAL_SINGLE_ROW_CASE_ID, REAL_BATCH_CASE_ID]
+        or document.get("dtype") != "float32"
+        or document.get("row_sha256") != list(_REAL_INPUT_ROW_SHA256)
+        or document.get("shape") != [MAXIMUM_ROWS, HIDDEN_WIDTH]
+    ):
+        raise RouterError(
+            "invalid_shape",
+            "the committed real router input identity is invalid",
+        )
+    rows = _validate_float32_matrix(
+        document.get("values"),
+        expected_rows=MAXIMUM_ROWS,
+        expected_columns=HIDDEN_WIDTH,
+        label="committed real router hidden states",
+    )
+    for row, expected_sha256 in zip(rows, _REAL_INPUT_ROW_SHA256):
+        if _canonical_f32le_sha256((row,)) != expected_sha256:
+            raise RouterError(
+                "invalid_byte_count",
+                "a committed real router input row differs from its hash",
+            )
+    if _canonical_f32le_sha256(rows) != _REAL_INPUT_SHA256 or rows[0] == rows[1]:
+        raise RouterError(
+            "invalid_byte_count",
+            "the committed real router input tensor differs from its contract",
+        )
+    selected = rows[:expected_rows]
+    if len(selected) != expected_rows:
+        raise RouterError(
+            "invalid_shape",
+            "the committed real router row selection is invalid",
+        )
+    return selected
+
+
+def _pread_exact_range(
+    descriptor: int,
+    *,
+    offset: int,
+    length: int,
+    pread_func: Callable[[int, int, int], bytes],
+    label: str,
+) -> bytes:
+    payload = bytearray(length)
+    actual = 0
+    retries = 0
+    while actual < length:
+        remaining = length - actual
+        try:
+            chunk = pread_func(descriptor, remaining, offset + actual)
+        except InterruptedError:
+            retries += 1
+            if retries > 64:
+                raise RouterError(
+                    "resource_limit",
+                    f"the {label} read exceeded its retry bound",
+                )
+            continue
+        except OSError as error:
+            if error.errno == errno.EINTR:
+                retries += 1
+                if retries <= 64:
+                    continue
+            raise RouterError(
+                "internal_worker_error",
+                f"the {label} could not be read",
+            ) from error
+        if not isinstance(chunk, bytes):
+            raise RouterError(
+                "internal_worker_error",
+                f"the {label} reader returned invalid data",
+            )
+        if not chunk:
+            raise RouterError(
+                "invalid_byte_count",
+                f"the {label} ended before its exact byte count",
+            )
+        if len(chunk) > remaining:
+            raise RouterError(
+                "invalid_byte_count",
+                f"the {label} reader exceeded its range",
+            )
+        payload[actual : actual + len(chunk)] = chunk
+        actual += len(chunk)
+    return bytes(payload)
 
 
 def _validate_control_scalars(
@@ -1240,7 +2294,7 @@ def _expected_case_rows(router_case_id: object) -> int:
     if expected_rows is None:
         raise RouterError(
             "unsupported_operation",
-            "router case identity is not a committed generated fixture",
+            "router case identity is not a committed bounded case",
         )
     return expected_rows
 
@@ -1730,13 +2784,13 @@ def _validate_manifest(manifest: Mapping[str, object]) -> None:
     cases = manifest.get("cases")
     if (
         not isinstance(cases, list)
-        or len(cases) != len(_CASE_ROWS)
+        or len(cases) != len(_SYNTHETIC_CASE_ROWS)
         or {
             case.get("case_id")
             for case in cases
             if isinstance(case, Mapping)
         }
-        != set(_CASE_ROWS)
+        != set(_SYNTHETIC_CASE_ROWS)
     ):
         raise RouterError(
             "internal_worker_error",

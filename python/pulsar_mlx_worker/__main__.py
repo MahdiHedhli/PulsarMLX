@@ -33,6 +33,8 @@ from .protocol import (
 )
 from .router import (
     BOUNDED_BATCH_CASE_ID as ROUTER_BATCH_CASE_ID,
+    REAL_BATCH_CASE_ID as ROUTER_REAL_BATCH_CASE_ID,
+    REAL_SINGLE_ROW_CASE_ID as ROUTER_REAL_SINGLE_CASE_ID,
     SINGLE_ROW_CASE_ID as ROUTER_SINGLE_CASE_ID,
     RouterResult,
     run_committed_router,
@@ -334,10 +336,12 @@ def _dispatch(
         if router_case_id not in {
             ROUTER_SINGLE_CASE_ID,
             ROUTER_BATCH_CASE_ID,
+            ROUTER_REAL_SINGLE_CASE_ID,
+            ROUTER_REAL_BATCH_CASE_ID,
         }:
             raise ProtocolError(
                 "unsupported_operation",
-                "run_router identity is not a committed generated fixture",
+                "run_router identity is not a committed bounded router case",
             )
         if requested_device != GPU_DEVICE_ID or allow_fallback:
             raise ProtocolError(

@@ -2,7 +2,9 @@
 
 use crate::model::{QWEN_ENCODED_SLICE_BYTES, QWEN_FILE_BYTES};
 use crate::router::{
-    canonical_f32le_sha256, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH, ROUTER_MAX_ROWS, ROUTER_TOP_K,
+    canonical_f32le_sha256, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH, ROUTER_MAX_ROWS,
+    ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID, ROUTER_TOP_K,
+    ROUTER_TENSOR_BYTES,
 };
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -677,7 +679,10 @@ impl RouterRequest {
         let device = device.into();
         if !matches!(
             router_case_id.as_str(),
-            ROUTER_SINGLE_ROW_CASE_ID | ROUTER_TWO_ROW_CASE_ID
+            ROUTER_SINGLE_ROW_CASE_ID
+                | ROUTER_TWO_ROW_CASE_ID
+                | ROUTER_REAL_SINGLE_ROW_CASE_ID
+                | ROUTER_REAL_TWO_ROW_CASE_ID
         ) {
             return Err(fixture_protocol_error(
                 "router validation accepts only a committed bounded case identity",
@@ -719,8 +724,8 @@ impl RouterRequest {
 
     fn expected_rows(&self) -> usize {
         match self.router_case_id.as_str() {
-            ROUTER_SINGLE_ROW_CASE_ID => 1,
-            ROUTER_TWO_ROW_CASE_ID => 2,
+            ROUTER_SINGLE_ROW_CASE_ID | ROUTER_REAL_SINGLE_ROW_CASE_ID => 1,
+            ROUTER_TWO_ROW_CASE_ID | ROUTER_REAL_TWO_ROW_CASE_ID => 2,
             _ => unreachable!("constructor admits only registered router cases"),
         }
     }
@@ -921,9 +926,29 @@ pub struct RouterResult {
     full_probabilities_f32le_sha256: String,
     selected_probabilities_f32le_sha256: String,
     normalized_weights_f32le_sha256: String,
+    router_tensor_bytes_read: u64,
+    router_tensor_cache_status: RouterTensorCacheStatus,
     memory_gauges: TensorFixtureMemoryGauges,
     timing: RouterExecutionTiming,
     passed: bool,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RouterTensorCacheStatus {
+    ReadAndCached,
+    CacheHit,
+    NotApplicable,
+}
+
+impl RouterTensorCacheStatus {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::ReadAndCached => "read_and_cached",
+            Self::CacheHit => "cache_hit",
+            Self::NotApplicable => "not_applicable",
+        }
+    }
 }
 
 impl RouterResult {
@@ -1009,6 +1034,14 @@ impl RouterResult {
 
     pub fn normalized_weights_f32le_sha256(&self) -> &str {
         &self.normalized_weights_f32le_sha256
+    }
+
+    pub const fn router_tensor_bytes_read(&self) -> u64 {
+        self.router_tensor_bytes_read
+    }
+
+    pub const fn router_tensor_cache_status(&self) -> RouterTensorCacheStatus {
+        self.router_tensor_cache_status
     }
 
     pub fn memory_gauges(&self) -> &TensorFixtureMemoryGauges {
@@ -2368,18 +2401,53 @@ fn validate_router_numeric_rows(rows: &[Vec<f64>]) -> Result<(), WorkerError> {
 }
 
 fn validate_router_execution_timing(timing: &RouterExecutionTiming) -> Result<(), WorkerError> {
-    // The frozen `run_router` protocol-v1 operation is the minimally
-    // instrumented execution boundary. Stage-instrumented observations are a
-    // separate evidence-series mode and must never be relabeled as this result.
+    const MINIMAL_STAGES: [&str; 2] = ["dequantization", "total_evaluated_router"];
+    const COSTLY_STAGES: [&str; 6] = [
+        "file_io",
+        "storage_validation_f32_decode",
+        "dequantization",
+        "host_to_device",
+        "total_evaluated_router",
+        "end_to_end_router_command",
+    ];
+    const DIAGNOSTIC_STAGES: [&str; 13] = [
+        "setup_admission",
+        "file_io",
+        "storage_validation_f32_decode",
+        "dequantization",
+        "host_to_device",
+        "graph_construction",
+        "compilation",
+        "router_projection",
+        "top_k",
+        "normalization",
+        "total_evaluated_router",
+        "synchronized_readback",
+        "end_to_end_router_command",
+    ];
     if timing.monotonic_clock() != ROUTER_TIMING_CLOCK
-        || timing.instrumentation_mode != RouterInstrumentationMode::MinimallyInstrumented
         || !timing.evaluated
         || !timing.synchronized
-        || timing.stages.len() != 2
         || timing.stages.len() > MAX_ROUTER_TIMING_STAGES
     {
         return Err(fixture_protocol_error(
-            "router timing contradicts the admitted minimal execution boundary",
+            "router timing contradicts the admitted evaluated execution boundary",
+        ));
+    }
+
+    let exact_stage_set = |expected: &[&str]| {
+        timing.stages.len() == expected.len()
+            && expected.iter().all(|name| timing.stages.contains_key(*name))
+    };
+    let profile_is_valid = match timing.instrumentation_mode {
+        RouterInstrumentationMode::MinimallyInstrumented => {
+            exact_stage_set(&MINIMAL_STAGES) || exact_stage_set(&COSTLY_STAGES)
+        }
+        RouterInstrumentationMode::StageInstrumented => exact_stage_set(&DIAGNOSTIC_STAGES),
+    };
+    if !profile_is_valid {
+        return Err(fixture_protocol_error(
+            "router timing stage set differs from every frozen timing profile",
         ));
     }
 
@@ -2425,6 +2493,84 @@ fn validate_router_execution_timing(timing: &RouterExecutionTiming) -> Result<()
         _ => {
             return Err(fixture_protocol_error(
                 "router timing lacks its positive evaluated total",
+            ));
+        }
+    }
+    if exact_stage_set(&COSTLY_STAGES)
+        && (!matches!(
+            timing.stages.get("file_io"),
+            Some(RouterTimingStage::Observed { duration_ns }) if *duration_ns > 0
+        ) || !matches!(
+            timing.stages.get("storage_validation_f32_decode"),
+            Some(RouterTimingStage::Observed { duration_ns }) if *duration_ns > 0
+        ) || !matches!(
+            timing.stages.get("end_to_end_router_command"),
+            Some(RouterTimingStage::Observed { duration_ns }) if *duration_ns > 0
+        ))
+    {
+        return Err(fixture_protocol_error(
+            "costly router timing omits an observed read, decode, or command total",
+        ));
+    }
+    if exact_stage_set(&COSTLY_STAGES)
+        && !matches!(
+            timing.stages.get("host_to_device"),
+            Some(RouterTimingStage::Unavailable { reason })
+                if reason == "host_to_device_not_separable_from_evaluated_total"
+        )
+    {
+        return Err(fixture_protocol_error(
+            "costly router timing does not use the canonical inseparable-transfer reason",
+        ));
+    }
+    if exact_stage_set(&DIAGNOSTIC_STAGES) {
+        let canonical_unavailable = |stage: &str, expected_reason: &str| {
+            matches!(
+                timing.stages.get(stage),
+                Some(RouterTimingStage::Unavailable { reason }) if reason == expected_reason
+            )
+        };
+        let positive_observed = |stage: &str| {
+            matches!(
+                timing.stages.get(stage),
+                Some(RouterTimingStage::Observed { duration_ns }) if *duration_ns > 0
+            )
+        };
+        let storage_pair_is_valid = (positive_observed("file_io")
+            && positive_observed("storage_validation_f32_decode"))
+            || (canonical_unavailable(
+                "file_io",
+                "validated_router_tensor_cache_hit_no_file_read",
+            ) && canonical_unavailable(
+                "storage_validation_f32_decode",
+                "validated_router_tensor_cache_hit_no_decode",
+            ));
+        if !canonical_unavailable(
+            "setup_admission",
+            "host_admission_completed_outside_router_timing",
+        ) || !storage_pair_is_valid
+            || !positive_observed("host_to_device")
+            || !canonical_unavailable(
+                "graph_construction",
+                "lazy_graph_construction_not_separable_from_evaluation",
+            )
+            || !canonical_unavailable(
+                "compilation",
+                "mlx_compilation_not_independently_observable",
+            )
+            || [
+                "router_projection",
+                "top_k",
+                "normalization",
+                "total_evaluated_router",
+                "synchronized_readback",
+                "end_to_end_router_command",
+            ]
+            .into_iter()
+            .any(|stage| !positive_observed(stage))
+        {
+            return Err(fixture_protocol_error(
+                "stage router timing differs from the canonical observed-or-unavailable profile",
             ));
         }
     }
@@ -2486,6 +2632,18 @@ fn validate_router_result(
         || result.output_dtype != ROUTER_OUTPUT_DTYPE
         || result.evaluated != result.timing.evaluated
         || result.synchronized != result.timing.synchronized
+        || !match request.router_case_id.as_str() {
+            ROUTER_REAL_SINGLE_ROW_CASE_ID | ROUTER_REAL_TWO_ROW_CASE_ID => matches!(
+                (result.router_tensor_bytes_read, result.router_tensor_cache_status),
+                (ROUTER_TENSOR_BYTES, RouterTensorCacheStatus::ReadAndCached)
+                    | (0, RouterTensorCacheStatus::CacheHit)
+            ),
+            _ => {
+                result.router_tensor_bytes_read == 0
+                    && result.router_tensor_cache_status
+                        == RouterTensorCacheStatus::NotApplicable
+            }
+        }
         || !result.passed
     {
         return Err(fixture_protocol_error(
@@ -3159,6 +3317,8 @@ mod tests {
             "full_probabilities_f32le_sha256": canonical_f32le_sha256(&probabilities).expect("hash"),
             "selected_probabilities_f32le_sha256": canonical_f32le_sha256(&selected).expect("hash"),
             "normalized_weights_f32le_sha256": canonical_f32le_sha256(&normalized).expect("hash"),
+            "router_tensor_bytes_read": 0,
+            "router_tensor_cache_status": "not_applicable",
             "memory_gauges": {
                 "mlx_active_bytes": null,
                 "mlx_cache_bytes": null,
@@ -3331,7 +3491,20 @@ mod tests {
         assert_eq!(total.status(), RouterTimingStageStatus::Observed);
         assert_eq!(total.duration_ns(), Some(1_337));
         assert_eq!(total.reason(), None);
+        assert_eq!(result.router_tensor_bytes_read(), 0);
+        assert_eq!(
+            result.router_tensor_cache_status().as_str(),
+            "not_applicable"
+        );
         assert!(result.passed());
+
+        let mut contradictory_read = router_result_value();
+        contradictory_read["router_tensor_bytes_read"] = json!(ROUTER_TENSOR_BYTES);
+        assert!(parse_router_result(contradictory_read, &request).is_err());
+        let mut unsupported_read = router_result_value();
+        unsupported_read["router_tensor_bytes_read"] = json!(1);
+        unsupported_read["router_tensor_cache_status"] = json!("read_and_cached");
+        assert!(parse_router_result(unsupported_read, &request).is_err());
 
         let mut incomplete = router_result_value();
         incomplete["logits"] = json!([[0.0]]);
@@ -3374,6 +3547,67 @@ mod tests {
         );
         assert!(RouterRequest::new("unregistered-router", "gpu").is_err());
         assert!(RouterRequest::new(ROUTER_SINGLE_ROW_CASE_ID, "cpu").is_err());
+        assert!(RouterRequest::new(ROUTER_REAL_SINGLE_ROW_CASE_ID, "gpu").is_ok());
+        assert!(RouterRequest::new(ROUTER_REAL_TWO_ROW_CASE_ID, "gpu").is_ok());
+    }
+
+    #[test]
+    fn real_router_result_admits_only_the_three_frozen_timing_profiles() {
+        let request = RouterRequest::new(ROUTER_REAL_SINGLE_ROW_CASE_ID, "gpu")
+            .expect("real single-row request is control-only");
+        let mut costly = router_result_value();
+        costly["router_case_id"] = json!(ROUTER_REAL_SINGLE_ROW_CASE_ID);
+        costly["router_tensor_cache_status"] = json!("cache_hit");
+        costly["timing"]["stages"] = json!({
+            "file_io": {"status": "observed", "duration_ns": 11},
+            "storage_validation_f32_decode": {"status": "observed", "duration_ns": 12},
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization"
+            },
+            "host_to_device": {
+                "status": "unavailable",
+                "reason": "host_to_device_not_separable_from_evaluated_total"
+            },
+            "total_evaluated_router": {"status": "observed", "duration_ns": 13},
+            "end_to_end_router_command": {"status": "observed", "duration_ns": 14}
+        });
+        assert!(parse_router_result(costly.clone(), &request).is_ok());
+
+        let mut stage = router_result_value();
+        stage["router_case_id"] = json!(ROUTER_REAL_SINGLE_ROW_CASE_ID);
+        stage["router_tensor_cache_status"] = json!("cache_hit");
+        stage["timing"]["instrumentation_mode"] = json!("stage_instrumented");
+        stage["timing"]["stages"] = json!({
+            "setup_admission": {"status": "unavailable", "reason": "host_admission_completed_outside_router_timing"},
+            "file_io": {"status": "observed", "duration_ns": 1},
+            "storage_validation_f32_decode": {"status": "observed", "duration_ns": 2},
+            "dequantization": {"status": "not_applicable", "reason": "f32_router_requires_no_dequantization"},
+            "host_to_device": {"status": "observed", "duration_ns": 3},
+            "graph_construction": {"status": "unavailable", "reason": "lazy_graph_construction_not_separable_from_evaluation"},
+            "compilation": {"status": "unavailable", "reason": "mlx_compilation_not_independently_observable"},
+            "router_projection": {"status": "observed", "duration_ns": 5},
+            "top_k": {"status": "observed", "duration_ns": 6},
+            "normalization": {"status": "observed", "duration_ns": 7},
+            "total_evaluated_router": {"status": "observed", "duration_ns": 8},
+            "synchronized_readback": {"status": "observed", "duration_ns": 9},
+            "end_to_end_router_command": {"status": "observed", "duration_ns": 10}
+        });
+        assert!(parse_router_result(stage.clone(), &request).is_ok());
+
+        let mut changed_reason = stage.clone();
+        changed_reason["timing"]["stages"]["compilation"]["reason"] =
+            json!("another_safe_but_unfrozen_reason");
+        assert!(parse_router_result(changed_reason, &request).is_err());
+
+        costly["timing"]["stages"]
+            .as_object_mut()
+            .expect("costly stages")
+            .remove("file_io");
+        assert!(parse_router_result(costly, &request).is_err());
+        stage["timing"]["stages"]["unreviewed_stage"] =
+            json!({"status": "observed", "duration_ns": 1});
+        assert!(parse_router_result(stage, &request).is_err());
     }
 
     #[test]

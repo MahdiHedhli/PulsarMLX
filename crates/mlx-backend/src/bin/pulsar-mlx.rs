@@ -1,19 +1,21 @@
-use mlx_backend::protocol::MAX_RESPONSE_BYTES;
 use mlx_backend::router::{
     admit_router_tensor, compare_router_outputs, read_admitted_router_tensor_f32,
-    validate_major_router_timing_series, RouterCaseScope, RouterNumericComparison, RouterOutput,
-    RouterOutputComparison, RouterTimingInstrumentationMode, RouterTimingObservationStatus,
-    RouterTimingReplicationRole, RouterTimingSeries, RouterTimingSeriesKind, RouterTolerancePolicy,
-    ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID, ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID,
+    validate_major_router_timing_series, RouterCaseScope, RouterNumericComparison, RouterOracle,
+    RouterOracleFormat, RouterOutput, RouterOutputComparison, RouterTimingInstrumentationMode,
+    RouterTimingObservationStatus, RouterTimingReplicationRole, RouterTimingSeries,
+    RouterTimingSeriesKind, RouterTolerancePolicy, ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
+    ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID, ROUTER_ORACLE_ID,
+    ROUTER_ORACLE_OUTPUT_BUNDLE_SHA256, ROUTER_REAL_INPUT_SHA256,
     ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID,
+    ROUTER_TENSOR_BYTES,
 };
 use mlx_backend::{
     frozen_qwen_model_memory_budget, inspect_external_qwen_model, validate_device_smoke,
     CleanupOutcome, DeviceHello, DeviceProbe, ExternalModelInspection, ModelSliceRequest,
     ModelSliceResult, RouterRequest, RouterResult, SyntheticMoeRequest, TensorFixtureRequest,
-    WorkerClient, WorkerConfig, MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID, PINNED_MLX_VERSION,
-    QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256,
-    ROUTER_SINGLE_ROW_CASE_ID, ROUTER_TWO_ROW_CASE_ID,
+    WorkerClient, WorkerConfig, WorkerError, WorkerTimeouts, MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID,
+    PINNED_MLX_VERSION, QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_REPOSITORY_ID, QWEN_REVISION,
+    QWEN_SHA256, ROUTER_SINGLE_ROW_CASE_ID, ROUTER_TWO_ROW_CASE_ID,
 };
 use serde::de::{DeserializeOwned, Error as DeError, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -24,9 +26,10 @@ use std::env;
 use std::ffi::OsString;
 use std::fmt;
 use std::fs::{self, OpenOptions};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
+use std::time::{Duration, Instant};
 
 const BACKEND_ID: &str = "apple-mlx";
 const GPU_DEVICE: &str = "gpu";
@@ -61,12 +64,30 @@ const ROUTER_CORRECTNESS_REPETITIONS: usize = 10;
 #[cfg_attr(not(test), allow(dead_code))]
 const ROUTER_CORRECTNESS_ATTEMPTS: usize =
     ROUTER_CORRECTNESS_WARMUPS + ROUTER_CORRECTNESS_REPETITIONS;
+const ROUTER_CORRECTNESS_PROCESS_STATE: &str = "reused_process";
+const ROUTER_CORRECTNESS_CONDITION: &str = "warm";
 #[cfg_attr(not(test), allow(dead_code))]
 const ROUTER_FIRST_PROCESS_REPETITIONS: usize = 10;
 #[cfg_attr(not(test), allow(dead_code))]
 const ROUTER_BENCHMARK_ORDER_SEED: u64 = 22_002;
 #[cfg_attr(not(test), allow(dead_code))]
 const ROUTER_PRIMARY_BATCH_ID: &str = "batch-a";
+const ROUTER_SECOND_BATCH_ID: &str = "batch-b";
+const ROUTER_PUBLIC_ORACLE_PATH: &str =
+    "fixtures/research/router-v1/real/f002-router-oracle-freeze-0001.json";
+const ROUTER_ORACLE_MAX_BYTES: usize = 1024 * 1024;
+const ROUTER_ORCHESTRATION_MAX_BYTES: usize = 4 * 1024 * 1024;
+const ROUTER_ORCHESTRATION_MAX_NODES: usize = 100_000;
+const ROUTER_EXTERNAL_ORACLE_SHA256: &str =
+    "e31e4337ddf2c7cf1bb6cfe721428e6baaeffec7e29aee0f77727969e756e645";
+const ROUTER_PUBLIC_ORACLE_SHA256: &str =
+    "3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133";
+const ROUTER_INTERNAL_CANDIDATE_FILENAME: &str = "internal-orchestration.json";
+const LIVE_OBSERVATION_JOIN_RELATIONSHIP: &str =
+    "exactly_one_request_window_and_one_resource_record_per_ordered_observation";
+const ROUTER_WORKER_STARTUP_TIMEOUT: Duration = Duration::from_secs(30);
+const ROUTER_WORKER_REQUEST_TIMEOUT: Duration = Duration::from_secs(120);
+const ROUTER_WORKER_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(15);
 const ROUTER_FIXTURE_FILES: [&str; 11] = [
     "golden/expected_results.json",
     "golden/hidden_states.json",
@@ -875,8 +896,16 @@ fn validate_router_fixture_path_identities(
     Ok(())
 }
 
-#[allow(dead_code)] // Called only after the T083 external-execution gate is implemented.
-fn validate_router_path_identities(command: &ValidateRouterCommand) -> Result<(), String> {
+fn router_path_identities(
+    command: &ValidateRouterCommand,
+) -> Result<
+    (
+        CanonicalPathIdentity,
+        CanonicalPathIdentity,
+        CanonicalPathIdentity,
+    ),
+    String,
+> {
     let model_identity = validate_router_model_path_identity(&command.model)?;
     let oracle_identity = validate_external_json_path_identity(&command.oracle, "router oracle")?;
     let evidence_identity =
@@ -884,7 +913,12 @@ fn validate_router_path_identities(command: &ValidateRouterCommand) -> Result<()
     if !paths_are_distinct(&[&model_identity, &oracle_identity, &evidence_identity]) {
         return Err("router model, oracle, and evidence paths must be distinct".to_owned());
     }
-    Ok(())
+    Ok((model_identity, oracle_identity, evidence_identity))
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_router_path_identities(command: &ValidateRouterCommand) -> Result<(), String> {
+    router_path_identities(command).map(|_| ())
 }
 
 fn parse_inspect_router(arguments: Vec<OsString>) -> Result<InspectRouterCommand, String> {
@@ -2681,6 +2715,8 @@ const ROUTER_SECOND_CLEAN_MAJOR_ORDER: [(OrchestratedRouterCase, RouterTimingRep
 struct RouterCorrectnessAttempt {
     case_id: String,
     process_replication_id: String,
+    process_state: &'static str,
+    condition: &'static str,
     logits_f32le_sha256: String,
     full_probabilities_f32le_sha256: String,
     selected_expert_ids: Vec<Vec<u64>>,
@@ -2697,6 +2733,87 @@ struct RouterCorrectnessAttempt {
     fallback_used: bool,
     evaluated: bool,
     synchronized: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RouterFailedCorrectnessAttempt {
+    observation_id: String,
+    attempt_index: usize,
+    observation_kind: &'static str,
+    run_index: usize,
+    batch_id: String,
+    case_id: String,
+    process_replication_id: String,
+    process_state: &'static str,
+    condition: &'static str,
+    schedule_step: &'static str,
+    requested_device: &'static str,
+    source_status: &'static str,
+    failure: RouterOrchestrationFailure,
+}
+
+impl RouterFailedCorrectnessAttempt {
+    fn new(
+        batch_id: &str,
+        case: OrchestratedRouterCase,
+        attempt_index: usize,
+        process_replication_id: &str,
+        schedule_step: &'static str,
+        failure: RouterOrchestrationFailure,
+    ) -> Self {
+        let (observation_kind, run_index) =
+            RouterCorrectnessAttempt::observation_role(attempt_index);
+        Self {
+            observation_id: format!(
+                "{batch_id}-{}-correctness-{observation_kind}-{run_index:02}",
+                case.case_id()
+            ),
+            attempt_index,
+            observation_kind,
+            run_index,
+            batch_id: batch_id.to_owned(),
+            case_id: case.case_id().to_owned(),
+            process_replication_id: process_replication_id.to_owned(),
+            process_state: ROUTER_CORRECTNESS_PROCESS_STATE,
+            condition: ROUTER_CORRECTNESS_CONDITION,
+            schedule_step,
+            requested_device: GPU_DEVICE,
+            source_status: "aborted",
+            failure,
+        }
+    }
+
+    fn with_evaluated_failure(mut self) -> Self {
+        self.source_status = "failed";
+        self
+    }
+
+    fn evidence(&self) -> Value {
+        json!({
+            "attempt_id": self.observation_id,
+            "attempt_index": self.attempt_index,
+            "observation_kind": self.observation_kind,
+            "run_index": self.run_index,
+            "batch_id": self.batch_id,
+            "case_id": self.case_id,
+            "process_replication_id": self.process_replication_id,
+            "process_state": self.process_state,
+            "condition": self.condition,
+            "schedule_step": self.schedule_step,
+            "requested_device": self.requested_device,
+            "selected_device": "not_available",
+            "fallback_used": false,
+            "evaluated": false,
+            "synchronized": false,
+            "memory_gauges": null,
+            "complete_output_sha256": null,
+            "canonical_output": null,
+            "comparison": null,
+            "status": self.source_status,
+            "passed": false,
+            "failure": self.failure.evidence(),
+        })
+    }
 }
 
 // The adapter is covered by the protocol/output contracts and becomes live at T083.
@@ -2732,6 +2849,8 @@ impl RouterCorrectnessAttempt {
         Ok(Self {
             case_id: result.router_case_id().to_owned(),
             process_replication_id: process_replication_id.into(),
+            process_state: ROUTER_CORRECTNESS_PROCESS_STATE,
+            condition: ROUTER_CORRECTNESS_CONDITION,
             logits_f32le_sha256: output.logits_f32le_sha256().to_owned(),
             full_probabilities_f32le_sha256: output.full_probabilities_f32le_sha256().to_owned(),
             selected_expert_ids: output.selected_expert_ids().to_vec(),
@@ -2773,6 +2892,8 @@ impl RouterCorrectnessAttempt {
             && selected_ids_are_valid
             && self.case_id == case.case_id()
             && self.process_replication_id == correctness_process_identity(batch_id)
+            && self.process_state == ROUTER_CORRECTNESS_PROCESS_STATE
+            && self.condition == ROUTER_CORRECTNESS_CONDITION
             && self.canonical_output.case_scope() == RouterCaseScope::RealCheckpoint
             && self.canonical_output.case_id() == self.case_id
             && self.canonical_output.row_count() == case.row_count()
@@ -2801,6 +2922,8 @@ impl RouterCorrectnessAttempt {
     fn repeat_identity_matches(&self, other: &Self) -> bool {
         self.case_id == other.case_id
             && self.process_replication_id == other.process_replication_id
+            && self.process_state == other.process_state
+            && self.condition == other.condition
             && self.logits_f32le_sha256 == other.logits_f32le_sha256
             && self.full_probabilities_f32le_sha256 == other.full_probabilities_f32le_sha256
             && self.selected_expert_ids == other.selected_expert_ids
@@ -2836,6 +2959,8 @@ impl RouterCorrectnessAttempt {
             "run_index": run_index,
             "case_id": self.case_id,
             "process_replication_id": self.process_replication_id,
+            "process_state": self.process_state,
+            "condition": self.condition,
             "logits_f32le_sha256": self.logits_f32le_sha256,
             "full_probabilities_f32le_sha256": self.full_probabilities_f32le_sha256,
             "selected_expert_ids": self.selected_expert_ids,
@@ -2843,6 +2968,7 @@ impl RouterCorrectnessAttempt {
             "selected_probabilities_f32le_sha256": self.selected_probabilities_f32le_sha256,
             "normalized_weights_f32le_sha256": self.normalized_weights_f32le_sha256,
             "complete_output_sha256": self.complete_output_sha256,
+            "canonical_output": canonical_router_output_evidence(&self.canonical_output),
             "comparison": self.comparison,
             "memory_gauges": self.memory_gauges,
             "result_passed": self.result_passed,
@@ -3125,6 +3251,8 @@ struct RouterOrderedObservation {
     observation_id: String,
     case_id: String,
     process_replication_id: String,
+    process_state: &'static str,
+    condition: &'static str,
     schedule_step: &'static str,
     source_kind: &'static str,
     observation_kind: &'static str,
@@ -3142,6 +3270,8 @@ impl RouterOrderedObservation {
             "case_id": self.case_id,
             "batch_id": batch_id,
             "process_replication_id": self.process_replication_id,
+            "process_state": self.process_state,
+            "condition": self.condition,
             "schedule_step": self.schedule_step,
             "source_kind": self.source_kind,
             "observation_kind": self.observation_kind,
@@ -3198,6 +3328,7 @@ struct RouterBenchmarkOrchestrator {
     primary_first_process_series: Vec<RouterTimingSeries>,
     correctness_gates: Vec<RouterCorrectnessGate>,
     pending_correctness_attempts: Vec<RouterCorrectnessAttempt>,
+    failed_correctness_attempts: Vec<RouterFailedCorrectnessAttempt>,
     correctness_failed: bool,
     timing_failed: bool,
     terminal_failure: Option<RouterOrchestrationFailure>,
@@ -3285,6 +3416,7 @@ impl RouterBenchmarkOrchestrator {
             primary_first_process_series: Vec::with_capacity(ROUTER_FIRST_PROCESS_REPETITIONS),
             correctness_gates: Vec::with_capacity(ROUTER_CORRECTNESS_ORDER.len()),
             pending_correctness_attempts: Vec::with_capacity(ROUTER_CORRECTNESS_ATTEMPTS),
+            failed_correctness_attempts: Vec::new(),
             correctness_failed: false,
             timing_failed: false,
             terminal_failure: None,
@@ -3453,6 +3585,8 @@ impl RouterBenchmarkOrchestrator {
             observation_id: attempt.observation_id(&self.batch_id, attempt_index),
             case_id: attempt.case_id.clone(),
             process_replication_id: attempt.process_replication_id.clone(),
+            process_state: attempt.process_state,
+            condition: attempt.condition,
             schedule_step,
             source_kind: "correctness_attempt",
             observation_kind,
@@ -3475,6 +3609,8 @@ impl RouterBenchmarkOrchestrator {
                 observation_id: observation.observation_id().to_owned(),
                 case_id: series.case_id().to_owned(),
                 process_replication_id: observation.process_replication_id().to_owned(),
+                process_state: series.process_state().as_str(),
+                condition: series.condition().as_str(),
                 schedule_step,
                 source_kind: "timing_series",
                 observation_kind: observation.observation_kind().as_str(),
@@ -3667,7 +3803,7 @@ impl RouterBenchmarkOrchestrator {
             RouterTimingSeriesKind::CostlyReal,
             RouterTimingInstrumentationMode::MinimallyInstrumented,
         )
-        .and_then(|()| validate_primary_process_identity(&self.batch_id, &series))
+        .and_then(|()| validate_costly_process_identity(&self.batch_id, &series))
         .and_then(|()| {
             self.validate_auxiliary_series(
                 &series,
@@ -3753,7 +3889,7 @@ impl RouterBenchmarkOrchestrator {
             RouterTimingSeriesKind::StageDiagnostic,
             RouterTimingInstrumentationMode::StageInstrumented,
         )
-        .and_then(|()| validate_primary_process_identity(&self.batch_id, &series))
+        .and_then(|()| validate_stage_process_identity(&self.batch_id, &series))
         .and_then(|()| {
             self.validate_auxiliary_series(
                 &series,
@@ -3909,6 +4045,7 @@ impl RouterBenchmarkOrchestrator {
             .map(|gate| gate.attempts.len())
             .sum::<usize>()
             .checked_add(self.pending_correctness_attempts.len())
+            .and_then(|count| count.checked_add(self.failed_correctness_attempts.len()))
             .ok_or_else(|| "router correctness observation count overflows".to_owned())?;
         let timing_count = self
             .primary_first_process_series
@@ -3978,7 +4115,7 @@ impl RouterBenchmarkOrchestrator {
         if serde_json::to_vec(&snapshot)
             .map_err(|_| "router batch snapshot could not be encoded".to_owned())?
             .len()
-            > MAX_RESPONSE_BYTES
+            > ROUTER_ORCHESTRATION_MAX_BYTES
         {
             return Err("router batch snapshot exceeds the protocol cap".to_owned());
         }
@@ -3990,7 +4127,8 @@ impl RouterBenchmarkOrchestrator {
             .correctness_failed
             .then(|| self.pending_correctness_attempts.len().checked_sub(1))
             .flatten();
-        self.pending_correctness_attempts
+        let mut evidence = self
+            .pending_correctness_attempts
             .iter()
             .enumerate()
             .map(|(index, attempt)| {
@@ -4012,7 +4150,13 @@ impl RouterBenchmarkOrchestrator {
                 }
                 evidence
             })
-            .collect()
+            .collect::<Vec<_>>();
+        evidence.extend(
+            self.failed_correctness_attempts
+                .iter()
+                .map(RouterFailedCorrectnessAttempt::evidence),
+        );
+        evidence
     }
 
     fn record_later_batch(&mut self, candidate: &RouterSecondBatchCandidate) -> Result<(), String> {
@@ -4126,7 +4270,7 @@ impl RouterBenchmarkOrchestrator {
                 RouterTimingInstrumentationMode::MinimallyInstrumented,
                 &candidate.correctness_gates,
             )?;
-            validate_primary_process_identity(batch_id, series)?;
+            validate_costly_process_identity(batch_id, series)?;
         }
         for (series, expected) in candidate
             .primary_major_series
@@ -4148,7 +4292,7 @@ impl RouterBenchmarkOrchestrator {
                 RouterTimingInstrumentationMode::StageInstrumented,
                 &candidate.correctness_gates,
             )?;
-            validate_primary_process_identity(batch_id, series)?;
+            validate_stage_process_identity(batch_id, series)?;
         }
         if candidate.clean_first_process_series.len()
             != ROUTER_SECOND_CLEAN_MAJOR_ORDER.len() * ROUTER_FIRST_PROCESS_REPETITIONS
@@ -4322,7 +4466,7 @@ impl RouterBenchmarkOrchestrator {
             if serde_json::to_vec(&evidence)
                 .map_err(|_| "router failure evidence could not be encoded".to_owned())?
                 .len()
-                > MAX_RESPONSE_BYTES
+                > ROUTER_ORCHESTRATION_MAX_BYTES
             {
                 return Err("router failure evidence exceeds the protocol cap".to_owned());
             }
@@ -4410,7 +4554,7 @@ impl RouterBenchmarkOrchestrator {
         if serde_json::to_vec(&evidence)
             .map_err(|_| "router orchestration evidence could not be encoded".to_owned())?
             .len()
-            > MAX_RESPONSE_BYTES
+            > ROUTER_ORCHESTRATION_MAX_BYTES
         {
             return Err("router orchestration evidence exceeds the protocol cap".to_owned());
         }
@@ -4618,7 +4762,15 @@ fn validate_unique_observation_identities<'a>(
 }
 
 fn primary_process_identity(batch_id: &str) -> String {
-    primary_first_process_identity(batch_id, 0)
+    format!("{batch_id}-primary-minimal-worker")
+}
+
+fn costly_process_identity(batch_id: &str) -> String {
+    format!("{batch_id}-primary-costly-worker")
+}
+
+fn stage_process_identity(batch_id: &str) -> String {
+    format!("{batch_id}-primary-stage-worker")
 }
 
 fn correctness_process_identity(batch_id: &str) -> String {
@@ -4626,7 +4778,14 @@ fn correctness_process_identity(batch_id: &str) -> String {
 }
 
 fn clean_process_identity(batch_id: &str, case: OrchestratedRouterCase) -> String {
-    clean_first_process_identity(batch_id, case, 0)
+    match case {
+        OrchestratedRouterCase::SingleRow => {
+            format!("{batch_id}-single-row-clean-minimal-worker")
+        }
+        OrchestratedRouterCase::TwoRow => {
+            format!("{batch_id}-two-row-clean-minimal-worker")
+        }
+    }
 }
 
 fn primary_first_process_identity(batch_id: &str, repetition_index: usize) -> String {
@@ -4669,6 +4828,32 @@ fn validate_primary_process_identity(
     if series.process_replication_id() != primary_process_identity(batch_id) {
         return Err(
             "router primary series does not use its orchestration-issued process identity"
+                .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+fn validate_costly_process_identity(
+    batch_id: &str,
+    series: &RouterTimingSeries,
+) -> Result<(), String> {
+    if series.process_replication_id() != costly_process_identity(batch_id) {
+        return Err(
+            "router costly series does not use its orchestration-issued process identity"
+                .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+fn validate_stage_process_identity(
+    batch_id: &str,
+    series: &RouterTimingSeries,
+) -> Result<(), String> {
+    if series.process_replication_id() != stage_process_identity(batch_id) {
+        return Err(
+            "router stage series does not use its orchestration-issued process identity"
                 .to_owned(),
         );
     }
@@ -4779,12 +4964,2729 @@ fn stable_orchestration_identifier(value: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':'))
 }
 
+fn parse_frozen_router_oracle(
+    bytes: &[u8],
+    expected_sha256: &str,
+    expected_format: RouterOracleFormat,
+    label: &str,
+) -> Result<RouterOracle, String> {
+    if bytes.is_empty()
+        || bytes.len() > ROUTER_ORACLE_MAX_BYTES
+        || sha256_bytes(bytes) != expected_sha256
+    {
+        return Err(format!("the {label} differs from its frozen whole-file identity"));
+    }
+    let value = parse_unique_json::<Value>(bytes, label)?;
+    let oracle = RouterOracle::try_from_value(value).map_err(|error| error.to_string())?;
+    if oracle.format() != expected_format {
+        return Err(format!("the {label} uses the wrong frozen envelope"));
+    }
+    Ok(oracle)
+}
+
+fn load_external_router_oracle(path: &Path) -> Result<RouterOracle, String> {
+    #[cfg(unix)]
+    use std::os::unix::fs::OpenOptionsExt;
+
+    let metadata = fs::symlink_metadata(path)
+        .map_err(|_| "the external router oracle is unavailable".to_owned())?;
+    if metadata.file_type().is_symlink()
+        || !metadata.is_file()
+        || metadata.len() == 0
+        || metadata.len() > ROUTER_ORACLE_MAX_BYTES as u64
+    {
+        return Err("the external router oracle must be one bounded regular non-link file".to_owned());
+    }
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    options.custom_flags(libc::O_CLOEXEC | libc::O_NOFOLLOW);
+    let mut file = options
+        .open(path)
+        .map_err(|_| "the external router oracle could not be opened safely".to_owned())?;
+    let opened = file
+        .metadata()
+        .map_err(|_| "the external router oracle identity could not be inspected".to_owned())?;
+    if !opened.is_file() || opened.len() != metadata.len() {
+        return Err("the external router oracle identity changed during admission".to_owned());
+    }
+    let mut bytes = Vec::with_capacity(opened.len() as usize);
+    std::io::Read::by_ref(&mut file)
+        .take((ROUTER_ORACLE_MAX_BYTES + 1) as u64)
+        .read_to_end(&mut bytes)
+        .map_err(|_| "the external router oracle could not be read".to_owned())?;
+    let final_metadata = file
+        .metadata()
+        .map_err(|_| "the external router oracle identity could not be rechecked".to_owned())?;
+    if final_metadata.len() != opened.len() || bytes.len() as u64 != opened.len() {
+        return Err("the external router oracle changed during admission".to_owned());
+    }
+    parse_frozen_router_oracle(
+        &bytes,
+        ROUTER_EXTERNAL_ORACLE_SHA256,
+        RouterOracleFormat::ExternalCandidate,
+        "external router oracle",
+    )
+}
+
+fn load_public_router_oracle(root: &Path) -> Result<RouterOracle, String> {
+    let root = fs::canonicalize(root)
+        .map_err(|_| "the repository root could not be resolved safely".to_owned())?;
+    let bytes = read_bounded_regular_file(&root, ROUTER_PUBLIC_ORACLE_PATH, ROUTER_ORACLE_MAX_BYTES)?;
+    parse_frozen_router_oracle(
+        &bytes,
+        ROUTER_PUBLIC_ORACLE_SHA256,
+        RouterOracleFormat::PublicProjection,
+        "committed public router oracle",
+    )
+}
+
+fn router_oracle_payloads_match(left: &RouterOracle, right: &RouterOracle) -> bool {
+    left.hidden_states() == right.hidden_states()
+        && [ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID]
+            .into_iter()
+            .all(|case_id| left.reference(case_id) == right.reference(case_id))
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum RouterWorkerTimingProfile {
+    Minimal,
+    Costly,
+    Stage,
+}
+
+impl RouterWorkerTimingProfile {
+    const fn environment_value(self) -> &'static str {
+        match self {
+            Self::Minimal => "minimal",
+            Self::Costly => "costly",
+            Self::Stage => "stage",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RouterLiveTimingPlan {
+    schedule_step: &'static str,
+    batch_id: String,
+    case: OrchestratedRouterCase,
+    benchmark_id: String,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    process_replication_id: String,
+    process_state: &'static str,
+    condition: &'static str,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    profile: RouterWorkerTimingProfile,
+    warmup_count: usize,
+    measurement_count: usize,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterLiveFailure {
+    code: String,
+    stage: String,
+    message: String,
+    schedule_step: Option<&'static str>,
+    retained_series: Option<RouterTimingSeries>,
+    retained_correctness: Option<RouterFailedCorrectnessAttempt>,
+    retained_result: Option<RouterResult>,
+}
+
+impl RouterLiveFailure {
+    fn new(code: impl Into<String>, stage: impl Into<String>, message: impl Into<String>) -> Self {
+        let failure = Self {
+            code: code.into(),
+            stage: stage.into(),
+            message: message.into(),
+            schedule_step: None,
+            retained_series: None,
+            retained_correctness: None,
+            retained_result: None,
+        };
+        if valid_router_live_failure_code(&failure.code)
+            && stable_orchestration_identifier(&failure.stage)
+            && ensure_no_private_paths(&json!({
+                "code": failure.code,
+                "stage": failure.stage,
+                "message": failure.message,
+            }))
+            .is_ok()
+        {
+            failure
+        } else {
+            Self {
+                code: "internal_worker_error".to_owned(),
+                stage: "live_adapter".to_owned(),
+                message: "the live router adapter returned an invalid failure".to_owned(),
+                schedule_step: None,
+                retained_series: None,
+                retained_correctness: None,
+                retained_result: None,
+            }
+        }
+    }
+
+    fn with_retained_series(
+        mut self,
+        schedule_step: &'static str,
+        series: RouterTimingSeries,
+    ) -> Self {
+        self.schedule_step = Some(schedule_step);
+        self.retained_series = Some(series);
+        self
+    }
+
+    fn with_retained_correctness(
+        mut self,
+        attempt: RouterFailedCorrectnessAttempt,
+    ) -> Self {
+        self.schedule_step = Some(attempt.schedule_step);
+        self.retained_correctness = Some(attempt);
+        self
+    }
+
+    fn with_retained_result(mut self, result: RouterResult) -> Self {
+        self.retained_result = Some(result);
+        self
+    }
+
+    fn orchestration_failure(&self) -> RouterOrchestrationFailure {
+        RouterOrchestrationFailure {
+            code: self.code.clone(),
+            stage: self.stage.clone(),
+            message: self.message.clone(),
+        }
+    }
+}
+
+fn valid_router_live_failure_code(code: &str) -> bool {
+    matches!(
+        code,
+        "model_identity_mismatch"
+            | "model_size_mismatch"
+            | "model_checksum_mismatch"
+            | "missing_tensor_role"
+            | "duplicate_tensor_role"
+            | "model_tensor_mismatch"
+            | "unsupported_tensor_quantization"
+            | "invalid_tensor_range"
+            | "model_budget_exceeded"
+            | "protocol_mismatch"
+            | "message_too_large"
+            | "malformed_request"
+            | "unsupported_operation"
+            | "invalid_shape"
+            | "invalid_dtype"
+            | "invalid_layout"
+            | "invalid_byte_count"
+            | "runtime_version_mismatch"
+            | "unsupported_host"
+            | "metal_unavailable"
+            | "device_unavailable"
+            | "evaluation_failed"
+            | "comparison_failed"
+            | "resource_limit"
+            | "internal_worker_error"
+    )
+}
+
+trait RouterScheduleAdapter {
+    fn correctness_attempt(
+        &mut self,
+        batch_id: &str,
+        case: OrchestratedRouterCase,
+        attempt_index: usize,
+        process_replication_id: &str,
+    ) -> Result<RouterCorrectnessAttempt, RouterLiveFailure>;
+
+    fn timing_series(
+        &mut self,
+        plan: &RouterLiveTimingPlan,
+    ) -> Result<RouterTimingSeries, RouterLiveFailure>;
+
+    fn finish_process(
+        &mut self,
+        _process_replication_id: &str,
+    ) -> Result<(), RouterLiveFailure> {
+        Ok(())
+    }
+}
+
+fn router_case_label(case: OrchestratedRouterCase) -> &'static str {
+    match case {
+        OrchestratedRouterCase::SingleRow => "single-row",
+        OrchestratedRouterCase::TwoRow => "two-row",
+    }
+}
+
+fn router_auxiliary_benchmark_id(
+    kind: RouterTimingSeriesKind,
+    case: OrchestratedRouterCase,
+) -> String {
+    let prefix = match kind {
+        RouterTimingSeriesKind::CostlyReal => "f002-costly-real",
+        RouterTimingSeriesKind::FirstProcessCostly => "f002-first-process-costly",
+        RouterTimingSeriesKind::StageDiagnostic => "f002-stage-diagnostic",
+        RouterTimingSeriesKind::MajorMinimallyInstrumented
+        | RouterTimingSeriesKind::InexpensiveSynthetic => {
+            unreachable!("auxiliary benchmark identity excludes major and synthetic series")
+        }
+    };
+    format!("{prefix}-{}-v1", router_case_label(case))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn router_live_timing_plan(
+    schedule_step: &'static str,
+    batch_id: &str,
+    case: OrchestratedRouterCase,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    process_replication_id: String,
+    process_state: &'static str,
+    condition: &'static str,
+    profile: RouterWorkerTimingProfile,
+    warmup_count: usize,
+    measurement_count: usize,
+) -> RouterLiveTimingPlan {
+    let benchmark_id = if series_kind == RouterTimingSeriesKind::MajorMinimallyInstrumented {
+        case.benchmark_id().to_owned()
+    } else {
+        router_auxiliary_benchmark_id(series_kind, case)
+    };
+    RouterLiveTimingPlan {
+        schedule_step,
+        batch_id: batch_id.to_owned(),
+        case,
+        benchmark_id,
+        series_kind,
+        replication_role,
+        process_replication_id,
+        process_state,
+        condition,
+        instrumentation_mode: if profile == RouterWorkerTimingProfile::Stage {
+            RouterTimingInstrumentationMode::StageInstrumented
+        } else {
+            RouterTimingInstrumentationMode::MinimallyInstrumented
+        },
+        profile,
+        warmup_count,
+        measurement_count,
+    }
+}
+
+fn retain_live_adapter_failure(
+    orchestration: &mut RouterBenchmarkOrchestrator,
+    mut failure: RouterLiveFailure,
+    correctness: bool,
+) {
+    if !correctness {
+        if let Some(series) = failure.retained_series.take() {
+            let schedule_step = failure.schedule_step.unwrap_or("live_adapter");
+            orchestration.append_timing_observations(schedule_step, &series, false);
+            orchestration
+                .rejected_timing_series
+                .push(RouterRejectedTimingSeries {
+                    series,
+                    failure: failure.orchestration_failure(),
+                });
+        }
+    } else if let Some(attempt) = failure.retained_correctness.take() {
+        orchestration.append_ordered_observation(RouterOrderedObservation {
+            global_order_index: 0,
+            observation_id: attempt.observation_id.clone(),
+            case_id: attempt.case_id.clone(),
+            process_replication_id: attempt.process_replication_id.clone(),
+            process_state: attempt.process_state,
+            condition: attempt.condition,
+            schedule_step: attempt.schedule_step,
+            source_kind: "correctness_attempt",
+            observation_kind: attempt.observation_kind,
+            run_index: attempt.run_index,
+            source_status: attempt.source_status,
+            orchestration_status: "rejected",
+            identity_duplicate: false,
+        });
+        orchestration.failed_correctness_attempts.push(attempt);
+    }
+    if orchestration.terminal_failure.is_none() {
+        orchestration.terminal_failure = Some(failure.orchestration_failure());
+    }
+    if correctness {
+        orchestration.correctness_failed = true;
+    } else {
+        orchestration.timing_failed = true;
+    }
+}
+
+/// Drive the already-frozen T066 schedule through a live-adapter seam.
+///
+/// The first timing call is structurally unreachable until both 5+10
+/// correctness gates complete. Every adapter error is retained on the returned
+/// state machine so the caller can serialize a failed candidate rather than
+/// losing the deepest completed boundary.
+fn execute_router_batch_schedule<A: RouterScheduleAdapter>(
+    mut orchestration: RouterBenchmarkOrchestrator,
+    adapter: &mut A,
+) -> RouterBenchmarkOrchestrator {
+    let batch_id = orchestration.batch_id.clone();
+    for case in orchestration.correctness_order() {
+        for attempt_index in 0..ROUTER_CORRECTNESS_ATTEMPTS {
+            let process_id = correctness_process_identity(&batch_id);
+            let attempt = match adapter.correctness_attempt(
+                &batch_id,
+                case,
+                attempt_index,
+                &process_id,
+            ) {
+                Ok(attempt) => attempt,
+                Err(failure) => {
+                    retain_live_adapter_failure(&mut orchestration, failure, true);
+                    return orchestration;
+                }
+            };
+            if orchestration
+                .record_correctness_attempt(case, attempt)
+                .is_err()
+            {
+                return orchestration;
+            }
+        }
+    }
+    if let Err(failure) = adapter.finish_process(&correctness_process_identity(&batch_id)) {
+        retain_live_adapter_failure(&mut orchestration, failure, true);
+        return orchestration;
+    }
+
+    let first_case = orchestration.costly_order()[0];
+    for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+        let plan = router_live_timing_plan(
+            "primary_first_process",
+            &batch_id,
+            first_case,
+            RouterTimingSeriesKind::FirstProcessCostly,
+            RouterTimingReplicationRole::Primary,
+            primary_first_process_identity(&batch_id, repetition_index),
+            "fresh_process",
+            "first_read_new_process_os_cache_uncontrolled",
+            RouterWorkerTimingProfile::Costly,
+            0,
+            1,
+        );
+        let series = match adapter.timing_series(&plan) {
+            Ok(series) => series,
+            Err(failure) => {
+                retain_live_adapter_failure(&mut orchestration, failure, false);
+                return orchestration;
+            }
+        };
+        if orchestration
+            .record_primary_first_process_series(series)
+            .is_err()
+        {
+            return orchestration;
+        }
+    }
+
+    for case in orchestration.costly_order() {
+        let plan = router_live_timing_plan(
+            "costly_real",
+            &batch_id,
+            case,
+            RouterTimingSeriesKind::CostlyReal,
+            RouterTimingReplicationRole::Primary,
+            costly_process_identity(&batch_id),
+            "reused_process",
+            "warm",
+            RouterWorkerTimingProfile::Costly,
+            5,
+            10,
+        );
+        let series = match adapter.timing_series(&plan) {
+            Ok(series) => series,
+            Err(failure) => {
+                retain_live_adapter_failure(&mut orchestration, failure, false);
+                return orchestration;
+            }
+        };
+        if orchestration.record_costly_series(series).is_err() {
+            return orchestration;
+        }
+    }
+    if let Err(failure) = adapter.finish_process(&costly_process_identity(&batch_id)) {
+        retain_live_adapter_failure(&mut orchestration, failure, false);
+        return orchestration;
+    }
+
+    for (case, role) in orchestration.primary_major_order() {
+        let plan = router_live_timing_plan(
+            "primary_major",
+            &batch_id,
+            case,
+            RouterTimingSeriesKind::MajorMinimallyInstrumented,
+            role,
+            primary_process_identity(&batch_id),
+            "reused_process",
+            "warm",
+            RouterWorkerTimingProfile::Minimal,
+            5,
+            30,
+        );
+        let series = match adapter.timing_series(&plan) {
+            Ok(series) => series,
+            Err(failure) => {
+                retain_live_adapter_failure(&mut orchestration, failure, false);
+                return orchestration;
+            }
+        };
+        if orchestration.record_primary_major_series(series).is_err() {
+            return orchestration;
+        }
+    }
+    if let Err(failure) = adapter.finish_process(&primary_process_identity(&batch_id)) {
+        retain_live_adapter_failure(&mut orchestration, failure, false);
+        return orchestration;
+    }
+
+    for case in orchestration.stage_diagnostic_order() {
+        let plan = router_live_timing_plan(
+            "stage_diagnostic",
+            &batch_id,
+            case,
+            RouterTimingSeriesKind::StageDiagnostic,
+            RouterTimingReplicationRole::Primary,
+            stage_process_identity(&batch_id),
+            "reused_process",
+            "warm",
+            RouterWorkerTimingProfile::Stage,
+            5,
+            10,
+        );
+        let series = match adapter.timing_series(&plan) {
+            Ok(series) => series,
+            Err(failure) => {
+                retain_live_adapter_failure(&mut orchestration, failure, false);
+                return orchestration;
+            }
+        };
+        if orchestration.record_stage_diagnostic_series(series).is_err() {
+            return orchestration;
+        }
+    }
+    if let Err(failure) = adapter.finish_process(&stage_process_identity(&batch_id)) {
+        retain_live_adapter_failure(&mut orchestration, failure, false);
+        return orchestration;
+    }
+
+    for (case, role) in orchestration.clean_major_order() {
+        for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+            let plan = router_live_timing_plan(
+                "clean_first_process",
+                &batch_id,
+                case,
+                RouterTimingSeriesKind::FirstProcessCostly,
+                RouterTimingReplicationRole::Primary,
+                clean_first_process_identity(&batch_id, case, repetition_index),
+                "fresh_process",
+                "first_read_new_process_os_cache_uncontrolled",
+                RouterWorkerTimingProfile::Costly,
+                0,
+                1,
+            );
+            let series = match adapter.timing_series(&plan) {
+                Ok(series) => series,
+                Err(failure) => {
+                    retain_live_adapter_failure(&mut orchestration, failure, false);
+                    return orchestration;
+                }
+            };
+            if orchestration
+                .record_clean_first_process_series(series)
+                .is_err()
+            {
+                return orchestration;
+            }
+        }
+        let plan = router_live_timing_plan(
+            "clean_major",
+            &batch_id,
+            case,
+            RouterTimingSeriesKind::MajorMinimallyInstrumented,
+            role,
+            clean_process_identity(&batch_id, case),
+            "fresh_process",
+            "warm",
+            RouterWorkerTimingProfile::Minimal,
+            5,
+            30,
+        );
+        let series = match adapter.timing_series(&plan) {
+            Ok(series) => series,
+            Err(failure) => {
+                retain_live_adapter_failure(&mut orchestration, failure, false);
+                return orchestration;
+            }
+        };
+        if orchestration.record_clean_major_series(series).is_err() {
+            return orchestration;
+        }
+    }
+    orchestration
+}
+
+struct RouterLiveSession {
+    profile: RouterWorkerTimingProfile,
+    client: WorkerClient,
+    completed_request_count: usize,
+}
+
+struct LiveRouterScheduleAdapter {
+    base_config: WorkerConfig,
+    oracle: RouterOracle,
+    sessions: BTreeMap<String, RouterLiveSession>,
+    completed_processes: BTreeSet<String>,
+    runtime: Option<Value>,
+    lifecycle: Vec<Value>,
+    request_windows: Vec<Value>,
+    resource_records: Vec<Value>,
+    attempted_timing_observations: Vec<Value>,
+    max_active_process_count: usize,
+}
+
+impl LiveRouterScheduleAdapter {
+    fn new(base_config: WorkerConfig, oracle: RouterOracle) -> Self {
+        Self {
+            base_config,
+            oracle,
+            sessions: BTreeMap::new(),
+            completed_processes: BTreeSet::new(),
+            runtime: None,
+            lifecycle: Vec::new(),
+            request_windows: Vec::new(),
+            resource_records: Vec::new(),
+            attempted_timing_observations: Vec::new(),
+            max_active_process_count: 0,
+        }
+    }
+
+    fn runtime_evidence(client: &WorkerClient) -> Value {
+        let hello = client.hello();
+        json!({
+            "protocol": hello.protocol(),
+            "worker_version": hello.worker_version(),
+            "python_version": hello.python_version(),
+            "python_architecture": hello.python_arch(),
+            "mlx_version": hello.mlx_version(),
+            "macos_version": hello.macos_version(),
+            "metal_available": hello.metal_available(),
+            "gpu_count": hello.gpu_count(),
+        })
+    }
+
+    fn push_lifecycle(
+        &mut self,
+        process_replication_id: &str,
+        profile: RouterWorkerTimingProfile,
+        event: &str,
+        outcome: &str,
+        details: Value,
+    ) -> Result<(), RouterLiveFailure> {
+        let record = json!({
+            "event_order": self.lifecycle.len(),
+            "recorded_at_utc": utc_now().map_err(|_| RouterLiveFailure::new(
+                "internal_worker_error",
+                "lifecycle_observation",
+                "a public-safe worker lifecycle timestamp could not be observed",
+            ))?,
+            "process_replication_id": process_replication_id,
+            "timing_profile": profile.environment_value(),
+            "event": event,
+            "outcome": outcome,
+            "details": details,
+        });
+        ensure_no_private_paths(&record).map_err(|_| {
+            RouterLiveFailure::new(
+                "internal_worker_error",
+                "lifecycle_observation",
+                "a worker lifecycle record contained private data",
+            )
+        })?;
+        self.lifecycle.push(record);
+        Ok(())
+    }
+
+    fn ensure_process(
+        &mut self,
+        process_replication_id: &str,
+        profile: RouterWorkerTimingProfile,
+    ) -> Result<(), RouterLiveFailure> {
+        if let Some(session) = self.sessions.get(process_replication_id) {
+            return if session.profile == profile {
+                Ok(())
+            } else {
+                Err(RouterLiveFailure::new(
+                    "internal_worker_error",
+                    "worker_startup",
+                    "a live process identity was reused across timing profiles",
+                ))
+            };
+        }
+        if self.completed_processes.contains(process_replication_id) {
+            return Err(RouterLiveFailure::new(
+                "internal_worker_error",
+                "worker_startup",
+                "a completed live process identity cannot be respawned",
+            ));
+        }
+        if !self.sessions.is_empty() {
+            return Err(RouterLiveFailure::new(
+                "internal_worker_error",
+                "worker_startup",
+                "a live router process would overlap an active benchmark process",
+            ));
+        }
+        self.push_lifecycle(
+            process_replication_id,
+            profile,
+            "spawn",
+            "started",
+            json!({"model_transport": "inherited_read_only_fd_198"}),
+        )?;
+        let config = self
+            .base_config
+            .clone()
+            .with_env(
+                "PULSARMLX_ROUTER_TIMING_PROFILE",
+                profile.environment_value(),
+            );
+        match WorkerClient::spawn(config) {
+            Ok(client) => {
+                let runtime = Self::runtime_evidence(&client);
+                if self.runtime.as_ref().is_some_and(|expected| expected != &runtime) {
+                    let failure = RouterLiveFailure::new(
+                        "runtime_version_mismatch",
+                        "worker_startup",
+                        "router worker runtime identity changed across processes",
+                    );
+                    let _ = self.push_lifecycle(
+                        process_replication_id,
+                        profile,
+                        "spawn",
+                        "failed",
+                        json!({"failure": failure.orchestration_failure().evidence()}),
+                    );
+                    let cleanup = client.shutdown();
+                    let _ = self.push_lifecycle(
+                        process_replication_id,
+                        profile,
+                        "shutdown",
+                        cleanup_outcome_name(cleanup.outcome()),
+                        cleanup_evidence(&cleanup),
+                    );
+                    self.completed_processes
+                        .insert(process_replication_id.to_owned());
+                    return Err(failure);
+                }
+                self.runtime.get_or_insert_with(|| runtime.clone());
+                self.push_lifecycle(
+                    process_replication_id,
+                    profile,
+                    "spawn",
+                    "passed",
+                    runtime,
+                )?;
+                self.sessions.insert(
+                    process_replication_id.to_owned(),
+                    RouterLiveSession {
+                        profile,
+                        client,
+                        completed_request_count: 0,
+                    },
+                );
+                self.max_active_process_count =
+                    self.max_active_process_count.max(self.sessions.len());
+                Ok(())
+            }
+            Err(error) => {
+                let failure = router_worker_failure(&error, "worker_startup");
+                self.push_lifecycle(
+                    process_replication_id,
+                    profile,
+                    "spawn",
+                    "failed",
+                    json!({"failure": failure.orchestration_failure().evidence()}),
+                )?;
+                self.completed_processes
+                    .insert(process_replication_id.to_owned());
+                Err(failure)
+            }
+        }
+    }
+
+    fn shutdown_process(
+        &mut self,
+        process_replication_id: &str,
+    ) -> Result<(), RouterLiveFailure> {
+        let Some(session) = self.sessions.remove(process_replication_id) else {
+            return Ok(());
+        };
+        let profile = session.profile;
+        let cleanup = session.client.shutdown();
+        let outcome = cleanup_outcome_name(cleanup.outcome());
+        self.push_lifecycle(
+            process_replication_id,
+            profile,
+            "shutdown",
+            outcome,
+            cleanup_evidence(&cleanup),
+        )?;
+        self.completed_processes
+            .insert(process_replication_id.to_owned());
+        if cleanup.outcome() != CleanupOutcome::Graceful || cleanup.exit_code() != Some(0) {
+            return Err(RouterLiveFailure::new(
+                "internal_worker_error",
+                "worker_shutdown",
+                "a live router worker did not shut down gracefully",
+            ));
+        }
+        Ok(())
+    }
+
+    fn finish_batch(&mut self, batch_id: &str) -> Result<(), RouterLiveFailure> {
+        let prefix = format!("{batch_id}-");
+        let processes = self
+            .sessions
+            .keys()
+            .filter(|process| process.starts_with(&prefix))
+            .cloned()
+            .collect::<Vec<_>>();
+        let mut first_failure = None;
+        for process in processes {
+            if let Err(failure) = self.shutdown_process(&process) {
+                first_failure.get_or_insert(failure);
+            }
+        }
+        first_failure.map_or(Ok(()), Err)
+    }
+
+    fn finish_all(&mut self) -> Result<(), RouterLiveFailure> {
+        let processes = self.sessions.keys().cloned().collect::<Vec<_>>();
+        let mut first_failure = None;
+        for process in processes {
+            if let Err(failure) = self.shutdown_process(&process) {
+                first_failure.get_or_insert(failure);
+            }
+        }
+        first_failure.map_or(Ok(()), Err)
+    }
+
+    fn execute_observed_request(
+        &mut self,
+        batch_id: &str,
+        case: OrchestratedRouterCase,
+        schedule_step: &'static str,
+        source_kind: &'static str,
+        observation_id: &str,
+        process_replication_id: &str,
+        process_state: &'static str,
+        condition: &'static str,
+        profile: RouterWorkerTimingProfile,
+        request: &RouterRequest,
+    ) -> Result<(RouterResult, usize), RouterLiveFailure> {
+        let admission_started_at_utc = utc_now().map_err(|_| {
+            RouterLiveFailure::new(
+                "internal_worker_error",
+                "request_observation",
+                "a public-safe router request timestamp could not be observed",
+            )
+        })?;
+        let admission_started = Instant::now();
+        let process_admission = self.ensure_process(process_replication_id, profile);
+        let (started_at_utc, started, request_sent, process_request_index, outcome) =
+            match process_admission {
+            Ok(()) => {
+                let started_at_utc = match utc_now() {
+                    Ok(value) => value,
+                    Err(_) => {
+                        let failure = RouterLiveFailure::new(
+                        "internal_worker_error",
+                        "request_observation",
+                        "a public-safe admitted-request timestamp could not be observed",
+                        );
+                        let host_wall_duration_ns = u64::try_from(
+                            admission_started.elapsed().as_nanos(),
+                        )
+                        .unwrap_or(u64::MAX);
+                        let window = json!({
+                            "observation_id": observation_id,
+                            "batch_id": batch_id,
+                            "case_id": case.case_id(),
+                            "schedule_step": schedule_step,
+                            "source_kind": source_kind,
+                            "process_replication_id": process_replication_id,
+                            "process_state": process_state,
+                            "condition": condition,
+                            "timing_profile": profile.environment_value(),
+                            "started_at_utc": admission_started_at_utc,
+                            "completed_at_utc": admission_started_at_utc,
+                            "host_wall_duration_ns": host_wall_duration_ns,
+                            "host_monotonic_clock": "rust_std_instant",
+                            "request_sent": false,
+                            "process_request_index": null,
+                            "router_tensor_bytes_read": null,
+                            "router_tensor_cache_status": null,
+                            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+                            "status": "aborted",
+                            "failure": failure.orchestration_failure().evidence(),
+                            "timestamp_observation": "failed_after_spawn_before_request",
+                        });
+                        self.request_windows.push(window);
+                        self.retain_aborted_resource_record(
+                            observation_id,
+                            source_kind,
+                            process_state,
+                            condition,
+                            profile,
+                            &failure,
+                        );
+                        return Err(failure);
+                    }
+                };
+                let started = Instant::now();
+                let session = self
+                    .sessions
+                    .get_mut(process_replication_id)
+                    .expect("admitted live process is present");
+                let process_request_index = session.completed_request_count;
+                let outcome = session
+                    .client
+                    .run_router(request)
+                    .map_err(|error| router_worker_failure(&error, "router_execution"));
+                if outcome.is_ok() {
+                    session.completed_request_count += 1;
+                }
+                (
+                    started_at_utc,
+                    started,
+                    true,
+                    Some(process_request_index),
+                    outcome,
+                )
+            }
+            Err(failure) => (
+                admission_started_at_utc,
+                admission_started,
+                false,
+                None,
+                Err(failure),
+            ),
+        };
+        let host_wall_duration_ns = u64::try_from(started.elapsed().as_nanos()).map_err(|_| {
+            RouterLiveFailure::new(
+                "resource_limit",
+                "request_observation",
+                "router request host wall duration is not representable",
+            )
+        })?;
+        let (completed_at_utc, completion_timestamp_failure) = match utc_now() {
+            Ok(value) => (value, None),
+            Err(_) => {
+                let failure = RouterLiveFailure::new(
+                "internal_worker_error",
+                "request_observation",
+                "a public-safe router completion timestamp could not be observed",
+                );
+                (started_at_utc.clone(), Some(failure))
+            }
+        };
+        let failure_evidence = completion_timestamp_failure
+            .as_ref()
+            .map(|failure| failure.orchestration_failure().evidence())
+            .or_else(|| {
+                outcome
+                    .as_ref()
+                    .err()
+                    .map(|failure| failure.orchestration_failure().evidence())
+            });
+        let window_index = self.request_windows.len();
+        let window = json!({
+            "observation_id": observation_id,
+            "batch_id": batch_id,
+            "case_id": case.case_id(),
+            "schedule_step": schedule_step,
+            "source_kind": source_kind,
+            "process_replication_id": process_replication_id,
+            "process_state": process_state,
+            "condition": condition,
+            "timing_profile": profile.environment_value(),
+            "started_at_utc": started_at_utc,
+            "completed_at_utc": completed_at_utc,
+            "host_wall_duration_ns": host_wall_duration_ns,
+            "host_monotonic_clock": "rust_std_instant",
+            "request_sent": request_sent,
+            "process_request_index": process_request_index,
+            "router_tensor_bytes_read": outcome
+                .as_ref()
+                .ok()
+                .map(RouterResult::router_tensor_bytes_read),
+            "router_tensor_cache_status": outcome
+                .as_ref()
+                .ok()
+                .map(|result| result.router_tensor_cache_status().as_str()),
+            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+            "status": if completion_timestamp_failure.is_some() && outcome.is_ok() {
+                "failed"
+            } else if outcome.is_ok() {
+                "result_received"
+            } else {
+                "aborted"
+            },
+            "failure": failure_evidence,
+            "timestamp_observation": if completion_timestamp_failure.is_some() {
+                "completion_fallback_to_request_start"
+            } else {
+                "observed"
+            },
+        });
+        ensure_no_private_paths(&window).map_err(|_| {
+            RouterLiveFailure::new(
+                "internal_worker_error",
+                "request_observation",
+                "a router request window contained private data",
+            )
+        })?;
+        self.request_windows.push(window);
+        if let Some(failure) = completion_timestamp_failure {
+            return match outcome {
+                Ok(result) => {
+                    let canonical = output_from_worker_result_with_scope(
+                        &result,
+                        RouterCaseScope::RealCheckpoint,
+                    )
+                    .ok();
+                    let output_sha256 = canonical
+                        .as_ref()
+                        .and_then(|output| complete_router_output_sha256(output).ok());
+                    self.retain_resource_record(
+                        observation_id,
+                        source_kind,
+                        process_state,
+                        condition,
+                        &result,
+                        canonical.as_ref(),
+                        output_sha256.as_deref(),
+                        Some(false),
+                        true,
+                        Some(&failure),
+                    );
+                    Err(failure.with_retained_result(result))
+                }
+                Err(worker_failure) => {
+                    self.retain_aborted_resource_record(
+                        observation_id,
+                        source_kind,
+                        process_state,
+                        condition,
+                        profile,
+                        &worker_failure,
+                    );
+                    Err(worker_failure)
+                }
+            };
+        }
+        if let Err(failure) = &outcome {
+            self.retain_aborted_resource_record(
+                observation_id,
+                source_kind,
+                process_state,
+                condition,
+                profile,
+                failure,
+            );
+        }
+        outcome.map(|result| (result, window_index))
+    }
+
+    fn finish_request_window(
+        &mut self,
+        index: usize,
+        passed: bool,
+        failure: Option<&RouterLiveFailure>,
+    ) {
+        if let Some(window) = self.request_windows.get_mut(index) {
+            window["status"] = json!(if passed { "passed" } else { "failed" });
+            window["failure"] = failure
+                .map(|item| item.orchestration_failure().evidence())
+                .unwrap_or(Value::Null);
+        }
+    }
+
+    fn retain_resource_record(
+        &mut self,
+        observation_id: &str,
+        source_kind: &str,
+        process_state: &str,
+        condition: &str,
+        result: &RouterResult,
+        canonical_output: Option<&RouterOutput>,
+        output_sha256: Option<&str>,
+        correctness_passed: Option<bool>,
+        retain_canonical_output: bool,
+        failure: Option<&RouterLiveFailure>,
+    ) {
+        self.resource_records.push(json!({
+            "observation_id": observation_id,
+            "source_kind": source_kind,
+            "process_state": process_state,
+            "condition": condition,
+            "backend": BACKEND_ID,
+            "requested_device": result.requested_device(),
+            "selected_device": result.selected_device(),
+            "fallback_used": result.fallback_used(),
+            "evaluated": result.evaluated(),
+            "synchronized": result.synchronized(),
+            "output_sha256": output_sha256,
+            "correctness_passed": correctness_passed,
+            "canonical_output": retain_canonical_output
+                .then(|| canonical_output.map(canonical_router_output_evidence))
+                .flatten(),
+            "canonical_output_retention": if retain_canonical_output && canonical_output.is_some() {
+                "complete"
+            } else if retain_canonical_output {
+                "unavailable_invalid_output"
+            } else if source_kind == "correctness_attempt" {
+                "hash_only_joined_correctness_attempt"
+            } else {
+                "hash_only_passing_timing"
+            },
+            "router_tensor_bytes_read": result.router_tensor_bytes_read(),
+            "router_tensor_cache_status": result.router_tensor_cache_status().as_str(),
+            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+            "memory_gauges": router_memory_evidence(result),
+            "monotonic_clock": result.timing().monotonic_clock(),
+            "instrumentation_mode": result.timing().instrumentation_mode().as_str(),
+            "timing_stages": if source_kind == "correctness_attempt" {
+                router_worker_timing_stages(result)
+            } else {
+                Value::Null
+            },
+            "timing_stage_retention": if source_kind == "correctness_attempt" {
+                "complete_in_resource_record"
+            } else {
+                "complete_in_joined_raw_timing_observation"
+            },
+            "status": if failure.is_some() { "failed" } else { "passed" },
+            "failure": failure.map(|item| item.orchestration_failure().evidence()),
+        }));
+    }
+
+    fn retain_aborted_resource_record(
+        &mut self,
+        observation_id: &str,
+        source_kind: &str,
+        process_state: &str,
+        condition: &str,
+        profile: RouterWorkerTimingProfile,
+        failure: &RouterLiveFailure,
+    ) {
+        self.resource_records.push(json!({
+            "observation_id": observation_id,
+            "source_kind": source_kind,
+            "process_state": process_state,
+            "condition": condition,
+            "backend": BACKEND_ID,
+            "requested_device": GPU_DEVICE,
+            "selected_device": "not_available",
+            "fallback_used": false,
+            "evaluated": false,
+            "synchronized": false,
+            "output_sha256": null,
+            "correctness_passed": null,
+            "canonical_output": null,
+            "canonical_output_retention": "unavailable_aborted_request",
+            "router_tensor_bytes_read": null,
+            "router_tensor_cache_status": null,
+            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+            "memory_gauges": null,
+            "monotonic_clock": null,
+            "instrumentation_mode": if profile == RouterWorkerTimingProfile::Stage {
+                "stage_instrumented"
+            } else {
+                "minimally_instrumented"
+            },
+            "timing_stages": null,
+            "timing_stage_retention": "unavailable_aborted_request",
+            "status": "aborted",
+            "failure": failure.orchestration_failure().evidence(),
+        }));
+    }
+
+    fn public_evidence(&self) -> Result<Value, String> {
+        if !self.sessions.is_empty() || self.max_active_process_count > 1 {
+            return Err("live router worker concurrency or shutdown is invalid".to_owned());
+        }
+        validate_live_process_lifecycle(&self.lifecycle)?;
+        validate_live_request_window_join(
+            &self.request_windows,
+            &self.attempted_timing_observations,
+        )?;
+        validate_live_process_request_join(
+            &self.lifecycle,
+            &self.request_windows,
+            &self.attempted_timing_observations,
+        )?;
+        validate_live_resource_join(&self.request_windows, &self.resource_records)?;
+        let evidence = json!({
+            "runtime": self.runtime,
+            "worker_lifecycle": self.lifecycle,
+            "request_utc_windows": self.request_windows,
+            "timestamp_join_contract": {
+                "join_key": "observation_id",
+                "relationship": LIVE_OBSERVATION_JOIN_RELATIONSHIP,
+                "validated": true,
+            },
+            "result_resource_records": self.resource_records,
+            "attempted_timing_observation_count": self.attempted_timing_observations.len(),
+            "active_process_count_at_serialization": self.sessions.len(),
+            "completed_process_count": self.completed_processes.len(),
+            "max_active_process_count_observed": self.max_active_process_count,
+            "benchmark_concurrency": 1,
+        });
+        ensure_no_private_paths(&evidence)?;
+        Ok(evidence)
+    }
+}
+
+fn validate_live_process_lifecycle(lifecycle: &[Value]) -> Result<(), String> {
+    let mut processes = BTreeMap::<(&str, &str), Vec<(&str, &str)>>::new();
+    let mut active_processes = BTreeSet::<(&str, &str)>::new();
+    let mut last_timestamp = None::<&str>;
+    for (index, record) in lifecycle.iter().enumerate() {
+        if record.get("event_order").and_then(Value::as_u64) != Some(index as u64) {
+            return Err("live worker lifecycle order is non-contiguous".to_owned());
+        }
+        let process = record
+            .get("process_replication_id")
+            .and_then(Value::as_str)
+            .filter(|value| stable_orchestration_identifier(value))
+            .ok_or_else(|| "live worker lifecycle has an invalid process identity".to_owned())?;
+        let profile = record
+            .get("timing_profile")
+            .and_then(Value::as_str)
+            .filter(|value| matches!(*value, "minimal" | "costly" | "stage"))
+            .ok_or_else(|| "live worker lifecycle has an invalid timing profile".to_owned())?;
+        let event = record
+            .get("event")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live worker lifecycle omits its event".to_owned())?;
+        let outcome = record
+            .get("outcome")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live worker lifecycle omits its outcome".to_owned())?;
+        let recorded_at = record
+            .get("recorded_at_utc")
+            .and_then(Value::as_str)
+            .filter(|value| valid_live_utc_timestamp(value))
+            .ok_or_else(|| "live worker lifecycle has an invalid timestamp".to_owned())?;
+        if last_timestamp.is_some_and(|previous| previous > recorded_at) {
+            return Err("live worker lifecycle timestamps are reversed".to_owned());
+        }
+        last_timestamp = Some(recorded_at);
+        if (event, outcome) == ("spawn", "passed") {
+            if !active_processes.is_empty() || !active_processes.insert((process, profile)) {
+                return Err("live router benchmark processes overlap".to_owned());
+            }
+        } else if event == "shutdown" {
+            active_processes.remove(&(process, profile));
+        }
+        processes
+            .entry((process, profile))
+            .or_default()
+            .push((event, outcome));
+    }
+    for events in processes.values() {
+        let valid_spawn_failure = events.as_slice() == [("spawn", "started"), ("spawn", "failed")];
+        let valid_runtime_failure = events.len() == 3
+            && events[0] == ("spawn", "started")
+            && events[1] == ("spawn", "failed")
+            && events[2].0 == "shutdown";
+        let valid_owned_process = events.len() == 3
+            && events[0] == ("spawn", "started")
+            && events[1] == ("spawn", "passed")
+            && events[2].0 == "shutdown"
+            && matches!(events[2].1, "graceful" | "forced_termination" | "failed");
+        if !valid_spawn_failure && !valid_runtime_failure && !valid_owned_process {
+            return Err("live worker lifecycle lacks an observed spawn or shutdown transition".to_owned());
+        }
+    }
+    if !active_processes.is_empty() {
+        return Err("a live router benchmark process remained active".to_owned());
+    }
+    Ok(())
+}
+
+fn valid_live_utc_timestamp(value: &str) -> bool {
+    value.len() == 20
+        && value.as_bytes().get(4) == Some(&b'-')
+        && value.as_bytes().get(7) == Some(&b'-')
+        && value.as_bytes().get(10) == Some(&b'T')
+        && value.as_bytes().get(13) == Some(&b':')
+        && value.as_bytes().get(16) == Some(&b':')
+        && value.ends_with('Z')
+        && value
+            .bytes()
+            .enumerate()
+            .all(|(index, byte)| matches!(index, 4 | 7 | 10 | 13 | 16 | 19) || byte.is_ascii_digit())
+}
+
+fn validate_live_request_window_join(
+    request_windows: &[Value],
+    attempted_timing_observations: &[Value],
+) -> Result<(), String> {
+    let mut windows = BTreeMap::<&str, &Value>::new();
+    for window in request_windows {
+        let observation_id = window
+            .get("observation_id")
+            .and_then(Value::as_str)
+            .filter(|value| stable_orchestration_identifier(value))
+            .ok_or_else(|| "a live request window has an invalid observation identity".to_owned())?;
+        let started = window
+            .get("started_at_utc")
+            .and_then(Value::as_str)
+            .filter(|value| valid_live_utc_timestamp(value))
+            .ok_or_else(|| "a live request window has an invalid start timestamp".to_owned())?;
+        let completed = window
+            .get("completed_at_utc")
+            .and_then(Value::as_str)
+            .filter(|value| valid_live_utc_timestamp(value))
+            .ok_or_else(|| "a live request window has an invalid completion timestamp".to_owned())?;
+        let status = window.get("status").and_then(Value::as_str);
+        let source_kind = window.get("source_kind").and_then(Value::as_str);
+        let process_state = window.get("process_state").and_then(Value::as_str);
+        let condition = window.get("condition").and_then(Value::as_str);
+        let tensor_access = (
+            window.get("router_tensor_bytes_read").and_then(Value::as_u64),
+            window
+                .get("router_tensor_cache_status")
+                .and_then(Value::as_str),
+        );
+        if started > completed
+            || window.get("host_monotonic_clock").and_then(Value::as_str)
+                != Some("rust_std_instant")
+            || window
+                .get("host_wall_duration_ns")
+                .and_then(Value::as_u64)
+                .is_none()
+            || !matches!(status, Some("passed" | "failed" | "aborted"))
+            || !matches!(
+                (process_state, condition),
+                (Some("reused_process"), Some("warm"))
+                    | (
+                        Some("fresh_process"),
+                        Some("first_read_new_process_os_cache_uncontrolled")
+                    )
+                    | (Some("fresh_process"), Some("warm"))
+                    | (Some("fresh_process"), Some("controlled_cold"))
+                    | (Some("reused_process"), Some("controlled_cold"))
+            )
+            || (source_kind == Some("correctness_attempt")
+                && (process_state != Some(ROUTER_CORRECTNESS_PROCESS_STATE)
+                    || condition != Some(ROUTER_CORRECTNESS_CONDITION)))
+            || window
+                .get("router_tensor_bytes_semantics")
+                .and_then(Value::as_str)
+                != Some("application_positional_read_not_physical_disk_io")
+            || (matches!(status, Some("passed" | "failed"))
+                && (window.get("process_request_index").and_then(Value::as_u64).is_none()
+                    || !matches!(
+                        tensor_access,
+                        (Some(ROUTER_TENSOR_BYTES), Some("read_and_cached"))
+                            | (Some(0), Some("cache_hit"))
+                    )))
+            || (status == Some("aborted")
+                && !matches!(tensor_access, (None, None)))
+            || windows.insert(observation_id, window).is_some()
+        {
+            return Err("live request windows are reversed, unfinished, or duplicated".to_owned());
+        }
+    }
+
+    let timing_windows = request_windows
+        .iter()
+        .filter(|window| window.get("source_kind").and_then(Value::as_str) == Some("timing_series"))
+        .count();
+    if timing_windows != attempted_timing_observations.len() {
+        return Err("live timing observations and UTC request windows are not bijective".to_owned());
+    }
+    let mut observation_ids = BTreeSet::new();
+    for observation in attempted_timing_observations {
+        let observation_id = observation
+            .get("observation_id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "a live timing observation lacks its identity".to_owned())?;
+        let status = observation
+            .get("status")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "a live timing observation lacks its status".to_owned())?;
+        let window = windows
+            .get(observation_id)
+            .filter(|window| {
+                window.get("source_kind").and_then(Value::as_str) == Some("timing_series")
+            })
+            .ok_or_else(|| "a live timing observation lacks its exact UTC request window".to_owned())?;
+        if !observation_ids.insert(observation_id)
+            || window.get("status").and_then(Value::as_str) != Some(status)
+            || observation.get("timing_profile") != window.get("timing_profile")
+            || observation.get("started_at_utc") != window.get("started_at_utc")
+            || observation.get("completed_at_utc") != window.get("completed_at_utc")
+            || observation.get("host_wall_duration_ns")
+                != window.get("host_wall_duration_ns")
+        {
+            return Err("a live timing observation has a duplicate or contradictory UTC window".to_owned());
+        }
+    }
+    Ok(())
+}
+
+fn validate_live_process_request_join(
+    lifecycle: &[Value],
+    request_windows: &[Value],
+    attempted_timing_observations: &[Value],
+) -> Result<(), String> {
+    let mut process_lifecycle = BTreeMap::<(String, String), Vec<&Value>>::new();
+    for record in lifecycle {
+        let process = record
+            .get("process_replication_id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live lifecycle/process join lacks a process identity".to_owned())?;
+        let profile = record
+            .get("timing_profile")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live lifecycle/process join lacks a timing profile".to_owned())?;
+        process_lifecycle
+            .entry((process.to_owned(), profile.to_owned()))
+            .or_default()
+            .push(record);
+    }
+    let timing_by_id = attempted_timing_observations
+        .iter()
+        .map(|observation| {
+            observation
+                .get("observation_id")
+                .and_then(Value::as_str)
+                .map(|identity| (identity, observation))
+                .ok_or_else(|| "live process/request join lacks an observation identity".to_owned())
+        })
+        .collect::<Result<BTreeMap<_, _>, _>>()?;
+    if timing_by_id.len() != attempted_timing_observations.len() {
+        return Err("live process/request join has duplicate timing identities".to_owned());
+    }
+
+    let mut requested_processes = BTreeSet::new();
+    let mut process_request_counts = BTreeMap::<String, usize>::new();
+    let mut first_read_counts = BTreeMap::<String, usize>::new();
+    for window in request_windows {
+        let observation_id = window
+            .get("observation_id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live process/request join lacks a window identity".to_owned())?;
+        let process = window
+            .get("process_replication_id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live process/request join lacks a process identity".to_owned())?;
+        let profile = window
+            .get("timing_profile")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "live process/request join lacks a timing profile".to_owned())?;
+        let records = process_lifecycle
+            .get(&(process.to_owned(), profile.to_owned()))
+            .ok_or_else(|| "a live request lacks its exact process/profile lifecycle".to_owned())?;
+        requested_processes.insert((process.to_owned(), profile.to_owned()));
+        *process_request_counts.entry(process.to_owned()).or_default() += 1;
+        let request_sent = window
+            .get("request_sent")
+            .and_then(Value::as_bool)
+            .ok_or_else(|| "live process/request join lacks request-sent state".to_owned())?;
+        if request_sent {
+            let spawn_completed = records
+                .iter()
+                .find(|record| {
+                    record.get("event").and_then(Value::as_str) == Some("spawn")
+                        && record.get("outcome").and_then(Value::as_str) == Some("passed")
+                })
+                .and_then(|record| record.get("recorded_at_utc"))
+                .and_then(Value::as_str)
+                .ok_or_else(|| "a sent live request lacks a completed spawn".to_owned())?;
+            let shutdown = records
+                .iter()
+                .find(|record| record.get("event").and_then(Value::as_str) == Some("shutdown"))
+                .and_then(|record| record.get("recorded_at_utc"))
+                .and_then(Value::as_str)
+                .ok_or_else(|| "a sent live request lacks an observed shutdown".to_owned())?;
+            let started = window
+                .get("started_at_utc")
+                .and_then(Value::as_str)
+                .ok_or_else(|| "a sent live request lacks a start timestamp".to_owned())?;
+            let completed = window
+                .get("completed_at_utc")
+                .and_then(Value::as_str)
+                .ok_or_else(|| "a sent live request lacks a completion timestamp".to_owned())?;
+            if spawn_completed > started || completed > shutdown {
+                return Err("a sent live request falls outside its process lifecycle".to_owned());
+            }
+        } else if window.get("status").and_then(Value::as_str) != Some("aborted")
+            || !(records.iter().any(|record| {
+                record.get("event").and_then(Value::as_str) == Some("spawn")
+                    && record.get("outcome").and_then(Value::as_str) == Some("failed")
+            }) || (records.iter().any(|record| {
+                record.get("event").and_then(Value::as_str) == Some("spawn")
+                    && record.get("outcome").and_then(Value::as_str) == Some("passed")
+            }) && records.iter().any(|record| {
+                record.get("event").and_then(Value::as_str) == Some("shutdown")
+            })))
+        {
+            return Err("an unsent live request lacks its failed-spawn lifecycle".to_owned());
+        }
+
+        if window.get("source_kind").and_then(Value::as_str) == Some("timing_series") {
+            let observation = timing_by_id
+                .get(observation_id)
+                .ok_or_else(|| "a timing request lacks its raw timing observation".to_owned())?;
+            if observation
+                .get("process_replication_id")
+                .and_then(Value::as_str)
+                != Some(process)
+                || observation.get("timing_profile").and_then(Value::as_str) != Some(profile)
+            {
+                return Err("a timing request contradicts its process/profile identity".to_owned());
+            }
+            if observation.get("condition").and_then(Value::as_str)
+                == Some("first_read_new_process_os_cache_uncontrolled")
+            {
+                if profile != "costly"
+                    || observation.get("process_state").and_then(Value::as_str)
+                        != Some("fresh_process")
+                    || observation.get("observation_kind").and_then(Value::as_str)
+                        != Some("measurement")
+                    || observation.get("run_index").and_then(Value::as_u64) != Some(0)
+                {
+                    return Err("a live first-read observation violates its 0+1 cohort".to_owned());
+                }
+                *first_read_counts.entry(process.to_owned()).or_default() += 1;
+            }
+        }
+    }
+    if first_read_counts.iter().any(|(process, count)| {
+        *count != 1 || process_request_counts.get(process).copied() != Some(1)
+    }) {
+        return Err("a live first-read process has other than one request".to_owned());
+    }
+    for ((process, profile), records) in process_lifecycle {
+        let admitted = records.iter().any(|record| {
+            record.get("event").and_then(Value::as_str) == Some("spawn")
+                && record.get("outcome").and_then(Value::as_str) == Some("passed")
+        });
+        if admitted && !requested_processes.contains(&(process, profile)) {
+            return Err("an admitted live process has no joined request".to_owned());
+        }
+    }
+    Ok(())
+}
+
+fn validate_live_resource_join(
+    request_windows: &[Value],
+    resource_records: &[Value],
+) -> Result<(), String> {
+    let windows = request_windows
+        .iter()
+        .map(|window| {
+            window
+                .get("observation_id")
+                .and_then(Value::as_str)
+                .map(|identity| (identity, window))
+                .ok_or_else(|| "live resource join lacks a request identity".to_owned())
+        })
+        .collect::<Result<BTreeMap<_, _>, _>>()?;
+    let resources = resource_records
+        .iter()
+        .map(|record| {
+            record
+                .get("observation_id")
+                .and_then(Value::as_str)
+                .map(|identity| (identity, record))
+                .ok_or_else(|| "live resource join lacks a resource identity".to_owned())
+        })
+        .collect::<Result<BTreeMap<_, _>, _>>()?;
+    if windows.len() != request_windows.len()
+        || resources.len() != resource_records.len()
+        || windows.keys().ne(resources.keys())
+    {
+        return Err("live request windows and resource records are not bijective".to_owned());
+    }
+    for (identity, window) in windows {
+        let resource = resources[identity];
+        if resource.get("backend").and_then(Value::as_str) != Some(BACKEND_ID)
+            || resource.get("source_kind") != window.get("source_kind")
+            || resource.get("process_state") != window.get("process_state")
+            || resource.get("condition") != window.get("condition")
+            || resource.get("status").and_then(Value::as_str)
+                != window.get("status").and_then(Value::as_str)
+            || resource.get("router_tensor_bytes_read")
+                != window.get("router_tensor_bytes_read")
+            || resource.get("router_tensor_cache_status")
+                != window.get("router_tensor_cache_status")
+            || resource.get("router_tensor_bytes_semantics")
+                != window.get("router_tensor_bytes_semantics")
+        {
+            return Err("a live resource record contradicts its request window".to_owned());
+        }
+        let source_kind = resource
+            .get("source_kind")
+            .and_then(Value::as_str)
+            .filter(|value| matches!(*value, "correctness_attempt" | "timing_series"))
+            .ok_or_else(|| "a live resource record has invalid source kind".to_owned())?;
+        if source_kind == "correctness_attempt"
+            && (resource.get("process_state").and_then(Value::as_str)
+                != Some(ROUTER_CORRECTNESS_PROCESS_STATE)
+                || resource.get("condition").and_then(Value::as_str)
+                    != Some(ROUTER_CORRECTNESS_CONDITION))
+        {
+            return Err("a correctness resource has an invalid process/condition label".to_owned());
+        }
+        let status = resource
+            .get("status")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "a live resource record lacks status".to_owned())?;
+        let evaluated = resource.get("evaluated").and_then(Value::as_bool);
+        let synchronized = resource.get("synchronized").and_then(Value::as_bool);
+        let output_sha256 = resource.get("output_sha256").and_then(Value::as_str);
+        let canonical_output = resource.get("canonical_output");
+        let retention = resource
+            .get("canonical_output_retention")
+            .and_then(Value::as_str);
+        let evaluated_envelope = resource.get("requested_device").and_then(Value::as_str)
+            == Some(GPU_DEVICE)
+            && resource.get("selected_device").and_then(Value::as_str) == Some(GPU_DEVICE)
+            && resource.get("fallback_used").and_then(Value::as_bool) == Some(false)
+            && evaluated == Some(true)
+            && synchronized == Some(true)
+            && resource.get("monotonic_clock").and_then(Value::as_str)
+                == Some("perf_counter_ns")
+            && matches!(
+                resource.get("instrumentation_mode").and_then(Value::as_str),
+                Some("minimally_instrumented" | "stage_instrumented")
+            )
+            && matches!(
+                (
+                    resource.get("router_tensor_bytes_read").and_then(Value::as_u64),
+                    resource
+                        .get("router_tensor_cache_status")
+                        .and_then(Value::as_str),
+                ),
+                (Some(ROUTER_TENSOR_BYTES), Some("read_and_cached"))
+                    | (Some(0), Some("cache_hit"))
+            );
+        let timing_retention_valid = if source_kind == "correctness_attempt" {
+            resource
+                .get("timing_stages")
+                .is_some_and(Value::is_object)
+                && resource.get("timing_stage_retention").and_then(Value::as_str)
+                    == Some("complete_in_resource_record")
+        } else {
+            resource.get("timing_stages").is_some_and(Value::is_null)
+                && resource.get("timing_stage_retention").and_then(Value::as_str)
+                    == Some("complete_in_joined_raw_timing_observation")
+        };
+        match status {
+            "passed" => {
+                if !evaluated_envelope
+                    || !timing_retention_valid
+                    || !output_sha256.is_some_and(canonical_sha256)
+                    || resource.get("correctness_passed").and_then(Value::as_bool) != Some(true)
+                {
+                    return Err("a passing live resource lacks its GPU correctness envelope".to_owned());
+                }
+                if source_kind == "correctness_attempt" {
+                    if retention != Some("hash_only_joined_correctness_attempt")
+                        || !canonical_output.is_some_and(Value::is_null)
+                    {
+                        return Err("a correctness resource violates joined-attempt hash retention".to_owned());
+                    }
+                } else if retention != Some("hash_only_passing_timing")
+                    || !canonical_output.is_some_and(Value::is_null)
+                {
+                    return Err("a passing timing resource violates hash-only retention".to_owned());
+                }
+            }
+            "failed" => {
+                if !evaluated_envelope
+                    || !timing_retention_valid
+                    || !resource.get("failure").is_some_and(Value::is_object)
+                    || resource.get("correctness_passed").and_then(Value::as_bool) == Some(true)
+                {
+                    return Err("a failed live resource lacks its evaluated failure envelope".to_owned());
+                }
+                let complete = retention == Some("complete")
+                    && canonical_output.is_some_and(Value::is_object)
+                    && output_sha256.is_some_and(canonical_sha256)
+                    && canonical_output
+                        .and_then(|output| output.get("complete_output_sha256"))
+                        .and_then(Value::as_str)
+                        == output_sha256;
+                let invalid_output = retention == Some("unavailable_invalid_output")
+                    && canonical_output.is_some_and(Value::is_null)
+                    && output_sha256.is_none();
+                if !complete && !invalid_output {
+                    return Err("a failed live resource has invalid output retention".to_owned());
+                }
+            }
+            "aborted" => {
+                if evaluated != Some(false)
+                    || synchronized != Some(false)
+                    || resource.get("selected_device").and_then(Value::as_str)
+                        != Some("not_available")
+                    || output_sha256.is_some()
+                    || !canonical_output.is_some_and(Value::is_null)
+                    || !resource.get("router_tensor_bytes_read").is_some_and(Value::is_null)
+                    || !resource
+                        .get("router_tensor_cache_status")
+                        .is_some_and(Value::is_null)
+                    || retention != Some("unavailable_aborted_request")
+                    || !resource.get("failure").is_some_and(Value::is_object)
+                {
+                    return Err("an aborted live resource contradicts unavailable execution".to_owned());
+                }
+            }
+            _ => return Err("a live resource record has invalid status".to_owned()),
+        }
+    }
+    Ok(())
+}
+
+fn validate_live_ledger_bijection(
+    orchestration: &Value,
+    worker_evidence: &Value,
+) -> Result<(), String> {
+    fn collect_raw_observations(
+        value: &Value,
+        observations_by_id: &mut BTreeMap<String, Value>,
+    ) -> Result<(), String> {
+        match value {
+            Value::Object(fields) => {
+                for (name, child) in fields {
+                    if name == "raw_observations" {
+                        let observations = child.as_array().ok_or_else(|| {
+                            "a router raw-observation ledger is not an array".to_owned()
+                        })?;
+                        for observation in observations {
+                            let identity = observation
+                                .get("observation_id")
+                                .and_then(Value::as_str)
+                                .filter(|value| stable_orchestration_identifier(value))
+                                .ok_or_else(|| {
+                                    "a router raw-observation ledger identity is invalid".to_owned()
+                                })?;
+                            if observations_by_id
+                                .insert(identity.to_owned(), observation.clone())
+                                .is_some()
+                            {
+                                return Err(
+                                    "a router raw-observation identity is duplicated".to_owned()
+                                );
+                            }
+                        }
+                    } else {
+                        collect_raw_observations(child, observations_by_id)?;
+                    }
+                }
+            }
+            Value::Array(items) => {
+                for item in items {
+                    collect_raw_observations(item, observations_by_id)?;
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    let mut ledger = BTreeMap::new();
+    collect_raw_observations(orchestration, &mut ledger)?;
+    let records = |field: &str| -> Result<BTreeMap<String, Value>, String> {
+        worker_evidence
+            .get(field)
+            .and_then(Value::as_array)
+            .ok_or_else(|| format!("live worker evidence lacks {field}"))?
+            .iter()
+            .map(|record| {
+                record
+                    .get("observation_id")
+                    .and_then(Value::as_str)
+                    .filter(|value| stable_orchestration_identifier(value))
+                    .map(|identity| (identity.to_owned(), record.clone()))
+                    .ok_or_else(|| format!("live worker {field} identity is invalid"))
+            })
+            .collect()
+    };
+    let requests = records("request_utc_windows")?;
+    let resources = records("result_resource_records")?;
+    if ledger.keys().ne(requests.keys()) || ledger.keys().ne(resources.keys()) {
+        return Err(
+            "router ledger, request-window, and resource identities are not bijective".to_owned(),
+        );
+    }
+    for (identity, observation) in ledger {
+        let request = &requests[&identity];
+        let resource = &resources[&identity];
+        for field in [
+            "batch_id",
+            "case_id",
+            "process_replication_id",
+            "process_state",
+            "condition",
+            "schedule_step",
+            "source_kind",
+            "status",
+            "timing_profile",
+            "started_at_utc",
+            "completed_at_utc",
+            "host_wall_duration_ns",
+            "host_monotonic_clock",
+            "process_request_index",
+            "router_tensor_bytes_read",
+            "router_tensor_cache_status",
+            "router_tensor_bytes_semantics",
+        ] {
+            if observation.get(field) != request.get(field) {
+                return Err("a router ledger observation contradicts its request metadata".to_owned());
+            }
+        }
+        if resource.get("source_kind") != observation.get("source_kind")
+            || resource.get("status") != observation.get("status")
+            || resource.get("process_state") != observation.get("process_state")
+            || resource.get("condition") != observation.get("condition")
+        {
+            return Err("a router ledger observation contradicts its resource record".to_owned());
+        }
+    }
+    Ok(())
+}
+
+fn attach_live_request_metadata_to_ledgers(
+    orchestration: &mut Value,
+    worker_evidence: &Value,
+) -> Result<(), String> {
+    fn attach(
+        value: &mut Value,
+        windows: &BTreeMap<String, Value>,
+    ) -> Result<(), String> {
+        match value {
+            Value::Object(fields) => {
+                for (name, child) in fields {
+                    if name == "raw_observations" {
+                        let observations = child.as_array_mut().ok_or_else(|| {
+                            "a router raw-observation ledger is not an array".to_owned()
+                        })?;
+                        for observation in observations {
+                            let identity = observation
+                                .get("observation_id")
+                                .and_then(Value::as_str)
+                                .ok_or_else(|| {
+                                    "a router raw-observation lacks its live identity".to_owned()
+                                })?;
+                            let window = windows.get(identity).ok_or_else(|| {
+                                "a router raw-observation lacks its live request window".to_owned()
+                            })?;
+                            for field in [
+                                "timing_profile",
+                                "started_at_utc",
+                                "completed_at_utc",
+                                "host_wall_duration_ns",
+                                "host_monotonic_clock",
+                                "process_request_index",
+                                "router_tensor_bytes_read",
+                                "router_tensor_cache_status",
+                                "router_tensor_bytes_semantics",
+                            ] {
+                                observation[field] = window
+                                    .get(field)
+                                    .cloned()
+                                    .ok_or_else(|| {
+                                        "a live request window lacks required timing metadata"
+                                            .to_owned()
+                                    })?;
+                            }
+                        }
+                    } else {
+                        attach(child, windows)?;
+                    }
+                }
+            }
+            Value::Array(items) => {
+                for item in items {
+                    attach(item, windows)?;
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    let windows = worker_evidence
+        .get("request_utc_windows")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "live worker evidence lacks request windows".to_owned())?
+        .iter()
+        .map(|window| {
+            window
+                .get("observation_id")
+                .and_then(Value::as_str)
+                .map(|identity| (identity.to_owned(), window.clone()))
+                .ok_or_else(|| "a live request window lacks its identity".to_owned())
+        })
+        .collect::<Result<BTreeMap<_, _>, _>>()?;
+    attach(orchestration, &windows)
+}
+
+impl RouterScheduleAdapter for LiveRouterScheduleAdapter {
+    fn correctness_attempt(
+        &mut self,
+        batch_id: &str,
+        case: OrchestratedRouterCase,
+        attempt_index: usize,
+        process_replication_id: &str,
+    ) -> Result<RouterCorrectnessAttempt, RouterLiveFailure> {
+        let (observation_kind, run_index) =
+            RouterCorrectnessAttempt::observation_role(attempt_index);
+        let observation_id = format!(
+            "{batch_id}-{}-correctness-{observation_kind}-{run_index:02}",
+            case.case_id()
+        );
+        let schedule_step = match case {
+            OrchestratedRouterCase::SingleRow => "single_row_correctness",
+            OrchestratedRouterCase::TwoRow => "two_row_correctness",
+        };
+        let request = RouterRequest::new(case.case_id(), GPU_DEVICE).map_err(|_| {
+            RouterLiveFailure::new(
+                "internal_worker_error",
+                "protocol",
+                "the frozen real router request could not be constructed",
+            )
+        })?;
+        let execution = self.execute_observed_request(
+            batch_id,
+            case,
+            schedule_step,
+            "correctness_attempt",
+            &observation_id,
+            process_replication_id,
+            ROUTER_CORRECTNESS_PROCESS_STATE,
+            ROUTER_CORRECTNESS_CONDITION,
+            RouterWorkerTimingProfile::Minimal,
+            &request,
+        );
+        let (result, window_index) = match execution {
+            Ok(result) => result,
+            Err(failure) => {
+                let mut retained = RouterFailedCorrectnessAttempt::new(
+                    batch_id,
+                    case,
+                    attempt_index,
+                    process_replication_id,
+                    schedule_step,
+                    failure.orchestration_failure(),
+                );
+                if failure.retained_result.is_some() {
+                    retained = retained.with_evaluated_failure();
+                }
+                return Err(failure.with_retained_correctness(retained));
+            }
+        };
+        let reference = match self.oracle.reference(case.case_id()).cloned() {
+            Some(reference) => reference,
+            None => {
+                let failure = RouterLiveFailure::new(
+                    "comparison_failed",
+                    "correctness_gate",
+                    "the frozen CPU oracle lacks the requested real router case",
+                );
+                let canonical = output_from_worker_result_with_scope(
+                    &result,
+                    RouterCaseScope::RealCheckpoint,
+                )
+                .ok();
+                let output_sha256 = canonical
+                    .as_ref()
+                    .and_then(|output| complete_router_output_sha256(output).ok());
+                self.retain_resource_record(
+                    &observation_id,
+                    "correctness_attempt",
+                    ROUTER_CORRECTNESS_PROCESS_STATE,
+                    ROUTER_CORRECTNESS_CONDITION,
+                    &result,
+                    canonical.as_ref(),
+                    output_sha256.as_deref(),
+                    Some(false),
+                    true,
+                    Some(&failure),
+                );
+                self.finish_request_window(window_index, false, Some(&failure));
+                let retained = RouterFailedCorrectnessAttempt::new(
+                    batch_id,
+                    case,
+                    attempt_index,
+                    process_replication_id,
+                    schedule_step,
+                    failure.orchestration_failure(),
+                );
+                return Err(failure.with_retained_correctness(retained));
+            }
+        };
+        let attempt = match RouterCorrectnessAttempt::from_result(
+            &result,
+            &reference,
+            process_replication_id,
+        ) {
+            Ok(attempt) => attempt,
+            Err(_) => {
+                let failure = RouterLiveFailure::new(
+                    "comparison_failed",
+                    "correctness_gate",
+                    "the MLX router result could not be adapted for CPU-oracle comparison",
+                );
+                let canonical = output_from_worker_result_with_scope(
+                    &result,
+                    RouterCaseScope::RealCheckpoint,
+                )
+                .ok();
+                let output_sha256 = canonical
+                    .as_ref()
+                    .and_then(|output| complete_router_output_sha256(output).ok());
+                self.retain_resource_record(
+                    &observation_id,
+                    "correctness_attempt",
+                    ROUTER_CORRECTNESS_PROCESS_STATE,
+                    ROUTER_CORRECTNESS_CONDITION,
+                    &result,
+                    canonical.as_ref(),
+                    output_sha256.as_deref(),
+                    Some(false),
+                    true,
+                    Some(&failure),
+                );
+                self.finish_request_window(window_index, false, Some(&failure));
+                let retained = RouterFailedCorrectnessAttempt::new(
+                    batch_id,
+                    case,
+                    attempt_index,
+                    process_replication_id,
+                    schedule_step,
+                    failure.orchestration_failure(),
+                );
+                return Err(failure.with_retained_correctness(retained));
+            }
+        };
+        let profile_passed = router_result_matches_timing_profile(
+            &result,
+            RouterWorkerTimingProfile::Minimal,
+            self.request_windows[window_index]["process_request_index"].as_u64(),
+        );
+        let passed = profile_passed && attempt.passes_gate(batch_id, case);
+        let failure = (!passed).then(|| {
+            RouterLiveFailure::new(
+                if profile_passed {
+                    "comparison_failed"
+                } else {
+                    "protocol_mismatch"
+                },
+                if profile_passed {
+                    "correctness_gate"
+                } else {
+                    "protocol"
+                },
+                "the real MLX router correctness attempt failed its frozen gate",
+            )
+        });
+        self.retain_resource_record(
+            &observation_id,
+            "correctness_attempt",
+            ROUTER_CORRECTNESS_PROCESS_STATE,
+            ROUTER_CORRECTNESS_CONDITION,
+            &result,
+            Some(&attempt.canonical_output),
+            Some(&attempt.complete_output_sha256),
+            Some(passed),
+            !passed,
+            failure.as_ref(),
+        );
+        self.finish_request_window(window_index, passed, failure.as_ref());
+        Ok(attempt)
+    }
+
+    fn timing_series(
+        &mut self,
+        plan: &RouterLiveTimingPlan,
+    ) -> Result<RouterTimingSeries, RouterLiveFailure> {
+        let request = RouterRequest::new(plan.case.case_id(), GPU_DEVICE).map_err(|_| {
+            RouterLiveFailure::new(
+                "internal_worker_error",
+                "protocol",
+                "the frozen real router timing request could not be constructed",
+            )
+        })?;
+        let reference = self
+            .oracle
+            .reference(plan.case.case_id())
+            .cloned()
+            .ok_or_else(|| {
+                RouterLiveFailure::new(
+                    "comparison_failed",
+                    "correctness_gate",
+                    "the frozen CPU oracle lacks the requested timing case",
+                )
+            })?;
+        let total_attempts = plan.warmup_count + plan.measurement_count;
+        let mut observations = Vec::with_capacity(total_attempts);
+        for attempt_index in 0..total_attempts {
+            let (observation_kind, run_index) = if attempt_index < plan.warmup_count {
+                ("warmup", attempt_index)
+            } else {
+                ("measurement", attempt_index - plan.warmup_count)
+            };
+            let observation_id = format!(
+                "{}-{}-{observation_kind}-{run_index:02}",
+                plan.process_replication_id, plan.benchmark_id
+            );
+            let request_window_index = self.request_windows.len();
+            let execution = self.execute_observed_request(
+                &plan.batch_id,
+                plan.case,
+                plan.schedule_step,
+                "timing_series",
+                &observation_id,
+                &plan.process_replication_id,
+                plan.process_state,
+                plan.condition,
+                plan.profile,
+                &request,
+            );
+            let observation = match execution {
+                Ok((result, window_index)) => {
+                    let adapted = RouterCorrectnessAttempt::from_result(
+                        &result,
+                        &reference,
+                        correctness_process_identity(&plan.batch_id),
+                    );
+                    let output_sha256 = adapted
+                        .as_ref()
+                        .ok()
+                        .map(|attempt| attempt.complete_output_sha256.as_str());
+                    let profile_passed = router_result_matches_timing_profile(
+                        &result,
+                        plan.profile,
+                        self.request_windows[window_index]["process_request_index"].as_u64(),
+                    );
+                    let correctness_passed = adapted
+                        .as_ref()
+                        .is_ok_and(|attempt| attempt.passes_gate(&plan.batch_id, plan.case));
+                    let passed = profile_passed && correctness_passed;
+                    let failure = (!passed).then(|| {
+                        RouterLiveFailure::new(
+                            if profile_passed {
+                                "comparison_failed"
+                            } else {
+                                "protocol_mismatch"
+                            },
+                            if profile_passed {
+                                "correctness_gate"
+                            } else {
+                                "protocol"
+                            },
+                            "the timed real router result failed its frozen correctness or profile gate",
+                        )
+                    });
+                    self.retain_resource_record(
+                        &observation_id,
+                        "timing_series",
+                        plan.process_state,
+                        plan.condition,
+                        &result,
+                        adapted
+                            .as_ref()
+                            .ok()
+                            .map(|attempt| &attempt.canonical_output),
+                        output_sha256,
+                        output_sha256.map(|_| passed),
+                        !passed,
+                        failure.as_ref(),
+                    );
+                    self.finish_request_window(window_index, passed, failure.as_ref());
+                    let request_window = self.request_windows.get(window_index).cloned();
+                    live_timing_observation(
+                        plan,
+                        observation_kind,
+                        run_index,
+                        &observation_id,
+                        &result,
+                        output_sha256,
+                        passed,
+                        failure.as_ref(),
+                        request_window.as_ref(),
+                    )
+                }
+                Err(failure) => {
+                    let request_window = self.request_windows.get(request_window_index).cloned();
+                    if let Some(result) = failure.retained_result.as_ref() {
+                        let canonical = output_from_worker_result_with_scope(
+                            result,
+                            RouterCaseScope::RealCheckpoint,
+                        )
+                        .ok();
+                        let output_sha256 = canonical
+                            .as_ref()
+                            .and_then(|output| complete_router_output_sha256(output).ok());
+                        live_timing_observation(
+                            plan,
+                            observation_kind,
+                            run_index,
+                            &observation_id,
+                            result,
+                            output_sha256.as_deref(),
+                            false,
+                            Some(&failure),
+                            request_window.as_ref(),
+                        )
+                    } else {
+                        live_aborted_timing_observation(
+                            plan,
+                            observation_kind,
+                            run_index,
+                            &observation_id,
+                            &failure,
+                            request_window.as_ref(),
+                        )
+                    }
+                }
+            };
+            self.attempted_timing_observations
+                .push(observation.clone());
+            let passed = observation["status"] == "passed";
+            observations.push(observation);
+            if !passed {
+                break;
+            }
+        }
+        let series = RouterTimingSeries::try_from_value(json!({
+            "benchmark_id": plan.benchmark_id,
+            "case_id": plan.case.case_id(),
+            "row_count": plan.case.row_count(),
+            "series_kind": plan.series_kind.as_str(),
+            "replication_role": plan.replication_role.as_str(),
+            "process_replication_id": plan.process_replication_id,
+            "process_state": plan.process_state,
+            "condition": plan.condition,
+            "instrumentation_mode": plan.instrumentation_mode.as_str(),
+            "warmup_count": plan.warmup_count,
+            "measurement_count": plan.measurement_count,
+            "raw_timing_observations": observations,
+        }))
+        .map_err(|_| {
+            RouterLiveFailure::new(
+                "internal_worker_error",
+                "orchestration",
+                "a retained live timing series violated the frozen evidence contract",
+            )
+        })?;
+
+        if plan.process_state == "fresh_process" {
+            if let Err(failure) = self.shutdown_process(&plan.process_replication_id) {
+                return Err(failure.with_retained_series(plan.schedule_step, series));
+            }
+        }
+        Ok(series)
+    }
+
+    fn finish_process(
+        &mut self,
+        process_replication_id: &str,
+    ) -> Result<(), RouterLiveFailure> {
+        self.shutdown_process(process_replication_id)
+    }
+}
+
+fn cleanup_evidence(cleanup: &mlx_backend::CleanupReport) -> Value {
+    json!({
+        "outcome": cleanup_outcome_name(cleanup.outcome()),
+        "exit_code": cleanup.exit_code(),
+        "error_code": cleanup.error().and_then(WorkerError::worker_code),
+    })
+}
+
+fn router_worker_failure(error: &WorkerError, stage: &str) -> RouterLiveFailure {
+    let candidate = error.worker_code().unwrap_or("internal_worker_error");
+    let code = if valid_router_live_failure_code(candidate) {
+        candidate
+    } else {
+        "internal_worker_error"
+    };
+    RouterLiveFailure::new(
+        code,
+        stage,
+        "the supervised live router worker did not complete the requested operation",
+    )
+}
+
+fn router_result_matches_timing_profile(
+    result: &RouterResult,
+    profile: RouterWorkerTimingProfile,
+    process_request_index: Option<u64>,
+) -> bool {
+    const MINIMAL: [&str; 2] = ["dequantization", "total_evaluated_router"];
+    const COSTLY: [&str; 6] = [
+        "file_io",
+        "storage_validation_f32_decode",
+        "dequantization",
+        "host_to_device",
+        "total_evaluated_router",
+        "end_to_end_router_command",
+    ];
+    const STAGE: [&str; 13] = [
+        "setup_admission",
+        "file_io",
+        "storage_validation_f32_decode",
+        "dequantization",
+        "host_to_device",
+        "graph_construction",
+        "compilation",
+        "router_projection",
+        "top_k",
+        "normalization",
+        "total_evaluated_router",
+        "synchronized_readback",
+        "end_to_end_router_command",
+    ];
+    let (expected_mode, expected_stages): (&str, &[&str]) = match profile {
+        RouterWorkerTimingProfile::Minimal => ("minimally_instrumented", &MINIMAL),
+        RouterWorkerTimingProfile::Costly => ("minimally_instrumented", &COSTLY),
+        RouterWorkerTimingProfile::Stage => ("stage_instrumented", &STAGE),
+    };
+    let expected_tensor_access = match (profile, process_request_index) {
+        (RouterWorkerTimingProfile::Costly, Some(_))
+        | (RouterWorkerTimingProfile::Minimal | RouterWorkerTimingProfile::Stage, Some(0)) => {
+            (ROUTER_TENSOR_BYTES, "read_and_cached")
+        }
+        (RouterWorkerTimingProfile::Minimal | RouterWorkerTimingProfile::Stage, Some(_)) => {
+            (0, "cache_hit")
+        }
+        (_, None) => return false,
+    };
+    let storage_timing_matches_access = match profile {
+        RouterWorkerTimingProfile::Minimal => true,
+        RouterWorkerTimingProfile::Costly => matches!(
+            (
+                result.timing().stage("file_io"),
+                result.timing().stage("storage_validation_f32_decode"),
+            ),
+            (
+                Some(mlx_backend::protocol::RouterTimingStage::Observed { .. }),
+                Some(mlx_backend::protocol::RouterTimingStage::Observed { .. }),
+            )
+        ),
+        RouterWorkerTimingProfile::Stage if expected_tensor_access.1 == "read_and_cached" => {
+            matches!(
+                (
+                    result.timing().stage("file_io"),
+                    result.timing().stage("storage_validation_f32_decode"),
+                ),
+                (
+                    Some(mlx_backend::protocol::RouterTimingStage::Observed { .. }),
+                    Some(mlx_backend::protocol::RouterTimingStage::Observed { .. }),
+                )
+            )
+        }
+        RouterWorkerTimingProfile::Stage => matches!(
+            (
+                result.timing().stage("file_io"),
+                result.timing().stage("storage_validation_f32_decode"),
+            ),
+            (
+                Some(mlx_backend::protocol::RouterTimingStage::Unavailable { reason: file_reason }),
+                Some(mlx_backend::protocol::RouterTimingStage::Unavailable { reason: decode_reason }),
+            ) if file_reason == "validated_router_tensor_cache_hit_no_file_read"
+                && decode_reason == "validated_router_tensor_cache_hit_no_decode"
+        ),
+    };
+    result.timing().instrumentation_mode().as_str() == expected_mode
+        && result.timing().stages().len() == expected_stages.len()
+        && expected_stages
+            .iter()
+            .all(|stage| result.timing().stages().contains_key(*stage))
+        && result.router_tensor_bytes_read() == expected_tensor_access.0
+        && result.router_tensor_cache_status().as_str() == expected_tensor_access.1
+        && storage_timing_matches_access
+}
+
+#[allow(clippy::too_many_arguments)]
+fn live_timing_observation(
+    plan: &RouterLiveTimingPlan,
+    observation_kind: &str,
+    run_index: usize,
+    observation_id: &str,
+    result: &RouterResult,
+    output_sha256: Option<&str>,
+    passed: bool,
+    failure: Option<&RouterLiveFailure>,
+    request_window: Option<&Value>,
+) -> Value {
+    let mut observation = json!({
+        "observation_id": observation_id,
+        "run_index": run_index,
+        "observation_kind": observation_kind,
+        "process_replication_id": plan.process_replication_id,
+        "process_state": plan.process_state,
+        "condition": plan.condition,
+        "instrumentation_mode": plan.instrumentation_mode.as_str(),
+        "monotonic_clock": result.timing().monotonic_clock(),
+        "stages": router_worker_timing_stages(result),
+        "status": if passed { "passed" } else { "failed" },
+        "requested_device": result.requested_device(),
+        "selected_device": result.selected_device(),
+        "fallback_used": result.fallback_used(),
+        "evaluated": result.evaluated(),
+        "synchronized": result.synchronized(),
+        "output_sha256": output_sha256,
+        "correctness_passed": output_sha256.map(|_| passed),
+    });
+    if let Some(failure) = failure {
+        observation["failure"] = failure.orchestration_failure().evidence();
+    }
+    attach_live_request_metadata(observation, request_window)
+}
+
+fn live_aborted_timing_observation(
+    plan: &RouterLiveTimingPlan,
+    observation_kind: &str,
+    run_index: usize,
+    observation_id: &str,
+    failure: &RouterLiveFailure,
+    request_window: Option<&Value>,
+) -> Value {
+    let observation = json!({
+        "observation_id": observation_id,
+        "run_index": run_index,
+        "observation_kind": observation_kind,
+        "process_replication_id": plan.process_replication_id,
+        "process_state": plan.process_state,
+        "condition": plan.condition,
+        "instrumentation_mode": plan.instrumentation_mode.as_str(),
+        "monotonic_clock": "perf_counter_ns",
+        "stages": {
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization",
+            }
+        },
+        "status": "aborted",
+        "requested_device": GPU_DEVICE,
+        "selected_device": "not_available",
+        "fallback_used": false,
+        "evaluated": false,
+        "synchronized": false,
+        "output_sha256": null,
+        "correctness_passed": null,
+        "failure": failure.orchestration_failure().evidence(),
+    });
+    attach_live_request_metadata(observation, request_window)
+}
+
+fn attach_live_request_metadata(mut observation: Value, request_window: Option<&Value>) -> Value {
+    if let Some(window) = request_window {
+        for field in [
+            "timing_profile",
+            "started_at_utc",
+            "completed_at_utc",
+            "host_wall_duration_ns",
+            "router_tensor_bytes_read",
+            "router_tensor_cache_status",
+        ] {
+            if let Some(value) = window.get(field) {
+                observation[field] = value.clone();
+            }
+        }
+    }
+    observation
+}
+
+fn router_parent_invocation_evidence() -> Value {
+    json!({
+        "operation": "validate-router",
+        "argv": [
+            "cargo",
+            "run",
+            "--release",
+            "-p",
+            "mlx-backend",
+            "--bin",
+            "pulsar-mlx",
+            "--",
+            "validate-router",
+            "--model",
+            "$PULSARMLX_MODEL_GGUF",
+            "--oracle",
+            "$PULSARMLX_ROUTER_ORACLE",
+            "--evidence-dir",
+            "$PULSARMLX_ROUTER_EVIDENCE",
+        ],
+    })
+}
+
 fn run_planned_validate_router(command: ValidateRouterCommand) -> Result<(), String> {
-    // As with inspection, resolving any path here would cross the T074 gate.
-    let orchestration = RouterBenchmarkOrchestrator::new();
-    debug_assert_eq!(orchestration.next_step(), "single_row_correctness");
-    let _parsed_paths = (command.model, command.oracle, command.evidence_dir);
-    Err("validate-router correctness-gated orchestration is frozen, but checkpoint admission remains blocked until notified T074 and execution until T083; no checkpoint was accessed and no MLX worker was started".to_owned())
+    let root = project_root();
+    // This remains the first filesystem-dependent gate. A dirty tree cannot
+    // resolve, stat, hash, or open the external model or oracle.
+    let source_commit = clean_source_commit_for(&root, "validate-router")?;
+    run_validate_router_after_clean_source(command, &root, &source_commit)
+}
+
+fn run_validate_router_after_clean_source(
+    command: ValidateRouterCommand,
+    root: &Path,
+    source_commit: &str,
+) -> Result<(), String> {
+    let initial_path_identities = router_path_identities(&command)?;
+    let evidence_metadata = fs::symlink_metadata(&command.evidence_dir)
+        .map_err(|_| "the router evidence directory is unavailable".to_owned())?;
+    if evidence_metadata.file_type().is_symlink() || !evidence_metadata.is_dir() {
+        return Err("the router evidence destination must be a regular non-link directory".to_owned());
+    }
+    let candidate_path = command
+        .evidence_dir
+        .join(ROUTER_INTERNAL_CANDIDATE_FILENAME);
+    match fs::symlink_metadata(&candidate_path) {
+        Ok(_) => return Err("the internal router candidate already exists".to_owned()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(_) => return Err("the internal router candidate could not be inspected".to_owned()),
+    }
+
+    let external_oracle = load_external_router_oracle(&command.oracle)?;
+    let public_oracle = load_public_router_oracle(root)?;
+    if !router_oracle_payloads_match(&external_oracle, &public_oracle) {
+        return Err("the external and committed public CPU oracle payloads differ".to_owned());
+    }
+
+    let (inspection, pressure) = inspect_admitted_model(root, &command.model)?;
+    if pressure != "normal" {
+        return Err("validate-router requires normal system memory pressure".to_owned());
+    }
+    #[cfg(unix)]
+    if initial_path_identities.0.existing_object
+        != inspection.opened_file_identity().unix_device_and_inode()
+    {
+        return Err("external model path identity changed during router admission".to_owned());
+    }
+    let router_before = inspection
+        .inspect_router_tensor()
+        .map_err(|error| error.to_string())?;
+    let admitted_router = admit_router_tensor(router_before.descriptor(), QWEN_FILE_BYTES)
+        .map_err(|error| error.to_string())?;
+    if !router_before.expert_weights_norm_effective() {
+        return Err("the admitted architecture does not require selected-weight renormalization".to_owned());
+    }
+    external_oracle
+        .validate_artifact_binding(
+            router_before.descriptor(),
+            inspection.admission_descriptor().identity.actual_size_bytes,
+            &inspection.admission_descriptor().identity.actual_sha256,
+        )
+        .map_err(|error| error.to_string())?;
+
+    let base_config = worker_config(root)?
+        .without_inherited_environment()
+        .with_env("PYTHONDONTWRITEBYTECODE", "1")
+        .with_env("PULSARMLX_MODEL_GGUF", "")
+        .with_env("PULSARMLX_ROUTER_ORACLE", "")
+        .with_env("PULSARMLX_ROUTER_EVIDENCE", "")
+        .with_env("PULSARMLX_ENVIRONMENT_EVIDENCE", "")
+        .with_timeouts(WorkerTimeouts::new(
+            ROUTER_WORKER_STARTUP_TIMEOUT,
+            ROUTER_WORKER_REQUEST_TIMEOUT,
+            ROUTER_WORKER_SHUTDOWN_TIMEOUT,
+        ))
+        .with_model_file(
+            inspection
+                .try_clone_file()
+                .map_err(|error| error.to_string())?,
+        );
+    // Model/oracle/path admission is preflight. The retained experiment starts
+    // immediately before the first supervised worker can be spawned.
+    let started_at_utc = utc_now()?;
+    let experiment_started = Instant::now();
+    let mut adapter = LiveRouterScheduleAdapter::new(base_config, external_oracle.clone());
+    let mut primary = execute_router_batch_schedule(RouterBenchmarkOrchestrator::new(), &mut adapter);
+    if let Err(failure) = adapter.finish_batch(ROUTER_PRIMARY_BATCH_ID) {
+        retain_live_adapter_failure(&mut primary, failure, false);
+    }
+
+    if primary.require_primary_complete().is_ok() {
+        let mut second = RouterBenchmarkOrchestrator::new_second(ROUTER_SECOND_BATCH_ID)?;
+        second = execute_router_batch_schedule(second, &mut adapter);
+        if let Err(failure) = adapter.finish_batch(ROUTER_SECOND_BATCH_ID) {
+            retain_live_adapter_failure(&mut second, failure, false);
+        }
+        let _ = primary.record_later_batch(&second);
+    }
+    if let Err(failure) = adapter.finish_all() {
+        retain_live_adapter_failure(&mut primary, failure, false);
+    }
+
+    let immutable_recheck = (|| -> Result<(), String> {
+        inspection
+            .verify_unchanged()
+            .map_err(|error| error.to_string())?;
+        let router_after = inspection
+            .inspect_router_tensor()
+            .map_err(|error| error.to_string())?;
+        if router_after != router_before {
+            return Err("the exact router range or metadata changed during execution".to_owned());
+        }
+        let post_values = read_admitted_router_tensor_f32(
+            &inspection
+                .try_clone_file()
+                .map_err(|error| error.to_string())?,
+            &admitted_router,
+        )
+        .map_err(|error| error.to_string())?;
+        if post_values.len() != 128 * 2_048 {
+            return Err("the post-execution router range is incomplete".to_owned());
+        }
+        drop(post_values);
+        external_oracle
+            .validate_artifact_binding(
+                router_after.descriptor(),
+                inspection.admission_descriptor().identity.actual_size_bytes,
+                &inspection.admission_descriptor().identity.actual_sha256,
+            )
+            .map_err(|error| error.to_string())?;
+        let final_oracle = load_external_router_oracle(&command.oracle)?;
+        if !router_oracle_payloads_match(&external_oracle, &final_oracle) {
+            return Err("the external CPU oracle changed during execution".to_owned());
+        }
+        let final_paths = router_path_identities(&command)?;
+        if final_paths != initial_path_identities {
+            return Err("a router validation path identity changed during execution".to_owned());
+        }
+        let final_commit = clean_source_commit_for(root, "validate-router")?;
+        if final_commit != source_commit {
+            return Err("the source commit changed during router execution".to_owned());
+        }
+        Ok(())
+    })();
+    if immutable_recheck.is_err() {
+        retain_live_adapter_failure(
+            &mut primary,
+            RouterLiveFailure::new(
+                "model_checksum_mismatch",
+                "immutable_recheck",
+                "the model, router range, oracle, path, or source identity changed during execution",
+            ),
+            false,
+        );
+    }
+
+    let completed_at_utc = utc_now()?;
+    let experiment_wall_duration_ns = u64::try_from(experiment_started.elapsed().as_nanos())
+        .map_err(|_| "the router experiment wall duration is not representable".to_owned())?;
+    let mut orchestration_evidence = primary.evidence()?;
+    let worker_evidence = adapter.public_evidence()?;
+    attach_live_request_metadata_to_ledgers(&mut orchestration_evidence, &worker_evidence)?;
+    validate_live_ledger_bijection(&orchestration_evidence, &worker_evidence)?;
+    let passed = orchestration_evidence["status"] == "passed";
+    let descriptor = inspection.admission_descriptor();
+    let candidate = json!({
+        "schema_version": 1,
+        "candidate_kind": "qwen3moe-router-internal-orchestration",
+        "candidate_status": if passed { "passed" } else { "failed" },
+        "publication_status": "external_unvalidated_candidate",
+        "started_at_utc": started_at_utc,
+        "completed_at_utc": completed_at_utc,
+        "experiment_wall_duration_ns": experiment_wall_duration_ns,
+        "source_commit": source_commit,
+        "source_worktree_before": "clean",
+        "source_worktree_after": if immutable_recheck.is_ok() { "clean" } else { "identity_recheck_failed" },
+        "parent_invocation": router_parent_invocation_evidence(),
+        "backend": BACKEND_ID,
+        "requested_device": GPU_DEVICE,
+        "artifact": {
+            "repository_id": descriptor.identity.repository_id,
+            "revision": descriptor.identity.revision,
+            "filename": descriptor.identity.filename,
+            "size_bytes": descriptor.identity.actual_size_bytes,
+            "sha256": descriptor.identity.actual_sha256,
+            "location_symbolic": format!("<external-model>/{QWEN_FILENAME}"),
+            "read_only": true,
+            "automatic_download": false,
+        },
+        "router_tensor": {
+            "name": router_before.descriptor().name,
+            "absolute_data_offset": router_before.descriptor().absolute_data_offset,
+            "encoded_length_bytes": router_before.descriptor().encoded_length,
+            "exclusive_end_offset": admitted_router.exclusive_end_offset(),
+            "encoded_sha256": router_before.descriptor().encoded_sha256,
+            "reader_shape": router_before.descriptor().reader_shape,
+            "execution_shape": router_before.descriptor().execution_shape,
+            "gguf_type": router_before.descriptor().gguf_type,
+            "quantization": router_before.descriptor().quantization,
+            "expert_count": router_before.descriptor().expert_count,
+            "top_k": router_before.descriptor().top_k,
+            "weight_scale": router_before.descriptor().weight_scale,
+            "bias_present": router_before.descriptor().bias_present,
+            "correction_bias_present": router_before.descriptor().correction_bias_present,
+            "selected_probability_renormalization": router_before.expert_weights_norm_effective(),
+        },
+        "oracle": {
+            "oracle_id": ROUTER_ORACLE_ID,
+            "external_document_sha256": ROUTER_EXTERNAL_ORACLE_SHA256,
+            "public_projection_sha256": ROUTER_PUBLIC_ORACLE_SHA256,
+            "input_f32le_sha256": ROUTER_REAL_INPUT_SHA256,
+            "output_bundle_sha256": ROUTER_ORACLE_OUTPUT_BUNDLE_SHA256,
+            "worker_control_request_included_hidden_values": false,
+            "worker_loaded_committed_hidden_input": true,
+            "worker_received_oracle_outputs": false,
+        },
+        "immutable_rechecks": {
+            "full_model_sha256": immutable_recheck.is_ok(),
+            "exact_router_range_sha256": immutable_recheck.is_ok(),
+            "oracle_whole_file_sha256": immutable_recheck.is_ok(),
+            "path_identity": immutable_recheck.is_ok(),
+            "source_commit_and_cleanliness": immutable_recheck.is_ok(),
+        },
+        "host_resource_observations": {
+            "collector_wall_duration_ns": {"status": "observed", "value": experiment_wall_duration_ns},
+            "collector_process_cpu_time_seconds": {
+                "status": "unavailable",
+                "reason": "the bounded Rust command does not expose reliable combined parent-and-live-child CPU time",
+                "source": "rust_std_process_boundary",
+            },
+        },
+        "worker": worker_evidence,
+        "orchestration": orchestration_evidence,
+        "unsupported_interpretations": [
+            "This candidate covers only the complete layer-0 router projection, full softmax, deterministic top-8, and selected-weight normalization boundary.",
+            "It does not execute experts, a complete MoE block or layer, generation, serving, or full-model inference.",
+            "Stage-instrumented durations overlap or perturb lazy evaluation and must not be summed into the minimally instrumented total.",
+            "This external internal candidate is not public verified evidence until T086 validation and sanitization."
+        ],
+    });
+    ensure_no_private_paths(&candidate)?;
+    validate_router_candidate_bounds(&candidate)?;
+    write_evidence_exclusive(&candidate_path, &candidate)?;
+    if passed {
+        println!("validate-router: real MLX router correctness and frozen timing schedule passed");
+        Ok(())
+    } else {
+        Err("validate-router retained a failed external candidate; inspect the bounded internal orchestration record".to_owned())
+    }
 }
 
 struct ExternalModelCommand {
@@ -5447,6 +8349,10 @@ fn ensure_no_private_paths(value: &Value) -> Result<(), String> {
                 || string.starts_with("~/")
                 || string.contains("/Users/")
                 || string.contains("/home/")
+                || string.contains("/private/")
+                || string.contains("/tmp/")
+                || string.contains("/var/folders/")
+                || string.contains("/Volumes/")
                 || string.contains("\\Users\\") =>
         {
             Err("evidence contains a private absolute path".to_owned())
@@ -5465,6 +8371,37 @@ fn ensure_no_private_paths(value: &Value) -> Result<(), String> {
         }
         _ => Ok(()),
     }
+}
+
+fn validate_router_candidate_bounds(candidate: &Value) -> Result<(), String> {
+    let encoded = serde_json::to_vec(candidate)
+        .map_err(|_| "the router candidate could not be encoded".to_owned())?;
+    let installed_len = encoded
+        .len()
+        .checked_add(1)
+        .ok_or_else(|| "the router candidate exceeds the protocol byte cap".to_owned())?;
+    if installed_len > ROUTER_ORCHESTRATION_MAX_BYTES {
+        return Err("the router candidate exceeds the protocol byte cap".to_owned());
+    }
+
+    // Count each JSON value or container once. Object field names are metadata
+    // for their child value and therefore do not consume a separate node.
+    let mut pending = vec![candidate];
+    let mut visited = 0_usize;
+    while let Some(current) = pending.pop() {
+        visited = visited
+            .checked_add(1)
+            .ok_or_else(|| "the router candidate exceeds the structural cap".to_owned())?;
+        if visited > ROUTER_ORCHESTRATION_MAX_NODES {
+            return Err("the router candidate exceeds the structural cap".to_owned());
+        }
+        match current {
+            Value::Array(values) => pending.extend(values),
+            Value::Object(values) => pending.extend(values.values()),
+            _ => {}
+        }
+    }
+    Ok(())
 }
 
 fn ensure_distinct_model_and_evidence(model: &Path, evidence: &Path) -> Result<(), String> {
@@ -6461,6 +9398,32 @@ mod tests {
         values.iter().map(OsString::from).collect()
     }
 
+    fn collect_arrays_named(value: &Value, field_name: &str, output: &mut Vec<Value>) {
+        match value {
+            Value::Object(fields) => {
+                for (name, child) in fields {
+                    if name == field_name {
+                        output.extend(
+                            child
+                                .as_array()
+                                .expect("named evidence collection is an array")
+                                .iter()
+                                .cloned(),
+                        );
+                    } else {
+                        collect_arrays_named(child, field_name, output);
+                    }
+                }
+            }
+            Value::Array(items) => {
+                for item in items {
+                    collect_arrays_named(item, field_name, output);
+                }
+            }
+            _ => {}
+        }
+    }
+
     fn build_orchestration_output(case: OrchestratedRouterCase) -> RouterOutput {
         let mut logits = Vec::with_capacity(case.row_count() * 128);
         let mut full_probabilities = Vec::with_capacity(case.row_count() * 128);
@@ -6521,7 +9484,7 @@ mod tests {
         }
     }
 
-    fn router_result_from_output(output: &RouterOutput) -> RouterResult {
+    fn router_result_value_from_output(output: &RouterOutput) -> Value {
         let complete_rows = |values: &[f32]| {
             values
                 .chunks_exact(128)
@@ -6534,7 +9497,7 @@ mod tests {
                 .map(|row| row.iter().copied().map(f64::from).collect::<Vec<_>>())
                 .collect::<Vec<_>>()
         };
-        serde_json::from_value(json!({
+        json!({
             "router_case_id": output.case_id(),
             "operation": "complete_router_projection_topk",
             "requested_device": GPU_DEVICE,
@@ -6556,6 +9519,12 @@ mod tests {
             "full_probabilities_f32le_sha256": output.full_probabilities_f32le_sha256(),
             "selected_probabilities_f32le_sha256": output.selected_probabilities_f32le_sha256(),
             "normalized_weights_f32le_sha256": output.normalized_weights_f32le_sha256(),
+            "router_tensor_bytes_read": 0,
+            "router_tensor_cache_status": if output.case_scope() == RouterCaseScope::RealCheckpoint {
+                "cache_hit"
+            } else {
+                "not_applicable"
+            },
             "memory_gauges": {
                 "mlx_active_bytes": null,
                 "mlx_cache_bytes": null,
@@ -6582,8 +9551,12 @@ mod tests {
                 }
             },
             "passed": true
-        }))
-        .expect("bounded worker result fixture")
+        })
+    }
+
+    fn router_result_from_output(output: &RouterOutput) -> RouterResult {
+        serde_json::from_value(router_result_value_from_output(output))
+            .expect("bounded worker result fixture")
     }
 
     fn generated_router_bundle() -> RouterFixtureBundle {
@@ -6804,6 +9777,8 @@ mod tests {
             .map(|_| RouterCorrectnessAttempt {
                 case_id: case.case_id().to_owned(),
                 process_replication_id: correctness_process_identity(batch_id),
+                process_state: ROUTER_CORRECTNESS_PROCESS_STATE,
+                condition: ROUTER_CORRECTNESS_CONDITION,
                 logits_f32le_sha256: output.logits_f32le_sha256().to_owned(),
                 full_probabilities_f32le_sha256: output
                     .full_probabilities_f32le_sha256()
@@ -7174,12 +10149,14 @@ mod tests {
 
     fn record_primary_schedule(orchestration: &mut RouterBenchmarkOrchestrator) {
         let primary_process = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        let costly_process = costly_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        let stage_process = stage_process_identity(ROUTER_PRIMARY_BATCH_ID);
         for case in ROUTER_COSTLY_ORDER {
             orchestration
                 .record_costly_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::CostlyReal,
-                    &primary_process,
+                    &costly_process,
                 ))
                 .expect("costly series in frozen order");
         }
@@ -7198,7 +10175,7 @@ mod tests {
                 .record_stage_diagnostic_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::StageDiagnostic,
-                    &primary_process,
+                    &stage_process,
                 ))
                 .expect("stage diagnostic in frozen order");
         }
@@ -7232,6 +10209,8 @@ mod tests {
         let mut candidate = RouterBenchmarkOrchestrator::new_second(batch_id)
             .expect("valid independent second-batch identity");
         let primary_process = primary_process_identity(batch_id);
+        let costly_process = costly_process_identity(batch_id);
+        let stage_process = stage_process_identity(batch_id);
         for case in ROUTER_SECOND_CORRECTNESS_ORDER {
             for attempt in correctness_attempts(batch_id, case) {
                 candidate
@@ -7253,7 +10232,7 @@ mod tests {
                 .record_costly_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::CostlyReal,
-                    &primary_process,
+                    &costly_process,
                 ))
                 .expect("second costly series in reversed order");
         }
@@ -7272,7 +10251,7 @@ mod tests {
                 .record_stage_diagnostic_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::StageDiagnostic,
-                    &primary_process,
+                    &stage_process,
                 ))
                 .expect("second stage diagnostic in reversed order");
         }
@@ -7297,6 +10276,522 @@ mod tests {
                 .expect("second clean major in reversed order");
         }
         candidate
+    }
+
+    #[derive(Default)]
+    struct RecordingScheduleAdapter {
+        correctness_calls: Vec<(String, OrchestratedRouterCase, usize, String)>,
+        timing_plans: Vec<RouterLiveTimingPlan>,
+        finished_processes: Vec<String>,
+        fail_correctness_at: Option<usize>,
+        fail_timing_at: Option<usize>,
+    }
+
+    impl RouterScheduleAdapter for RecordingScheduleAdapter {
+        fn correctness_attempt(
+            &mut self,
+            batch_id: &str,
+            case: OrchestratedRouterCase,
+            attempt_index: usize,
+            process_replication_id: &str,
+        ) -> Result<RouterCorrectnessAttempt, RouterLiveFailure> {
+            let call_index = self.correctness_calls.len();
+            self.correctness_calls.push((
+                batch_id.to_owned(),
+                case,
+                attempt_index,
+                process_replication_id.to_owned(),
+            ));
+            if self.fail_correctness_at == Some(call_index) {
+                let failure = RouterLiveFailure::new(
+                    "comparison_failed",
+                    "correctness_execution",
+                    "the bounded fake correctness attempt failed",
+                );
+                let schedule_step = match case {
+                    OrchestratedRouterCase::SingleRow => "single_row_correctness",
+                    OrchestratedRouterCase::TwoRow => "two_row_correctness",
+                };
+                let retained = RouterFailedCorrectnessAttempt::new(
+                    batch_id,
+                    case,
+                    attempt_index,
+                    process_replication_id,
+                    schedule_step,
+                    failure.orchestration_failure(),
+                );
+                return Err(failure.with_retained_correctness(retained));
+            }
+            correctness_attempts(batch_id, case)
+                .get(attempt_index)
+                .cloned()
+                .ok_or_else(|| {
+                    RouterLiveFailure::new(
+                        "internal_worker_error",
+                        "correctness_execution",
+                        "the bounded fake correctness index is unavailable",
+                    )
+                })
+        }
+
+        fn timing_series(
+            &mut self,
+            plan: &RouterLiveTimingPlan,
+        ) -> Result<RouterTimingSeries, RouterLiveFailure> {
+            let call_index = self.timing_plans.len();
+            self.timing_plans.push(plan.clone());
+            let series = match plan.series_kind {
+                RouterTimingSeriesKind::MajorMinimallyInstrumented => {
+                    orchestration_major_series(
+                        plan.case,
+                        plan.replication_role,
+                        &plan.process_replication_id,
+                        orchestration_hash(plan.case),
+                    )
+                }
+                RouterTimingSeriesKind::CostlyReal
+                | RouterTimingSeriesKind::FirstProcessCostly
+                | RouterTimingSeriesKind::StageDiagnostic => orchestration_auxiliary_series(
+                    plan.case,
+                    plan.series_kind,
+                    &plan.process_replication_id,
+                ),
+                RouterTimingSeriesKind::InexpensiveSynthetic => {
+                    return Err(RouterLiveFailure::new(
+                        "internal_worker_error",
+                        "timing_execution",
+                        "the real schedule cannot request a synthetic timing series",
+                    ));
+                }
+            };
+            if self.fail_timing_at == Some(call_index) {
+                let mut retained = series
+                    .try_to_value()
+                    .expect("fake timing series serializes");
+                let observations = retained["raw_timing_observations"]
+                    .as_array_mut()
+                    .expect("fake timing observations");
+                observations.truncate(1);
+                observations[0]["status"] = json!("failed");
+                observations[0]["correctness_passed"] = json!(false);
+                observations[0]["failure"] = json!({
+                    "code": "evaluation_failed",
+                    "message": "the bounded fake timing attempt failed",
+                    "stage": "router_execution",
+                });
+                let retained = RouterTimingSeries::try_from_value(retained)
+                    .expect("one failed observation is a retained partial series");
+                return Err(RouterLiveFailure::new(
+                    "evaluation_failed",
+                    "timing_execution",
+                    "the bounded fake timing attempt failed",
+                )
+                .with_retained_series(plan.schedule_step, retained));
+            }
+            if series.benchmark_id() != plan.benchmark_id
+                || series.process_state().as_str() != plan.process_state
+                || series.condition().as_str() != plan.condition
+                || series.instrumentation_mode() != plan.instrumentation_mode
+                || series.successful_warmup_count() != plan.warmup_count
+                || series.successful_measurement_count() != plan.measurement_count
+                || plan.profile.environment_value()
+                    != match plan.series_kind {
+                        RouterTimingSeriesKind::StageDiagnostic => "stage",
+                        RouterTimingSeriesKind::CostlyReal
+                        | RouterTimingSeriesKind::FirstProcessCostly => "costly",
+                        RouterTimingSeriesKind::MajorMinimallyInstrumented => "minimal",
+                        RouterTimingSeriesKind::InexpensiveSynthetic => unreachable!(),
+                    }
+            {
+                return Err(RouterLiveFailure::new(
+                    "internal_worker_error",
+                    "timing_execution",
+                    "the fake adapter plan differs from the frozen series",
+                ));
+            }
+            Ok(series)
+        }
+
+        fn finish_process(
+            &mut self,
+            process_replication_id: &str,
+        ) -> Result<(), RouterLiveFailure> {
+            self.finished_processes
+                .push(process_replication_id.to_owned());
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn live_schedule_requires_both_correctness_gates_before_any_timing() {
+        let mut adapter = RecordingScheduleAdapter {
+            fail_correctness_at: Some(7),
+            ..RecordingScheduleAdapter::default()
+        };
+        let orchestration =
+            execute_router_batch_schedule(RouterBenchmarkOrchestrator::new(), &mut adapter);
+        assert_eq!(adapter.correctness_calls.len(), 8);
+        assert!(adapter.timing_plans.is_empty());
+        assert_eq!(orchestration.next_step(), "failed_stop_condition");
+        let evidence = orchestration.evidence().expect("failed run remains serializable");
+        assert_eq!(evidence["status"], "failed");
+        assert_eq!(evidence["failure"]["code"], "comparison_failed");
+        assert_eq!(evidence["timing_started"], false);
+        assert_eq!(evidence["raw_observations"].as_array().unwrap().len(), 8);
+        assert_eq!(evidence["raw_observations"][7]["status"], "aborted");
+        assert_eq!(
+            evidence["raw_observations"][7]["process_state"],
+            ROUTER_CORRECTNESS_PROCESS_STATE
+        );
+        assert_eq!(
+            evidence["raw_observations"][7]["condition"],
+            ROUTER_CORRECTNESS_CONDITION
+        );
+        assert_eq!(
+            evidence["raw_observations"][7]["schedule_step"],
+            "single_row_correctness"
+        );
+        assert_eq!(
+            evidence["retained_current_case_attempts"][7]["failure"]["code"],
+            "comparison_failed"
+        );
+        assert_eq!(
+            evidence["retained_current_case_attempts"][7]["process_state"],
+            ROUTER_CORRECTNESS_PROCESS_STATE
+        );
+        assert_eq!(
+            evidence["retained_current_case_attempts"][7]["condition"],
+            ROUTER_CORRECTNESS_CONDITION
+        );
+        assert!(evidence["retained_current_case_attempts"][7]["memory_gauges"].is_null());
+    }
+
+    #[test]
+    fn live_schedule_retains_failure_after_the_deepest_completed_timing_series() {
+        let mut adapter = RecordingScheduleAdapter {
+            fail_timing_at: Some(1),
+            ..RecordingScheduleAdapter::default()
+        };
+        let orchestration =
+            execute_router_batch_schedule(RouterBenchmarkOrchestrator::new(), &mut adapter);
+        assert_eq!(adapter.correctness_calls.len(), 30);
+        assert_eq!(adapter.timing_plans.len(), 2);
+        assert_eq!(orchestration.primary_first_process_series.len(), 1);
+        assert_eq!(orchestration.next_step(), "failed_stop_condition");
+        let evidence = orchestration.evidence().expect("timing failure remains serializable");
+        assert_eq!(evidence["failure"]["code"], "evaluation_failed");
+        assert_eq!(
+            evidence["retained_timing"]["first_process_series"]
+                .as_array()
+                .expect("retained first-process series")
+                .len(),
+            1
+        );
+        assert_eq!(
+            evidence["retained_timing"]["rejected_series"][0]["failure"]["code"],
+            "evaluation_failed"
+        );
+        assert_eq!(evidence["raw_observations"].as_array().unwrap().len(), 32);
+        assert_eq!(
+            evidence["raw_observations"][31]["schedule_step"],
+            "primary_first_process"
+        );
+        assert_eq!(evidence["raw_observations"][31]["status"], "failed");
+        assert_eq!(
+            evidence["raw_observations"][31]["orchestration_status"],
+            "rejected"
+        );
+        assert_eq!(evidence["timing_started"], true);
+    }
+
+    #[test]
+    fn live_schedule_issues_the_exact_profile_process_and_observation_matrix() {
+        let mut adapter = RecordingScheduleAdapter::default();
+        let orchestration =
+            execute_router_batch_schedule(RouterBenchmarkOrchestrator::new(), &mut adapter);
+        assert_eq!(adapter.correctness_calls.len(), 30);
+        assert_eq!(adapter.timing_plans.len(), 38);
+        assert_eq!(
+            adapter
+                .timing_plans
+                .iter()
+                .filter(|plan| plan.profile == RouterWorkerTimingProfile::Minimal)
+                .count(),
+            4
+        );
+        assert_eq!(
+            adapter
+                .timing_plans
+                .iter()
+                .filter(|plan| plan.profile == RouterWorkerTimingProfile::Costly)
+                .count(),
+            32
+        );
+        assert_eq!(
+            adapter
+                .timing_plans
+                .iter()
+                .filter(|plan| plan.profile == RouterWorkerTimingProfile::Stage)
+                .count(),
+            2
+        );
+        let lifecycle_ids = adapter
+            .timing_plans
+            .iter()
+            .map(|plan| {
+                (
+                    plan.profile,
+                    plan.process_replication_id.as_str(),
+                    plan.process_state,
+                )
+            })
+            .collect::<BTreeSet<_>>();
+        assert_eq!(lifecycle_ids.len(), 35);
+        assert!(lifecycle_ids.iter().all(|(profile, process, state)| {
+            (match profile {
+                RouterWorkerTimingProfile::Minimal => process.contains("minimal-worker"),
+                RouterWorkerTimingProfile::Costly => {
+                    process.contains("costly-worker") || process.contains("first-read-worker")
+                }
+                RouterWorkerTimingProfile::Stage => process.contains("stage-worker"),
+            }) && matches!(*state, "fresh_process" | "reused_process")
+        }));
+        assert_eq!(
+            adapter.finished_processes,
+            vec![
+                correctness_process_identity(ROUTER_PRIMARY_BATCH_ID),
+                costly_process_identity(ROUTER_PRIMARY_BATCH_ID),
+                primary_process_identity(ROUTER_PRIMARY_BATCH_ID),
+                stage_process_identity(ROUTER_PRIMARY_BATCH_ID),
+            ]
+        );
+        assert_eq!(orchestration.next_step(), "later_batch_or_unavailable_reason");
+        assert_eq!(
+            orchestration
+                .ordered_observation_evidence()
+                .expect("complete ordered ledger")
+                .len(),
+            260
+        );
+        orchestration
+            .require_primary_complete()
+            .expect("exact live schedule completes every primary gate");
+    }
+
+    #[test]
+    fn live_candidate_requires_bijective_utc_windows_and_observed_process_lifecycle() {
+        let windows = vec![json!({
+            "observation_id": "obs-00",
+            "batch_id": "batch-a",
+            "case_id": ROUTER_REAL_SINGLE_ROW_CASE_ID,
+            "schedule_step": "primary_first_process",
+            "source_kind": "timing_series",
+            "process_replication_id": "worker-a",
+            "process_state": "fresh_process",
+            "condition": "first_read_new_process_os_cache_uncontrolled",
+            "timing_profile": "costly",
+            "started_at_utc": "2026-08-06T01:02:03Z",
+            "completed_at_utc": "2026-08-06T01:02:04Z",
+            "host_wall_duration_ns": 100,
+            "host_monotonic_clock": "rust_std_instant",
+            "request_sent": true,
+            "process_request_index": 0,
+            "router_tensor_bytes_read": ROUTER_TENSOR_BYTES,
+            "router_tensor_cache_status": "read_and_cached",
+            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+            "status": "passed",
+        })];
+        let observations = vec![json!({
+            "observation_id": "obs-00",
+            "process_replication_id": "worker-a",
+            "timing_profile": "costly",
+            "started_at_utc": "2026-08-06T01:02:03Z",
+            "completed_at_utc": "2026-08-06T01:02:04Z",
+            "host_wall_duration_ns": 100,
+            "router_tensor_bytes_read": ROUTER_TENSOR_BYTES,
+            "router_tensor_cache_status": "read_and_cached",
+            "process_state": "fresh_process",
+            "condition": "first_read_new_process_os_cache_uncontrolled",
+            "observation_kind": "measurement",
+            "run_index": 0,
+            "status": "passed",
+        })];
+        validate_live_request_window_join(&windows, &observations)
+            .expect("one timing observation has exactly one ordered UTC window");
+
+        let mut missing = windows.clone();
+        missing.clear();
+        assert!(validate_live_request_window_join(&missing, &observations).is_err());
+        let mut reversed = windows.clone();
+        reversed[0]["completed_at_utc"] = json!("2026-08-06T01:02:02Z");
+        assert!(validate_live_request_window_join(&reversed, &observations).is_err());
+        let mut contradictory = windows.clone();
+        contradictory[0]["status"] = json!("failed");
+        assert!(validate_live_request_window_join(&contradictory, &observations).is_err());
+
+        let lifecycle = vec![
+            json!({"event_order": 0, "recorded_at_utc": "2026-08-06T01:02:01Z", "process_replication_id": "worker-a", "timing_profile": "costly", "event": "spawn", "outcome": "started"}),
+            json!({"event_order": 1, "recorded_at_utc": "2026-08-06T01:02:02Z", "process_replication_id": "worker-a", "timing_profile": "costly", "event": "spawn", "outcome": "passed"}),
+            json!({"event_order": 2, "recorded_at_utc": "2026-08-06T01:02:05Z", "process_replication_id": "worker-a", "timing_profile": "costly", "event": "shutdown", "outcome": "graceful"}),
+            json!({"event_order": 3, "recorded_at_utc": "2026-08-06T01:02:06Z", "process_replication_id": "worker-b", "timing_profile": "costly", "event": "spawn", "outcome": "started"}),
+            json!({"event_order": 4, "recorded_at_utc": "2026-08-06T01:02:07Z", "process_replication_id": "worker-b", "timing_profile": "costly", "event": "spawn", "outcome": "failed"}),
+        ];
+        validate_live_process_lifecycle(&lifecycle)
+            .expect("owned workers shut down and failed spawns remain explicit");
+        validate_live_process_request_join(&lifecycle, &windows, &observations)
+            .expect("the first-read request is joined between its spawn and shutdown");
+        let resources = vec![json!({
+            "observation_id": "obs-00",
+            "source_kind": "timing_series",
+            "backend": BACKEND_ID,
+            "process_state": "fresh_process",
+            "condition": "first_read_new_process_os_cache_uncontrolled",
+            "status": "passed",
+            "requested_device": GPU_DEVICE,
+            "selected_device": GPU_DEVICE,
+            "fallback_used": false,
+            "evaluated": true,
+            "synchronized": true,
+            "output_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "correctness_passed": true,
+            "canonical_output": null,
+            "canonical_output_retention": "hash_only_passing_timing",
+            "router_tensor_bytes_read": ROUTER_TENSOR_BYTES,
+            "router_tensor_cache_status": "read_and_cached",
+            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+            "monotonic_clock": "perf_counter_ns",
+            "instrumentation_mode": "minimally_instrumented",
+            "timing_stages": null,
+            "timing_stage_retention": "complete_in_joined_raw_timing_observation",
+        })];
+        validate_live_resource_join(&windows, &resources)
+            .expect("every request has exactly one same-status resource record");
+        let mut relabeled_resource = resources.clone();
+        relabeled_resource[0]["condition"] = json!("warm");
+        assert!(validate_live_resource_join(&windows, &relabeled_resource).is_err());
+        let mut correctness_windows = windows.clone();
+        correctness_windows[0]["source_kind"] = json!("correctness_attempt");
+        correctness_windows[0]["process_state"] = json!(ROUTER_CORRECTNESS_PROCESS_STATE);
+        correctness_windows[0]["condition"] = json!(ROUTER_CORRECTNESS_CONDITION);
+        correctness_windows[0]["timing_profile"] = json!("minimal");
+        let mut correctness_resources = resources.clone();
+        correctness_resources[0]["source_kind"] = json!("correctness_attempt");
+        correctness_resources[0]["process_state"] = json!(ROUTER_CORRECTNESS_PROCESS_STATE);
+        correctness_resources[0]["condition"] = json!(ROUTER_CORRECTNESS_CONDITION);
+        correctness_resources[0]["canonical_output_retention"] =
+            json!("hash_only_joined_correctness_attempt");
+        correctness_resources[0]["timing_stages"] = json!({
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization",
+            },
+            "total_evaluated_router": {"status": "observed", "duration_ns": 1},
+        });
+        correctness_resources[0]["timing_stage_retention"] =
+            json!("complete_in_resource_record");
+        validate_live_resource_join(&correctness_windows, &correctness_resources)
+            .expect("correctness resource carries the producer-attested process condition");
+        correctness_resources[0]["process_state"] = json!("fresh_process");
+        assert!(
+            validate_live_resource_join(&correctness_windows, &correctness_resources).is_err()
+        );
+        let mut orchestration = json!({
+            "primary_batch": {"raw_observations": [{
+                "observation_id": "obs-00",
+                "batch_id": "batch-a",
+                "case_id": ROUTER_REAL_SINGLE_ROW_CASE_ID,
+                "process_replication_id": "worker-a",
+                "process_state": "fresh_process",
+                "condition": "first_read_new_process_os_cache_uncontrolled",
+                "schedule_step": "primary_first_process",
+                "source_kind": "timing_series",
+                "status": "passed"
+            }]}
+        });
+        let worker = json!({
+            "request_utc_windows": windows,
+            "result_resource_records": resources,
+        });
+        attach_live_request_metadata_to_ledgers(&mut orchestration, &worker)
+            .expect("raw ledger receives its exact request metadata");
+        assert_eq!(
+            orchestration["primary_batch"]["raw_observations"][0]["started_at_utc"],
+            "2026-08-06T01:02:03Z"
+        );
+        validate_live_ledger_bijection(&orchestration, &worker)
+            .expect("ledger, windows, and resources are bijective");
+        assert_eq!(
+            LIVE_OBSERVATION_JOIN_RELATIONSHIP,
+            "exactly_one_request_window_and_one_resource_record_per_ordered_observation"
+        );
+        let mut missing_shutdown = lifecycle.clone();
+        missing_shutdown.remove(2);
+        for (index, event) in missing_shutdown.iter_mut().enumerate() {
+            event["event_order"] = json!(index);
+        }
+        assert!(validate_live_process_lifecycle(&missing_shutdown).is_err());
+
+        let mapped = RouterLiveFailure::new(
+            "invented_failure_code",
+            "worker_startup",
+            "bounded failure",
+        );
+        assert_eq!(mapped.code, "internal_worker_error");
+    }
+
+    #[test]
+    fn live_stage_profile_binds_tensor_cache_outcome_to_storage_timing() {
+        let mut value = router_result_value_from_output(orchestration_output(
+            OrchestratedRouterCase::SingleRow,
+        ));
+        value["timing"]["instrumentation_mode"] = json!("stage_instrumented");
+        value["timing"]["stages"] = json!({
+            "setup_admission": {"status": "unavailable", "reason": "host_admission_completed_outside_router_timing"},
+            "file_io": {"status": "observed", "duration_ns": 1},
+            "storage_validation_f32_decode": {"status": "observed", "duration_ns": 2},
+            "dequantization": {"status": "not_applicable", "reason": "f32_router_requires_no_dequantization"},
+            "host_to_device": {"status": "observed", "duration_ns": 3},
+            "graph_construction": {"status": "unavailable", "reason": "lazy_graph_construction_not_separable_from_evaluation"},
+            "compilation": {"status": "unavailable", "reason": "mlx_compilation_not_independently_observable"},
+            "router_projection": {"status": "observed", "duration_ns": 4},
+            "top_k": {"status": "observed", "duration_ns": 5},
+            "normalization": {"status": "observed", "duration_ns": 6},
+            "total_evaluated_router": {"status": "observed", "duration_ns": 7},
+            "synchronized_readback": {"status": "observed", "duration_ns": 8},
+            "end_to_end_router_command": {"status": "observed", "duration_ns": 9}
+        });
+        value["router_tensor_bytes_read"] = json!(ROUTER_TENSOR_BYTES);
+        value["router_tensor_cache_status"] = json!("read_and_cached");
+        let first: RouterResult = serde_json::from_value(value.clone()).expect("stage result");
+        assert!(router_result_matches_timing_profile(
+            &first,
+            RouterWorkerTimingProfile::Stage,
+            Some(0),
+        ));
+
+        value["router_tensor_bytes_read"] = json!(0);
+        value["router_tensor_cache_status"] = json!("cache_hit");
+        let contradictory: RouterResult =
+            serde_json::from_value(value.clone()).expect("contradictory stage result");
+        assert!(!router_result_matches_timing_profile(
+            &contradictory,
+            RouterWorkerTimingProfile::Stage,
+            Some(1),
+        ));
+        value["timing"]["stages"]["file_io"] = json!({
+            "status": "unavailable",
+            "reason": "validated_router_tensor_cache_hit_no_file_read"
+        });
+        value["timing"]["stages"]["storage_validation_f32_decode"] = json!({
+            "status": "unavailable",
+            "reason": "validated_router_tensor_cache_hit_no_decode"
+        });
+        let cached: RouterResult = serde_json::from_value(value).expect("cached stage result");
+        assert!(router_result_matches_timing_profile(
+            &cached,
+            RouterWorkerTimingProfile::Stage,
+            Some(1),
+        ));
     }
 
     #[test]
@@ -7466,6 +10961,44 @@ mod tests {
             };
             assert!(result.is_err());
         }
+    }
+
+    #[test]
+    fn live_candidate_parent_invocation_is_closed_symbolic_and_public_safe() {
+        let invocation = router_parent_invocation_evidence();
+        assert_eq!(
+            invocation,
+            json!({
+                "operation": "validate-router",
+                "argv": [
+                    "cargo",
+                    "run",
+                    "--release",
+                    "-p",
+                    "mlx-backend",
+                    "--bin",
+                    "pulsar-mlx",
+                    "--",
+                    "validate-router",
+                    "--model",
+                    "$PULSARMLX_MODEL_GGUF",
+                    "--oracle",
+                    "$PULSARMLX_ROUTER_ORACLE",
+                    "--evidence-dir",
+                    "$PULSARMLX_ROUTER_EVIDENCE",
+                ],
+            })
+        );
+        assert_eq!(
+            invocation
+                .as_object()
+                .expect("closed invocation object")
+                .len(),
+            2
+        );
+        ensure_no_private_paths(&invocation).expect("symbolic invocation is public safe");
+        validate_router_candidate_bounds(&json!({"parent_invocation": invocation}))
+            .expect("symbolic invocation stays within candidate bounds");
     }
 
     #[cfg(unix)]
@@ -7808,9 +11341,15 @@ mod tests {
         .expect("real-result adapter computes its own exact comparison and canonical output");
         assert!(adapted.passes_gate(ROUTER_PRIMARY_BATCH_ID, single));
         assert_eq!(adapted.canonical_output, *orchestration_output(single));
+        let adapted_evidence = adapted.evidence(ROUTER_PRIMARY_BATCH_ID, 0);
+        assert_eq!(adapted_evidence["backend"], BACKEND_ID);
         assert_eq!(
-            adapted.evidence(ROUTER_PRIMARY_BATCH_ID, 0)["backend"],
-            BACKEND_ID
+            adapted_evidence["process_state"],
+            ROUTER_CORRECTNESS_PROCESS_STATE
+        );
+        assert_eq!(
+            adapted_evidence["condition"],
+            ROUTER_CORRECTNESS_CONDITION
         );
         let self_comparison = compare_router_outputs(
             orchestration_output(single),
@@ -7859,6 +11398,24 @@ mod tests {
             RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, relabeled_process,)
                 .is_err()
         );
+
+        let mut relabeled_process_state = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        relabeled_process_state[0].process_state = "fresh_process";
+        assert!(RouterCorrectnessGate::try_new(
+            ROUTER_PRIMARY_BATCH_ID,
+            single,
+            relabeled_process_state,
+        )
+        .is_err());
+
+        let mut relabeled_condition = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        relabeled_condition[0].condition = "controlled_cold";
+        assert!(RouterCorrectnessGate::try_new(
+            ROUTER_PRIMARY_BATCH_ID,
+            single,
+            relabeled_condition,
+        )
+        .is_err());
 
         for mutation in [
             |attempt: &mut RouterCorrectnessAttempt| attempt.comparison["passed"] = json!(false),
@@ -7970,6 +11527,8 @@ mod tests {
         );
 
         let primary_process = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        let costly_process = costly_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        let stage_process = stage_process_identity(ROUTER_PRIMARY_BATCH_ID);
         for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
             orchestration
                 .record_primary_first_process_series(orchestration_auxiliary_series(
@@ -7995,7 +11554,7 @@ mod tests {
                 .record_costly_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::CostlyReal,
-                    &primary_process,
+                    &costly_process,
                 ))
                 .expect("costly series in frozen order");
         }
@@ -8036,7 +11595,7 @@ mod tests {
                 .record_stage_diagnostic_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::StageDiagnostic,
-                    &primary_process,
+                    &stage_process,
                 ))
                 .expect("stage diagnostics in frozen order");
         }
@@ -8444,14 +12003,16 @@ mod tests {
             );
             assert!(attempts
                 .iter()
-                .all(|attempt| attempt.get("canonical_output").is_none()));
+                .all(|attempt| attempt["canonical_output"].is_object()));
         }
         assert_eq!(evidence["second_batch"]["status"], "unavailable");
         assert_eq!(
             evidence["second_batch"]["between_batch_variation_measured"],
             false
         );
-        assert!(serde_json::to_vec(&evidence).unwrap().len() <= MAX_RESPONSE_BYTES);
+        assert!(
+            serde_json::to_vec(&evidence).unwrap().len() <= ROUTER_ORCHESTRATION_MAX_BYTES
+        );
     }
 
     #[test]
@@ -8570,7 +12131,7 @@ mod tests {
 
         let mut oversized_candidate = second_batch_candidate("batch-oversized");
         let repeated_costly = oversized_candidate.costly_series[0].clone();
-        for _ in 2..128 {
+        for _ in 2..512 {
             oversized_candidate.append_timing_observations("costly_real", &repeated_costly, false);
             oversized_candidate
                 .costly_series
@@ -8584,7 +12145,7 @@ mod tests {
         assert!(matches!(
             &oversized_outer.later_batch,
             RouterLaterBatchState::Failed(failed)
-                if failed.candidate.costly_series.len() == 128
+                if failed.candidate.costly_series.len() == 512
         ));
         assert!(oversized_outer
             .evidence()
@@ -8593,12 +12154,13 @@ mod tests {
 
         let mut split_primary = orchestrator_with_correctness();
         let expected_primary = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        let expected_costly = costly_process_identity(ROUTER_PRIMARY_BATCH_ID);
         for case in ROUTER_COSTLY_ORDER {
             split_primary
                 .record_costly_series(orchestration_auxiliary_series(
                     case,
                     RouterTimingSeriesKind::CostlyReal,
-                    &expected_primary,
+                    &expected_costly,
                 ))
                 .expect("costly series");
         }
@@ -8720,10 +12282,149 @@ mod tests {
             second_ordered[30]["case_id"],
             OrchestratedRouterCase::TwoRow.case_id()
         );
+
+        let mut ordered = Vec::new();
+        collect_arrays_named(&evidence, "raw_observations", &mut ordered);
+        let mut attempted_timing = Vec::new();
+        collect_arrays_named(
+            &evidence,
+            "raw_timing_observations",
+            &mut attempted_timing,
+        );
+        assert_eq!(ordered.len(), 520);
+        assert_eq!(attempted_timing.len(), 460);
+        let request_windows = ordered
+            .iter()
+            .enumerate()
+            .map(|(index, observation)| {
+                json!({
+                    "observation_id": observation["observation_id"],
+                    "batch_id": observation["batch_id"],
+                    "case_id": observation["case_id"],
+                    "process_replication_id": observation["process_replication_id"],
+                    "process_state": observation["process_state"],
+                    "condition": observation["condition"],
+                    "schedule_step": observation["schedule_step"],
+                    "source_kind": observation["source_kind"],
+                    "timing_profile": "minimal",
+                    "started_at_utc": "2026-08-06T01:02:03Z",
+                    "completed_at_utc": "2026-08-06T01:02:04Z",
+                    "host_wall_duration_ns": 1,
+                    "host_monotonic_clock": "rust_std_instant",
+                    "process_request_index": index,
+                    "router_tensor_bytes_read": 0,
+                    "router_tensor_cache_status": "cache_hit",
+                    "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+                    "request_sent": true,
+                    "status": observation["status"],
+                })
+            })
+            .collect::<Vec<_>>();
+        let resource_records = ordered
+            .iter()
+            .map(|observation| {
+                let correctness = observation["source_kind"] == "correctness_attempt";
+                let timing_stages = if correctness {
+                    json!({
+                        "dequantization": {"status": "not_applicable", "reason": "f32_router_requires_no_dequantization"},
+                        "total_evaluated_router": {"status": "observed", "duration_ns": 1}
+                    })
+                } else {
+                    Value::Null
+                };
+                json!({
+                    "observation_id": observation["observation_id"],
+                    "source_kind": observation["source_kind"],
+                    "process_state": observation["process_state"],
+                    "condition": observation["condition"],
+                    "backend": BACKEND_ID,
+                    "requested_device": GPU_DEVICE,
+                    "selected_device": GPU_DEVICE,
+                    "fallback_used": false,
+                    "evaluated": true,
+                    "synchronized": true,
+                    "output_sha256": orchestration_hash(if observation["case_id"] == ROUTER_REAL_SINGLE_ROW_CASE_ID { OrchestratedRouterCase::SingleRow } else { OrchestratedRouterCase::TwoRow }),
+                    "correctness_passed": true,
+                    "canonical_output": null,
+                    "canonical_output_retention": if correctness { "hash_only_joined_correctness_attempt" } else { "hash_only_passing_timing" },
+                    "router_tensor_bytes_read": 0,
+                    "router_tensor_cache_status": "cache_hit",
+                    "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+                    "memory_gauges": {},
+                    "monotonic_clock": "perf_counter_ns",
+                    "instrumentation_mode": "stage_instrumented",
+                    "timing_stages": timing_stages,
+                    "timing_stage_retention": if correctness { "complete_in_resource_record" } else { "complete_in_joined_raw_timing_observation" },
+                    "status": observation["status"],
+                    "failure": null,
+                })
+            })
+            .collect::<Vec<_>>();
+        let lifecycle = (0..220)
+            .map(|index| {
+                json!({
+                    "event_order": index,
+                    "recorded_at_utc": "2026-08-06T01:02:03Z",
+                    "process_replication_id": format!("representative-worker-{index}"),
+                    "timing_profile": "minimal",
+                    "event": "shutdown",
+                    "outcome": "graceful",
+                    "details": {"outcome": "graceful", "exit_code": 0, "error_code": null},
+                })
+            })
+            .collect::<Vec<_>>();
+        let representative_candidate = json!({
+            "schema_version": 1,
+            "parent_invocation": router_parent_invocation_evidence(),
+            "worker": {
+                "worker_lifecycle": lifecycle,
+                "request_utc_windows": request_windows,
+                "result_resource_records": resource_records,
+                "attempted_timing_observation_count": attempted_timing.len(),
+            },
+            "orchestration": evidence,
+        });
+        validate_router_candidate_bounds(&representative_candidate)
+            .expect("representative two-batch candidate stays within runtime bounds");
     }
 
     #[test]
-    fn feature_002_router_execution_remains_fail_closed_without_access() {
+    fn live_candidate_runtime_rejects_byte_and_structural_overflow() {
+        let empty = json!({"padding": ""});
+        let structural_bytes = serde_json::to_vec(&empty)
+            .expect("bounded byte fixture serializes")
+            .len();
+        let exact_bytes = json!({
+            "padding": "x".repeat(
+                ROUTER_ORCHESTRATION_MAX_BYTES - structural_bytes - 1
+            ),
+        });
+        validate_router_candidate_bounds(&exact_bytes)
+            .expect("the cap includes and admits the final newline");
+
+        let oversized_bytes = json!({
+            "padding": "x".repeat(
+                ROUTER_ORCHESTRATION_MAX_BYTES - structural_bytes
+            ),
+        });
+        assert_eq!(
+            validate_router_candidate_bounds(&oversized_bytes),
+            Err("the router candidate exceeds the protocol byte cap".to_owned())
+        );
+
+        let oversized_nodes = Value::Array(
+            (0..ROUTER_ORCHESTRATION_MAX_NODES)
+                .map(|_| Value::Null)
+                .collect(),
+        );
+        assert_eq!(
+            validate_router_candidate_bounds(&oversized_nodes),
+            Err("the router candidate exceeds the structural cap".to_owned())
+        );
+    }
+
+    #[test]
+    fn feature_002_router_execution_fails_before_any_nonexistent_checkpoint_can_be_opened() {
         let model = format!("/tmp/pulsarmlx-never-accessed/{QWEN_FILENAME}");
         let router_error = run(args(&[
             "validate-router",
@@ -8734,11 +12435,12 @@ mod tests {
             "--evidence-dir",
             "/tmp/pulsarmlx-never-accessed/attempts",
         ]))
-        .expect_err("router execution remains task gated");
-        assert!(router_error.contains("orchestration is frozen"));
-        assert!(router_error.contains("T074"));
-        assert!(router_error.contains("T083"));
-        assert!(router_error.contains("no checkpoint was accessed"));
+        .expect_err("a nonexistent checkpoint cannot pass the live admission gate");
+        assert!(
+            router_error == "validate-router requires a clean source worktree"
+                || router_error == "the external model path metadata could not be inspected"
+        );
+        assert!(!Path::new("/tmp/pulsarmlx-never-accessed/attempts").exists());
 
         assert!(run(args(&["--help"]))
             .expect_err("help is usage-only")
@@ -8777,6 +12479,48 @@ mod tests {
         assert!(parse_unique_json::<Value>(duplicate_root, "test document").is_err());
         let duplicate_nested = br#"{"outer":{"code":"one","code":"two"}}"#;
         assert!(parse_unique_json::<Value>(duplicate_nested, "test document").is_err());
+    }
+
+    #[test]
+    fn live_oracle_gate_binds_the_complete_public_document_before_parsing() {
+        let root = fs::canonicalize(project_root()).expect("canonical project root");
+        let bytes = read_bounded_regular_file(
+            &root,
+            ROUTER_PUBLIC_ORACLE_PATH,
+            ROUTER_ORACLE_MAX_BYTES,
+        )
+        .expect("committed public oracle bytes");
+        let oracle = parse_frozen_router_oracle(
+            &bytes,
+            ROUTER_PUBLIC_ORACLE_SHA256,
+            RouterOracleFormat::PublicProjection,
+            "committed public router oracle",
+        )
+        .expect("the exact whole-file identity is admitted");
+        assert_eq!(oracle.format(), RouterOracleFormat::PublicProjection);
+
+        let mut semantically_equivalent_but_reencoded = bytes.clone();
+        semantically_equivalent_but_reencoded.push(b' ');
+        assert!(parse_frozen_router_oracle(
+            &semantically_equivalent_but_reencoded,
+            ROUTER_PUBLIC_ORACLE_SHA256,
+            RouterOracleFormat::PublicProjection,
+            "committed public router oracle",
+        )
+        .expect_err("even harmless re-encoding changes the immutable oracle authority")
+        .contains("whole-file identity"));
+
+        let mut mutated: Value = parse_unique_json(&bytes, "committed public router oracle")
+            .expect("duplicate-free public oracle");
+        mutated["unsupported_interpretations"][0] = json!("mutated boundary");
+        let mutated = serde_json::to_vec(&mutated).expect("mutated oracle encodes");
+        assert!(parse_frozen_router_oracle(
+            &mutated,
+            ROUTER_PUBLIC_ORACLE_SHA256,
+            RouterOracleFormat::PublicProjection,
+            "committed public router oracle",
+        )
+        .is_err());
     }
 
     #[test]
@@ -9000,8 +12744,18 @@ mod tests {
     fn evidence_private_path_scan_rejects_nested_machine_paths() {
         let safe = json!({"model": format!("<external-model>/{QWEN_FILENAME}")});
         assert!(ensure_no_private_paths(&safe).is_ok());
-        let private = json!({"nested": [{"model": "/Users/private/model.gguf"}]});
-        assert!(ensure_no_private_paths(&private).is_err());
+        let user_path = ["/Users", "/private/model.gguf"].concat();
+        let volume_path = ["/Volumes", "/External/model.gguf"].concat();
+        for private_path in [
+            user_path.as_str(),
+            "/private/var/model.gguf",
+            "/tmp/router-evidence.json",
+            "/var/folders/xy/cache/router.json",
+            volume_path.as_str(),
+        ] {
+            let private = json!({"nested": [{"model": private_path}]});
+            assert!(ensure_no_private_paths(&private).is_err());
+        }
     }
 
     #[test]

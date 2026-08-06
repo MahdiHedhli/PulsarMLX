@@ -81,6 +81,7 @@ pub struct WorkerConfig {
     environment: Vec<(OsString, OsString)>,
     current_dir: Option<PathBuf>,
     model_file: Option<Arc<File>>,
+    inherit_environment: bool,
 }
 
 impl WorkerConfig {
@@ -95,6 +96,7 @@ impl WorkerConfig {
             environment: Vec::new(),
             current_dir: None,
             model_file: None,
+            inherit_environment: true,
         }
     }
 
@@ -131,6 +133,15 @@ impl WorkerConfig {
     /// Inherit an already-opened, read-only model on the fixed worker fd.
     pub fn with_model_file(mut self, model_file: File) -> Self {
         self.model_file = Some(Arc::new(model_file));
+        self
+    }
+
+    /// Start the child from only the explicitly configured environment.
+    ///
+    /// External-checkpoint workers use this so model/oracle/evidence paths and
+    /// unrelated host credentials are not inherited by a control-only child.
+    pub fn without_inherited_environment(mut self) -> Self {
+        self.inherit_environment = false;
         self
     }
 
@@ -240,6 +251,9 @@ impl WorkerClient {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit());
+        if !config.inherit_environment {
+            command.env_clear();
+        }
         for (key, value) in &config.environment {
             command.env(key, value);
         }

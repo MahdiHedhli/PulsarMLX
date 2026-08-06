@@ -157,6 +157,29 @@ fn sequential_requests_preserve_order_and_monotonic_ids() {
 }
 
 #[test]
+fn external_worker_configuration_can_clear_inherited_private_environment() {
+    assert!(std::env::var_os("HOME").is_some());
+    let worker = FakeWorker::new(worker_script(
+        r#"for line in sys.stdin:
+    request = json.loads(line)
+    if request["op"] == "health":
+        success(request["request_id"], {"ready": os.environ.get("HOME") is None and os.environ.get("PULSARMLX_EXPLICIT_SAFE") == "yes"})
+    elif request["op"] == "shutdown":
+        success(request["request_id"], {"cleanup": "graceful"})
+        sys.exit(0)
+"#,
+    ));
+    let config = worker
+        .config()
+        .without_inherited_environment()
+        .with_env("PATH", std::env::var_os("PATH").expect("test PATH"))
+        .with_env("PULSARMLX_EXPLICIT_SAFE", "yes");
+    let mut client = WorkerClient::spawn(config).expect("environment-cleared worker starts");
+    assert!(client.health().expect("environment probe").ready());
+    assert_eq!(client.shutdown().outcome(), CleanupOutcome::Graceful);
+}
+
+#[test]
 fn mismatched_response_id_invalidates_the_request() {
     let worker = FakeWorker::new(worker_script(
         r#"request = json.loads(sys.stdin.readline())
