@@ -81,3 +81,20 @@ aggregation, attention or prior-layer parity in PulsarMLX, a complete
 transformer layer or model, language-model-head logits, tokens, generation,
 serving, full or giant model inference, projected tokens per second, custom
 Metal kernels, or Linux/CUDA runtime parity of fork changes.
+
+## Feature 003 single-expert MLP
+
+| Field | Value |
+| --- | --- |
+| Expert index | 114 (Feature 002 single-row top-8 rank-0) |
+| Routing weight | 0.20055663585662842 |
+| Activation | SiLU-SwiGLU |
+| Backend | apple-mlx / gpu, evaluated, synchronized, no fallback |
+| Weighted max abs error | 7.375932542519337e-08 |
+| Weighted RMSE | 4.021767246100519e-09 |
+| Mismatches | 0 on gate, up, act, down, weighted |
+| Oracle | [f003-expert-oracle-114-freeze-0001.json](raw/003-expert-mlp/f003-expert-oracle-114-freeze-0001.json) |
+| Parity | [f003-expert-114-parity-0001.json](raw/003-expert-mlp/f003-expert-114-parity-0001.json) |
+
+This does not execute the remaining top-7 experts or aggregate a MoE block.
+

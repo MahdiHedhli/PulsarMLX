@@ -4068,3 +4068,17 @@ Research discovery reported 255 passed. GitHub Actions for final main tip
 success). Worktree remained clean with `HEAD == origin/main` after push.
 T097 completion NTFY was sent; local inference may resume.
 
+### Feature 003 single-expert MLP parity (2026-08-06)
+
+Opened Spec Kit feature `003-real-expert-execution`. Implemented independent
+CPU oracle and Apple MLX full MLP for routed expert 114 (Feature 002 top-8
+rank-0) on the genuine `ffn_norm-0` row-0 activation with frozen routing
+weight 0.20055663585662842. SwiGLU used SiLU = x*sigmoid(x). Q8_0 gate/up/down
+slices admitted by exact byte ranges. Weighted output comparison: 2048
+elements, 0 mismatches, max abs error 7.38e-08, RMSE 4.02e-09 under 5e-4
+absolute-plus-relative tolerances. Tensor encoded SHA-256 identities matched.
+Published raw oracle freeze and parity records under
+`docs/research/raw/003-expert-mlp/`. Claim F003-C01 recorded as provisional
+pending clean-checkout reproduction and package integration. No multi-expert
+aggregation or generation was executed.
+

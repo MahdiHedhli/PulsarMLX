@@ -1,0 +1,6 @@
+{
+  "feature_id": "003-real-expert-execution",
+  "expert_index": 114,
+  "raw_oracle": "docs/research/raw/003-expert-mlp/f003-expert-oracle-114-freeze-0001.json",
+  "raw_parity": "docs/research/raw/003-expert-mlp/f003-expert-114-parity-0001.json"
+}

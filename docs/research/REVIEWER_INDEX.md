@@ -75,3 +75,16 @@ through F002-C03) bound to all four real raw records. Reproduction guidance is
 in [REPRODUCIBILITY.md](REPRODUCIBILITY.md). Observed results and limits are in
 [RESULTS.md](RESULTS.md) and [LIMITATIONS.md](LIMITATIONS.md). Model identity is
 in [MODEL_MANIFEST.json](MODEL_MANIFEST.json).
+
+---
+
+## Feature 003 raw evidence
+
+- [Expert 114 CPU oracle freeze](raw/003-expert-mlp/f003-expert-oracle-114-freeze-0001.json)
+  SHA-256 `c4b4c6f6d972e83d5eb595c78536914b65f6cb3a43cc9470ee269a7946515293`
+- [Expert 114 Apple MLX parity](raw/003-expert-mlp/f003-expert-114-parity-0001.json)
+  SHA-256 `852b876a90f18977be8acdd6437401ed37af69f949c6cfe8192980e4dc054ec6`
+
+Scope is a single routed expert full MLP with Feature 002 routing weight.
+Aggregation and generation remain unsupported.
+
