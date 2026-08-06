@@ -3234,3 +3234,62 @@ These checks constructed only fake or committed generated fixture values; they
 did not launch the MLX worker or use the GPU. Final T068 samples remain pending
 until this exact harness is committed, pushed, green in CI, and run from a clean
 source tree with the public-safe before/after collector.
+
+The harness was committed and pushed as
+`98ccdb9b8e781062b77fc4198b58021c3541b34f`. GitHub Actions run
+`31076700023` passed both jobs: the native Apple MLX fixture job in 53 seconds
+and the workspace job in 1 minute 27 seconds. The first collector invocation
+produced no snapshot because its symbolic candidate root was not exported. A
+fresh second attempt retained a postponed snapshot with
+`runtime_identity_admission_failed` and
+`resource_observation_admission_failed`: it used the system Python, which did
+not expose the pinned MLX package, and a sequential macOS RSS sample was 16 KiB
+above the earlier `ru_maxrss` sample. No MLX worker or GPU benchmark ran in
+either attempt, and neither result was deleted or represented as an execution.
+
+The collector was narrowly corrected to retain the conservative maximum of
+the available `ru_maxrss` and later current-RSS samples, with regression
+coverage, and the quickstart was corrected to invoke it through the pinned
+`uv` environment. The focused environment suite passed 24 of 24 tests and the
+complete research suite passed 119 of 119 tests. The fix was scanned,
+committed, and pushed as
+`c8c189731901d779f08042e8d585a461e58c3b91`; GitHub Actions run
+`31077076397` then passed the native Apple MLX fixture job in 46 seconds and
+the workspace job in 1 minute 38 seconds.
+
+A third fresh external attempt captured an admitted before snapshot at
+`2026-08-06T06:24:37.934561Z` from clean commit `c8c1897`. It observed arm64,
+Apple M1 Ultra, 128 GiB unified memory, 20 logical CPUs, MLX 0.32.0, Python
+3.12.13, normal memory pressure, nominal thermal state, no declared concurrent
+workload, and more than the protocol minimum of GiB-rounded free storage. The
+active power mode was explicitly unavailable from the unprivileged `pmset`
+probe and was not fabricated. The exact benchmark command was:
+
+```sh
+PULSARMLX_MODEL_GGUF='' cargo run --release -p mlx-backend \
+  --bin pulsar-mlx -- validate-router-fixtures \
+  --manifest fixtures/research/router-v1/manifest.json \
+  --evidence "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE"
+```
+
+It exited zero and reported two evaluated MLX router fixture cases plus the
+fixed single-row 5+30 microbenchmark passed. The external 58,335-byte candidate
+retains exactly 35 observations and 35 result records: five warm-ups followed
+by thirty measurements. All 35 records are `apple-mlx`, requested and selected
+GPU, evaluated, synchronized, no-fallback, correctness-passed, and
+golden-comparison-passed. Every observation and result has the same complete
+output SHA-256; there are no failed timing observations; F32 dequantization is
+explicitly not applicable; and `stage_sum_claimed` is false. The after snapshot
+at `2026-08-06T06:25:27.946178Z` was also admitted, with no interference
+reasons. Worker resources retain observed process footprint and MLX active,
+cache, and peak memory; bytes read and process CPU time are explicitly
+unavailable because the bounded worker protocol cannot report them reliably.
+
+The candidate, snapshots, and resource handoff remain together outside Git.
+They are generated fixture evidence only: they do not support a real-model,
+checkpoint, token-generation, full-layer, throughput, or performance claim.
+T069 must still validate the closed candidate contract and independently
+reproduce its statistics before any timing summary is accepted. No checkpoint
+path was resolved, statted, hashed, opened, or read. The completion/resume NTFY
+to `Mahdi-Dev` was acknowledged at `2026-08-06T06:26:41Z`; local inference may
+resume until the separate T073 checkpoint notification.
