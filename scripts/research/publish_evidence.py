@@ -85,6 +85,14 @@ PRIVATE_IDENTIFIER_KEYS = {
 }
 ENVIRONMENT_KEY_MARKERS = ("TOKEN", "SECRET", "PASSWORD", "AUTH", "COOKIE", "KEY")
 PUBLIC_TOKEN_IDENTIFIER_KEYS = {"direct_token_ids", "token_ids"}
+# Schema-required router evidence fields that contain the private-id token
+# "host" as a path component but are public process/timing identifiers, not
+# machine hostnames. Exact-match only; bare host/hostname remain rejected.
+PUBLIC_HOST_PROTOCOL_KEYS = {
+    "host_monotonic_clock",
+    "host_to_device",
+    "host_wall_duration_ns",
+}
 SECRET_KEY_PARTS = {
     "auth",
     "authentication",
@@ -171,7 +179,10 @@ def _reject_non_public_values(record: dict[str, Any]) -> None:
         if key is not None:
             normalized = _normalized_key(key)
             key_parts = {part for part in normalized.split("_") if part}
-            if normalized in PRIVATE_IDENTIFIER_KEYS or key_parts & PRIVATE_IDENTIFIER_KEYS:
+            if normalized not in PUBLIC_HOST_PROTOCOL_KEYS and (
+                normalized in PRIVATE_IDENTIFIER_KEYS
+                or key_parts & PRIVATE_IDENTIFIER_KEYS
+            ):
                 raise PublicationError(
                     "candidate contains a forbidden private identifier field"
                 )

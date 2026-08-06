@@ -747,6 +747,20 @@ class PublicationBoundaryTests(unittest.TestCase):
             self.assertEqual((raw_dir / "historical-v1.json").read_bytes(), before)
             self.assertEqual(sorted(path.name for path in raw_dir.iterdir()), ["historical-v1.json"])
 
+    def test_public_host_protocol_keys_are_not_treated_as_private_identifiers(self) -> None:
+        """Schema-required host_* timing fields must remain public-safe."""
+        for key in (
+            "host_monotonic_clock",
+            "host_wall_duration_ns",
+            "host_to_device",
+        ):
+            with self.subTest(key=key):
+                record = _candidate(f"fixture-public-host-{key}")
+                # Compact candidates place metadata outside the full schema path.
+                record["metadata"] = {key: ("rust_std_instant" if key == "host_monotonic_clock" else 1)}
+                sanitized = self.publisher.sanitize_candidate(record)
+                self.assertIn(key, sanitized["metadata"])
+
     def test_private_identifier_and_secret_shaped_keys_are_rejected(self) -> None:
         mutations = (
             ("metadata", "host", "fixture-machine-marker"),
