@@ -7,8 +7,8 @@
 > It preserves Pulsar's MIT license, attribution, Git history, and Linux/CUDA
 > path while an additive Apple backend is developed. Bounded MLX GPU device,
 > tensor, portable-storage, synthetic routed-MoE, one external Qwen
-> checkpoint tensor-prefix proof, and Feature 002 real layer-0 **router**
-> parity are verified. End-to-end model inference is not implemented or
+> checkpoint tensor-prefix proof, Feature 002 real layer-0 **router** parity, and Feature 003 single
+> routed expert **full MLP** parity are verified. End-to-end model inference is not implemented or
 > verified.
 
 ## PulsarMLX capability status

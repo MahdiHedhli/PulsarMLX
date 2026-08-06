@@ -86,6 +86,7 @@ Feature 003 claims: [CLAIMS_LEDGER_003.md](CLAIMS_LEDGER_003.md).
   SHA-256 `c4b4c6f6d972e83d5eb595c78536914b65f6cb3a43cc9470ee269a7946515293`
 - [Expert 114 Apple MLX parity](raw/003-expert-mlp/f003-expert-114-parity-0001.json)
   SHA-256 `852b876a90f18977be8acdd6437401ed37af69f949c6cfe8192980e4dc054ec6`
+- [Expert 114 Apple MLX parity reproduction](raw/003-expert-mlp/f003-expert-114-parity-repro-0001.json)
 
 Scope is a single routed expert full MLP with Feature 002 routing weight.
 Aggregation and generation remain unsupported.
