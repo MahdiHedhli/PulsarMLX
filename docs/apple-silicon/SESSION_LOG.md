@@ -3408,3 +3408,32 @@ invalidate its precommitted SHA-256
 would require a formal amendment plus fresh experiment identities. The
 protocol therefore remains byte-identical while the observed fixture behavior,
 limitations, and task state are updated in their appropriate records.
+
+### T071 timing milestone and T072 non-recursive CI attestation
+
+The corrected timing-methodology closure was scanned with
+`scripts/research/check_staged.sh`, committed as
+`b9625709a06443fbf2a46c9fcd584746a683bd79`, and pushed to `origin/main`.
+Before that commit, `git diff --check`, `cargo check --workspace --all-targets`,
+and `cargo test --workspace --no-fail-fast` passed; the workspace test gate ran
+216 tests successfully with zero failures and two ignored native integration
+tests. The known `crates/quant/src/iq.rs` `unused_mut` and 13 macOS-unused
+`serve` items remained warnings only. Focused `mlx-backend` library, CLI,
+router-contract, and research-evidence suites passed 10, 19, 21, and 5 tests;
+package check and strict package Clippy passed. The model-free research suite
+passed 145 tests, three fixture records validated, fixture-only package
+verification regenerated six artifacts, and the replacement generated
+candidate validator passed. The normative protocol remained at SHA-256
+`c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863`.
+
+[GitHub Actions run 31079793330](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31079793330)
+completed successfully for that exact commit. The Apple Silicon workspace
+baseline passed in 2 minutes 5 seconds, and Apple MLX small-fixture validation
+passed in 1 minute 3 seconds, including the research methodology, bounded
+worker, Rust-to-worker generated router, native device smoke, tensor fixture,
+synthetic routed-MoE, and external-model-exclusion gates.
+
+This documentation/task-state commit is the deliberately non-recursive T072
+CI attestation. Its own CI conclusion is verified out of tree before T073 and
+is not appended recursively. No checkpoint path has been resolved, searched,
+statted, hashed, opened, or read.

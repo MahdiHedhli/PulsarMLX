@@ -237,7 +237,7 @@ enforces 5/10 and 5/30 policies, and reproduces every statistic.
 - [X] T068 [US4] Run the inexpensive generated router microbenchmark with five retained warmups and thirty measurements and keep its candidate outside Git until validated through `fixtures/research/router-v1/manifest.json`
 - [X] T069 [US4] Validate the generated timing candidate, reproduce statistics/grouping, verify no stage-sum claim, and run focused Rust/Python/research tests using `specs/002-qwen-router-parity/quickstart.md`
 - [X] T070 [US4] Update timing methods, fixture behavior, unavailable observations, task state, and staged review in `docs/research/EXPERIMENT_PROTOCOL.md`, `docs/research/RESULTS.md`, `docs/research/LIMITATIONS.md`, `docs/apple-silicon/SESSION_LOG.md`, and `specs/002-qwen-router-parity/tasks.md`
-- [ ] T071 [US4] Run exact workspace/package gates and the standardized staged safety scan, commit timing instrumentation, push `main`, and wait for every `.github/workflows/macos.yml` job
+- [X] T071 [US4] Run exact workspace/package gates and the standardized staged safety scan, commit timing instrumentation, push `main`, and wait for every `.github/workflows/macos.yml` job
 
 **Checkpoint**: Timing mechanics are fixture-verified. No real router latency
 has been measured or claimed.
@@ -252,7 +252,7 @@ oracle, run bounded Apple correctness, and only then retain timing evidence.
 **Dependencies**: T022, T038, T049, T060, and T071 must be pushed with green
 CI.
 
-- [ ] T072 Append the actual T071 CI result, create and push a scanned non-recursive documentation-only CI attestation, wait for it, then verify clean `main`, `HEAD == origin/main`, green CI, methodology ancestry, exact workspace/Python/research gates, normal resource admission, and external candidate directories outside Git using `specs/002-qwen-router-parity/quickstart.md`
+- [X] T072 Append the actual T071 CI result, create and push a scanned non-recursive documentation-only CI attestation, wait for it, then verify clean `main`, `HEAD == origin/main`, green CI, methodology ancestry, exact workspace/Python/research gates, normal resource admission, and external candidate directories outside Git using `specs/002-qwen-router-parity/quickstart.md`
 - [ ] T073 Send the pre-access NTFY to `https://ntfy.sh/Mahdi-Dev`, require an acknowledged success response, and stop before model access if it fails as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
 - [ ] T074 [US1] Only after T073, verify exact external filename, size, SHA-256, immutable identity, and run read-only `inspect-router` into an external candidate according to `specs/002-qwen-router-parity/quickstart.md`
 - [ ] T075 [US1] Validate the inspection and stop on unresolved occurrence, F32 type, dimensions, offset, range, hash, orientation, top-k, scale, bias, license, memory, disk, pressure, thermal, or workload facts before updating `docs/research/MODEL_MANIFEST.json`
