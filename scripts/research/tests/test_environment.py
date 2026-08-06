@@ -268,6 +268,37 @@ class EnvironmentCollectorContractTests(unittest.TestCase):
                 with self.assertRaises(environment.EnvironmentCollectionError):
                     environment.assert_public_safe(value)
 
+    def test_public_safety_node_bound_is_explicit_and_inclusive(self) -> None:
+        environment.assert_public_safe({"values": [None]}, max_nodes=3)
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.assert_public_safe({"values": [None, None]}, max_nodes=3)
+        for invalid in (0, -1, True, environment.ROUTER_CANDIDATE_MAX_NODES + 1):
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(environment.EnvironmentCollectionError):
+                    environment.assert_public_safe({}, max_nodes=invalid)
+
+        at_limit: object = None
+        for _ in range(environment.JSON_MAX_DEPTH):
+            at_limit = {"value": at_limit}
+        environment.assert_public_safe(at_limit)
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.assert_public_safe({"value": at_limit})
+
+    def test_join_key_is_public_but_other_credential_fields_remain_forbidden(self) -> None:
+        environment.assert_public_safe({"join_key": "observation_id"})
+        for value in (
+            {"api_key": "not-published"},
+            {"api_key": None},
+            {"secret_key": "not-published"},
+            {"join_key": "public-request-join-001"},
+            {"join_key": "operator-private-value"},
+            {"join_key": "/" + "Users/private-user/request"},
+            {"join_key": "h" + "f_abcdefghijklmnopqrstuvwxyz"},
+        ):
+            with self.subTest(value=tuple(value)):
+                with self.assertRaises(environment.EnvironmentCollectionError):
+                    environment.assert_public_safe(value)
+
     def test_paths_normalize_to_repository_relative_or_symbolic_values(self) -> None:
         self.assertEqual(
             environment.normalize_public_path(
@@ -329,6 +360,240 @@ class EnvironmentCollectorContractTests(unittest.TestCase):
             self.assertEqual(second, 1)
             self.assertEqual(json.loads(output.read_text(encoding="utf-8")), snapshot)
             self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+
+    def test_router_resource_input_uses_its_frozen_larger_bound_only(self) -> None:
+        candidate = {
+            "schema_version": 1,
+            "candidate_kind": "qwen3moe-router-internal-orchestration",
+            "publication_status": "external_unvalidated_candidate",
+            "backend": "apple-mlx",
+            "worker": {
+                "result_resource_records": [
+                    {
+                        "observation_id": "bounded-live-result",
+                        "status": "passed",
+                        "backend": "apple-mlx",
+                        "requested_device": "gpu",
+                        "selected_device": "gpu",
+                        "fallback_used": False,
+                        "evaluated": True,
+                        "synchronized": True,
+                        "memory_gauges": {
+                            "process_footprint_bytes": 4096,
+                            "mlx_active_bytes": 1024,
+                            "mlx_cache_bytes": 512,
+                            "mlx_peak_bytes": 2048,
+                        },
+                    }
+                ]
+            },
+            "padding": "x" * environment.ENVIRONMENT_INPUT_MAX_BYTES,
+            "expanded_nodes": [None] * environment.ENVIRONMENT_INPUT_MAX_NODES,
+        }
+        with tempfile.TemporaryDirectory(prefix="pulsarmlx-environment-test-") as temp:
+            root = Path(temp).resolve()
+            candidate_path = root / "internal-orchestration.json"
+            output = root / "resources.json"
+            candidate_path.write_text(
+                json.dumps(candidate, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
+            self.assertGreater(
+                candidate_path.stat().st_size,
+                environment.ENVIRONMENT_INPUT_MAX_BYTES,
+            )
+            self.assertLessEqual(
+                candidate_path.stat().st_size,
+                environment.ROUTER_CANDIDATE_MAX_BYTES,
+            )
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(candidate_path)
+
+            wrong_identity = deepcopy(candidate)
+            wrong_identity["candidate_kind"] = "synthetic-candidate"
+            wrong_identity_path = root / "wrong-identity.json"
+            wrong_identity_path.write_text(
+                json.dumps(wrong_identity, sort_keys=True, separators=(",", ":"))
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(
+                    wrong_identity_path,
+                    allow_internal_router_candidate=True,
+                )
+
+            node_tier = deepcopy(candidate)
+            node_tier["padding"] = ""
+            node_tier_path = root / "node-tier.json"
+            node_tier_path.write_text(
+                json.dumps(node_tier, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
+            self.assertLess(
+                node_tier_path.stat().st_size,
+                environment.ENVIRONMENT_INPUT_MAX_BYTES,
+            )
+            environment._read_bounded_json(
+                node_tier_path,
+                allow_internal_router_candidate=True,
+            )
+            node_tier["candidate_kind"] = "synthetic-candidate"
+            node_tier_path.write_text(
+                json.dumps(node_tier, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(
+                    node_tier_path,
+                    allow_internal_router_candidate=True,
+                )
+
+            oversized_nodes = deepcopy(candidate)
+            oversized_nodes["padding"] = ""
+            oversized_nodes["expanded_nodes"] = [
+                None
+            ] * environment.ROUTER_CANDIDATE_MAX_NODES
+            oversized_nodes_path = root / "oversized-nodes.json"
+            oversized_nodes_path.write_text(
+                json.dumps(oversized_nodes, sort_keys=True, separators=(",", ":"))
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(
+                    oversized_nodes_path,
+                    allow_internal_router_candidate=True,
+                )
+
+            excessive_depth: object = None
+            for _ in range(environment.JSON_MAX_DEPTH + 1):
+                excessive_depth = {"value": excessive_depth}
+            deep_candidate = deepcopy(candidate)
+            deep_candidate["padding"] = ""
+            deep_candidate["expanded_nodes"] = []
+            deep_candidate["excessive_depth"] = excessive_depth
+            deep_candidate_path = root / "excessive-depth.json"
+            deep_candidate_path.write_text(
+                json.dumps(deep_candidate, sort_keys=True, separators=(",", ":"))
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(
+                    deep_candidate_path,
+                    allow_internal_router_candidate=True,
+                )
+
+            boolean_identity = deepcopy(candidate)
+            boolean_identity["schema_version"] = True
+            boolean_identity_path = root / "boolean-identity.json"
+            boolean_identity_path.write_text(
+                json.dumps(boolean_identity, sort_keys=True, separators=(",", ":"))
+                + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(
+                    boolean_identity_path,
+                    allow_internal_router_candidate=True,
+                )
+
+            result = environment.main(
+                [
+                    "extract-resources",
+                    "--candidate",
+                    str(candidate_path),
+                    "--output",
+                    str(output),
+                ]
+            )
+
+            self.assertEqual(result, 0)
+            resources = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(resources["process_footprint_bytes"]["value"], 4096)
+            self.assertEqual(resources["worker_selected_device"]["value"], "gpu")
+
+    def test_router_candidate_byte_cap_includes_the_final_newline(self) -> None:
+        prefix = (
+            b'{"backend":"apple-mlx",'
+            b'"candidate_kind":"qwen3moe-router-internal-orchestration",'
+            b'"padding":"'
+        )
+        suffix = (
+            b'","publication_status":"external_unvalidated_candidate",'
+            b'"schema_version":1}\n'
+        )
+        padding = environment.ROUTER_CANDIDATE_MAX_BYTES - len(prefix) - len(suffix)
+        exact = prefix + (b"x" * padding) + suffix
+        self.assertEqual(len(exact), environment.ROUTER_CANDIDATE_MAX_BYTES)
+        with tempfile.TemporaryDirectory(prefix="pulsarmlx-environment-test-") as temp:
+            candidate = Path(temp).resolve() / "candidate.json"
+            candidate.write_bytes(exact)
+            parsed = environment._read_bounded_json(
+                candidate,
+                allow_internal_router_candidate=True,
+            )
+            self.assertEqual(len(parsed["padding"]), padding)
+
+            candidate.write_bytes(exact + b" ")
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(
+                    candidate,
+                    allow_internal_router_candidate=True,
+                )
+
+    def test_bounded_reader_rejects_links_duplicate_fields_and_mutation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="pulsarmlx-environment-test-") as temp:
+            root = Path(temp).resolve()
+            candidate = root / "candidate.json"
+            candidate.write_text('{"value":1}\n', encoding="utf-8")
+
+            hard_link = root / "hard-link.json"
+            hard_link.hardlink_to(candidate)
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(candidate)
+            hard_link.unlink()
+
+            final_link = root / "final-link.json"
+            final_link.symlink_to(candidate)
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(final_link)
+
+            real_parent = root / "real-parent"
+            real_parent.mkdir()
+            nested = real_parent / "nested.json"
+            nested.write_text('{"value":1}\n', encoding="utf-8")
+            parent_link = root / "parent-link"
+            parent_link.symlink_to(real_parent, target_is_directory=True)
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(parent_link / "nested.json")
+
+            duplicate = root / "duplicate.json"
+            duplicate.write_text('{"value":1,"value":2}\n', encoding="utf-8")
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(duplicate)
+            non_finite = root / "non-finite.json"
+            non_finite.write_text('{"value":NaN}\n', encoding="utf-8")
+            with self.assertRaises(environment.EnvironmentCollectionError):
+                environment._read_bounded_json(non_finite)
+
+            original_read = environment.os.read
+            changed = False
+
+            def mutate_after_read(descriptor: int, count: int) -> bytes:
+                nonlocal changed
+                chunk = original_read(descriptor, count)
+                if chunk and not changed:
+                    changed = True
+                    candidate.write_text('{"value":2}\n', encoding="utf-8")
+                return chunk
+
+            with (
+                mock.patch.object(environment.os, "read", side_effect=mutate_after_read),
+                self.assertRaises(environment.EnvironmentCollectionError),
+            ):
+                environment._read_bounded_json(candidate)
 
     def test_atomic_writer_leaves_no_partial_destination_on_preinstall_failure(self) -> None:
         with tempfile.TemporaryDirectory(prefix="pulsarmlx-environment-test-") as temp:
@@ -643,7 +908,7 @@ class EnvironmentCollectorContractTests(unittest.TestCase):
             "worker_synchronized": environment.observed(True, "worker"),
         }
         with tempfile.TemporaryDirectory(prefix="pulsarmlx-environment-test-") as temp:
-            root = Path(temp)
+            root = Path(temp).resolve()
             before_path = root / "before.json"
             after_path = root / "after.json"
             resources_path = root / "resources.json"

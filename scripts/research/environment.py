@@ -19,6 +19,7 @@ from pathlib import Path, PurePosixPath
 import platform
 import re
 import resource
+import stat
 import subprocess
 import sys
 import tempfile
@@ -32,6 +33,12 @@ GIB = 1_073_741_824
 MINIMUM_TOTAL_MEMORY_BYTES = 42_949_672_960
 MINIMUM_AVAILABLE_STORAGE_BYTES = 134_761_081_856
 MAXIMUM_LOAD_PER_LOGICAL_CPU = 0.75
+ENVIRONMENT_INPUT_MAX_BYTES = 1_048_576
+ENVIRONMENT_INPUT_MAX_NODES = 20_000
+ROUTER_CANDIDATE_MAX_BYTES = 4_194_304
+ROUTER_CANDIDATE_MAX_NODES = 100_000
+JSON_MAX_DEPTH = 64
+READ_CHUNK_BYTES = 131_072
 INTERFERENCE_REASON_CODES = {
     "memory_pressure_not_normal",
     "load_average_1m_admission_failed",
@@ -53,6 +60,7 @@ SAFE_ENVIRONMENT_ALLOWLIST = (
     "PULSARMLX_ROUTER_FIXTURE_EVIDENCE",
 )
 SECRET_KEY_MARKERS = ("TOKEN", "SECRET", "PASSWORD", "AUTH", "COOKIE", "KEY")
+PUBLIC_SAFE_CREDENTIAL_FIELDS = {"join_key": "observation_id"}
 FORBIDDEN_FIELD_NAMES = {
     "account",
     "account_id",
@@ -465,29 +473,51 @@ def normalize_public_path(
     return normalized
 
 
-def assert_public_safe(value: Any) -> None:
+def assert_public_safe(
+    value: Any,
+    *,
+    max_nodes: int = ENVIRONMENT_INPUT_MAX_NODES,
+    max_depth: int = JSON_MAX_DEPTH,
+) -> None:
     """Recursively reject private identifiers, paths, secrets, and non-finite data."""
 
-    pending = [value]
+    if (
+        type(max_nodes) is not int
+        or max_nodes <= 0
+        or max_nodes > ROUTER_CANDIDATE_MAX_NODES
+        or type(max_depth) is not int
+        or max_depth < 0
+        or max_depth > JSON_MAX_DEPTH
+    ):
+        raise EnvironmentCollectionError("public-safety node bound is invalid")
+
+    pending = [(value, 0)]
     visited = 0
     while pending:
-        current = pending.pop()
+        current, depth = pending.pop()
         visited += 1
-        if visited > 20_000:
+        if visited > max_nodes or depth > max_depth:
             raise EnvironmentCollectionError("environment snapshot is too large")
         if isinstance(current, dict):
             for key, child in current.items():
                 if not isinstance(key, str):
                     raise EnvironmentCollectionError("environment field name is invalid")
                 lowered = key.lower()
-                if lowered in FORBIDDEN_FIELD_NAMES or any(
-                    marker in key.upper()
-                    for marker in ("TOKEN", "SECRET", "PASSWORD", "AUTH", "COOKIE", "KEY")
+                credential_shaped = any(
+                    marker in key.upper() for marker in SECRET_KEY_MARKERS
+                )
+                admitted_public_credential_field = (
+                    key in PUBLIC_SAFE_CREDENTIAL_FIELDS
+                    and PUBLIC_SAFE_CREDENTIAL_FIELDS[key] == child
+                )
+                if lowered in FORBIDDEN_FIELD_NAMES or (
+                    credential_shaped
+                    and not admitted_public_credential_field
                 ):
                     raise EnvironmentCollectionError("environment contains a forbidden field")
-                pending.append(child)
+                pending.append((child, depth + 1))
         elif isinstance(current, list):
-            pending.extend(current)
+            pending.extend((child, depth + 1) for child in current)
         elif isinstance(current, float) and not math.isfinite(current):
             raise EnvironmentCollectionError("environment contains a non-finite number")
         elif isinstance(current, str):
@@ -1386,16 +1416,161 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _read_bounded_json(path: Path) -> dict[str, Any]:
-    if path.is_symlink() or not path.is_file() or path.stat().st_size > 1_048_576:
-        raise EnvironmentCollectionError("environment input is unsafe or oversized")
+def _directory_open_flags() -> int:
+    flags = os.O_RDONLY
+    flags |= getattr(os, "O_DIRECTORY", 0)
+    flags |= getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    return flags
+
+
+def _open_parent_directory_no_symlinks(path: Path) -> tuple[int, str]:
+    raw = os.fspath(path)
+    if not raw or "\x00" in raw:
+        raise EnvironmentCollectionError("environment input path is invalid")
+    absolute = os.path.isabs(raw)
+    parts = list(Path(raw).parts)
+    if absolute:
+        parts = parts[1:]
+    normalized: list[str] = []
+    for part in parts:
+        if part in {"", "."}:
+            continue
+        if part == ".." or "/" in part:
+            raise EnvironmentCollectionError("environment input path is invalid")
+        normalized.append(part)
+    if not normalized:
+        raise EnvironmentCollectionError("environment input path is invalid")
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError, RecursionError, ValueError) as error:
+        descriptor = os.open("/" if absolute else ".", _directory_open_flags())
+        for component in normalized[:-1]:
+            next_descriptor = os.open(
+                component, _directory_open_flags(), dir_fd=descriptor
+            )
+            os.close(descriptor)
+            descriptor = next_descriptor
+    except OSError as error:
+        if "descriptor" in locals():
+            os.close(descriptor)
+        raise EnvironmentCollectionError(
+            "environment input has an unavailable or symlinked parent"
+        ) from error
+    return descriptor, normalized[-1]
+
+
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    document: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in document:
+            raise EnvironmentCollectionError("environment input has duplicate fields")
+        document[key] = value
+    return document
+
+
+def _reject_json_constant(_value: str) -> None:
+    raise EnvironmentCollectionError("environment input contains a non-finite number")
+
+
+def _is_internal_router_candidate(document: Mapping[str, Any]) -> bool:
+    return (
+        type(document.get("schema_version")) is int
+        and document.get("schema_version") == 1
+        and document.get("candidate_kind")
+        == "qwen3moe-router-internal-orchestration"
+        and document.get("publication_status") == "external_unvalidated_candidate"
+        and document.get("backend") == "apple-mlx"
+    )
+
+
+def _read_bounded_json(
+    path: Path, *, allow_internal_router_candidate: bool = False
+) -> dict[str, Any]:
+    if type(allow_internal_router_candidate) is not bool:
+        raise EnvironmentCollectionError("environment input bound is invalid")
+    intake_maximum = (
+        ROUTER_CANDIDATE_MAX_BYTES
+        if allow_internal_router_candidate
+        else ENVIRONMENT_INPUT_MAX_BYTES
+    )
+    flags = os.O_RDONLY
+    flags |= getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_NOFOLLOW", 0)
+    flags |= getattr(os, "O_NONBLOCK", 0)
+    parent_descriptor: int | None = None
+    descriptor: int | None = None
+    try:
+        parent_descriptor, name = _open_parent_directory_no_symlinks(path)
+        descriptor = os.open(name, flags, dir_fd=parent_descriptor)
+    except OSError as error:
+        if parent_descriptor is not None:
+            os.close(parent_descriptor)
+        raise EnvironmentCollectionError("environment input is unsafe or oversized") from error
+    try:
+        before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1
+            or before.st_size <= 0
+            or before.st_size > intake_maximum
+        ):
+            raise EnvironmentCollectionError("environment input is unsafe or oversized")
+        chunks: list[bytes] = []
+        total = 0
+        while True:
+            chunk = os.read(descriptor, READ_CHUNK_BYTES)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > intake_maximum:
+                raise EnvironmentCollectionError(
+                    "environment input is unsafe or oversized"
+                )
+            chunks.append(chunk)
+        encoded = b"".join(chunks)
+        after = os.fstat(descriptor)
+        if (
+            len(encoded) != before.st_size
+            or before.st_dev != after.st_dev
+            or before.st_ino != after.st_ino
+            or before.st_size != after.st_size
+            or before.st_nlink != after.st_nlink
+            or before.st_mtime_ns != after.st_mtime_ns
+            or before.st_ctime_ns != after.st_ctime_ns
+        ):
+            raise EnvironmentCollectionError("environment input changed during bounded read")
+    except OSError as error:
+        raise EnvironmentCollectionError("environment input could not be read safely") from error
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        if parent_descriptor is not None:
+            os.close(parent_descriptor)
+    try:
+        document = json.loads(
+            encoded.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_keys,
+            parse_constant=_reject_json_constant,
+        )
+    except EnvironmentCollectionError:
+        raise
+    except (UnicodeError, json.JSONDecodeError, RecursionError, ValueError) as error:
         raise EnvironmentCollectionError("environment input is invalid JSON") from error
     if not isinstance(document, dict):
         raise EnvironmentCollectionError("environment input must be an object")
-    assert_public_safe(document)
+    expanded = allow_internal_router_candidate and _is_internal_router_candidate(document)
+    maximum_bytes = (
+        ROUTER_CANDIDATE_MAX_BYTES if expanded else ENVIRONMENT_INPUT_MAX_BYTES
+    )
+    maximum_nodes = (
+        ROUTER_CANDIDATE_MAX_NODES if expanded else ENVIRONMENT_INPUT_MAX_NODES
+    )
+    if len(encoded) > maximum_bytes:
+        raise EnvironmentCollectionError("environment input is unsafe or oversized")
+    assert_public_safe(
+        document,
+        max_nodes=maximum_nodes,
+        max_depth=JSON_MAX_DEPTH,
+    )
     return document
 
 
@@ -1539,7 +1714,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 benchmark_resources=resources,
             )
         else:
-            candidate = _read_bounded_json(args.candidate)
+            candidate = _read_bounded_json(
+                args.candidate,
+                allow_internal_router_candidate=True,
+            )
             document = extract_benchmark_resources(candidate)
         payload = json.dumps(document, sort_keys=True, separators=(",", ":")) + "\n"
         if args.output is None:

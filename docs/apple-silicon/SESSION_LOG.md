@@ -3763,3 +3763,64 @@ worker integration, native MLX device smoke, tensor and synthetic routed-MoE
 fixtures, evidence gates, workspace check, and workspace tests. This paragraph
 is the non-recursive documentation-only CI attestation; its own CI conclusion
 is verified out of tree before checkpoint access rather than appended again.
+
+### First T083 execution and fail-closed post-processing correction
+
+The documentation-only attestation commit was
+`54ab326f92bd39818a8756d59498cde5b5891d27`.
+[GitHub Actions run 31109331743](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31109331743)
+passed for that exact commit: Apple MLX small-fixture validation completed in
+1 minute 46 seconds and the Apple Silicon workspace baseline completed in
+1 minute 36 seconds. Local and remote `main` were equal and clean before the
+checkpoint was reopened.
+
+The admitted Qwen file rehashed to
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`,
+the router byte range rehashed to
+`98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c`,
+and the independent external CPU oracle rehashed to
+`e31e4337ddf2c7cf1bb6cfe721428e6baaeffec7e29aee0f77727969e756e645`.
+There was one GGUF in the admitted directory. The public before snapshot
+reported normal memory pressure, nominal thermal state, 96% system-wide free
+memory, 370 GiB rounded free candidate-evidence storage, low unrelated
+workload, and
+an explicit local native MLX GPU smoke pass. Its source identity was the exact
+clean commit above. The first capture invocation omitted the required process
+binding for `$PULSARMLX_ROUTER_EVIDENCE`; it failed closed and wrote no output.
+The corrected documented invocation retained an admitted snapshot.
+
+The exact release `validate-router` command then returned zero and reported
+that real MLX router correctness and the frozen timing schedule passed. Its
+complete external internal-orchestration candidate is 2,903,766 bytes. The
+candidate and before/after snapshots remain external and unmodified. No raw
+Apple result was staged or published, and no numerical or performance claim is
+promoted from this attempt.
+
+The required resource-extraction step then rejected that retained candidate.
+The collector had one shared 1 MiB/20,000-node input limit even though the
+already frozen internal-candidate contract permits 4 MiB, 100,000 nodes, and
+depth 64; its generic credential-field scan also rejected the protocol's
+public `join_key`. This was a fail-closed post-processing defect, not an MLX or
+numerical failure. The candidate was preserved, but it cannot be the published
+T083 evidence because fixing the source changes the clean source commit bound
+by the candidate and sanitizer.
+
+The bounded model-free correction gives only the exact internal Apple-MLX
+router identity the frozen expanded intake, keeps all combine operands at the
+smaller limit, allows only the required public `join_key`, and rejects secret
+values, other credential fields, duplicate keys, non-finite values, excess
+depth, links, parent aliases, hard links, oversized input, and in-place
+mutation. All 32 focused environment tests passed, including exact
+newline-inclusive boundaries, and the retained real candidate passed a
+non-public extraction probe. A fresh real attempt remains required after this
+correction is committed, pushed, and green in CI; T083 therefore remains
+incomplete.
+
+Final model-free validation of the correction passed 32 focused environment
+tests and the complete 254-test research suite. The exact retained candidate
+passed a fresh extraction probe under the corrected intake. Committed fixture
+validation still accepted exactly three records, fixture-only package
+verification reproduced six artifacts with zero promoted claims, the protocol
+SHA-256 remained
+`c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423`,
+and `git diff --check` passed.

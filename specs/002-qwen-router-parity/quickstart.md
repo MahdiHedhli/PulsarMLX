@@ -400,6 +400,13 @@ PYTHONPATH=python uv run python scripts/research/environment.py combine \
   --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json"
 ```
 
+`extract-resources` admits the 4 MiB/100,000-node/depth-64 intake only when
+the root is the exact external unvalidated Apple-MLX router orchestration
+identity. Before, after, and extracted-resource inputs to `combine` retain the
+smaller 1 MiB/20,000-node bound. Input reads reject links, duplicate keys,
+non-finite values, parent aliases, and in-place mutation; the byte cap includes
+the final newline.
+
 Capture the after snapshot and combine the environment even when
 `validate-router` returns nonzero but retains a candidate. Use a fresh external
 attempt directory rather than overwriting any prior snapshot or candidate.
