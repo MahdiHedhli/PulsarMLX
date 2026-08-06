@@ -3966,3 +3966,19 @@ new external attempt rather than overwriting this postponed snapshot, recheck
 the immutable model/router/oracle identities, and resume at T083 with the exact
 Section 7 command in `specs/002-qwen-router-parity/quickstart.md`. Do not resume
 from T084 and do not reuse either prior internal candidate.
+
+### T097 exact-blocker notification
+
+The blocker documentation was committed and pushed as
+`16e9502b722ae5a0225f856fd13fe25e58d9550f`. Local `main`, `origin/main`, and
+the GitHub `main` head all resolved to that exact commit with a clean worktree
+and zero divergence before notification.
+
+The required exact-blocker NTFY was acknowledged by `Mahdi-Dev` at
+`2026-08-06T15:42:04Z` with event ID `XpxArb45zCUp`. It stated precisely that
+model access did begin in two earlier authorized Feature 002 attempts, while
+the fresh T083 attempt stopped before reopening the checkpoint because the
+quiet-window gate failed. It also stated that T083 through T096 remain
+incomplete, no Apple parity claim was admitted, and local inference may
+resume. No checkpoint or model file was accessed while sending or recording
+the notification. T097 is complete; T083 remains the first incomplete task.
