@@ -168,6 +168,45 @@ BENCHMARK_RESOURCE_FIELDS = {
     "worker_backend", "worker_requested_device", "worker_selected_device",
     "worker_fallback_used", "worker_evaluated", "worker_synchronized",
 }
+SECOND_BATCH_CASE_ORDER = (
+    "qwen3moe-layer0-router-token0-row0-v1",
+    "qwen3moe-layer0-router-token0-token1-batch-v1",
+)
+SECOND_BATCH_ENVIRONMENT_OBSERVATIONS = (
+    "repository_commit",
+    "worktree_dirty",
+    "python_version",
+    "mlx_version",
+    "rust_version",
+    "cargo_version",
+    "worker_protocol_version",
+    "pulsarmlx_version",
+    "macos_product_version",
+    "macos_build",
+    "shell_architecture",
+    "chip_model",
+    "unified_memory_bytes",
+    "physical_cpu_count",
+    "logical_cpu_count",
+    "filesystem_type",
+    "memory_pressure",
+    "power_mode",
+    "thermal_state",
+    "load_average_1m",
+    "load_average_5m",
+    "load_average_15m",
+    "workload_category",
+    "material_concurrent_workload",
+    "benchmark_concurrency",
+)
+SECOND_BATCH_WORKER_FACTS = (
+    "worker_backend",
+    "worker_requested_device",
+    "worker_selected_device",
+    "worker_fallback_used",
+    "worker_evaluated",
+    "worker_synchronized",
+)
 
 # These names are shared by the Python worker and Rust orchestration boundary.
 # External-checkpoint evidence is fail-closed to this vocabulary; synthetic
@@ -707,11 +746,35 @@ def _validate_structure(record: dict[str, Any]) -> None:
         },
     )
     if "second_batch" in record:
-        _closed_object(
-            record["second_batch"],
-            allowed={"status", "reason", "between_batch_variation_measured"},
-            required={"status", "between_batch_variation_measured"},
-        )
+        second_batch = record["second_batch"]
+        if not isinstance(second_batch, dict):
+            _fail("schema_violation", "second-batch evidence has the wrong type")
+        if second_batch.get("status") == "observed":
+            observed = _closed_object(
+                second_batch,
+                allowed={
+                    "status",
+                    "between_batch_variation_measured",
+                    "linked_experiment_id",
+                    "linked_batch_id",
+                    "linked_record_sha256",
+                },
+            )
+            _stable_id(observed["linked_experiment_id"])
+            _stable_id(observed["linked_batch_id"])
+            linked_hash = observed["linked_record_sha256"]
+            if not isinstance(linked_hash, str) or not SHA256_RE.fullmatch(linked_hash):
+                _fail("schema_violation", "a linked second-batch hash is invalid")
+        elif second_batch.get("status") == "unavailable":
+            unavailable = _closed_object(
+                second_batch,
+                allowed={"status", "reason", "between_batch_variation_measured"},
+                required={"status", "between_batch_variation_measured"},
+            )
+            if "reason" in unavailable:
+                _bounded_text(unavailable["reason"])
+        else:
+            _fail("schema_violation", "second-batch status is invalid")
     _closed_object(
         record["model"],
         allowed={
@@ -1093,7 +1156,7 @@ def _validate_environment_semantics(record: dict[str, Any]) -> None:
 
 
 def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
-    _evidence_scope(record)
+    evidence_scope = _evidence_scope(record)
     source_commit = record["source_commit"]
     if not isinstance(source_commit, str) or not COMMIT_RE.fullmatch(source_commit):
         _fail("semantic_relationship", "source commit is not immutable")
@@ -1152,6 +1215,16 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
     if execution["working_directory_policy"] != "repository_root":
         _fail("semantic_relationship", "working-directory policy is invalid")
 
+    if (
+        evidence_scope == "external_checkpoint"
+        and record["record_kind"] in {"timing", "combined"}
+        and "second_batch" not in record
+    ):
+        _fail(
+            "semantic_relationship",
+            "external timing evidence lacks a second-batch disposition",
+        )
+
     _validate_environment_semantics(record)
 
     if (
@@ -1170,7 +1243,7 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
         if type(measured) is not bool or status not in {"observed", "unavailable"}:
             _fail("semantic_relationship", "second-batch observation is invalid")
         if status == "observed":
-            if measured is not True or "reason" in second_batch:
+            if measured is not True:
                 _fail("semantic_relationship", "second-batch observation is inconsistent")
         else:
             if measured is not False or "reason" not in second_batch:
@@ -2039,6 +2112,15 @@ def validate_record(
         _fail("schema_violation", "evidence contains an invalid scalar value")
 
 
+def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            _fail("schema_violation", "an evidence object contains a duplicate key")
+        result[key] = value
+    return result
+
+
 def _load_records(input_path: Path) -> list[tuple[Path, dict[str, Any]]]:
     if input_path.is_symlink():
         _fail("schema_violation", "evidence input cannot be a symlink")
@@ -2055,13 +2137,226 @@ def _load_records(input_path: Path) -> list[tuple[Path, dict[str, Any]]]:
         if path.is_symlink() or not path.is_file() or path.stat().st_size > 4 * 1024 * 1024:
             _fail("schema_violation", "an evidence file is unsafe or oversized")
         try:
-            record = json.loads(path.read_text(encoding="utf-8"))
+            record = json.loads(
+                path.read_text(encoding="utf-8"),
+                object_pairs_hook=_reject_duplicate_json_keys,
+            )
+        except EvidenceValidationError:
+            raise
         except (OSError, UnicodeError, json.JSONDecodeError, RecursionError, ValueError):
             _fail("schema_violation", "an evidence file is invalid JSON")
         if not isinstance(record, dict):
             _fail("schema_violation", "an evidence root is not an object")
         records.append((path, record))
     return records
+
+
+def _canonical_record_sha256(record: Mapping[str, Any]) -> str:
+    """Hash the complete record using the publication JSON canonicalization."""
+
+    try:
+        encoded = json.dumps(
+            record,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+    except (RecursionError, TypeError, UnicodeError, ValueError):
+        _fail("schema_violation", "a linked record cannot be canonicalized")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _second_batch_case_orders(
+    record: Mapping[str, Any],
+) -> dict[tuple[Any, ...], tuple[str, ...]]:
+    orders: dict[tuple[Any, ...], list[str]] = {}
+    for observation in record.get("raw_observations", []):
+        if not isinstance(observation, Mapping):
+            continue
+        case_id = observation.get("case_id")
+        if case_id not in SECOND_BATCH_CASE_ORDER:
+            continue
+        paired_step = (
+            observation.get("observation_kind"),
+            observation.get("process_state"),
+            observation.get("condition"),
+            observation.get("instrumentation_mode"),
+        )
+        order = orders.setdefault(paired_step, [])
+        if not order or order[-1] != case_id:
+            order.append(str(case_id))
+    return {key: tuple(order) for key, order in orders.items()}
+
+
+def _is_frozen_case_block(
+    order: tuple[str, ...],
+    expected_pair: tuple[str, str],
+) -> bool:
+    return order == expected_pair
+
+
+def _second_batch_process_ids(record: Mapping[str, Any]) -> set[str]:
+    process_ids = {str(record.get("process_replication_id"))}
+    for observation in record.get("raw_observations", []):
+        if isinstance(observation, Mapping):
+            process_ids.add(str(observation.get("process_replication_id")))
+    return process_ids
+
+
+def _second_batch_device_facts(record: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]:
+    facts = {
+        (
+            observation.get("requested_device"),
+            observation.get("selected_device"),
+            observation.get("fallback_used"),
+            observation.get("evaluated"),
+            observation.get("synchronized"),
+        )
+        for observation in record.get("raw_observations", [])
+        if isinstance(observation, Mapping)
+    }
+    return tuple(sorted(facts, key=repr))
+
+
+def _second_batch_environment_facts(record: Mapping[str, Any]) -> dict[str, Any]:
+    environment = record.get("environment")
+    if not isinstance(environment, Mapping):
+        _fail("semantic_relationship", "linked second-batch environment is invalid")
+
+    facts: dict[str, Any] = {
+        "platform": environment.get("platform"),
+        "selected_backend": environment.get("selected_backend"),
+        "selected_device": environment.get("selected_device"),
+        "safe_environment": environment.get("safe_environment"),
+        "interference_admission": environment.get("interference_admission"),
+        "interference_reasons": environment.get("interference_reasons"),
+    }
+    for phase in ("before_snapshot", "after_snapshot"):
+        snapshot = environment.get(phase)
+        if not isinstance(snapshot, Mapping):
+            facts[phase] = None
+            continue
+        if snapshot.get("status") == "unavailable":
+            facts[phase] = {"status": "unavailable"}
+            continue
+        observations = snapshot.get("observations")
+        selected_observations = (
+            {
+                name: observations.get(name)
+                for name in SECOND_BATCH_ENVIRONMENT_OBSERVATIONS
+            }
+            if isinstance(observations, Mapping)
+            else None
+        )
+        facts[phase] = {
+            "snapshot_schema": snapshot.get("snapshot_schema"),
+            "snapshot_schema_version": snapshot.get("snapshot_schema_version"),
+            "platform": snapshot.get("platform"),
+            "requested_backend": snapshot.get("requested_backend"),
+            "requested_device": snapshot.get("requested_device"),
+            "storage_role": snapshot.get("storage_role"),
+            "storage_locator": snapshot.get("storage_locator"),
+            "safe_environment": snapshot.get("safe_environment"),
+            "interference_admission": snapshot.get("interference_admission"),
+            "admission_reasons": snapshot.get("admission_reasons"),
+            "observations": selected_observations,
+        }
+
+    resources = environment.get("benchmark_resources")
+    facts["worker_device_facts"] = (
+        {name: resources.get(name) for name in SECOND_BATCH_WORKER_FACTS}
+        if isinstance(resources, Mapping)
+        else None
+    )
+    return facts
+
+
+def _validate_second_batch_cross_records(records: Iterable[Mapping[str, Any]]) -> None:
+    """Resolve and validate every observed second-batch relationship in one input."""
+
+    records_by_id = {
+        str(record.get("experiment_id")): record
+        for record in records
+    }
+    linked_targets: set[str] = set()
+    observed_links: list[tuple[Mapping[str, Any], Mapping[str, Any]]] = []
+
+    for source in records_by_id.values():
+        second_batch = source.get("second_batch")
+        if not isinstance(second_batch, Mapping) or second_batch.get("status") != "observed":
+            continue
+        source_id = str(source.get("experiment_id"))
+        target_id = str(second_batch.get("linked_experiment_id"))
+        if source_id == target_id:
+            _fail("semantic_relationship", "a second-batch link cannot reference itself")
+        target = records_by_id.get(target_id)
+        if target is None:
+            _fail("semantic_relationship", "a second-batch link is missing from this input")
+        if target_id in linked_targets:
+            _fail("semantic_relationship", "a second-batch record is linked more than once")
+        linked_targets.add(target_id)
+
+        source_batch_id = source.get("batch_id")
+        linked_batch_id = second_batch.get("linked_batch_id")
+        if source_batch_id == linked_batch_id or target.get("batch_id") == source_batch_id:
+            _fail("semantic_relationship", "a second-batch link reuses the source batch")
+        if target.get("batch_id") != linked_batch_id:
+            _fail("semantic_relationship", "a linked second-batch identity does not resolve")
+
+        target_disposition = target.get("second_batch")
+        if (
+            not isinstance(target_disposition, Mapping)
+            or target_disposition.get("status") != "unavailable"
+        ):
+            _fail("semantic_relationship", "second-batch links cannot form chains or cycles")
+        observed_links.append((source, target))
+
+    for source, target in observed_links:
+        immutable_fields = (
+            "evidence_scope",
+            "record_kind",
+            "source_commit",
+            "source_worktree_before",
+            "protocol",
+            "execution",
+            "model",
+            "tensor",
+            "input",
+            "oracle",
+        )
+        if any(source.get(field) != target.get(field) for field in immutable_fields):
+            _fail("semantic_relationship", "linked second batches have incompatible identities")
+        if _second_batch_environment_facts(source) != _second_batch_environment_facts(target):
+            _fail("semantic_relationship", "linked second batches have incompatible environments")
+        if _second_batch_device_facts(source) != _second_batch_device_facts(target):
+            _fail("semantic_relationship", "linked second batches have incompatible device facts")
+        if _second_batch_process_ids(source) & _second_batch_process_ids(target):
+            _fail("semantic_relationship", "linked second batches reuse a process identity")
+
+        source_orders = _second_batch_case_orders(source)
+        target_orders = _second_batch_case_orders(target)
+        reverse_order = tuple(reversed(SECOND_BATCH_CASE_ORDER))
+        if (
+            not source_orders
+            or source_orders.keys() != target_orders.keys()
+            or any(
+                not _is_frozen_case_block(order, SECOND_BATCH_CASE_ORDER)
+                for order in source_orders.values()
+            )
+            or any(
+                not _is_frozen_case_block(order, reverse_order)
+                for order in target_orders.values()
+            )
+        ):
+            _fail("semantic_relationship", "linked second batches are not counterbalanced")
+
+        second_batch = source["second_batch"]
+        expected_hash = _canonical_record_sha256(target)
+        if second_batch.get("linked_record_sha256") != expected_hash:
+            _fail("semantic_relationship", "a linked second-batch hash does not match")
+        if second_batch.get("linked_record_sha256") == _canonical_record_sha256(source):
+            _fail("semantic_relationship", "a second-batch link is not a distinct record")
 
 
 def validate_input(schema_dir: Path, input_path: Path) -> list[dict[str, Any]]:
@@ -2076,6 +2371,7 @@ def validate_input(schema_dir: Path, input_path: Path) -> list[dict[str, Any]]:
         if not isinstance(experiment_id, str) or path.stem != experiment_id:
             _fail("append_only_identity_mismatch", "filename and experiment identity differ")
         validated.append(validate_record(record))
+    _validate_second_batch_cross_records(validated)
     return validated
 
 

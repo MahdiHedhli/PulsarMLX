@@ -76,6 +76,18 @@
     "failures": { "type": "array", "items": { "$ref": "#/$defs/failure" } },
     "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "evidence_scope": { "const": "external_checkpoint" },
+          "record_kind": { "enum": ["timing", "combined"] }
+        },
+        "required": ["evidence_scope", "record_kind"]
+      },
+      "then": { "required": ["second_batch"] }
+    }
+  ],
   "$defs": {
     "stableId": {
       "type": "string",
@@ -343,14 +355,36 @@
       ]
     },
     "secondBatch": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["status", "between_batch_variation_measured"],
-      "properties": {
-        "status": { "enum": ["observed", "unavailable"] },
-        "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
-        "between_batch_variation_measured": { "type": "boolean" }
-      }
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "between_batch_variation_measured",
+            "linked_experiment_id",
+            "linked_batch_id",
+            "linked_record_sha256"
+          ],
+          "properties": {
+            "status": { "const": "observed" },
+            "between_batch_variation_measured": { "const": true },
+            "linked_experiment_id": { "$ref": "#/$defs/stableId" },
+            "linked_batch_id": { "$ref": "#/$defs/stableId" },
+            "linked_record_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason", "between_batch_variation_measured"],
+          "properties": {
+            "status": { "const": "unavailable" },
+            "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "between_batch_variation_measured": { "const": false }
+          }
+        }
+      ]
     },
     "stageObservation": {
       "oneOf": [
