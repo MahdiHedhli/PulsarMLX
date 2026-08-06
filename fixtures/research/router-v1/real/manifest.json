@@ -1,0 +1,20 @@
+{
+  "byte_identical_copies": true,
+  "commit_marker_installed_last": true,
+  "complete": true,
+  "publication_id": "f002-router-oracle-freeze-0001",
+  "records": [
+    {
+      "byte_length": 148909,
+      "path": "fixtures/research/router-v1/real/f002-router-oracle-freeze-0001.json",
+      "sha256": "3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133"
+    },
+    {
+      "byte_length": 148909,
+      "path": "docs/research/raw/002-router-parity/oracle/f002-router-oracle-freeze-0001.json",
+      "sha256": "3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133"
+    }
+  ],
+  "schema": "pulsarmlx.research.router-oracle-publication-manifest",
+  "schema_version": "1.0.0"
+}

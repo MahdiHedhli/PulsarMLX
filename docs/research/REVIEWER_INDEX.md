@@ -1,7 +1,8 @@
 # Feature 002 Reviewer Index
 
-**Status**: Methodology index initialized. No real evidence, generated result,
-or reviewer-verifiable checkpoint capability is indexed.
+**Status**: The independent CPU-oracle support package is frozen and indexed.
+No Apple MLX checkpoint experiment, generated real result, or promoted router
+capability is indexed.
 
 The governing package is the [Feature 002 specification](../../specs/002-qwen-router-parity/spec.md),
 [plan](../../specs/002-qwen-router-parity/plan.md), [quickstart](../../specs/002-qwen-router-parity/quickstart.md),
@@ -11,7 +12,19 @@ and [experiment protocol](EXPERIMENT_PROTOCOL.md).
 
 ## Raw evidence
 
-No published Feature 002 raw record exists under
+The exact independent CPU reference is available as a byte-identical
+[raw support record](raw/002-router-parity/oracle/f002-router-oracle-freeze-0001.json)
+and [review fixture](../../fixtures/research/router-v1/real/f002-router-oracle-freeze-0001.json),
+bound by the [manifest](../../fixtures/research/router-v1/real/manifest.json).
+The support record freezes the complete two-row hidden-state input, all router
+outputs, exact top-8 IDs, hashes, tolerances, source/checkpoint/tensor identity,
+and bounded public provenance. Its record SHA-256 is
+`3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133`;
+the manifest SHA-256 is
+`ba2165b985195ca34df1813189228c0763bef414f0e1040833c069b999e66816`.
+It contains no model or router-tensor bytes and is not an Apple experiment.
+
+No top-level `pulsarmlx.research.experiment` record exists yet under
 `docs/research/raw/002-router-parity/`. The accepted model-free inputs are the
 synthetic [passed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-0001.json),
 [failed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-failed-0001.json),
@@ -84,6 +97,9 @@ capability or performance row.
   candidate and fixture-only regeneration verification.
 - [`publish_evidence.py`](../../scripts/research/publish_evidence.py): atomic,
   append-only installation after validation.
+- [`oracle_publication.py`](../../scripts/research/oracle_publication.py):
+  exact-value validation and manifest-last publication of the bounded CPU
+  reference package.
 
 The current model-free package entrypoint is:
 
@@ -93,7 +109,7 @@ PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
   --fixture-only
 ```
 
-A passing fixture-only verification establishes the methodology package only;
-it does not create a claim row or model result. No checkpoint was resolved or
-opened, no MLX tensor operation ran, and no Apple GPU memory was used to create
-this index.
+A passing fixture-only verification now also checks the exact three-file
+CPU-oracle support inventory. It does not create a claim row or Apple model
+result. No MLX tensor operation ran and no Apple GPU memory was used to create
+the frozen oracle index.

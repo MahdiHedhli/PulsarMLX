@@ -1,7 +1,8 @@
 # Feature 002 Claims Ledger
 
-**Status**: Initialized with zero public Feature 002 claims. No external model
-experiment has run and no router capability has been promoted.
+**Status**: The independent CPU oracle support package is frozen, with zero
+public Feature 002 claims. No Apple MLX checkpoint experiment has run and no
+router capability has been promoted.
 
 There are zero public Feature 002 capability or performance claims. The table
 below intentionally has no data rows. A row may be added only when its status
@@ -32,9 +33,11 @@ interpretation outside the evidence scope.
 
 The synthetic fixture record's internal provisional boundary is not a public
 claim, and its constructed failed and aborted records are not observed model
-failures. They validate a zero-row ledger but cannot promote a claim. Repaired,
-repeated, failed, and aborted work receives a new experiment ID; linked raw
-history is never rewritten or deleted.
+failures. The frozen CPU-oracle support record is an immutable reference input
+and output, not Apple execution or parity evidence. These artifacts validate a
+zero-row ledger but cannot promote a claim. Repaired, repeated, failed, and
+aborted work receives a new experiment ID; linked raw history is never
+rewritten or deleted.
 
 | Claim | Evidence files | Commit | Scope | Status | Caveat |
 | --- | --- | --- | --- | --- | --- |

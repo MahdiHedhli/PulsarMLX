@@ -3548,3 +3548,83 @@ This scanned documentation-only commit is the final non-recursive CI
 attestation before retrying T077. Its own CI result is verified out of tree and
 will not be recursively appended. The pre-access NTFY hardware pause remains
 active; no duplicate notification is required.
+
+### T077-T081 independent CPU oracle freeze
+
+The non-recursive prerequisite attestation was committed as
+`f604eed4de976c7e08bd24fed50b9d8c69449556` and pushed without force.
+[GitHub Actions run 31086950283](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31086950283)
+passed for that exact commit: Apple MLX small-fixture validation completed in
+57 seconds and the Apple Silicon workspace baseline completed in 1 minute 55
+seconds. The branch was then clean, equal to `origin/main`, and descended from
+every required methodology and admission commit before the T077 retry.
+
+Two independently started CPU-only captures used the pinned clean llama.cpp
+revision `b06aa774c03dbbb624e726664b714a57d1f49815`, direct token IDs `[0,1]`,
+positions `[0,1]`, context/batch/ubatch of two, one thread, and no tokenizer.
+Both captured the complete finite `[2,2048]` F32 output of `ffn_norm-0` with
+canonical input SHA-256
+`978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7`.
+Each capture proved one CPU scheduler split, synchronized target completion,
+an armed abort guard, zero true abort callbacks, no callback node after the
+target, and cancellation before router or expert execution. Their scheduler
+input counts were both zero. The full capture bytes were identical, while the
+two retained hidden rows were distinct.
+
+The standalone scalar F32 oracle imported neither MLX nor PulsarMLX worker
+code. It read the exact admitted F32 router range and produced all 256 logits,
+all 256 full-softmax probabilities, pre-normalization selected probabilities,
+and architecture-correct normalized top-8 weights. Row 0 selected
+`[114,45,99,46,98,74,102,65]`; row 1 selected
+`[73,95,114,99,102,46,108,106]`. Neither row had a rank-8/rank-9 cutoff tie.
+The independent NumPy cross-check had zero mismatches; maximum absolute error
+was `1.430511474609375e-6` and maximum relative error was
+`2.903159876627318e-7`, below the precommitted `5e-4` combined tolerance.
+
+The complete ten-file external bundle was verified read-only. Its candidate
+SHA-256 is
+`b27ab74a539b06bfdd48f9be5c4353d7987a972448cac74fb959c48f783d8b6a`,
+bundle-manifest SHA-256 is
+`14cfa011aa621ab64d016469521d4e2bad8c18fd88708728ad2728de54bdd7f6`,
+oracle-document SHA-256 is
+`e31e4337ddf2c7cf1bb6cfe721428e6baaeffec7e29aee0f77727969e756e645`,
+and complete output-bundle SHA-256 is
+`eba36f9149b61f0d408de3ec5ad6ba73d1ff45b98867a4da56cfc586109ee93f`.
+The admitted tensor remained
+`blk.0.ffn_gate_inp.weight`, F32 `[128,2048]`, byte range
+`1115085312..1116133888`, SHA-256
+`98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c`.
+No tensor parsing, hidden-state discovery, or model loading is described as
+router execution.
+
+The complete bundle verifier and its reviewer fixes were committed as
+`37e3668ba9f845bf954305da07712ad5e1169481`.
+[GitHub Actions run 31090774079](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31090774079)
+passed: Apple MLX small-fixture validation completed in 47 seconds and the
+workspace baseline completed in 1 minute 38 seconds. A separate bounded
+publisher was then implemented and independently reviewed. It pins the exact
+candidate, input, output, NumPy, and canonical capture-provenance identities;
+reconstructs every numerical output; rejects private paths, runtime identity,
+model/tensor bytes, FIFOs, short reads, symlinks, unknown files, noncanonical
+bytes, and coherent alternate outputs; and uses rollback plus a manifest-last
+logical transaction. Its 18 focused tests and the complete 195-test research
+suite passed. Commit `c67aaca604da48526aac18fbefcc8a7afdab7f52` was pushed,
+and [GitHub Actions run 31093545740](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31093545740)
+passed both jobs: the native small-fixture job completed in 59 seconds and the
+workspace baseline in 1 minute 33 seconds.
+
+From that clean/equal commit, the formal external verifier passed again and
+the publisher installed byte-identical 148,909-byte records under
+`fixtures/research/router-v1/real/` and
+`docs/research/raw/002-router-parity/oracle/`, followed by the fixture manifest.
+The record SHA-256 is
+`3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133`;
+the manifest SHA-256 is
+`ba2165b985195ca34df1813189228c0763bef414f0e1040833c069b999e66816`.
+The public package contains complete derived hidden states and oracle outputs,
+but no checkpoint bytes, router weights, capture binaries, private paths, or
+device/inode identities. It is a frozen CPU reference, not Apple execution,
+MLX parity, performance, expert execution, a complete layer, or inference.
+No Apple router output has been produced or inspected. The original
+acknowledged NTFY hardware pause remains active for T082-T085; no duplicate
+start notification is required.
