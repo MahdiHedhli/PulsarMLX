@@ -170,3 +170,22 @@ See [CLAIMS_LEDGER_007.md](CLAIMS_LEDGER_007.md) — F007-C01 verified.
 - F005 residual MoE self-parity (independent Q8_0 experts) remains verified.
 - F006 llama `l_out` / fused MoE parity remains rejected (max abs ~3.4e-3) despite
   matching top-8 expert IDs `[114,45,99,46,98,74,102,65]`.
+
+---
+
+# Feature 008 Reviewer Index (F006 root cause)
+
+**Status**: Resolved by contract **B**. A≈B (~1e-7); B≠C (~3.4e-3) due to
+llama Q8_0×Q8_0 activation requantization.
+
+## Evidence
+
+- [decision record](raw/008-f006-root-cause/f008-f006-root-cause-0001.json)
+- [summary](raw/008-f006-root-cause/f006-rootcause-summary.json)
+- Intermediate llama captures: gate/up/down/weighted/moe/weights/logits under
+  `raw/008-f006-root-cause/`
+
+## Claims
+
+[CLAIMS_LEDGER_008.md](CLAIMS_LEDGER_008.md) F008-C01 verified.
+[CLAIMS_LEDGER_006.md](CLAIMS_LEDGER_006.md) F006-C01 rejected preserved; F006-C02 architecture oracle verified.

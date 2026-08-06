@@ -18,8 +18,9 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 | F004 Top-8 aggregation | Complete (F004-C01) |
 | F005 Complete MoE residual block (indep. MoE path) | Complete (F005-C01) |
 | F007 Pre-FFN residual capture + RMSNorm link | Complete (F007-C01) |
-| F006 Complete transformer layer vs llama `l_out` | **Rejected / blocked** (MoE kernel gap) |
-| F008+ Multi-layer, logits, tokens, benchmarks | **Blocked on F006** |
+| F006 Layer-0 vs llama bit-parity | **Rejected** (preserved); architecture oracle = F005 |
+| F008 F006 root cause (Q8_0×Q8_0 vs f32 dequant) | **Complete (F008-C01)** |
+| Next: multi-layer / logits / tokens | Open under architecture oracle |
 | GLM-5.2 | **Not admitted** |
 
 ## Feature completion
@@ -64,15 +65,22 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 - F002 fixture **not** regenerated  
 - Evidence: `docs/research/raw/007-pre-ffn-residual/`
 
-### Feature 006 — Layer-0 output (rejected)
+### Feature 006 — Layer-0 / llama bit-parity
 
-- Captured `l_out-0` / `ffn_moe_out-0` from pinned llama.cpp  
-- Independent F005 block vs `l_out-0`: max abs ≈ **3.43e-3**, 182 mismatches  
-- Cosine F004 vs llama MoE ≈ **0.999990**  
-- Llama `ffn_moe_topk` row0 IDs match F002: **[114, 45, 99, 46, 98, 74, 102, 65]**  
-  (gap is expert MLP / accumulation, not routing selection)  
-- Evidence retained: `docs/research/raw/006-layer-out/`  
-- **No F006 verified claim.** Deepest verified remains F005.
+- Llama bit-parity **rejected** (evidence preserved).  
+- Architecture-level layer-0 MoE residual **verified** as F005.  
+- Root cause: Feature 008.
+
+### Feature 008 — F006 root cause
+
+- Pairwise: A≈B ~**6e-8**; B≠C ~**3.4e-3** (cosine ~0.99999).  
+- First diverge: expert **gate/up** Q8_0 matvec (not routing, not residual).  
+- llama: F32 act → **Q8_0 requant** → Q8_0×Q8_0 dots  
+  (`type_traits_cpu[Q8_0].vec_dot_type = Q8_0`).  
+- Independent oracle / PulsarMLX: **f32 dequant weights × f32 act**.  
+- Q8_0×Q8_0 reproduction matches llama expert 114 within ~**2e-7**.  
+- Contract **B**: keep architecture oracle; do not claim llama bit-parity.  
+- Evidence: `docs/research/raw/008-f006-root-cause/`
 
 ## Correctness
 
@@ -173,17 +181,11 @@ PYTHONPATH=scripts/research uv run python -B scripts/research/moe_block_parity.p
 Deepest verified boundary: **Feature 005** residual MoE block
 (`y = ffn_inp + independent top-8 MoE(ffn_norm)`).
 
-### Unblock Feature 006
+### After F008 (next roadmap)
 
-1. Diff independent Q8_0 expert matvec / SwiGLU / weight application against
-   llama.cpp fused `build_moe_ffn` for expert 114 alone using captured
-   `ffn_moe_out` contribution isolation if available.
-2. Check expert tensor layout (row-major vs packed), Q8_0 block decode, and
-   whether llama accumulates expert outputs in f16/f32 differently.
-3. Do **not** loosen 5e-4 tolerances or replace the independent oracle with
-   llama outputs without a new admitted contract.
-4. When max abs vs `ffn_moe_out-0` is within frozen tolerances, re-run residual
-   add and `l_out-0` parity; only then open F007 multi-layer.
+1. Multi-layer replay under **architecture oracle** (f32 dequant path).  
+2. Optional: separate llama-parity mode using Q8_0×Q8_0 (not required).  
+3. First logits → greedy token → bounded prompts → benchmarks → scaling/GLM.  
 
 ### Reproduction of rejection
 

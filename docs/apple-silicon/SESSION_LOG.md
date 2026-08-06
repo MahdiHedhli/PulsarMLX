@@ -4118,3 +4118,12 @@ link (max abs ~8.5e-8, 0 mismatches). F002 freeze not regenerated.
 Also confirmed llama fused MoE top-8 IDs match F002 exactly; F006 numerical gap
 is confined to expert MLP/accumulation vs independent Q8_0 path.
 
+## 2026-08-06 — Feature 008 F006 root cause
+
+Froze F006 case; pairwise A/B/C: A≈B (~6e-8), B≠C (~3.4e-3). Captured llama
+intermediates (logits, topk, weights, gate, up, swiglu, down, weighted, moe).
+First divergence at expert gate/up Q8_0 matvec. Source: ggml mul_mat requantizes
+F32 activations to Q8_0 for Q8_0 weights. Independent Q8_0×Q8_0 reproduction
+matches llama within ~2e-7. Contract B: architecture oracle remains F003–F005;
+llama bit-parity not claimed. F006-C02 recorded.
+

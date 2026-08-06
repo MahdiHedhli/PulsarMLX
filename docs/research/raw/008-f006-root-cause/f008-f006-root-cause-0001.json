@@ -1,0 +1,164 @@
+{
+  "actual_status": "resolved_by_contract",
+  "contract_decision": {
+    "choice": "B",
+    "not_chosen": {
+      "A": "PulsarMLX is not wrong relative to architecture-level independent oracle",
+      "C": "Boundary is correct (ffn_moe_out / l_out)",
+      "D": "No omitted component; top-k, weights, SwiGLU form, residual all match"
+    },
+    "statement": "llama fused MoE uses implementation-specific Q8_0\u00d7Q8_0 matmul (activation requantized). PulsarMLX A and independent CPU oracle B implement architecture-level Q8_0 weight dequant \u00d7 f32 activation. A and B remain the verified contract (F003\u2013F005). Bit-identical llama MoE parity is not required and is not claimed."
+  },
+  "decomposition": {
+    "accumulation": "not primary; sum of llama weighted equals llama moe (~1e-7)",
+    "first_divergent_boundary": "expert_gate_and_up_q8_0_matvec (unweighted MLP)",
+    "normalized_weights": "agree within 3.5e-7 max_abs",
+    "per_expert_gate_max_abs_approx": "~4e-3",
+    "router_logits": "activation ffn_norm identical (max_abs=0 vs F002 freeze)",
+    "swiglu_formula": "silu(gate)*up (confirmed; reverse ordering fails)",
+    "top8_ids": "exact match [114,45,99,46,98,74,102,65]"
+  },
+  "experiment_id": "f008-f006-root-cause-0001",
+  "feature_id": "008-f006-root-cause",
+  "frozen_case": {
+    "checkpoint_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    "feature_id": "008-f006-root-cause",
+    "first_divergent_boundary": "expert_unweighted_mlp",
+    "input_activation_sha256": "062e42f277e26af0042d52e5e30f895523c7f26cffb866b970dc0ae1c1dbe296",
+    "layer": 0,
+    "pairwise": {
+      "A_vs_B_published_max_abs": 6.19571565163568e-08,
+      "A_vs_B_published_mismatches": 0,
+      "B_vs_C_cosine": 0.9999904619003478,
+      "B_vs_C_max_abs": 0.003434651089823104,
+      "B_vs_C_mismatches": 148
+    },
+    "per_expert_unweighted_max_abs": {
+      "102": 0.00123604307073584,
+      "114": 0.010002376344593777,
+      "45": 0.003912535498616372,
+      "46": 0.0006600646582544945,
+      "65": 0.0021236866713903457,
+      "74": 0.0008753999039925935,
+      "98": 0.0014402012821960741,
+      "99": 0.004545725382682497
+    },
+    "per_expert_weighted_max_abs": {
+      "102": 0.00011173138798041375,
+      "114": 0.0020054720327934428,
+      "45": 0.0007619444000794701,
+      "46": 7.394372523694855e-05,
+      "65": 0.00018247494573381262,
+      "74": 8.294877135288955e-05,
+      "98": 0.000151910743867327,
+      "99": 0.0005281911814956075
+    },
+    "reference_revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+    "routing_weights_f002": [
+      0.20055663585662842,
+      0.19474391639232635,
+      0.11622494459152222,
+      0.11203397810459137,
+      0.1054089143872261,
+      0.09475458413362503,
+      0.0904117301106453,
+      0.08586523681879044
+    ],
+    "routing_weights_llama_norm": [
+      0.20055650174617767,
+      0.19474387168884277,
+      0.1162247434258461,
+      0.11203383654356003,
+      0.10540914535522461,
+      0.0947548896074295,
+      0.09041143953800201,
+      0.08586558699607849
+    ],
+    "routing_weights_llama_raw": [
+      0.04770307242870331,
+      0.04632051661610603,
+      0.02764446660876274,
+      0.026647644117474556,
+      0.02507193759083748,
+      0.02253778465092182,
+      0.021504679694771767,
+      0.02042343281209469
+    ],
+    "top8_ids_f002": [
+      114,
+      45,
+      99,
+      46,
+      98,
+      74,
+      102,
+      65
+    ],
+    "top8_ids_llama": [
+      114,
+      45,
+      99,
+      46,
+      98,
+      74,
+      102,
+      65
+    ],
+    "top8_ids_match": true,
+    "weight_comparison": {
+      "absolute_tolerance": 0.0005,
+      "compared_count": 8,
+      "cosine": 0.9999999999984557,
+      "first_max_error_actual": 0.08586558699607849,
+      "first_max_error_index": 7,
+      "first_max_error_reference": 0.08586523681879044,
+      "first_mismatch": null,
+      "label": "w",
+      "maximum_absolute_error": 3.501772880554199e-07,
+      "maximum_relative_error": 4.078219556937021e-06,
+      "mean_absolute_error": 2.123415470123291e-07,
+      "mismatch_count": 0,
+      "passed": true,
+      "relative_tolerance": 0.0005,
+      "rmse": 2.3297216167680278e-07
+    }
+  },
+  "implications": {
+    "F005_architecture_oracle": "remains verified",
+    "F006_llama_bit_parity": "unsupported (documented semantic difference)",
+    "optional_future": "llama-parity mode via Q8_0 activation quant + Q8_0\u00d7Q8_0 dots if product requires bit-match"
+  },
+  "llama_semantics": {
+    "architecture_level_path": "Dequantize Q8_0 weights to f32; multiply by f32 activation (no activation requantization)",
+    "files": [
+      "src/models/qwen3moe.cpp (build_moe_ffn call, norm_w=true, SILU/SwiGLU)",
+      "src/llama-graph.cpp:build_moe_ffn / build_lora_mm_id",
+      "ggml/src/ggml-cpu/ggml-cpu.c:ggml_compute_forward_mul_mat",
+      "ggml/src/ggml-cpu/ggml-cpu.c type_traits_cpu[GGML_TYPE_Q8_0].vec_dot_type = GGML_TYPE_Q8_0"
+    ],
+    "matmul_path": "Weights are Q8_0; activations are dynamically quantized to Q8_0 (from_float) then Q8_0\u00d7Q8_0 vec_dot",
+    "reference_revision": "b06aa774c03dbbb624e726664b714a57d1f49815"
+  },
+  "pairwise": {
+    "A_mlx_vs_B_cpu_independent": {
+      "classification": "agree",
+      "maximum_absolute_error": 6.19571565163568e-08,
+      "mismatch_count": 0,
+      "source": "docs/research/raw/004-top8-moe/f004-top8-aggregate-parity-0001.json"
+    },
+    "B_cpu_independent_vs_C_llama_fused": {
+      "classification": "disagree",
+      "cosine": 0.9999904619003478,
+      "maximum_absolute_error": 0.003434651089823104,
+      "mismatch_count": 148
+    }
+  },
+  "reproduction_proof": {
+    "claim": "Independent Q8_0\u00d7Q8_0 matvec matches llama expert gate/up/down within ~2e-7",
+    "expert_114_full_mlp_q8xq8_vs_llama_down_max_abs": 3.822e-07,
+    "expert_114_gate_f32dequant_vs_llama_max_abs": 0.004044,
+    "expert_114_gate_q8xq8_vs_llama_max_abs": 2.082e-07
+  },
+  "schema": "pulsarmlx.research.f006-root-cause",
+  "schema_version": "1.0.0"
+}
