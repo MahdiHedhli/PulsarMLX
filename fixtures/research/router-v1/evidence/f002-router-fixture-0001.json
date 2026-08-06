@@ -647,8 +647,8 @@
     "encoded_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "end_offset": 1048576,
     "execution_shape": [
-      2048,
-      128
+      128,
+      2048
     ],
     "gguf_dimensions": [
       2048,

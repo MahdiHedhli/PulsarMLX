@@ -219,7 +219,7 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
             "occurrence_count": 1,
             "gguf_dimensions": [2048, 128],
             "reader_shape": [128, 2048],
-            "execution_shape": [2048, 128],
+            "execution_shape": [128, 2048],
             "dtype": "F32",
             "quantization": "none_f32",
             "absolute_offset": 0,
@@ -384,6 +384,21 @@ class EvidenceValidatorContractTests(unittest.TestCase):
 
     def test_accepts_a_structurally_and_semantically_valid_fixture(self) -> None:
         self._assert_accepted(valid_evidence())
+
+    def test_execution_shape_names_the_weight_before_matmul_transpose(self) -> None:
+        record = valid_evidence()
+        tensor = record["tensor"]
+        self.assertEqual(tensor["reader_shape"], [128, 2048])
+        self.assertEqual(tensor["execution_shape"], [128, 2048])
+
+        transposed_rhs_shape = valid_evidence("f002-router-transposed-rhs-shape")
+        transposed_rhs_shape["tensor"]["execution_shape"] = [2048, 128]
+        self._assert_rejected(
+            {
+                f"{transposed_rhs_shape['experiment_id']}.json": transposed_rhs_shape
+            },
+            "semantic_relationship",
+        )
 
     def test_rejects_schema_identity_and_version_mutations(self) -> None:
         mutations = (

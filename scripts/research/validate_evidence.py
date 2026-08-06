@@ -1265,7 +1265,7 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
         or tensor["occurrence_count"] != 1
         or tensor["gguf_dimensions"] != [2048, 128]
         or tensor["reader_shape"] != [128, 2048]
-        or tensor["execution_shape"] != [2048, 128]
+        or tensor["execution_shape"] != [128, 2048]
         or tensor["dtype"] != "F32"
         or tensor["quantization"] != "none_f32"
     ):

@@ -78,7 +78,10 @@
         "occurrence_count": { "const": 1 },
         "gguf_dimensions": { "const": [2048, 128] },
         "reader_shape": { "const": [128, 2048] },
-        "execution_shape": { "const": [2048, 128] },
+        "execution_shape": {
+          "description": "Shape of the execution weight object before the explicit mathematical transpose; the matmul right-hand side is [2048, 128].",
+          "const": [128, 2048]
+        },
         "dtype": { "const": "F32" },
         "quantization": { "const": "none_f32" },
         "absolute_offset": { "type": "integer", "minimum": 0 },
