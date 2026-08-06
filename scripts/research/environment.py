@@ -396,6 +396,19 @@ def _process_resources(runner: CommandRunner) -> dict[str, Any]:
         if code == 0 and resident_bytes >= 0
         else unavailable("resident memory was unavailable", "ps_resident_kibibytes")
     )
+    if (
+        peak is not None
+        and resident["status"] == "observed"
+        and peak["value"] < resident["value"]
+    ):
+        # The two gauges are sampled sequentially. On macOS, the resident-set
+        # probe can therefore observe a small allocation made after
+        # getrusage(2). A process peak cannot be lower than its current RSS, so
+        # retain the conservative maximum and name both contributing probes.
+        peak = observed(
+            resident["value"],
+            "max_getrusage_ru_maxrss_and_ps_resident",
+        )
     return {
         "collector_process_resident_bytes": resident,
         "collector_peak_resident_bytes": peak

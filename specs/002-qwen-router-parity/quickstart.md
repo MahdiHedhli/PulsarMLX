@@ -106,7 +106,7 @@ export PULSARMLX_ROUTER_FIXTURE_EVIDENCE="$PULSARMLX_ROUTER_EVIDENCE/generated-r
 
 mkdir -p "$PULSARMLX_ENVIRONMENT_EVIDENCE"
 
-python3 scripts/research/environment.py capture \
+PYTHONPATH=python uv run python scripts/research/environment.py capture \
   --repository-root . \
   --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
   --storage-role candidate_evidence_storage \
@@ -122,11 +122,11 @@ PULSARMLX_MODEL_GGUF='' cargo run --release -p mlx-backend \
   --manifest fixtures/research/router-v1/manifest.json \
   --evidence "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE"
 
-python3 scripts/research/environment.py extract-resources \
+PYTHONPATH=python uv run python scripts/research/environment.py extract-resources \
   --candidate "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE" \
   --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json"
 
-python3 scripts/research/environment.py capture \
+PYTHONPATH=python uv run python scripts/research/environment.py capture \
   --repository-root . \
   --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
   --storage-role candidate_evidence_storage \
@@ -136,7 +136,7 @@ python3 scripts/research/environment.py capture \
   --benchmark-concurrency 1 \
   --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json"
 
-python3 scripts/research/environment.py combine \
+PYTHONPATH=python uv run python scripts/research/environment.py combine \
   --before "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json" \
   --after "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json" \
   --benchmark-resources "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json" \

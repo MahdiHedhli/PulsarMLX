@@ -170,6 +170,31 @@ class EnvironmentCollectorContractTests(unittest.TestCase):
         self.assertNotIn("private-user", json.dumps(snapshot))
         self.assertEqual(snapshot["interference_admission"], "admitted")
 
+    def test_peak_resident_memory_is_never_below_later_current_sample(self) -> None:
+        usage = SimpleNamespace(ru_maxrss=1024, ru_utime=0.1, ru_stime=0.2)
+
+        def runner(argv):
+            if tuple(argv)[:3] == ("/bin/ps", "-o", "rss="):
+                return 0, "2\n"
+            return 127, ""
+
+        with (
+            mock.patch.object(environment.sys, "platform", "darwin"),
+            mock.patch.object(environment.resource, "getrusage", return_value=usage),
+        ):
+            resources = environment._process_resources(runner)
+
+        self.assertEqual(
+            resources["collector_process_resident_bytes"]["value"], 2 * 1024
+        )
+        self.assertEqual(
+            resources["collector_peak_resident_bytes"],
+            environment.observed(
+                2 * 1024,
+                "max_getrusage_ru_maxrss_and_ps_resident",
+            ),
+        )
+
     def test_resource_and_interference_admission_fail_closed(self) -> None:
         snapshot = _collect(
             runner=FixtureRunner(pressure="2", power="1", thermal="serious"),
