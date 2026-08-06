@@ -33,6 +33,11 @@ jobs:
       PULSARMLX_MODEL_GGUF: ""
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Evidence records pin the verifier/generator sources at their
+          # measured commit. Later verifier changes therefore need history to
+          # validate those immutable source hashes in fixture-only CI.
+          fetch-depth: 0
       - name: Verify Apple Silicon fixture-only boundary
         run: |
           test "$(uname -m)" = arm64

@@ -3648,3 +3648,28 @@ clean/equal `main`, unchanged checkpoint and router identities, the intended
 MLX GPU with no fallback, normal resource/load/pressure/thermal admission, and
 the still-active acknowledged operator pause. No Apple checkpoint router
 output has yet been produced or inspected.
+
+### Pre-T083 evidence-contract CI correction
+
+The case-scoped determinism, real-oracle identity, promotion-identity, and
+fresh-process `0+1` cohort corrections passed 202 local research tests, three
+fixture records, fixture-only package regeneration of six artifacts,
+`git diff --check`, and the standardized staged safety scan. They were
+committed as `2d3dcb67613534531147671e4a6c144304efc77d` and pushed without
+force.
+
+[GitHub Actions run 31096623612](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31096623612)
+then exposed one CI-only history dependency. The Apple Silicon workspace job
+passed. The Apple MLX small-fixture job ran all 202 research tests and had one
+failure: its fixture-only package subprocess could not validate the immutable
+CPU-oracle verifier source because `actions/checkout` had provided only the
+new head commit after that verifier changed. The oracle record correctly pins
+the historical verifier SHA, but the shallow checkout could not execute the
+required `git show <measured-commit>:<source>` fallback. The failure was not a
+router, MLX, schema, privacy, model-access, or numerical result.
+
+The bounded correction sets `fetch-depth: 0` only for the fixture-validation
+job so immutable historical source hashes remain verifiable after later
+tooling changes. No checkpoint access or Apple real-router execution occurred
+during this correction; T083 remains incomplete and the acknowledged hardware
+pause remains active.
