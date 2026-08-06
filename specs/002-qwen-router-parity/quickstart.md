@@ -232,6 +232,12 @@ Run read-only router inspection before CPU or Apple execution:
 cargo run --release -p mlx-backend --bin pulsar-mlx -- inspect-router \
   --model "$PULSARMLX_MODEL_GGUF" \
   --evidence "$PULSARMLX_ROUTER_INSPECTION"
+
+PYTHONDONTWRITEBYTECODE=1 python3 -B \
+  scripts/research/validate_router_inspection.py \
+  --input "$PULSARMLX_ROUTER_INSPECTION" \
+  --environment "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/router-inspection-validation.json"
 ```
 
 The record must prove one exact `blk.0.ffn_gate_inp.weight`, expected GGUF
@@ -239,6 +245,13 @@ dimensions `[2048,128]`, reader shape `[128,2048]`, observed type, exact offset
 and length, range SHA-256, 128 experts, top-8, full-softmax/renormalization
 metadata, absent bias/correction bias, and scale 1.0. Expected F32/1,048,576
 bytes remain assumptions until this command observes them.
+
+The validator additionally requires that the inspection commit exists and is
+the clean current `HEAD`, and binds the candidate to a fresh admitted
+`model_storage` before snapshot. Thermal state and workload must be resolved;
+an unprivileged desktop power-mode probe may remain explicitly unavailable,
+but an observed low-power mode is not admitted. The validation report remains
+external until a later raw-evidence publication task explicitly admits it.
 
 ## 5. Freeze the independent real CPU oracle
 

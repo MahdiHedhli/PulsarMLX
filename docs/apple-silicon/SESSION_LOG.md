@@ -3437,3 +3437,72 @@ This documentation/task-state commit is the deliberately non-recursive T072
 CI attestation. Its own CI conclusion is verified out of tree before T073 and
 is not appended recursively. No checkpoint path has been resolved, searched,
 statted, hashed, opened, or read.
+
+### T073-T076 notified immutable router admission
+
+The Feature 002 pre-access notification was acknowledged by `ntfy.sh` at
+`2026-08-06T07:15:45Z` with response event ID `iu3HmKnew9Ct`. The requested
+hardware pause therefore remained active throughout the first checkpoint
+inspection. No duplicate notification was sent after recovery.
+
+Before checkpoint access, the read-only inspector and its independent closed
+validator were implemented, reviewed for descriptor/path races, and hardened
+to bind the retained checkpoint file descriptor to the validated pathname,
+reject unreviewed layer-0 router aliases, and publish external candidates via
+directory-anchored no-overwrite writes with file and directory durability.
+Commit `2168803dfdb759ab7352862babb77895a27fd8b6` passed GitHub Actions run
+`31083819717`; both the Apple Silicon workspace baseline and Apple MLX
+small-fixture validation jobs succeeded. A follow-up correction retained an
+unavailable unprivileged desktop power-mode observation instead of requiring a
+fabricated value. Its 24 focused tests and 170-test research suite passed, and
+commit `c0501eb3aca38c13d326e01f25cd9bd8a87604fe` passed both jobs in GitHub
+Actions run `31084309243`.
+
+A fresh external `model_storage` before snapshot at
+`2026-08-06T08:19:44.024089Z` was admitted from clean/equal commit `c0501eb`.
+It observed normal memory pressure, nominal thermal state, no material
+concurrent workload, 20 logical CPUs, load within the frozen per-CPU bound,
+128 GiB unified memory, and more than the frozen storage minimum. The active
+power mode was explicitly unavailable from the unprivileged
+`pmset_live_lowpowermode` probe. Its public-safe SHA-256 is
+`497120c2d1eeff283caf7c6e9f29d566577caa9a5ec988fd9e26bcbd9e83a987`.
+
+The exact commands then executed against local-only symbolic paths were:
+
+```sh
+cargo run --release -p mlx-backend --bin pulsar-mlx -- inspect-router \
+  --model "$PULSARMLX_MODEL_GGUF" \
+  --evidence "$PULSARMLX_ROUTER_INSPECTION"
+
+PYTHONDONTWRITEBYTECODE=1 python3 -B \
+  scripts/research/validate_router_inspection.py \
+  --input "$PULSARMLX_ROUTER_INSPECTION" \
+  --environment "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/router-inspection-validation.json"
+```
+
+Both exited zero. The full checkpoint was admitted as the exact
+`Qwen/Qwen3-30B-A3B-GGUF` revision
+`e4d4bafdfb96a411a163846265362aceb0b9c63a`, Apache-2.0,
+32,483,931,648 bytes, SHA-256
+`4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`.
+The GGUF v3 inventory contained 579 tensors with 241 F32 and 338 Q8_0 entries.
+Exactly one `blk.0.ffn_gate_inp.weight` was observed as F32 with GGUF dimensions
+`[2048,128]`, reader/execution shape `[128,2048]`, absolute byte range
+`1115085312..1116133888`, and complete range SHA-256
+`98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c`.
+All 262,144 decoded F32 values were finite. Typed metadata admitted 128 experts
+and top-8 routing; absent scale metadata retained the architecture value 1.0,
+and absent normalization metadata retained selected-probability
+renormalization. Router bias, known correction bias, and unexpected layer-0
+router-alias occurrence counts were all zero.
+
+The external inspection candidate SHA-256 is
+`0078285d853bbd73fb7f2123cb71a8a8c1c8112ab6f09c802aef2110e140c580`.
+The independent validator bound it to the exact current clean commit and fresh
+environment, rejected private fields and execution claims, and wrote a passing
+external validation report. Neither external file is committed. Inspection
+performed no MLX initialization, worker spawn, router projection, softmax,
+top-k, router output, expert execution, network access, or automatic download.
+This milestone is immutable checkpoint/tensor admission only and does not
+promote a router-execution or model-inference claim.

@@ -16,9 +16,9 @@
     "source": "reused_from_feature_001_committed_evidence",
     "source_record": "docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json"
   },
-  "observed_feature_002_model_access": false,
+  "observed_feature_002_model_access": true,
   "router_tensor_admission": {
-    "expectation_status": "pre_access_contract_not_observation",
+    "expectation_status": "observed_contract_match",
     "expected": {
       "bias": "absent",
       "correction_bias": "absent",
@@ -41,10 +41,55 @@
       "storage": "F32",
       "weight_scale": 1.0
     },
-    "observed": null,
-    "status": "awaiting_notified_read_only_inspection"
+    "observed": {
+      "absolute_offset": 1115085312,
+      "bias_occurrence_count": 0,
+      "bias_present": false,
+      "byte_order": "little",
+      "correction_bias_occurrence_count": 0,
+      "correction_bias_present": false,
+      "encoded_length_bytes": 1048576,
+      "encoded_sha256": "98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c",
+      "exclusive_end_offset": 1116133888,
+      "execution_shape": [
+        128,
+        2048
+      ],
+      "expert_count": 128,
+      "expert_weights_norm_metadata_present": false,
+      "expert_weights_scale_metadata_present": false,
+      "finite_element_count": 262144,
+      "finite_f32_values_verified": true,
+      "gguf_dimensions": [
+        2048,
+        128
+      ],
+      "gguf_type": "F32",
+      "inspection_candidate_sha256": "0078285d853bbd73fb7f2123cb71a8a8c1c8112ab6f09c802aef2110e140c580",
+      "inspection_source_commit": "c0501eb3aca38c13d326e01f25cd9bd8a87604fe",
+      "logical_element_count": 262144,
+      "name": "blk.0.ffn_gate_inp.weight",
+      "normalization_source": "frozen-architecture-contract:qwen3moe.expert_weights_norm-default-true-key-absent",
+      "occurrence_count": 1,
+      "orientation": "expert_major_rows_input_columns",
+      "quantization": "none_f32",
+      "reader_shape": [
+        128,
+        2048
+      ],
+      "relative_offset": 1109115904,
+      "selected_expert_count": 8,
+      "selected_probability_renormalization": true,
+      "semantic_role": "layer_0_router_projection",
+      "storage": "F32",
+      "unexpected_router_alias_occurrence_count": 0,
+      "validation_environment_sha256": "497120c2d1eeff283caf7c6e9f29d566577caa9a5ec988fd9e26bcbd9e83a987",
+      "validation_status": "passed",
+      "weight_scale": 1.0
+    },
+    "status": "admitted_observed"
   },
-  "status": "placeholder_unsealed_no_feature_002_model_access",
+  "status": "sealed_read_only_inspection",
   "unsupported_interpretations": [
     "expert_execution",
     "routed_moe_aggregation",
