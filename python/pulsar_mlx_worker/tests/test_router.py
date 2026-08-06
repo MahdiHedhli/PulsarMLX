@@ -921,6 +921,8 @@ class RouterTimingContractTests(unittest.TestCase):
         observation_kind: str,
         status: str = "passed",
         failure: dict[str, str] | None = None,
+        output_sha256: str = "a" * 64,
+        include_dequantization: bool = True,
     ):
         recorder = router_module.RouterTimingRecorder(
             clock_ns=ScriptedNanosecondClock(10_000, 10_025)
@@ -933,10 +935,11 @@ class RouterTimingContractTests(unittest.TestCase):
                 gpu="gpu",
                 operation=lambda: ("logits", "probabilities", "ids", "weights"),
             )
-        recorder.record_not_applicable(
-            stage="dequantization",
-            reason="f32_router_requires_no_dequantization",
-        )
+        if include_dequantization:
+            recorder.record_not_applicable(
+                stage="dequantization",
+                reason="f32_router_requires_no_dequantization",
+            )
         return recorder.finish(
             observation_id=observation_id,
             run_index=run_index,
@@ -948,7 +951,7 @@ class RouterTimingContractTests(unittest.TestCase):
             requested_device="gpu",
             selected_device="gpu" if status == "passed" else "not_available",
             fallback_used=False,
-            output_sha256=("a" * 64) if status == "passed" else None,
+            output_sha256=output_sha256 if status == "passed" else None,
             correctness_passed=True if status == "passed" else None,
             failure=failure,
         )
@@ -965,6 +968,13 @@ class RouterTimingContractTests(unittest.TestCase):
             gpu="gpu",
             operation=lambda: ("final-output",),
         )
+        recorder.record_not_applicable(
+            stage="dequantization",
+            reason="f32_router_requires_no_dequantization",
+        )
+        execution_timing = recorder.execution_timing(
+            instrumentation_mode="minimally_instrumented"
+        ).to_protocol_result()
         observation = recorder.finish(
             observation_id="measurement-00",
             run_index=0,
@@ -986,6 +996,16 @@ class RouterTimingContractTests(unittest.TestCase):
         self.assertEqual(total, {"status": "observed", "duration_ns": 137})
         self.assertIs(type(total["duration_ns"]), int)
         self.assertGreater(total["duration_ns"], 0)
+        self.assertEqual(
+            execution_timing,
+            {
+                "monotonic_clock": "perf_counter_ns",
+                "instrumentation_mode": "minimally_instrumented",
+                "evaluated": True,
+                "synchronized": True,
+                "stages": payload["stages"],
+            },
+        )
 
     def test_minimally_instrumented_total_has_one_evaluated_sync_barrier(self) -> None:
         events: list[tuple[str, object]] = []
@@ -1069,14 +1089,22 @@ class RouterTimingContractTests(unittest.TestCase):
                 run_index=0,
                 observation_kind="measurement",
                 status="failed",
-                failure={"code": "evaluation_failed", "message": "bounded failure"},
+                failure={
+                    "code": "evaluation_failed",
+                    "message": "bounded failure",
+                    "stage": "router_execution",
+                },
             ),
             self.make_observation(
                 observation_id="measurement-01",
                 run_index=1,
                 observation_kind="measurement",
                 status="aborted",
-                failure={"code": "resource_limit", "message": "bounded abort"},
+                failure={
+                    "code": "resource_limit",
+                    "message": "bounded abort",
+                    "stage": "resource_admission",
+                },
             ),
         )
         for attempt in attempts:
@@ -1096,6 +1124,213 @@ class RouterTimingContractTests(unittest.TestCase):
         )
         self.assertEqual(payloads[1]["failure"]["code"], "evaluation_failed")
         self.assertEqual(payloads[2]["failure"]["code"], "resource_limit")
+
+    def test_invalid_clocks_and_duplicate_stages_fail_closed(self) -> None:
+        for timestamps in (
+            (True, 2),
+            (-1, 2),
+            (2**64, 2**64),
+            (7, 7),
+            (8, 7),
+        ):
+            with self.subTest(timestamps=timestamps):
+                recorder = router_module.RouterTimingRecorder(
+                    clock_ns=ScriptedNanosecondClock(*timestamps)
+                )
+                with self.assertRaises(RouterError):
+                    recorder.measure_evaluated(
+                        stage="total_evaluated_router",
+                        mx_module=TimingBoundarySpy([]),
+                        gpu="gpu",
+                        operation=lambda: ("output",),
+                    )
+
+        recorder = router_module.RouterTimingRecorder()
+        recorder.record_not_applicable(
+            stage="dequantization",
+            reason="f32_router_requires_no_dequantization",
+        )
+        with self.assertRaises(RouterError):
+            recorder.record_not_applicable(
+                stage="dequantization",
+                reason="f32_router_requires_no_dequantization",
+            )
+
+        poisoned = router_module.RouterTimingRecorder(
+            clock_ns=ScriptedNanosecondClock(9, 9)
+        )
+        with self.assertRaises(RouterError):
+            poisoned.measure_evaluated(
+                stage="total_evaluated_router",
+                mx_module=TimingBoundarySpy([]),
+                gpu="gpu",
+                operation=lambda: ("output",),
+            )
+        retried: list[str] = []
+        with self.assertRaises(RouterError):
+            poisoned.measure_evaluated(
+                stage="router_projection",
+                mx_module=TimingBoundarySpy([]),
+                gpu="gpu",
+                operation=lambda: retried.append("ran") or ("output",),
+            )
+        self.assertEqual(retried, [])
+        poisoned.record_not_applicable(
+            stage="dequantization",
+            reason="f32_router_requires_no_dequantization",
+        )
+        retained = poisoned.finish(
+            observation_id="failed-clock-00",
+            run_index=0,
+            observation_kind="measurement",
+            process_state="reused_process",
+            condition="warm",
+            instrumentation_mode="minimally_instrumented",
+            status="failed",
+            requested_device="gpu",
+            selected_device="gpu",
+            fallback_used=False,
+            output_sha256=None,
+            correctness_passed=None,
+            failure={
+                "code": "evaluation_failed",
+                "message": "monotonic clock failed",
+                "stage": "total_evaluated_router",
+            },
+        )
+        self.assertEqual(retained.status, "failed")
+
+    def test_f32_observation_requires_explicit_not_applicable_dequantization(
+        self,
+    ) -> None:
+        with self.assertRaises(RouterError):
+            self.make_observation(
+                observation_id="measurement-00",
+                run_index=0,
+                observation_kind="measurement",
+                include_dequantization=False,
+            )
+
+        recorder = router_module.RouterTimingRecorder(
+            clock_ns=ScriptedNanosecondClock(10, 20)
+        )
+        recorder.measure_evaluated(
+            stage="total_evaluated_router",
+            mx_module=TimingBoundarySpy([]),
+            gpu="gpu",
+            operation=lambda: ("output",),
+        )
+        with self.assertRaises(RouterError):
+            recorder.record_unavailable(
+                stage="dequantization",
+                reason="dequantization status was not observed",
+            )
+
+    def test_series_rejects_gaps_and_hash_changes_without_partial_retention(
+        self,
+    ) -> None:
+        series = router_module.RouterTimingSeries()
+        first = self.make_observation(
+            observation_id="measurement-00",
+            run_index=0,
+            observation_kind="measurement",
+        )
+        series.retain(first)
+
+        for rejected in (
+            self.make_observation(
+                observation_id="measurement-02",
+                run_index=2,
+                observation_kind="measurement",
+            ),
+            self.make_observation(
+                observation_id="measurement-01-other-hash",
+                run_index=1,
+                observation_kind="measurement",
+                output_sha256="b" * 64,
+            ),
+        ):
+            with self.assertRaises(RouterError):
+                series.retain(rejected)
+            self.assertEqual(series.raw_timing_observations, (first,))
+
+        second = self.make_observation(
+            observation_id="measurement-01",
+            run_index=1,
+            observation_kind="measurement",
+        )
+        series.retain(second)
+        self.assertEqual(series.raw_timing_observations, (first, second))
+
+        payload = series.to_protocol_result(
+            process_replication_id="timing-process-01"
+        )
+        payload[0]["stages"]["total_evaluated_router"]["duration_ns"] = 999
+        fresh_payload = series.to_protocol_result(
+            process_replication_id="timing-process-01"
+        )
+        self.assertEqual(
+            fresh_payload[0]["stages"]["total_evaluated_router"]["duration_ns"],
+            25,
+        )
+        with self.assertRaises(TypeError):
+            first.stages["dequantization"] = router_module.RouterTimingStage(
+                status="not_applicable",
+                reason="f32_router_requires_no_dequantization",
+            )
+        with self.assertRaises(RouterError):
+            series.to_protocol_result(process_replication_id="timing-process-02")
+
+    def test_stage_diagnostics_are_separate_and_failures_are_sanitized(self) -> None:
+        recorder = router_module.RouterTimingRecorder(
+            clock_ns=ScriptedNanosecondClock(100, 130)
+        )
+        recorder.measure_evaluated(
+            stage="router_projection",
+            mx_module=TimingBoundarySpy([]),
+            gpu="gpu",
+            operation=lambda: ("logits",),
+        )
+        recorder.record_not_applicable(
+            stage="dequantization",
+            reason="f32_router_requires_no_dequantization",
+        )
+        diagnostic = recorder.finish(
+            observation_id="diagnostic-00",
+            run_index=0,
+            observation_kind="measurement",
+            process_state="reused_process",
+            condition="warm",
+            instrumentation_mode="stage_instrumented",
+            status="passed",
+            requested_device="gpu",
+            selected_device="gpu",
+            fallback_used=False,
+            output_sha256="a" * 64,
+            correctness_passed=True,
+        )
+        self.assertEqual(
+            diagnostic.to_protocol_result()["stages"]["router_projection"],
+            {"status": "observed", "duration_ns": 30},
+        )
+
+        private_home_marker = "/" + "Users/"
+        failed = self.make_observation(
+            observation_id="failed-00",
+            run_index=0,
+            observation_kind="measurement",
+            status="failed",
+            failure={
+                "code": "evaluation_failed",
+                "message": (
+                    f"failed at {private_home_marker}private/checkpoint.gguf"
+                ),
+                "stage": "router_execution",
+            },
+        )
+        failure = failed.to_protocol_result()["failure"]
+        self.assertNotIn(private_home_marker, failure["message"])
+        self.assertEqual(failure["stage"], "router_execution")
 
 
 @unittest.skipUnless(
@@ -1251,6 +1486,26 @@ class RouterExecutionContractTests(unittest.TestCase):
             result.normalized_weights_f32le_sha256,
             _canonical_f32le_sha256(result.normalized_weights),
         )
+        timing = result.timing.to_protocol_result()
+        self.assertEqual(timing["monotonic_clock"], "perf_counter_ns")
+        self.assertEqual(
+            timing["instrumentation_mode"],
+            "minimally_instrumented",
+        )
+        self.assertTrue(timing["evaluated"])
+        self.assertTrue(timing["synchronized"])
+        self.assertEqual(
+            timing["stages"]["dequantization"],
+            {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization",
+            },
+        )
+        total_timing = timing["stages"]["total_evaluated_router"]
+        self.assertEqual(total_timing["status"], "observed")
+        self.assertIs(type(total_timing["duration_ns"]), int)
+        self.assertGreater(total_timing["duration_ns"], 0)
+        self.assertEqual(result.to_protocol_result()["timing"], timing)
         gauges = result.memory_gauges.to_protocol_result()
         self.assertEqual(
             set(gauges),

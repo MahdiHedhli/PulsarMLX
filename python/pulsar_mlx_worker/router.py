@@ -17,9 +17,11 @@ import math
 from pathlib import Path
 import stat
 import struct
+import time
+from types import MappingProxyType
 from typing import Any
 
-from .protocol import is_stable_identifier
+from .protocol import STABLE_ERROR_CODES, is_stable_identifier
 from .runtime import (
     GPU_DEVICE_ID,
     MemoryGauges,
@@ -60,6 +62,52 @@ _WEIGHT_ELEMENT_COUNT = EXPERT_COUNT * HIDDEN_WIDTH
 _WEIGHT_BYTES = _WEIGHT_ELEMENT_COUNT * 4
 _PROBABILITY_SUM_TOLERANCE = 1.0e-6
 _PROBABILITY_RELATIVE_TOLERANCE = 1.0e-6
+_MAX_U64 = (1 << 64) - 1
+_MAX_TIMING_OBSERVATIONS = 1_024
+_MAX_TIMING_REASON_CHARS = 512
+_TIMING_STAGES = frozenset(
+    {
+        "setup_admission",
+        "file_io",
+        "storage_validation_f32_decode",
+        "dequantization",
+        "host_to_device",
+        "graph_construction",
+        "compilation",
+        "router_projection",
+        "top_k",
+        "normalization",
+        "total_evaluated_router",
+        "synchronized_readback",
+        "end_to_end_router_command",
+    }
+)
+_TIMING_STAGE_STATUSES = frozenset(
+    {"observed", "unavailable", "not_applicable"}
+)
+_EVALUATED_TIMING_STAGES = frozenset(
+    {
+        "host_to_device",
+        "graph_construction",
+        "compilation",
+        "router_projection",
+        "top_k",
+        "normalization",
+        "total_evaluated_router",
+    }
+)
+_OBSERVATION_KINDS = frozenset(
+    {"warmup", "measurement", "clean_process_replication"}
+)
+_PROCESS_STATES = frozenset({"fresh_process", "reused_process"})
+_TIMING_CONDITIONS = frozenset(
+    {"warm", "first_read_new_process_os_cache_uncontrolled", "controlled_cold"}
+)
+_INSTRUMENTATION_MODES = frozenset(
+    {"minimally_instrumented", "stage_instrumented"}
+)
+_OBSERVATION_STATUSES = frozenset({"passed", "failed", "aborted"})
+_F32_DEQUANTIZATION_REASON = "f32_router_requires_no_dequantization"
 
 _CASE_ROWS = {
     SINGLE_ROW_CASE_ID: 1,
@@ -84,6 +132,668 @@ class RouterCaseScope(Enum):
 
 class RouterError(RuntimeContractError):
     """Stable bounded failure at the Feature 002 router boundary."""
+
+
+@dataclass(frozen=True, slots=True)
+class RouterTimingStage:
+    """One observed or explicitly unavailable router timing boundary."""
+
+    status: str
+    duration_ns: int | None = None
+    reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.status, str)
+            or self.status not in _TIMING_STAGE_STATUSES
+        ):
+            raise _timing_contract_error("router timing stage status is invalid")
+        if self.status == "observed":
+            _validate_positive_nanoseconds(
+                self.duration_ns,
+                "router timing duration",
+            )
+            if self.reason is not None:
+                raise _timing_contract_error(
+                    "an observed router timing stage cannot have a reason"
+                )
+            return
+        if self.duration_ns is not None:
+            raise _timing_contract_error(
+                "an unavailable router timing stage cannot have a duration"
+            )
+        sanitized_reason = _sanitize_timing_text(
+            self.reason,
+            "router timing stage reason",
+        )
+        object.__setattr__(self, "reason", sanitized_reason)
+
+    def to_protocol_result(self) -> dict[str, object]:
+        if self.status == "observed":
+            return {"status": self.status, "duration_ns": self.duration_ns}
+        return {"status": self.status, "reason": self.reason}
+
+
+@dataclass(frozen=True, slots=True)
+class RouterExecutionTiming:
+    """One worker-owned evaluated timing envelope without host-owned labels."""
+
+    instrumentation_mode: str
+    evaluated: bool
+    synchronized: bool
+    stages: Mapping[str, RouterTimingStage]
+
+    def __post_init__(self) -> None:
+        if (
+            not isinstance(self.instrumentation_mode, str)
+            or self.instrumentation_mode not in _INSTRUMENTATION_MODES
+        ):
+            raise _timing_contract_error("router execution timing mode is invalid")
+        if self.evaluated is not True or self.synchronized is not True:
+            raise _timing_contract_error(
+                "router execution timing lacks its evaluated synchronization barrier"
+            )
+        if not isinstance(self.stages, Mapping):
+            raise _timing_contract_error("router execution timing stages are invalid")
+        frozen_stages = dict(self.stages)
+        if not frozen_stages or len(frozen_stages) > len(_TIMING_STAGES):
+            raise _timing_contract_error("router execution timing stages are invalid")
+        for stage, value in frozen_stages.items():
+            _validate_timing_stage_name(stage)
+            if not isinstance(value, RouterTimingStage):
+                raise _timing_contract_error("router execution timing stage is invalid")
+            if stage != "dequantization" and value.status == "not_applicable":
+                raise _timing_contract_error(
+                    "only F32 dequantization can be marked not applicable"
+                )
+        dequantization = frozen_stages.get("dequantization")
+        if (
+            dequantization is None
+            or dequantization.status != "not_applicable"
+            or dequantization.reason != _F32_DEQUANTIZATION_REASON
+        ):
+            raise _timing_contract_error(
+                "router execution timing lacks F32 dequantization evidence"
+            )
+        if self.instrumentation_mode == "minimally_instrumented":
+            if set(frozen_stages) != {
+                "dequantization",
+                "total_evaluated_router",
+            }:
+                raise _timing_contract_error(
+                    "minimal router execution timing contains diagnostic stages"
+                )
+            if frozen_stages["total_evaluated_router"].status != "observed":
+                raise _timing_contract_error(
+                    "minimal router execution timing lacks its observed total"
+                )
+        elif not any(
+            stage in _EVALUATED_TIMING_STAGES
+            and stage != "total_evaluated_router"
+            and value.status == "observed"
+            for stage, value in frozen_stages.items()
+        ):
+            raise _timing_contract_error(
+                "stage router execution timing lacks an evaluated diagnostic"
+            )
+        object.__setattr__(self, "stages", MappingProxyType(frozen_stages))
+
+    def to_protocol_result(self) -> dict[str, object]:
+        return {
+            "monotonic_clock": "perf_counter_ns",
+            "instrumentation_mode": self.instrumentation_mode,
+            "evaluated": self.evaluated,
+            "synchronized": self.synchronized,
+            "stages": {
+                stage: value.to_protocol_result()
+                for stage, value in self.stages.items()
+            },
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class RouterTimingObservation:
+    """Immutable raw timing evidence for one attempted router execution."""
+
+    observation_id: str
+    run_index: int
+    observation_kind: str
+    process_state: str
+    condition: str
+    instrumentation_mode: str
+    status: str
+    requested_device: str
+    selected_device: str
+    fallback_used: bool
+    evaluated: bool
+    synchronized: bool
+    output_sha256: str | None
+    correctness_passed: bool | None
+    stages: Mapping[str, RouterTimingStage]
+    failure: Mapping[str, str] | None = None
+
+    def __post_init__(self) -> None:
+        if not is_stable_identifier(self.observation_id):
+            raise _timing_contract_error("router timing observation ID is invalid")
+        if (
+            isinstance(self.run_index, bool)
+            or not isinstance(self.run_index, int)
+            or not 0 <= self.run_index <= _MAX_U64
+        ):
+            raise _timing_contract_error("router timing run index is invalid")
+        if (
+            not isinstance(self.observation_kind, str)
+            or self.observation_kind not in _OBSERVATION_KINDS
+        ):
+            raise _timing_contract_error("router timing observation kind is invalid")
+        if (
+            not isinstance(self.process_state, str)
+            or self.process_state not in _PROCESS_STATES
+        ):
+            raise _timing_contract_error("router timing process state is invalid")
+        if (
+            not isinstance(self.condition, str)
+            or self.condition not in _TIMING_CONDITIONS
+        ):
+            raise _timing_contract_error("router timing condition is invalid")
+        if (
+            not isinstance(self.instrumentation_mode, str)
+            or self.instrumentation_mode not in _INSTRUMENTATION_MODES
+        ):
+            raise _timing_contract_error("router timing instrumentation mode is invalid")
+        if (
+            not isinstance(self.status, str)
+            or self.status not in _OBSERVATION_STATUSES
+        ):
+            raise _timing_contract_error("router timing observation status is invalid")
+        if self.requested_device != GPU_DEVICE_ID:
+            raise _timing_contract_error("router timing requested device is invalid")
+        if (
+            not isinstance(self.selected_device, str)
+            or self.selected_device not in {GPU_DEVICE_ID, "not_available"}
+        ):
+            raise _timing_contract_error("router timing selected device is invalid")
+        if not isinstance(self.fallback_used, bool) or self.fallback_used:
+            raise _timing_contract_error("router timing fallback state is invalid")
+        if not isinstance(self.evaluated, bool) or not isinstance(
+            self.synchronized, bool
+        ):
+            raise _timing_contract_error("router timing barrier flags are invalid")
+        if self.synchronized and not self.evaluated:
+            raise _timing_contract_error(
+                "router timing cannot synchronize unevaluated work"
+            )
+        if self.selected_device == "not_available" and (
+            self.evaluated or self.synchronized
+        ):
+            raise _timing_contract_error(
+                "unavailable router timing device contradicts completed work"
+            )
+        if self.output_sha256 is not None and not _is_lowercase_sha256(
+            self.output_sha256
+        ):
+            raise _timing_contract_error("router timing output hash is invalid")
+        if self.correctness_passed is not None and not isinstance(
+            self.correctness_passed, bool
+        ):
+            raise _timing_contract_error("router timing correctness state is invalid")
+
+        if not isinstance(self.stages, Mapping):
+            raise _timing_contract_error("router timing stage set is invalid")
+        frozen_stages = dict(self.stages)
+        if not frozen_stages or len(frozen_stages) > len(_TIMING_STAGES):
+            raise _timing_contract_error("router timing stage set is invalid")
+        for stage, value in frozen_stages.items():
+            _validate_timing_stage_name(stage)
+            if not isinstance(value, RouterTimingStage):
+                raise _timing_contract_error("router timing stage value is invalid")
+            if stage != "dequantization" and value.status == "not_applicable":
+                raise _timing_contract_error(
+                    "only F32 dequantization can be marked not applicable"
+                )
+        dequantization = frozen_stages.get("dequantization")
+        if (
+            dequantization is None
+            or dequantization.status != "not_applicable"
+            or dequantization.reason != _F32_DEQUANTIZATION_REASON
+        ):
+            raise _timing_contract_error(
+                "F32 router dequantization must be explicitly not applicable"
+            )
+        object.__setattr__(self, "stages", MappingProxyType(frozen_stages))
+
+        frozen_failure = _freeze_timing_failure(self.failure)
+        object.__setattr__(self, "failure", frozen_failure)
+        if self.status == "passed":
+            if (
+                self.selected_device != GPU_DEVICE_ID
+                or not self.evaluated
+                or not self.synchronized
+                or self.output_sha256 is None
+                or self.correctness_passed is not True
+                or frozen_failure is not None
+            ):
+                raise _timing_contract_error(
+                    "passing router timing observation contradicts its evidence"
+                )
+        elif self.status in {"failed", "aborted"}:
+            if frozen_failure is None:
+                raise _timing_contract_error(
+                    "failed router timing observation lacks bounded failure evidence"
+                )
+            if self.correctness_passed is True:
+                raise _timing_contract_error(
+                    "unsuccessful router timing cannot claim correctness"
+                )
+            if self.output_sha256 is None:
+                if self.correctness_passed is not None:
+                    raise _timing_contract_error(
+                        "unsuccessful router timing has incomplete output evidence"
+                    )
+            elif (
+                self.status != "failed"
+                or self.selected_device != GPU_DEVICE_ID
+                or not self.evaluated
+                or not self.synchronized
+                or self.correctness_passed is not False
+            ):
+                raise _timing_contract_error(
+                    "unsuccessful router timing output evidence is inconsistent"
+                )
+
+        if self.instrumentation_mode == "minimally_instrumented":
+            total = frozen_stages.get("total_evaluated_router")
+            if self.status == "passed" and (
+                total is None or total.status != "observed"
+            ):
+                raise _timing_contract_error(
+                    "passing minimal router timing lacks its evaluated total"
+                )
+            if self.status == "passed" and set(frozen_stages) != {
+                "dequantization",
+                "total_evaluated_router",
+            }:
+                raise _timing_contract_error(
+                    "passing minimal router timing contains diagnostic stages"
+                )
+        elif self.status == "passed" and not any(
+            stage in _EVALUATED_TIMING_STAGES
+            and stage != "total_evaluated_router"
+            and value.status == "observed"
+            for stage, value in frozen_stages.items()
+        ):
+            raise _timing_contract_error(
+                "passing stage timing lacks an evaluated diagnostic stage"
+            )
+
+    def to_protocol_result(self) -> dict[str, object]:
+        result: dict[str, object] = {
+            "observation_id": self.observation_id,
+            "run_index": self.run_index,
+            "observation_kind": self.observation_kind,
+            "process_state": self.process_state,
+            "condition": self.condition,
+            "instrumentation_mode": self.instrumentation_mode,
+            "monotonic_clock": "perf_counter_ns",
+            "stages": {
+                stage: value.to_protocol_result()
+                for stage, value in self.stages.items()
+            },
+            "status": self.status,
+            "requested_device": self.requested_device,
+            "selected_device": self.selected_device,
+            "fallback_used": self.fallback_used,
+            "evaluated": self.evaluated,
+            "synchronized": self.synchronized,
+            "output_sha256": self.output_sha256,
+            "correctness_passed": self.correctness_passed,
+        }
+        if self.failure is not None:
+            result["failure"] = dict(self.failure)
+        return result
+
+
+class RouterTimingRecorder:
+    """Collect one fail-closed timing observation using an injected clock."""
+
+    def __init__(self, *, clock_ns: Callable[[], int] = time.perf_counter_ns) -> None:
+        if not callable(clock_ns):
+            raise _timing_contract_error("router timing clock is not callable")
+        self._clock_ns = clock_ns
+        self._stages: dict[str, RouterTimingStage] = {}
+        self._evaluated = False
+        self._synchronized = False
+        self._finished = False
+        self._failed_stage: str | None = None
+
+    def measure_evaluated(
+        self,
+        *,
+        stage: str,
+        mx_module: Any,
+        gpu: Any,
+        operation: Callable[[], object],
+    ) -> tuple[object, ...]:
+        """Run one operation and stop its clock only after eval then sync."""
+
+        self._require_open()
+        _validate_timing_stage_name(stage)
+        if stage not in _EVALUATED_TIMING_STAGES:
+            raise _timing_contract_error(
+                "router timing stage is not an evaluated device boundary"
+            )
+        self._require_new_stage(stage)
+        if self._failed_stage is not None:
+            raise _timing_contract_error(
+                "router timing cannot continue after an evaluated stage failure"
+            )
+        if not callable(operation):
+            raise _timing_contract_error("router timing operation is not callable")
+        self._evaluated = False
+        self._synchronized = False
+        try:
+            started_ns = self._read_clock()
+            outputs_value = operation()
+            if (
+                not isinstance(outputs_value, Sequence)
+                or isinstance(outputs_value, (str, bytes, bytearray, memoryview))
+                or not outputs_value
+            ):
+                raise _timing_contract_error(
+                    "evaluated router timing operation returned invalid outputs"
+                )
+            outputs = tuple(outputs_value)
+            mx_module.eval(*outputs)
+            self._evaluated = True
+            mx_module.synchronize(gpu)
+            self._synchronized = True
+            completed_ns = self._read_clock()
+            if completed_ns <= started_ns:
+                raise _timing_contract_error(
+                    "router timing clock did not advance monotonically"
+                )
+        except RouterError as error:
+            self._failed_stage = stage
+            self._stages[stage] = RouterTimingStage(
+                status="unavailable",
+                reason=error.message,
+            )
+            raise
+        except RuntimeContractError as error:
+            self._failed_stage = stage
+            self._stages[stage] = RouterTimingStage(
+                status="unavailable",
+                reason=error.message,
+            )
+            raise RouterError(error.code, error.message) from error
+        except Exception as error:
+            self._failed_stage = stage
+            self._stages[stage] = RouterTimingStage(
+                status="unavailable",
+                reason="the evaluated router timing stage did not complete",
+            )
+            raise RouterError(
+                "evaluation_failed",
+                "the evaluated router timing stage did not complete",
+            ) from error
+        self._stages[stage] = RouterTimingStage(
+            status="observed",
+            duration_ns=completed_ns - started_ns,
+        )
+        return outputs
+
+    def record_not_applicable(self, *, stage: str, reason: str) -> None:
+        if stage != "dequantization" or reason != _F32_DEQUANTIZATION_REASON:
+            raise _timing_contract_error(
+                "only F32 dequantization has a frozen not-applicable state"
+            )
+        self._record_unobserved(stage, status="not_applicable", reason=reason)
+
+    def record_unavailable(self, *, stage: str, reason: str) -> None:
+        if stage == "dequantization":
+            raise _timing_contract_error(
+                "F32 router dequantization is not applicable, not unavailable"
+            )
+        self._record_unobserved(stage, status="unavailable", reason=reason)
+
+    def finish(
+        self,
+        *,
+        observation_id: str,
+        run_index: int,
+        observation_kind: str,
+        process_state: str,
+        condition: str,
+        instrumentation_mode: str,
+        status: str,
+        requested_device: str,
+        selected_device: str,
+        fallback_used: bool,
+        output_sha256: str | None,
+        correctness_passed: bool | None,
+        failure: Mapping[str, str] | None = None,
+    ) -> RouterTimingObservation:
+        self._require_open()
+        if self._failed_stage is not None:
+            if status not in {"failed", "aborted"}:
+                raise _timing_contract_error(
+                    "a failed evaluated timing stage cannot produce a passing observation"
+                )
+            if not isinstance(failure, Mapping) or failure.get("stage") != self._failed_stage:
+                raise _timing_contract_error(
+                    "router timing failure does not identify its failed stage"
+                )
+            failed_stage = self._stages.get(self._failed_stage)
+            if failed_stage is None or failed_stage.status != "unavailable":
+                raise _timing_contract_error(
+                    "router timing failure lacks its unavailable stage record"
+                )
+        observation = RouterTimingObservation(
+            observation_id=observation_id,
+            run_index=run_index,
+            observation_kind=observation_kind,
+            process_state=process_state,
+            condition=condition,
+            instrumentation_mode=instrumentation_mode,
+            status=status,
+            requested_device=requested_device,
+            selected_device=selected_device,
+            fallback_used=fallback_used,
+            evaluated=self._evaluated,
+            synchronized=self._synchronized,
+            output_sha256=output_sha256,
+            correctness_passed=correctness_passed,
+            stages=MappingProxyType(dict(self._stages)),
+            failure=failure,
+        )
+        self._finished = True
+        return observation
+
+    def execution_timing(
+        self,
+        *,
+        instrumentation_mode: str,
+    ) -> RouterExecutionTiming:
+        """Freeze worker-owned timing before host orchestration adds labels."""
+
+        self._require_open()
+        if self._failed_stage is not None:
+            raise _timing_contract_error(
+                "failed router timing cannot become a successful execution envelope"
+            )
+        return RouterExecutionTiming(
+            instrumentation_mode=instrumentation_mode,
+            evaluated=self._evaluated,
+            synchronized=self._synchronized,
+            stages=MappingProxyType(dict(self._stages)),
+        )
+
+    def _record_unobserved(self, stage: str, *, status: str, reason: str) -> None:
+        self._require_open()
+        _validate_timing_stage_name(stage)
+        self._require_new_stage(stage)
+        self._stages[stage] = RouterTimingStage(status=status, reason=reason)
+
+    def _read_clock(self) -> int:
+        value = self._clock_ns()
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= _MAX_U64:
+            raise _timing_contract_error(
+                "router timing clock did not return unsigned integer nanoseconds"
+            )
+        return value
+
+    def _require_open(self) -> None:
+        if self._finished:
+            raise _timing_contract_error("router timing recorder is already finished")
+
+    def _require_new_stage(self, stage: str) -> None:
+        if stage in self._stages:
+            raise _timing_contract_error("router timing stage is duplicated")
+
+
+class RouterTimingSeries:
+    """Append-only ordered retention for every attempted timing observation."""
+
+    def __init__(self) -> None:
+        self._observations: list[RouterTimingObservation] = []
+        self._observation_ids: set[str] = set()
+        self._series_indices: set[tuple[str, str, str, str, int]] = set()
+        self._next_indices: dict[tuple[str, str, str, str], int] = {}
+        self._passed_output_sha256: str | None = None
+        self._process_replication_id: str | None = None
+
+    @property
+    def raw_timing_observations(self) -> tuple[RouterTimingObservation, ...]:
+        return tuple(self._observations)
+
+    def retain(self, observation: RouterTimingObservation) -> None:
+        if not isinstance(observation, RouterTimingObservation):
+            raise _timing_contract_error("router timing series value is invalid")
+        if len(self._observations) >= _MAX_TIMING_OBSERVATIONS:
+            raise RouterError(
+                "resource_limit",
+                "router timing observation count exceeds its bound",
+            )
+        series_key = (
+            observation.observation_kind,
+            observation.process_state,
+            observation.condition,
+            observation.instrumentation_mode,
+        )
+        series_index = (*series_key, observation.run_index)
+        if observation.observation_id in self._observation_ids:
+            raise _timing_contract_error("router timing observation ID is duplicated")
+        if series_index in self._series_indices:
+            raise _timing_contract_error(
+                "router timing compatible-series index is duplicated"
+            )
+        if observation.run_index != self._next_indices.get(series_key, 0):
+            raise _timing_contract_error(
+                "router timing observation indices are not contiguous"
+            )
+        if (
+            observation.status == "passed"
+            and self._passed_output_sha256 is not None
+            and observation.output_sha256 != self._passed_output_sha256
+        ):
+            raise _timing_contract_error(
+                "passing router timing output hashes are inconsistent"
+            )
+        self._observations.append(observation)
+        self._observation_ids.add(observation.observation_id)
+        self._series_indices.add(series_index)
+        self._next_indices[series_key] = observation.run_index + 1
+        if observation.status == "passed" and self._passed_output_sha256 is None:
+            self._passed_output_sha256 = observation.output_sha256
+
+    def to_protocol_result(self, *, process_replication_id: str) -> list[dict[str, object]]:
+        if not is_stable_identifier(process_replication_id):
+            raise _timing_contract_error(
+                "router timing process replication ID is invalid"
+            )
+        if (
+            self._process_replication_id is not None
+            and process_replication_id != self._process_replication_id
+        ):
+            raise _timing_contract_error(
+                "router timing series process replication ID cannot be relabeled"
+            )
+        self._process_replication_id = process_replication_id
+        result: list[dict[str, object]] = []
+        for observation in self._observations:
+            payload = observation.to_protocol_result()
+            payload["process_replication_id"] = process_replication_id
+            result.append(payload)
+        return result
+
+
+def _timing_contract_error(message: str) -> RouterError:
+    return RouterError("internal_worker_error", message)
+
+
+def _validate_positive_nanoseconds(value: object, label: str) -> None:
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or not 1 <= value <= _MAX_U64
+    ):
+        raise _timing_contract_error(f"{label} is not a positive u64")
+
+
+def _validate_timing_text(value: object, label: str) -> None:
+    normalized = " ".join(value.split()) if isinstance(value, str) else ""
+    if (
+        not isinstance(value, str)
+        or not normalized
+        or len(normalized) > _MAX_TIMING_REASON_CHARS
+        or any(ord(character) < 0x20 or ord(character) == 0x7F for character in value)
+    ):
+        raise _timing_contract_error(f"{label} is invalid")
+
+
+def _sanitize_timing_text(value: object, label: str) -> str:
+    _validate_timing_text(value, label)
+    return RuntimeContractError("internal_worker_error", str(value)).message
+
+
+def _validate_timing_stage_name(stage: object) -> None:
+    if not isinstance(stage, str) or stage not in _TIMING_STAGES:
+        raise _timing_contract_error("router timing stage name is invalid")
+
+
+def _is_lowercase_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _freeze_timing_failure(
+    failure: Mapping[str, str] | None,
+) -> Mapping[str, str] | None:
+    if failure is None:
+        return None
+    if not isinstance(failure, Mapping) or set(failure) != {
+        "code",
+        "message",
+        "stage",
+    }:
+        raise _timing_contract_error("router timing failure evidence is invalid")
+    code = failure.get("code")
+    message = failure.get("message")
+    stage = failure.get("stage")
+    if not isinstance(code, str) or code not in STABLE_ERROR_CODES:
+        raise _timing_contract_error("router timing failure code is invalid")
+    if not is_stable_identifier(stage):
+        raise _timing_contract_error("router timing failure stage is invalid")
+    sanitized_message = _sanitize_timing_text(
+        message,
+        "router timing failure message",
+    )
+    return MappingProxyType(
+        {"code": code, "message": sanitized_message, "stage": stage}
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +822,18 @@ class RouterResult:
     selected_probabilities_f32le_sha256: str
     normalized_weights_f32le_sha256: str
     memory_gauges: MemoryGauges
+    timing: RouterExecutionTiming
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.timing, RouterExecutionTiming):
+            raise _timing_contract_error("router result timing envelope is invalid")
+        if (
+            self.evaluated != self.timing.evaluated
+            or self.synchronized != self.timing.synchronized
+        ):
+            raise _timing_contract_error(
+                "router result timing contradicts its execution envelope"
+            )
 
     @property
     def passed(self) -> bool:
@@ -159,6 +881,7 @@ class RouterResult:
                 self.normalized_weights_f32le_sha256
             ),
             "memory_gauges": self.memory_gauges.to_protocol_result(),
+            "timing": self.timing.to_protocol_result(),
             "passed": self.passed,
         }
 
@@ -223,6 +946,11 @@ def run_router(
             mx,
             requested_device=requested_device,
         )
+        timing_recorder = RouterTimingRecorder()
+        timing_recorder.record_not_applicable(
+            stage="dequantization",
+            reason=_F32_DEQUANTIZATION_REASON,
+        )
         with mx.stream(gpu):
             hidden_array = mx.array(admitted_hidden, dtype=mx.float32)
             weight_array = mx.array(admitted_weights, dtype=mx.float32)
@@ -231,68 +959,85 @@ def run_router(
                 (1, 0),
                 stream=gpu,
             )
-            logits_array = mx.matmul(
-                hidden_array,
-                transposed_weights,
-                stream=gpu,
-            )
-            probability_array = mx.softmax(
+
+            def build_router_outputs() -> tuple[object, ...]:
+                logits_array = mx.matmul(
+                    hidden_array,
+                    transposed_weights,
+                    stream=gpu,
+                )
+                probability_array = mx.softmax(
+                    logits_array,
+                    axis=1,
+                    stream=gpu,
+                )
+                # Assign every expert its exact lexicographic rank under
+                # (probability descending, expert ID ascending). Ranks are
+                # unique even when probabilities tie, so argsort never has to
+                # choose an order among equal keys or rely on sort stability.
+                expert_ids = mx.arange(
+                    EXPERT_COUNT,
+                    dtype=mx.uint32,
+                    stream=gpu,
+                )
+                candidate_probabilities = probability_array[:, :, None]
+                competing_probabilities = probability_array[:, None, :]
+                strictly_better = competing_probabilities > candidate_probabilities
+                equal_with_lower_id = (
+                    competing_probabilities == candidate_probabilities
+                ) & (expert_ids[None, None, :] < expert_ids[None, :, None])
+                lexicographic_rank = mx.sum(
+                    strictly_better | equal_with_lower_id,
+                    axis=2,
+                    stream=gpu,
+                )
+                order_array = mx.argsort(
+                    lexicographic_rank,
+                    axis=1,
+                    stream=gpu,
+                )
+                selected_id_array = order_array[:, :TOP_K]
+                selected_probability_array = mx.take_along_axis(
+                    probability_array,
+                    selected_id_array,
+                    axis=1,
+                    stream=gpu,
+                )
+                selected_sum_array = mx.sum(
+                    selected_probability_array,
+                    axis=1,
+                    keepdims=True,
+                    stream=gpu,
+                )
+                normalized_weight_array = (
+                    selected_probability_array / selected_sum_array
+                )
+                return (
+                    logits_array,
+                    probability_array,
+                    selected_id_array,
+                    selected_probability_array,
+                    normalized_weight_array,
+                )
+
+            (
                 logits_array,
-                axis=1,
-                stream=gpu,
-            )
-            # Assign every expert its exact lexicographic rank under
-            # (probability descending, expert ID ascending).  Ranks are
-            # unique even when probabilities tie, so argsort never has to
-            # choose an order among equal keys or rely on sort stability.
-            expert_ids = mx.arange(
-                EXPERT_COUNT,
-                dtype=mx.uint32,
-                stream=gpu,
-            )
-            candidate_probabilities = probability_array[:, :, None]
-            competing_probabilities = probability_array[:, None, :]
-            strictly_better = competing_probabilities > candidate_probabilities
-            equal_with_lower_id = (
-                competing_probabilities == candidate_probabilities
-            ) & (expert_ids[None, None, :] < expert_ids[None, :, None])
-            lexicographic_rank = mx.sum(
-                strictly_better | equal_with_lower_id,
-                axis=2,
-                stream=gpu,
-            )
-            order_array = mx.argsort(
-                lexicographic_rank,
-                axis=1,
-                stream=gpu,
-            )
-            selected_id_array = order_array[:, :TOP_K]
-            selected_probability_array = mx.take_along_axis(
                 probability_array,
                 selected_id_array,
-                axis=1,
-                stream=gpu,
-            )
-            selected_sum_array = mx.sum(
                 selected_probability_array,
-                axis=1,
-                keepdims=True,
-                stream=gpu,
-            )
-            normalized_weight_array = (
-                selected_probability_array / selected_sum_array
+                normalized_weight_array,
+            ) = timing_recorder.measure_evaluated(
+                stage="total_evaluated_router",
+                mx_module=mx,
+                gpu=gpu,
+                operation=build_router_outputs,
             )
 
-        mx.eval(
-            logits_array,
-            probability_array,
-            selected_id_array,
-            selected_probability_array,
-            normalized_weight_array,
+        timing = timing_recorder.execution_timing(
+            instrumentation_mode="minimally_instrumented"
         )
-        evaluated = True
-        mx.synchronize(gpu)
-        synchronized = True
+        evaluated = timing.evaluated
+        synchronized = timing.synchronized
 
         _require_array_metadata(
             mx,
@@ -398,6 +1143,7 @@ def run_router(
             normalized_weights
         ),
         memory_gauges=memory_gauges,
+        timing=timing,
     )
 
 

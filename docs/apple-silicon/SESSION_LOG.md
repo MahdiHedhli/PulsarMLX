@@ -2838,3 +2838,64 @@ schema is absent; it did not fabricate a passing timing result.
 
 No model, checkpoint, Python MLX worker, GPU, or hardware observation was used.
 Local inference remained available without an NTFY pause.
+
+### T064 worker timing implementation
+
+The Python router now owns an actual worker-returned timing envelope for the
+bounded projection-through-normalization operation. It uses
+`time.perf_counter_ns()`, starts immediately before graph construction for the
+complete router operation, performs exactly one final `mx.eval(...)` followed
+by `mx.synchronize(gpu)`, and stops only after synchronization. The serialized
+worker result keeps this minimally instrumented total separate from later
+host-owned process, condition, repetition, and correctness labels.
+
+The timing primitives also implement structured observed, unavailable, and
+F32 `not_applicable` stages; strict minimal-versus-stage-instrumented
+separation; positive-u64 duration checks; bounded and sanitized failed-stage
+evidence; immutable observation snapshots; contiguous compatible-series
+indices; stable successful output hashes; non-relabelable process-replication
+identity; and ordered retention of passed, failed, and aborted attempts. The
+frozen v1 worker type rejects excluded observations because it carries no
+predeclared exclusion rule.
+
+The exact model-disabled validation commands and actual results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' PYTHONPATH=python python3 -m py_compile \
+  python/pulsar_mlx_worker/router.py \
+  python/pulsar_mlx_worker/tests/test_router.py
+# passed
+
+PULSARMLX_MODEL_GGUF='' PYTHONPATH=python python3 -m unittest -v \
+  python.pulsar_mlx_worker.tests.test_router.RouterControlContractTests \
+  python.pulsar_mlx_worker.tests.test_router.RouterAdmissionContractTests \
+  python.pulsar_mlx_worker.tests.test_router.RouterTiePolicyTests \
+  python.pulsar_mlx_worker.tests.test_router.RouterTimingContractTests
+# passed: 27 of 27 tests in 0.254 seconds
+
+PULSARMLX_MODEL_GGUF='' PYTHONPATH=python python3 -m unittest -v \
+  python.pulsar_mlx_worker.tests.test_router.RouterExecutionContractTests
+# environment-selection failure: system Python lacked mlx; 5 tests reported
+# 6 import/runtime errors before MLX initialization, exit 1
+
+PULSARMLX_MODEL_GGUF='' PYTHONPATH=python uv run python -m unittest -v \
+  python.pulsar_mlx_worker.tests.test_router.RouterExecutionContractTests
+# passed: 5 of 5 native Apple MLX tests in 0.467 seconds
+
+git diff --check
+# passed
+```
+
+Immediately before the native regression, NTFY topic `Mahdi-Dev` acknowledged
+the requested high-priority pause notice. The first command used Homebrew's
+system Python and stopped before MLX initialization because that interpreter
+does not contain the pinned package. The repository's existing `uv` environment
+then completed all five native tests, after which the topic acknowledged a
+resume notice. The run used only generated model-free fixture tensors; no
+checkpoint path was resolved, statted, hashed, opened, or executed.
+
+This establishes fixture-tested worker timing mechanics only. It is not a
+latency benchmark or performance claim, does not complete the major benchmark
+matrix, and does not establish real-checkpoint router correctness. Rust timing
+deserialization and sample validation remain T065; benchmark orchestration and
+host-owned labels remain T066.

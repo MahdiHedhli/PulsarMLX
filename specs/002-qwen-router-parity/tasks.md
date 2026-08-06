@@ -230,7 +230,7 @@ enforces 5/10 and 5/30 policies, and reproduces every statistic.
 
 ### Implementation
 
-- [ ] T064 [US4] Implement monotonic raw timing, explicit synchronization, minimally instrumented totals, stage diagnostics, and all-attempt retention in `python/pulsar_mlx_worker/router.py`
+- [X] T064 [US4] Implement monotonic raw timing, explicit synchronization, minimally instrumented totals, stage diagnostics, and all-attempt retention in `python/pulsar_mlx_worker/router.py`
 - [ ] T065 [US4] Implement timing observation/result types, sample validation, process/condition/instrumentation separation, and response bounds in `crates/mlx-backend/src/router.rs` and `crates/mlx-backend/src/protocol.rs`
 - [ ] T066 [US4] Implement correctness-gated orchestration for the single-row and two-row minimally instrumented major benchmarks, one clean-process replication per major benchmark, and later-batch/unavailable recording in `crates/mlx-backend/src/bin/pulsar-mlx.rs`
 - [ ] T067 [US4] Implement public-safe environment, load, storage, pressure, power, thermal, and resource observations with unavailable reasons in `scripts/research/environment.py`
