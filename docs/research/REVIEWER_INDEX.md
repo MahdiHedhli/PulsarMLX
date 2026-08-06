@@ -1,9 +1,9 @@
 # Feature 002 Reviewer Index
 
-**Status**: The independent CPU-oracle support package is frozen and indexed.
-Two external Apple MLX producer attempts failed closed before evidence
-admission, so no Apple experiment record, generated real result, or promoted
-router capability is indexed.
+**Status**: Real Apple MLX layer-0 router evidence is published as two append-only
+raw experiment records plus regenerated tables and figures. Claims remain
+provisional pending clean-checkout reproduction. Expert execution, aggregation,
+generation, serving, and tokens-per-second remain unsupported.
 
 The governing package is the [Feature 002 specification](../../specs/002-qwen-router-parity/spec.md),
 [plan](../../specs/002-qwen-router-parity/plan.md), [quickstart](../../specs/002-qwen-router-parity/quickstart.md),
@@ -13,104 +13,71 @@ and [experiment protocol](EXPERIMENT_PROTOCOL.md).
 
 ## Raw evidence
 
-The exact independent CPU reference is available as a byte-identical
+The exact independent CPU reference remains the byte-identical
 [raw support record](raw/002-router-parity/oracle/f002-router-oracle-freeze-0001.json)
 and [review fixture](../../fixtures/research/router-v1/real/f002-router-oracle-freeze-0001.json),
 bound by the [manifest](../../fixtures/research/router-v1/real/manifest.json).
-The support record freezes the complete two-row hidden-state input, all router
-outputs, exact top-8 IDs, hashes, tolerances, source/checkpoint/tensor identity,
-and bounded public provenance. Its record SHA-256 is
-`3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133`;
-the manifest SHA-256 is
-`ba2165b985195ca34df1813189228c0763bef414f0e1040833c069b999e66816`.
-It contains no model or router-tensor bytes and is not an Apple experiment.
+Support-record SHA-256:
+`3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133`.
 
-No top-level `pulsarmlx.research.experiment` record exists yet under
-`docs/research/raw/002-router-parity/`. The accepted model-free inputs are the
-synthetic [passed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-0001.json),
+Admitted real Apple experiment records (measured source commit
+`04b3502aa5cfbe48cda66d1a5b0b07a45902f762`):
+
+- [primary batch-a](raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-a.json)
+  SHA-256 `b5925db8ba68d90a42507e00be6d3159457a2b97d9fc827f0200245cb20851fa`
+- [later batch-b](raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-b.json)
+  SHA-256 `99346e8be81b4975cb355759be20872aefdea05baa9960f28aa272d970116801`
+
+Both records report `actual_status: passed`, exact top-8 parity, zero ID/order
+mismatches, evaluated synchronized `apple-mlx`/`gpu`, no fallback, and the
+frozen unsupported-interpretation boundary for everything deeper than the
+layer-0 router. Source candidate SHA-256
+`b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4`.
+
+Accepted model-free methodology fixtures remain the synthetic
+[passed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-0001.json),
 [failed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-failed-0001.json),
 and [aborted fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-aborted-0001.json).
-The separate excluded record is an expected-rejection mutation and is not
-accepted evidence or a frozen-output input.
+
+Two earlier external producer candidates failed independent post-processing and
+are intentionally not indexed as public evidence.
 
 ## Generated tables
 
-No committed generated result tables exist. Deterministic table generation is
-implemented by [`generate_tables.py`](../../scripts/research/generate_tables.py).
-The frozen fixture baselines are the [Markdown
-summary](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.md)
-and [Markdown
-sidecar](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.md.sources.json),
-plus the [CSV
-summary](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.csv)
-and [CSV
-sidecar](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.csv.sources.json).
+Committed generated tables from the real raw records:
+
+- [Markdown summary](tables/002-router-parity-summary.md)
+  SHA-256 `eabf9ff1c13a401be9be30648d6c933b078f323472fbe3f43322e0d0ff22f8fb`
+- [Markdown sidecar](tables/002-router-parity-summary.md.sources.json)
+  SHA-256 `7cf8b4cb6731078e0aa2bfc24620a959cdcc09f893f1d6b5e1b97f2e9a2f0e01`
+- [CSV summary](tables/002-router-parity-summary.csv)
+  SHA-256 `1476c2a39217365fe93ea84f5851308e2201c179198cf1179309d0d7333eb4f4`
+- [CSV sidecar](tables/002-router-parity-summary.csv.sources.json)
+  SHA-256 `2e882fb2da4bbbefa2fc3641cc7a6c2e78304a4a4ddb09b163cf0f18bfd1ab71`
+
+Fixture-only baselines remain under
+`fixtures/research/router-v1/expected/tables/` for methodology regression.
 
 ## Generated figures
 
-No committed generated result figures exist. Bounded static SVG generation is
-implemented by [`generate_figures.py`](../../scripts/research/generate_figures.py).
-The frozen fixture baseline is the [median/status
-figure](../../fixtures/research/router-v1/expected/figures/002-router-parity-median.svg)
-and its [figure
-sidecar](../../fixtures/research/router-v1/expected/figures/002-router-parity-median.svg.sources.json).
+Committed generated figures from the real raw records:
+
+- [Median/status figure](figures/002-router-parity-median.svg)
+  SHA-256 `616f4342bf5aec35120f27f6e1cbf5185ab31bd3236730eada52e529c1f73870`
+- [Figure sidecar](figures/002-router-parity-median.svg.sources.json)
+  SHA-256 `6e2f890d346734395092850906ce032ede17361e2991ee9602f949d7b561a0e9`
+
+Fixture-only baselines remain under
+`fixtures/research/router-v1/expected/figures/`.
 
 ## Claims and reproduction links
 
-The [claims ledger](CLAIMS_LEDGER.md) contains zero claims. The
-[reproducibility guide](REPRODUCIBILITY.md), [results structure](RESULTS.md),
-[limitations](LIMITATIONS.md), [model manifest](MODEL_MANIFEST.json), and
-[artifact manifest](ARTIFACT_MANIFEST.json) are initialized for later
-append-only evidence.
+The [claims ledger](CLAIMS_LEDGER.md) currently lists three provisional claims
+(F002-C01 through F002-C03) bound to the two real raw records and the frozen
+oracle. Reproduction guidance is in [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
+Observed results and limits are in [RESULTS.md](RESULTS.md) and
+[LIMITATIONS.md](LIMITATIONS.md). Model identity is in
+[MODEL_MANIFEST.json](MODEL_MANIFEST.json).
 
-The model manifest contains only the inherited Feature 001 checkpoint identity
-and pre-access expectations. Its Feature 002 router observation is unset. The
-artifact manifest contains unsealed placeholders, not evidence hashes or a
-measured source commit.
-
-The six fixture outputs were reproduced byte-for-byte and hash-for-hash from a
-detached clean worktree at
-`d6f5820050cdc59944a7b2af26b7b0c2c15767c6`. The exact procedure is in the
-reproducibility guide. That attestation covers three synthetic records, six
-generated artifacts, and zero claims.
-
-Every sidecar binds all three fixture paths and SHA-256 values, the exact
-generator and hash, normalized generation command, fixture-record source
-commit, and output hash. This is test provenance, not a measured model commit.
-
-Raw evidence publication is exclusive, atomic, and append-only. Existing or
-duplicate experiment IDs cannot be overwritten; failed and aborted history is
-retained; and every rerun, correction, or reproduction receives a new ID. Raw
-evidence must be committed and pushed before result generation.
-
-The ledger allows `verified`, `provisional`, `rejected`, and `unsupported`.
-Only an exact-scope claim with complete committed evidence and matching
-clean-checkout reproduction can be `verified`. Fixture methodology creates no
-capability or performance row.
-
-## Validation entrypoints
-
-- [`validate_evidence.py`](../../scripts/research/validate_evidence.py): closed
-  schema and semantic/privacy validation.
-- [`statistics.py`](../../scripts/research/statistics.py): frozen Type-7 and
-  sample-statistics implementation.
-- [`verify_package.py`](../../scripts/research/verify_package.py): read-only
-  candidate and fixture-only regeneration verification.
-- [`publish_evidence.py`](../../scripts/research/publish_evidence.py): atomic,
-  append-only installation after validation.
-- [`oracle_publication.py`](../../scripts/research/oracle_publication.py):
-  exact-value validation and manifest-last publication of the bounded CPU
-  reference package.
-
-The current model-free package entrypoint is:
-
-```sh
-PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
-  --feature 002-qwen-router-parity \
-  --fixture-only
-```
-
-A passing fixture-only verification now also checks the exact three-file
-CPU-oracle support inventory. It does not create a claim row or Apple model
-result. No MLX tensor operation ran and no Apple GPU memory was used to create
-the frozen oracle index.
+Clean-checkout reproduction of the real Apple command is still required before
+any claim may be promoted from provisional to verified.

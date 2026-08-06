@@ -1,0 +1,16 @@
+{
+  "generation_command": "python3 scripts/research/generate_figures.py --raw-dir <raw-dir> --output-dir <output-dir>",
+  "generator": "scripts/research/generate_figures.py",
+  "generator_sha256": "0200eceff0293d52c79f7fda08f3951687702a2c18bc9b1324f6b2df2e98f26a",
+  "output": "002-router-parity-median.svg",
+  "output_sha256": "616f4342bf5aec35120f27f6e1cbf5185ab31bd3236730eada52e529c1f73870",
+  "schema_id": "pulsarmlx.research.generated-sources",
+  "schema_version": "1.0.0",
+  "source_commits": [
+    "04b3502aa5cfbe48cda66d1a5b0b07a45902f762"
+  ],
+  "sources": {
+    "docs/research/raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-a.json": "b5925db8ba68d90a42507e00be6d3159457a2b97d9fc827f0200245cb20851fa",
+    "docs/research/raw/002-router-parity/f002-router-real-b4262d84eef41665cf8306c352701a58838f5e5f0180c3342f3a6ab618a751d4-batch-b.json": "99346e8be81b4975cb355759be20872aefdea05baa9960f28aa272d970116801"
+  }
+}

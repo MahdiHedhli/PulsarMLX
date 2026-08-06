@@ -1,0 +1,896 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="10190" viewBox="0 0 1000 10190" role="img" aria-labelledby="title description">
+<title id="title">Feature 002 router median durations</title>
+<desc id="description">Deterministically generated horizontal bars; durations are nanoseconds and every label includes status, correctness, and scope.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<style>text{font-family:ui-monospace,SFMono-Regular,monospace;fill:#17202a}.label{font-size:11px}.value{font-size:11px;font-weight:600}.bar-pass{fill:#4c78a8}.bar-nonpass{fill:#c44e52}.axis{stroke:#566573;stroke-width:1}</style>
+<text x="24" y="34" font-size="18" font-weight="700">Router median duration (ns)</text>
+<line class="axis" x1="350" y1="60" x2="350" y2="10142"/>
+<text class="label" x="12" y="88">status=passed / correctness=true / process=batch-a-correctness-worker / scope=layer_0_router_only...</text>
+<rect class="bar-pass" x="350" y="72" width="5.112" height="20" rx="2"/>
+<text class="value" x="361.112" y="87">1036895.5</text>
+<text class="label" x="12" y="122">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="106" width="411.349" height="20" rx="2"/>
+<text class="value" x="767.349" y="121">83435479.5</text>
+<text class="label" x="12" y="156">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="140" width="2.331" height="20" rx="2"/>
+<text class="value" x="358.331" y="155">472750.0</text>
+<text class="label" x="12" y="190">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="174" width="97.335" height="20" rx="2"/>
+<text class="value" x="453.335" y="189">19742896.0</text>
+<text class="label" x="12" y="224">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="208" width="9.841" height="20" rx="2"/>
+<text class="value" x="365.841" y="223">1996062.5</text>
+<text class="label" x="12" y="258">status=passed / correctness=true / process=batch-a-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="242" width="540.155" height="20" rx="2"/>
+<text class="value" x="896.155" y="257">109561541.0</text>
+<text class="label" x="12" y="292">status=passed / correctness=true / process=batch-a-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="276" width="2.310" height="20" rx="2"/>
+<text class="value" x="358.310" y="291">468542.0</text>
+<text class="label" x="12" y="326">status=passed / correctness=true / process=batch-a-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="310" width="100.656" height="20" rx="2"/>
+<text class="value" x="456.656" y="325">20416417.0</text>
+<text class="label" x="12" y="360">status=passed / correctness=true / process=batch-a-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="344" width="125.598" height="20" rx="2"/>
+<text class="value" x="481.598" y="359">25475584.0</text>
+<text class="label" x="12" y="394">status=passed / correctness=true / process=batch-a-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="378" width="560.000" height="20" rx="2"/>
+<text class="value" x="916.000" y="393">113586792.0</text>
+<text class="label" x="12" y="428">status=passed / correctness=true / process=batch-a-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="412" width="2.263" height="20" rx="2"/>
+<text class="value" x="358.263" y="427">459000.0</text>
+<text class="label" x="12" y="462">status=passed / correctness=true / process=batch-a-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="446" width="101.912" height="20" rx="2"/>
+<text class="value" x="457.912" y="461">20671209.0</text>
+<text class="label" x="12" y="496">status=passed / correctness=true / process=batch-a-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="480" width="131.364" height="20" rx="2"/>
+<text class="value" x="487.364" y="495">26645125.0</text>
+<text class="label" x="12" y="530">status=passed / correctness=true / process=batch-a-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="514" width="508.636" height="20" rx="2"/>
+<text class="value" x="864.636" y="529">103168417.0</text>
+<text class="label" x="12" y="564">status=passed / correctness=true / process=batch-a-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="548" width="2.581" height="20" rx="2"/>
+<text class="value" x="358.581" y="563">523583.0</text>
+<text class="label" x="12" y="598">status=passed / correctness=true / process=batch-a-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="582" width="101.461" height="20" rx="2"/>
+<text class="value" x="457.461" y="597">20579750.0</text>
+<text class="label" x="12" y="632">status=passed / correctness=true / process=batch-a-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="616" width="98.778" height="20" rx="2"/>
+<text class="value" x="454.778" y="631">20035541.0</text>
+<text class="label" x="12" y="666">status=passed / correctness=true / process=batch-a-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="650" width="558.890" height="20" rx="2"/>
+<text class="value" x="914.890" y="665">113361583.0</text>
+<text class="label" x="12" y="700">status=passed / correctness=true / process=batch-a-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="684" width="2.323" height="20" rx="2"/>
+<text class="value" x="358.323" y="699">471125.0</text>
+<text class="label" x="12" y="734">status=passed / correctness=true / process=batch-a-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="718" width="101.726" height="20" rx="2"/>
+<text class="value" x="457.726" y="733">20633375.0</text>
+<text class="label" x="12" y="768">status=passed / correctness=true / process=batch-a-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="752" width="141.126" height="20" rx="2"/>
+<text class="value" x="497.126" y="767">28625084.0</text>
+<text class="label" x="12" y="802">status=passed / correctness=true / process=batch-a-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="786" width="508.735" height="20" rx="2"/>
+<text class="value" x="864.735" y="801">103188500.0</text>
+<text class="label" x="12" y="836">status=passed / correctness=true / process=batch-a-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="820" width="2.125" height="20" rx="2"/>
+<text class="value" x="358.125" y="835">431000.0</text>
+<text class="label" x="12" y="870">status=passed / correctness=true / process=batch-a-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="854" width="101.599" height="20" rx="2"/>
+<text class="value" x="457.599" y="869">20607750.0</text>
+<text class="label" x="12" y="904">status=passed / correctness=true / process=batch-a-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="888" width="102.691" height="20" rx="2"/>
+<text class="value" x="458.691" y="903">20829084.0</text>
+<text class="label" x="12" y="938">status=passed / correctness=true / process=batch-a-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="922" width="506.247" height="20" rx="2"/>
+<text class="value" x="862.247" y="937">102683834.0</text>
+<text class="label" x="12" y="972">status=passed / correctness=true / process=batch-a-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="956" width="2.213" height="20" rx="2"/>
+<text class="value" x="358.213" y="971">448792.0</text>
+<text class="label" x="12" y="1006">status=passed / correctness=true / process=batch-a-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="990" width="99.287" height="20" rx="2"/>
+<text class="value" x="455.287" y="1005">20138833.0</text>
+<text class="label" x="12" y="1040">status=passed / correctness=true / process=batch-a-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1024" width="98.233" height="20" rx="2"/>
+<text class="value" x="454.233" y="1039">19924875.0</text>
+<text class="label" x="12" y="1074">status=passed / correctness=true / process=batch-a-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1058" width="525.912" height="20" rx="2"/>
+<text class="value" x="881.912" y="1073">106672667.0</text>
+<text class="label" x="12" y="1108">status=passed / correctness=true / process=batch-a-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1092" width="2.242" height="20" rx="2"/>
+<text class="value" x="358.242" y="1107">454833.0</text>
+<text class="label" x="12" y="1142">status=passed / correctness=true / process=batch-a-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1126" width="102.585" height="20" rx="2"/>
+<text class="value" x="458.585" y="1141">20807750.0</text>
+<text class="label" x="12" y="1176">status=passed / correctness=true / process=batch-a-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1160" width="118.327" height="20" rx="2"/>
+<text class="value" x="474.327" y="1175">24000709.0</text>
+<text class="label" x="12" y="1210">status=passed / correctness=true / process=batch-a-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1194" width="524.249" height="20" rx="2"/>
+<text class="value" x="880.249" y="1209">106335250.0</text>
+<text class="label" x="12" y="1244">status=passed / correctness=true / process=batch-a-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1228" width="2.387" height="20" rx="2"/>
+<text class="value" x="358.387" y="1243">484250.0</text>
+<text class="label" x="12" y="1278">status=passed / correctness=true / process=batch-a-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1262" width="101.130" height="20" rx="2"/>
+<text class="value" x="457.130" y="1277">20512542.0</text>
+<text class="label" x="12" y="1312">status=passed / correctness=true / process=batch-a-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1296" width="118.201" height="20" rx="2"/>
+<text class="value" x="474.201" y="1311">23975209.0</text>
+<text class="label" x="12" y="1346">status=passed / correctness=true / process=batch-a-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1330" width="532.164" height="20" rx="2"/>
+<text class="value" x="888.164" y="1345">107940791.0</text>
+<text class="label" x="12" y="1380">status=passed / correctness=true / process=batch-a-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1364" width="2.237" height="20" rx="2"/>
+<text class="value" x="358.237" y="1379">453750.0</text>
+<text class="label" x="12" y="1414">status=passed / correctness=true / process=batch-a-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1398" width="102.440" height="20" rx="2"/>
+<text class="value" x="458.440" y="1413">20778250.0</text>
+<text class="label" x="12" y="1448">status=passed / correctness=true / process=batch-a-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1432" width="121.764" height="20" rx="2"/>
+<text class="value" x="477.764" y="1447">24697875.0</text>
+<text class="label" x="12" y="1482">status=passed / correctness=true / process=batch-a-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1466" width="524.054" height="20" rx="2"/>
+<text class="value" x="880.054" y="1481">106295709.0</text>
+<text class="label" x="12" y="1516">status=passed / correctness=true / process=batch-a-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1500" width="2.509" height="20" rx="2"/>
+<text class="value" x="358.509" y="1515">509000.0</text>
+<text class="label" x="12" y="1550">status=passed / correctness=true / process=batch-a-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1534" width="101.334" height="20" rx="2"/>
+<text class="value" x="457.334" y="1549">20553916.0</text>
+<text class="label" x="12" y="1584">status=passed / correctness=true / process=batch-a-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="1568" width="116.746" height="20" rx="2"/>
+<text class="value" x="472.746" y="1583">23679959.0</text>
+<text class="label" x="12" y="1618">status=passed / correctness=true / process=batch-a-primary-minimal-worker / scope=layer_0_router_...</text>
+<rect class="bar-pass" x="350" y="1602" width="5.286" height="20" rx="2"/>
+<text class="value" x="361.286" y="1617">1072124.5</text>
+<text class="label" x="12" y="1652">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1636" width="305.706" height="20" rx="2"/>
+<text class="value" x="661.706" y="1651">62007437.5</text>
+<text class="label" x="12" y="1686">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1670" width="14.700" height="20" rx="2"/>
+<text class="value" x="370.700" y="1685">2981625.0</text>
+<text class="label" x="12" y="1720">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1704" width="1.722" height="20" rx="2"/>
+<text class="value" x="357.722" y="1719">349188.0</text>
+<text class="label" x="12" y="1754">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1738" width="3.237" height="20" rx="2"/>
+<text class="value" x="359.237" y="1753">656666.5</text>
+<text class="label" x="12" y="1788">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1772" width="0.238" height="20" rx="2"/>
+<text class="value" x="356.238" y="1787">48250.0</text>
+<text class="label" x="12" y="1822">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1806" width="2.751" height="20" rx="2"/>
+<text class="value" x="358.751" y="1821">557958.0</text>
+<text class="label" x="12" y="1856">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="1840" width="2.273" height="20" rx="2"/>
+<text class="value" x="358.273" y="1855">461062.5</text>
+<text class="label" x="12" y="1890">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="1874" width="537.850" height="20" rx="2"/>
+<text class="value" x="893.850" y="1889">109093958.0</text>
+<text class="label" x="12" y="1924">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="1908" width="2.070" height="20" rx="2"/>
+<text class="value" x="358.070" y="1923">419917.0</text>
+<text class="label" x="12" y="1958">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="1942" width="105.453" height="20" rx="2"/>
+<text class="value" x="461.453" y="1957">21389416.0</text>
+<text class="label" x="12" y="1992">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="1976" width="128.912" height="20" rx="2"/>
+<text class="value" x="484.912" y="1991">26147750.0</text>
+<text class="label" x="12" y="2026">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="2010" width="530.705" height="20" rx="2"/>
+<text class="value" x="886.705" y="2025">107644709.0</text>
+<text class="label" x="12" y="2060">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="2044" width="2.472" height="20" rx="2"/>
+<text class="value" x="358.472" y="2059">501458.0</text>
+<text class="label" x="12" y="2094">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="2078" width="99.004" height="20" rx="2"/>
+<text class="value" x="455.004" y="2093">20081375.0</text>
+<text class="label" x="12" y="2128">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="2112" width="123.731" height="20" rx="2"/>
+<text class="value" x="479.731" y="2127">25096833.0</text>
+<text class="label" x="12" y="2162">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="2146" width="538.262" height="20" rx="2"/>
+<text class="value" x="894.262" y="2161">109177500.0</text>
+<text class="label" x="12" y="2196">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="2180" width="2.101" height="20" rx="2"/>
+<text class="value" x="358.101" y="2195">426084.0</text>
+<text class="label" x="12" y="2230">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="2214" width="101.371" height="20" rx="2"/>
+<text class="value" x="457.371" y="2229">20561417.0</text>
+<text class="label" x="12" y="2264">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="2248" width="129.095" height="20" rx="2"/>
+<text class="value" x="485.095" y="2263">26184709.0</text>
+<text class="label" x="12" y="2298">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="2282" width="513.048" height="20" rx="2"/>
+<text class="value" x="869.048" y="2297">104063375.0</text>
+<text class="label" x="12" y="2332">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="2316" width="1.694" height="20" rx="2"/>
+<text class="value" x="357.694" y="2331">343500.0</text>
+<text class="label" x="12" y="2366">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="2350" width="100.123" height="20" rx="2"/>
+<text class="value" x="456.123" y="2365">20308334.0</text>
+<text class="label" x="12" y="2400">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="2384" width="105.613" height="20" rx="2"/>
+<text class="value" x="461.613" y="2399">21421916.0</text>
+<text class="label" x="12" y="2434">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="2418" width="530.374" height="20" rx="2"/>
+<text class="value" x="886.374" y="2433">107577709.0</text>
+<text class="label" x="12" y="2468">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="2452" width="2.586" height="20" rx="2"/>
+<text class="value" x="358.586" y="2467">524625.0</text>
+<text class="label" x="12" y="2502">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="2486" width="104.624" height="20" rx="2"/>
+<text class="value" x="460.624" y="2501">21221291.0</text>
+<text class="label" x="12" y="2536">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="2520" width="119.522" height="20" rx="2"/>
+<text class="value" x="475.522" y="2535">24243167.0</text>
+<text class="label" x="12" y="2570">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="2554" width="523.359" height="20" rx="2"/>
+<text class="value" x="879.359" y="2569">106154791.0</text>
+<text class="label" x="12" y="2604">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="2588" width="2.284" height="20" rx="2"/>
+<text class="value" x="358.284" y="2603">463291.0</text>
+<text class="label" x="12" y="2638">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="2622" width="100.009" height="20" rx="2"/>
+<text class="value" x="456.009" y="2637">20285250.0</text>
+<text class="label" x="12" y="2672">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="2656" width="114.729" height="20" rx="2"/>
+<text class="value" x="470.729" y="2671">23270792.0</text>
+<text class="label" x="12" y="2706">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="2690" width="525.361" height="20" rx="2"/>
+<text class="value" x="881.361" y="2705">106560917.0</text>
+<text class="label" x="12" y="2740">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="2724" width="1.944" height="20" rx="2"/>
+<text class="value" x="357.944" y="2739">394292.0</text>
+<text class="label" x="12" y="2774">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="2758" width="99.518" height="20" rx="2"/>
+<text class="value" x="455.518" y="2773">20185625.0</text>
+<text class="label" x="12" y="2808">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="2792" width="119.902" height="20" rx="2"/>
+<text class="value" x="475.902" y="2807">24320083.0</text>
+<text class="label" x="12" y="2842">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="2826" width="528.136" height="20" rx="2"/>
+<text class="value" x="884.136" y="2841">107123709.0</text>
+<text class="label" x="12" y="2876">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="2860" width="2.396" height="20" rx="2"/>
+<text class="value" x="358.396" y="2875">486041.0</text>
+<text class="label" x="12" y="2910">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="2894" width="102.032" height="20" rx="2"/>
+<text class="value" x="458.032" y="2909">20695542.0</text>
+<text class="label" x="12" y="2944">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="2928" width="110.327" height="20" rx="2"/>
+<text class="value" x="466.327" y="2943">22378042.0</text>
+<text class="label" x="12" y="2978">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="2962" width="511.723" height="20" rx="2"/>
+<text class="value" x="867.723" y="2977">103794625.0</text>
+<text class="label" x="12" y="3012">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="2996" width="2.313" height="20" rx="2"/>
+<text class="value" x="358.313" y="3011">469083.0</text>
+<text class="label" x="12" y="3046">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="3030" width="101.861" height="20" rx="2"/>
+<text class="value" x="457.861" y="3045">20660875.0</text>
+<text class="label" x="12" y="3080">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="3064" width="99.978" height="20" rx="2"/>
+<text class="value" x="455.978" y="3079">20278834.0</text>
+<text class="label" x="12" y="3114">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="3098" width="525.812" height="20" rx="2"/>
+<text class="value" x="881.812" y="3113">106652333.0</text>
+<text class="label" x="12" y="3148">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="3132" width="2.538" height="20" rx="2"/>
+<text class="value" x="358.538" y="3147">514834.0</text>
+<text class="label" x="12" y="3182">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="3166" width="100.741" height="20" rx="2"/>
+<text class="value" x="456.741" y="3181">20433583.0</text>
+<text class="label" x="12" y="3216">status=passed / correctness=true / process=batch-a-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="3200" width="116.314" height="20" rx="2"/>
+<text class="value" x="472.314" y="3215">23592417.0</text>
+<text class="label" x="12" y="3250">status=passed / correctness=true / process=batch-a-single-row-clean-minimal-worker / scope=layer_...</text>
+<rect class="bar-pass" x="350" y="3234" width="4.984" height="20" rx="2"/>
+<text class="value" x="360.984" y="3249">1010979.0</text>
+<text class="label" x="12" y="3284">status=passed / correctness=true / process=batch-a-correctness-worker / scope=layer_0_router_only...</text>
+<rect class="bar-pass" x="350" y="3268" width="5.843" height="20" rx="2"/>
+<text class="value" x="361.843" y="3283">1185208.5</text>
+<text class="label" x="12" y="3318">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="3302" width="406.545" height="20" rx="2"/>
+<text class="value" x="762.545" y="3317">82461000.0</text>
+<text class="label" x="12" y="3352">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="3336" width="2.280" height="20" rx="2"/>
+<text class="value" x="358.280" y="3351">462416.5</text>
+<text class="label" x="12" y="3386">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="3370" width="97.954" height="20" rx="2"/>
+<text class="value" x="453.954" y="3385">19868292.0</text>
+<text class="label" x="12" y="3420">status=passed / correctness=true / process=batch-a-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="3404" width="5.583" height="20" rx="2"/>
+<text class="value" x="361.583" y="3419">1132416.5</text>
+<text class="label" x="12" y="3454">status=passed / correctness=true / process=batch-a-primary-minimal-worker / scope=layer_0_router_...</text>
+<rect class="bar-pass" x="350" y="3438" width="5.382" height="20" rx="2"/>
+<text class="value" x="361.382" y="3453">1091729.5</text>
+<text class="label" x="12" y="3488">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3472" width="308.379" height="20" rx="2"/>
+<text class="value" x="664.379" y="3487">62549604.0</text>
+<text class="label" x="12" y="3522">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3506" width="14.603" height="20" rx="2"/>
+<text class="value" x="370.603" y="3521">2961937.5</text>
+<text class="label" x="12" y="3556">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3540" width="1.795" height="20" rx="2"/>
+<text class="value" x="357.795" y="3555">364145.5</text>
+<text class="label" x="12" y="3590">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3574" width="3.694" height="20" rx="2"/>
+<text class="value" x="359.694" y="3589">749291.5</text>
+<text class="label" x="12" y="3624">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3608" width="0.436" height="20" rx="2"/>
+<text class="value" x="356.436" y="3623">88375.0</text>
+<text class="label" x="12" y="3658">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3642" width="2.835" height="20" rx="2"/>
+<text class="value" x="358.835" y="3657">575042.0</text>
+<text class="label" x="12" y="3692">status=passed / correctness=true / process=batch-a-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="3676" width="2.476" height="20" rx="2"/>
+<text class="value" x="358.476" y="3691">502208.5</text>
+<text class="label" x="12" y="3726">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3710" width="543.899" height="20" rx="2"/>
+<text class="value" x="899.899" y="3725">110321041.0</text>
+<text class="label" x="12" y="3760">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3744" width="2.143" height="20" rx="2"/>
+<text class="value" x="358.143" y="3759">434750.0</text>
+<text class="label" x="12" y="3794">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3778" width="100.832" height="20" rx="2"/>
+<text class="value" x="456.832" y="3793">20452041.0</text>
+<text class="label" x="12" y="3828">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3812" width="131.763" height="20" rx="2"/>
+<text class="value" x="487.763" y="3827">26726042.0</text>
+<text class="label" x="12" y="3862">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3846" width="515.973" height="20" rx="2"/>
+<text class="value" x="871.973" y="3861">104656625.0</text>
+<text class="label" x="12" y="3896">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3880" width="2.377" height="20" rx="2"/>
+<text class="value" x="358.377" y="3895">482208.0</text>
+<text class="label" x="12" y="3930">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3914" width="102.059" height="20" rx="2"/>
+<text class="value" x="458.059" y="3929">20700917.0</text>
+<text class="label" x="12" y="3964">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3948" width="101.228" height="20" rx="2"/>
+<text class="value" x="457.228" y="3963">20532500.0</text>
+<text class="label" x="12" y="3998">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="3982" width="534.185" height="20" rx="2"/>
+<text class="value" x="890.185" y="3997">108350708.0</text>
+<text class="label" x="12" y="4032">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4016" width="2.197" height="20" rx="2"/>
+<text class="value" x="358.197" y="4031">445667.0</text>
+<text class="label" x="12" y="4066">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4050" width="104.386" height="20" rx="2"/>
+<text class="value" x="460.386" y="4065">21173083.0</text>
+<text class="label" x="12" y="4100">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4084" width="122.017" height="20" rx="2"/>
+<text class="value" x="478.017" y="4099">24749167.0</text>
+<text class="label" x="12" y="4134">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4118" width="511.863" height="20" rx="2"/>
+<text class="value" x="867.863" y="4133">103823083.0</text>
+<text class="label" x="12" y="4168">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4152" width="1.929" height="20" rx="2"/>
+<text class="value" x="357.929" y="4167">391292.0</text>
+<text class="label" x="12" y="4202">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4186" width="102.810" height="20" rx="2"/>
+<text class="value" x="458.810" y="4201">20853375.0</text>
+<text class="label" x="12" y="4236">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4220" width="105.089" height="20" rx="2"/>
+<text class="value" x="461.089" y="4235">21315542.0</text>
+<text class="label" x="12" y="4270">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4254" width="536.215" height="20" rx="2"/>
+<text class="value" x="892.215" y="4269">108762375.0</text>
+<text class="label" x="12" y="4304">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4288" width="2.403" height="20" rx="2"/>
+<text class="value" x="358.403" y="4303">487375.0</text>
+<text class="label" x="12" y="4338">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4322" width="102.509" height="20" rx="2"/>
+<text class="value" x="458.509" y="4337">20792250.0</text>
+<text class="label" x="12" y="4372">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4356" width="121.665" height="20" rx="2"/>
+<text class="value" x="477.665" y="4371">24677791.0</text>
+<text class="label" x="12" y="4406">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4390" width="505.791" height="20" rx="2"/>
+<text class="value" x="861.791" y="4405">102591417.0</text>
+<text class="label" x="12" y="4440">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4424" width="2.305" height="20" rx="2"/>
+<text class="value" x="358.305" y="4439">467542.0</text>
+<text class="label" x="12" y="4474">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4458" width="101.719" height="20" rx="2"/>
+<text class="value" x="457.719" y="4473">20632000.0</text>
+<text class="label" x="12" y="4508">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4492" width="97.549" height="20" rx="2"/>
+<text class="value" x="453.549" y="4507">19786292.0</text>
+<text class="label" x="12" y="4542">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4526" width="532.708" height="20" rx="2"/>
+<text class="value" x="888.708" y="4541">108050958.0</text>
+<text class="label" x="12" y="4576">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4560" width="2.058" height="20" rx="2"/>
+<text class="value" x="358.058" y="4575">417334.0</text>
+<text class="label" x="12" y="4610">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4594" width="102.585" height="20" rx="2"/>
+<text class="value" x="458.585" y="4609">20807666.0</text>
+<text class="label" x="12" y="4644">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4628" width="119.381" height="20" rx="2"/>
+<text class="value" x="475.381" y="4643">24214542.0</text>
+<text class="label" x="12" y="4678">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4662" width="513.883" height="20" rx="2"/>
+<text class="value" x="869.883" y="4677">104232750.0</text>
+<text class="label" x="12" y="4712">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4696" width="2.267" height="20" rx="2"/>
+<text class="value" x="358.267" y="4711">459916.0</text>
+<text class="label" x="12" y="4746">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4730" width="102.158" height="20" rx="2"/>
+<text class="value" x="458.158" y="4745">20721042.0</text>
+<text class="label" x="12" y="4780">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4764" width="105.868" height="20" rx="2"/>
+<text class="value" x="461.868" y="4779">21473542.0</text>
+<text class="label" x="12" y="4814">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4798" width="545.620" height="20" rx="2"/>
+<text class="value" x="901.620" y="4813">110670000.0</text>
+<text class="label" x="12" y="4848">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4832" width="2.315" height="20" rx="2"/>
+<text class="value" x="358.315" y="4847">469459.0</text>
+<text class="label" x="12" y="4882">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4866" width="102.541" height="20" rx="2"/>
+<text class="value" x="458.541" y="4881">20798708.0</text>
+<text class="label" x="12" y="4916">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4900" width="129.028" height="20" rx="2"/>
+<text class="value" x="485.028" y="4915">26171208.0</text>
+<text class="label" x="12" y="4950">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4934" width="545.336" height="20" rx="2"/>
+<text class="value" x="901.336" y="4949">110612417.0</text>
+<text class="label" x="12" y="4984">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="4968" width="2.074" height="20" rx="2"/>
+<text class="value" x="358.074" y="4983">420709.0</text>
+<text class="label" x="12" y="5018">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="5002" width="102.332" height="20" rx="2"/>
+<text class="value" x="458.332" y="5017">20756375.0</text>
+<text class="label" x="12" y="5052">status=passed / correctness=true / process=batch-a-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="5036" width="126.777" height="20" rx="2"/>
+<text class="value" x="482.777" y="5051">25714709.0</text>
+<text class="label" x="12" y="5086">status=passed / correctness=true / process=batch-a-two-row-clean-minimal-worker / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="5070" width="5.779" height="20" rx="2"/>
+<text class="value" x="361.779" y="5085">1172187.5</text>
+<text class="label" x="12" y="5120">status=passed / correctness=true / process=batch-b-correctness-worker / scope=layer_0_router_only...</text>
+<rect class="bar-pass" x="350" y="5104" width="5.463" height="20" rx="2"/>
+<text class="value" x="361.463" y="5119">1108041.5</text>
+<text class="label" x="12" y="5154">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="5138" width="409.176" height="20" rx="2"/>
+<text class="value" x="765.176" y="5153">82994562.5</text>
+<text class="label" x="12" y="5188">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="5172" width="2.472" height="20" rx="2"/>
+<text class="value" x="358.472" y="5187">501312.5</text>
+<text class="label" x="12" y="5222">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="5206" width="97.773" height="20" rx="2"/>
+<text class="value" x="453.773" y="5221">19831687.5</text>
+<text class="label" x="12" y="5256">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="5240" width="8.509" height="20" rx="2"/>
+<text class="value" x="364.509" y="5255">1725958.5</text>
+<text class="label" x="12" y="5290">status=passed / correctness=true / process=batch-b-primary-minimal-worker / scope=layer_0_router_...</text>
+<rect class="bar-pass" x="350" y="5274" width="5.365" height="20" rx="2"/>
+<text class="value" x="361.365" y="5289">1088104.5</text>
+<text class="label" x="12" y="5324">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5308" width="311.493" height="20" rx="2"/>
+<text class="value" x="667.493" y="5323">63181145.5</text>
+<text class="label" x="12" y="5358">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5342" width="14.803" height="20" rx="2"/>
+<text class="value" x="370.803" y="5357">3002500.0</text>
+<text class="label" x="12" y="5392">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5376" width="1.692" height="20" rx="2"/>
+<text class="value" x="357.692" y="5391">343291.5</text>
+<text class="label" x="12" y="5426">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5410" width="3.765" height="20" rx="2"/>
+<text class="value" x="359.765" y="5425">763583.5</text>
+<text class="label" x="12" y="5460">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5444" width="0.238" height="20" rx="2"/>
+<text class="value" x="356.238" y="5459">48312.5</text>
+<text class="label" x="12" y="5494">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5478" width="2.992" height="20" rx="2"/>
+<text class="value" x="358.992" y="5493">606854.5</text>
+<text class="label" x="12" y="5528">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="5512" width="2.407" height="20" rx="2"/>
+<text class="value" x="358.407" y="5527">488145.5</text>
+<text class="label" x="12" y="5562">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="5546" width="509.204" height="20" rx="2"/>
+<text class="value" x="865.204" y="5561">103283625.0</text>
+<text class="label" x="12" y="5596">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="5580" width="2.041" height="20" rx="2"/>
+<text class="value" x="358.041" y="5595">413958.0</text>
+<text class="label" x="12" y="5630">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="5614" width="99.935" height="20" rx="2"/>
+<text class="value" x="455.935" y="5629">20270250.0</text>
+<text class="label" x="12" y="5664">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-00 / scope=...</text>
+<rect class="bar-pass" x="350" y="5648" width="102.871" height="20" rx="2"/>
+<text class="value" x="458.871" y="5663">20865708.0</text>
+<text class="label" x="12" y="5698">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="5682" width="505.905" height="20" rx="2"/>
+<text class="value" x="861.905" y="5697">102614542.0</text>
+<text class="label" x="12" y="5732">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="5716" width="2.353" height="20" rx="2"/>
+<text class="value" x="358.353" y="5731">477250.0</text>
+<text class="label" x="12" y="5766">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="5750" width="101.511" height="20" rx="2"/>
+<text class="value" x="457.511" y="5765">20589875.0</text>
+<text class="label" x="12" y="5800">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-01 / scope=...</text>
+<rect class="bar-pass" x="350" y="5784" width="98.727" height="20" rx="2"/>
+<text class="value" x="454.727" y="5799">20025250.0</text>
+<text class="label" x="12" y="5834">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="5818" width="521.772" height="20" rx="2"/>
+<text class="value" x="877.772" y="5833">105832792.0</text>
+<text class="label" x="12" y="5868">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="5852" width="1.886" height="20" rx="2"/>
+<text class="value" x="357.886" y="5867">382584.0</text>
+<text class="label" x="12" y="5902">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="5886" width="102.277" height="20" rx="2"/>
+<text class="value" x="458.277" y="5901">20745167.0</text>
+<text class="label" x="12" y="5936">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-02 / scope=...</text>
+<rect class="bar-pass" x="350" y="5920" width="101.903" height="20" rx="2"/>
+<text class="value" x="457.903" y="5935">20669250.0</text>
+<text class="label" x="12" y="5970">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="5954" width="529.941" height="20" rx="2"/>
+<text class="value" x="885.941" y="5969">107489917.0</text>
+<text class="label" x="12" y="6004">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="5988" width="2.077" height="20" rx="2"/>
+<text class="value" x="358.077" y="6003">421375.0</text>
+<text class="label" x="12" y="6038">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="6022" width="100.887" height="20" rx="2"/>
+<text class="value" x="456.887" y="6037">20463333.0</text>
+<text class="label" x="12" y="6072">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-03 / scope=...</text>
+<rect class="bar-pass" x="350" y="6056" width="122.969" height="20" rx="2"/>
+<text class="value" x="478.969" y="6071">24942250.0</text>
+<text class="label" x="12" y="6106">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="6090" width="528.256" height="20" rx="2"/>
+<text class="value" x="884.256" y="6105">107148000.0</text>
+<text class="label" x="12" y="6140">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="6124" width="2.152" height="20" rx="2"/>
+<text class="value" x="358.152" y="6139">436542.0</text>
+<text class="label" x="12" y="6174">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="6158" width="101.583" height="20" rx="2"/>
+<text class="value" x="457.583" y="6173">20604375.0</text>
+<text class="label" x="12" y="6208">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-04 / scope=...</text>
+<rect class="bar-pass" x="350" y="6192" width="113.273" height="20" rx="2"/>
+<text class="value" x="469.273" y="6207">22975542.0</text>
+<text class="label" x="12" y="6242">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="6226" width="515.753" height="20" rx="2"/>
+<text class="value" x="871.753" y="6241">104611959.0</text>
+<text class="label" x="12" y="6276">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="6260" width="2.100" height="20" rx="2"/>
+<text class="value" x="358.100" y="6275">426000.0</text>
+<text class="label" x="12" y="6310">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="6294" width="104.269" height="20" rx="2"/>
+<text class="value" x="460.269" y="6309">21149333.0</text>
+<text class="label" x="12" y="6344">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-05 / scope=...</text>
+<rect class="bar-pass" x="350" y="6328" width="102.600" height="20" rx="2"/>
+<text class="value" x="458.600" y="6343">20810792.0</text>
+<text class="label" x="12" y="6378">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="6362" width="512.617" height="20" rx="2"/>
+<text class="value" x="868.617" y="6377">103976000.0</text>
+<text class="label" x="12" y="6412">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="6396" width="2.027" height="20" rx="2"/>
+<text class="value" x="358.027" y="6411">411125.0</text>
+<text class="label" x="12" y="6446">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="6430" width="100.958" height="20" rx="2"/>
+<text class="value" x="456.958" y="6445">20477708.0</text>
+<text class="label" x="12" y="6480">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-06 / scope=...</text>
+<rect class="bar-pass" x="350" y="6464" width="109.331" height="20" rx="2"/>
+<text class="value" x="465.331" y="6479">22176000.0</text>
+<text class="label" x="12" y="6514">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="6498" width="529.205" height="20" rx="2"/>
+<text class="value" x="885.205" y="6513">107340542.0</text>
+<text class="label" x="12" y="6548">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="6532" width="1.872" height="20" rx="2"/>
+<text class="value" x="357.872" y="6547">379791.0</text>
+<text class="label" x="12" y="6582">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="6566" width="102.241" height="20" rx="2"/>
+<text class="value" x="458.241" y="6581">20737875.0</text>
+<text class="label" x="12" y="6616">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-07 / scope=...</text>
+<rect class="bar-pass" x="350" y="6600" width="117.105" height="20" rx="2"/>
+<text class="value" x="473.105" y="6615">23752875.0</text>
+<text class="label" x="12" y="6650">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="6634" width="526.949" height="20" rx="2"/>
+<text class="value" x="882.949" y="6649">106883000.0</text>
+<text class="label" x="12" y="6684">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="6668" width="2.210" height="20" rx="2"/>
+<text class="value" x="358.210" y="6683">448250.0</text>
+<text class="label" x="12" y="6718">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="6702" width="101.675" height="20" rx="2"/>
+<text class="value" x="457.675" y="6717">20623125.0</text>
+<text class="label" x="12" y="6752">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-08 / scope=...</text>
+<rect class="bar-pass" x="350" y="6736" width="118.591" height="20" rx="2"/>
+<text class="value" x="474.591" y="6751">24054333.0</text>
+<text class="label" x="12" y="6786">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="6770" width="530.365" height="20" rx="2"/>
+<text class="value" x="886.365" y="6785">107575833.0</text>
+<text class="label" x="12" y="6820">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="6804" width="2.649" height="20" rx="2"/>
+<text class="value" x="358.649" y="6819">537375.0</text>
+<text class="label" x="12" y="6854">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="6838" width="101.507" height="20" rx="2"/>
+<text class="value" x="457.507" y="6853">20589084.0</text>
+<text class="label" x="12" y="6888">status=passed / correctness=true / process=batch-b-single-row-clean-first-read-worker-09 / scope=...</text>
+<rect class="bar-pass" x="350" y="6872" width="116.452" height="20" rx="2"/>
+<text class="value" x="472.452" y="6887">23620292.0</text>
+<text class="label" x="12" y="6922">status=passed / correctness=true / process=batch-b-single-row-clean-minimal-worker / scope=layer_...</text>
+<rect class="bar-pass" x="350" y="6906" width="4.669" height="20" rx="2"/>
+<text class="value" x="360.669" y="6921">946958.5</text>
+<text class="label" x="12" y="6956">status=passed / correctness=true / process=batch-b-correctness-worker / scope=layer_0_router_only...</text>
+<rect class="bar-pass" x="350" y="6940" width="5.989" height="20" rx="2"/>
+<text class="value" x="361.989" y="6955">1214770.5</text>
+<text class="label" x="12" y="6990">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="6974" width="406.805" height="20" rx="2"/>
+<text class="value" x="762.805" y="6989">82513708.0</text>
+<text class="label" x="12" y="7024">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="7008" width="2.416" height="20" rx="2"/>
+<text class="value" x="358.416" y="7023">490062.5</text>
+<text class="label" x="12" y="7058">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="7042" width="97.202" height="20" rx="2"/>
+<text class="value" x="453.202" y="7057">19715750.5</text>
+<text class="label" x="12" y="7092">status=passed / correctness=true / process=batch-b-primary-costly-worker / scope=layer_0_router_o...</text>
+<rect class="bar-pass" x="350" y="7076" width="5.196" height="20" rx="2"/>
+<text class="value" x="361.196" y="7091">1053854.5</text>
+<text class="label" x="12" y="7126">status=passed / correctness=true / process=batch-b-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7110" width="525.582" height="20" rx="2"/>
+<text class="value" x="881.582" y="7125">106605667.0</text>
+<text class="label" x="12" y="7160">status=passed / correctness=true / process=batch-b-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7144" width="2.622" height="20" rx="2"/>
+<text class="value" x="358.622" y="7159">531917.0</text>
+<text class="label" x="12" y="7194">status=passed / correctness=true / process=batch-b-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7178" width="102.981" height="20" rx="2"/>
+<text class="value" x="458.981" y="7193">20888042.0</text>
+<text class="label" x="12" y="7228">status=passed / correctness=true / process=batch-b-primary-first-read-worker-00 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7212" width="110.738" height="20" rx="2"/>
+<text class="value" x="466.738" y="7227">22461375.0</text>
+<text class="label" x="12" y="7262">status=passed / correctness=true / process=batch-b-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7246" width="525.798" height="20" rx="2"/>
+<text class="value" x="881.798" y="7261">106649542.0</text>
+<text class="label" x="12" y="7296">status=passed / correctness=true / process=batch-b-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7280" width="1.961" height="20" rx="2"/>
+<text class="value" x="357.961" y="7295">397709.0</text>
+<text class="label" x="12" y="7330">status=passed / correctness=true / process=batch-b-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7314" width="99.430" height="20" rx="2"/>
+<text class="value" x="455.430" y="7329">20167750.0</text>
+<text class="label" x="12" y="7364">status=passed / correctness=true / process=batch-b-primary-first-read-worker-01 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7348" width="124.333" height="20" rx="2"/>
+<text class="value" x="480.333" y="7363">25218833.0</text>
+<text class="label" x="12" y="7398">status=passed / correctness=true / process=batch-b-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7382" width="531.778" height="20" rx="2"/>
+<text class="value" x="887.778" y="7397">107862417.0</text>
+<text class="label" x="12" y="7432">status=passed / correctness=true / process=batch-b-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7416" width="2.329" height="20" rx="2"/>
+<text class="value" x="358.329" y="7431">472375.0</text>
+<text class="label" x="12" y="7466">status=passed / correctness=true / process=batch-b-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7450" width="103.401" height="20" rx="2"/>
+<text class="value" x="459.401" y="7465">20973292.0</text>
+<text class="label" x="12" y="7500">status=passed / correctness=true / process=batch-b-primary-first-read-worker-02 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7484" width="122.261" height="20" rx="2"/>
+<text class="value" x="478.261" y="7499">24798542.0</text>
+<text class="label" x="12" y="7534">status=passed / correctness=true / process=batch-b-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7518" width="541.339" height="20" rx="2"/>
+<text class="value" x="897.339" y="7533">109801708.0</text>
+<text class="label" x="12" y="7568">status=passed / correctness=true / process=batch-b-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7552" width="2.200" height="20" rx="2"/>
+<text class="value" x="358.200" y="7567">446167.0</text>
+<text class="label" x="12" y="7602">status=passed / correctness=true / process=batch-b-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7586" width="100.890" height="20" rx="2"/>
+<text class="value" x="456.890" y="7601">20463959.0</text>
+<text class="label" x="12" y="7636">status=passed / correctness=true / process=batch-b-primary-first-read-worker-03 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7620" width="127.956" height="20" rx="2"/>
+<text class="value" x="483.956" y="7635">25953708.0</text>
+<text class="label" x="12" y="7670">status=passed / correctness=true / process=batch-b-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7654" width="530.754" height="20" rx="2"/>
+<text class="value" x="886.754" y="7669">107654750.0</text>
+<text class="label" x="12" y="7704">status=passed / correctness=true / process=batch-b-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7688" width="2.108" height="20" rx="2"/>
+<text class="value" x="358.108" y="7703">427625.0</text>
+<text class="label" x="12" y="7738">status=passed / correctness=true / process=batch-b-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7722" width="102.222" height="20" rx="2"/>
+<text class="value" x="458.222" y="7737">20734083.0</text>
+<text class="label" x="12" y="7772">status=passed / correctness=true / process=batch-b-primary-first-read-worker-04 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7756" width="118.313" height="20" rx="2"/>
+<text class="value" x="474.313" y="7771">23997875.0</text>
+<text class="label" x="12" y="7806">status=passed / correctness=true / process=batch-b-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7790" width="529.208" height="20" rx="2"/>
+<text class="value" x="885.208" y="7805">107341209.0</text>
+<text class="label" x="12" y="7840">status=passed / correctness=true / process=batch-b-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7824" width="2.411" height="20" rx="2"/>
+<text class="value" x="358.411" y="7839">489125.0</text>
+<text class="label" x="12" y="7874">status=passed / correctness=true / process=batch-b-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7858" width="102.325" height="20" rx="2"/>
+<text class="value" x="458.325" y="7873">20755042.0</text>
+<text class="label" x="12" y="7908">status=passed / correctness=true / process=batch-b-primary-first-read-worker-05 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7892" width="115.597" height="20" rx="2"/>
+<text class="value" x="471.597" y="7907">23447041.0</text>
+<text class="label" x="12" y="7942">status=passed / correctness=true / process=batch-b-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7926" width="529.440" height="20" rx="2"/>
+<text class="value" x="885.440" y="7941">107388167.0</text>
+<text class="label" x="12" y="7976">status=passed / correctness=true / process=batch-b-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7960" width="2.013" height="20" rx="2"/>
+<text class="value" x="358.013" y="7975">408208.0</text>
+<text class="label" x="12" y="8010">status=passed / correctness=true / process=batch-b-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="7994" width="101.283" height="20" rx="2"/>
+<text class="value" x="457.283" y="8009">20543625.0</text>
+<text class="label" x="12" y="8044">status=passed / correctness=true / process=batch-b-primary-first-read-worker-06 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8028" width="117.275" height="20" rx="2"/>
+<text class="value" x="473.275" y="8043">23787292.0</text>
+<text class="label" x="12" y="8078">status=passed / correctness=true / process=batch-b-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8062" width="531.552" height="20" rx="2"/>
+<text class="value" x="887.552" y="8077">107816625.0</text>
+<text class="label" x="12" y="8112">status=passed / correctness=true / process=batch-b-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8096" width="1.996" height="20" rx="2"/>
+<text class="value" x="357.996" y="8111">404875.0</text>
+<text class="label" x="12" y="8146">status=passed / correctness=true / process=batch-b-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8130" width="102.863" height="20" rx="2"/>
+<text class="value" x="458.863" y="8145">20864125.0</text>
+<text class="label" x="12" y="8180">status=passed / correctness=true / process=batch-b-primary-first-read-worker-07 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8164" width="118.080" height="20" rx="2"/>
+<text class="value" x="474.080" y="8179">23950667.0</text>
+<text class="label" x="12" y="8214">status=passed / correctness=true / process=batch-b-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8198" width="532.143" height="20" rx="2"/>
+<text class="value" x="888.143" y="8213">107936375.0</text>
+<text class="label" x="12" y="8248">status=passed / correctness=true / process=batch-b-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8232" width="2.128" height="20" rx="2"/>
+<text class="value" x="358.128" y="8247">431709.0</text>
+<text class="label" x="12" y="8282">status=passed / correctness=true / process=batch-b-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8266" width="100.269" height="20" rx="2"/>
+<text class="value" x="456.269" y="8281">20337875.0</text>
+<text class="label" x="12" y="8316">status=passed / correctness=true / process=batch-b-primary-first-read-worker-08 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8300" width="117.323" height="20" rx="2"/>
+<text class="value" x="473.323" y="8315">23797000.0</text>
+<text class="label" x="12" y="8350">status=passed / correctness=true / process=batch-b-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8334" width="518.079" height="20" rx="2"/>
+<text class="value" x="874.079" y="8349">105083709.0</text>
+<text class="label" x="12" y="8384">status=passed / correctness=true / process=batch-b-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8368" width="2.158" height="20" rx="2"/>
+<text class="value" x="358.158" y="8383">437666.0</text>
+<text class="label" x="12" y="8418">status=passed / correctness=true / process=batch-b-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8402" width="101.931" height="20" rx="2"/>
+<text class="value" x="457.931" y="8417">20675000.0</text>
+<text class="label" x="12" y="8452">status=passed / correctness=true / process=batch-b-primary-first-read-worker-09 / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="8436" width="107.180" height="20" rx="2"/>
+<text class="value" x="463.180" y="8451">21739708.0</text>
+<text class="label" x="12" y="8486">status=passed / correctness=true / process=batch-b-primary-minimal-worker / scope=layer_0_router_...</text>
+<rect class="bar-pass" x="350" y="8470" width="5.374" height="20" rx="2"/>
+<text class="value" x="361.374" y="8485">1090021.0</text>
+<text class="label" x="12" y="8520">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8504" width="312.057" height="20" rx="2"/>
+<text class="value" x="668.057" y="8519">63295708.5</text>
+<text class="label" x="12" y="8554">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8538" width="14.694" height="20" rx="2"/>
+<text class="value" x="370.694" y="8553">2980437.5</text>
+<text class="label" x="12" y="8588">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8572" width="1.642" height="20" rx="2"/>
+<text class="value" x="357.642" y="8587">333104.0</text>
+<text class="label" x="12" y="8622">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8606" width="3.223" height="20" rx="2"/>
+<text class="value" x="359.223" y="8621">653646.0</text>
+<text class="label" x="12" y="8656">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8640" width="0.429" height="20" rx="2"/>
+<text class="value" x="356.429" y="8655">86979.0</text>
+<text class="label" x="12" y="8690">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8674" width="2.766" height="20" rx="2"/>
+<text class="value" x="358.766" y="8689">561125.0</text>
+<text class="label" x="12" y="8724">status=passed / correctness=true / process=batch-b-primary-stage-worker / scope=layer_0_router_on...</text>
+<rect class="bar-pass" x="350" y="8708" width="2.831" height="20" rx="2"/>
+<text class="value" x="358.831" y="8723">574167.0</text>
+<text class="label" x="12" y="8758">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8742" width="549.737" height="20" rx="2"/>
+<text class="value" x="905.737" y="8757">111505125.0</text>
+<text class="label" x="12" y="8792">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8776" width="2.070" height="20" rx="2"/>
+<text class="value" x="358.070" y="8791">419916.0</text>
+<text class="label" x="12" y="8826">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8810" width="102.125" height="20" rx="2"/>
+<text class="value" x="458.125" y="8825">20714292.0</text>
+<text class="label" x="12" y="8860">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-00 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8844" width="121.287" height="20" rx="2"/>
+<text class="value" x="477.287" y="8859">24601125.0</text>
+<text class="label" x="12" y="8894">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8878" width="556.707" height="20" rx="2"/>
+<text class="value" x="912.707" y="8893">112918875.0</text>
+<text class="label" x="12" y="8928">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8912" width="2.308" height="20" rx="2"/>
+<text class="value" x="358.308" y="8927">468167.0</text>
+<text class="label" x="12" y="8962">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8946" width="101.527" height="20" rx="2"/>
+<text class="value" x="457.527" y="8961">20593041.0</text>
+<text class="label" x="12" y="8996">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-01 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="8980" width="147.136" height="20" rx="2"/>
+<text class="value" x="503.136" y="8995">29844042.0</text>
+<text class="label" x="12" y="9030">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9014" width="551.307" height="20" rx="2"/>
+<text class="value" x="907.307" y="9029">111823625.0</text>
+<text class="label" x="12" y="9064">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9048" width="2.198" height="20" rx="2"/>
+<text class="value" x="358.198" y="9063">445917.0</text>
+<text class="label" x="12" y="9098">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9082" width="101.931" height="20" rx="2"/>
+<text class="value" x="457.931" y="9097">20675125.0</text>
+<text class="label" x="12" y="9132">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-02 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9116" width="131.828" height="20" rx="2"/>
+<text class="value" x="487.828" y="9131">26739042.0</text>
+<text class="label" x="12" y="9166">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9150" width="547.701" height="20" rx="2"/>
+<text class="value" x="903.701" y="9165">111092042.0</text>
+<text class="label" x="12" y="9200">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9184" width="2.397" height="20" rx="2"/>
+<text class="value" x="358.397" y="9199">486209.0</text>
+<text class="label" x="12" y="9234">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9218" width="102.683" height="20" rx="2"/>
+<text class="value" x="458.683" y="9233">20827500.0</text>
+<text class="label" x="12" y="9268">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-03 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9252" width="134.517" height="20" rx="2"/>
+<text class="value" x="490.517" y="9267">27284625.0</text>
+<text class="label" x="12" y="9302">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9286" width="526.910" height="20" rx="2"/>
+<text class="value" x="882.910" y="9301">106875000.0</text>
+<text class="label" x="12" y="9336">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9320" width="2.344" height="20" rx="2"/>
+<text class="value" x="358.344" y="9335">475500.0</text>
+<text class="label" x="12" y="9370">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9354" width="102.260" height="20" rx="2"/>
+<text class="value" x="458.260" y="9369">20741750.0</text>
+<text class="label" x="12" y="9404">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-04 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9388" width="115.521" height="20" rx="2"/>
+<text class="value" x="471.521" y="9403">23431500.0</text>
+<text class="label" x="12" y="9438">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9422" width="517.926" height="20" rx="2"/>
+<text class="value" x="873.926" y="9437">105052750.0</text>
+<text class="label" x="12" y="9472">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9456" width="2.024" height="20" rx="2"/>
+<text class="value" x="358.024" y="9471">410458.0</text>
+<text class="label" x="12" y="9506">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9490" width="102.769" height="20" rx="2"/>
+<text class="value" x="458.769" y="9505">20845000.0</text>
+<text class="label" x="12" y="9540">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-05 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9524" width="104.814" height="20" rx="2"/>
+<text class="value" x="460.814" y="9539">21259708.0</text>
+<text class="label" x="12" y="9574">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9558" width="527.024" height="20" rx="2"/>
+<text class="value" x="883.024" y="9573">106898250.0</text>
+<text class="label" x="12" y="9608">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9592" width="2.185" height="20" rx="2"/>
+<text class="value" x="358.185" y="9607">443250.0</text>
+<text class="label" x="12" y="9642">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9626" width="102.011" height="20" rx="2"/>
+<text class="value" x="458.011" y="9641">20691292.0</text>
+<text class="label" x="12" y="9676">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-06 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9660" width="115.897" height="20" rx="2"/>
+<text class="value" x="471.897" y="9675">23507709.0</text>
+<text class="label" x="12" y="9710">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9694" width="534.152" height="20" rx="2"/>
+<text class="value" x="890.152" y="9709">108344000.0</text>
+<text class="label" x="12" y="9744">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9728" width="2.933" height="20" rx="2"/>
+<text class="value" x="358.933" y="9743">594875.0</text>
+<text class="label" x="12" y="9778">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9762" width="104.111" height="20" rx="2"/>
+<text class="value" x="460.111" y="9777">21117125.0</text>
+<text class="label" x="12" y="9812">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-07 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9796" width="120.018" height="20" rx="2"/>
+<text class="value" x="476.018" y="9811">24343750.0</text>
+<text class="label" x="12" y="9846">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9830" width="544.578" height="20" rx="2"/>
+<text class="value" x="900.578" y="9845">110458708.0</text>
+<text class="label" x="12" y="9880">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9864" width="2.115" height="20" rx="2"/>
+<text class="value" x="358.115" y="9879">428916.0</text>
+<text class="label" x="12" y="9914">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9898" width="102.200" height="20" rx="2"/>
+<text class="value" x="458.200" y="9913">20729541.0</text>
+<text class="label" x="12" y="9948">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-08 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9932" width="133.875" height="20" rx="2"/>
+<text class="value" x="489.875" y="9947">27154333.0</text>
+<text class="label" x="12" y="9982">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="9966" width="547.499" height="20" rx="2"/>
+<text class="value" x="903.499" y="9981">111051250.0</text>
+<text class="label" x="12" y="10016">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="10000" width="2.693" height="20" rx="2"/>
+<text class="value" x="358.693" y="10015">546167.0</text>
+<text class="label" x="12" y="10050">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="10034" width="101.053" height="20" rx="2"/>
+<text class="value" x="457.053" y="10049">20496959.0</text>
+<text class="label" x="12" y="10084">status=passed / correctness=true / process=batch-b-two-row-clean-first-read-worker-09 / scope=lay...</text>
+<rect class="bar-pass" x="350" y="10068" width="113.309" height="20" rx="2"/>
+<text class="value" x="469.309" y="10083">22982875.0</text>
+<text class="label" x="12" y="10118">status=passed / correctness=true / process=batch-b-two-row-clean-minimal-worker / scope=layer_0_r...</text>
+<rect class="bar-pass" x="350" y="10102" width="5.627" height="20" rx="2"/>
+<text class="value" x="361.627" y="10117">1141270.5</text>
+</svg>
