@@ -977,7 +977,27 @@ def _validate_environment_snapshot(
         snapshot, "material_concurrent_workload"
     )
     thermal = _observed_environment_value(snapshot, "thermal_state")
-    power = _observed_environment_value(snapshot, "power_mode")
+    observations = snapshot.get("observations")
+    if not isinstance(observations, Mapping):
+        _fail("environment_snapshot", "environment observations are unavailable")
+    power_observation = observations.get("power_mode")
+    if not isinstance(power_observation, Mapping):
+        _fail("environment_snapshot", "environment power-mode observation is invalid")
+    if power_observation.get("status") == "observed":
+        if power_observation.get("value") != "automatic":
+            _fail("environment_snapshot", "environment power admission did not pass")
+        power_summary: dict[str, Any] = {
+            "status": "observed",
+            "value": "automatic",
+        }
+    elif power_observation.get("status") == "unavailable":
+        power_summary = {
+            "status": "unavailable",
+            "reason": power_observation.get("reason"),
+            "attempted_method": power_observation.get("attempted_method"),
+        }
+    else:
+        _fail("environment_snapshot", "environment power-mode observation is invalid")
     logical_cpus = _observed_environment_value(snapshot, "logical_cpu_count")
     captured_at = _observed_environment_value(snapshot, "captured_at_utc")
     loads = {
@@ -992,8 +1012,8 @@ def _validate_environment_snapshot(
         _fail("environment_snapshot", "environment source identity differs from the candidate")
     if workload != "none" or material_workload is not False:
         _fail("environment_snapshot", "environment reports a concurrent material workload")
-    if thermal != "nominal" or power != "automatic":
-        _fail("environment_snapshot", "environment thermal or power admission did not pass")
+    if thermal != "nominal":
+        _fail("environment_snapshot", "environment thermal admission did not pass")
     if type(logical_cpus) is not int or logical_cpus <= 0:
         _fail("environment_snapshot", "environment logical CPU count is invalid")
     maximum_load = logical_cpus * MAX_LOAD_PER_LOGICAL_CPU
@@ -1036,7 +1056,7 @@ def _validate_environment_snapshot(
         "workload_category": workload,
         "material_concurrent_workload": material_workload,
         "thermal_state": thermal,
-        "power_mode": power,
+        "power_mode": power_summary,
         "logical_cpu_count": logical_cpus,
         **loads,
     }

@@ -436,13 +436,13 @@ class RouterInspectionValidatorTests(unittest.TestCase):
         )
         cases.append(("thermal", unavailable_thermal, VALIDATION_TIME))
 
-        unavailable_power = _environment_snapshot()
-        unavailable_power["observations"]["power_mode"] = (
-            environment_contracts.environment.unavailable(
-                "power mode unavailable", "fixture_probe"
-            )
+        low_power = _environment_snapshot()
+        low_power["observations"]["power_mode"] = (
+            environment_contracts.environment.observed("low_power", "fixture_probe")
         )
-        cases.append(("power", unavailable_power, VALIDATION_TIME))
+        low_power["interference_admission"] = "postponed"
+        low_power["admission_reasons"] = ["low_power_mode_active"]
+        cases.append(("power", low_power, VALIDATION_TIME))
 
         high_long_load = _environment_snapshot()
         high_long_load["observations"]["load_average_15m"]["value"] = 100.0
@@ -483,6 +483,26 @@ class RouterInspectionValidatorTests(unittest.TestCase):
                     )
                     self.assertNotIn("Traceback", completed.stderr)
 
+    def test_unavailable_desktop_power_mode_is_retained_without_inference(self) -> None:
+        snapshot = _environment_snapshot()
+        snapshot["observations"]["power_mode"] = (
+            environment_contracts.environment.unavailable(
+                "power mode unavailable", "fixture_probe"
+            )
+        )
+        with tempfile.TemporaryDirectory(prefix="pulsarmlx-inspection-test-") as temporary:
+            candidate_path = self._write(Path(temporary), _candidate())
+            completed = self._run(candidate_path, environment_snapshot=snapshot)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        power = json.loads(completed.stdout)["environment_snapshot"]["power_mode"]
+        self.assertEqual(
+            power,
+            {
+                "status": "unavailable",
+                "reason": "power mode unavailable",
+                "attempted_method": "fixture_probe",
+            },
+        )
     def test_environment_argument_is_required(self) -> None:
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             validator._parser().parse_args(["--input", "/tmp/candidate.json"])
