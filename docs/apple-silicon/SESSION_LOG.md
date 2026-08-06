@@ -2802,3 +2802,39 @@ The compiler reported only the two intentionally absent T065 API symbols; no
 test subprocess, worker, Python interpreter, MLX device, or checkpoint was
 opened. The initially drafted file needed targeted rustfmt; no unrelated crate
 or repository-wide formatting change was made.
+
+### T063 red timing-policy contract
+
+Six model-free research tests now freeze policy enforcement across the
+statistics and evidence-validator seams. They require grouping to separate
+experiment, process, process state, stage, requested/selected device, memory
+pressure, power, thermal, and interference dimensions; prevent postponed or
+interfered batches from claiming clean results; require unfiltered summaries
+and a declared rule for filtered summaries; enforce the synthetic 5+30 sample
+policy; represent unavailable or inapplicable phases with bounded reasons; and
+require a reason when the later independent batch is unavailable.
+
+The exact commands and results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' python3 -m py_compile \
+  scripts/research/tests/test_timing_policy.py
+# passed
+
+PULSARMLX_MODEL_GGUF='' python3 -m unittest \
+  scripts/research/tests/test_timing_policy.py -v
+# expected red: 6 tests, 7 failures including two interference subtests,
+# exit 1
+
+git diff --check -- scripts/research/tests/test_timing_policy.py
+# passed
+```
+
+The red result exposes six missing policy surfaces: complete compatibility
+grouping, sample-count enforcement, clean-batch interference rejection,
+second-batch schema/reason support, structured phase statuses, and semantic
+filtered-summary admission. Existing validation failed closed where the new
+schema is absent; it did not fabricate a passing timing result.
+
+No model, checkpoint, Python MLX worker, GPU, or hardware observation was used.
+Local inference remained available without an NTFY pause.
