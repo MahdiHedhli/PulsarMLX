@@ -161,11 +161,12 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
 
     return {
         "evidence_schema": "pulsarmlx.research.experiment",
-        "evidence_schema_version": "1.0.0",
+        "evidence_schema_version": "1.1.0",
         "payload_schema": "pulsarmlx.research.router-parity",
         "payload_schema_version": "1.0.0",
         "experiment_id": experiment_id,
         "feature_id": "002-qwen-router-parity",
+        "evidence_scope": "synthetic_fixture",
         "record_kind": "combined",
         "actual_status": "passed",
         "started_at_utc": "2026-08-05T17:59:00Z",
@@ -177,8 +178,8 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
             "paths": [f"docs/research/raw/002-router-parity/{experiment_id}.json"],
         },
         "protocol": {
-            "protocol_id": "f002-router-protocol",
-            "protocol_version": "1.0.0",
+            "protocol_id": "f002-router-protocol-amendment-001",
+            "protocol_version": "1.1.0",
             "path": "docs/research/EXPERIMENT_PROTOCOL.md",
             "sha256": protocol_sha256,
             "order_seed": 22002,
@@ -438,6 +439,23 @@ class EvidenceValidatorContractTests(unittest.TestCase):
             {f"{record['experiment_id']}.json": record},
             "private_value",
             forbidden_output=private_path,
+        )
+
+        private_email = "private.user@example.com"
+        email_record = valid_evidence("f002-router-fixture-private-email")
+        email_record["warnings"].append(private_email)
+        self._assert_rejected(
+            {f"{email_record['experiment_id']}.json": email_record},
+            "private_value",
+            forbidden_output=private_email,
+        )
+
+        account_record = valid_evidence("f002-router-fixture-private-account")
+        account_record["account" + "_id"] = "private-account"
+        self._assert_rejected(
+            {f"{account_record['experiment_id']}.json": account_record},
+            "private_value",
+            forbidden_output="private-account",
         )
 
     def test_rejects_nested_non_finite_values(self) -> None:

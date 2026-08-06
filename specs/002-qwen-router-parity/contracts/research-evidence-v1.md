@@ -34,11 +34,21 @@ Every Feature 002 raw record MUST identify them with:
 ```json
 {
   "evidence_schema": "pulsarmlx.research.experiment",
-  "evidence_schema_version": "1.0.0",
+  "evidence_schema_version": "1.1.0",
   "payload_schema": "pulsarmlx.research.router-parity",
   "payload_schema_version": "1.0.0"
 }
 ```
+
+The additive evidence envelope is `1.1.0`; the router payload schema remains
+`1.0.0`. The currently frozen experiment protocol is the separate
+`f002-router-protocol-amendment-001` version `1.1.0`; it supersedes protocol
+`1.0.0` before any external checkpoint or Apple result.
+
+Version `1.1.0` adds optional scope, paired-environment, structured-stage, and
+resource-provenance fields without changing the `1.0.0` payload schema. A
+record that omits `evidence_scope` is accepted only as a legacy synthetic
+fixture and cannot support an external-checkpoint claim.
 
 The router schema extends the experiment envelope; it may narrow fields but
 MUST NOT weaken the envelope. Fixed objects SHOULD reject unknown fields.
@@ -126,8 +136,11 @@ The environment group MUST record:
   counts;
 - storage filesystem type and available capacity at the admitted external
   model location without recording that location;
-- memory pressure and process memory/resource gauges before and after the run
-  where reliably observable;
+- independent before/after memory-pressure snapshots and collector-scoped
+  resource gauges where reliably observable;
+- worker process-footprint and MLX active/cache/peak gauges, plus backend,
+  requested/selected device, fallback, evaluation, and synchronization facts
+  extracted from validated worker results rather than caller assertions;
 - power mode and thermal state before and after when observable without
   privilege, or an explicit `unavailable` observation with reason;
 - the interference/load observation method, bounded pre-run observation,
@@ -135,9 +148,9 @@ The environment group MUST record:
 - every execution-affecting environment variable from a checked-in allowlist,
   represented by a safe value or symbolic placeholder.
 
-Serial numbers, hardware UUIDs, host names, usernames, account identifiers,
-full process command lines, and private mount paths are not environment facts
-needed by this contract and MUST NOT be captured.
+Serial numbers, hardware UUIDs, host names, usernames, account or private email
+identifiers, full process command lines, and private mount paths are not
+environment facts needed by this contract and MUST NOT be captured.
 
 ## Router-parity payload
 

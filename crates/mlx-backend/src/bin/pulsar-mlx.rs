@@ -1616,6 +1616,41 @@ fn router_memory_evidence(result: &RouterResult) -> Value {
     })
 }
 
+fn router_positive_case_evidence(
+    result: &RouterResult,
+    comparison: &RouterOutputComparison,
+) -> Value {
+    json!({
+        "backend": BACKEND_ID,
+        "case_id": result.router_case_id(),
+        "fixture_kind": "synthetic",
+        "case_scope": "synthetic_fixture",
+        "validation_mode": "mlx_gpu_execution_and_host_golden_comparison",
+        "real_checkpoint_evidence": false,
+        "requested_device": result.requested_device(),
+        "selected_device": result.selected_device(),
+        "fallback_used": result.fallback_used(),
+        "evaluated": result.evaluated(),
+        "synchronized": result.synchronized(),
+        "operation": result.operation(),
+        "batch_size": result.batch_size(),
+        "hidden_width": result.hidden_width(),
+        "expert_count": result.expert_count(),
+        "top_k": result.top_k(),
+        "output_dtype": result.output_dtype(),
+        "selected_expert_ids": result.selected_expert_ids(),
+        "hashes": {
+            "logits_f32le_sha256": result.logits_f32le_sha256(),
+            "full_probabilities_f32le_sha256": result.full_probabilities_f32le_sha256(),
+            "selected_probabilities_f32le_sha256": result.selected_probabilities_f32le_sha256(),
+            "normalized_weights_f32le_sha256": result.normalized_weights_f32le_sha256(),
+        },
+        "comparison": router_comparison_evidence(comparison),
+        "memory_gauges": router_memory_evidence(result),
+        "status": "passed",
+    })
+}
+
 fn ensure_model_free_worker_descriptor() -> Result<(), String> {
     #[cfg(unix)]
     {
@@ -1831,34 +1866,9 @@ fn execute_router_positive_cases(
                 "the evaluated synthetic router output differs from its committed golden case",
             ));
         }
-        attempt.positive_cases.push(json!({
-            "case_id": result.router_case_id(),
-            "fixture_kind": "synthetic",
-            "case_scope": "synthetic_fixture",
-            "validation_mode": "mlx_gpu_execution_and_host_golden_comparison",
-            "real_checkpoint_evidence": false,
-            "requested_device": result.requested_device(),
-            "selected_device": result.selected_device(),
-            "fallback_used": result.fallback_used(),
-            "evaluated": result.evaluated(),
-            "synchronized": result.synchronized(),
-            "operation": result.operation(),
-            "batch_size": result.batch_size(),
-            "hidden_width": result.hidden_width(),
-            "expert_count": result.expert_count(),
-            "top_k": result.top_k(),
-            "output_dtype": result.output_dtype(),
-            "selected_expert_ids": result.selected_expert_ids(),
-            "hashes": {
-                "logits_f32le_sha256": result.logits_f32le_sha256(),
-                "full_probabilities_f32le_sha256": result.full_probabilities_f32le_sha256(),
-                "selected_probabilities_f32le_sha256": result.selected_probabilities_f32le_sha256(),
-                "normalized_weights_f32le_sha256": result.normalized_weights_f32le_sha256(),
-            },
-            "comparison": router_comparison_evidence(&comparison),
-            "memory_gauges": router_memory_evidence(&result),
-            "status": "passed",
-        }));
+        attempt
+            .positive_cases
+            .push(router_positive_case_evidence(&result, &comparison));
     }
     Ok(())
 }
@@ -2252,6 +2262,7 @@ impl RouterCorrectnessAttempt {
             })
         });
         json!({
+            "backend": BACKEND_ID,
             "attempt_id": self.observation_id(batch_id, attempt_index),
             "attempt_index": attempt_index,
             "observation_kind": observation_kind,
@@ -6643,14 +6654,29 @@ mod tests {
         let single = OrchestratedRouterCase::SingleRow;
         let two_row = OrchestratedRouterCase::TwoRow;
 
+        let produced_result = router_result_from_output(orchestration_output(single));
         let adapted = RouterCorrectnessAttempt::from_result(
-            &router_result_from_output(orchestration_output(single)),
+            &produced_result,
             orchestration_output(single),
             correctness_process_identity(ROUTER_PRIMARY_BATCH_ID),
         )
         .expect("real-result adapter computes its own exact comparison and canonical output");
         assert!(adapted.passes_gate(ROUTER_PRIMARY_BATCH_ID, single));
         assert_eq!(adapted.canonical_output, *orchestration_output(single));
+        assert_eq!(
+            adapted.evidence(ROUTER_PRIMARY_BATCH_ID, 0)["backend"],
+            BACKEND_ID
+        );
+        let self_comparison = compare_router_outputs(
+            orchestration_output(single),
+            orchestration_output(single),
+            &RouterTolerancePolicy::contract_v1(),
+        )
+        .expect("self comparison");
+        assert_eq!(
+            router_positive_case_evidence(&produced_result, &self_comparison)["backend"],
+            BACKEND_ID
+        );
 
         let mut short = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
         short.pop();

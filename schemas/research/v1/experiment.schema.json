@@ -37,13 +37,14 @@
   ],
   "properties": {
     "evidence_schema": { "const": "pulsarmlx.research.experiment" },
-    "evidence_schema_version": { "const": "1.0.0" },
+    "evidence_schema_version": { "const": "1.1.0" },
     "payload_schema": { "const": "pulsarmlx.research.router-parity" },
     "payload_schema_version": { "const": "1.0.0" },
     "experiment_id": { "$ref": "#/$defs/stableId" },
     "feature_id": { "const": "002-qwen-router-parity" },
+    "evidence_scope": { "enum": ["synthetic_fixture", "external_checkpoint"] },
     "record_kind": { "enum": ["correctness", "timing", "resource", "combined"] },
-    "actual_status": { "enum": ["passed", "failed", "aborted", "excluded"] },
+    "actual_status": { "enum": ["passed", "failed", "blocked", "aborted", "excluded"] },
     "started_at_utc": { "$ref": "#/$defs/utc" },
     "completed_at_utc": { "$ref": "#/$defs/utc" },
     "source_commit": { "$ref": "#/$defs/commit" },
@@ -53,6 +54,7 @@
     "execution": { "$ref": "#/$defs/execution" },
     "batch_id": { "$ref": "#/$defs/stableId" },
     "process_replication_id": { "$ref": "#/$defs/stableId" },
+    "second_batch": { "$ref": "#/$defs/secondBatch" },
     "model": { "$ref": "router-parity.schema.json#/$defs/model" },
     "tensor": { "$ref": "router-parity.schema.json#/$defs/tensor" },
     "input": { "$ref": "router-parity.schema.json#/$defs/input" },
@@ -111,7 +113,7 @@
       "required": ["protocol_id", "protocol_version", "path", "sha256", "order_seed"],
       "properties": {
         "protocol_id": { "$ref": "#/$defs/stableId" },
-        "protocol_version": { "const": "1.0.0" },
+        "protocol_version": { "const": "1.1.0" },
         "path": { "const": "docs/research/EXPERIMENT_PROTOCOL.md" },
         "sha256": { "$ref": "#/$defs/sha256" },
         "order_seed": { "type": "integer", "minimum": 0 }
@@ -145,26 +147,233 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "platform",
-        "selected_backend",
-        "selected_device",
-        "safe_environment",
-        "interference_admission"
+        "platform", "selected_backend", "selected_device",
+        "safe_environment", "interference_admission"
       ],
       "properties": {
         "platform": { "const": "macos-arm64" },
         "selected_backend": { "const": "apple-mlx" },
         "selected_device": { "const": "gpu" },
-        "safe_environment": {
+        "safe_environment": { "$ref": "#/$defs/safeEnvironment" },
+        "interference_admission": {
+          "enum": ["admitted", "postponed", "observed_interference"]
+        },
+        "interference_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/stableId" }
+        },
+        "before_snapshot": { "$ref": "#/$defs/environmentSnapshot" },
+        "after_snapshot": {
+          "oneOf": [
+            { "$ref": "#/$defs/environmentSnapshot" },
+            { "$ref": "#/$defs/unavailableSnapshot" }
+          ]
+        },
+        "benchmark_resources": { "$ref": "#/$defs/benchmarkResources" }
+      }
+    },
+    "safeEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["PULSARMLX_MODEL_GGUF"],
+      "properties": {
+        "PULSARMLX_MODEL_GGUF": { "const": "$PULSARMLX_MODEL_GGUF" },
+        "PULSARMLX_MODEL_STORAGE_ROOT": { "const": "$PULSARMLX_MODEL_STORAGE_ROOT" },
+        "PULSARMLX_ENVIRONMENT_EVIDENCE": { "const": "$PULSARMLX_ENVIRONMENT_EVIDENCE" },
+        "PULSARMLX_ROUTER_INSPECTION": { "const": "$PULSARMLX_ROUTER_INSPECTION" },
+        "PULSARMLX_ORACLE_WORK": { "const": "$PULSARMLX_ORACLE_WORK" },
+        "PULSARMLX_ORACLE_OUTPUT": { "const": "$PULSARMLX_ORACLE_OUTPUT" },
+        "PULSARMLX_ROUTER_ORACLE": { "const": "$PULSARMLX_ROUTER_ORACLE" },
+        "PULSARMLX_ROUTER_EVIDENCE": { "const": "$PULSARMLX_ROUTER_EVIDENCE" },
+        "PULSARMLX_ROUTER_FIXTURE_EVIDENCE": { "const": "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE" }
+      }
+    },
+    "environmentSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_schema", "snapshot_schema_version", "capture_phase",
+        "platform", "requested_backend", "requested_device", "storage_role",
+        "storage_locator", "safe_environment", "interference_admission",
+        "admission_reasons", "observations"
+      ],
+      "properties": {
+        "snapshot_schema": { "const": "pulsarmlx.research.environment" },
+        "snapshot_schema_version": { "const": "1.0.0" },
+        "capture_phase": { "enum": ["before", "after"] },
+        "platform": { "const": "macos-arm64" },
+        "requested_backend": { "const": "apple-mlx" },
+        "requested_device": { "const": "gpu" },
+        "storage_role": {
+          "enum": [
+            "repository_storage", "model_storage", "oracle_work_storage",
+            "candidate_evidence_storage"
+          ]
+        },
+        "storage_locator": {
+          "enum": [
+            "$PULSARMLX_REPOSITORY_ROOT", "$PULSARMLX_MODEL_STORAGE_ROOT",
+            "$PULSARMLX_ORACLE_WORK", "$PULSARMLX_ROUTER_EVIDENCE"
+          ]
+        },
+        "safe_environment": { "$ref": "#/$defs/safeEnvironment" },
+        "interference_admission": {
+          "enum": ["admitted", "postponed", "observed_interference"]
+        },
+        "admission_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/stableId" }
+        },
+        "observations": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["PULSARMLX_MODEL_GGUF"],
+          "required": [
+            "repository_commit", "worktree_dirty", "captured_at_utc",
+            "python_version", "mlx_version", "rust_version", "cargo_version",
+            "worker_protocol_version", "pulsarmlx_version",
+            "macos_product_version", "macos_build", "shell_architecture",
+            "chip_model", "unified_memory_bytes", "physical_cpu_count",
+            "logical_cpu_count", "filesystem_type", "available_storage_bytes",
+            "storage_rounding_bytes", "memory_pressure", "power_mode",
+            "thermal_state", "collector_process_resident_bytes",
+            "collector_peak_resident_bytes", "collector_process_cpu_time_seconds",
+            "collector_process_bytes_read", "load_average_1m", "load_average_5m",
+            "load_average_15m", "workload_category", "material_concurrent_workload",
+            "benchmark_concurrency", "capture_wall_time_ns"
+          ],
           "properties": {
-            "PULSARMLX_MODEL_GGUF": { "const": "$PULSARMLX_MODEL_GGUF" }
+            "repository_commit": { "$ref": "#/$defs/publicObservation" },
+            "worktree_dirty": { "$ref": "#/$defs/publicObservation" },
+            "captured_at_utc": { "$ref": "#/$defs/publicObservation" },
+            "python_version": { "$ref": "#/$defs/publicObservation" },
+            "mlx_version": { "$ref": "#/$defs/publicObservation" },
+            "rust_version": { "$ref": "#/$defs/publicObservation" },
+            "cargo_version": { "$ref": "#/$defs/publicObservation" },
+            "worker_protocol_version": { "$ref": "#/$defs/publicObservation" },
+            "pulsarmlx_version": { "$ref": "#/$defs/publicObservation" },
+            "macos_product_version": { "$ref": "#/$defs/publicObservation" },
+            "macos_build": { "$ref": "#/$defs/publicObservation" },
+            "shell_architecture": { "$ref": "#/$defs/publicObservation" },
+            "chip_model": { "$ref": "#/$defs/publicObservation" },
+            "unified_memory_bytes": { "$ref": "#/$defs/publicObservation" },
+            "physical_cpu_count": { "$ref": "#/$defs/publicObservation" },
+            "logical_cpu_count": { "$ref": "#/$defs/publicObservation" },
+            "filesystem_type": { "$ref": "#/$defs/publicObservation" },
+            "available_storage_bytes": { "$ref": "#/$defs/publicObservation" },
+            "storage_rounding_bytes": { "$ref": "#/$defs/publicObservation" },
+            "memory_pressure": { "$ref": "#/$defs/publicObservation" },
+            "power_mode": { "$ref": "#/$defs/publicObservation" },
+            "thermal_state": { "$ref": "#/$defs/publicObservation" },
+            "collector_process_resident_bytes": { "$ref": "#/$defs/publicObservation" },
+            "collector_peak_resident_bytes": { "$ref": "#/$defs/publicObservation" },
+            "collector_process_cpu_time_seconds": { "$ref": "#/$defs/publicObservation" },
+            "collector_process_bytes_read": { "$ref": "#/$defs/publicObservation" },
+            "load_average_1m": { "$ref": "#/$defs/publicObservation" },
+            "load_average_5m": { "$ref": "#/$defs/publicObservation" },
+            "load_average_15m": { "$ref": "#/$defs/publicObservation" },
+            "workload_category": { "$ref": "#/$defs/publicObservation" },
+            "material_concurrent_workload": { "$ref": "#/$defs/publicObservation" },
+            "benchmark_concurrency": { "$ref": "#/$defs/publicObservation" },
+            "capture_wall_time_ns": { "$ref": "#/$defs/publicObservation" }
+          }
+        }
+      }
+    },
+    "unavailableSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "attempted_method"],
+      "properties": {
+        "status": { "const": "unavailable" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "attempted_method": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "benchmarkResources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "process_footprint_bytes", "mlx_active_memory_bytes",
+        "mlx_cache_memory_bytes", "mlx_peak_memory_bytes",
+        "process_cpu_time_seconds", "process_bytes_read",
+        "worker_backend", "worker_requested_device", "worker_selected_device",
+        "worker_fallback_used", "worker_evaluated", "worker_synchronized"
+      ],
+      "properties": {
+        "process_footprint_bytes": { "$ref": "#/$defs/publicObservation" },
+        "mlx_active_memory_bytes": { "$ref": "#/$defs/publicObservation" },
+        "mlx_cache_memory_bytes": { "$ref": "#/$defs/publicObservation" },
+        "mlx_peak_memory_bytes": { "$ref": "#/$defs/publicObservation" },
+        "process_cpu_time_seconds": { "$ref": "#/$defs/publicObservation" },
+        "process_bytes_read": { "$ref": "#/$defs/publicObservation" },
+        "worker_backend": { "$ref": "#/$defs/publicObservation" },
+        "worker_requested_device": { "$ref": "#/$defs/publicObservation" },
+        "worker_selected_device": { "$ref": "#/$defs/publicObservation" },
+        "worker_fallback_used": { "$ref": "#/$defs/publicObservation" },
+        "worker_evaluated": { "$ref": "#/$defs/publicObservation" },
+        "worker_synchronized": { "$ref": "#/$defs/publicObservation" }
+      }
+    },
+    "publicObservation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "value", "source"],
+          "properties": {
+            "status": { "const": "observed" },
+            "value": { "type": ["string", "integer", "number", "boolean"] },
+            "source": { "type": "string", "minLength": 1, "maxLength": 128 }
           }
         },
-        "interference_admission": { "enum": ["admitted", "postponed", "observed_interference"] }
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason", "attempted_method"],
+          "properties": {
+            "status": { "const": "unavailable" },
+            "reason": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "attempted_method": { "type": "string", "minLength": 1, "maxLength": 256 }
+          }
+        }
+      ]
+    },
+    "secondBatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "between_batch_variation_measured"],
+      "properties": {
+        "status": { "enum": ["observed", "unavailable"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "between_batch_variation_measured": { "type": "boolean" }
       }
+    },
+    "stageObservation": {
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "duration_ns"],
+          "properties": {
+            "status": { "const": "observed" },
+            "duration_ns": { "type": "integer", "minimum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason"],
+          "properties": {
+            "status": { "enum": ["unavailable", "not_applicable"] },
+            "reason": { "type": "string", "minLength": 1, "maxLength": 512 }
+          }
+        }
+      ]
     },
     "observation": {
       "type": "object",
@@ -209,7 +418,7 @@
           "type": "object",
           "minProperties": 1,
           "maxProperties": 16,
-          "additionalProperties": { "type": "integer", "minimum": 1 }
+          "additionalProperties": { "$ref": "#/$defs/stageObservation" }
         },
         "status": { "enum": ["passed", "failed", "aborted", "excluded"] },
         "requested_device": { "enum": ["gpu", "not_applicable"] },
@@ -291,7 +500,9 @@
         },
         "included_observation_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/stableId" } },
         "excluded_observation_ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/stableId" } },
-        "unfiltered_summary": { "$ref": "#/$defs/summaryValues" }
+        "unfiltered_summary": { "$ref": "#/$defs/summaryValues" },
+        "filtered_summary": { "$ref": "#/$defs/summaryValues" },
+        "exclusion_rule_id": { "$ref": "#/$defs/stableId" }
       }
     },
     "failure": {

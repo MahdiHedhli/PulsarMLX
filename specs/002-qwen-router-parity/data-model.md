@@ -48,7 +48,7 @@ Identifies the rules committed before any affected observation.
 | Field | Type | Validation |
 | --- | --- | --- |
 | `protocol_id` | stable string | Exact registered protocol |
-| `protocol_version` | semantic version | `1.0.0` for the first frozen method |
+| `protocol_version` | semantic version | `1.1.0` for pre-access amendment 001; `1.0.0` is superseded in Git history |
 | `path` | repository-relative path | Must resolve inside Git |
 | `sha256` | 64 lowercase hex | Hash of the committed protocol file |
 | `amendment_id` | optional stable string | Required after any result-informed change |
@@ -207,12 +207,15 @@ float ten times.
 All fields are public-safe. Observable fields are recorded as values;
 unobservable fields use an explicit unavailable reason.
 
-Required groups include macOS version/build, arm64 architecture, Apple chip,
+Required groups include paired before/after macOS version/build, arm64 architecture, Apple chip,
 unified memory, physical/logical CPU counts, filesystem type/available bytes,
 Python/MLX/Rust/Cargo versions, build profile/features, safe allowlisted
 execution environment variables, power mode, thermal state, pre/post memory
-pressure, and a sanitized concurrent-workload observation. Usernames, serials,
-UUIDs, process command lines, and the full environment are forbidden.
+pressure, and a sanitized concurrent-workload observation. Benchmark resources
+separately retain worker process/MLX gauges and worker-derived backend, device,
+fallback, evaluation, and synchronization facts. Usernames, serials, UUIDs,
+email/account identities, process command lines, and the full environment are
+forbidden.
 
 ## RawObservation
 
@@ -258,9 +261,10 @@ instrumentation mode.
 | Field | Type | Validation |
 | --- | --- | --- |
 | `evidence_schema` | stable string | `pulsarmlx.research.experiment` |
-| `evidence_schema_version` | semantic version | `1.0.0` |
+| `evidence_schema_version` | semantic version | `1.1.0` |
 | `experiment_id` | stable unique string | Append-only identifier |
 | `feature_id` | stable string | `002-qwen-router-parity` |
+| `evidence_scope` | optional enum | Explicit `synthetic_fixture` or `external_checkpoint`; omission is legacy fixture-only |
 | `started_at_utc` / `completed_at_utc` | timestamps | UTC and ordered |
 | `source_commit` | full Git SHA | Clean measured source |
 | `worktree_before` / `worktree_after` | states | Only declared output may appear afterward |

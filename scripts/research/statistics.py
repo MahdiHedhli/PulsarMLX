@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from fractions import Fraction
 import math
-from typing import Iterable, Mapping, TypeAlias
+from typing import Any, Iterable, Mapping, TypeAlias
 
 
 NanosecondSummary: TypeAlias = dict[str, int | float | str | None]
@@ -19,11 +19,23 @@ CompatibilityKey: TypeAlias = tuple[object, ...]
 # Changing any of these fields can change what was measured.  Observations
 # with different values therefore must never contribute to the same summary.
 COMPATIBILITY_FIELDS = (
+    "experiment_id",
     "case_id",
+    "batch_id",
+    "process_replication_id",
+    "observation_kind",
+    "observation_status",
+    "process_state",
     "condition",
     "instrumentation_mode",
+    "stage",
+    "requested_device",
+    "selected_device",
     "source_commit",
-    "batch_id",
+    "memory_pressure",
+    "power_mode",
+    "thermal_state",
+    "interference_admission",
 )
 
 _REQUIRED_PERCENTILES = (
@@ -184,3 +196,93 @@ def group_raw_observations(
         groups.setdefault(key, []).append(observation)
 
     return groups
+
+
+def _environment_compatibility_value(
+    record: Mapping[str, Any],
+    field: str,
+) -> object:
+    environment = record.get("environment")
+    if not isinstance(environment, Mapping):
+        raise KeyError("record is missing environment")
+    before = environment.get("before_snapshot")
+    if not isinstance(before, Mapping):
+        return "synthetic_fixture_not_observed"
+    observations = before.get("observations")
+    if not isinstance(observations, Mapping) or field not in observations:
+        raise KeyError(f"before environment is missing {field}")
+    observation = observations[field]
+    if not isinstance(observation, Mapping):
+        raise TypeError(f"before environment field {field} must be a mapping")
+    if observation.get("status") == "observed":
+        return observation.get("value")
+    if observation.get("status") == "unavailable":
+        return (
+            "unavailable",
+            observation.get("reason"),
+            observation.get("attempted_method"),
+        )
+    raise ValueError(f"before environment field {field} has an invalid status")
+
+
+def project_timing_rows(record: Mapping[str, Any]) -> list[dict[str, object]]:
+    """Explode one evidence record into canonical stage-level timing rows."""
+
+    required_record_fields = (
+        "experiment_id",
+        "source_commit",
+        "environment",
+        "raw_observations",
+    )
+    for field in required_record_fields:
+        if field not in record:
+            raise KeyError(f"record is missing {field}")
+    environment = record["environment"]
+    if not isinstance(environment, Mapping):
+        raise TypeError("record environment must be a mapping")
+    observations = record["raw_observations"]
+    if not isinstance(observations, list):
+        raise TypeError("raw observations must be a list")
+
+    shared = {
+        "experiment_id": record["experiment_id"],
+        "source_commit": record["source_commit"],
+        "memory_pressure": _environment_compatibility_value(record, "memory_pressure"),
+        "power_mode": _environment_compatibility_value(record, "power_mode"),
+        "thermal_state": _environment_compatibility_value(record, "thermal_state"),
+        "interference_admission": environment.get("interference_admission"),
+    }
+    rows: list[dict[str, object]] = []
+    for observation in observations:
+        if not isinstance(observation, Mapping):
+            raise TypeError("raw observation must be a mapping")
+        durations = observation.get("durations_ns")
+        if not isinstance(durations, Mapping):
+            raise TypeError("raw observation durations must be a mapping")
+        for stage, duration in durations.items():
+            if not isinstance(stage, str):
+                raise TypeError("timing stage must be a string")
+            if type(duration) is int:
+                duration_ns: object = duration
+            elif isinstance(duration, Mapping) and duration.get("status") == "observed":
+                duration_ns = duration.get("duration_ns")
+            else:
+                continue
+            row = {
+                **shared,
+                "observation_id": observation.get("observation_id"),
+                "case_id": observation.get("case_id"),
+                "batch_id": observation.get("batch_id"),
+                "process_replication_id": observation.get("process_replication_id"),
+                "observation_kind": observation.get("observation_kind"),
+                "observation_status": observation.get("status"),
+                "process_state": observation.get("process_state"),
+                "condition": observation.get("condition"),
+                "instrumentation_mode": observation.get("instrumentation_mode"),
+                "stage": stage,
+                "requested_device": observation.get("requested_device"),
+                "selected_device": observation.get("selected_device"),
+                "duration_ns": duration_ns,
+            }
+            rows.append(row)
+    return rows

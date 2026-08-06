@@ -3066,3 +3066,112 @@ was used, so no NTFY pause was needed. Process IDs and the state machine are
 correlation/design evidence only: T083 must still prove actual worker spawn,
 single first read, shutdown, temporal batch separation, and real-checkpoint
 execution before any model-backed correctness or performance claim is legal.
+
+### T067 public-safe environment and resource evidence
+
+Recovery began from clean local `main` at `6b7aa07`, seven commits ahead of
+`origin/main`. The seven commits were coherent, and their focused Rust timing
+tests passed, but the full research gate exposed intentionally red T063 policy
+tests plus a stale protocol hash in the fixture records. They were therefore
+not pushed as a knowingly failing stack. No commit was reset, rebased,
+discarded, or force-pushed.
+
+The repaired model-free evidence boundary now includes:
+
+- explicit observed/unavailable envelopes with bounded sources or attempted
+  methods;
+- public-safe Git, UTC, macOS/build, arm64, Apple-chip, unified-memory, CPU,
+  Python/MLX/Rust/Cargo, filesystem, GiB-rounded free-storage, pressure,
+  active-power, thermal, load, benchmark-concurrency, and collector-scoped
+  process-resource observations;
+- mandatory operator workload classification and conservative one-/five-minute
+  load admission at no more than `0.75 × logical CPU count`;
+- storage-directory roles and symbolic locators, with model-looking file
+  operands rejected before probing and each probed directory bound to the
+  declared allowlisted symbolic-root value;
+- independent before/after snapshots, transition detection, and a separate
+  handoff for worker-supplied process-footprint and MLX active/cache/peak
+  gauges plus backend/device/fallback/evaluation facts extracted from and
+  agreed by every validated worker result rather than asserted by the caller;
+- snapshot combination that fully revalidates both source snapshots and
+  recomputes their admission decisions instead of trusting stored labels,
+  including complete-snapshot timestamp, power, thermal, workload, version,
+  CPU, storage, and resource type checks;
+- exclusive atomic JSON installation, including pre-install failure and
+  post-link directory-sync rollback and concurrent-writer regression coverage;
+- a canonical projection from schema-valid raw observations to all frozen
+  timing compatibility dimensions, used at the validator boundary; and
+- fail-closed external timing stages with the shared worker/Rust vocabulary,
+  structured observed/unavailable/not-applicable values, an observed minimal
+  total, every diagnostic boundary, and the canonical F32 dequantization
+  reason; and
+- recursive rejection of credentials, secret-shaped fields, usernames,
+  host/serial/UUID/MAC/IP/email/account identifiers, private paths/mounts, and
+  private path forms embedded in URIs or diagnostic text.
+
+The additive evidence envelope is version `1.1.0` and now has an explicit
+`synthetic_fixture` versus
+`external_checkpoint` scope. Synthetic conformance fixtures may omit real host
+snapshots; external evidence cannot use warning text, a zero tensor offset, or
+a fixture artifact to bypass paired environment/resource and sealed model,
+real-input, and independent-oracle provenance requirements. A missing scope is
+accepted only as a legacy synthetic fixture. A postponed capture remains
+durable but exits nonzero so a documented benchmark flow cannot continue. The
+experiment protocol is frozen as pre-access amendment
+`f002-router-protocol-amendment-001` version `1.1.0`, SHA-256
+`c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863`.
+It supersedes the local unpushed 1.0.0 timing method before any external model,
+CPU-oracle, Apple, or real timing output; the constructed fixture package was
+regenerated from its machine-readable sources.
+
+Exact model-disabled validation completed as follows:
+
+```sh
+git diff --check
+# passed
+
+python3 -m py_compile \
+  scripts/research/environment.py \
+  scripts/research/statistics.py \
+  scripts/research/validate_evidence.py
+# passed
+
+PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover \
+  -s scripts/research/tests -v
+# passed: 118 of 118 tests
+
+python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence
+# passed: 3 records
+
+python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity \
+  --fixture-only
+# passed: 3 records, 6 regenerated artifacts, 0 public claims
+
+PULSARMLX_MODEL_GGUF='' cargo test -q -p mlx-backend --bin pulsar-mlx
+# passed: 16 of 16 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -q -p mlx-backend --lib
+# passed: 10 of 10 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -q -p mlx-backend --test router_contract
+# passed: 21 of 21 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -q -p mlx-backend --test research_evidence
+# passed: 5 of 5 tests
+
+PULSARMLX_MODEL_GGUF='' cargo check -q -p mlx-backend --all-targets
+# passed
+
+rustfmt --edition 2021 --check crates/mlx-backend/src/bin/pulsar-mlx.rs
+# passed
+```
+
+The collector and tests did not resolve, stat, hash, open, or execute the
+checkpoint. They did not import the MLX runtime, initialize a device, launch a
+Python worker, or execute GPU work. No hardware pause or NTFY message was
+needed for this T067 model-free implementation. The next hardware-using step
+is T068; it requires the requested `Mahdi-Dev` pause notification before the
+generated MLX microbenchmark runs.

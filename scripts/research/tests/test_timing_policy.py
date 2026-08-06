@@ -38,6 +38,63 @@ fixtures = _load_module(
     "pulsarmlx_timing_validator_fixtures",
     Path(__file__).with_name("test_validate_evidence.py"),
 )
+environment_contracts = _load_module(
+    "pulsarmlx_timing_environment_fixtures",
+    Path(__file__).with_name("test_environment.py"),
+)
+validator = _load_module(
+    "pulsarmlx_timing_validator",
+    RESEARCH_DIR / "validate_evidence.py",
+)
+
+
+def _external_evidence(experiment_id: str) -> dict[str, object]:
+    """Return model-free evidence shaped like an admitted external run."""
+
+    record = fixtures.valid_evidence(experiment_id)
+    before = environment_contracts._collect()
+    after = environment_contracts._collect(capture_phase="after")
+    for snapshot in (before, after):
+        snapshot["observations"]["repository_commit"]["value"] = fixtures.SOURCE_COMMIT
+        snapshot["observations"]["pulsarmlx_version"]["value"] = fixtures.SOURCE_COMMIT
+    resources = {
+        "process_footprint_bytes": environment_contracts.environment.observed(2048, "worker"),
+        "mlx_active_memory_bytes": environment_contracts.environment.observed(256, "worker"),
+        "mlx_cache_memory_bytes": environment_contracts.environment.observed(128, "worker"),
+        "mlx_peak_memory_bytes": environment_contracts.environment.observed(512, "worker"),
+        "process_cpu_time_seconds": environment_contracts.environment.unavailable(
+            "not exposed by the bounded worker protocol", "worker_process_cpu_time"
+        ),
+        "process_bytes_read": environment_contracts.environment.unavailable(
+            "not exposed reliably by the bounded worker protocol", "worker_process_bytes_read"
+        ),
+        "worker_backend": environment_contracts.environment.observed("apple-mlx", "worker"),
+        "worker_requested_device": environment_contracts.environment.observed("gpu", "worker"),
+        "worker_selected_device": environment_contracts.environment.observed("gpu", "worker"),
+        "worker_fallback_used": environment_contracts.environment.observed(False, "worker"),
+        "worker_evaluated": environment_contracts.environment.observed(True, "worker"),
+        "worker_synchronized": environment_contracts.environment.observed(True, "worker"),
+    }
+    record["environment"] = environment_contracts.environment.combine_environment_evidence(
+        before_snapshot=before,
+        after_snapshot=after,
+        after_unavailable_reason=None,
+        benchmark_resources=resources,
+    )
+    record["evidence_scope"] = "external_checkpoint"
+    for observation in record["raw_observations"]:
+        duration = observation["durations_ns"]["total_evaluated_router"]
+        observation["durations_ns"] = {
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization",
+            },
+            "total_evaluated_router": {
+                "status": "observed",
+                "duration_ns": duration,
+            },
+        }
+    return record
 
 
 class TimingPolicyContractTests(unittest.TestCase):
@@ -84,6 +141,13 @@ class TimingPolicyContractTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0, msg="validator accepted invalid timing evidence")
         self.assertIn(code, output, msg=output)
 
+    def _assert_observation_contract_rejected(
+        self, record: dict[str, object], code: str = "semantic_relationship"
+    ) -> None:
+        with self.assertRaises(validator.EvidenceValidationError) as captured:
+            validator._validate_observations(record)
+        self.assertEqual(captured.exception.code, code)
+
     def test_groups_every_incompatible_timing_dimension_separately(self) -> None:
         base = {
             "observation_id": "obs-00",
@@ -91,6 +155,8 @@ class TimingPolicyContractTests(unittest.TestCase):
             "case_id": "single-row",
             "batch_id": "batch-a",
             "process_replication_id": "process-a",
+            "observation_kind": "measurement",
+            "observation_status": "passed",
             "process_state": "reused_process",
             "condition": "warm",
             "instrumentation_mode": "minimally_instrumented",
@@ -106,6 +172,8 @@ class TimingPolicyContractTests(unittest.TestCase):
         incompatible = (
             ("experiment_id", "experiment-b"),
             ("process_replication_id", "process-b"),
+            ("observation_kind", "warmup"),
+            ("observation_status", "failed"),
             ("process_state", "fresh_process"),
             ("stage", "router_projection"),
             ("requested_device", "not_applicable"),
@@ -213,6 +281,52 @@ class TimingPolicyContractTests(unittest.TestCase):
             "between_batch_variation_measured": False,
         }
         self._assert_rejected(missing_reason, "semantic_relationship")
+
+    def test_external_timing_requires_the_frozen_structured_stage_contract(self) -> None:
+        valid = _external_evidence("timing-external-structured")
+        validator._validate_observations(valid)
+
+        arbitrary = _external_evidence("timing-external-arbitrary")
+        arbitrary["raw_observations"][0]["durations_ns"]["arbitrary_stage"] = {
+            "status": "observed",
+            "duration_ns": 7,
+        }
+        self._assert_observation_contract_rejected(arbitrary)
+
+        legacy_integer = _external_evidence("timing-external-legacy-integer")
+        legacy_integer["raw_observations"][0]["durations_ns"][
+            "total_evaluated_router"
+        ] = 7
+        self._assert_observation_contract_rejected(legacy_integer)
+
+        missing_total = _external_evidence("timing-external-missing-total")
+        missing_total["raw_observations"][0]["durations_ns"][
+            "total_evaluated_router"
+        ] = {"status": "unavailable", "reason": "evaluation did not complete"}
+        self._assert_observation_contract_rejected(missing_total)
+
+        wrong_f32_reason = _external_evidence("timing-external-wrong-f32-reason")
+        wrong_f32_reason["raw_observations"][0]["durations_ns"]["dequantization"][
+            "reason"
+        ] = "the tensor happened to be skipped"
+        self._assert_observation_contract_rejected(wrong_f32_reason)
+
+        wrong_not_applicable = _external_evidence("timing-external-wrong-na-stage")
+        wrong_not_applicable["raw_observations"][0]["durations_ns"]["file_io"] = {
+            "status": "not_applicable",
+            "reason": "not measured",
+        }
+        self._assert_observation_contract_rejected(wrong_not_applicable)
+
+        # A fixture cannot become real evidence by changing only its scope and
+        # attaching otherwise valid host/timing metadata.
+        self._assert_rejected(valid, "semantic_relationship")
+
+    def test_external_stage_mode_requires_every_frozen_boundary(self) -> None:
+        record = _external_evidence("timing-external-stage-incomplete")
+        observation = record["raw_observations"][0]
+        observation["instrumentation_mode"] = "stage_instrumented"
+        self._assert_observation_contract_rejected(record)
 
 
 if __name__ == "__main__":

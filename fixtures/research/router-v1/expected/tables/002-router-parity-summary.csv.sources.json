@@ -10,8 +10,8 @@
     "b8eabcbdc4ba4bc23478b1f8d103dabf2c65f9e7"
   ],
   "sources": {
-    "fixtures/research/router-v1/evidence/f002-router-fixture-0001.json": "62c0dc8929b3bc8d07d97ec53929cd05bb7b5212c6c6e4edcb8e5288088b2455",
-    "fixtures/research/router-v1/evidence/f002-router-fixture-aborted-0001.json": "b6608dea9c556db324f9ed55a85223e5d74179038312745a39334b859a78a17c",
-    "fixtures/research/router-v1/evidence/f002-router-fixture-failed-0001.json": "c10cf995c159520bf781911040cd87a96dae60faab0e84de172b72e4bfd79c26"
+    "fixtures/research/router-v1/evidence/f002-router-fixture-0001.json": "86aaedb9670e856982b71f27719da5f7b76ebf7d144a3d38dfb46945a0ac701a",
+    "fixtures/research/router-v1/evidence/f002-router-fixture-aborted-0001.json": "eb6ace6a904b0d3a20a7c8e37203470fecb1b952f896403dad38ca08599bb6c1",
+    "fixtures/research/router-v1/evidence/f002-router-fixture-failed-0001.json": "b556dbadd495f91fa03f3f763d19a325e7c45a46fd60944f0e1cf05ee423e3b6"
   }
 }

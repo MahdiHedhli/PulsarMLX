@@ -25,6 +25,7 @@ MAX_JSON_NODES = 100_000
 MAX_JSON_DEPTH = 64
 SCHEMA_ID = "pulsarmlx.research.experiment"
 SCHEMA_VERSION = "1.0.0"
+FULL_EVIDENCE_SCHEMA_VERSION = "1.1.0"
 EXPERIMENT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 PRIVATE_PATH_RE = re.compile(
@@ -37,6 +38,10 @@ SECRET_VALUE_RE = re.compile(
     r"github_pat_[A-Za-z0-9_]{20,}|hf_[A-Za-z0-9]{20,}|"
     r"Bearer\s+[^\s'\"]+)",
     re.IGNORECASE,
+)
+EMAIL_RE = re.compile(
+    r"(?i)(?<![a-z0-9._%+-])[a-z0-9._%+-]+@"
+    r"[a-z0-9-]+(?:\.[a-z0-9-]+)+(?![a-z0-9.-])"
 )
 CREDENTIAL_OPTION_RE = re.compile(
     r"--(?P<name>[A-Za-z][A-Za-z0-9_-]*)(?=[\s=]|$)"
@@ -184,6 +189,8 @@ def _reject_non_public_values(record: dict[str, Any]) -> None:
                 raise PublicationError("candidate contains an invalid string")
             if PRIVATE_PATH_RE.search(value):
                 raise PublicationError("candidate contains a forbidden private path")
+            if EMAIL_RE.search(value):
+                raise PublicationError("candidate contains a forbidden private identity")
             if _contains_secret_value(value):
                 raise PublicationError("candidate contains a forbidden secret value")
 
@@ -192,7 +199,7 @@ def _require_candidate_shape(record: dict[str, Any]) -> None:
     if "evidence_schema" in record:
         if (
             record.get("evidence_schema") != SCHEMA_ID
-            or record.get("evidence_schema_version") != SCHEMA_VERSION
+            or record.get("evidence_schema_version") != FULL_EVIDENCE_SCHEMA_VERSION
         ):
             raise PublicationError("candidate schema identity is unsupported")
         try:

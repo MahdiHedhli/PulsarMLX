@@ -126,21 +126,45 @@ class StatisticsContractTests(unittest.TestCase):
     def test_grouping_never_pools_incompatible_observations(self) -> None:
         base = {
             "observation_id": "obs-0",
+            "experiment_id": "experiment-0",
             "case_id": "single-row",
+            "batch_id": "batch-0",
+            "process_replication_id": "process-0",
+            "observation_kind": "measurement",
+            "observation_status": "passed",
+            "process_state": "reused_process",
             "condition": "warm",
             "instrumentation_mode": "minimally_instrumented",
+            "stage": "total_evaluated_router",
+            "requested_device": "gpu",
+            "selected_device": "gpu",
             "source_commit": "a" * 40,
-            "batch_id": "batch-0",
+            "memory_pressure": "normal",
+            "power_mode": "automatic",
+            "thermal_state": "nominal",
+            "interference_admission": "admitted",
             "duration_ns": 101,
         }
         observations = [base, {**base, "observation_id": "obs-1"}]
         for index, (field, value) in enumerate(
             (
                 ("case_id", "two-row"),
+                ("experiment_id", "experiment-1"),
+                ("process_replication_id", "process-1"),
+                ("observation_kind", "warmup"),
+                ("observation_status", "failed"),
+                ("process_state", "fresh_process"),
                 ("condition", "first_read_new_process_os_cache_uncontrolled"),
                 ("instrumentation_mode", "stage_instrumented"),
+                ("stage", "router_projection"),
+                ("requested_device", "not_applicable"),
+                ("selected_device", "not_available"),
                 ("source_commit", "b" * 40),
                 ("batch_id", "batch-1"),
+                ("memory_pressure", "warning"),
+                ("power_mode", "low_power"),
+                ("thermal_state", "serious"),
+                ("interference_admission", "observed_interference"),
             ),
             start=2,
         ):
@@ -154,36 +178,72 @@ class StatisticsContractTests(unittest.TestCase):
 
         groups = statistics.group_raw_observations(observations)
 
-        self.assertEqual(len(groups), 6)
+        self.assertEqual(len(groups), 18)
         self.assertEqual(
             sorted(len(group) for group in groups.values()),
-            [1, 1, 1, 1, 1, 2],
+            [1] * 17 + [2],
         )
 
     def test_grouping_rejects_missing_compatibility_fields(self) -> None:
         complete = {
             "observation_id": "obs-0",
+            "experiment_id": "experiment-0",
             "case_id": "single-row",
+            "batch_id": "batch-0",
+            "process_replication_id": "process-0",
+            "observation_kind": "measurement",
+            "observation_status": "passed",
+            "process_state": "reused_process",
             "condition": "warm",
             "instrumentation_mode": "minimally_instrumented",
+            "stage": "total_evaluated_router",
+            "requested_device": "gpu",
+            "selected_device": "gpu",
             "source_commit": "a" * 40,
-            "batch_id": "batch-0",
+            "memory_pressure": "normal",
+            "power_mode": "automatic",
+            "thermal_state": "nominal",
+            "interference_admission": "admitted",
             "duration_ns": 101,
         }
 
-        for field in (
-            "case_id",
-            "condition",
-            "instrumentation_mode",
-            "source_commit",
-            "batch_id",
-        ):
+        for field in statistics.COMPATIBILITY_FIELDS:
             incomplete = {
                 key: value for key, value in complete.items() if key != field
             }
             with self.subTest(field=field):
                 with self.assertRaisesRegex((KeyError, ValueError), field):
                     statistics.group_raw_observations([incomplete])
+
+    def test_schema_fixture_projects_to_the_canonical_compatibility_rows(self) -> None:
+        from scripts.research.tests.test_validate_evidence import valid_evidence
+
+        record = valid_evidence("f002-router-fixture-statistics-projection")
+        rows = statistics.project_timing_rows(record)
+        groups = statistics.group_raw_observations(rows)
+
+        self.assertTrue(rows)
+        self.assertEqual(sum(map(len, groups.values())), len(rows))
+        self.assertTrue(
+            all(field in row for row in rows for field in statistics.COMPATIBILITY_FIELDS)
+        )
+        self.assertEqual(
+            {row["experiment_id"] for row in rows},
+            {"f002-router-fixture-statistics-projection"},
+        )
+        measurement_groups = {
+            key: values
+            for key, values in groups.items()
+            if values[0]["observation_kind"] == "measurement"
+        }
+        self.assertEqual(sum(map(len, measurement_groups.values())), 10)
+        self.assertTrue(
+            all(
+                row["observation_status"] == "passed"
+                for values in measurement_groups.values()
+                for row in values
+            )
+        )
 
 
 if __name__ == "__main__":

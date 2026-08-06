@@ -15,7 +15,7 @@ from pathlib import PurePosixPath
 import re
 import stat
 import sys
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 
 _STATISTICS_PATH = Path(__file__).with_name("statistics.py")
@@ -27,18 +27,35 @@ if _STATISTICS_SPEC is None or _STATISTICS_SPEC.loader is None:
 _STATISTICS_MODULE = importlib.util.module_from_spec(_STATISTICS_SPEC)
 _STATISTICS_SPEC.loader.exec_module(_STATISTICS_MODULE)
 summarize_nanoseconds = _STATISTICS_MODULE.summarize_nanoseconds
+project_timing_rows = _STATISTICS_MODULE.project_timing_rows
+group_raw_observations = _STATISTICS_MODULE.group_raw_observations
+
+_ENVIRONMENT_PATH = Path(__file__).with_name("environment.py")
+_ENVIRONMENT_SPEC = importlib.util.spec_from_file_location(
+    "pulsarmlx_research_environment", _ENVIRONMENT_PATH
+)
+if _ENVIRONMENT_SPEC is None or _ENVIRONMENT_SPEC.loader is None:
+    raise RuntimeError("research environment module is unavailable")
+_ENVIRONMENT_MODULE = importlib.util.module_from_spec(_ENVIRONMENT_SPEC)
+_ENVIRONMENT_SPEC.loader.exec_module(_ENVIRONMENT_MODULE)
+snapshot_admission = _ENVIRONMENT_MODULE.snapshot_admission
+combine_environment_evidence = _ENVIRONMENT_MODULE.combine_environment_evidence
 
 
 EXPERIMENT_SCHEMA = "pulsarmlx.research.experiment"
 ROUTER_SCHEMA = "pulsarmlx.research.router-parity"
-SCHEMA_VERSION = "1.0.0"
+EVIDENCE_SCHEMA_VERSION = "1.1.0"
+PAYLOAD_SCHEMA_VERSION = "1.0.0"
+MODEL_MANIFEST_SCHEMA_VERSION = "1.0.0"
+ENVIRONMENT_SNAPSHOT_SCHEMA_VERSION = "1.0.0"
 FEATURE_ID = "002-qwen-router-parity"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MODEL_MANIFEST_PATH = "docs/research/MODEL_MANIFEST.json"
 FROZEN_PROTOCOL_PATH = "docs/research/EXPERIMENT_PROTOCOL.md"
-FROZEN_PROTOCOL_ID = "f002-router-protocol"
+FROZEN_PROTOCOL_ID = "f002-router-protocol-amendment-001"
+FROZEN_PROTOCOL_VERSION = "1.1.0"
 FROZEN_PROTOCOL_ORDER_SEED = 22_002
-FROZEN_PROTOCOL_SHA256 = "6452f920102a87502143effa33b7a85911c931af93bc3a63b8a3007514ac1f0f"
+FROZEN_PROTOCOL_SHA256 = "c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863"
 FROZEN_MODEL_REVISION = "e4d4bafdfb96a411a163846265362aceb0b9c63a"
 FROZEN_MODEL_SHA256 = "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c"
 FROZEN_LOGIT_ABSOLUTE_TOLERANCE = 5e-4
@@ -53,15 +70,125 @@ MAX_LINKED_ARTIFACT_BYTES = 4 * 1024 * 1024
 MAX_ARTIFACT_COUNT = 32
 MAX_JSON_NODES = 100_000
 MAX_JSON_DEPTH = 64
+MINIMUM_TOTAL_MEMORY_BYTES = 42_949_672_960
+MINIMUM_AVAILABLE_STORAGE_BYTES = 134_761_081_856
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
-PRIVATE_PATH_RE = re.compile(r"(?:^|[\s='\"])(?:/Users/|/home/|/private/var/|[A-Za-z]:\\Users\\)")
+PRIVATE_PATH_RE = re.compile(
+    r"(?:/"
+    r"Users/|/"
+    r"home/|/"
+    r"Volumes/|/private/var/|/var/folders/|"
+    r"[A-Za-z]:\\Users\\)"
+)
 SECRET_RE = re.compile(
     r"(?:-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
     r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,}|"
     r"github_pat_[A-Za-z0-9_]{20,}|hf_[A-Za-z0-9]{20,})"
 )
+UUID_RE = re.compile(
+    r"(?i)(?<![0-9a-f])[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
+    r"[0-9a-f]{4}-[0-9a-f]{12}(?![0-9a-f])"
+)
+MAC_RE = re.compile(r"(?i)(?<![0-9a-f])(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-9a-f])")
+IPV4_RE = re.compile(
+    r"(?<![0-9])(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})"
+    r"(?:\.(?:25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})){3}(?![0-9])"
+)
+HOSTNAME_RE = re.compile(r"(?i)\b[a-z0-9][a-z0-9-]{0,62}(?:\.[a-z0-9-]{1,63})*\.local\b")
+EMAIL_RE = re.compile(
+    r"(?i)(?<![a-z0-9._%+-])[a-z0-9._%+-]+@"
+    r"[a-z0-9-]+(?:\.[a-z0-9-]+)+(?![a-z0-9.-])"
+)
+FORBIDDEN_PUBLIC_FIELD_NAMES = {
+    "account", "account_id", "account_identifier", "email", "email_address",
+    "username", "user_name", "hostname", "host_name", "serial",
+    "serial_number", "hardware_uuid", "volume_uuid", "mac_address",
+    "ip_address", "home", "home_directory", "command_line",
+    "process_command_line",
+}
+
+SAFE_ENVIRONMENT_SYMBOLS = {
+    "PULSARMLX_MODEL_GGUF": "$PULSARMLX_MODEL_GGUF",
+    "PULSARMLX_MODEL_STORAGE_ROOT": "$PULSARMLX_MODEL_STORAGE_ROOT",
+    "PULSARMLX_ENVIRONMENT_EVIDENCE": "$PULSARMLX_ENVIRONMENT_EVIDENCE",
+    "PULSARMLX_ROUTER_INSPECTION": "$PULSARMLX_ROUTER_INSPECTION",
+    "PULSARMLX_ORACLE_WORK": "$PULSARMLX_ORACLE_WORK",
+    "PULSARMLX_ORACLE_OUTPUT": "$PULSARMLX_ORACLE_OUTPUT",
+    "PULSARMLX_ROUTER_ORACLE": "$PULSARMLX_ROUTER_ORACLE",
+    "PULSARMLX_ROUTER_EVIDENCE": "$PULSARMLX_ROUTER_EVIDENCE",
+    "PULSARMLX_ROUTER_FIXTURE_EVIDENCE": "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE",
+}
+SECRET_ENVIRONMENT_MARKERS = ("TOKEN", "SECRET", "PASSWORD", "AUTH", "COOKIE", "KEY")
+ENVIRONMENT_OBSERVATION_FIELDS = {
+    "repository_commit",
+    "worktree_dirty",
+    "captured_at_utc",
+    "python_version",
+    "mlx_version",
+    "rust_version",
+    "cargo_version",
+    "worker_protocol_version",
+    "pulsarmlx_version",
+    "macos_product_version",
+    "macos_build",
+    "shell_architecture",
+    "chip_model",
+    "unified_memory_bytes",
+    "physical_cpu_count",
+    "logical_cpu_count",
+    "filesystem_type",
+    "available_storage_bytes",
+    "storage_rounding_bytes",
+    "memory_pressure",
+    "power_mode",
+    "thermal_state",
+    "collector_process_resident_bytes",
+    "collector_peak_resident_bytes",
+    "collector_process_cpu_time_seconds",
+    "collector_process_bytes_read",
+    "load_average_1m",
+    "load_average_5m",
+    "load_average_15m",
+    "workload_category",
+    "material_concurrent_workload",
+    "benchmark_concurrency",
+    "capture_wall_time_ns",
+}
+ENVIRONMENT_SNAPSHOT_FIELDS = {
+    "snapshot_schema", "snapshot_schema_version", "capture_phase", "platform",
+    "requested_backend", "requested_device", "storage_role", "storage_locator",
+    "safe_environment", "interference_admission", "admission_reasons", "observations",
+}
+BENCHMARK_RESOURCE_FIELDS = {
+    "process_footprint_bytes", "mlx_active_memory_bytes",
+    "mlx_cache_memory_bytes", "mlx_peak_memory_bytes",
+    "process_cpu_time_seconds", "process_bytes_read",
+    "worker_backend", "worker_requested_device", "worker_selected_device",
+    "worker_fallback_used", "worker_evaluated", "worker_synchronized",
+}
+
+# These names are shared by the Python worker and Rust orchestration boundary.
+# External-checkpoint evidence is fail-closed to this vocabulary; synthetic
+# fixture records retain their legacy integer-stage compatibility so older
+# redistributable contract fixtures remain replayable.
+ROUTER_TIMING_STAGES = {
+    "setup_admission",
+    "file_io",
+    "storage_validation_f32_decode",
+    "dequantization",
+    "host_to_device",
+    "graph_construction",
+    "compilation",
+    "router_projection",
+    "top_k",
+    "normalization",
+    "total_evaluated_router",
+    "synchronized_readback",
+    "end_to_end_router_command",
+}
+ROUTER_F32_DEQUANTIZATION_REASON = "f32_router_requires_no_dequantization"
 
 ROUTER_CAPABILITIES = {
     "router_logits",
@@ -147,9 +274,19 @@ def _reject_non_finite_and_private_values(record: dict[str, Any]) -> None:
         if isinstance(value, float) and not math.isfinite(value):
             _fail("non_finite_value", "evidence contains a non-finite number")
         if isinstance(value, str):
-            if PRIVATE_PATH_RE.search(value) or SECRET_RE.search(value):
+            if (
+                value.lower() in FORBIDDEN_PUBLIC_FIELD_NAMES
+                or PRIVATE_PATH_RE.search(value)
+                or SECRET_RE.search(value)
+                or UUID_RE.search(value)
+                or MAC_RE.search(value)
+                or IPV4_RE.search(value)
+                or HOSTNAME_RE.search(value)
+                or EMAIL_RE.search(value)
+                or value.startswith("~/")
+            ):
                 _fail("private_value", "evidence contains a forbidden private value")
-            if "\x00" in value:
+            if any(ord(character) < 32 and character not in "\t\n\r" for character in value):
                 _fail("schema_violation", "evidence contains an invalid string")
 
 
@@ -183,6 +320,78 @@ def _bounded_text(value: Any, *, maximum: int = 512) -> str:
     if len(encoded) > maximum:
         _fail("schema_violation", "a bounded text field is invalid")
     return value
+
+
+def _validate_public_observation(value: Any) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        _fail("schema_violation", "a public environment observation is invalid")
+    status = value.get("status")
+    if status == "observed":
+        item = _closed_object(value, allowed={"status", "value", "source"})
+        observation_value = item["value"]
+        if isinstance(observation_value, bool):
+            pass
+        elif type(observation_value) is int:
+            pass
+        elif isinstance(observation_value, float):
+            _finite_number(observation_value)
+        elif isinstance(observation_value, str):
+            _bounded_text(observation_value, maximum=256)
+        else:
+            _fail("schema_violation", "an observed environment value has the wrong type")
+        _bounded_text(item["source"], maximum=128)
+        return item
+    if status == "unavailable":
+        item = _closed_object(
+            value,
+            allowed={"status", "reason", "attempted_method"},
+        )
+        _bounded_text(item["reason"], maximum=256)
+        _bounded_text(item["attempted_method"], maximum=256)
+        return item
+    _fail("schema_violation", "a public environment observation status is invalid")
+
+
+def _validate_safe_environment(value: Any) -> dict[str, Any]:
+    safe_environment = _closed_object(
+        value,
+        allowed=set(SAFE_ENVIRONMENT_SYMBOLS),
+        required={"PULSARMLX_MODEL_GGUF"},
+    )
+    for key, symbolic_value in safe_environment.items():
+        if any(marker in key.upper() for marker in SECRET_ENVIRONMENT_MARKERS):
+            _fail("private_value", "a secret-shaped environment key is forbidden")
+        if symbolic_value != SAFE_ENVIRONMENT_SYMBOLS[key]:
+            _fail("private_value", "an environment value is not symbolic")
+    return safe_environment
+
+
+def _validate_environment_snapshot_structure(value: Any) -> dict[str, Any]:
+    snapshot = _closed_object(value, allowed=ENVIRONMENT_SNAPSHOT_FIELDS)
+    _validate_safe_environment(snapshot["safe_environment"])
+    reasons = snapshot["admission_reasons"]
+    if (
+        not isinstance(reasons, list)
+        or len(reasons) > 16
+        or len(set(map(str, reasons))) != len(reasons)
+    ):
+        _fail("schema_violation", "environment admission reasons are invalid")
+    for reason in reasons:
+        _stable_id(reason)
+    observations = _closed_object(
+        snapshot["observations"],
+        allowed=ENVIRONMENT_OBSERVATION_FIELDS,
+    )
+    for observation in observations.values():
+        _validate_public_observation(observation)
+    return snapshot
+
+
+def _validate_benchmark_resources_structure(value: Any) -> dict[str, Any]:
+    resources = _closed_object(value, allowed=BENCHMARK_RESOURCE_FIELDS)
+    for observation in resources.values():
+        _validate_public_observation(observation)
+    return resources
 
 
 def _repository_relative_parts(
@@ -278,7 +487,7 @@ def _hash_repository_file(
     )[1]
 
 
-def _load_model_identity(repository_root: Path) -> dict[str, Any]:
+def _load_model_manifest(repository_root: Path) -> dict[str, Any]:
     manifest_bytes, _ = _read_repository_file(
         repository_root,
         MODEL_MANIFEST_PATH,
@@ -293,10 +502,15 @@ def _load_model_identity(repository_root: Path) -> dict[str, Any]:
         _fail("semantic_relationship", "the frozen model manifest is invalid")
     if (
         manifest.get("manifest_schema") != "pulsarmlx.research.model-manifest"
-        or manifest.get("manifest_schema_version") != SCHEMA_VERSION
+        or manifest.get("manifest_schema_version") != MODEL_MANIFEST_SCHEMA_VERSION
         or manifest.get("feature_id") != FEATURE_ID
     ):
         _fail("semantic_relationship", "the frozen model manifest identity is invalid")
+    return manifest
+
+
+def _load_model_identity(repository_root: Path) -> dict[str, Any]:
+    manifest = _load_model_manifest(repository_root)
     identity = manifest.get("model_identity")
     if not isinstance(identity, dict):
         _fail("semantic_relationship", "the frozen model identity is unavailable")
@@ -331,6 +545,7 @@ TOP_LEVEL_FIELDS = {
     "payload_schema_version",
     "experiment_id",
     "feature_id",
+    "evidence_scope",
     "record_kind",
     "actual_status",
     "started_at_utc",
@@ -342,6 +557,7 @@ TOP_LEVEL_FIELDS = {
     "execution",
     "batch_id",
     "process_replication_id",
+    "second_batch",
     "model",
     "tensor",
     "input",
@@ -409,15 +625,19 @@ def _validate_identity(record: dict[str, Any]) -> None:
     )
     if identities != (
         EXPERIMENT_SCHEMA,
-        SCHEMA_VERSION,
+        EVIDENCE_SCHEMA_VERSION,
         ROUTER_SCHEMA,
-        SCHEMA_VERSION,
+        PAYLOAD_SCHEMA_VERSION,
     ):
         _fail("unsupported_schema_identity", "evidence schema identity is unsupported")
 
 
 def _validate_structure(record: dict[str, Any]) -> None:
-    _closed_object(record, allowed=TOP_LEVEL_FIELDS)
+    _closed_object(
+        record,
+        allowed=TOP_LEVEL_FIELDS,
+        required=TOP_LEVEL_FIELDS - {"second_batch", "evidence_scope"},
+    )
     if record["feature_id"] != FEATURE_ID:
         _fail("semantic_relationship", "feature identity does not match")
     for name in ("experiment_id", "batch_id", "process_replication_id"):
@@ -434,6 +654,7 @@ def _validate_structure(record: dict[str, Any]) -> None:
         "passed",
         "failed",
         "aborted",
+        "blocked",
         "excluded",
     }:
         _fail("schema_violation", "actual status is unsupported")
@@ -485,6 +706,12 @@ def _validate_structure(record: dict[str, Any]) -> None:
             "benchmark_order_policy",
         },
     )
+    if "second_batch" in record:
+        _closed_object(
+            record["second_batch"],
+            allowed={"status", "reason", "between_batch_variation_measured"},
+            required={"status", "between_batch_variation_measured"},
+        )
     _closed_object(
         record["model"],
         allowed={
@@ -544,7 +771,7 @@ def _validate_structure(record: dict[str, Any]) -> None:
             "independence_statement",
         },
     )
-    _closed_object(
+    environment = _closed_object(
         record["environment"],
         allowed={
             "platform",
@@ -552,8 +779,51 @@ def _validate_structure(record: dict[str, Any]) -> None:
             "selected_device",
             "safe_environment",
             "interference_admission",
+            "interference_reasons",
+            "before_snapshot",
+            "after_snapshot",
+            "benchmark_resources",
+        },
+        required={
+            "platform",
+            "selected_backend",
+            "selected_device",
+            "safe_environment",
+            "interference_admission",
         },
     )
+    _validate_safe_environment(environment["safe_environment"])
+    paired_fields = {
+        "interference_reasons",
+        "before_snapshot",
+        "after_snapshot",
+        "benchmark_resources",
+    }
+    paired_fields_present = paired_fields & environment.keys()
+    if paired_fields_present and paired_fields_present != paired_fields:
+        _fail("schema_violation", "paired environment evidence is incomplete")
+    if paired_fields_present:
+        reasons = environment["interference_reasons"]
+        if (
+            not isinstance(reasons, list)
+            or len(reasons) > 32
+            or len(set(map(str, reasons))) != len(reasons)
+        ):
+            _fail("schema_violation", "environment interference reasons are invalid")
+        for reason in reasons:
+            _stable_id(reason)
+        _validate_environment_snapshot_structure(environment["before_snapshot"])
+        after_snapshot = environment["after_snapshot"]
+        if isinstance(after_snapshot, dict) and after_snapshot.get("status") == "unavailable":
+            unavailable_after = _closed_object(
+                after_snapshot,
+                allowed={"status", "reason", "attempted_method"},
+            )
+            _bounded_text(unavailable_after["reason"], maximum=256)
+            _bounded_text(unavailable_after["attempted_method"], maximum=256)
+        else:
+            _validate_environment_snapshot_structure(after_snapshot)
+        _validate_benchmark_resources_structure(environment["benchmark_resources"])
     _closed_object(
         record["correctness"],
         allowed={
@@ -581,7 +851,249 @@ def _validate_structure(record: dict[str, Any]) -> None:
     )
 
 
+def _environment_observed_value(
+    observations: Mapping[str, Any],
+    name: str,
+) -> Any | None:
+    observation = observations[name]
+    return observation.get("value") if observation.get("status") == "observed" else None
+
+
+def _validate_environment_snapshot_semantics(
+    record: dict[str, Any],
+    snapshot: dict[str, Any],
+    *,
+    phase: str,
+) -> None:
+    if (
+        snapshot["snapshot_schema"] != "pulsarmlx.research.environment"
+        or snapshot["snapshot_schema_version"] != ENVIRONMENT_SNAPSHOT_SCHEMA_VERSION
+        or snapshot["capture_phase"] != phase
+        or snapshot["platform"] != "macos-arm64"
+        or snapshot["requested_backend"] != "apple-mlx"
+        or snapshot["requested_device"] != "gpu"
+    ):
+        _fail("semantic_relationship", "environment snapshot identity is invalid")
+    role_to_locator = {
+        "repository_storage": "$PULSARMLX_REPOSITORY_ROOT",
+        "model_storage": "$PULSARMLX_MODEL_STORAGE_ROOT",
+        "oracle_work_storage": "$PULSARMLX_ORACLE_WORK",
+        "candidate_evidence_storage": "$PULSARMLX_ROUTER_EVIDENCE",
+    }
+    if role_to_locator.get(snapshot["storage_role"]) != snapshot["storage_locator"]:
+        _fail("semantic_relationship", "environment storage role is invalid")
+
+    observations = snapshot["observations"]
+    commit = _environment_observed_value(observations, "repository_commit")
+    pulsarmlx_version = _environment_observed_value(observations, "pulsarmlx_version")
+    dirty = _environment_observed_value(observations, "worktree_dirty")
+    captured_at = _environment_observed_value(observations, "captured_at_utc")
+    architecture = _environment_observed_value(observations, "shell_architecture")
+    if commit != record["source_commit"] or pulsarmlx_version != commit:
+        _fail("semantic_relationship", "environment source identity does not match")
+    if type(dirty) is not bool:
+        _fail("schema_violation", "environment worktree state is invalid")
+    _parse_utc(captured_at)
+    if architecture != "arm64":
+        _fail("semantic_relationship", "environment architecture is not arm64")
+
+    for name in (
+        "python_version", "mlx_version", "rust_version", "cargo_version",
+        "worker_protocol_version", "macos_product_version", "macos_build",
+        "chip_model", "filesystem_type",
+    ):
+        value = _environment_observed_value(observations, name)
+        if not isinstance(value, str) or not value or len(value.encode("utf-8")) > 256:
+            _fail("schema_violation", "environment string observation is invalid")
+    if _environment_observed_value(observations, "worker_protocol_version") != "1":
+        _fail("semantic_relationship", "worker protocol version is invalid")
+
+    positive_integer_fields = (
+        "unified_memory_bytes", "physical_cpu_count", "logical_cpu_count",
+        "available_storage_bytes", "storage_rounding_bytes",
+        "collector_process_resident_bytes", "collector_peak_resident_bytes",
+        "benchmark_concurrency", "capture_wall_time_ns",
+    )
+    for name in positive_integer_fields:
+        value = _environment_observed_value(observations, name)
+        if value is not None:
+            _plain_int(value, positive=True)
+    physical = _environment_observed_value(observations, "physical_cpu_count")
+    logical = _environment_observed_value(observations, "logical_cpu_count")
+    if isinstance(physical, int) and isinstance(logical, int) and logical < physical:
+        _fail("semantic_relationship", "environment CPU counts are inconsistent")
+    resident = _environment_observed_value(observations, "collector_process_resident_bytes")
+    peak = _environment_observed_value(observations, "collector_peak_resident_bytes")
+    if isinstance(resident, int) and isinstance(peak, int) and peak < resident:
+        _fail("semantic_relationship", "collector memory gauges are inconsistent")
+
+    for name in (
+        "collector_process_cpu_time_seconds", "load_average_1m",
+        "load_average_5m", "load_average_15m",
+    ):
+        value = _environment_observed_value(observations, name)
+        if value is not None and _finite_number(value) < 0:
+            _fail("semantic_relationship", "environment numeric observation is negative")
+    bytes_read = _environment_observed_value(observations, "collector_process_bytes_read")
+    if bytes_read is not None:
+        _plain_int(bytes_read, nonnegative=True)
+
+    storage_rounding = _environment_observed_value(observations, "storage_rounding_bytes")
+    if storage_rounding is not None and storage_rounding != 1_073_741_824:
+        _fail("semantic_relationship", "environment storage rounding is invalid")
+    pressure = _environment_observed_value(observations, "memory_pressure")
+    power = _environment_observed_value(observations, "power_mode")
+    thermal = _environment_observed_value(observations, "thermal_state")
+    workload = _environment_observed_value(observations, "workload_category")
+    material_workload = _environment_observed_value(
+        observations, "material_concurrent_workload"
+    )
+    if pressure is not None and pressure not in {"normal", "warning", "critical"}:
+        _fail("semantic_relationship", "environment memory pressure is invalid")
+    if power is not None and power not in {"automatic", "low_power"}:
+        _fail("semantic_relationship", "environment power mode is invalid")
+    if thermal is not None and thermal not in {"nominal", "warning", "serious", "critical"}:
+        _fail("semantic_relationship", "environment thermal state is invalid")
+    if workload not in {
+        "none", "local_inference", "accelerator_benchmark", "large_build",
+        "memory_pressure", "compute_storage_workload", "other_material",
+    } or type(material_workload) is not bool:
+        _fail("semantic_relationship", "environment workload observation is invalid")
+    if material_workload != (workload != "none"):
+        _fail("semantic_relationship", "environment workload facts contradict")
+
+    try:
+        expected_status, expected_reasons = snapshot_admission(
+            observations,
+            workload_category=workload,
+            capture_phase=phase,
+        )
+    except (KeyError, TypeError, ValueError):
+        _fail("semantic_relationship", "environment admission could not be recomputed")
+    if (
+        snapshot["interference_admission"] != expected_status
+        or snapshot["admission_reasons"] != expected_reasons
+    ):
+        _fail("semantic_relationship", "environment admission facts contradict")
+
+
+def _validate_benchmark_resource_semantics(
+    resources: Mapping[str, Any],
+    *,
+    require_observed: bool,
+) -> None:
+    values: dict[str, Any | None] = {
+        name: _environment_observed_value(resources, name)
+        for name in BENCHMARK_RESOURCE_FIELDS
+    }
+    for name in (
+        "process_footprint_bytes", "mlx_active_memory_bytes",
+        "mlx_cache_memory_bytes", "mlx_peak_memory_bytes", "process_bytes_read",
+    ):
+        value = values[name]
+        if value is not None:
+            _plain_int(value, positive=name == "process_footprint_bytes", nonnegative=True)
+    cpu_time = values["process_cpu_time_seconds"]
+    if cpu_time is not None and _finite_number(cpu_time) < 0:
+        _fail("semantic_relationship", "benchmark CPU time is negative")
+    active = values["mlx_active_memory_bytes"]
+    peak = values["mlx_peak_memory_bytes"]
+    if isinstance(active, int) and isinstance(peak, int) and peak < active:
+        _fail("semantic_relationship", "benchmark MLX memory gauges are inconsistent")
+    if require_observed and any(
+        values[name] is None
+        for name in (
+            "process_footprint_bytes", "mlx_active_memory_bytes",
+            "mlx_cache_memory_bytes", "mlx_peak_memory_bytes",
+        )
+    ):
+        _fail("semantic_relationship", "executed evidence lacks benchmark memory gauges")
+    worker_facts = {
+        name: values[name]
+        for name in (
+            "worker_backend", "worker_requested_device", "worker_selected_device",
+            "worker_fallback_used", "worker_evaluated", "worker_synchronized",
+        )
+    }
+    if worker_facts != {
+        "worker_backend": "apple-mlx",
+        "worker_requested_device": "gpu",
+        "worker_selected_device": "gpu",
+        "worker_fallback_used": False,
+        "worker_evaluated": True,
+        "worker_synchronized": True,
+    }:
+        _fail("semantic_relationship", "benchmark resources lack evaluated MLX GPU provenance")
+
+
+def _evidence_scope(record: Mapping[str, Any]) -> str:
+    """Return the additive v1.1 scope; omitted v1 records are fixture-only."""
+
+    scope = record.get("evidence_scope", "synthetic_fixture")
+    if scope not in {"synthetic_fixture", "external_checkpoint"}:
+        _fail("semantic_relationship", "evidence scope is invalid")
+    return scope
+
+
+def _validate_environment_semantics(record: dict[str, Any]) -> None:
+    environment = record["environment"]
+    if (
+        environment["platform"] != "macos-arm64"
+        or environment["selected_backend"] != "apple-mlx"
+        or environment["selected_device"] != "gpu"
+        or environment["interference_admission"]
+        not in {"admitted", "postponed", "observed_interference"}
+    ):
+        _fail("semantic_relationship", "environment identity is invalid")
+
+    has_pair = {
+        "interference_reasons", "before_snapshot", "after_snapshot",
+        "benchmark_resources",
+    } <= environment.keys()
+    if not has_pair:
+        if _evidence_scope(record) != "synthetic_fixture":
+            _fail("semantic_relationship", "real evidence lacks paired environment snapshots")
+        return
+
+    before = environment["before_snapshot"]
+    after = environment["after_snapshot"]
+    _validate_environment_snapshot_semantics(record, before, phase="before")
+    after_snapshot: dict[str, Any] | None
+    after_reason: str | None
+    if after.get("status") == "unavailable":
+        if record["actual_status"] != "blocked":
+            _fail("semantic_relationship", "executed evidence lacks an after snapshot")
+        after_snapshot = None
+        after_reason = after["reason"]
+    else:
+        after_snapshot = after
+        after_reason = None
+        _validate_environment_snapshot_semantics(record, after, phase="after")
+    resources = environment["benchmark_resources"]
+    _validate_benchmark_resource_semantics(
+        resources,
+        require_observed=_evidence_scope(record) == "external_checkpoint"
+        and after_snapshot is not None,
+    )
+    try:
+        recomputed = combine_environment_evidence(
+            before_snapshot=before,
+            after_snapshot=after_snapshot,
+            after_unavailable_reason=after_reason,
+            benchmark_resources=resources,
+        )
+    except (KeyError, TypeError, ValueError):
+        _fail("semantic_relationship", "paired environment evidence is inconsistent")
+    if (
+        environment["interference_admission"] != recomputed["interference_admission"]
+        or environment["interference_reasons"] != recomputed["interference_reasons"]
+        or environment["safe_environment"] != recomputed["safe_environment"]
+    ):
+        _fail("semantic_relationship", "paired environment admission facts contradict")
+
+
 def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
+    _evidence_scope(record)
     source_commit = record["source_commit"]
     if not isinstance(source_commit, str) or not COMMIT_RE.fullmatch(source_commit):
         _fail("semantic_relationship", "source commit is not immutable")
@@ -618,7 +1130,7 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
     protocol = record["protocol"]
     if (
         protocol["protocol_id"] != FROZEN_PROTOCOL_ID
-        or protocol["protocol_version"] != SCHEMA_VERSION
+        or protocol["protocol_version"] != FROZEN_PROTOCOL_VERSION
         or protocol["path"] != FROZEN_PROTOCOL_PATH
         or not isinstance(protocol["sha256"], str)
         or protocol["sha256"] != FROZEN_PROTOCOL_SHA256
@@ -639,6 +1151,31 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
     _plain_int(execution["exit_code"], nonnegative=True)
     if execution["working_directory_policy"] != "repository_root":
         _fail("semantic_relationship", "working-directory policy is invalid")
+
+    _validate_environment_semantics(record)
+
+    if (
+        record["actual_status"] == "passed"
+        and record["environment"]["interference_admission"] != "admitted"
+    ):
+        _fail(
+            "semantic_relationship",
+            "a passing experiment requires admitted interference conditions",
+        )
+
+    if "second_batch" in record:
+        second_batch = record["second_batch"]
+        status = second_batch["status"]
+        measured = second_batch["between_batch_variation_measured"]
+        if type(measured) is not bool or status not in {"observed", "unavailable"}:
+            _fail("semantic_relationship", "second-batch observation is invalid")
+        if status == "observed":
+            if measured is not True or "reason" in second_batch:
+                _fail("semantic_relationship", "second-batch observation is inconsistent")
+        else:
+            if measured is not False or "reason" not in second_batch:
+                _fail("semantic_relationship", "second-batch unavailable reason is missing")
+            _bounded_text(second_batch["reason"])
 
     model = record["model"]
     _plain_int(model["size_bytes"], positive=True)
@@ -708,26 +1245,48 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
 
 
 def _is_fixture_scoped(record: dict[str, Any]) -> bool:
-    experiment_id = record.get("experiment_id")
-    tensor = record.get("tensor")
-    artifacts = record.get("artifacts")
-    return (
-        isinstance(experiment_id, str)
-        and experiment_id.startswith("f002-router-fixture-")
-    ) or (
-        isinstance(tensor, dict) and tensor.get("absolute_offset") == 0
-    ) or (
-        isinstance(artifacts, list)
-        and any(
-            isinstance(artifact, dict)
-            and artifact.get("kind") == "router_fixture_manifest"
-            and artifact.get("path") == ROUTER_FIXTURE_MANIFEST_PATH
-            for artifact in artifacts
+    return _evidence_scope(record) == "synthetic_fixture"
+
+
+def _validate_scope_provenance(
+    record: dict[str, Any], repository_root: Path
+) -> None:
+    """Prevent a constructed fixture from being relabeled as checkpoint evidence."""
+
+    if _is_fixture_scoped(record):
+        if (
+            record["tensor"]["absolute_offset"] != 0
+            or "real_checkpoint_routing"
+            not in record["claim_boundary"]["unsupported_interpretations"]
+            or not any("fixture" in warning.lower() for warning in record["warnings"])
+        ):
+            _fail("semantic_relationship", "synthetic fixture provenance is inconsistent")
+        return
+
+    manifest = _load_model_manifest(repository_root)
+    admission = manifest.get("router_tensor_admission")
+    observed = admission.get("observed") if isinstance(admission, dict) else None
+    tensor = record["tensor"]
+    if (
+        manifest.get("observed_feature_002_model_access") is not True
+        or manifest.get("status") != "sealed_read_only_inspection"
+        or not isinstance(admission, dict)
+        or admission.get("status") != "admitted_observed"
+        or not isinstance(observed, dict)
+        or observed.get("name") != tensor["name"]
+        or observed.get("absolute_offset") != tensor["absolute_offset"]
+        or observed.get("encoded_length_bytes") != tensor["encoded_length"]
+        or observed.get("encoded_sha256") != tensor["encoded_sha256"]
+        or tensor["absolute_offset"] <= 0
+        or "real_checkpoint_routing"
+        in record["claim_boundary"]["unsupported_interpretations"]
+        or any(
+            "fixture-only" in warning.lower()
+            or "no real checkpoint" in warning.lower()
+            for warning in record["warnings"]
         )
-    ) or any(
-        "fixture-only" in warning.lower() or "synthetic fixture" in warning.lower()
-        for warning in record["warnings"]
-    )
+    ):
+        _fail("semantic_relationship", "external checkpoint provenance is not sealed")
 
 
 def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
@@ -737,6 +1296,9 @@ def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
     paths: set[str] = set()
     protocol_links = 0
     router_fixture_links = 0
+    model_manifest_links = 0
+    real_input_links = 0
+    independent_oracle_links = 0
     for artifact in artifacts:
         path = artifact["path"]
         _repository_relative_parts(
@@ -769,11 +1331,28 @@ def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
             ):
                 _fail("semantic_relationship", "the router fixture artifact identity does not match")
             router_fixture_links += 1
+        if artifact["kind"] == "model_manifest":
+            if path != MODEL_MANIFEST_PATH:
+                _fail("semantic_relationship", "the model manifest artifact path is invalid")
+            model_manifest_links += 1
+        if artifact["kind"] == "real_router_input":
+            if not path.startswith("fixtures/research/router-v1/real/"):
+                _fail("semantic_relationship", "the real router input artifact path is invalid")
+            real_input_links += 1
+        if artifact["kind"] == "independent_cpu_oracle":
+            if not (
+                path.startswith("fixtures/research/router-v1/real/")
+                or path.startswith("docs/research/raw/002-router-parity/")
+            ):
+                _fail("semantic_relationship", "the independent oracle artifact path is invalid")
+            independent_oracle_links += 1
     if protocol_links != 1:
         _fail("semantic_relationship", "the frozen protocol artifact is not linked")
     if _is_fixture_scoped(record):
         if router_fixture_links != 1:
             _fail("semantic_relationship", "fixture evidence artifacts are incomplete")
+    elif (model_manifest_links, real_input_links, independent_oracle_links) != (1, 1, 1):
+        _fail("semantic_relationship", "external evidence provenance artifacts are incomplete")
 
 
 OBSERVATION_FIELDS = {
@@ -801,6 +1380,24 @@ OBSERVATION_FIELDS = {
     "failure",
     "exclusion_rule_id",
 }
+
+
+def _observed_duration_ns(value: Any) -> int | None:
+    """Validate one stage observation and return its measured duration."""
+
+    if type(value) is int:
+        return _plain_int(value, positive=True)
+    if not isinstance(value, dict):
+        _fail("schema_violation", "a timing stage observation is invalid")
+    status = value.get("status")
+    if status == "observed":
+        stage = _closed_object(value, allowed={"status", "duration_ns"})
+        return _plain_int(stage["duration_ns"], positive=True)
+    if status in {"unavailable", "not_applicable"}:
+        stage = _closed_object(value, allowed={"status", "reason"})
+        _bounded_text(stage["reason"])
+        return None
+    _fail("schema_violation", "a timing stage observation status is invalid")
 
 
 def _validate_observations(
@@ -877,9 +1474,63 @@ def _validate_observations(
             _fail("schema_violation", "duration map is invalid")
         if len(item["durations_ns"]) > 16:
             _fail("schema_violation", "duration map is invalid")
+        external_checkpoint = _evidence_scope(record) == "external_checkpoint"
+        if external_checkpoint and any(
+            stage not in ROUTER_TIMING_STAGES for stage in item["durations_ns"]
+        ):
+            _fail("semantic_relationship", "external timing stage name is invalid")
+        if external_checkpoint and any(
+            type(duration) is int for duration in item["durations_ns"].values()
+        ):
+            _fail(
+                "semantic_relationship",
+                "external timing stages require structured status evidence",
+            )
+
+        observed_stage_count = 0
         for stage, duration in item["durations_ns"].items():
             _bounded_text(stage, maximum=128)
-            _plain_int(duration, positive=True)
+            if _observed_duration_ns(duration) is not None:
+                observed_stage_count += 1
+        if observed_stage_count == 0:
+            _fail("semantic_relationship", "timing observation has no observed stage")
+        if external_checkpoint:
+            dequantization = item["durations_ns"].get("dequantization")
+            if dequantization != {
+                "status": "not_applicable",
+                "reason": ROUTER_F32_DEQUANTIZATION_REASON,
+            }:
+                _fail(
+                    "semantic_relationship",
+                    "external F32 timing lacks canonical dequantization evidence",
+                )
+            if any(
+                stage != "dequantization"
+                and isinstance(duration, dict)
+                and duration.get("status") == "not_applicable"
+                for stage, duration in item["durations_ns"].items()
+            ):
+                _fail(
+                    "semantic_relationship",
+                    "only F32 dequantization can be not applicable",
+                )
+            if item["instrumentation_mode"] == "minimally_instrumented":
+                total = item["durations_ns"].get("total_evaluated_router")
+                if not (
+                    isinstance(total, dict)
+                    and total.get("status") == "observed"
+                    and type(total.get("duration_ns")) is int
+                    and total["duration_ns"] > 0
+                ):
+                    _fail(
+                        "semantic_relationship",
+                        "external minimal timing lacks its evaluated router total",
+                    )
+            elif set(item["durations_ns"]) != ROUTER_TIMING_STAGES:
+                _fail(
+                    "semantic_relationship",
+                    "external stage timing omits a frozen boundary",
+                )
         if item["status"] == "passed":
             if (
                 item["requested_device"] != "gpu"
@@ -992,7 +1643,11 @@ def _validate_repetitions(record: dict[str, Any], by_id: dict[str, dict[str, Any
         measurements = kinds["measurement"]
         warmups = kinds.get("warmup", [])
         condition = base[4]
-        if len(measurements) < 10 or (condition == "warm" and len(warmups) < 5):
+        case_id = base[0]
+        required_measurements = 30 if case_id.startswith("generated-") else 10
+        if len(measurements) < required_measurements or (
+            condition == "warm" and len(warmups) < 5
+        ):
             _fail("insufficient_repetitions", "timing repetition policy is not met")
     if any(item["output_sha256"] != hashes[0] for item in passed):
         _fail("semantic_relationship", "raw and repeated output identities differ")
@@ -1005,6 +1660,8 @@ SUMMARY_FIELDS = {
     "included_observation_ids",
     "excluded_observation_ids",
     "unfiltered_summary",
+    "filtered_summary",
+    "exclusion_rule_id",
 }
 GROUP_FIELDS = {
     "case_id",
@@ -1067,13 +1724,34 @@ def _equal_number(left: Any, right: Any) -> bool:
     return left == right
 
 
-def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]) -> None:
+def _validate_summaries(
+    record: dict[str, Any],
+    by_id: dict[str, dict[str, Any]],
+    timing_groups: Mapping[tuple[Any, ...], list[Mapping[str, Any]]],
+) -> None:
     summaries = record["summaries"]
     if not isinstance(summaries, list) or not summaries:
         _fail("schema_violation", "statistical summaries are missing")
     summary_ids: set[str] = set()
+    projected_rows: dict[tuple[str, str], tuple[Any, ...]] = {}
+    for compatibility_key, rows in timing_groups.items():
+        for row in rows:
+            observation_id = row.get("observation_id")
+            stage = row.get("stage")
+            if isinstance(observation_id, str) and isinstance(stage, str):
+                identity = (observation_id, stage)
+                if identity in projected_rows:
+                    _fail(
+                        "incompatible_summary_group",
+                        "canonical timing projection contains duplicate rows",
+                    )
+                projected_rows[identity] = compatibility_key
     for raw_summary in summaries:
-        summary = _closed_object(raw_summary, allowed=SUMMARY_FIELDS)
+        summary = _closed_object(
+            raw_summary,
+            allowed=SUMMARY_FIELDS,
+            required=SUMMARY_FIELDS - {"filtered_summary", "exclusion_rule_id"},
+        )
         group = _closed_object(summary["group"], allowed=GROUP_FIELDS)
         summary_id = _stable_id(summary["summary_id"])
         if summary_id in summary_ids:
@@ -1090,6 +1768,12 @@ def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]
             or len(set(included_ids)) != len(included_ids)
         ):
             _fail("schema_violation", "included observation identities are invalid")
+        if "filtered_summary" in summary or "exclusion_rule_id" in summary:
+            if "filtered_summary" not in summary or "exclusion_rule_id" not in summary:
+                _fail("semantic_relationship", "filtered summary has no declared rule")
+            _stable_id(summary["exclusion_rule_id"])
+            # Protocol v1 retains every observation and declares no filter.
+            _fail("semantic_relationship", "frozen protocol v1 declares no exclusion rule")
         if excluded_ids != []:
             _fail("semantic_relationship", "frozen protocol v1 declares no exclusion rule")
         if (
@@ -1105,6 +1789,7 @@ def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]
         _stable_id(group["case_id"])
         _stable_id(group["batch_id"])
         included: list[dict[str, Any]] = []
+        included_compatibility_keys: list[tuple[Any, ...]] = []
         for observation_id in included_ids:
             observation = by_id.get(observation_id)
             if observation is None:
@@ -1120,7 +1805,19 @@ def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]
                     _fail("incompatible_summary_group", "summary pools incompatible observations")
             if observation["status"] != "passed":
                 _fail("raw_summary_mismatch", "summary includes an unsuccessful observation")
+            projected_key = projected_rows.get((observation_id, group["stage"]))
+            if projected_key is None:
+                _fail(
+                    "raw_summary_mismatch",
+                    "summary stage is absent from the canonical timing projection",
+                )
+            included_compatibility_keys.append(projected_key)
             included.append(observation)
+        if len(set(included_compatibility_keys)) != 1:
+            _fail(
+                "incompatible_summary_group",
+                "summary pools incompatible canonical timing rows",
+            )
         replication_id = included[0]["process_replication_id"]
         if any(item["process_replication_id"] != replication_id for item in included):
             _fail("incompatible_summary_group", "summary pools process replications")
@@ -1128,7 +1825,11 @@ def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]
         if any(item["process_state"] != process_state for item in included):
             _fail("incompatible_summary_group", "summary pools process states")
         stage = group["stage"]
-        if not isinstance(stage, str) or any(stage not in item["durations_ns"] for item in included):
+        if not isinstance(stage, str) or any(
+            stage not in item["durations_ns"]
+            or _observed_duration_ns(item["durations_ns"][stage]) is None
+            for item in included
+        ):
             _fail("raw_summary_mismatch", "summary timing stage is unavailable")
         expected_ids = {
             item["observation_id"]
@@ -1137,6 +1838,7 @@ def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]
             and item["process_replication_id"] == replication_id
             and item["process_state"] == process_state
             and stage in item["durations_ns"]
+            and _observed_duration_ns(item["durations_ns"][stage]) is not None
             and all(
                 item[field] == group[field]
                 for field in (
@@ -1150,7 +1852,14 @@ def _validate_summaries(record: dict[str, Any], by_id: dict[str, dict[str, Any]]
         }
         if set(included_ids) != expected_ids:
             _fail("raw_summary_mismatch", "summary omits compatible raw observations")
-        recomputed = summarize_nanoseconds([item["durations_ns"][stage] for item in included])
+        observed_durations = [
+            _observed_duration_ns(item["durations_ns"][stage]) for item in included
+        ]
+        if any(value is None for value in observed_durations):
+            _fail("raw_summary_mismatch", "summary timing stage is unavailable")
+        recomputed = summarize_nanoseconds(
+            [value for value in observed_durations if value is not None]
+        )
         reported = summary["unfiltered_summary"]
         if not isinstance(reported, dict) or reported.keys() != recomputed.keys():
             _fail("raw_summary_mismatch", "summary fields do not match the frozen method")
@@ -1285,11 +1994,12 @@ def _validate_outcome_state(
         return
 
     expected_claim_status = "failed" if actual_status == "failed" else "blocked"
+    expected_observation_status = "aborted" if actual_status == "blocked" else actual_status
     if (
-        actual_status not in {"failed", "aborted"}
+        actual_status not in {"failed", "blocked", "aborted"}
         or exit_code == 0
         or not record["failures"]
-        or actual_status not in observation_statuses
+        or expected_observation_status not in observation_statuses
         or claim_status != expected_claim_status
         or failure_codes != observation_failure_codes
     ):
@@ -1310,12 +2020,17 @@ def validate_record(
         _validate_semantics(record, repository_root)
         _validate_artifacts(record, repository_root)
         by_id, compatible_series = _validate_observations(record)
+        timing_rows = project_timing_rows(record)
+        timing_groups = group_raw_observations(timing_rows)
+        if not timing_rows or not timing_groups:
+            _fail("incompatible_summary_group", "timing compatibility projection is empty")
         _validate_summary_compatibility(record, by_id)
         _validate_contiguous_series(compatible_series)
         _validate_repetitions(record, by_id)
-        _validate_summaries(record, by_id)
+        _validate_summaries(record, by_id, timing_groups)
         _validate_correctness(record)
         _validate_claim_boundary(record)
+        _validate_scope_provenance(record, repository_root)
         _validate_outcome_state(record, by_id)
         return record
     except EvidenceValidationError:

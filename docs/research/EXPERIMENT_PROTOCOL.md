@@ -1,8 +1,10 @@
 # Feature 002 Experiment Protocol
 
-**Protocol ID**: `f002-router-protocol`
+**Protocol ID**: `f002-router-protocol-amendment-001`
 
-**Protocol version**: `1.0.0`
+**Protocol version**: `1.1.0`
+
+**Supersedes**: `f002-router-protocol` version `1.0.0`
 
 **Feature**: `002-qwen-router-parity`
 
@@ -10,13 +12,21 @@
 
 **Order seed**: `22002`
 
-**Status**: Frozen methodology; no external checkpoint access, real-router
+**Status**: Frozen pre-access amendment; no external checkpoint access, real-router
 execution, or real-router measurement has occurred under this protocol.
 
 This document freezes the correctness, timing, retention, publication, and
 stop rules for the bounded Qwen3MoE layer-0 router experiment. It is executable
 only with the admission gates below. It records no result and makes no claim
 that the Feature 002 router implementation works.
+
+Amendment 001 was made before any external checkpoint, CPU-oracle, Apple, or
+real timing output was accessed. It closes the exact correctness-attempt,
+fresh-process, flat-ledger, paired environment, and load-admission rules needed
+by the implemented orchestration. The superseded bytes remain in Git history.
+The checked-in passed/failed/aborted conformance fixtures are constructed
+policy data rather than experimental attempts or claims; they are regenerated
+under this amendment and retain no assertion about a real checkpoint.
 
 The normative companion documents are the
 [feature specification](../../specs/002-qwen-router-parity/spec.md),
@@ -359,6 +369,13 @@ path, tool/runtime versions, intended/selected device, memory pressure,
 physical process footprint, MLX active/cache/peak gauges, power mode and
 thermal state when observable, and a sanitized concurrent-workload category.
 
+The collector records an explicit symbolic storage-root role and never accepts
+the checkpoint file as a storage operand. Before and after snapshots remain
+separate and are bound to worker-supplied benchmark process/MLX gauges; the
+collector's own short-lived process gauges are labeled as collector-only.
+Selected backend/device evidence comes from the evaluated worker result, not
+from the environment collector.
+
 The existing conservative
 [Feature 001 memory budget](../validation/models/qwen3-30b-a3b-q8_0-memory-budget.json)
 remains the minimum checkpoint gate: fresh available disk is at least
@@ -392,6 +409,13 @@ failed/aborted or as a separately labeled `observed_interference` batch. It is
 never merged with the primary clean summary. Different pressure, load, power,
 thermal, process, cache, commit, instrumentation, case, or batch conditions are
 incompatible unless this protocol explicitly groups them.
+
+The workload category is an explicit required operator declaration; it never
+defaults to `none`. As an additional conservative precommitted gate, both the
+one-minute and five-minute load averages must be no greater than `0.75` times
+the observed logical CPU count. A missing, negative, non-finite, or higher load
+observation postpones the batch. This load rule cannot prove that an undeclared
+GPU workload is absent, so the explicit workload declaration remains required.
 
 ## 9. Exclusion and retention policy
 

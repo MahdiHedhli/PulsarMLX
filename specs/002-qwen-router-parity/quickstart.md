@@ -87,6 +87,73 @@ implemented, green, committed, pushed, and green in fixture-only CI:
 
 Do not retrofit Feature 001's heterogeneous JSON records to the new schema.
 
+### 3.1 Capture public-safe environment and worker resources
+
+The environment collector is model-free: it accepts a storage **directory**
+role, rejects model-looking file operands, never expands a model path into
+evidence, and does not import or initialize MLX. Its workload declaration is
+mandatory. Use `none` only after confirming there is no material local
+inference, accelerator benchmark, large build, memory-pressure job, or other
+declared compute/storage workload; otherwise use the truthful category and
+expect admission to be postponed.
+
+Use a fresh external output directory for each attempt:
+
+```sh
+export PULSARMLX_ROUTER_EVIDENCE='<external-evidence>/router-experiments'
+export PULSARMLX_ENVIRONMENT_EVIDENCE="$PULSARMLX_ROUTER_EVIDENCE/environment"
+export PULSARMLX_ROUTER_FIXTURE_EVIDENCE="$PULSARMLX_ROUTER_EVIDENCE/generated-router.json"
+
+mkdir -p "$PULSARMLX_ENVIRONMENT_EVIDENCE"
+
+python3 scripts/research/environment.py capture \
+  --repository-root . \
+  --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
+  --storage-role candidate_evidence_storage \
+  --storage-locator '$PULSARMLX_ROUTER_EVIDENCE' \
+  --capture-phase before \
+  --workload-category none \
+  --benchmark-concurrency 1 \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json"
+
+# A postponed admission is retained and exits nonzero. Stop here in that case.
+# T068 adds and freezes the generated 5+30 benchmark entry point before it is
+# legal to replace this comment with an execution command.
+
+python3 scripts/research/environment.py extract-resources \
+  --candidate "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json"
+
+python3 scripts/research/environment.py capture \
+  --repository-root . \
+  --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
+  --storage-role candidate_evidence_storage \
+  --storage-locator '$PULSARMLX_ROUTER_EVIDENCE' \
+  --capture-phase after \
+  --workload-category none \
+  --benchmark-concurrency 1 \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json"
+
+python3 scripts/research/environment.py combine \
+  --before "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json" \
+  --after "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json" \
+  --benchmark-resources "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json"
+```
+
+Every file is created exclusively and atomically; retry in a fresh external
+directory rather than overwriting an attempt. The combined document is an
+environment/resource handoff into the experiment record, not standalone
+latency, correctness, or checkpoint evidence. A passing executed record must
+retain both snapshots and worker-supplied process/MLX gauges. Collector-process
+RSS/CPU fields remain explicitly collector-scoped. The one- and five-minute
+load averages must each be no greater than `0.75 × logical CPU count`.
+The resource extractor also binds the selected backend/device, fallback,
+evaluation, and synchronization facts from the validated worker records; the
+combine command has no caller-controlled backend/device override.
+The capture command writes a postponed snapshot and returns nonzero whenever
+admission is not `admitted`; do not continue to a benchmark after that result.
+
 ## 4. Notify and admit the external model
 
 The same immutable external checkpoint from Feature 001 is required. Do not
@@ -110,12 +177,14 @@ curl -fsS \
 Then set local-only absolute paths without writing them to committed evidence:
 
 ```sh
-PULSARMLX_MODEL_GGUF='<external-model>/Qwen3-30B-A3B-Q8_0.gguf'
+export PULSARMLX_MODEL_GGUF='<external-model>/Qwen3-30B-A3B-Q8_0.gguf'
+export PULSARMLX_MODEL_STORAGE_ROOT='<external-model>'
 PULSARMLX_ROUTER_INSPECTION='<external-evidence>/router-inspection.json'
 PULSARMLX_ORACLE_WORK='<external-work>/router-oracle'
 PULSARMLX_ORACLE_OUTPUT='<external-evidence>/router-oracle'
 PULSARMLX_ROUTER_ORACLE='<external-evidence>/router-oracle/oracle.json'
-PULSARMLX_ROUTER_EVIDENCE='<external-evidence>/router-experiments'
+export PULSARMLX_ROUTER_EVIDENCE='<external-evidence>/router-experiments'
+export PULSARMLX_ENVIRONMENT_EVIDENCE="$PULSARMLX_ROUTER_EVIDENCE/environment"
 PULSARMLX_ROUTER_FIXTURE_EVIDENCE='<external-evidence>/router-fixtures.json'
 ```
 
