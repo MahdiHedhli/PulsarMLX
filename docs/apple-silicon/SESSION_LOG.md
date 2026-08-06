@@ -3515,3 +3515,36 @@ workspace baseline completed successfully in 1 minute 15 seconds. This
 documentation-only record is the deliberately non-recursive T077 CI
 attestation. Its own CI conclusion is verified out of tree before the two
 independently started CPU-only captures and is not appended recursively.
+
+### T077 oracle dependency recovery and CI attestation
+
+The first T077 CPU-oracle attempt completed both bounded `ffn_norm-0` capture
+processes and their provenance record, but stopped before final bundle
+publication when pinned `gguf-py` could not import its declared PyYAML runtime
+dependency. The command exited 2 with the bounded reason
+`gguf_reader_unavailable`; the requested final output directory remained
+absent, and the failed attempt was retained outside Git. No Apple MLX router
+output was produced or inspected.
+
+The recovery adds a fail-before-model-I/O prerequisite gate for external
+CPython 3.12.13, NumPy 2.4.5, PyYAML 6.0.3, tqdm 4.67.1, requests 2.32.5, and
+the pinned `gguf-py` reader. Probe output is suppressed so a transitive import
+failure cannot expose a private external path; only the bounded public shell
+error is retained. A subprocess test injects a private-looking traceback and a
+model-hash sentinel, then proves that neither is emitted or reached.
+
+The recovery passed shell parsing, 13 focused oracle tests, 171 complete
+research tests, three fixture evidence records, fixture-only package
+regeneration of six artifacts, `git diff --check`, and the standardized staged
+safety scan. It was committed as
+`7a4378d6e19e3e42b4772a537ab692da052e9c96` and pushed without force.
+[GitHub Actions run 31086701447](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31086701447)
+passed for that exact commit: Apple MLX small-fixture validation completed in
+56 seconds and the Apple Silicon workspace baseline completed in 1 minute 50
+seconds. The external oracle environment was then reconciled to the exact
+documented package versions and its bounded import preflight passed.
+
+This scanned documentation-only commit is the final non-recursive CI
+attestation before retrying T077. Its own CI result is verified out of tree and
+will not be recursively appended. The pre-access NTFY hardware pause remains
+active; no duplicate notification is required.
