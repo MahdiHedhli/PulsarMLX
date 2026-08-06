@@ -2964,3 +2964,13 @@ coverage, and validated serialization.
 No checkpoint path was resolved, no model bytes were accessed, and no Python,
 MLX, or GPU process ran. This is contract/fixture evidence only, so local
 inference remained available and no NTFY hardware pause was requested.
+
+A final post-commit read-only audit found two additional bounded-evidence edge
+cases. The major-matrix validator now enforces observation-ID uniqueness across
+all four series, not merely within each series. Timing-series admission also
+checks the 1 MiB encoded ceiling before deserialization, while the public domain
+type exposes serialization only through the same bounded `try_to_value` path.
+Regression coverage constructs a schema-valid 1,024-attempt oversized candidate
+and a cross-series duplicate-ID candidate; both fail closed. The focused
+evidence suite remained green at 5 of 5 tests, and targeted formatting, diff,
+and strict package Clippy checks passed. No model or hardware was accessed.

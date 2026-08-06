@@ -371,6 +371,22 @@ fn exact_major_benchmarks_require_a_complete_clean_process_replication_each() {
     ];
     validate_major_router_timing_series(&shared_primary_process)
         .expect("both primary cases may share one persistent worker");
+
+    let duplicate_observation_id = primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1)
+        ["raw_timing_observations"][0]["observation_id"]
+        .clone();
+    let mut duplicate_clean = clean_replica(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1);
+    duplicate_clean["raw_timing_observations"][0]["observation_id"] = duplicate_observation_id;
+    let duplicate_across_series = vec![
+        parse_series(primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1)),
+        parse_series(primary_major(TWO_ROW_BENCHMARK_ID, TWO_ROW_CASE_ID, 2)),
+        parse_series(duplicate_clean),
+        parse_series(clean_replica(TWO_ROW_BENCHMARK_ID, TWO_ROW_CASE_ID, 2)),
+    ];
+    assert!(
+        validate_major_router_timing_series(&duplicate_across_series).is_err(),
+        "observation IDs must be unique across the complete experiment"
+    );
 }
 
 #[test]
@@ -620,6 +636,75 @@ fn labels_evaluated_envelope_and_output_hashes_fail_closed() {
 
 #[test]
 fn timing_response_is_bounded_by_the_existing_protocol_cap() {
+    let mut oversized_series = timing_series(
+        "f002-generated-router-single-row-minimal-v1",
+        GENERATED_SINGLE_CASE_ID,
+        1,
+        "inexpensive_synthetic",
+        "minimally_instrumented",
+        "primary",
+        "oversized-process",
+        "reused_process",
+        "warm",
+        5,
+        30,
+    );
+    let bounded_reason = "x".repeat(512);
+    for run_index in 30..1_019 {
+        let mut failed = timing_observation(
+            "measurement",
+            run_index,
+            "oversized-process",
+            "reused_process",
+            "warm",
+            "minimally_instrumented",
+            OUTPUT_SHA256,
+        );
+        failed["status"] = json!("aborted");
+        failed["selected_device"] = json!("not_available");
+        failed["evaluated"] = json!(false);
+        failed["synchronized"] = json!(false);
+        failed["output_sha256"] = Value::Null;
+        failed["correctness_passed"] = Value::Null;
+        failed["stages"] = json!({
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization"
+            },
+            "setup_admission": {"status": "unavailable", "reason": bounded_reason},
+            "file_io": {"status": "unavailable", "reason": bounded_reason},
+            "storage_validation_f32_decode": {"status": "unavailable", "reason": bounded_reason},
+            "host_to_device": {"status": "unavailable", "reason": bounded_reason},
+            "graph_construction": {"status": "unavailable", "reason": bounded_reason},
+            "compilation": {"status": "unavailable", "reason": bounded_reason},
+            "router_projection": {"status": "unavailable", "reason": bounded_reason},
+            "top_k": {"status": "unavailable", "reason": bounded_reason},
+            "normalization": {"status": "unavailable", "reason": bounded_reason},
+            "total_evaluated_router": {"status": "unavailable", "reason": bounded_reason},
+            "synchronized_readback": {"status": "unavailable", "reason": bounded_reason},
+            "end_to_end_router_command": {"status": "unavailable", "reason": bounded_reason}
+        });
+        failed["failure"] = json!({
+            "code": "resource_limit",
+            "message": bounded_reason,
+            "stage": "resource_admission"
+        });
+        oversized_series["raw_timing_observations"]
+            .as_array_mut()
+            .expect("observation array")
+            .push(failed);
+    }
+    assert!(
+        serde_json::to_vec(&oversized_series)
+            .expect("oversized series encodes")
+            .len()
+            > MAX_RESPONSE_BYTES
+    );
+    assert!(
+        RouterTimingSeries::try_from_value(oversized_series).is_err(),
+        "admission and bounded serialization must enforce the same byte ceiling"
+    );
+
     let result = json!({
         "timing_series": [
             primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1),

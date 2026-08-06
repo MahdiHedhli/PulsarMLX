@@ -316,7 +316,7 @@ impl RouterTimingObservation {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RouterTimingSeries {
     benchmark_id: String,
     case_id: String,
@@ -334,6 +334,14 @@ pub struct RouterTimingSeries {
 
 impl RouterTimingSeries {
     pub fn try_from_value(value: Value) -> Result<Self, ContractError> {
+        let encoded_len = serde_json::to_vec(&value)
+            .map_err(|_| invalid_timing_evidence("router timing series could not be encoded"))?
+            .len();
+        if encoded_len > MAX_TIMING_SERIES_BYTES {
+            return Err(invalid_timing_evidence(
+                "router timing series exceeds the bounded response size",
+            ));
+        }
         let raw: RawRouterTimingSeries = serde_json::from_value(value).map_err(|_| {
             invalid_timing_evidence("router timing series does not match its closed schema")
         })?;
@@ -389,7 +397,7 @@ impl RouterTimingSeries {
     }
 
     pub fn try_to_value(&self) -> Result<Value, ContractError> {
-        let encoded = serde_json::to_vec(self)
+        let encoded = serde_json::to_vec(&SerializableRouterTimingSeries::from(self))
             .map_err(|_| invalid_timing_evidence("router timing series could not be serialized"))?;
         if encoded.len() > MAX_TIMING_SERIES_BYTES {
             return Err(invalid_timing_evidence(
@@ -534,6 +542,41 @@ impl RouterTimingSeries {
     }
 }
 
+#[derive(Serialize)]
+struct SerializableRouterTimingSeries<'a> {
+    benchmark_id: &'a str,
+    case_id: &'a str,
+    row_count: usize,
+    series_kind: RouterTimingSeriesKind,
+    replication_role: RouterTimingReplicationRole,
+    process_replication_id: &'a str,
+    process_state: RouterTimingProcessState,
+    condition: RouterTimingCondition,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    warmup_count: usize,
+    measurement_count: usize,
+    raw_timing_observations: &'a [RouterTimingObservation],
+}
+
+impl<'a> From<&'a RouterTimingSeries> for SerializableRouterTimingSeries<'a> {
+    fn from(series: &'a RouterTimingSeries) -> Self {
+        Self {
+            benchmark_id: &series.benchmark_id,
+            case_id: &series.case_id,
+            row_count: series.row_count,
+            series_kind: series.series_kind,
+            replication_role: series.replication_role,
+            process_replication_id: &series.process_replication_id,
+            process_state: series.process_state,
+            condition: series.condition,
+            instrumentation_mode: series.instrumentation_mode,
+            warmup_count: series.warmup_count,
+            measurement_count: series.measurement_count,
+            raw_timing_observations: &series.raw_timing_observations,
+        }
+    }
+}
+
 pub fn validate_major_router_timing_series(
     series: &[RouterTimingSeries],
 ) -> Result<(), ContractError> {
@@ -562,6 +605,7 @@ pub fn validate_major_router_timing_series(
         ),
     ]);
     let mut actual = BTreeSet::new();
+    let mut observation_ids = BTreeSet::new();
     for item in series {
         if item.series_kind != RouterTimingSeriesKind::MajorMinimallyInstrumented
             || !actual.insert((item.benchmark_id.as_str(), item.replication_role))
@@ -579,6 +623,13 @@ pub fn validate_major_router_timing_series(
             return Err(invalid_timing_evidence(
                 "major router timing series contains an unsuccessful attempt",
             ));
+        }
+        for observation in &item.raw_timing_observations {
+            if !observation_ids.insert(observation.observation_id.as_str()) {
+                return Err(invalid_timing_evidence(
+                    "major router observation identity is duplicated across series",
+                ));
+            }
         }
     }
     if actual != required {
