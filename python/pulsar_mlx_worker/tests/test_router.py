@@ -246,6 +246,31 @@ class RuntimeEvidenceTrap:
         raise AssertionError("invalid runtime evidence reached tensor scheduling")
 
 
+class ScriptedNanosecondClock:
+    """Return reviewable monotonic timestamps without consulting wall time."""
+
+    def __init__(self, *timestamps: int) -> None:
+        self.timestamps = list(timestamps)
+
+    def __call__(self) -> int:
+        if not self.timestamps:
+            raise AssertionError("timing code read beyond the scripted clock")
+        return self.timestamps.pop(0)
+
+
+class TimingBoundarySpy:
+    """Record the explicit evaluation and synchronization timing boundary."""
+
+    def __init__(self, events: list[tuple[str, object]]) -> None:
+        self.events = events
+
+    def eval(self, *outputs):
+        self.events.append(("eval", outputs))
+
+    def synchronize(self, device):
+        self.events.append(("synchronize", device))
+
+
 class CoreRunnerSpy:
     """Capture the internally resolved committed arrays without MLX."""
 
@@ -883,6 +908,194 @@ class RouterTiePolicyTests(unittest.TestCase):
             _synthetic_tie_case("near_tie"),
             RouterCaseScope.REAL_CHECKPOINT,
         )
+
+
+class RouterTimingContractTests(unittest.TestCase):
+    """Tests-first contract for the Feature 002 worker timing mechanics."""
+
+    def make_observation(
+        self,
+        *,
+        observation_id: str,
+        run_index: int,
+        observation_kind: str,
+        status: str = "passed",
+        failure: dict[str, str] | None = None,
+    ):
+        recorder = router_module.RouterTimingRecorder(
+            clock_ns=ScriptedNanosecondClock(10_000, 10_025)
+        )
+        if status == "passed":
+            mx = TimingBoundarySpy([])
+            recorder.measure_evaluated(
+                stage="total_evaluated_router",
+                mx_module=mx,
+                gpu="gpu",
+                operation=lambda: ("logits", "probabilities", "ids", "weights"),
+            )
+        recorder.record_not_applicable(
+            stage="dequantization",
+            reason="f32_router_requires_no_dequantization",
+        )
+        return recorder.finish(
+            observation_id=observation_id,
+            run_index=run_index,
+            observation_kind=observation_kind,
+            process_state="reused_process",
+            condition="warm",
+            instrumentation_mode="minimally_instrumented",
+            status=status,
+            requested_device="gpu",
+            selected_device="gpu" if status == "passed" else "not_available",
+            fallback_used=False,
+            output_sha256=("a" * 64) if status == "passed" else None,
+            correctness_passed=True if status == "passed" else None,
+            failure=failure,
+        )
+
+    def test_monotonic_nanosecond_timing_retains_raw_positive_integer(self) -> None:
+        recorder = router_module.RouterTimingRecorder(
+            clock_ns=ScriptedNanosecondClock(1_000_000, 1_000_137)
+        )
+        mx = TimingBoundarySpy([])
+
+        recorder.measure_evaluated(
+            stage="total_evaluated_router",
+            mx_module=mx,
+            gpu="gpu",
+            operation=lambda: ("final-output",),
+        )
+        observation = recorder.finish(
+            observation_id="measurement-00",
+            run_index=0,
+            observation_kind="measurement",
+            process_state="reused_process",
+            condition="warm",
+            instrumentation_mode="minimally_instrumented",
+            status="passed",
+            requested_device="gpu",
+            selected_device="gpu",
+            fallback_used=False,
+            output_sha256="a" * 64,
+            correctness_passed=True,
+        )
+        payload = observation.to_protocol_result()
+
+        self.assertEqual(payload["monotonic_clock"], "perf_counter_ns")
+        total = payload["stages"]["total_evaluated_router"]
+        self.assertEqual(total, {"status": "observed", "duration_ns": 137})
+        self.assertIs(type(total["duration_ns"]), int)
+        self.assertGreater(total["duration_ns"], 0)
+
+    def test_minimally_instrumented_total_has_one_evaluated_sync_barrier(self) -> None:
+        events: list[tuple[str, object]] = []
+        recorder = router_module.RouterTimingRecorder(
+            clock_ns=ScriptedNanosecondClock(20_000, 20_031)
+        )
+        mx = TimingBoundarySpy(events)
+
+        outputs = recorder.measure_evaluated(
+            stage="total_evaluated_router",
+            mx_module=mx,
+            gpu="gpu",
+            operation=lambda: (
+                events.append(("operation", None))
+                or ("logits", "probabilities", "ids", "selected", "weights")
+            ),
+        )
+
+        self.assertEqual(
+            [name for name, _ in events],
+            ["operation", "eval", "synchronize"],
+        )
+        self.assertEqual(events[1], ("eval", outputs))
+        self.assertEqual(events[2], ("synchronize", "gpu"))
+
+    def test_f32_dequantization_is_not_applicable_and_never_zero(self) -> None:
+        observation = self.make_observation(
+            observation_id="measurement-00",
+            run_index=0,
+            observation_kind="measurement",
+        )
+        payload = observation.to_protocol_result()
+
+        self.assertEqual(
+            payload["stages"]["dequantization"],
+            {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization",
+            },
+        )
+        self.assertNotIn("duration_ns", payload["stages"]["dequantization"])
+
+    def test_fixed_minimal_series_retains_five_warmups_and_thirty_measurements(
+        self,
+    ) -> None:
+        series = router_module.RouterTimingSeries()
+        for observation_kind, count in (("warmup", 5), ("measurement", 30)):
+            for run_index in range(count):
+                series.retain(
+                    self.make_observation(
+                        observation_id=f"{observation_kind}-{run_index:02d}",
+                        run_index=run_index,
+                        observation_kind=observation_kind,
+                    )
+                )
+
+        payloads = [
+            observation.to_protocol_result()
+            for observation in series.raw_timing_observations
+        ]
+        self.assertEqual(len(payloads), 35)
+        self.assertEqual(
+            [item["run_index"] for item in payloads if item["observation_kind"] == "warmup"],
+            list(range(5)),
+        )
+        self.assertEqual(
+            [item["run_index"] for item in payloads if item["observation_kind"] == "measurement"],
+            list(range(30)),
+        )
+
+    def test_all_failed_and_aborted_attempts_are_retained_in_order(self) -> None:
+        series = router_module.RouterTimingSeries()
+        attempts = (
+            self.make_observation(
+                observation_id="warmup-00",
+                run_index=0,
+                observation_kind="warmup",
+            ),
+            self.make_observation(
+                observation_id="measurement-00",
+                run_index=0,
+                observation_kind="measurement",
+                status="failed",
+                failure={"code": "evaluation_failed", "message": "bounded failure"},
+            ),
+            self.make_observation(
+                observation_id="measurement-01",
+                run_index=1,
+                observation_kind="measurement",
+                status="aborted",
+                failure={"code": "resource_limit", "message": "bounded abort"},
+            ),
+        )
+        for attempt in attempts:
+            series.retain(attempt)
+
+        payloads = [
+            observation.to_protocol_result()
+            for observation in series.raw_timing_observations
+        ]
+        self.assertEqual(
+            [(item["observation_id"], item["status"]) for item in payloads],
+            [
+                ("warmup-00", "passed"),
+                ("measurement-00", "failed"),
+                ("measurement-01", "aborted"),
+            ],
+        )
+        self.assertEqual(payloads[1]["failure"]["code"], "evaluation_failed")
+        self.assertEqual(payloads[2]["failure"]["code"], "resource_limit")
 
 
 @unittest.skipUnless(

@@ -2738,3 +2738,37 @@ completed with conclusion `success` for exact head
 This closes the fixture-publication checkpoint only. CI accessed no external
 checkpoint and establishes no model-backed correctness or performance claim.
 Local inference may continue until a later explicitly notified hardware window.
+
+### T061 red worker timing contract
+
+Five pure-Python tests now freeze the worker-side timing seam before T064:
+positive integer monotonic nanoseconds, one evaluation plus synchronization
+barrier around a minimally instrumented total, F32 dequantization represented
+as `not_applicable` without a duration, five retained warm-ups plus thirty
+retained measurements, and ordered retention of passed, failed, and aborted
+attempts. Scripted clocks and an evaluation-boundary spy keep this red test
+slice independent of MLX and hardware.
+
+The exact commands and results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' PYTHONPATH=python uv run python -m unittest \
+  python.pulsar_mlx_worker.tests.test_router.RouterTimingContractTests -v
+# expected red: 5 tests, 5 errors, exit 1
+# missing: RouterTimingRecorder and RouterTimingSeries
+
+PULSARMLX_MODEL_GGUF='' python3 -m py_compile \
+  python/pulsar_mlx_worker/tests/test_router.py
+# passed
+
+git diff --check -- python/pulsar_mlx_worker/tests/test_router.py
+# passed
+```
+
+Every error is the intended absent T064 API rather than a numerical or
+environment failure. The tests name the raw observation schema, clock identity,
+stage statuses, device/evaluation envelope, output hash, failure payload, and
+retention order required of the implementation.
+
+No MLX module was evaluated, no GPU or model path was accessed, and no NTFY
+hardware notice was needed. Local inference remained available.
