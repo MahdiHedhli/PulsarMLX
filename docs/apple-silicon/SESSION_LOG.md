@@ -3673,3 +3673,60 @@ job so immutable historical source hashes remain verifiable after later
 tooling changes. No checkpoint access or Apple real-router execution occurred
 during this correction; T083 remains incomplete and the acknowledged hardware
 pause remains active.
+
+[GitHub Actions run 31096864243](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31096864243)
+then passed both jobs for exact head
+`24ec7d9bc8b6bd9a94cd0c5fc2633d4a8f32d6d5`: Apple MLX small-fixture
+validation succeeded with full immutable history available, and the Apple
+Silicon workspace baseline succeeded. This confirms the history-retention CI
+correction; it is not Apple real-router execution or model-performance
+evidence.
+
+### T083 pre-execution contract amendment and sanitizer gate
+
+Before opening the checkpoint, an independent producer/schema/validator audit
+found that the earlier evidence envelope could not truthfully retain several
+failure paths and did not enforce the exact live schedule. No checkpoint file
+was opened and no Apple real-router execution occurred during this work.
+
+The frozen pre-execution amendment now binds the exact 260-observation schedule
+per batch, full oracle outputs, canonical output hashes and numerical metrics,
+request/resource/lifecycle joins, per-process read/cache behavior, Rust worker
+memory semantics, planned-versus-attempted timing prefixes, terminal and
+environment-admission failures, and the complete linked 260-by-2 reversed-batch
+relationship. It distinguishes spawn failure, post-spawn/pre-request timestamp
+failure, sent-but-unevaluated worker failure, evaluated invalid output,
+evaluated correctness failure, later-batch failure, post-run interference, and
+unavailable after-snapshot evidence. The protocol SHA-256 is
+`c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423`.
+
+The Rust command now retains a closed symbolic parent invocation, direct
+process-state and condition attestations, and a complete internal candidate
+bounded to 4 MiB including its final newline and 100,000 JSON value nodes. The
+model-free sanitizer securely reads and rechecks exact candidate/environment
+bytes, rejects links and credential-shaped/private data, recomputes oracle
+comparisons and summaries, validates redundant producer joins, and atomically
+installs target-first linked public records through an anchored directory
+transaction. It does not import MLX or open model/oracle paths.
+
+Actual model-free validation at this boundary:
+
+- research discovery: 243 passed;
+- Python worker discovery with `PYTHONPATH=python`: 89 passed;
+- `cargo test -p mlx-backend --tests --no-fail-fast`: 127 passed, 2 ignored
+  native opt-ins, 0 failed;
+- `cargo check -p mlx-backend --all-targets`: passed;
+- explicit native MLX device smoke and generated two-row Rust-to-worker router
+  integration: 1 passed each;
+- evaluated MLX tensor fixtures: 7 passed; evaluated synthetic routed-MoE:
+  passed with no external checkpoint path in the environment;
+- committed fixture evidence: 3 records passed and 6 generated artifacts were
+  reproduced by the fixture-only package verifier;
+- `git diff --check` and Python compilation: passed.
+
+An earlier local worker-discovery invocation omitted `PYTHONPATH=python` and
+reported seven import errors before running tests. The corrected documented
+command above ran all 89 tests successfully; the import-only invocation is not
+reported as a product test result. T083 remains incomplete until this amended
+method is committed, pushed, green in CI, and the exact authorized real-router
+command executes from that clean source commit.

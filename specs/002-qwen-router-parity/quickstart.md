@@ -362,16 +362,65 @@ result. This remains synthetic evidence.
 Only after the committed oracle, method, and fixtures pass:
 
 ```sh
+export PULSARMLX_ROUTER_INTERNAL_CANDIDATE="$PULSARMLX_ROUTER_EVIDENCE/internal-orchestration.json"
+
+PYTHONPATH=python uv run python scripts/research/environment.py capture \
+  --repository-root . \
+  --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
+  --storage-role candidate_evidence_storage \
+  --storage-locator '$PULSARMLX_ROUTER_EVIDENCE' \
+  --capture-phase before \
+  --workload-category none \
+  --benchmark-concurrency 1 \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json"
+
 cargo run --release -p mlx-backend --bin pulsar-mlx -- validate-router \
   --model "$PULSARMLX_MODEL_GGUF" \
   --oracle "$PULSARMLX_ROUTER_ORACLE" \
   --evidence-dir "$PULSARMLX_ROUTER_EVIDENCE"
+
+PYTHONPATH=python uv run python scripts/research/environment.py extract-resources \
+  --candidate "$PULSARMLX_ROUTER_INTERNAL_CANDIDATE" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json"
+
+PYTHONPATH=python uv run python scripts/research/environment.py capture \
+  --repository-root . \
+  --storage-root "$PULSARMLX_ROUTER_EVIDENCE" \
+  --storage-role candidate_evidence_storage \
+  --storage-locator '$PULSARMLX_ROUTER_EVIDENCE' \
+  --capture-phase after \
+  --workload-category none \
+  --benchmark-concurrency 1 \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json"
+
+PYTHONPATH=python uv run python scripts/research/environment.py combine \
+  --before "$PULSARMLX_ENVIRONMENT_EVIDENCE/before.json" \
+  --after "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json" \
+  --benchmark-resources "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json"
 ```
+
+Capture the after snapshot and combine the environment even when
+`validate-router` returns nonzero but retains a candidate. Use a fresh external
+attempt directory rather than overwriting any prior snapshot or candidate.
 
 The command must use all 128 router rows, return full bounded logits and hashes,
 match exact top-8 IDs/order, meet the frozen logit and weight tolerances, retain
-at least ten identical output hashes, select explicit MLX GPU, evaluate and
-synchronize, and report no fallback.
+ten identical measured output hashes per case and twenty total, select explicit
+MLX GPU, evaluate and synchronize, and report no fallback.
+
+The resulting file is an external internal-orchestration candidate, not yet a
+public evidence record. Before publication it must be transformed without
+coercion into evidence envelope `1.2.0` / router payload `1.1.0`, including the
+closed `router_detail` ledger, complete correctness attempts, finalized
+request/resource/lifecycle joins, application read/cache semantics, and exact
+candidate/environment hashes. A pre-execution abort retains unavailable
+correctness and positive supervisor duration; it never invents measurements.
+An evaluated correctness stop retains the exact zero-to-nineteen measured-hash
+prefix. Structurally invalid evaluated output uses
+`evaluated_output_invalid`; it is not a pre-execution abort. A linked later
+batch keeps its own exit code, so a later failure does not rewrite a passed
+first-batch outcome.
 
 Correctness gates timing. The command then retains separately:
 
@@ -392,15 +441,27 @@ No stage sum is required to equal the minimally instrumented total.
 
 ## 8. Validate and publish bounded evidence
 
-First validate external candidates without modifying committed history:
+First transform the exact internal candidate into a fresh external directory.
+The sanitizer reads no model or oracle path, hashes the exact candidate bytes,
+recomputes public comparisons and summaries, validates all joins, and installs
+the linked records atomically. Every parent component must be a real directory,
+not a symbolic link.
 
 ```sh
-python3 scripts/research/validate_evidence.py \
+export PULSARMLX_ROUTER_SANITIZED='<external-evidence>/router-public'
+
+PYTHONDONTWRITEBYTECODE=1 python3 -B \
+  scripts/research/sanitize_router_candidate.py \
+  --candidate "$PULSARMLX_ROUTER_INTERNAL_CANDIDATE" \
+  --environment "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json" \
+  --output-dir "$PULSARMLX_ROUTER_SANITIZED"
+
+PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/research/validate_evidence.py \
   --schema-dir schemas/research/v1 \
-  --input "$PULSARMLX_ROUTER_EVIDENCE"
-python3 scripts/research/verify_package.py \
+  --input "$PULSARMLX_ROUTER_SANITIZED"
+PYTHONDONTWRITEBYTECODE=1 python3 -B scripts/research/verify_package.py \
   --feature 002-qwen-router-parity \
-  --candidate "$PULSARMLX_ROUTER_EVIDENCE"
+  --candidate "$PULSARMLX_ROUTER_SANITIZED"
 ```
 
 After controlled sanitization and append-only installation, validate the raw
