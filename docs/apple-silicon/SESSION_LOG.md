@@ -3628,3 +3628,23 @@ MLX parity, performance, expert execution, a complete layer, or inference.
 No Apple router output has been produced or inspected. The original
 acknowledged NTFY hardware pause remains active for T082-T085; no duplicate
 start notification is required.
+
+### T082 non-recursive oracle-publication CI attestation
+
+The scanned T077-T081 oracle-publication and task-state commit is
+`db00c9ea0eb3cb93d32f223e515b1d313da69d8b`.
+[GitHub Actions run 31093792748](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31093792748)
+passed for that exact commit. Apple MLX small-fixture validation completed in
+56 seconds, including the exact three-file CPU-oracle support inventory,
+methodology validation, worker protocol, generated router integration, native
+device smoke, tensor fixtures, synthetic routed-MoE, and external-model
+exclusion. The Apple Silicon workspace baseline completed in 2 minutes 21
+seconds, with workspace check and tests passing.
+
+This documentation/task-state commit is the deliberately non-recursive T082
+CI attestation. Its own CI conclusion is verified out of tree before the Apple
+checkpoint command and is not appended recursively. The next gate requires
+clean/equal `main`, unchanged checkpoint and router identities, the intended
+MLX GPU with no fallback, normal resource/load/pressure/thermal admission, and
+the still-active acknowledged operator pause. No Apple checkpoint router
+output has yet been produced or inspected.
