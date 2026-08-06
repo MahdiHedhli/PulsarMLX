@@ -220,6 +220,61 @@ class PublicationBoundaryTests(unittest.TestCase):
         with self.assertRaises(self.publisher.PublicationError):
             self.publisher.sanitize_candidate(leaked)
 
+        benign = _candidate("fixture-benign-token-prose-v1")
+        benign["warnings"] = ["Direct token IDs are fixed by protocol."]
+        self.assertEqual(
+            self.publisher.sanitize_candidate(benign)["warnings"],
+            benign["warnings"],
+        )
+        benign["command"]["display"] = "tool --token-ids 0,1"
+        self.assertEqual(
+            self.publisher.sanitize_candidate(benign)["command"]["display"],
+            benign["command"]["display"],
+        )
+
+        credential_name = "pass" + "word"
+        command_fragments = (
+            f"tool --{credential_name} abc",
+            f"tool --{credential_name}=abc",
+            f"tool --{credential_name} 'abc'",
+            f'tool --{credential_name} "abc"',
+            f"tool {credential_name}='abc'",
+            'tool ' + "token" + '="abc"',
+        )
+        for index, display in enumerate(command_fragments):
+            with self.subTest(index=index):
+                leaked = _candidate(f"fixture-explicit-credential-{index}")
+                leaked["command"]["display"] = display
+                with self.assertRaises(self.publisher.PublicationError):
+                    self.publisher.sanitize_candidate(leaked)
+
+        full_record = json.loads(FULL_FIXTURE.read_text(encoding="utf-8"))
+        compound_commands = (
+            "HF_" + "TOKEN=abc python3 tool.py",
+            "python3 tool.py --auth abc",
+            "python3 tool.py --access_" + "token abc",
+            "python3 tool.py --client" + "Secret='abc'",
+        )
+        for index, display in enumerate(compound_commands):
+            with self.subTest(compound_index=index):
+                leaked = deepcopy(full_record)
+                leaked["execution"]["command"] = display
+                leaked["execution"]["argv"] = ["zsh", "-lc", display]
+                with self.assertRaises(self.publisher.PublicationError):
+                    self.publisher.sanitize_candidate(leaked)
+
+        split_options = (
+            "--" + credential_name,
+            "--auth",
+            "--access_" + "token",
+        )
+        for index, option in enumerate(split_options):
+            with self.subTest(split_argv_index=index):
+                leaked = deepcopy(full_record)
+                leaked["execution"]["argv"] = ["python3", "tool.py", option, "abc"]
+                with self.assertRaises(self.publisher.PublicationError):
+                    self.publisher.sanitize_candidate(leaked)
+
     def test_publish_is_append_only_and_refuses_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -266,15 +321,62 @@ class PublicationBoundaryTests(unittest.TestCase):
                 msg="duplicate identity admission changed append-only history",
             )
 
+    def test_publish_rejects_invalid_existing_history_without_changes(self) -> None:
+        private_key = "hardware." + "serial"
+        private_history = _candidate("private-history-v1")
+        private_history.pop("_local")
+        private_history["environment"] = {
+            private_key: "fixture-private-marker"
+        }
+        cases = (
+            {"experiment_id": "malformed-history-v1"},
+            private_history,
+        )
+        for existing_record in cases:
+            with self.subTest(experiment_id=existing_record["experiment_id"]):
+                with tempfile.TemporaryDirectory() as temporary:
+                    root = Path(temporary)
+                    raw_dir = root / "raw"
+                    raw_dir.mkdir()
+                    existing = raw_dir / f"{existing_record['experiment_id']}.json"
+                    existing.write_text(
+                        json.dumps(existing_record, indent=2, sort_keys=True) + "\n",
+                        encoding="utf-8",
+                    )
+                    before = {path.name: path.read_bytes() for path in raw_dir.iterdir()}
+                    candidate_path = self._write_candidate(
+                        root / "candidate",
+                        _candidate("new-candidate-v1"),
+                    )
+
+                    with self.assertRaises(self.publisher.PublicationError):
+                        self.publisher.publish_candidate(candidate_path, raw_dir)
+
+                    self.assertEqual(
+                        {path.name: path.read_bytes() for path in raw_dir.iterdir()},
+                        before,
+                    )
+
     def test_private_identifier_and_secret_shaped_keys_are_rejected(self) -> None:
         mutations = (
-            ("host" + "name", "fixture-machine.local"),
-            ("RUNNER_" + "TOKEN" + "_ALIAS", "fixture-sensitive-marker"),
+            ("metadata", "host", "fixture-machine-marker"),
+            ("metadata", "host" + "name", "fixture-machine.local"),
+            ("metadata", "hardware." + "serial", "fixture-hardware-marker"),
+            ("metadata", "access_" + "token", "fixture-sensitive-marker"),
+            ("metadata", "access" + "Token", "fixture-sensitive-marker"),
+            ("metadata", "ntfy_" + "token", "fixture-sensitive-marker"),
+            ("metadata", "client_" + "secret", "fixture-sensitive-marker"),
+            ("metadata", "client" + "Secret", "fixture-sensitive-marker"),
+            (
+                "environment",
+                "RUNNER_" + "TOKEN" + "_ALIAS",
+                "fixture-sensitive-marker",
+            ),
         )
-        for key, value in mutations:
+        for container, key, value in mutations:
             with self.subTest(key=key):
                 leaked = _candidate(f"fixture-private-{len(key)}")
-                leaked["environment"] = {key: value}
+                leaked[container] = {key: value}
                 with self.assertRaises(self.publisher.PublicationError) as raised:
                     self.publisher.sanitize_candidate(leaked)
                 self.assertRegex(str(raised.exception).lower(), r"private|secret")
@@ -292,6 +394,57 @@ class PublicationBoundaryTests(unittest.TestCase):
 
             self.assertFalse(raw_dir.exists() and any(raw_dir.iterdir()))
             self.assertEqual(list(root.rglob("*.tmp")), [])
+
+    def test_malformed_numeric_and_depth_errors_are_bounded(self) -> None:
+        for status in ([], {}):
+            with self.subTest(status_type=type(status).__name__):
+                malformed = _candidate(f"fixture-invalid-status-{type(status).__name__}")
+                malformed["status"] = status
+                with self.assertRaises(self.publisher.PublicationError):
+                    self.publisher.sanitize_candidate(malformed)
+
+        malformed_payloads = (
+            '{"experiment_id":1' + "0" * 5000 + "}\n",
+            "[" * 1200 + "0" + "]" * 1200 + "\n",
+        )
+        for index, payload in enumerate(malformed_payloads):
+            with self.subTest(index=index), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                candidate_path = root / "candidate.json"
+                candidate_path.write_text(payload, encoding="utf-8")
+                raw_dir = root / "raw"
+
+                with self.assertRaises(self.publisher.PublicationError):
+                    self.publisher.publish_candidate(candidate_path, raw_dir)
+
+                self.assertFalse(raw_dir.exists() and any(raw_dir.iterdir()))
+                self.assertEqual(list(root.rglob("*.tmp")), [])
+
+    def test_post_link_failure_never_reports_failure_with_an_installed_record(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            candidate_path = self._write_candidate(root / "candidate", _candidate())
+            raw_dir = root / "raw"
+            original_unlink = Path.unlink
+
+            def refuse_destination_unlink(path: Path, *args: object, **kwargs: object) -> None:
+                if path.name == "fixture-publish-v1.json":
+                    raise OSError("bounded rollback failure")
+                original_unlink(path, *args, **kwargs)
+
+            with (
+                mock.patch.object(
+                    self.publisher,
+                    "_sync_directory",
+                    side_effect=OSError("bounded sync failure"),
+                ),
+                mock.patch.object(Path, "unlink", new=refuse_destination_unlink),
+            ):
+                installed = self.publisher.publish_candidate(candidate_path, raw_dir)
+
+            self.assertEqual(installed.name, "fixture-publish-v1.json")
+            self.assertTrue(installed.is_file())
+            self.assertNotIn("_local", json.loads(installed.read_bytes()))
 
     def test_symlink_destination_is_rejected_without_touching_target(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

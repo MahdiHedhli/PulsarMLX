@@ -2305,3 +2305,61 @@ tolerances. The final review reported no remaining high or medium finding.
 No command accessed a checkpoint, resolved or opened a model path, executed
 MLX/model code, consumed Apple GPU memory, or sent NTFY. Local inference did
 not need to pause.
+
+### T054 append-only evidence publication
+
+The publication boundary now validates the complete existing JSON history
+before accepting a candidate, rejects duplicate logical experiment IDs and
+noncanonical filenames, and installs canonical sanitized bytes with an
+exclusive hard-link commit point. Candidate and history reads are bounded,
+regular-file-only, no-follow operations. Structural depth/node counts,
+aggregate history size, local metadata, private identifiers and paths,
+secret-shaped keys and values, malformed scalar types, and non-finite JSON all
+fail closed with bounded messages. If an error occurs after the exclusive link,
+publication either removes the destination or reports the installed record as
+success; it never reports failure while its new record remains installed.
+
+The final model-free validation commands were:
+
+```sh
+python3 -m py_compile scripts/research/publish_evidence.py \
+  scripts/research/tests/test_verify_package.py
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_candidate_sanitization_drops_only_declared_local_metadata \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_publish_is_append_only_and_refuses_overwrite \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_publish_rejects_duplicate_identity_under_an_existing_filename \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_publish_rejects_invalid_existing_history_without_changes \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_private_identifier_and_secret_shaped_keys_are_rejected \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_failed_validation_leaves_no_partial_publication \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_malformed_numeric_and_depth_errors_are_bounded \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_post_link_failure_never_reports_failure_with_an_installed_record \
+  scripts.research.tests.test_verify_package.PublicationBoundaryTests.test_symlink_destination_is_rejected_without_touching_target
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts.research.tests.test_validate_evidence \
+  scripts.research.tests.test_feature002_records
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity --fixture-only
+PULSARMLX_MODEL_GGUF='' python3 -m unittest -v \
+  scripts.research.tests.test_verify_package
+PULSARMLX_MODEL_GGUF='' python3 -m unittest discover \
+  -s scripts/research/tests -q
+git diff --check
+```
+
+Compilation passed; the nine focused publication methods passed in 0.052
+seconds; and the 29 semantic-validator methods passed in 3.307 seconds. The
+fixture-only package accepted exactly three records and regenerated six
+artifacts with zero claims. The full publication module ran 19 methods and
+retained exactly 15 intentional T055 claim-link, sidecar, claim-promotion, and
+reviewer-index failures. Full research discovery ran 82 methods and retained
+exactly 16 intentional T055 failures: those 15 package failures plus one
+repository-relative sidecar-source failure. `git diff --check` passed.
+
+Independent review passes found and closed malformed compact status types,
+short and quoted credential assignments, compound and camel-case secret-key
+aliases, full-record credential strings, and split-argument secret options.
+Regression cases preserve legitimate direct token-ID identifiers. The final
+independent review passed with no remaining high or medium finding; its focused
+run also passed nine of nine methods. No model path was resolved or opened, no
+checkpoint or MLX execution occurred, no Apple GPU memory was used, and no
+NTFY notification was sent. Local inference did not need to pause.
