@@ -3,11 +3,17 @@
 //! This module validates caller-observed descriptors and can inspect one
 //! explicit external artifact read-only. It never acquires or executes a model.
 
+use crate::router::{
+    admit_router_tensor, RouterTensorDescriptor, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH,
+    ROUTER_TENSOR_BYTES, ROUTER_TENSOR_ELEMENTS, ROUTER_TENSOR_NAME, ROUTER_TOP_K,
+};
 use backend::{ContractError, ErrorCategory};
 use gguf::{Gguf, TensorType, Value};
 use sha2::{Digest, Sha256};
-use std::fs::File;
+use std::fs::{self, File, Metadata, OpenOptions};
 use std::io::{Read, Seek, SeekFrom};
+#[cfg(unix)]
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::path::Path;
 
 pub const QWEN_REPOSITORY_ID: &str = "Qwen/Qwen3-30B-A3B-GGUF";
@@ -67,6 +73,17 @@ const EXPECTED_DATA_OFFSET: u64 = 5_969_408;
 const EXPECTED_TENSOR_COUNT: usize = 579;
 const EXPECTED_F32_TENSOR_COUNT: usize = 241;
 const EXPECTED_Q8_0_TENSOR_COUNT: usize = 338;
+const ROUTER_EXPERT_USED_KEY: &str = "qwen3moe.expert_used_count";
+const ROUTER_WEIGHT_SCALE_KEY: &str = "qwen3moe.expert_weights_scale";
+const ROUTER_WEIGHT_NORM_KEY: &str = "qwen3moe.expert_weights_norm";
+const FLOAT32_VALUE_TYPE: &str = "FLOAT32";
+const BOOL_VALUE_TYPE: &str = "BOOL";
+const ROUTER_SEMANTIC_ROLE: &str = "layer_0_router_projection";
+const ROUTER_QUANTIZATION: &str = "none_f32";
+const ROUTER_BYTE_ORDER: &str = "little";
+const ROUTER_ORIENTATION: &str = "expert_major_rows_input_columns";
+const ROUTER_BIAS_NAME: &str = "blk.0.ffn_gate_inp.bias";
+const ROUTER_CORRECTION_BIAS_NAMES: [&str; 2] = ["blk.0.exp_probs_b", "blk.0.exp_probs_b.bias"];
 
 /// Immutable source and locally observed identity for the admitted artifact.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -154,12 +171,29 @@ pub struct AdmittedModelSlice {
     _private: (),
 }
 
+/// Stable identity of the regular file behind an admitted checkpoint handle.
+///
+/// Device and inode values are deliberately private and this type implements
+/// no serialization or debug formatting. Callers may use the comparison-only
+/// accessor to bind a pre-open path observation to the retained descriptor,
+/// but these host-specific values must never enter public evidence.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct ExternalFileIdentity {
+    #[cfg(unix)]
+    device: u64,
+    #[cfg(unix)]
+    inode: u64,
+}
+
 /// Read-only inspection of the immutable external artifact.
 ///
-/// Only the already-opened file is retained. Its private external path is not
-/// exposed to the worker protocol or evidence layer.
+/// The already-opened file and its canonical path are retained privately so
+/// pathname identity can be rechecked. Neither path nor host file identifiers
+/// are exposed to the worker protocol or evidence layer.
 pub struct ExternalModelInspection {
     file: File,
+    canonical_path: std::path::PathBuf,
+    opened_file_identity: ExternalFileIdentity,
     admission_descriptor: ModelAdmissionDescriptor,
     admitted: AdmittedModelSlice,
     gguf_version: u32,
@@ -170,7 +204,57 @@ pub struct ExternalModelInspection {
     encoded_slice_sha256: String,
 }
 
+/// Read-only, path-free observation of the exact layer-0 router tensor.
+///
+/// The containing [`ExternalModelInspection`] has already established the
+/// complete immutable artifact identity. This value adds only bounded GGUF
+/// router metadata and the hash of the exact F32 tensor range; it does not
+/// decode the tensor or initialize MLX.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExternalRouterInspection {
+    descriptor: RouterTensorDescriptor,
+    relative_data_offset: u64,
+    exclusive_end_offset: u64,
+    expert_used_count: u64,
+    expert_used_count_value_type: String,
+    weight_scale_metadata_present: bool,
+    weight_scale_value_type: Option<String>,
+    weight_scale_metadata_value: Option<f32>,
+    expert_weights_norm_metadata_present: bool,
+    expert_weights_norm_value_type: Option<String>,
+    expert_weights_norm: Option<bool>,
+    expert_weights_norm_effective: bool,
+    router_bias_occurrence_count: u64,
+    correction_bias_occurrence_count: u64,
+    unexpected_router_alias_occurrence_count: u64,
+}
+
+impl ExternalFileIdentity {
+    /// Return the comparison tuple on Unix hosts.
+    ///
+    /// This is an admission-only value. It is not stable across copied files
+    /// or hosts and must not be serialized into public evidence.
+    pub fn unix_device_and_inode(&self) -> Option<(u64, u64)> {
+        #[cfg(unix)]
+        {
+            Some((self.device, self.inode))
+        }
+        #[cfg(not(unix))]
+        {
+            None
+        }
+    }
+}
+
 impl ExternalModelInspection {
+    /// Identity of the exact regular file held open for this inspection.
+    ///
+    /// The returned value is comparison-only and intentionally carries no
+    /// path or public-evidence representation.
+    pub fn opened_file_identity(&self) -> ExternalFileIdentity {
+        self.opened_file_identity
+    }
+
     pub fn try_clone_file(&self) -> Result<File, ContractError> {
         self.file.try_clone().map_err(|_| {
             invalid_model(
@@ -212,9 +296,17 @@ impl ExternalModelInspection {
         &self.encoded_slice_sha256
     }
 
+    /// Inspect and admit the complete F32 layer-0 router range from the same
+    /// already-opened immutable file description.
+    pub fn inspect_router_tensor(&self) -> Result<ExternalRouterInspection, ContractError> {
+        let gguf = parse_bounded_header(&self.file)?;
+        inspect_router_inventory(&gguf, &self.file)
+    }
+
     /// Recheck the exact open artifact after execution without reopening its
     /// private path. This detects mutation while preserving the same inode.
     pub fn verify_unchanged(&self) -> Result<(), ContractError> {
+        verify_path_matches_open_file(&self.canonical_path, &self.file, self.opened_file_identity)?;
         let metadata = self.file.metadata().map_err(|_| {
             invalid_model(
                 "model_unavailable",
@@ -237,7 +329,70 @@ impl ExternalModelInspection {
                 "the admitted external model changed during validation",
             ));
         }
+        verify_path_matches_open_file(&self.canonical_path, &self.file, self.opened_file_identity)?;
         Ok(())
+    }
+}
+
+impl ExternalRouterInspection {
+    pub fn descriptor(&self) -> &RouterTensorDescriptor {
+        &self.descriptor
+    }
+
+    pub fn relative_data_offset(&self) -> u64 {
+        self.relative_data_offset
+    }
+
+    pub fn exclusive_end_offset(&self) -> u64 {
+        self.exclusive_end_offset
+    }
+
+    pub fn expert_used_count(&self) -> u64 {
+        self.expert_used_count
+    }
+
+    pub fn expert_used_count_value_type(&self) -> &str {
+        &self.expert_used_count_value_type
+    }
+
+    pub fn weight_scale_metadata_present(&self) -> bool {
+        self.weight_scale_metadata_present
+    }
+
+    pub fn weight_scale_value_type(&self) -> Option<&str> {
+        self.weight_scale_value_type.as_deref()
+    }
+
+    pub fn weight_scale_metadata_value(&self) -> Option<f32> {
+        self.weight_scale_metadata_value
+    }
+
+    pub fn expert_weights_norm_metadata_present(&self) -> bool {
+        self.expert_weights_norm_metadata_present
+    }
+
+    pub fn expert_weights_norm_value_type(&self) -> Option<&str> {
+        self.expert_weights_norm_value_type.as_deref()
+    }
+
+    pub fn expert_weights_norm(&self) -> Option<bool> {
+        self.expert_weights_norm
+    }
+
+    pub fn expert_weights_norm_effective(&self) -> bool {
+        self.expert_weights_norm_effective
+    }
+
+    pub fn router_bias_occurrence_count(&self) -> u64 {
+        self.router_bias_occurrence_count
+    }
+
+    pub fn correction_bias_occurrence_count(&self) -> u64 {
+        self.correction_bias_occurrence_count
+    }
+
+    pub fn unexpected_router_alias_occurrence_count(&self) -> u64 {
+        self.unexpected_router_alias_occurrence_count
     }
 }
 
@@ -350,6 +505,95 @@ pub fn frozen_qwen_model_memory_budget(
     }
 }
 
+fn file_identity(metadata: &Metadata) -> ExternalFileIdentity {
+    #[cfg(unix)]
+    {
+        ExternalFileIdentity {
+            device: metadata.dev(),
+            inode: metadata.ino(),
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = metadata;
+        ExternalFileIdentity {}
+    }
+}
+
+fn verify_path_matches_open_file(
+    canonical_path: &Path,
+    file: &File,
+    expected_identity: ExternalFileIdentity,
+) -> Result<(), ContractError> {
+    let path_metadata = fs::symlink_metadata(canonical_path).map_err(|_| {
+        invalid_model(
+            "model_path_identity_changed",
+            "the admitted model pathname is no longer available",
+        )
+    })?;
+    let open_metadata = file.metadata().map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the admitted external model descriptor metadata could not be read",
+        )
+    })?;
+    if path_metadata.file_type().is_symlink()
+        || !path_metadata.is_file()
+        || !open_metadata.is_file()
+        || file_identity(&path_metadata) != expected_identity
+        || file_identity(&open_metadata) != expected_identity
+    {
+        return Err(invalid_model(
+            "model_path_identity_changed",
+            "the admitted model pathname no longer resolves to the retained regular file",
+        ));
+    }
+    Ok(())
+}
+
+fn open_read_only_no_follow(
+    canonical_path: &Path,
+) -> Result<(File, Metadata, ExternalFileIdentity), ContractError> {
+    let path_metadata = fs::symlink_metadata(canonical_path).map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the external model file is unavailable",
+        )
+    })?;
+    if path_metadata.file_type().is_symlink() || !path_metadata.is_file() {
+        return Err(invalid_model(
+            "model_unavailable",
+            "the external model path must name a regular non-symbolic-link target",
+        ));
+    }
+    let path_identity = file_identity(&path_metadata);
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    options.custom_flags(libc::O_NOFOLLOW);
+    let file = options.open(canonical_path).map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the external model file could not be opened read-only without following a link",
+        )
+    })?;
+    let metadata = file.metadata().map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the external model metadata could not be read",
+        )
+    })?;
+    let opened_file_identity = file_identity(&metadata);
+    if !metadata.is_file() || opened_file_identity != path_identity {
+        return Err(invalid_model(
+            "model_path_identity_changed",
+            "the external model pathname changed while its descriptor was opened",
+        ));
+    }
+    verify_path_matches_open_file(canonical_path, &file, opened_file_identity)?;
+    Ok((file, metadata, opened_file_identity))
+}
+
 /// Hash, parse, inventory, and admit the exact external Qwen artifact.
 ///
 /// The file is opened read-only, never downloaded, mapped, or executed. The
@@ -391,18 +635,7 @@ pub fn inspect_external_qwen_model(
         ));
     }
 
-    let mut file = File::open(&canonical_path).map_err(|_| {
-        invalid_model(
-            "model_unavailable",
-            "the external model file could not be opened read-only",
-        )
-    })?;
-    let metadata = file.metadata().map_err(|_| {
-        invalid_model(
-            "model_unavailable",
-            "the external model metadata could not be read",
-        )
-    })?;
+    let (mut file, metadata, opened_file_identity) = open_read_only_no_follow(&canonical_path)?;
     if !metadata.is_file() || metadata.len() != FILE_BYTES {
         return Err(invalid_model(
             "model_size_mismatch",
@@ -451,9 +684,12 @@ pub fn inspect_external_qwen_model(
         automatic_download_requested: false,
     };
     let admitted = admit_qwen3_q8_0_slice(&admission_descriptor)?;
+    verify_path_matches_open_file(&canonical_path, &file, opened_file_identity)?;
 
     Ok(ExternalModelInspection {
         file,
+        canonical_path,
+        opened_file_identity,
         admission_descriptor,
         admitted,
         gguf_version: gguf.version,
@@ -686,6 +922,257 @@ fn inspect_gguf_inventory(
         f32_count,
         q8_0_count,
     ))
+}
+
+/// Inspect the exact Feature 002 router inventory from an already admitted,
+/// read-only model handle.
+///
+/// This function performs no router math and does not initialize MLX. It
+/// validates typed routing metadata, proves that prohibited bias/correction
+/// tensors are absent, hashes the complete router range, and passes the
+/// resulting descriptor through the model-neutral router admission contract.
+fn inspect_router_inventory(
+    gguf: &Gguf,
+    file: &File,
+) -> Result<ExternalRouterInspection, ContractError> {
+    let file_metadata = file.metadata().map_err(|_| {
+        invalid_model(
+            "model_unavailable",
+            "the admitted external model metadata could not be read for router inspection",
+        )
+    })?;
+    if !file_metadata.is_file() {
+        return Err(invalid_model(
+            "model_unavailable",
+            "router inspection requires a regular read-only model file",
+        ));
+    }
+    let file_bytes = file_metadata.len();
+
+    let expert_used_count = exact_u32_metadata(
+        gguf,
+        ROUTER_EXPERT_USED_KEY,
+        u64::try_from(ROUTER_TOP_K).expect("router top-k fits u64"),
+    )?;
+    let (
+        weight_scale_metadata_present,
+        weight_scale_value_type,
+        weight_scale_metadata_value,
+        effective_weight_scale,
+    ) = match gguf.metadata.get(ROUTER_WEIGHT_SCALE_KEY) {
+        None => (false, None, None, 1.0_f32),
+        Some(Value::F32(value)) if value.to_bits() == 1.0_f32.to_bits() => (
+            true,
+            Some(FLOAT32_VALUE_TYPE.to_owned()),
+            Some(*value),
+            *value,
+        ),
+        Some(Value::F32(_)) => {
+            return Err(invalid_model(
+                "model_metadata_mismatch",
+                "the router expert-weight scale differs from the frozen value 1.0",
+            ));
+        }
+        Some(_) => {
+            return Err(invalid_model(
+                "model_metadata_type_mismatch",
+                "the router expert-weight scale is not GGUF FLOAT32",
+            ));
+        }
+    };
+    let (
+        expert_weights_norm_metadata_present,
+        expert_weights_norm_value_type,
+        expert_weights_norm,
+        expert_weights_norm_effective,
+    ) = match gguf.metadata.get(ROUTER_WEIGHT_NORM_KEY) {
+        None => (false, None, None, true),
+        Some(Value::Bool(true)) => (true, Some(BOOL_VALUE_TYPE.to_owned()), Some(true), true),
+        Some(Value::Bool(false)) => {
+            return Err(invalid_model(
+                "model_metadata_mismatch",
+                "the router expert-weight normalization metadata disables the frozen behavior",
+            ));
+        }
+        Some(_) => {
+            return Err(invalid_model(
+                "model_metadata_type_mismatch",
+                "the router expert-weight normalization metadata is not GGUF BOOL",
+            ));
+        }
+    };
+
+    let router_bias_occurrence_count = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| tensor.name == ROUTER_BIAS_NAME)
+        .count() as u64;
+    let correction_bias_occurrence_count = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| {
+            ROUTER_CORRECTION_BIAS_NAMES
+                .iter()
+                .any(|name| tensor.name == *name)
+        })
+        .count() as u64;
+    let unexpected_router_alias_occurrence_count = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| is_unexpected_layer_0_router_alias(&tensor.name))
+        .count() as u64;
+    if router_bias_occurrence_count != 0
+        || correction_bias_occurrence_count != 0
+        || unexpected_router_alias_occurrence_count != 0
+    {
+        return Err(invalid_model(
+            "model_tensor_mismatch",
+            "the frozen Qwen router contract does not admit a router bias, correction bias, or unreviewed layer-0 router alias",
+        ));
+    }
+
+    let matching = gguf
+        .tensors
+        .iter()
+        .filter(|tensor| tensor.name == ROUTER_TENSOR_NAME)
+        .collect::<Vec<_>>();
+    match matching.len() {
+        0 => {
+            return Err(invalid_model(
+                "missing_tensor_role",
+                "the exact layer-0 router tensor is missing",
+            ));
+        }
+        1 => {}
+        _ => {
+            return Err(invalid_model(
+                "duplicate_tensor_role",
+                "the exact layer-0 router tensor is not unique",
+            ));
+        }
+    }
+    let tensor = matching[0];
+    if tensor.ty != TensorType::F32 {
+        return Err(invalid_model(
+            "unsupported_tensor_quantization",
+            "the Feature 002 router contract requires exact unquantized F32 storage",
+        ));
+    }
+    let expected_dimensions = [ROUTER_HIDDEN_WIDTH as u64, ROUTER_EXPERT_COUNT as u64];
+    if tensor.dims != expected_dimensions {
+        return Err(invalid_model(
+            "model_tensor_mismatch",
+            "the layer-0 router GGUF dimensions differ from [2048,128]",
+        ));
+    }
+    let logical_elements = tensor
+        .dims
+        .iter()
+        .try_fold(1_u64, |product, dimension| product.checked_mul(*dimension))
+        .ok_or_else(|| {
+            invalid_model(
+                "model_tensor_mismatch",
+                "the layer-0 router element count overflows",
+            )
+        })?;
+    let encoded_length = tensor.byte_size().ok_or_else(|| {
+        invalid_model(
+            "unsupported_tensor_quantization",
+            "the layer-0 router tensor byte layout is unsupported",
+        )
+    })?;
+    if logical_elements != ROUTER_TENSOR_ELEMENTS || encoded_length != ROUTER_TENSOR_BYTES {
+        return Err(invalid_model(
+            "model_tensor_mismatch",
+            "the layer-0 router element or encoded byte count differs from the frozen contract",
+        ));
+    }
+    let absolute_data_offset = gguf.data_offset.checked_add(tensor.offset).ok_or_else(|| {
+        invalid_model(
+            "invalid_tensor_range",
+            "the layer-0 router absolute offset overflows",
+        )
+    })?;
+    let exclusive_end_offset = absolute_data_offset
+        .checked_add(encoded_length)
+        .ok_or_else(|| {
+            invalid_model(
+                "invalid_tensor_range",
+                "the layer-0 router range end overflows",
+            )
+        })?;
+    if absolute_data_offset >= file_bytes || exclusive_end_offset > file_bytes {
+        return Err(invalid_model(
+            "invalid_tensor_range",
+            "the complete layer-0 router range is outside the immutable artifact",
+        ));
+    }
+    let encoded_sha256 = sha256_exact_range(
+        file,
+        absolute_data_offset,
+        usize::try_from(encoded_length).map_err(|_| {
+            invalid_model(
+                "invalid_tensor_range",
+                "the layer-0 router byte count is not representable",
+            )
+        })?,
+    )?;
+    let descriptor = RouterTensorDescriptor {
+        name: ROUTER_TENSOR_NAME.to_owned(),
+        semantic_role: ROUTER_SEMANTIC_ROLE.to_owned(),
+        occurrence_count: 1,
+        gguf_dimensions_fastest_axis_first: tensor.dims.clone(),
+        reader_shape: vec![ROUTER_EXPERT_COUNT as u64, ROUTER_HIDDEN_WIDTH as u64],
+        execution_shape: vec![ROUTER_EXPERT_COUNT as u64, ROUTER_HIDDEN_WIDTH as u64],
+        gguf_type: "F32".to_owned(),
+        quantization: ROUTER_QUANTIZATION.to_owned(),
+        logical_elements,
+        absolute_data_offset,
+        encoded_length,
+        encoded_sha256,
+        byte_order: ROUTER_BYTE_ORDER.to_owned(),
+        orientation: ROUTER_ORIENTATION.to_owned(),
+        expert_count: ROUTER_EXPERT_COUNT as u64,
+        top_k: expert_used_count,
+        weight_scale: effective_weight_scale,
+        bias_present: false,
+        correction_bias_present: false,
+    };
+    let admitted = admit_router_tensor(&descriptor, file_bytes)?;
+
+    Ok(ExternalRouterInspection {
+        descriptor,
+        relative_data_offset: tensor.offset,
+        exclusive_end_offset: admitted.exclusive_end_offset(),
+        expert_used_count,
+        expert_used_count_value_type: UINT32_VALUE_TYPE.to_owned(),
+        weight_scale_metadata_present,
+        weight_scale_value_type,
+        weight_scale_metadata_value,
+        expert_weights_norm_metadata_present,
+        expert_weights_norm_value_type,
+        expert_weights_norm,
+        expert_weights_norm_effective,
+        router_bias_occurrence_count,
+        correction_bias_occurrence_count,
+        unexpected_router_alias_occurrence_count,
+    })
+}
+
+fn is_unexpected_layer_0_router_alias(name: &str) -> bool {
+    if name == ROUTER_TENSOR_NAME
+        || name == ROUTER_BIAS_NAME
+        || ROUTER_CORRECTION_BIAS_NAMES.contains(&name)
+    {
+        return false;
+    }
+    let Some(layer_name) = name.strip_prefix("blk.0.") else {
+        return false;
+    };
+    let normalized = layer_name.to_ascii_lowercase();
+    normalized.starts_with("ffn_gate_inp")
+        || normalized.starts_with("exp_probs")
+        || normalized.contains("router")
 }
 
 fn exact_u32_metadata(gguf: &Gguf, key: &str, expected: u64) -> Result<u64, ContractError> {
@@ -935,4 +1422,316 @@ fn within_cap(value: u64, required: u64, maximum: u64) -> bool {
 
 fn invalid_model(code: &'static str, message: &'static str) -> ContractError {
     ContractError::new(ErrorCategory::InvalidModel, code, message)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gguf::{TensorInfo, GGUF_MAGIC};
+    use std::fs::{self, OpenOptions};
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static FIXTURE_NONCE: AtomicU64 = AtomicU64::new(0);
+    const FIXTURE_DATA_OFFSET: u64 = 64;
+    const FIXTURE_RELATIVE_OFFSET: u64 = 32;
+    const FIXTURE_ABSOLUTE_OFFSET: u64 = FIXTURE_DATA_OFFSET + FIXTURE_RELATIVE_OFFSET;
+
+    struct RouterFileFixture {
+        path: std::path::PathBuf,
+        file: File,
+    }
+
+    impl Drop for RouterFileFixture {
+        fn drop(&mut self) {
+            let _ = fs::remove_file(&self.path);
+        }
+    }
+
+    fn empty_gguf() -> Gguf {
+        let mut header = Vec::new();
+        header.extend_from_slice(&GGUF_MAGIC.to_le_bytes());
+        header.extend_from_slice(&3_u32.to_le_bytes());
+        header.extend_from_slice(&0_u64.to_le_bytes());
+        header.extend_from_slice(&0_u64.to_le_bytes());
+        Gguf::parse(&header).expect("minimal GGUF header parses")
+    }
+
+    fn router_gguf() -> Gguf {
+        let mut gguf = empty_gguf();
+        gguf.data_offset = FIXTURE_DATA_OFFSET;
+        gguf.metadata
+            .insert(ROUTER_EXPERT_USED_KEY.to_owned(), Value::U32(8));
+        gguf.tensors.push(TensorInfo {
+            name: ROUTER_TENSOR_NAME.to_owned(),
+            dims: vec![ROUTER_HIDDEN_WIDTH as u64, ROUTER_EXPERT_COUNT as u64],
+            ty: TensorType::F32,
+            offset: FIXTURE_RELATIVE_OFFSET,
+        });
+        gguf
+    }
+
+    fn router_file(file_bytes: u64) -> RouterFileFixture {
+        let nonce = FIXTURE_NONCE.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "pulsarmlx-model-router-inventory-{}-{nonce}.gguf",
+            std::process::id()
+        ));
+        let writable = OpenOptions::new()
+            .create_new(true)
+            .read(true)
+            .write(true)
+            .open(&path)
+            .expect("create isolated sparse router fixture");
+        writable
+            .set_len(file_bytes)
+            .expect("size isolated sparse router fixture");
+        drop(writable);
+        let file = File::open(&path).expect("reopen router fixture read-only");
+        RouterFileFixture { path, file }
+    }
+
+    fn complete_router_file() -> RouterFileFixture {
+        router_file(FIXTURE_ABSOLUTE_OFFSET + ROUTER_TENSOR_BYTES)
+    }
+
+    fn assert_router_error(gguf: &Gguf, expected_code: &str) {
+        let fixture = complete_router_file();
+        let error = inspect_router_inventory(gguf, &fixture.file)
+            .expect_err("invalid router inventory must fail closed");
+        assert_eq!(error.code(), expected_code);
+    }
+
+    #[test]
+    fn exact_router_inventory_is_hash_bound_with_explicit_absent_defaults() {
+        let fixture = complete_router_file();
+        let observed = inspect_router_inventory(&router_gguf(), &fixture.file)
+            .expect("exact complete router inventory is admitted");
+        let descriptor = observed.descriptor();
+
+        assert_eq!(descriptor.name, ROUTER_TENSOR_NAME);
+        assert_eq!(descriptor.gguf_dimensions_fastest_axis_first, [2_048, 128]);
+        assert_eq!(descriptor.reader_shape, [128, 2_048]);
+        assert_eq!(descriptor.execution_shape, [128, 2_048]);
+        assert_eq!(descriptor.gguf_type, "F32");
+        assert_eq!(descriptor.quantization, "none_f32");
+        assert_eq!(descriptor.logical_elements, ROUTER_TENSOR_ELEMENTS);
+        assert_eq!(descriptor.absolute_data_offset, FIXTURE_ABSOLUTE_OFFSET);
+        assert_eq!(descriptor.encoded_length, ROUTER_TENSOR_BYTES);
+        assert_eq!(
+            descriptor.encoded_sha256,
+            format!(
+                "{:x}",
+                Sha256::digest(vec![0_u8; ROUTER_TENSOR_BYTES as usize])
+            )
+        );
+        assert_eq!(observed.relative_data_offset(), FIXTURE_RELATIVE_OFFSET);
+        assert_eq!(
+            observed.exclusive_end_offset(),
+            FIXTURE_ABSOLUTE_OFFSET + ROUTER_TENSOR_BYTES
+        );
+        assert_eq!(observed.expert_used_count(), 8);
+        assert_eq!(observed.expert_used_count_value_type(), UINT32_VALUE_TYPE);
+        assert!(!observed.weight_scale_metadata_present());
+        assert_eq!(observed.weight_scale_value_type(), None);
+        assert_eq!(observed.weight_scale_metadata_value(), None);
+        assert_eq!(descriptor.weight_scale.to_bits(), 1.0_f32.to_bits());
+        assert!(!observed.expert_weights_norm_metadata_present());
+        assert_eq!(observed.expert_weights_norm_value_type(), None);
+        assert_eq!(observed.expert_weights_norm(), None);
+        assert!(observed.expert_weights_norm_effective());
+        assert_eq!(observed.router_bias_occurrence_count(), 0);
+        assert_eq!(observed.correction_bias_occurrence_count(), 0);
+        assert_eq!(observed.unexpected_router_alias_occurrence_count(), 0);
+    }
+
+    #[test]
+    fn present_scale_and_normalization_metadata_are_typed_and_retained() {
+        let fixture = complete_router_file();
+        let mut gguf = router_gguf();
+        gguf.metadata
+            .insert(ROUTER_WEIGHT_SCALE_KEY.to_owned(), Value::F32(1.0));
+        gguf.metadata
+            .insert(ROUTER_WEIGHT_NORM_KEY.to_owned(), Value::Bool(true));
+
+        let observed = inspect_router_inventory(&gguf, &fixture.file)
+            .expect("exact typed optional routing metadata is admitted");
+        assert!(observed.weight_scale_metadata_present());
+        assert_eq!(observed.weight_scale_value_type(), Some(FLOAT32_VALUE_TYPE));
+        assert_eq!(observed.weight_scale_metadata_value(), Some(1.0));
+        assert!(observed.expert_weights_norm_metadata_present());
+        assert_eq!(
+            observed.expert_weights_norm_value_type(),
+            Some(BOOL_VALUE_TYPE)
+        );
+        assert_eq!(observed.expert_weights_norm(), Some(true));
+        assert!(observed.expert_weights_norm_effective());
+    }
+
+    #[test]
+    fn routing_metadata_type_and_value_mismatches_fail_closed() {
+        let cases = [
+            (
+                ROUTER_EXPERT_USED_KEY,
+                Value::U64(8),
+                "model_metadata_type_mismatch",
+            ),
+            (
+                ROUTER_EXPERT_USED_KEY,
+                Value::U32(7),
+                "model_metadata_mismatch",
+            ),
+            (
+                ROUTER_WEIGHT_SCALE_KEY,
+                Value::F64(1.0),
+                "model_metadata_type_mismatch",
+            ),
+            (
+                ROUTER_WEIGHT_SCALE_KEY,
+                Value::F32(0.5),
+                "model_metadata_mismatch",
+            ),
+            (
+                ROUTER_WEIGHT_NORM_KEY,
+                Value::U32(1),
+                "model_metadata_type_mismatch",
+            ),
+            (
+                ROUTER_WEIGHT_NORM_KEY,
+                Value::Bool(false),
+                "model_metadata_mismatch",
+            ),
+        ];
+        for (key, value, expected_code) in cases {
+            let mut gguf = router_gguf();
+            gguf.metadata.insert(key.to_owned(), value);
+            assert_router_error(&gguf, expected_code);
+        }
+
+        let mut missing_top_k = router_gguf();
+        missing_top_k.metadata.remove(ROUTER_EXPERT_USED_KEY);
+        assert_router_error(&missing_top_k, "model_metadata_type_mismatch");
+    }
+
+    #[test]
+    fn missing_duplicate_wrong_type_and_wrong_shape_router_tensors_are_rejected() {
+        let mut missing = router_gguf();
+        missing.tensors.clear();
+        assert_router_error(&missing, "missing_tensor_role");
+
+        let mut duplicate = router_gguf();
+        duplicate.tensors.push(duplicate.tensors[0].clone());
+        assert_router_error(&duplicate, "duplicate_tensor_role");
+
+        let mut wrong_type = router_gguf();
+        wrong_type.tensors[0].ty = TensorType::Q8_0;
+        assert_router_error(&wrong_type, "unsupported_tensor_quantization");
+
+        let mut wrong_shape = router_gguf();
+        wrong_shape.tensors[0].dims = vec![128, 2_048];
+        assert_router_error(&wrong_shape, "model_tensor_mismatch");
+    }
+
+    #[test]
+    fn router_and_correction_bias_tensors_are_rejected_before_range_read() {
+        for forbidden_name in std::iter::once(ROUTER_BIAS_NAME)
+            .chain(ROUTER_CORRECTION_BIAS_NAMES.iter().copied())
+            .chain([
+                "blk.0.ffn_gate_inp.unreviewed_correction",
+                "blk.0.router_surprise.weight",
+                "blk.0.exp_probs_future.bias",
+            ])
+        {
+            let mut gguf = router_gguf();
+            gguf.tensors.push(TensorInfo {
+                name: forbidden_name.to_owned(),
+                dims: vec![ROUTER_EXPERT_COUNT as u64],
+                ty: TensorType::F32,
+                offset: 0,
+            });
+            assert_router_error(&gguf, "model_tensor_mismatch");
+        }
+
+        let mut unrelated = router_gguf();
+        unrelated.tensors.push(TensorInfo {
+            name: "blk.1.router_surprise.weight".to_owned(),
+            dims: vec![ROUTER_EXPERT_COUNT as u64],
+            ty: TensorType::F32,
+            offset: 0,
+        });
+        let fixture = complete_router_file();
+        inspect_router_inventory(&unrelated, &fixture.file)
+            .expect("a similarly named tensor outside layer 0 is outside this scan");
+    }
+
+    #[test]
+    fn truncated_and_overflowing_router_ranges_are_rejected() {
+        let truncated = router_file(FIXTURE_ABSOLUTE_OFFSET + ROUTER_TENSOR_BYTES - 1);
+        let error = inspect_router_inventory(&router_gguf(), &truncated.file)
+            .expect_err("a truncated complete router range must fail");
+        assert_eq!(error.code(), "invalid_tensor_range");
+
+        let fixture = complete_router_file();
+        let mut overflowing = router_gguf();
+        overflowing.data_offset = u64::MAX;
+        overflowing.tensors[0].offset = 1;
+        let error = inspect_router_inventory(&overflowing, &fixture.file)
+            .expect_err("an overflowing absolute router offset must fail");
+        assert_eq!(error.code(), "invalid_tensor_range");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_only_open_exposes_comparison_identity_and_rejects_final_symlinks() {
+        use std::os::unix::fs::{symlink, MetadataExt};
+        use std::os::unix::io::AsRawFd;
+
+        let fixture = router_file(4 * 1024 * 1024);
+        let (file, metadata, identity) =
+            open_read_only_no_follow(&fixture.path).expect("regular sparse file opens read-only");
+        let descriptor_flags = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL) };
+        assert_ne!(descriptor_flags, -1);
+        assert_eq!(descriptor_flags & libc::O_ACCMODE, libc::O_RDONLY);
+        assert_eq!(
+            identity.unix_device_and_inode(),
+            Some((metadata.dev(), metadata.ino()))
+        );
+        verify_path_matches_open_file(&fixture.path, &file, identity)
+            .expect("the unchanged path still names the retained descriptor");
+
+        let alias = fixture.path.with_extension("alias.gguf");
+        symlink(&fixture.path, &alias).expect("create final-component symbolic link");
+        let error = match open_read_only_no_follow(&alias) {
+            Ok(_) => panic!("a final-component symbolic link must fail closed"),
+            Err(error) => error,
+        };
+        assert_eq!(error.code(), "model_unavailable");
+        fs::remove_file(alias).expect("remove symbolic-link fixture");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn retained_descriptor_rejects_same_size_path_replacement() {
+        let fixture = router_file(4 * 1024 * 1024);
+        let (file, _metadata, identity) =
+            open_read_only_no_follow(&fixture.path).expect("regular sparse file opens read-only");
+        let displaced = fixture.path.with_extension("displaced.gguf");
+        fs::rename(&fixture.path, &displaced).expect("move the originally opened inode");
+        let replacement = OpenOptions::new()
+            .create_new(true)
+            .read(true)
+            .write(true)
+            .open(&fixture.path)
+            .expect("create a same-size replacement");
+        replacement
+            .set_len(4 * 1024 * 1024)
+            .expect("size the replacement sparsely");
+        drop(replacement);
+
+        let error = verify_path_matches_open_file(&fixture.path, &file, identity)
+            .expect_err("a same-size path replacement must not match the retained descriptor");
+        assert_eq!(error.code(), "model_path_identity_changed");
+
+        fs::remove_file(&fixture.path).expect("remove replacement path");
+        fs::rename(&displaced, &fixture.path).expect("restore original fixture for cleanup");
+    }
 }

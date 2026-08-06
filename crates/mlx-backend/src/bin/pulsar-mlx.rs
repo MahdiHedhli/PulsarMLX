@@ -1,10 +1,11 @@
 use mlx_backend::protocol::MAX_RESPONSE_BYTES;
 use mlx_backend::router::{
-    compare_router_outputs, validate_major_router_timing_series, RouterCaseScope,
-    RouterNumericComparison, RouterOutput, RouterOutputComparison, RouterTimingInstrumentationMode,
-    RouterTimingObservationStatus, RouterTimingReplicationRole, RouterTimingSeries,
-    RouterTimingSeriesKind, RouterTolerancePolicy, ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
-    ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID, ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID,
+    admit_router_tensor, compare_router_outputs, read_admitted_router_tensor_f32,
+    validate_major_router_timing_series, RouterCaseScope, RouterNumericComparison, RouterOutput,
+    RouterOutputComparison, RouterTimingInstrumentationMode, RouterTimingObservationStatus,
+    RouterTimingReplicationRole, RouterTimingSeries, RouterTimingSeriesKind, RouterTolerancePolicy,
+    ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID, ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID,
+    ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID,
 };
 use mlx_backend::{
     frozen_qwen_model_memory_budget, inspect_external_qwen_model, validate_device_smoke,
@@ -687,11 +688,13 @@ fn parse_router_arguments(arguments: Vec<OsString>) -> Result<Vec<String>, Strin
         .collect()
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 struct CanonicalPathIdentity {
     resolved: PathBuf,
     #[cfg(unix)]
     existing_object: Option<(u64, u64)>,
+    #[cfg(unix)]
+    resolution_anchor: (u64, u64),
 }
 
 impl CanonicalPathIdentity {
@@ -740,16 +743,23 @@ fn canonical_path_identity(path: &Path, kind: &str) -> Result<CanonicalPathIdent
     let resolved = resolved_prefix.join(unresolved_suffix);
 
     #[cfg(unix)]
-    let existing_object = direct_metadata.as_ref().map(|metadata| {
+    let (existing_object, resolution_anchor) = {
         use std::os::unix::fs::MetadataExt;
 
-        (metadata.dev(), metadata.ino())
-    });
+        let existing_object = direct_metadata
+            .as_ref()
+            .map(|metadata| (metadata.dev(), metadata.ino()));
+        let anchor = fs::metadata(&resolved_prefix)
+            .map_err(|_| format!("the {kind} path resolution anchor could not be inspected"))?;
+        (existing_object, (anchor.dev(), anchor.ino()))
+    };
 
     Ok(CanonicalPathIdentity {
         resolved,
         #[cfg(unix)]
         existing_object,
+        #[cfg(unix)]
+        resolution_anchor,
     })
 }
 
@@ -838,15 +848,16 @@ fn paths_are_distinct(paths: &[&CanonicalPathIdentity]) -> bool {
     })
 }
 
-#[allow(dead_code)] // Called only after the T074 external-access gate is implemented.
-fn validate_inspect_router_path_identities(command: &InspectRouterCommand) -> Result<(), String> {
+fn validate_inspect_router_path_identities(
+    command: &InspectRouterCommand,
+) -> Result<(CanonicalPathIdentity, CanonicalPathIdentity), String> {
     let model_identity = validate_router_model_path_identity(&command.model)?;
     let evidence_identity =
         validate_external_json_path_identity(&command.evidence, "router inspection evidence")?;
     if !paths_are_distinct(&[&model_identity, &evidence_identity]) {
         return Err("router inspection paths must be distinct".to_owned());
     }
-    Ok(())
+    Ok((model_identity, evidence_identity))
 }
 
 fn validate_router_fixture_path_identities(
@@ -2206,10 +2217,217 @@ fn cleanup_outcome_name(outcome: CleanupOutcome) -> &'static str {
 }
 
 fn run_planned_inspect_router(command: InspectRouterCommand) -> Result<(), String> {
-    // Keep this pre-gate path lexical-only: the filesystem identity validator
-    // above must not run until T074 authorizes resolving the checkpoint.
-    let _parsed_paths = (command.model, command.evidence);
-    Err("inspect-router is parsed but remains blocked until the notified T074 external-artifact admission; no checkpoint was accessed".to_owned())
+    let root = project_root();
+    // This must remain the first filesystem-dependent gate in this command.
+    // Argument parsing above is lexical-only, so a dirty source tree cannot
+    // resolve, stat, hash, or open the external checkpoint.
+    let source_commit = clean_source_commit_for(&root, "inspect-router")?;
+    run_inspect_router_after_clean_source(command, &root, &source_commit)
+}
+
+fn run_inspect_router_after_clean_source(
+    command: InspectRouterCommand,
+    root: &Path,
+    source_commit: &str,
+) -> Result<(), String> {
+    match fs::symlink_metadata(&command.evidence) {
+        Ok(_) => return Err("the router inspection evidence destination already exists".to_owned()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(_) => {
+            return Err(
+                "the router inspection evidence destination could not be inspected".to_owned(),
+            )
+        }
+    }
+    let evidence_parent = command
+        .evidence
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .ok_or_else(|| "the router inspection evidence parent is unavailable".to_owned())?;
+    let evidence_parent_metadata = fs::metadata(evidence_parent)
+        .map_err(|_| "the router inspection evidence parent is unavailable".to_owned())?;
+    if !evidence_parent_metadata.is_dir() {
+        return Err("the router inspection evidence parent must be a directory".to_owned());
+    }
+    let initial_path_identities = validate_inspect_router_path_identities(&command)?;
+    let (inspection, pressure) = inspect_admitted_model(root, &command.model)?;
+    #[cfg(unix)]
+    if initial_path_identities.0.existing_object
+        != inspection.opened_file_identity().unix_device_and_inode()
+    {
+        return Err("external model path identity changed during admission".to_owned());
+    }
+    if pressure != "normal" {
+        return Err("inspect-router requires normal system memory pressure".to_owned());
+    }
+
+    let router = inspection
+        .inspect_router_tensor()
+        .map_err(|error| error.to_string())?;
+    let router_tensor = router.descriptor();
+    let admitted_router =
+        admit_router_tensor(router_tensor, QWEN_FILE_BYTES).map_err(|error| error.to_string())?;
+    let router_file = inspection
+        .try_clone_file()
+        .map_err(|error| error.to_string())?;
+    let finite_router_values = read_admitted_router_tensor_f32(&router_file, &admitted_router)
+        .map_err(|error| error.to_string())?;
+    let finite_element_count = finite_router_values.len();
+    drop(finite_router_values);
+
+    let descriptor = inspection.admission_descriptor();
+    let memory = &descriptor.memory_budget;
+    let weight_scale_metadata_value = router.weight_scale_metadata_value();
+    let normalization_source = if router.expert_weights_norm_metadata_present() {
+        "gguf:qwen3moe.expert_weights_norm"
+    } else {
+        "frozen-architecture-contract:qwen3moe.expert_weights_norm-default-true-key-absent"
+    };
+    let evidence = json!({
+        "schema_version": 1,
+        "validation": "qwen3moe-layer0-router-read-only-inspection",
+        "status": "admitted_observed",
+        "passed": true,
+        "recorded_at_utc": utc_now()?,
+        "source_commit": source_commit,
+        "source_worktree_clean_before_inspection": true,
+        "source_worktree_clean_after_inspection": true,
+        "artifact": {
+            "repository_id": descriptor.identity.repository_id,
+            "revision": descriptor.identity.revision,
+            "filename": descriptor.identity.filename,
+            "license_spdx": descriptor.identity.license_spdx,
+            "size_bytes": descriptor.identity.actual_size_bytes,
+            "sha256": descriptor.identity.actual_sha256,
+            "location_symbolic": format!("<external-model>/{QWEN_FILENAME}"),
+            "stored_outside_repository": descriptor.identity.stored_outside_repository,
+            "read_only": true,
+            "automatic_download": descriptor.automatic_download_requested,
+            "identity_rechecked_after_inspection": true,
+        },
+        "gguf": {
+            "version": inspection.gguf_version(),
+            "endianness": "little",
+            "data_offset": inspection.data_offset(),
+            "tensor_count": inspection.tensor_count(),
+            "tensor_type_counts": {
+                "F32": inspection.f32_tensor_count(),
+                "Q8_0": inspection.q8_0_tensor_count(),
+            },
+            "metadata": {
+                "general.architecture": {
+                    "type": descriptor.metadata.architecture_value_type,
+                    "value": descriptor.metadata.architecture,
+                },
+                "qwen3moe.embedding_length": {
+                    "type": descriptor.metadata.embedding_length_value_type,
+                    "value": descriptor.metadata.embedding_length,
+                },
+                "qwen3moe.expert_feed_forward_length": {
+                    "type": descriptor.metadata.expert_feed_forward_length_value_type,
+                    "value": descriptor.metadata.expert_feed_forward_length,
+                },
+                "qwen3moe.expert_count": {
+                    "type": descriptor.metadata.expert_count_value_type,
+                    "value": descriptor.metadata.expert_count,
+                },
+                "qwen3moe.expert_used_count": {
+                    "type": router.expert_used_count_value_type(),
+                    "value": router.expert_used_count(),
+                },
+                "qwen3moe.expert_weights_scale": {
+                    "present": router.weight_scale_metadata_present(),
+                    "type": router.weight_scale_value_type(),
+                    "value": weight_scale_metadata_value,
+                    "effective_value": router_tensor.weight_scale,
+                },
+                "qwen3moe.expert_weights_norm": {
+                    "present": router.expert_weights_norm_metadata_present(),
+                    "type": router.expert_weights_norm_value_type(),
+                    "value": router.expert_weights_norm(),
+                    "effective_value": router.expert_weights_norm_effective(),
+                },
+            },
+        },
+        "router_tensor": {
+            "name": router_tensor.name,
+            "semantic_role": router_tensor.semantic_role,
+            "occurrence_count": router_tensor.occurrence_count,
+            "gguf_dimensions_fastest_axis_first": router_tensor.gguf_dimensions_fastest_axis_first,
+            "reader_shape": router_tensor.reader_shape,
+            "execution_shape": router_tensor.execution_shape,
+            "gguf_type": router_tensor.gguf_type,
+            "quantization": router_tensor.quantization,
+            "logical_elements": router_tensor.logical_elements,
+            "relative_data_offset": router.relative_data_offset(),
+            "absolute_data_offset": router_tensor.absolute_data_offset,
+            "encoded_length_bytes": router_tensor.encoded_length,
+            "exclusive_end_offset": router.exclusive_end_offset(),
+            "encoded_range_sha256": router_tensor.encoded_sha256,
+            "byte_order": router_tensor.byte_order,
+            "orientation": router_tensor.orientation,
+            "finite_f32_values_verified": true,
+            "finite_element_count": finite_element_count,
+        },
+        "routing_semantics": {
+            "expert_count": router_tensor.expert_count,
+            "selected_expert_count": router_tensor.top_k,
+            "weight_scale": router_tensor.weight_scale,
+            "bias_present": router_tensor.bias_present,
+            "bias_occurrence_count": router.router_bias_occurrence_count(),
+            "correction_bias_present": router_tensor.correction_bias_present,
+            "correction_bias_occurrence_count": router.correction_bias_occurrence_count(),
+            "unexpected_router_alias_occurrence_count": router.unexpected_router_alias_occurrence_count(),
+            "full_softmax": true,
+            "selected_probability_renormalization": router.expert_weights_norm_effective(),
+            "normalization_source": normalization_source,
+        },
+        "resource_admission": {
+            "available_disk_bytes": memory.available_disk_bytes,
+            "required_disk_bytes": memory.required_disk_bytes,
+            "disk_headroom_satisfied": true,
+            "host_unified_memory_bytes": memory.host_unified_memory_bytes,
+            "required_host_bytes": memory.required_host_bytes,
+            "unified_memory_headroom_satisfied": true,
+            "system_pressure": pressure,
+            "memory_pressure_normal": true,
+        },
+        "execution": {
+            "performed": false,
+            "worker_spawned": false,
+            "mlx_initialized": false,
+            "router_projection_performed": false,
+            "router_output_produced": false,
+            "expert_execution_performed": false,
+            "network_access_performed": false,
+            "automatic_download_performed": false,
+        },
+        "warnings": [
+            "The inherited Rust GGUF map does not independently retain duplicate metadata keys; the exact full-file SHA-256 and pinned artifact identity close this artifact-specific boundary.",
+            "This read-only admission record is a candidate for T075 validation and is not execution evidence or a capability promotion."
+        ],
+        "exclusions": [
+            "No MLX runtime or worker process was initialized.",
+            "No router projection, softmax, top-k selection, expert execution, model output, generation, serving, or benchmark was performed.",
+            "No model or tensor bytes, decoded values, private paths, or machine identifiers are included in this record."
+        ],
+    });
+
+    inspection
+        .verify_unchanged()
+        .map_err(|error| error.to_string())?;
+    let final_source_commit = clean_source_commit_for(root, "inspect-router")?;
+    if final_source_commit != source_commit {
+        return Err("source commit changed during router inspection".to_owned());
+    }
+    let final_path_identities = validate_inspect_router_path_identities(&command)?;
+    if final_path_identities != initial_path_identities {
+        return Err("router inspection path identity changed during admission".to_owned());
+    }
+    ensure_no_private_paths(&evidence)?;
+    write_evidence_exclusive(&command.evidence, &evidence)?;
+    println!("inspect-router: immutable external Qwen router inventory admitted read-only");
+    Ok(())
 }
 
 fn run_planned_validate_router_fixtures(
@@ -5181,13 +5399,17 @@ fn utc_now() -> Result<String, String> {
 }
 
 fn clean_source_commit(project_root: &Path) -> Result<String, String> {
+    clean_source_commit_for(project_root, "validate-model-slice")
+}
+
+fn clean_source_commit_for(project_root: &Path, command_name: &str) -> Result<String, String> {
     let status = Command::new("git")
         .args(["status", "--porcelain"])
         .current_dir(project_root)
         .output()
         .map_err(|_| "source cleanliness could not be observed".to_owned())?;
     if !status.status.success() || !status.stdout.is_empty() {
-        return Err("validate-model-slice requires a clean source worktree".to_owned());
+        return Err(format!("{command_name} requires a clean source worktree"));
     }
     let revision = Command::new("git")
         .args(["rev-parse", "HEAD"])
@@ -5908,6 +6130,260 @@ fn write_evidence(path: &Path, evidence: &Value) -> Result<(), String> {
 }
 
 fn write_evidence_exclusive(path: &Path, evidence: &Value) -> Result<(), String> {
+    write_evidence_exclusive_with_hook(path, evidence, || {})
+}
+
+#[cfg(unix)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct AnchoredDirectoryIdentity {
+    device: u64,
+    inode: u64,
+}
+
+#[cfg(unix)]
+fn directory_identity(metadata: &fs::Metadata) -> AnchoredDirectoryIdentity {
+    use std::os::unix::fs::MetadataExt;
+
+    AnchoredDirectoryIdentity {
+        device: metadata.dev(),
+        inode: metadata.ino(),
+    }
+}
+
+#[cfg(unix)]
+fn verify_anchored_parent_path(
+    requested_parent: &Path,
+    resolved_parent: &Path,
+    expected: AnchoredDirectoryIdentity,
+) -> Result<(), String> {
+    let current_resolution = fs::canonicalize(requested_parent)
+        .map_err(|_| "the evidence parent directory identity changed".to_owned())?;
+    if current_resolution != resolved_parent {
+        return Err("the evidence parent directory identity changed".to_owned());
+    }
+    let metadata = fs::symlink_metadata(resolved_parent)
+        .map_err(|_| "the evidence parent directory identity changed".to_owned())?;
+    if metadata.file_type().is_symlink()
+        || !metadata.is_dir()
+        || directory_identity(&metadata) != expected
+    {
+        return Err("the evidence parent directory identity changed".to_owned());
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn anchored_entry_exists(directory: &fs::File, name: &std::ffi::CStr) -> Result<bool, String> {
+    use std::os::fd::AsRawFd;
+
+    let mut metadata = std::mem::MaybeUninit::<libc::stat>::uninit();
+    let status = unsafe {
+        libc::fstatat(
+            directory.as_raw_fd(),
+            name.as_ptr(),
+            metadata.as_mut_ptr(),
+            libc::AT_SYMLINK_NOFOLLOW,
+        )
+    };
+    if status == 0 {
+        return Ok(true);
+    }
+    match std::io::Error::last_os_error().raw_os_error() {
+        Some(libc::ENOENT) => Ok(false),
+        _ => Err("the router evidence destination could not be inspected safely".to_owned()),
+    }
+}
+
+#[cfg(unix)]
+fn anchored_unlink(directory: &fs::File, name: &std::ffi::CStr) -> bool {
+    use std::os::fd::AsRawFd;
+
+    let status = unsafe { libc::unlinkat(directory.as_raw_fd(), name.as_ptr(), 0) };
+    status == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::ENOENT)
+}
+
+#[cfg(unix)]
+fn reconcile_anchored_entries(
+    directory: &fs::File,
+    temporary_name: &std::ffi::CStr,
+    destination_name: Option<&std::ffi::CStr>,
+) -> bool {
+    let destination_removed = destination_name
+        .map(|name| anchored_unlink(directory, name))
+        .unwrap_or(true);
+    let temporary_removed = anchored_unlink(directory, temporary_name);
+    let directory_synced = directory.sync_all().is_ok();
+    destination_removed && temporary_removed && directory_synced
+}
+
+#[cfg(unix)]
+fn write_evidence_exclusive_with_hook<F>(
+    path: &Path,
+    evidence: &Value,
+    before_install: F,
+) -> Result<(), String>
+where
+    F: FnOnce(),
+{
+    use std::ffi::CString;
+    use std::os::fd::{AsRawFd, FromRawFd};
+    use std::os::unix::fs::OpenOptionsExt;
+
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let filename = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| "the evidence path must name a UTF-8 file".to_owned())?;
+    let destination_name = CString::new(filename.as_bytes())
+        .map_err(|_| "the evidence path must name a safe UTF-8 file".to_owned())?;
+    let mut encoded = serde_json::to_vec(evidence)
+        .map_err(|_| "the validated evidence could not be encoded".to_owned())?;
+    encoded.push(b'\n');
+
+    let resolved_parent = fs::canonicalize(parent)
+        .map_err(|_| "the evidence parent directory does not exist".to_owned())?;
+    let path_metadata = fs::symlink_metadata(&resolved_parent)
+        .map_err(|_| "the evidence parent directory could not be inspected safely".to_owned())?;
+    if path_metadata.file_type().is_symlink() || !path_metadata.is_dir() {
+        return Err("the evidence parent path must resolve to a regular directory".to_owned());
+    }
+    let expected_identity = directory_identity(&path_metadata);
+    let directory = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_CLOEXEC | libc::O_DIRECTORY | libc::O_NOFOLLOW)
+        .open(&resolved_parent)
+        .map_err(|_| "the evidence parent directory could not be opened safely".to_owned())?;
+    let opened_metadata = directory
+        .metadata()
+        .map_err(|_| "the evidence parent directory could not be inspected safely".to_owned())?;
+    if !opened_metadata.is_dir() || directory_identity(&opened_metadata) != expected_identity {
+        return Err("the evidence parent directory identity changed".to_owned());
+    }
+    verify_anchored_parent_path(parent, &resolved_parent, expected_identity)?;
+    if anchored_entry_exists(&directory, &destination_name)? {
+        return Err("the router evidence destination already exists".to_owned());
+    }
+
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|_| "a unique temporary evidence name could not be created".to_owned())?
+        .as_nanos();
+    let mut temporary = None;
+    for attempt in 0..64_u32 {
+        let name = CString::new(format!(
+            ".{filename}.pulsarmlx-exclusive-{}-{nonce}-{attempt}.tmp",
+            std::process::id()
+        ))
+        .expect("the bounded temporary evidence name contains no NUL");
+        let descriptor = unsafe {
+            libc::openat(
+                directory.as_raw_fd(),
+                name.as_ptr(),
+                libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+                0o600,
+            )
+        };
+        if descriptor >= 0 {
+            let file = unsafe { fs::File::from_raw_fd(descriptor) };
+            temporary = Some((name, file));
+            break;
+        }
+        match std::io::Error::last_os_error().raw_os_error() {
+            Some(libc::EEXIST) => continue,
+            _ => return Err("the temporary evidence file could not be created safely".to_owned()),
+        }
+    }
+    let (temporary_name, mut temporary_file) = temporary
+        .ok_or_else(|| "a unique temporary evidence file could not be created".to_owned())?;
+    if temporary_file
+        .write_all(&encoded)
+        .and_then(|()| temporary_file.sync_all())
+        .is_err()
+    {
+        drop(temporary_file);
+        if !reconcile_anchored_entries(&directory, &temporary_name, None) {
+            return Err("temporary evidence cleanup could not be reconciled safely".to_owned());
+        }
+        return Err("the requested evidence file could not be written durably".to_owned());
+    }
+    drop(temporary_file);
+
+    before_install();
+    if let Err(error) = verify_anchored_parent_path(parent, &resolved_parent, expected_identity) {
+        if !reconcile_anchored_entries(&directory, &temporary_name, None) {
+            return Err("temporary evidence cleanup could not be reconciled safely".to_owned());
+        }
+        return Err(error);
+    }
+    match anchored_entry_exists(&directory, &destination_name) {
+        Ok(false) => {}
+        Ok(true) => {
+            if !reconcile_anchored_entries(&directory, &temporary_name, None) {
+                return Err("temporary evidence cleanup could not be reconciled safely".to_owned());
+            }
+            return Err("the router evidence destination already exists".to_owned());
+        }
+        Err(error) => {
+            if !reconcile_anchored_entries(&directory, &temporary_name, None) {
+                return Err("temporary evidence cleanup could not be reconciled safely".to_owned());
+            }
+            return Err(error);
+        }
+    }
+    let installed = unsafe {
+        libc::linkat(
+            directory.as_raw_fd(),
+            temporary_name.as_ptr(),
+            directory.as_raw_fd(),
+            destination_name.as_ptr(),
+            0,
+        )
+    };
+    if installed != 0 {
+        let already_exists = std::io::Error::last_os_error().raw_os_error() == Some(libc::EEXIST);
+        if !reconcile_anchored_entries(&directory, &temporary_name, None) {
+            return Err("temporary evidence cleanup could not be reconciled safely".to_owned());
+        }
+        return if already_exists {
+            Err("the router evidence destination already exists".to_owned())
+        } else {
+            Err("the requested evidence file could not be installed atomically".to_owned())
+        };
+    }
+
+    if !anchored_unlink(&directory, &temporary_name) {
+        if !reconcile_anchored_entries(&directory, &temporary_name, Some(&destination_name)) {
+            return Err("evidence installation could not be reconciled safely".to_owned());
+        }
+        return Err("temporary evidence cleanup failed after installation".to_owned());
+    }
+    if directory.sync_all().is_err() {
+        if !reconcile_anchored_entries(&directory, &temporary_name, Some(&destination_name)) {
+            return Err("evidence durability failure could not be reconciled safely".to_owned());
+        }
+        return Err("the requested evidence file could not be made durable".to_owned());
+    }
+    if let Err(error) = verify_anchored_parent_path(parent, &resolved_parent, expected_identity) {
+        if !reconcile_anchored_entries(&directory, &temporary_name, Some(&destination_name)) {
+            return Err("evidence path change could not be reconciled safely".to_owned());
+        }
+        return Err(error);
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn write_evidence_exclusive_with_hook<F>(
+    path: &Path,
+    evidence: &Value,
+    before_install: F,
+) -> Result<(), String>
+where
+    F: FnOnce(),
+{
     let parent = path
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty())
@@ -5916,7 +6392,7 @@ fn write_evidence_exclusive(path: &Path, evidence: &Value) -> Result<(), String>
         return Err("the evidence parent directory does not exist".to_owned());
     }
     if fs::symlink_metadata(path).is_ok() {
-        return Err("the router fixture evidence destination already exists".to_owned());
+        return Err("the router evidence destination already exists".to_owned());
     }
     let filename = path
         .file_name()
@@ -5925,28 +6401,15 @@ fn write_evidence_exclusive(path: &Path, evidence: &Value) -> Result<(), String>
     let mut encoded = serde_json::to_vec(evidence)
         .map_err(|_| "the validated evidence could not be encoded".to_owned())?;
     encoded.push(b'\n');
-
-    let mut temporary = None;
-    for attempt in 0..32_u32 {
-        let candidate = parent.join(format!(
-            ".{filename}.pulsarmlx-exclusive-{}-{attempt}.tmp",
-            std::process::id()
-        ));
-        match OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&candidate)
-        {
-            Ok(file) => {
-                temporary = Some((candidate, file));
-                break;
-            }
-            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
-            Err(_) => return Err("the temporary evidence file could not be created".to_owned()),
-        }
-    }
-    let (temporary_path, mut temporary_file) = temporary
-        .ok_or_else(|| "a unique temporary evidence file could not be created".to_owned())?;
+    let temporary_path = parent.join(format!(
+        ".{filename}.pulsarmlx-exclusive-{}.tmp",
+        std::process::id()
+    ));
+    let mut temporary_file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary_path)
+        .map_err(|_| "the temporary evidence file could not be created".to_owned())?;
     if temporary_file
         .write_all(&encoded)
         .and_then(|()| temporary_file.sync_all())
@@ -5957,13 +6420,13 @@ fn write_evidence_exclusive(path: &Path, evidence: &Value) -> Result<(), String>
         return Err("the requested evidence file could not be written".to_owned());
     }
     drop(temporary_file);
-
+    before_install();
     let installed = fs::hard_link(&temporary_path, path);
     let _ = fs::remove_file(&temporary_path);
     match installed {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-            Err("the router fixture evidence destination already exists".to_owned())
+            Err("the router evidence destination already exists".to_owned())
         }
         Err(_) => Err("the requested evidence file could not be installed atomically".to_owned()),
     }
@@ -7048,16 +7511,21 @@ mod tests {
             ordinary_evidence.to_str().expect("UTF-8 evidence path"),
         ]))
         .expect("the pre-T074 parser remains lexical-only");
-        let gated_error = run(args(&[
+        let dispatch_command = parse_inspect_router(args(&[
             "inspect-router",
             "--model",
             symlink_model.to_str().expect("UTF-8 symlink path"),
             "--evidence",
             ordinary_evidence.to_str().expect("UTF-8 evidence path"),
         ]))
-        .expect_err("pre-T074 dispatch remains task gated");
-        assert!(gated_error.contains("T074"));
-        assert!(gated_error.contains("no checkpoint was accessed"));
+        .expect("the notified command still parses lexically");
+        let gated_error = run_inspect_router_after_clean_source(
+            dispatch_command,
+            &project_root(),
+            "0000000000000000000000000000000000000000",
+        )
+        .expect_err("T074 dispatch rejects a symbolic-link model alias");
+        assert!(gated_error.contains("symbolic-link alias"));
         let symlink_error = validate_inspect_router_path_identities(&symlink_command)
             .expect_err("post-gate symbolic-link model alias must fail closed");
         assert!(symlink_error.contains("symbolic-link alias"));
@@ -7148,6 +7616,164 @@ mod tests {
         );
 
         fs::remove_dir_all(&directory).expect("remove path-safety fixture directory");
+    }
+
+    #[test]
+    fn t074_inspection_dispatch_reaches_read_only_model_admission() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-router-inspection-dispatch-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&directory).expect("create external inspection directory");
+        let model = directory.join(QWEN_FILENAME);
+        fs::write(&model, b"bounded-model-stand-in").expect("write immutable stand-in");
+        let evidence = directory.join("inspection.json");
+
+        let command = parse_inspect_router(args(&[
+            "inspect-router",
+            "--model",
+            model.to_str().expect("UTF-8 model path"),
+            "--evidence",
+            evidence.to_str().expect("UTF-8 evidence path"),
+        ]))
+        .expect("parse the exact post-notification inspection command");
+        let error = run_inspect_router_after_clean_source(
+            command,
+            &project_root(),
+            "0000000000000000000000000000000000000000",
+        )
+        .expect_err("the undersized stand-in must fail immutable admission");
+        assert!(error.contains("byte size"));
+        assert!(!error.contains("T074"));
+        assert!(!evidence.exists());
+
+        fs::remove_file(model).expect("remove stand-in");
+        fs::remove_dir(directory).expect("remove external inspection directory");
+    }
+
+    #[test]
+    fn t074_inspection_refuses_existing_evidence_before_model_admission() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-router-inspection-exclusive-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&directory).expect("create external inspection directory");
+        let model = directory.join(QWEN_FILENAME);
+        fs::write(&model, b"bounded-model-stand-in").expect("write immutable stand-in");
+        let evidence = directory.join("inspection.json");
+        let original = b"existing-candidate-must-not-change";
+        fs::write(&evidence, original).expect("write existing evidence stand-in");
+        let command = parse_inspect_router(args(&[
+            "inspect-router",
+            "--model",
+            model.to_str().expect("UTF-8 model path"),
+            "--evidence",
+            evidence.to_str().expect("UTF-8 evidence path"),
+        ]))
+        .expect("parse the exact inspection command");
+
+        let error = run_inspect_router_after_clean_source(
+            command,
+            &project_root(),
+            "0000000000000000000000000000000000000000",
+        )
+        .expect_err("existing inspection evidence must fail before model admission");
+        assert_eq!(
+            error,
+            "the router inspection evidence destination already exists"
+        );
+        assert_eq!(
+            fs::read(&evidence).expect("read existing evidence"),
+            original
+        );
+
+        fs::remove_file(evidence).expect("remove evidence stand-in");
+        let missing_parent_evidence = directory.join("missing-parent/inspection.json");
+        let missing_parent_command = parse_inspect_router(args(&[
+            "inspect-router",
+            "--model",
+            model.to_str().expect("UTF-8 model path"),
+            "--evidence",
+            missing_parent_evidence
+                .to_str()
+                .expect("UTF-8 missing-parent evidence path"),
+        ]))
+        .expect("parse the missing-parent inspection command");
+        let missing_parent_error = run_inspect_router_after_clean_source(
+            missing_parent_command,
+            &project_root(),
+            "0000000000000000000000000000000000000000",
+        )
+        .expect_err("a missing evidence parent must fail before model admission");
+        assert_eq!(
+            missing_parent_error,
+            "the router inspection evidence parent is unavailable"
+        );
+        assert!(!missing_parent_evidence.exists());
+
+        fs::remove_file(model).expect("remove model stand-in");
+        fs::remove_dir(directory).expect("remove external inspection directory");
+    }
+
+    #[test]
+    fn t074_clean_source_gate_reports_only_bounded_public_errors() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-router-clean-source-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&directory).expect("create temporary source repository");
+        let tracked = directory.join("tracked.txt");
+        fs::write(&tracked, b"clean\n").expect("write tracked file");
+        let git = |arguments: &[&str]| {
+            Command::new("git")
+                .args(arguments)
+                .current_dir(&directory)
+                .status()
+                .expect("run git for clean-source fixture")
+        };
+        assert!(git(&["init", "--quiet"]).success());
+        assert!(git(&["add", "tracked.txt"]).success());
+        assert!(git(&[
+            "-c",
+            "user.name=PulsarMLX Test",
+            "-c",
+            "user.email=pulsarmlx-test@example.invalid",
+            "commit",
+            "--quiet",
+            "-m",
+            "test baseline",
+        ])
+        .success());
+        let commit = clean_source_commit_for(&directory, "inspect-router")
+            .expect("clean committed source is admitted");
+        assert_eq!(commit.len(), 40);
+
+        fs::write(directory.join("untracked.txt"), b"dirty\n")
+            .expect("create untracked dirty state");
+        let error = clean_source_commit_for(&directory, "inspect-router")
+            .expect_err("dirty source must fail closed");
+        assert_eq!(error, "inspect-router requires a clean source worktree");
+        assert!(!error.contains(directory.to_string_lossy().as_ref()));
+
+        fs::remove_dir_all(directory).expect("remove clean-source fixture repository");
     }
 
     #[cfg(unix)]
@@ -8097,19 +8723,8 @@ mod tests {
     }
 
     #[test]
-    fn feature_002_external_dispatch_remains_fail_closed_without_access() {
+    fn feature_002_router_execution_remains_fail_closed_without_access() {
         let model = format!("/tmp/pulsarmlx-never-accessed/{QWEN_FILENAME}");
-        let inspect_error = run(args(&[
-            "inspect-router",
-            "--model",
-            &model,
-            "--evidence",
-            "/tmp/pulsarmlx-never-accessed/inspection.json",
-        ]))
-        .expect_err("inspection remains task gated");
-        assert!(inspect_error.contains("T074"));
-        assert!(inspect_error.contains("no checkpoint was accessed"));
-
         let router_error = run(args(&[
             "validate-router",
             "--model",
@@ -8206,6 +8821,9 @@ mod tests {
         write_evidence_exclusive(&destination, &json!({"status": "passed"}))
             .expect("first exclusive install");
         let original = fs::read(&destination).expect("read installed evidence");
+        let installed_metadata = fs::symlink_metadata(&destination).expect("installed metadata");
+        assert!(installed_metadata.is_file());
+        assert!(!installed_metadata.file_type().is_symlink());
         let error = write_evidence_exclusive(&destination, &json!({"status": "failed"}))
             .expect_err("existing destination must be refused");
         assert!(error.contains("already exists"));
@@ -8213,6 +8831,117 @@ mod tests {
         assert_eq!(fs::read_dir(&directory).unwrap().count(), 1);
         fs::remove_file(destination).expect("remove evidence");
         fs::remove_dir(directory).expect("remove evidence directory");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn exclusive_evidence_install_rejects_a_final_symlink_without_touching_its_target() {
+        use std::os::unix::fs::symlink;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-router-evidence-symlink-{}-{nonce}",
+            std::process::id()
+        ));
+        fs::create_dir(&directory).expect("create symlink evidence directory");
+        let target = directory.join("target.json");
+        let destination = directory.join("router-fixtures.json");
+        fs::write(&target, b"target-must-remain-unchanged\n").expect("write symlink target");
+        symlink(&target, &destination).expect("create final symlink");
+
+        let error = write_evidence_exclusive(&destination, &json!({"status": "passed"}))
+            .expect_err("a final symlink must be rejected");
+        assert!(error.contains("already exists"));
+        assert!(fs::symlink_metadata(&destination)
+            .expect("symlink metadata")
+            .file_type()
+            .is_symlink());
+        assert_eq!(
+            fs::read(&target).expect("read untouched symlink target"),
+            b"target-must-remain-unchanged\n"
+        );
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 2);
+
+        fs::remove_file(destination).expect("remove final symlink");
+        fs::remove_file(target).expect("remove symlink target");
+        fs::remove_dir(directory).expect("remove symlink evidence directory");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn exclusive_evidence_install_is_anchored_through_a_stable_parent_alias() {
+        use std::os::unix::fs::symlink;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let root = env::temp_dir().join(format!(
+            "pulsarmlx-router-evidence-parent-alias-{}-{nonce}",
+            std::process::id()
+        ));
+        let real_parent = root.join("real");
+        let alias_parent = root.join("alias");
+        fs::create_dir_all(&real_parent).expect("create real evidence parent");
+        symlink(&real_parent, &alias_parent).expect("create stable parent alias");
+        let destination = alias_parent.join("router-fixtures.json");
+
+        write_evidence_exclusive(&destination, &json!({"status": "passed"}))
+            .expect("install through stable parent alias");
+        assert_eq!(
+            fs::read(real_parent.join("router-fixtures.json")).expect("read anchored evidence"),
+            b"{\"status\":\"passed\"}\n"
+        );
+        assert_eq!(fs::read_dir(&real_parent).unwrap().count(), 1);
+
+        fs::remove_file(real_parent.join("router-fixtures.json")).expect("remove evidence");
+        fs::remove_file(alias_parent).expect("remove parent alias");
+        fs::remove_dir(real_parent).expect("remove real evidence parent");
+        fs::remove_dir(root).expect("remove parent alias root");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn exclusive_evidence_install_rolls_back_when_parent_alias_is_replaced() {
+        use std::os::unix::fs::symlink;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let root = env::temp_dir().join(format!(
+            "pulsarmlx-router-evidence-parent-replaced-{}-{nonce}",
+            std::process::id()
+        ));
+        let original_parent = root.join("original");
+        let replacement_parent = root.join("replacement");
+        let alias_parent = root.join("alias");
+        fs::create_dir_all(&original_parent).expect("create original evidence parent");
+        fs::create_dir(&replacement_parent).expect("create replacement evidence parent");
+        symlink(&original_parent, &alias_parent).expect("create original parent alias");
+        let destination = alias_parent.join("router-fixtures.json");
+
+        let error =
+            write_evidence_exclusive_with_hook(&destination, &json!({"status": "passed"}), || {
+                fs::remove_file(&alias_parent).expect("remove original parent alias");
+                symlink(&replacement_parent, &alias_parent)
+                    .expect("install replacement parent alias");
+            })
+            .expect_err("a replaced parent alias must abort publication");
+        assert!(error.contains("parent directory identity changed"));
+        assert_eq!(fs::read_dir(&original_parent).unwrap().count(), 0);
+        assert_eq!(fs::read_dir(&replacement_parent).unwrap().count(), 0);
+
+        fs::remove_file(alias_parent).expect("remove replacement parent alias");
+        fs::remove_dir(original_parent).expect("remove original evidence parent");
+        fs::remove_dir(replacement_parent).expect("remove replacement evidence parent");
+        fs::remove_dir(root).expect("remove parent replacement root");
     }
 
     #[test]

@@ -1,0 +1,378 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/schemas/research/v1/router-inspection.schema.json",
+  "title": "PulsarMLX read-only Qwen3MoE router inspection candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "validation",
+    "status",
+    "passed",
+    "recorded_at_utc",
+    "source_commit",
+    "source_worktree_clean_before_inspection",
+    "source_worktree_clean_after_inspection",
+    "artifact",
+    "gguf",
+    "router_tensor",
+    "routing_semantics",
+    "resource_admission",
+    "execution",
+    "warnings",
+    "exclusions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "validation": { "const": "qwen3moe-layer0-router-read-only-inspection" },
+    "status": { "const": "admitted_observed" },
+    "passed": { "const": true },
+    "recorded_at_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "source_commit": { "$ref": "#/$defs/commit" },
+    "source_worktree_clean_before_inspection": { "const": true },
+    "source_worktree_clean_after_inspection": { "const": true },
+    "artifact": { "$ref": "#/$defs/artifact" },
+    "gguf": { "$ref": "#/$defs/gguf" },
+    "router_tensor": { "$ref": "#/$defs/routerTensor" },
+    "routing_semantics": { "$ref": "#/$defs/routingSemantics" },
+    "resource_admission": { "$ref": "#/$defs/resourceAdmission" },
+    "execution": { "$ref": "#/$defs/execution" },
+    "warnings": {
+      "const": [
+        "The inherited Rust GGUF map does not independently retain duplicate metadata keys; the exact full-file SHA-256 and pinned artifact identity close this artifact-specific boundary.",
+        "This read-only admission record is a candidate for T075 validation and is not execution evidence or a capability promotion."
+      ]
+    },
+    "exclusions": {
+      "const": [
+        "No MLX runtime or worker process was initialized.",
+        "No router projection, softmax, top-k selection, expert execution, model output, generation, serving, or benchmark was performed.",
+        "No model or tensor bytes, decoded values, private paths, or machine identifiers are included in this record."
+      ]
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "typedString": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "STRING" },
+        "value": { "const": "qwen3moe" }
+      }
+    },
+    "typedEmbedding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "UINT32" },
+        "value": { "const": 2048 }
+      }
+    },
+    "typedFeedForward": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "UINT32" },
+        "value": { "const": 768 }
+      }
+    },
+    "typedExpertCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "UINT32" },
+        "value": { "const": 128 }
+      }
+    },
+    "typedTopK": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "UINT32" },
+        "value": { "const": 8 }
+      }
+    },
+    "scaleMetadata": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "type", "value", "effective_value"],
+          "properties": {
+            "present": { "const": false },
+            "type": { "const": null },
+            "value": { "const": null },
+            "effective_value": { "const": 1.0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "type", "value", "effective_value"],
+          "properties": {
+            "present": { "const": true },
+            "type": { "const": "FLOAT32" },
+            "value": { "const": 1.0 },
+            "effective_value": { "const": 1.0 }
+          }
+        }
+      ]
+    },
+    "normalizationMetadata": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "type", "value", "effective_value"],
+          "properties": {
+            "present": { "const": false },
+            "type": { "const": null },
+            "value": { "const": null },
+            "effective_value": { "const": true }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "type", "value", "effective_value"],
+          "properties": {
+            "present": { "const": true },
+            "type": { "const": "BOOL" },
+            "value": { "const": true },
+            "effective_value": { "const": true }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_id",
+        "revision",
+        "filename",
+        "license_spdx",
+        "size_bytes",
+        "sha256",
+        "location_symbolic",
+        "stored_outside_repository",
+        "read_only",
+        "automatic_download",
+        "identity_rechecked_after_inspection"
+      ],
+      "properties": {
+        "repository_id": { "const": "Qwen/Qwen3-30B-A3B-GGUF" },
+        "revision": { "const": "e4d4bafdfb96a411a163846265362aceb0b9c63a" },
+        "filename": { "const": "Qwen3-30B-A3B-Q8_0.gguf" },
+        "license_spdx": { "const": "Apache-2.0" },
+        "size_bytes": { "const": 32483931648 },
+        "sha256": {
+          "const": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c"
+        },
+        "location_symbolic": {
+          "const": "<external-model>/Qwen3-30B-A3B-Q8_0.gguf"
+        },
+        "stored_outside_repository": { "const": true },
+        "read_only": { "const": true },
+        "automatic_download": { "const": false },
+        "identity_rechecked_after_inspection": { "const": true }
+      }
+    },
+    "gguf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "endianness",
+        "data_offset",
+        "tensor_count",
+        "tensor_type_counts",
+        "metadata"
+      ],
+      "properties": {
+        "version": { "const": 3 },
+        "endianness": { "const": "little" },
+        "data_offset": { "const": 5969408 },
+        "tensor_count": { "const": 579 },
+        "tensor_type_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["F32", "Q8_0"],
+          "properties": {
+            "F32": { "const": 241 },
+            "Q8_0": { "const": 338 }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "general.architecture",
+            "qwen3moe.embedding_length",
+            "qwen3moe.expert_feed_forward_length",
+            "qwen3moe.expert_count",
+            "qwen3moe.expert_used_count",
+            "qwen3moe.expert_weights_scale",
+            "qwen3moe.expert_weights_norm"
+          ],
+          "properties": {
+            "general.architecture": { "$ref": "#/$defs/typedString" },
+            "qwen3moe.embedding_length": { "$ref": "#/$defs/typedEmbedding" },
+            "qwen3moe.expert_feed_forward_length": {
+              "$ref": "#/$defs/typedFeedForward"
+            },
+            "qwen3moe.expert_count": { "$ref": "#/$defs/typedExpertCount" },
+            "qwen3moe.expert_used_count": { "$ref": "#/$defs/typedTopK" },
+            "qwen3moe.expert_weights_scale": { "$ref": "#/$defs/scaleMetadata" },
+            "qwen3moe.expert_weights_norm": {
+              "$ref": "#/$defs/normalizationMetadata"
+            }
+          }
+        }
+      }
+    },
+    "routerTensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "semantic_role",
+        "occurrence_count",
+        "gguf_dimensions_fastest_axis_first",
+        "reader_shape",
+        "execution_shape",
+        "gguf_type",
+        "quantization",
+        "logical_elements",
+        "relative_data_offset",
+        "absolute_data_offset",
+        "encoded_length_bytes",
+        "exclusive_end_offset",
+        "encoded_range_sha256",
+        "byte_order",
+        "orientation",
+        "finite_f32_values_verified",
+        "finite_element_count"
+      ],
+      "properties": {
+        "name": { "const": "blk.0.ffn_gate_inp.weight" },
+        "semantic_role": { "const": "layer_0_router_projection" },
+        "occurrence_count": { "const": 1 },
+        "gguf_dimensions_fastest_axis_first": { "const": [2048, 128] },
+        "reader_shape": { "const": [128, 2048] },
+        "execution_shape": { "const": [128, 2048] },
+        "gguf_type": { "const": "F32" },
+        "quantization": { "const": "none_f32" },
+        "logical_elements": { "const": 262144 },
+        "relative_data_offset": { "type": "integer", "minimum": 0 },
+        "absolute_data_offset": { "type": "integer", "minimum": 1 },
+        "encoded_length_bytes": { "const": 1048576 },
+        "exclusive_end_offset": { "type": "integer", "minimum": 1 },
+        "encoded_range_sha256": { "$ref": "#/$defs/sha256" },
+        "byte_order": { "const": "little" },
+        "orientation": { "const": "expert_major_rows_input_columns" },
+        "finite_f32_values_verified": { "const": true },
+        "finite_element_count": { "const": 262144 }
+      }
+    },
+    "routingSemantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expert_count",
+        "selected_expert_count",
+        "weight_scale",
+        "bias_present",
+        "bias_occurrence_count",
+        "correction_bias_present",
+        "correction_bias_occurrence_count",
+        "unexpected_router_alias_occurrence_count",
+        "full_softmax",
+        "selected_probability_renormalization",
+        "normalization_source"
+      ],
+      "properties": {
+        "expert_count": { "const": 128 },
+        "selected_expert_count": { "const": 8 },
+        "weight_scale": { "const": 1.0 },
+        "bias_present": { "const": false },
+        "bias_occurrence_count": { "const": 0 },
+        "correction_bias_present": { "const": false },
+        "correction_bias_occurrence_count": { "const": 0 },
+        "unexpected_router_alias_occurrence_count": { "const": 0 },
+        "full_softmax": { "const": true },
+        "selected_probability_renormalization": { "const": true },
+        "normalization_source": {
+          "enum": [
+            "gguf:qwen3moe.expert_weights_norm",
+            "frozen-architecture-contract:qwen3moe.expert_weights_norm-default-true-key-absent"
+          ]
+        }
+      }
+    },
+    "resourceAdmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available_disk_bytes",
+        "required_disk_bytes",
+        "disk_headroom_satisfied",
+        "host_unified_memory_bytes",
+        "required_host_bytes",
+        "unified_memory_headroom_satisfied",
+        "system_pressure",
+        "memory_pressure_normal"
+      ],
+      "properties": {
+        "available_disk_bytes": { "type": "integer", "minimum": 1 },
+        "required_disk_bytes": { "const": 134761081856 },
+        "disk_headroom_satisfied": { "const": true },
+        "host_unified_memory_bytes": { "type": "integer", "minimum": 1 },
+        "required_host_bytes": { "const": 42949672960 },
+        "unified_memory_headroom_satisfied": { "const": true },
+        "system_pressure": { "const": "normal" },
+        "memory_pressure_normal": { "const": true }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "performed",
+        "worker_spawned",
+        "mlx_initialized",
+        "router_projection_performed",
+        "router_output_produced",
+        "expert_execution_performed",
+        "network_access_performed",
+        "automatic_download_performed"
+      ],
+      "properties": {
+        "performed": { "const": false },
+        "worker_spawned": { "const": false },
+        "mlx_initialized": { "const": false },
+        "router_projection_performed": { "const": false },
+        "router_output_produced": { "const": false },
+        "expert_execution_performed": { "const": false },
+        "network_access_performed": { "const": false },
+        "automatic_download_performed": { "const": false }
+      }
+    }
+  }
+}
