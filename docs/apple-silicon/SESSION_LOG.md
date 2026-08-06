@@ -2473,3 +2473,60 @@ fixture-derived files.
 No model path was resolved or opened, no checkpoint or MLX execution occurred,
 no Apple GPU memory was used, and no NTFY notification was sent. Local
 inference did not need to pause.
+
+### T057 clean-checkout fixture reproduction
+
+A detached temporary worktree at exact commit `d6f5820` reproduced the six
+fixture-derived publication artifacts outside the checkout. The source
+worktree was clean before generation and remained clean afterward. Recursive
+name/byte comparison and an independently sorted SHA-256 manifest comparison
+both produced no differences. The temporary checkout and generated output were
+removed after the clean result; `git worktree list --porcelain` then named only
+the primary worktree.
+
+The reproduction commands were:
+
+```sh
+t057_root=$(mktemp -d "${TMPDIR:-/tmp}/pulsarmlx-t057.XXXXXX")
+t057_checkout="$t057_root/checkout"
+t057_output="$t057_root/output"
+git worktree add --detach "$t057_checkout" HEAD
+git -C "$t057_checkout" status --porcelain
+(
+  cd "$t057_checkout"
+  PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_tables.py \
+    --raw-dir fixtures/research/router-v1/evidence \
+    --output-dir "$t057_output/expected/tables"
+  PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_figures.py \
+    --raw-dir fixtures/research/router-v1/evidence \
+    --output-dir "$t057_output/expected/figures"
+  PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
+    --feature 002-qwen-router-parity --fixture-only
+  PULSARMLX_MODEL_GGUF='' python3 -m unittest -q \
+    scripts.research.tests.test_generators \
+    scripts.research.tests.test_verify_package
+)
+diff -ru \
+  "$t057_checkout/fixtures/research/router-v1/expected" \
+  "$t057_output/expected"
+diff -u \
+  <(cd "$t057_checkout/fixtures/research/router-v1/expected" && \
+    find . -type f -print0 | sort -z | xargs -0 shasum -a 256) \
+  <(cd "$t057_output/expected" && \
+    find . -type f -print0 | sort -z | xargs -0 shasum -a 256)
+git -C "$t057_checkout" status --porcelain
+git -C "$t057_checkout" diff --exit-code
+git worktree remove "$t057_checkout"
+rm -r -- "$t057_output"
+rmdir "$t057_root"
+```
+
+Both generators passed with six outputs total. Fixture-only verification
+accepted three records, six artifacts, and zero claims. The clean-checkout
+focused suite passed 28 of 28 methods in 0.583 seconds. Both `diff` commands,
+both worktree-status checks, and the Git diff check were empty. The regenerated
+SHA-256 values exactly match the six hashes recorded for T056.
+
+No model path was resolved or opened, no checkpoint or MLX execution occurred,
+no Apple GPU memory was used, and no NTFY notification was sent. Local
+inference did not need to pause.
