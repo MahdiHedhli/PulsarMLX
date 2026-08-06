@@ -11,6 +11,7 @@ const TWO_ROW_CASE_ID: &str = "qwen3moe-layer0-router-token0-token1-batch-v1";
 const GENERATED_SINGLE_CASE_ID: &str = "generated-qwen3moe-router-single-row-v1";
 const OUTPUT_SHA256: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
+#[allow(clippy::too_many_arguments)]
 fn timing_observation(
     kind: &str,
     run_index: usize,
@@ -18,21 +19,89 @@ fn timing_observation(
     process_state: &str,
     condition: &str,
     instrumentation_mode: &str,
+    external_costly: bool,
     output_sha256: &str,
 ) -> Value {
     let stages = if instrumentation_mode == "stage_instrumented" {
         json!({
+            "setup_admission": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "file_io": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "storage_validation_f32_decode": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
             "dequantization": {
                 "status": "not_applicable",
                 "reason": "f32_router_requires_no_dequantization"
+            },
+            "host_to_device": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "graph_construction": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "compilation": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
             },
             "router_projection": {
                 "status": "observed",
                 "duration_ns": 500_u64 + u64::try_from(run_index).unwrap()
             },
+            "top_k": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "normalization": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
             "total_evaluated_router": {
                 "status": "observed",
                 "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
+            },
+            "synchronized_readback": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "end_to_end_router_command": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            }
+        })
+    } else if external_costly {
+        json!({
+            "file_io": {
+                "status": "observed",
+                "duration_ns": 250_u64 + u64::try_from(run_index).unwrap()
+            },
+            "storage_validation_f32_decode": {
+                "status": "observed",
+                "duration_ns": 300_u64 + u64::try_from(run_index).unwrap()
+            },
+            "dequantization": {
+                "status": "not_applicable",
+                "reason": "f32_router_requires_no_dequantization"
+            },
+            "host_to_device": {
+                "status": "unavailable",
+                "reason": "not_separately_observed_in_model_free_fixture"
+            },
+            "total_evaluated_router": {
+                "status": "observed",
+                "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
+            },
+            "end_to_end_router_command": {
+                "status": "observed",
+                "duration_ns": 1_500_u64 + u64::try_from(run_index).unwrap()
             }
         })
     } else {
@@ -84,6 +153,7 @@ fn timing_series(
     measurement_count: usize,
 ) -> Value {
     let mut observations = Vec::with_capacity(warmup_count + measurement_count);
+    let external_costly = matches!(series_kind, "costly_real" | "first_process_costly");
     observations.extend((0..warmup_count).map(|index| {
         timing_observation(
             "warmup",
@@ -92,6 +162,7 @@ fn timing_series(
             process_state,
             condition,
             instrumentation_mode,
+            external_costly,
             OUTPUT_SHA256,
         )
     }));
@@ -103,6 +174,7 @@ fn timing_series(
             process_state,
             condition,
             instrumentation_mode,
+            external_costly,
             OUTPUT_SHA256,
         )
     }));
@@ -159,6 +231,37 @@ fn parse_series(value: Value) -> RouterTimingSeries {
     RouterTimingSeries::try_from_value(value).expect("valid frozen timing series")
 }
 
+fn assert_costly_external_stages(series: &Value) {
+    for observation in series["raw_timing_observations"]
+        .as_array()
+        .expect("costly timing observations")
+    {
+        let stages = observation["stages"]
+            .as_object()
+            .expect("costly timing stages");
+        assert_eq!(stages.len(), 6);
+        for stage in [
+            "file_io",
+            "storage_validation_f32_decode",
+            "total_evaluated_router",
+            "end_to_end_router_command",
+        ] {
+            assert_eq!(stages[stage]["status"], "observed");
+            assert!(stages[stage]["duration_ns"].as_u64().unwrap_or(0) > 0);
+        }
+        assert_eq!(stages["dequantization"]["status"], "not_applicable");
+        assert_eq!(
+            stages["dequantization"]["reason"],
+            "f32_router_requires_no_dequantization"
+        );
+        assert_eq!(stages["host_to_device"]["status"], "unavailable");
+        let host_to_device_reason = stages["host_to_device"]["reason"]
+            .as_str()
+            .expect("bounded host-to-device reason");
+        assert!(!host_to_device_reason.is_empty() && host_to_device_reason.len() <= 512);
+    }
+}
+
 fn complete_major_series() -> Vec<RouterTimingSeries> {
     vec![
         parse_series(primary_major(SINGLE_BENCHMARK_ID, SINGLE_CASE_ID, 1)),
@@ -200,28 +303,90 @@ fn fixed_sample_policies_reject_count_overrides() {
         5,
         10,
     );
+    assert_costly_external_stages(&costly);
     parse_series(costly.clone());
     let mut costly_with_microbenchmark_count = costly;
     costly_with_microbenchmark_count["measurement_count"] = json!(30);
     assert!(RouterTimingSeries::try_from_value(costly_with_microbenchmark_count).is_err());
 
-    let first_process = timing_series(
-        "f002-first-read-single-row-v1",
-        SINGLE_CASE_ID,
-        1,
-        "first_process_costly",
-        "minimally_instrumented",
-        "primary",
-        "first-read-process",
-        "fresh_process",
-        "first_read_new_process_os_cache_uncontrolled",
-        0,
+    let first_process_values = (0..10)
+        .map(|replication_index| {
+            timing_series(
+                "f002-first-read-single-row-v1",
+                SINGLE_CASE_ID,
+                1,
+                "first_process_costly",
+                "minimally_instrumented",
+                "primary",
+                &format!("first-read-process-{replication_index:02}"),
+                "fresh_process",
+                "first_read_new_process_os_cache_uncontrolled",
+                0,
+                1,
+            )
+        })
+        .collect::<Vec<_>>();
+    for series in &first_process_values {
+        assert_costly_external_stages(series);
+    }
+    let first_process_cohort = first_process_values
+        .iter()
+        .cloned()
+        .map(parse_series)
+        .collect::<Vec<_>>();
+    assert_eq!(first_process_cohort.len(), 10);
+    assert_eq!(
+        first_process_cohort
+            .iter()
+            .map(RouterTimingSeries::process_replication_id)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
         10,
+        "each 0+1 first-process series must identify a distinct fresh process"
     );
-    parse_series(first_process.clone());
+    assert_eq!(
+        first_process_cohort
+            .iter()
+            .flat_map(|series| series.raw_timing_observations())
+            .map(|observation| observation.observation_id())
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        10,
+        "the truthful ten-process cohort must retain ten distinct measurements"
+    );
+    assert!(first_process_cohort.iter().all(|series| {
+        series.warmup_count() == 0
+            && series.measurement_count() == 1
+            && series.raw_timing_observations().len() == 1
+    }));
+
+    let first_process = first_process_values[0].clone();
+    let mut first_process_without_read = first_process.clone();
+    for observation in first_process_without_read["raw_timing_observations"]
+        .as_array_mut()
+        .expect("first-process observations")
+    {
+        observation["stages"]
+            .as_object_mut()
+            .expect("timing stages")
+            .remove("file_io");
+    }
+    assert!(RouterTimingSeries::try_from_value(first_process_without_read).is_err());
     let mut invented_warmup = first_process;
     invented_warmup["warmup_count"] = json!(1);
     assert!(RouterTimingSeries::try_from_value(invented_warmup).is_err());
+
+    let mut warm_major_with_first_read = major;
+    for observation in warm_major_with_first_read["raw_timing_observations"]
+        .as_array_mut()
+        .expect("major observations")
+    {
+        observation["stages"]["file_io"] = json!({
+            "status": "observed",
+            "duration_ns": 250
+        });
+    }
+    assert!(RouterTimingSeries::try_from_value(warm_major_with_first_read).is_err());
 
     let generated = timing_series(
         "f002-generated-router-single-row-minimal-v1",
@@ -247,6 +412,7 @@ fn fixed_sample_policies_reject_count_overrides() {
         "reused_process",
         "warm",
         "minimally_instrumented",
+        false,
         OUTPUT_SHA256,
     );
     failed_attempt["status"] = json!("aborted");
@@ -312,6 +478,14 @@ fn exact_major_benchmarks_require_a_complete_clean_process_replication_each() {
         "warm",
         5,
         10,
+    );
+    assert_eq!(
+        diagnostic["raw_timing_observations"][0]["stages"]
+            .as_object()
+            .expect("stage diagnostic boundaries")
+            .len(),
+        13,
+        "stage diagnostics must retain every required observed-or-unavailable boundary"
     );
     parse_series(diagnostic.clone());
 
@@ -658,6 +832,7 @@ fn timing_response_is_bounded_by_the_existing_protocol_cap() {
             "reused_process",
             "warm",
             "minimally_instrumented",
+            false,
             OUTPUT_SHA256,
         );
         failed["status"] = json!("aborted");

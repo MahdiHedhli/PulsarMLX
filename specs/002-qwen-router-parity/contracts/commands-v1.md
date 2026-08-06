@@ -181,9 +181,11 @@ cargo run --release -p mlx-backend --bin pulsar-mlx -- validate-router \
 The command uses protocol-fixed counts rather than caller-selected benchmark
 counts:
 
-- at least ten identical evaluated correctness repetitions per real case;
+- five labeled correctness warm-ups followed by ten identical measured
+  correctness attempts per real case, with all fifteen independently passing;
 - five warm-ups plus ten costly total/load measurements;
 - five warm-ups plus thirty inexpensive warm compute measurements;
+- ten distinct fresh-process `0+1` series for every first-process condition;
 - one fresh-process replication for each of the two minimally instrumented
   single-row and two-row major benchmarks, and one later second batch when
   feasible. Stage-instrumented series remain diagnostic.

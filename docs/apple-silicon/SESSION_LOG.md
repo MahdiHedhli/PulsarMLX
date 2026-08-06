@@ -2974,3 +2974,95 @@ Regression coverage constructs a schema-valid 1,024-attempt oversized candidate
 and a cross-series duplicate-ID candidate; both fail closed. The focused
 evidence suite remained green at 5 of 5 tests, and targeted formatting, diff,
 and strict package Clippy checks passed. No model or hardware was accessed.
+
+### T066 correctness-gated router benchmark orchestration
+
+The host now has a model-neutral, event-driven state machine for the frozen
+real-router validation schedule. Each single-row and two-row correctness gate
+retains exactly five labeled warm-up attempts followed by ten labeled measured
+attempts. All fifteen attempts must independently pass the complete oracle,
+GPU-selection, no-fallback, evaluation, synchronization, memory-evidence, and
+finite-value checks. Determinism is checked across the ten measured attempts;
+each retains all canonical output hashes and comparison metrics, while the
+complete 128-way logits/probabilities and selected-route output are serialized
+once per gate. Whole-output and required `0..16` and `64..80` comparison
+summaries are mandatory.
+
+Timing cannot start until both correctness gates pass. The first-process policy
+was corrected from the earlier impossible single-series `0+10` representation
+to ten distinct fresh-process series, each exactly `0+1`. Every batch therefore
+requires ten orchestration-issued primary first-read identities and ten for
+each clean-worker cohort before its associated timing work can advance. The
+primary schedule then admits the two 5+10 costly external-read series, two
+5+30 minimally instrumented major series, two 5+10 stage diagnostics, and one
+5+30 clean-process major replication per real case. A later independent batch
+uses a new batch identity and the reversed two-row/single-row order.
+
+Every correctness attempt and every raw timing observation is also indexed in
+one append-ordered per-batch ledger. Its contiguous global index plus explicit
+batch, case, process, source, and schedule-step identities proves the enforced
+inter-series order without relying on the separately grouped evidence arrays.
+Rejected observations remain in the same ledger with their source status and
+orchestration disposition. The model-free primary and reversed-batch fixtures
+each retain 260 ordered observations.
+
+Passing costly and first-process observations retain the exact six external
+boundaries, including observed file I/O, F32 decode, evaluated total, and
+end-to-end command duration. Stage diagnostics retain all thirteen frozen
+observed, unavailable, or F32-not-applicable boundaries. Global observation
+identities must be unique across every series. Wrong order, identity, output,
+or schedule state fails closed; worker-originated failures preserve their
+validated code, stage, message, and original observation rather than being
+collapsed into a generic orchestration failure.
+
+Failed later batches are cloned into the terminal primary experiment, while a
+public-safe unavailable reason is an explicit alternative. Duplicate later
+dispositions cannot overwrite accepted evidence. A retained candidate that
+would cross the 1 MiB response ceiling causes an explicit cap error and remains
+held by the state machine; it is never replaced with truncated evidence. The
+protocol and command contracts now describe the same 5+10 correctness policy
+and truthful ten-series `0+1` first-process method.
+
+The exact model-disabled validation commands and actual results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend --bin pulsar-mlx -- --nocapture
+# passed: 16 of 16 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend --lib -- --nocapture
+# passed: 10 of 10 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+  --test router_contract -- --nocapture
+# passed: 21 of 21 tests
+
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+  --test research_evidence -- --nocapture
+# passed: 5 of 5 tests
+
+PULSARMLX_MODEL_GGUF='' cargo check -p mlx-backend --all-targets
+# passed with no warnings
+
+PULSARMLX_MODEL_GGUF='' cargo clippy -p mlx-backend --all-targets -- -D warnings
+# passed with no warnings
+
+rustfmt --edition 2021 --check \
+  crates/mlx-backend/src/bin/pulsar-mlx.rs \
+  crates/mlx-backend/src/router.rs \
+  crates/mlx-backend/tests/research_evidence.rs
+# passed
+
+git diff --check
+# passed
+```
+
+An independent review first found that type-grouped arrays could not prove the
+cross-series global order required by the frozen protocol. The ordered ledger
+and its accepted, rejected, reversed-batch, uniqueness, contiguity, and response
+cap tests were added before the task was marked complete. A second independent
+review found no remaining technical T066 release blocker. No Python
+worker, checkpoint path, model bytes, MLX device, GPU, or hardware observation
+was used, so no NTFY pause was needed. Process IDs and the state machine are
+correlation/design evidence only: T083 must still prove actual worker spawn,
+single first read, shutdown, temporal batch separation, and real-checkpoint
+execution before any model-backed correctness or performance claim is legal.

@@ -165,10 +165,14 @@ Each correctness case in the router payload MUST contain:
 - compared count, exact-ID mismatch count, ordering mismatch count, numerical
   mismatch count, maximum absolute error, mean absolute error, RMSE, maximum
   relative error where meaningful, first mismatch location, and pass/fail;
-- non-finite input/output policy and observed non-finite count; and
-- per-repetition logits, full-softmax-probability, IDs,
-  selected-probability, and normalized-weight hashes for at least ten identical
-  evaluated executions.
+- non-finite input/output policy and observed non-finite count;
+- a retained attempt identity, correctness role, and within-role index for
+  exactly five labeled warm-up attempts followed by exactly ten labeled
+  measured attempts;
+- an independent pass/fail outcome for every warm-up and measured attempt; and
+- per-measured-attempt logits, full-softmax-probability, IDs,
+  selected-probability, and normalized-weight hashes for the ten identical
+  evaluated measured executions.
 
 Expert IDs and ordering compare exactly. Floating-point values use the frozen
 per-element rule:
@@ -188,6 +192,13 @@ canonical candidate hash differs, the record MUST report the numerical spread,
 mark the v1 experiment failed, and trigger the documented stop condition. It
 MUST NOT substitute a looser numerical-only repeatability policy after output
 is observed.
+
+Every one of the five correctness warm-ups and ten measured correctness
+attempts MUST independently satisfy explicit GPU selection, no fallback,
+evaluation, synchronization, exact IDs/order, and the frozen numerical
+tolerances. Only the ten measured attempts form the determinism population;
+warm-ups cannot satisfy the measured repeat count. Both real correctness cases
+MUST pass these gates before any timing observation starts.
 
 ## Raw observation contract
 
@@ -210,6 +221,14 @@ observation contains:
   observable resource gauges;
 - failure code/message for failed or aborted attempts; and
 - an exclusion rule ID and reason for an excluded observation.
+
+For the Feature 002 orchestration payload, `raw_observations` is one flat,
+append-ordered ledger per batch. It covers correctness attempts and every raw
+observation from accepted or rejected timing series. Each ledger row carries
+the batch/case/process identities and a contiguous `global_order_index`, then
+links back to the retained correctness attempt or timing-series observation by
+its unique observation ID. Type-separated timing arrays are supporting detail;
+their grouping MUST NOT be used as a substitute for the ordered ledger.
 
 Warm-ups are retained but excluded from measured summaries. Failed and aborted
 attempts are counted and reported separately; they are never deleted because
@@ -265,9 +284,12 @@ without controlled cache evidence it MUST be labeled
   runs and at least ten retained measured repetitions.
 - Every inexpensive microbenchmark uses at least five retained warm-ups and at
   least thirty retained measured repetitions.
-- A condition whose purpose is first-process or controlled-cold behavior may
-  declare warm-up technically inappropriate. It records zero warm-ups, the
-  precommitted exception, and at least ten measured costly repetitions.
+- A first-process condition is one predeclared cohort containing exactly ten
+  separate series. Each series has a distinct process-replication ID, runs in a
+  distinct fresh process, records exactly zero warm-ups followed by exactly one
+  first-read measurement, and retains the required process/cache label. One
+  process or series MUST NOT claim ten first reads. An independently proved
+  controlled-cold condition uses the same ten-series, 0+1 structure.
 - The two major benchmarks are exactly the minimally instrumented single-row
   real router case and minimally instrumented two-row real router case. Each
   includes at least one complete clean-process replication. Stage-instrumented
@@ -286,6 +308,12 @@ The experiment admission gate checks memory pressure, storage headroom,
 thermal/power observability, and other significant workload before collection.
 Material interference postpones the benchmark or is retained as a separately
 labeled non-clean batch; it is not merged into the primary clean summary.
+
+Process-replication IDs correlate records; by themselves they do not prove an
+actual spawn or shutdown. T083 MUST connect each series identity to the live
+execution adapter's observed spawn, single first-read measurement, and shutdown
+lifecycle. Before that step passes, schema and orchestration validation are
+design evidence only and MUST NOT be reported as a real first-process result.
 
 ## Summary statistics
 

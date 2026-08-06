@@ -1,6 +1,10 @@
+use mlx_backend::protocol::MAX_RESPONSE_BYTES;
 use mlx_backend::router::{
-    compare_router_outputs, RouterCaseScope, RouterNumericComparison, RouterOutput,
-    RouterOutputComparison, RouterTolerancePolicy,
+    compare_router_outputs, validate_major_router_timing_series, RouterCaseScope,
+    RouterNumericComparison, RouterOutput, RouterOutputComparison, RouterTimingInstrumentationMode,
+    RouterTimingObservationStatus, RouterTimingReplicationRole, RouterTimingSeries,
+    RouterTimingSeriesKind, RouterTolerancePolicy, ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
+    ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID, ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID,
 };
 use mlx_backend::{
     frozen_qwen_model_memory_budget, inspect_external_qwen_model, validate_device_smoke,
@@ -44,6 +48,19 @@ const ROUTER_FIXTURE_ID: &str = "generated-qwen3moe-router-v1";
 const ROUTER_EXPECTED_RESULTS_ID: &str = "generated-qwen3moe-router-expected-results-v1";
 const ROUTER_SYNTHETIC_TIE_ID: &str = "generated-qwen3moe-router-synthetic-cutoff-v1";
 const ROUTER_FIXTURE_MAX_EVIDENCE_BYTES: usize = 256 * 1024;
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_CORRECTNESS_WARMUPS: usize = 5;
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_CORRECTNESS_REPETITIONS: usize = 10;
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_CORRECTNESS_ATTEMPTS: usize =
+    ROUTER_CORRECTNESS_WARMUPS + ROUTER_CORRECTNESS_REPETITIONS;
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_FIRST_PROCESS_REPETITIONS: usize = 10;
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_BENCHMARK_ORDER_SEED: u64 = 22_002;
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_PRIMARY_BATCH_ID: &str = "batch-a";
 const ROUTER_FIXTURE_FILES: [&str; 11] = [
     "golden/expected_results.json",
     "golden/hidden_states.json",
@@ -1385,6 +1402,13 @@ fn output_from_router_values(
 }
 
 fn output_from_worker_result(result: &RouterResult) -> Result<RouterOutput, String> {
+    output_from_worker_result_with_scope(result, RouterCaseScope::SyntheticFixture)
+}
+
+fn output_from_worker_result_with_scope(
+    result: &RouterResult,
+    case_scope: RouterCaseScope,
+) -> Result<RouterOutput, String> {
     let logits = f32_rows(result.logits(), "worker router logits")?;
     let probabilities = f32_rows(result.full_probabilities(), "worker router probabilities")?;
     let selected = f32_rows(
@@ -1394,7 +1418,7 @@ fn output_from_worker_result(result: &RouterResult) -> Result<RouterOutput, Stri
     let normalized = f32_rows(result.normalized_weights(), "worker normalized weights")?;
     let output = RouterOutput::try_new(
         result.router_case_id(),
-        RouterCaseScope::SyntheticFixture,
+        case_scope,
         usize::try_from(result.batch_size())
             .map_err(|_| "the worker router batch size is not representable".to_owned())?,
         flatten_f32(&logits),
@@ -1413,6 +1437,32 @@ fn output_from_worker_result(result: &RouterResult) -> Result<RouterOutput, Stri
         return Err("the worker router output differs from its protocol hashes".to_owned());
     }
     Ok(output)
+}
+
+// The real `RouterResult` adapter remains intentionally dormant until T083.
+#[allow(dead_code)]
+fn complete_router_output_sha256(output: &RouterOutput) -> Result<String, String> {
+    let mut digest = Sha256::new();
+    for value in output.logits() {
+        digest.update(value.to_le_bytes());
+    }
+    for value in output.full_probabilities() {
+        digest.update(value.to_le_bytes());
+    }
+    for expert_id in output.selected_expert_ids().iter().flatten() {
+        digest.update(
+            u32::try_from(*expert_id)
+                .map_err(|_| "a router expert ID is outside the bounded U32 range".to_owned())?
+                .to_le_bytes(),
+        );
+    }
+    for value in output.selected_probabilities().iter().flatten() {
+        digest.update(value.to_le_bytes());
+    }
+    for value in output.normalized_weights().iter().flatten() {
+        digest.update(value.to_le_bytes());
+    }
+    Ok(format!("{:x}", digest.finalize()))
 }
 
 fn numeric_comparison_evidence(comparison: &RouterNumericComparison) -> Value {
@@ -1447,6 +1497,110 @@ fn router_comparison_evidence(comparison: &RouterOutputComparison) -> Value {
         "order_mismatch_count": comparison.order_mismatch_count(),
         "passed": comparison.passed(),
     })
+}
+
+fn range_numeric_comparison_evidence(
+    reference: &[f32],
+    candidate: &[f32],
+    row_count: usize,
+    range_start: usize,
+    range_end: usize,
+    absolute_tolerance: f64,
+    relative_tolerance: f64,
+) -> Value {
+    let mut compared_count = 0_usize;
+    let mut mismatch_count = 0_usize;
+    let mut first_mismatch = None;
+    let mut maximum_absolute_error = 0.0_f64;
+    let mut absolute_error_sum = 0.0_f64;
+    let mut squared_error_sum = 0.0_f64;
+    let mut maximum_relative_error = None::<f64>;
+    for row_index in 0..row_count {
+        for column_index in range_start..range_end {
+            let index = row_index * 128 + column_index;
+            let reference_value = f64::from(reference[index]);
+            let candidate_value = f64::from(candidate[index]);
+            let absolute_error = (candidate_value - reference_value).abs();
+            let allowed_error = absolute_tolerance + relative_tolerance * reference_value.abs();
+            compared_count += 1;
+            maximum_absolute_error = maximum_absolute_error.max(absolute_error);
+            absolute_error_sum += absolute_error;
+            squared_error_sum += absolute_error * absolute_error;
+            if reference_value != 0.0 {
+                let relative_error = absolute_error / reference_value.abs();
+                maximum_relative_error = Some(
+                    maximum_relative_error
+                        .map_or(relative_error, |current| current.max(relative_error)),
+                );
+            }
+            if absolute_error > allowed_error {
+                mismatch_count += 1;
+                if first_mismatch.is_none() {
+                    first_mismatch = Some(json!({
+                        "row_index": row_index,
+                        "column_index": column_index,
+                        "reference": reference_value,
+                        "candidate": candidate_value,
+                    }));
+                }
+            }
+        }
+    }
+    let count = compared_count as f64;
+    json!({
+        "compared_count": compared_count,
+        "mismatch_count": mismatch_count,
+        "first_mismatch": first_mismatch,
+        "maximum_absolute_error": maximum_absolute_error,
+        "mean_absolute_error": absolute_error_sum / count,
+        "rmse": (squared_error_sum / count).sqrt(),
+        "maximum_relative_error": maximum_relative_error,
+        "absolute_tolerance": absolute_tolerance,
+        "relative_tolerance": relative_tolerance,
+    })
+}
+
+fn router_comparison_evidence_with_ranges(
+    comparison: &RouterOutputComparison,
+    reference: &RouterOutput,
+    candidate: &RouterOutput,
+) -> Value {
+    let mut evidence = router_comparison_evidence(comparison);
+    let ranges = [("0..16", 0_usize, 16_usize), ("64..80", 64, 80)];
+    let range_evidence = ranges
+        .into_iter()
+        .map(|(label, start, end)| {
+            let logits = range_numeric_comparison_evidence(
+                reference.logits(),
+                candidate.logits(),
+                reference.row_count(),
+                start,
+                end,
+                5.0e-4,
+                5.0e-4,
+            );
+            let probabilities = range_numeric_comparison_evidence(
+                reference.full_probabilities(),
+                candidate.full_probabilities(),
+                reference.row_count(),
+                start,
+                end,
+                1.0e-6,
+                1.0e-6,
+            );
+            let passed = logits["mismatch_count"] == 0 && probabilities["mismatch_count"] == 0;
+            (
+                label.to_owned(),
+                json!({
+                    "logits": logits,
+                    "full_probabilities": probabilities,
+                    "passed": passed,
+                }),
+            )
+        })
+        .collect::<Map<String, Value>>();
+    evidence["expert_range_comparisons"] = Value::Object(range_evidence);
+    evidence
 }
 
 fn router_memory_evidence(result: &RouterResult) -> Value {
@@ -1845,10 +1999,2211 @@ fn run_planned_validate_router_fixtures(
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum OrchestratedRouterCase {
+    SingleRow,
+    TwoRow,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+impl OrchestratedRouterCase {
+    const fn case_id(self) -> &'static str {
+        match self {
+            Self::SingleRow => ROUTER_REAL_SINGLE_ROW_CASE_ID,
+            Self::TwoRow => ROUTER_REAL_TWO_ROW_CASE_ID,
+        }
+    }
+
+    const fn benchmark_id(self) -> &'static str {
+        match self {
+            Self::SingleRow => ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
+            Self::TwoRow => ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID,
+        }
+    }
+
+    const fn row_count(self) -> usize {
+        match self {
+            Self::SingleRow => 1,
+            Self::TwoRow => 2,
+        }
+    }
+}
+
+const ROUTER_CORRECTNESS_ORDER: [OrchestratedRouterCase; 2] = [
+    OrchestratedRouterCase::SingleRow,
+    OrchestratedRouterCase::TwoRow,
+];
+const ROUTER_COSTLY_ORDER: [OrchestratedRouterCase; 2] = [
+    OrchestratedRouterCase::SingleRow,
+    OrchestratedRouterCase::TwoRow,
+];
+const ROUTER_PRIMARY_MAJOR_ORDER: [(OrchestratedRouterCase, RouterTimingReplicationRole); 2] = [
+    (
+        OrchestratedRouterCase::SingleRow,
+        RouterTimingReplicationRole::Primary,
+    ),
+    (
+        OrchestratedRouterCase::TwoRow,
+        RouterTimingReplicationRole::Primary,
+    ),
+];
+const ROUTER_STAGE_DIAGNOSTIC_ORDER: [OrchestratedRouterCase; 2] = [
+    OrchestratedRouterCase::SingleRow,
+    OrchestratedRouterCase::TwoRow,
+];
+const ROUTER_CLEAN_MAJOR_ORDER: [(OrchestratedRouterCase, RouterTimingReplicationRole); 2] = [
+    (
+        OrchestratedRouterCase::SingleRow,
+        RouterTimingReplicationRole::CleanProcessReplication,
+    ),
+    (
+        OrchestratedRouterCase::TwoRow,
+        RouterTimingReplicationRole::CleanProcessReplication,
+    ),
+];
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_SECOND_CORRECTNESS_ORDER: [OrchestratedRouterCase; 2] = [
+    OrchestratedRouterCase::TwoRow,
+    OrchestratedRouterCase::SingleRow,
+];
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_SECOND_COSTLY_ORDER: [OrchestratedRouterCase; 2] = [
+    OrchestratedRouterCase::TwoRow,
+    OrchestratedRouterCase::SingleRow,
+];
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_SECOND_PRIMARY_MAJOR_ORDER: [(OrchestratedRouterCase, RouterTimingReplicationRole);
+    2] = [
+    (
+        OrchestratedRouterCase::TwoRow,
+        RouterTimingReplicationRole::Primary,
+    ),
+    (
+        OrchestratedRouterCase::SingleRow,
+        RouterTimingReplicationRole::Primary,
+    ),
+];
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_SECOND_STAGE_DIAGNOSTIC_ORDER: [OrchestratedRouterCase; 2] = [
+    OrchestratedRouterCase::TwoRow,
+    OrchestratedRouterCase::SingleRow,
+];
+#[cfg_attr(not(test), allow(dead_code))]
+const ROUTER_SECOND_CLEAN_MAJOR_ORDER: [(OrchestratedRouterCase, RouterTimingReplicationRole); 2] = [
+    (
+        OrchestratedRouterCase::TwoRow,
+        RouterTimingReplicationRole::CleanProcessReplication,
+    ),
+    (
+        OrchestratedRouterCase::SingleRow,
+        RouterTimingReplicationRole::CleanProcessReplication,
+    ),
+];
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterCorrectnessAttempt {
+    case_id: String,
+    process_replication_id: String,
+    logits_f32le_sha256: String,
+    full_probabilities_f32le_sha256: String,
+    selected_expert_ids: Vec<Vec<u64>>,
+    selected_expert_ids_u32le_sha256: String,
+    selected_probabilities_f32le_sha256: String,
+    normalized_weights_f32le_sha256: String,
+    complete_output_sha256: String,
+    canonical_output: RouterOutput,
+    comparison: Value,
+    memory_gauges: Value,
+    result_passed: bool,
+    requested_device: String,
+    selected_device: String,
+    fallback_used: bool,
+    evaluated: bool,
+    synchronized: bool,
+}
+
+// The adapter is covered by the protocol/output contracts and becomes live at T083.
+#[allow(dead_code)]
+impl RouterCorrectnessAttempt {
+    fn observation_role(attempt_index: usize) -> (&'static str, usize) {
+        if attempt_index < ROUTER_CORRECTNESS_WARMUPS {
+            ("warmup", attempt_index)
+        } else {
+            ("measurement", attempt_index - ROUTER_CORRECTNESS_WARMUPS)
+        }
+    }
+
+    fn observation_id(&self, batch_id: &str, attempt_index: usize) -> String {
+        let (observation_kind, run_index) = Self::observation_role(attempt_index);
+        format!(
+            "{batch_id}-{}-correctness-{observation_kind}-{run_index:02}",
+            self.case_id,
+        )
+    }
+
+    fn from_result(
+        result: &RouterResult,
+        reference: &RouterOutput,
+        process_replication_id: impl Into<String>,
+    ) -> Result<Self, String> {
+        let output = output_from_worker_result_with_scope(result, RouterCaseScope::RealCheckpoint)?;
+        let comparison =
+            compare_router_outputs(reference, &output, &RouterTolerancePolicy::contract_v1())
+                .map_err(|error| error.to_string())?;
+        let comparison_evidence =
+            router_comparison_evidence_with_ranges(&comparison, reference, &output);
+        Ok(Self {
+            case_id: result.router_case_id().to_owned(),
+            process_replication_id: process_replication_id.into(),
+            logits_f32le_sha256: output.logits_f32le_sha256().to_owned(),
+            full_probabilities_f32le_sha256: output.full_probabilities_f32le_sha256().to_owned(),
+            selected_expert_ids: output.selected_expert_ids().to_vec(),
+            selected_expert_ids_u32le_sha256: selected_id_sha256(output.selected_expert_ids())?,
+            selected_probabilities_f32le_sha256: output
+                .selected_probabilities_f32le_sha256()
+                .to_owned(),
+            normalized_weights_f32le_sha256: output.normalized_weights_f32le_sha256().to_owned(),
+            complete_output_sha256: complete_router_output_sha256(&output)?,
+            canonical_output: output,
+            comparison: comparison_evidence,
+            memory_gauges: router_memory_evidence(result),
+            result_passed: result.passed(),
+            requested_device: result.requested_device().to_owned(),
+            selected_device: result.selected_device().to_owned(),
+            fallback_used: result.fallback_used(),
+            evaluated: result.evaluated(),
+            synchronized: result.synchronized(),
+        })
+    }
+
+    fn passes_gate(&self, batch_id: &str, case: OrchestratedRouterCase) -> bool {
+        let selected_ids_are_valid = self.selected_expert_ids.len() == case.row_count()
+            && self.selected_expert_ids.iter().all(|row| {
+                row.len() == 8
+                    && row.iter().copied().collect::<BTreeSet<_>>().len() == 8
+                    && row.iter().all(|expert_id| *expert_id < 128)
+            });
+        [
+            &self.logits_f32le_sha256,
+            &self.full_probabilities_f32le_sha256,
+            &self.selected_expert_ids_u32le_sha256,
+            &self.selected_probabilities_f32le_sha256,
+            &self.normalized_weights_f32le_sha256,
+            &self.complete_output_sha256,
+        ]
+        .into_iter()
+        .all(|hash| canonical_sha256(hash))
+            && selected_ids_are_valid
+            && self.case_id == case.case_id()
+            && self.process_replication_id == correctness_process_identity(batch_id)
+            && self.canonical_output.case_scope() == RouterCaseScope::RealCheckpoint
+            && self.canonical_output.case_id() == self.case_id
+            && self.canonical_output.row_count() == case.row_count()
+            && self.canonical_output.logits_f32le_sha256() == self.logits_f32le_sha256
+            && self.canonical_output.full_probabilities_f32le_sha256()
+                == self.full_probabilities_f32le_sha256
+            && self.canonical_output.selected_expert_ids() == self.selected_expert_ids
+            && selected_id_sha256(self.canonical_output.selected_expert_ids()).as_deref()
+                == Ok(self.selected_expert_ids_u32le_sha256.as_str())
+            && self.canonical_output.selected_probabilities_f32le_sha256()
+                == self.selected_probabilities_f32le_sha256
+            && self.canonical_output.normalized_weights_f32le_sha256()
+                == self.normalized_weights_f32le_sha256
+            && complete_router_output_sha256(&self.canonical_output).as_deref()
+                == Ok(self.complete_output_sha256.as_str())
+            && passing_router_comparison_evidence(&self.comparison, case.row_count())
+            && valid_router_memory_evidence(&self.memory_gauges)
+            && self.result_passed
+            && self.requested_device == GPU_DEVICE
+            && self.selected_device == GPU_DEVICE
+            && !self.fallback_used
+            && self.evaluated
+            && self.synchronized
+    }
+
+    fn repeat_identity_matches(&self, other: &Self) -> bool {
+        self.case_id == other.case_id
+            && self.process_replication_id == other.process_replication_id
+            && self.logits_f32le_sha256 == other.logits_f32le_sha256
+            && self.full_probabilities_f32le_sha256 == other.full_probabilities_f32le_sha256
+            && self.selected_expert_ids == other.selected_expert_ids
+            && self.selected_expert_ids_u32le_sha256 == other.selected_expert_ids_u32le_sha256
+            && self.selected_probabilities_f32le_sha256 == other.selected_probabilities_f32le_sha256
+            && self.normalized_weights_f32le_sha256 == other.normalized_weights_f32le_sha256
+            && self.complete_output_sha256 == other.complete_output_sha256
+            && self.canonical_output == other.canonical_output
+    }
+
+    fn evidence(&self, batch_id: &str, attempt_index: usize) -> Value {
+        let (observation_kind, run_index) = Self::observation_role(attempt_index);
+        let passed = self.passes_gate(
+            batch_id,
+            match self.case_id.as_str() {
+                ROUTER_REAL_SINGLE_ROW_CASE_ID => OrchestratedRouterCase::SingleRow,
+                ROUTER_REAL_TWO_ROW_CASE_ID => OrchestratedRouterCase::TwoRow,
+                _ => return json!({"status": "failed", "code": "invalid_case_identity"}),
+            },
+        );
+        let failure = (!passed).then(|| {
+            json!({
+                "code": "comparison_failed",
+                "stage": "correctness_gate",
+                "message": "the retained correctness attempt did not satisfy the frozen gate"
+            })
+        });
+        json!({
+            "attempt_id": self.observation_id(batch_id, attempt_index),
+            "attempt_index": attempt_index,
+            "observation_kind": observation_kind,
+            "run_index": run_index,
+            "case_id": self.case_id,
+            "process_replication_id": self.process_replication_id,
+            "logits_f32le_sha256": self.logits_f32le_sha256,
+            "full_probabilities_f32le_sha256": self.full_probabilities_f32le_sha256,
+            "selected_expert_ids": self.selected_expert_ids,
+            "selected_expert_ids_u32le_sha256": self.selected_expert_ids_u32le_sha256,
+            "selected_probabilities_f32le_sha256": self.selected_probabilities_f32le_sha256,
+            "normalized_weights_f32le_sha256": self.normalized_weights_f32le_sha256,
+            "complete_output_sha256": self.complete_output_sha256,
+            "comparison": self.comparison,
+            "memory_gauges": self.memory_gauges,
+            "result_passed": self.result_passed,
+            "requested_device": self.requested_device,
+            "selected_device": self.selected_device,
+            "fallback_used": self.fallback_used,
+            "evaluated": self.evaluated,
+            "synchronized": self.synchronized,
+            "status": if passed { "passed" } else { "failed" },
+            "failure": failure,
+            "passed": passed,
+        })
+    }
+}
+
+fn valid_router_memory_evidence(memory: &Value) -> bool {
+    let Some(fields) = memory.as_object() else {
+        return false;
+    };
+    let exact_fields = [
+        "mlx_active_bytes",
+        "mlx_cache_bytes",
+        "mlx_peak_bytes",
+        "process_footprint_bytes",
+        "process_footprint_source",
+        "system_pressure",
+        "reported_summed_total_bytes",
+    ];
+    if fields.len() != exact_fields.len()
+        || exact_fields
+            .iter()
+            .any(|field| !fields.contains_key(*field))
+        || !memory["reported_summed_total_bytes"].is_null()
+        || ensure_no_private_paths(memory).is_err()
+    {
+        return false;
+    }
+    let optional_u64 = |field: &str| memory[field].is_null() || memory[field].as_u64().is_some();
+    if ![
+        "mlx_active_bytes",
+        "mlx_cache_bytes",
+        "mlx_peak_bytes",
+        "process_footprint_bytes",
+    ]
+    .into_iter()
+    .all(optional_u64)
+    {
+        return false;
+    }
+    if let (Some(active), Some(peak)) = (
+        memory["mlx_active_bytes"].as_u64(),
+        memory["mlx_peak_bytes"].as_u64(),
+    ) {
+        if peak < active {
+            return false;
+        }
+    }
+    let footprint_pair = (
+        memory["process_footprint_bytes"].as_u64(),
+        memory["process_footprint_source"].as_str(),
+    );
+    if !matches!(footprint_pair, (Some(_), Some(_)) | (None, None)) {
+        return false;
+    }
+    ["process_footprint_source", "system_pressure"]
+        .into_iter()
+        .all(|field| {
+            memory[field].is_null()
+                || memory[field]
+                    .as_str()
+                    .is_some_and(stable_orchestration_identifier)
+        })
+}
+
+fn passing_router_comparison_evidence(comparison: &Value, row_count: usize) -> bool {
+    let Some(root) = comparison.as_object() else {
+        return false;
+    };
+    if root.len() != 8
+        || comparison["passed"] != true
+        || comparison["id_mismatch_count"].as_u64() != Some(0)
+        || comparison["order_mismatch_count"].as_u64() != Some(0)
+    {
+        return false;
+    }
+    let numeric_passes = |value: &Value, compared_count: usize, absolute: f64, relative: f64| {
+        let Some(numeric) = value.as_object() else {
+            return false;
+        };
+        let nonnegative_finite = |field: &str| {
+            value[field]
+                .as_f64()
+                .is_some_and(|metric| metric.is_finite() && metric >= 0.0)
+        };
+        numeric.len() == 9
+            && value["compared_count"].as_u64() == u64::try_from(compared_count).ok()
+            && value["mismatch_count"].as_u64() == Some(0)
+            && value["first_mismatch"].is_null()
+            && value["absolute_tolerance"].as_f64() == Some(absolute)
+            && value["relative_tolerance"].as_f64() == Some(relative)
+            && nonnegative_finite("maximum_absolute_error")
+            && nonnegative_finite("mean_absolute_error")
+            && nonnegative_finite("rmse")
+            && (value["maximum_relative_error"].is_null()
+                || nonnegative_finite("maximum_relative_error"))
+    };
+    let whole_checks = [
+        ("logits", row_count * 128, 5.0e-4, 5.0e-4),
+        ("full_probabilities", row_count * 128, 1.0e-6, 1.0e-6),
+        ("selected_probabilities", row_count * 8, 1.0e-6, 1.0e-6),
+        ("normalized_weights", row_count * 8, 1.0e-6, 1.0e-6),
+    ];
+    let whole_passes = whole_checks
+        .into_iter()
+        .all(|(name, count, absolute, relative)| {
+            numeric_passes(&comparison[name], count, absolute, relative)
+        });
+    let Some(ranges) = comparison["expert_range_comparisons"].as_object() else {
+        return false;
+    };
+    let ranges_pass = ranges.len() == 2
+        && ["0..16", "64..80"].into_iter().all(|range| {
+            comparison["expert_range_comparisons"][range]["passed"] == true
+                && comparison["expert_range_comparisons"][range]
+                    .as_object()
+                    .is_some_and(|fields| fields.len() == 3)
+                && numeric_passes(
+                    &comparison["expert_range_comparisons"][range]["logits"],
+                    row_count * 16,
+                    5.0e-4,
+                    5.0e-4,
+                )
+                && numeric_passes(
+                    &comparison["expert_range_comparisons"][range]["full_probabilities"],
+                    row_count * 16,
+                    1.0e-6,
+                    1.0e-6,
+                )
+        });
+    whole_passes && ranges_pass
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterCorrectnessGate {
+    batch_id: String,
+    case: OrchestratedRouterCase,
+    complete_output_sha256: String,
+    attempts: Vec<RouterCorrectnessAttempt>,
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+impl RouterCorrectnessGate {
+    fn try_new(
+        batch_id: &str,
+        case: OrchestratedRouterCase,
+        attempts: Vec<RouterCorrectnessAttempt>,
+    ) -> Result<Self, String> {
+        if attempts.len() != ROUTER_CORRECTNESS_ATTEMPTS {
+            return Err(
+                "router correctness requires exactly five retained warmups and ten retained measurements"
+                    .to_owned(),
+            );
+        }
+        let expected_case_id = case.case_id();
+        let measured_attempts = &attempts[ROUTER_CORRECTNESS_WARMUPS..];
+        let first_hash = measured_attempts
+            .first()
+            .map(|attempt| attempt.complete_output_sha256.as_str())
+            .ok_or_else(|| "router correctness attempts are unavailable".to_owned())?;
+        let first = measured_attempts
+            .first()
+            .ok_or_else(|| "router correctness attempts are unavailable".to_owned())?;
+        if !canonical_sha256(first_hash)
+            || expected_case_id != first.case_id
+            || attempts
+                .iter()
+                .any(|attempt| !attempt.passes_gate(batch_id, case))
+            || measured_attempts
+                .iter()
+                .any(|attempt| !attempt.repeat_identity_matches(first))
+        {
+            return Err(
+                "router correctness attempts do not establish passing warmups and ten identical evaluated GPU measurements"
+                    .to_owned(),
+            );
+        }
+        Ok(Self {
+            batch_id: batch_id.to_owned(),
+            case,
+            complete_output_sha256: first_hash.to_owned(),
+            attempts,
+        })
+    }
+
+    fn evidence(&self) -> Value {
+        let attempts = self
+            .attempts
+            .iter()
+            .enumerate()
+            .map(|(attempt_index, attempt)| attempt.evidence(&self.batch_id, attempt_index))
+            .collect::<Vec<_>>();
+        json!({
+            "batch_id": self.batch_id,
+            "case_id": self.case.case_id(),
+            "attempt_count": self.attempts.len(),
+            "warmup_count": ROUTER_CORRECTNESS_WARMUPS,
+            "measurement_count": ROUTER_CORRECTNESS_REPETITIONS,
+            "complete_output_sha256": self.complete_output_sha256,
+            "canonical_output": canonical_router_output_evidence(
+                &self.attempts[ROUTER_CORRECTNESS_WARMUPS].canonical_output,
+            ),
+            "requested_device": GPU_DEVICE,
+            "selected_device": GPU_DEVICE,
+            "fallback_used": false,
+            "evaluated": true,
+            "synchronized": true,
+            "comparison_passed": true,
+            "passed": true,
+            "attempts": attempts,
+        })
+    }
+}
+
+fn canonical_router_output_evidence(output: &RouterOutput) -> Value {
+    json!({
+        "case_id": output.case_id(),
+        "case_scope": "real_checkpoint",
+        "row_count": output.row_count(),
+        "logits_shape": output.logits_shape(),
+        "logits": output.logits(),
+        "logits_f32le_sha256": output.logits_f32le_sha256(),
+        "full_probabilities_shape": output.full_probabilities_shape(),
+        "full_probabilities": output.full_probabilities(),
+        "full_probabilities_f32le_sha256": output.full_probabilities_f32le_sha256(),
+        "selected_expert_ids": output.selected_expert_ids(),
+        "selected_expert_ids_u32le_sha256": selected_id_sha256(output.selected_expert_ids())
+            .expect("validated bounded expert IDs have a canonical hash"),
+        "selected_probabilities": output.selected_probabilities(),
+        "selected_probabilities_f32le_sha256": output.selected_probabilities_f32le_sha256(),
+        "normalized_weights": output.normalized_weights(),
+        "normalized_weights_f32le_sha256": output.normalized_weights_f32le_sha256(),
+        "complete_output_sha256": complete_router_output_sha256(output)
+            .expect("validated bounded router output has a canonical hash"),
+    })
+}
+
+#[derive(Debug, Clone, PartialEq)]
+enum RouterLaterBatchState {
+    Pending,
+    Recorded(Box<RouterRecordedBatch>),
+    Failed(Box<RouterFailedBatch>),
+    Unavailable { reason: String },
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterRecordedBatch {
+    batch_id: String,
+    ordered_observations: Vec<RouterOrderedObservation>,
+    primary_first_process_series: Vec<RouterTimingSeries>,
+    correctness_gates: Vec<RouterCorrectnessGate>,
+    costly_series: Vec<RouterTimingSeries>,
+    primary_major_series: Vec<RouterTimingSeries>,
+    stage_diagnostic_series: Vec<RouterTimingSeries>,
+    clean_first_process_series: Vec<RouterTimingSeries>,
+    clean_major_series: Vec<RouterTimingSeries>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterFailedBatch {
+    batch_id: String,
+    candidate: Box<RouterBenchmarkOrchestrator>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RouterOrderedObservation {
+    global_order_index: usize,
+    observation_id: String,
+    case_id: String,
+    process_replication_id: String,
+    schedule_step: &'static str,
+    source_kind: &'static str,
+    observation_kind: &'static str,
+    run_index: usize,
+    source_status: &'static str,
+    orchestration_status: &'static str,
+    identity_duplicate: bool,
+}
+
+impl RouterOrderedObservation {
+    fn evidence(&self, batch_id: &str) -> Value {
+        let mut evidence = json!({
+            "global_order_index": self.global_order_index,
+            "observation_id": self.observation_id,
+            "case_id": self.case_id,
+            "batch_id": batch_id,
+            "process_replication_id": self.process_replication_id,
+            "schedule_step": self.schedule_step,
+            "source_kind": self.source_kind,
+            "observation_kind": self.observation_kind,
+            "run_index": self.run_index,
+            "status": self.source_status,
+            "orchestration_status": self.orchestration_status,
+        });
+        if self.identity_duplicate {
+            evidence["identity_duplicate"] = json!(true);
+        }
+        evidence
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RouterBatchOrder {
+    SingleRowFirst,
+    TwoRowFirst,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(not(test), allow(dead_code))]
+enum RouterSecondBatchUnavailableReason {
+    QuietWindowUnavailable,
+    ResourceAdmissionUnavailable,
+    ThermalOrPowerStateUnavailable,
+    ExternalInterferenceObserved,
+}
+
+impl RouterSecondBatchUnavailableReason {
+    const fn public_reason(self) -> &'static str {
+        match self {
+            Self::QuietWindowUnavailable => {
+                "the later independent collection window was unavailable"
+            }
+            Self::ResourceAdmissionUnavailable => {
+                "the later batch did not pass the frozen resource-admission gate"
+            }
+            Self::ThermalOrPowerStateUnavailable => {
+                "the later batch did not match the admitted thermal or power state"
+            }
+            Self::ExternalInterferenceObserved => {
+                "the later batch was unavailable because external interference was observed"
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterBenchmarkOrchestrator {
+    batch_id: String,
+    batch_order: RouterBatchOrder,
+    ordered_observations: Vec<RouterOrderedObservation>,
+    primary_first_process_series: Vec<RouterTimingSeries>,
+    correctness_gates: Vec<RouterCorrectnessGate>,
+    pending_correctness_attempts: Vec<RouterCorrectnessAttempt>,
+    correctness_failed: bool,
+    timing_failed: bool,
+    terminal_failure: Option<RouterOrchestrationFailure>,
+    costly_series: Vec<RouterTimingSeries>,
+    primary_major_series: Vec<RouterTimingSeries>,
+    stage_diagnostic_series: Vec<RouterTimingSeries>,
+    clean_first_process_series: Vec<RouterTimingSeries>,
+    clean_major_series: Vec<RouterTimingSeries>,
+    rejected_timing_series: Vec<RouterRejectedTimingSeries>,
+    later_batch: RouterLaterBatchState,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct RouterOrchestrationFailure {
+    code: String,
+    stage: String,
+    message: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct RouterRejectedTimingSeries {
+    series: RouterTimingSeries,
+    failure: RouterOrchestrationFailure,
+}
+
+impl RouterOrchestrationFailure {
+    fn comparison(stage: &str, error: &str) -> Self {
+        Self {
+            code: "comparison_failed".to_owned(),
+            stage: "orchestration".to_owned(),
+            message: format!("{stage}: {error}"),
+        }
+    }
+
+    fn from_timing_series(stage: &str, series: &RouterTimingSeries, error: &str) -> Self {
+        series
+            .raw_timing_observations()
+            .iter()
+            .find_map(|observation| observation.failure())
+            .map_or_else(
+                || Self::comparison(stage, error),
+                |failure| Self {
+                    code: failure.code().to_owned(),
+                    stage: failure.stage().to_owned(),
+                    message: failure.message().to_owned(),
+                },
+            )
+    }
+
+    fn evidence(&self) -> Value {
+        json!({
+            "code": self.code,
+            "stage": self.stage,
+            "message": self.message,
+        })
+    }
+}
+
+type RouterSecondBatchCandidate = RouterBenchmarkOrchestrator;
+
+// T066 freezes and unit-tests this state machine before the T083 execution
+// gate may connect it to a real checkpoint and worker lifecycle.
+#[cfg_attr(not(test), allow(dead_code))]
+impl RouterBenchmarkOrchestrator {
+    fn new() -> Self {
+        Self::new_batch(
+            ROUTER_PRIMARY_BATCH_ID.to_owned(),
+            RouterBatchOrder::SingleRowFirst,
+        )
+    }
+
+    fn new_second(batch_id: impl Into<String>) -> Result<Self, String> {
+        let batch_id = batch_id.into();
+        if batch_id == ROUTER_PRIMARY_BATCH_ID || !stable_orchestration_identifier(&batch_id) {
+            return Err("later router batch identity is invalid or reused".to_owned());
+        }
+        Ok(Self::new_batch(batch_id, RouterBatchOrder::TwoRowFirst))
+    }
+
+    fn new_batch(batch_id: String, batch_order: RouterBatchOrder) -> Self {
+        Self {
+            batch_id,
+            batch_order,
+            ordered_observations: Vec::new(),
+            primary_first_process_series: Vec::with_capacity(ROUTER_FIRST_PROCESS_REPETITIONS),
+            correctness_gates: Vec::with_capacity(ROUTER_CORRECTNESS_ORDER.len()),
+            pending_correctness_attempts: Vec::with_capacity(ROUTER_CORRECTNESS_ATTEMPTS),
+            correctness_failed: false,
+            timing_failed: false,
+            terminal_failure: None,
+            costly_series: Vec::with_capacity(ROUTER_COSTLY_ORDER.len()),
+            primary_major_series: Vec::with_capacity(ROUTER_PRIMARY_MAJOR_ORDER.len()),
+            stage_diagnostic_series: Vec::with_capacity(ROUTER_STAGE_DIAGNOSTIC_ORDER.len()),
+            clean_first_process_series: Vec::with_capacity(ROUTER_CLEAN_MAJOR_ORDER.len()),
+            clean_major_series: Vec::with_capacity(ROUTER_CLEAN_MAJOR_ORDER.len()),
+            rejected_timing_series: Vec::new(),
+            later_batch: RouterLaterBatchState::Pending,
+        }
+    }
+
+    const fn correctness_order(&self) -> [OrchestratedRouterCase; 2] {
+        match self.batch_order {
+            RouterBatchOrder::SingleRowFirst => ROUTER_CORRECTNESS_ORDER,
+            RouterBatchOrder::TwoRowFirst => ROUTER_SECOND_CORRECTNESS_ORDER,
+        }
+    }
+
+    const fn costly_order(&self) -> [OrchestratedRouterCase; 2] {
+        match self.batch_order {
+            RouterBatchOrder::SingleRowFirst => ROUTER_COSTLY_ORDER,
+            RouterBatchOrder::TwoRowFirst => ROUTER_SECOND_COSTLY_ORDER,
+        }
+    }
+
+    const fn primary_major_order(
+        &self,
+    ) -> [(OrchestratedRouterCase, RouterTimingReplicationRole); 2] {
+        match self.batch_order {
+            RouterBatchOrder::SingleRowFirst => ROUTER_PRIMARY_MAJOR_ORDER,
+            RouterBatchOrder::TwoRowFirst => ROUTER_SECOND_PRIMARY_MAJOR_ORDER,
+        }
+    }
+
+    const fn stage_diagnostic_order(&self) -> [OrchestratedRouterCase; 2] {
+        match self.batch_order {
+            RouterBatchOrder::SingleRowFirst => ROUTER_STAGE_DIAGNOSTIC_ORDER,
+            RouterBatchOrder::TwoRowFirst => ROUTER_SECOND_STAGE_DIAGNOSTIC_ORDER,
+        }
+    }
+
+    const fn clean_major_order(
+        &self,
+    ) -> [(OrchestratedRouterCase, RouterTimingReplicationRole); 2] {
+        match self.batch_order {
+            RouterBatchOrder::SingleRowFirst => ROUTER_CLEAN_MAJOR_ORDER,
+            RouterBatchOrder::TwoRowFirst => ROUTER_SECOND_CLEAN_MAJOR_ORDER,
+        }
+    }
+
+    fn next_step(&self) -> &'static str {
+        if self.correctness_failed || self.timing_failed {
+            return "failed_stop_condition";
+        }
+        let correctness_order = self.correctness_order();
+        if self.correctness_gates.len() < correctness_order.len() {
+            return match correctness_order[self.correctness_gates.len()] {
+                OrchestratedRouterCase::SingleRow => "single_row_correctness",
+                OrchestratedRouterCase::TwoRow => "two_row_correctness",
+            };
+        }
+        if self.primary_first_process_series.len() < ROUTER_FIRST_PROCESS_REPETITIONS {
+            return "primary_first_process_os_cache_uncontrolled";
+        }
+        let costly_order = self.costly_order();
+        if self.costly_series.len() < costly_order.len() {
+            return match costly_order[self.costly_series.len()] {
+                OrchestratedRouterCase::SingleRow => "single_row_costly_real",
+                OrchestratedRouterCase::TwoRow => "two_row_costly_real",
+            };
+        }
+        let primary_major_order = self.primary_major_order();
+        if self.primary_major_series.len() < primary_major_order.len() {
+            let (case, role) = primary_major_order[self.primary_major_series.len()];
+            return match (case, role) {
+                (OrchestratedRouterCase::SingleRow, RouterTimingReplicationRole::Primary) => {
+                    "single_row_primary_major"
+                }
+                (OrchestratedRouterCase::TwoRow, RouterTimingReplicationRole::Primary) => {
+                    "two_row_primary_major"
+                }
+                (_, RouterTimingReplicationRole::CleanProcessReplication) => {
+                    unreachable!("primary major order contains only primary series")
+                }
+            };
+        }
+        let stage_diagnostic_order = self.stage_diagnostic_order();
+        if self.stage_diagnostic_series.len() < stage_diagnostic_order.len() {
+            return match stage_diagnostic_order[self.stage_diagnostic_series.len()] {
+                OrchestratedRouterCase::SingleRow => "single_row_stage_diagnostic",
+                OrchestratedRouterCase::TwoRow => "two_row_stage_diagnostic",
+            };
+        }
+        let clean_major_order = self.clean_major_order();
+        if self.clean_major_series.len() < clean_major_order.len() {
+            let current = clean_major_order[self.clean_major_series.len()];
+            let required_first_process_count =
+                (self.clean_major_series.len() + 1) * ROUTER_FIRST_PROCESS_REPETITIONS;
+            if self.clean_first_process_series.len() < required_first_process_count {
+                return match current.0 {
+                    OrchestratedRouterCase::SingleRow => {
+                        "single_row_clean_first_process_os_cache_uncontrolled"
+                    }
+                    OrchestratedRouterCase::TwoRow => {
+                        "two_row_clean_first_process_os_cache_uncontrolled"
+                    }
+                };
+            }
+            return match current {
+                (
+                    OrchestratedRouterCase::SingleRow,
+                    RouterTimingReplicationRole::CleanProcessReplication,
+                ) => "single_row_clean_process_major",
+                (
+                    OrchestratedRouterCase::TwoRow,
+                    RouterTimingReplicationRole::CleanProcessReplication,
+                ) => "two_row_clean_process_major",
+                (_, RouterTimingReplicationRole::Primary) => {
+                    unreachable!("clean major order contains only clean replications")
+                }
+            };
+        }
+        if self.batch_order == RouterBatchOrder::TwoRowFirst {
+            return "batch_complete";
+        }
+        match self.later_batch {
+            RouterLaterBatchState::Pending => "later_batch_or_unavailable_reason",
+            RouterLaterBatchState::Recorded(_)
+            | RouterLaterBatchState::Failed(_)
+            | RouterLaterBatchState::Unavailable { .. } => "complete",
+        }
+    }
+
+    fn ensure_active(&self) -> Result<(), String> {
+        if self.correctness_failed || self.timing_failed {
+            return Err(
+                "router orchestration already reached a retained stop condition".to_owned(),
+            );
+        }
+        Ok(())
+    }
+
+    fn append_ordered_observation(&mut self, mut observation: RouterOrderedObservation) {
+        observation.global_order_index = self.ordered_observations.len();
+        observation.identity_duplicate = self
+            .ordered_observations
+            .iter()
+            .any(|existing| existing.observation_id == observation.observation_id);
+        self.ordered_observations.push(observation);
+    }
+
+    fn append_correctness_observation(
+        &mut self,
+        schedule_step: &'static str,
+        attempt: &RouterCorrectnessAttempt,
+        attempt_index: usize,
+        source_passed: bool,
+        accepted: bool,
+    ) {
+        let (observation_kind, run_index) =
+            RouterCorrectnessAttempt::observation_role(attempt_index);
+        self.append_ordered_observation(RouterOrderedObservation {
+            global_order_index: 0,
+            observation_id: attempt.observation_id(&self.batch_id, attempt_index),
+            case_id: attempt.case_id.clone(),
+            process_replication_id: attempt.process_replication_id.clone(),
+            schedule_step,
+            source_kind: "correctness_attempt",
+            observation_kind,
+            run_index,
+            source_status: if source_passed { "passed" } else { "failed" },
+            orchestration_status: if accepted { "accepted" } else { "rejected" },
+            identity_duplicate: false,
+        });
+    }
+
+    fn append_timing_observations(
+        &mut self,
+        schedule_step: &'static str,
+        series: &RouterTimingSeries,
+        accepted: bool,
+    ) {
+        for observation in series.raw_timing_observations() {
+            self.append_ordered_observation(RouterOrderedObservation {
+                global_order_index: 0,
+                observation_id: observation.observation_id().to_owned(),
+                case_id: series.case_id().to_owned(),
+                process_replication_id: observation.process_replication_id().to_owned(),
+                schedule_step,
+                source_kind: "timing_series",
+                observation_kind: observation.observation_kind().as_str(),
+                run_index: observation.run_index(),
+                source_status: observation.status().as_str(),
+                orchestration_status: if accepted { "accepted" } else { "rejected" },
+                identity_duplicate: false,
+            });
+        }
+    }
+
+    fn mark_last_observations_rejected(&mut self, count: usize) {
+        let start = self.ordered_observations.len().saturating_sub(count);
+        for observation in &mut self.ordered_observations[start..] {
+            observation.orchestration_status = "rejected";
+        }
+    }
+
+    fn retain_timing_failure(&mut self, stage: &str, error: String) -> Result<(), String> {
+        let failure = RouterOrchestrationFailure::comparison(stage, &error);
+        self.retain_failure_record(failure, error)
+    }
+
+    fn retain_failure_record(
+        &mut self,
+        failure: RouterOrchestrationFailure,
+        error: String,
+    ) -> Result<(), String> {
+        self.timing_failed = true;
+        self.terminal_failure = Some(failure);
+        Err(error)
+    }
+
+    fn reject_timing_series(
+        &mut self,
+        stage: &'static str,
+        series: RouterTimingSeries,
+        error: String,
+    ) -> Result<(), String> {
+        let failure = RouterOrchestrationFailure::comparison(stage, &error);
+        self.append_timing_observations(stage, &series, false);
+        self.rejected_timing_series
+            .push(RouterRejectedTimingSeries {
+                series,
+                failure: failure.clone(),
+            });
+        self.timing_failed = true;
+        self.terminal_failure = Some(failure);
+        Err(error)
+    }
+
+    fn retain_correctness_failure(&mut self, error: String) -> Result<(), String> {
+        self.correctness_failed = true;
+        self.terminal_failure = Some(RouterOrchestrationFailure {
+            code: "comparison_failed".to_owned(),
+            stage: "correctness_gate".to_owned(),
+            message: error.clone(),
+        });
+        Err(error)
+    }
+
+    fn record_primary_first_process_series(
+        &mut self,
+        series: RouterTimingSeries,
+    ) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.correctness_gates.len() != self.correctness_order().len() {
+            return self.reject_timing_series(
+                "primary_first_process",
+                series,
+                "primary first-process timing is blocked until correctness passes".to_owned(),
+            );
+        }
+        if self.primary_first_process_series.len() >= ROUTER_FIRST_PROCESS_REPETITIONS
+            || !self.costly_series.is_empty()
+            || !self.primary_major_series.is_empty()
+        {
+            return self.reject_timing_series(
+                "primary_first_process",
+                series,
+                "primary first-process evidence is already recorded or late".to_owned(),
+            );
+        }
+        let case = self.costly_order()[0];
+        let repetition_index = self.primary_first_process_series.len();
+        let validation = validate_auxiliary_series_identity(
+            &series,
+            case,
+            RouterTimingSeriesKind::FirstProcessCostly,
+            RouterTimingInstrumentationMode::MinimallyInstrumented,
+        )
+        .and_then(|()| {
+            validate_first_process_identity(
+                &series,
+                &primary_first_process_identity(&self.batch_id, repetition_index),
+            )
+        })
+        .and_then(|()| {
+            self.validate_auxiliary_series(
+                &series,
+                case,
+                RouterTimingSeriesKind::FirstProcessCostly,
+                RouterTimingInstrumentationMode::MinimallyInstrumented,
+            )
+        });
+        let failure = validation.as_ref().err().map(|error| {
+            RouterOrchestrationFailure::from_timing_series("primary_first_process", &series, error)
+        });
+        self.append_timing_observations("primary_first_process", &series, validation.is_ok());
+        self.primary_first_process_series.push(series);
+        match validation {
+            Ok(()) => Ok(()),
+            Err(error) => self.retain_failure_record(
+                failure.expect("failed validation has a retained failure record"),
+                error,
+            ),
+        }
+    }
+
+    fn record_correctness_attempt(
+        &mut self,
+        case: OrchestratedRouterCase,
+        attempt: RouterCorrectnessAttempt,
+    ) -> Result<(), String> {
+        self.ensure_active()?;
+        let expected = self
+            .correctness_order()
+            .get(self.correctness_gates.len())
+            .copied();
+        let schedule_step = match expected.unwrap_or(case) {
+            OrchestratedRouterCase::SingleRow => "single_row_correctness",
+            OrchestratedRouterCase::TwoRow => "two_row_correctness",
+        };
+        let source_passed =
+            attempt.case_id == case.case_id() && attempt.passes_gate(&self.batch_id, case);
+        let passed = expected == Some(case) && source_passed;
+        self.append_correctness_observation(
+            schedule_step,
+            &attempt,
+            self.pending_correctness_attempts.len(),
+            source_passed,
+            passed,
+        );
+        self.pending_correctness_attempts.push(attempt);
+        if !passed {
+            return self.retain_correctness_failure(
+                if expected.is_none() {
+                    "router correctness attempt occurred after the frozen gates completed"
+                } else if expected != Some(case) {
+                    "router correctness attempt violated the frozen case order"
+                } else {
+                    "router correctness attempt failed and triggered the retained stop condition"
+                }
+                .to_owned(),
+            );
+        }
+        if self.pending_correctness_attempts.len() == ROUTER_CORRECTNESS_ATTEMPTS {
+            let attempts = std::mem::take(&mut self.pending_correctness_attempts);
+            match RouterCorrectnessGate::try_new(&self.batch_id, case, attempts.clone()) {
+                Ok(gate) => self.correctness_gates.push(gate),
+                Err(error) => {
+                    self.pending_correctness_attempts = attempts;
+                    self.mark_last_observations_rejected(ROUTER_CORRECTNESS_ATTEMPTS);
+                    return self.retain_correctness_failure(error);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn record_costly_series(&mut self, series: RouterTimingSeries) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.primary_first_process_series.len() != ROUTER_FIRST_PROCESS_REPETITIONS {
+            return self.reject_timing_series(
+                "costly_real",
+                series,
+                "costly router timing is blocked until first-process evidence passes".to_owned(),
+            );
+        }
+        let Some(case) = self.costly_order().get(self.costly_series.len()).copied() else {
+            return self.reject_timing_series(
+                "costly_real",
+                series,
+                "costly router timing series are already complete".to_owned(),
+            );
+        };
+        let validation = validate_auxiliary_series_identity(
+            &series,
+            case,
+            RouterTimingSeriesKind::CostlyReal,
+            RouterTimingInstrumentationMode::MinimallyInstrumented,
+        )
+        .and_then(|()| validate_primary_process_identity(&self.batch_id, &series))
+        .and_then(|()| {
+            self.validate_auxiliary_series(
+                &series,
+                case,
+                RouterTimingSeriesKind::CostlyReal,
+                RouterTimingInstrumentationMode::MinimallyInstrumented,
+            )
+        });
+        let failure = validation.as_ref().err().map(|error| {
+            RouterOrchestrationFailure::from_timing_series("costly_real", &series, error)
+        });
+        self.append_timing_observations("costly_real", &series, validation.is_ok());
+        self.costly_series.push(series);
+        match validation {
+            Ok(()) => Ok(()),
+            Err(error) => self.retain_failure_record(
+                failure.expect("failed validation has a retained failure record"),
+                error,
+            ),
+        }
+    }
+
+    fn record_primary_major_series(&mut self, series: RouterTimingSeries) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.costly_series.len() != self.costly_order().len() {
+            return self.reject_timing_series(
+                "primary_major",
+                series,
+                "router major timing is blocked until both costly series pass".to_owned(),
+            );
+        }
+        let Some(expected) = self
+            .primary_major_order()
+            .get(self.primary_major_series.len())
+            .copied()
+        else {
+            return self.reject_timing_series(
+                "primary_major",
+                series,
+                "primary router major series are already complete".to_owned(),
+            );
+        };
+        let validation = validate_major_series_identity(&series, expected)
+            .and_then(|()| validate_primary_process_identity(&self.batch_id, &series))
+            .and_then(|()| self.validate_series_for_step(&series, expected));
+        let failure = validation.as_ref().err().map(|error| {
+            RouterOrchestrationFailure::from_timing_series("primary_major", &series, error)
+        });
+        self.append_timing_observations("primary_major", &series, validation.is_ok());
+        self.primary_major_series.push(series);
+        match validation {
+            Ok(()) => Ok(()),
+            Err(error) => self.retain_failure_record(
+                failure.expect("failed validation has a retained failure record"),
+                error,
+            ),
+        }
+    }
+
+    fn record_stage_diagnostic_series(&mut self, series: RouterTimingSeries) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.primary_major_series.len() != self.primary_major_order().len() {
+            return self.reject_timing_series(
+                "stage_diagnostic",
+                series,
+                "stage diagnostics are blocked until both primary major series pass".to_owned(),
+            );
+        }
+        let Some(case) = self
+            .stage_diagnostic_order()
+            .get(self.stage_diagnostic_series.len())
+            .copied()
+        else {
+            return self.reject_timing_series(
+                "stage_diagnostic",
+                series,
+                "router stage diagnostics are already complete".to_owned(),
+            );
+        };
+        let validation = validate_auxiliary_series_identity(
+            &series,
+            case,
+            RouterTimingSeriesKind::StageDiagnostic,
+            RouterTimingInstrumentationMode::StageInstrumented,
+        )
+        .and_then(|()| validate_primary_process_identity(&self.batch_id, &series))
+        .and_then(|()| {
+            self.validate_auxiliary_series(
+                &series,
+                case,
+                RouterTimingSeriesKind::StageDiagnostic,
+                RouterTimingInstrumentationMode::StageInstrumented,
+            )
+        });
+        let failure = validation.as_ref().err().map(|error| {
+            RouterOrchestrationFailure::from_timing_series("stage_diagnostic", &series, error)
+        });
+        self.append_timing_observations("stage_diagnostic", &series, validation.is_ok());
+        self.stage_diagnostic_series.push(series);
+        match validation {
+            Ok(()) => Ok(()),
+            Err(error) => self.retain_failure_record(
+                failure.expect("failed validation has a retained failure record"),
+                error,
+            ),
+        }
+    }
+
+    fn record_clean_first_process_series(
+        &mut self,
+        series: RouterTimingSeries,
+    ) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.stage_diagnostic_series.len() != self.stage_diagnostic_order().len() {
+            return self.reject_timing_series(
+                "clean_first_process",
+                series,
+                "clean first-process evidence is blocked until stage diagnostics pass".to_owned(),
+            );
+        }
+        let case_index = self.clean_major_series.len();
+        let Some(expected) = self.clean_major_order().get(case_index).copied() else {
+            return self.reject_timing_series(
+                "clean_first_process",
+                series,
+                "clean first-process evidence is already complete".to_owned(),
+            );
+        };
+        let group_start = case_index * ROUTER_FIRST_PROCESS_REPETITIONS;
+        let repetition_index = self
+            .clean_first_process_series
+            .len()
+            .saturating_sub(group_start);
+        if self.clean_first_process_series.len() < group_start
+            || repetition_index >= ROUTER_FIRST_PROCESS_REPETITIONS
+        {
+            return self.reject_timing_series(
+                "clean_first_process",
+                series,
+                "the current clean worker cohort must complete its major replication before another starts"
+                    .to_owned(),
+            );
+        }
+        let validation = validate_auxiliary_series_identity(
+            &series,
+            expected.0,
+            RouterTimingSeriesKind::FirstProcessCostly,
+            RouterTimingInstrumentationMode::MinimallyInstrumented,
+        )
+        .and_then(|()| {
+            validate_first_process_identity(
+                &series,
+                &clean_first_process_identity(&self.batch_id, expected.0, repetition_index),
+            )
+        })
+        .and_then(|()| {
+            self.validate_auxiliary_series(
+                &series,
+                expected.0,
+                RouterTimingSeriesKind::FirstProcessCostly,
+                RouterTimingInstrumentationMode::MinimallyInstrumented,
+            )
+        });
+        let failure = validation.as_ref().err().map(|error| {
+            RouterOrchestrationFailure::from_timing_series("clean_first_process", &series, error)
+        });
+        self.append_timing_observations("clean_first_process", &series, validation.is_ok());
+        self.clean_first_process_series.push(series);
+        match validation {
+            Ok(()) => Ok(()),
+            Err(error) => self.retain_failure_record(
+                failure.expect("failed validation has a retained failure record"),
+                error,
+            ),
+        }
+    }
+
+    fn record_clean_major_series(&mut self, series: RouterTimingSeries) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.stage_diagnostic_series.len() != self.stage_diagnostic_order().len() {
+            return self.reject_timing_series(
+                "clean_major",
+                series,
+                "clean router replications are blocked until stage diagnostics pass".to_owned(),
+            );
+        }
+        let required_first_process_count =
+            (self.clean_major_series.len() + 1) * ROUTER_FIRST_PROCESS_REPETITIONS;
+        if self.clean_first_process_series.len() != required_first_process_count {
+            return self.reject_timing_series(
+                "clean_major",
+                series,
+                "clean major timing is blocked until its first-process evidence passes".to_owned(),
+            );
+        }
+        let Some(expected) = self
+            .clean_major_order()
+            .get(self.clean_major_series.len())
+            .copied()
+        else {
+            return self.reject_timing_series(
+                "clean_major",
+                series,
+                "clean router major series are already complete".to_owned(),
+            );
+        };
+        let validation = validate_major_series_identity(&series, expected)
+            .and_then(|()| validate_clean_process_identity(&self.batch_id, expected.0, &series))
+            .and_then(|()| self.validate_series_for_step(&series, expected));
+        let failure = validation.as_ref().err().map(|error| {
+            RouterOrchestrationFailure::from_timing_series("clean_major", &series, error)
+        });
+        let observation_count = series.raw_timing_observations().len();
+        self.append_timing_observations("clean_major", &series, validation.is_ok());
+        self.clean_major_series.push(series);
+        if let Err(error) = validation {
+            return self.retain_failure_record(
+                failure.expect("failed validation has a retained failure record"),
+                error,
+            );
+        }
+        if self.clean_major_series.len() == self.clean_major_order().len() {
+            let completion =
+                validate_major_router_timing_series(&self.complete_primary_major_matrix())
+                    .map_err(|error| error.to_string())
+                    .and_then(|()| self.require_primary_complete());
+            if let Err(error) = completion {
+                self.mark_last_observations_rejected(observation_count);
+                return self.retain_timing_failure("clean_major_matrix", error);
+            }
+        }
+        Ok(())
+    }
+
+    fn ordered_observation_evidence(&self) -> Result<Vec<Value>, String> {
+        let correctness_count = self
+            .correctness_gates
+            .iter()
+            .map(|gate| gate.attempts.len())
+            .sum::<usize>()
+            .checked_add(self.pending_correctness_attempts.len())
+            .ok_or_else(|| "router correctness observation count overflows".to_owned())?;
+        let timing_count = self
+            .primary_first_process_series
+            .iter()
+            .chain(&self.costly_series)
+            .chain(&self.primary_major_series)
+            .chain(&self.stage_diagnostic_series)
+            .chain(&self.clean_first_process_series)
+            .chain(&self.clean_major_series)
+            .map(|series| series.raw_timing_observations().len())
+            .chain(
+                self.rejected_timing_series
+                    .iter()
+                    .map(|item| item.series.raw_timing_observations().len()),
+            )
+            .sum::<usize>();
+        let expected_count = correctness_count
+            .checked_add(timing_count)
+            .ok_or_else(|| "router ordered observation count overflows".to_owned())?;
+        if self.ordered_observations.len() != expected_count {
+            return Err(
+                "router ordered observation ledger is incomplete or non-contiguous".to_owned(),
+            );
+        }
+        serialize_ordered_observations(&self.batch_id, &self.ordered_observations)
+    }
+
+    fn retained_batch_snapshot(&self) -> Result<Value, String> {
+        let status = if self.correctness_failed || self.timing_failed {
+            "failed"
+        } else if self.require_primary_complete().is_ok() {
+            "complete_candidate"
+        } else {
+            "incomplete"
+        };
+        let snapshot = json!({
+            "status": status,
+            "batch_id": self.batch_id,
+            "order": match self.batch_order {
+                RouterBatchOrder::SingleRowFirst => "single_row_first",
+                RouterBatchOrder::TwoRowFirst => "two_row_first",
+            },
+            "next_step": self.next_step(),
+            "raw_observations": self.ordered_observation_evidence()?,
+            "failure": self.terminal_failure.as_ref().map(RouterOrchestrationFailure::evidence),
+            "correctness_gates": self.correctness_gates
+                .iter()
+                .map(RouterCorrectnessGate::evidence)
+                .collect::<Vec<_>>(),
+            "pending_correctness_attempts": self.retained_correctness_attempt_evidence(),
+            "first_process_series": serialize_timing_series(
+                &self.primary_first_process_series
+                    .iter()
+                    .chain(&self.clean_first_process_series)
+                    .cloned()
+                    .collect::<Vec<_>>(),
+            )?,
+            "costly_series": serialize_timing_series(&self.costly_series)?,
+            "primary_major_series": serialize_timing_series(&self.primary_major_series)?,
+            "stage_diagnostic_series": serialize_timing_series(&self.stage_diagnostic_series)?,
+            "clean_major_series": serialize_timing_series(&self.clean_major_series)?,
+            "rejected_timing_series": serialize_rejected_timing_series(
+                &self.rejected_timing_series,
+            )?,
+        });
+        ensure_no_private_paths(&snapshot)?;
+        if serde_json::to_vec(&snapshot)
+            .map_err(|_| "router batch snapshot could not be encoded".to_owned())?
+            .len()
+            > MAX_RESPONSE_BYTES
+        {
+            return Err("router batch snapshot exceeds the protocol cap".to_owned());
+        }
+        Ok(snapshot)
+    }
+
+    fn retained_correctness_attempt_evidence(&self) -> Vec<Value> {
+        let rejected_index = self
+            .correctness_failed
+            .then(|| self.pending_correctness_attempts.len().checked_sub(1))
+            .flatten();
+        self.pending_correctness_attempts
+            .iter()
+            .enumerate()
+            .map(|(index, attempt)| {
+                let mut evidence = attempt.evidence(&self.batch_id, index);
+                if rejected_index == Some(index) {
+                    evidence["status"] = json!("failed");
+                    evidence["passed"] = json!(false);
+                    evidence["failure"] = self
+                        .terminal_failure
+                        .as_ref()
+                        .map(RouterOrchestrationFailure::evidence)
+                        .unwrap_or_else(|| {
+                            json!({
+                                "code": "comparison_failed",
+                                "stage": "correctness_gate",
+                                "message": "correctness attempt triggered a retained stop condition",
+                            })
+                        });
+                }
+                evidence
+            })
+            .collect()
+    }
+
+    fn record_later_batch(&mut self, candidate: &RouterSecondBatchCandidate) -> Result<(), String> {
+        self.ensure_active()?;
+        if self.later_batch != RouterLaterBatchState::Pending {
+            return Err("later router batch disposition is already recorded".to_owned());
+        }
+        match self.validate_and_record_later_batch(candidate) {
+            Ok(()) => Ok(()),
+            Err(error) => {
+                let failure = candidate.terminal_failure.clone().unwrap_or_else(|| {
+                    RouterOrchestrationFailure::comparison("later_batch", &error)
+                });
+                self.later_batch = RouterLaterBatchState::Failed(Box::new(RouterFailedBatch {
+                    batch_id: candidate.batch_id.clone(),
+                    candidate: Box::new(candidate.clone()),
+                }));
+                self.retain_failure_record(failure, error)
+            }
+        }
+    }
+
+    fn validate_and_record_later_batch(
+        &mut self,
+        candidate: &RouterSecondBatchCandidate,
+    ) -> Result<(), String> {
+        if self.batch_order != RouterBatchOrder::SingleRowFirst {
+            return Err("only the primary batch can accept a second batch".to_owned());
+        }
+        self.require_primary_complete()?;
+        if self.later_batch != RouterLaterBatchState::Pending {
+            return Err("later router batch disposition is already recorded".to_owned());
+        }
+        let batch_id = candidate.batch_id.as_str();
+        if candidate.batch_order != RouterBatchOrder::TwoRowFirst
+            || candidate.later_batch != RouterLaterBatchState::Pending
+            || batch_id == ROUTER_PRIMARY_BATCH_ID
+            || !stable_orchestration_identifier(batch_id)
+        {
+            return Err("later router batch identity is invalid or reused".to_owned());
+        }
+        candidate.require_primary_complete()?;
+        if candidate.correctness_gates.len() != ROUTER_SECOND_CORRECTNESS_ORDER.len()
+            || candidate.costly_series.len() != ROUTER_SECOND_COSTLY_ORDER.len()
+            || candidate.primary_major_series.len() != ROUTER_SECOND_PRIMARY_MAJOR_ORDER.len()
+            || candidate.stage_diagnostic_series.len() != ROUTER_SECOND_STAGE_DIAGNOSTIC_ORDER.len()
+            || candidate.clean_major_series.len() != ROUTER_SECOND_CLEAN_MAJOR_ORDER.len()
+        {
+            return Err("later router batch is not a complete reversed schedule".to_owned());
+        }
+        if candidate.primary_first_process_series.len() != ROUTER_FIRST_PROCESS_REPETITIONS {
+            return Err("later batch lacks its complete primary first-process cohort".to_owned());
+        }
+        for (index, primary_first_process) in
+            candidate.primary_first_process_series.iter().enumerate()
+        {
+            validate_auxiliary_series_identity(
+                primary_first_process,
+                ROUTER_SECOND_CORRECTNESS_ORDER[0],
+                RouterTimingSeriesKind::FirstProcessCostly,
+                RouterTimingInstrumentationMode::MinimallyInstrumented,
+            )?;
+            validate_first_process_series(primary_first_process)?;
+            validate_first_process_identity(
+                primary_first_process,
+                &primary_first_process_identity(batch_id, index),
+            )?;
+        }
+        for (gate, expected) in candidate
+            .correctness_gates
+            .iter()
+            .zip(ROUTER_SECOND_CORRECTNESS_ORDER)
+        {
+            if gate.case != expected
+                || RouterCorrectnessGate::try_new(batch_id, gate.case, gate.attempts.clone())?
+                    != *gate
+                || self
+                    .correctness_gates
+                    .iter()
+                    .find(|primary| primary.case == gate.case)
+                    .is_none_or(|primary| {
+                        primary.complete_output_sha256 != gate.complete_output_sha256
+                    })
+            {
+                return Err(
+                    "later router correctness gates violate order or repeat identity".to_owned(),
+                );
+            }
+        }
+        let first_case_gate = candidate
+            .correctness_gates
+            .iter()
+            .find(|gate| gate.case == ROUTER_SECOND_CORRECTNESS_ORDER[0])
+            .ok_or_else(|| "later batch lacks its first-case correctness gate".to_owned())?;
+        if candidate.primary_first_process_series.iter().any(|series| {
+            series.passing_output_sha256() != Some(first_case_gate.complete_output_sha256.as_str())
+        }) {
+            return Err(
+                "later primary first-process output differs from its correctness gate".to_owned(),
+            );
+        }
+        for (series, case) in candidate
+            .costly_series
+            .iter()
+            .zip(ROUTER_SECOND_COSTLY_ORDER)
+        {
+            validate_auxiliary_series_against_gates(
+                series,
+                case,
+                RouterTimingSeriesKind::CostlyReal,
+                RouterTimingInstrumentationMode::MinimallyInstrumented,
+                &candidate.correctness_gates,
+            )?;
+            validate_primary_process_identity(batch_id, series)?;
+        }
+        for (series, expected) in candidate
+            .primary_major_series
+            .iter()
+            .zip(ROUTER_SECOND_PRIMARY_MAJOR_ORDER)
+        {
+            validate_major_series_against_gates(series, expected, &candidate.correctness_gates)?;
+            validate_primary_process_identity(batch_id, series)?;
+        }
+        for (series, case) in candidate
+            .stage_diagnostic_series
+            .iter()
+            .zip(ROUTER_SECOND_STAGE_DIAGNOSTIC_ORDER)
+        {
+            validate_auxiliary_series_against_gates(
+                series,
+                case,
+                RouterTimingSeriesKind::StageDiagnostic,
+                RouterTimingInstrumentationMode::StageInstrumented,
+                &candidate.correctness_gates,
+            )?;
+            validate_primary_process_identity(batch_id, series)?;
+        }
+        if candidate.clean_first_process_series.len()
+            != ROUTER_SECOND_CLEAN_MAJOR_ORDER.len() * ROUTER_FIRST_PROCESS_REPETITIONS
+        {
+            return Err("later batch lacks complete clean first-process cohorts".to_owned());
+        }
+        for (series_group, expected) in candidate
+            .clean_first_process_series
+            .chunks_exact(ROUTER_FIRST_PROCESS_REPETITIONS)
+            .zip(ROUTER_SECOND_CLEAN_MAJOR_ORDER)
+        {
+            for (index, series) in series_group.iter().enumerate() {
+                validate_auxiliary_series_against_gates(
+                    series,
+                    expected.0,
+                    RouterTimingSeriesKind::FirstProcessCostly,
+                    RouterTimingInstrumentationMode::MinimallyInstrumented,
+                    &candidate.correctness_gates,
+                )?;
+                validate_first_process_identity(
+                    series,
+                    &clean_first_process_identity(batch_id, expected.0, index),
+                )?;
+            }
+        }
+        for (series, expected) in candidate
+            .clean_major_series
+            .iter()
+            .zip(ROUTER_SECOND_CLEAN_MAJOR_ORDER)
+        {
+            validate_major_series_against_gates(series, expected, &candidate.correctness_gates)?;
+            validate_clean_process_identity(batch_id, expected.0, series)?;
+        }
+        let major_series = candidate
+            .primary_major_series
+            .iter()
+            .chain(&candidate.clean_major_series)
+            .cloned()
+            .collect::<Vec<_>>();
+        validate_major_router_timing_series(&major_series).map_err(|error| error.to_string())?;
+        validate_orchestrated_process_matrix(&major_series)?;
+        let primary_schedule = self
+            .primary_first_process_series
+            .iter()
+            .chain(&self.costly_series)
+            .chain(&self.primary_major_series)
+            .chain(&self.stage_diagnostic_series)
+            .chain(&self.clean_first_process_series)
+            .chain(&self.clean_major_series)
+            .collect::<Vec<_>>();
+        let second_schedule = candidate
+            .primary_first_process_series
+            .iter()
+            .chain(&candidate.costly_series)
+            .chain(&candidate.primary_major_series)
+            .chain(&candidate.stage_diagnostic_series)
+            .chain(&candidate.clean_first_process_series)
+            .chain(&candidate.clean_major_series)
+            .collect::<Vec<_>>();
+        validate_independent_later_batch(&primary_schedule, &second_schedule)?;
+        validate_unique_observation_identities(
+            candidate
+                .primary_first_process_series
+                .iter()
+                .chain(&candidate.costly_series)
+                .chain(&candidate.primary_major_series)
+                .chain(&candidate.stage_diagnostic_series)
+                .chain(&candidate.clean_first_process_series)
+                .chain(&candidate.clean_major_series),
+        )?;
+        self.later_batch = RouterLaterBatchState::Recorded(Box::new(RouterRecordedBatch {
+            batch_id: candidate.batch_id.clone(),
+            ordered_observations: candidate.ordered_observations.clone(),
+            primary_first_process_series: candidate.primary_first_process_series.clone(),
+            correctness_gates: candidate.correctness_gates.clone(),
+            costly_series: candidate.costly_series.clone(),
+            primary_major_series: candidate.primary_major_series.clone(),
+            stage_diagnostic_series: candidate.stage_diagnostic_series.clone(),
+            clean_first_process_series: candidate.clean_first_process_series.clone(),
+            clean_major_series: candidate.clean_major_series.clone(),
+        }));
+        Ok(())
+    }
+
+    fn record_later_batch_unavailable(
+        &mut self,
+        reason: RouterSecondBatchUnavailableReason,
+    ) -> Result<(), String> {
+        self.ensure_active()?;
+        if let Err(error) = self.require_primary_complete() {
+            return self.retain_timing_failure("later_batch_unavailable", error);
+        }
+        if self.later_batch != RouterLaterBatchState::Pending {
+            return Err("later router batch disposition is already recorded".to_owned());
+        }
+        let reason = reason.public_reason().to_owned();
+        ensure_no_private_paths(&Value::String(reason.clone()))?;
+        self.later_batch = RouterLaterBatchState::Unavailable { reason };
+        Ok(())
+    }
+
+    fn evidence(&self) -> Result<Value, String> {
+        if self.correctness_failed || self.timing_failed {
+            let retained_major_series = self.complete_primary_major_matrix();
+            let failure = self
+                .terminal_failure
+                .as_ref()
+                .ok_or_else(|| "router terminal failure lacks a stable error record".to_owned())?;
+            let evidence = json!({
+                "schema_version": 1,
+                "orchestration": "qwen3moe-router-frozen-schedule",
+                "status": "failed",
+                "batch_id": self.batch_id,
+                "order": match self.batch_order {
+                    RouterBatchOrder::SingleRowFirst => "single_row_first",
+                    RouterBatchOrder::TwoRowFirst => "two_row_first",
+                },
+                "stage": failure.stage,
+                "failure": failure.evidence(),
+                "order_seed": ROUTER_BENCHMARK_ORDER_SEED,
+                "raw_observations": self.ordered_observation_evidence()?,
+                "completed_correctness_gates": self
+                    .correctness_gates
+                    .iter()
+                    .map(RouterCorrectnessGate::evidence)
+                    .collect::<Vec<_>>(),
+                "retained_current_case_attempts": self.retained_correctness_attempt_evidence(),
+                "retained_timing": {
+                    "first_process_series": serialize_timing_series(
+                        &self.primary_first_process_series
+                            .iter()
+                            .chain(&self.clean_first_process_series)
+                            .cloned()
+                            .collect::<Vec<_>>(),
+                    )?,
+                    "costly_series": serialize_timing_series(&self.costly_series)?,
+                    "major_series": serialize_timing_series(&retained_major_series)?,
+                    "stage_diagnostic_series": serialize_timing_series(
+                        &self.stage_diagnostic_series,
+                    )?,
+                    "rejected_series": serialize_rejected_timing_series(
+                        &self.rejected_timing_series,
+                    )?,
+                },
+                "second_batch": match &self.later_batch {
+                    RouterLaterBatchState::Failed(failed) => {
+                        let retained_evidence = failed.candidate.retained_batch_snapshot()?;
+                        json!({
+                            "status": "failed",
+                            "batch_id": failed.batch_id,
+                            "retained_evidence": retained_evidence,
+                        })
+                    }
+                    _ => Value::Null,
+                },
+                "first_process_observation_started": !self.primary_first_process_series.is_empty()
+                    || !self.clean_first_process_series.is_empty()
+                    || self.rejected_timing_series.iter().any(|item| {
+                        item.series.series_kind() == RouterTimingSeriesKind::FirstProcessCostly
+                    }),
+                "timing_started": !self.primary_first_process_series.is_empty()
+                    || !self.costly_series.is_empty()
+                    || !self.primary_major_series.is_empty()
+                    || !self.stage_diagnostic_series.is_empty()
+                    || !self.clean_first_process_series.is_empty()
+                    || !self.clean_major_series.is_empty()
+                    || !self.rejected_timing_series.is_empty(),
+                "passed": false,
+            });
+            ensure_no_private_paths(&evidence)?;
+            if serde_json::to_vec(&evidence)
+                .map_err(|_| "router failure evidence could not be encoded".to_owned())?
+                .len()
+                > MAX_RESPONSE_BYTES
+            {
+                return Err("router failure evidence exceeds the protocol cap".to_owned());
+            }
+            return Ok(evidence);
+        }
+        self.require_primary_complete()?;
+        let primary_major_matrix = self.complete_primary_major_matrix();
+        let primary_series = serialize_timing_series(&primary_major_matrix)?;
+        let later_batch = match &self.later_batch {
+            RouterLaterBatchState::Pending => {
+                return Err(
+                    "later router batch requires recorded evidence or an unavailable reason"
+                        .to_owned(),
+                );
+            }
+            RouterLaterBatchState::Recorded(recorded) => json!({
+                "status": "recorded",
+                "batch_id": recorded.batch_id,
+                "order": "two_row_before_single_row_within_each_major_pair",
+                "raw_observations": serialize_ordered_observations(
+                    &recorded.batch_id,
+                    &recorded.ordered_observations,
+                )?,
+                "between_batch_variation_measured": true,
+                "first_process_series": serialize_timing_series(
+                    &recorded.primary_first_process_series
+                        .iter()
+                        .chain(&recorded.clean_first_process_series)
+                        .cloned()
+                        .collect::<Vec<_>>(),
+                )?,
+                "correctness_gates": recorded.correctness_gates
+                    .iter()
+                    .map(RouterCorrectnessGate::evidence)
+                    .collect::<Vec<_>>(),
+                "costly_series": serialize_timing_series(&recorded.costly_series)?,
+                "major_series": serialize_timing_series(
+                    &recorded.primary_major_series
+                        .iter()
+                        .chain(&recorded.clean_major_series)
+                        .cloned()
+                        .collect::<Vec<_>>(),
+                )?,
+                "stage_diagnostic_series": serialize_timing_series(
+                    &recorded.stage_diagnostic_series,
+                )?,
+            }),
+            RouterLaterBatchState::Failed(_) => {
+                return Err("failed later router batch must use terminal evidence".to_owned());
+            }
+            RouterLaterBatchState::Unavailable { reason } => json!({
+                "status": "unavailable",
+                "reason": reason,
+                "between_batch_variation_measured": false,
+            }),
+        };
+        let evidence = json!({
+            "schema_version": 1,
+            "orchestration": "qwen3moe-router-frozen-schedule",
+            "status": "passed",
+            "order_seed": ROUTER_BENCHMARK_ORDER_SEED,
+            "correctness_gates": self
+                .correctness_gates
+                .iter()
+                .map(RouterCorrectnessGate::evidence)
+                .collect::<Vec<_>>(),
+            "primary_batch": {
+                "batch_id": self.batch_id,
+                "order": "single_row_before_two_row_within_each_major_pair",
+                "raw_observations": self.ordered_observation_evidence()?,
+                "first_process_series": serialize_timing_series(
+                    &self.primary_first_process_series
+                        .iter()
+                        .chain(&self.clean_first_process_series)
+                        .cloned()
+                        .collect::<Vec<_>>(),
+                )?,
+                "costly_series": serialize_timing_series(&self.costly_series)?,
+                "major_series": primary_series,
+                "stage_diagnostic_series": serialize_timing_series(&self.stage_diagnostic_series)?,
+            },
+            "second_batch": later_batch,
+        });
+        ensure_no_private_paths(&evidence)?;
+        if serde_json::to_vec(&evidence)
+            .map_err(|_| "router orchestration evidence could not be encoded".to_owned())?
+            .len()
+            > MAX_RESPONSE_BYTES
+        {
+            return Err("router orchestration evidence exceeds the protocol cap".to_owned());
+        }
+        Ok(evidence)
+    }
+
+    fn validate_series_for_step(
+        &self,
+        series: &RouterTimingSeries,
+        expected: (OrchestratedRouterCase, RouterTimingReplicationRole),
+    ) -> Result<(), String> {
+        validate_major_series_against_gates(series, expected, &self.correctness_gates)
+    }
+
+    fn validate_auxiliary_series(
+        &self,
+        series: &RouterTimingSeries,
+        case: OrchestratedRouterCase,
+        series_kind: RouterTimingSeriesKind,
+        instrumentation_mode: RouterTimingInstrumentationMode,
+    ) -> Result<(), String> {
+        validate_auxiliary_series_against_gates(
+            series,
+            case,
+            series_kind,
+            instrumentation_mode,
+            &self.correctness_gates,
+        )
+    }
+
+    fn complete_primary_major_matrix(&self) -> Vec<RouterTimingSeries> {
+        self.primary_major_series
+            .iter()
+            .chain(&self.clean_major_series)
+            .cloned()
+            .collect()
+    }
+
+    fn require_primary_complete(&self) -> Result<(), String> {
+        self.ordered_observation_evidence()?;
+        if self.correctness_failed
+            || self.timing_failed
+            || self.ordered_observations.iter().any(|observation| {
+                observation.orchestration_status != "accepted" || observation.identity_duplicate
+            })
+            || self.primary_first_process_series.len() != ROUTER_FIRST_PROCESS_REPETITIONS
+            || self.correctness_gates.len() != self.correctness_order().len()
+            || self.costly_series.len() != self.costly_order().len()
+            || self.primary_major_series.len() != self.primary_major_order().len()
+            || self.stage_diagnostic_series.len() != self.stage_diagnostic_order().len()
+            || self.clean_first_process_series.len()
+                != self.clean_major_order().len() * ROUTER_FIRST_PROCESS_REPETITIONS
+            || self.clean_major_series.len() != self.clean_major_order().len()
+        {
+            return Err("primary router frozen schedule is incomplete".to_owned());
+        }
+        let major_matrix = self.complete_primary_major_matrix();
+        validate_major_router_timing_series(&major_matrix).map_err(|error| error.to_string())?;
+        validate_orchestrated_process_matrix(&major_matrix)?;
+        validate_unique_observation_identities(
+            self.primary_first_process_series
+                .iter()
+                .chain(&self.costly_series)
+                .chain(&self.primary_major_series)
+                .chain(&self.stage_diagnostic_series)
+                .chain(&self.clean_first_process_series)
+                .chain(&self.clean_major_series),
+        )
+    }
+}
+
+fn serialize_ordered_observations(
+    batch_id: &str,
+    observations: &[RouterOrderedObservation],
+) -> Result<Vec<Value>, String> {
+    if observations
+        .iter()
+        .enumerate()
+        .any(|(index, observation)| observation.global_order_index != index)
+    {
+        return Err("router ordered observation ledger is non-contiguous".to_owned());
+    }
+    Ok(observations
+        .iter()
+        .map(|observation| observation.evidence(batch_id))
+        .collect())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_major_series_identity(
+    series: &RouterTimingSeries,
+    expected: (OrchestratedRouterCase, RouterTimingReplicationRole),
+) -> Result<(), String> {
+    let (case, role) = expected;
+    if series.case_id() != case.case_id()
+        || series.benchmark_id() != case.benchmark_id()
+        || series.series_kind() != RouterTimingSeriesKind::MajorMinimallyInstrumented
+        || series.replication_role() != role
+        || series.instrumentation_mode() != RouterTimingInstrumentationMode::MinimallyInstrumented
+    {
+        return Err("router major series violates its frozen step identity".to_owned());
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_major_series_against_gates(
+    series: &RouterTimingSeries,
+    expected: (OrchestratedRouterCase, RouterTimingReplicationRole),
+    gates: &[RouterCorrectnessGate],
+) -> Result<(), String> {
+    let (case, role) = expected;
+    validate_major_series_identity(series, expected)?;
+    let gate = gates
+        .iter()
+        .find(|gate| gate.case == case)
+        .ok_or_else(|| "router timing lacks its matching correctness gate".to_owned())?;
+    if series.replication_role() != role
+        || !series.has_complete_success_samples()
+        || series
+            .raw_timing_observations()
+            .iter()
+            .any(|observation| observation.status() != RouterTimingObservationStatus::Passed)
+        || series.passing_output_sha256() != Some(gate.complete_output_sha256.as_str())
+    {
+        return Err(
+            "router major series contradicts its correctness gate or frozen step".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_auxiliary_series_identity(
+    series: &RouterTimingSeries,
+    case: OrchestratedRouterCase,
+    series_kind: RouterTimingSeriesKind,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+) -> Result<(), String> {
+    if series.case_id() != case.case_id()
+        || series.series_kind() != series_kind
+        || series.replication_role() != RouterTimingReplicationRole::Primary
+        || series.instrumentation_mode() != instrumentation_mode
+    {
+        return Err("router auxiliary series violates its frozen step identity".to_owned());
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_first_process_series(series: &RouterTimingSeries) -> Result<(), String> {
+    if !series.has_complete_success_samples()
+        || series
+            .raw_timing_observations()
+            .iter()
+            .any(|observation| observation.status() != RouterTimingObservationStatus::Passed)
+        || series
+            .passing_output_sha256()
+            .is_none_or(|hash| !canonical_sha256(hash))
+    {
+        return Err("router first-process series contains a retained failure".to_owned());
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_auxiliary_series_against_gates(
+    series: &RouterTimingSeries,
+    case: OrchestratedRouterCase,
+    series_kind: RouterTimingSeriesKind,
+    instrumentation_mode: RouterTimingInstrumentationMode,
+    gates: &[RouterCorrectnessGate],
+) -> Result<(), String> {
+    validate_auxiliary_series_identity(series, case, series_kind, instrumentation_mode)?;
+    let gate = gates
+        .iter()
+        .find(|gate| gate.case == case)
+        .ok_or_else(|| "router timing lacks its matching correctness gate".to_owned())?;
+    if !series.has_complete_success_samples()
+        || series
+            .raw_timing_observations()
+            .iter()
+            .any(|observation| observation.status() != RouterTimingObservationStatus::Passed)
+        || series.passing_output_sha256() != Some(gate.complete_output_sha256.as_str())
+    {
+        return Err(
+            "router auxiliary series contradicts its correctness gate or frozen step".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_unique_observation_identities<'a>(
+    series: impl Iterator<Item = &'a RouterTimingSeries>,
+) -> Result<(), String> {
+    let mut identities = BTreeSet::new();
+    if series
+        .flat_map(RouterTimingSeries::raw_timing_observations)
+        .any(|observation| !identities.insert(observation.observation_id()))
+    {
+        return Err("router schedule reuses an observation identity across series".to_owned());
+    }
+    Ok(())
+}
+
+fn primary_process_identity(batch_id: &str) -> String {
+    primary_first_process_identity(batch_id, 0)
+}
+
+fn correctness_process_identity(batch_id: &str) -> String {
+    format!("{batch_id}-correctness-worker")
+}
+
+fn clean_process_identity(batch_id: &str, case: OrchestratedRouterCase) -> String {
+    clean_first_process_identity(batch_id, case, 0)
+}
+
+fn primary_first_process_identity(batch_id: &str, repetition_index: usize) -> String {
+    format!("{batch_id}-primary-first-read-worker-{repetition_index:02}")
+}
+
+fn clean_first_process_identity(
+    batch_id: &str,
+    case: OrchestratedRouterCase,
+    repetition_index: usize,
+) -> String {
+    match case {
+        OrchestratedRouterCase::SingleRow => {
+            format!("{batch_id}-single-row-clean-first-read-worker-{repetition_index:02}")
+        }
+        OrchestratedRouterCase::TwoRow => {
+            format!("{batch_id}-two-row-clean-first-read-worker-{repetition_index:02}")
+        }
+    }
+}
+
+fn validate_first_process_identity(
+    series: &RouterTimingSeries,
+    expected_process_id: &str,
+) -> Result<(), String> {
+    if series.process_replication_id() != expected_process_id {
+        return Err(
+            "router first-process series does not use its orchestration-issued process identity"
+                .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_primary_process_identity(
+    batch_id: &str,
+    series: &RouterTimingSeries,
+) -> Result<(), String> {
+    if series.process_replication_id() != primary_process_identity(batch_id) {
+        return Err(
+            "router primary series does not use its orchestration-issued process identity"
+                .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_clean_process_identity(
+    batch_id: &str,
+    case: OrchestratedRouterCase,
+    series: &RouterTimingSeries,
+) -> Result<(), String> {
+    if series.process_replication_id() != clean_process_identity(batch_id, case) {
+        return Err(
+            "router clean series does not use its orchestration-issued process identity".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_orchestrated_process_matrix(series: &[RouterTimingSeries]) -> Result<(), String> {
+    let primary_processes = series
+        .iter()
+        .filter(|item| item.replication_role() == RouterTimingReplicationRole::Primary)
+        .map(RouterTimingSeries::process_replication_id)
+        .collect::<BTreeSet<_>>();
+    let clean_processes = series
+        .iter()
+        .filter(|item| {
+            item.replication_role() == RouterTimingReplicationRole::CleanProcessReplication
+        })
+        .map(RouterTimingSeries::process_replication_id)
+        .collect::<BTreeSet<_>>();
+    if primary_processes.len() != 1
+        || clean_processes.len() != 2
+        || primary_processes
+            .iter()
+            .any(|process| clean_processes.contains(process))
+    {
+        return Err(
+            "router major orchestration requires one persistent and two clean processes".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn serialize_timing_series(series: &[RouterTimingSeries]) -> Result<Vec<Value>, String> {
+    series
+        .iter()
+        .map(|item| item.try_to_value().map_err(|error| error.to_string()))
+        .collect()
+}
+
+fn serialize_rejected_timing_series(
+    series: &[RouterRejectedTimingSeries],
+) -> Result<Vec<Value>, String> {
+    series
+        .iter()
+        .map(|item| {
+            Ok(json!({
+                "status": "failed",
+                "failure": item.failure.evidence(),
+                "series": item.series.try_to_value().map_err(|error| error.to_string())?,
+            }))
+        })
+        .collect()
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn validate_independent_later_batch(
+    primary: &[&RouterTimingSeries],
+    later: &[&RouterTimingSeries],
+) -> Result<(), String> {
+    let primary_processes = primary
+        .iter()
+        .map(|series| series.process_replication_id())
+        .collect::<BTreeSet<_>>();
+    if later
+        .iter()
+        .any(|series| primary_processes.contains(series.process_replication_id()))
+    {
+        return Err("later router batch reuses a primary-batch process identity".to_owned());
+    }
+    let primary_observations = primary
+        .iter()
+        .flat_map(|series| series.raw_timing_observations())
+        .map(|observation| observation.observation_id())
+        .collect::<BTreeSet<_>>();
+    if later
+        .iter()
+        .flat_map(|series| series.raw_timing_observations())
+        .any(|observation| primary_observations.contains(observation.observation_id()))
+    {
+        return Err("later router batch reuses a primary-batch observation identity".to_owned());
+    }
+    Ok(())
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn stable_orchestration_identifier(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value.trim() == value
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':'))
+}
+
 fn run_planned_validate_router(command: ValidateRouterCommand) -> Result<(), String> {
     // As with inspection, resolving any path here would cross the T074 gate.
+    let orchestration = RouterBenchmarkOrchestrator::new();
+    debug_assert_eq!(orchestration.next_step(), "single_row_correctness");
     let _parsed_paths = (command.model, command.oracle, command.evidence_dir);
-    Err("validate-router is parsed but correctness-gated orchestration remains deferred to T066 and execution to T083; no checkpoint was accessed and no MLX worker was started".to_owned())
+    Err("validate-router correctness-gated orchestration is frozen, but checkpoint admission remains blocked until notified T074 and execution until T083; no checkpoint was accessed and no MLX worker was started".to_owned())
 }
 
 struct ExternalModelCommand {
@@ -3254,9 +5609,701 @@ fn write_evidence_exclusive(path: &Path, evidence: &Value) -> Result<(), String>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::LazyLock;
+
+    static ORCHESTRATION_SINGLE_OUTPUT: LazyLock<RouterOutput> =
+        LazyLock::new(|| build_orchestration_output(OrchestratedRouterCase::SingleRow));
+    static ORCHESTRATION_TWO_ROW_OUTPUT: LazyLock<RouterOutput> =
+        LazyLock::new(|| build_orchestration_output(OrchestratedRouterCase::TwoRow));
+    static ORCHESTRATION_SINGLE_HASH: LazyLock<String> = LazyLock::new(|| {
+        complete_router_output_sha256(&ORCHESTRATION_SINGLE_OUTPUT)
+            .expect("single-row orchestration output hash")
+    });
+    static ORCHESTRATION_TWO_ROW_HASH: LazyLock<String> = LazyLock::new(|| {
+        complete_router_output_sha256(&ORCHESTRATION_TWO_ROW_OUTPUT)
+            .expect("two-row orchestration output hash")
+    });
+
+    #[derive(Clone, Copy)]
+    struct OrchestrationTimingLabels<'a> {
+        process_state: &'a str,
+        condition: &'a str,
+        external_costly: bool,
+    }
 
     fn args(values: &[&str]) -> Vec<OsString> {
         values.iter().map(OsString::from).collect()
+    }
+
+    fn build_orchestration_output(case: OrchestratedRouterCase) -> RouterOutput {
+        let mut logits = Vec::with_capacity(case.row_count() * 128);
+        let mut full_probabilities = Vec::with_capacity(case.row_count() * 128);
+        let mut selected_expert_ids = Vec::with_capacity(case.row_count());
+        let mut selected_probabilities = Vec::with_capacity(case.row_count());
+        let mut normalized_weights = Vec::with_capacity(case.row_count());
+        for row in 0..case.row_count() {
+            let row_logits = (0..128)
+                .map(|expert| 4.0_f32 - expert as f32 * 0.05 + row as f32 * 0.001)
+                .collect::<Vec<_>>();
+            let maximum = row_logits.iter().copied().reduce(f32::max).unwrap();
+            let exponentials = row_logits
+                .iter()
+                .map(|value| (f64::from(*value) - f64::from(maximum)).exp())
+                .collect::<Vec<_>>();
+            let denominator = exponentials.iter().sum::<f64>();
+            let probabilities = exponentials
+                .iter()
+                .map(|value| (value / denominator) as f32)
+                .collect::<Vec<_>>();
+            let ids = (0_u64..8).collect::<Vec<_>>();
+            let selected = probabilities[..8].to_vec();
+            let selected_sum = selected.iter().copied().map(f64::from).sum::<f64>();
+            let normalized = selected
+                .iter()
+                .map(|value| (f64::from(*value) / selected_sum) as f32)
+                .collect::<Vec<_>>();
+            logits.extend(row_logits);
+            full_probabilities.extend(probabilities);
+            selected_expert_ids.push(ids);
+            selected_probabilities.push(selected);
+            normalized_weights.push(normalized);
+        }
+        RouterOutput::try_new(
+            case.case_id(),
+            RouterCaseScope::RealCheckpoint,
+            case.row_count(),
+            logits,
+            full_probabilities,
+            selected_expert_ids,
+            selected_probabilities,
+            normalized_weights,
+        )
+        .expect("valid bounded orchestration output")
+    }
+
+    fn orchestration_output(case: OrchestratedRouterCase) -> &'static RouterOutput {
+        match case {
+            OrchestratedRouterCase::SingleRow => &ORCHESTRATION_SINGLE_OUTPUT,
+            OrchestratedRouterCase::TwoRow => &ORCHESTRATION_TWO_ROW_OUTPUT,
+        }
+    }
+
+    fn orchestration_hash(case: OrchestratedRouterCase) -> &'static str {
+        match case {
+            OrchestratedRouterCase::SingleRow => ORCHESTRATION_SINGLE_HASH.as_str(),
+            OrchestratedRouterCase::TwoRow => ORCHESTRATION_TWO_ROW_HASH.as_str(),
+        }
+    }
+
+    fn router_result_from_output(output: &RouterOutput) -> RouterResult {
+        let complete_rows = |values: &[f32]| {
+            values
+                .chunks_exact(128)
+                .map(|row| row.iter().copied().map(f64::from).collect::<Vec<_>>())
+                .collect::<Vec<_>>()
+        };
+        let selected_rows = |values: &[Vec<f32>]| {
+            values
+                .iter()
+                .map(|row| row.iter().copied().map(f64::from).collect::<Vec<_>>())
+                .collect::<Vec<_>>()
+        };
+        serde_json::from_value(json!({
+            "router_case_id": output.case_id(),
+            "operation": "complete_router_projection_topk",
+            "requested_device": GPU_DEVICE,
+            "selected_device": GPU_DEVICE,
+            "fallback_used": false,
+            "evaluated": true,
+            "synchronized": true,
+            "batch_size": output.row_count(),
+            "hidden_width": 2048,
+            "expert_count": 128,
+            "top_k": 8,
+            "output_dtype": "float32",
+            "logits": complete_rows(output.logits()),
+            "full_probabilities": complete_rows(output.full_probabilities()),
+            "selected_expert_ids": output.selected_expert_ids(),
+            "selected_probabilities": selected_rows(output.selected_probabilities()),
+            "normalized_weights": selected_rows(output.normalized_weights()),
+            "logits_f32le_sha256": output.logits_f32le_sha256(),
+            "full_probabilities_f32le_sha256": output.full_probabilities_f32le_sha256(),
+            "selected_probabilities_f32le_sha256": output.selected_probabilities_f32le_sha256(),
+            "normalized_weights_f32le_sha256": output.normalized_weights_f32le_sha256(),
+            "memory_gauges": {
+                "mlx_active_bytes": null,
+                "mlx_cache_bytes": null,
+                "mlx_peak_bytes": null,
+                "process_footprint_bytes": null,
+                "process_footprint_source": null,
+                "system_pressure": null,
+                "reported_summed_total_bytes": null
+            },
+            "timing": {
+                "monotonic_clock": "perf_counter_ns",
+                "instrumentation_mode": "minimally_instrumented",
+                "evaluated": true,
+                "synchronized": true,
+                "stages": {
+                    "dequantization": {
+                        "status": "not_applicable",
+                        "reason": "f32_router_requires_no_dequantization"
+                    },
+                    "total_evaluated_router": {
+                        "status": "observed",
+                        "duration_ns": 1_000
+                    }
+                }
+            },
+            "passed": true
+        }))
+        .expect("bounded worker result fixture")
+    }
+
+    fn correctness_attempts(
+        batch_id: &str,
+        case: OrchestratedRouterCase,
+    ) -> Vec<RouterCorrectnessAttempt> {
+        let output = orchestration_output(case);
+        let numeric_comparison = |compared_count: usize, absolute: f64, relative: f64| {
+            json!({
+                "compared_count": compared_count,
+                "mismatch_count": 0,
+                "first_mismatch": null,
+                "maximum_absolute_error": 0.0,
+                "mean_absolute_error": 0.0,
+                "rmse": 0.0,
+                "maximum_relative_error": 0.0,
+                "absolute_tolerance": absolute,
+                "relative_tolerance": relative,
+            })
+        };
+        let comparison = json!({
+            "logits": numeric_comparison(case.row_count() * 128, 5.0e-4, 5.0e-4),
+            "full_probabilities": numeric_comparison(case.row_count() * 128, 1.0e-6, 1.0e-6),
+            "selected_probabilities": numeric_comparison(case.row_count() * 8, 1.0e-6, 1.0e-6),
+            "normalized_weights": numeric_comparison(case.row_count() * 8, 1.0e-6, 1.0e-6),
+            "expert_range_comparisons": {
+                "0..16": {
+                    "logits": numeric_comparison(case.row_count() * 16, 5.0e-4, 5.0e-4),
+                    "full_probabilities": numeric_comparison(
+                        case.row_count() * 16,
+                        1.0e-6,
+                        1.0e-6,
+                    ),
+                    "passed": true,
+                },
+                "64..80": {
+                    "logits": numeric_comparison(case.row_count() * 16, 5.0e-4, 5.0e-4),
+                    "full_probabilities": numeric_comparison(
+                        case.row_count() * 16,
+                        1.0e-6,
+                        1.0e-6,
+                    ),
+                    "passed": true,
+                },
+            },
+            "id_mismatch_count": 0,
+            "order_mismatch_count": 0,
+            "passed": true,
+        });
+        (0..ROUTER_CORRECTNESS_ATTEMPTS)
+            .map(|_| RouterCorrectnessAttempt {
+                case_id: case.case_id().to_owned(),
+                process_replication_id: correctness_process_identity(batch_id),
+                logits_f32le_sha256: output.logits_f32le_sha256().to_owned(),
+                full_probabilities_f32le_sha256: output
+                    .full_probabilities_f32le_sha256()
+                    .to_owned(),
+                selected_expert_ids: output.selected_expert_ids().to_vec(),
+                selected_expert_ids_u32le_sha256: selected_id_sha256(output.selected_expert_ids())
+                    .expect("bounded selected expert ID hash"),
+                selected_probabilities_f32le_sha256: output
+                    .selected_probabilities_f32le_sha256()
+                    .to_owned(),
+                normalized_weights_f32le_sha256: output
+                    .normalized_weights_f32le_sha256()
+                    .to_owned(),
+                complete_output_sha256: orchestration_hash(case).to_owned(),
+                canonical_output: output.clone(),
+                comparison: comparison.clone(),
+                memory_gauges: json!({
+                    "mlx_active_bytes": null,
+                    "mlx_cache_bytes": null,
+                    "mlx_peak_bytes": null,
+                    "process_footprint_bytes": null,
+                    "process_footprint_source": null,
+                    "system_pressure": null,
+                    "reported_summed_total_bytes": null,
+                }),
+                result_passed: true,
+                requested_device: GPU_DEVICE.to_owned(),
+                selected_device: GPU_DEVICE.to_owned(),
+                fallback_used: false,
+                evaluated: true,
+                synchronized: true,
+            })
+            .collect()
+    }
+
+    fn orchestration_timing_observation(
+        series_id: &str,
+        kind: &str,
+        run_index: usize,
+        process_replication_id: &str,
+        labels: OrchestrationTimingLabels<'_>,
+        instrumentation_mode: &str,
+        output_sha256: &str,
+    ) -> Value {
+        let stages = if instrumentation_mode == "stage_instrumented" {
+            json!({
+                "setup_admission": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "file_io": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "storage_validation_f32_decode": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "dequantization": {
+                    "status": "not_applicable",
+                    "reason": "f32_router_requires_no_dequantization"
+                },
+                "host_to_device": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "graph_construction": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "compilation": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "router_projection": {
+                    "status": "observed",
+                    "duration_ns": 500_u64 + u64::try_from(run_index).unwrap()
+                },
+                "top_k": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "normalization": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "total_evaluated_router": {
+                    "status": "observed",
+                    "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
+                },
+                "synchronized_readback": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "end_to_end_router_command": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                }
+            })
+        } else if labels.external_costly {
+            json!({
+                "file_io": {
+                    "status": "observed",
+                    "duration_ns": 250_u64 + u64::try_from(run_index).unwrap()
+                },
+                "storage_validation_f32_decode": {
+                    "status": "observed",
+                    "duration_ns": 300_u64 + u64::try_from(run_index).unwrap()
+                },
+                "dequantization": {
+                    "status": "not_applicable",
+                    "reason": "f32_router_requires_no_dequantization"
+                },
+                "host_to_device": {
+                    "status": "unavailable",
+                    "reason": "not_separately_observed_in_model_free_fixture"
+                },
+                "total_evaluated_router": {
+                    "status": "observed",
+                    "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
+                },
+                "end_to_end_router_command": {
+                    "status": "observed",
+                    "duration_ns": 2_000_u64 + u64::try_from(run_index).unwrap()
+                }
+            })
+        } else {
+            json!({
+                "dequantization": {
+                    "status": "not_applicable",
+                    "reason": "f32_router_requires_no_dequantization"
+                },
+                "total_evaluated_router": {
+                    "status": "observed",
+                    "duration_ns": 1_000_u64 + u64::try_from(run_index).unwrap()
+                }
+            })
+        };
+        json!({
+            "observation_id": format!(
+                "{process_replication_id}-{series_id}-{kind}-{run_index:02}"
+            ),
+            "run_index": run_index,
+            "observation_kind": kind,
+            "process_replication_id": process_replication_id,
+            "process_state": labels.process_state,
+            "condition": labels.condition,
+            "instrumentation_mode": instrumentation_mode,
+            "monotonic_clock": "perf_counter_ns",
+            "stages": stages,
+            "status": "passed",
+            "requested_device": GPU_DEVICE,
+            "selected_device": GPU_DEVICE,
+            "fallback_used": false,
+            "evaluated": true,
+            "synchronized": true,
+            "output_sha256": output_sha256,
+            "correctness_passed": true
+        })
+    }
+
+    fn orchestration_major_series(
+        case: OrchestratedRouterCase,
+        role: RouterTimingReplicationRole,
+        process_replication_id: &str,
+        output_sha256: &str,
+    ) -> RouterTimingSeries {
+        let process_state = match role {
+            RouterTimingReplicationRole::Primary => "reused_process",
+            RouterTimingReplicationRole::CleanProcessReplication => "fresh_process",
+        };
+        let mut observations = Vec::with_capacity(35);
+        observations.extend((0..5).map(|index| {
+            orchestration_timing_observation(
+                case.benchmark_id(),
+                "warmup",
+                index,
+                process_replication_id,
+                OrchestrationTimingLabels {
+                    process_state,
+                    condition: "warm",
+                    external_costly: false,
+                },
+                "minimally_instrumented",
+                output_sha256,
+            )
+        }));
+        observations.extend((0..30).map(|index| {
+            orchestration_timing_observation(
+                case.benchmark_id(),
+                "measurement",
+                index,
+                process_replication_id,
+                OrchestrationTimingLabels {
+                    process_state,
+                    condition: "warm",
+                    external_costly: false,
+                },
+                "minimally_instrumented",
+                output_sha256,
+            )
+        }));
+        RouterTimingSeries::try_from_value(json!({
+            "benchmark_id": case.benchmark_id(),
+            "case_id": case.case_id(),
+            "row_count": case.row_count(),
+            "series_kind": "major_minimally_instrumented",
+            "replication_role": match role {
+                RouterTimingReplicationRole::Primary => "primary",
+                RouterTimingReplicationRole::CleanProcessReplication => {
+                    "clean_process_replication"
+                }
+            },
+            "process_replication_id": process_replication_id,
+            "process_state": process_state,
+            "condition": "warm",
+            "instrumentation_mode": "minimally_instrumented",
+            "warmup_count": 5,
+            "measurement_count": 30,
+            "raw_timing_observations": observations
+        }))
+        .expect("valid orchestration timing series")
+    }
+
+    fn orchestration_auxiliary_series(
+        case: OrchestratedRouterCase,
+        series_kind: RouterTimingSeriesKind,
+        process_replication_id: &str,
+    ) -> RouterTimingSeries {
+        let (kind, mode, benchmark_prefix, process_state, condition, warmups, measurements) =
+            match series_kind {
+                RouterTimingSeriesKind::CostlyReal => (
+                    "costly_real",
+                    "minimally_instrumented",
+                    "f002-costly-real",
+                    "reused_process",
+                    "warm",
+                    5,
+                    10,
+                ),
+                RouterTimingSeriesKind::FirstProcessCostly => (
+                    "first_process_costly",
+                    "minimally_instrumented",
+                    "f002-first-process-costly",
+                    "fresh_process",
+                    "first_read_new_process_os_cache_uncontrolled",
+                    0,
+                    1,
+                ),
+                RouterTimingSeriesKind::StageDiagnostic => (
+                    "stage_diagnostic",
+                    "stage_instrumented",
+                    "f002-stage-diagnostic",
+                    "reused_process",
+                    "warm",
+                    5,
+                    10,
+                ),
+                _ => panic!("test helper accepts only orchestration auxiliary series"),
+            };
+        let case_label = match case {
+            OrchestratedRouterCase::SingleRow => "single-row",
+            OrchestratedRouterCase::TwoRow => "two-row",
+        };
+        let benchmark_id = format!("{benchmark_prefix}-{case_label}-v1");
+        let mut observations = Vec::with_capacity(warmups + measurements);
+        observations.extend((0..warmups).map(|index| {
+            orchestration_timing_observation(
+                &benchmark_id,
+                "warmup",
+                index,
+                process_replication_id,
+                OrchestrationTimingLabels {
+                    process_state,
+                    condition,
+                    external_costly: matches!(
+                        series_kind,
+                        RouterTimingSeriesKind::CostlyReal
+                            | RouterTimingSeriesKind::FirstProcessCostly
+                    ),
+                },
+                mode,
+                orchestration_hash(case),
+            )
+        }));
+        observations.extend((0..measurements).map(|index| {
+            orchestration_timing_observation(
+                &benchmark_id,
+                "measurement",
+                index,
+                process_replication_id,
+                OrchestrationTimingLabels {
+                    process_state,
+                    condition,
+                    external_costly: matches!(
+                        series_kind,
+                        RouterTimingSeriesKind::CostlyReal
+                            | RouterTimingSeriesKind::FirstProcessCostly
+                    ),
+                },
+                mode,
+                orchestration_hash(case),
+            )
+        }));
+        RouterTimingSeries::try_from_value(json!({
+            "benchmark_id": benchmark_id,
+            "case_id": case.case_id(),
+            "row_count": case.row_count(),
+            "series_kind": kind,
+            "replication_role": "primary",
+            "process_replication_id": process_replication_id,
+            "process_state": process_state,
+            "condition": condition,
+            "instrumentation_mode": mode,
+            "warmup_count": warmups,
+            "measurement_count": measurements,
+            "raw_timing_observations": observations
+        }))
+        .expect("valid orchestration auxiliary series")
+    }
+
+    fn retained_failed_series(
+        series: &RouterTimingSeries,
+        failure_code: &str,
+        failure_stage: &str,
+    ) -> RouterTimingSeries {
+        let mut value = series.try_to_value().expect("serialized timing series");
+        let failure_index = if series.raw_timing_observations().len() > 6 {
+            6
+        } else {
+            0
+        };
+        value["raw_timing_observations"][failure_index]["status"] = json!("failed");
+        value["raw_timing_observations"][failure_index]["correctness_passed"] = json!(false);
+        value["raw_timing_observations"][failure_index]["failure"] = json!({
+            "code": failure_code,
+            "message": "bounded retained orchestration failure",
+            "stage": failure_stage
+        });
+        RouterTimingSeries::try_from_value(value).expect("retained failed timing series")
+    }
+
+    fn orchestrator_with_correctness_gates() -> RouterBenchmarkOrchestrator {
+        let mut orchestration = RouterBenchmarkOrchestrator::new();
+        for case in ROUTER_CORRECTNESS_ORDER {
+            for attempt in correctness_attempts(ROUTER_PRIMARY_BATCH_ID, case) {
+                orchestration
+                    .record_correctness_attempt(case, attempt)
+                    .expect("correctness attempt in frozen order");
+            }
+        }
+        orchestration
+    }
+
+    fn orchestrator_with_correctness() -> RouterBenchmarkOrchestrator {
+        let mut orchestration = orchestrator_with_correctness_gates();
+        for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+            orchestration
+                .record_primary_first_process_series(orchestration_auxiliary_series(
+                    ROUTER_COSTLY_ORDER[0],
+                    RouterTimingSeriesKind::FirstProcessCostly,
+                    &primary_first_process_identity(ROUTER_PRIMARY_BATCH_ID, repetition_index),
+                ))
+                .expect("correctness gates each fresh primary timing worker first read");
+        }
+        orchestration
+    }
+
+    fn record_primary_schedule(orchestration: &mut RouterBenchmarkOrchestrator) {
+        let primary_process = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        for case in ROUTER_COSTLY_ORDER {
+            orchestration
+                .record_costly_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::CostlyReal,
+                    &primary_process,
+                ))
+                .expect("costly series in frozen order");
+        }
+        for (case, role) in ROUTER_PRIMARY_MAJOR_ORDER {
+            orchestration
+                .record_primary_major_series(orchestration_major_series(
+                    case,
+                    role,
+                    &primary_process,
+                    orchestration_hash(case),
+                ))
+                .expect("major series in frozen order");
+        }
+        for case in ROUTER_STAGE_DIAGNOSTIC_ORDER {
+            orchestration
+                .record_stage_diagnostic_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::StageDiagnostic,
+                    &primary_process,
+                ))
+                .expect("stage diagnostic in frozen order");
+        }
+        for (case, role) in ROUTER_CLEAN_MAJOR_ORDER {
+            let clean_process = clean_process_identity(ROUTER_PRIMARY_BATCH_ID, case);
+            for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+                orchestration
+                    .record_clean_first_process_series(orchestration_auxiliary_series(
+                        case,
+                        RouterTimingSeriesKind::FirstProcessCostly,
+                        &clean_first_process_identity(
+                            ROUTER_PRIMARY_BATCH_ID,
+                            case,
+                            repetition_index,
+                        ),
+                    ))
+                    .expect("clean first-process cohort in frozen order");
+            }
+            orchestration
+                .record_clean_major_series(orchestration_major_series(
+                    case,
+                    role,
+                    &clean_process,
+                    orchestration_hash(case),
+                ))
+                .expect("clean major series in frozen order");
+        }
+    }
+
+    fn second_batch_candidate(batch_id: &str) -> RouterSecondBatchCandidate {
+        let mut candidate = RouterBenchmarkOrchestrator::new_second(batch_id)
+            .expect("valid independent second-batch identity");
+        let primary_process = primary_process_identity(batch_id);
+        for case in ROUTER_SECOND_CORRECTNESS_ORDER {
+            for attempt in correctness_attempts(batch_id, case) {
+                candidate
+                    .record_correctness_attempt(case, attempt)
+                    .expect("second correctness attempt in reversed order");
+            }
+        }
+        for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+            candidate
+                .record_primary_first_process_series(orchestration_auxiliary_series(
+                    ROUTER_SECOND_COSTLY_ORDER[0],
+                    RouterTimingSeriesKind::FirstProcessCostly,
+                    &primary_first_process_identity(batch_id, repetition_index),
+                ))
+                .expect("second correctness gates each fresh primary worker first read");
+        }
+        for case in ROUTER_SECOND_COSTLY_ORDER {
+            candidate
+                .record_costly_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::CostlyReal,
+                    &primary_process,
+                ))
+                .expect("second costly series in reversed order");
+        }
+        for (case, role) in ROUTER_SECOND_PRIMARY_MAJOR_ORDER {
+            candidate
+                .record_primary_major_series(orchestration_major_series(
+                    case,
+                    role,
+                    &primary_process,
+                    orchestration_hash(case),
+                ))
+                .expect("second primary major in reversed order");
+        }
+        for case in ROUTER_SECOND_STAGE_DIAGNOSTIC_ORDER {
+            candidate
+                .record_stage_diagnostic_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::StageDiagnostic,
+                    &primary_process,
+                ))
+                .expect("second stage diagnostic in reversed order");
+        }
+        for (case, role) in ROUTER_SECOND_CLEAN_MAJOR_ORDER {
+            let clean_process = clean_process_identity(batch_id, case);
+            for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+                candidate
+                    .record_clean_first_process_series(orchestration_auxiliary_series(
+                        case,
+                        RouterTimingSeriesKind::FirstProcessCostly,
+                        &clean_first_process_identity(batch_id, case, repetition_index),
+                    ))
+                    .expect("second clean first-process cohort");
+            }
+            candidate
+                .record_clean_major_series(orchestration_major_series(
+                    case,
+                    role,
+                    &clean_process,
+                    orchestration_hash(case),
+                ))
+                .expect("second clean major in reversed order");
+        }
+        candidate
     }
 
     #[test]
@@ -3592,6 +6639,919 @@ mod tests {
     }
 
     #[test]
+    fn router_benchmark_orchestration_requires_exact_correctness_before_timing() {
+        let single = OrchestratedRouterCase::SingleRow;
+        let two_row = OrchestratedRouterCase::TwoRow;
+
+        let adapted = RouterCorrectnessAttempt::from_result(
+            &router_result_from_output(orchestration_output(single)),
+            orchestration_output(single),
+            correctness_process_identity(ROUTER_PRIMARY_BATCH_ID),
+        )
+        .expect("real-result adapter computes its own exact comparison and canonical output");
+        assert!(adapted.passes_gate(ROUTER_PRIMARY_BATCH_ID, single));
+        assert_eq!(adapted.canonical_output, *orchestration_output(single));
+
+        let mut short = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        short.pop();
+        assert!(RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, short).is_err());
+
+        let mut changed_hash = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        changed_hash[9].complete_output_sha256 = orchestration_hash(two_row).to_owned();
+        assert!(
+            RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, changed_hash).is_err()
+        );
+
+        let mut changed_component = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        changed_component[9].logits_f32le_sha256 = "c".repeat(64);
+        assert!(
+            RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, changed_component,)
+                .is_err()
+        );
+
+        let mut changed_ids = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        changed_ids[9].selected_expert_ids[0].swap(0, 1);
+        assert!(
+            RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, changed_ids,).is_err()
+        );
+
+        let mut invalid_metrics = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        invalid_metrics[3].comparison["logits"]["mismatch_count"] = json!(1);
+        assert!(
+            RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, invalid_metrics,)
+                .is_err()
+        );
+
+        let mut relabeled_process = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        relabeled_process[0].process_replication_id = "caller-supplied-process".to_owned();
+        assert!(
+            RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, relabeled_process,)
+                .is_err()
+        );
+
+        for mutation in [
+            |attempt: &mut RouterCorrectnessAttempt| attempt.comparison["passed"] = json!(false),
+            |attempt: &mut RouterCorrectnessAttempt| attempt.result_passed = false,
+            |attempt: &mut RouterCorrectnessAttempt| attempt.fallback_used = true,
+            |attempt: &mut RouterCorrectnessAttempt| attempt.evaluated = false,
+            |attempt: &mut RouterCorrectnessAttempt| attempt.synchronized = false,
+        ] {
+            let mut attempts = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+            mutation(&mut attempts[4]);
+            assert!(
+                RouterCorrectnessGate::try_new(ROUTER_PRIMARY_BATCH_ID, single, attempts).is_err()
+            );
+        }
+
+        let mut premature_timing = RouterBenchmarkOrchestrator::new();
+        let premature = orchestration_major_series(
+            single,
+            RouterTimingReplicationRole::Primary,
+            "primary-process",
+            orchestration_hash(single),
+        );
+        assert!(premature_timing
+            .record_primary_major_series(premature)
+            .is_err());
+        let premature_evidence = premature_timing
+            .evidence()
+            .expect("premature timing is retained as terminal evidence");
+        assert_eq!(premature_evidence["failure"]["code"], "comparison_failed");
+        assert_eq!(
+            premature_evidence["retained_timing"]["rejected_series"]
+                .as_array()
+                .expect("retained premature series")
+                .len(),
+            1
+        );
+        assert!(premature_evidence["raw_observations"]
+            .as_array()
+            .is_some_and(|observations| {
+                observations.len() == 35
+                    && observations.iter().enumerate().all(|(index, observation)| {
+                        observation["global_order_index"] == index
+                            && observation["batch_id"] == ROUTER_PRIMARY_BATCH_ID
+                            && observation["schedule_step"] == "primary_major"
+                            && observation["orchestration_status"] == "rejected"
+                    })
+            }));
+
+        let mut wrong_order = RouterBenchmarkOrchestrator::new();
+        assert!(wrong_order
+            .record_correctness_attempt(
+                two_row,
+                correctness_attempts(ROUTER_PRIMARY_BATCH_ID, two_row).remove(0),
+            )
+            .is_err());
+        let wrong_order_evidence = wrong_order
+            .evidence()
+            .expect("wrong-order attempt is terminal and retained");
+        assert_eq!(
+            wrong_order_evidence["retained_current_case_attempts"][0]["status"],
+            "failed"
+        );
+        assert_eq!(
+            wrong_order_evidence["raw_observations"][0]["global_order_index"],
+            0
+        );
+        assert_eq!(
+            wrong_order_evidence["raw_observations"][0]["case_id"],
+            two_row.case_id()
+        );
+        assert_eq!(
+            wrong_order_evidence["raw_observations"][0]["orchestration_status"],
+            "rejected"
+        );
+
+        let mut orchestration = RouterBenchmarkOrchestrator::new();
+        assert_eq!(orchestration.next_step(), "single_row_correctness");
+        for attempt in correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single) {
+            orchestration
+                .record_correctness_attempt(single, attempt)
+                .expect("single-row correctness is first");
+        }
+        let mut duplicate_case = orchestration.clone();
+        assert!(duplicate_case
+            .record_correctness_attempt(
+                single,
+                correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single).remove(0),
+            )
+            .is_err());
+        let duplicate_evidence = duplicate_case
+            .evidence()
+            .expect("duplicate correctness identity remains ordered and retained");
+        assert_eq!(
+            duplicate_evidence["raw_observations"]
+                .as_array()
+                .expect("ordered duplicate ledger")
+                .last()
+                .expect("duplicate observation")["identity_duplicate"],
+            true
+        );
+        for attempt in correctness_attempts(ROUTER_PRIMARY_BATCH_ID, two_row) {
+            orchestration
+                .record_correctness_attempt(two_row, attempt)
+                .expect("two-row correctness is second");
+        }
+        assert_eq!(
+            orchestration.next_step(),
+            "primary_first_process_os_cache_uncontrolled"
+        );
+
+        let primary_process = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+            orchestration
+                .record_primary_first_process_series(orchestration_auxiliary_series(
+                    single,
+                    RouterTimingSeriesKind::FirstProcessCostly,
+                    &primary_first_process_identity(ROUTER_PRIMARY_BATCH_ID, repetition_index),
+                ))
+                .expect("correctness gates each fresh timing worker first read");
+        }
+        assert_eq!(orchestration.next_step(), "single_row_costly_real");
+
+        let mut premature_major = orchestration.clone();
+        assert!(premature_major
+            .record_primary_major_series(orchestration_major_series(
+                single,
+                RouterTimingReplicationRole::Primary,
+                &primary_process,
+                orchestration_hash(single),
+            ))
+            .is_err());
+        for case in ROUTER_COSTLY_ORDER {
+            orchestration
+                .record_costly_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::CostlyReal,
+                    &primary_process,
+                ))
+                .expect("costly series in frozen order");
+        }
+        assert_eq!(orchestration.next_step(), "single_row_primary_major");
+        let mut ordered = orchestration.clone();
+
+        let wrong_hash = orchestration_major_series(
+            single,
+            RouterTimingReplicationRole::Primary,
+            &primary_process,
+            orchestration_hash(two_row),
+        );
+        assert!(orchestration
+            .record_primary_major_series(wrong_hash)
+            .is_err());
+        assert_eq!(orchestration.next_step(), "failed_stop_condition");
+        let retained_wrong_hash = orchestration.evidence().expect("retained hash failure");
+        assert_eq!(
+            retained_wrong_hash["retained_timing"]["major_series"]
+                .as_array()
+                .expect("retained wrong-hash series")
+                .len(),
+            1
+        );
+        for (case, role) in ROUTER_PRIMARY_MAJOR_ORDER {
+            ordered
+                .record_primary_major_series(orchestration_major_series(
+                    case,
+                    role,
+                    &primary_process,
+                    orchestration_hash(case),
+                ))
+                .expect("primary majors in frozen order");
+        }
+        assert_eq!(ordered.next_step(), "single_row_stage_diagnostic");
+        for case in ROUTER_STAGE_DIAGNOSTIC_ORDER {
+            ordered
+                .record_stage_diagnostic_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::StageDiagnostic,
+                    &primary_process,
+                ))
+                .expect("stage diagnostics in frozen order");
+        }
+        assert_eq!(
+            ordered.next_step(),
+            "single_row_clean_first_process_os_cache_uncontrolled"
+        );
+        let mut premature_clean = ordered.clone();
+        assert!(premature_clean
+            .record_clean_major_series(orchestration_major_series(
+                single,
+                RouterTimingReplicationRole::CleanProcessReplication,
+                &clean_process_identity(ROUTER_PRIMARY_BATCH_ID, single),
+                orchestration_hash(single),
+            ))
+            .is_err());
+        let failed_clean_first = retained_failed_series(
+            &orchestration_auxiliary_series(
+                single,
+                RouterTimingSeriesKind::FirstProcessCostly,
+                &clean_process_identity(ROUTER_PRIMARY_BATCH_ID, single),
+            ),
+            "resource_limit",
+            "resource_admission",
+        );
+        assert!(ordered
+            .record_clean_first_process_series(failed_clean_first)
+            .is_err());
+        let clean_first_failure = ordered
+            .evidence()
+            .expect("retained clean first-process failure");
+        assert_eq!(clean_first_failure["failure"]["code"], "resource_limit");
+        assert_eq!(
+            clean_first_failure["failure"]["stage"],
+            "resource_admission"
+        );
+        assert_eq!(
+            clean_first_failure["retained_timing"]["first_process_series"]
+                .as_array()
+                .expect("retained first-process series")
+                .last()
+                .expect("failed clean first-process series")["raw_timing_observations"][0]
+                ["failure"]["code"],
+            "resource_limit"
+        );
+        assert_eq!(
+            clean_first_failure["retained_timing"]["first_process_series"]
+                .as_array()
+                .expect("primary and failed clean first-process evidence")
+                .len(),
+            ROUTER_FIRST_PROCESS_REPETITIONS + 1
+        );
+
+        let mut retained_failure = RouterBenchmarkOrchestrator::new();
+        let mut attempts = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        attempts[4].comparison["passed"] = json!(false);
+        for attempt in attempts.into_iter().take(4) {
+            retained_failure
+                .record_correctness_attempt(single, attempt)
+                .expect("pre-failure attempt");
+        }
+        let failed_attempt = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single)
+            .into_iter()
+            .nth(4)
+            .expect("fifth attempt");
+        let mut failed_attempt = failed_attempt;
+        failed_attempt.comparison["passed"] = json!(false);
+        assert!(retained_failure
+            .record_correctness_attempt(single, failed_attempt)
+            .is_err());
+        assert_eq!(retained_failure.next_step(), "failed_stop_condition");
+        let retained = retained_failure
+            .evidence()
+            .expect("retained failure evidence");
+        assert_eq!(retained["status"], "failed");
+        assert_eq!(retained["failure"]["code"], "comparison_failed");
+        assert_eq!(retained["failure"]["stage"], "correctness_gate");
+        assert_eq!(retained["first_process_observation_started"], false);
+        assert_eq!(retained["timing_started"], false);
+        assert_eq!(
+            retained["retained_current_case_attempts"]
+                .as_array()
+                .expect("retained attempts")
+                .len(),
+            5
+        );
+        assert!(retained_failure
+            .record_correctness_attempt(
+                single,
+                correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single).remove(0),
+            )
+            .is_err());
+
+        let mut repeat_failure = RouterBenchmarkOrchestrator::new();
+        let mut repeated = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single);
+        repeated[ROUTER_CORRECTNESS_ATTEMPTS - 1].normalized_weights_f32le_sha256 = "c".repeat(64);
+        for attempt in repeated.into_iter().take(ROUTER_CORRECTNESS_ATTEMPTS - 1) {
+            repeat_failure
+                .record_correctness_attempt(single, attempt)
+                .expect("matching pre-repeat attempts");
+        }
+        let mut final_measurement = correctness_attempts(ROUTER_PRIMARY_BATCH_ID, single)
+            .remove(ROUTER_CORRECTNESS_ATTEMPTS - 1);
+        final_measurement.normalized_weights_f32le_sha256 = "c".repeat(64);
+        assert!(repeat_failure
+            .record_correctness_attempt(single, final_measurement)
+            .is_err());
+        assert_eq!(repeat_failure.next_step(), "failed_stop_condition");
+        let repeat_evidence = repeat_failure.evidence().expect("repeat failure evidence");
+        assert_eq!(
+            repeat_evidence["retained_current_case_attempts"]
+                .as_array()
+                .expect("retained repeat attempts")
+                .len(),
+            ROUTER_CORRECTNESS_ATTEMPTS
+        );
+        assert_eq!(repeat_evidence["failure"]["code"], "comparison_failed");
+
+        let mut first_process_failure = orchestrator_with_correctness_gates();
+        let failed_first_process = retained_failed_series(
+            &orchestration_auxiliary_series(
+                single,
+                RouterTimingSeriesKind::FirstProcessCostly,
+                &primary_process_identity(ROUTER_PRIMARY_BATCH_ID),
+            ),
+            "evaluation_failed",
+            "router_execution",
+        );
+        assert!(first_process_failure
+            .record_primary_first_process_series(failed_first_process)
+            .is_err());
+        assert_eq!(first_process_failure.next_step(), "failed_stop_condition");
+        let first_process_evidence = first_process_failure
+            .evidence()
+            .expect("retained first-process failure evidence");
+        assert_eq!(
+            first_process_evidence["first_process_observation_started"],
+            true
+        );
+        assert_eq!(first_process_evidence["timing_started"], true);
+        assert_eq!(
+            first_process_evidence["retained_timing"]["first_process_series"]
+                .as_array()
+                .expect("retained failed first-process series")
+                .len(),
+            1
+        );
+        assert_eq!(
+            first_process_evidence["failure"]["code"],
+            "evaluation_failed"
+        );
+        assert_eq!(
+            first_process_evidence["failure"]["stage"],
+            "router_execution"
+        );
+
+        let mut wrong_first_process = orchestration_auxiliary_series(
+            single,
+            RouterTimingSeriesKind::FirstProcessCostly,
+            &primary_process_identity(ROUTER_PRIMARY_BATCH_ID),
+        )
+        .try_to_value()
+        .expect("serialized first-process series");
+        for observation in wrong_first_process["raw_timing_observations"]
+            .as_array_mut()
+            .expect("first-process observations")
+        {
+            observation["output_sha256"] = json!(orchestration_hash(two_row));
+        }
+        let mut gated_hash_failure = orchestrator_with_correctness_gates();
+        assert!(gated_hash_failure
+            .record_primary_first_process_series(
+                RouterTimingSeries::try_from_value(wrong_first_process)
+                    .expect("locally valid mismatching first-process series"),
+            )
+            .is_err());
+        let gated_hash_evidence = gated_hash_failure
+            .evidence()
+            .expect("retained first-process gate mismatch");
+        assert_eq!(gated_hash_evidence["failure"]["code"], "comparison_failed");
+
+        let mut timing_failure = orchestrator_with_correctness();
+        let failed_costly = retained_failed_series(
+            &orchestration_auxiliary_series(
+                single,
+                RouterTimingSeriesKind::CostlyReal,
+                &primary_process_identity(ROUTER_PRIMARY_BATCH_ID),
+            ),
+            "evaluation_failed",
+            "router_execution",
+        );
+        assert!(timing_failure.record_costly_series(failed_costly).is_err());
+        assert_eq!(timing_failure.next_step(), "failed_stop_condition");
+        let timing_evidence = timing_failure.evidence().expect("timing failure evidence");
+        assert_eq!(timing_evidence["status"], "failed");
+        assert_eq!(timing_evidence["failure"]["code"], "evaluation_failed");
+        assert_eq!(timing_evidence["failure"]["stage"], "router_execution");
+        assert_eq!(timing_evidence["timing_started"], true);
+        assert_eq!(
+            timing_evidence["retained_timing"]["costly_series"]
+                .as_array()
+                .expect("retained failed costly series")
+                .len(),
+            1
+        );
+        assert!(timing_failure
+            .record_costly_series(orchestration_auxiliary_series(
+                single,
+                RouterTimingSeriesKind::CostlyReal,
+                &primary_process_identity(ROUTER_PRIMARY_BATCH_ID),
+            ))
+            .is_err());
+    }
+
+    #[test]
+    fn router_benchmark_orchestration_records_exact_major_matrix_and_unavailability() {
+        let single = OrchestratedRouterCase::SingleRow;
+        let two_row = OrchestratedRouterCase::TwoRow;
+        let mut orchestration = orchestrator_with_correctness();
+        record_primary_schedule(&mut orchestration);
+        assert_eq!(
+            orchestration.next_step(),
+            "later_batch_or_unavailable_reason"
+        );
+        assert!(orchestration.evidence().is_err());
+
+        orchestration
+            .record_later_batch_unavailable(
+                RouterSecondBatchUnavailableReason::QuietWindowUnavailable,
+            )
+            .expect("bounded public-safe unavailable reason");
+        assert_eq!(orchestration.next_step(), "complete");
+        assert!(orchestration
+            .record_later_batch_unavailable(
+                RouterSecondBatchUnavailableReason::ExternalInterferenceObserved,
+            )
+            .is_err());
+
+        for reason in [
+            RouterSecondBatchUnavailableReason::QuietWindowUnavailable,
+            RouterSecondBatchUnavailableReason::ResourceAdmissionUnavailable,
+            RouterSecondBatchUnavailableReason::ThermalOrPowerStateUnavailable,
+            RouterSecondBatchUnavailableReason::ExternalInterferenceObserved,
+        ] {
+            let value = Value::String(reason.public_reason().to_owned());
+            ensure_no_private_paths(&value).expect("allowlisted public-safe reason");
+            assert!(reason.public_reason().chars().count() <= 512);
+        }
+
+        let evidence = orchestration.evidence().expect("complete evidence");
+        let state_before_duplicate = evidence.clone();
+        let duplicate_candidate =
+            RouterBenchmarkOrchestrator::new_second("batch-after-unavailable")
+                .expect("valid unused second-batch identity");
+        assert!(orchestration
+            .record_later_batch(&duplicate_candidate)
+            .is_err());
+        assert_eq!(
+            orchestration
+                .evidence()
+                .expect("duplicate attempt preserves prior disposition"),
+            state_before_duplicate
+        );
+        assert_eq!(evidence["order_seed"], ROUTER_BENCHMARK_ORDER_SEED);
+        assert_eq!(
+            evidence["correctness_gates"]
+                .as_array()
+                .expect("correctness gates")
+                .len(),
+            2
+        );
+        assert!(evidence["correctness_gates"]
+            .as_array()
+            .expect("correctness gates")
+            .iter()
+            .all(|gate| gate["attempts"]
+                .as_array()
+                .is_some_and(|items| items.len() == ROUTER_CORRECTNESS_ATTEMPTS)
+                && gate["warmup_count"] == ROUTER_CORRECTNESS_WARMUPS
+                && gate["measurement_count"] == ROUTER_CORRECTNESS_REPETITIONS));
+        let ordered = evidence["primary_batch"]["raw_observations"]
+            .as_array()
+            .expect("primary ordered raw-observation ledger");
+        assert_eq!(ordered.len(), 260);
+        assert!(ordered.iter().enumerate().all(|(index, observation)| {
+            observation["global_order_index"] == index
+                && observation["batch_id"] == ROUTER_PRIMARY_BATCH_ID
+                && observation["orchestration_status"] == "accepted"
+                && observation.get("identity_duplicate").is_none()
+        }));
+        for (index, expected_step, expected_case) in [
+            (0, "single_row_correctness", single.case_id()),
+            (15, "two_row_correctness", two_row.case_id()),
+            (30, "primary_first_process", single.case_id()),
+            (40, "costly_real", single.case_id()),
+            (55, "costly_real", two_row.case_id()),
+            (70, "primary_major", single.case_id()),
+            (105, "primary_major", two_row.case_id()),
+            (140, "stage_diagnostic", single.case_id()),
+            (155, "stage_diagnostic", two_row.case_id()),
+            (170, "clean_first_process", single.case_id()),
+            (180, "clean_major", single.case_id()),
+            (215, "clean_first_process", two_row.case_id()),
+            (225, "clean_major", two_row.case_id()),
+        ] {
+            assert_eq!(ordered[index]["schedule_step"], expected_step);
+            assert_eq!(ordered[index]["case_id"], expected_case);
+        }
+        assert_eq!(
+            evidence["primary_batch"]["major_series"]
+                .as_array()
+                .expect("major series")
+                .len(),
+            4
+        );
+        assert_eq!(
+            evidence["primary_batch"]["costly_series"]
+                .as_array()
+                .expect("costly series")
+                .len(),
+            2
+        );
+        assert_eq!(
+            evidence["primary_batch"]["stage_diagnostic_series"]
+                .as_array()
+                .expect("stage diagnostics")
+                .len(),
+            2
+        );
+        let first_process_series = evidence["primary_batch"]["first_process_series"]
+            .as_array()
+            .expect("first-process series");
+        assert_eq!(
+            first_process_series.len(),
+            ROUTER_FIRST_PROCESS_REPETITIONS * 3
+        );
+        let process_ids = first_process_series
+            .iter()
+            .map(|series| {
+                series["process_replication_id"]
+                    .as_str()
+                    .expect("first-process identity")
+            })
+            .collect::<BTreeSet<_>>();
+        assert_eq!(process_ids.len(), ROUTER_FIRST_PROCESS_REPETITIONS * 3);
+        assert!(first_process_series.iter().all(|series| {
+            series["series_kind"] == "first_process_costly"
+                && series["process_state"] == "fresh_process"
+                && series["condition"] == "first_read_new_process_os_cache_uncontrolled"
+                && series["warmup_count"] == 0
+                && series["measurement_count"] == 1
+                && series["raw_timing_observations"]
+                    .as_array()
+                    .is_some_and(|observations| {
+                        observations.len() == 1
+                            && observations.iter().all(|observation| {
+                                observation["stages"]["file_io"]["status"] == "observed"
+                            })
+                    })
+        }));
+        for gate in evidence["correctness_gates"]
+            .as_array()
+            .expect("correctness gate evidence")
+        {
+            let attempts = gate["attempts"]
+                .as_array()
+                .expect("labeled correctness attempts");
+            assert!(attempts[..ROUTER_CORRECTNESS_WARMUPS]
+                .iter()
+                .enumerate()
+                .all(|(index, attempt)| {
+                    attempt["observation_kind"] == "warmup"
+                        && attempt["run_index"] == index
+                        && attempt["attempt_index"] == index
+                }));
+            assert!(attempts[ROUTER_CORRECTNESS_WARMUPS..]
+                .iter()
+                .enumerate()
+                .all(|(index, attempt)| {
+                    attempt["observation_kind"] == "measurement"
+                        && attempt["run_index"] == index
+                        && attempt["attempt_index"] == index + ROUTER_CORRECTNESS_WARMUPS
+                }));
+            let canonical = &gate["canonical_output"];
+            let rows = canonical["row_count"]
+                .as_u64()
+                .expect("canonical row count") as usize;
+            assert_eq!(
+                canonical["logits"]
+                    .as_array()
+                    .expect("complete logits")
+                    .len(),
+                rows * 128
+            );
+            assert_eq!(
+                canonical["full_probabilities"]
+                    .as_array()
+                    .expect("complete probabilities")
+                    .len(),
+                rows * 128
+            );
+            assert_eq!(
+                canonical["complete_output_sha256"],
+                gate["complete_output_sha256"]
+            );
+            assert!(attempts
+                .iter()
+                .all(|attempt| attempt.get("canonical_output").is_none()));
+        }
+        assert_eq!(evidence["second_batch"]["status"], "unavailable");
+        assert_eq!(
+            evidence["second_batch"]["between_batch_variation_measured"],
+            false
+        );
+        assert!(serde_json::to_vec(&evidence).unwrap().len() <= MAX_RESPONSE_BYTES);
+    }
+
+    #[test]
+    fn router_benchmark_orchestration_requires_independent_reversed_later_batch() {
+        let mut base = orchestrator_with_correctness();
+        record_primary_schedule(&mut base);
+
+        let mut second_order_failure = RouterBenchmarkOrchestrator::new_second("batch-order")
+            .expect("valid second-batch order-failure identity");
+        assert!(second_order_failure
+            .record_correctness_attempt(
+                OrchestratedRouterCase::SingleRow,
+                correctness_attempts("batch-order", OrchestratedRouterCase::SingleRow).remove(0),
+            )
+            .is_err());
+        assert_eq!(
+            second_order_failure
+                .evidence()
+                .expect("retained second-batch order failure")["retained_current_case_attempts"][0]
+                ["status"],
+            "failed"
+        );
+
+        let mut event_driven_second =
+            RouterBenchmarkOrchestrator::new_second("batch-event").expect("valid second batch");
+        assert_eq!(event_driven_second.next_step(), "two_row_correctness");
+        for case in ROUTER_SECOND_CORRECTNESS_ORDER {
+            for attempt in correctness_attempts("batch-event", case) {
+                event_driven_second
+                    .record_correctness_attempt(case, attempt)
+                    .expect("second batch correctness in reversed order");
+            }
+        }
+        assert_eq!(
+            event_driven_second.next_step(),
+            "primary_first_process_os_cache_uncontrolled"
+        );
+        for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+            event_driven_second
+                .record_primary_first_process_series(orchestration_auxiliary_series(
+                    OrchestratedRouterCase::TwoRow,
+                    RouterTimingSeriesKind::FirstProcessCostly,
+                    &primary_first_process_identity("batch-event", repetition_index),
+                ))
+                .expect("second correctness gates each fresh timing worker first read");
+        }
+        assert_eq!(event_driven_second.next_step(), "two_row_costly_real");
+
+        let mut failed_second = RouterBenchmarkOrchestrator::new_second("batch-failed")
+            .expect("valid failed second batch identity");
+        for case in ROUTER_SECOND_CORRECTNESS_ORDER {
+            for attempt in correctness_attempts("batch-failed", case) {
+                failed_second
+                    .record_correctness_attempt(case, attempt)
+                    .expect("failed second batch first passes correctness");
+            }
+        }
+        let failed_second_process = primary_process_identity("batch-failed");
+        for repetition_index in 0..ROUTER_FIRST_PROCESS_REPETITIONS {
+            failed_second
+                .record_primary_first_process_series(orchestration_auxiliary_series(
+                    OrchestratedRouterCase::TwoRow,
+                    RouterTimingSeriesKind::FirstProcessCostly,
+                    &primary_first_process_identity("batch-failed", repetition_index),
+                ))
+                .expect("failed second batch retains its first-process cohort");
+        }
+        assert!(failed_second
+            .record_costly_series(retained_failed_series(
+                &orchestration_auxiliary_series(
+                    OrchestratedRouterCase::TwoRow,
+                    RouterTimingSeriesKind::CostlyReal,
+                    &failed_second_process,
+                ),
+                "resource_limit",
+                "resource_admission",
+            ))
+            .is_err());
+        let failed_second_evidence = failed_second
+            .evidence()
+            .expect("failed second-batch evidence remains caller-owned");
+        assert_eq!(failed_second_evidence["failure"]["code"], "resource_limit");
+        assert_eq!(
+            failed_second_evidence["retained_timing"]["costly_series"]
+                .as_array()
+                .expect("retained failed second costly series")
+                .len(),
+            1
+        );
+        let mut failed_outer = base.clone();
+        assert!(failed_outer.record_later_batch(&failed_second).is_err());
+        let failed_outer_evidence = failed_outer
+            .evidence()
+            .expect("primary and failed second batch remain one terminal experiment");
+        assert_eq!(failed_outer_evidence["second_batch"]["status"], "failed");
+        assert_eq!(failed_outer_evidence["failure"]["code"], "resource_limit");
+        assert_eq!(
+            failed_outer_evidence["failure"]["stage"],
+            "resource_admission"
+        );
+        assert_eq!(
+            failed_outer_evidence["second_batch"]["retained_evidence"]["status"],
+            "failed"
+        );
+        assert!(failed_outer
+            .record_later_batch_unavailable(
+                RouterSecondBatchUnavailableReason::QuietWindowUnavailable,
+            )
+            .is_err());
+        assert_eq!(
+            failed_second
+                .evidence()
+                .expect("second failure survives outer rejection"),
+            failed_second_evidence
+        );
+
+        let mut oversized_candidate = second_batch_candidate("batch-oversized");
+        let repeated_costly = oversized_candidate.costly_series[0].clone();
+        for _ in 2..128 {
+            oversized_candidate.append_timing_observations("costly_real", &repeated_costly, false);
+            oversized_candidate
+                .costly_series
+                .push(repeated_costly.clone());
+        }
+        assert!(oversized_candidate.retained_batch_snapshot().is_err());
+        let mut oversized_outer = base.clone();
+        assert!(oversized_outer
+            .record_later_batch(&oversized_candidate)
+            .is_err());
+        assert!(matches!(
+            &oversized_outer.later_batch,
+            RouterLaterBatchState::Failed(failed)
+                if failed.candidate.costly_series.len() == 128
+        ));
+        assert!(oversized_outer
+            .evidence()
+            .expect_err("oversized retained evidence must fail rather than truncate")
+            .contains("exceeds the protocol cap"));
+
+        let mut split_primary = orchestrator_with_correctness();
+        let expected_primary = primary_process_identity(ROUTER_PRIMARY_BATCH_ID);
+        for case in ROUTER_COSTLY_ORDER {
+            split_primary
+                .record_costly_series(orchestration_auxiliary_series(
+                    case,
+                    RouterTimingSeriesKind::CostlyReal,
+                    &expected_primary,
+                ))
+                .expect("costly series");
+        }
+        split_primary
+            .record_primary_major_series(orchestration_major_series(
+                OrchestratedRouterCase::SingleRow,
+                RouterTimingReplicationRole::Primary,
+                &expected_primary,
+                orchestration_hash(OrchestratedRouterCase::SingleRow),
+            ))
+            .expect("first primary process");
+        assert!(split_primary
+            .record_primary_major_series(orchestration_major_series(
+                OrchestratedRouterCase::TwoRow,
+                RouterTimingReplicationRole::Primary,
+                "different-primary-process",
+                orchestration_hash(OrchestratedRouterCase::TwoRow),
+            ))
+            .is_err());
+
+        let mut wrong_order = base.clone();
+        let mut primary_order = second_batch_candidate("batch-b");
+        primary_order.primary_major_series.swap(0, 1);
+        assert!(wrong_order.record_later_batch(&primary_order).is_err());
+
+        let mut reused_process = base.clone();
+        let mut relabeled_process = second_batch_candidate("batch-b");
+        relabeled_process.costly_series[0] = orchestration_auxiliary_series(
+            OrchestratedRouterCase::TwoRow,
+            RouterTimingSeriesKind::CostlyReal,
+            "batch-a-primary-worker",
+        );
+        assert!(reused_process
+            .record_later_batch(&relabeled_process)
+            .is_err());
+
+        let mut reused_observation = second_batch_candidate("batch-b");
+        let primary_observation_id = base.costly_series[0].raw_timing_observations()[0]
+            .observation_id()
+            .to_owned();
+        let mut changed = reused_observation.costly_series[0]
+            .try_to_value()
+            .expect("serialized costly series");
+        changed["raw_timing_observations"][0]["observation_id"] = json!(primary_observation_id);
+        reused_observation.costly_series[0] =
+            RouterTimingSeries::try_from_value(changed).expect("locally valid changed identity");
+        let mut cross_batch_duplicate = base.clone();
+        assert!(cross_batch_duplicate
+            .record_later_batch(&reused_observation)
+            .is_err());
+
+        base.record_later_batch(&second_batch_candidate("batch-b"))
+            .expect("independent reversed later batch");
+        let evidence = base.evidence().expect("recorded later-batch evidence");
+        assert_eq!(evidence["second_batch"]["status"], "recorded");
+        assert_eq!(evidence["second_batch"]["batch_id"], "batch-b");
+        assert_eq!(
+            evidence["second_batch"]["between_batch_variation_measured"],
+            true
+        );
+        assert_eq!(
+            evidence["second_batch"]["major_series"]
+                .as_array()
+                .expect("later major series")
+                .len(),
+            4
+        );
+        assert_eq!(
+            evidence["second_batch"]["correctness_gates"]
+                .as_array()
+                .expect("second correctness gates")
+                .len(),
+            2
+        );
+        assert_eq!(
+            evidence["second_batch"]["costly_series"]
+                .as_array()
+                .expect("second costly series")
+                .len(),
+            2
+        );
+        assert_eq!(
+            evidence["second_batch"]["first_process_series"]
+                .as_array()
+                .expect("second first-process series")
+                .len(),
+            ROUTER_FIRST_PROCESS_REPETITIONS * 3
+        );
+        assert_eq!(
+            evidence["second_batch"]["stage_diagnostic_series"]
+                .as_array()
+                .expect("second stage diagnostics")
+                .len(),
+            2
+        );
+        let second_ordered = evidence["second_batch"]["raw_observations"]
+            .as_array()
+            .expect("second ordered raw-observation ledger");
+        assert_eq!(second_ordered.len(), 260);
+        assert!(second_ordered
+            .iter()
+            .enumerate()
+            .all(|(index, observation)| {
+                observation["global_order_index"] == index
+                    && observation["batch_id"] == "batch-b"
+                    && observation["orchestration_status"] == "accepted"
+                    && observation.get("identity_duplicate").is_none()
+            }));
+        assert_eq!(
+            second_ordered[0]["case_id"],
+            OrchestratedRouterCase::TwoRow.case_id()
+        );
+        assert_eq!(
+            second_ordered[15]["case_id"],
+            OrchestratedRouterCase::SingleRow.case_id()
+        );
+        assert_eq!(second_ordered[30]["schedule_step"], "primary_first_process");
+        assert_eq!(
+            second_ordered[30]["case_id"],
+            OrchestratedRouterCase::TwoRow.case_id()
+        );
+    }
+
+    #[test]
     fn feature_002_external_dispatch_remains_fail_closed_without_access() {
         let model = format!("/tmp/pulsarmlx-never-accessed/{QWEN_FILENAME}");
         let inspect_error = run(args(&[
@@ -3615,7 +7575,8 @@ mod tests {
             "/tmp/pulsarmlx-never-accessed/attempts",
         ]))
         .expect_err("router execution remains task gated");
-        assert!(router_error.contains("T066"));
+        assert!(router_error.contains("orchestration is frozen"));
+        assert!(router_error.contains("T074"));
         assert!(router_error.contains("T083"));
         assert!(router_error.contains("no checkpoint was accessed"));
 

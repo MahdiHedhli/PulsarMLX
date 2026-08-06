@@ -38,6 +38,29 @@ const MAX_TIMING_OBSERVATIONS: usize = 1_024;
 const MAX_TIMING_SERIES_BYTES: usize = 1_024 * 1_024;
 const ROUTER_TIMING_CLOCK: &str = "perf_counter_ns";
 const ROUTER_F32_DEQUANTIZATION_REASON: &str = "f32_router_requires_no_dequantization";
+const ROUTER_STAGE_DIAGNOSTIC_KEYS: [&str; 13] = [
+    "setup_admission",
+    "file_io",
+    "storage_validation_f32_decode",
+    "dequantization",
+    "host_to_device",
+    "graph_construction",
+    "compilation",
+    "router_projection",
+    "top_k",
+    "normalization",
+    "total_evaluated_router",
+    "synchronized_readback",
+    "end_to_end_router_command",
+];
+const ROUTER_COSTLY_EXTERNAL_KEYS: [&str; 6] = [
+    "file_io",
+    "storage_validation_f32_decode",
+    "dequantization",
+    "host_to_device",
+    "total_evaluated_router",
+    "end_to_end_router_command",
+];
 
 pub const ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID: &str = "f002-major-single-row-minimal-v1";
 pub const ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID: &str = "f002-major-two-row-minimal-v1";
@@ -421,6 +444,13 @@ impl RouterTimingSeries {
             && self.successful_measurement_count() == self.measurement_count
     }
 
+    pub fn passing_output_sha256(&self) -> Option<&str> {
+        self.raw_timing_observations
+            .iter()
+            .find(|observation| observation.status == RouterTimingObservationStatus::Passed)
+            .and_then(RouterTimingObservation::output_sha256)
+    }
+
     fn try_from_raw(mut raw: RawRouterTimingSeries) -> Result<Self, ContractError> {
         validate_timing_series_identity(&raw)?;
         validate_timing_series_policy(&raw)?;
@@ -522,13 +552,6 @@ impl RouterTimingSeries {
             measurement_count: raw.measurement_count,
             raw_timing_observations: observations,
         })
-    }
-
-    fn passed_output_sha256(&self) -> Option<&str> {
-        self.raw_timing_observations
-            .iter()
-            .find(|observation| observation.status == RouterTimingObservationStatus::Passed)
-            .and_then(|observation| observation.output_sha256())
     }
 
     fn successful_count(&self, kind: RouterTimingObservationKind) -> usize {
@@ -668,12 +691,12 @@ pub fn validate_major_router_timing_series(
             item.benchmark_id == benchmark_id
                 && item.replication_role == RouterTimingReplicationRole::CleanProcessReplication
         });
-        let Some(primary_hash) = primary.and_then(RouterTimingSeries::passed_output_sha256) else {
+        let Some(primary_hash) = primary.and_then(RouterTimingSeries::passing_output_sha256) else {
             return Err(invalid_timing_evidence(
                 "major router primary series lacks a passing output identity",
             ));
         };
-        let Some(replica_hash) = replica.and_then(RouterTimingSeries::passed_output_sha256) else {
+        let Some(replica_hash) = replica.and_then(RouterTimingSeries::passing_output_sha256) else {
             return Err(invalid_timing_evidence(
                 "major router clean-process series lacks a passing output identity",
             ));
@@ -818,7 +841,7 @@ fn validate_timing_series_policy(raw: &RawRouterTimingSeries) -> Result<(), Cont
         RouterTimingSeriesKind::MajorMinimallyInstrumented
         | RouterTimingSeriesKind::InexpensiveSynthetic => (5, 30),
         RouterTimingSeriesKind::CostlyReal | RouterTimingSeriesKind::StageDiagnostic => (5, 10),
-        RouterTimingSeriesKind::FirstProcessCostly => (0, 10),
+        RouterTimingSeriesKind::FirstProcessCostly => (0, 1),
     };
     if (raw.warmup_count, raw.measurement_count) != expected_counts {
         return Err(invalid_timing_evidence(
@@ -923,6 +946,7 @@ fn validate_timing_observation(
     };
     let stages = validate_timing_stages(
         raw.stages,
+        series.series_kind,
         series.instrumentation_mode,
         raw.status,
         raw.evaluated,
@@ -1010,6 +1034,7 @@ fn validate_timing_observation(
 
 fn validate_timing_stages(
     raw: BTreeMap<String, RawRouterTimingStage>,
+    series_kind: RouterTimingSeriesKind,
     instrumentation_mode: RouterTimingInstrumentationMode,
     status: RouterTimingObservationStatus,
     evaluated: bool,
@@ -1088,18 +1113,46 @@ fn validate_timing_stages(
     if status == RouterTimingObservationStatus::Passed {
         match instrumentation_mode {
             RouterTimingInstrumentationMode::MinimallyInstrumented => {
-                if stages.len() != 2
-                    || !matches!(
-                        stages.get("total_evaluated_router"),
-                        Some(RouterTimingStageObservation::Observed { .. })
-                    )
-                {
+                let evaluated_total_is_observed = matches!(
+                    stages.get("total_evaluated_router"),
+                    Some(RouterTimingStageObservation::Observed { .. })
+                );
+                let external_read_is_observed = matches!(
+                    stages.get("file_io"),
+                    Some(RouterTimingStageObservation::Observed { .. })
+                );
+                let external_command_is_observed = matches!(
+                    stages.get("end_to_end_router_command"),
+                    Some(RouterTimingStageObservation::Observed { .. })
+                );
+                let stages_match_kind = match series_kind {
+                    RouterTimingSeriesKind::FirstProcessCostly
+                    | RouterTimingSeriesKind::CostlyReal => {
+                        stages.len() == ROUTER_COSTLY_EXTERNAL_KEYS.len()
+                            && ROUTER_COSTLY_EXTERNAL_KEYS
+                                .iter()
+                                .all(|stage| stages.contains_key(*stage))
+                            && external_read_is_observed
+                            && external_command_is_observed
+                    }
+                    _ => stages.len() == 2 && !stages.contains_key("file_io"),
+                };
+                if !stages_match_kind || !evaluated_total_is_observed {
                     return Err(invalid_timing_evidence(
-                        "minimal router timing lacks its isolated evaluated total",
+                        "minimal router timing lacks its frozen evaluated total or first-process read",
                     ));
                 }
             }
             RouterTimingInstrumentationMode::StageInstrumented => {
+                if stages.len() != ROUTER_STAGE_DIAGNOSTIC_KEYS.len()
+                    || ROUTER_STAGE_DIAGNOSTIC_KEYS
+                        .iter()
+                        .any(|stage| !stages.contains_key(*stage))
+                {
+                    return Err(invalid_timing_evidence(
+                        "stage router timing omits a required observed-or-unavailable boundary",
+                    ));
+                }
                 let observed_diagnostic = stages.iter().any(|(name, value)| {
                     name != "total_evaluated_router"
                         && name != "dequantization"

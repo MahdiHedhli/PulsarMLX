@@ -184,16 +184,23 @@ values, maximum and mean absolute error, RMSE, and maximum meaningful relative
 error. IDs additionally report ID and ordering mismatch counts. Whole-output,
 `0..16`, and `64..80` metrics are mandatory.
 
-Each real case has at least ten identical evaluated Apple correctness
-repetitions after admission. Every repetition must select explicit GPU, use no
-fallback, evaluate and synchronize before readback, match exact IDs/order, and
-pass the oracle tolerances. Canonical little-endian F32 hashes for complete
-logits, complete probabilities, selected probabilities, and normalized weights
-must be bitwise identical across all measured correctness repetitions. Any
-difference is retained as failure and stops v1; tolerances are not widened.
+Each real case retains exactly five labeled correctness warm-up attempts,
+followed by exactly ten labeled measured correctness attempts, after admission.
+The attempt role and within-role index are retained. Every one of the fifteen
+attempts must independently select explicit GPU, use no fallback, evaluate and
+synchronize before readback, match exact IDs/order, and pass the oracle
+tolerances. A failure in any warm-up or measured attempt is retained as a
+failure and stops v1.
 
-Correctness completes before timing begins. Timing observations do not
-retroactively satisfy the independent correctness gate.
+Canonical little-endian F32 hashes for complete logits, complete probabilities,
+selected probabilities, and normalized weights must be bitwise identical
+across the ten measured correctness attempts. Warm-up attempts do not satisfy
+the measured repeat count. Any measured difference is retained as failure and
+stops v1; tolerances are not widened.
+
+Both the single-row and two-row correctness gates complete before any timing
+series begins. Timing observations do not retroactively satisfy either
+independent correctness gate.
 
 ## 5. Benchmark matrix and execution order
 
@@ -218,10 +225,13 @@ under the required condition label, then repeats the entire major series.
   at least 5 retained warm-ups followed by 10 retained measurements.
 - Inexpensive warm compute and synthetic microbenchmark series use at least 5
   retained warm-ups followed by 30 retained measurements.
-- A series whose declared purpose is first-process or independently proved
-  controlled-cold behavior uses zero warm-ups under that precommitted
-  exception and at least 10 measured costly repetitions, each with the required
-  process/cache label. Starting a process alone never proves a cold filesystem.
+- A first-process condition is one predeclared cohort of exactly 10 separate
+  series. Every series runs in a distinct fresh process and contains exactly 0
+  warm-ups followed by exactly 1 first-read measurement with its own
+  process-replication ID and required process/cache label. A process or series
+  may never claim ten first reads. Independently proved controlled-cold
+  behavior uses the same 10-series, 0+1 structure. Starting a process alone
+  never proves a cold filesystem.
 - Stage-instrumented real diagnostics use at least 5 retained warm-ups and 10
   retained measurements, remain separate from major totals, and cannot be
   promoted as a third major benchmark.
@@ -232,12 +242,21 @@ Every primary or replication worker's first external read is retained as
 control method is added by protocol amendment. Same-process post-warm-up work
 uses `warm`.
 
+Recorded process-replication IDs are correlation evidence, not proof that the
+required processes were actually spawned and shut down. T083 connects each
+series identity to the execution adapter's observed spawn, one first-read
+measurement, and shutdown lifecycle. Until that live command step succeeds,
+the schema and orchestration checks establish only the planned evidence
+structure and MUST NOT be described as a real first-process result.
+
 ### 5.3 Frozen order
 
 Order is recorded for every observation. Batch 1 uses this fixed sequence:
 
-1. single-row correctness repetitions;
-2. two-row correctness repetitions;
+1. five labeled single-row correctness warm-up attempts followed by ten labeled
+   measured attempts;
+2. five labeled two-row correctness warm-up attempts followed by ten labeled
+   measured attempts;
 3. single-row costly real series;
 4. two-row costly real series;
 5. single-row minimally instrumented major series;
@@ -246,6 +265,19 @@ Order is recorded for every observation. Batch 1 uses this fixed sequence:
 8. two-row stage-instrumented diagnostic series;
 9. a separate clean-process replication of the single-row major; and
 10. a separate clean-process replication of the two-row major.
+
+Items 1 and 2 are complete gates: no first-process cohort or other timing work
+starts before both pass. At each first-process condition encountered later in
+the schedule, its ten one-measurement series are collected at that position;
+expanding the condition into distinct fresh processes does not change the
+single-row/two-row ordering above.
+
+Each batch serializes one flat `raw_observations` ledger in append order. The
+ledger includes correctness attempts plus every observation from accepted or
+rejected timing series, assigns contiguous global indices, and repeats the
+batch, case, and process identities needed to interpret the referenced raw
+record. The separate correctness, first-process, costly, major, and diagnostic
+arrays retain full typed detail but do not independently prove execution order.
 
 The stored order seed is `22002`; it identifies this frozen schedule and is not
 used for unrecorded ad-hoc shuffling. A later second independent batch is
