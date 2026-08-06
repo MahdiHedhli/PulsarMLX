@@ -3883,3 +3883,13 @@ accessed while implementing or testing this correction. The frozen protocol,
 tolerances, model identity, tensor identity, input, and independent oracle are
 unchanged. T083 remains incomplete until a new clean-source attempt passes the
 producer, sanitizer, evidence validator, and candidate package verifier.
+
+The correction was committed as
+`9f86f7f44b76b579ec95805fd3fb3ac26c220856` and pushed without force.
+[GitHub Actions run 31114184383](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31114184383)
+passed for that exact commit: Apple MLX small-fixture validation completed in
+1 minute 58 seconds and the Apple Silicon workspace baseline completed in
+1 minute 33 seconds. Every required fixture-only, native MLX, evidence, and
+workspace step passed. This documentation-only update is the non-recursive
+pre-T083 CI attestation; its own CI result is verified out of tree before the
+next checkpoint run rather than appended recursively.
