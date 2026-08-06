@@ -2702,3 +2702,39 @@ signal with `SIGTERM`; the current workspace replay produced no crash report.
 No checkpoint path was resolved, statted, hashed, opened, or executed. Apple
 GPU/unified memory was used only for the bounded synthetic MLX tests during the
 notified window. No model result or claims-ledger row was created.
+
+### T060 fixture-publication CI checkpoint
+
+The ten focused T050-T059 commits were staged-scanned individually, remained
+recoverable throughout, and were pushed without force to `origin/main` at
+`f5263b856894bd772d41161c67edece8e08bfab5`. Immediately after the push,
+local `HEAD` and `origin/main` were equal and the worktree was clean. The
+pre-push commands were:
+
+```sh
+git status --short --branch
+git diff --check
+scripts/research/check_staged.sh
+git log --oneline origin/main..HEAD
+git push origin main
+```
+
+All commands passed. The standardized staged safety scan reported `passed` and
+the push advanced `main` from `9840988` to `f5263b8` without rewriting history.
+
+GitHub Actions run
+[`31060882272`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31060882272)
+completed with conclusion `success` for exact head
+`f5263b856894bd772d41161c67edece8e08bfab5`. Every job in
+`.github/workflows/macos.yml` passed:
+
+- Apple Silicon workspace baseline, job `92488402369`: success in 1 minute 12
+  seconds, including workspace check and workspace tests.
+- Apple MLX small-fixture validation, job `92488402405`: success in 45 seconds,
+  including research methodology, pinned environment, worker contract,
+  Rust-to-worker integration, native device smoke, bounded tensor fixtures,
+  synthetic routed MoE, evidence verification, and external-model exclusion.
+
+This closes the fixture-publication checkpoint only. CI accessed no external
+checkpoint and establishes no model-backed correctness or performance claim.
+Local inference may continue until a later explicitly notified hardware window.
