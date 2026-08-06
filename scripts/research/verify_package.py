@@ -6,16 +6,19 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 from pathlib import PurePosixPath
 import re
 import stat
+import struct
 import tempfile
 from typing import Any
 
 import generate_figures
 import generate_tables
+import router_oracle
 from publish_evidence import (
     PublicationError,
     _read_candidate,
@@ -63,9 +66,958 @@ REVIEWER_SECTIONS = (
     "## Claims and reproduction links",
 )
 
+PINNED_ORACLE_REVISION = "b06aa774c03dbbb624e726664b714a57d1f49815"
+PINNED_MODEL_SHA256 = "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c"
+PINNED_ROUTER_SHA256 = "98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c"
+ORACLE_GENERATION_COMMAND = (
+    "python3 scripts/research/router_oracle.py --model "
+    "$PULSARMLX_MODEL_GGUF --source-dir $PULSARMLX_LLAMA_CPP "
+    "--capture-a $PULSARMLX_CAPTURE_A --capture-a-record "
+    "$PULSARMLX_CAPTURE_A_RECORD --capture-a-scheduler-trace "
+    "$PULSARMLX_CAPTURE_A_SCHEDULER_TRACE --capture-b "
+    "$PULSARMLX_CAPTURE_B --capture-b-record "
+    "$PULSARMLX_CAPTURE_B_RECORD --capture-b-scheduler-trace "
+    "$PULSARMLX_CAPTURE_B_SCHEDULER_TRACE --capture-provenance "
+    "$PULSARMLX_CAPTURE_PROVENANCE --output $PULSARMLX_ROUTER_ORACLE"
+)
+REAL_CASE_IDS = [
+    "qwen3moe-layer0-router-token0-row0-v1",
+    "qwen3moe-layer0-router-token0-token1-batch-v1",
+]
+REAL_ORACLE_UNSUPPORTED = [
+    "expert execution",
+    "routed MoE aggregation",
+    "complete layer or model inference",
+    "generation or serving",
+]
+ORACLE_BUNDLE_FILES = frozenset(
+    {
+        "bundle-manifest.json",
+        "capture-a.f32le",
+        "capture-a.json",
+        "capture-a.scheduler-trace.txt",
+        "capture-b.f32le",
+        "capture-b.json",
+        "capture-b.scheduler-trace.txt",
+        "capture-provenance.json",
+        "execution-provenance.json",
+        "oracle.json",
+    }
+)
+
 
 class VerificationError(ValueError):
     """A bounded package-verification failure."""
+
+
+def _exact_mapping(value: Any, fields: set[str], *, subject: str) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != fields:
+        raise VerificationError(f"{subject} contract differs")
+    return value
+
+
+def _round_f32(value: Any, *, subject: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise VerificationError(f"{subject} is not numeric")
+    try:
+        result = struct.unpack("<f", struct.pack("<f", float(value)))[0]
+    except (OverflowError, struct.error, ValueError) as error:
+        raise VerificationError(f"{subject} is outside F32") from error
+    if not math.isfinite(result):
+        raise VerificationError(f"{subject} is not finite F32")
+    return result
+
+
+def _f32(value: Any, *, subject: str) -> float:
+    result = _round_f32(value, subject=subject)
+    if float(value) != result:
+        raise VerificationError(f"{subject} is not canonical F32")
+    return result
+
+
+def _f32_add(left: float, right: float) -> float:
+    return _round_f32(left + right, subject="oracle F32 accumulation")
+
+
+def _f32_matrix(
+    value: Any,
+    *,
+    rows: int,
+    columns: int,
+    subject: str,
+) -> list[list[float]]:
+    if not isinstance(value, list) or len(value) != rows:
+        raise VerificationError(f"{subject} row count differs")
+    result: list[list[float]] = []
+    for row in value:
+        if not isinstance(row, list) or len(row) != columns:
+            raise VerificationError(f"{subject} column count differs")
+        result.append([_f32(item, subject=subject) for item in row])
+    return result
+
+
+def _canonical_f32(values: list[list[float]]) -> bytes:
+    return b"".join(struct.pack("<f", item) for row in values for item in row)
+
+
+def _canonical_u32(values: list[list[int]]) -> bytes:
+    if not isinstance(values, list) or len(values) != 2 or any(
+        not isinstance(row, list) or len(row) != 8 for row in values
+    ):
+        raise VerificationError("oracle selected expert ID shape differs")
+    encoded = bytearray()
+    for row in values:
+        for item in row:
+            if type(item) is not int or not 0 <= item < 128:
+                raise VerificationError("oracle selected expert ID is invalid")
+            encoded.extend(struct.pack("<I", item))
+    return bytes(encoded)
+
+
+def _softmax_f32(logits: list[float]) -> list[float]:
+    maximum = max(logits)
+    exponentials = [
+        _round_f32(
+            math.exp(_round_f32(value - maximum, subject="oracle shifted logit")),
+            subject="oracle exponential",
+        )
+        for value in logits
+    ]
+    denominator = 0.0
+    for value in exponentials:
+        denominator = _f32_add(denominator, value)
+    if not denominator > 0.0:
+        raise VerificationError("oracle softmax denominator is invalid")
+    return [
+        _round_f32(value / denominator, subject="oracle probability")
+        for value in exponentials
+    ]
+
+
+def _route_f32(probabilities: list[float]) -> tuple[list[int], list[float], list[float], bool]:
+    ranked = sorted(range(128), key=lambda expert_id: (-probabilities[expert_id], expert_id))
+    cutoff_tie = probabilities[ranked[7]] == probabilities[ranked[8]]
+    selected_ids = ranked[:8]
+    selected = [probabilities[expert_id] for expert_id in selected_ids]
+    selected_sum = 0.0
+    for value in selected:
+        selected_sum = _f32_add(selected_sum, value)
+    if not selected_sum > 0.0:
+        raise VerificationError("oracle selected-probability sum is invalid")
+    normalized = [
+        _round_f32(value / selected_sum, subject="oracle normalized weight")
+        for value in selected
+    ]
+    return selected_ids, selected, normalized, cutoff_tie
+
+
+def _sha256(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def verify_router_oracle_document(document: dict[str, Any]) -> dict[str, Any]:
+    """Independently revalidate bounded oracle values without model access."""
+
+    try:
+        _reject_non_public_values(document)
+    except PublicationError as error:
+        raise VerificationError("router oracle contains non-public data") from error
+    root = _exact_mapping(
+        document,
+        {
+            "schema", "schema_version", "oracle_id", "status", "source",
+            "generator", "model", "tensor", "capture", "capture_provenance",
+            "input", "result", "comparison_policy", "unsupported_interpretations",
+        },
+        subject="router oracle",
+    )
+    if (
+        root["schema"] != "pulsarmlx.research.router-oracle"
+        or root["schema_version"] != "1.0.0"
+        or root["oracle_id"] != "qwen3moe-layer0-router-cpu-oracle-v1"
+        or root["status"] != "passed"
+    ):
+        raise VerificationError("router oracle identity differs")
+
+    source = _exact_mapping(
+        root["source"],
+        {"repository", "revision", "clean", "license", "metal", "gpu_offload"},
+        subject="router oracle source",
+    )
+    if (
+        source["repository"] not in {
+            "https://github.com/ggml-org/llama.cpp",
+            "https://github.com/ggml-org/llama.cpp.git",
+        }
+        or source["revision"] != PINNED_ORACLE_REVISION
+        or source["clean"] is not True
+        or source["license"] != "MIT"
+        or source["metal"] is not False
+        or source["gpu_offload"] is not False
+    ):
+        raise VerificationError("router oracle source identity differs")
+
+    generator = _exact_mapping(
+        root["generator"],
+        {"path", "sha256", "generation_command", "independence", "numpy_version"},
+        subject="router oracle generator",
+    )
+    expected_generator = REPOSITORY_ROOT / "scripts" / "research" / "router_oracle.py"
+    if (
+        not all(
+            isinstance(generator[name], str)
+            for name in ("path", "sha256", "generation_command", "independence", "numpy_version")
+        )
+        or generator["generation_command"] != ORACLE_GENERATION_COMMAND
+        or generator["path"] != "scripts/research/router_oracle.py"
+        or generator["sha256"] != _sha256(expected_generator.read_bytes())
+        or "no MLX or PulsarMLX worker import or call" not in generator["independence"]
+        or generator["numpy_version"] != "2.4.5"
+    ):
+        raise VerificationError("router oracle generator identity differs")
+
+    model = _exact_mapping(
+        root["model"],
+        {"filename", "size_bytes", "sha256", "runtime_identity", "consumer_proofs"},
+        subject="router oracle model",
+    )
+    if (
+        model["filename"] != "Qwen3-30B-A3B-Q8_0.gguf"
+        or model["size_bytes"] != 32_483_931_648
+        or model["sha256"] != PINNED_MODEL_SHA256
+    ):
+        raise VerificationError("router oracle model identity differs")
+
+    def validate_posix_identity(value: Any) -> dict[str, Any]:
+        identity = _exact_mapping(
+            value,
+            {"device", "inode", "size_bytes", "sha256"},
+            subject="router oracle runtime identity",
+        )
+        if (
+            type(identity["device"]) is not int
+            or identity["device"] < 0
+            or type(identity["inode"]) is not int
+            or identity["inode"] <= 0
+            or identity["size_bytes"] != 32_483_931_648
+            or identity["sha256"] != PINNED_MODEL_SHA256
+        ):
+            raise VerificationError("router oracle runtime identity differs")
+        return identity
+
+    admitted_identity = validate_posix_identity(model["runtime_identity"])
+    consumers = model["consumer_proofs"]
+    if not isinstance(consumers, list) or len(consumers) != 2:
+        raise VerificationError("router oracle model consumers differ")
+    expected_consumer_ids = ["oracle-before-gguf-reader", "oracle-after-gguf-reader"]
+    for consumer, consumer_id in zip(consumers, expected_consumer_ids, strict=True):
+        proof = _exact_mapping(
+            consumer,
+            {"consumer_id", "before", "after", "descriptor_opened_read_only", "no_follow"},
+            subject="router oracle model consumer",
+        )
+        if (
+            proof["consumer_id"] != consumer_id
+            or proof["descriptor_opened_read_only"] is not True
+            or proof["no_follow"] is not True
+            or validate_posix_identity(proof["before"]) != admitted_identity
+            or validate_posix_identity(proof["after"]) != admitted_identity
+        ):
+            raise VerificationError("router oracle model consumer differs")
+
+    tensor = _exact_mapping(
+        root["tensor"],
+        {
+            "name", "gguf_type", "gguf_dimensions_fastest_axis_first",
+            "reader_shape", "orientation", "logical_element_count",
+            "encoded_byte_length", "encoded_sha256",
+        },
+        subject="router oracle tensor",
+    )
+    if (
+        tensor["name"] != "blk.0.ffn_gate_inp.weight"
+        or tensor["gguf_type"] != "F32"
+        or tensor["gguf_dimensions_fastest_axis_first"] != [2048, 128]
+        or tensor["reader_shape"] != [128, 2048]
+        or tensor["orientation"] != "expert_major_rows_input_columns"
+        or tensor["logical_element_count"] != 262_144
+        or tensor["encoded_byte_length"] != 1_048_576
+        or tensor["encoded_sha256"] != PINNED_ROUTER_SHA256
+    ):
+        raise VerificationError("router oracle tensor identity differs")
+
+    capture = _exact_mapping(
+        root["capture"],
+        {
+            "source_revision", "capture_node", "capture_sha256", "row_sha256",
+            "shape", "dtype", "canonical_byte_length", "direct_token_ids",
+            "positions", "context", "batch", "ubatch", "threads",
+            "input_adapter", "tokenizer", "model_identity",
+            "independent_capture_count", "rows_distinct", "cancellation_proofs",
+        },
+        subject="router oracle capture",
+    )
+    if (
+        capture.get("source_revision") != PINNED_ORACLE_REVISION
+        or capture.get("capture_node") != "ffn_norm-0"
+        or capture.get("shape") != [2, 2048]
+        or capture.get("dtype") != "float32_little_endian"
+        or capture.get("canonical_byte_length") != 16_384
+        or capture.get("direct_token_ids") != [0, 1]
+        or capture.get("positions") != [0, 1]
+        or capture.get("context") != 2
+        or capture.get("batch") != 2
+        or capture.get("ubatch") != 2
+        or capture.get("threads") != 1
+        or capture.get("input_adapter") != "direct_token_ids_v1"
+        or capture.get("tokenizer") != "not_used_direct_token_ids"
+        or capture.get("independent_capture_count") != 2
+        or capture.get("rows_distinct") is not True
+    ):
+        raise VerificationError("router oracle capture contract differs")
+    if validate_posix_identity(capture["model_identity"]) != admitted_identity:
+        raise VerificationError("router oracle capture model identity differs")
+    proofs = capture.get("cancellation_proofs")
+    if not isinstance(proofs, list) or len(proofs) != 2:
+        raise VerificationError("router oracle cancellation proofs differ")
+    for proof in proofs:
+        checked_proof = _exact_mapping(
+            proof,
+            {
+                "backend", "scheduler_trace_format", "scheduler_split_count",
+                "scheduler_split_ids", "scheduler_backends", "scheduler_input_count",
+                "scheduler_trace_sha256", "retained_scheduler_trace_byte_length",
+                "retained_scheduler_trace_sha256", "target", "target_ask_count",
+                "target_observation_count", "target_complete", "callback_returned_false",
+                "abort_guard_armed", "abort_callback_call_count",
+                "abort_callback_calls_after_target", "abort_callback_true_count",
+                "decode_status", "nodes_after_target", "cancelled_before_router_or_expert",
+            },
+            subject="router oracle cancellation proof",
+        )
+        if (
+            checked_proof["scheduler_trace_format"] != "ggml_sched_debug_marker_v1"
+            or type(checked_proof["scheduler_input_count"]) is not int
+            or not 0 <= checked_proof["scheduler_input_count"] <= 1_000_000
+            or not isinstance(checked_proof["scheduler_trace_sha256"], str)
+            or SHA256_RE.fullmatch(checked_proof["scheduler_trace_sha256"]) is None
+            or type(checked_proof["retained_scheduler_trace_byte_length"]) is not int
+            or not 1 <= checked_proof["retained_scheduler_trace_byte_length"] <= 4096
+            or not isinstance(checked_proof["retained_scheduler_trace_sha256"], str)
+            or SHA256_RE.fullmatch(checked_proof["retained_scheduler_trace_sha256"]) is None
+            or checked_proof["target_ask_count"] != 1
+            or checked_proof["target_observation_count"] != 1
+            or type(checked_proof["abort_callback_call_count"]) is not int
+            or checked_proof["abort_callback_call_count"] < 1
+            or checked_proof["abort_callback_true_count"] != 0
+            or checked_proof["decode_status"] != 0
+            or proof.get("backend") != "cpu"
+            or proof.get("scheduler_split_count") != 1
+            or proof.get("scheduler_split_ids") != [0]
+            or proof.get("scheduler_backends") != ["cpu"]
+            or proof.get("target") != "ffn_norm-0"
+            or proof.get("target_complete") is not True
+            or proof.get("callback_returned_false") is not True
+            or proof.get("abort_guard_armed") is not True
+            or proof.get("abort_callback_calls_after_target") != 0
+            or proof.get("nodes_after_target") != []
+            or proof.get("cancelled_before_router_or_expert") is not True
+        ):
+            raise VerificationError("router oracle cancellation proof differs")
+
+    validated_capture_provenance = _closed_capture_provenance(
+        root["capture_provenance"]
+    )
+    if validated_capture_provenance["admitted_model"] != admitted_identity:
+        raise VerificationError("router oracle capture provenance model differs")
+
+    oracle_input = _exact_mapping(
+        root["input"],
+        {"case_ids", "shape", "dtype", "byte_order", "values", "canonical_f32le_sha256", "row_sha256"},
+        subject="router oracle input",
+    )
+    if (
+        oracle_input["case_ids"] != REAL_CASE_IDS
+        or oracle_input["shape"] != [2, 2048]
+        or oracle_input["dtype"] != "float32"
+        or oracle_input["byte_order"] != "little"
+    ):
+        raise VerificationError("router oracle input contract differs")
+    hidden = _f32_matrix(oracle_input["values"], rows=2, columns=2048, subject="router oracle input")
+    hidden_bytes = _canonical_f32(hidden)
+    row_hashes = [_sha256(_canonical_f32([row])) for row in hidden]
+    if (
+        hidden[0] == hidden[1]
+        or oracle_input["canonical_f32le_sha256"] != _sha256(hidden_bytes)
+        or oracle_input["row_sha256"] != row_hashes
+        or capture.get("capture_sha256") != _sha256(hidden_bytes)
+        or capture.get("row_sha256") != row_hashes
+    ):
+        raise VerificationError("router oracle input hashes differ")
+
+    result = _exact_mapping(
+        root["result"],
+        {
+            "arithmetic", "logits", "full_softmax_probabilities",
+            "selected_expert_ids", "selected_probabilities", "normalized_weights",
+            "cutoff_ties", "hashes", "numpy_cross_check",
+        },
+        subject="router oracle result",
+    )
+    if result["arithmetic"] != "scalar_float32_multiply_then_add_left_to_right":
+        raise VerificationError("router oracle arithmetic differs")
+    logits = _f32_matrix(result["logits"], rows=2, columns=128, subject="router oracle logits")
+    probabilities = _f32_matrix(
+        result["full_softmax_probabilities"], rows=2, columns=128,
+        subject="router oracle probabilities",
+    )
+    selected_probabilities = _f32_matrix(
+        result["selected_probabilities"], rows=2, columns=8,
+        subject="router oracle selected probabilities",
+    )
+    normalized_weights = _f32_matrix(
+        result["normalized_weights"], rows=2, columns=8,
+        subject="router oracle normalized weights",
+    )
+    selected_ids = result["selected_expert_ids"]
+    ids_bytes = _canonical_u32(selected_ids) if isinstance(selected_ids, list) else b""
+    recomputed_probabilities = [_softmax_f32(row) for row in logits]
+    routes = [_route_f32(row) for row in recomputed_probabilities]
+    expected_ids = [route[0] for route in routes]
+    expected_selected = [route[1] for route in routes]
+    expected_normalized = [route[2] for route in routes]
+    cutoff_ties = [route[3] for route in routes]
+    if (
+        _canonical_f32(probabilities) != _canonical_f32(recomputed_probabilities)
+        or selected_ids != expected_ids
+        or _canonical_f32(selected_probabilities) != _canonical_f32(expected_selected)
+        or _canonical_f32(normalized_weights) != _canonical_f32(expected_normalized)
+        or result["cutoff_ties"] != cutoff_ties
+        or any(cutoff_ties)
+    ):
+        raise VerificationError("router oracle routing result differs")
+
+    logits_bytes = _canonical_f32(logits)
+    probabilities_bytes = _canonical_f32(probabilities)
+    selected_bytes = _canonical_f32(selected_probabilities)
+    normalized_bytes = _canonical_f32(normalized_weights)
+    output_bundle = logits_bytes + probabilities_bytes + ids_bytes + selected_bytes + normalized_bytes
+    expected_hashes = {
+        "logits_f32le_sha256": _sha256(logits_bytes),
+        "full_softmax_probabilities_f32le_sha256": _sha256(probabilities_bytes),
+        "selected_expert_ids_u32le_sha256": _sha256(ids_bytes),
+        "selected_probabilities_f32le_sha256": _sha256(selected_bytes),
+        "normalized_weights_f32le_sha256": _sha256(normalized_bytes),
+        "output_bundle_sha256": _sha256(output_bundle),
+    }
+    hashes = _exact_mapping(
+        result["hashes"],
+        {
+            "logits_f32le_sha256", "full_softmax_probabilities_f32le_sha256",
+            "selected_expert_ids_u32le_sha256", "selected_probabilities_f32le_sha256",
+            "normalized_weights_f32le_sha256", "output_bundle_sha256",
+        },
+        subject="router oracle output hashes",
+    )
+    if hashes != expected_hashes:
+        raise VerificationError("router oracle output hashes differ")
+
+    policy = root["comparison_policy"]
+    expected_policy = {
+        "logits": {"absolute_tolerance": 5e-4, "relative_tolerance": 5e-4},
+        "probabilities_and_weights": {"absolute_tolerance": 1e-6, "relative_tolerance": 1e-6},
+        "non_finite_policy": "reject",
+        "tie_rule": "probability_descending_then_expert_id_ascending",
+        "real_rank_8_rank_9_tie": "stop",
+    }
+    if policy != expected_policy:
+        raise VerificationError("router oracle comparison policy differs")
+    numpy = _exact_mapping(
+        result["numpy_cross_check"],
+        {
+            "passed", "compared_count", "mismatch_count", "first_mismatch",
+            "absolute_tolerance", "relative_tolerance", "maximum_absolute_error",
+            "maximum_relative_error", "numpy_logits_f32le_sha256",
+        },
+        subject="router oracle NumPy cross-check",
+    )
+    if (
+        numpy.get("passed") is not True
+        or numpy.get("compared_count") != 256
+        or numpy.get("mismatch_count") != 0
+        or numpy.get("first_mismatch") is not None
+        or numpy.get("absolute_tolerance") != _round_f32(5e-4, subject="NumPy tolerance")
+        or numpy.get("relative_tolerance") != _round_f32(5e-4, subject="NumPy tolerance")
+        or not isinstance(numpy.get("numpy_logits_f32le_sha256"), str)
+        or SHA256_RE.fullmatch(numpy["numpy_logits_f32le_sha256"]) is None
+    ):
+        raise VerificationError("router oracle NumPy cross-check differs")
+    for name in ("maximum_absolute_error", "maximum_relative_error"):
+        value = numpy.get(name)
+        try:
+            finite = math.isfinite(value)
+        except (OverflowError, TypeError, ValueError):
+            finite = False
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not finite
+            or value < 0
+        ):
+            raise VerificationError("router oracle NumPy error metric differs")
+    if root["unsupported_interpretations"] != REAL_ORACLE_UNSUPPORTED:
+        raise VerificationError("router oracle redistribution scope differs")
+
+    return {
+        "passed": True,
+        "row_count": 2,
+        "expert_count": 128,
+        "top_k": 8,
+        "selected_expert_ids": selected_ids,
+        "cutoff_ties": cutoff_ties,
+        "scheduler_input_counts": [
+            proof["scheduler_input_count"] for proof in proofs
+        ],
+        "input_sha256": _sha256(hidden_bytes),
+        "tensor_sha256": tensor["encoded_sha256"],
+        "output_sha256": expected_hashes["output_bundle_sha256"],
+        "numpy_mismatch_count": numpy["mismatch_count"],
+        "redistribution": "bounded_derived_values_only_no_model_weights",
+    }
+
+
+def _json_bytes(raw: bytes, *, subject: str) -> dict[str, Any]:
+    def reject_duplicate(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise VerificationError(f"{subject} repeats a JSON field")
+            value[key] = item
+        return value
+
+    def reject_constant(_: str) -> None:
+        raise VerificationError(f"{subject} contains a non-finite number")
+
+    try:
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=reject_duplicate,
+            parse_constant=reject_constant,
+        )
+    except VerificationError:
+        raise
+    except (UnicodeError, json.JSONDecodeError, RecursionError, ValueError) as error:
+        raise VerificationError(f"{subject} is not bounded JSON") from error
+    if not isinstance(value, dict):
+        raise VerificationError(f"{subject} root is not an object")
+    return value
+
+
+_POSIX_IDENTITY_FIELDS = {"device", "inode", "size_bytes", "sha256"}
+_RAW_CAPTURE_FIELDS = {
+    "source_revision",
+    "capture_node",
+    "shape",
+    "dtype",
+    "canonical_byte_length",
+    "direct_token_ids",
+    "positions",
+    "context",
+    "batch",
+    "ubatch",
+    "threads",
+    "input_adapter",
+    "tokenizer",
+    "decode_status",
+    "model_identity",
+    "cancellation",
+}
+_RAW_CANCELLATION_FIELDS = {
+    "backend",
+    "scheduler_trace_format",
+    "target",
+    "target_ask_count",
+    "target_observation_count",
+    "target_complete",
+    "callback_returned_false",
+    "abort_guard_armed",
+    "abort_callback_call_count",
+    "abort_callback_calls_after_target",
+    "abort_callback_true_count",
+    "nodes_after_target",
+}
+_CAPTURE_PROVENANCE_FIELDS = {
+    "schema",
+    "schema_version",
+    "binding_strategy",
+    "admitted_model",
+    "build",
+    "consumers",
+}
+_CAPTURE_BUILD_FIELDS = {
+    "attempt_scoped_fresh",
+    "source_revision",
+    "source_tree",
+    "source_clean_before",
+    "source_clean_after",
+    "capture_source_repository_sha256",
+    "capture_source_overlay_sha256",
+    "cmake_lists_sha256",
+    "cmake_cache_sha256",
+    "configure_log_sha256",
+    "build_log_sha256",
+    "configure_command",
+    "build_command",
+    "tools",
+    "helper",
+}
+_CAPTURE_CONSUMER_FIELDS = {
+    "consumer_id",
+    "model_before",
+    "model_after",
+    "helper_before",
+    "helper_after",
+}
+
+
+def _closed_posix_identity(value: Any, *, subject: str) -> dict[str, Any]:
+    return _exact_mapping(value, _POSIX_IDENTITY_FIELDS, subject=subject)
+
+
+def _closed_capture_provenance(value: Any) -> dict[str, Any]:
+    provenance = _exact_mapping(
+        value,
+        _CAPTURE_PROVENANCE_FIELDS,
+        subject="oracle capture provenance",
+    )
+    _closed_posix_identity(
+        provenance["admitted_model"],
+        subject="oracle admitted model identity",
+    )
+    build = _exact_mapping(
+        provenance["build"],
+        _CAPTURE_BUILD_FIELDS,
+        subject="oracle capture build provenance",
+    )
+    _closed_posix_identity(build["helper"], subject="oracle capture helper identity")
+    tools = build["tools"]
+    if not isinstance(tools, list) or len(tools) != 3:
+        raise VerificationError("oracle capture build tools differ")
+    for tool in tools:
+        _exact_mapping(
+            tool,
+            {"name", "version", "executable_sha256"},
+            subject="oracle capture build tool",
+        )
+    consumers = provenance["consumers"]
+    if not isinstance(consumers, list) or len(consumers) != 2:
+        raise VerificationError("oracle capture consumers differ")
+    for consumer in consumers:
+        proof = _exact_mapping(
+            consumer,
+            _CAPTURE_CONSUMER_FIELDS,
+            subject="oracle capture consumer",
+        )
+        for name in ("model_before", "model_after", "helper_before", "helper_after"):
+            _closed_posix_identity(
+                proof[name],
+                subject="oracle capture consumer file identity",
+            )
+    try:
+        canonical = router_oracle.validate_capture_provenance(provenance)
+    except router_oracle.RouterOracleError as error:
+        raise VerificationError(
+            f"router oracle capture provenance failed: {error.code}"
+        ) from error
+    if provenance != canonical:
+        raise VerificationError("oracle capture provenance is not canonical")
+    return canonical
+
+
+def _verify_closed_oracle_bundle_json(documents: dict[str, dict[str, Any]]) -> None:
+    manifest = _exact_mapping(
+        documents["bundle-manifest.json"],
+        {"schema", "schema_version", "complete", "publication", "attempts", "files"},
+        subject="oracle candidate manifest",
+    )
+    attempts = manifest["attempts"]
+    if not isinstance(attempts, list) or len(attempts) != 2:
+        raise VerificationError("oracle candidate attempt inventory differs")
+    for attempt in attempts:
+        _exact_mapping(
+            attempt,
+            {"attempt_id", "capture", "record", "scheduler_trace"},
+            subject="oracle candidate attempt",
+        )
+    files = manifest["files"]
+    if not isinstance(files, list) or len(files) != 9:
+        raise VerificationError("oracle candidate manifest inventory differs")
+    for record in files:
+        _exact_mapping(
+            record,
+            {"path", "byte_length", "sha256"},
+            subject="oracle candidate file identity",
+        )
+
+    for name in ("capture-a.json", "capture-b.json"):
+        capture = _exact_mapping(
+            documents[name],
+            _RAW_CAPTURE_FIELDS,
+            subject="oracle raw capture record",
+        )
+        _exact_mapping(
+            capture["model_identity"],
+            {*_POSIX_IDENTITY_FIELDS, "pre_post_match"},
+            subject="oracle raw capture model identity",
+        )
+        _exact_mapping(
+            capture["cancellation"],
+            _RAW_CANCELLATION_FIELDS,
+            subject="oracle raw cancellation proof",
+        )
+
+    _closed_capture_provenance(documents["capture-provenance.json"])
+    execution = _exact_mapping(
+        documents["execution-provenance.json"],
+        {
+            "schema",
+            "schema_version",
+            "binding_strategy",
+            "oracle_process_consumer",
+            "oracle_source_sha256",
+            "capture_provenance_sha256",
+            "oracle_document_sha256",
+        },
+        subject="oracle execution provenance",
+    )
+    consumer = _exact_mapping(
+        execution["oracle_process_consumer"],
+        {"consumer_id", "model_before", "model_after"},
+        subject="oracle process consumer",
+    )
+    _closed_posix_identity(
+        consumer["model_before"],
+        subject="oracle process model identity",
+    )
+    _closed_posix_identity(
+        consumer["model_after"],
+        subject="oracle process model identity",
+    )
+
+
+def verify_oracle_candidate_bundle(
+    candidate_path: Path | str,
+    *,
+    expected_feature: str,
+) -> dict[str, Any]:
+    """Read-only cross-file and numerical verification for the CPU oracle bundle."""
+
+    if expected_feature != "002-qwen-router-parity":
+        raise VerificationError("oracle candidate feature identity differs")
+    candidate = Path(candidate_path)
+    if not candidate.is_absolute() or Path(os.path.normpath(str(candidate))) != candidate:
+        raise VerificationError("oracle candidate path must be normalized and absolute")
+    _reject_symlink_components(candidate)
+    try:
+        resolved = candidate.resolve(strict=True)
+        repository = REPOSITORY_ROOT.resolve(strict=True)
+        resolved.relative_to(repository)
+    except ValueError:
+        pass
+    except OSError as error:
+        raise VerificationError("oracle candidate is unavailable") from error
+    else:
+        raise VerificationError("oracle candidate must remain outside the repository")
+    try:
+        directory_before = resolved.lstat()
+        if stat.S_ISLNK(directory_before.st_mode) or not stat.S_ISDIR(directory_before.st_mode):
+            raise VerificationError("oracle candidate must be a real directory")
+        entries = sorted(resolved.iterdir(), key=lambda item: item.name)
+    except VerificationError:
+        raise
+    except OSError as error:
+        raise VerificationError("oracle candidate cannot be inventoried") from error
+    if frozenset(item.name for item in entries) != ORACLE_BUNDLE_FILES:
+        raise VerificationError("oracle candidate artifact inventory differs")
+
+    snapshot: dict[str, bytes] = {}
+    metadata: dict[str, tuple[int, int, int, int]] = {}
+    aggregate_bytes = 0
+    for item in entries:
+        try:
+            before = item.lstat()
+        except OSError as error:
+            raise VerificationError("oracle candidate artifact is unavailable") from error
+        if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode):
+            raise VerificationError("oracle candidate contains an unsafe artifact")
+        maximum = 512 * 1024
+        raw = _read_regular_bytes(
+            item,
+            maximum_bytes=maximum,
+            subject="oracle candidate artifact",
+        )
+        if item.name in {"capture-a.f32le", "capture-b.f32le"} and len(raw) != 16_384:
+            raise VerificationError("oracle capture byte length differs")
+        aggregate_bytes += len(raw)
+        if aggregate_bytes > 2 * 1024 * 1024:
+            raise VerificationError("oracle candidate aggregate size exceeds its bound")
+        snapshot[item.name] = raw
+        metadata[item.name] = (
+            before.st_dev,
+            before.st_ino,
+            before.st_size,
+            before.st_mtime_ns,
+        )
+
+    documents = {
+        name: _json_bytes(raw, subject="oracle JSON artifact")
+        for name, raw in snapshot.items()
+        if name.endswith(".json")
+    }
+    _verify_closed_oracle_bundle_json(documents)
+    manifest = documents["bundle-manifest.json"]
+    expected_manifest_files = [
+        {
+            "path": name,
+            "byte_length": len(snapshot[name]),
+            "sha256": _sha256(snapshot[name]),
+        }
+        for name in (
+            "oracle.json",
+            "capture-a.f32le",
+            "capture-a.json",
+            "capture-a.scheduler-trace.txt",
+            "capture-b.f32le",
+            "capture-b.json",
+            "capture-b.scheduler-trace.txt",
+            "capture-provenance.json",
+            "execution-provenance.json",
+        )
+    ]
+    if manifest.get("files") != expected_manifest_files:
+        raise VerificationError("oracle candidate manifest hashes differ")
+    for name, raw in snapshot.items():
+        if name.endswith(".json"):
+            try:
+                _reject_non_public_values(documents[name])
+            except PublicationError as error:
+                raise VerificationError("oracle candidate contains non-public data") from error
+        elif name.endswith(".txt"):
+            try:
+                trace_text = raw.decode("utf-8")
+                _reject_non_public_values({"scheduler_trace": trace_text})
+                if router_oracle.canonical_scheduler_trace_bytes(trace_text) != raw:
+                    raise VerificationError("oracle scheduler trace is not canonical")
+            except router_oracle.RouterOracleError as error:
+                raise VerificationError(
+                    f"oracle scheduler trace failed: {error.code}"
+                ) from error
+            except (PublicationError, UnicodeError) as error:
+                raise VerificationError("oracle candidate trace is not public-safe") from error
+
+    try:
+        router_oracle.validate_oracle_candidate_bundle(resolved)
+    except router_oracle.RouterOracleError as error:
+        raise VerificationError(f"oracle candidate producer proof failed: {error.code}") from error
+
+    try:
+        directory_after = resolved.lstat()
+        if (
+            directory_before.st_dev,
+            directory_before.st_ino,
+            directory_before.st_mtime_ns,
+        ) != (
+            directory_after.st_dev,
+            directory_after.st_ino,
+            directory_after.st_mtime_ns,
+        ):
+            raise VerificationError("oracle candidate directory changed during verification")
+        for item in entries:
+            after = item.lstat()
+            if metadata[item.name] != (
+                after.st_dev,
+                after.st_ino,
+                after.st_size,
+                after.st_mtime_ns,
+            ):
+                raise VerificationError("oracle candidate artifact changed during verification")
+    except VerificationError:
+        raise
+    except OSError as error:
+        raise VerificationError("oracle candidate changed during verification") from error
+
+    oracle_document = documents["oracle.json"]
+    summary = verify_router_oracle_document(oracle_document)
+    cancellation_proofs = oracle_document["capture"]["cancellation_proofs"]
+    for index, attempt in enumerate(("a", "b")):
+        trace_text = snapshot[f"capture-{attempt}.scheduler-trace.txt"].decode("utf-8")
+        try:
+            trace = router_oracle.validate_scheduler_debug_trace(trace_text)
+        except router_oracle.RouterOracleError as error:
+            raise VerificationError(
+                f"oracle scheduler trace failed: {error.code}"
+            ) from error
+        for field, value in trace.items():
+            if cancellation_proofs[index].get(field) != value:
+                raise VerificationError("oracle scheduler trace binding differs")
+    model_manifest, _ = _read_json_object(
+        REPOSITORY_ROOT / "docs" / "research" / "MODEL_MANIFEST.json",
+        maximum_bytes=MAX_DOCUMENT_BYTES,
+        subject="model manifest",
+    )
+    try:
+        model_identity = model_manifest["model_identity"]
+        admission = model_manifest["router_tensor_admission"]
+        observed = admission["observed"]
+        model_license = model_identity["license"]
+    except (KeyError, TypeError) as error:
+        raise VerificationError("model redistribution identity is unavailable") from error
+    if (
+        model_manifest.get("feature_id") != expected_feature
+        or model_manifest.get("status") != "sealed_read_only_inspection"
+        or model_manifest.get("observed_feature_002_model_access") is not True
+        or not isinstance(model_identity, dict)
+        or model_identity.get("repository") != "Qwen/Qwen3-30B-A3B-GGUF"
+        or model_identity.get("revision") != "e4d4bafdfb96a411a163846265362aceb0b9c63a"
+        or model_identity.get("filename") != "Qwen3-30B-A3B-Q8_0.gguf"
+        or model_identity.get("size_bytes") != 32_483_931_648
+        or model_identity.get("sha256") != PINNED_MODEL_SHA256
+        or model_license != "Apache-2.0"
+        or model_identity.get("access_policy")
+        != "caller_supplied_external_read_only_no_automatic_download"
+        or model_identity.get("license_reference")
+        != "docs/validation/models/qwen3-30b-a3b-q8_0-compatibility.json"
+        or not isinstance(admission, dict)
+        or admission.get("status") != "admitted_observed"
+        or not isinstance(observed, dict)
+        or observed.get("name") != "blk.0.ffn_gate_inp.weight"
+        or observed.get("gguf_type") != "F32"
+        or observed.get("gguf_dimensions") != [2048, 128]
+        or observed.get("reader_shape") != [128, 2048]
+        or observed.get("execution_shape") != [128, 2048]
+        or observed.get("logical_element_count") != 262_144
+        or observed.get("encoded_length_bytes") != 1_048_576
+        or observed.get("orientation") != "expert_major_rows_input_columns"
+        or observed.get("encoded_sha256") != PINNED_ROUTER_SHA256
+        or observed.get("validation_status") != "passed"
+    ):
+        raise VerificationError("sealed model/tensor admission differs")
+
+    candidate_material = b"".join(
+        name.encode("utf-8") + b"\0" + snapshot[name]
+        for name in sorted(snapshot)
+    )
+    return {
+        **summary,
+        "feature_id": expected_feature,
+        "candidate_sha256": _sha256(candidate_material),
+        "manifest_sha256": _sha256(snapshot["bundle-manifest.json"]),
+        "oracle_document_sha256": _sha256(snapshot["oracle.json"]),
+        "artifact_count": len(snapshot),
+        "source_license": "MIT",
+        "model_license": model_license,
+        "publication_status": "eligible_for_sanitization_not_published",
+    }
 
 
 def _reject_symlink_components(path: Path) -> None:
@@ -444,10 +1396,6 @@ def verify_deterministic_regeneration(raw_directory: Path | str) -> dict[str, An
                     for name, content in sorted(first_files.items())
                 },
             }
-
-
-def _sha256(content: bytes) -> str:
-    return hashlib.sha256(content).hexdigest()
 
 
 def _load_publication_raw_records(
@@ -989,17 +1937,65 @@ def _parser() -> argparse.ArgumentParser:
             "artifacts twice, and check publication index scaffolding."
         ),
     )
+    parser.add_argument(
+        "--oracle-candidate",
+        type=Path,
+        help=(
+            "External complete CPU-oracle bundle to verify read-only. This mode "
+            "does not publish or modify the candidate."
+        ),
+    )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     arguments = _parser().parse_args(argv)
-    if arguments.fixture_only and arguments.candidate is not None:
+    selected_modes = sum(
+        (
+            arguments.fixture_only,
+            arguments.candidate is not None,
+            arguments.oracle_candidate is not None,
+        )
+    )
+    if selected_modes > 1:
         print(
-            "verification_error: --fixture-only and --candidate are mutually exclusive",
+            "verification_error: explicit verification modes are mutually exclusive",
             file=os.sys.stderr,
         )
         return 2
+    if arguments.oracle_candidate is not None:
+        try:
+            result = verify_oracle_candidate_bundle(
+                arguments.oracle_candidate,
+                expected_feature=arguments.feature,
+            )
+        except VerificationError as error:
+            print(f"verification_error: {error}", file=os.sys.stderr)
+            return 1
+        except (
+            OSError,
+            OverflowError,
+            RecursionError,
+            TypeError,
+            UnicodeError,
+            ValueError,
+            struct.error,
+        ):
+            print("verification_error: oracle candidate is malformed", file=os.sys.stderr)
+            return 1
+        print(
+            json.dumps(
+                {
+                    "fixture_only": False,
+                    "oracle_candidate": True,
+                    "passed": True,
+                    "record_count": 0,
+                    "oracle": result,
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
     candidate = arguments.candidate
     complete_package = not arguments.fixture_only and candidate is None
     if arguments.fixture_only:

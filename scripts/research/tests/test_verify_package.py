@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 import importlib
 import json
 import os
+import struct
 import subprocess
 import sys
 import tempfile
@@ -26,6 +28,9 @@ VERIFY_COMMAND = RESEARCH_DIR / "verify_package.py"
 if str(RESEARCH_DIR) not in sys.path:
     # Preserve standard-library import precedence during full test discovery.
     sys.path.append(str(RESEARCH_DIR))
+
+import router_oracle as oracle_reference
+from scripts.research.tests import test_router_oracle as oracle_bundle_fixture
 
 
 def _candidate(experiment_id: str = "fixture-publish-v1") -> dict:
@@ -77,6 +82,341 @@ def _claim_scope(record: dict) -> str:
             f"depth={record['claim_boundary']['operation']}",
         )
     )
+
+
+def _f32(value: float) -> float:
+    return struct.unpack("<f", struct.pack("<f", value))[0]
+
+
+def _router_oracle_document() -> dict:
+    hidden = [[0.0] * 2048, [1.0] * 2048]
+    model_identity = {
+        "device": 17,
+        "inode": 23,
+        "size_bytes": 32_483_931_648,
+        "sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    }
+    logits = [
+        [_f32((127 - expert_id) / 8.0) for expert_id in range(128)],
+        [_f32(((expert_id * 37) % 128) / 8.0) for expert_id in range(128)],
+    ]
+    probabilities = [oracle_reference.full_softmax_f32(row) for row in logits]
+    selections = [oracle_reference.select_top_k_f32(row) for row in probabilities]
+    selected_ids = [item[0] for item in selections]
+    selected_probabilities = [item[1] for item in selections]
+    normalized_weights = [item[2] for item in selections]
+    cutoff_ties = [
+        sorted(row, reverse=True)[7] == sorted(row, reverse=True)[8]
+        for row in probabilities
+    ]
+    logits_bytes = oracle_reference.canonical_f32_bytes(logits)
+    probabilities_bytes = oracle_reference.canonical_f32_bytes(probabilities)
+    selected_bytes = oracle_reference.canonical_f32_bytes(selected_probabilities)
+    normalized_bytes = oracle_reference.canonical_f32_bytes(normalized_weights)
+    ids_bytes = oracle_reference.canonical_u32_bytes(
+        expert_id for row in selected_ids for expert_id in row
+    )
+    input_bytes = oracle_reference.canonical_f32_bytes(hidden)
+    capture_hash = hashlib.sha256(input_bytes).hexdigest()
+    row_hashes = [oracle_reference.canonical_f32_sha256(row) for row in hidden]
+    cancellation = {
+        "backend": "cpu",
+        "scheduler_trace_format": "ggml_sched_debug_marker_v1",
+        "scheduler_split_count": 1,
+        "scheduler_split_ids": [0],
+        "scheduler_backends": ["cpu"],
+        "scheduler_input_count": 0,
+        "scheduler_trace_sha256": "1" * 64,
+        "retained_scheduler_trace_byte_length": 88,
+        "retained_scheduler_trace_sha256": "2" * 64,
+        "target": "ffn_norm-0",
+        "target_ask_count": 1,
+        "target_observation_count": 1,
+        "target_complete": True,
+        "callback_returned_false": True,
+        "abort_guard_armed": True,
+        "abort_callback_call_count": 1,
+        "abort_callback_calls_after_target": 0,
+        "abort_callback_true_count": 0,
+        "decode_status": 0,
+        "nodes_after_target": [],
+        "cancelled_before_router_or_expert": True,
+    }
+    return {
+        "schema": "pulsarmlx.research.router-oracle",
+        "schema_version": "1.0.0",
+        "oracle_id": "qwen3moe-layer0-router-cpu-oracle-v1",
+        "status": "passed",
+        "source": {
+            "repository": "https://github.com/ggml-org/llama.cpp.git",
+            "revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+            "clean": True,
+            "license": "MIT",
+            "metal": False,
+            "gpu_offload": False,
+        },
+        "generator": {
+            "path": "scripts/research/router_oracle.py",
+            "sha256": hashlib.sha256(
+                (RESEARCH_DIR / "router_oracle.py").read_bytes()
+            ).hexdigest(),
+            "generation_command": (
+                "python3 scripts/research/router_oracle.py --model "
+                "$PULSARMLX_MODEL_GGUF --source-dir $PULSARMLX_LLAMA_CPP "
+                "--capture-a $PULSARMLX_CAPTURE_A --capture-a-record "
+                "$PULSARMLX_CAPTURE_A_RECORD --capture-a-scheduler-trace "
+                "$PULSARMLX_CAPTURE_A_SCHEDULER_TRACE --capture-b "
+                "$PULSARMLX_CAPTURE_B --capture-b-record "
+                "$PULSARMLX_CAPTURE_B_RECORD --capture-b-scheduler-trace "
+                "$PULSARMLX_CAPTURE_B_SCHEDULER_TRACE --capture-provenance "
+                "$PULSARMLX_CAPTURE_PROVENANCE --output "
+                "$PULSARMLX_ROUTER_ORACLE"
+            ),
+            "independence": (
+                "scalar CPU implementation; no MLX or PulsarMLX worker import or call"
+            ),
+            "numpy_version": "2.4.5",
+        },
+        "model": {
+            "filename": "Qwen3-30B-A3B-Q8_0.gguf",
+            "size_bytes": 32_483_931_648,
+            "sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+            "runtime_identity": deepcopy(model_identity),
+            "consumer_proofs": [
+                {
+                    "consumer_id": consumer_id,
+                    "before": deepcopy(model_identity),
+                    "after": deepcopy(model_identity),
+                    "descriptor_opened_read_only": True,
+                    "no_follow": True,
+                }
+                for consumer_id in (
+                    "oracle-before-gguf-reader",
+                    "oracle-after-gguf-reader",
+                )
+            ],
+        },
+        "tensor": {
+            "name": "blk.0.ffn_gate_inp.weight",
+            "gguf_type": "F32",
+            "gguf_dimensions_fastest_axis_first": [2048, 128],
+            "reader_shape": [128, 2048],
+            "orientation": "expert_major_rows_input_columns",
+            "logical_element_count": 262_144,
+            "encoded_byte_length": 1_048_576,
+            "encoded_sha256": "98d82da676c9c2df99badbc8b05912471417ad60cc63ce719a25b54dca1d531c",
+        },
+        "capture": {
+            "source_revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+            "capture_node": "ffn_norm-0",
+            "capture_sha256": capture_hash,
+            "row_sha256": row_hashes,
+            "shape": [2, 2048],
+            "dtype": "float32_little_endian",
+            "canonical_byte_length": 16_384,
+            "direct_token_ids": [0, 1],
+            "positions": [0, 1],
+            "context": 2,
+            "batch": 2,
+            "ubatch": 2,
+            "threads": 1,
+            "input_adapter": "direct_token_ids_v1",
+            "tokenizer": "not_used_direct_token_ids",
+            "model_identity": deepcopy(model_identity),
+            "independent_capture_count": 2,
+            "rows_distinct": True,
+            "cancellation_proofs": [cancellation, deepcopy(cancellation)],
+        },
+        "capture_provenance": oracle_reference.validate_capture_provenance(
+            oracle_bundle_fixture._capture_provenance()
+        ),
+        "input": {
+            "case_ids": [
+                "qwen3moe-layer0-router-token0-row0-v1",
+                "qwen3moe-layer0-router-token0-token1-batch-v1",
+            ],
+            "shape": [2, 2048],
+            "dtype": "float32",
+            "byte_order": "little",
+            "values": hidden,
+            "canonical_f32le_sha256": capture_hash,
+            "row_sha256": row_hashes,
+        },
+        "result": {
+            "arithmetic": "scalar_float32_multiply_then_add_left_to_right",
+            "logits": logits,
+            "full_softmax_probabilities": probabilities,
+            "selected_expert_ids": selected_ids,
+            "selected_probabilities": selected_probabilities,
+            "normalized_weights": normalized_weights,
+            "cutoff_ties": cutoff_ties,
+            "hashes": {
+                "logits_f32le_sha256": hashlib.sha256(logits_bytes).hexdigest(),
+                "full_softmax_probabilities_f32le_sha256": hashlib.sha256(
+                    probabilities_bytes
+                ).hexdigest(),
+                "selected_expert_ids_u32le_sha256": hashlib.sha256(ids_bytes).hexdigest(),
+                "selected_probabilities_f32le_sha256": hashlib.sha256(
+                    selected_bytes
+                ).hexdigest(),
+                "normalized_weights_f32le_sha256": hashlib.sha256(
+                    normalized_bytes
+                ).hexdigest(),
+                "output_bundle_sha256": hashlib.sha256(
+                    logits_bytes
+                    + probabilities_bytes
+                    + ids_bytes
+                    + selected_bytes
+                    + normalized_bytes
+                ).hexdigest(),
+            },
+            "numpy_cross_check": {
+                "passed": True,
+                "compared_count": 256,
+                "mismatch_count": 0,
+                "first_mismatch": None,
+                "absolute_tolerance": _f32(5e-4),
+                "relative_tolerance": _f32(5e-4),
+                "maximum_absolute_error": 0.0,
+                "maximum_relative_error": 0.0,
+                "numpy_logits_f32le_sha256": hashlib.sha256(logits_bytes).hexdigest(),
+            },
+        },
+        "comparison_policy": {
+            "logits": {
+                "absolute_tolerance": 5e-4,
+                "relative_tolerance": 5e-4,
+            },
+            "probabilities_and_weights": {
+                "absolute_tolerance": 1e-6,
+                "relative_tolerance": 1e-6,
+            },
+            "non_finite_policy": "reject",
+            "tie_rule": "probability_descending_then_expert_id_ascending",
+            "real_rank_8_rank_9_tie": "stop",
+        },
+        "unsupported_interpretations": [
+            "expert execution",
+            "routed MoE aggregation",
+            "complete layer or model inference",
+            "generation or serving",
+        ],
+    }
+
+
+def _write_router_oracle_bundle(
+    candidate: Path,
+    *,
+    scheduler_input_count: int = 0,
+) -> None:
+    oracle_bundle_fixture._write_complete_candidate(candidate)
+    for attempt in ("a", "b"):
+        record_path = candidate / f"capture-{attempt}.json"
+        record = json.loads(record_path.read_text(encoding="utf-8"))
+        record["canonical_byte_length"] = 16_384
+        record["cancellation"] = {
+            name: record["cancellation"][name]
+            for name in (
+                "backend",
+                "scheduler_trace_format",
+                "target",
+                "target_ask_count",
+                "target_observation_count",
+                "target_complete",
+                "callback_returned_false",
+                "abort_guard_armed",
+                "abort_callback_call_count",
+                "abort_callback_calls_after_target",
+                "abort_callback_true_count",
+                "nodes_after_target",
+            )
+        }
+        record_path.write_text(
+            json.dumps(record, allow_nan=False, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    if scheduler_input_count:
+        for attempt in ("a", "b"):
+            trace_path = candidate / f"capture-{attempt}.scheduler-trace.txt"
+            trace = trace_path.read_text(encoding="utf-8").replace(
+                "## SPLIT #0: CPU # 0 inputs",
+                f"## SPLIT #0: CPU # {scheduler_input_count} inputs",
+            )
+            trace_path.write_text(trace, encoding="utf-8")
+    first_rows, first_record = oracle_reference._read_capture(
+        candidate / "capture-a.f32le",
+        candidate / "capture-a.json",
+        candidate / "capture-a.scheduler-trace.txt",
+    )
+    second_rows, second_record = oracle_reference._read_capture(
+        candidate / "capture-b.f32le",
+        candidate / "capture-b.json",
+        candidate / "capture-b.scheduler-trace.txt",
+    )
+    if oracle_reference.canonical_f32_bytes(
+        first_rows
+    ) != oracle_reference.canonical_f32_bytes(second_rows):
+        raise AssertionError("test candidate captures differ")
+    capture = oracle_reference.validate_capture_pair(first_record, second_record)
+    document = _router_oracle_document()
+    provenance = json.loads(
+        (candidate / "capture-provenance.json").read_text(encoding="utf-8")
+    )
+    validated_provenance = oracle_reference.validate_capture_provenance(provenance)
+    provenance_path = candidate / "capture-provenance.json"
+    provenance_path.write_text(
+        json.dumps(validated_provenance, allow_nan=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    admitted = validated_provenance["admitted_model"]
+    document["capture"] = capture
+    document["capture_provenance"] = validated_provenance
+    document["model"]["runtime_identity"] = admitted
+    document["model"]["consumer_proofs"] = [
+        {
+            "consumer_id": consumer_id,
+            "before": admitted,
+            "after": admitted,
+            "descriptor_opened_read_only": True,
+            "no_follow": True,
+        }
+        for consumer_id in ("oracle-before-gguf-reader", "oracle-after-gguf-reader")
+    ]
+    (candidate / "oracle.json").write_text(
+        json.dumps(document, allow_nan=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    execution_path = candidate / "execution-provenance.json"
+    execution = json.loads(execution_path.read_text(encoding="utf-8"))
+    execution["oracle_process_consumer"] = {
+        "consumer_id": "oracle-process",
+        "model_before": admitted,
+        "model_after": admitted,
+    }
+    execution["oracle_source_sha256"] = document["generator"]["sha256"]
+    execution["capture_provenance_sha256"] = hashlib.sha256(
+        provenance_path.read_bytes()
+    ).hexdigest()
+    execution["oracle_document_sha256"] = hashlib.sha256(
+        (candidate / "oracle.json").read_bytes()
+    ).hexdigest()
+    execution_path.write_text(
+        json.dumps(execution, allow_nan=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    manifest_path = candidate / "bundle-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["files"] = [
+        oracle_reference._candidate_file_record(candidate / name)
+        for name in oracle_reference._CANDIDATE_ARTIFACTS
+    ]
+    manifest_path.write_text(
+        json.dumps(manifest, allow_nan=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    oracle_reference.validate_oracle_candidate_bundle(candidate)
 
 
 class PublicationBoundaryTests(unittest.TestCase):
@@ -479,6 +819,263 @@ class PublicationBoundaryTests(unittest.TestCase):
             self.assertEqual(candidate_path.read_bytes(), before)
             self.assertEqual(sorted(path.name for path in root.iterdir()), ["candidate.json"])
 
+    def test_complete_oracle_bundle_and_cli_are_read_only_and_model_independent(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            candidate = root / "oracle-candidate"
+            _write_router_oracle_bundle(candidate)
+            before = {
+                path.name: path.read_bytes()
+                for path in candidate.iterdir()
+            }
+
+            result = self.verifier.verify_oracle_candidate_bundle(
+                candidate,
+                expected_feature="002-qwen-router-parity",
+            )
+
+            self.assertTrue(result["passed"])
+            self.assertEqual(result["artifact_count"], 10)
+            self.assertEqual(result["row_count"], 2)
+            self.assertEqual(result["expert_count"], 128)
+            self.assertEqual(result["top_k"], 8)
+            self.assertFalse(any(result["cutoff_ties"]))
+            self.assertRegex(result["candidate_sha256"], r"^[0-9a-f]{64}$")
+            self.assertEqual(
+                {path.name: path.read_bytes() for path in candidate.iterdir()},
+                before,
+            )
+
+            environment = os.environ.copy()
+            environment["PULSARMLX_MODEL_GGUF"] = ""
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(VERIFY_COMMAND),
+                    "--feature",
+                    "002-qwen-router-parity",
+                    "--oracle-candidate",
+                    str(candidate),
+                ],
+                cwd=REPOSITORY_ROOT,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            cli_result = json.loads(completed.stdout)
+            self.assertTrue(cli_result["passed"])
+            self.assertTrue(cli_result["oracle_candidate"])
+            self.assertEqual(cli_result["oracle"]["candidate_sha256"], result["candidate_sha256"])
+            self.assertNotIn(str(candidate), completed.stdout)
+            self.assertNotIn(str(candidate), completed.stderr)
+            self.assertEqual(
+                {path.name: path.read_bytes() for path in candidate.iterdir()},
+                before,
+            )
+
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = Path(temporary).resolve() / "nonzero-scheduler-input"
+            _write_router_oracle_bundle(candidate, scheduler_input_count=7)
+
+            result = self.verifier.verify_oracle_candidate_bundle(
+                candidate,
+                expected_feature="002-qwen-router-parity",
+            )
+
+            self.assertEqual(result["scheduler_input_counts"], [7, 7])
+
+    def test_oracle_bundle_rejects_wrong_feature_and_structural_mutations(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            candidate = Path(temporary).resolve() / "wrong-feature"
+            _write_router_oracle_bundle(candidate)
+            with self.assertRaises(self.verifier.VerificationError):
+                self.verifier.verify_oracle_candidate_bundle(
+                    candidate,
+                    expected_feature="001-apple-silicon-mlx",
+                )
+
+        def remove_artifact(candidate: Path, _: Path) -> None:
+            (candidate / "capture-b.json").unlink()
+
+        def add_artifact(candidate: Path, _: Path) -> None:
+            (candidate / "unexpected.json").write_text("{}\n", encoding="utf-8")
+
+        def replace_with_symlink(candidate: Path, root: Path) -> None:
+            target = root / "capture-target.f32le"
+            target.write_bytes((candidate / "capture-a.f32le").read_bytes())
+            (candidate / "capture-a.f32le").unlink()
+            (candidate / "capture-a.f32le").symlink_to(target)
+
+        def mutate_manifest_hash(candidate: Path, _: Path) -> None:
+            manifest_path = candidate / "bundle-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["files"][0]["sha256"] = "0" * 64
+            manifest_path.write_text(
+                json.dumps(manifest, allow_nan=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+        def rehash_manifest(candidate: Path) -> None:
+            manifest_path = candidate / "bundle-manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["files"] = [
+                oracle_reference._candidate_file_record(candidate / artifact)
+                for artifact in oracle_reference._CANDIDATE_ARTIFACTS
+            ]
+            manifest_path.write_text(
+                json.dumps(manifest, allow_nan=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+        def add_execution_payload(candidate: Path, _: Path) -> None:
+            path = candidate / "execution-provenance.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["opaque_payload"] = "00" * 1024
+            path.write_text(
+                json.dumps(document, allow_nan=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            rehash_manifest(candidate)
+
+        def add_capture_payload(candidate: Path, _: Path) -> None:
+            path = candidate / "capture-a.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["cancellation"]["router_weight_bytes"] = "00" * 1024
+            path.write_text(
+                json.dumps(document, allow_nan=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            rehash_manifest(candidate)
+
+        def add_provenance_payload(candidate: Path, _: Path) -> None:
+            path = candidate / "capture-provenance.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["build"]["router_weight_bytes"] = "00" * 1024
+            path.write_text(
+                json.dumps(document, allow_nan=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            rehash_manifest(candidate)
+
+        def add_manifest_payload(candidate: Path, _: Path) -> None:
+            path = candidate / "bundle-manifest.json"
+            document = json.loads(path.read_text(encoding="utf-8"))
+            document["opaque_payload"] = "00" * 1024
+            path.write_text(
+                json.dumps(document, allow_nan=False, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+        for name, mutate in (
+            ("missing", remove_artifact),
+            ("extra", add_artifact),
+            ("symlink", replace_with_symlink),
+            ("manifest_hash", mutate_manifest_hash),
+            ("execution_payload", add_execution_payload),
+            ("capture_payload", add_capture_payload),
+            ("provenance_payload", add_provenance_payload),
+            ("manifest_payload", add_manifest_payload),
+        ):
+            with self.subTest(mutation=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                candidate = root / "oracle-candidate"
+                _write_router_oracle_bundle(candidate)
+                mutate(candidate, root)
+
+                with self.assertRaises(self.verifier.VerificationError) as raised:
+                    self.verifier.verify_oracle_candidate_bundle(
+                        candidate,
+                        expected_feature="002-qwen-router-parity",
+                    )
+                self.assertNotIn(str(candidate), str(raised.exception))
+
+    def test_real_oracle_document_is_recomputed_before_publication(self) -> None:
+        document = _router_oracle_document()
+
+        result = self.verifier.verify_router_oracle_document(document)
+
+        self.assertTrue(result["passed"])
+        self.assertEqual(result["row_count"], 2)
+        self.assertEqual(result["expert_count"], 128)
+        self.assertEqual(result["top_k"], 8)
+        self.assertEqual(result["selected_expert_ids"], document["result"]["selected_expert_ids"])
+        self.assertFalse(any(result["cutoff_ties"]))
+
+    def test_oracle_numpy_metrics_follow_the_combined_tolerance_rule(self) -> None:
+        document = _router_oracle_document()
+        cross_check = document["result"]["numpy_cross_check"]
+        cross_check["maximum_absolute_error"] = 0.001
+        cross_check["maximum_relative_error"] = 0.5
+
+        result = self.verifier.verify_router_oracle_document(document)
+
+        self.assertTrue(result["passed"])
+        self.assertEqual(result["numpy_mismatch_count"], 0)
+
+    def test_real_oracle_document_rejects_mutated_outputs_and_scope(self) -> None:
+        mutations = []
+
+        changed_id = _router_oracle_document()
+        changed_id["result"]["selected_expert_ids"][0][0] = 127
+        mutations.append(changed_id)
+
+        changed_hash = _router_oracle_document()
+        changed_hash["result"]["hashes"]["output_bundle_sha256"] = "0" * 64
+        mutations.append(changed_hash)
+
+        changed_probability = _router_oracle_document()
+        changed_probability["result"]["full_softmax_probabilities"][0][0] = 0.5
+        mutations.append(changed_probability)
+
+        missing_scope = _router_oracle_document()
+        missing_scope["unsupported_interpretations"].remove("expert execution")
+        mutations.append(missing_scope)
+
+        private_path = _router_oracle_document()
+        private_path["generator"]["path"] = "/" + "Users" + "/private/oracle.py"
+        mutations.append(private_path)
+
+        malformed_ids = _router_oracle_document()
+        malformed_ids["result"]["selected_expert_ids"] = [1, 2]
+        mutations.append(malformed_ids)
+
+        malformed_command = _router_oracle_document()
+        malformed_command["generator"]["generation_command"] = None
+        mutations.append(malformed_command)
+
+        huge_number = _router_oracle_document()
+        huge_number["result"]["logits"][0][0] = 10**1000
+        mutations.append(huge_number)
+
+        for metric in ("maximum_absolute_error", "maximum_relative_error"):
+            huge_metric = _router_oracle_document()
+            huge_metric["result"]["numpy_cross_check"][metric] = 10**1000
+            mutations.append(huge_metric)
+
+        nested_payload = _router_oracle_document()
+        nested_payload["result"]["numpy_cross_check"]["router_weight_bytes"] = "00"
+        mutations.append(nested_payload)
+
+        runtime_payload = _router_oracle_document()
+        runtime_payload["model"]["runtime_identity"]["router_weight_bytes"] = "00"
+        mutations.append(runtime_payload)
+
+        provenance_payload = _router_oracle_document()
+        provenance_payload["capture_provenance"]["build"][
+            "router_weight_bytes"
+        ] = "00"
+        mutations.append(provenance_payload)
+
+        for mutation in mutations:
+            with self.subTest(mutation=mutations.index(mutation)):
+                with self.assertRaises(self.verifier.VerificationError):
+                    self.verifier.verify_router_oracle_document(mutation)
+
     def test_full_schema_fixture_uses_the_semantic_validator(self) -> None:
         before = FULL_FIXTURE.read_bytes()
         result = self.verifier.verify_candidate(
@@ -522,6 +1119,32 @@ class PublicationBoundaryTests(unittest.TestCase):
             for path in FULL_FIXTURE.parent.glob("*.json")
         }
         self.assertEqual(after, before)
+
+    def test_oracle_candidate_mode_is_explicit_and_mutually_exclusive(self) -> None:
+        private_candidate = "/" + "Users" + "/private/oracle-candidate"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(VERIFY_COMMAND),
+                "--feature",
+                "002-qwen-router-parity",
+                "--fixture-only",
+                "--oracle-candidate",
+                private_candidate,
+            ],
+            cwd=REPOSITORY_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 2)
+        self.assertEqual(completed.stdout, "")
+        self.assertEqual(
+            completed.stderr,
+            "verification_error: explicit verification modes are mutually exclusive\n",
+        )
+        self.assertNotIn(private_candidate, completed.stderr)
 
     def test_complete_publication_index_is_accepted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
