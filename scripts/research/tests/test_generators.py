@@ -60,6 +60,54 @@ def _record(experiment_id: str, total_ns: int, max_abs_error: float) -> dict:
     }
 
 
+def _large_record(
+    experiment_id: str,
+    *,
+    batch_id: str,
+    process_prefix: str,
+    observation_count: int = 260,
+    summary_count: int = 190,
+) -> dict:
+    """Build the live-run cardinalities without depending on the full schema."""
+
+    record = _record(experiment_id, 100_000, 0.000001)
+    record["batch_id"] = batch_id
+    # This deliberately incorrect anchor proves generators resolve each summary
+    # through its included raw observations instead of copying record metadata.
+    record["process_replication_id"] = "wrong-record-anchor"
+    record["raw_observations"] = [
+        {
+            "observation_id": f"{experiment_id}-observation-{index:03d}",
+            "process_replication_id": f"{process_prefix}-{index:03d}",
+        }
+        for index in range(observation_count)
+    ]
+    record["summaries"] = [
+        {
+            "group": {
+                "case_id": "generated-qwen3moe-router-single-row-v1",
+                "batch_id": batch_id,
+                "observation_kind": "measurement",
+                "stage": f"stage-{index:03d}",
+                "condition": "warm",
+                "instrumentation_mode": "minimally_instrumented",
+            },
+            "included_observation_ids": [
+                f"{experiment_id}-observation-{index:03d}"
+            ],
+            "unfiltered_summary": {
+                "sample_count": 1,
+                "median_ns": 100_000 + index,
+                "mean_ns": float(100_000 + index),
+                "minimum_ns": 100_000 + index,
+                "maximum_ns": 100_000 + index,
+            },
+        }
+        for index in range(summary_count)
+    ]
+    return record
+
+
 class DeterministicGeneratorTests(unittest.TestCase):
     def setUp(self) -> None:
         try:
@@ -116,7 +164,9 @@ class DeterministicGeneratorTests(unittest.TestCase):
     def test_tables_derive_values_from_raw_records(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             table_dir, _ = self._generate(Path(temporary))
-            csv_path = next(path for path in table_dir.iterdir() if path.suffix == ".csv")
+            csv_path = next(
+                path for path in table_dir.iterdir() if path.suffix == ".csv"
+            )
             markdown_path = next(path for path in table_dir.iterdir() if path.suffix == ".md")
 
             with csv_path.open(newline="", encoding="utf-8") as handle:
@@ -246,7 +296,9 @@ class DeterministicGeneratorTests(unittest.TestCase):
                     or row["coefficient_of_variation_reason"]
                 )
 
-            svg = next(path for path in figure_dir.iterdir() if path.suffix == ".svg")
+            svg = next(
+                path for path in figure_dir.iterdir() if path.suffix == ".svg"
+            )
             svg_text = svg.read_text(encoding="utf-8")
             self.assertIn("status=passed", svg_text)
             self.assertIn("status=failed", svg_text)
@@ -254,6 +306,95 @@ class DeterministicGeneratorTests(unittest.TestCase):
             self.assertIn("correctness=true", svg_text)
             self.assertIn('class="bar-pass"', svg_text)
             self.assertIn('class="bar-nonpass"', svg_text)
+
+    def test_live_cardinality_derives_each_summary_process_from_raw_observations(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw_dir = root / "raw"
+            raw_dir.mkdir()
+            record = _large_record(
+                "live-batch-a",
+                batch_id="batch-a",
+                process_prefix="process-a",
+            )
+            (raw_dir / "live-batch-a.json").write_text(
+                json.dumps(record, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+
+            table_dir = root / "tables"
+            figure_dir = root / "figures"
+            self.tables.generate_tables(raw_dir, table_dir)
+            self.figures.generate_figures(raw_dir, figure_dir)
+
+            csv_path = next(
+                path for path in table_dir.iterdir() if path.suffix == ".csv"
+            )
+            with csv_path.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(len(rows), 190)
+            self.assertEqual(rows[0]["process_replication_id"], "process-a-000")
+            self.assertEqual(rows[-1]["process_replication_id"], "process-a-189")
+            self.assertNotIn(
+                "wrong-record-anchor",
+                {row["process_replication_id"] for row in rows},
+            )
+
+            svg = next(
+                path for path in figure_dir.iterdir() if path.suffix == ".svg"
+            )
+            svg_text = svg.read_text(encoding="utf-8")
+            self.assertEqual(svg_text.count('<rect class="bar-pass"'), 190)
+            self.assertIn("process=process-a-000", svg_text)
+            self.assertIn("process=process-a-189", svg_text)
+            self.assertNotIn("wrong-record-anchor", svg_text)
+
+    def test_two_live_batches_generate_all_380_summary_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw_dir = root / "raw"
+            raw_dir.mkdir()
+            for record in (
+                _large_record(
+                    "live-batch-a",
+                    batch_id="batch-a",
+                    process_prefix="process-a",
+                ),
+                _large_record(
+                    "live-batch-b",
+                    batch_id="batch-b",
+                    process_prefix="process-b",
+                ),
+            ):
+                (raw_dir / f"{record['experiment_id']}.json").write_text(
+                    json.dumps(record, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+
+            table_dir = root / "tables"
+            figure_dir = root / "figures"
+            self.tables.generate_tables(raw_dir, table_dir)
+            self.figures.generate_figures(raw_dir, figure_dir)
+
+            csv_path = next(path for path in table_dir.iterdir() if path.suffix == ".csv")
+            with csv_path.open(newline="", encoding="utf-8") as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(len(rows), 380)
+            self.assertEqual(
+                {row["process_replication_id"] for row in rows},
+                {
+                    *(f"process-a-{index:03d}" for index in range(190)),
+                    *(f"process-b-{index:03d}" for index in range(190)),
+                },
+            )
+
+            svg = next(path for path in figure_dir.iterdir() if path.suffix == ".svg")
+            svg_text = svg.read_text(encoding="utf-8")
+            self.assertEqual(svg_text.count('<rect class="bar-pass"'), 380)
+            self.assertIn("process=process-a-000", svg_text)
+            self.assertIn("process=process-b-189", svg_text)
 
     def test_symlinked_ancestor_and_partial_package_are_rejected(self) -> None:
         for module, output_name in (

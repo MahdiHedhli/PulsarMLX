@@ -19,13 +19,14 @@ from validate_evidence import EvidenceValidationError, validate_record
 
 
 MAX_CANDIDATE_BYTES = 16 * 1024 * 1024
+MAX_PUBLIC_RECORD_BYTES = 4 * 1024 * 1024
 MAX_HISTORY_FILES = 512
 MAX_HISTORY_BYTES = 64 * 1024 * 1024
 MAX_JSON_NODES = 100_000
 MAX_JSON_DEPTH = 64
 SCHEMA_ID = "pulsarmlx.research.experiment"
 SCHEMA_VERSION = "1.0.0"
-FULL_EVIDENCE_SCHEMA_VERSION = "1.1.0"
+FULL_EVIDENCE_SCHEMA_VERSIONS = {"1.1.0", "1.2.0"}
 EXPERIMENT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,127}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 PRIVATE_PATH_RE = re.compile(
@@ -199,7 +200,7 @@ def _require_candidate_shape(record: dict[str, Any]) -> None:
     if "evidence_schema" in record:
         if (
             record.get("evidence_schema") != SCHEMA_ID
-            or record.get("evidence_schema_version") != FULL_EVIDENCE_SCHEMA_VERSION
+            or record.get("evidence_schema_version") not in FULL_EVIDENCE_SCHEMA_VERSIONS
         ):
             raise PublicationError("candidate schema identity is unsupported")
         try:
@@ -327,6 +328,7 @@ def _read_bounded_json(
     path: Path,
     *,
     subject: str,
+    maximum_bytes: int = MAX_CANDIDATE_BYTES,
 ) -> tuple[dict[str, Any], bytes]:
     _reject_symlink_components(path)
     descriptor: int | None = None
@@ -342,14 +344,14 @@ def _read_bounded_json(
         metadata = os.fstat(descriptor)
         if not stat.S_ISREG(metadata.st_mode):
             raise PublicationError(f"{subject} must be a regular file")
-        if metadata.st_size <= 0 or metadata.st_size > MAX_CANDIDATE_BYTES:
+        if metadata.st_size <= 0 or metadata.st_size > maximum_bytes:
             raise PublicationError(f"{subject} size is outside the publication bound")
 
         chunks: list[bytes] = []
         size = 0
         while chunk := os.read(descriptor, 64 * 1024):
             size += len(chunk)
-            if size > MAX_CANDIDATE_BYTES:
+            if size > maximum_bytes:
                 raise PublicationError(
                     f"{subject} size is outside the publication bound"
                 )
@@ -406,7 +408,7 @@ def _canonical_bytes(record: dict[str, Any]) -> bytes:
         ).encode("utf-8")
     except (RecursionError, TypeError, UnicodeError, ValueError) as error:
         raise PublicationError("canonical candidate is not bounded JSON") from error
-    if len(payload) > MAX_CANDIDATE_BYTES:
+    if len(payload) > MAX_PUBLIC_RECORD_BYTES:
         raise PublicationError("canonical candidate exceeds the publication bound")
     return payload
 
@@ -435,7 +437,11 @@ def _validate_publication_history(
     seen: set[str] = set()
     total_bytes = 0
     for entry in entries:
-        record, raw = _read_bounded_json(entry, subject="publication history")
+        record, raw = _read_bounded_json(
+            entry,
+            subject="publication history",
+            maximum_bytes=MAX_PUBLIC_RECORD_BYTES,
+        )
         total_bytes += len(raw)
         if total_bytes > MAX_HISTORY_BYTES:
             raise PublicationError("publication history exceeds the aggregate bound")

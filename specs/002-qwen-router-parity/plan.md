@@ -225,7 +225,7 @@ are:
    `gguf-py` and standalone scalar F32 code, with NumPy only as a cross-check.
    Never relabel Feature 001's prompt-derived activation as real.
 4. Introduce `pulsarmlx.research.experiment` and
-   `pulsarmlx.research.router-parity` version `1.0.0`; do not retrofit the 14
+   `pulsarmlx.research.router-parity` version `1.1.0` for external complete-detail records while retaining explicit historical `1.0.0` validation; do not retrofit the 14
    heterogeneous Feature 001 JSON records.
 5. Freeze Type-7 percentiles, sample standard deviation, and explicit CV rules.
    Keep minimally instrumented totals separate from stage-instrumented timings;

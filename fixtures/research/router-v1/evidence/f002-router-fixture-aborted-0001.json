@@ -4,7 +4,7 @@
     {
       "kind": "frozen_protocol",
       "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-      "sha256": "c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863"
+      "sha256": "c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423"
     },
     {
       "kind": "router_fixture_manifest",
@@ -79,7 +79,7 @@
     "selected_device": "gpu"
   },
   "evidence_schema": "pulsarmlx.research.experiment",
-  "evidence_schema_version": "1.1.0",
+  "evidence_schema_version": "1.2.0",
   "execution": {
     "argv": [
       "python3",
@@ -152,14 +152,14 @@
     "tensor_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   },
   "payload_schema": "pulsarmlx.research.router-parity",
-  "payload_schema_version": "1.0.0",
+  "payload_schema_version": "1.1.0",
   "process_replication_id": "process-warm-a",
   "protocol": {
     "order_seed": 22002,
     "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-    "protocol_id": "f002-router-protocol-amendment-001",
-    "protocol_version": "1.1.0",
-    "sha256": "c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863"
+    "protocol_id": "f002-router-protocol-amendment-002",
+    "protocol_version": "1.2.0",
+    "sha256": "c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423"
   },
   "raw_observations": [
     {

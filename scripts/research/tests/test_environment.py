@@ -730,6 +730,199 @@ class EnvironmentCollectorContractTests(unittest.TestCase):
         with self.assertRaises(environment.EnvironmentCollectionError):
             environment.extract_benchmark_resources(wrong_backend)
 
+    def test_resource_extractor_supports_live_result_records_and_ignores_aborts(self) -> None:
+        def result_record(
+            observation_id: str,
+            footprint: int,
+            peak: int,
+            *,
+            status: str = "passed",
+        ) -> dict[str, object]:
+            return {
+                "observation_id": observation_id,
+                "status": status,
+                "backend": "apple-mlx",
+                "requested_device": "gpu",
+                "selected_device": "gpu",
+                "fallback_used": False,
+                "evaluated": True,
+                "synchronized": True,
+                "memory_gauges": {
+                    "process_footprint_bytes": footprint,
+                    "mlx_active_bytes": peak // 2,
+                    "mlx_cache_bytes": peak // 4,
+                    "mlx_peak_bytes": peak,
+                },
+            }
+
+        candidate = {
+            "backend": "apple-mlx",
+            "worker": {
+                "result_resource_records": [
+                    result_record("live-result-00", 4_096, 2_048),
+                    {
+                        "observation_id": "live-abort-00",
+                        "status": "aborted",
+                        "backend": "apple-mlx",
+                        "requested_device": "gpu",
+                        "selected_device": "not_available",
+                        "fallback_used": False,
+                        "evaluated": False,
+                        "synchronized": False,
+                        "memory_gauges": None,
+                    },
+                    result_record(
+                        "live-result-01",
+                        8_192,
+                        4_096,
+                        status="failed",
+                    ),
+                ]
+            },
+        }
+
+        resources = environment.extract_benchmark_resources(candidate)
+
+        self.assertEqual(resources["process_footprint_bytes"]["value"], 8_192)
+        self.assertEqual(resources["mlx_peak_memory_bytes"]["value"], 4_096)
+        self.assertEqual(resources["worker_backend"]["value"], "apple-mlx")
+        self.assertEqual(resources["worker_evaluated"]["value"], True)
+
+        wrong_backend = deepcopy(candidate)
+        wrong_backend["backend"] = "different-backend"
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.extract_benchmark_resources(wrong_backend)
+
+        missing_gauges = deepcopy(candidate)
+        missing_gauges["worker"]["result_resource_records"][0][  # type: ignore[index]
+            "memory_gauges"
+        ] = None
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.extract_benchmark_resources(missing_gauges)
+
+        contradictory_abort = deepcopy(candidate)
+        contradictory_abort["worker"]["result_resource_records"][1][  # type: ignore[index]
+            "evaluated"
+        ] = True
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.extract_benchmark_resources(contradictory_abort)
+
+    def test_all_aborted_live_resources_are_truthfully_unavailable(self) -> None:
+        def aborted_record(observation_id: str) -> dict[str, object]:
+            return {
+                "observation_id": observation_id,
+                "status": "aborted",
+                "backend": "apple-mlx",
+                "requested_device": "gpu",
+                "selected_device": "not_available",
+                "fallback_used": False,
+                "evaluated": False,
+                "synchronized": False,
+                "memory_gauges": None,
+            }
+
+        candidate = {
+            "backend": "apple-mlx",
+            "worker": {
+                "result_resource_records": [
+                    aborted_record("live-abort-00"),
+                    aborted_record("live-abort-01"),
+                ]
+            },
+        }
+
+        resources = environment.extract_benchmark_resources(candidate)
+
+        for name in (
+            "process_footprint_bytes",
+            "mlx_active_memory_bytes",
+            "mlx_cache_memory_bytes",
+            "mlx_peak_memory_bytes",
+            "process_cpu_time_seconds",
+            "process_bytes_read",
+        ):
+            self.assertEqual(resources[name]["status"], "unavailable", name)
+        self.assertEqual(resources["worker_backend"]["value"], "apple-mlx")
+        self.assertEqual(resources["worker_requested_device"]["value"], "gpu")
+        self.assertEqual(
+            resources["worker_selected_device"]["value"],
+            "not_available",
+        )
+        self.assertFalse(resources["worker_fallback_used"]["value"])
+        self.assertFalse(resources["worker_evaluated"]["value"])
+        self.assertFalse(resources["worker_synchronized"]["value"])
+
+        combined = environment.combine_environment_evidence(
+            before_snapshot=_collect(),
+            after_snapshot=_collect(capture_phase="after"),
+            after_unavailable_reason=None,
+            benchmark_resources=resources,
+        )
+        self.assertEqual(combined["selected_device"], "not_available")
+
+        contradictory_resources = deepcopy(resources)
+        contradictory_resources["process_footprint_bytes"] = environment.observed(
+            4_096,
+            "forged_unevaluated_gauge",
+        )
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.combine_environment_evidence(
+                before_snapshot=_collect(),
+                after_snapshot=_collect(capture_phase="after"),
+                after_unavailable_reason=None,
+                benchmark_resources=contradictory_resources,
+            )
+
+    def test_mixed_aborted_and_failed_before_evaluation_remains_unevaluated(
+        self,
+    ) -> None:
+        def record(observation_id: str, status: str) -> dict[str, object]:
+            return {
+                "observation_id": observation_id,
+                "status": status,
+                "backend": "apple-mlx",
+                "requested_device": "gpu",
+                "selected_device": "not_available",
+                "fallback_used": False,
+                "evaluated": False,
+                "synchronized": False,
+                "memory_gauges": None,
+            }
+
+        candidate = {
+            "backend": "apple-mlx",
+            "worker": {
+                "result_resource_records": [
+                    record("live-abort-00", "aborted"),
+                    record("live-pre-evaluation-failure-00", "failed"),
+                ]
+            },
+        }
+
+        resources = environment.extract_benchmark_resources(candidate)
+
+        self.assertEqual(resources["worker_selected_device"]["value"], "not_available")
+        self.assertFalse(resources["worker_evaluated"]["value"])
+        self.assertFalse(resources["worker_synchronized"]["value"])
+        self.assertTrue(
+            all(
+                resources[name]["status"] == "unavailable"
+                for name in (
+                    "process_footprint_bytes",
+                    "mlx_active_memory_bytes",
+                    "mlx_cache_memory_bytes",
+                    "mlx_peak_memory_bytes",
+                )
+            )
+        )
+
+        invalid_mixed = deepcopy(candidate)
+        invalid_mixed["worker"]["result_resource_records"][1][  # type: ignore[index]
+            "selected_device"
+        ] = "gpu"
+        with self.assertRaises(environment.EnvironmentCollectionError):
+            environment.extract_benchmark_resources(invalid_mixed)
+
 
 if __name__ == "__main__":
     unittest.main()

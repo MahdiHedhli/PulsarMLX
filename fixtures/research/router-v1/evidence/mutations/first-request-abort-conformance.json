@@ -1,0 +1,46 @@
+{
+  "fixture_schema": "pulsarmlx.research.router-abort-conformance",
+  "fixture_schema_version": "1.0.0",
+  "feature_id": "002-qwen-router-parity",
+  "case_id": "qwen3moe-layer0-router-token0-row0-v1",
+  "observation_id": "batch-a-single-correctness-warmup-00",
+  "oracle_artifact": {
+    "path": "fixtures/research/router-v1/real/f002-router-oracle-freeze-0001.json",
+    "sha256": "3f570ce97f45902a1717d3770c6665d1023d8ccfc18266e25229bc1e86725133"
+  },
+  "correctness": {
+    "status": "unavailable",
+    "reason": "worker startup failed before evaluation",
+    "source": "pre_execution_abort"
+  },
+  "timing": {
+    "monotonic_clock": "rust_std_instant",
+    "durations_ns": {
+      "dequantization": {
+        "status": "not_applicable",
+        "reason": "f32_router_requires_no_dequantization"
+      },
+      "end_to_end_router_command": {
+        "status": "observed",
+        "duration_ns": 1000
+      },
+      "total_evaluated_router": {
+        "status": "unavailable",
+        "reason": "worker_startup_failed_before_evaluation"
+      }
+    }
+  },
+  "resource": {
+    "application_tensor_bytes_read": null,
+    "tensor_cache_outcome": "unavailable",
+    "canonical_output_retention": "unavailable_aborted_request",
+    "evaluated": false,
+    "synchronized": false,
+    "failure": {
+      "code": "worker_startup_failed",
+      "message": "the worker did not start",
+      "stage": "worker_startup"
+    }
+  },
+  "expected_validation": "accepted_failed_or_aborted_external_record_only"
+}

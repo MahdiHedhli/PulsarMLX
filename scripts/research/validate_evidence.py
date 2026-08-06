@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from datetime import datetime
 import hashlib
 import importlib.util
@@ -14,6 +15,8 @@ from pathlib import Path
 from pathlib import PurePosixPath
 import re
 import stat
+import struct
+import subprocess
 import sys
 from typing import Any, Iterable, Mapping
 
@@ -44,18 +47,23 @@ combine_environment_evidence = _ENVIRONMENT_MODULE.combine_environment_evidence
 
 EXPERIMENT_SCHEMA = "pulsarmlx.research.experiment"
 ROUTER_SCHEMA = "pulsarmlx.research.router-parity"
-EVIDENCE_SCHEMA_VERSION = "1.1.0"
-PAYLOAD_SCHEMA_VERSION = "1.0.0"
+EVIDENCE_SCHEMA_VERSION = "1.2.0"
+PAYLOAD_SCHEMA_VERSION = "1.1.0"
+LEGACY_EVIDENCE_SCHEMA_VERSION = "1.1.0"
+LEGACY_PAYLOAD_SCHEMA_VERSION = "1.0.0"
 MODEL_MANIFEST_SCHEMA_VERSION = "1.0.0"
 ENVIRONMENT_SNAPSHOT_SCHEMA_VERSION = "1.0.0"
 FEATURE_ID = "002-qwen-router-parity"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MODEL_MANIFEST_PATH = "docs/research/MODEL_MANIFEST.json"
 FROZEN_PROTOCOL_PATH = "docs/research/EXPERIMENT_PROTOCOL.md"
-FROZEN_PROTOCOL_ID = "f002-router-protocol-amendment-001"
-FROZEN_PROTOCOL_VERSION = "1.1.0"
+FROZEN_PROTOCOL_ID = "f002-router-protocol-amendment-002"
+FROZEN_PROTOCOL_VERSION = "1.2.0"
 FROZEN_PROTOCOL_ORDER_SEED = 22_002
-FROZEN_PROTOCOL_SHA256 = "c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863"
+FROZEN_PROTOCOL_SHA256 = "c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423"
+LEGACY_PROTOCOL_ID = "f002-router-protocol-amendment-001"
+LEGACY_PROTOCOL_VERSION = "1.1.0"
+LEGACY_PROTOCOL_SHA256 = "c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863"
 FROZEN_MODEL_REVISION = "e4d4bafdfb96a411a163846265362aceb0b9c63a"
 FROZEN_MODEL_SHA256 = "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c"
 FROZEN_LOGIT_ABSOLUTE_TOLERANCE = 5e-4
@@ -76,6 +84,7 @@ ROUTER_FIXTURE_MANIFEST_SHA256 = (
 MAX_MANIFEST_BYTES = 128 * 1024
 MAX_LINKED_ARTIFACT_BYTES = 4 * 1024 * 1024
 MAX_ARTIFACT_COUNT = 32
+MAX_PUBLIC_RECORD_BYTES = 4 * 1024 * 1024
 MAX_JSON_NODES = 100_000
 MAX_JSON_DEPTH = 64
 MINIMUM_TOTAL_MEMORY_BYTES = 42_949_672_960
@@ -304,23 +313,37 @@ def _finite_number(value: Any) -> float:
 
 
 def _walk(value: Any) -> Iterable[Any]:
-    """Iterate bounded JSON-like values without recursive Python calls."""
+    """Iterate JSON values while counting containers/scalars, never object keys."""
 
-    pending: list[tuple[Any, int]] = [(value, 0)]
+    pending: list[tuple[Any, int, bool]] = [(value, 0, True)]
     visited = 0
     while pending:
-        current, depth = pending.pop()
-        visited += 1
-        if visited > MAX_JSON_NODES or depth > MAX_JSON_DEPTH:
+        current, depth, counts_as_node = pending.pop()
+        if counts_as_node:
+            visited += 1
+        if visited > MAX_JSON_NODES or (counts_as_node and depth > MAX_JSON_DEPTH):
             _fail("schema_violation", "evidence exceeds the structural bound")
         yield current
         if isinstance(current, dict):
             for key, child in reversed(tuple(current.items())):
-                pending.append((child, depth + 1))
-                pending.append((key, depth + 1))
+                pending.append((child, depth + 1, True))
+                # Keys are scanned for privacy but excluded from the shared
+                # one-node-per-JSON-value/container structural definition.
+                pending.append((key, depth + 1, False))
         elif isinstance(current, list):
             for child in reversed(current):
-                pending.append((child, depth + 1))
+                pending.append((child, depth + 1, True))
+
+
+def _validate_public_record_size(record: dict[str, Any]) -> None:
+    try:
+        payload = (
+            json.dumps(record, allow_nan=False, indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
+    except (RecursionError, TypeError, UnicodeError, ValueError):
+        _fail("schema_violation", "evidence cannot be canonically serialized")
+    if len(payload) > MAX_PUBLIC_RECORD_BYTES:
+        _fail("schema_violation", "canonical public evidence exceeds the byte bound")
 
 
 def _reject_non_finite_and_private_values(record: dict[str, Any]) -> None:
@@ -541,6 +564,30 @@ def _hash_repository_file(
     )[1]
 
 
+def _hash_historical_protocol(repository_root: Path, source_commit: str) -> str:
+    """Resolve legacy protocol bytes from the immutable source commit."""
+
+    if not COMMIT_RE.fullmatch(source_commit):
+        _fail("semantic_relationship", "historical protocol commit is invalid")
+    try:
+        completed = subprocess.run(
+            ["git", "show", f"{source_commit}:{FROZEN_PROTOCOL_PATH}"],
+            cwd=repository_root,
+            check=False,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        _fail("semantic_relationship", "historical protocol bytes are unavailable")
+    if (
+        completed.returncode != 0
+        or not completed.stdout
+        or len(completed.stdout) > MAX_LINKED_ARTIFACT_BYTES
+    ):
+        _fail("semantic_relationship", "historical protocol bytes are unavailable")
+    return hashlib.sha256(completed.stdout).hexdigest()
+
+
 def _load_model_manifest(repository_root: Path) -> dict[str, Any]:
     manifest_bytes, _ = _read_repository_file(
         repository_root,
@@ -592,8 +639,8 @@ def _load_model_identity(repository_root: Path) -> dict[str, Any]:
     return {field: identity[field] for field in required}
 
 
-def _load_real_oracle_identity(repository_root: Path) -> dict[str, Any]:
-    """Project the immutable public oracle into the experiment identity shape."""
+def _load_real_oracle_publication(repository_root: Path) -> dict[str, Any]:
+    """Load the immutable public oracle document after binding its exact bytes."""
 
     publication_bytes, publication_sha256 = _read_repository_file(
         repository_root,
@@ -605,6 +652,25 @@ def _load_real_oracle_identity(repository_root: Path) -> dict[str, Any]:
         _fail("semantic_relationship", "the frozen real oracle publication changed")
     try:
         publication = json.loads(publication_bytes.decode("utf-8"))
+    except (TypeError, UnicodeError, json.JSONDecodeError, RecursionError, ValueError):
+        _fail("semantic_relationship", "the frozen real oracle publication is invalid")
+    if (
+        not isinstance(publication, dict)
+        or publication.get("schema") != "pulsarmlx.research.router-oracle-publication"
+        or publication.get("schema_version") != "1.0.0"
+        or publication.get("publication_id") != "f002-router-oracle-freeze-0001"
+        or publication.get("feature_id") != FEATURE_ID
+        or publication.get("status") != "passed"
+    ):
+        _fail("semantic_relationship", "the frozen real oracle publication is invalid")
+    return publication
+
+
+def _load_real_oracle_identity(repository_root: Path) -> dict[str, Any]:
+    """Project the immutable public oracle into the experiment identity shape."""
+
+    publication = _load_real_oracle_publication(repository_root)
+    try:
         source = publication["source"]
         generator = publication["generator"]
         fixture = publication["input"]
@@ -623,13 +689,7 @@ def _load_real_oracle_identity(repository_root: Path) -> dict[str, Any]:
     except (KeyError, TypeError, UnicodeError, json.JSONDecodeError, RecursionError, ValueError):
         _fail("semantic_relationship", "the frozen real oracle publication is invalid")
     if (
-        not isinstance(publication, dict)
-        or publication.get("schema") != "pulsarmlx.research.router-oracle-publication"
-        or publication.get("schema_version") != "1.0.0"
-        or publication.get("publication_id") != "f002-router-oracle-freeze-0001"
-        or publication.get("feature_id") != FEATURE_ID
-        or publication.get("status") != "passed"
-        or identity["revision"] != PINNED_ORACLE_REVISION
+        identity["revision"] != PINNED_ORACLE_REVISION
         or any(
             not isinstance(identity[name], str) or not SHA256_RE.fullmatch(identity[name])
             for name in ("input_fixture_sha256", "tensor_sha256", "output_sha256")
@@ -675,6 +735,7 @@ TOP_LEVEL_FIELDS = {
     "warnings",
     "failures",
     "artifacts",
+    "router_detail",
 }
 FAILURE_FIELDS = {"code", "message", "stage"}
 ARTIFACT_FIELDS = {"kind", "path", "sha256"}
@@ -728,12 +789,21 @@ def _validate_identity(record: dict[str, Any]) -> None:
         record.get("payload_schema"),
         record.get("payload_schema_version"),
     )
-    if identities != (
-        EXPERIMENT_SCHEMA,
-        EVIDENCE_SCHEMA_VERSION,
-        ROUTER_SCHEMA,
-        PAYLOAD_SCHEMA_VERSION,
-    ):
+    supported = {
+        (
+            EXPERIMENT_SCHEMA,
+            EVIDENCE_SCHEMA_VERSION,
+            ROUTER_SCHEMA,
+            PAYLOAD_SCHEMA_VERSION,
+        ),
+        (
+            EXPERIMENT_SCHEMA,
+            LEGACY_EVIDENCE_SCHEMA_VERSION,
+            ROUTER_SCHEMA,
+            LEGACY_PAYLOAD_SCHEMA_VERSION,
+        ),
+    }
+    if identities not in supported:
         _fail("unsupported_schema_identity", "evidence schema identity is unsupported")
 
 
@@ -741,10 +811,23 @@ def _validate_structure(record: dict[str, Any]) -> None:
     _closed_object(
         record,
         allowed=TOP_LEVEL_FIELDS,
-        required=TOP_LEVEL_FIELDS - {"second_batch", "evidence_scope"},
+        required=TOP_LEVEL_FIELDS - {"second_batch", "evidence_scope", "router_detail"},
     )
     if record["feature_id"] != FEATURE_ID:
         _fail("semantic_relationship", "feature identity does not match")
+    evidence_scope = _evidence_scope(record)
+    if evidence_scope == "external_checkpoint":
+        if (
+            record["evidence_schema_version"] != EVIDENCE_SCHEMA_VERSION
+            or record["payload_schema_version"] != PAYLOAD_SCHEMA_VERSION
+            or "router_detail" not in record
+        ):
+            _fail(
+                "unsupported_schema_identity",
+                "external evidence requires the complete-detail schema versions",
+            )
+    elif "router_detail" in record:
+        _fail("semantic_relationship", "synthetic evidence cannot claim external router detail")
     for name in ("experiment_id", "batch_id", "process_replication_id"):
         if not isinstance(record[name], str) or not ID_RE.fullmatch(record[name]):
             _fail("schema_violation", "an evidence identity is invalid")
@@ -953,27 +1036,33 @@ def _validate_structure(record: dict[str, Any]) -> None:
         else:
             _validate_environment_snapshot_structure(after_snapshot)
         _validate_benchmark_resources_structure(environment["benchmark_resources"])
-    _closed_object(
-        record["correctness"],
-        allowed={
-            "passed",
-            "compared_count",
-            "id_mismatch_count",
-            "order_mismatch_count",
-            "numeric_mismatch_count",
-            "first_mismatch",
-            "maximum_absolute_error",
-            "mean_absolute_error",
-            "rmse",
-            "maximum_relative_error",
-            "absolute_tolerance",
-            "relative_tolerance",
-            "non_finite_policy",
-            "non_finite_count",
-            "deterministic_repeat_count",
-            "repeat_output_hashes",
-        },
-    )
+    if record["correctness"].get("status") == "unavailable":
+        _closed_object(
+            record["correctness"],
+            allowed={"status", "reason", "source"},
+        )
+    else:
+        _closed_object(
+            record["correctness"],
+            allowed={
+                "passed",
+                "compared_count",
+                "id_mismatch_count",
+                "order_mismatch_count",
+                "numeric_mismatch_count",
+                "first_mismatch",
+                "maximum_absolute_error",
+                "mean_absolute_error",
+                "rmse",
+                "maximum_relative_error",
+                "absolute_tolerance",
+                "relative_tolerance",
+                "non_finite_policy",
+                "non_finite_count",
+                "deterministic_repeat_count",
+                "repeat_output_hashes",
+            },
+        )
     _closed_object(
         record["claim_boundary"],
         allowed={"status", "operation", "capabilities", "unsupported_interpretations"},
@@ -1110,6 +1199,7 @@ def _validate_benchmark_resource_semantics(
     resources: Mapping[str, Any],
     *,
     require_observed: bool,
+    allow_all_aborted: bool,
 ) -> None:
     values: dict[str, Any | None] = {
         name: _environment_observed_value(resources, name)
@@ -1144,14 +1234,32 @@ def _validate_benchmark_resource_semantics(
             "worker_fallback_used", "worker_evaluated", "worker_synchronized",
         )
     }
-    if worker_facts != {
+    passing_facts = {
         "worker_backend": "apple-mlx",
         "worker_requested_device": "gpu",
         "worker_selected_device": "gpu",
         "worker_fallback_used": False,
         "worker_evaluated": True,
         "worker_synchronized": True,
-    }:
+    }
+    aborted_facts = {
+        "worker_backend": "apple-mlx",
+        "worker_requested_device": "gpu",
+        "worker_selected_device": "not_available",
+        "worker_fallback_used": False,
+        "worker_evaluated": False,
+        "worker_synchronized": False,
+    }
+    aborted_gauges = all(
+        values[name] is None
+        for name in (
+            "process_footprint_bytes", "mlx_active_memory_bytes",
+            "mlx_cache_memory_bytes", "mlx_peak_memory_bytes",
+        )
+    )
+    if worker_facts != passing_facts and not (
+        allow_all_aborted and worker_facts == aborted_facts and aborted_gauges
+    ):
         _fail("semantic_relationship", "benchmark resources lack evaluated MLX GPU provenance")
 
 
@@ -1169,7 +1277,11 @@ def _validate_environment_semantics(record: dict[str, Any]) -> None:
     if (
         environment["platform"] != "macos-arm64"
         or environment["selected_backend"] != "apple-mlx"
-        or environment["selected_device"] != "gpu"
+        or environment["selected_device"] not in {"gpu", "not_available"}
+        or (
+            record["actual_status"] == "passed"
+            and environment["selected_device"] != "gpu"
+        )
         or environment["interference_admission"]
         not in {"admitted", "postponed", "observed_interference"}
     ):
@@ -1202,7 +1314,9 @@ def _validate_environment_semantics(record: dict[str, Any]) -> None:
     _validate_benchmark_resource_semantics(
         resources,
         require_observed=_evidence_scope(record) == "external_checkpoint"
-        and after_snapshot is not None,
+        and after_snapshot is not None
+        and record["actual_status"] == "passed",
+        allow_all_aborted=record["actual_status"] in {"failed", "blocked", "aborted"},
     )
     try:
         recomputed = combine_environment_evidence(
@@ -1287,24 +1401,37 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
         _fail("semantic_relationship", "unreviewed worktree paths cannot be declared outputs")
 
     protocol = record["protocol"]
+    legacy_envelope = record["evidence_schema_version"] == LEGACY_EVIDENCE_SCHEMA_VERSION
+    expected_protocol = (
+        (LEGACY_PROTOCOL_ID, LEGACY_PROTOCOL_VERSION, LEGACY_PROTOCOL_SHA256)
+        if legacy_envelope
+        else (FROZEN_PROTOCOL_ID, FROZEN_PROTOCOL_VERSION, FROZEN_PROTOCOL_SHA256)
+    )
     if (
-        protocol["protocol_id"] != FROZEN_PROTOCOL_ID
-        or protocol["protocol_version"] != FROZEN_PROTOCOL_VERSION
+        protocol["protocol_id"] != expected_protocol[0]
+        or protocol["protocol_version"] != expected_protocol[1]
         or protocol["path"] != FROZEN_PROTOCOL_PATH
         or not isinstance(protocol["sha256"], str)
-        or protocol["sha256"] != FROZEN_PROTOCOL_SHA256
+        or protocol["sha256"] != expected_protocol[2]
         or _plain_int(protocol["order_seed"], nonnegative=True)
         != FROZEN_PROTOCOL_ORDER_SEED
     ):
         _fail("semantic_relationship", "protocol identity is invalid")
-    actual_protocol_sha256 = _hash_repository_file(
-        repository_root,
-        protocol["path"],
-        allowed_prefixes=(("docs", "research"),),
-        maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
-    )
-    if actual_protocol_sha256 != FROZEN_PROTOCOL_SHA256:
-        _fail("semantic_relationship", "protocol content identity does not match")
+    if legacy_envelope:
+        actual_protocol_sha256 = _hash_historical_protocol(
+            repository_root, source_commit
+        )
+        if actual_protocol_sha256 != LEGACY_PROTOCOL_SHA256:
+            _fail("semantic_relationship", "historical protocol content identity does not match")
+    else:
+        actual_protocol_sha256 = _hash_repository_file(
+            repository_root,
+            protocol["path"],
+            allowed_prefixes=(("docs", "research"),),
+            maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
+        )
+        if actual_protocol_sha256 != FROZEN_PROTOCOL_SHA256:
+            _fail("semantic_relationship", "protocol content identity does not match")
 
     execution = record["execution"]
     _plain_int(execution["exit_code"], nonnegative=True)
@@ -1452,6 +1579,7 @@ def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
     model_manifest_links = 0
     real_input_links = 0
     independent_oracle_links = 0
+    legacy_envelope = record["evidence_schema_version"] == LEGACY_EVIDENCE_SCHEMA_VERSION
     for artifact in artifacts:
         path = artifact["path"]
         _repository_relative_parts(
@@ -1461,18 +1589,26 @@ def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
         if path in paths:
             _fail("semantic_relationship", "an artifact path is linked more than once")
         paths.add(path)
-        actual_sha256 = _hash_repository_file(
-            repository_root,
-            path,
-            allowed_prefixes=(("docs", "research"), ("fixtures", "research")),
-            maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
+        historical_protocol = artifact["kind"] == "frozen_protocol" and legacy_envelope
+        actual_sha256 = (
+            _hash_historical_protocol(repository_root, record["source_commit"])
+            if historical_protocol
+            else _hash_repository_file(
+                repository_root,
+                path,
+                allowed_prefixes=(("docs", "research"), ("fixtures", "research")),
+                maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
+            )
         )
         if artifact["sha256"] != actual_sha256:
             _fail("semantic_relationship", "an artifact content identity does not match")
         if artifact["kind"] == "frozen_protocol":
+            expected_protocol_sha256 = (
+                LEGACY_PROTOCOL_SHA256 if legacy_envelope else FROZEN_PROTOCOL_SHA256
+            )
             if (
                 path != FROZEN_PROTOCOL_PATH
-                or artifact["sha256"] != FROZEN_PROTOCOL_SHA256
+                or artifact["sha256"] != expected_protocol_sha256
                 or artifact["sha256"] != record["protocol"]["sha256"]
             ):
                 _fail("semantic_relationship", "the protocol artifact identity does not match")
@@ -1498,6 +1634,17 @@ def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
                 or path.startswith("docs/research/raw/002-router-parity/")
             ):
                 _fail("semantic_relationship", "the independent oracle artifact path is invalid")
+            independent_oracle_links += 1
+        if artifact["kind"] == "real_router_input_and_independent_cpu_oracle":
+            if (
+                path != REAL_ORACLE_PUBLICATION_PATH
+                or artifact["sha256"] != REAL_ORACLE_PUBLICATION_SHA256
+            ):
+                _fail(
+                    "semantic_relationship",
+                    "the combined real-input/oracle artifact identity is invalid",
+                )
+            real_input_links += 1
             independent_oracle_links += 1
     if protocol_links != 1:
         _fail("semantic_relationship", "the frozen protocol artifact is not linked")
@@ -1621,7 +1768,7 @@ def _validate_observations(
             _fail("schema_violation", "observation status is invalid")
         if _parse_utc(item["started_at_utc"]) > _parse_utc(item["completed_at_utc"]):
             _fail("semantic_relationship", "observation timestamps are reversed")
-        if item["monotonic_clock"] != "perf_counter_ns":
+        if item["monotonic_clock"] not in {"perf_counter_ns", "rust_std_instant"}:
             _fail("semantic_relationship", "observation clock identity is invalid")
         if not isinstance(item["durations_ns"], dict) or not item["durations_ns"]:
             _fail("schema_violation", "duration map is invalid")
@@ -1667,7 +1814,37 @@ def _validate_observations(
                     "semantic_relationship",
                     "only F32 dequantization can be not applicable",
                 )
-            if item["instrumentation_mode"] == "minimally_instrumented":
+            pre_execution_abort = (
+                item["status"] in {"failed", "aborted"}
+                and item["evaluated"] is False
+                and item["synchronized"] is False
+            )
+            if pre_execution_abort:
+                if item["monotonic_clock"] != "rust_std_instant":
+                    _fail(
+                        "semantic_relationship",
+                        "pre-execution abort timing lacks its supervisor clock identity",
+                    )
+                total = item["durations_ns"].get("total_evaluated_router")
+                command_total = item["durations_ns"].get("end_to_end_router_command")
+                if not (
+                    isinstance(total, dict)
+                    and total.get("status") == "unavailable"
+                    and isinstance(command_total, dict)
+                    and command_total.get("status") == "observed"
+                    and type(command_total.get("duration_ns")) is int
+                    and command_total["duration_ns"] > 0
+                ):
+                    _fail(
+                        "semantic_relationship",
+                        "pre-execution abort timing is not truthfully retained",
+                    )
+            elif item["monotonic_clock"] != "perf_counter_ns":
+                _fail(
+                    "semantic_relationship",
+                    "evaluated worker timing lacks its worker clock identity",
+                )
+            if item["instrumentation_mode"] == "minimally_instrumented" and not pre_execution_abort:
                 total = item["durations_ns"].get("total_evaluated_router")
                 if not (
                     isinstance(total, dict)
@@ -1679,7 +1856,9 @@ def _validate_observations(
                         "semantic_relationship",
                         "external minimal timing lacks its evaluated router total",
                     )
-            elif set(item["durations_ns"]) != ROUTER_TIMING_STAGES:
+            elif item["instrumentation_mode"] == "stage_instrumented" and set(
+                item["durations_ns"]
+            ) != ROUTER_TIMING_STAGES:
                 _fail(
                     "semantic_relationship",
                     "external stage timing omits a frozen boundary",
@@ -1750,6 +1929,1578 @@ def _validate_observations(
     return by_id, compatible_series
 
 
+ROUTER_DETAIL_FIELDS = {
+    "detail_schema",
+    "detail_schema_version",
+    "source_candidate_sha256",
+    "source_environment_sha256",
+    "application_read_semantics",
+    "batch_order",
+    "ordered_observations",
+    "correctness_cases",
+    "timing_series",
+    "process_lifecycles",
+    "request_windows",
+    "resource_records",
+    "terminal_failure",
+}
+CANONICAL_OUTPUT_FIELDS = {
+    "case_id",
+    "case_scope",
+    "row_count",
+    "logits_shape",
+    "logits",
+    "logits_f32le_sha256",
+    "full_probabilities_shape",
+    "full_probabilities",
+    "full_probabilities_f32le_sha256",
+    "selected_expert_ids",
+    "selected_expert_ids_u32le_sha256",
+    "selected_probabilities",
+    "selected_probabilities_f32le_sha256",
+    "normalized_weights",
+    "normalized_weights_f32le_sha256",
+    "complete_output_sha256",
+}
+MEMORY_GAUGE_FIELDS = {
+    "mlx_active_bytes",
+    "mlx_cache_bytes",
+    "mlx_peak_bytes",
+    "process_footprint_bytes",
+    "process_footprint_source",
+    "system_pressure",
+    "reported_summed_total_bytes",
+}
+
+
+def _validate_failure(value: Any) -> dict[str, Any]:
+    failure = _closed_object(
+        value,
+        allowed=FAILURE_FIELDS,
+        required={"code", "message"},
+    )
+    _stable_id(failure["code"])
+    _bounded_text(failure["message"])
+    if "stage" in failure:
+        _bounded_text(failure["stage"], maximum=128)
+    return failure
+
+
+def _validate_memory_gauges(value: Any) -> dict[str, Any]:
+    gauges = _closed_object(
+        value,
+        allowed=MEMORY_GAUGE_FIELDS,
+        required=MEMORY_GAUGE_FIELDS,
+    )
+    for field in (
+        "mlx_active_bytes",
+        "mlx_cache_bytes",
+        "mlx_peak_bytes",
+        "process_footprint_bytes",
+    ):
+        if gauges[field] is not None:
+            _plain_int(gauges[field], nonnegative=True)
+    for field in ("process_footprint_source", "system_pressure"):
+        if gauges[field] is not None:
+            _stable_id(gauges[field])
+    if gauges["reported_summed_total_bytes"] is not None:
+        _fail("semantic_relationship", "summed memory total is forbidden")
+    active = gauges["mlx_active_bytes"]
+    peak = gauges["mlx_peak_bytes"]
+    if active is not None and peak is not None and peak < active:
+        _fail("semantic_relationship", "router MLX memory gauges are inconsistent")
+    if (gauges["process_footprint_bytes"] is None) != (
+        gauges["process_footprint_source"] is None
+    ):
+        _fail("semantic_relationship", "router process footprint gauges are inconsistent")
+    return gauges
+NUMERIC_COMPARISON_FIELDS = {
+    "compared_count",
+    "mismatch_count",
+    "first_mismatch",
+    "maximum_absolute_error",
+    "mean_absolute_error",
+    "rmse",
+    "maximum_relative_error",
+    "absolute_tolerance",
+    "relative_tolerance",
+}
+OUTPUT_COMPARISON_FIELDS = {
+    "logits",
+    "full_probabilities",
+    "selected_probabilities",
+    "normalized_weights",
+    "id_mismatch_count",
+    "order_mismatch_count",
+    "expert_range_comparisons",
+    "passed",
+}
+
+
+def _canonical_json_sha256(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _flatten_bounded(values: Any, *, integer: bool, maximum: int) -> list[int | float]:
+    flattened: list[int | float] = []
+
+    def visit(value: Any) -> None:
+        if isinstance(value, list):
+            for item in value:
+                visit(item)
+            return
+        if len(flattened) >= maximum:
+            _fail("schema_violation", "a canonical router output exceeds its bound")
+        if integer:
+            if type(value) is not int or value < 0 or value > 127:
+                _fail("semantic_relationship", "a canonical expert ID is invalid")
+            flattened.append(value)
+            return
+        if type(value) not in {int, float} or not math.isfinite(float(value)):
+            _fail("semantic_relationship", "a canonical numeric output is invalid")
+        try:
+            encoded = struct.pack("<f", float(value))
+            canonical = struct.unpack("<f", encoded)[0]
+        except (OverflowError, struct.error):
+            _fail("semantic_relationship", "a canonical numeric output is not F32")
+        if float(value) != float(canonical):
+            _fail("semantic_relationship", "a canonical numeric output is not exact F32")
+        flattened.append(float(value))
+
+    visit(values)
+    return flattened
+
+
+def _f32le(values: list[int | float]) -> bytes:
+    return b"".join(struct.pack("<f", float(value)) for value in values)
+
+
+def _u32le(values: list[int | float]) -> bytes:
+    return b"".join(struct.pack("<I", int(value)) for value in values)
+
+
+def _validate_canonical_output(value: Any, case_id: str, row_count: int) -> dict[str, Any]:
+    output = _closed_object(
+        value,
+        allowed=CANONICAL_OUTPUT_FIELDS,
+        required=CANONICAL_OUTPUT_FIELDS,
+    )
+    if (
+        output["case_id"] != case_id
+        or output["case_scope"] != "real_checkpoint"
+        or _plain_int(output["row_count"], positive=True) != row_count
+        or output["logits_shape"] != [row_count, 128]
+        or output["full_probabilities_shape"] != [row_count, 128]
+    ):
+        _fail("semantic_relationship", "canonical router output shape or identity differs")
+    if (
+        not isinstance(output["logits"], list)
+        or len(output["logits"]) != row_count * 128
+        or any(isinstance(item, list) for item in output["logits"])
+        or not isinstance(output["full_probabilities"], list)
+        or len(output["full_probabilities"]) != row_count * 128
+        or any(isinstance(item, list) for item in output["full_probabilities"])
+    ):
+        _fail("semantic_relationship", "canonical router dense output shape differs")
+    for field in (
+        "selected_expert_ids",
+        "selected_probabilities",
+        "normalized_weights",
+    ):
+        rows = output[field]
+        if (
+            not isinstance(rows, list)
+            or len(rows) != row_count
+            or any(not isinstance(row, list) or len(row) != 8 for row in rows)
+        ):
+            _fail("semantic_relationship", "canonical router selected output shape differs")
+    logits = _flatten_bounded(output["logits"], integer=False, maximum=256)
+    probabilities = _flatten_bounded(
+        output["full_probabilities"], integer=False, maximum=256
+    )
+    selected_ids = _flatten_bounded(
+        output["selected_expert_ids"], integer=True, maximum=16
+    )
+    selected_probabilities = _flatten_bounded(
+        output["selected_probabilities"], integer=False, maximum=16
+    )
+    normalized = _flatten_bounded(
+        output["normalized_weights"], integer=False, maximum=16
+    )
+    if (
+        len(logits) != row_count * 128
+        or len(probabilities) != row_count * 128
+        or len(selected_ids) != row_count * 8
+        or len(selected_probabilities) != row_count * 8
+        or len(normalized) != row_count * 8
+    ):
+        _fail("semantic_relationship", "canonical router output cardinality differs")
+    components = (
+        ("logits_f32le_sha256", _f32le(logits)),
+        ("full_probabilities_f32le_sha256", _f32le(probabilities)),
+        ("selected_expert_ids_u32le_sha256", _u32le(selected_ids)),
+        ("selected_probabilities_f32le_sha256", _f32le(selected_probabilities)),
+        ("normalized_weights_f32le_sha256", _f32le(normalized)),
+    )
+    for field, payload in components:
+        if output[field] != hashlib.sha256(payload).hexdigest():
+            _fail("semantic_relationship", "canonical router component hash differs")
+    complete = b"".join(payload for _, payload in components)
+    if output["complete_output_sha256"] != hashlib.sha256(complete).hexdigest():
+        _fail("semantic_relationship", "canonical router output hash differs")
+    return output
+
+
+def _load_real_oracle_outputs(repository_root: Path) -> dict[str, dict[str, Any]]:
+    """Derive the two canonical case outputs from the byte-bound oracle publication."""
+
+    publication = _load_real_oracle_publication(repository_root)
+    try:
+        result = publication["result"]
+        dense_rows = {
+            "logits": result["logits"],
+            "full_probabilities": result["full_softmax_probabilities"],
+        }
+        selected_rows = {
+            "selected_expert_ids": result["selected_expert_ids"],
+            "selected_probabilities": result["selected_probabilities"],
+            "normalized_weights": result["normalized_weights"],
+        }
+        if any(
+            not isinstance(rows, list)
+            or len(rows) != 2
+            or any(not isinstance(row, list) for row in rows)
+            for rows in (*dense_rows.values(), *selected_rows.values())
+        ):
+            _fail("semantic_relationship", "the frozen real oracle output is invalid")
+    except (KeyError, TypeError):
+        _fail("semantic_relationship", "the frozen real oracle output is invalid")
+
+    outputs: dict[str, dict[str, Any]] = {}
+    for case_id, row_count in (
+        ("qwen3moe-layer0-router-token0-row0-v1", 1),
+        ("qwen3moe-layer0-router-token0-token1-batch-v1", 2),
+    ):
+        logits = [value for row in dense_rows["logits"][:row_count] for value in row]
+        probabilities = [
+            value
+            for row in dense_rows["full_probabilities"][:row_count]
+            for value in row
+        ]
+        selected_ids = selected_rows["selected_expert_ids"][:row_count]
+        selected_probabilities = selected_rows["selected_probabilities"][:row_count]
+        normalized_weights = selected_rows["normalized_weights"][:row_count]
+        components = (
+            _f32le(logits),
+            _f32le(probabilities),
+            _u32le(_flatten_bounded(selected_ids, integer=True, maximum=16)),
+            _f32le(_flatten_bounded(selected_probabilities, integer=False, maximum=16)),
+            _f32le(_flatten_bounded(normalized_weights, integer=False, maximum=16)),
+        )
+        output = {
+            "case_id": case_id,
+            "case_scope": "real_checkpoint",
+            "row_count": row_count,
+            "logits_shape": [row_count, 128],
+            "logits": logits,
+            "logits_f32le_sha256": hashlib.sha256(components[0]).hexdigest(),
+            "full_probabilities_shape": [row_count, 128],
+            "full_probabilities": probabilities,
+            "full_probabilities_f32le_sha256": hashlib.sha256(components[1]).hexdigest(),
+            "selected_expert_ids": selected_ids,
+            "selected_expert_ids_u32le_sha256": hashlib.sha256(components[2]).hexdigest(),
+            "selected_probabilities": selected_probabilities,
+            "selected_probabilities_f32le_sha256": hashlib.sha256(components[3]).hexdigest(),
+            "normalized_weights": normalized_weights,
+            "normalized_weights_f32le_sha256": hashlib.sha256(components[4]).hexdigest(),
+            "complete_output_sha256": hashlib.sha256(b"".join(components)).hexdigest(),
+        }
+        outputs[case_id] = _validate_canonical_output(output, case_id, row_count)
+    return outputs
+
+
+def _validate_numeric_comparison(value: Any, expected_count: int) -> dict[str, Any]:
+    comparison = _closed_object(
+        value,
+        allowed=NUMERIC_COMPARISON_FIELDS,
+        required=NUMERIC_COMPARISON_FIELDS,
+    )
+    if _plain_int(comparison["compared_count"], positive=True) != expected_count:
+        _fail("semantic_relationship", "router comparison count differs")
+    mismatch_count = _plain_int(comparison["mismatch_count"], nonnegative=True)
+    if mismatch_count == 0 and comparison["first_mismatch"] is not None:
+        _fail("semantic_relationship", "router comparison mismatch detail contradicts")
+    for field in (
+        "maximum_absolute_error",
+        "mean_absolute_error",
+        "rmse",
+        "absolute_tolerance",
+        "relative_tolerance",
+    ):
+        if type(comparison[field]) not in {int, float} or not math.isfinite(
+            float(comparison[field])
+        ) or float(comparison[field]) < 0:
+            _fail("semantic_relationship", "router comparison metric is invalid")
+    relative = comparison["maximum_relative_error"]
+    if relative is not None and (
+        type(relative) not in {int, float}
+        or not math.isfinite(float(relative))
+        or float(relative) < 0
+    ):
+        _fail("semantic_relationship", "router relative error is invalid")
+    return comparison
+
+
+def _expected_numeric_comparison(
+    reference: list[int | float],
+    candidate: list[int | float],
+    *,
+    row_count: int,
+    columns: int,
+    absolute_tolerance: float,
+    relative_tolerance: float,
+    column_range: range | None = None,
+) -> dict[str, Any]:
+    indices = (
+        [row * columns + column for row in range(row_count) for column in column_range]
+        if column_range is not None
+        else list(range(len(reference)))
+    )
+    errors: list[float] = []
+    relative_errors: list[float] = []
+    mismatch_count = 0
+    first_mismatch = None
+    for index in indices:
+        reference_value = float(reference[index])
+        candidate_value = float(candidate[index])
+        error = abs(candidate_value - reference_value)
+        errors.append(error)
+        if reference_value != 0.0:
+            relative_errors.append(error / abs(reference_value))
+        if error > absolute_tolerance + relative_tolerance * abs(reference_value):
+            mismatch_count += 1
+            if first_mismatch is None:
+                first_mismatch = {
+                    "row_index": index // columns,
+                    "column_index": index % columns,
+                    "reference": reference_value,
+                    "candidate": candidate_value,
+                }
+    count = len(indices)
+    return {
+        "compared_count": count,
+        "mismatch_count": mismatch_count,
+        "first_mismatch": first_mismatch,
+        "maximum_absolute_error": max(errors),
+        "mean_absolute_error": sum(errors) / count,
+        "rmse": math.sqrt(sum(error * error for error in errors) / count),
+        "maximum_relative_error": max(relative_errors) if relative_errors else None,
+        "absolute_tolerance": absolute_tolerance,
+        "relative_tolerance": relative_tolerance,
+    }
+
+
+def _assert_numeric_comparison(reported: Any, expected: dict[str, Any]) -> None:
+    comparison = _validate_numeric_comparison(reported, expected["compared_count"])
+    for field, expected_value in expected.items():
+        reported_value = comparison[field]
+        if field == "first_mismatch":
+            if expected_value is None:
+                if reported_value is not None:
+                    _fail("semantic_relationship", "router comparison first mismatch differs")
+            elif not isinstance(reported_value, dict) or set(reported_value) != set(expected_value):
+                _fail("semantic_relationship", "router comparison first mismatch differs")
+            elif any(
+                not _equal_number(reported_value[name], value)
+                for name, value in expected_value.items()
+            ):
+                _fail("semantic_relationship", "router comparison first mismatch differs")
+        elif not _equal_number(reported_value, expected_value):
+            _fail("semantic_relationship", "router comparison metric differs from values")
+
+
+def _validate_output_comparison(
+    value: Any,
+    reference_output: dict[str, Any],
+    candidate_output: dict[str, Any],
+    row_count: int,
+    *,
+    require_pass: bool,
+) -> None:
+    comparison = _closed_object(
+        value,
+        allowed=OUTPUT_COMPARISON_FIELDS,
+        required=OUTPUT_COMPARISON_FIELDS,
+    )
+    reference_logits = _flatten_bounded(reference_output["logits"], integer=False, maximum=256)
+    candidate_logits = _flatten_bounded(candidate_output["logits"], integer=False, maximum=256)
+    reference_probabilities = _flatten_bounded(
+        reference_output["full_probabilities"], integer=False, maximum=256
+    )
+    candidate_probabilities = _flatten_bounded(
+        candidate_output["full_probabilities"], integer=False, maximum=256
+    )
+    reference_selected = _flatten_bounded(
+        reference_output["selected_probabilities"], integer=False, maximum=16
+    )
+    candidate_selected = _flatten_bounded(
+        candidate_output["selected_probabilities"], integer=False, maximum=16
+    )
+    reference_normalized = _flatten_bounded(
+        reference_output["normalized_weights"], integer=False, maximum=16
+    )
+    candidate_normalized = _flatten_bounded(
+        candidate_output["normalized_weights"], integer=False, maximum=16
+    )
+    expected_numeric = {
+        "logits": _expected_numeric_comparison(
+            reference_logits, candidate_logits, row_count=row_count, columns=128,
+            absolute_tolerance=5.0e-4, relative_tolerance=5.0e-4,
+        ),
+        "full_probabilities": _expected_numeric_comparison(
+            reference_probabilities, candidate_probabilities, row_count=row_count, columns=128,
+            absolute_tolerance=1.0e-6, relative_tolerance=1.0e-6,
+        ),
+        "selected_probabilities": _expected_numeric_comparison(
+            reference_selected, candidate_selected, row_count=row_count, columns=8,
+            absolute_tolerance=1.0e-6, relative_tolerance=1.0e-6,
+        ),
+        "normalized_weights": _expected_numeric_comparison(
+            reference_normalized, candidate_normalized, row_count=row_count, columns=8,
+            absolute_tolerance=1.0e-6, relative_tolerance=1.0e-6,
+        ),
+    }
+    for field, expected in expected_numeric.items():
+        _assert_numeric_comparison(comparison[field], expected)
+    reference_ids = _flatten_bounded(
+        reference_output["selected_expert_ids"], integer=True, maximum=16
+    )
+    candidate_ids = _flatten_bounded(
+        candidate_output["selected_expert_ids"], integer=True, maximum=16
+    )
+    id_mismatch_count = 0
+    order_mismatch_count = 0
+    for row in range(row_count):
+        reference_row = reference_ids[row * 8 : (row + 1) * 8]
+        candidate_row = candidate_ids[row * 8 : (row + 1) * 8]
+        id_mismatch_count += len(set(reference_row) - set(candidate_row))
+        order_mismatch_count += sum(
+            left != right for left, right in zip(reference_row, candidate_row)
+        )
+    if (
+        comparison["id_mismatch_count"] != id_mismatch_count
+        or comparison["order_mismatch_count"] != order_mismatch_count
+    ):
+        _fail("semantic_relationship", "router selected expert comparison differs")
+    ranges = _closed_object(
+        comparison["expert_range_comparisons"],
+        allowed={"0..16", "64..80"},
+        required={"0..16", "64..80"},
+    )
+    for label, range_value in ranges.items():
+        item = _closed_object(
+            range_value,
+            allowed={"logits", "full_probabilities", "passed"},
+            required={"logits", "full_probabilities", "passed"},
+        )
+        columns = range(0, 16) if label == "0..16" else range(64, 80)
+        expected_logits = _expected_numeric_comparison(
+            reference_logits, candidate_logits, row_count=row_count, columns=128,
+            absolute_tolerance=5.0e-4, relative_tolerance=5.0e-4,
+            column_range=columns,
+        )
+        expected_probabilities = _expected_numeric_comparison(
+            reference_probabilities, candidate_probabilities, row_count=row_count, columns=128,
+            absolute_tolerance=1.0e-6, relative_tolerance=1.0e-6,
+            column_range=columns,
+        )
+        _assert_numeric_comparison(item["logits"], expected_logits)
+        _assert_numeric_comparison(item["full_probabilities"], expected_probabilities)
+        expected_range_pass = (
+            expected_logits["mismatch_count"] == 0
+            and expected_probabilities["mismatch_count"] == 0
+        )
+        if type(item["passed"]) is not bool or item["passed"] != expected_range_pass:
+            _fail("schema_violation", "router range comparison status is invalid")
+    expected_pass = (
+        id_mismatch_count == 0
+        and order_mismatch_count == 0
+        and all(item["mismatch_count"] == 0 for item in expected_numeric.values())
+    )
+    if type(comparison["passed"]) is not bool or comparison["passed"] != expected_pass:
+        _fail("schema_violation", "router comparison status is invalid")
+    if require_pass and not (
+        comparison["passed"] is True
+        and comparison["id_mismatch_count"] == 0
+        and comparison["order_mismatch_count"] == 0
+        and all(comparison[field]["mismatch_count"] == 0 for field in (
+            "logits", "full_probabilities", "selected_probabilities", "normalized_weights"
+        ))
+        and all(item["passed"] is True for item in ranges.values())
+    ):
+        _fail("semantic_relationship", "passing external comparison detail contradicts")
+
+
+def _validate_passing_timing_matrix(
+    timing_series: list[dict[str, Any]],
+    *,
+    raw_count: int,
+    correctness_count: int,
+    timing_count: int,
+) -> None:
+    expected_matrix = Counter({
+        ("first_process_costly", "primary", 0, 1): 10,
+        ("costly_real", "primary", 5, 10): 2,
+        ("major_minimally_instrumented", "primary", 5, 30): 2,
+        ("stage_diagnostic", "primary", 5, 10): 2,
+        ("first_process_costly", "clean_process_replication", 0, 1): 20,
+        ("major_minimally_instrumented", "clean_process_replication", 5, 30): 2,
+    })
+    actual_matrix = Counter(
+        (
+            series["series_kind"], series["replication_role"],
+            series["warmup_count"], series["measurement_count"],
+        )
+        for series in timing_series
+    )
+    expected_order = (
+        [("first_process_costly", "primary", 0, 1)] * 10
+        + [("costly_real", "primary", 5, 10)] * 2
+        + [("major_minimally_instrumented", "primary", 5, 30)] * 2
+        + [("stage_diagnostic", "primary", 5, 10)] * 2
+        + [
+            signature
+            for _ in range(2)
+            for signature in (
+                [("first_process_costly", "clean_process_replication", 0, 1)] * 10
+                + [("major_minimally_instrumented", "clean_process_replication", 5, 30)]
+            )
+        ]
+    )
+    actual_order = [
+        (
+            series["series_kind"], series["replication_role"],
+            series["warmup_count"], series["measurement_count"],
+        )
+        for series in timing_series
+    ]
+    if (
+        actual_matrix != expected_matrix
+        or actual_order != expected_order
+        or raw_count != 260
+        or correctness_count != 30
+        or timing_count != 230
+    ):
+        _fail("semantic_relationship", "passing router timing schedule matrix differs")
+
+
+def _expected_passing_timing_plan(
+    batch_id: str, batch_order: str
+) -> list[dict[str, Any]]:
+    single = "qwen3moe-layer0-router-token0-row0-v1"
+    batch = "qwen3moe-layer0-router-token0-token1-batch-v1"
+    cases = [single, batch] if batch_order == "single_row_first" else [batch, single]
+
+    def label(case_id: str) -> str:
+        return "single-row" if case_id == single else "two-row"
+
+    def benchmark(kind: str, case_id: str) -> str:
+        if kind == "major_minimally_instrumented":
+            return (
+                "f002-major-single-row-minimal-v1"
+                if case_id == single
+                else "f002-major-two-row-minimal-v1"
+            )
+        prefix = {
+            "first_process_costly": "f002-first-process-costly",
+            "costly_real": "f002-costly-real",
+            "stage_diagnostic": "f002-stage-diagnostic",
+        }[kind]
+        return f"{prefix}-{label(case_id)}-v1"
+
+    plan: list[dict[str, Any]] = []
+
+    def append(
+        *, case_id: str, kind: str, role: str, process_id: str,
+        process_state: str, condition: str, mode: str,
+        warmups: int, measurements: int, step: str,
+    ) -> None:
+        plan.append({
+            "case_id": case_id,
+            "series_kind": kind,
+            "replication_role": role,
+            "process_replication_id": process_id,
+            "process_state": process_state,
+            "condition": condition,
+            "instrumentation_mode": mode,
+            "warmup_count": warmups,
+            "measurement_count": measurements,
+            "benchmark_id": benchmark(kind, case_id),
+            "schedule_step": step,
+        })
+
+    for index in range(10):
+        append(
+            case_id=cases[0], kind="first_process_costly", role="primary",
+            process_id=f"{batch_id}-primary-first-read-worker-{index:02}",
+            process_state="fresh_process",
+            condition="first_read_new_process_os_cache_uncontrolled",
+            mode="minimally_instrumented", warmups=0, measurements=1,
+            step="primary_first_process",
+        )
+    for case_id in cases:
+        append(
+            case_id=case_id, kind="costly_real", role="primary",
+            process_id=f"{batch_id}-primary-costly-worker",
+            process_state="reused_process", condition="warm",
+            mode="minimally_instrumented", warmups=5, measurements=10,
+            step="costly_real",
+        )
+    for case_id in cases:
+        append(
+            case_id=case_id, kind="major_minimally_instrumented", role="primary",
+            process_id=f"{batch_id}-primary-minimal-worker",
+            process_state="reused_process", condition="warm",
+            mode="minimally_instrumented", warmups=5, measurements=30,
+            step="primary_major",
+        )
+    for case_id in cases:
+        append(
+            case_id=case_id, kind="stage_diagnostic", role="primary",
+            process_id=f"{batch_id}-primary-stage-worker",
+            process_state="reused_process", condition="warm",
+            mode="stage_instrumented", warmups=5, measurements=10,
+            step="stage_diagnostic",
+        )
+    for case_id in cases:
+        for index in range(10):
+            append(
+                case_id=case_id, kind="first_process_costly",
+                role="clean_process_replication",
+                process_id=(
+                    f"{batch_id}-{label(case_id)}-clean-first-read-worker-{index:02}"
+                ),
+                process_state="fresh_process",
+                condition="first_read_new_process_os_cache_uncontrolled",
+                mode="minimally_instrumented", warmups=0, measurements=1,
+                step="clean_first_process",
+            )
+        append(
+            case_id=case_id, kind="major_minimally_instrumented",
+            role="clean_process_replication",
+            process_id=f"{batch_id}-{label(case_id)}-clean-minimal-worker",
+            process_state="fresh_process", condition="warm",
+            mode="minimally_instrumented", warmups=5, measurements=30,
+            step="clean_major",
+        )
+    return plan
+
+
+def _validate_router_detail(
+    record: dict[str, Any],
+    by_id: dict[str, dict[str, Any]],
+    *,
+    repository_root: Path = REPOSITORY_ROOT,
+) -> None:
+    if _evidence_scope(record) != "external_checkpoint":
+        return
+    complete_router_run = bool(by_id) and all(
+        observation["status"] == "passed" for observation in by_id.values()
+    )
+    detail = _closed_object(
+        record["router_detail"],
+        allowed=ROUTER_DETAIL_FIELDS,
+        required=ROUTER_DETAIL_FIELDS,
+    )
+    if (
+        detail["detail_schema"] != "pulsarmlx.research.router-detail"
+        or detail["detail_schema_version"] != "1.0.0"
+        or not isinstance(detail["source_candidate_sha256"], str)
+        or not SHA256_RE.fullmatch(detail["source_candidate_sha256"])
+        or detail["source_environment_sha256"]
+        != _canonical_json_sha256(record["environment"])
+        or detail["application_read_semantics"]
+        != "application_positional_read_not_physical_disk_io"
+    ):
+        _fail("semantic_relationship", "router detail identity or binding differs")
+    terminal_failure = detail["terminal_failure"]
+    if terminal_failure is not None:
+        terminal = _closed_object(
+            terminal_failure,
+            allowed={"phase", "process_replication_id", "failure"},
+            required={"phase", "process_replication_id", "failure"},
+        )
+        if terminal["phase"] not in {
+            "orchestration", "post_request_identity", "worker_shutdown",
+            "environment_interference", "environment_admission_unavailable",
+        }:
+            _fail("semantic_relationship", "router terminal failure phase is invalid")
+        if terminal["process_replication_id"] is not None:
+            _stable_id(terminal["process_replication_id"])
+        _validate_failure(terminal["failure"])
+    if record["actual_status"] == "passed" and terminal_failure is not None:
+        _fail("semantic_relationship", "passing router detail has a terminal failure")
+    frozen_oracle_outputs = _load_real_oracle_outputs(repository_root)
+
+    ordered = detail["ordered_observations"]
+    if not isinstance(ordered, list) or len(ordered) != len(by_id):
+        _fail("semantic_relationship", "router detail ledger cardinality differs")
+    ordered_ids: list[str] = []
+    source_kinds: dict[str, str] = {}
+    ledger_entries: dict[str, dict[str, Any]] = {}
+    for index, raw in enumerate(ordered):
+        item = _closed_object(
+            raw,
+            allowed={
+                "global_order_index", "observation_id", "schedule_step", "source_kind",
+                "batch_id", "case_id", "process_replication_id", "observation_kind",
+                "run_index", "orchestration_status", "identity_disposition",
+                "benchmark_id", "series_kind", "replication_role",
+            },
+            required={
+                "global_order_index", "observation_id", "schedule_step", "source_kind",
+                "batch_id", "case_id", "process_replication_id", "observation_kind",
+                "run_index", "orchestration_status", "identity_disposition",
+            },
+        )
+        if _plain_int(item["global_order_index"], nonnegative=True) != index:
+            _fail("semantic_relationship", "router detail ledger order is non-contiguous")
+        observation_id = _stable_id(item["observation_id"])
+        if observation_id not in by_id or observation_id in source_kinds:
+            _fail("semantic_relationship", "router detail ledger join differs")
+        if item["source_kind"] not in {"correctness_attempt", "timing_series"}:
+            _fail("schema_violation", "router detail source kind is invalid")
+        raw_observation = by_id[observation_id]
+        if any(
+            item[field] != raw_observation[field]
+            for field in (
+                "batch_id", "case_id", "process_replication_id",
+                "observation_kind", "run_index",
+            )
+        ):
+            _fail("semantic_relationship", "router detail ledger metadata differs")
+        if item["orchestration_status"] not in {"accepted", "rejected"} or item[
+            "identity_disposition"
+        ] not in {"unique", "rejected_duplicate"}:
+            _fail("schema_violation", "router detail ledger disposition is invalid")
+        if item["identity_disposition"] == "rejected_duplicate" and item[
+            "orchestration_status"
+        ] != "rejected":
+            _fail("semantic_relationship", "router duplicate disposition contradicts")
+        _bounded_text(item["schedule_step"], maximum=128)
+        ordered_ids.append(observation_id)
+        source_kinds[observation_id] = item["source_kind"]
+        ledger_entries[observation_id] = item
+    if ordered_ids != list(by_id):
+        _fail("semantic_relationship", "router detail ledger order differs from raw evidence")
+    first_case_id = ordered[0]["case_id"]
+    expected_order = {
+        "qwen3moe-layer0-router-token0-row0-v1": "single_row_first",
+        "qwen3moe-layer0-router-token0-token1-batch-v1": "two_row_first",
+    }.get(first_case_id)
+    if (
+        record["input"]["selected_rows"] != [0, 1]
+        or ordered[0]["source_kind"] != "correctness_attempt"
+        or detail["batch_order"] != expected_order
+    ):
+        _fail("semantic_relationship", "router detail batch order differs")
+
+    correctness_ids: set[str] = set()
+    correctness_ordered_ids: list[str] = []
+    correctness_attempts: dict[str, dict[str, Any]] = {}
+    cases = detail["correctness_cases"]
+    if not isinstance(cases, list) or not 1 <= len(cases) <= 2:
+        _fail("semantic_relationship", "external correctness case detail is invalid")
+    if complete_router_run and len(cases) != 2:
+        _fail("semantic_relationship", "passing external detail requires both correctness cases")
+    expected_cases = {
+        "qwen3moe-layer0-router-token0-row0-v1": 1,
+        "qwen3moe-layer0-router-token0-token1-batch-v1": 2,
+    }
+    seen_cases: set[str] = set()
+    retained_case_comparisons: list[tuple[str, dict[str, Any]]] = []
+    for raw_case in cases:
+        case = _closed_object(
+            raw_case,
+            allowed={"case_id", "row_count", "oracle_output", "mlx_output", "comparison", "attempts"},
+            required={"case_id", "row_count", "oracle_output", "mlx_output", "comparison", "attempts"},
+        )
+        case_id = _stable_id(case["case_id"])
+        row_count = expected_cases.get(case_id)
+        if row_count is None or case_id in seen_cases or case["row_count"] != row_count:
+            _fail("semantic_relationship", "external correctness case identity differs")
+        seen_cases.add(case_id)
+        oracle_output = _validate_canonical_output(case["oracle_output"], case_id, row_count)
+        if oracle_output != frozen_oracle_outputs[case_id]:
+            _fail("semantic_relationship", "external oracle output differs from the frozen publication")
+        attempts = case["attempts"]
+        if not isinstance(attempts, list) or not 1 <= len(attempts) <= 15:
+            _fail("insufficient_repetitions", "external correctness attempt count differs")
+        if complete_router_run and len(attempts) != 15:
+            _fail("insufficient_repetitions", "passing correctness attempt count differs")
+        measured_hashes: list[str] = []
+        last_passing_output = None
+        last_retained_output = None
+        for attempt_index, raw_attempt in enumerate(attempts):
+            attempt = _closed_object(
+                raw_attempt,
+                allowed={
+                    "attempt_id", "attempt_index", "observation_kind", "run_index",
+                    "process_replication_id", "canonical_output", "comparison", "memory_gauges",
+                    "requested_device", "selected_device", "fallback_used", "evaluated",
+                    "synchronized", "status", "passed", "failure",
+                },
+                required={
+                    "attempt_id", "attempt_index", "observation_kind", "run_index",
+                    "process_replication_id", "canonical_output", "comparison", "memory_gauges",
+                    "requested_device", "selected_device", "fallback_used", "evaluated",
+                    "synchronized", "status", "passed",
+                },
+            )
+            attempt_id = _stable_id(attempt["attempt_id"])
+            if (
+                attempt_id in correctness_ids
+                or source_kinds.get(attempt_id) != "correctness_attempt"
+                or _plain_int(attempt["attempt_index"], nonnegative=True) != attempt_index
+            ):
+                _fail("semantic_relationship", "correctness attempt ledger join differs")
+            observation = by_id[attempt_id]
+            expected_correctness_step = (
+                "single_row_correctness"
+                if case_id == "qwen3moe-layer0-router-token0-row0-v1"
+                else "two_row_correctness"
+            )
+            expected_kind = "warmup" if attempt_index < 5 else "measurement"
+            expected_index = attempt_index if attempt_index < 5 else attempt_index - 5
+            if (
+                attempt["observation_kind"] != expected_kind
+                or attempt["run_index"] != expected_index
+                or attempt["observation_kind"] != observation["observation_kind"]
+                or attempt["run_index"] != observation["run_index"]
+                or attempt["process_replication_id"]
+                != observation["process_replication_id"]
+                or attempt["requested_device"] != observation["requested_device"]
+                or attempt["selected_device"] != observation["selected_device"]
+                or attempt["fallback_used"] != observation["fallback_used"]
+                or attempt["evaluated"] != observation["evaluated"]
+                or attempt["synchronized"] != observation["synchronized"]
+                or attempt["status"] != observation["status"]
+                or attempt.get("failure") != observation.get("failure")
+                or ledger_entries[attempt_id]["schedule_step"]
+                != expected_correctness_step
+            ):
+                _fail("semantic_relationship", "correctness attempt role differs")
+            correctness_ids.add(attempt_id)
+            correctness_ordered_ids.append(attempt_id)
+            correctness_attempts[attempt_id] = attempt
+            passed_attempt = attempt["status"] == "passed" and attempt["passed"] is True
+            if passed_attempt:
+                output = _validate_canonical_output(attempt["canonical_output"], case_id, row_count)
+                _validate_output_comparison(
+                    attempt["comparison"], oracle_output, output, row_count, require_pass=True
+                )
+                if (
+                    attempt["requested_device"] != "gpu"
+                    or attempt["selected_device"] != "gpu"
+                    or attempt["fallback_used"] is not False
+                    or attempt["evaluated"] is not True
+                    or attempt["synchronized"] is not True
+                    or attempt["passed"] != observation["correctness_passed"]
+                    or output["complete_output_sha256"] != observation["output_sha256"]
+                    or not isinstance(attempt["memory_gauges"], dict)
+                    or "failure" in attempt
+                ):
+                    _fail("semantic_relationship", "passing correctness attempt metadata differs")
+                gauges = _validate_memory_gauges(attempt["memory_gauges"])
+                if gauges["system_pressure"] != "normal":
+                    _fail("semantic_relationship", "passing router memory pressure is not admitted")
+                last_passing_output = output
+                last_retained_output = output
+                if expected_kind == "measurement":
+                    measured_hashes.append(output["complete_output_sha256"])
+            else:
+                if not (
+                    attempt["status"] in {"failed", "aborted"}
+                    and attempt["passed"] is False
+                    and "failure" in attempt
+                ):
+                    _fail("semantic_relationship", "failed correctness attempt metadata differs")
+                _validate_failure(attempt["failure"])
+                if attempt["evaluated"] is True:
+                    _validate_memory_gauges(attempt["memory_gauges"])
+                elif attempt["memory_gauges"] is not None:
+                    _fail("semantic_relationship", "unevaluated correctness attempt gauges contradict")
+                if attempt["canonical_output"] is not None:
+                    output = _validate_canonical_output(
+                        attempt["canonical_output"], case_id, row_count
+                    )
+                    if output["complete_output_sha256"] != observation["output_sha256"]:
+                        _fail("semantic_relationship", "failed correctness output hash join differs")
+                    if attempt["comparison"] is None:
+                        _fail("semantic_relationship", "failed output comparison is missing")
+                    _validate_output_comparison(
+                        attempt["comparison"], oracle_output, output, row_count,
+                        require_pass=False,
+                    )
+                    last_retained_output = output
+                elif attempt["comparison"] is not None:
+                    _fail("semantic_relationship", "failed comparison lacks retained output")
+        if complete_router_run:
+            if (
+                last_passing_output is None
+                or len(measured_hashes) != 10
+                or len(set(measured_hashes)) != 1
+                or case["mlx_output"] != last_passing_output
+            ):
+                _fail("semantic_relationship", "passing correctness outputs are incomplete")
+            _validate_output_comparison(
+                case["comparison"], oracle_output, last_passing_output, row_count,
+                require_pass=True,
+            )
+            retained_case_comparisons.append((case_id, case["comparison"]))
+            if oracle_output["case_id"] != last_passing_output["case_id"]:
+                _fail("semantic_relationship", "oracle/candidate case binding differs")
+        elif case["mlx_output"] is None:
+            if case["comparison"] is not None or last_retained_output is not None:
+                _fail("semantic_relationship", "partial correctness case output is inconsistent")
+        else:
+            retained_case_output = _validate_canonical_output(
+                case["mlx_output"], case_id, row_count
+            )
+            if (
+                last_retained_output is None
+                or retained_case_output != last_retained_output
+                or case["comparison"] is None
+            ):
+                _fail("semantic_relationship", "partial correctness case output is inconsistent")
+            _validate_output_comparison(
+                case["comparison"], oracle_output, retained_case_output, row_count,
+                require_pass=False,
+            )
+            retained_case_comparisons.append((case_id, case["comparison"]))
+
+    if correctness_ids != {
+        observation_id for observation_id, kind in source_kinds.items() if kind == "correctness_attempt"
+    }:
+        _fail("semantic_relationship", "correctness detail does not cover its ledger")
+    if retained_case_comparisons:
+        top = record["correctness"]
+        if top.get("status") == "unavailable":
+            _fail(
+                "semantic_relationship",
+                "retained correctness comparisons cannot be reported as unavailable",
+            )
+        logit_comparisons = [
+            comparison["logits"] for _, comparison in retained_case_comparisons
+        ]
+        compared_count = sum(item["compared_count"] for item in logit_comparisons)
+        id_mismatch_count = sum(
+            comparison["id_mismatch_count"]
+            for _, comparison in retained_case_comparisons
+        )
+        order_mismatch_count = sum(
+            comparison["order_mismatch_count"]
+            for _, comparison in retained_case_comparisons
+        )
+        numeric_mismatch_count = sum(
+            item["mismatch_count"] for item in logit_comparisons
+        )
+        first_mismatch = None
+        for case_id, comparison in retained_case_comparisons:
+            if comparison["id_mismatch_count"]:
+                first_mismatch = {
+                    "case_id": case_id,
+                    "component": "selected_expert_ids",
+                    "mismatch_kind": "id_membership",
+                }
+                break
+            if comparison["order_mismatch_count"]:
+                first_mismatch = {
+                    "case_id": case_id,
+                    "component": "selected_expert_ids",
+                    "mismatch_kind": "order",
+                }
+                break
+            logit_mismatch = comparison["logits"]["first_mismatch"]
+            if logit_mismatch is not None:
+                first_mismatch = {
+                    "case_id": case_id,
+                    "component": "logits",
+                    **logit_mismatch,
+                }
+                break
+        expected_top = {
+            "compared_count": compared_count,
+            "id_mismatch_count": id_mismatch_count,
+            "order_mismatch_count": order_mismatch_count,
+            "numeric_mismatch_count": numeric_mismatch_count,
+            "non_finite_count": 0,
+            "maximum_absolute_error": max(
+                item["maximum_absolute_error"] for item in logit_comparisons
+            ),
+            "mean_absolute_error": sum(
+                item["mean_absolute_error"] * item["compared_count"]
+                for item in logit_comparisons
+            ) / compared_count,
+            "rmse": math.sqrt(
+                sum(
+                    item["rmse"] ** 2 * item["compared_count"]
+                    for item in logit_comparisons
+                ) / compared_count
+            ),
+            "maximum_relative_error": max(
+                (
+                    item["maximum_relative_error"]
+                    for item in logit_comparisons
+                    if item["maximum_relative_error"] is not None
+                ),
+                default=None,
+            ),
+            "absolute_tolerance": FROZEN_LOGIT_ABSOLUTE_TOLERANCE,
+            "relative_tolerance": FROZEN_LOGIT_RELATIVE_TOLERANCE,
+            "passed": (
+                id_mismatch_count + order_mismatch_count + numeric_mismatch_count == 0
+            ),
+            "first_mismatch": first_mismatch,
+        }
+        if any(
+            field not in top or not _equal_number(top[field], expected)
+            for field, expected in expected_top.items()
+        ):
+            _fail("semantic_relationship", "top-level correctness projection differs")
+    elif record["correctness"].get("status") != "unavailable":
+        _fail(
+            "semantic_relationship",
+            "top-level correctness invents an unavailable comparison",
+        )
+
+    timing_ids: set[str] = set()
+    timing_membership: dict[str, dict[str, Any]] = {}
+    timing_first_positions: list[int] = []
+    timing_series = detail["timing_series"]
+    if not isinstance(timing_series, list):
+        _fail("schema_violation", "router timing detail is invalid")
+    for raw_series in timing_series:
+        series = _closed_object(
+            raw_series,
+            allowed={
+                "benchmark_id", "case_id", "series_kind", "replication_role",
+                "process_replication_id", "process_state", "condition", "instrumentation_mode",
+                "warmup_count", "measurement_count", "attempted_warmup_count",
+                "attempted_measurement_count", "retained_observation_count", "observation_ids",
+            },
+            required={
+                "benchmark_id", "case_id", "series_kind", "replication_role",
+                "process_replication_id", "process_state", "condition", "instrumentation_mode",
+                "warmup_count", "measurement_count", "attempted_warmup_count",
+                "attempted_measurement_count", "retained_observation_count", "observation_ids",
+            },
+        )
+        for field in ("benchmark_id", "case_id", "process_replication_id"):
+            _stable_id(series[field])
+        ids = series["observation_ids"]
+        if not isinstance(ids, list) or not ids:
+            _fail("schema_violation", "router timing series has no observations")
+        planned_warmups = _plain_int(series["warmup_count"], nonnegative=True)
+        planned_measurements = _plain_int(series["measurement_count"], positive=True)
+        attempted_warmups = _plain_int(series["attempted_warmup_count"], nonnegative=True)
+        attempted_measurements = _plain_int(
+            series["attempted_measurement_count"], nonnegative=True
+        )
+        retained_count = _plain_int(series["retained_observation_count"], positive=True)
+        expected_count = attempted_warmups + attempted_measurements
+        if (
+            attempted_warmups > planned_warmups
+            or attempted_measurements > planned_measurements
+            or (attempted_measurements > 0 and attempted_warmups != planned_warmups)
+            or len(ids) != expected_count
+            or retained_count != expected_count
+        ):
+            _fail("semantic_relationship", "router timing series count differs")
+        timing_first_positions.append(ordered_ids.index(ids[0]))
+        for position, observation_id in enumerate(ids):
+            observation_id = _stable_id(observation_id)
+            if source_kinds.get(observation_id) != "timing_series" or observation_id in timing_ids:
+                _fail("semantic_relationship", "router timing series join differs")
+            if by_id[observation_id]["process_replication_id"] != series["process_replication_id"]:
+                _fail("semantic_relationship", "router timing process join differs")
+            observation = by_id[observation_id]
+            expected_kind = "warmup" if position < attempted_warmups else "measurement"
+            expected_index = position if expected_kind == "warmup" else position - attempted_warmups
+            ledger = ledger_entries[observation_id]
+            if (
+                observation["case_id"] != series["case_id"]
+                or observation["process_state"] != series["process_state"]
+                or observation["condition"] != series["condition"]
+                or observation["instrumentation_mode"] != series["instrumentation_mode"]
+                or observation["observation_kind"] != expected_kind
+                or observation["run_index"] != expected_index
+                or ledger.get("benchmark_id") != series["benchmark_id"]
+                or ledger.get("series_kind") != series["series_kind"]
+                or ledger.get("replication_role") != series["replication_role"]
+            ):
+                _fail("semantic_relationship", "router timing series metadata differs")
+            timing_ids.add(observation_id)
+            timing_membership[observation_id] = series
+    if timing_ids != {
+        observation_id for observation_id, kind in source_kinds.items() if kind == "timing_series"
+    }:
+        _fail("semantic_relationship", "router timing detail does not cover its ledger")
+    if timing_first_positions != sorted(timing_first_positions):
+        _fail("semantic_relationship", "router timing series order differs from the ledger")
+    if complete_router_run:
+        _validate_passing_timing_matrix(
+            timing_series,
+            raw_count=len(by_id),
+            correctness_count=len(correctness_ids),
+            timing_count=len(timing_ids),
+        )
+        expected_plan = _expected_passing_timing_plan(
+            record["batch_id"], detail["batch_order"]
+        )
+        plan_fields = {
+            "benchmark_id", "case_id", "series_kind", "replication_role",
+            "process_replication_id", "process_state", "condition",
+            "instrumentation_mode", "warmup_count", "measurement_count",
+        }
+        if any(
+            {field: series[field] for field in plan_fields}
+            != {field: expected[field] for field in plan_fields}
+            for series, expected in zip(timing_series, expected_plan, strict=True)
+        ):
+            _fail("semantic_relationship", "passing router timing plan differs")
+        if any(
+            series["attempted_warmup_count"] != series["warmup_count"]
+            or series["attempted_measurement_count"] != series["measurement_count"]
+            or series["retained_observation_count"]
+            != series["warmup_count"] + series["measurement_count"]
+            for series in timing_series
+        ):
+            _fail("semantic_relationship", "passing router timing attempts are incomplete")
+        expected_correctness_case_order = (
+            [
+                "qwen3moe-layer0-router-token0-row0-v1",
+                "qwen3moe-layer0-router-token0-token1-batch-v1",
+            ]
+            if detail["batch_order"] == "single_row_first"
+            else [
+                "qwen3moe-layer0-router-token0-token1-batch-v1",
+                "qwen3moe-layer0-router-token0-row0-v1",
+            ]
+        )
+        if [case["case_id"] for case in cases] != expected_correctness_case_order:
+            _fail("semantic_relationship", "passing correctness case order differs")
+        timing_ordered_ids = [
+            observation_id
+            for series in timing_series
+            for observation_id in series["observation_ids"]
+        ]
+        if ordered_ids != correctness_ordered_ids + timing_ordered_ids:
+            _fail("semantic_relationship", "correctness/timing ledger order differs")
+        for series, expected in zip(timing_series, expected_plan, strict=True):
+            if any(
+                ledger_entries[observation_id]["schedule_step"]
+                != expected["schedule_step"]
+                for observation_id in series["observation_ids"]
+            ):
+                _fail("semantic_relationship", "router timing schedule step differs")
+
+    request_windows = detail["request_windows"]
+    resource_records = detail["resource_records"]
+    if not isinstance(request_windows, list) or not isinstance(resource_records, list):
+        _fail("schema_violation", "router request/resource detail is invalid")
+    window_ids: set[str] = set()
+    window_profiles: dict[str, str] = {}
+    for raw_window in request_windows:
+        window = _closed_object(
+            raw_window,
+            allowed={
+                "observation_id", "batch_id", "case_id", "schedule_step", "source_kind",
+                "process_replication_id", "timing_profile", "started_at_utc", "completed_at_utc",
+                "host_wall_duration_ns", "host_monotonic_clock", "request_sent", "status", "failure",
+            },
+            required={
+                "observation_id", "batch_id", "case_id", "schedule_step", "source_kind",
+                "process_replication_id", "timing_profile", "started_at_utc", "completed_at_utc",
+                "host_wall_duration_ns", "host_monotonic_clock", "request_sent", "status",
+            },
+        )
+        observation_id = _stable_id(window["observation_id"])
+        if observation_id not in by_id or observation_id in window_ids:
+            _fail("semantic_relationship", "router request-window join differs")
+        joined_series = timing_membership.get(observation_id)
+        expected_profile = "minimal"
+        if joined_series is not None and joined_series["series_kind"] in {
+            "costly_real", "first_process_costly"
+        }:
+            expected_profile = "costly"
+        elif joined_series is not None and joined_series["series_kind"] == "stage_diagnostic":
+            expected_profile = "stage"
+        if (
+            window["batch_id"] != by_id[observation_id]["batch_id"]
+            or window["case_id"] != by_id[observation_id]["case_id"]
+            or window["process_replication_id"] != by_id[observation_id]["process_replication_id"]
+            or window["schedule_step"] != ledger_entries[observation_id]["schedule_step"]
+            or window["source_kind"] != source_kinds[observation_id]
+            or window["timing_profile"] != expected_profile
+            or window["started_at_utc"] != by_id[observation_id]["started_at_utc"]
+            or window["completed_at_utc"] != by_id[observation_id]["completed_at_utc"]
+            or window["host_monotonic_clock"] != "rust_std_instant"
+            or _plain_int(window["host_wall_duration_ns"], positive=True) <= 0
+            or type(window["request_sent"]) is not bool
+            or window["status"] not in {"passed", "failed", "aborted"}
+            or window["status"] != by_id[observation_id]["status"]
+            or (
+                by_id[observation_id]["evaluated"] is True
+                and window["request_sent"] is not True
+            )
+            or (
+                by_id[observation_id]["evaluated"] is False
+                and (
+                    window["status"] != "aborted"
+                    or window.get("failure") is None
+                )
+            )
+            or window.get("failure") != by_id[observation_id].get("failure")
+        ):
+            _fail("semantic_relationship", "router request-window metadata differs")
+        if window.get("failure") is not None:
+            _validate_failure(window["failure"])
+        window_ids.add(observation_id)
+        window_profiles[observation_id] = expected_profile
+    if window_ids != set(by_id):
+        _fail("semantic_relationship", "router request windows do not cover the ledger")
+    request_count_by_process = Counter(
+        window["process_replication_id"] for window in request_windows
+    )
+    for observation_id, observation in by_id.items():
+        if (
+            observation["condition"] == "first_read_new_process_os_cache_uncontrolled"
+            and request_count_by_process[observation["process_replication_id"]] != 1
+        ):
+            _fail("semantic_relationship", "first-read process has more than one request")
+
+    resource_ids: set[str] = set()
+    resources_by_id: dict[str, dict[str, Any]] = {}
+    for raw_resource in resource_records:
+        resource = _closed_object(
+            raw_resource,
+            allowed={
+                "observation_id", "source_kind", "backend", "requested_device", "selected_device",
+                "fallback_used", "evaluated", "synchronized", "output_sha256",
+                "correctness_passed", "canonical_output", "memory_gauges", "monotonic_clock",
+                "instrumentation_mode", "timing_stages", "application_tensor_bytes_read",
+                "tensor_cache_outcome", "canonical_output_retention", "status", "failure",
+            },
+            required={
+                "observation_id", "source_kind", "backend", "requested_device", "selected_device",
+                "fallback_used", "evaluated", "synchronized", "output_sha256",
+                "correctness_passed", "canonical_output", "memory_gauges", "monotonic_clock",
+                "instrumentation_mode", "timing_stages", "application_tensor_bytes_read",
+                "tensor_cache_outcome", "canonical_output_retention", "status", "failure",
+            },
+        )
+        observation_id = _stable_id(resource["observation_id"])
+        if (
+            observation_id not in by_id
+            or observation_id in resource_ids
+            or resource["backend"] != "apple-mlx"
+            or resource["source_kind"] != source_kinds[observation_id]
+        ):
+            _fail("semantic_relationship", "router resource-record join differs")
+        observation = by_id[observation_id]
+        if (
+            resource["requested_device"] != observation["requested_device"]
+            or resource["selected_device"] != observation["selected_device"]
+            or resource["fallback_used"] != observation["fallback_used"]
+            or resource["evaluated"] != observation["evaluated"]
+            or resource["synchronized"] != observation["synchronized"]
+            or resource["status"] != observation["status"]
+            or resource["instrumentation_mode"] != observation["instrumentation_mode"]
+            or resource["correctness_passed"] != observation["correctness_passed"]
+            or resource.get("failure") != observation.get("failure")
+            or (
+                resource["evaluated"] is True
+                and (
+                    resource["monotonic_clock"] != observation["monotonic_clock"]
+                    or resource["timing_stages"] != observation["durations_ns"]
+                )
+            )
+            or (
+                resource["evaluated"] is False
+                and (
+                    resource["monotonic_clock"] is not None
+                    or resource["timing_stages"] is not None
+                )
+            )
+        ):
+            _fail("semantic_relationship", "router resource metadata differs from raw evidence")
+        if resource["evaluated"] is True:
+            if not isinstance(resource["memory_gauges"], dict):
+                _fail("semantic_relationship", "evaluated router resource gauges are missing")
+            gauges = _validate_memory_gauges(resource["memory_gauges"])
+            if resource["status"] == "passed" and gauges["system_pressure"] != "normal":
+                _fail("semantic_relationship", "passing router memory pressure is not admitted")
+            if resource["status"] == "passed" and resource["source_kind"] == "correctness_attempt":
+                retention_valid = (
+                    resource["canonical_output_retention"] == "complete"
+                    and isinstance(resource["canonical_output"], dict)
+                )
+            elif resource["status"] == "passed":
+                retention_valid = (
+                    resource["canonical_output_retention"] == "hash_only_passing_timing"
+                    and resource["canonical_output"] is None
+                    and isinstance(resource["output_sha256"], str)
+                    and SHA256_RE.fullmatch(resource["output_sha256"]) is not None
+                )
+            else:
+                retention_valid = (
+                    resource["canonical_output_retention"] == "unavailable_invalid_output"
+                    and resource["canonical_output"] is None
+                ) or (
+                    resource["canonical_output_retention"] == "complete"
+                    and isinstance(resource["canonical_output"], dict)
+                )
+            if not retention_valid:
+                _fail("semantic_relationship", "router canonical output retention differs")
+        elif (
+            resource["memory_gauges"] is not None
+            or resource["canonical_output"] is not None
+            or resource["canonical_output_retention"] != "unavailable_aborted_request"
+        ):
+            _fail("semantic_relationship", "unevaluated router resource gauges contradict")
+        cache_pair = (
+            resource["tensor_cache_outcome"],
+            resource["application_tensor_bytes_read"],
+        )
+        allowed_cache_pairs = {("read_and_cached", 1_048_576), ("cache_hit", 0)}
+        if resource["evaluated"] is False:
+            allowed_cache_pairs.add(("unavailable", None))
+        if cache_pair not in allowed_cache_pairs:
+            _fail("semantic_relationship", "router application read/cache evidence differs")
+        timing_series_for_observation = timing_membership.get(observation_id)
+        if (
+            resource["status"] == "passed"
+            and timing_series_for_observation is not None
+            and timing_series_for_observation["series_kind"]
+            in {"costly_real", "first_process_costly"}
+            and cache_pair != ("read_and_cached", 1_048_576)
+        ):
+            _fail("semantic_relationship", "costly force-read resource evidence differs")
+        if resource["canonical_output"] is not None:
+            canonical_case_id = observation["case_id"]
+            canonical_row_count = expected_cases.get(canonical_case_id)
+            if canonical_row_count is None:
+                _fail("semantic_relationship", "router canonical resource case differs")
+            canonical_resource_output = _validate_canonical_output(
+                resource["canonical_output"], canonical_case_id, canonical_row_count
+            )
+            if canonical_resource_output["complete_output_sha256"] != resource[
+                "output_sha256"
+            ]:
+                _fail("semantic_relationship", "router canonical resource hash differs")
+        if resource["failure"] is not None:
+            _validate_failure(resource["failure"])
+        if (resource["status"] == "passed") != (resource["failure"] is None):
+            _fail("semantic_relationship", "router resource failure status contradicts")
+        if resource["output_sha256"] != by_id[observation_id]["output_sha256"]:
+            _fail("semantic_relationship", "router resource output hash join differs")
+        attempt = correctness_attempts.get(observation_id)
+        if attempt is not None and (
+            resource["requested_device"] != attempt["requested_device"]
+            or resource["selected_device"] != attempt["selected_device"]
+            or resource["fallback_used"] != attempt["fallback_used"]
+            or resource["evaluated"] != attempt["evaluated"]
+            or resource["synchronized"] != attempt["synchronized"]
+            or resource["status"] != attempt["status"]
+            or resource["correctness_passed"]
+            != (True if attempt["passed"] is True else observation["correctness_passed"])
+            or resource["canonical_output"] != attempt["canonical_output"]
+            or resource["memory_gauges"] != attempt["memory_gauges"]
+            or resource.get("failure") != attempt.get("failure")
+        ):
+            _fail("semantic_relationship", "router resource/correctness join differs")
+        resource_ids.add(observation_id)
+        resources_by_id[observation_id] = resource
+    if resource_ids != set(by_id):
+        _fail("semantic_relationship", "router resource records do not cover the ledger")
+    successful_accesses_by_process: Counter[str] = Counter()
+    for observation_id in ordered_ids:
+        resource = resources_by_id[observation_id]
+        if resource["status"] != "passed":
+            continue
+        process_id = by_id[observation_id]["process_replication_id"]
+        series = timing_membership.get(observation_id)
+        force_read = series is not None and series["series_kind"] in {
+            "costly_real", "first_process_costly",
+        }
+        expected_cache_pair = (
+            ("read_and_cached", 1_048_576)
+            if force_read or successful_accesses_by_process[process_id] == 0
+            else ("cache_hit", 0)
+        )
+        actual_cache_pair = (
+            resource["tensor_cache_outcome"],
+            resource["application_tensor_bytes_read"],
+        )
+        if actual_cache_pair != expected_cache_pair:
+            _fail("semantic_relationship", "router per-process cache sequence differs")
+        successful_accesses_by_process[process_id] += 1
+
+    lifecycles = detail["process_lifecycles"]
+    if not isinstance(lifecycles, list) or not lifecycles:
+        _fail("schema_violation", "router process lifecycle detail is missing")
+    lifecycle_ids: set[str] = set()
+    lifecycle_records: dict[tuple[str, str], list[tuple[str, str, datetime]]] = {}
+    lifecycle_failed_details: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    process_profiles: dict[str, str] = {}
+    completed_lifecycle_keys: set[tuple[str, str]] = set()
+    previous_lifecycle_key: tuple[str, str] | None = None
+    previous_lifecycle_time: datetime | None = None
+    for event_order, raw_lifecycle in enumerate(lifecycles):
+        lifecycle = _closed_object(
+            raw_lifecycle,
+            allowed={
+                "event_order", "recorded_at_utc", "process_replication_id",
+                "timing_profile", "event", "outcome", "details",
+            },
+            required={
+                "event_order", "recorded_at_utc", "process_replication_id",
+                "timing_profile", "event", "outcome", "details",
+            },
+        )
+        process_id = _stable_id(lifecycle["process_replication_id"])
+        profile = lifecycle["timing_profile"]
+        if profile not in {"minimal", "costly", "stage"}:
+            _fail("semantic_relationship", "router process lifecycle profile is invalid")
+        if process_id in process_profiles and process_profiles[process_id] != profile:
+            _fail("semantic_relationship", "router process lifecycle profile changes")
+        process_profiles[process_id] = profile
+        lifecycle_key = (process_id, profile)
+        if previous_lifecycle_key is not None and lifecycle_key != previous_lifecycle_key:
+            completed_lifecycle_keys.add(previous_lifecycle_key)
+            if lifecycle_key in completed_lifecycle_keys:
+                _fail("semantic_relationship", "router process lifecycle is interleaved")
+        previous_lifecycle_key = lifecycle_key
+        if _plain_int(lifecycle["event_order"], nonnegative=True) != event_order:
+            _fail("semantic_relationship", "router process lifecycle order is non-contiguous")
+        lifecycle_time = _parse_utc(lifecycle["recorded_at_utc"])
+        if previous_lifecycle_time is not None and lifecycle_time < previous_lifecycle_time:
+            _fail("semantic_relationship", "router lifecycle timestamps are reversed")
+        previous_lifecycle_time = lifecycle_time
+        if (
+            lifecycle["event"] not in {"spawn", "shutdown"}
+            or not isinstance(lifecycle["details"], dict)
+            or len(lifecycle["details"]) > 16
+        ):
+            _fail("schema_violation", "router process lifecycle event is invalid")
+        allowed_outcomes = (
+            {"started", "passed", "failed"}
+            if lifecycle["event"] == "spawn"
+            else {"graceful", "forced_termination", "failed"}
+        )
+        if lifecycle["outcome"] not in allowed_outcomes:
+            _fail("semantic_relationship", "router process lifecycle outcome is invalid")
+        event = (lifecycle["event"], lifecycle["outcome"])
+        lifecycle_records.setdefault(lifecycle_key, []).append(
+            (event[0], event[1], lifecycle_time)
+        )
+        if event == ("spawn", "failed"):
+            details = _closed_object(
+                lifecycle["details"], allowed={"failure"}, required={"failure"}
+            )
+            failure = _validate_failure(details["failure"])
+            lifecycle_failed_details.setdefault(lifecycle_key, []).append(failure)
+        lifecycle_ids.add(process_id)
+    expected_process_ids = {item["process_replication_id"] for item in by_id.values()}
+    if lifecycle_ids != expected_process_ids:
+        _fail("semantic_relationship", "router process lifecycles do not cover the ledger")
+    for lifecycle_key, records in lifecycle_records.items():
+        events = [(event, outcome) for event, outcome, _ in records]
+        valid_spawn_failure = events == [("spawn", "started"), ("spawn", "failed")]
+        valid_runtime_failure = (
+            len(events) == 3
+            and events[:2] == [("spawn", "started"), ("spawn", "failed")]
+            and events[2][0] == "shutdown"
+        )
+        valid_owned_process = (
+            len(events) == 3
+            and events[:2] == [("spawn", "started"), ("spawn", "passed")]
+            and events[2][0] == "shutdown"
+            and events[2][1] in {"graceful", "forced_termination", "failed"}
+        )
+        if not (valid_spawn_failure or valid_runtime_failure or valid_owned_process):
+            _fail("semantic_relationship", "router process lifecycle sequence is invalid")
+        process_id, _ = lifecycle_key
+        if lifecycle_key in lifecycle_failed_details:
+            process_failures = [
+                observation["failure"]
+                for observation in by_id.values()
+                if observation["process_replication_id"] == process_id
+                and observation["status"] in {"failed", "aborted"}
+            ]
+            if any(
+                failure not in process_failures
+                for failure in lifecycle_failed_details[lifecycle_key]
+            ):
+                _fail("semantic_relationship", "router lifecycle failure join differs")
+        if record["actual_status"] == "passed" and (
+            not valid_owned_process or events[2] != ("shutdown", "graceful")
+        ):
+            _fail("semantic_relationship", "passing process lifecycle is incomplete")
+    for window in request_windows:
+        observation_id = window["observation_id"]
+        process_id = window["process_replication_id"]
+        lifecycle_key = (process_id, window_profiles[observation_id])
+        records = lifecycle_records.get(lifecycle_key)
+        started = _parse_utc(window["started_at_utc"])
+        completed = _parse_utc(window["completed_at_utc"])
+        if records is None or completed < started:
+            _fail("semantic_relationship", "router request lies outside its process lifecycle")
+        events = [(event, outcome) for event, outcome, _ in records]
+        lifecycle_start = records[0][2]
+        lifecycle_end = records[-1][2]
+        owned_process = (
+            events[:2] == [("spawn", "started"), ("spawn", "passed")]
+            and events[-1][0] == "shutdown"
+        )
+        failure = window.get("failure")
+        failed_after_spawn_before_request = (
+            window["request_sent"] is False
+            and isinstance(failure, dict)
+            and failure.get("code") == "internal_worker_error"
+            and failure.get("stage") == "request_observation"
+            and owned_process
+        )
+        if window["request_sent"] is True:
+            if (
+                not owned_process
+                or started < records[1][2]
+                or completed > lifecycle_end
+            ):
+                _fail("semantic_relationship", "sent router request lacks an owned lifecycle")
+        elif failed_after_spawn_before_request:
+            # The admitted-request UTC timestamp can fail after the worker has
+            # started. Rust retains a fallback window that is not a lifecycle
+            # bound, while the exact failure stage and owned lifecycle prove
+            # that no request was sent to the live worker.
+            pass
+        elif (
+            window["status"] != "aborted"
+            or started > lifecycle_start
+            or completed < lifecycle_end
+            or events[:2] != [("spawn", "started"), ("spawn", "failed")]
+        ):
+            _fail("semantic_relationship", "unsent router request lacks a failed lifecycle")
+
+
 def _validate_contiguous_series(
     compatible_series: dict[tuple[Any, ...], list[int]],
 ) -> None:
@@ -1760,6 +3511,130 @@ def _validate_contiguous_series(
 
 def _validate_repetitions(record: dict[str, Any], by_id: dict[str, dict[str, Any]]) -> None:
     correctness = record["correctness"]
+    if (
+        _evidence_scope(record) == "external_checkpoint"
+        and isinstance(record.get("router_detail"), dict)
+    ):
+        detail_cases = record["router_detail"]["correctness_cases"]
+        attempts = [
+            attempt
+            for case in detail_cases
+            for attempt in case["attempts"]
+        ]
+        if correctness.get("status") == "unavailable":
+            if record["actual_status"] == "passed":
+                _fail(
+                    "insufficient_repetitions",
+                    "passing evidence lacks correctness repetitions",
+                )
+            source = correctness.get("source")
+            has_evaluated_invalid_output = any(
+                attempt["evaluated"] is True
+                and attempt["canonical_output"] is None
+                for attempt in attempts
+            )
+            has_evaluated_attempt = any(
+                attempt["evaluated"] is True for attempt in attempts
+            )
+            if (
+                source == "pre_execution_abort"
+                and has_evaluated_attempt
+            ) or (
+                source == "evaluated_output_invalid"
+                and not has_evaluated_invalid_output
+            ):
+                _fail(
+                    "semantic_relationship",
+                    "correctness unavailability source differs from retained attempts",
+                )
+            return
+
+        repeat_count = _plain_int(
+            correctness["deterministic_repeat_count"], nonnegative=True
+        )
+        hashes = correctness["repeat_output_hashes"]
+        if (
+            repeat_count > 20
+            or not isinstance(hashes, list)
+            or len(hashes) != repeat_count
+            or any(
+                not isinstance(value, str) or not SHA256_RE.fullmatch(value)
+                for value in hashes
+            )
+        ):
+            _fail(
+                "insufficient_repetitions",
+                "deterministic repetition prefix is invalid",
+            )
+        retained_measurement_hashes = [
+            attempt["canonical_output"]["complete_output_sha256"]
+            for attempt in attempts
+            if attempt["observation_kind"] == "measurement"
+            and isinstance(attempt["canonical_output"], dict)
+        ]
+        if repeat_count != len(retained_measurement_hashes) or sorted(hashes) != sorted(
+            retained_measurement_hashes
+        ):
+            _fail(
+                "semantic_relationship",
+                "correctness repetition hashes differ from the retained measured prefix",
+            )
+
+        retained_case_hashes = {
+            case["case_id"]: case["mlx_output"]["complete_output_sha256"]
+            for case in detail_cases
+            if isinstance(case["mlx_output"], dict)
+        }
+        for observation in by_id.values():
+            expected_hash = retained_case_hashes.get(observation["case_id"])
+            if (
+                observation["status"] == "passed"
+                and expected_hash is not None
+                and observation["output_sha256"] != expected_hash
+            ):
+                _fail(
+                    "semantic_relationship",
+                    "raw and retained correctness output identities differ by case",
+                )
+
+        complete_router_run = bool(by_id) and all(
+            observation["status"] == "passed" for observation in by_id.values()
+        )
+        if complete_router_run:
+            measured_by_case: dict[str, list[str]] = {}
+            for case in detail_cases:
+                measured_by_case[case["case_id"]] = [
+                    attempt["canonical_output"]["complete_output_sha256"]
+                    for attempt in case["attempts"]
+                    if attempt["observation_kind"] == "measurement"
+                    and isinstance(attempt["canonical_output"], dict)
+                ]
+            required_cases = set(SECOND_BATCH_CASE_ORDER)
+            if (
+                repeat_count != 20
+                or set(measured_by_case) != required_cases
+                or any(
+                    len(case_hashes) != 10 or len(set(case_hashes)) != 1
+                    for case_hashes in measured_by_case.values()
+                )
+                or len(
+                    {
+                        case_hashes[0]
+                        for case_hashes in measured_by_case.values()
+                    }
+                )
+                != 2
+            ):
+                _fail(
+                    "insufficient_repetitions",
+                    "complete external correctness repetitions differ",
+                )
+        return
+
+    if correctness.get("status") == "unavailable":
+        if record["actual_status"] == "passed":
+            _fail("insufficient_repetitions", "passing evidence lacks correctness repetitions")
+        return
     repeat_count = _plain_int(correctness["deterministic_repeat_count"], positive=True)
     hashes = correctness["repeat_output_hashes"]
     if (
@@ -1947,8 +3822,49 @@ def _validate_summaries(
     timing_groups: Mapping[tuple[Any, ...], list[Mapping[str, Any]]],
 ) -> None:
     summaries = record["summaries"]
-    if not isinstance(summaries, list) or not summaries:
+    if not isinstance(summaries, list):
         _fail("schema_violation", "statistical summaries are missing")
+    if not summaries:
+        has_summarizable_observation = any(
+            observation["status"] == "passed"
+            and observation["observation_kind"]
+            in {"measurement", "clean_process_replication"}
+            and any(
+                _observed_duration_ns(stage_observation) is not None
+                for stage_observation in observation["durations_ns"].values()
+            )
+            for observation in by_id.values()
+        )
+        terminal = (
+            record.get("router_detail", {}).get("terminal_failure")
+            if isinstance(record.get("router_detail"), dict)
+            else None
+        )
+        environment_block_disposition = (
+            record["actual_status"] == "blocked"
+            and isinstance(terminal, dict)
+            and (
+                (
+                    terminal.get("phase") == "environment_interference"
+                    and record["environment"].get("interference_admission")
+                    == "observed_interference"
+                )
+                or (
+                    terminal.get("phase") == "environment_admission_unavailable"
+                    and record["environment"].get("interference_admission")
+                    == "postponed"
+                    and isinstance(record["environment"].get("after_snapshot"), dict)
+                    and record["environment"]["after_snapshot"].get("status")
+                    == "unavailable"
+                )
+            )
+        )
+        if (
+            record["actual_status"] == "passed"
+            or (has_summarizable_observation and not environment_block_disposition)
+        ):
+            _fail("schema_violation", "statistical summaries are missing")
+        return
     summary_ids: set[str] = set()
     projected_rows: dict[tuple[str, str], tuple[Any, ...]] = {}
     for compatibility_key, rows in timing_groups.items():
@@ -2087,6 +4003,22 @@ def _validate_summaries(
 
 def _validate_correctness(record: dict[str, Any]) -> None:
     correctness = record["correctness"]
+    if correctness.get("status") == "unavailable":
+        unavailable = _closed_object(
+            correctness,
+            allowed={"status", "reason", "source"},
+            required={"status", "reason", "source"},
+        )
+        if (
+            record["actual_status"] not in {"failed", "blocked", "aborted"}
+            or unavailable["source"] not in {
+                "pre_execution_abort",
+                "evaluated_output_invalid",
+            }
+        ):
+            _fail("semantic_relationship", "correctness unavailability is not admissible")
+        _bounded_text(unavailable["reason"])
+        return
     for field in (
         "compared_count",
         "id_mismatch_count",
@@ -2151,6 +4083,20 @@ def _validate_correctness(record: dict[str, Any]) -> None:
             "first_mismatch"
         ]:
             _fail("schema_violation", "correctness mismatch detail is invalid")
+    repeat_count = _plain_int(
+        correctness["deterministic_repeat_count"], nonnegative=True
+    )
+    hashes = correctness["repeat_output_hashes"]
+    if (
+        not isinstance(hashes, list)
+        or len(hashes) != repeat_count
+        or repeat_count > 20
+        or any(
+            not isinstance(value, str) or SHA256_RE.fullmatch(value) is None
+            for value in hashes
+        )
+    ):
+        _fail("insufficient_repetitions", "correctness repetition prefix is invalid")
 
 
 def _validate_claim_boundary(record: dict[str, Any]) -> None:
@@ -2191,18 +4137,26 @@ def _validate_outcome_state(
     exit_code = record["execution"]["exit_code"]
     observation_statuses = [item["status"] for item in by_id.values()]
     failure_codes = {failure["code"] for failure in record["failures"]}
-    observation_failure_codes = {
-        item["failure"]["code"]
-        for item in by_id.values()
-        if item["status"] in {"failed", "aborted"}
-    }
+    expected_failures: list[dict[str, Any]] = []
+    for item in by_id.values():
+        if item["status"] not in {"failed", "aborted"}:
+            continue
+        failure = item["failure"]
+        if failure not in expected_failures:
+            expected_failures.append(failure)
+    terminal_failure = None
+    if _evidence_scope(record) == "external_checkpoint":
+        terminal_failure = record["router_detail"]["terminal_failure"]
+        if terminal_failure is not None and terminal_failure["failure"] not in expected_failures:
+            expected_failures.append(terminal_failure["failure"])
+    expected_failure_codes = {failure["code"] for failure in expected_failures}
 
     if actual_status == "excluded":
         _fail("semantic_relationship", "frozen protocol v1 declares no exclusion rule")
     if actual_status == "passed":
         if (
             exit_code != 0
-            or record["correctness"]["passed"] is not True
+            or record["correctness"].get("passed") is not True
             or record["failures"]
             or any(status != "passed" for status in observation_statuses)
             or claim_status not in {"provisional", "verified"}
@@ -2212,13 +4166,70 @@ def _validate_outcome_state(
 
     expected_claim_status = "failed" if actual_status == "failed" else "blocked"
     expected_observation_status = "aborted" if actual_status == "blocked" else actual_status
+    terminal_only = terminal_failure is not None
+    interference_terminal = (
+        terminal_only
+        and terminal_failure["phase"] == "environment_interference"
+    )
+    unavailable_environment_terminal = (
+        terminal_only
+        and terminal_failure["phase"] == "environment_admission_unavailable"
+    )
+    environment = record["environment"]
+    unavailable_after_snapshot = (
+        isinstance(environment.get("after_snapshot"), dict)
+        and environment["after_snapshot"].get("status") == "unavailable"
+    )
+    all_requests_pass = bool(observation_statuses) and all(
+        status == "passed" for status in observation_statuses
+    )
     if (
         actual_status not in {"failed", "blocked", "aborted"}
         or exit_code == 0
         or not record["failures"]
-        or expected_observation_status not in observation_statuses
+        or (
+            expected_observation_status not in observation_statuses
+            and not terminal_only
+        )
         or claim_status != expected_claim_status
-        or failure_codes != observation_failure_codes
+        or failure_codes != expected_failure_codes
+        or record["failures"] != expected_failures
+        or (
+            interference_terminal
+            and (
+                actual_status != "blocked"
+                or environment["interference_admission"] != "observed_interference"
+                or any(status != "passed" for status in observation_statuses)
+                or record["summaries"] != []
+                or record["claim_boundary"]["capabilities"] != []
+            )
+        )
+        or (
+            unavailable_environment_terminal
+            and (
+                actual_status != "blocked"
+                or environment["interference_admission"] != "postponed"
+                or not unavailable_after_snapshot
+                or environment["before_snapshot"]["interference_admission"]
+                != "admitted"
+                or any(status != "passed" for status in observation_statuses)
+                or record["summaries"] != []
+                or record["claim_boundary"]["capabilities"] != []
+            )
+        )
+        or (
+            actual_status == "blocked"
+            and all_requests_pass
+            and environment["interference_admission"] == "observed_interference"
+            and not interference_terminal
+        )
+        or (
+            actual_status == "blocked"
+            and all_requests_pass
+            and environment["interference_admission"] == "postponed"
+            and unavailable_after_snapshot
+            and not unavailable_environment_terminal
+        )
     ):
         _fail("semantic_relationship", "unsuccessful experiment fields contradict each other")
 
@@ -2232,11 +4243,13 @@ def validate_record(
         if not isinstance(record, dict):
             _fail("schema_violation", "evidence root is not an object")
         _reject_non_finite_and_private_values(record)
+        _validate_public_record_size(record)
         _validate_identity(record)
         _validate_structure(record)
         _validate_semantics(record, repository_root)
         _validate_artifacts(record, repository_root)
         by_id, compatible_series = _validate_observations(record)
+        _validate_router_detail(record, by_id, repository_root=repository_root)
         timing_rows = project_timing_rows(record)
         timing_groups = group_raw_observations(timing_rows)
         if not timing_rows or not timing_groups:
@@ -2346,6 +4359,19 @@ def _second_batch_process_ids(record: Mapping[str, Any]) -> set[str]:
         if isinstance(observation, Mapping):
             process_ids.add(str(observation.get("process_replication_id")))
     return process_ids
+
+
+def _second_batch_execution_identity(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Project immutable command facts without conflating per-record exit status."""
+
+    execution = record.get("execution")
+    if not isinstance(execution, Mapping):
+        _fail("semantic_relationship", "linked second-batch execution is invalid")
+    return {
+        str(name): value
+        for name, value in execution.items()
+        if name != "exit_code"
+    }
 
 
 def _second_batch_device_facts(record: Mapping[str, Any]) -> tuple[tuple[Any, ...], ...]:
@@ -2463,7 +4489,6 @@ def _validate_second_batch_cross_records(records: Iterable[Mapping[str, Any]]) -
             "source_commit",
             "source_worktree_before",
             "protocol",
-            "execution",
             "model",
             "tensor",
             "input",
@@ -2471,6 +4496,18 @@ def _validate_second_batch_cross_records(records: Iterable[Mapping[str, Any]]) -
         )
         if any(source.get(field) != target.get(field) for field in immutable_fields):
             _fail("semantic_relationship", "linked second batches have incompatible identities")
+        if _second_batch_execution_identity(source) != _second_batch_execution_identity(target):
+            _fail("semantic_relationship", "linked second batches have incompatible execution")
+        if source.get("evidence_scope") == "external_checkpoint":
+            source_detail = source.get("router_detail")
+            target_detail = target.get("router_detail")
+            if (
+                not isinstance(source_detail, Mapping)
+                or not isinstance(target_detail, Mapping)
+                or source_detail.get("batch_order") != "single_row_first"
+                or target_detail.get("batch_order") != "two_row_first"
+            ):
+                _fail("semantic_relationship", "linked second-batch roles are invalid")
         if _second_batch_environment_facts(source) != _second_batch_environment_facts(target):
             _fail("semantic_relationship", "linked second batches have incompatible environments")
         if _second_batch_device_facts(source) != _second_batch_device_facts(target):
@@ -2478,22 +4515,23 @@ def _validate_second_batch_cross_records(records: Iterable[Mapping[str, Any]]) -
         if _second_batch_process_ids(source) & _second_batch_process_ids(target):
             _fail("semantic_relationship", "linked second batches reuse a process identity")
 
-        source_orders = _second_batch_case_orders(source)
-        target_orders = _second_batch_case_orders(target)
-        reverse_order = tuple(reversed(SECOND_BATCH_CASE_ORDER))
-        if (
-            not source_orders
-            or source_orders.keys() != target_orders.keys()
-            or any(
-                not _is_frozen_case_block(order, SECOND_BATCH_CASE_ORDER)
-                for order in source_orders.values()
-            )
-            or any(
-                not _is_frozen_case_block(order, reverse_order)
-                for order in target_orders.values()
-            )
-        ):
-            _fail("semantic_relationship", "linked second batches are not counterbalanced")
+        if source.get("evidence_scope") != "external_checkpoint":
+            source_orders = _second_batch_case_orders(source)
+            target_orders = _second_batch_case_orders(target)
+            reverse_order = tuple(reversed(SECOND_BATCH_CASE_ORDER))
+            if (
+                not source_orders
+                or source_orders.keys() != target_orders.keys()
+                or any(
+                    not _is_frozen_case_block(order, SECOND_BATCH_CASE_ORDER)
+                    for order in source_orders.values()
+                )
+                or any(
+                    not _is_frozen_case_block(order, reverse_order)
+                    for order in target_orders.values()
+                )
+            ):
+                _fail("semantic_relationship", "linked second batches are not counterbalanced")
 
         second_batch = source["second_batch"]
         expected_hash = _canonical_record_sha256(target)

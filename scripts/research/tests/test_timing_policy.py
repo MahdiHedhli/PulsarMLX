@@ -433,7 +433,7 @@ class TimingPolicyContractTests(unittest.TestCase):
 
         # A fixture cannot become real evidence by changing only its scope and
         # attaching otherwise valid host/timing metadata.
-        self._assert_rejected(valid, "semantic_relationship")
+        self._assert_rejected(valid, "unsupported_schema_identity")
 
     def test_external_stage_mode_requires_every_frozen_boundary(self) -> None:
         record = _external_evidence("timing-external-stage-incomplete")

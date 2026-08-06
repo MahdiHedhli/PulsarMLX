@@ -880,15 +880,34 @@ def combine_environment_evidence(
         for name, value in benchmark_resources.items()
         if name.startswith("worker_") and value.get("status") == "observed"
     }
-    if worker_facts != {
+    passing_worker_facts = {
         "worker_backend": "apple-mlx",
         "worker_requested_device": "gpu",
         "worker_selected_device": "gpu",
         "worker_fallback_used": False,
         "worker_evaluated": True,
         "worker_synchronized": True,
-    }:
-        raise EnvironmentCollectionError("worker execution identity is not an evaluated MLX GPU result")
+    }
+    unevaluated_worker_facts = {
+        "worker_backend": "apple-mlx",
+        "worker_requested_device": "gpu",
+        "worker_selected_device": "not_available",
+        "worker_fallback_used": False,
+        "worker_evaluated": False,
+        "worker_synchronized": False,
+    }
+    resource_fields = required_resource_fields - set(passing_worker_facts)
+    if worker_facts == passing_worker_facts:
+        pass
+    elif worker_facts == unevaluated_worker_facts and all(
+        benchmark_resources[name].get("status") == "unavailable"
+        for name in resource_fields
+    ):
+        pass
+    else:
+        raise EnvironmentCollectionError(
+            "worker execution identity is neither evaluated nor wholly unevaluated"
+        )
 
     identity_fields = (
         "snapshot_schema",
@@ -974,25 +993,113 @@ def combine_environment_evidence(
 
 
 def extract_benchmark_resources(candidate: Mapping[str, Any]) -> dict[str, Any]:
-    """Aggregate bounded worker memory gauges without retaining process identity."""
+    """Aggregate evaluated gauges or retain exact all-unevaluated provenance."""
 
     gauge_records: list[Mapping[str, Any]] = []
-    pending: list[Any] = [candidate]
-    visited = 0
-    while pending:
-        current = pending.pop()
-        visited += 1
-        if visited > 20_000:
-            raise EnvironmentCollectionError("benchmark candidate is too large")
-        if isinstance(current, Mapping):
-            memory = current.get("memory_gauges")
-            if isinstance(memory, Mapping):
-                gauge_records.append(current)
-            pending.extend(current.values())
-        elif isinstance(current, list):
-            pending.extend(current)
-    if not gauge_records:
+    worker = candidate.get("worker")
+    live_records = (
+        worker.get("result_resource_records")
+        if isinstance(worker, Mapping)
+        else None
+    )
+    live_without_evaluated_results = False
+    if live_records is not None:
+        if candidate.get("backend") != "apple-mlx":
+            raise EnvironmentCollectionError(
+                "live benchmark candidate backend is not the admitted MLX backend"
+            )
+        if (
+            not isinstance(live_records, list)
+            or not live_records
+            or len(live_records) > 1_024
+            or any(not isinstance(record, Mapping) for record in live_records)
+        ):
+            raise EnvironmentCollectionError(
+                "live benchmark resource records are invalid or unbounded"
+            )
+        unevaluated_records = 0
+        for record in live_records:
+            status = record.get("status")
+            memory = record.get("memory_gauges")
+            common_identity = (
+                record.get("backend") == "apple-mlx"
+                and record.get("requested_device") == "gpu"
+                and record.get("fallback_used") is False
+            )
+            evaluated_identity = (
+                status in {"passed", "failed"}
+                and common_identity
+                and record.get("selected_device") == "gpu"
+                and record.get("evaluated") is True
+                and record.get("synchronized") is True
+                and isinstance(memory, Mapping)
+            )
+            unevaluated_identity = (
+                status in {"aborted", "failed"}
+                and common_identity
+                and record.get("selected_device") == "not_available"
+                and record.get("evaluated") is False
+                and record.get("synchronized") is False
+                and memory is None
+            )
+            if evaluated_identity:
+                gauge_records.append(record)
+            elif unevaluated_identity:
+                unevaluated_records += 1
+            else:
+                raise EnvironmentCollectionError(
+                    "live benchmark resources contradict their execution state"
+                )
+        live_without_evaluated_results = (
+            not gauge_records and unevaluated_records == len(live_records)
+        )
+    else:
+        pending: list[Any] = [candidate]
+        visited = 0
+        while pending:
+            current = pending.pop()
+            visited += 1
+            if visited > 20_000:
+                raise EnvironmentCollectionError("benchmark candidate is too large")
+            if isinstance(current, Mapping):
+                memory = current.get("memory_gauges")
+                if isinstance(memory, Mapping):
+                    gauge_records.append(current)
+                pending.extend(current.values())
+            elif isinstance(current, list):
+                pending.extend(current)
+    if not gauge_records and not live_without_evaluated_results:
         raise EnvironmentCollectionError("benchmark candidate has no worker memory gauges")
+
+    if live_without_evaluated_results:
+        resources = {
+            name: unavailable(
+                "no retained live worker request reached evaluated execution",
+                "live_worker_result_resource_records",
+            )
+            for name in (
+                "process_footprint_bytes",
+                "mlx_active_memory_bytes",
+                "mlx_cache_memory_bytes",
+                "mlx_peak_memory_bytes",
+                "process_cpu_time_seconds",
+                "process_bytes_read",
+            )
+        }
+        for name, value in (
+            ("worker_backend", "apple-mlx"),
+            ("worker_requested_device", "gpu"),
+            ("worker_selected_device", "not_available"),
+            ("worker_fallback_used", False),
+            ("worker_evaluated", False),
+            ("worker_synchronized", False),
+        ):
+            resources[name] = observed(
+                value,
+                "validated_unevaluated_worker_results",
+            )
+        assert_public_safe(resources)
+        return resources
 
     expected_execution = {
         "backend": "apple-mlx",

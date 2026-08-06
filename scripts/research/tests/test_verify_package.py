@@ -716,6 +716,37 @@ class PublicationBoundaryTests(unittest.TestCase):
                         before,
                     )
 
+    def test_publication_and_history_use_the_four_mib_public_bound(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            oversized = _candidate("oversized-public-v1")
+            oversized["warnings"] = ["x" * 512 for _ in range(9_000)]
+            candidate_path = self._write_candidate(root / "candidate", oversized)
+            raw_dir = root / "raw"
+            with self.assertRaises(self.publisher.PublicationError):
+                self.publisher.publish_candidate(candidate_path, raw_dir)
+            self.assertFalse(raw_dir.exists() and any(raw_dir.iterdir()))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            raw_dir = root / "raw"
+            raw_dir.mkdir()
+            historical = _candidate("historical-v1")
+            historical.pop("_local")
+            raw = json.dumps(historical, indent=2, sort_keys=True) + "\n"
+            padding = " " * (self.publisher.MAX_PUBLIC_RECORD_BYTES - len(raw) + 1)
+            (raw_dir / "historical-v1.json").write_text(
+                raw + padding, encoding="utf-8"
+            )
+            candidate_path = self._write_candidate(
+                root / "candidate", _candidate("new-public-v1")
+            )
+            before = (raw_dir / "historical-v1.json").read_bytes()
+            with self.assertRaises(self.publisher.PublicationError):
+                self.publisher.publish_candidate(candidate_path, raw_dir)
+            self.assertEqual((raw_dir / "historical-v1.json").read_bytes(), before)
+            self.assertEqual(sorted(path.name for path in raw_dir.iterdir()), ["historical-v1.json"])
+
     def test_private_identifier_and_secret_shaped_keys_are_rejected(self) -> None:
         mutations = (
             ("metadata", "host", "fixture-machine-marker"),

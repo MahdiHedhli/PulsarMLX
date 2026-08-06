@@ -1,10 +1,10 @@
 # Feature 002 Experiment Protocol
 
-**Protocol ID**: `f002-router-protocol-amendment-001`
+**Protocol ID**: `f002-router-protocol-amendment-002`
 
-**Protocol version**: `1.1.0`
+**Protocol version**: `1.2.0`
 
-**Supersedes**: `f002-router-protocol` version `1.0.0`
+**Supersedes**: `f002-router-protocol-amendment-001` version `1.1.0`
 
 **Feature**: `002-qwen-router-parity`
 
@@ -12,21 +12,24 @@
 
 **Order seed**: `22002`
 
-**Status**: Frozen pre-access amendment; no external checkpoint access, real-router
-execution, or real-router measurement has occurred under this protocol.
+**Status**: Frozen pre-execution amendment. Read-only checkpoint inspection and
+CPU-oracle publication have occurred, but no Apple/MLX real-router execution or
+real-router timing measurement has occurred under this protocol.
 
 This document freezes the correctness, timing, retention, publication, and
 stop rules for the bounded Qwen3MoE layer-0 router experiment. It is executable
 only with the admission gates below. It records no result and makes no claim
 that the Feature 002 router implementation works.
 
-Amendment 001 was made before any external checkpoint, CPU-oracle, Apple, or
-real timing output was accessed. It closes the exact correctness-attempt,
-fresh-process, flat-ledger, paired environment, and load-admission rules needed
-by the implemented orchestration. The superseded bytes remain in Git history.
-The checked-in passed/failed/aborted conformance fixtures are constructed
-policy data rather than experimental attempts or claims; they are regenerated
-under this amendment and retain no assertion about a real checkpoint.
+Amendment 002 was made after immutable read-only checkpoint inspection and
+independent CPU-oracle publication, but before any Apple/MLX output or real
+router timing was observed. It does not change inputs, oracle values,
+tolerances, attempt counts, case order, timing boundaries, or acceptance
+criteria. It closes the publication representation needed to retain complete
+bounded outputs, process/request/resource joins, truthful pre-execution abort
+timing, and the already frozen per-process summary grouping. Amendment 001 and
+the original protocol remain in Git history. Checked-in conformance fixtures
+are constructed policy data, not experimental attempts or checkpoint claims.
 
 The normative companion documents are the
 [feature specification](../../specs/002-qwen-router-parity/spec.md),
@@ -208,6 +211,15 @@ across the ten measured correctness attempts. Warm-up attempts do not satisfy
 the measured repeat count. Any measured difference is retained as failure and
 stops v1; tolerances are not widened.
 
+An unsuccessful gate publishes the exact completed measured prefix, which may
+contain zero through nineteen hashes across the ordered two-case experiment.
+Its `deterministic_repeat_count` equals that prefix exactly; it is never padded
+to ten or twenty. A complete passing or post-run-interference record contains
+exactly ten identical measured hashes for each case and twenty total. If an
+evaluated result is structurally invalid before a numerical comparison can be
+formed, correctness uses the distinct `evaluated_output_invalid` unavailable
+source; it cannot be relabeled as a pre-execution abort.
+
 Both the single-row and two-row correctness gates complete before any timing
 series begins. Timing observations do not retroactively satisfy either
 independent correctness gate.
@@ -246,11 +258,13 @@ under the required condition label, then repeats the entire major series.
   retained measurements, remain separate from major totals, and cannot be
   promoted as a third major benchmark.
 
-Every primary or replication worker's first external read is retained as
-`first_read_new_process_os_cache_uncontrolled`. It is never labeled `cold`,
-`cold filesystem`, or `controlled_cold` unless an independently reviewed cache
-control method is added by protocol amendment. Same-process post-warm-up work
-uses `warm`.
+Only the dedicated fresh-process `0+1` cohorts label their one request
+`first_read_new_process_os_cache_uncontrolled`. The persistent costly, primary,
+stage, and clean-major workers label their complete `5+N` series `warm`: their
+first request is a retained warm-up, not a separately claimed first-read
+measurement. No series is labeled `cold`, `cold filesystem`, or
+`controlled_cold` unless an independently reviewed cache-control method is
+added by protocol amendment.
 
 Recorded process-replication IDs are correlation evidence, not proof that the
 required processes were actually spawned and shut down. T083 connects each
@@ -267,14 +281,16 @@ Order is recorded for every observation. Batch 1 uses this fixed sequence:
    measured attempts;
 2. five labeled two-row correctness warm-up attempts followed by ten labeled
    measured attempts;
-3. single-row costly real series;
-4. two-row costly real series;
-5. single-row minimally instrumented major series;
-6. two-row minimally instrumented major series;
-7. single-row stage-instrumented diagnostic series;
-8. two-row stage-instrumented diagnostic series;
-9. a separate clean-process replication of the single-row major; and
-10. a separate clean-process replication of the two-row major.
+3. the ten-series primary fresh-process `0+1` cohort for the first case in the
+   batch's costly order;
+4. the single-row and two-row costly real series, in batch order;
+5. the single-row and two-row minimally instrumented primary major series, in
+   batch order;
+6. the single-row and two-row stage-instrumented diagnostic series, in batch
+   order; and
+7. for each case in clean-major order, its ten-series fresh-process `0+1`
+   cohort immediately followed by that case's separate clean-major `5+30`
+   replication.
 
 Items 1 and 2 are complete gates: no first-process cohort or other timing work
 starts before both pass. At each first-process condition encountered later in
@@ -288,6 +304,11 @@ rejected timing series, assigns contiguous global indices, and repeats the
 batch, case, and process identities needed to interpret the referenced raw
 record. The separate correctness, first-process, costly, major, and diagnostic
 arrays retain full typed detail but do not independently prove execution order.
+
+Both public batch records retain the complete captured input selection
+`selected_rows: [0, 1]`. `router_detail.batch_order` is derived from the first
+correctness case in the ordered ledger: the linked source is
+`single_row_first`, and its counterbalanced target is `two_row_first`.
 
 The stored order seed is `22002`; it identifies this frozen schedule and is not
 used for unrecorded ad-hoc shuffling. A later second independent batch is
@@ -304,6 +325,44 @@ Durations come from `time.perf_counter_ns()` or an equivalently monotonic,
 high-resolution source and are stored as positive integer nanoseconds. An MLX
 interval ends only after the declared outputs are evaluated and
 `mx.synchronize(mx.gpu)` completes. Scheduling time is not execution time.
+
+The worker clock is identified as `perf_counter_ns`. The supervising Rust
+command separately identifies request-window durations as `rust_std_instant`.
+Those clock domains are never subtracted from or silently merged with one
+another. A request that aborts before worker evaluation retains its positive
+supervisor-observed end-to-end request duration, records
+`total_evaluated_router` as `unavailable`, and records F32 dequantization as
+`not_applicable`. It must not fabricate a worker duration or claim evaluation.
+
+`request_sent` records whether the supervisor handed the request to an admitted
+worker; it is independent of whether a valid evaluated result returned. Three
+pre-evaluation abort lifecycles are retained distinctly. A worker spawn failure
+has `request_sent: false`, a `spawn started`/`spawn failed` lifecycle, and a
+fallback request window enclosing that failed lifecycle. An admitted-request
+timestamp failure after spawn has `request_sent: false`, exact failure
+code/stage `internal_worker_error`/`request_observation`, and an owned `spawn
+started`/`spawn passed`/eventual `shutdown` lifecycle; its fallback UTC window
+is not treated as a lifecycle bound. A worker or protocol failure after request
+submission has `request_sent: true`, an owned lifecycle, and a request window
+inside it even though `evaluated` and `synchronized` remain false. All three
+retain `aborted` status and failure evidence without output, memory gauges,
+application tensor bytes, or cache-read claims.
+
+Each real result also records application-level positional router-tensor bytes
+returned and the cache outcome. The only admitted pairs are `1,048,576` bytes
+with `read_and_cached`, or zero bytes with `cache_hit`. Every passing costly
+force-read result must use the former pair; every cache-hit result uses the
+latter. These fields describe bytes returned to the application and its
+validated in-process cache, not physical device I/O, cache eviction, or proof
+of a cold filesystem. The public detail binds this meaning with the exact
+constant `application_positional_read_not_physical_disk_io`.
+
+For non-force-read work, the first successful access in each worker uses
+`read_and_cached` with exactly 1,048,576 bytes and later successful accesses in
+that worker use `cache_hit` with zero bytes. Memory evidence forbids a summed
+total, requires MLX peak bytes to be no lower than active bytes when both are
+available, couples process-footprint bytes with their stable source, and uses a
+stable pressure label; passing rows require admitted `normal` pressure.
 
 Every experiment represents each boundary as `observed` with its exact duration
 or `unavailable`/`not_applicable` with a bounded reason:
@@ -336,6 +395,69 @@ process replication, condition, instrumentation mode, timing boundary,
 requested/selected device, and materially different load, power, or thermal
 state. Incompatible groups are never pooled.
 
+### 6.1 Bounded complete-detail publication
+
+Every external-checkpoint envelope carries one closed `router_detail` object
+with the sanitizer-attested SHA-256 of its preserved external candidate and an
+independently recomputable canonical SHA-256 of its paired public environment
+evidence. Because the original candidate remains outside Git,
+`source_candidate_sha256` is rechecked against it during T086 sanitization and
+is not reconstructible from public bytes alone. The detail retains the complete ordered observation ledger; both
+case outputs from the independent oracle; every Apple correctness attempt;
+complete canonical logits, full probabilities, selected IDs, selected
+probabilities, and normalized weights or an explicit unavailable value on an
+aborted pre-execution attempt; whole-output and required `0..16`/`64..80`
+comparisons; every timing-series membership list; worker lifecycle events;
+supervisor request windows; and result resource records.
+
+Canonical numeric arrays are bounded by the two frozen case shapes and are
+hashed from little-endian F32 or unsigned-32 bytes. An output hash without the
+corresponding bounded values is insufficient for a passing external record.
+Observation IDs are the exact join key across the flat ledger, correctness or
+timing detail, request window, and resource record. The validator rejects
+missing, duplicate, reordered, or orphaned joins and any mismatch between
+values and hashes. This representation adds reviewability; it does not add a
+new measurement, tolerance, or acceptance rule.
+
+The top-level correctness summary is recomputed from every retained detailed
+logits comparison (counts and weighted error statistics), while ID/order counts
+come from the corresponding complete output comparisons. A stopped prefix may
+therefore project one case; a complete record projects both. It cannot
+contradict the retained detail or invent metrics when no valid output exists.
+
+Each timing-series record distinguishes planned warm-up/measurement counts from
+attempted counts and the retained observation count. A stopped series retains
+the exact attempted prefix; it never pads an incomplete `5+N` plan with
+unattempted IDs. A closed nullable `terminal_failure` records orchestration,
+post-request identity, shutdown, observed post-run interference, or an
+unavailable post-run environment admission that occurs without fabricating a
+failed request observation. Top-level failures are the ordered union of raw
+request failures and that terminal failure.
+
+If every request passes but the after snapshot reports material interference,
+the envelope is `blocked`, keeps the complete raw/detail ledger, uses terminal
+phase `environment_interference`, and publishes neither capabilities nor
+statistical summaries. It is not passing performance evidence.
+
+If every request passes but the after snapshot is unavailable, the envelope is
+also `blocked`, keeps the complete raw/detail ledger, uses the distinct terminal
+phase `environment_admission_unavailable`, and publishes neither capabilities
+nor statistical summaries. Its combined environment admission is `postponed`,
+not `observed_interference`; it is not passing performance evidence and cannot
+be relabeled as observed interference.
+
+A linked later-batch record shares immutable command arguments and build facts,
+but its per-record process exit status remains outcome evidence rather than an
+immutable identity field. This permits a passed first batch to link truthfully
+to a failed later batch without coercing either exit code.
+
+The canonical public envelope and the complete internal candidate (sorted
+keys, two-space indentation where applicable, trailing newline, UTF-8) MUST
+each be no larger than 4 MiB. The runtime, sanitizer, and publication
+validators admit at most 100,000 JSON nodes at depth 64. One
+node means one JSON container or scalar value; object keys are excluded from
+the node count but remain subject to privacy and field-name validation.
+
 ## 7. Statistics
 
 Raw integer nanoseconds are the source of truth. Warm-ups, failures, aborts,
@@ -358,6 +480,13 @@ and is `null` with reason when `n < 2`. Coefficient of variation is sample
 standard deviation divided by the mean and is `null` with reason for a zero or
 undefined mean. NaN and infinity are forbidden. The validator recomputes every
 summary and its exact included observation IDs from raw evidence.
+
+The bounded generator admission limits are at least 512 summaries per record
+and 1,024 plotted summary rows. These are serialization-capacity limits for
+the frozen two-batch schedule, not permission to pool processes or conditions.
+Every generated row derives its process-replication label from the raw
+observations included by that summary rather than from the envelope's anchor
+process field.
 
 ## 8. Environment, resource, and interference admission
 

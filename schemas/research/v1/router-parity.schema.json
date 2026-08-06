@@ -17,7 +17,12 @@
     "tensor": { "$ref": "#/$defs/tensor" },
     "input": { "$ref": "#/$defs/input" },
     "oracle": { "$ref": "#/$defs/oracle" },
-    "correctness": { "$ref": "#/$defs/correctness" },
+    "correctness": {
+      "oneOf": [
+        { "$ref": "#/$defs/correctness" },
+        { "$ref": "#/$defs/correctnessUnavailable" }
+      ]
+    },
     "claim_boundary": { "$ref": "#/$defs/claimBoundary" }
   },
   "$defs": {
@@ -192,12 +197,412 @@
         "relative_tolerance": { "type": "number", "minimum": 0 },
         "non_finite_policy": { "const": "reject" },
         "non_finite_count": { "type": "integer", "minimum": 0 },
-        "deterministic_repeat_count": { "type": "integer", "minimum": 10 },
+        "deterministic_repeat_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
         "repeat_output_hashes": {
           "type": "array",
-          "minItems": 10,
+          "minItems": 0,
+          "maxItems": 20,
           "items": { "$ref": "#/$defs/sha256" }
         }
+      }
+    },
+    "correctnessUnavailable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason", "source"],
+      "properties": {
+        "status": { "const": "unavailable" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "source": {
+          "enum": [
+            "pre_execution_abort",
+            "evaluated_output_invalid"
+          ]
+        }
+      }
+    },
+    "numericComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compared_count", "mismatch_count", "first_mismatch",
+        "maximum_absolute_error", "mean_absolute_error", "rmse",
+        "maximum_relative_error", "absolute_tolerance", "relative_tolerance"
+      ],
+      "properties": {
+        "compared_count": { "type": "integer", "minimum": 1 },
+        "mismatch_count": { "type": "integer", "minimum": 0 },
+        "first_mismatch": { "type": ["object", "null"] },
+        "maximum_absolute_error": { "type": "number", "minimum": 0 },
+        "mean_absolute_error": { "type": "number", "minimum": 0 },
+        "rmse": { "type": "number", "minimum": 0 },
+        "maximum_relative_error": { "type": ["number", "null"], "minimum": 0 },
+        "absolute_tolerance": { "type": "number", "minimum": 0 },
+        "relative_tolerance": { "type": "number", "minimum": 0 }
+      }
+    },
+    "rangeComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logits", "full_probabilities", "passed"],
+      "properties": {
+        "logits": { "$ref": "#/$defs/numericComparison" },
+        "full_probabilities": { "$ref": "#/$defs/numericComparison" },
+        "passed": { "type": "boolean" }
+      }
+    },
+    "outputComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logits", "full_probabilities", "selected_probabilities",
+        "normalized_weights", "id_mismatch_count", "order_mismatch_count",
+        "expert_range_comparisons", "passed"
+      ],
+      "properties": {
+        "logits": { "$ref": "#/$defs/numericComparison" },
+        "full_probabilities": { "$ref": "#/$defs/numericComparison" },
+        "selected_probabilities": { "$ref": "#/$defs/numericComparison" },
+        "normalized_weights": { "$ref": "#/$defs/numericComparison" },
+        "id_mismatch_count": { "type": "integer", "minimum": 0 },
+        "order_mismatch_count": { "type": "integer", "minimum": 0 },
+        "expert_range_comparisons": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["0..16", "64..80"],
+          "properties": {
+            "0..16": { "$ref": "#/$defs/rangeComparison" },
+            "64..80": { "$ref": "#/$defs/rangeComparison" }
+          }
+        },
+        "passed": { "type": "boolean" }
+      }
+    },
+    "canonicalOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id", "case_scope", "row_count", "logits_shape", "logits",
+        "logits_f32le_sha256", "full_probabilities_shape", "full_probabilities",
+        "full_probabilities_f32le_sha256", "selected_expert_ids",
+        "selected_expert_ids_u32le_sha256", "selected_probabilities",
+        "selected_probabilities_f32le_sha256", "normalized_weights",
+        "normalized_weights_f32le_sha256", "complete_output_sha256"
+      ],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/stableId" },
+        "case_scope": { "const": "real_checkpoint" },
+        "row_count": { "enum": [1, 2] },
+        "logits_shape": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+        "logits": { "type": "array", "minItems": 128, "maxItems": 256, "items": { "type": "number" } },
+        "logits_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "full_probabilities_shape": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer" } },
+        "full_probabilities": { "type": "array", "minItems": 128, "maxItems": 256, "items": { "type": "number" } },
+        "full_probabilities_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_expert_ids": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "integer", "minimum": 0, "maximum": 127 } } },
+        "selected_expert_ids_u32le_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_probabilities": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "number" } } },
+        "selected_probabilities_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "normalized_weights": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "number" } } },
+        "normalized_weights_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "complete_output_sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "row_count": { "const": 1 } }, "required": ["row_count"] },
+          "then": {
+            "properties": {
+              "logits": { "minItems": 128, "maxItems": 128 },
+              "full_probabilities": { "minItems": 128, "maxItems": 128 },
+              "selected_expert_ids": { "minItems": 1, "maxItems": 1 },
+              "selected_probabilities": { "minItems": 1, "maxItems": 1 },
+              "normalized_weights": { "minItems": 1, "maxItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "row_count": { "const": 2 } }, "required": ["row_count"] },
+          "then": {
+            "properties": {
+              "logits": { "minItems": 256, "maxItems": 256 },
+              "full_probabilities": { "minItems": 256, "maxItems": 256 },
+              "selected_expert_ids": { "minItems": 2, "maxItems": 2 },
+              "selected_probabilities": { "minItems": 2, "maxItems": 2 },
+              "normalized_weights": { "minItems": 2, "maxItems": 2 }
+            }
+          }
+        }
+      ]
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/stableId" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "stage": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "memoryGauges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mlx_active_bytes", "mlx_cache_bytes", "mlx_peak_bytes",
+        "process_footprint_bytes", "process_footprint_source",
+        "system_pressure", "reported_summed_total_bytes"
+      ],
+      "properties": {
+        "mlx_active_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "mlx_cache_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "mlx_peak_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "process_footprint_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "process_footprint_source": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "system_pressure": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+        "reported_summed_total_bytes": { "type": "null" }
+      }
+    },
+    "correctnessAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attempt_id", "attempt_index", "observation_kind", "run_index",
+        "process_replication_id", "canonical_output", "comparison", "memory_gauges",
+        "requested_device", "selected_device", "fallback_used", "evaluated",
+        "synchronized", "status", "passed"
+      ],
+      "properties": {
+        "attempt_id": { "$ref": "#/$defs/stableId" },
+        "attempt_index": { "type": "integer", "minimum": 0, "maximum": 14 },
+        "observation_kind": { "enum": ["warmup", "measurement"] },
+        "run_index": { "type": "integer", "minimum": 0, "maximum": 9 },
+        "process_replication_id": { "$ref": "#/$defs/stableId" },
+        "canonical_output": { "oneOf": [{ "$ref": "#/$defs/canonicalOutput" }, { "type": "null" }] },
+        "comparison": { "oneOf": [{ "$ref": "#/$defs/outputComparison" }, { "type": "null" }] },
+        "memory_gauges": { "oneOf": [{ "$ref": "#/$defs/memoryGauges" }, { "type": "null" }] },
+        "requested_device": { "const": "gpu" },
+        "selected_device": { "enum": ["gpu", "not_available"] },
+        "fallback_used": { "type": "boolean" },
+        "evaluated": { "type": "boolean" },
+        "synchronized": { "type": "boolean" },
+        "status": { "enum": ["passed", "failed", "aborted"] },
+        "passed": { "type": "boolean" },
+        "failure": { "$ref": "#/$defs/failure" }
+      }
+    },
+    "detailCorrectnessCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "row_count", "oracle_output", "mlx_output", "comparison", "attempts"],
+      "properties": {
+        "case_id": { "$ref": "#/$defs/stableId" },
+        "row_count": { "enum": [1, 2] },
+        "oracle_output": { "$ref": "#/$defs/canonicalOutput" },
+        "mlx_output": { "oneOf": [{ "$ref": "#/$defs/canonicalOutput" }, { "type": "null" }] },
+        "comparison": { "oneOf": [{ "$ref": "#/$defs/outputComparison" }, { "type": "null" }] },
+        "attempts": { "type": "array", "minItems": 1, "maxItems": 15, "items": { "$ref": "#/$defs/correctnessAttempt" } }
+      }
+    },
+    "orderedObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "global_order_index", "observation_id", "schedule_step", "source_kind",
+        "batch_id", "case_id", "process_replication_id", "observation_kind",
+        "run_index", "orchestration_status", "identity_disposition"
+      ],
+      "properties": {
+        "global_order_index": { "type": "integer", "minimum": 0 },
+        "observation_id": { "$ref": "#/$defs/stableId" },
+        "schedule_step": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "source_kind": { "enum": ["correctness_attempt", "timing_series"] },
+        "batch_id": { "$ref": "#/$defs/stableId" },
+        "case_id": { "$ref": "#/$defs/stableId" },
+        "process_replication_id": { "$ref": "#/$defs/stableId" },
+        "observation_kind": { "enum": ["warmup", "measurement", "clean_process_replication"] },
+        "run_index": { "type": "integer", "minimum": 0 },
+        "orchestration_status": { "enum": ["accepted", "rejected"] },
+        "identity_disposition": { "enum": ["unique", "rejected_duplicate"] },
+        "benchmark_id": { "$ref": "#/$defs/stableId" },
+        "series_kind": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "replication_role": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "timingSeriesDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_id", "case_id", "series_kind", "replication_role",
+        "process_replication_id", "process_state", "condition", "instrumentation_mode",
+        "warmup_count", "measurement_count", "attempted_warmup_count",
+        "attempted_measurement_count", "retained_observation_count", "observation_ids"
+      ],
+      "properties": {
+        "benchmark_id": { "$ref": "#/$defs/stableId" },
+        "case_id": { "$ref": "#/$defs/stableId" },
+        "series_kind": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "replication_role": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "process_replication_id": { "$ref": "#/$defs/stableId" },
+        "process_state": { "enum": ["fresh_process", "reused_process"] },
+        "condition": { "enum": ["warm", "first_read_new_process_os_cache_uncontrolled", "controlled_cold"] },
+        "instrumentation_mode": { "enum": ["minimally_instrumented", "stage_instrumented"] },
+        "warmup_count": { "type": "integer", "minimum": 0 },
+        "measurement_count": { "type": "integer", "minimum": 1 },
+        "attempted_warmup_count": { "type": "integer", "minimum": 0 },
+        "attempted_measurement_count": { "type": "integer", "minimum": 0 },
+        "retained_observation_count": { "type": "integer", "minimum": 1 },
+        "observation_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/stableId" } }
+      }
+    },
+    "terminalFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "process_replication_id", "failure"],
+      "properties": {
+        "phase": {
+          "enum": [
+            "orchestration",
+            "post_request_identity",
+            "worker_shutdown",
+            "environment_interference",
+            "environment_admission_unavailable"
+          ]
+        },
+        "process_replication_id": { "oneOf": [{ "$ref": "#/$defs/stableId" }, { "type": "null" }] },
+        "failure": { "$ref": "#/$defs/failure" }
+      }
+    },
+    "processLifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_order", "recorded_at_utc", "process_replication_id",
+        "timing_profile", "event", "outcome", "details"
+      ],
+      "properties": {
+        "event_order": { "type": "integer", "minimum": 0 },
+        "recorded_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "process_replication_id": { "$ref": "#/$defs/stableId" },
+        "timing_profile": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "event": { "enum": ["spawn", "shutdown"] },
+        "outcome": { "enum": ["started", "passed", "failed", "graceful", "forced_termination"] },
+        "details": { "type": "object", "maxProperties": 16 }
+      }
+    },
+    "requestWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id", "batch_id", "case_id", "schedule_step", "source_kind",
+        "process_replication_id", "timing_profile", "started_at_utc", "completed_at_utc",
+        "host_wall_duration_ns", "host_monotonic_clock", "request_sent", "status"
+      ],
+      "properties": {
+        "observation_id": { "$ref": "#/$defs/stableId" },
+        "batch_id": { "$ref": "#/$defs/stableId" },
+        "case_id": { "$ref": "#/$defs/stableId" },
+        "schedule_step": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "source_kind": { "enum": ["correctness_attempt", "timing_series"] },
+        "process_replication_id": { "$ref": "#/$defs/stableId" },
+        "timing_profile": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "started_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "completed_at_utc": { "type": "string", "format": "date-time", "pattern": "Z$" },
+        "host_wall_duration_ns": { "type": "integer", "minimum": 1 },
+        "host_monotonic_clock": { "const": "rust_std_instant" },
+        "request_sent": { "type": "boolean" },
+        "status": { "enum": ["passed", "failed", "aborted"] },
+        "failure": { "oneOf": [{ "$ref": "#/$defs/failure" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "request_sent": { "const": false } },
+            "required": ["request_sent"]
+          },
+          "then": {
+            "properties": {
+              "status": { "const": "aborted" },
+              "failure": { "$ref": "#/$defs/failure" }
+            },
+            "required": ["failure"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "status": { "const": "passed" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "request_sent": { "const": true } }
+          }
+        }
+      ]
+    },
+    "resourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id", "source_kind", "backend", "requested_device", "selected_device",
+        "fallback_used", "evaluated", "synchronized", "output_sha256",
+        "correctness_passed", "canonical_output", "memory_gauges", "monotonic_clock",
+        "instrumentation_mode", "timing_stages", "application_tensor_bytes_read",
+        "tensor_cache_outcome", "canonical_output_retention", "status", "failure"
+      ],
+      "properties": {
+        "observation_id": { "$ref": "#/$defs/stableId" },
+        "source_kind": { "enum": ["correctness_attempt", "timing_series"] },
+        "backend": { "const": "apple-mlx" },
+        "requested_device": { "const": "gpu" },
+        "selected_device": { "enum": ["gpu", "not_available"] },
+        "fallback_used": { "type": "boolean" },
+        "evaluated": { "type": "boolean" },
+        "synchronized": { "type": "boolean" },
+        "output_sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "correctness_passed": { "type": ["boolean", "null"] },
+        "canonical_output": { "oneOf": [{ "$ref": "#/$defs/canonicalOutput" }, { "type": "null" }] },
+        "memory_gauges": { "oneOf": [{ "$ref": "#/$defs/memoryGauges" }, { "type": "null" }] },
+        "monotonic_clock": { "type": ["string", "null"] },
+        "instrumentation_mode": { "enum": ["minimally_instrumented", "stage_instrumented"] },
+        "timing_stages": { "type": ["object", "null"] },
+        "application_tensor_bytes_read": { "type": ["integer", "null"], "enum": [0, 1048576, null] },
+        "tensor_cache_outcome": { "enum": ["read_and_cached", "cache_hit", "unavailable"] },
+        "canonical_output_retention": {
+          "enum": [
+            "complete", "hash_only_passing_timing",
+            "unavailable_aborted_request", "unavailable_invalid_output"
+          ]
+        },
+        "status": { "enum": ["passed", "failed", "aborted"] },
+        "failure": { "oneOf": [{ "$ref": "#/$defs/failure" }, { "type": "null" }] }
+      }
+    },
+    "routerDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detail_schema", "detail_schema_version", "source_candidate_sha256",
+        "source_environment_sha256", "application_read_semantics", "batch_order", "ordered_observations",
+        "correctness_cases", "timing_series", "process_lifecycles",
+        "request_windows", "resource_records", "terminal_failure"
+      ],
+      "properties": {
+        "detail_schema": { "const": "pulsarmlx.research.router-detail" },
+        "detail_schema_version": { "const": "1.0.0" },
+        "source_candidate_sha256": { "$ref": "#/$defs/sha256" },
+        "source_environment_sha256": { "$ref": "#/$defs/sha256" },
+        "application_read_semantics": { "const": "application_positional_read_not_physical_disk_io" },
+        "batch_order": { "enum": ["single_row_first", "two_row_first"] },
+        "ordered_observations": { "type": "array", "minItems": 1, "maxItems": 512, "items": { "$ref": "#/$defs/orderedObservation" } },
+        "correctness_cases": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "$ref": "#/$defs/detailCorrectnessCase" } },
+        "timing_series": { "type": "array", "minItems": 0, "maxItems": 128, "items": { "$ref": "#/$defs/timingSeriesDetail" } },
+        "process_lifecycles": { "type": "array", "minItems": 1, "maxItems": 128, "items": { "$ref": "#/$defs/processLifecycle" } },
+        "request_windows": { "type": "array", "minItems": 1, "maxItems": 512, "items": { "$ref": "#/$defs/requestWindow" } },
+        "resource_records": { "type": "array", "minItems": 1, "maxItems": 512, "items": { "$ref": "#/$defs/resourceRecord" } },
+        "terminal_failure": { "oneOf": [{ "$ref": "#/$defs/terminalFailure" }, { "type": "null" }] }
       }
     },
     "claimBoundary": {

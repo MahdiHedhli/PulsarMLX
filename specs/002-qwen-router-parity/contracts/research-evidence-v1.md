@@ -1,8 +1,8 @@
 # Contract: Research Evidence v1
 
-**Status**: Normative v1 methodology with fixture-only schemas, statistics,
-validation, generation, and publication boundaries implemented. Real evidence
-remains prohibited until every pre-access gate passes.
+**Status**: Normative v1 methodology with pre-execution amendment 002 frozen.
+Read-only inspection and CPU-oracle publication are complete; Apple/MLX real
+router output remains unobserved until T083.
 
 **Feature**: `002-qwen-router-parity`
 
@@ -34,21 +34,24 @@ Every Feature 002 raw record MUST identify them with:
 ```json
 {
   "evidence_schema": "pulsarmlx.research.experiment",
-  "evidence_schema_version": "1.1.0",
+  "evidence_schema_version": "1.2.0",
   "payload_schema": "pulsarmlx.research.router-parity",
-  "payload_schema_version": "1.0.0"
+  "payload_schema_version": "1.1.0"
 }
 ```
 
-The additive evidence envelope is `1.1.0`; the router payload schema remains
-`1.0.0`. The currently frozen experiment protocol is the separate
-`f002-router-protocol-amendment-001` version `1.1.0`; it supersedes protocol
-`1.0.0` before any external checkpoint or Apple result.
+The external-evidence envelope is `1.2.0` and its router payload is `1.1.0`.
+The currently frozen experiment protocol is
+`f002-router-protocol-amendment-002` version `1.2.0`. It supersedes amendment
+001 after read-only inspection and CPU-oracle publication but before any
+Apple/MLX output or timing measurement.
 
-Version `1.1.0` adds optional scope, paired-environment, structured-stage, and
-resource-provenance fields without changing the `1.0.0` payload schema. A
-record that omits `evidence_scope` is accepted only as a legacy synthetic
-fixture and cannot support an external-checkpoint claim.
+Envelope `1.2.0` and payload `1.1.0` add the required closed `router_detail`
+binding for external records and a truthful unavailable-correctness form for a
+pre-execution abort. Historical `1.1.0`/`1.0.0` synthetic records remain
+explicitly supported only when the validator resolves and hashes their exact
+protocol bytes from the immutable `source_commit`; versions are never silently
+coerced. A record that omits `evidence_scope` remains legacy synthetic-only.
 
 The router schema extends the experiment envelope; it may narrow fields but
 MUST NOT weaken the envelope. Fixed objects SHOULD reject unknown fields.
@@ -213,6 +216,87 @@ tolerances. Only the ten measured attempts form the determinism population;
 warm-ups cannot satisfy the measured repeat count. Both real correctness cases
 MUST pass these gates before any timing observation starts.
 
+An unsuccessful external record MUST bind `deterministic_repeat_count` and
+`repeat_output_hashes` to the exact completed measured prefix, including an
+empty prefix when a warm-up fails. A complete record MUST contain ten identical
+hashes per case and twenty total. Valid retained outputs project their actual
+top correctness metrics even when a later gate fails. An evaluated result that
+cannot form a valid canonical output uses correctness source
+`evaluated_output_invalid`; `pre_execution_abort` is reserved for a prefix with
+no evaluated attempt.
+
+### External complete-detail binding
+
+Every `external_checkpoint` record MUST use envelope `1.2.0`, payload `1.1.0`,
+and contain one closed `router_detail` object. It carries the
+sanitizer-attested SHA-256 of the preserved external source candidate and the
+independently recomputable canonical SHA-256 of the paired public environment.
+T086 verifies the source-candidate hash against the external bytes; public
+validation does not pretend that withheld candidate is reconstructible. It
+retains:
+
+- the append-order ledger with global index, batch/case/process identity,
+  observation role/index, schedule step, source kind, orchestration status,
+  and explicit unique-or-rejected-duplicate disposition;
+- one or two correctness case records and one through fifteen attempts when a
+  failed/aborted stop occurs, but exactly two cases and all fifteen attempts
+  per case for a passing record;
+- the complete independent oracle output and every available correctness
+  output, including bounded values and component/whole-output hashes;
+- whole-output and `0..16`/`64..80` comparison objects;
+- timing-series membership, finalized supervisor request windows, complete
+  worker lifecycle event rows, and result resource rows joined by observation
+  identity; and
+- application-level router-tensor bytes returned plus `read_and_cached` or
+  `cache_hit`, bound by the constant
+  `application_positional_read_not_physical_disk_io`. These are not
+  physical-device I/O or filesystem-cold evidence.
+
+Passing correctness resource rows retain complete canonical output. Passing
+timing resource rows may retain the verified complete-output hash only and
+must say `hash_only_passing_timing`. Aborted requests and invalid outputs use
+their distinct unavailable-retention states. Every resource row carries
+`source_kind`, a nullable failure, and the exact retention state.
+
+For non-force-read work, the first successful access in each worker records
+`read_and_cached` with 1,048,576 application bytes and later accesses record
+`cache_hit` with zero bytes. Memory gauges forbid a summed total, require peak
+MLX bytes to be at least active bytes when both exist, couple footprint bytes
+to a stable source, and require admitted `normal` pressure on passing rows.
+The top correctness object is recomputed from every retained detailed logits
+comparison and its complete ID/order result; complete evidence covers both
+cases.
+
+A first-request abort may publish one correctness case, one aborted attempt,
+no timing series, a failed spawn lifecycle, and correctness
+`{"status":"unavailable",...}`. It MUST retain a positive
+`rust_std_instant` request duration, mark the evaluated-router total
+unavailable, and never invent comparison counts, metrics, hashes, gauges, or
+evaluation. A passing record may not use that representation.
+
+Linked batches compare the command, arguments, build profile, features, and
+order policy as immutable execution identity. The per-record `exit_code` is an
+outcome and MAY differ, so a passed first batch can link to a failed later batch
+without falsifying either record.
+
+Canonical public output and the complete pre-sanitization internal candidate
+use UTF-8 and MUST each be at most 4 MiB. All paths admit at most 100,000 JSON
+nodes at depth 64, where one node is one JSON container or scalar value;
+object keys are excluded from the count but remain privacy-validated.
+
+Timing-series detail separates planned counts from attempted counts and retains
+the exact attempted observation-ID prefix. A nullable closed `terminal_failure`
+records orchestration, post-request identity, shutdown, or after-snapshot
+interference/admission failures without inventing a failed request row.
+Top-level failures are the ordered union of raw request failures and that
+terminal failure. If all requests pass but material interference is observed
+afterward, terminal phase `environment_interference` binds an
+`observed_interference` environment. If the after snapshot is unavailable,
+terminal phase `environment_admission_unavailable` instead binds a `postponed`
+environment. Both envelopes are blocked, keep their raw/detail ledger, and
+publish no capabilities or summaries; neither is passing evidence, and the two
+dispositions are not interchangeable.
+
 ## Raw observation contract
 
 Every attempted warm-up, measured repetition, clean-process replication,
@@ -254,6 +338,18 @@ An unsuccessful top-level experiment still produces a durable failed or
 aborted raw record when doing so can be completed safely. Failure evidence MUST
 never be rewritten as `not_run`, omitted from the index, or promoted to a
 passing claim.
+
+For live-router detail, `request_sent` is a transport fact and MUST NOT be
+derived from `evaluated`. An unsent spawn failure retains `spawn started` then
+`spawn failed`, with its fallback request window enclosing that lifecycle. An
+unsent failure after spawn but before request submission is admitted only for
+failure code/stage `internal_worker_error`/`request_observation` together with
+an owned `spawn started`/`spawn passed`/eventual `shutdown` lifecycle; its
+fallback UTC window need not enclose the lifecycle. A sent request that aborts
+before an evaluated result retains `request_sent: true` and the same owned
+lifecycle, with the request window inside it. Each pre-evaluation form is
+`aborted`, unevaluated, unsynchronized, and has no output, memory gauges,
+application tensor-byte count, or cache-read claim.
 
 ## Timing boundaries
 
@@ -303,6 +399,9 @@ without controlled cache evidence it MUST be labeled
   first-read measurement, and retains the required process/cache label. One
   process or series MUST NOT claim ten first reads. An independently proved
   controlled-cold condition uses the same ten-series, 0+1 structure.
+- Only those dedicated `0+1` cohorts use the first-read condition. Persistent
+  costly, primary, stage, and clean-major workers retain their first requests
+  as warm-ups and label the complete `5+N` series `warm`.
 - The two major benchmarks are exactly the minimally instrumented single-row
   real router case and minimally instrumented two-row real router case. Each
   includes at least one complete clean-process replication. Stage-instrumented
@@ -316,6 +415,17 @@ without controlled cache evidence it MUST be labeled
   proved, minimally instrumented, stage-instrumented, different commits,
   different batches, and materially different thermal/load conditions are
   summarized separately. They MUST NOT be pooled silently.
+
+After both correctness gates, the frozen timing order is: ten primary
+fresh-process `0+1` series for the first costly-order case; both costly series;
+both primary major series; both stage diagnostics; then, for each clean-major
+case, ten fresh-process `0+1` series immediately followed by its clean-major
+`5+30` replication.
+
+Both public records retain the complete input selection `selected_rows: [0,1]`.
+The ordered ledger's first correctness case determines `batch_order`; an
+observed linked pair requires `single_row_first` on the source and
+`two_row_first` on the counterbalanced target.
 
 The experiment admission gate checks memory pressure, storage headroom,
 thermal/power observability, and other significant workload before collection.
@@ -385,6 +495,12 @@ refuse an existing destination. A rerun, repaired capture, protocol amendment,
 or changed commit receives a new experiment ID and file. Temporary writes are
 installed atomically and cannot follow a symlink to the checkpoint or another
 private file.
+
+The single committed public oracle projection contains both the bounded real
+router input and independent CPU oracle. An external record therefore links it
+once as `real_router_input_and_independent_cpu_oracle`; that one immutable path
+and SHA-256 satisfies both provenance roles. A manifest is not relabeled as an
+input, and the same path is never duplicated under two artifact kinds.
 
 Every generated table or figure has a repository-relative provenance sidecar
 or reviewer-index entry naming its generator, source raw files and SHA-256

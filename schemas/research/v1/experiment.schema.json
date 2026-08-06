@@ -37,9 +37,9 @@
   ],
   "properties": {
     "evidence_schema": { "const": "pulsarmlx.research.experiment" },
-    "evidence_schema_version": { "const": "1.1.0" },
+    "evidence_schema_version": { "enum": ["1.1.0", "1.2.0"] },
     "payload_schema": { "const": "pulsarmlx.research.router-parity" },
-    "payload_schema_version": { "const": "1.0.0" },
+    "payload_schema_version": { "enum": ["1.0.0", "1.1.0"] },
     "experiment_id": { "$ref": "#/$defs/stableId" },
     "feature_id": { "const": "002-qwen-router-parity" },
     "evidence_scope": { "enum": ["synthetic_fixture", "external_checkpoint"] },
@@ -60,7 +60,12 @@
     "input": { "$ref": "router-parity.schema.json#/$defs/input" },
     "oracle": { "$ref": "router-parity.schema.json#/$defs/oracle" },
     "environment": { "$ref": "#/$defs/environment" },
-    "correctness": { "$ref": "router-parity.schema.json#/$defs/correctness" },
+    "correctness": {
+      "oneOf": [
+        { "$ref": "router-parity.schema.json#/$defs/correctness" },
+        { "$ref": "router-parity.schema.json#/$defs/correctnessUnavailable" }
+      ]
+    },
     "raw_observations": {
       "type": "array",
       "minItems": 1,
@@ -68,13 +73,14 @@
     },
     "summaries": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 0,
       "items": { "$ref": "#/$defs/summary" }
     },
     "claim_boundary": { "$ref": "router-parity.schema.json#/$defs/claimBoundary" },
     "warnings": { "type": "array", "items": { "type": "string", "maxLength": 512 } },
     "failures": { "type": "array", "items": { "$ref": "#/$defs/failure" } },
-    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "router_detail": { "$ref": "router-parity.schema.json#/$defs/routerDetail" }
   },
   "allOf": [
     {
@@ -85,7 +91,24 @@
         },
         "required": ["evidence_scope", "record_kind"]
       },
-      "then": { "required": ["second_batch"] }
+      "then": { "required": ["second_batch", "router_detail"] }
+    },
+    {
+      "if": {
+        "properties": { "evidence_scope": { "const": "external_checkpoint" } },
+        "required": ["evidence_scope"]
+      },
+      "then": {
+        "properties": {
+          "evidence_schema_version": { "const": "1.2.0" },
+          "payload_schema_version": { "const": "1.1.0" },
+          "input": {
+            "properties": { "selected_rows": { "const": [0, 1] } },
+            "required": ["selected_rows"]
+          }
+        },
+        "required": ["router_detail"]
+      }
     }
   ],
   "$defs": {
@@ -125,7 +148,7 @@
       "required": ["protocol_id", "protocol_version", "path", "sha256", "order_seed"],
       "properties": {
         "protocol_id": { "$ref": "#/$defs/stableId" },
-        "protocol_version": { "const": "1.1.0" },
+        "protocol_version": { "enum": ["1.1.0", "1.2.0"] },
         "path": { "const": "docs/research/EXPERIMENT_PROTOCOL.md" },
         "sha256": { "$ref": "#/$defs/sha256" },
         "order_seed": { "type": "integer", "minimum": 0 }
@@ -165,7 +188,7 @@
       "properties": {
         "platform": { "const": "macos-arm64" },
         "selected_backend": { "const": "apple-mlx" },
-        "selected_device": { "const": "gpu" },
+        "selected_device": { "enum": ["gpu", "not_available"] },
         "safe_environment": { "$ref": "#/$defs/safeEnvironment" },
         "interference_admission": {
           "enum": ["admitted", "postponed", "observed_interference"]
@@ -447,7 +470,7 @@
         "instrumentation_mode": { "enum": ["minimally_instrumented", "stage_instrumented"] },
         "started_at_utc": { "$ref": "#/$defs/utc" },
         "completed_at_utc": { "$ref": "#/$defs/utc" },
-        "monotonic_clock": { "const": "perf_counter_ns" },
+        "monotonic_clock": { "enum": ["perf_counter_ns", "rust_std_instant"] },
         "durations_ns": {
           "type": "object",
           "minProperties": 1,

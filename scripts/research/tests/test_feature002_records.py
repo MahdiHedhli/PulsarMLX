@@ -226,7 +226,7 @@ class Feature002RecordContractTests(unittest.TestCase):
                 record["failures"] = [
                     {
                         "code": f"fixture_{actual_status}",
-                        "message": f"bounded fixture {actual_status} experiment",
+                        "message": f"bounded fixture {actual_status} attempt",
                         "stage": "fixture_contract_validation",
                     }
                 ]

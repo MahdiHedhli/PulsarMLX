@@ -28,7 +28,7 @@ OUTPUT_NAME = "002-router-parity-median.svg"
 MAX_INPUT_BYTES = 4 * 1024 * 1024
 MAX_TOTAL_INPUT_BYTES = 64 * 1024 * 1024
 MAX_RECORDS = 1_024
-MAX_PLOTTED_ROWS = 256
+MAX_PLOTTED_ROWS = 1_024
 MAX_SVG_BYTES = 128 * 1024
 MAX_SIDECAR_BYTES = 4 * 1024 * 1024
 
@@ -197,6 +197,51 @@ def _finite_number(value: Any, field: str) -> int | float:
     return value
 
 
+def _raw_observation_processes(record: dict[str, Any]) -> dict[str, str]:
+    observations = record.get("raw_observations")
+    if observations is None:
+        return {}
+    if not isinstance(observations, list):
+        raise GenerationError("raw observations must be a list")
+    processes: dict[str, str] = {}
+    for observation in observations:
+        if not isinstance(observation, dict):
+            raise GenerationError("raw observation must be an object")
+        observation_id = observation.get("observation_id")
+        process_id = observation.get("process_replication_id")
+        if not isinstance(observation_id, str) or not isinstance(process_id, str):
+            raise GenerationError("raw observation process identity is invalid")
+        if observation_id in processes:
+            raise GenerationError("raw observation identity is duplicated")
+        processes[observation_id] = process_id
+    return processes
+
+
+def _summary_process_replication_id(
+    summary: dict[str, Any],
+    observation_processes: dict[str, str],
+) -> str | None:
+    included_ids = summary.get("included_observation_ids")
+    if included_ids is None:
+        return None
+    if (
+        not isinstance(included_ids, list)
+        or not included_ids
+        or any(not isinstance(observation_id, str) for observation_id in included_ids)
+    ):
+        raise GenerationError("summary observation identities are invalid")
+    try:
+        processes = {
+            observation_processes[observation_id]
+            for observation_id in included_ids
+        }
+    except KeyError as error:
+        raise GenerationError("summary references an unknown raw observation") from error
+    if len(processes) != 1:
+        raise GenerationError("summary pools multiple process replications")
+    return next(iter(processes))
+
+
 def _plot_rows(
     records: list[tuple[str, dict[str, Any], str, int]],
 ) -> list[dict[str, Any]]:
@@ -212,6 +257,7 @@ def _plot_rows(
         if not isinstance(status, str) or not isinstance(scope, str):
             raise GenerationError("experiment status or scope is invalid")
         summaries = record.get("summaries")
+        observation_processes = _raw_observation_processes(record)
         if not isinstance(summaries, list) or not summaries:
             raise GenerationError("statistical summaries must be a nonempty list")
         for summary in summaries:
@@ -240,6 +286,10 @@ def _plot_rows(
                     "scope": scope,
                     "correctness_passed": correctness["passed"],
                     "case_id": case_id,
+                    "process_replication_id": _summary_process_replication_id(
+                        summary,
+                        observation_processes,
+                    ),
                     "phase": phase,
                     "condition": condition,
                     "instrumentation_mode": instrumentation,
@@ -253,6 +303,7 @@ def _plot_rows(
             str(row["status"]),
             str(row["scope"]),
             str(row["case_id"]),
+            str(row["process_replication_id"]),
             str(row["phase"]),
             str(row["condition"]),
             str(row["instrumentation_mode"]),
@@ -264,9 +315,11 @@ def _plot_rows(
 
 
 def _label(row: dict[str, Any]) -> str:
+    process = row["process_replication_id"] or "unavailable"
     value = (
         f"status={row['status']} / correctness={str(row['correctness_passed']).lower()} / "
-        f"scope={row['scope']} / {row['experiment_id']} / {row['case_id']} / {row['phase']} / "
+        f"process={process} / scope={row['scope']} / {row['experiment_id']} / "
+        f"{row['case_id']} / {row['phase']} / "
         f"{row['condition']} / {row['instrumentation_mode']}"
     )
     return value if len(value) <= 100 else value[:97] + "..."

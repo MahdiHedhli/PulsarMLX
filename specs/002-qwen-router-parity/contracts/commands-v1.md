@@ -201,6 +201,21 @@ The Rust side independently validates every response identity, shape, count,
 hash, selected-probability relationship, weight sum, repetition, timing, memory, and
 oracle comparison. It rehashes the model and router range after execution.
 
+The external internal-orchestration candidate retains finalized lifecycle
+events, request windows on `rust_std_instant`, worker timing on
+`perf_counter_ns`, application positional-read/cache facts, complete
+correctness values, and timing output hashes. A request that aborts before
+evaluation retains the host request duration and unavailable correctness/worker
+timing rather than fabricated zeros. Public sanitization converts it only to
+envelope `1.2.0`, payload `1.1.0`, with a closed `router_detail` and exact
+candidate/environment hashes.
+
+An evaluated correctness failure retains the exact completed measured-hash
+prefix, including zero hashes when a warm-up fails. An evaluated invalid output
+uses `evaluated_output_invalid`, never the pre-execution-abort source. Linked
+batches share command identity but retain independent exit codes so a failed
+later batch remains publishable without changing the passed first-batch result.
+
 The command returns nonzero and retains a failed/aborted attempt on any ID or
 order mismatch, tolerance excess, non-finite result, hash change, fallback,
 unsynchronized work, repeatability failure, resource gate, or schema failure.
@@ -247,6 +262,10 @@ overwrites, and updates artifact hashes. The staged raw-data diff receives the
 required secret, path, identifier, weight, binary, cache, and large-file scans,
 then is committed and pushed. Tables and figures are regenerated only in a
 subsequent commit from that committed raw-data SHA.
+
+The committed public oracle file is linked once as
+`real_router_input_and_independent_cpu_oracle`; it satisfies both roles without
+duplicating one path or relabeling a manifest as the real input.
 
 ## Result and exit behavior
 

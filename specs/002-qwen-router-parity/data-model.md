@@ -48,7 +48,7 @@ Identifies the rules committed before any affected observation.
 | Field | Type | Validation |
 | --- | --- | --- |
 | `protocol_id` | stable string | Exact registered protocol |
-| `protocol_version` | semantic version | `1.1.0` for pre-access amendment 001; `1.0.0` is superseded in Git history |
+| `protocol_version` | semantic version | `1.2.0` for pre-execution amendment 002; amendment 001 and `1.0.0` remain in Git history |
 | `path` | repository-relative path | Must resolve inside Git |
 | `sha256` | 64 lowercase hex | Hash of the committed protocol file |
 | `amendment_id` | optional stable string | Required after any result-informed change |
@@ -175,8 +175,8 @@ One evaluated Apple result for an immutable oracle case.
 | `selected_expert_ids` | integer matrix | Exact `[rows,8]` |
 | `selected_probabilities` | float matrix | Before renormalization |
 | `normalized_weights` | float matrix | After renormalization |
-| `repeat_output_hashes` | SHA list | At least ten, all identical |
-| `repeat_selected_ids` | matrices or hashes | At least ten exact repetitions |
+| `repeat_output_hashes` | SHA list | Exact completed measured prefix; ten identical per case for completion |
+| `repeat_selected_ids` | matrices or hashes | Exact completed measured prefix |
 | `memory_gauges` | independent values | No invalid overlapping total |
 | `runtime_identity` | version/platform fields | Exact MLX/Python/worker/device identity |
 
@@ -199,7 +199,7 @@ float ten times.
 | `maximum_relative_error` | float or reason | Zero-reference policy explicit |
 | `absolute_tolerance` / `relative_tolerance` | finite floats | Match frozen protocol by value class |
 | `non_finite_policy` | stable ID | Reject |
-| `deterministic_repeat_count` | integer | At least ten |
+| `deterministic_repeat_count` | integer | `0..20` exact measured prefix; `20` for complete two-case evidence |
 | `passed` | boolean | Derived, never hand-entered |
 
 ## EnvironmentSnapshot
@@ -261,7 +261,7 @@ instrumentation mode.
 | Field | Type | Validation |
 | --- | --- | --- |
 | `evidence_schema` | stable string | `pulsarmlx.research.experiment` |
-| `evidence_schema_version` | semantic version | `1.1.0` |
+| `evidence_schema_version` | semantic version | `1.2.0` for external detail; historical synthetic `1.1.0` is verified from its source commit |
 | `experiment_id` | stable unique string | Append-only identifier |
 | `feature_id` | stable string | `002-qwen-router-parity` |
 | `evidence_scope` | optional enum | Explicit `synthetic_fixture` or `external_checkpoint`; omission is legacy fixture-only |

@@ -30,7 +30,7 @@ OUTPUT_BASENAME = "002-router-parity-summary"
 MAX_INPUT_BYTES = 4 * 1024 * 1024
 MAX_TOTAL_INPUT_BYTES = 64 * 1024 * 1024
 MAX_RECORDS = 1_024
-MAX_SUMMARIES_PER_RECORD = 128
+MAX_SUMMARIES_PER_RECORD = 512
 MAX_TABLE_ROWS = MAX_RECORDS * MAX_SUMMARIES_PER_RECORD
 MAX_TABLE_OUTPUT_BYTES = 4 * 1024 * 1024
 MAX_SIDECAR_BYTES = 4 * 1024 * 1024
@@ -293,6 +293,51 @@ def _optional_string(value: Any, field: str) -> str | None:
     return value
 
 
+def _raw_observation_processes(record: dict[str, Any]) -> dict[str, str]:
+    observations = record.get("raw_observations")
+    if observations is None:
+        return {}
+    if not isinstance(observations, list):
+        raise GenerationError("raw observations must be a list")
+    processes: dict[str, str] = {}
+    for observation in observations:
+        if not isinstance(observation, dict):
+            raise GenerationError("raw observation must be an object")
+        observation_id = observation.get("observation_id")
+        process_id = observation.get("process_replication_id")
+        if not isinstance(observation_id, str) or not isinstance(process_id, str):
+            raise GenerationError("raw observation process identity is invalid")
+        if observation_id in processes:
+            raise GenerationError("raw observation identity is duplicated")
+        processes[observation_id] = process_id
+    return processes
+
+
+def _summary_process_replication_id(
+    summary: dict[str, Any],
+    observation_processes: dict[str, str],
+) -> str | None:
+    included_ids = summary.get("included_observation_ids")
+    if included_ids is None:
+        return None
+    if (
+        not isinstance(included_ids, list)
+        or not included_ids
+        or any(not isinstance(observation_id, str) for observation_id in included_ids)
+    ):
+        raise GenerationError("summary observation identities are invalid")
+    try:
+        processes = {
+            observation_processes[observation_id]
+            for observation_id in included_ids
+        }
+    except KeyError as error:
+        raise GenerationError("summary references an unknown raw observation") from error
+    if len(processes) != 1:
+        raise GenerationError("summary pools multiple process replications")
+    return next(iter(processes))
+
+
 def _table_rows(
     records: Iterable[tuple[str, dict[str, Any], str, int]],
 ) -> list[dict[str, Any]]:
@@ -300,6 +345,7 @@ def _table_rows(
     for _, record, _, _ in records:
         correctness = record.get("correctness")
         summaries = record.get("summaries")
+        observation_processes = _raw_observation_processes(record)
         if not isinstance(correctness, dict):
             raise GenerationError("correctness summary must be an object")
         if not isinstance(summaries, list) or not summaries:
@@ -349,9 +395,9 @@ def _table_rows(
                 "batch_id": _optional_string(
                     group.get("batch_id", record.get("batch_id")), "batch_id"
                 ),
-                "process_replication_id": _optional_string(
-                    record.get("process_replication_id"),
-                    "process_replication_id",
+                "process_replication_id": _summary_process_replication_id(
+                    summary,
+                    observation_processes,
                 ),
                 "observation_kind": _optional_string(
                     group.get("observation_kind"), "observation_kind"
