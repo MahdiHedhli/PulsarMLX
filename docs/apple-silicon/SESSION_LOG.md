@@ -2530,3 +2530,78 @@ SHA-256 values exactly match the six hashes recorded for T056.
 No model path was resolved or opened, no checkpoint or MLX execution occurred,
 no Apple GPU memory was used, and no NTFY notification was sent. Local
 inference did not need to pause.
+
+### T058 fixture-publication documentation
+
+The five Feature 002 publication documents now index all three accepted
+synthetic records and all six frozen expected artifacts, distinguish fixture
+methodology from model-backed results, define the four claims-ledger states,
+and retain a zero-row ledger. They record artifact commit
+`ed9846ac9b120580b579eb669ff4370b918a5c91`, the clean-checkout reproduction at
+`d6f5820050cdc59944a7b2af26b7b0c2c15767c6`, and the exact fail-closed fresh
+generation, recursive byte comparison, independently sorted SHA-256
+comparison, candidate-validation, and append-only publication patterns.
+
+The documented boundary keeps experiment outcomes separate from public claim
+states. Raw attempts remain immutable; every retry or amendment receives a new
+experiment ID; a raw v1 record cannot promote itself; and raw publication must
+be committed and pushed before result artifacts are generated. Constructed
+fixture timings, errors, identities, failed states, and aborted states remain
+test data rather than checkpoint observations.
+
+Validation commands and actual results were:
+
+```sh
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity --fixture-only
+# passed: 3 full-schema records, 6 deterministic artifacts, 0 claims
+
+PULSARMLX_MODEL_GGUF='' python3 -m unittest discover \
+  -s scripts/research/tests -v
+# passed: 86 of 86 tests in 7.538 seconds
+
+PULSARMLX_MODEL_GGUF='' python3 - <<'PY'
+from pathlib import Path
+import re
+
+files = [
+    Path('docs/research/REPRODUCIBILITY.md'),
+    Path('docs/research/RESULTS.md'),
+    Path('docs/research/LIMITATIONS.md'),
+    Path('docs/research/CLAIMS_LEDGER.md'),
+    Path('docs/research/REVIEWER_INDEX.md'),
+]
+missing = []
+for source in files:
+    text = source.read_text(encoding='utf-8')
+    for target in re.findall(r'\[[^]]+\]\(([^)]+)\)', text):
+        if '://' in target or target.startswith('#'):
+            continue
+        target = target.split('#', 1)[0]
+        if not (source.parent / target).resolve().is_file():
+            missing.append((source.as_posix(), target))
+if missing:
+    for source, target in missing:
+        print(f'missing link: {source} -> {target}')
+    raise SystemExit(1)
+print(f'local markdown links: passed ({len(files)} documents)')
+PY
+# passed: all local links resolved
+
+awk 'BEGIN{inside=0} /^```zsh$/{inside=1; next} \
+  /^```$/{if(inside){exit}} inside{print}' \
+  docs/research/REPRODUCIBILITY.md | zsh -n
+# passed
+
+git diff --check
+# passed
+```
+
+The required Reviewer Index headings each occur exactly once in contract order.
+Independent reviews found no remaining high- or medium-severity issue after the
+single-file publisher example and fail-closed reproduction block were
+corrected.
+
+No model path was resolved or opened, no checkpoint or MLX execution occurred,
+no Apple GPU memory was used, and no NTFY notification was sent. Local
+inference did not need to pause.

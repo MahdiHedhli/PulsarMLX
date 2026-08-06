@@ -15,5 +15,26 @@ measured source commit and exact checkpoint/tensor/case/depth scope, use one of
 caveat. `verified` additionally requires clean-checkout reproduction, artifact
 hashes, and package verification.
 
+Future IDs use exactly two decimal digits. Evidence links use
+`raw/002-router-parity/<experiment-id>.json` without parent traversal. Scope is
+written as
+`checkpoint=<repository>@<revision>;tensor=<name>;case=<id>;depth=<operation>`,
+and the full commit must match the linked raw record.
+
+`provisional` requires a passing linked raw record but lacks some package-level
+promotion proof. `verified` additionally requires passing exact-scope
+correctness, at least two matching clean reproduction records with distinct
+process identities, identical model/tensor/input/oracle/output identity,
+committed artifact hashes, clean-checkout reproduction, and no
+`real_checkpoint_routing` exclusion. `rejected` retains and links a nonpassing
+outcome that contradicts the proposed statement. `unsupported` identifies an
+interpretation outside the evidence scope.
+
+The synthetic fixture record's internal provisional boundary is not a public
+claim, and its constructed failed and aborted records are not observed model
+failures. They validate a zero-row ledger but cannot promote a claim. Repaired,
+repeated, failed, and aborted work receives a new experiment ID; linked raw
+history is never rewritten or deleted.
+
 | Claim | Evidence files | Commit | Scope | Status | Caveat |
 | --- | --- | --- | --- | --- | --- |

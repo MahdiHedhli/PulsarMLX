@@ -48,10 +48,13 @@ cat .specify/feature.json
 ```
 
 The checkout command must fail rather than substitute another revision. For a
-future claim marked `verified`, use the measured `source_commit` from its raw
-record and execute the record's sanitized exact command without changing its
-operation, cases, tolerances, counts, or order. A fixture-only methodology
-review may instead use the exact committed methodology revision being audited.
+future ledger claim proposed for `verified`, use the measured `source_commit`
+from its raw record and execute the record's sanitized exact command without
+changing its operation, cases, tolerances, counts, or order. A raw v1 record
+remains provisional because it cannot itself prove that evidence was committed,
+indexed, and reproduced. Only the complete package can promote the ledger
+claim. A fixture-only methodology review may instead use the exact committed
+methodology revision being audited.
 
 ## Immutable inputs
 
@@ -84,8 +87,19 @@ PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
 
 The package verifier reads the committed full-schema fixture, validates its
 semantic and privacy boundaries, regenerates Markdown, CSV, SVG, and source
-sidecars twice in temporary directories, and compares every byte. It does not
-write publication output into the checkout.
+sidecars twice in temporary directories, and compares those two fresh runs
+byte-for-byte. It does not write publication output into the checkout.
+
+### Frozen fixture publication package
+
+The accepted synthetic input set contains three records whose experiment
+outcomes are `passed`, `failed`, and `aborted`. Their internal claim-boundary
+states are fixture fields, not public claims-ledger rows. Six expected artifacts
+are committed beneath `fixtures/research/router-v1/expected/`:
+a Markdown table, CSV table, bounded SVG, and one provenance sidecar for each.
+Artifact commit `ed9846ac9b120580b579eb669ff4370b918a5c91` froze those
+bytes. All displayed measurements are constructed contract-test values, not
+checkpoint, MLX, or Apple GPU observations.
 
 After the fixture-only commands, the checkout must still have no non-ignored
 changes:
@@ -93,6 +107,41 @@ changes:
 ```sh
 test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
+
+At commit `d6f5820050cdc59944a7b2af26b7b0c2c15767c6`, a detached
+clean worktree regenerated the six files outside the checkout. The focused
+generator/package suite passed 28 of 28 tests, fixture verification accepted
+three records and zero claims, recursive byte comparison was empty, an
+independently sorted SHA-256 comparison was empty, and the checkout remained
+clean. The following bounded pattern reproduces the committed baseline from a
+clean checkout containing the expected files:
+
+```zsh
+set -eu
+t057_output=$(mktemp -d "${TMPDIR:-/tmp}/pulsarmlx-fixture.XXXXXX")
+case "$t057_output" in */pulsarmlx-fixture.*) ;; *) exit 1 ;; esac
+trap 'rm -r -- "$t057_output"' EXIT
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_tables.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir "$t057_output/expected/tables"
+PULSARMLX_MODEL_GGUF='' python3 scripts/research/generate_figures.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir "$t057_output/expected/figures"
+diff -ru fixtures/research/router-v1/expected "$t057_output/expected"
+diff -u \
+  <(cd fixtures/research/router-v1/expected && \
+    find . -type f -print0 | sort -z | xargs -0 shasum -a 256) \
+  <(cd "$t057_output/expected" && \
+    find . -type f -print0 | sort -z | xargs -0 shasum -a 256)
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+rm -r -- "$t057_output"
+trap - EXIT
+```
+
+Successful comparisons emit no `diff` output. Each sidecar records the exact
+generator and hash, normalized generation command, all three fixture paths and
+hashes, fixture-record source commit, and output hash. Fixture provenance must
+not be described as a measured model commit.
 
 ## Authorized local model reproduction
 
@@ -123,6 +172,11 @@ python3 scripts/research/validate_evidence.py \
 python3 scripts/research/verify_package.py \
   --feature 002-qwen-router-parity \
   --candidate "$PULSARMLX_ROUTER_EVIDENCE"
+PULSARMLX_PUBLIC_CANDIDATE=\
+"$PULSARMLX_ROUTER_EVIDENCE/<experiment-id>.json"
+python3 scripts/research/publish_evidence.py \
+  --candidate "$PULSARMLX_PUBLIC_CANDIDATE" \
+  --output-dir docs/research/raw/002-router-parity
 ```
 
 Only a bounded, schema-valid, public-safe candidate may be installed with
@@ -132,6 +186,20 @@ committed and pushed before tables or figures are generated from that exact raw
 commit. The artifact manifest and reviewer index must name repository-relative
 paths and hashes. Reproduction always creates a new attempt; it never
 overwrites historical evidence.
+
+Every attempt, rerun, correction, protocol amendment, and reproduction uses a
+new experiment ID. Failed and aborted history is neither mutated nor deleted.
+A duplicate ID under any filename, malformed existing history, unsafe path, or
+partial install stops publication atomically. Raw evidence is committed and
+pushed before tables or figures are generated. Generators write to fresh
+destinations for review and byte comparison rather than overwriting history.
+
+The ledger states are distinct from experiment outcomes. `provisional` means a
+bounded claim lacks the full promotion chain; `verified` requires exact-scope
+package validation and clean-checkout reproduction; `rejected` preserves a
+claim contradicted by evidence; and `unsupported` marks an interpretation
+outside the evidence boundary. A raw `failed` or `aborted` experiment remains
+an immutable outcome and is not relabeled as a ledger state.
 
 ## Expected outcomes and failure handling
 

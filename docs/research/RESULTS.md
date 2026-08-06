@@ -5,8 +5,28 @@ has run and there are no checkpoint correctness or timing results.
 
 Only validated, committed raw evidence governed by the [Feature 002 evidence
 contract](../../specs/002-qwen-router-parity/contracts/research-evidence-v1.md)
-may populate this document. Fixture-only methodology checks are not model
-results and are recorded in the session log rather than promoted here.
+may populate model-backed result sections. Fixture-only methodology checks are
+documented separately below and are never promoted as model results.
+
+## Fixture-only publication validation
+
+Three full-schema synthetic records exercise `passed`, `failed`, and `aborted`
+experiment outcomes. They generate six frozen outputs: a [Markdown
+summary](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.md),
+[CSV summary](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.csv),
+[bounded SVG](../../fixtures/research/router-v1/expected/figures/002-router-parity-median.svg),
+and a source-provenance sidecar for each. The [reviewer
+index](REVIEWER_INDEX.md) links the complete input and output set.
+
+Fixture-only verification accepted three records and zero claims, regenerated
+all six artifacts twice, and matched the two fresh runs byte-for-byte. A
+separate detached clean-checkout reproduction at
+`d6f5820050cdc59944a7b2af26b7b0c2c15767c6` matched every committed byte and
+SHA-256. The displayed durations, errors, identities, and outcome states are
+constructed contract-test values. They do not measure checkpoint routing,
+latency, MLX execution, Apple GPU selection, memory, or inference. A synthetic
+correctness field does not override a record's terminal failed or aborted
+outcome.
 
 ## Correctness records
 
@@ -19,12 +39,12 @@ the exact checkpoint, tensor, case, execution depth, comparison metrics, and
 pass/fail state; and preserve failed or aborted outcomes. There are currently
 zero entries.
 
-## Repeatability
+## Model-backed repeatability
 
 No real repetition record exists. Ten-run output identity and the required
 clean-process replications have not been measured.
 
-## Timing and resources
+## Model-backed timing and resources
 
 No router timing has been collected. There are no first-process
 OS-cache-uncontrolled, warm, minimally instrumented, stage-instrumented,
@@ -37,12 +57,16 @@ separate. There are currently zero entries.
 ## Failed, aborted, and excluded attempts
 
 No Feature 002 model attempt exists. Future unsuccessful attempts remain
-append-only evidence and must appear here rather than being removed.
+append-only evidence and must appear here rather than being removed. Protocol
+v1 admits no production exclusion rule; the separate excluded fixture is a
+mutation expected to be rejected and is not part of the frozen expected-output
+package.
 
 ## Claim boundary
 
-There is currently no Feature 002 public capability or performance claim. Real
-checkpoint router parity is planned but unverified. Expert execution, routed
-aggregation, complete-layer or model inference, generation, serving, token
-throughput, giant-model performance, custom Metal, and Linux/CUDA runtime
-parity are outside the evidence boundary and unsupported by this feature.
+There are currently zero Feature 002 claims-ledger rows and no model-backed
+correctness or performance claim. Real checkpoint router parity is planned but
+unverified. Expert execution, routed aggregation, complete-layer or model
+inference, generation, serving, token throughput, giant-model performance,
+custom Metal, and Linux/CUDA runtime parity are outside the evidence boundary
+and unsupported by this feature.

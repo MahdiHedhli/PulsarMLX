@@ -12,20 +12,34 @@ and [experiment protocol](EXPERIMENT_PROTOCOL.md).
 ## Raw evidence
 
 No published Feature 002 raw record exists under
-`docs/research/raw/002-router-parity/`. The model-free positive methodology
-fixture is
-[`f002-router-fixture-0001.json`](../../fixtures/research/router-v1/evidence/f002-router-fixture-0001.json)
-and is explicitly synthetic.
+`docs/research/raw/002-router-parity/`. The accepted model-free inputs are the
+synthetic [passed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-0001.json),
+[failed fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-failed-0001.json),
+and [aborted fixture](../../fixtures/research/router-v1/evidence/f002-router-fixture-aborted-0001.json).
+The separate excluded record is an expected-rejection mutation and is not
+accepted evidence or a frozen-output input.
 
 ## Generated tables
 
 No committed generated result tables exist. Deterministic table generation is
 implemented by [`generate_tables.py`](../../scripts/research/generate_tables.py).
+The frozen fixture baselines are the [Markdown
+summary](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.md)
+and [Markdown
+sidecar](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.md.sources.json),
+plus the [CSV
+summary](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.csv)
+and [CSV
+sidecar](../../fixtures/research/router-v1/expected/tables/002-router-parity-summary.csv.sources.json).
 
 ## Generated figures
 
 No committed generated result figures exist. Bounded static SVG generation is
 implemented by [`generate_figures.py`](../../scripts/research/generate_figures.py).
+The frozen fixture baseline is the [median/status
+figure](../../fixtures/research/router-v1/expected/figures/002-router-parity-median.svg)
+and its [figure
+sidecar](../../fixtures/research/router-v1/expected/figures/002-router-parity-median.svg.sources.json).
 
 ## Claims and reproduction links
 
@@ -39,6 +53,26 @@ The model manifest contains only the inherited Feature 001 checkpoint identity
 and pre-access expectations. Its Feature 002 router observation is unset. The
 artifact manifest contains unsealed placeholders, not evidence hashes or a
 measured source commit.
+
+The six fixture outputs were reproduced byte-for-byte and hash-for-hash from a
+detached clean worktree at
+`d6f5820050cdc59944a7b2af26b7b0c2c15767c6`. The exact procedure is in the
+reproducibility guide. That attestation covers three synthetic records, six
+generated artifacts, and zero claims.
+
+Every sidecar binds all three fixture paths and SHA-256 values, the exact
+generator and hash, normalized generation command, fixture-record source
+commit, and output hash. This is test provenance, not a measured model commit.
+
+Raw evidence publication is exclusive, atomic, and append-only. Existing or
+duplicate experiment IDs cannot be overwritten; failed and aborted history is
+retained; and every rerun, correction, or reproduction receives a new ID. Raw
+evidence must be committed and pushed before result generation.
+
+The ledger allows `verified`, `provisional`, `rejected`, and `unsupported`.
+Only an exact-scope claim with complete committed evidence and matching
+clean-checkout reproduction can be `verified`. Fixture methodology creates no
+capability or performance row.
 
 ## Validation entrypoints
 
@@ -60,4 +94,6 @@ PULSARMLX_MODEL_GGUF='' python3 scripts/research/verify_package.py \
 ```
 
 A passing fixture-only verification establishes the methodology package only;
-it does not create a claim row or model result.
+it does not create a claim row or model result. No checkpoint was resolved or
+opened, no MLX tensor operation ran, and no Apple GPU memory was used to create
+this index.
