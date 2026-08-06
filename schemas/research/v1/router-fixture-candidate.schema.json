@@ -1,0 +1,672 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/schemas/research/v1/router-fixture-candidate.schema.json",
+  "title": "PulsarMLX generated router fixture candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "validation",
+    "status",
+    "passed",
+    "fixture_kind",
+    "evidence_level",
+    "model_free",
+    "real_checkpoint_evidence",
+    "external_checkpoint_accessed",
+    "manifest",
+    "manifest_sha256",
+    "manifest_files",
+    "runtime",
+    "positive_cases",
+    "synthetic_tie_cases",
+    "negative_cases",
+    "generated_router_microbenchmark",
+    "cleanup",
+    "failure",
+    "warnings",
+    "exclusions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "validation": { "const": "qwen3moe-router-fixtures" },
+    "status": { "enum": ["passed", "failed", "aborted"] },
+    "passed": { "type": "boolean" },
+    "fixture_kind": { "const": "synthetic" },
+    "evidence_level": { "const": "synthetic_fixture_only" },
+    "model_free": { "const": true },
+    "real_checkpoint_evidence": { "const": false },
+    "external_checkpoint_accessed": { "const": false },
+    "manifest": { "const": "fixtures/research/router-v1/manifest.json" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "manifest_files": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": { "$ref": "#/$defs/manifestFile" }
+    },
+    "runtime": { "$ref": "#/$defs/runtime" },
+    "positive_cases": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/positiveCase" }
+    },
+    "synthetic_tie_cases": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/tieCase" }
+    },
+    "negative_cases": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": { "$ref": "#/$defs/negativeCase" }
+    },
+    "generated_router_microbenchmark": { "$ref": "#/$defs/benchmark" },
+    "cleanup": { "$ref": "#/$defs/cleanup" },
+    "failure": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/failure" }
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/boundedText" }
+    },
+    "exclusions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/boundedText" }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "boundedText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "nonnegativeIntegerOrNull": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "manifestFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "byte_length", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "byte_length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "worker_version",
+        "python_version",
+        "python_arch",
+        "mlx_version",
+        "macos_version",
+        "metal_available",
+        "gpu_count",
+        "operations",
+        "model_operation_advertised"
+      ],
+      "properties": {
+        "protocol": { "const": 1 },
+        "worker_version": { "const": "0.1.0" },
+        "python_version": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "python_arch": { "const": "arm64" },
+        "mlx_version": { "const": "0.32.0" },
+        "macos_version": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "metal_available": { "const": true },
+        "gpu_count": { "const": 1 },
+        "operations": {
+          "const": [
+            "health",
+            "tensor_probe",
+            "run_fixture",
+            "run_router",
+            "run_synthetic_moe",
+            "shutdown"
+          ]
+        },
+        "model_operation_advertised": { "const": false }
+      }
+    },
+    "memoryGauges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mlx_active_bytes",
+        "mlx_cache_bytes",
+        "mlx_peak_bytes",
+        "process_footprint_bytes",
+        "process_footprint_source",
+        "system_pressure",
+        "reported_summed_total_bytes"
+      ],
+      "properties": {
+        "mlx_active_bytes": { "$ref": "#/$defs/nonnegativeIntegerOrNull" },
+        "mlx_cache_bytes": { "$ref": "#/$defs/nonnegativeIntegerOrNull" },
+        "mlx_peak_bytes": { "$ref": "#/$defs/nonnegativeIntegerOrNull" },
+        "process_footprint_bytes": { "$ref": "#/$defs/nonnegativeIntegerOrNull" },
+        "process_footprint_source": {
+          "type": ["string", "null"],
+          "maxLength": 64
+        },
+        "system_pressure": {
+          "type": ["string", "null"],
+          "enum": ["normal", "warning", "critical", null]
+        },
+        "reported_summed_total_bytes": { "$ref": "#/$defs/nonnegativeIntegerOrNull" }
+      }
+    },
+    "candidateHashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logits_f32le_sha256",
+        "full_probabilities_f32le_sha256",
+        "selected_probabilities_f32le_sha256",
+        "normalized_weights_f32le_sha256"
+      ],
+      "properties": {
+        "logits_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "full_probabilities_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_probabilities_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "normalized_weights_f32le_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "numericComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compared_count",
+        "mismatch_count",
+        "first_mismatch",
+        "maximum_absolute_error",
+        "mean_absolute_error",
+        "rmse",
+        "maximum_relative_error",
+        "absolute_tolerance",
+        "relative_tolerance"
+      ],
+      "properties": {
+        "compared_count": { "type": "integer", "minimum": 1 },
+        "mismatch_count": { "type": "integer", "minimum": 0 },
+        "first_mismatch": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/mismatch" }
+          ]
+        },
+        "maximum_absolute_error": { "type": "number", "minimum": 0 },
+        "mean_absolute_error": { "type": "number", "minimum": 0 },
+        "rmse": { "type": "number", "minimum": 0 },
+        "maximum_relative_error": { "type": ["number", "null"], "minimum": 0 },
+        "absolute_tolerance": { "type": "number", "minimum": 0 },
+        "relative_tolerance": { "type": "number", "minimum": 0 }
+      }
+    },
+    "mismatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["row_index", "column_index", "reference", "candidate"],
+      "properties": {
+        "row_index": { "type": "integer", "minimum": 0 },
+        "column_index": { "type": "integer", "minimum": 0 },
+        "reference": { "type": "number" },
+        "candidate": { "type": "number" }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logits",
+        "full_probabilities",
+        "selected_probabilities",
+        "normalized_weights",
+        "id_mismatch_count",
+        "order_mismatch_count",
+        "passed"
+      ],
+      "properties": {
+        "logits": { "$ref": "#/$defs/numericComparison" },
+        "full_probabilities": { "$ref": "#/$defs/numericComparison" },
+        "selected_probabilities": { "$ref": "#/$defs/numericComparison" },
+        "normalized_weights": { "$ref": "#/$defs/numericComparison" },
+        "id_mismatch_count": { "type": "integer", "minimum": 0 },
+        "order_mismatch_count": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "boolean" }
+      }
+    },
+    "selectedIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": { "type": "integer", "minimum": 0, "maximum": 127 }
+      }
+    },
+    "positiveCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "backend",
+        "case_id",
+        "fixture_kind",
+        "case_scope",
+        "validation_mode",
+        "real_checkpoint_evidence",
+        "requested_device",
+        "selected_device",
+        "fallback_used",
+        "evaluated",
+        "synchronized",
+        "operation",
+        "batch_size",
+        "hidden_width",
+        "expert_count",
+        "top_k",
+        "output_dtype",
+        "selected_expert_ids",
+        "hashes",
+        "comparison",
+        "memory_gauges",
+        "status"
+      ],
+      "properties": {
+        "backend": { "const": "apple-mlx" },
+        "case_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "fixture_kind": { "const": "synthetic" },
+        "case_scope": { "const": "synthetic_fixture" },
+        "validation_mode": { "const": "mlx_gpu_execution_and_host_golden_comparison" },
+        "real_checkpoint_evidence": { "const": false },
+        "requested_device": { "const": "gpu" },
+        "selected_device": { "const": "gpu" },
+        "fallback_used": { "const": false },
+        "evaluated": { "const": true },
+        "synchronized": { "const": true },
+        "operation": { "const": "complete_router_projection_topk" },
+        "batch_size": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "hidden_width": { "const": 2048 },
+        "expert_count": { "const": 128 },
+        "top_k": { "const": 8 },
+        "output_dtype": { "const": "float32" },
+        "selected_expert_ids": { "$ref": "#/$defs/selectedIds" },
+        "hashes": { "$ref": "#/$defs/candidateHashes" },
+        "comparison": { "$ref": "#/$defs/comparison" },
+        "memory_gauges": { "$ref": "#/$defs/memoryGauges" },
+        "status": { "const": "passed" }
+      }
+    },
+    "tieCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "kind",
+        "fixture_kind",
+        "case_scope",
+        "validation_mode",
+        "mlx_executed",
+        "real_checkpoint_evidence",
+        "cutoff",
+        "selected_expert_ids",
+        "hashes",
+        "status"
+      ],
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "kind": { "enum": ["exact_tie", "near_tie"] },
+        "fixture_kind": { "const": "synthetic" },
+        "case_scope": { "const": "synthetic_fixture" },
+        "validation_mode": { "const": "host_contract_validation" },
+        "mlx_executed": { "const": false },
+        "real_checkpoint_evidence": { "const": false },
+        "cutoff": { "$ref": "#/$defs/tieCutoff" },
+        "selected_expert_ids": { "$ref": "#/$defs/selectedIds" },
+        "hashes": { "$ref": "#/$defs/candidateHashes" },
+        "status": { "const": "passed" }
+      }
+    },
+    "tieCutoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rank_8_expert_id", "rank_9_expert_id", "relation"],
+      "properties": {
+        "rank_8_expert_id": { "type": "integer", "minimum": 0, "maximum": 127 },
+        "rank_9_expert_id": { "type": "integer", "minimum": 0, "maximum": 127 },
+        "relation": { "enum": ["exact_f32_equal", "one_f32_ulp_logit_above"] }
+      }
+    },
+    "negativeCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture",
+        "fixture_id",
+        "category",
+        "validation_surface",
+        "expected_code",
+        "must_precede",
+        "accepted_result",
+        "router_runner_called",
+        "validation_mode",
+        "mlx_executed",
+        "mutation",
+        "status"
+      ],
+      "properties": {
+        "fixture": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "fixture_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "validation_surface": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "expected_code": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "must_precede": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "accepted_result": { "const": false },
+        "router_runner_called": { "const": false },
+        "validation_mode": { "const": "fixture_contract_validation" },
+        "mlx_executed": { "const": false },
+        "mutation": { "$ref": "#/$defs/mutation" },
+        "status": { "const": "covered" }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "operation", "original", "replacement"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "operation": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "original": {},
+        "replacement": {}
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_id",
+        "case_id",
+        "fixture_kind",
+        "evidence_level",
+        "model_free",
+        "real_checkpoint_evidence",
+        "manifest_sha256",
+        "status",
+        "passed",
+        "warmup_count",
+        "measurement_count",
+        "retained_observation_count",
+        "complete_output_sha256",
+        "canonical_output",
+        "stage_sum_claimed",
+        "timing_series",
+        "result_records",
+        "failure",
+        "exclusions"
+      ],
+      "properties": {
+        "benchmark_id": { "const": "f002-generated-router-single-row-minimal-v1" },
+        "case_id": { "const": "generated-qwen3moe-router-single-row-v1" },
+        "fixture_kind": { "const": "synthetic" },
+        "evidence_level": { "const": "synthetic_fixture_only" },
+        "model_free": { "const": true },
+        "real_checkpoint_evidence": { "const": false },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "status": { "const": "passed" },
+        "passed": { "const": true },
+        "warmup_count": { "const": 5 },
+        "measurement_count": { "const": 30 },
+        "retained_observation_count": { "const": 35 },
+        "complete_output_sha256": { "$ref": "#/$defs/sha256" },
+        "canonical_output": { "$ref": "#/$defs/canonicalOutput" },
+        "stage_sum_claimed": { "const": false },
+        "timing_series": { "$ref": "#/$defs/timingSeries" },
+        "result_records": {
+          "type": "array",
+          "minItems": 35,
+          "maxItems": 35,
+          "items": { "$ref": "#/$defs/resultRecord" }
+        },
+        "failure": { "type": "null" },
+        "exclusions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/boundedText" }
+        }
+      }
+    },
+    "canonicalOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "case_scope",
+        "row_count",
+        "logits_shape",
+        "logits",
+        "logits_f32le_sha256",
+        "full_probabilities_shape",
+        "full_probabilities",
+        "full_probabilities_f32le_sha256",
+        "selected_expert_ids",
+        "selected_expert_ids_u32le_sha256",
+        "selected_probabilities",
+        "selected_probabilities_f32le_sha256",
+        "normalized_weights",
+        "normalized_weights_f32le_sha256",
+        "complete_output_sha256"
+      ],
+      "properties": {
+        "case_id": { "const": "generated-qwen3moe-router-single-row-v1" },
+        "case_scope": { "const": "synthetic_fixture" },
+        "row_count": { "const": 1 },
+        "logits_shape": { "const": [1, 128] },
+        "logits": { "$ref": "#/$defs/completeValues" },
+        "logits_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "full_probabilities_shape": { "const": [1, 128] },
+        "full_probabilities": { "$ref": "#/$defs/completeValues" },
+        "full_probabilities_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_expert_ids": { "$ref": "#/$defs/selectedIds" },
+        "selected_expert_ids_u32le_sha256": { "$ref": "#/$defs/sha256" },
+        "selected_probabilities": { "$ref": "#/$defs/selectedRows" },
+        "selected_probabilities_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "normalized_weights": { "$ref": "#/$defs/selectedRows" },
+        "normalized_weights_f32le_sha256": { "$ref": "#/$defs/sha256" },
+        "complete_output_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "completeValues": {
+      "type": "array",
+      "minItems": 128,
+      "maxItems": 128,
+      "items": { "type": "number" }
+    },
+    "selectedRows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 8,
+        "maxItems": 8,
+        "items": { "type": "number" }
+      }
+    },
+    "timingSeries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_id",
+        "case_id",
+        "row_count",
+        "series_kind",
+        "replication_role",
+        "process_replication_id",
+        "process_state",
+        "condition",
+        "instrumentation_mode",
+        "warmup_count",
+        "measurement_count",
+        "raw_timing_observations"
+      ],
+      "properties": {
+        "benchmark_id": { "const": "f002-generated-router-single-row-minimal-v1" },
+        "case_id": { "const": "generated-qwen3moe-router-single-row-v1" },
+        "row_count": { "const": 1 },
+        "series_kind": { "const": "inexpensive_synthetic" },
+        "replication_role": { "const": "primary" },
+        "process_replication_id": { "const": "generated-router-persistent-worker-v1" },
+        "process_state": { "const": "reused_process" },
+        "condition": { "const": "warm" },
+        "instrumentation_mode": { "const": "minimally_instrumented" },
+        "warmup_count": { "const": 5 },
+        "measurement_count": { "const": 30 },
+        "raw_timing_observations": {
+          "type": "array",
+          "minItems": 35,
+          "maxItems": 35,
+          "items": { "$ref": "#/$defs/timingObservation" }
+        }
+      }
+    },
+    "timingObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "run_index",
+        "observation_kind",
+        "process_replication_id",
+        "process_state",
+        "condition",
+        "instrumentation_mode",
+        "monotonic_clock",
+        "stages",
+        "status",
+        "requested_device",
+        "selected_device",
+        "fallback_used",
+        "evaluated",
+        "synchronized",
+        "output_sha256",
+        "correctness_passed"
+      ],
+      "properties": {
+        "observation_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "run_index": { "type": "integer", "minimum": 0, "maximum": 29 },
+        "observation_kind": { "enum": ["warmup", "measurement"] },
+        "process_replication_id": { "const": "generated-router-persistent-worker-v1" },
+        "process_state": { "const": "reused_process" },
+        "condition": { "const": "warm" },
+        "instrumentation_mode": { "const": "minimally_instrumented" },
+        "monotonic_clock": { "const": "perf_counter_ns" },
+        "stages": { "$ref": "#/$defs/minimalStages" },
+        "status": { "const": "passed" },
+        "requested_device": { "const": "gpu" },
+        "selected_device": { "const": "gpu" },
+        "fallback_used": { "const": false },
+        "evaluated": { "const": true },
+        "synchronized": { "const": true },
+        "output_sha256": { "$ref": "#/$defs/sha256" },
+        "correctness_passed": { "const": true }
+      }
+    },
+    "minimalStages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dequantization", "total_evaluated_router"],
+      "properties": {
+        "dequantization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reason"],
+          "properties": {
+            "status": { "const": "not_applicable" },
+            "reason": { "const": "f32_router_requires_no_dequantization" }
+          }
+        },
+        "total_evaluated_router": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "duration_ns"],
+          "properties": {
+            "status": { "const": "observed" },
+            "duration_ns": { "type": "integer", "minimum": 1 }
+          }
+        }
+      }
+    },
+    "resultRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_id",
+        "backend",
+        "requested_device",
+        "selected_device",
+        "fallback_used",
+        "evaluated",
+        "synchronized",
+        "golden_comparison_passed",
+        "output_sha256",
+        "memory_gauges",
+        "status"
+      ],
+      "properties": {
+        "observation_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "backend": { "const": "apple-mlx" },
+        "requested_device": { "const": "gpu" },
+        "selected_device": { "const": "gpu" },
+        "fallback_used": { "const": false },
+        "evaluated": { "const": true },
+        "synchronized": { "const": true },
+        "golden_comparison_passed": { "const": true },
+        "output_sha256": { "$ref": "#/$defs/sha256" },
+        "memory_gauges": { "$ref": "#/$defs/memoryGauges" },
+        "status": { "const": "passed" }
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempted", "outcome", "exit_code", "message"],
+      "properties": {
+        "attempted": { "type": "boolean" },
+        "outcome": { "enum": ["graceful", "forced_termination", "failed"] },
+        "exit_code": { "type": ["integer", "null"] },
+        "message": { "type": ["string", "null"], "maxLength": 512 }
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "code", "message"],
+      "properties": {
+        "stage": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "code": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "message": { "$ref": "#/$defs/boundedText" }
+      }
+    }
+  }
+}

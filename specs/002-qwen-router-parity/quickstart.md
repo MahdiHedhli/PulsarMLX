@@ -141,6 +141,13 @@ PYTHONPATH=python uv run python scripts/research/environment.py combine \
   --after "$PULSARMLX_ENVIRONMENT_EVIDENCE/after.json" \
   --benchmark-resources "$PULSARMLX_ENVIRONMENT_EVIDENCE/benchmark-resources.json" \
   --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json"
+
+PYTHONDONTWRITEBYTECODE=1 PULSARMLX_MODEL_GGUF='' \
+  PYTHONPATH=python uv run python -B \
+  scripts/research/validate_generated_candidate.py \
+  --candidate "$PULSARMLX_ROUTER_FIXTURE_EVIDENCE" \
+  --environment "$PULSARMLX_ENVIRONMENT_EVIDENCE/combined.json" \
+  --output "$PULSARMLX_ENVIRONMENT_EVIDENCE/generated-validation.json"
 ```
 
 Every file is created exclusively and atomically; retry in a fresh external
@@ -156,6 +163,14 @@ evaluated/synchronized MLX GPU attempts; callers cannot select or shorten the
 counts. Every attempt is compared with the committed manifest/golden output,
 and the candidate remains external until T069 validates its timing contract
 and regenerated statistics.
+The candidate retains one bounded canonical actual output. The dedicated
+validator independently recomputes its component, selected-ID, and complete
+hashes; recomputes the golden comparison from the retained values rather than
+trusting the producer's pass flag; proves the 35 timing/result records form a
+bijection; routes the raw totals through the canonical timing projection and
+Type-7 statistics helpers; and rejects any component-stage or stage-sum field.
+The validation report is still generated-fixture evidence and remains external
+until the real-evidence publication tasks explicitly admit a record.
 The resource extractor also binds the selected backend/device, fallback,
 evaluation, and synchronization facts from the validated worker records; the
 combine command has no caller-controlled backend/device override.

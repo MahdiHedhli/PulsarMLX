@@ -510,6 +510,7 @@ struct GeneratedRouterBenchmarkAttempt {
     raw_timing_observations: Vec<Value>,
     resource_records: Vec<Value>,
     output_sha256: Option<String>,
+    canonical_output: Option<RouterOutput>,
     failure: Option<RetainedRouterFixtureFailure>,
 }
 
@@ -1894,6 +1895,7 @@ impl GeneratedRouterBenchmarkAttempt {
             raw_timing_observations: Vec::with_capacity(ROUTER_GENERATED_ATTEMPTS),
             resource_records: Vec::with_capacity(ROUTER_GENERATED_ATTEMPTS),
             output_sha256: None,
+            canonical_output: None,
             failure: None,
         }
     }
@@ -1993,6 +1995,10 @@ impl GeneratedRouterBenchmarkAttempt {
             "measurement_count": ROUTER_GENERATED_MEASUREMENTS,
             "retained_observation_count": self.raw_timing_observations.len(),
             "complete_output_sha256": self.output_sha256,
+            "canonical_output": self
+                .canonical_output
+                .as_ref()
+                .map(canonical_router_output_evidence),
             "stage_sum_claimed": false,
             "timing_series": timing_series,
             "result_records": self.resource_records,
@@ -2112,6 +2118,12 @@ where
                 .as_ref()
                 .is_none_or(|expected| expected == hash)
         });
+        let exact_output_repeat = candidate.as_ref().is_ok_and(|output| {
+            attempt
+                .canonical_output
+                .as_ref()
+                .is_none_or(|expected| expected == output)
+        });
         let passed = result.passed()
             && result.requested_device() == GPU_DEVICE
             && result.selected_device() == GPU_DEVICE
@@ -2125,7 +2137,8 @@ where
             && comparison
                 .as_ref()
                 .is_some_and(|comparison| comparison.passed())
-            && exact_repeat;
+            && exact_repeat
+            && exact_output_repeat;
 
         attempt.resource_records.push(json!({
             "observation_id": observation_id,
@@ -2178,6 +2191,7 @@ where
         }
         if attempt.output_sha256.is_none() {
             attempt.output_sha256 = candidate_hash;
+            attempt.canonical_output = candidate.ok();
         }
     }
     attempt
@@ -2837,7 +2851,10 @@ impl RouterCorrectnessGate {
 fn canonical_router_output_evidence(output: &RouterOutput) -> Value {
     json!({
         "case_id": output.case_id(),
-        "case_scope": "real_checkpoint",
+        "case_scope": match output.case_scope() {
+            RouterCaseScope::SyntheticFixture => "synthetic_fixture",
+            RouterCaseScope::RealCheckpoint => "real_checkpoint",
+        },
         "row_count": output.row_count(),
         "logits_shape": output.logits_shape(),
         "logits": output.logits(),
@@ -6172,6 +6189,38 @@ mod tests {
             .map(|observation| observation["output_sha256"].as_str().unwrap())
             .collect::<BTreeSet<_>>();
         assert_eq!(hashes.len(), 1, "every generated result hash is identical");
+        let canonical = &evidence["canonical_output"];
+        assert_eq!(canonical["case_id"], ROUTER_SINGLE_ROW_CASE_ID);
+        assert_eq!(canonical["case_scope"], "synthetic_fixture");
+        assert_eq!(canonical["row_count"], 1);
+        assert_eq!(canonical["logits_shape"], json!([1, 128]));
+        assert_eq!(canonical["full_probabilities_shape"], json!([1, 128]));
+        assert_eq!(
+            canonical["selected_expert_ids"][0]
+                .as_array()
+                .unwrap()
+                .len(),
+            8
+        );
+        assert_eq!(
+            canonical["selected_probabilities"][0]
+                .as_array()
+                .unwrap()
+                .len(),
+            8
+        );
+        assert_eq!(
+            canonical["normalized_weights"][0].as_array().unwrap().len(),
+            8
+        );
+        assert_eq!(
+            canonical["complete_output_sha256"],
+            evidence["complete_output_sha256"]
+        );
+        assert_eq!(
+            canonical["complete_output_sha256"].as_str(),
+            hashes.first().copied()
+        );
     }
 
     #[test]
