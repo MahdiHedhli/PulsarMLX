@@ -2605,3 +2605,100 @@ corrected.
 No model path was resolved or opened, no checkpoint or MLX execution occurred,
 no Apple GPU memory was used, and no NTFY notification was sent. Local
 inference did not need to pause.
+
+### T059 complete safe-gate replay
+
+Every currently implemented model-free command in the Feature 002 quickstart
+was replayed with `PULSARMLX_MODEL_GGUF` explicitly empty. The exact command
+groups were:
+
+```sh
+export PULSARMLX_MODEL_GGUF=''
+git status --short --branch
+git rev-parse HEAD
+git rev-parse origin/main
+cat .specify/feature.json
+sed -n '1,360p' specs/002-qwen-router-parity/spec.md
+sed -n '1,360p' specs/002-qwen-router-parity/plan.md
+specify version
+specify check
+specify integration status
+.specify/scripts/bash/check-prerequisites.sh --json
+
+scripts/research/setup.sh
+python3 fixtures/research/router-v1/golden/generate.py --check
+python3 -m unittest discover -s scripts/research/tests -v
+python3 scripts/research/validate_evidence.py \
+  --schema-dir schemas/research/v1 \
+  --input fixtures/research/router-v1/evidence
+python3 scripts/research/verify_package.py \
+  --feature 002-qwen-router-parity --fixture-only
+
+cargo test -p backend --test routing_contract
+cargo test -p mlx-backend --test router_contract
+cargo check --workspace --all-targets
+cargo test --workspace --no-fail-fast
+cargo test --workspace -- --list | rg ': test$' | wc -l
+
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+PYTHONPATH=python uv run python -m unittest \
+  python/pulsar_mlx_worker/tests/test_router.py -v
+PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+  --test router_worker_integration \
+  real_python_worker_two_row_router_matches_committed_golden -- \
+  --ignored --exact
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-router-fixtures \
+  --manifest fixtures/research/router-v1/manifest.json \
+  --evidence <new-external-temporary-directory>/router-fixtures.json
+python3 -m json.tool \
+  <new-external-temporary-directory>/router-fixtures.json
+
+python3 scripts/research/generate_tables.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir <new-external-temporary-directory>/expected/tables
+python3 scripts/research/generate_figures.py \
+  --raw-dir fixtures/research/router-v1/evidence \
+  --output-dir <new-external-temporary-directory>/expected/figures
+diff -ru fixtures/research/router-v1/expected \
+  <new-external-temporary-directory>/expected
+diff -u <sorted-committed-sha256-manifest> \
+  <sorted-regenerated-sha256-manifest>
+git diff --check
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
+```
+
+Actual results were Spec Kit CLI 0.15.2 ready with Codex integration healthy;
+research setup ready offline; all 12 golden files byte-identical; 86 of 86
+research tests passing in 6.671 seconds; three evidence records accepted; and
+fixture-only verification accepting three records, six artifacts, and zero
+claims. The backend routing and Rust router-contract suites passed 8 of 8 and
+21 of 21 tests.
+
+The workspace check passed. Workspace tests passed 204 active cases with two
+native MLX cases explicitly ignored; independent listing counted 206 total.
+The inherited `unused_mut` diagnostic and 13 macOS `serve` dead-code warnings
+were unchanged. Python worker discovery passed 67 of 67 tests in 0.896 seconds,
+the focused router suite passed 23 of 23 in 0.662 seconds, and the explicitly
+selected Rust-to-Python integration passed 1 of 1 in 0.24 seconds. The retained
+synthetic command passed two evaluated MLX router cases, reported model-free
+scope, and reported both real-checkpoint evidence and external-checkpoint
+access as false. Its temporary evidence was parsed, reviewed, and removed.
+
+Fresh generation produced four table-side and two figure-side outputs. The
+recursive byte diff and independently sorted SHA-256 diff were empty. The
+temporary output was removed; `git diff --check` passed; and the worktree was
+clean afterward.
+
+Immediately before active MLX evaluation, NTFY topic `Mahdi-Dev` acknowledged
+the high-priority hardware-pause message. After every synthetic MLX check
+passed, the topic acknowledged the completion message permitting local
+inference to resume. The attached Python crash report was also inspected: it
+records an earlier `worker_contract` child deliberately invoking `os.abort()`,
+loads no MLX or Metal library, and is not an out-of-memory report. Commit
+`c7ef8a56beda29307a809720a87c22d990f68d83` had already replaced that test
+signal with `SIGTERM`; the current workspace replay produced no crash report.
+
+No checkpoint path was resolved, statted, hashed, opened, or executed. Apple
+GPU/unified memory was used only for the bounded synthetic MLX tests during the
+notified window. No model result or claims-ledger row was created.
