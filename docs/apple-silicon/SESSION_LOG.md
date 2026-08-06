@@ -3752,3 +3752,14 @@ exact unavailable-oracle result, proves the checkpoint remains absent and no
 candidate is written, and removes its temporary directories. The focused test
 and all 33 `pulsar-mlx` unit tests passed locally. T083 remains gated on a new
 clean/equal pushed commit and green CI.
+
+The correction was committed as
+`94425abaa01b09cfd29d1d17494712ad9efc479a` and pushed without force.
+[GitHub Actions run 31109040268](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31109040268)
+passed for that exact commit: Apple MLX small-fixture validation completed in
+2 minutes 34 seconds and the Apple Silicon workspace baseline completed in
+1 minute 24 seconds. Every step was green, including the research methodology,
+worker integration, native MLX device smoke, tensor and synthetic routed-MoE
+fixtures, evidence gates, workspace check, and workspace tests. This paragraph
+is the non-recursive documentation-only CI attestation; its own CI conclusion
+is verified out of tree before checkpoint access rather than appended again.
