@@ -17,7 +17,8 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 | F003 Single routed expert full MLP | Complete (F003-C01, expert 114) |
 | F004 Top-8 aggregation | Complete (F004-C01) |
 | F005 Complete MoE residual block | Complete (F005-C01) |
-| F006+ Complete layer, multi-layer, logits, tokens | **Not started** |
+| F006 Complete transformer layer vs llama `l_out` | **Rejected / blocked** (MoE kernel gap) |
+| F007+ Multi-layer, logits, tokens, benchmarks | **Blocked on F006** |
 | GLM-5.2 | **Not admitted** |
 
 ## Feature completion
@@ -54,6 +55,14 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 - MLX vs CPU max abs ~**6.2e-8**, 0 mismatches  
 - Evidence: `docs/research/raw/005-moe-block/`
 
+### Feature 006 — Layer-0 output (rejected)
+
+- Captured `l_out-0` / `ffn_moe_out-0` from pinned llama.cpp  
+- Independent F005 block vs `l_out-0`: max abs ≈ **3.43e-3**, 182 mismatches  
+- Cosine F004 vs llama MoE ≈ **0.999990**  
+- Evidence retained: `docs/research/raw/006-layer-out/`  
+- **No F006 verified claim.** Deepest verified remains F005.
+
 ## Correctness
 
 All MLX results compared to independent CPU oracles (no MLX imports in oracle
@@ -75,7 +84,8 @@ router, experts, logits, or greedy token evidence exists.
 
 ## Limitations
 
-- No attention, complete transformer layer, multi-layer, logits, sampling,
+- Feature 006 blocked: independent MoE vs llama fused MoE max abs ~3.4e-3.  
+- No attention re-implementation on MLX, multi-layer, logits, sampling,
   generation, or serving.  
 - No giant-model or multi-device claims.  
 - Hosted CI is fixture-only; real checkpoint runs are local.
@@ -90,10 +100,8 @@ router, experts, logits, or greedy token evidence exists.
 
 ## Future work (roadmap order)
 
-1. **F006** Complete transformer layer (attention + residual path)  
-3. **F007** Multi-layer replay  
-4. **F008–F010** Logits → greedy token → prompt replay  
-5. **F011–F012** Benchmark harness + scaling (GLM only after all succeed)
+1. **Unblock F006**: align independent Q8_0 MoE with llama fused `ffn_moe_out`  
+2. Then F007 multi-layer → F008 logits → … → F012 scaling/GLM  
 
 ## Publication checklist
 

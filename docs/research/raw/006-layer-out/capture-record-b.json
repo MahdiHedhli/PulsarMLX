@@ -1,0 +1,37 @@
+{
+  "source_revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+  "capture_node": "l_out-0",
+  "shape": [2, 2048],
+  "dtype": "float32_little_endian",
+  "direct_token_ids": [0, 1],
+  "positions": [0, 1],
+  "context": 2,
+  "batch": 2,
+  "ubatch": 2,
+  "threads": 1,
+  "input_adapter": "direct_token_ids_v1",
+  "tokenizer": "not_used_direct_token_ids",
+  "canonical_byte_length": 16384,
+  "model_identity": {
+    "device": 16777231,
+    "inode": 300413912,
+    "size_bytes": 32483931648,
+    "sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    "pre_post_match": true
+  },
+  "decode_status": 0,
+  "cancellation": {
+    "backend": "cpu",
+    "scheduler_trace_format": "ggml_sched_debug_marker_v1",
+    "target": "l_out-0",
+    "target_ask_count": 1,
+    "target_observation_count": 1,
+    "target_complete": true,
+    "callback_returned_false": true,
+    "abort_guard_armed": true,
+    "abort_callback_call_count": 38,
+    "abort_callback_calls_after_target": 0,
+    "abort_callback_true_count": 0,
+    "nodes_after_target": []
+  }
+}

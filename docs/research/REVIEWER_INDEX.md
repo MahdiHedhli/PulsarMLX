@@ -124,3 +124,20 @@ See [CLAIMS_LEDGER_005.md](CLAIMS_LEDGER_005.md) claim F005-C01.
 Single-target `ffn_inp-0` capture only. Dual-ask of `ffn_inp`+`ffn_norm` makes
 `ffn_inp` a scheduler leaf and drops `ffn_norm` from the compute graph.
 RMSNorm cross-check (eps=1e-6) of residual vs F002 freeze: max abs ≈ 8.5e-8.
+
+---
+
+# Feature 006 Reviewer Index
+
+**Status**: Layer-0 llama `l_out` parity **rejected**. Independent residual MoE
+block (Feature 005) remains the deepest verified boundary.
+
+## Raw evidence (rejected attempt)
+
+- [parity record](raw/006-layer-out/f006-layer-out-parity-0001.json)
+- [l_out-0](raw/006-layer-out/l_out-0.f32le)
+- [ffn_moe_out-0](raw/006-layer-out/ffn_moe_out-0.f32le)
+
+## Claims
+
+See [CLAIMS_LEDGER_006.md](CLAIMS_LEDGER_006.md) — F006-C01 rejected.

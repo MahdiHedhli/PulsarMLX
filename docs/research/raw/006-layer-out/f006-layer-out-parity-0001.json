@@ -1,0 +1,43 @@
+{
+  "actual_status": "failed",
+  "claim_boundary": {
+    "deepest_verified": "005-moe-block residual + independent top-8 MoE",
+    "operation": "layer_0_output_vs_llama_l_out",
+    "reason": "independent_q8_0_moe_differs_from_llama_fused_moe",
+    "status": "rejected"
+  },
+  "comparison_f004_agg_vs_llama_ffn_moe_out": {
+    "compared_count": 2048,
+    "maximum_absolute_error": 0.003434651089823104,
+    "mean_absolute_error": 0.0002357988754686536,
+    "mismatch_count_tol_5e-4": 182,
+    "passed": false,
+    "rmse": 0.0003070891505787334
+  },
+  "comparison_f005_block_vs_l_out_row0": {
+    "compared_count": 2048,
+    "maximum_absolute_error": 0.003434591485178551,
+    "mean_absolute_error": 0.00023579886310521003,
+    "mismatch_count_tol_5e-4": 182,
+    "passed": false,
+    "rmse": 0.0003070887766579378
+  },
+  "cosine_f004_vs_llama_moe": 0.9999904619003478,
+  "experiment_id": "f006-layer-out-vs-f005-0001",
+  "f004_aggregate_sha256": "5567673d05a2ae5d5651d47b3b9cebfe2c1850bf1c44de00dea1ec9df27c9640",
+  "f005_block_sha256": "c8723e92061ea8f5a570b54c0ef97de47cda25ae0ef352564973aa738c1b34ab",
+  "feature_id": "006-transformer-layer",
+  "ffn_moe_out_sha256": "ae4e4467575d91cab3b6f1c3a6fb7ba8c2eb682bea29c8a43157bac83ed04a13",
+  "l_out_sha256": "ad16738a01759bf407c9b7bb1fb5379f799d83cd5417a3eeaf09a6bef40719c2",
+  "residual_sha256": "673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d",
+  "schema": "pulsarmlx.research.layer-out-parity",
+  "schema_version": "1.0.0",
+  "source_commit": "1b1dca2",
+  "unsupported_interpretations": [
+    "complete_transformer_layer_llama_parity",
+    "attention_mlx",
+    "multi_layer",
+    "logits",
+    "generation"
+  ]
+}

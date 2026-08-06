@@ -4098,3 +4098,12 @@ Verified `y = ffn_inp + top-8 MoE(ffn_norm)` CPU/MLX parity (max abs ~6.2e-8).
 RMSNorm cross-check of residual vs F002 freeze: max abs ~8.5e-8. Claim F005-C01
 published under `docs/research/raw/005-moe-block/`.
 
+## 2026-08-06 — Feature 006 layer-out attempt (rejected)
+
+Captured deterministic `l_out-0` and `ffn_moe_out-0` (sha
+`ad16738a…19c2` for l_out). Compared against Feature 005 residual MoE block
+and Feature 004 aggregate. Failed frozen 5e-4 tolerances (max abs ≈ 3.43e-3,
+182 mismatches). Cosine similarity ≈ 0.999990. Rejected attempt preserved under
+`docs/research/raw/006-layer-out/`. Deepest verified boundary remains Feature
+005. F007+ not started.
+
