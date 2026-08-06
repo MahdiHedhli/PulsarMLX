@@ -3730,3 +3730,25 @@ command above ran all 89 tests successfully; the import-only invocation is not
 reported as a product test result. T083 remains incomplete until this amended
 method is committed, pushed, green in CI, and the exact authorized real-router
 command executes from that clean source commit.
+
+### Pre-T083 clean-CI regression and bounded correction
+
+The amended harness and sanitizer were committed in three focused commits,
+ending at `a66960f5a960ad9bacab8945a356a47ee1d258f2`, and pushed with local and
+remote `main` equal. [GitHub Actions run 31108422771](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31108422771)
+then passed the Apple MLX small-fixture job in 2 minutes 25 seconds but failed
+the Apple Silicon workspace job. Its `cargo test --workspace --no-fail-fast`
+step had one failure among the 33 `pulsar-mlx` unit tests: the nonexistent-model
+guard fixture supplied a nonexistent evidence directory. A dirty local source
+tree had exercised the earlier cleanliness return, while clean CI correctly
+reached the evidence-directory availability gate. This was a test-fixture
+defect; no external checkpoint was opened and no Apple router output was
+produced.
+
+The bounded correction gives the test three distinct fresh external parent
+directories, an existing empty evidence directory, and absent model/oracle
+files, then directly exercises the post-clean-source gate. It now requires the
+exact unavailable-oracle result, proves the checkpoint remains absent and no
+candidate is written, and removes its temporary directories. The focused test
+and all 33 `pulsar-mlx` unit tests passed locally. T083 remains gated on a new
+clean/equal pushed commit and green CI.

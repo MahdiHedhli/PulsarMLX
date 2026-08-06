@@ -12425,22 +12425,48 @@ mod tests {
 
     #[test]
     fn feature_002_router_execution_fails_before_any_nonexistent_checkpoint_can_be_opened() {
-        let model = format!("/tmp/pulsarmlx-never-accessed/{QWEN_FILENAME}");
-        let router_error = run(args(&[
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let directory = env::temp_dir().join(format!(
+            "pulsarmlx-never-accessed-{}-{nonce}",
+            std::process::id()
+        ));
+        let model_directory = directory.join("model");
+        let oracle_directory = directory.join("oracle");
+        let evidence_directory = directory.join("evidence");
+        fs::create_dir_all(&model_directory).expect("create model parent");
+        fs::create_dir(&oracle_directory).expect("create oracle parent");
+        fs::create_dir(&evidence_directory).expect("create evidence directory");
+        let model = model_directory.join(QWEN_FILENAME);
+        let oracle = oracle_directory.join("oracle.json");
+        let command = parse_validate_router(args(&[
             "validate-router",
             "--model",
-            &model,
+            model.to_str().expect("UTF-8 model path"),
             "--oracle",
-            "/tmp/pulsarmlx-never-accessed/oracle.json",
+            oracle.to_str().expect("UTF-8 oracle path"),
             "--evidence-dir",
-            "/tmp/pulsarmlx-never-accessed/attempts",
+            evidence_directory.to_str().expect("UTF-8 evidence path"),
         ]))
+        .expect("parse bounded router command");
+        let router_error = run_validate_router_after_clean_source(
+            command,
+            &project_root(),
+            "0000000000000000000000000000000000000000",
+        )
         .expect_err("a nonexistent checkpoint cannot pass the live admission gate");
-        assert!(
-            router_error == "validate-router requires a clean source worktree"
-                || router_error == "the external model path metadata could not be inspected"
-        );
-        assert!(!Path::new("/tmp/pulsarmlx-never-accessed/attempts").exists());
+        assert_eq!(router_error, "the external router oracle is unavailable");
+        assert!(!model.exists());
+        assert_eq!(fs::read_dir(&evidence_directory).unwrap().count(), 0);
+
+        fs::remove_dir(evidence_directory).expect("remove evidence directory");
+        fs::remove_dir(oracle_directory).expect("remove oracle parent");
+        fs::remove_dir(model_directory).expect("remove model parent");
+        fs::remove_dir(directory).expect("remove test directory");
 
         assert!(run(args(&["--help"]))
             .expect_err("help is usage-only")
