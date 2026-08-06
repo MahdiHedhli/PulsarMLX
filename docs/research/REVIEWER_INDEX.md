@@ -91,3 +91,9 @@ Feature 003 claims: [CLAIMS_LEDGER_003.md](CLAIMS_LEDGER_003.md).
 Scope is a single routed expert full MLP with Feature 002 routing weight.
 Aggregation and generation remain unsupported.
 
+## Feature 004 raw evidence
+
+- [Top-8 oracle](raw/004-top8-moe/f004-top8-oracle-0001.json)
+- [Top-8 MLX parity](raw/004-top8-moe/f004-top8-aggregate-parity-0001.json)
+Claims: [CLAIMS_LEDGER_004.md](CLAIMS_LEDGER_004.md)
+

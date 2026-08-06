@@ -98,3 +98,9 @@ Metal kernels, or Linux/CUDA runtime parity of fork changes.
 
 This does not execute the remaining top-7 experts or aggregate a MoE block.
 
+## Feature 004 top-8 aggregation
+
+Expert IDs [114, 45, 99, 46, 98, 74, 102, 65] fully executed and weighted-summed.
+Aggregate 2048-vector parity: 0 mismatches, max abs error 6.20e-08.
+Cold/warm I/O gauge: 40,108,032 bytes/pass; cold ~3.76ms wall, warm ~3.28ms wall (OS-cache uncontrolled).
+

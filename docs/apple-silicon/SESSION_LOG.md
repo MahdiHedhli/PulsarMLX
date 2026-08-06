@@ -4082,3 +4082,9 @@ Published raw oracle freeze and parity records under
 pending clean-checkout reproduction and package integration. No multi-expert
 aggregation or generation was executed.
 
+### Feature 004 top-8 aggregation (2026-08-06)
+
+Executed all eight Feature 002 routed experts on CPU oracle and Apple MLX,
+aggregated weighted down-projections. Parity passed (max abs 6.20e-08).
+Recorded cold/warm I/O gauges over expert tensor ranges. Claim F004-C01.
+
