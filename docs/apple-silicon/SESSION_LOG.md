@@ -4107,3 +4107,14 @@ and Feature 004 aggregate. Failed frozen 5e-4 tolerances (max abs ≈ 3.43e-3,
 `docs/research/raw/006-layer-out/`. Deepest verified boundary remains Feature
 005. F007+ not started.
 
+## 2026-08-06 — Feature 007 pre-FFN residual capture formalization
+
+Proved layer-0 graph boundary from pinned `qwen3moe.cpp`: `ffn_inp` is the
+post-attention residual entering `ffn_norm`; no scale/bias/gate between them;
+eps=1e-6 from checkpoint KV. Formal Spec Kit feature 007 packages the already
+acquired `ffn_inp-0` capture with mandatory CPU RMSNorm → F002 `ffn_norm-0`
+link (max abs ~8.5e-8, 0 mismatches). F002 freeze not regenerated.
+
+Also confirmed llama fused MoE top-8 IDs match F002 exactly; F006 numerical gap
+is confined to expert MLP/accumulation vs independent Q8_0 path.
+

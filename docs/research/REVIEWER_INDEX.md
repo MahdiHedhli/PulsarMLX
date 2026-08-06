@@ -141,3 +141,32 @@ block (Feature 005) remains the deepest verified boundary.
 ## Claims
 
 See [CLAIMS_LEDGER_006.md](CLAIMS_LEDGER_006.md) — F006-C01 rejected.
+
+---
+
+# Feature 007 Reviewer Index
+
+**Status**: Layer-0 pre-FFN residual (`ffn_inp-0`) capture verified. Independent
+CPU RMSNorm reproduces Feature 002 `ffn_norm-0` freeze. This is the formal
+oracle-state acquisition feature for the residual stream.
+
+## Graph boundary
+
+See [raw/007-pre-ffn-residual/GRAPH_BOUNDARY.md](raw/007-pre-ffn-residual/GRAPH_BOUNDARY.md).
+
+## Raw evidence
+
+- [validation](raw/007-pre-ffn-residual/f007-pre-ffn-residual-validate-0001.json)
+- [ffn_inp-0](raw/007-pre-ffn-residual/ffn_inp-0.f32le)
+  SHA-256 `673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d`
+- Links F002 freeze `978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7` (not regenerated)
+
+## Claims
+
+See [CLAIMS_LEDGER_007.md](CLAIMS_LEDGER_007.md) — F007-C01 verified.
+
+## Relationship to F005/F006
+
+- F005 residual MoE self-parity (independent Q8_0 experts) remains verified.
+- F006 llama `l_out` / fused MoE parity remains rejected (max abs ~3.4e-3) despite
+  matching top-8 expert IDs `[114,45,99,46,98,74,102,65]`.

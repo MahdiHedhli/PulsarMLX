@@ -1,8 +1,8 @@
 # Feature Specification: Complete MoE FFN Sublayer / Residual Block
 
 **Created**: 2026-08-06  
-**Status**: Complete (verified)  
-**Depends on**: Feature 004 top-8 aggregation
+**Status**: Complete (verified) for independent Q8_0 MoE path  
+**Depends on**: Feature 004 top-8 aggregation; Feature 007 pre-FFN residual capture
 
 ## Goal
 
@@ -12,33 +12,33 @@ slot: residual add of routed MoE output onto the pre-norm residual stream.
 ## Verified form
 
 ```
-ffn_inp-0 = post-attention residual (pre-FFN)
-ffn_norm-0 = RMSNorm(ffn_inp-0)   # Feature 002 freeze
-aggregate  = top-8 MoE(ffn_norm-0) # Feature 004
-y          = ffn_inp-0 + aggregate
+ffn_inp-0 = post-attention residual (pre-FFN)   # Feature 007 capture
+ffn_norm-0 = RMSNorm(ffn_inp-0)                 # Feature 002 freeze (linked)
+aggregate  = top-8 MoE(ffn_norm-0)              # Feature 004 independent path
+y          = ffn_inp-0 + aggregate              # Feature 005
 ```
+
+## Oracle policy
+
+- Residual activation: independent reference capture (`ffn_inp-0`), not MLX.
+- Final block oracle for F005-C01: **independent CPU** recomputation
+  `y = residual + F004_aggregate` (no MLX imports on oracle path).
+- Cross-check vs llama fused `l_out-0` / `ffn_moe_out-0` is **Feature 006** and
+  remains **rejected** (max abs ~3.4e-3) despite matching top-8 expert IDs.
 
 ## Capture strategy
 
-Single-target CPU capture of `ffn_inp-0` (pinned llama.cpp revision
-`b06aa774…`) with the same tokens/positions as Feature 002. Dual-ask capture
-of `ffn_inp` + `ffn_norm` is **not** used: returning true for `ffn_inp` as a
-scheduler leaf truncates the graph before `ffn_norm`.
+Formalized as Feature 007. Single-target `ffn_inp-0` capture; dual-ask of
+`ffn_inp`+`ffn_norm` is rejected (scheduler leaf truncation).
 
-`ffn_norm-0` identity is the Feature 002 freeze
-(`978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7`).
+## Success evidence (F005-C01)
 
-Cross-check: independent RMSNorm(`ffn_inp-0`, `blk.0.ffn_norm.weight`,
-eps=1e-6) matches F002 row-0 within ~8.5e-8 max abs error.
-
-## Success evidence
-
-- Independent residual captures match (sha256
-  `673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d`)
-- CPU oracle `y = residual + aggregate`
-- MLX parity max abs error ~6.2e-8, 0 mismatches
-- Evidence: `docs/research/raw/005-moe-block/`
+- Residual + F007 RMSNorm link to F002 freeze  
+- CPU oracle `y = residual + aggregate`  
+- MLX parity max abs error ~6.2e-8, 0 mismatches  
+- Evidence: `docs/research/raw/005-moe-block/` + `docs/research/raw/007-pre-ffn-residual/`
 
 ## Out of scope
 
-Attention, complete transformer layer output, multi-layer, logits, generation.
+Attention re-implementation, llama fused MoE bit-parity (F006), multi-layer,
+logits, generation.

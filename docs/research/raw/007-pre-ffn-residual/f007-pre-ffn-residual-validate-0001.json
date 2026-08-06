@@ -1,0 +1,150 @@
+{
+  "actual_status": "passed",
+  "checkpoint": {
+    "filename": "Qwen3-30B-A3B-Q8_0.gguf",
+    "sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+    "size_bytes": 32483931648
+  },
+  "claim_boundary": {
+    "operation": "layer_0_pre_ffn_residual_capture_and_rmsnorm_link",
+    "status": "verified",
+    "unsupported_interpretations": [
+      "moe_execution",
+      "attention_mlx",
+      "logits",
+      "generation"
+    ]
+  },
+  "cpu_rmsnorm": {
+    "comparison_vs_f002_values": {
+      "absolute_tolerance": 0.0005,
+      "compared_count": 4096,
+      "first_mismatch": null,
+      "maximum_absolute_error": 9.48653191557014e-08,
+      "mean_absolute_error": 4.384638772305695e-09,
+      "mismatch_count": 0,
+      "passed": true,
+      "relative_tolerance": 0.0005,
+      "rmse": 7.754662048649434e-09
+    },
+    "comparison_vs_ffn_norm_f32le_file": {
+      "absolute_tolerance": 0.0005,
+      "compared_count": 4096,
+      "first_mismatch": null,
+      "maximum_absolute_error": 9.48653191557014e-08,
+      "mean_absolute_error": 4.384638772305695e-09,
+      "mismatch_count": 0,
+      "passed": true,
+      "relative_tolerance": 0.0005,
+      "rmse": 7.754662048649434e-09
+    },
+    "epsilon": 1e-06,
+    "output_sha256": "9b51758f73e20c95bd38865041b109fae8d1550ed1e0a2794837f3db29b56ce5",
+    "row_stats": [
+      {
+        "comparison": {
+          "absolute_tolerance": 0.0005,
+          "compared_count": 2048,
+          "first_mismatch": null,
+          "maximum_absolute_error": 8.516853677864589e-08,
+          "mean_absolute_error": 5.346197972567174e-09,
+          "mismatch_count": 0,
+          "passed": true,
+          "relative_tolerance": 0.0005,
+          "rmse": 9.143700453809367e-09
+        },
+        "cpu_row_sha256": "c98ed6f581b0d18f532f8eff78ef58ed11913508320135f798f9c6807637799a",
+        "fixture_row_sha256": "062e42f277e26af0042d52e5e30f895523c7f26cffb866b970dc0ae1c1dbe296",
+        "row": 0
+      },
+      {
+        "comparison": {
+          "absolute_tolerance": 0.0005,
+          "compared_count": 2048,
+          "first_mismatch": null,
+          "maximum_absolute_error": 9.48653191557014e-08,
+          "mean_absolute_error": 3.423079572044216e-09,
+          "mismatch_count": 0,
+          "passed": true,
+          "relative_tolerance": 0.0005,
+          "rmse": 6.0549408740741624e-09
+        },
+        "cpu_row_sha256": "6347c4648a1be06365047a486d9a4312322b8f7612eecff5910293c301ae8bc7",
+        "fixture_row_sha256": "278810be1143949ef019448e352c8bf74c7ab0c1c7bb8dd7b526dbafbacf0eaf",
+        "row": 1
+      }
+    ]
+  },
+  "existing_ffn_norm_fixture": {
+    "f002_oracle": "docs/research/raw/002-router-parity/oracle/f002-router-oracle-freeze-0001.json",
+    "f32le_mirror": "docs/research/raw/005-moe-block/ffn_norm-0.f32le",
+    "node": "ffn_norm-0",
+    "sha256": "978205a61fb31d03a8627fd5b9c9319e4c32ef7af0d3d934ccaddda9defc68a7",
+    "source": "Feature 002 freeze (not regenerated)"
+  },
+  "experiment_id": "f007-pre-ffn-residual-validate-0001",
+  "feature_id": "007-pre-ffn-residual-capture",
+  "graph_boundary": {
+    "architecture": "qwen3moe",
+    "gating_before_ffn_norm": false,
+    "layer": 0,
+    "moe_block_form": "l_out = ffn_inp + MoE(ffn_norm(ffn_inp))",
+    "norm_bias": null,
+    "norm_epsilon": 1e-06,
+    "norm_epsilon_kv": "qwen3moe.attention.layer_norm_rms_epsilon",
+    "norm_node": "ffn_norm-0",
+    "norm_op": "RMSNorm (LLM_NORM_RMS)",
+    "norm_weight_tensor": "blk.0.ffn_norm.weight",
+    "pre_norm_definition": "ggml_add(attn_out, residual_stream_inpSA); cb name ffn_inp",
+    "pre_norm_node": "ffn_inp-0",
+    "proof": "Pinned llama_model_qwen3moe::graph: ffn_inp=ggml_add(attn_out,inpSA); cur=build_norm(ffn_inp,ffn_norm,NULL,LLM_NORM_RMS); no scale/bias/gate between residual add and ffn_norm.",
+    "reference_revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+    "residual_scaling_before_ffn_norm": false,
+    "shared_expert": false,
+    "source_file": "src/models/qwen3moe.cpp"
+  },
+  "input": {
+    "batch": 2,
+    "context": 2,
+    "direct_token_ids": [
+      0,
+      1
+    ],
+    "input_adapter": "direct_token_ids_v1",
+    "positions": [
+      0,
+      1
+    ],
+    "threads": 1,
+    "ubatch": 2
+  },
+  "residual_capture": {
+    "also_published_under": "docs/research/raw/005-moe-block/ffn_inp-0.f32le",
+    "artifact": "docs/research/raw/007-pre-ffn-residual/ffn_inp-0.f32le",
+    "canonical_byte_length": 16384,
+    "capture_helper": "scripts/research/llama_capture/residual_inp_capture.cpp",
+    "dtype": "float32_little_endian",
+    "independent_captures": 2,
+    "independent_captures_identical": true,
+    "node": "ffn_inp-0",
+    "row0_sha256": "b1753b35b708defb169ad7fe098f55513517908a85bd1f5562298481bde272fe",
+    "row1_sha256": "d9bf0d9df1f582fb16fd4773acc6ef6444bfed8fb709aef392a3f209a78e4dd0",
+    "sha256": "673441ded7cd24b304b7c3b9472fabce2419c9f6b53c8c7d25a96baf3c09832d",
+    "shape": [
+      2,
+      2048
+    ]
+  },
+  "rmsnorm_weight": {
+    "data_offset": 1116133888,
+    "dtype": "float32",
+    "name": "blk.0.ffn_norm.weight",
+    "sha256": "e7608528ceb62784966e2a7b345a0f1fbec3b2b7f8f75dba5bcf24aa1b592b29",
+    "shape": [
+      2048
+    ]
+  },
+  "schema": "pulsarmlx.research.pre-ffn-residual-validation",
+  "schema_version": "1.0.0",
+  "validation_rule": "CPU_RMSNorm(captured_ffn_inp, blk.0.ffn_norm.weight, eps=1e-6) ~= frozen_ffn_norm_0"
+}

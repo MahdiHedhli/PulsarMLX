@@ -16,9 +16,10 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 | F002 Layer-0 router parity | Complete (verified claims F002-C01–C03) |
 | F003 Single routed expert full MLP | Complete (F003-C01, expert 114) |
 | F004 Top-8 aggregation | Complete (F004-C01) |
-| F005 Complete MoE residual block | Complete (F005-C01) |
+| F005 Complete MoE residual block (indep. MoE path) | Complete (F005-C01) |
+| F007 Pre-FFN residual capture + RMSNorm link | Complete (F007-C01) |
 | F006 Complete transformer layer vs llama `l_out` | **Rejected / blocked** (MoE kernel gap) |
-| F007+ Multi-layer, logits, tokens, benchmarks | **Blocked on F006** |
+| F008+ Multi-layer, logits, tokens, benchmarks | **Blocked on F006** |
 | GLM-5.2 | **Not admitted** |
 
 ## Feature completion
@@ -55,11 +56,21 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 - MLX vs CPU max abs ~**6.2e-8**, 0 mismatches  
 - Evidence: `docs/research/raw/005-moe-block/`
 
+### Feature 007 — Pre-FFN residual capture
+
+- Graph: `ffn_inp-0` = post-attention residual; `ffn_norm-0` = RMSNorm(`ffn_inp-0`)  
+- Residual sha `673441ded7…832d` (2 independent captures)  
+- CPU RMSNorm vs F002 freeze: max abs ≈ **8.5e-8** / **9.5e-8**, 0 mismatches  
+- F002 fixture **not** regenerated  
+- Evidence: `docs/research/raw/007-pre-ffn-residual/`
+
 ### Feature 006 — Layer-0 output (rejected)
 
 - Captured `l_out-0` / `ffn_moe_out-0` from pinned llama.cpp  
 - Independent F005 block vs `l_out-0`: max abs ≈ **3.43e-3**, 182 mismatches  
 - Cosine F004 vs llama MoE ≈ **0.999990**  
+- Llama `ffn_moe_topk` row0 IDs match F002: **[114, 45, 99, 46, 98, 74, 102, 65]**  
+  (gap is expert MLP / accumulation, not routing selection)  
 - Evidence retained: `docs/research/raw/006-layer-out/`  
 - **No F006 verified claim.** Deepest verified remains F005.
 
