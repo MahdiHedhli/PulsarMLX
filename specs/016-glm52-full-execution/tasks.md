@@ -2,68 +2,50 @@
 
 ## Phase 0 — Qwen baseline (done)
 
-- [x] Confirm worktree clean; main = origin/main
-- [x] Fast-forward Documents checkout to F015 tip `493234a`
-- [x] Run CI-safe research tests (258 passed; 1 pre-existing package fixture fail noted)
-- [x] Verify Qwen claims evidence present under `docs/research/raw/`
-- [x] Annotated tag `v0.2.0-qwen30b-e2e-research` created
+- [x] Tag `v0.2.0-qwen30b-e2e-research` @ 493234a
 
-## Phase 1 — Disk admission (blocked)
+## Phase 1 — Disk admission (done)
 
-- [x] Measure free space (APFS internal)
-- [x] Inventory expected model locations
-- [x] Determine remote checkpoint size (UD-IQ2_XXS = 222.082 GiB)
-- [x] Safe cleanup (partial + build targets)
-- [x] Write `docs/validation/glm52-disk-admission.json` → **failed**
-- [ ] Re-run admission when ≥500 GiB free
+- [x] Passed after space clearance (`docs/validation/glm52-disk-admission.json`)
 
-## Phase 2 — Checkpoint acquisition (blocked)
+## Phase 2 — Checkpoint acquisition (in progress)
 
-- [ ] NTFY before access
-- [ ] Atomic download of all shards / single file
-- [ ] SHA-256 + GGUF structure validation
-- [ ] `docs/validation/glm52-checkpoint.json`
-- [ ] Document `PULSARMLX_GLM_GGUF`
+- [x] NTFY start; download to internal `Models/PulsarMLX/GLM-5.2-UD-IQ2_XXS`
+- [ ] All 6 shards complete + size check
+- [ ] Per-file SHA-256 + `docs/validation/glm52-checkpoint.json`
+- [ ] NTFY acquisition complete
 
-## Phase 3 — Streaming runtime
+## Checkpoint-independent (done / ongoing)
 
-- [ ] GGUF multi-shard / single-file positional reader
-- [ ] Expert address map + compressed expert cache
-- [ ] Prefetch + eviction + telemetry
-- [ ] Memory budget controls
-- [ ] Fail closed on full-model materialization / silent CPU fallback
+- [x] Experiment protocol + tolerances frozen
+- [x] Results/repro/reviewer shells
+- [x] Upstream glm-dsa map @ 17dac547; contract tightened
+- [x] Expert cache skeleton + tests
+- [x] Public-safe telemetry + privacy tests
+- [x] Fail-closed execution guard + tests
+- [x] IQ2_XXS dequant + synthetic tests
+- [x] Synthetic sigmoid router + shared sink
+- [x] Generation harness + frozen prompt texts
+- [x] Multi-shard catalog/store tooling
+- [x] CI suite `test_glm52_checkpoint_free.py`
+
+## Phase 3 — Streaming runtime (partial)
+
+- [x] Expert cache API (fake store)
+- [x] Telemetry collector
+- [x] Fail-closed mode
+- [ ] Wire cache to real multi-shard positional reads
+- [ ] Prefetch policy integration
 
 ## Phase 4 — Architecture contract
 
-- [ ] Parse GGUF KV + tensor catalog
-- [ ] Map MLA / DSA / MoE from upstream source revision
-- [ ] Freeze `docs/architecture/GLM52_CONTRACT.md`
+- [x] KV freeze + upstream map
+- [ ] Complete tensor-name walk after C01 full catalog
 
-## Phase 5 — Correctness ladder
+## Phase 5 — Correctness ladder (real weights)
 
-- [ ] GLM-C01 metadata
-- [ ] GLM-C02 dense primitives
-- [ ] GLM-C03 router
-- [ ] GLM-C04 single expert
-- [ ] GLM-C05 full MoE
-- [ ] GLM-C06 MLA
-- [ ] GLM-C07 DSA
-- [ ] GLM-C08 layer 0
-- [ ] GLM-C09 depth ladder → full
-- [ ] GLM-C10 full logits
-- [ ] GLM-C11 generation ≥8 tokens
+- [ ] C01–C11 after checkpoint identity
 
-## Phase 6–7 — Execution, performance, publication
+## Phase 6–7
 
-- [ ] Full-model logits NTFY
-- [ ] First token NTFY
-- [ ] Benchmark protocol freeze + runs
-- [ ] `docs/research/glm52/*` package
-- [ ] `PULSARMLX_GLM52_REPORT.md`
-- [ ] CI fixtures (no weights)
-- [ ] Tag `v0.3.0-glm52-e2e-research` only after complete
-
-## Stop condition
-
-**Active**: disk admission cannot be satisfied through safe cleanup.
-Do not download GLM until free ≥ 500 GiB (direct) or ≥ 700 GiB (dual-copy).
+- [ ] Performance + `PULSARMLX_GLM52_REPORT.md` + tag `v0.3.0-glm52-e2e-research`

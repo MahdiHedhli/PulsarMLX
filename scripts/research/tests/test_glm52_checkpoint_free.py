@@ -202,16 +202,30 @@ class TestTier3FailClosed(unittest.TestCase):
 
 
 class TestTinyMultiShardFixture(unittest.TestCase):
-    def test_catalog_two_shard_fake_headers(self):
-        """Minimal GGUF-like headers are hard; test store discovery rules."""
-        from glm52_gguf_catalog import discover_ggufs
+    def test_catalog_two_shard_real_minimal(self):
+        from glm52_gguf_catalog import discover_ggufs, parse_header
+        from glm52_tiny_gguf_fixture import build_two_shard_fixture
+        from glm52_tensor_store import Glm52TensorStore
 
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            (root / "a.gguf").write_bytes(b"GGUF" + b"\x00" * 12)
-            (root / "b.gguf").write_bytes(b"GGUF" + b"\x00" * 12)
-            found = discover_ggufs(root)
-            self.assertEqual(len(found), 2)
+            paths = build_two_shard_fixture(root)
+            self.assertEqual(len(discover_ggufs(root)), 2)
+            h1 = parse_header(paths[0])
+            self.assertEqual(h1["kv"]["general.architecture"], "glm-dsa")
+            self.assertEqual(h1["n_tensors"], 1)
+            store = Glm52TensorStore(root)
+            self.assertIn("toy.weight", store.tensors)
+            self.assertIn("toy.bias", store.tensors)
+            raw = store.read_bytes("toy.weight")
+            self.assertEqual(len(raw), 16)
+            store.close()
+
+    def test_missing_shard_dir_empty(self):
+        from glm52_gguf_catalog import discover_ggufs
+
+        with tempfile.TemporaryDirectory() as td:
+            self.assertEqual(discover_ggufs(Path(td)), [])
 
 
 if __name__ == "__main__":
