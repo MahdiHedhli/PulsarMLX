@@ -106,24 +106,12 @@ def main() -> int:
 
     # ---- C11: short greedy gen (≥8 tokens) from frozen minimal prompt ----
     prompts_path = raw / "f016-frozen-prompts-0001.json"
-    prompts = json.loads(prompts_path.read_text()) if prompts_path.exists() else {}
-    # prefer minimal deterministic token ids if frozen
-    seed_ids = None
-    if isinstance(prompts, dict):
-        for key in ("minimal", "prompts", "frozen"):
-            block = prompts.get(key)
-            if isinstance(block, list) and block:
-                item = block[0]
-                if isinstance(item, dict) and "token_ids" in item:
-                    seed_ids = list(item["token_ids"])
-                    break
-                if isinstance(item, list):
-                    seed_ids = list(item)
-                    break
-        if seed_ids is None and "token_ids" in prompts:
-            seed_ids = list(prompts["token_ids"])
-    if not seed_ids:
-        seed_ids = [0]  # fallback BOS/unk style
+    seed_ids = [9703]  # frozen P-MIN "Hello"
+    if prompts_path.exists():
+        prompts = json.loads(prompts_path.read_text())
+        pmin = (prompts.get("prompts") or {}).get("P-MIN") or {}
+        if pmin.get("token_ids"):
+            seed_ids = list(pmin["token_ids"])
     n_new = 8
     t1 = time.time()
     # fresh forward for prompt
