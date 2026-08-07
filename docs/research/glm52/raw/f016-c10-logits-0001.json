@@ -1,0 +1,44 @@
+{
+  "actual_status": "passed",
+  "argmax": 4766,
+  "boundary": "GLM-C10",
+  "hidden_l2": 231.08572263127473,
+  "logits_l2": 866.9334917974415,
+  "note": "Logits after 79-layer single-token architecture residual + output_norm + output.weight. Architecture path; residual L2 large \u2014 not a quality claim.",
+  "repeatability": {
+    "absolute_tolerance": 0.0,
+    "compared_count": 154880,
+    "first_mismatch": null,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0,
+    "rmse": 0.0
+  },
+  "schema": "pulsarmlx.research.glm52-c10-logits",
+  "seconds": 158.0685751438141,
+  "source_hidden": "f016-c09-final-hidden.json",
+  "top8": [
+    4766,
+    1729,
+    2730,
+    35383,
+    906,
+    387,
+    505,
+    6073
+  ],
+  "top8_values": [
+    11.986026763916016,
+    10.5424165725708,
+    10.43086051940918,
+    10.411154747009277,
+    10.162586212158203,
+    10.123662948608398,
+    9.988106727600098,
+    9.956016540527344
+  ],
+  "vocab": 154880
+}

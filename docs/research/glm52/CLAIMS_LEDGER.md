@@ -16,7 +16,9 @@
 | F016-C06 | Layer-0 MLA single-token finite + repeatable | `raw/f016-c06-mla-0001.json` | 83014ce | verified | Compact-KV path |
 | F016-C07 | DSA policy + indexer loads + short-ctx range-fill | `raw/f016-c07-dsa-0001.json` | 83014ce | verified | Long-ctx top-k not claimed |
 | F016-C08 | Complete layer-0 residual block | `raw/f016-c08-layer0-0001.json` | 83014ce | verified | |
-| F016-C09–C11 | Depth ladder, logits, generation | — | — | in progress | C09 running |
+| F016-C09 | Single-token 79-layer depth ladder finite | `raw/f016-c09-depth-0001.json` | — | verified | ~5511s; residual L2 grows; architecture path only |
+| F016-C10 | Full vocab logits after 79-layer residual | `raw/f016-c10-logits-0001.json` | — | verified | finite; argmax 4766; bit-exact repeat; not quality claim |
+| F016-C11 | Tokenizer-driven greedy generation ≥8 tokens | — | — | in progress | Background full-stack path |
 | F016-PERF | MLX-only performance on M1 Ultra SSD | — | — | unsupported | After C11 |
 
 ## Rejected / blocked (historical)

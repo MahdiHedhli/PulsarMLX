@@ -35,21 +35,24 @@
 
 ## C09 Depth ladder
 
-| Depth | status |
-| ---: | --- |
-| 1–79 | **in progress** (background single-token ladder) |
+| Depth | status | notes |
+| ---: | --- | --- |
+| 1–79 | **passed** | single-token; ~5511s; final hidden L2 ~231 |
 
 ## C10 Logits
 
 | Metric | Value |
 | --- | --- |
-| status | pending (after C09) |
+| status | **passed** |
+| argmax | 4766 |
+| top-8 | [4766, 1729, 2730, 35383, 906, 387, 505, 6073] |
+| note | architecture path; residual scale large |
 
 ## C11 Generation
 
 | Prompt ID | status |
 | --- | --- |
-| P-MIN | pending (after C10) |
+| P-MIN | **in progress** (full 79-layer steps; multi-hour) |
 
 ## Performance (MLX-only)
 
