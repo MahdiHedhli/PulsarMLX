@@ -1,0 +1,68 @@
+{
+  "conclusions": [
+    "Dominant cost is expert SwiGLU dequant+matvec (\u00d79 experts per MoE layer).",
+    "MLA is second-order but material (~seconds\u2013tens of seconds).",
+    "C11 research path does not dual-run CPU oracle; cost is pure architecture forward.",
+    "Prefix is not re-embedded for old tokens, but each new token still walks all 79 layers (correct for decode); KV is CompactKVCache append-only.",
+    "Primary wins: expert residency of dequantized slabs, faster dequant, MLX-only hot path without research instrumentation."
+  ],
+  "estimates": {
+    "empirical_c11_decode_stack_s": 5335.0,
+    "empirical_c11_logits_s": 79.0,
+    "empirical_c11_total_s": 48730.7,
+    "naive_79_layer_from_layer3_proxy_s": 5349.045110869891,
+    "per_moe_layer_s": 69.70955004202551
+  },
+  "hotspot_ranking": [
+    [
+      "moe_top8_plus_shared",
+      50.776473125006305
+    ],
+    [
+      "mla_layer3_pos0",
+      18.933076917019207
+    ],
+    [
+      "shared_expert",
+      10.018734959012363
+    ],
+    [
+      "single_routed_expert",
+      5.035400374996243
+    ],
+    [
+      "router_layer3",
+      0.06028058298397809
+    ],
+    [
+      "embed_token",
+      0.009833207994233817
+    ],
+    [
+      "output_norm",
+      0.0008091669878922403
+    ]
+  ],
+  "layer_probed": 3,
+  "route_expert_ids": [
+    15,
+    177,
+    10,
+    233,
+    166,
+    41,
+    152,
+    26
+  ],
+  "schema": "pulsarmlx.research.glm52-hotspot-profile",
+  "timings_s": {
+    "embed_token": 0.009833207994233817,
+    "mla_layer3_pos0": 18.933076917019207,
+    "moe_top8_plus_shared": 50.776473125006305,
+    "output_norm": 0.0008091669878922403,
+    "router_layer3": 0.06028058298397809,
+    "shared_expert": 10.018734959012363,
+    "single_routed_expert": 5.035400374996243
+  },
+  "token_id": 9703
+}
