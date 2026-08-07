@@ -9,7 +9,16 @@ from pathlib import Path
 from glm52_tensor_store import Glm52TensorStore, nbytes_for_tensor
 from iq2_xxs_dequant import dequantize_row_iq2_xxs, BLOCK_BYTES as IQ2_B, QK_K
 from iq3_xxs_dequant import dequantize_row_iq3_xxs, BLOCK_BYTES as IQ3_B
-from ggml_kquants import dequantize_row_q5_k, dequantize_row_q6_k, Q5_K_BLOCK, Q6_K_BLOCK
+from iq2_s_dequant import dequantize_row_iq2_s
+from iq4_xs_dequant import dequantize_row_iq4_xs
+from ggml_kquants import (
+    dequantize_row_q2_k,
+    dequantize_row_q3_k,
+    dequantize_row_q5_k,
+    dequantize_row_q6_k,
+    Q5_K_BLOCK,
+    Q6_K_BLOCK,
+)
 
 
 def _silu(x: float) -> float:
@@ -29,6 +38,14 @@ def _dequant_row_bytes(type_id: int, raw: bytes, cols: int) -> list[float]:
         return dequantize_row_iq2_xxs(raw, cols)
     if type_id == 18:  # IQ3_XXS
         return dequantize_row_iq3_xxs(raw, cols)
+    if type_id == 22:  # IQ2_S
+        return dequantize_row_iq2_s(raw, cols)
+    if type_id == 23:  # IQ4_XS
+        return dequantize_row_iq4_xs(raw, cols)
+    if type_id == 10:  # Q2_K
+        return dequantize_row_q2_k(raw, cols)
+    if type_id == 11:  # Q3_K
+        return dequantize_row_q3_k(raw, cols)
     if type_id == 13:  # Q5_K
         return dequantize_row_q5_k(raw, cols)
     if type_id == 14:  # Q6_K

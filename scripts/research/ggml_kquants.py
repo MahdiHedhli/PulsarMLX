@@ -285,3 +285,67 @@ def _q5_k_block(d: float, dmin: float, scales: bytes, qh: bytes, qs: bytes) -> l
         u1 <<= 2
         u2 <<= 2
     return y
+
+
+Q2_K_BLOCK = 84
+Q3_K_BLOCK = 110
+
+
+def dequantize_row_q2_k(encoded: bytes, n: int | None = None) -> list[float]:
+    if n is None:
+        assert len(encoded) % Q2_K_BLOCK == 0
+        n = (len(encoded) // Q2_K_BLOCK) * QK_K
+    assert n % QK_K == 0
+    out: list[float] = []
+    for i in range(n // QK_K):
+        base = i * Q2_K_BLOCK
+        scales = encoded[base : base + 16]
+        qs = encoded[base + 16 : base + 80]
+        d = struct.unpack_from("<e", encoded, base + 80)[0]
+        dmin = struct.unpack_from("<e", encoded, base + 82)[0]
+        y = [0.0] * QK_K
+        for nn in range(2):
+            for j in range(32):
+                byte = qs[32 * nn + j]
+                for s in range(4):
+                    idx = 128 * nn + 32 * s + j
+                    q = (byte >> (2 * s)) & 3
+                    sub = idx // 16
+                    y[idx] = d * (scales[sub] & 0xF) * q - dmin * (scales[sub] >> 4)
+        out.extend(y)
+    return out
+
+
+def _q3_scales(sb: bytes) -> list[int]:
+    sc = [0] * 16
+    for j in range(16):
+        lo = sb[j] & 0xF if j < 8 else sb[j - 8] >> 4
+        hi = (sb[8 + j % 4] >> (2 * (j // 4))) & 3
+        sc[j] = (lo | (hi << 4)) - 32
+    return sc
+
+
+def dequantize_row_q3_k(encoded: bytes, n: int | None = None) -> list[float]:
+    if n is None:
+        assert len(encoded) % Q3_K_BLOCK == 0
+        n = (len(encoded) // Q3_K_BLOCK) * QK_K
+    assert n % QK_K == 0
+    out: list[float] = []
+    for i in range(n // QK_K):
+        base = i * Q3_K_BLOCK
+        hmask = encoded[base : base + 32]
+        qs = encoded[base + 32 : base + 96]
+        sc = _q3_scales(encoded[base + 96 : base + 108])
+        d = struct.unpack_from("<e", encoded, base + 108)[0]
+        y = [0.0] * QK_K
+        for nn in range(2):
+            for j in range(32):
+                byte = qs[32 * nn + j]
+                for s in range(4):
+                    idx = 128 * nn + 32 * s + j
+                    q = (byte >> (2 * s)) & 3
+                    if (hmask[j] & (1 << (4 * nn + s))) == 0:
+                        q -= 4
+                    y[idx] = d * sc[idx // 16] * q
+        out.extend(y)
+    return out

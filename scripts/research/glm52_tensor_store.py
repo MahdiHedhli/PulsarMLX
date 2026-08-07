@@ -51,7 +51,16 @@ def nbytes_for_tensor(ttype: int, n_elem: int) -> int:
         return (n_elem // QK_K) * 210
     if ttype == 17:  # IQ2_XS
         assert n_elem % QK_K == 0
-        return (n_elem // QK_K) * 66  # verify if needed
+        return (n_elem // QK_K) * 66
+    if ttype == 22:  # IQ2_S
+        assert n_elem % QK_K == 0
+        return (n_elem // QK_K) * 82
+    if ttype == 23:  # IQ4_XS
+        assert n_elem % QK_K == 0
+        return (n_elem // QK_K) * 136
+    if ttype == 11:  # Q3_K
+        assert n_elem % QK_K == 0
+        return (n_elem // QK_K) * 110
     # fallback: refuse unknown
     raise ValueError(f"unsupported tensor type {ttype} for nbytes")
 

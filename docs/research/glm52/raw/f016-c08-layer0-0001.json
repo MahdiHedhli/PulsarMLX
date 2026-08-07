@@ -1,0 +1,33 @@
+{
+  "actual_status": "passed",
+  "boundary": "GLM-C08",
+  "diag": {
+    "attn_out_l2": 0.38116314310044114,
+    "dsa_mode": "range_fill",
+    "ffn": "dense_swiglu",
+    "finite": true,
+    "layer": 0,
+    "out_l2": 0.3888550133051524,
+    "pos": 0,
+    "q_rank_norm_l2": 10.159735472578907,
+    "uses_full_indexer": true
+  },
+  "ffn": "dense_swiglu",
+  "layer": 0,
+  "note": "Complete layer 0: MLA residual + dense SwiGLU FFN residual on token_embd[0].",
+  "out_l2": 0.3888550133051524,
+  "repeatability": {
+    "absolute_tolerance": 0.0,
+    "compared_count": 6144,
+    "first_mismatch": null,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0,
+    "rmse": 0.0
+  },
+  "schema": "pulsarmlx.research.glm52-c08-layer0",
+  "seconds": 149.71698713302612
+}

@@ -1,0 +1,34 @@
+{
+  "actual_status": "passed",
+  "boundary": "GLM-C07",
+  "full_indexer_layer_count": 22,
+  "full_indexer_layers_sample": [
+    0,
+    1,
+    2,
+    6,
+    10,
+    14,
+    18,
+    22,
+    26,
+    30,
+    34,
+    38
+  ],
+  "indexer_finite": true,
+  "indexer_tensor_dims": {
+    "k": 128,
+    "proj": 32,
+    "q_b": 4096
+  },
+  "n_idx_topk": 2048,
+  "n_leading_dense": 3,
+  "note": "DSA short-context path uses range-fill (visible<=2048). Indexer weights load and matvec finite. Full top-k long-context not claimed here.",
+  "schema": "pulsarmlx.research.glm52-c07-dsa",
+  "short_ctx_mode": "range_fill_bit_identical_to_pre_indexer",
+  "two_token_selected": [
+    0,
+    1
+  ]
+}

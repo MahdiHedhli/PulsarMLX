@@ -1,0 +1,33 @@
+{
+  "actual_status": "passed",
+  "boundary": "GLM-C06",
+  "dsa_mode": "range_fill",
+  "l2": {
+    "attn_out": 0.38116314310044114,
+    "out": 0.45849543067922416,
+    "q_rank_norm_proxy": 10.159735472578907
+  },
+  "layer": 0,
+  "n_leading_dense": 3,
+  "note": "Layer-0 single-token MLA via MLX matmul after dequant. DSA range-fill (visible=1). Upstream mla_kernels.inc semantics.",
+  "pos": 0,
+  "repeatability": {
+    "absolute_tolerance": 0.0,
+    "compared_count": 6144,
+    "first_mismatch": null,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0,
+    "rmse": 0.0
+  },
+  "rms_eps": 1e-05,
+  "schema": "pulsarmlx.research.glm52-c06-mla",
+  "seconds": 37.39077186584473,
+  "shapes": {
+    "attn_residual_out": 6144
+  },
+  "uses_full_indexer": true
+}

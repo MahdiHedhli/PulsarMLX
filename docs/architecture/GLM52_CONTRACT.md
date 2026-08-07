@@ -1,6 +1,6 @@
 # GLM-5.2 Architecture Contract
 
-**Status**: **KV-FROZEN + upstream-mapped** (full tensor catalog pending complete shards)
+**Status**: **KV-FROZEN + C01 catalog + C06–C08 layer-0 MLA path**
 **Date**: 2026-08-07
 **Upstream donor pin**: `giannisanni/pulsar` @ `17dac547898e0e65bb073f13444708daf68edc3d`
 **Family**: `glm-dsa` → Pulsar `Family::Mla` with DSA indexer
@@ -95,13 +95,23 @@ blk.{i}.ffn_down_exps.weight
 blk.{i}.ffn_gate_shexp.weight    # shared
 blk.{i}.ffn_up_shexp.weight
 blk.{i}.ffn_down_shexp.weight
-# MLA (names exact TBD from catalog — H2)
-blk.{i}.attn_q_a.weight / attn_q_b.weight / attn_kv_a_mqa.weight / ...
-# DSA indexer
-blk.{i}.indexer.* or model-level indexer.*
+# MLA (C01 catalog)
+blk.{i}.attn_q_a.weight          # Q5_K [6144, 2048]
+blk.{i}.attn_q_a_norm.weight     # F32 [2048]
+blk.{i}.attn_q_b.weight          # Q8_0 [2048, 16384] = 64*(192+64)
+blk.{i}.attn_kv_a_mqa.weight     # Q8_0 [6144, 576] = 512+64
+blk.{i}.attn_kv_a_norm.weight    # F32 [512]
+blk.{i}.attn_k_b.weight          # Q8_0 [192, 512, 64]
+blk.{i}.attn_v_b.weight          # Q8_0 [512, 256, 64]
+blk.{i}.attn_output.weight       # Q5_K [16384, 6144]
+# DSA indexer (per-layer)
+blk.{i}.indexer.attn_q_b.weight  # Q8_0 [2048, 4096]
+blk.{i}.indexer.attn_k.weight    # Q8_0 [6144, 128]
+blk.{i}.indexer.k_norm.weight/bias  # F32 [128]
+blk.{i}.indexer.proj.weight      # F32 [6144, 32]
 ```
 
-**H2**: Exact MLA/DSA tensor names must be filled from C01 complete catalog — do not invent.
+**Confirmed**: MLA/DSA names from complete 1809-tensor catalog (C01).
 
 ### Expert slab addressing (stream)
 
@@ -138,9 +148,9 @@ See frozen table in `docs/research/glm52/EXPERIMENT_PROTOCOL.md` §5.
 - [x] Exact MLA tensor names per layer (`attn_q_a/b`, `attn_kv_a_mqa`, `attn_k_b`, `attn_v_b`, …)
 - [x] Exact indexer tensor names (`indexer.attn_k/q_b`, `indexer.k_norm`, `indexer.proj`)
 - [x] Mixed quant type histogram (C01: Q8_0/Q5_K/F32/IQ2_XXS/…)
-- [ ] `leading_dense_block_count`
-- [ ] Whether lm_head is tied to embd
-- [ ] RMSNorm epsilon exact KV key
+- [x] `leading_dense_block_count` = **3** (GGUF + dense FFN tensors on layers 0–2)
+- [x] `output.weight` present (not embd-tied); Q4_K [6144, 154880]
+- [x] `glm-dsa.attention.layer_norm_rms_epsilon` ≈ **1e-5**
 
 ## Freeze checklist
 
@@ -149,4 +159,4 @@ See frozen table in `docs/research/glm52/EXPERIMENT_PROTOCOL.md` §5.
 - [x] Router family (sigmoid + shared sink) from source
 - [x] Expert slab address formula
 - [x] Complete tensor catalog (1809 tensors, 0 bad offsets)
-- [ ] Residual op order verified against real forward
+- [x] Layer-0 residual order exercised (C08): `x += MLA(attn_norm(x)); x += FFN(ffn_norm(x))`

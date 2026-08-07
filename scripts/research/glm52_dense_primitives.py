@@ -97,19 +97,49 @@ def _decode_q8_0_row(encoded: bytes, cols: int) -> list[float]:
 
 
 def matvec_weight(
-    store: Glm52TensorStore, name: str, x: list[float]
+    store: Glm52TensorStore, name: str, x: list[float], *, backend: str = "auto"
 ) -> list[float]:
+    """y = W @ x for 2D GGUF weight [cols, rows].
+
+    backend:
+      - auto: MLX matmul after bulk dequant when available
+      - cpu: pure-Python row dots (oracle / fallback)
+      - mlx: force MLX
+    """
     loc = store.tensors[name]
     if len(loc.dims) != 2:
         raise ValueError(f"{name}: expected 2D weight")
     cols, rows = int(loc.dims[0]), int(loc.dims[1])
     if len(x) != cols:
         raise ValueError(f"{name}: act {len(x)} != cols {cols}")
+    use_mlx = backend == "mlx" or (backend == "auto" and rows * cols >= 256 * 256)
+    if use_mlx:
+        try:
+            return _matvec_mlx(store, loc, x, cols, rows)
+        except Exception:
+            if backend == "mlx":
+                raise
     y = [0.0] * rows
     for r in range(rows):
         w = dequant_row(store, loc, r)
         y[r] = sum(a * b for a, b in zip(w, x, strict=True))
     return y
+
+
+def _matvec_mlx(
+    store: Glm52TensorStore, loc: TensorLoc, x: list[float], cols: int, rows: int
+) -> list[float]:
+    import mlx.core as mx
+
+    # bulk-dequant rows into a flat row-major [rows, cols] buffer
+    flat: list[float] = []
+    for r in range(rows):
+        flat.extend(dequant_row(store, loc, r))
+    w = mx.array(flat, dtype=mx.float32).reshape((rows, cols))
+    xv = mx.array(x, dtype=mx.float32)
+    y = w @ xv
+    mx.eval(y)
+    return y.tolist()
 
 
 def embed_token(store: Glm52TensorStore, token_id: int) -> list[float]:
