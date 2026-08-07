@@ -1,0 +1,54 @@
+{
+  "actual_status": "passed",
+  "boundary": "GLM-C03",
+  "logits_repeatability": {
+    "absolute_tolerance": 0.0,
+    "compared_count": 256,
+    "first_mismatch": null,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0,
+    "rmse": 0.0
+  },
+  "mlx_vs_cpu": {
+    "absolute_tolerance": 0.0005,
+    "compared_count": 256,
+    "first_mismatch": null,
+    "maximum_absolute_error": 1.072363982057567e-07,
+    "maximum_relative_error": 4.9102490936716125e-06,
+    "mean_absolute_error": 6.857516300242196e-09,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0005,
+    "rmse": 1.1792150851345247e-08
+  },
+  "moe_layer": 3,
+  "note": "Activation is ffn_norm(token_embd[0]) not full residual through prior layers; C03 establishes router matvec+topk determinism. Full residual routing revalidated at C08/C09.",
+  "router_dims": [
+    6144,
+    256
+  ],
+  "router_type": "F32",
+  "schema": "pulsarmlx.research.glm52-c03-router",
+  "shared_ids": [
+    255
+  ],
+  "top8_ids": [
+    236,
+    141,
+    131,
+    77,
+    135,
+    40,
+    123,
+    175
+  ],
+  "unsupported_interpretations": [
+    "full_layer_residual_activation",
+    "generation"
+  ],
+  "weights_sum_routed": 1.0
+}
