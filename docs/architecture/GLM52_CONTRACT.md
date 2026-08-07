@@ -135,9 +135,9 @@ See frozen table in `docs/research/glm52/EXPERIMENT_PROTOCOL.md` §5.
 
 ## Open items (need C01 catalog)
 
-- [ ] Exact MLA tensor names per layer
-- [ ] Exact indexer tensor names
-- [ ] Mixed quant type histogram
+- [x] Exact MLA tensor names per layer (`attn_q_a/b`, `attn_kv_a_mqa`, `attn_k_b`, `attn_v_b`, …)
+- [x] Exact indexer tensor names (`indexer.attn_k/q_b`, `indexer.k_norm`, `indexer.proj`)
+- [x] Mixed quant type histogram (C01: Q8_0/Q5_K/F32/IQ2_XXS/…)
 - [ ] `leading_dense_block_count`
 - [ ] Whether lm_head is tied to embd
 - [ ] RMSNorm epsilon exact KV key
@@ -148,5 +148,5 @@ See frozen table in `docs/research/glm52/EXPERIMENT_PROTOCOL.md` §5.
 - [x] Upstream revision pin
 - [x] Router family (sigmoid + shared sink) from source
 - [x] Expert slab address formula
-- [ ] Complete tensor catalog
+- [x] Complete tensor catalog (1809 tensors, 0 bad offsets)
 - [ ] Residual op order verified against real forward

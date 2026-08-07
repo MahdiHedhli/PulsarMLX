@@ -1,0 +1,53 @@
+{
+  "actual_status": "passed",
+  "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+  "download_wall_seconds": 2228.6058599948883,
+  "env_var": "PULSARMLX_GLM_GGUF",
+  "errors": [],
+  "expected_total_bytes": 238458632928,
+  "feature_id": "016-glm52-full-execution",
+  "file_count": 6,
+  "files": [
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",
+      "sha256": "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18",
+      "size_bytes": 9423744
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+      "size_bytes": 49105028960
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",
+      "sha256": "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b",
+      "size_bytes": 49143176640
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",
+      "sha256": "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e",
+      "size_bytes": 49143176640
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",
+      "sha256": "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d",
+      "size_bytes": 49143176640
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",
+      "sha256": "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d",
+      "size_bytes": 41914650304
+    }
+  ],
+  "free_bytes_after": 454195736576,
+  "free_gib_after": 423.003,
+  "hash_source": "post_download_acquisition_script",
+  "min_free_after_required_gib": 250,
+  "quant": "UD-IQ2_XXS",
+  "repo": "unsloth/GLM-5.2-GGUF",
+  "schema": "pulsarmlx.validation.glm52-checkpoint",
+  "schema_version": "1.0.0",
+  "source_commit": "5e5c06dc5064ca243fd3a87f4f30c86270273194",
+  "total_bytes": 238458632928,
+  "utc_timestamp": "2026-08-07T04:45:43.116390+00:00"
+}

@@ -13,6 +13,14 @@ from typing import Any
 
 from glm52_tensor_store import Glm52TensorStore, TensorLoc
 from iq2_xxs_dequant import dequantize_row_iq2_xxs, QK_K, BLOCK_BYTES as IQ2_BLOCK
+from ggml_kquants import (
+    dequantize_row_q4_k,
+    dequantize_row_q5_k,
+    dequantize_row_q6_k,
+    Q4_K_BLOCK,
+    Q5_K_BLOCK,
+    Q6_K_BLOCK,
+)
 
 EPS_DEFAULT = 1e-5  # override from KV when present
 
@@ -57,6 +65,24 @@ def dequant_row(store: Glm52TensorStore, loc: TensorLoc, row: int) -> list[float
         row_b = (cols // QK_K) * IQ2_BLOCK
         raw = store.pread(loc.name, row * row_b, row_b)
         return dequantize_row_iq2_xxs(raw, cols)
+    if loc.type_id == 12:  # Q4_K
+        if cols % QK_K != 0:
+            raise ValueError(f"Q4_K cols {cols}")
+        row_b = (cols // QK_K) * Q4_K_BLOCK
+        raw = store.pread(loc.name, row * row_b, row_b)
+        return dequantize_row_q4_k(raw, cols)
+    if loc.type_id == 13:  # Q5_K
+        if cols % QK_K != 0:
+            raise ValueError(f"Q5_K cols {cols}")
+        row_b = (cols // QK_K) * Q5_K_BLOCK
+        raw = store.pread(loc.name, row * row_b, row_b)
+        return dequantize_row_q5_k(raw, cols)
+    if loc.type_id == 14:  # Q6_K
+        if cols % QK_K != 0:
+            raise ValueError(f"Q6_K cols {cols}")
+        row_b = (cols // QK_K) * Q6_K_BLOCK
+        raw = store.pread(loc.name, row * row_b, row_b)
+        return dequantize_row_q6_k(raw, cols)
     raise TypeError(f"unsupported type {loc.type_name} for {loc.name}")
 
 

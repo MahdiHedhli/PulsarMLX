@@ -1,0 +1,62 @@
+{
+  "actual_status": "passed",
+  "boundary": "GLM-C02",
+  "embed_dim": 6144,
+  "embed_repeatability": {
+    "absolute_tolerance": 0.0,
+    "compared_count": 6144,
+    "first_mismatch": null,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0,
+    "rmse": 0.0
+  },
+  "f32_matvec_indexer_proj_mlx_vs_cpu": {
+    "absolute_tolerance": 0.0005,
+    "compared_count": 32,
+    "first_mismatch": null,
+    "maximum_absolute_error": 1.961362394720112e-07,
+    "maximum_relative_error": 3.215979333227271e-06,
+    "mean_absolute_error": 5.834033863627965e-08,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0005,
+    "rmse": 7.618577171412971e-08
+  },
+  "feature_id": "016-glm52-full-execution",
+  "q5k_attn_q_a_row0_finite": true,
+  "quant_types_exercised": [
+    "Q4_K",
+    "F32",
+    "Q5_K"
+  ],
+  "rmsnorm_mlx_vs_cpu": {
+    "absolute_tolerance": 0.0005,
+    "compared_count": 6144,
+    "first_mismatch": null,
+    "maximum_absolute_error": 2.9224631548085966e-08,
+    "maximum_relative_error": 1.3601053945282798e-07,
+    "mean_absolute_error": 8.360798620375948e-10,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0005,
+    "rmse": 1.5189933744761726e-09
+  },
+  "schema": "pulsarmlx.research.glm52-c02-dense-primitives",
+  "schema_version": "1.0.0",
+  "tensors_exercised": [
+    "token_embd.weight",
+    "blk.0.attn_norm.weight",
+    "blk.0.indexer.proj.weight",
+    "blk.0.attn_q_a.weight"
+  ],
+  "token_id": 0,
+  "unsupported_interpretations": [
+    "full_layer",
+    "generation",
+    "logits"
+  ]
+}
