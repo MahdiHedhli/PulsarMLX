@@ -23,3 +23,15 @@ preflight baseline does not claim that MLX inference is already implemented.
 PulsarMLX is an independent derivative. The upstream Pulsar project, its
 author, and its contributors do not endorse this repository and are not
 responsible for its modifications, behavior, support, or releases.
+
+## Design reference: ssd-llm
+
+Weekend optimization work may adapt *design ideas* (and, if vendored later,
+small pure utilities) from:
+
+- Repository: <https://github.com/quantumnic/ssd-llm>
+- License: MIT
+- Copyright: Nicola Spieser (2026)
+
+ssd-llm is **not** a runtime dependency of PulsarMLX. Its authors do not
+endorse this project. See `docs/upstream/SSD_LLM.md`.
