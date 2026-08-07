@@ -4,190 +4,403 @@
 
 **Giant MoE inference on Apple Silicon.**
 
-PulsarMLX is an experimental Apple Silicon inference engine for oversized Mixture-of-Experts models. It combines MLX GPU execution, unified-memory-aware expert residency, SSD-backed tensor streaming, and an architecture-level correctness framework designed to make models larger than available memory practical on Macs.
+PulsarMLX is an experimental inference runtime for oversized Mixture-of-Experts models on Apple Silicon. It uses MLX for GPU execution, treats unified memory and fast internal NVMe as first-class resources, and validates results against an independent architecture-level CPU oracle with an evidence-first research workflow.
 
-It is **not** production-ready. Claims below are limited to committed evidence.
+It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisanni/pulsar). The Apple path has grown into a substantially independent runtime: MLX backend, portable storage, architecture-oracle methodology, research/evidence framework, and unified-memory-aware residency work—while still preserving Pulsar’s MIT license, Git history, and Linux/CUDA implementation.
 
-## Project identity
+> [!IMPORTANT]
+> PulsarMLX is experimental research software. Verified capabilities are explicitly bounded by **committed** evidence. Correctness has been prioritized before performance optimization.
 
-> PulsarMLX began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisanni/pulsar), created by Giannis Anni and contributors. It preserves Pulsar's MIT license, Git history, original Linux/CUDA runtime, and important giant-MoE architecture work.
->
-> The Apple Silicon runtime, MLX execution backend, portable storage path, architecture-oracle methodology, reproducible evidence framework, and ongoing unified-memory/SSD streaming work are developed independently in PulsarMLX by Mahdi Hedhli and contributors.
+> **DON'T PANIC.** The giant model does not need to fit entirely in memory.
 
-See [NOTICE.md](NOTICE.md) for complete attribution. PulsarMLX is an independent derivative; upstream authors do not endorse this repository.
+## The idea
 
-## Lineage
+A giant MoE may hold hundreds of billions of parameters while **activating only a fraction** on each token. That changes the memory problem: not every expert must stay resident for every step.
 
-`DwarfStar → NeutronStar → Pulsar → PulsarMLX`
+PulsarMLX explores a residency hierarchy:
 
-PulsarMLX is the Apple Silicon branch of that engineering lineage. It still carries Pulsar's GGUF/streaming design heritage while hosting a substantially independent MLX runtime and validation framework.
+```text
+SSD  →  compressed expert residency  →  unified memory  →  MLX  →  token
+```
 
-## It runs a real model
+Apple Silicon is interesting for that design because:
 
-**Verified baseline (committed evidence):** [Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF) **Q8_0** on **Apple MLX GPU**, under the architecture contract *Q8_0 weight dequant × f32 activation*. Research freeze tag: `v0.2.0-qwen30b-e2e-research`.
+- CPU and GPU share **unified memory**
+- **MLX** is built for Apple Silicon
+- modern Macs have high memory bandwidth
+- internal NVMe is fast
+- MoE sparsity enables cache, prefetch, and streaming of experts
 
-On that checkpoint, the architecture path has been exercised end-to-end:
+This is a **feasibility and resource-use** thesis—not a claim that Macs outrun discrete GPUs.
 
-| Milestone | What was verified |
+## Verified today
+
+**Baseline (committed evidence):** [Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF) **Q8_0** on **native Apple MLX GPU**, under the architecture contract *Q8_0 weight dequantization × f32 activation*. Research freeze tag: [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.2.0-qwen30b-e2e-research).
+
+Narrative report: **[PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md)** · raw evidence under [`docs/research/raw/`](docs/research/raw/).
+
+### What was demonstrated
+
+| Stage | Verified on Apple MLX |
 | --- | --- |
-| Device / tensors | Real Apple MLX GPU execution (no silent CPU fallback in admitted runs) |
-| Router | Real layer-0 router; deterministic top-8 expert IDs and order |
-| Experts | Complete real expert MLP (gate / up / SiLU-SwiGLU / down) |
+| Device | Native GPU execution (admitted runs: no silent CPU fallback) |
+| Checkpoint | Real Qwen3-30B-A3B Q8_0 identity (SHA-256 `4ad960d1…743c`) |
+| Router | Real layer-0 router; deterministic top-8 IDs/order |
+| Expert | Complete real expert MLP (gate / up / SiLU-SwiGLU / down) |
 | Aggregation | Top-8 routed expert aggregation |
-| MoE block | Complete MoE residual block `y = residual + MoE(RMSNorm(·))` |
+| MoE residual | Complete block `y = residual + MoE(RMSNorm(·))` |
 | Attention | Real layer-0 attention residual (`ffn_inp`) |
-| Layer | Complete transformer layer-0 (attention + MoE) |
-| Full model | Complete **48-layer** stack |
-| Logits | Full vocabulary logits after `output_norm` + `output.weight` |
-| Parity | Architecture-level **CPU ↔ MLX** agreement |
+| Layer | Complete transformer layer 0 (attention + MoE) |
+| Depth | Progressive multi-layer ladder through **all 48 layers** |
+| Head | Final `output_norm` + full-vocabulary logits |
 | Decode | Matching greedy token (CPU = MLX) |
-| Generation | Bounded short greedy generation |
+| Generation | Bounded autoregressive greedy generation |
 
-**Strongest published numerical results** (MLX vs independent architecture CPU oracle; see evidence links):
+### Exact numerical boundaries (MLX vs architecture CPU oracle)
 
-| Boundary | Approx. max abs error | Evidence |
+| Boundary | max abs error | Source |
 | --- | ---: | --- |
-| Single expert (weighted MLP) | **~7.4×10⁻⁸** | [F003](docs/research/raw/003-expert-mlp/) |
-| Top-8 aggregation | **~6.2×10⁻⁸** | [F004](docs/research/raw/004-top8-moe/) |
-| Complete layer-0 | **~1.1×10⁻⁷** | [F010](docs/research/raw/010-011-layer-stack/) |
-| Multi-layer peak (L3) | **~4.3×10⁻⁴** | [F011 summary](docs/research/raw/010-011-layer-stack/f010-f011-layer-stack-summary.json) |
-| Final layer (L47) | **~1.8×10⁻⁴** | same |
-| Full logits | **~7.6×10⁻⁶** | [F012](docs/research/raw/012-013-logits-greedy/) |
-| Top-1 / top-5 | agree (CPU ↔ MLX) | [F012](docs/research/raw/012-013-logits-greedy/), [F013](docs/research/raw/012-013-logits-greedy/f013-greedy-token-0001.json) |
-| Greedy token | **320** on both backends | [F013](docs/research/raw/012-013-logits-greedy/f013-greedy-token-0001.json) |
-| Short generation | prompt `[0, 1]` → `[320, 16]`; full `[0, 1, 320, 16]` | [F014](docs/research/raw/014-short-prompt-gen/) |
+| Single expert (weighted MLP, expert 114) | **7.375932542519337×10⁻⁸** | [F003](docs/research/raw/003-expert-mlp/f003-expert-114-parity-0001.json) |
+| Top-8 aggregation | **6.19571565163568×10⁻⁸** | [F004](docs/research/raw/004-top8-moe/f004-top8-aggregate-parity-0001.json) |
+| MoE residual block | **≈6.20×10⁻⁸** | [F005](docs/research/raw/005-moe-block/f005-moe-block-parity-0001.json) |
+| Layer-0 attention (MLX vs arch CPU) | **1.1298628832534519×10⁻⁷** | [F009](docs/research/raw/009-layer0-attention/) / [F010](docs/research/raw/010-011-layer-stack/) |
+| Complete layer 0 | **1.1298628832534519×10⁻⁷** | [F010](docs/research/raw/010-011-layer-stack/f010-complete-layer0-0001.json) |
+| 48-layer peak (layer 3) | **4.2811071364212694×10⁻⁴** | [F011 summary](docs/research/raw/010-011-layer-stack/f010-f011-layer-stack-summary.json) |
+| Final layer (47) | **1.7724422104947735×10⁻⁴** | same |
+| Full logits | **7.62939453125×10⁻⁶** | [F012](docs/research/raw/012-013-logits-greedy/f012-full-logits-0001.json) / [F013](docs/research/raw/012-013-logits-greedy/f013-greedy-token-0001.json) |
+| Greedy token | **320** (CPU = MLX); top-5 `[320, 220, 4710, 374, 1115]` | [F013](docs/research/raw/012-013-logits-greedy/f013-greedy-token-0001.json) |
+| Short generation | prompt `[0, 1]` → `[320, 16]`; full `[0, 1, 320, 16]` | [F014](docs/research/raw/014-short-prompt-gen/f014-short-prompt-gen-0001.json) |
 
-Primary narrative report: **[PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md)**.  
-Claims and raw evidence: [docs/research/](docs/research/) (ledgers `CLAIMS_LEDGER_*.md`, raw trees F002–F015).
+Claims ledgers: [`docs/research/CLAIMS_LEDGER_*.md`](docs/research/) · reviewer index: [`docs/research/REVIEWER_INDEX.md`](docs/research/REVIEWER_INDEX.md).
 
-**Not claimed:** production tokens/sec, serving quality, llama.cpp bit-parity, multi-host CI on the full GGUF, or GLM-5.2 full-model support.
+**Not claimed for Qwen:** production tokens/sec, optimized MLX-only serving, KV-cached decode, or llama.cpp bit-identical output.
 
-## Architecture oracle, not implementation mimicry
+## Correctness before speed
 
-PulsarMLX validates MLX execution against an **independent architecture-level CPU oracle**.
+PulsarMLX does not treat “text looks fine” as a correctness proof.
 
-During Qwen validation, llama.cpp's fused Q8_0 path differed by approximately **3.4×10⁻³** (max abs) from that oracle because its Q8_0 × Q8_0 matmul **requantizes activations**, while the PulsarMLX architecture contract uses **Q8_0 weight dequantization × f32 activation**.
+Validation uses:
 
-PulsarMLX and the independent CPU architecture oracle agree around the **10⁻⁷** scale at isolated MoE boundaries (and remain within frozen multi-layer tolerances through 48 layers).
+- frozen model identities
+- frozen inputs
+- independent **CPU architecture oracles**
+- intermediate graph-boundary checks
+- deterministic repetition
+- raw machine-readable evidence
+- sanitization
+- claims ledgers and reviewer indexes
+- reproducible commands
+
+```text
+checkpoint
+    ↓
+frozen input
+    ↓
+CPU architecture oracle
+    ↓
+MLX execution
+    ↓
+numerical comparison
+    ↓
+evidence
+    ↓
+verified claim
+```
+
+### Architecture oracle, not fused-kernel mimicry
+
+During Qwen validation, PulsarMLX and the independent architecture oracle agreed closely (≈10⁻⁷–10⁻⁸ at isolated MoE boundaries). llama.cpp’s fused Q8_0 path differed by about **3.43×10⁻³** max abs (cosine ≈0.99999) because that path **requantizes activations** for Q8_0×Q8_0 dots, while the PulsarMLX architecture contract is **f32 dequantized weights × f32 activations** ([F008](docs/research/raw/008-f006-root-cause/)).
 
 Therefore:
 
-- **Architecture-level numerical correctness** is the contract
-- **llama.cpp bit-parity is not a project goal**
-- Implementation-specific fused-kernel behavior is **documented**, not blindly reproduced
+- **Architecture-level numerical parity** is the contract
+- **llama.cpp bit-identical output is not a goal**
+- Implementation-specific fused numerical behavior is **documented**, not blindly reproduced
 
-llama.cpp is not “wrong”; it implements a different (fused) quant contract. Feature 008 records the root cause: [docs/research/raw/008-f006-root-cause/](docs/research/raw/008-f006-root-cause/). Feature 006 llama bit-parity remains a **preserved rejection**.
+llama.cpp is not “wrong”; it implements a different quant contract. Feature 006 llama bit-parity remains a **preserved rejection**.
 
-## Why PulsarMLX?
-
-Apple Silicon combines:
-
-- GPU compute
-- high-bandwidth unified memory
-- fast internal NVMe
-- MLX
-- CPU and GPU access to the same memory architecture
-
-Giant MoE models are unusually interesting on this platform because **only a fraction of total parameters are active per token**. PulsarMLX explores whether expert weights can be intelligently resident, cached, prefetched, or streamed from SSD while the active graph executes through MLX—without inventing throughput that has not been measured under a frozen protocol.
-
-## Architecture
+## How it works
 
 ```text
-                    ┌──────────────────────┐
-                    │      Model / GGUF    │
-                    └──────────┬───────────┘
-                               │
-                     positional / mapped I/O
-                               │
-                    ┌──────────▼───────────┐
-                    │   Expert Storage     │
-                    │ cache • stream • map │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │   PulsarMLX Runtime  │
-                    │ routing • residency  │
-                    │ budgets • telemetry  │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │         MLX          │
-                    │  Apple GPU execution │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │   Apple Silicon GPU  │
-                    │    Unified Memory    │
-                    └──────────────────────┘
+                 ┌───────────────────────┐
+                 │      GGUF Model       │
+                 │   hundreds of GB      │
+                 └───────────┬───────────┘
+                             │
+                    positional / mapped I/O
+                             │
+                 ┌───────────▼───────────┐
+                 │    Expert Storage     │
+                 │  SSD • cache • map    │
+                 └───────────┬───────────┘
+                             │
+                 ┌───────────▼───────────┐
+                 │   PulsarMLX Runtime   │
+                 │ routing • residency   │
+                 │ prefetch • telemetry  │
+                 └───────────┬───────────┘
+                             │
+                 ┌───────────▼───────────┐
+                 │          MLX          │
+                 │ Apple GPU execution   │
+                 └───────────┬───────────┘
+                             │
+                 ┌───────────▼───────────┐
+                 │    Apple Silicon      │
+                 │    Unified Memory     │
+                 └───────────────────────┘
 ```
 
-The research stack additionally keeps a pure CPU architecture oracle for parity gates. Expert addressing, admission, and telemetry scaffolding are developed for streaming budgets; fail-closed modes refuse silent CPU fallback and full-model materialization beyond declared limits (see Feature 016 research tools and [docs/research/glm52/EXPERIMENT_PROTOCOL.md](docs/research/glm52/EXPERIMENT_PROTOCOL.md)).
+The **CPU architecture oracle** is a validation path. It is not the intended optimized inference hot path.
 
-## GLM-5.2 (active research — not full support)
+## What is new in PulsarMLX
 
-Feature **016** (`016-glm52-full-execution`) targets **Unsloth GLM-5.2 UD-IQ2_XXS** multi-shard GGUF on M1 Ultra internal SSD only, under a frozen experiment protocol.
+Relative to upstream Pulsar:
 
-**Committed so far (architecture path; see [docs/research/glm52/CLAIMS_LEDGER.md](docs/research/glm52/CLAIMS_LEDGER.md)):**
-
-- Disk admission + checkpoint identity + complete multi-shard catalog (1809 tensors)
-- Dense primitives, real router / single expert / MoE aggregate probes
-- Layer-0 MLA + DSA short-context path + complete dense layer-0 residual
-- Checkpoint-free CI suite (25 tests)
-
-**Not claimed:** full 79-layer generation quality, production tok/s, M2 Max or external RAID, or “GLM support” as a product feature until C09–C11 and MLX-only performance close under the frozen protocol.
-
-Contract sketch: [docs/architecture/GLM52_CONTRACT.md](docs/architecture/GLM52_CONTRACT.md).
-
-## Evidence map
-
-| Document | Role |
+| Area | PulsarMLX work |
 | --- | --- |
-| [PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md) | Qwen F002–F015 narrative |
-| [docs/research/](docs/research/) | Claims ledgers, raw JSON, figures, protocol |
-| [docs/validation/](docs/validation/) | Device, fixture, and bounded model-slice evidence |
-| [docs/apple-silicon/](docs/apple-silicon/) | Compatibility and known limitations |
-| [NOTICE.md](NOTICE.md) / [LICENSE](LICENSE) | Attribution and MIT terms |
+| **Apple MLX runtime** | GPU device path, MLX worker/backend, model ops, Apple device validation ([`crates/mlx-backend/`](crates/mlx-backend/), `python/`) |
+| **Backend contracts** | Backend-neutral capability, tensor, routing, and evidence contracts ([`crates/backend/`](crates/backend/)) |
+| **Portable storage** | Exact positional GGUF / expert access without Linux `io_uring` ([`crates/stream/`](crates/stream/) positional path) |
+| **Architecture oracle** | Independent CPU reference execution for parity gates ([`scripts/research/`](scripts/research/)) |
+| **Evidence framework** | Schemas, raw JSON, sanitization, claims ledgers, reviewer indexes, protocols ([`docs/research/`](docs/research/), [`docs/validation/`](docs/validation/)) |
+| **Unified-memory runtime** | Expert-cache / budget / telemetry / fail-closed no-CPU-fallback scaffolding (Feature 016 research path) |
 
-## Verify on Apple Silicon
+Unfinished or partial pieces (GLM generation, MLX-only serving, KV cache) are **not** marked complete.
 
-Host probes (no install required):
+## Built on Pulsar
+
+PulsarMLX would not exist without **[Pulsar](https://github.com/giannisanni/pulsar)**, created by **Giannis Anni** and contributors.
+
+Pulsar established much of the foundation that inspired this project: giant-MoE SSD expert streaming, the Linux/CUDA runtime, GGUF support, quantization work, multi-architecture model implementations, and substantial GLM / MLA / DSA architecture knowledge.
+
+PulsarMLX **preserves**:
+
+- Pulsar’s MIT license
+- attribution and notices
+- Git history
+- the inherited Linux/CUDA implementation
+- upstream architectural contributions
+
+The Apple Silicon runtime, MLX execution backend, portable storage path, architecture-oracle methodology, research framework, and Apple unified-memory work are developed in **PulsarMLX by Mahdi Hedhli and contributors**.
+
+See [NOTICE.md](NOTICE.md). Upstream authors do **not** endorse this repository.
+
+## Lineage
+
+```text
+DwarfStar / ds4
+       ↓
+  NeutronStar
+       ↓
+     Pulsar
+       ↓
+   PulsarMLX
+```
+
+- [ds4 / DwarfStar lineage](https://github.com/antirez/ds4) explored giant-model inference (including early Mac work)
+- [NeutronStar](https://github.com/giannisanni/neutronstar) evolved that line
+- [Pulsar](https://github.com/giannisanni/pulsar) became an independent Rust/CUDA giant-MoE engine
+- **PulsarMLX** carries the lineage onto Apple Silicon through MLX
+
+CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
+
+## Capability status
+
+| Capability | Status |
+| --- | --- |
+| Apple MLX GPU execution | ✅ Verified |
+| Portable positional GGUF access | ✅ Verified |
+| Q8_0 reference / architecture execution | ✅ Verified |
+| Real Qwen router (layer 0) | ✅ Verified |
+| Real expert MLP | ✅ Verified |
+| Top-8 MoE aggregation | ✅ Verified |
+| Complete MoE residual block | ✅ Verified |
+| Attention (layer 0) | ✅ Verified |
+| Complete transformer layer | ✅ Verified |
+| Full 48-layer Qwen execution | ✅ Verified |
+| Full vocabulary logits | ✅ Verified |
+| Deterministic greedy token | ✅ Verified |
+| Bounded generation | ✅ Verified |
+| Architecture CPU oracle | ✅ Verified |
+| Evidence / claims / reviewer indexes | ✅ Verified |
+| Optimized MLX-only generation | 🚧 |
+| KV-cached decode | 🚧 |
+| GLM-5.2 full stack | 🚧 Active bring-up (see below) |
+| OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
+| Production readiness | ❌ Not claimed |
+| Production tokens/sec | ❌ Not claimed |
+
+## The next giant: GLM-5.2
+
+Feature **016** (`016-glm52-full-execution`) targets **Unsloth GLM-5.2 UD-IQ2_XXS** multi-shard GGUF on **M1 Ultra internal SSD only**, under a frozen protocol.
+
+**From frozen contract + checkpoint identity** ([`docs/architecture/GLM52_CONTRACT.md`](docs/architecture/GLM52_CONTRACT.md), [`docs/validation/glm52-checkpoint.json`](docs/validation/glm52-checkpoint.json)):
+
+| Field | Value |
+| --- | --- |
+| Architecture | `glm-dsa` (MLA + DSA) |
+| Layers | **79** |
+| Experts | **256** routed, top-**8**, **1** shared |
+| Embedding | **6144** |
+| Quant | UD-IQ2_XXS, 6 shards |
+| Checkpoint size | **238,458,632,928** bytes (~222 GiB) |
+| Family scale (published) | ~744B total / ~40B active per token (family description; structure above is what we freeze) |
+
+GLM is the model that **forces** SSD-backed expert residency rather than “fit the whole quant in RAM.”
+
+### Deepest **committed** GLM boundary
+
+| Boundary | Committed status |
+| --- | --- |
+| Disk admission + checkpoint identity | ✅ |
+| Catalog (1809 tensors, 0 bad offsets) | ✅ C01 |
+| Dense primitives | ✅ C02 |
+| Real router (layer 3 probe) | ✅ C03 |
+| Single expert + shared | ✅ C04 |
+| MoE aggregate | ✅ C05 |
+| MLA (layer 0) | ✅ C06 |
+| DSA policy / short-ctx range-fill | ✅ C07 |
+| Complete dense layer 0 | ✅ C08 |
+| Single-token **79-layer** depth ladder (finite) | ✅ C09 |
+| Full-vocab logits after 79 layers | ✅ C10 |
+| Multi-token greedy generation | 🚧 **not** a committed final claim (work may be in flight; only raw evidence counts when committed) |
+| MLX-only performance | ❌ Not claimed |
+
+Evidence: [`docs/research/glm52/`](docs/research/glm52/) · ledger: [`docs/research/glm52/CLAIMS_LEDGER.md`](docs/research/glm52/CLAIMS_LEDGER.md).
+
+**Not claimed:** GLM product support, generation quality, tok/s, M2 Max, external RAID, or CUDA bit-parity.
+
+## Performance: not the point yet
+
+Correctness has been established **before** optimization.
+
+The full-Qwen research path often runs **CPU oracle and MLX**, and may replay more work than a production decoder. Those timings (e.g. dual 48-layer stack ≈962 s under F015) are **validation timings**, not advertised inference performance.
+
+Optimization roadmap (intended order):
+
+1. MLX-only execution
+2. KV caching
+3. Incremental decode
+4. Expert residency + prefetch
+5. Bounded SSD streaming
+6. Cache-aware scheduling
+7. Serving
+
+No tokens/sec are published until a committed benchmark meets the evidence rules.
+
+## Quick start
+
+### Requirements
+
+- Apple Silicon Mac (arm64)
+- Recent macOS, Xcode CLT
+- Rust toolchain (`cargo`)
+- Python 3.12+ with MLX for worker-backed checks (see `python/` lockfiles)
+
+### Clone
 
 ```sh
-sw_vers
-uname -m
-sysctl -n hw.memsize
-df -h .
-xcode-select -p
-rustc -vV
-cargo -V
+git clone https://github.com/MahdiHedhli/PulsarMLX.git
+cd PulsarMLX
 ```
 
-Workspace baseline:
+### Baseline
 
 ```sh
 cargo check --workspace --all-targets
 cargo test --workspace --no-fail-fast
 ```
 
-Checkpoint-free GLM research suite (no multi-hundred-GB model required):
+### Fixture / device validation (no multi-hundred-GB download)
 
 ```sh
-# from a Python env with the research path on PYTHONPATH
-python -m pytest scripts/research/tests/test_glm52_checkpoint_free.py -q
+PYTHONPATH=python uv run python -m unittest discover \
+  -s python/pulsar_mlx_worker/tests -v
+
+cargo run -p mlx-backend --bin pulsar-mlx -- device-smoke \
+  --backend apple-mlx --device gpu \
+  --evidence "${TMPDIR:-/tmp}/pulsarmlx-device-smoke.json"
+
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
+  --manifest fixtures/mlx/manifest.json \
+  --evidence "${TMPDIR:-/tmp}/pulsarmlx-tensor-fixtures.json"
+
+cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
+  --fixture fixtures/mlx/routed-moe-v1.json \
+  --evidence "${TMPDIR:-/tmp}/pulsarmlx-synthetic-moe.json"
+
+cargo test -p stream --test positional_source
 ```
 
-Real-checkpoint research runs require an external GGUF (not in Git), identity checks, and the frozen protocol for the feature under test. Model files stay outside the repository.
+Real-checkpoint research runs need an external GGUF, identity checks, and the feature’s frozen protocol. Weights stay **out of Git**. See [docs/validation/README.md](docs/validation/README.md) and [specs/001-apple-silicon-mlx/quickstart.md](specs/001-apple-silicon-mlx/quickstart.md).
 
-Spec Kit features live under `specs/` (001–015 Qwen ladder; 016 GLM). Continue from the first incomplete task in the active feature; do not widen claim scope without new evidence.
+## Repository map
 
-## Inherited upstream (Linux + CUDA)
+```text
+crates/backend/          backend-neutral contracts
+crates/mlx-backend/      Apple MLX runtime
+crates/stream/           portable / expert storage
+crates/quant/            quantization + CPU reference ops
+crates/engine/           inherited Pulsar engine (CUDA/Linux path)
+crates/serve/            inherited OpenAI-compatible serve (Linux)
+python/                  MLX worker integration
+scripts/research/        oracles, parity runners, GLM research tools
+docs/research/           evidence, claims, reviewer indexes
+docs/architecture/       architecture contracts (e.g. GLM-5.2)
+docs/validation/         Apple bring-up evidence index
+docs/upstream/           inherited Pulsar docs (not Apple results)
+specs/                   Spec Kit feature history
+```
 
-This repository **preserves** Pulsar's Linux/CUDA giant-MoE engine, GGUF tooling, tokenizer paths, and related history. Upstream model tables, CUDA tok/s figures, and multi-architecture bring-up notes remain **Pulsar / Linux+CUDA documentation**—they have **not** been re-measured as PulsarMLX Apple results.
+## Reproducibility
 
-For the original engine, models, and CUDA performance methodology, see [giannisanni/pulsar](https://github.com/giannisanni/pulsar).
+A public PulsarMLX claim should resolve to:
 
-## License
+1. a **commit**
+2. **raw evidence**
+3. an **oracle / reference contract**
+4. a **reproduction command**
 
-MIT. Copyright and third-party notices: [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
+Start here:
 
-Portions of retained CUDA kernels derive from `ds4` and `ggml` (MIT); their notices remain in affected source files.
+| Artifact | Path |
+| --- | --- |
+| Apple runtime report | [PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md) |
+| Experiment protocol | [docs/research/EXPERIMENT_PROTOCOL.md](docs/research/EXPERIMENT_PROTOCOL.md) |
+| Claims ledgers | [docs/research/CLAIMS_LEDGER*.md](docs/research/) |
+| Reviewer index | [docs/research/REVIEWER_INDEX.md](docs/research/REVIEWER_INDEX.md) |
+| Raw evidence | [docs/research/raw/](docs/research/raw/) |
+| Validation index | [docs/validation/README.md](docs/validation/README.md) |
+| GLM research | [docs/research/glm52/](docs/research/glm52/) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+## Inherited upstream material
+
+Detailed Pulsar Linux/CUDA model catalogs, CUDA benchmark tables, acquisition notes, and historical roadmap text live in:
+
+**[docs/upstream/PULSAR_INHERITED.md](docs/upstream/PULSAR_INHERITED.md)**
+
+Those are **historical/inherited Pulsar results**, not PulsarMLX Apple benchmarks.
+
+## Roadmap
+
+1. Finish GLM-5.2 correctness (generation + MLX-only path under the frozen protocol)
+2. Establish MLX-only execution for the verified graph
+3. KV-cached incremental decode
+4. Expert residency + prefetch under memory budgets
+5. SSD streaming optimization
+6. Reproducible performance benchmarks (then—and only then—tok/s)
+7. OpenAI-compatible serving on Apple (when justified by evidence)
+8. Cross-machine validation
+9. Optional M2 Max + external NVMe RAID study (explicitly out of current GLM scope)
+
+## License & attribution
+
+MIT licensed. See [LICENSE](LICENSE).
+
+PulsarMLX is derived from **Pulsar** by **Giannis Anni and contributors** and preserves applicable upstream notices and history.
+
+**Apple Silicon / MLX development:** Mahdi Hedhli and contributors.
+
+See [NOTICE.md](NOTICE.md) for detailed attribution.
