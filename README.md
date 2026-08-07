@@ -1,42 +1,156 @@
+![PulsarMLX](docs/assets/pulsarmlx-poster.png)
+
 # PulsarMLX
 
-![pulsar](docs/assets/pulsar-poster.png)
+**Giant MoE inference on Apple Silicon.**
 
-> **Project status:** PulsarMLX is an experimental Apple Silicon and MLX
-> derivative of [Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar).
-> It preserves Pulsar's MIT license, attribution, Git history, and Linux/CUDA
-> path while an additive Apple backend is developed. Bounded MLX GPU device,
-> tensor, portable-storage, synthetic routed-MoE, one external Qwen
-> checkpoint tensor-prefix proof, Feature 002 real layer-0 **router** parity, and Feature 003 single
-> routed expert **full MLP** parity are verified. End-to-end model inference is not implemented or
-> verified.
+PulsarMLX is an experimental Apple Silicon inference engine for oversized Mixture-of-Experts models. It combines MLX GPU execution, unified-memory-aware expert residency, SSD-backed tensor streaming, and an architecture-level correctness framework designed to make models larger than available memory practical on Macs.
 
-## PulsarMLX capability status
+It is **not** production-ready. Claims below are limited to committed evidence.
 
-| Category | Current status |
+## Project identity
+
+> PulsarMLX began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisanni/pulsar), created by Giannis Anni and contributors. It preserves Pulsar's MIT license, Git history, original Linux/CUDA runtime, and important giant-MoE architecture work.
+>
+> The Apple Silicon runtime, MLX execution backend, portable storage path, architecture-oracle methodology, reproducible evidence framework, and ongoing unified-memory/SSD streaming work are developed independently in PulsarMLX by Mahdi Hedhli and contributors.
+
+See [NOTICE.md](NOTICE.md) for complete attribution. PulsarMLX is an independent derivative; upstream authors do not endorse this repository.
+
+## Lineage
+
+`DwarfStar → NeutronStar → Pulsar → PulsarMLX`
+
+PulsarMLX is the Apple Silicon branch of that engineering lineage. It still carries Pulsar's GGUF/streaming design heritage while hosting a substantially independent MLX runtime and validation framework.
+
+## It runs a real model
+
+**Verified baseline (committed evidence):** [Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF) **Q8_0** on **Apple MLX GPU**, under the architecture contract *Q8_0 weight dequant × f32 activation*. Research freeze tag: `v0.2.0-qwen30b-e2e-research`.
+
+On that checkpoint, the architecture path has been exercised end-to-end:
+
+| Milestone | What was verified |
 | --- | --- |
-| Inherited upstream capabilities | Pulsar's Linux, CUDA, `io_uring`, GGUF, tokenizer, quantization, serving, and giant-MoE paths are preserved with their original history. The detailed model and performance descriptions below are upstream claims and were not rerun on this Apple host. |
-| Verified PulsarMLX capabilities | Native MLX 0.32.0 evidence covers device proof, bounded tensor fixtures, strict Q8_0 operations, portable positional source, synthetic f32 routed-MoE, and one evaluated Qwen3MoE Q8_0 gate-projection prefix. Feature 002 additionally verifies the complete real Qwen3MoE **layer-0 router** (`blk.0.ffn_gate_inp.weight`) on Apple MLX GPU against an independent CPU oracle: exact top-8 IDs/order, full 128-output metrics within frozen tolerances, twenty deterministic measured hashes, primary plus clean-checkout reproduction, and package claims F002-C01–C03. Workspace baseline at closeout: 245 active tests passed, 2 ignored, 0 failed. |
-| Planned or deferred | Expert MLP execution, routed expert aggregation, complete MoE block, full layer/model, generation, and serving require a new explicit Spec Kit feature. The initial Feature 001 benchmark decision remains `actual_status: not_run` with zero performance claim. |
-| Unsupported or unverified | End-to-end Qwen tokenization/embeddings as a serving path, complete experts or layers, language-model logits, token generation, macOS serving, giant-model Apple inference, custom Metal kernels, Apple multi-device execution, and tokens/sec remain unsupported. Linux/CUDA runtime validation of fork changes remains unavailable and unverified. |
+| Device / tensors | Real Apple MLX GPU execution (no silent CPU fallback in admitted runs) |
+| Router | Real layer-0 router; deterministic top-8 expert IDs and order |
+| Experts | Complete real expert MLP (gate / up / SiLU-SwiGLU / down) |
+| Aggregation | Top-8 routed expert aggregation |
+| MoE block | Complete MoE residual block `y = residual + MoE(RMSNorm(·))` |
+| Attention | Real layer-0 attention residual (`ffn_inp`) |
+| Layer | Complete transformer layer-0 (attention + MoE) |
+| Full model | Complete **48-layer** stack |
+| Logits | Full vocabulary logits after `output_norm` + `output.weight` |
+| Parity | Architecture-level **CPU ↔ MLX** agreement |
+| Decode | Matching greedy token (CPU = MLX) |
+| Generation | Bounded short greedy generation |
 
-The Qwen results are named real-checkpoint **intermediates** (tensor prefix and
-layer-0 router), not complete-model inference. See the [validation
-index](docs/validation/README.md), [compatibility
-matrix](docs/apple-silicon/COMPATIBILITY.md), [Feature 002 research
-results](docs/research/RESULTS.md), [claims ledger](docs/research/CLAIMS_LEDGER.md),
-[device evidence](docs/validation/mlx-device-smoke.json), [tensor
-evidence](docs/validation/mlx-tensor-fixtures.json), [synthetic MoE
-evidence](docs/validation/synthetic-moe-v1.json), [portable-source
-evidence](docs/validation/portable-expert-source.json), [trusted Qwen
-reference](docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json),
-[bounded Apple Qwen result](docs/validation/qwen3-30b-a3b-q8_0-slice.json),
-[benchmark decision](docs/validation/benchmark-initial.json), and [known
-limitations](docs/apple-silicon/KNOWN_LIMITATIONS.md) for the exact boundaries.
+**Strongest published numerical results** (MLX vs independent architecture CPU oracle; see evidence links):
 
-## Verify and continue development
+| Boundary | Approx. max abs error | Evidence |
+| --- | ---: | --- |
+| Single expert (weighted MLP) | **~7.4×10⁻⁸** | [F003](docs/research/raw/003-expert-mlp/) |
+| Top-8 aggregation | **~6.2×10⁻⁸** | [F004](docs/research/raw/004-top8-moe/) |
+| Complete layer-0 | **~1.1×10⁻⁷** | [F010](docs/research/raw/010-011-layer-stack/) |
+| Multi-layer peak (L3) | **~4.3×10⁻⁴** | [F011 summary](docs/research/raw/010-011-layer-stack/f010-f011-layer-stack-summary.json) |
+| Final layer (L47) | **~1.8×10⁻⁴** | same |
+| Full logits | **~7.6×10⁻⁶** | [F012](docs/research/raw/012-013-logits-greedy/) |
+| Top-1 / top-5 | agree (CPU ↔ MLX) | [F012](docs/research/raw/012-013-logits-greedy/), [F013](docs/research/raw/012-013-logits-greedy/f013-greedy-token-0001.json) |
+| Greedy token | **320** on both backends | [F013](docs/research/raw/012-013-logits-greedy/f013-greedy-token-0001.json) |
+| Short generation | prompt `[0, 1]` → `[320, 16]`; full `[0, 1, 320, 16]` | [F014](docs/research/raw/014-short-prompt-gen/) |
 
-Inspect the host without installing anything:
+Primary narrative report: **[PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md)**.  
+Claims and raw evidence: [docs/research/](docs/research/) (ledgers `CLAIMS_LEDGER_*.md`, raw trees F002–F015).
+
+**Not claimed:** production tokens/sec, serving quality, llama.cpp bit-parity, multi-host CI on the full GGUF, or GLM-5.2 full-model support.
+
+## Architecture oracle, not implementation mimicry
+
+PulsarMLX validates MLX execution against an **independent architecture-level CPU oracle**.
+
+During Qwen validation, llama.cpp's fused Q8_0 path differed by approximately **3.4×10⁻³** (max abs) from that oracle because its Q8_0 × Q8_0 matmul **requantizes activations**, while the PulsarMLX architecture contract uses **Q8_0 weight dequantization × f32 activation**.
+
+PulsarMLX and the independent CPU architecture oracle agree around the **10⁻⁷** scale at isolated MoE boundaries (and remain within frozen multi-layer tolerances through 48 layers).
+
+Therefore:
+
+- **Architecture-level numerical correctness** is the contract
+- **llama.cpp bit-parity is not a project goal**
+- Implementation-specific fused-kernel behavior is **documented**, not blindly reproduced
+
+llama.cpp is not “wrong”; it implements a different (fused) quant contract. Feature 008 records the root cause: [docs/research/raw/008-f006-root-cause/](docs/research/raw/008-f006-root-cause/). Feature 006 llama bit-parity remains a **preserved rejection**.
+
+## Why PulsarMLX?
+
+Apple Silicon combines:
+
+- GPU compute
+- high-bandwidth unified memory
+- fast internal NVMe
+- MLX
+- CPU and GPU access to the same memory architecture
+
+Giant MoE models are unusually interesting on this platform because **only a fraction of total parameters are active per token**. PulsarMLX explores whether expert weights can be intelligently resident, cached, prefetched, or streamed from SSD while the active graph executes through MLX—without inventing throughput that has not been measured under a frozen protocol.
+
+## Architecture
+
+```text
+                    ┌──────────────────────┐
+                    │      Model / GGUF    │
+                    └──────────┬───────────┘
+                               │
+                     positional / mapped I/O
+                               │
+                    ┌──────────▼───────────┐
+                    │   Expert Storage     │
+                    │ cache • stream • map │
+                    └──────────┬───────────┘
+                               │
+                    ┌──────────▼───────────┐
+                    │   PulsarMLX Runtime  │
+                    │ routing • residency  │
+                    │ budgets • telemetry  │
+                    └──────────┬───────────┘
+                               │
+                    ┌──────────▼───────────┐
+                    │         MLX          │
+                    │  Apple GPU execution │
+                    └──────────┬───────────┘
+                               │
+                    ┌──────────▼───────────┐
+                    │   Apple Silicon GPU  │
+                    │    Unified Memory    │
+                    └──────────────────────┘
+```
+
+The research stack additionally keeps a pure CPU architecture oracle for parity gates. Expert addressing, admission, and telemetry scaffolding are developed for streaming budgets; fail-closed modes refuse silent CPU fallback and full-model materialization beyond declared limits (see Feature 016 research tools and [docs/research/glm52/EXPERIMENT_PROTOCOL.md](docs/research/glm52/EXPERIMENT_PROTOCOL.md)).
+
+## GLM-5.2 (active research — not full support)
+
+Feature **016** (`016-glm52-full-execution`) targets **Unsloth GLM-5.2 UD-IQ2_XXS** multi-shard GGUF on M1 Ultra internal SSD only, under a frozen experiment protocol.
+
+**Committed so far (architecture path; see [docs/research/glm52/CLAIMS_LEDGER.md](docs/research/glm52/CLAIMS_LEDGER.md)):**
+
+- Disk admission + checkpoint identity + complete multi-shard catalog (1809 tensors)
+- Dense primitives, real router / single expert / MoE aggregate probes
+- Layer-0 MLA + DSA short-context path + complete dense layer-0 residual
+- Checkpoint-free CI suite (25 tests)
+
+**Not claimed:** full 79-layer generation quality, production tok/s, M2 Max or external RAID, or “GLM support” as a product feature until C09–C11 and MLX-only performance close under the frozen protocol.
+
+Contract sketch: [docs/architecture/GLM52_CONTRACT.md](docs/architecture/GLM52_CONTRACT.md).
+
+## Evidence map
+
+| Document | Role |
+| --- | --- |
+| [PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md) | Qwen F002–F015 narrative |
+| [docs/research/](docs/research/) | Claims ledgers, raw JSON, figures, protocol |
+| [docs/validation/](docs/validation/) | Device, fixture, and bounded model-slice evidence |
+| [docs/apple-silicon/](docs/apple-silicon/) | Compatibility and known limitations |
+| [NOTICE.md](NOTICE.md) / [LICENSE](LICENSE) | Attribution and MIT terms |
+
+## Verify on Apple Silicon
+
+Host probes (no install required):
 
 ```sh
 sw_vers
@@ -46,535 +160,34 @@ df -h .
 xcode-select -p
 rustc -vV
 cargo -V
-specify --version
 ```
 
-Run the macOS workspace baseline:
+Workspace baseline:
 
 ```sh
 cargo check --workspace --all-targets
 cargo test --workspace --no-fail-fast
 ```
 
-Run the committed non-model validation slices on a prepared native MLX host:
+Checkpoint-free GLM research suite (no multi-hundred-GB model required):
 
 ```sh
-PYTHONPATH=python uv run python -m unittest discover \
-  -s python/pulsar_mlx_worker/tests -v
-cargo test -p stream --test positional_source
-cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
-  --manifest fixtures/mlx/manifest.json \
-  --evidence "${TMPDIR:-/tmp}/pulsarmlx-tensor-fixtures.json"
-cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
-  --fixture fixtures/mlx/routed-moe-v1.json \
-  --evidence "${TMPDIR:-/tmp}/pulsarmlx-synthetic-moe-v1.json"
+# from a Python env with the research path on PYTHONPATH
+python -m pytest scripts/research/tests/test_glm52_checkpoint_free.py -q
 ```
 
-The external-model command and its mandatory identity, memory, clean-worktree,
-and no-fallback stop conditions are in the [Apple MLX validation
-quickstart](specs/001-apple-silicon-mlx/quickstart.md). Model files remain
-outside Git.
+Real-checkpoint research runs require an external GGUF (not in Git), identity checks, and the frozen protocol for the feature under test. Model files stay outside the repository.
 
-Locate the Spec Kit source of truth and inspect the active feature:
+Spec Kit features live under `specs/` (001–015 Qwen ladder; 016 GLM). Continue from the first incomplete task in the active feature; do not widen claim scope without new evidence.
 
-```sh
-specify integration status --json
-cat .specify/feature.json
-find specs/001-apple-silicon-mlx -maxdepth 2 -type f -print
-sed -n '1,220p' specs/001-apple-silicon-mlx/spec.md
-sed -n '1,260p' specs/001-apple-silicon-mlx/tasks.md
-```
+## Inherited upstream (Linux + CUDA)
 
-Continue implementation from the first incomplete active Spec Kit task. The
-implementation command is `$speckit-implement`; validation evidence must stay
-bounded to the capability actually exercised.
+This repository **preserves** Pulsar's Linux/CUDA giant-MoE engine, GGUF tooling, tokenizer paths, and related history. Upstream model tables, CUDA tok/s figures, and multi-architecture bring-up notes remain **Pulsar / Linux+CUDA documentation**—they have **not** been re-measured as PulsarMLX Apple results.
 
-## Inherited upstream overview (Linux + CUDA)
-
-Upstream Pulsar is an inference engine for giant Mixture-of-Experts models on hardware that
-has no business running them. The routed experts live on NVMe and stream
-per token; everything that makes decisions stays resident in VRAM. No
-llama.cpp anywhere in the stack.
-
-> The technical descriptions, model results, benchmarks, requirements,
-> acquisition examples, and roadmap below are retained upstream documentation
-> for the Linux/CUDA runtime. They have not been reproduced as PulsarMLX Apple
-> or MLX results.
-
-Successor to [NeutronStar](https://github.com/giannisanni/neutronstar),
-rebuilt as its own engine in Rust + CUDA instead of a C fork. A pulsar is
-a neutron star that spins fast and emits beams.
-
-## Inherited upstream capabilities (Linux + CUDA)
-
-Eleven model architectures running on consumer GPUs: **Hy3 295B**
-(hy-v3, GQA), **GLM-5.2 743B** (glm-dsa, MLA + DSA sparse attention),
-**Kimi K2.7 1T** (deepseek2, MLA + YaRN), **MiniMax M3** (partial
-rotary, swiglu_oai), **Gemma 4 26B-A4B** (interleaved sliding-window
-attention, dual GELU FFN), **TML Inkling 1T** (no rope, learned
-relative-position bias, shortconv streams, sink router; supported the
-day after release), **Qwen3-235B-A22B** (qwen3moe, softmax router;
-correct output on its first-ever run), **DeepSeek-V4-Flash 284B**
-(deepseek4: 4-stream hyper-connection residual with Sinkhorn gates,
-sink attention over a sliding window plus streaming compressed KV,
-fp8/fp4 cache quantization-aware sims, token-id hash routing on the
-early layers; also correct output on its first-ever run), and
-**Qwen3.6-35B-A3B** (qwen35moe hybrid: Gated DeltaNet linear attention
-with O(1) recurrent state on 3 of every 4 layers, sigmoid-gated full
-attention on the rest - 262k context with KV on only 10 of 40 layers,
-needle recall verified at 45k tokens with 19.6 tok/s decode at that
-depth; prefer K-quants for it: the Q4_K_XL decodes at 51.8 tok/s where
-the smaller Q3_K_XL manages 36, because iq3's codebook lookups are
-decode compute the simple K-quant shifts don't pay), and
-**gpt-oss 20B** (gpt-oss: per-head attention sinks in the softmax
-denominator, alternating sliding/full attention, biases on both the
-attention projections and every expert, MXFP4 routed experts), and
-**Laguna-S-2.1 118B** (laguna: hybrid attention with a full-window
-layer every fourth and sliding-window 512 elsewhere, a per-head output
-gate, and per-layer-type RoPE — YaRN on the full-window layers, plain
-on the sliding ones; the imatrix IQ2_XXS build decodes faster than the
-Q4_K_M because more experts stay resident at 36GB), and
-**Ornith-397B** (a `qwen35moe` hybrid at 397B: Q2_K experts on a 512-way
-sigmoid-gated router with a shared expert, Gated DeltaNet linear
-attention as above; runs end-to-end on a single 32GB GPU after a load-site
-fix — see `docs/ornith-q2k-cuda-crash-fix.md`). Reference
-box: RTX 5060 Ti 16GB + RTX 4060 Ti 16GB, Ryzen 9900X, 30GB RAM, one
-Gen5 NVMe.
-
-| Model | Total | Active / token | gguf | Decode, warm | vs ds4, same box |
-|---|---|---|---|---|---|
-| Gemma 4 26B-A4B | 26B | 4B | 16GB (Q4_K_XL) | **41 tok/s** | – |
-| gpt-oss 20B | 20B | 3.6B (top-4 of 32) | 12GB (Q8_0 attn + MXFP4 experts) | **21.2 tok/s** | – |
-| Qwen3.6-35B-A3B | 35B | 3B (top-8 of 256 + shared) | 22GB (Q4_K_XL) | **51.8 tok/s** | – |
-| ThinkingCap-Qwen3.6-27B (dense) | 27B | 27B | 16GB (Q4_K_M) | **18.7 tok/s** (27.8 w/ nextn MTP) | – |
-| Laguna-S-2.1 | 118B | 8B (top-10 of 256 + shared) | 36GB (IQ2_XXS, imatrix) | **17.3 tok/s** (22.4 w/ CPU lane) | – |
-| DeepSeek-V4-Flash | 284B | ~8B (top-6 of 256 + shared) | 87GB (ds4 recipe) | **8.2 tok/s** (11.3 w/ CPU lane) | – |
-| Hy3 295B | 295B | 21B (top-8 of 192) | 79GB (IQ2_XXS) | **6.0 tok/s** (6.9 w/ CPU lane) | 0.64–0.70 |
-| Qwen3-235B-A22B | 235B | 22B (top-8 of 128) | 83GB (Q2_K_XL) | **5.3 tok/s** (6.4 w/ CPU lane) | – |
-| MiniMax M3 | 428B | 23B | 134GB (Q2_K_XL) | **5.0 tok/s** (5.9 w/ CPU lane) | – |
-| GLM-5.2 | 744B | 40B | 211GB (ds4 recipe) | **2.7 tok/s** (2.8 w/ CPU lane) | 0.40 |
-| TML Inkling | 975B | 41B (6 + 2 shared) | 296GB (Q2_K_XL) | **1.6 tok/s** (1.75 w/ CPU lane) | – |
-| Kimi K2.7 Code† | ~1T | 32B | 339GB (Q2_K_XL) | **1.3 tok/s** | – |
-| Ornith-397B†† | 397B | ~38B (top-10 of 512 + shared) | 149GB (Q2_K exp + Q8_0) | *not benched* | – |
-
-All figures are sustained warm decode at n=64, temp 0, second run onward.
-The resident tier is placed from the popularity census, which builds over
-the first full run, so measure with a warm census. Shorter generations read
-higher because the per-token SSD miss rate is still climbing to steady state:
-Hy3 does 8.2 tok/s at n=32 versus 6.0 at n=64. Gemma is small enough that its
-whole quantized weight set lives resident in the tier, so warm Gemma is
-compute-bound, not streaming-bound.
-
-† Measured before the n=64 standardization and not yet re-run (model deleted
-to free disk); the sustained rate is likely a little lower than shown, for
-the same reason Hy3 reads 8.2 at n=32 against 6.0 at n=64.
-
-†† Ornith-397B was brought up on a different box (3090 + V100 32GB GPU, 128Gb),
-not the reference 2×16GB rig, and only a short cold-census 15-token run exists
-(`-p "The capital of France is" -n 15` → "Paris.", correct, 0.82 tok/s cold).
-That is a bring-up smoke test, not a benchmark: n=15 off a cold census with the
-disk as the floor. The rate column stays empty until `scripts/bench.sh` has run
-on it, per the rule that every number in this table comes from that script and
-nowhere else. The 149GB gguf
-size is the experts-Q2_K / rest-Q8_0 mix from `pulsar-quant --map "_exps.=q2_k"
---default q8_0`.
-
-ThinkingCap-27B is pulsar's first fully-dense arch and runs a different
-mode entirely: no streaming, no tiers - the model fits across both
-cards, so each layer's whole stack (attention or Gated DeltaNet, KV,
-FFN triple) is resident on ONE owner card in native K-quant, evaluated
-with warp-cooperative Q4_K/Q6_K matmuls on q8_K activations, and the
-residual stream crosses cards twice per 16-token chunk. Speculative
-decode rides the model's own nextn/MTP layer (`PULSAR_MTP=1`, depth via
-`PULSAR_MTP_DEPTH`, 85% acceptance at depth 3 on greedy); verify rounds
-snapshot the recurrent GDN state, since unlike KV rows a delta-rule
-state can't be overwritten after a rejected draft. The port went 9.7 ->
-18.3 tok/s base (27.5 with MTP) in one arc: per-layer card ownership,
-K-quant-native attention, a warp token tile so verify/prefill rows
-share one weight read (ncu: L1-bound at 94%, DRAM 28% - the next lever
-is the int8-MMA path the MoE verify unions already use).
-
-DeepSeek-V4-Flash runs its state machines (sliding-window ring,
-streaming KV compressor, Sinkhorn hyper-connection gates) fully on
-device and prefills in batched 16-token chunks (~26 tok/s prefill
-with the CPU lane at shallow positions; past ~2K context the indexer
-top-k engages and the batched path used to fall back to single-token
-steps, decaying prefill to decode speed ~8 tok/s. Deep chunks now stay
-batched with per-token visibility masks - a 3.4K prompt drops 249s to
-137s, larger prompts save proportionally more. The float delta vs
-single-stepping that briefly kept this opt-in was root-caused to
-matmul_q8_0's batch-size kernel dispatch (dp4a vs int8-MMA accumulate
-in different orders, tolerance-tested at 1e-3) - the same documented
-drift class as the tiers and grouped MoE, present in every chunked
-prefill. PULSAR_NO_DEEP_BATCH=1 restores exact single-stepping. one router readback and one expert union per
-chunk-layer, with the per-token ring/compressor/attention interleave
-preserved bit-exactly). Long-context retrieval verified by needle
-recall at 2.4k ctx through compressed rows.
-
-Long context on the GQA models decodes through a split-K attention
-kernel: past 4k visible rows the position scan fans out across blocks
-(2k rows per split, unnormalized online-softmax partials, one combine
-pass) instead of serializing inside a single block per head. Measured
-on Qwen3.6 at 45k tokens: needle recall correct, decode 3.7 to 19.6
-tok/s (5.3x); at 10.8k tokens recall is also verified. Short contexts
-take the original kernel unchanged, so bit-exact gates and the 51.8
-tok/s bench are untouched. Known remaining lever: each q-head group
-re-reads its shared kv-head rows, so a kv-head-centric layout has
-several-fold headroom left at depth.
-
-A CPU expert lane (opt-in, `PULSAR_CPU=1`) computes host-cache-hit
-experts on the CPU instead of uploading them: AVX2 iq2_xxs and q2_K
-x q8_K kernels sustain 42 GB/s across the 9900X's cores, above the
-28.7 GB/s the same bytes would cost crossing PCIe, and the dots
-overlap the GPU resolve. Host-cached experts stop competing for
-upload bandwidth and VRAM cache slots, so both effects compound:
-DeepSeek-V4-Flash measures 8.2 to 11.3 tok/s, Hy3 6.0 to 6.9, GLM-5.2
-2.7 to 2.8 (re-measured 2026-07-19 after an iq2_xxs correctness fix:
-the CPU dot had been indexing the encoder-unit grid instead of the
-dequant lattice, scaling every lane partial by ~1/9 per dot - GLM
-surfaced it as repetition loops, and a one-row GPU-vs-CPU arbiter now
-pins the dot to the kernel bit-for-bit-scale; earlier lane numbers
-were measured with the broken dot and are superseded by these).
-GLM's pair moved again on 2026-07-25 when a prefill prefetch bug was
-fixed, and the lane's margin there narrowed from +41% to +6%: much of
-what the lane had been buying on that model was insulation from the
-flood's cache thrashing, not upload bandwidth. Covers iq2_xxs, iq2_xs, iq3_xxs, q2_K, q3_K and q4_K
-expert tensors, which spans the ds4 recipes and the UD-Q2_K_XL mixes:
-Qwen3-235B 5.3 to 6.4 (+21%), TML Inkling 1.63 to 1.75 (+7%),
-MiniMax M3 5.0 to 5.9 (+18%; its IQ mix engages on 54 of 57 MoE
-layers, the three iq4_xs-down layers stay on the GPU). Baselines for
-dsv4/Hy3/M3 re-measured 2026-07-19 with the triple-aware warm load
-(PR #2); 235B and Inkling predate it (ggufs rotated off disk).
-
-Decode rate slides with output length on the streaming models: a longer
-generation routes to a wider set of experts, so the disk-miss fraction
-creeps up until the working set saturates. Hy3's length scan (measured
-before the triple warm load; the shape holds, the levels read ~10% low
-now): 5.7 tok/s at n=64, 4.5 at n=128, 4.2 at n=256, converging toward
-a ~4 tok/s floor set by how
-much of the expert working set fits in host RAM (more RAM lifts the whole
-curve). n=64 is the reported standard; long outputs run nearer the floor.
-Gemma is exempt: its weights are fully resident, so no disk is in the loop.
-
-Prefill runs the quantized weights through int8 tensor cores: Hy3
-**28 tok/s** (1.8× over dp4a, ds4 0.44), GLM-5.2 **15 tok/s** (2.7×).
-Warm start: hot experts bulk-load in **~3s**. (ds4 = NeutronStar, the
-llama.cpp-fork predecessor, on the same box.)
-
-Decode figures are **warm-run** (second run onward). The first run is
-cold while the expert-popularity census fills; only after it is written
-do the host cache and resident tiers load hot, so a cold run reads far
-more from disk and clocks lower, so don't benchmark the first run. On the
-reference box Gemma 4 goes 28.7 tok/s cold → 41 tok/s warm (hot experts
-resident on the second GPU). See the warm-start note under Quick start.
-
-Prefill runs the quantized weights through int8 tensor cores on
-sm_80+ (`mma.m16n8k32` dense GEMM + mmq-style grouped MoE that unpacks
-each expert superblock to shared memory once per prefill chunk and
-rescales per quant block in registers), 1.8–2.7× over the dp4a
-kernels, which remain the path on older GPUs. Decode is single-token
-and memory-bound, so it is deliberately untouched: ids stay
-bit-identical to the dp4a path.
-
-GLM runs contexts past its naive 2048-row ceiling via a port of the
-DSA lightning indexer (top-k row selection per token), validated
-against the reference engine with a long-context retrieval probe. The
-indexer's batch scorer runs on tensor cores (f16 keys, m16n8k16 with the
-relu-weight epilogue fused between heads): 1.9x long-prompt prefill at
-4k context, byte-identical ids vs the scalar path, and the index K cache
-halves to f16 (the reference indexer ships FP8 in production).
-
-On a single RTX 4060 Ti (where NeutronStar set its numbers): Hy3 2.6,
-GLM 0.56.
-
-**Zero-config multi-GPU.** At startup pulsar *measures* each card's H2D
-bandwidth (labels lie: an x8-labeled slot can train x1, a driver bug can
-park a Gen5 card at Gen1, only a measurement sees that) and assigns
-roles by what each card is actually good at:
-
-- **Expert streaming** needs link bandwidth → the fastest measured card.
-- **Attention residency** (MLA models: the whole ~14GB attn stack + KV
-  parked on a second card) only needs capacity, weights cross the bus
-  once at load, then only activations hop (2× 24KB per layer). A
-  bandwidth-crippled card serves attention at full speed.
-- **Expert tiers**: leftover cards are filled with the hottest expert
-  triples from the warm census, and the MoE kernels *run on the card
-  that holds the weights*, partial outputs gather back over PCIe. On
-  the reference box the tier serves ~90% of expert computations and
-  nearly doubles Hy3 decode.
-
-Correctness is certified against ds4, not assumed: teacher-forced along
-ds4's greedy path (15/16 per-position argmax agreement on Hy3, 10/12 on
-GLM, every miss at a <0.09-logit tie), byte-identical greedy ids across
-single-GPU vs attn-offload configurations, and bit-exact decode
-determinism on a fixed code path (`--decode-consistency`, below).
-
-## Inherited upstream requirements (Linux + CUDA)
-
-- Linux (io_uring and CUDA are load-bearing; the workspace *compiles* on
-  macOS but the engine is stubbed out there)
-- One or more NVIDIA GPUs, GTX 10-series (Pascal, sm_61) or newer, the
-  default build ships native code for 10/16/20, 30, and 40-series plus
-  PTX that JITs on everything else (50-series Blackwell, Volta, Hopper).
-  `PULSAR_CUDA_ARCH` overrides codegen targets
-- CUDA toolkit with `nvcc` on PATH, plus a host compiler nvcc accepts
-  (gcc-12 works; newer gcc may need `CXX=g++-12` at build time)
-- Rust via [rustup](https://rustup.rs)
-- The model gguf on a fast NVMe, streaming reads it at up to ~7GB/s,
-  so the disk *is* the decode speed
-- ~16GB system RAM for the host-side expert cache (more helps; the cache
-  budget is the single biggest knob after the disk)
-
-## Inherited upstream model acquisition
-
-Pulsar reads standard llama.cpp ggufs: ten routed-expert quant
-formats (q2_K, q3_K, q4_0, q4_K, q5_K, q5_1, q6_K, iq2_xxs, iq2_xs,
-iq3_xxs, including fused gate_up tensors and non-256-multiple expert
-widths), K-quant dense tensors (requantized to q8_0 at load), tied
-embeddings, split -00001-of-000NN shard sets (point `-m` at the first
-shard), and both converter dialects (ds4-lineage and upstream).
-Known-good starters:
-
-```sh
-# Hy3 295B - 85GB, the friendlier starting point (fromBF16 = current build)
-curl -L -C - -o Hy3-ds4-IQ2XXS-AttnQ8-fromBF16.gguf \
-  "https://huggingface.co/giannisan/Hy3-ds4-gguf/resolve/main/Hy3-ds4-IQ2XXS-AttnQ8-fromBF16.gguf"
-
-# GLM-5.2 743B - 197GB, needs a second 16GB GPU for the attention stack
-curl -L -C - -o GLM-5.2-UD-IQ2_XXS_RoutedIQ2XXS_blk78Q2K.gguf \
-  "https://huggingface.co/antirez/GLM-5.2-GGUF/resolve/main/GLM-5.2-UD-IQ2_XXS_RoutedIQ2XXS_blk78Q2K.gguf"
-
-# Kimi K2.7-Code 1T - 339GB in 8 shards (unsloth UD-Q2_K_XL); download
-# the folder and point pulsar at shard -00001-of-00008
-```
-
-Put the file on your fastest NVMe - decode speed is read speed.
-
-## Inherited upstream quick start (Linux + CUDA)
-
-```sh
-git clone https://github.com/MahdiHedhli/PulsarMLX
-cd PulsarMLX
-
-# build (CXX only needed if your default gcc is too new for nvcc)
-CXX=g++-12 cargo build --release -p engine
-
-# run: greedy generation (multi-GPU roles auto-detected)
-./target/release/pulsar-cli \
-    -m /path/to/Hy3-ds4-IQ2XXS-AttnQ8.gguf \
-    -p "The capital of France is" -n 64
-
-# or: interactive chat (multi-turn, KV cache retained across turns)
-./target/release/pulsar-cli -m /path/to/model.gguf --chat
-
-# or: OpenAI-compatible server with a built-in web UI at /
-cargo build --release -p serve
-./target/release/pulsar-serve -m /path/to/model.gguf --port 11435
-# open http://127.0.0.1:11435/  in a browser for the chat UI
-# MCP tool-use (opt-in): connect the model to MCP servers (stdio + http),
-# managed from the web UI sidebar, persisted to ./mcp.json:
-#   pulsar-serve -m model.gguf --port 11435 --webui-mcp-proxy [--mcp-config FILE]
-# see docs/mcp-server.md for the config format, routes, and the agentic loop
-# or hit the API directly:
-curl http://127.0.0.1:11435/v1/chat/completions -d '{
-  "messages": [{"role": "user", "content": "Hello!"}],
-  "stream": true
-}'
-```
-
-First run is cold. On exit the engine writes a `<model>.gguf.warm`
-sidecar (a popularity census of expert slabs); every later run bulk-loads
-the hot set in a few seconds, and expert tiers (spare GPUs) fill from the
-same census, so the second run is the fast one.
-
-When no census exists yet, the engine seeds the warm set and tier
-placement from a built-in per-family hotlist (`crates/engine/hotlists/`,
-generated from real routing censuses with the `hotlist-gen` tool, keyed
-by layer/expert index so it survives requantized ggufs). Measured on
-Qwen3.6-35B: first-run decode 19.2 to 25.1 tok/s, with the resident tier
-active from token one. The real census replaces the seed on exit;
-`PULSAR_NO_HOTLIST=1` restores the plain cold start. Idea borrowed from
-the static streaming hotlists in antirez's ds4 (MIT).
-
-### CLI flags
-
-| flag | meaning |
-|---|---|
-| `-m FILE` | model gguf (required) |
-| `-p TEXT` | prompt (tokenized, BOS prepended) |
-| `--chat` | interactive multi-turn chat (KV retained) |
-| `--system TEXT` | system prompt for chat mode |
-| `--temp F` / `--top-p F` / `--min-p F` / `--seed N` | sampling (chat defaults to the gguf's `general.sampling.*`; one-shot defaults to greedy) |
-| `--no-bos` | don't prepend BOS |
-| `--tokens 1,2,3` | feed exact token ids instead of text |
-| `-n N` | tokens to generate (default 16) |
-| `--ctx N` | context size (default 2048) |
-| `--dump-logits FILE` | write next-token logits as JSON and exit |
-| `--teacher-force` | per-position top-5 JSONL along the given ids |
-| `--decode-consistency N` | decode N steps, fresh-prefill the same sequence, compare logits |
-
-### Tuning knobs (env vars)
-
-Everything auto-configures; these override.
-
-| var | default | what |
-|---|---|---|
-| `PULSAR_GPU` | measured | CUDA index of the expert-streaming (primary) GPU |
-| `PULSAR_ATTN_GPU` | auto (MLA) | attention GPU by CUDA index. MLA models auto-offload (`off` disables); GQA models are opt-in by index: a capacity shuffle that loses on 2 GPUs at short context, pays on 3+ GPUs or long context |
-| `PULSAR_KV` | f32 | GQA K/V storage format. One of `fp8` (e4m3 + per-row scale, ~3.9× smaller KV), `fp16` (IEEE half, ~2.0×), `int8` (int8 + per-row scale, ~4.0×), `q8_0` (32-wide blocks, ~3.8×), `q4_0` (32-wide blocks, ~7.6×), `turbo8` (q8_0 + rotation, ~3.8×), `turbo4` (q4_0 + rotation, ~7.6×). Lossy, hence opt-in: the default f32 keeps decode bit-exact. Runs on any GPU (storage format, no special hardware needed). MLA/Dsv4 keep their own caches. `turbo<4\|8>` (aliases `rotq<4\|8>`, `turboq<4\|8>`) fold a fixed orthogonal rotation into K (pre-append) and Q (pre-attention) so per-32-block outliers spread across the block instead of dominating blockmax `d` — decode-invariant: `(Q@Πᵀ)·(K@Πᵀ)ᵀ = Q@Kᵀ` since ΠᵀΠ=I; V is untouched. Measured on Hy3 with a clean 100% f32-vs-f32 noise floor (`PULSAR_CPU=off`): turbo8 89% / turbo4 86-88% top-1 vs q8_0 64-67% / q4_0 58-64%. Speed is context-dependent, since the rotation costs a fixed two matmuls per layer while the smaller cache saves attention traffic that grows with context: at ctx 512 turbo runs ~7% under f32, at ctx 8192 turbo4 runs ~3% over it. Prefer `turbo4` for long context, where it is the only format reaching ~7.6x at usable quality |
-| `PULSAR_TIERS` | on | `off` disables resident expert tiers (also the bit-exact single-device path) |
-| `PULSAR_CACHE_GB` | measured | host RAM budget for the expert LFU cache (solved from MemAvailable) |
-| `PULSAR_DEV_CACHE_GB` | solved | VRAM hot-expert pool: measured free VRAM minus staging + reserve |
-| `PULSAR_ATTN_VRAM_GB` | all that fits | attn VRAM budget (single-GPU MLA: default 6) |
-| `PULSAR_BATCH` | solved | prefill chunk: largest whose worst-case expert staging fits a third of free VRAM |
-| `PULSAR_NO_PREFETCH` | unset | set to disable the cross-layer prefetcher |
-| `PULSAR_PROFILE` | unset | print per-stage wall-time profile |
-
-¹ defaults shift with the detected topology: attn offload frees pinned
-RAM (host cache 12→22) and primary VRAM (dev cache →8).
-
-### Tests
-
-```sh
-cargo test                                        # host-side (any OS)
-CXX=g++-12 cargo test -p kernels --release -- --test-threads=1   # GPU kernel selftests vs CPU references
-scripts/check.sh /path/to/model.gguf              # full commit gate (build + selftests + bit-exact decode)
-```
-
-## How the streaming works
-
-Per MoE layer, per token (or per prefill chunk as a union across the
-whole batch), an expert slab resolves through:
-
-1. **Resident tier** (spare GPUs): the hottest expert triples live
-   permanently on leftover cards; their MoE compute happens *there* and
-   only activations cross PCIe. Placement, not cache: no eviction.
-2. **VRAM hot-set cache** (primary GPU): a fixed pool with touch-count
-   admission: a slab earns a slot only by being hotter than the coldest
-   resident, so the pool holds a *stable* hot set instead of thrashing.
-3. **Host LFU cache**: RAM-budgeted, persisted to the `.warm` sidecar.
-4. **io_uring + O_DIRECT**: misses are fetched at queue depth 32, and
-   each completion is uploaded to the GPU while the remaining reads are
-   still in flight.
-
-A background thread additionally **prefetches the next layer's experts**,
-predicted by running the next layer's router on the current layer's
-input.
-
-The MoE kernels never consult global state: every launch receives
-explicit per-(token, slot) device pointers for gate/up/down, and a NULL
-slot means "not mine", which is what makes per-card partial execution
-native. Where the bytes came from is the host's problem, resolved before
-launch.
-
-## Fidelity notes
-
-- All matmuls use ds4's exact math: activations quantized to q8_0/q8_K,
-  integer dp4a dots. Logit-level parity with ds4 is within quantization
-  noise.
-- Batched prefill and single-token decode use different reduction
-  orders, so greedy near-ties (top1−top2 < ~0.5 logits) can flip between
-  them, the same class of drift ds4 has between its CUDA and Metal
-  backends. `--decode-consistency N` measures it; with `PULSAR_BATCH=1`
-  the two paths are identical and the comparison is bit-exact (verified:
-  max |Δlogit| = 0.0).
-- Expert tiers split the per-slot sum across cards, which reorders float
-  adds, same drift class. `PULSAR_TIERS=off` restores the single-device
-  exact path. Attention offload does NOT drift: ids are byte-identical
-  with and without it.
-
-## Inherited upstream status / roadmap
-
-Done: gguf reader · io_uring disk path (parity with C at 4.8GB/s) ·
-hy-v3 + glm-dsa (MLA compact-KV) forward graphs with GPU-vs-CPU kernel
-selftests · from-gguf BPE tokenizer (gold-vector parity with ds4) ·
-four-tier streaming · warm-cache persistence · batch prefill ·
-cross-layer prefetch · measured-bandwidth GPU role assignment · MLA
-attention residency on a second GPU · resident expert tiers on spare
-GPUs · temp/top-p/min-p sampling · interactive chat · OpenAI-compatible
-server (`pulsar-serve`: `/v1/models`, `/v1/chat/completions` with SSE
-streaming plus a built-in chat web UI at `/`, no build step, embedded via
-`include_str!`; local single-user, one request at a time).
-
-Done since: DSA lightning indexer (GLM contexts past 2048, batch scorer
-on tensor cores) · Kimi K2.7/deepseek2 with llama.cpp-exact YaRN ·
-split-gguf loading · MTP + draft-free n-gram speculation (built,
-measured honestly: net-slower until the host cache outruns the disk;
-`PULSAR_MTP=1` / `PULSAR_NGRAM=n` to experiment) · style-aware chat
-templates (Hy3/Kimi/ChatML/Gemma/MiniMax/Inkling/DeepSeek) · int8
-tensor-core prefill (dense GEMM + grouped MoE) · MiniMax M3, Qwen3,
-Gemma 4, TML Inkling forward graphs · opt-in fp8 e4m3 KV cache
-(`PULSAR_KV=fp8`) · TurboQuant rotated block-KV (`PULSAR_KV=turbo4|turbo8`,
-orthogonal Π on K/Q spreads outliers so block-quant stops zeroing the
-other 31 lanes; decode-invariant, V untouched) · `pulsar-quant` recipe quantizer (BF16 gguf →
-ds4-style expert mixes, iq2_xxs with imatrix, per-tensor `--map`
-rules; removes llama.cpp from the model-prep pipeline; shard
-streaming: `--fetch-cmd`/`--delete-shards` quantize sources bigger
-than the disk one shard at a time) ·
-DeepSeek-V4-Flash (deepseek4): hyper-connection residual streams,
-streaming compressed KV + sink attention, indexer QAT top-k, token-id
-hash routing.
-Ornith-397B (qwen35moe at 397B): the largest qwen35-moe hybrid yet —
-Q2_K experts on a 512-way router, GDN linear attention, shared expert.
-Runs end-to-end after fixing three f32-reader load sites that the
-generic `upload()` path left as raw/reqantized bytes (conv1d, gate_inp,
-gate_inp_shexp); see `docs/ornith-q2k-cuda-crash-fix.md`. Warm decode
-bench pending.
-
-Also done, honestly measured: DFlash block-diffusion speculative
-decoding for Qwen3.6 (the lucebox recipe: a 515MB matched draft
-proposes 16 tokens conditioned on 5 captured target hidden states, one
-batched target forward verifies the block, recurrent state snapshots
-roll back rejections). The machinery works - structured text accepts
-whole 16-blocks - but it ships opt-in experimental
-(`PULSAR_DFLASH=draft.gguf`) because on the reference box it is
-experimental. Four profiling rounds took it from 6.1 to 39.7 tok/s
-(resident expert tiers for the hybrid families, grouped tensor-core
-MoE for verify chunks, recurrence-only fast rollback that replaces the
-replay forward, a token-tiled K-quant lm head), and on the iq3-heavy
-Q3_K_XL target it now BEATS sequential decode on reasoning workloads
-(39.7 vs 36.3, byte-identical output to plain greedy). On the faster
-Q4_K_XL target sequential decode itself jumps to 51.8 tok/s and DFlash
-falls behind again: the round's remaining fixed costs (a ~95ms verify
-floor of per-layer launches and router readbacks, a draft whose cost
-grows with the feature window) need acceptance ~7+ to amortize, and
-measured acceptance is 4.3 on math, less on prose.
-MCP (Model Context Protocol) tool-use in pulsar-serve, opt-in via
-`--webui-mcp-proxy`: the server connects to configured MCP servers
-(rmcp 3.0.1; stdio + streamable-http), exposes their tools to the model
-as namespaced `server__tool` specs, and runs a non-stream agentic loop
-(MAX_TURNS=8) that executes the model's `<tool_call>` blocks and feeds
-results back. Each server card's title auto-detects the advertised name
-from the MCP `initialize` handshake and shows a rolling connection log
-with the last handshake latency; the on/off pill matches the CPU Lane /
-MTP toggles. Full CRUD lives in the web UI sidebar (add/edit/remove
-servers, enable/disable per tool), persisted to `mcp.json`. Without the
-flag: zero behavioral change — every `/mcp/*` route 404s and the sidebar
-group stays hidden. End-to-end verified on Qwen3.6-35B against a remote
-SearXNG MCP (tool_call → dispatch → grounded answer in ~22s). See
-`docs/mcp-server.md`.
-
-Not yet:
-
-- DFlash, remaining: draft context-KV cache ring (lucebox
-  DraftKvCacheRefs - caps the draft cost at long windows), CUDA-graph
-  or fused launches for the verify's per-layer fixed costs, tree
-  verification (DDTree) for higher acceptance per round
-- deepseek4 perf pass: batched prefill (prompts currently process
-  sequentially), resident tiers + cross-layer prefetch for the dsv4
-  resolve, fewer host syncs on the hyper-connection gates
-- tensor-core unpackers for the remaining expert formats (iq2_xs,
-  iq3_xxs, q4_K, q5_1, q2_K, q3_K, the harness takes one ~40-line
-  unpacker per format)
+For the original engine, models, and CUDA performance methodology, see [giannisanni/pulsar](https://github.com/giannisanni/pulsar).
 
 ## License
 
-PulsarMLX is derived from
-[Pulsar by Giannis Anni and contributors](https://github.com/giannisanni/pulsar)
-and retains its original Git history and attribution under the
-[MIT license](LICENSE). See [NOTICE.md](NOTICE.md) for the derivative-project,
-upstream contributor, and third-party notices. The CUDA kernels derive from the
-[ds4](https://github.com/antirez/ds4) lineage (MIT) and carry their
-attribution:
-Copyright (c) 2026 The ds4.c authors · Copyright (c) 2023–2026 The ggml
-authors.
+MIT. Copyright and third-party notices: [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
+
+Portions of retained CUDA kernels derive from `ds4` and `ggml` (MIT); their notices remain in affected source files.
