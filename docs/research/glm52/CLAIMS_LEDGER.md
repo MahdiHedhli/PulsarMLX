@@ -2,13 +2,21 @@
 
 | Claim ID | Claim | Evidence | source_commit | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| F016-C00 | Qwen e2e research baseline frozen under annotated tag | tag `v0.2.0-qwen30b-e2e-research` @ `493234a` | 493234a | verified | Full 48-layer stack, logits, greedy, short gen; no tok/s claim |
-| F016-C01 | Internal SSD disk admission for GLM-5.2-UD-IQ2_XXS | [admission](../../validation/glm52-disk-admission.json) | (this commit) | **rejected / blocked** | Free ~346 GiB after safe cleanup; need 500 GiB; shortfall ~154 GiB |
-| F016-C02+ | Checkpoint identity, correctness ladder, generation, performance | — | — | unsupported | Not started until C01 disk pass |
+| F016-C00 | Qwen e2e research baseline frozen | tag `v0.2.0-qwen30b-e2e-research` | 493234a | verified | Full Qwen stack; no tok/s claim |
+| F016-C01a | Disk admission passed after space clearance | `docs/validation/glm52-disk-admission.json` | 1919ffe | verified | ≥500 GiB free; projected ≥250 after |
+| F016-C01b | Experiment protocol + tolerances frozen before real-weight parity | `docs/research/glm52/EXPERIMENT_PROTOCOL.md` | (this series) | verified | Methodology only |
+| F016-C01c | glm-dsa KV dims frozen from shard 00001 | `docs/architecture/GLM52_CONTRACT.md` | 5ad3d10+ | provisional | Full tensor catalog pending all shards |
+| F016-C02+ | Real-weight C01–C11, generation, performance | — | — | unsupported | Requires complete checkpoint identity |
 
-## Unsupported
+## Rejected / blocked (historical)
+
+| Claim | Status | Notes |
+| --- | --- | --- |
+| Disk admission 2026-08-07 first attempt | rejected | ~346 GiB free; shortfall ~154 GiB |
+
+## Explicit non-claims
 
 - GLM-5.2 full-model support
-- GLM generation
-- GLM tokens/sec
-- External-drive or RAID-based GLM residency for this sprint
+- Production tokens/sec
+- CUDA equivalence
+- M2 Max / RAID results

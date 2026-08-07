@@ -1,19 +1,21 @@
-# GLM-5.2 Limitations (sprint open)
+# GLM-5.2 Limitations
 
-## Active
+## Active (methodology phase)
 
-1. **Disk admission failed** on M1 Ultra internal SSD (~346 GiB free after safe
-   cleanup; need 500 GiB before download of ~222 GiB UD-IQ2_XXS).
-2. **No GLM weights local** — no correctness or performance claims.
-3. Architecture contract is **draft only**.
+1. Full multi-shard checkpoint may still be downloading; **no full-model claim**.
+2. Architecture residual op order partially confirmed from upstream source + KV; tensor-name walk pending complete catalog.
+3. Mixed quant inventory incomplete until C01 full catalog.
+4. Research streaming path is not an optimized production server.
+5. OS page cache not controlled unless a run explicitly documents scrubbing.
 
-## Deferred by policy
+## Policy
 
-- M2 Max testing
-- External NVMe RAID
-- Storing GLM on external drives
+- No M2 Max / external RAID in this feature.
+- No llama/CUDA bit-parity requirement.
+- No silent CPU fallback in performance mode.
+- No tolerance loosening after first real-weight measurement without versioned protocol change.
 
-## Inherited from Qwen baseline
+## Inherited
 
-- Research path is not an optimized production serving stack.
-- Architecture oracle ≠ llama fused bit-parity.
+- Qwen baseline remains the verified end-to-end research path under
+  `v0.2.0-qwen30b-e2e-research`.
