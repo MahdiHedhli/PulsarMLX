@@ -32,7 +32,29 @@ def main() -> int:
 
     for layer in range(n_layer):
         t1 = time.time()
-        x, diag = layer_forward_token(store, layer, x, caches[layer], pos=0)
+        try:
+            x, diag = layer_forward_token(store, layer, x, caches[layer], pos=0)
+        except Exception as exc:  # noqa: BLE001
+            (out_dir / "f016-c09-depth-progress.json").write_text(
+                json.dumps(
+                    {
+                        "last_layer": layer - 1,
+                        "failed_layer": layer,
+                        "error": repr(exc),
+                        "layer_l2": layer_l2,
+                        "meta": layer_meta,
+                        "elapsed": time.time() - t0,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+            # keep residual for resume debugging
+            (out_dir / "f016-c09-resume-hidden.json").write_text(
+                json.dumps({"layer_completed": layer - 1, "hidden": x}, sort_keys=True) + "\n"
+            )
+            raise
         if not diag["finite"]:
             raise RuntimeError(f"non-finite residual at layer {layer}")
         sec = time.time() - t1
@@ -50,6 +72,10 @@ def main() -> int:
         print(
             f"L{layer:02d} {diag.get('ffn')} l2={diag['out_l2']:.6f} sec={sec:.1f}",
             flush=True,
+        )
+        # persist residual every layer for resume
+        (out_dir / "f016-c09-resume-hidden.json").write_text(
+            json.dumps({"layer_completed": layer, "hidden": x}, sort_keys=True) + "\n"
         )
         if layer % 5 == 0 or layer == n_layer - 1:
             (out_dir / "f016-c09-depth-progress.json").write_text(

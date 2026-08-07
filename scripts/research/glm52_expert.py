@@ -50,8 +50,13 @@ def _dequant_row_bytes(type_id: int, raw: bytes, cols: int) -> list[float]:
         return dequantize_row_q5_k(raw, cols)
     if type_id == 14:  # Q6_K
         return dequantize_row_q6_k(raw, cols)
+    if type_id == 8:  # Q8_0 (some shexp / rare slabs)
+        from glm52_dense_primitives import _decode_q8_0_row
+
+        return _decode_q8_0_row(raw, cols)
     if type_id == 0:
         import struct
+
         return list(struct.unpack(f"<{cols}f", raw))
     raise TypeError(type_id)
 
