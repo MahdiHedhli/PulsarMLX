@@ -34,12 +34,18 @@ def nbytes_for_tensor(ttype: int, n_elem: int) -> int:
     if ttype == 16:  # IQ2_XXS
         assert n_elem % QK_K == 0
         return (n_elem // QK_K) * 66
+    if ttype == 18:  # IQ3_XXS
+        assert n_elem % QK_K == 0
+        return (n_elem // QK_K) * 98
     if ttype == 10:  # Q2_K
         assert n_elem % QK_K == 0
         return (n_elem // QK_K) * 84
     if ttype == 12:  # Q4_K
         assert n_elem % QK_K == 0
         return (n_elem // QK_K) * 144
+    if ttype == 13:  # Q5_K
+        assert n_elem % QK_K == 0
+        return (n_elem // QK_K) * 176
     if ttype == 14:  # Q6_K
         assert n_elem % QK_K == 0
         return (n_elem // QK_K) * 210

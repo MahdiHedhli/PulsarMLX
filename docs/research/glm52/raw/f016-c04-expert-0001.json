@@ -1,0 +1,23 @@
+{
+  "activation": "ffn_norm(token_embd[0])",
+  "actual_status": "passed",
+  "boundary": "GLM-C04",
+  "expert": 236,
+  "layer": 3,
+  "note": "Full SwiGLU expert 236 + shared expert on layer 3; activation probe not full residual.",
+  "output_dim": 6144,
+  "repeatability": {
+    "absolute_tolerance": 0.0,
+    "compared_count": 6144,
+    "first_mismatch": null,
+    "maximum_absolute_error": 0.0,
+    "maximum_relative_error": 0.0,
+    "mean_absolute_error": 0.0,
+    "mismatch_count": 0,
+    "passed": true,
+    "relative_tolerance": 0.0,
+    "rmse": 0.0
+  },
+  "schema": "pulsarmlx.research.glm52-c04-single-expert",
+  "shexp_finite": true
+}
