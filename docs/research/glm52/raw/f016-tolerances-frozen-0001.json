@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.research.glm52-tolerances",
+  "schema_version": "1.0.0",
+  "feature_id": "016-glm52-full-execution",
+  "status": "frozen",
+  "note": "Frozen before real-weight parity. Do not edit after first real-weight measurement without version bump.",
+  "protocol": "docs/research/glm52/EXPERIMENT_PROTOCOL.md",
+  "absolute_relative_mode": "err <= abs + rel * abs(ref)",
+  "boundaries": {
+    "dense_f32_rmsnorm": {"absolute": 0.0005, "relative": 0.0005},
+    "dequant_matvec": {"absolute": 0.005, "relative": 0.005},
+    "router_scores": {"absolute": 0.0005, "relative": 0.0005},
+    "router_ids": {"mode": "exact"},
+    "residual_layer": {"absolute": 0.005, "relative": 0.005, "cosine_min": 0.999},
+    "logits": {"absolute": 0.05, "relative": 0.005, "top1": "exact"},
+    "greedy_token": {"mode": "exact"}
+  },
+  "memory": {
+    "default_expert_cache_bytes": 51539607552,
+    "default_min_headroom_bytes": 25769803776,
+    "max_materialized_bytes_default": 103079215104
+  }
+}

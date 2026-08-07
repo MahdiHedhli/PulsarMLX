@@ -1,0 +1,98 @@
+{
+  "feature_id": "016-glm52-full-execution",
+  "note": "token_ids filled after tokenizer extract from full GGUF merges/tokens; do not invent IDs.",
+  "prompts": {
+    "P-CODE": {
+      "category": "short_code",
+      "roundtrip_ok": true,
+      "text": "Write a Python function that returns 42.",
+      "token_ids": [
+        7984,
+        264,
+        13020,
+        729,
+        429,
+        4675,
+        119320,
+        13
+      ]
+    },
+    "P-FACT": {
+      "category": "short_factual",
+      "roundtrip_ok": true,
+      "text": "What is the capital of France?",
+      "token_ids": [
+        3838,
+        374,
+        279,
+        6722,
+        315,
+        9621,
+        30
+      ]
+    },
+    "P-MIN": {
+      "category": "minimal",
+      "roundtrip_ok": true,
+      "text": "Hello",
+      "token_ids": [
+        9703
+      ]
+    },
+    "P-REASON": {
+      "category": "short_reasoning",
+      "roundtrip_ok": true,
+      "text": "If all cats are animals and some animals are black, can we conclude some cats are black? Answer yes or no and one sentence.",
+      "token_ids": [
+        2679,
+        678,
+        19386,
+        525,
+        9893,
+        323,
+        1045,
+        9893,
+        525,
+        3691,
+        11,
+        646,
+        582,
+        30968,
+        1045,
+        19386,
+        525,
+        3691,
+        30,
+        21754,
+        9829,
+        476,
+        902,
+        323,
+        825,
+        11646,
+        13
+      ]
+    }
+  },
+  "schema": "pulsarmlx.research.glm52-frozen-prompts",
+  "schema_version": "1.0.0",
+  "status": "text_and_token_ids_frozen",
+  "tokenizer_extract": {
+    "merges": 321416,
+    "note": "local extract under Models/glm52-tokenizer; not committed",
+    "vocab_size": 154880
+  },
+  "tokenizer_identity": {
+    "bos_token_id": 154822,
+    "chat_template_present": true,
+    "eom_token_id": 154829,
+    "eos_token_id": 154820,
+    "eot_token_id": 154827,
+    "ggml_model": "gpt2",
+    "pad_token_id": 154821,
+    "pre": "glm4",
+    "source": "GGUF KV from UD-IQ2_XXS shard 00001",
+    "unknown_token_id": 154820,
+    "vocab_size": 154880
+  }
+}
