@@ -1,0 +1,33 @@
+{
+  "actual_status": "passed",
+  "boundary": "GLM-C11",
+  "generated_token_ids": [
+    9703,
+    21615,
+    220,
+    16,
+    13,
+    16,
+    16,
+    15,
+    15
+  ],
+  "new_tokens": [
+    21615,
+    220,
+    16,
+    13,
+    16,
+    16,
+    15,
+    15
+  ],
+  "note": "Greedy argmax \u22658 new tokens on architecture 79-layer path. Not a quality claim; residual scale may be large.",
+  "prompt_id": "P-MIN",
+  "prompt_text": "Hello",
+  "schema": "pulsarmlx.research.glm52-c11-generation",
+  "seconds": 48730.706508636475,
+  "seed_token_ids": [
+    9703
+  ]
+}
