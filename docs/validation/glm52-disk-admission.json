@@ -1,0 +1,116 @@
+{
+  "admission_result": "failed",
+  "blocker": {
+    "checkpoint_gib": 222.082,
+    "code": "disk_admission_insufficient_free_space",
+    "disallowed_options_not_used": [
+      "external_nvme_raid",
+      "copy_glm_to_external_drive",
+      "delete_canonical_qwen",
+      "delete_user_media_documents_music"
+    ],
+    "free_gib_after_cleanup": 345.762,
+    "message": "Internal APFS free space remains below the 500 GiB pre-download gate for GLM-5.2-UD-IQ2_XXS (222.082 GiB across 6 shards). Safe cleanup freed ~7.3 GiB (incomplete Qwen partial + reproducible Rust targets) but shortfall remains ~154.2 GiB. External volumes and user media are out of scope. Canonical Qwen checkpoint retained.",
+    "projected_free_after_download_gib": 123.68,
+    "required_gib_after_checkpoint": 250,
+    "required_gib_before_download": 500,
+    "safe_cleanup_exhausted": true,
+    "shortfall_gib": 154.238
+  },
+  "cleanup_actions": [
+    {
+      "action": "remove_incomplete_qwen_partial",
+      "category": "stale_incomplete_download",
+      "path_public": "models/Qwen3-30B-A3B-Q8_0.gguf.partial",
+      "referenced_by_evidence": false,
+      "reproducible": true,
+      "size_bytes": 976000000,
+      "status": "removed"
+    },
+    {
+      "action": "remove_repo_rust_target",
+      "category": "repository_build_output",
+      "path_public": "repo/target",
+      "reproducible": true,
+      "size_bytes_approx": 5153960755,
+      "status": "removed"
+    },
+    {
+      "action": "remove_worktree_rust_target",
+      "category": "repository_build_output",
+      "path_public": "worktree/target",
+      "reproducible": true,
+      "size_bytes_approx": 1503238553,
+      "status": "removed"
+    }
+  ],
+  "download_strategy": "direct_single_copy_shard_set_to_internal_ssd",
+  "expected_free_bytes_after_download": 132800193824,
+  "expected_free_gib_after_download": 123.68,
+  "expected_temporary_duplication_bytes": 0,
+  "feature_id": "016-glm52-full-execution",
+  "filesystem": {
+    "container_capacity_bytes": 1995218165760,
+    "public_identity": "mac_studio_m1_ultra_internal_apfs",
+    "role": "internal_ssd_data_volume",
+    "type": "APFS"
+  },
+  "free_bytes_after_cleanup": 371258826752,
+  "free_bytes_after_cleanup_gib": 345.762,
+  "free_bytes_before_cleanup": 363401744384,
+  "free_bytes_before_cleanup_gib": 338.444,
+  "git_sha": "493234aad7b0fadd70f2ca6bf154810b53f7926b",
+  "local_search": {
+    "glm_checkpoint_found": false,
+    "locations_inspected": [
+      "models_root/PulsarMLX",
+      "hf_cache_hub",
+      "repo_local_state"
+    ],
+    "qwen_checkpoint_bytes": 32483931648,
+    "qwen_checkpoint_present": true,
+    "qwen_checkpoint_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c"
+  },
+  "preferred_checkpoint": {
+    "architecture": "glm-dsa",
+    "expected_total_bytes": 238458632928,
+    "expected_total_gib": 222.082,
+    "form": "6_shard_gguf",
+    "note": "Preferred quant is UD-IQ2_XXS; currently published as 6 GGUF shards (not 11-shard Q4). No local copy found.",
+    "params": "754B",
+    "quant": "UD-IQ2_XXS",
+    "repo": "unsloth/GLM-5.2-GGUF",
+    "shards": [
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",
+        "size_bytes": 9423744
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "size_bytes": 49105028960
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",
+        "size_bytes": 41914650304
+      }
+    ]
+  },
+  "qwen_baseline_tag": "v0.2.0-qwen30b-e2e-research",
+  "required_free_bytes_after_checkpoint": 268435456000,
+  "required_free_bytes_before_download": 536870912000,
+  "schema": "pulsarmlx.validation.glm52-disk-admission",
+  "schema_version": "1.0.0",
+  "utc_timestamp": "2026-08-07T02:44:23.141917+00:00"
+}

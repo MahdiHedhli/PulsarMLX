@@ -4127,3 +4127,13 @@ F32 activations to Q8_0 for Q8_0 weights. Independent Q8_0×Q8_0 reproduction
 matches llama within ~2e-7. Contract B: architecture oracle remains F003–F005;
 llama bit-parity not claimed. F006-C02 recorded.
 
+
+## 2026-08-07 — GLM-5.2 sprint open / disk admission block
+
+- Fast-forwarded local main to F015 tip `493234a`.
+- Created annotated tag `v0.2.0-qwen30b-e2e-research` (Qwen e2e research baseline).
+- Spec Kit feature `016-glm52-full-execution` opened.
+- Disk admission **failed**: ~346 GiB free after safe cleanup; need 500 GiB for
+  `GLM-5.2-UD-IQ2_XXS` (~222 GiB / 6 shards). No download attempted.
+- Evidence: `docs/validation/glm52-disk-admission.json`.
+- Deferred: M2 Max, external RAID (policy).
