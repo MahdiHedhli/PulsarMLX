@@ -1,0 +1,79 @@
+{
+  "actual_status": "passed",
+  "checkpoint_sha256": "4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c",
+  "claim_boundary": {
+    "notes": "Publication of measured wall times for dual architecture stack and logits; not a tok/s claim.",
+    "operation": "wall_clock_research_path_timings",
+    "status": "verified"
+  },
+  "experiment_id": "f015-benchmark-0001",
+  "explicit_non_claims": [
+    "tokens_per_second_serving",
+    "production_throughput",
+    "optimized_kv_cache_runtime"
+  ],
+  "feature_id": "015-reproducible-benchmark",
+  "platform_note": "Apple Silicon; architecture dual CPU+MLX research path (not optimized serving)",
+  "runs": [
+    {
+      "metric": "architecture_dual_cpu_mlx_forward",
+      "n_layers": 1,
+      "n_tokens": 2,
+      "name": "stack_depth_1",
+      "status": "passed",
+      "wall_seconds": 20.150690208989545
+    },
+    {
+      "metric": "architecture_dual_cpu_mlx_forward",
+      "n_layers": 2,
+      "n_tokens": 2,
+      "name": "stack_depth_2",
+      "status": "passed",
+      "wall_seconds": 39.854421750002075
+    },
+    {
+      "metric": "architecture_dual_cpu_mlx_forward",
+      "n_layers": 4,
+      "n_tokens": 2,
+      "name": "stack_depth_4",
+      "status": "passed",
+      "wall_seconds": 79.51824166599545
+    },
+    {
+      "metric": "architecture_dual_cpu_mlx_forward",
+      "n_layers": 8,
+      "n_tokens": 2,
+      "name": "stack_depth_8",
+      "status": "passed",
+      "wall_seconds": 160.26107137500367
+    },
+    {
+      "metric": "architecture_dual_cpu_mlx_forward",
+      "n_layers": 16,
+      "n_tokens": 2,
+      "name": "stack_depth_16",
+      "status": "passed",
+      "wall_seconds": 319.923825165999
+    },
+    {
+      "metric": "architecture_dual_cpu_mlx_forward",
+      "n_layers": 48,
+      "n_tokens": 2,
+      "name": "stack_depth_48",
+      "status": "passed",
+      "wall_seconds": 962.0989253750013
+    },
+    {
+      "metric": "logits_head_plus_stack",
+      "name": "full_logits_vocab",
+      "status": "passed",
+      "vocab": 151936,
+      "wall_seconds_cpu": 15.608222291994025,
+      "wall_seconds_mlx": 29.260159165991354,
+      "wall_seconds_stack": 959.4400963330118
+    }
+  ],
+  "schema": "pulsarmlx.research.reproducible-benchmark",
+  "schema_version": "1.0.0",
+  "timestamp_utc": "2026-08-07T00:41:44.355331+00:00"
+}

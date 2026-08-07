@@ -20,8 +20,14 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 | F007 Pre-FFN residual capture + RMSNorm link | Complete (F007-C01) |
 | F006 Layer-0 vs llama bit-parity | **Rejected** (preserved); architecture oracle = F005 |
 | F008 F006 root cause (Q8_0×Q8_0 vs f32 dequant) | **Complete (F008-C01)** |
-| Next: multi-layer / logits / tokens | Open under architecture oracle |
-| GLM-5.2 | **Not admitted** |
+| F009 Layer-0 attention → ffn_inp | **Complete (F009-C01/C02)** |
+| F010 Complete layer-0 (attn+MoE) | **Complete (F010-C01)** |
+| F011 Multi-layer stack (1…48 full model) | **Complete (F011-C01/C02)** |
+| F012 Full logits | **Complete (F012-C01)** |
+| F013 First greedy token | **Complete (F013-C01)** token **320** |
+| F014 Bounded short-prompt generation | **Complete (F014-C01)** seq `[0,1,320,16]` |
+| F015 Reproducible wall-clock benchmarks | **Complete (F015-C01)** (not tok/s) |
+| Larger checkpoints / GLM-5.2 | **Not admitted** (Qwen green first) |
 
 ## Feature completion
 
@@ -82,55 +88,95 @@ immutable Qwen3-30B-A3B Q8_0 checkpoint under Apple MLX 0.32.0.
 - Contract **B**: keep architecture oracle; do not claim llama bit-parity.  
 - Evidence: `docs/research/raw/008-f006-root-cause/`
 
+### Feature 009 — Layer-0 attention
+
+- Qwen3MoE: GQA 32/4, head_dim 128, NeoX RoPE θ=1e6, per-head q/k RMSNorm.  
+- Graph: `attn_norm → QKV → q/k norm → rope_ext NEOX → attn → Wo → + residual = ffn_inp`.  
+- MLX vs architecture CPU: max_abs ≈ **1.1e-7**, cos ≈ 1.0.  
+- vs frozen llama `ffn_inp-0`: max_abs ≈ **2.4e-3** (secondary Q8 act drift; F008 contract B).  
+- Evidence: `docs/research/raw/009-layer0-attention/`
+
+### Feature 010 — Complete layer-0
+
+- Full layer: architecture attention + MoE residual.  
+- MLX vs CPU max_abs ≈ **1.1e-7**; top-8 experts match F004/F005.  
+- Evidence: `docs/research/raw/010-011-layer-stack/f010-complete-layer0-0001.json`
+
+### Feature 011 — Multi-layer / full model
+
+- Depth ladder **1 → 2 → 4 → 8 → 16 → 48** all passed under architecture oracle.  
+- Per-layer drift metrics (max_abs, mean, RMSE, cos, norm_ratio, first max index).  
+- Peak MLX–CPU max_abs ≈ **4.3e-4** (L3); final L47 ≈ **1.8e-4**; no unbounded growth.  
+- Evidence: `docs/research/raw/010-011-layer-stack/`
+
+### Feature 012–013 — Logits + greedy token
+
+- 48-layer residual + `output_norm` + Q8_0 `output.weight` logits.  
+- Logits max_abs ≈ **7.6e-6**; top-1/top-5 agree.  
+- Greedy token **320** (CPU = MLX).  
+- Evidence: `docs/research/raw/012-013-logits-greedy/`
+
+### Feature 014 — Short-prompt generation
+
+- Greedy extend 2 tokens from `[0,1]` → **`[320, 16]`**; full seq `[0,1,320,16]`.  
+- Per-step CPU head agree; final dual residual check passed; first-token repeatable.  
+- Evidence: `docs/research/raw/014-short-prompt-gen/`
+
+### Feature 015 — Reproducible benchmarks
+
+- Wall-clock dual stack depth-48 ≈ **962 s**; research path only.  
+- **Does not claim tokens/sec.**  
+- Evidence: `docs/research/raw/015-benchmark/`
+
 ## Correctness
 
-All MLX results compared to independent CPU oracles (no MLX imports in oracle
-path for expert scripts). Tolerances: absolute 5e-4 + relative 5e-4. Zero
-allowed mismatches on published passes.
+All MLX results compared to independent CPU oracles (architecture path:
+Q8_0 weight dequant × f32 activation). Tolerances: absolute 5e-4 + relative
+5e-4. Llama Q8_0×Q8_0 bit-parity is **not** the contract (F008).
 
 ## Performance / memory / I/O
 
-- No tokens/sec or full-model load benchmark claimed.  
-- F004 I/O gauges only cover expert tensor range re-reads (OS-cache
-  uncontrolled).  
-- Memory: process stayed within normal pressure; no thermal warnings recorded
-  during admitted runs.
+- No tokens/sec or production throughput claimed.  
+- Research-path wall times published under F015.  
+- Memory: process stayed within normal pressure on dual 48-layer runs.
 
 ## GLM status
 
-**Not started.** GLM is not supported. No GLM checkpoint identity, load,
-router, experts, logits, or greedy token evidence exists.
+**Not admitted.** Smaller-model (Qwen3-30B-A3B-Q8_0) correctness is green
+through generation. GLM-5.2 remains out of scope until an explicit scaling
+feature admits a GLM checkpoint identity.
 
 ## Limitations
 
-- Feature 006 blocked: independent MoE vs llama fused MoE max abs ~3.4e-3.  
-- No attention re-implementation on MLX, multi-layer, logits, sampling,
-  generation, or serving.  
-- No giant-model or multi-device claims.  
-- Hosted CI is fixture-only; real checkpoint runs are local.
+- Research dual CPU+MLX path is not an optimized KV-cache serving runtime.  
+- No sampling; greedy argmax only.  
+- No larger checkpoints admitted yet.  
+- Hosted CI is fixture-only; real checkpoint runs are local.  
+- Llama fused Q8×Q8 path intentionally not matched (F006/F008).
 
 ## Threats to validity
 
-- Single-host (M1 Ultra class) results.  
-- Q8_0 decode + f32 MLX matvec path may not match a fused Metal implementation.  
-- OS page cache affects I/O gauges.  
-- Feature 003/004 package verification is claim-file based, not yet a full
-  Schema 1.2 experiment package like Feature 002.
+- Single-host (Apple Silicon) results.  
+- Q8_0 decode + f32 MLX matvec may not match a fused Metal kernel.  
+- Multi-layer MLX–CPU error plateaus ~4e-4 (within tol) — accumulation, not
+  structural routing break in admitted runs.  
+- Generation dual-check is expensive without KV cache.
 
 ## Future work (roadmap order)
 
-1. **Unblock F006**: align independent Q8_0 MoE with llama fused `ffn_moe_out`  
-2. Then F007 multi-layer → F008 logits → … → F012 scaling/GLM  
+1. Progressively larger admitted Qwen checkpoints (same architecture oracle).  
+2. KV-cache / optimized generation path (still architecture-correct).  
+3. GLM-5.2 **only after** smaller-model green remains.  
 
 ## Publication checklist
 
-- [x] Raw evidence for F002–F005  
-- [x] Claims ledgers F002–F005  
-- [x] Reviewer index updates  
+- [x] Raw evidence for F002–F005, F007–F015  
+- [x] Claims ledgers F002–F005, F007–F015  
+- [x] Architecture full-model stack + logits + greedy + short gen  
 - [x] Focused git commits pushed to main  
 - [ ] Full clean-checkout automation for F003/F004 (F003 partial; F004 single run)  
 - [ ] Unified package verifier for multi-feature claims  
-- [ ] Final CI attestation commit after each feature tip  
+- [ ] Optimized serving / tok/s (not claimed)  
 
 ## Exact reproduction (Feature 004)
 
@@ -176,18 +222,18 @@ PYTHONPATH=scripts/research uv run python -B scripts/research/moe_block_parity.p
   --source-commit "$(git rev-parse HEAD)"
 ```
 
-## Continuation instructions (post-F006 blocker)
+## Continuation instructions
 
-Deepest verified boundary: **Feature 005** residual MoE block
-(`y = ffn_inp + independent top-8 MoE(ffn_norm)`).
+Deepest verified boundary: **full 48-layer architecture stack + logits +
+greedy token + bounded 2-token generation** on Qwen3-30B-A3B-Q8_0.
 
-### After F008 (next roadmap)
+### Next roadmap
 
-1. Multi-layer replay under **architecture oracle** (f32 dequant path).  
-2. Optional: separate llama-parity mode using Q8_0×Q8_0 (not required).  
-3. First logits → greedy token → bounded prompts → benchmarks → scaling/GLM.  
+1. Larger admitted checkpoints (same contract).  
+2. KV-cache generation + real short text prompts (tokenizer).  
+3. GLM-5.2 only after smaller-model remains green.  
 
-### Reproduction of rejection
+### Reproduction of rejection (F006 llama bit-parity)
 
 ```sh
 # published captures under docs/research/raw/006-layer-out/
@@ -196,4 +242,5 @@ python3 -c "import json; print(json.load(open('docs/research/raw/006-layer-out/f
 
 ### GLM
 
-Not admitted. No attempt until F006–F011 succeed on admitted Qwen checkpoints.
+Not admitted. Qwen full-model architecture path is green; GLM requires a
+separate admitted checkpoint program.

@@ -1,0 +1,6 @@
+# Claims ledger — Feature 011 multi-layer stack drift
+
+| Claim ID | Claim | Evidence | source_commit | Scope | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| F011-C01 | Multi-layer architecture replay (attention + MoE residual) at depths 1, 2, 4, 8, 16, **48 (full model)** keeps MLX≈CPU within tolerance with bounded error growth | [depth-01](raw/010-011-layer-stack/f011-stack-depth-01-0001.json) … [depth-48](raw/010-011-layer-stack/f011-stack-depth-48-0001.json), [summary](raw/010-011-layer-stack/f010-f011-layer-stack-summary-full.json) | cca6b99 (runtime; re-stamp on commit) | tokens=[0,1]; layers 0..47 | verified | Peak max_abs ≈4.3e-4 at L3; final L47 ≈1.8e-4. No stop-threshold breach. Full-model residual stack architecture parity admitted. |
+| F011-C02 | Per-layer drift metrics recorded (max_abs, mean_abs, RMSE, cosine, norm_ratio, first max-error index) at attention `ffn_inp` and MoE `l_out` boundaries | same stack records | cca6b99 | publication metrics | verified | Secondary llama `ffn_inp-{0,1,2}` captures show expected Q8 fused drift; L2 row0 max_abs≈0.145 vs capture with cos still ≥0.99999 (sparse Q8 accumulation, not architecture CPU/MLX fail). |
