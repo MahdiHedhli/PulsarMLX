@@ -29,6 +29,20 @@ pub use portable_fixture::{
     TrunkInventoryReference,
 };
 
+mod residency;
+pub use residency::{
+    authoritative_candidates, AdmissionDecision, AdmissionRejection, HostMemoryBudget,
+    ResidentOrMissing, ResidencyCandidate, ResidencyClass, ResidencyDisposition,
+    ResidencyOptionId, ResidencySlot, ResidencyTransitionError, SlotLifecycle, GIB,
+};
+
+mod trunk_inventory;
+pub use trunk_inventory::{
+    TrunkGroupSummary, TrunkInventorySummary, AUTHORITATIVE_COMPRESSED_BYTES,
+    AUTHORITATIVE_DECODED_F32_BYTES, AUTHORITATIVE_EXCLUDED_EXPERT_MATRIX_COUNT,
+    AUTHORITATIVE_TENSOR_COUNT,
+};
+
 pub use stable_slab::{
     SlabAllocatorError, StableSlab, StableSlabAllocator, StableSlabConfig, StableSlabTelemetry,
     SlotId, ZeroingPolicy,

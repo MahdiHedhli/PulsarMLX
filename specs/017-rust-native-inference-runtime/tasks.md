@@ -17,15 +17,15 @@
 
 ## Phase 2 — Inventory-driven slot sizing and residency boundaries
 
-- [ ] T017-20 Ingest `f016-gguf-trunk-inventory-0001.json` and assert:
+- [x] T017-20 Ingest `f016-gguf-trunk-inventory-0001.json` and assert:
   - `tensor_count == 1353`
   - `excluded_expert_matrix_count == 456`
   - `total_compressed_bytes == 13_474_784_256`
   - `total_decoded_f32_bytes == 66_223_309_824`
-- [ ] T017-21 Assert trunk residency options A–F are represented by concrete names and budgets from authoritative table.
+- [x] T017-21 Assert trunk residency options A–F are represented by concrete names and budgets from authoritative table.
 - [ ] T017-22 Add allocator/slot-size generation from observed tensor-size distribution (no invented sizes).
-- [ ] T017-23 Add safe rejections for decoded-all-trunk and unsafe hybrid options on M2 Max safety gates.
-- [ ] T017-24 Add unit tests for compressed/decoded/hybrid residency state transitions.
+- [x] T017-23 Add safe rejections for decoded-all-trunk and unsafe hybrid options on M2 Max safety gates.
+- [x] T017-24 Add unit tests for compressed/decoded/hybrid residency state transitions.
 
 ## Phase 3 — Native slab allocator
 
