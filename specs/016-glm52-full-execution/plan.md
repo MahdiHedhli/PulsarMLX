@@ -46,7 +46,9 @@
 5. Qualify and integrate IQ3_XXS at exact scalar f32 bits before re-running the
    affected measured ladder. **Qualification passed** at source `be47a95` for
    four complete matrices across four shards with zero bit mismatches.
-6. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
+6. Rerun affected boundaries in order. **Committed through the real IQ3 down
+   matrix** at source `15a8aa2`; complete routed expert is next.
+7. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).

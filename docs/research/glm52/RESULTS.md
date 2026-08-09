@@ -62,6 +62,7 @@
 | matrix decode median | 0.050588 s vector vs 1.424142 s scalar; 28.15× at this boundary |
 | exact-bit NumPy IQ3_XXS matrix decode | **passed** — 4 complete matrices across 4 shards, 0 f32-bit mismatches |
 | IQ3_XXS matrix decode median | 0.075513 s vector vs 1.578598 s scalar; 20.90× at this boundary |
+| real IQ3_XXS down-matrix load/build/matvec | **passed** — 1 vector read vs 6144 scalar reads; exact deterministic output; 0.126149 s vs 1.559883 s median total |
 | real matrix load/build/matvec | **passed** — 1 vector read vs 2048 scalar reads; exact deterministic output; 0.090525 s vs 1.393479 s median total |
 | complete routed expert | **passed** — CPU oracle 0 mismatches; exact deterministic MLX modes; 1.706290 s vs 4.365715 s median total |
 | layer-3 top-8 + shared MoE | **passed** — CPU oracle 0 mismatches; exact route/mode bits; 14.062472 s vs 36.309373 s warm median |
@@ -70,9 +71,10 @@
 | P1 mixed-quant ranking | **passed** — 9 formats exercised; IQ3_XXS accounts for 1791.414 s / 61.78% of the quantified component sum |
 | P2 / steady-state tok/s | pending; not inferred from one P1 pilot |
 
-The IQ3_XXS result is a decode-only qualification on complete routed-expert
-down matrices. It does not yet establish a complete expert, layer, P1, or P2
-speedup. The mixed-quant inventory is generated at
+The IQ3_XXS decoder qualification is decode-only. The separate real down-matrix
+boundary includes load, decode, contiguous-buffer verification, synchronized
+MLX matrix build/eval, and matvec, but still does not establish a complete
+expert, layer, P1, or P2 speedup. The mixed-quant inventory is generated at
 [`tables/f016-p1-quant-hotspots.md`](tables/f016-p1-quant-hotspots.md) from the
 committed P1 record. Figures and tables must be generated from `raw/` — never
 hand-hardcoded.

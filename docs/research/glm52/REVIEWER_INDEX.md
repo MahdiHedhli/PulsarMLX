@@ -40,6 +40,9 @@
 - [IQ3_XXS NumPy qualification](raw/f016-iq3-xxs-numpy-qualification-0001.json)
   — four complete down matrices across four shards, raw timing samples,
   exact-bit comparisons, and allocation/resource observations
+- [Real IQ3_XXS down-matrix boundary](raw/f016-iq3-matrix-boundary-0001.json)
+  — one-read vector load, synchronized MLX GPU build/matvec, exact scalar-mode
+  comparison, resource observations, and raw timing samples
 - [Real matrix boundary](raw/f016-matrix-boundary-0001.json) — one-read vector
   load, synchronized MLX GPU build/matvec, scalar comparison, and raw samples
 - [Complete routed expert](raw/f016-routed-expert-0001.json) — gate/up/down,

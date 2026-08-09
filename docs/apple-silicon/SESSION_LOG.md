@@ -4299,3 +4299,11 @@ mismatches and deterministic repeat hashes. For one 12,582,912-weight matrix,
 decode boundary. The vector allocation observation retained raw RSS and
 `tracemalloc` values. This does not establish a complete routed-expert, layer,
 P1, or P2 speedup; the affected bounded ladder must now be rerun in order.
+
+The first affected benchmark rung then passed at clean source `15a8aa2`. One
+complete layer-3 expert-15 IQ3_XXS down matrix used one bounded vector read
+instead of 6144 scalar row reads, followed by contiguous decode, synchronized
+MLX GPU matrix build/eval, and matvec. Ten counterbalanced samples after three
+warmups produced exact deterministic output across decoder modes. Median total
+was 0.126149 seconds vectorized versus 1.559883 seconds scalar. This is a
+matrix-boundary result only; complete-expert benefit remains the next gate.
