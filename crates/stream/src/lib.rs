@@ -36,11 +36,14 @@ pub use residency::{
     ResidencyOptionId, ResidencySlot, ResidencyTransitionError, SlotLifecycle, GIB,
 };
 
+mod slot_classes;
+pub use slot_classes::{observed_slot_classes, ObservedSlotClass, SlotEncoding};
+
 mod trunk_inventory;
 pub use trunk_inventory::{
     TrunkGroupSummary, TrunkInventorySummary, AUTHORITATIVE_COMPRESSED_BYTES,
     AUTHORITATIVE_DECODED_F32_BYTES, AUTHORITATIVE_EXCLUDED_EXPERT_MATRIX_COUNT,
-    AUTHORITATIVE_TENSOR_COUNT,
+    AUTHORITATIVE_TENSOR_COUNT, TrunkTensorSummary,
 };
 
 pub use stable_slab::{

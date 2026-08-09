@@ -14,6 +14,15 @@ pub struct TrunkGroupSummary {
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+pub struct TrunkTensorSummary {
+    pub name: String,
+    pub trunk_group: String,
+    pub quantization: String,
+    pub compressed_bytes: u64,
+    pub decoded_f32_bytes: u64,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct TrunkInventorySummary {
     pub schema: String,
     pub schema_version: String,
@@ -22,6 +31,7 @@ pub struct TrunkInventorySummary {
     pub total_compressed_bytes: u64,
     pub total_decoded_f32_bytes: u64,
     pub by_trunk_group: Vec<TrunkGroupSummary>,
+    pub tensors: Vec<TrunkTensorSummary>,
 }
 
 impl TrunkInventorySummary {
@@ -57,22 +67,27 @@ impl TrunkInventorySummary {
                 self.total_decoded_f32_bytes
             ));
         }
+        if self.tensors.len() as u64 != self.tensor_count {
+            return Err(format!("unexpected tensor records {}", self.tensors.len()));
+        }
 
         let group_compressed = self
             .by_trunk_group
             .iter()
-            .map(|group| group.compressed_bytes)
-            .sum::<u64>();
+            .try_fold(0_u64, |total, group| total.checked_add(group.compressed_bytes));
         let group_decoded = self
             .by_trunk_group
             .iter()
-            .map(|group| group.decoded_f32_bytes)
-            .sum::<u64>();
+            .try_fold(0_u64, |total, group| total.checked_add(group.decoded_f32_bytes));
         let group_tensors = self
             .by_trunk_group
             .iter()
-            .map(|group| group.tensor_count)
-            .sum::<u64>();
+            .try_fold(0_u64, |total, group| total.checked_add(group.tensor_count));
+        let (Some(group_compressed), Some(group_decoded), Some(group_tensors)) =
+            (group_compressed, group_decoded, group_tensors)
+        else {
+            return Err("trunk-group totals overflow".to_owned());
+        };
         if group_compressed != self.total_compressed_bytes
             || group_decoded != self.total_decoded_f32_bytes
             || group_tensors != self.tensor_count
@@ -86,6 +101,12 @@ impl TrunkInventorySummary {
         self.by_trunk_group
             .iter()
             .find(|group| group.trunk_group == name)
+    }
+
+    pub fn tensor_sizes(&self) -> impl Iterator<Item = (u64, u64)> + '_ {
+        self.tensors
+            .iter()
+            .map(|tensor| (tensor.compressed_bytes, tensor.decoded_f32_bytes))
     }
 }
 
