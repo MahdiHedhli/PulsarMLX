@@ -11,6 +11,7 @@ exercised first. DSA top-k is range-fill identity when visible <= 2048.
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -138,20 +139,96 @@ def _matvec_3d_q8(
     rb = nbytes_for_tensor(loc.type_id, cols)
     head_bytes = rb * rows
     base = head * head_bytes
-    from glm52_dense_primitives import _decode_q8_0_row
+    from glm52_dense_primitives import (
+        DenseOperationMetrics,
+        _decode_q8_0_row,
+        dense_read_mode_current,
+        record_dense_operation,
+    )
 
-    # bulk dequant head slab then MLX matmul
-    flat: list[float] = []
-    for r in range(rows):
-        raw = store.pread(name, base + r * rb, rb)
-        flat.extend(_decode_q8_0_row(raw, cols))
+    mode = dense_read_mode_current()
+    bulk_modes = {
+        "whole_matrix_numpy_q5_q8_head_bulk_scalar",
+        "whole_matrix_numpy_q5_q8_head_numpy",
+    }
+    total_start = time.perf_counter()
+    storage_read_count = 0
+    storage_read_seconds = 0.0
+    dequant_seconds = 0.0
+    contiguous_buffer_seconds = 0.0
+    complete_raw: bytes | None = None
+    if mode in bulk_modes:
+        read_start = time.perf_counter()
+        complete_raw = store.pread(name, base, head_bytes)
+        storage_read_seconds = time.perf_counter() - read_start
+        storage_read_count = 1
+        if len(complete_raw) != head_bytes:
+            raise OSError(f"{name}: truncated head slab {head}")
+
+    if mode == "whole_matrix_numpy_q5_q8_head_numpy":
+        import numpy as np
+        from q8_0_dequant import dequantize_matrix_q8_0_numpy
+
+        assert complete_raw is not None
+        decode_start = time.perf_counter()
+        decoded = dequantize_matrix_q8_0_numpy(complete_raw, rows, cols)
+        dequant_seconds = time.perf_counter() - decode_start
+        buffer_start = time.perf_counter()
+        flat = np.ascontiguousarray(decoded.reshape(-1), dtype=np.float32)
+        contiguous_buffer_seconds = time.perf_counter() - buffer_start
+        decoder_mode = "numpy_vectorized_q8_0"
+    else:
+        flat = []
+        for r in range(rows):
+            if complete_raw is None:
+                read_start = time.perf_counter()
+                raw = store.pread(name, base + r * rb, rb)
+                storage_read_seconds += time.perf_counter() - read_start
+                storage_read_count += 1
+                if len(raw) != rb:
+                    raise OSError(f"{name}: truncated head {head} row {r}")
+            else:
+                start = r * rb
+                raw = complete_raw[start : start + rb]
+            decode_start = time.perf_counter()
+            decoded_row = _decode_q8_0_row(raw, cols)
+            dequant_seconds += time.perf_counter() - decode_start
+            buffer_start = time.perf_counter()
+            flat.extend(decoded_row)
+            contiguous_buffer_seconds += time.perf_counter() - buffer_start
+        decoder_mode = "scalar_reference"
     try:
         import mlx.core as mx
 
+        build_start = time.perf_counter()
         w = mx.array(flat, dtype=mx.float32).reshape((rows, cols))
+        mx.eval(w)
+        matrix_build_seconds = time.perf_counter() - build_start
+        matvec_start = time.perf_counter()
         y = w @ mx.array(x, dtype=mx.float32)
         mx.eval(y)
-        return y.tolist()
+        result = y.tolist()
+        matvec_seconds = time.perf_counter() - matvec_start
+        record_dense_operation(
+            DenseOperationMetrics(
+                tensor=name,
+                quantization=loc.type_name,
+                rows=rows,
+                cols=cols,
+                encoded_bytes=head_bytes,
+                storage_read_count=storage_read_count,
+                storage_read_seconds=storage_read_seconds,
+                dequant_seconds=dequant_seconds,
+                contiguous_buffer_seconds=contiguous_buffer_seconds,
+                mlx_matrix_build_seconds=matrix_build_seconds,
+                mlx_matvec_seconds=matvec_seconds,
+                total_seconds=time.perf_counter() - total_start,
+                read_mode=mode,
+                decoder_mode=decoder_mode,
+                slice_index=head,
+            )
+        )
+        return result
     except Exception:
         from glm52_dense_primitives import mlx_backend_required
 

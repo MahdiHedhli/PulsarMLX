@@ -47,6 +47,7 @@ class DenseOperationMetrics:
     total_seconds: float
     read_mode: str
     decoder_mode: str
+    slice_index: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -117,6 +118,8 @@ def dense_read_mode(mode: str) -> Iterator[None]:
         "whole_matrix_scalar",
         "whole_matrix_numpy_q5",
         "whole_matrix_numpy_q5_q8",
+        "whole_matrix_numpy_q5_q8_head_bulk_scalar",
+        "whole_matrix_numpy_q5_q8_head_numpy",
     }:
         raise ValueError(f"unsupported dense read mode {mode}")
     reset_handle = _DENSE_READ_MODE.set(mode)
@@ -124,6 +127,20 @@ def dense_read_mode(mode: str) -> Iterator[None]:
         yield
     finally:
         _DENSE_READ_MODE.reset(reset_handle)
+
+
+def dense_read_mode_current() -> str:
+    """Return the explicitly selected experimental dense mode."""
+
+    return _DENSE_READ_MODE.get()
+
+
+def record_dense_operation(operation: DenseOperationMetrics) -> None:
+    """Append one measured dense operation when capture is active."""
+
+    capture = _DENSE_METRICS.get()
+    if capture is not None:
+        capture.operations.append(operation)
 
 
 @contextmanager
@@ -269,9 +286,7 @@ def _matvec_mlx(
         read_mode=load.read_mode,
         decoder_mode=load.decoder_mode,
     )
-    capture = _DENSE_METRICS.get()
-    if capture is not None:
-        capture.operations.append(metrics)
+    record_dense_operation(metrics)
     return result
 
 
@@ -289,6 +304,8 @@ def _load_scalar_dense_matrix(
         "whole_matrix_scalar",
         "whole_matrix_numpy_q5",
         "whole_matrix_numpy_q5_q8",
+        "whole_matrix_numpy_q5_q8_head_bulk_scalar",
+        "whole_matrix_numpy_q5_q8_head_numpy",
     }:
         raise ValueError(f"unsupported dense read mode {read_mode}")
     row_bytes = nbytes_for_tensor(loc.type_id, cols)
@@ -310,10 +327,15 @@ def _load_scalar_dense_matrix(
 
     vector_decoder = None
     decoder_name = None
-    if read_mode in {"whole_matrix_numpy_q5", "whole_matrix_numpy_q5_q8"} and loc.type_id == 13:
+    q5_q8_modes = {
+        "whole_matrix_numpy_q5_q8",
+        "whole_matrix_numpy_q5_q8_head_bulk_scalar",
+        "whole_matrix_numpy_q5_q8_head_numpy",
+    }
+    if read_mode in {"whole_matrix_numpy_q5", *q5_q8_modes} and loc.type_id == 13:
         vector_decoder = dequantize_matrix_q5_k_numpy
         decoder_name = "numpy_vectorized_q5_k"
-    elif read_mode == "whole_matrix_numpy_q5_q8" and loc.type_id == 8:
+    elif read_mode in q5_q8_modes and loc.type_id == 8:
         vector_decoder = dequantize_matrix_q8_0_numpy
         decoder_name = "numpy_vectorized_q8_0"
     if vector_decoder is not None:
