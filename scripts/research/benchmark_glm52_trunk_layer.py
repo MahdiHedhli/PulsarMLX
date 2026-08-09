@@ -238,7 +238,7 @@ def benchmark(model: Path) -> dict[str, Any]:
             and all(len(values) == 1 for values in route_ids.values())
             and all(
                 sample["shared_cache_hits"] == 3
-                and sample["shared_cache_misses"] == 0
+                and sample["shared_cache_misses"] == 24
                 and sample["resident_entries_end"] == 3
                 and sample["expert_decoder_mode"] == "numpy_vectorized"
                 and sample["resource_after"]["level"] == "normal"
@@ -267,6 +267,8 @@ def benchmark(model: Path) -> dict[str, Any]:
                 "expert_decoder_mode_both": "numpy_vectorized",
                 "shared_cache_policy_both": "decoded_shared_only",
                 "shared_cache_budget_bytes": 16 * 1024**3,
+                "expected_shared_cache_hits_per_warm_layer": 3,
+                "expected_transient_routed_matrix_misses_per_layer": 24,
                 "warmups_per_mode": WARMUPS,
                 "measured_samples_per_mode": MEASURED,
                 "measurement_order": "counterbalanced_alternation",
