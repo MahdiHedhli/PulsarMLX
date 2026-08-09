@@ -4307,3 +4307,12 @@ MLX GPU matrix build/eval, and matvec. Ten counterbalanced samples after three
 warmups produced exact deterministic output across decoder modes. Median total
 was 0.126149 seconds vectorized versus 1.559883 seconds scalar. This is a
 matrix-boundary result only; complete-expert benefit remains the next gate.
+
+The complete layer-3 routed expert then passed at clean source `a8a3d71`.
+Gate and up remained vector IQ2_XXS while down used the new vector IQ3_XXS
+path; all three matrices used one bounded read each. Two independent scalar
+CPU-oracle executions were deterministic, the MLX result had zero tolerance
+mismatches, and scalar/vector decoder modes were bit-identical and deterministic
+across ten measured samples. Median total was 0.243532 seconds vectorized
+versus 4.378363 seconds scalar (17.98×). This remains one routed expert; the
+complete top-8 plus shared layer-3 MoE is the next measured gate.

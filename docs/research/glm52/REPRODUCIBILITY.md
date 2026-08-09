@@ -58,6 +58,8 @@ uv run --frozen python scripts/research/qualify_iq3_xxs_numpy.py \
 uv run --frozen python scripts/research/benchmark_glm52_matrix_boundary.py \
   --projection down \
   --output docs/research/glm52/raw/f016-iq3-matrix-boundary-0001.json
+uv run --frozen python scripts/research/benchmark_glm52_routed_expert.py \
+  --output docs/research/glm52/raw/f016-routed-expert-iq3-0001.json
 python3 -m unittest discover -s scripts/research/tests \
   -p 'test_iq*_xxs_qualification_record.py' -v
 ```
