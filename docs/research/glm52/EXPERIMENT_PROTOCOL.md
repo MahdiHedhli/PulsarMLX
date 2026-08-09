@@ -191,8 +191,9 @@ Before opening the tensor store:
 1. notify `Mahdi-Dev` that local inference hardware is required;
 2. confirm the six local filenames and sizes against
    `docs/validation/glm52-checkpoint.json` (do not re-download or duplicate);
-3. record the checkpoint-set SHA-256 and the fact that the remote revision was
-   not captured at acquisition rather than inferring one after the fact;
+3. record the checkpoint-set SHA-256 and the post-acquisition content binding
+   to revision `abc55e72527792c6e77069c99b4cb7de16fa9f23`; do not describe it
+   as a revision captured by the original download;
 4. require a clean worktree and record the exact source commit;
 5. require sufficient disk and a non-critical macOS memory-pressure sample;
 6. confirm there is no competing GLM run and no declared material local

@@ -1,0 +1,46 @@
+{
+  "actual_status": "passed",
+  "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+  "feature_id": "016-glm52-full-execution",
+  "file_count": 6,
+  "files": [
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",
+      "local_sha256": "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18",
+      "remote_lfs_etag": "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18"
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "local_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+      "remote_lfs_etag": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",
+      "local_sha256": "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b",
+      "remote_lfs_etag": "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b"
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",
+      "local_sha256": "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e",
+      "remote_lfs_etag": "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e"
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",
+      "local_sha256": "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d",
+      "remote_lfs_etag": "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d"
+    },
+    {
+      "filename": "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",
+      "local_sha256": "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d",
+      "remote_lfs_etag": "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d"
+    }
+  ],
+  "method": "HTTPS HEAD x-repo-commit and x-linked-etag; no checkpoint payload downloaded",
+  "quant": "UD-IQ2_XXS",
+  "remote_reference": "main",
+  "repo": "unsloth/GLM-5.2-GGUF",
+  "revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23",
+  "schema": "pulsarmlx.validation.glm52-revision-binding",
+  "schema_version": "1.0.0",
+  "utc_timestamp": "2026-08-09T00:54:46Z"
+}

@@ -21,8 +21,10 @@ Architecture metadata (HF card): `glm-dsa`, ~754B params.
 **Local**: the six admitted shards are present on the internal SSD. Their exact
 sizes, per-file SHA-256 values, and checkpoint-set hash are frozen in
 `docs/validation/glm52-checkpoint.json`. The remote revision was not recorded
-at acquisition; the content hashes, not an inferred branch head, are the
-immutable identity used by this feature.
+at acquisition. A later metadata-only check established that all six local
+hashes match the six LFS etags at immutable revision
+`abc55e72527792c6e77069c99b4cb7de16fa9f23`; the append-only binding is
+`docs/validation/glm52-revision-binding.json`.
 
 ### Single-file note (upstream README)
 

@@ -98,13 +98,26 @@ def _source_identity() -> dict[str, Any]:
 
 def _checkpoint_identity() -> dict[str, Any]:
     manifest = json.loads((ROOT / "docs/validation/glm52-checkpoint.json").read_text())
+    revision_binding = json.loads(
+        (ROOT / "docs/validation/glm52-revision-binding.json").read_text()
+    )
+    if revision_binding["checkpoint_set_sha256"] != manifest["checkpoint_set_sha256"]:
+        raise ValueError("checkpoint revision binding does not match acquisition identity")
+    for local, remote in zip(
+        manifest["files"], revision_binding["files"], strict=True
+    ):
+        if (
+            local["filename"] != remote["filename"]
+            or local["sha256"] != remote["local_sha256"]
+            or local["sha256"] != remote["remote_lfs_etag"]
+        ):
+            raise ValueError("checkpoint revision binding file identity mismatch")
     return {
         "checkpoint_set_sha256": manifest["checkpoint_set_sha256"],
         "repo": manifest["repo"],
-        "revision": manifest.get("revision"),
-        "revision_status": (
-            "recorded" if manifest.get("revision") else "not_recorded_at_acquisition"
-        ),
+        "revision": revision_binding["revision"],
+        "revision_status": "post_acquisition_content_binding",
+        "revision_binding_evidence": "docs/validation/glm52-revision-binding.json",
         "quant": manifest["quant"],
         "file_count": manifest["file_count"],
         "total_bytes": manifest["total_bytes"],

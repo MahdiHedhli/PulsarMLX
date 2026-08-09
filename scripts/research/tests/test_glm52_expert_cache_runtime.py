@@ -26,7 +26,7 @@ from glm52_dense_primitives import (  # noqa: E402
     mlx_backend_required,
     require_mlx_backend,
 )
-from glm52_inference import _stats_delta  # noqa: E402
+from glm52_inference import _checkpoint_identity, _stats_delta  # noqa: E402
 
 
 class FakeBackend:
@@ -210,6 +210,14 @@ def test_inference_stats_delta_keeps_split_cache_metrics() -> None:
     assert "backend" not in delta
 
 
+def test_checkpoint_revision_binding_matches_every_acquired_file() -> None:
+    identity = _checkpoint_identity()
+    assert identity["revision"] == "abc55e72527792c6e77069c99b4cb7de16fa9f23"
+    assert identity["revision_status"] == "post_acquisition_content_binding"
+    assert identity["file_count"] == 6
+    assert len(identity["files"]) == 6
+
+
 def test_inference_progress_is_atomic_identity_bound_and_route_complete() -> None:
     import glm52_inference as inference
 
@@ -347,6 +355,7 @@ def load_tests(
         test_matvec_cached_rows_reference,
         test_inference_context_forbids_auto_cpu_fallback,
         test_inference_stats_delta_keeps_split_cache_metrics,
+        test_checkpoint_revision_binding_matches_every_acquired_file,
         test_inference_progress_is_atomic_identity_bound_and_route_complete,
     ):
         suite.addTest(unittest.FunctionTestCase(function))

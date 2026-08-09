@@ -4164,3 +4164,9 @@ fallbacks, records routes and split storage/dequant/MLX/cache metrics, samples
 current and peak RSS, and atomically checkpoints completed stacks. Model-free
 tests and a tiny native MLX GPU matvec pass. These facts do not establish
 real-checkpoint cache reuse; exactly two new tokens are the next Tier-3 gate.
+
+Immediately before P2, a metadata-only remote check bound the already admitted
+six local shard hashes to all six LFS etags at immutable upstream revision
+`abc55e72527792c6e77069c99b4cb7de16fa9f23`. No checkpoint payload was
+downloaded. The original acquisition record remains unchanged; the later
+binding is append-only in `docs/validation/glm52-revision-binding.json`.
