@@ -3,13 +3,14 @@
 
 from __future__ import annotations
 
-import sys
 import json
+import sys
 import tempfile
+import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from types import SimpleNamespace
-
-import pytest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -129,7 +130,9 @@ def test_clear_drops_residency_but_resets_all_counters() -> None:
 
 def test_backend_failure_propagates_without_cpu_fallback() -> None:
     cache = ExpertSlabCache(max_bytes=16, backend=FakeBackend(fail_load=True))
-    with pytest.raises(RuntimeError, match="synthetic MLX load failure"):
+    with unittest.TestCase().assertRaisesRegex(
+        RuntimeError, "synthetic MLX load failure"
+    ):
         expert_matvec_cached(
             object(), cache, "blk.3.ffn_gate_shexp.weight", 0, [1.0, 1.0]
         )
@@ -141,7 +144,7 @@ def test_matvec_cached_rows_reference() -> None:
     assert matvec_cached_rows(rows, [3.0, 4.0]) == [3.0, 8.0]
 
 
-def test_inference_context_forbids_auto_cpu_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_inference_context_forbids_auto_cpu_fallback() -> None:
     class Store:
         tensors = {
             "toy.weight": SimpleNamespace(
@@ -160,13 +163,15 @@ def test_inference_context_forbids_auto_cpu_fallback(monkeypatch: pytest.MonkeyP
         del args, kwargs
         raise RuntimeError("synthetic MLX failure")
 
-    monkeypatch.setattr("glm52_dense_primitives._matvec_mlx", fail_mlx)
-    assert not mlx_backend_required()
-    assert matvec_weight(Store(), "toy.weight", [3.0, 4.0]) == [3.0, 8.0]
-    with require_mlx_backend():
-        assert mlx_backend_required()
-        with pytest.raises(RuntimeError, match="synthetic MLX failure"):
-            matvec_weight(Store(), "toy.weight", [3.0, 4.0])
+    with patch("glm52_dense_primitives._matvec_mlx", fail_mlx):
+        assert not mlx_backend_required()
+        assert matvec_weight(Store(), "toy.weight", [3.0, 4.0]) == [3.0, 8.0]
+        with require_mlx_backend():
+            assert mlx_backend_required()
+            with unittest.TestCase().assertRaisesRegex(
+                RuntimeError, "synthetic MLX failure"
+            ):
+                matvec_weight(Store(), "toy.weight", [3.0, 4.0])
     assert not mlx_backend_required()
 
 
@@ -205,9 +210,7 @@ def test_inference_stats_delta_keeps_split_cache_metrics() -> None:
     assert "backend" not in delta
 
 
-def test_inference_progress_is_atomic_identity_bound_and_route_complete(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_inference_progress_is_atomic_identity_bound_and_route_complete() -> None:
     import glm52_inference as inference
 
     class FakeStats:
@@ -282,29 +285,38 @@ def test_inference_progress_is_atomic_identity_bound_and_route_complete(
         logits[21615] = 1.0
         return logits
 
-    monkeypatch.setattr(inference, "N_LAYER", 1)
-    monkeypatch.setattr(inference, "ExpertSlabCache", FakeCache)
-    monkeypatch.setattr(inference, "embed_token", lambda store, token: [float(token)])
-    monkeypatch.setattr(inference, "layer_forward_inference", fake_layer)
-    monkeypatch.setattr(inference, "logits_from_hidden", fake_logits)
-    monkeypatch.setattr(inference, "sample_pressure", lambda: Pressure())
-
-    with tempfile.TemporaryDirectory() as td:
-        output = Path(td) / "candidate.json"
-        result = inference.generate(
-            object(),
-            [9703],
-            1,
-            mode="inference",
-            cache_bytes=16,
-            progress_path=output,
-            evidence_context={
-                "source_commit": "a" * 40,
-                "checkpoint": {"checkpoint_set_sha256": "b" * 64},
-            },
+    with ExitStack() as patches:
+        patches.enter_context(patch.object(inference, "N_LAYER", 1))
+        patches.enter_context(patch.object(inference, "ExpertSlabCache", FakeCache))
+        patches.enter_context(
+            patch.object(
+                inference, "embed_token", lambda store, token: [float(token)]
+            )
         )
-        assert json.loads(output.read_text()) == result
-        assert not (output.parent / f".{output.name}.tmp").exists()
+        patches.enter_context(
+            patch.object(inference, "layer_forward_inference", fake_layer)
+        )
+        patches.enter_context(patch.object(inference, "logits_from_hidden", fake_logits))
+        patches.enter_context(
+            patch.object(inference, "sample_pressure", lambda: Pressure())
+        )
+
+        with tempfile.TemporaryDirectory() as td:
+            output = Path(td) / "candidate.json"
+            result = inference.generate(
+                object(),
+                [9703],
+                1,
+                mode="inference",
+                cache_bytes=16,
+                progress_path=output,
+                evidence_context={
+                    "source_commit": "a" * 40,
+                    "checkpoint": {"checkpoint_set_sha256": "b" * 64},
+                },
+            )
+            assert json.loads(output.read_text()) == result
+            assert not (output.parent / f".{output.name}.tmp").exists()
 
     assert result["schema"] == "pulsarmlx.research.glm52-inference"
     assert result["schema_version"] == "2.0.0"
@@ -316,3 +328,26 @@ def test_inference_progress_is_atomic_identity_bound_and_route_complete(
     assert result["routing"][0]["layers"][0]["expert_ids"] == list(range(8))
     assert result["timings"][1]["cache_delta"]["decoded_cache_hits"] == 1
     assert result["expert_cache"]["cpu_fallbacks"] == 0
+
+
+def load_tests(
+    loader: unittest.TestLoader,
+    tests: unittest.TestSuite,
+    pattern: str | None,
+) -> unittest.TestSuite:
+    """Expose the same function tests to the repository's unittest CI runner."""
+
+    del loader, tests, pattern
+    suite = unittest.TestSuite()
+    for function in (
+        test_shared_only_policy_bypasses_routed_and_reuses_shared,
+        test_shared_admission_is_protected_and_bounded_without_eviction,
+        test_clear_drops_residency_but_resets_all_counters,
+        test_backend_failure_propagates_without_cpu_fallback,
+        test_matvec_cached_rows_reference,
+        test_inference_context_forbids_auto_cpu_fallback,
+        test_inference_stats_delta_keeps_split_cache_metrics,
+        test_inference_progress_is_atomic_identity_bound_and_route_complete,
+    ):
+        suite.addTest(unittest.FunctionTestCase(function))
+    return suite
