@@ -66,8 +66,8 @@
 
 ## Phase 7 — Apple bridge spike and native registration
 
-- [ ] T017-70 Build native bridge registration spike with deterministic buffer ownership and teardown ordering.
-- [ ] T017-71 Demonstrate stable address behavior across command submission boundaries.
+- [x] T017-70 Build native bridge registration spike with deterministic buffer ownership and teardown ordering.
+- [x] T017-71 Demonstrate stable address behavior across command submission boundaries.
 - [ ] T017-72 Add no-copy or explicit `newBufferWithBytesNoCopy` qualification matrix.
 - [ ] T017-73 Add fail-closed teardown and cancellation path tests.
 
