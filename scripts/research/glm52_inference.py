@@ -360,6 +360,11 @@ def generate(
             tid = argmax(logits_from_hidden(store, x))
             logits_seconds = time.perf_counter() - logits_start
             generated.append(tid)
+            if generated != GOLDEN[: len(generated)]:
+                final = snapshot("failed")
+                if progress_path is not None:
+                    _write_json_atomic(progress_path, final)
+                return final
             position = len(seed) + step
             before = expert_cache.stats.to_dict() if expert_cache is not None else {}
             x, stack = _run_stack(

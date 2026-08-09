@@ -9,7 +9,7 @@ import struct
 import sys
 import tempfile
 import unittest
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -476,6 +476,71 @@ def test_inference_progress_is_atomic_identity_bound_and_route_complete() -> Non
     assert result["expert_cache"]["cpu_fallbacks"] == 0
 
 
+def test_inference_stops_before_executing_a_divergent_token_stack() -> None:
+    import glm52_inference as inference
+
+    class FakeStats:
+        def to_dict(self) -> dict[str, object]:
+            return {
+                "bytes_resident": 0,
+                "resident_entries": 0,
+                "cpu_fallbacks": 0,
+            }
+
+    class FakeCache:
+        def __init__(self, **kwargs: object) -> None:
+            del kwargs
+            self.stats = FakeStats()
+
+    completed_tokens: list[int] = []
+
+    def fake_stack(
+        store: object,
+        *,
+        token_id: int,
+        position: int,
+        mode: str,
+        cache: FakeCache,
+        kvs: list[object],
+    ) -> tuple[list[float], dict[str, object]]:
+        del store, position, mode, cache, kvs
+        completed_tokens.append(token_id)
+        return [0.0], {
+            "stack_seconds": 1.0,
+            "layers": [],
+            "routes": [],
+            "resource_after": {"level": "normal"},
+        }
+
+    with ExitStack() as patches:
+        patches.enter_context(patch.object(inference, "ExpertSlabCache", FakeCache))
+        patches.enter_context(patch.object(inference, "_run_stack", fake_stack))
+        patches.enter_context(
+            patch.object(inference, "require_mlx_backend", lambda: nullcontext())
+        )
+        patches.enter_context(
+            patch.object(inference, "logits_from_hidden", lambda store, hidden: [0.0, 1.0])
+        )
+        with tempfile.TemporaryDirectory() as td:
+            output = Path(td) / "divergent.json"
+            result = inference.generate(
+                object(),
+                [9703],
+                8,
+                mode="inference",
+                cache_bytes=16,
+                progress_path=output,
+            )
+            assert json.loads(output.read_text()) == result
+
+    assert result["actual_status"] == "failed"
+    assert result["generated_token_ids"] == [9703, 1]
+    assert result["matches_golden_prefix"] is False
+    assert result["timings"][0]["token"] == 9703
+    assert len(result["timings"]) == 1
+    assert completed_tokens == [9703]
+
+
 def load_tests(
     loader: unittest.TestLoader,
     tests: unittest.TestSuite,
@@ -500,6 +565,7 @@ def load_tests(
         test_inference_stats_delta_keeps_split_cache_metrics,
         test_checkpoint_revision_binding_matches_every_acquired_file,
         test_inference_progress_is_atomic_identity_bound_and_route_complete,
+        test_inference_stops_before_executing_a_divergent_token_stack,
     ):
         suite.addTest(unittest.FunctionTestCase(function))
     return suite
