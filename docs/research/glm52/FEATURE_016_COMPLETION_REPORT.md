@@ -80,17 +80,20 @@ of contiguous-buffer work, 87.939649 seconds of MLX matrix build/evaluation,
 ## Revised hotspots
 
 The cold prompt stack took 2569.173874 seconds. Its measured ranking was an
-uninstrumented trunk residual of 1636.635724 seconds (63.70%), expert-cache
+uninstrumented residual of 1636.635724 seconds (63.70%), expert-cache
 dequantization of 836.065616 seconds, contiguous buffers of 74.588111 seconds,
 matrix build of 11.018476 seconds, matvec of 8.909328 seconds, and storage of
 1.956619 seconds. Cold per-quant deltas are unavailable because the watcher
 started after the cold and first warm stacks; no earlier snapshot was invented.
 
-Warm stack means ranked as follows: uninstrumented trunk residual 1670.729513
+Warm stack means ranked as follows: uninstrumented residual 1670.729513
 seconds, expert-cache dequantization 206.003257, separate full-vocabulary logits
 77.777555, contiguous buffers 18.172826, MLX matrix build 9.615147, MLX matvec
 7.971767, and storage 3.871705. The median residual was 1675.491540 seconds and
 87.18% of stack wall.
+
+This residual is not a direct trunk or cleanup measurement; it is the layer/stack
+wall not covered by the expert-cache component timers.
 
 Seven watcher intervals covering generated tokens 2–8 were monotonic and valid
 for subtraction; no reset occurred. Their per-quant ranking is explicitly
@@ -164,9 +167,17 @@ norm/output projection, and any Q6_K tensors on those paths.
   `docs/research/glm52/raw/f016-golden8-derived-profile-0001.json`
 - Generated table:
   `docs/research/glm52/tables/f016-golden8-derived-profile.md`
+- Post-run calculations:
+  `docs/research/glm52/raw/f016-golden8-post-run-calculations-0001.json`
+- Complete GGUF trunk inventory:
+  `docs/research/glm52/raw/f016-gguf-trunk-inventory-0001.json`
+- Post-run calculation report:
+  `docs/research/glm52/POST_GOLDEN8_CALCULATIONS.md`
 - Record validator:
   `python3 -m unittest scripts.research.tests.test_glm52_golden8_iq3_record -v`
 - Derived-profile validator:
   `python3 scripts/research/analyze_glm52_golden8.py --check`
+- Post-run calculation validator:
+  `python3 scripts/research/analyze_glm52_post_run.py --check`
 - Complete CI-safe research suite:
   `python3 -m unittest discover -s scripts/research/tests -v`

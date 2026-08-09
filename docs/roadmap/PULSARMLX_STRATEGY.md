@@ -30,10 +30,11 @@ at source commit `1a2ca76ee2df0f518bfc9ddbaafd31500a5e6a26`: nine complete
 and normal retained resource states. This is one bounded research correctness
 and reuse run, not a tokens-per-second or production-runtime claim. Its
 derived [cold/warm profile](../research/glm52/raw/f016-golden8-derived-profile-0001.json)
-found a 1675.492-second median warm uninstrumented trunk residual (87.18% median
-of stack wall), while expert-cache storage averaged only 3.872 seconds (0.20%
+found a 1675.492-second median warm uninstrumented residual (87.18% median of
+stack wall), while expert-cache storage averaged only 3.872 seconds (0.20%
 of mean stack wall). Prefetch is deferred, and the first direct-quantized Metal
-target remains undecided pending trunk-side fixture evidence.
+target remains undecided pending trunk-side fixture evidence. The residual is
+not itself a direct trunk or cleanup measurement.
 
 ## Architectural principles
 
@@ -257,7 +258,7 @@ generation, telemetry, cancellation, and recovery. No Spec Kit artifacts or
 tasks are generated here. The exact-decode entry contract is documented in
 [`RUST_EXACT_DECODE_BOUNDARY.md`](../architecture/RUST_EXACT_DECODE_BOUNDARY.md).
 
-The material uninstrumented warm trunk residual justifies keeping the following
+The material uninstrumented warm residual justifies keeping the following
 feature separate and profile-neutral: `018-direct-quantized-metal-runtime`.
 Feature 017 should first provide the native ownership/orchestration boundary
 and representative M2 Max trunk fixtures. Feature 018's first kernel is chosen

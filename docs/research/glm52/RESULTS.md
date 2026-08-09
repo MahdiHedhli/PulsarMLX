@@ -79,7 +79,7 @@ gates passed
 | frozen golden-eight correctness/reuse | **passed** — exact `[9703,21615,220,16,13,16,16,15,15]`; 18522.659 s; 1824 shared hits; zero fallback |
 | golden-eight warm stack population | 8 stacks; median 1921.882 s; mean 1916.364 s; sample standard deviation 12.887 s; range 1892.662–1928.536 s |
 | warm expert-cache storage | mean 3.872 s, 0.20% of mean stack wall; prefetch/storage implementation deferred |
-| warm uninstrumented trunk residual | median 1675.492 s and median 87.18% of stack wall; material, so expert-only quant metrics cannot select a Metal kernel |
+| warm uninstrumented residual | median 1675.492 s and median 87.18% of stack wall; material, so expert-only quant metrics cannot select a Metal kernel |
 | steady-state tok/s | unsupported; not inferred from one eight-token correctness run |
 
 The IQ3_XXS decoder qualification is decode-only. The separate real down-matrix
@@ -123,7 +123,16 @@ The warm per-quant table is explicitly **EXPERT-CACHE PATH ONLY**. Across the
 seven observable intervals, IQ2_XXS led that bounded path at 69.672 mean
 component-seconds, followed by IQ3_XXS at 50.304. Q6_K contributed only 0.378
 mean component-seconds because the protected shared matrices were resident.
-Dense trunk operations are outside these counters. Their material residual
-requires representative MLA/attention, dense transform, embedding, final
-norm/output, and Q6_K trunk fixture measurements before the first kernel in
-provisional Feature 018 can be selected.
+Dense trunk operations are outside these counters. The material residual is not
+a direct trunk or cleanup measurement; it requires representative MLA/attention,
+dense transform, embedding, final norm/output, and Q6_K trunk fixture measurements
+before the first kernel in provisional Feature 018 can be selected.
+
+The checkpoint-free [post-run calculation report](POST_GOLDEN8_CALCULATIONS.md)
+with its [machine-readable record](raw/f016-golden8-post-run-calculations-0001.json)
+and [complete trunk inventory](raw/f016-gguf-trunk-inventory-0001.json)
+reconcile the honest token-eight selection boundary, all warm per-layer residual
+samples, the non-identifiable cleanup correlation, the complete 1,353-tensor
+non-expert catalog, logical residency budgets, and row-read request arithmetic.
+They define whole-matrix-read and vectorized-trunk-decode fixtures as the next
+two experiments; they do not add inference evidence or select a Metal kernel.

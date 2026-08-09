@@ -78,7 +78,13 @@
 - [Golden-eight derived profile](raw/f016-golden8-derived-profile-0001.json)
   and [generated table](tables/f016-golden8-derived-profile.md) — total/cold/warm
   observations, passive-watcher monotonicity witness, seven expert-cache-only
-  per-quant deltas, trunk residual, and prefetch/Feature-018 decisions
+  per-quant deltas, uninstrumented residual, and prefetch/Feature-018 decisions
+- [Post-golden-eight calculations](raw/f016-golden8-post-run-calculations-0001.json)
+  with the [complete GGUF trunk inventory](raw/f016-gguf-trunk-inventory-0001.json)
+  and [concise report](POST_GOLDEN8_CALCULATIONS.md) — token-eight selection
+  boundary, per-layer uninstrumented residual, cleanup non-attribution, complete
+  non-expert GGUF inventory, logical residency budgets, request amplification,
+  and the two bounded trunk experiments
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
@@ -95,6 +101,8 @@
 - `tables/` / `figures/` generated from raw only
 - Deterministic profile check:
   `python3 scripts/research/analyze_glm52_golden8.py --check`
+- Deterministic post-run calculation check:
+  `python3 scripts/research/analyze_glm52_post_run.py --check`
 
 ### Claims
 

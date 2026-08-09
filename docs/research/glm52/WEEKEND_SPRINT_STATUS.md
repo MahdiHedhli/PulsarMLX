@@ -23,7 +23,7 @@ hotspot profile, Rust boundary design, and CI passed
 | 9 | Exact-bit IQ2_XXS and IQ3_XXS vectorization through matrix, expert, MoE, layer, and P1 | `968cfac`…`d5e1cf3` |
 | 10 | P2 exact two-token correctness and useful shared reuse | `5bc6fe6` |
 | 11 | Frozen golden-eight exact sequence, nine complete stacks, and 1,824 shared hits | source `1a2ca76` |
-| 12 | Golden-eight cold/warm profile, monotonic snapshot deltas, trunk residual, and evidence-backed prefetch deferral | derived from source `1a2ca76` |
+| 12 | Golden-eight cold/warm profile, monotonic snapshot deltas, uninstrumented residual, and evidence-backed prefetch deferral | derived from source `1a2ca76` |
 
 ## Recovered P1 evidence
 

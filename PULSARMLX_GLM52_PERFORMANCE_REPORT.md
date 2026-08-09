@@ -356,8 +356,8 @@ shared matrices were resident.
 
 Warm expert-cache storage averaged 3.872 seconds, only 0.20% of mean stack
 wall, so prefetch/storage implementation is deferred. By contrast, the warm
-uninstrumented trunk residual had a 1675.492-second median and 87.18% median
-fraction. This prevents selecting the first direct-quantized Metal kernel from
+uninstrumented residual had a 1675.492-second median and 87.18% median fraction.
+It is not a direct trunk or cleanup measurement. This prevents selecting the first direct-quantized Metal kernel from
 expert-only quantization counters. Representative M2 Max fixtures must first
 attribute MLA/attention projections, dense transforms, embeddings if material,
 final norm/output projection, and any Q6_K tensors on those paths.

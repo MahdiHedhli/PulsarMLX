@@ -67,7 +67,7 @@ per-quant table. Every cumulative interval was monotonic; no reset was hidden.
 
 The cold prompt stack took 2569.174 seconds. Its bounded component ranking was:
 
-1. uninstrumented trunk residual: 1636.636 seconds (63.70%)
+1. uninstrumented residual: 1636.636 seconds (63.70%)
 2. expert-cache dequantization: 836.066 seconds
 3. expert-cache contiguous buffers: 74.588 seconds
 4. expert-cache MLX matrix build: 11.018 seconds
@@ -75,11 +75,14 @@ The cold prompt stack took 2569.174 seconds. Its bounded component ranking was:
 6. expert-cache storage: 1.957 seconds
 
 The eight warm stacks had a 1921.882-second median. Their mean bounded ranking
-was 1670.730 seconds of uninstrumented trunk residual, 206.003 seconds of
+was 1670.730 seconds of uninstrumented residual, 206.003 seconds of
 expert-cache dequantization, 77.778 seconds of separately recorded logits,
 18.173 seconds of expert-cache contiguous buffers, 9.615 seconds of matrix
 build, 7.972 seconds of matvec, and 3.872 seconds of storage. The median residual
 fraction was 87.18%; it is not assigned to any quantization.
+
+The residual is not a direct trunk or cleanup measurement; it is the stack wall
+outside the expert-cache component timers.
 
 The warm quantization ranking is **EXPERT-CACHE PATH ONLY**, not whole-token
 cost: IQ2_XXS 69.672 mean seconds, IQ3_XXS 50.304, Q2_K 36.153, IQ4_XS 34.654,

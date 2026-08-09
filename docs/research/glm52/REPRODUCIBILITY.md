@@ -36,6 +36,10 @@ python -m pytest scripts/research/tests/test_glm52_*.py -q
 # Regenerate/check the committed golden-eight derived profile.
 python3 scripts/research/analyze_glm52_golden8.py
 python3 scripts/research/analyze_glm52_golden8.py --check
+
+# Regenerate/check the checkpoint-free post-run calculations and trunk inventory.
+python3 scripts/research/analyze_glm52_post_run.py
+python3 scripts/research/analyze_glm52_post_run.py --check
 ```
 
 The committed profile embeds the public-safe passive-watcher witness needed for
@@ -43,6 +47,11 @@ CI-safe verification. Recreating the watcher archive itself is neither required
 nor possible from a later checkout; no overwritten historical snapshot is
 fabricated. Regeneration from a new run requires passing its external watcher
 summary explicitly as documented by `--help`.
+
+The post-run calculation reads only the committed golden evidence, derived
+profile, and C01 tensor catalog. It does not open checkpoint shards or execute
+the model. Its generated JSON contains the complete non-expert tensor inventory;
+its Markdown report is a reviewer summary of that same machine-readable data.
 
 ## Real-model Tier-3
 
