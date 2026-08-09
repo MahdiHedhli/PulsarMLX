@@ -74,7 +74,8 @@
 | complete layer 3 | **passed** — frozen attention midpoint/routes; exact mode bits; 31.687686 s vs 53.230274 s warm median |
 | vectorized P1 full stack | **passed** — golden `[9703,21615]`; 6294.015 s; 228 shared-cache hits; zero fallback |
 | P1 mixed-quant ranking | **passed** — 9 formats exercised; IQ3_XXS accounts for 1791.414 s / 61.78% of the quantified component sum |
-| P2 / steady-state tok/s | pending; not inferred from one P1 pilot |
+| P2 two-token correctness/reuse | **passed** — exact `[9703,21615,220]`; 6552.475 s; 456 shared hits; zero fallback |
+| steady-state tok/s | unsupported; not inferred from two warm decode stacks |
 
 The IQ3_XXS decoder qualification is decode-only. The separate real down-matrix
 boundary includes load, decode, contiguous-buffer verification, synchronized
@@ -93,3 +94,8 @@ The earlier inventory is retained at
 [`tables/f016-p1-quant-hotspots.md`](tables/f016-p1-quant-hotspots.md) from the
 prior committed P1 record. Figures and tables must be generated from `raw/` —
 never hand-hardcoded.
+
+P2 repeated the complete 79-layer path for two generated tokens and retained
+228 shared-cache hits in each warm stack. Its 1903.598-second and
+1922.817-second decode-stack observations are correctness/reuse evidence, not a
+steady-state throughput population. The full golden-eight run remains separate.

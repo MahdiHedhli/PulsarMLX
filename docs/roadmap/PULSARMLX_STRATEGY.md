@@ -23,14 +23,15 @@ The C01–C11 research ladder is complete and frozen at
 
 Feature 016's committed vectorized reference path has additionally reproduced
 the exact P1 prefix `[9703, 21615]` on MLX GPU with zero CPU fallbacks. The
-deepest committed optimization rung is the complete P1 79-layer first-token
-run with vector IQ2_XXS and IQ3_XXS recorded in
-[`f016-inference-p1-iq3-0001.json`](../research/glm52/raw/f016-inference-p1-iq3-0001.json)
-at source commit `99751b9c3d8bf00a6b1af166f8f07adf9e90dd15`: 4582.511032 seconds and 228
-decoded shared-cache hits. This is one bounded research run, not a
-tokens-per-second or production-runtime claim. The revised ranking names Q6_K
-next, but its protected shared matrices are already resident in the warm
-stack; P2 is the next correctness/reuse gate.
+deepest committed optimization rung is P2 with vector IQ2_XXS and IQ3_XXS,
+recorded in
+[`f016-inference-p2-iq3-0001.json`](../research/glm52/raw/f016-inference-p2-iq3-0001.json)
+at source commit `d5e1cf3cc092c7629d5905fd9da1a85afd1fd363`: exact prefix
+`[9703,21615,220]`, 456 decoded shared-cache hits, and zero CPU fallbacks. This
+is one bounded research run, not a tokens-per-second or production-runtime
+claim. The revised ranking names Q6_K next, but its protected shared matrices
+are already resident in warm stacks; the full golden-eight run is the next
+correctness gate.
 
 ## Architectural principles
 

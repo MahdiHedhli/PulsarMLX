@@ -66,7 +66,7 @@
 - [x] Qualify and integrate the next measured dominant format, IQ3_XXS, against exact scalar f32 bits
 - [ ] Design a dedicated bit-exact Rust f32 dequantization boundary; do not reuse x86 Q8_K throughput claims
 - [x] Re-profile P1 and re-evaluate shared-cache value after vectorization
-- [ ] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
+- [x] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
 - [ ] Run the frozen eight-token golden only after P2 passes
 - [ ] Evaluate prefetch and storage changes one measured variable at a time after decoder profiling
 - [ ] Publish final optimization report, clean CI, and pushed repository state

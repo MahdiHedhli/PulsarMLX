@@ -54,7 +54,9 @@
 7. Re-profile cache value. **Passed**: Q6_K is now the leading quantified
    format, while all 228 protected shared matrices hit in the warm stack and
    avoided 11.476 GB of decoded materialization. The cache remains enabled.
-8. Retry P2. No full golden-eight run is eligible until P2 passes.
+8. Retry P2. **Passed** at source `d5e1cf3`: exact `[9703,21615,220]`,
+   228 shared hits per warm stack, and zero CPU fallbacks.
+9. Run the full golden eight, then publish the final optimization report.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).

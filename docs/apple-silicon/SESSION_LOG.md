@@ -4358,3 +4358,17 @@ Shared residency therefore retains measured value and stays enabled for P2.
 Q6_K is the next exact-bit decoder candidate for later work, but does not block
 the admitted two-token correctness/reuse gate because those shared matrices are
 already resident after the prompt stack.
+
+## 2026-08-09 — P2 correctness and reuse gate
+
+The clean P2 at source `d5e1cf3` passed the exact golden prefix
+`[9703,21615,220]` across three complete 79-layer stacks in 6552.475384
+seconds. The prompt stack took 2571.838137 seconds. The two warm decode stacks
+took 1903.598278 and 1922.816584 seconds, and each recorded exactly 228 decoded
+shared-cache hits. Total cache reuse was 456 hits, 4,211,539,968 compressed
+bytes avoided, and 22,951,231,488 decoded bytes avoided, with zero evictions
+and zero CPU fallbacks. All three resource checkpoints remained normal.
+
+This establishes the two-token correctness and shared-reuse gate only. Two
+warm stack observations are not a steady-state throughput population, and the
+full frozen golden-eight sequence remains the next correctness boundary.

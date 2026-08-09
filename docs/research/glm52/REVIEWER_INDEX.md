@@ -67,6 +67,9 @@
 - [P1 with vector IQ3_XXS](raw/f016-inference-p1-iq3-0001.json) — clean
   full-stack golden-prefix run after both dominant decoder qualifications,
   complete routes, warm shared-cache reuse, resources, and per-quant timing
+- [P2 with vector IQ3_XXS](raw/f016-inference-p2-iq3-0001.json) — exact
+  two-token golden prefix, three complete route stacks, 228 shared-cache hits
+  per warm stack, resource checkpoints, and zero-fallback MLX identity
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
