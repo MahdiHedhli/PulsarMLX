@@ -151,6 +151,10 @@ preserved; their real two-token benefit is still unverified.
 5. dedicated bit-exact Rust f32 boundary design;
 6. cache re-evaluation, then P2 retry.
 
+The bounded ladder has now passed through the complete layer rung. P1 remains
+the next required boundary; no new P2 is eligible until that clean full-stack
+result and its revised mixed-quant hotspot inventory are committed.
+
 ### Qualified IQ2_XXS decode boundary
 
 Source commit `968cfac` passed the clean-worktree Tier-3 qualification on the
@@ -268,6 +272,42 @@ latency. Raw evidence: `docs/research/glm52/raw/f016-moe-layer3-0001.json`.
 
 This boundary excludes attention and therefore is not a complete transformer
 layer or token-generation result.
+
+### Complete transformer layer 3
+
+At source `a78bc46`, the complete position-0 layer-3 boundary executed MLA/DSA
+attention, the frozen post-attention top-8 plus shared MoE, and both residual
+updates. Two architecture-reference executions repeated exactly at the frozen
+attention-midpoint hash and route
+`[15,177,233,41,166,26,10,152]`. The reference comparison had zero tolerance
+mismatches and 3.73e-9 maximum absolute error. Both MLX decoder modes produced
+exactly equal deterministic f32 bits across ten measured samples.
+
+The architecture reference is intentionally not called an independent CPU
+oracle for complete attention because its dense helper may use the shared MLX
+reference path; independent scalar correctness remains established for the
+preceding complete-MoE rung.
+
+| Component (warm median) | scalar reference | NumPy vectorized |
+| --- | ---: | ---: |
+| attention | 18.012330 s | 18.002312 s |
+| MoE | 35.210090 s | 13.648985 s |
+| storage read | 0.058493 s | 0.037860 s |
+| dequantization | 28.635887 s | 11.198760 s |
+| contiguous buffer | 5.957976 s | 1.990166 s |
+| MLX matrix build/eval | 0.162626 s | 0.134045 s |
+| MLX matvec | 0.213846 s | 0.135787 s |
+| total | 53.230274 s | 31.687686 s |
+
+Median warm complete-layer improvement was **1.68×**. Attention was unchanged,
+as expected; the improvement is confined to the expert decoder boundary. The
+process-first vector observation was 40.498847 seconds with zero shared-cache
+hits; measured observations reused all three shared matrices. Peak process RSS
+was 7,076,659,200 bytes and memory pressure remained normal. Raw evidence:
+`docs/research/glm52/raw/f016-layer3-0001.json`.
+
+This is one complete layer, not a full 79-layer stack, first-token latency, or
+token-generation throughput result.
 
 ## Limitations
 

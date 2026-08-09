@@ -90,6 +90,21 @@ python3 -m unittest discover -s scripts/research/tests \
   -p 'test_glm52_moe_record.py' -v
 ```
 
+### Complete transformer layer 3
+
+```sh
+export PULSARMLX_GLM_GGUF=/path/to/GLM-5.2-UD-IQ2_XXS
+uv run --frozen python scripts/research/benchmark_glm52_layer.py \
+  --output docs/research/glm52/raw/f016-layer3-0001.json
+python3 -m unittest discover -s scripts/research/tests \
+  -p 'test_glm52_layer_record.py' -v
+```
+
+The architecture reference repeats exactly, but it is not described as an
+independent CPU oracle for complete attention because its dense helper may use
+the shared MLX reference path. The independent CPU-oracle gate remains the
+preceding complete-MoE record.
+
 ## Protocol freeze
 
 Numerical tolerances and stop conditions live in

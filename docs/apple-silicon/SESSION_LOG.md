@@ -4230,3 +4230,14 @@ shared residency, median total fell from 36.309373 seconds to 14.062472 seconds
 (2.58×). The retained process-first vector sample was 23.172902 seconds with
 no cache hits; measured samples each reused all three shared matrices. Attention
 and complete-layer performance remain the next boundary.
+
+The complete position-0 layer-3 rung then passed at source `a78bc46`. The
+architecture reference repeated exactly at the frozen attention midpoint and
+post-attention route; vector MLX had zero tolerance mismatches and exact f32
+bits against scalar-reference MLX across ten measured samples. Warm median
+total fell from 53.230274 seconds to 31.687686 seconds (1.68×), with attention
+essentially unchanged at about 18 seconds and MoE falling from 35.210090 to
+13.648985 seconds. The result is bounded to one layer and does not establish
+full-stack or token-generation performance. The architecture reference is not
+promoted to an independent CPU oracle for complete attention because its dense
+helper may use the shared MLX reference path.

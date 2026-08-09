@@ -43,6 +43,9 @@
   independent CPU oracle, mixed-quant timing, and deterministic MLX comparison
 - [Layer-3 top-8 plus shared MoE](raw/f016-moe-layer3-0001.json) — exact route,
   independent CPU oracle, shared-cache cold/warm observations, and raw samples
+- [Complete layer 3](raw/f016-layer3-0001.json) — frozen attention midpoint and
+  route, architecture-reference comparison, exact decoder-mode bits, split
+  attention/MoE timing, and raw samples
 
 ### Results (populated after runs)
 
