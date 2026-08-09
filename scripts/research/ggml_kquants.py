@@ -287,6 +287,76 @@ def _q5_k_block(d: float, dmin: float, scales: bytes, qh: bytes, qs: bytes) -> l
     return y
 
 
+def dequantize_blocks_q5_k_numpy(encoded: bytes):
+    """Vector-decode complete Q5_K blocks to one contiguous f32 array.
+
+    Arithmetic is deliberately performed in f64 and rounded once to f32. This
+    matches the scalar Python oracle's multiply/subtract order before MLX input.
+    """
+
+    import numpy as np
+
+    if len(encoded) == 0 or len(encoded) % Q5_K_BLOCK != 0:
+        raise ValueError("encoded length must be a nonzero multiple of 176")
+    blocks = np.frombuffer(encoded, dtype=np.uint8).reshape(-1, Q5_K_BLOCK)
+    d = np.ascontiguousarray(blocks[:, 0:2]).view("<f2").reshape(-1).astype(np.float64)
+    dmin = (
+        np.ascontiguousarray(blocks[:, 2:4])
+        .view("<f2")
+        .reshape(-1)
+        .astype(np.float64)
+    )
+    if not np.isfinite(d).all() or not np.isfinite(dmin).all():
+        raise ValueError("Q5_K scales must be finite")
+
+    packed = blocks[:, 4:16]
+    scales = np.empty((len(blocks), 8), dtype=np.uint8)
+    mins = np.empty((len(blocks), 8), dtype=np.uint8)
+    scales[:, :4] = packed[:, :4] & np.uint8(63)
+    mins[:, :4] = packed[:, 4:8] & np.uint8(63)
+    scales[:, 4:] = (packed[:, 8:12] & np.uint8(15)) | (
+        (packed[:, :4] >> np.uint8(6)) << np.uint8(4)
+    )
+    mins[:, 4:] = (packed[:, 8:12] >> np.uint8(4)) | (
+        (packed[:, 4:8] >> np.uint8(6)) << np.uint8(4)
+    )
+
+    high = blocks[:, 16:48]
+    quants = blocks[:, 48:176].reshape(-1, 4, 32)
+    decoded = np.empty((len(blocks), QK_K), dtype=np.float32)
+    for group in range(4):
+        packed_quants = quants[:, group, :]
+        low = (packed_quants & np.uint8(15)).astype(np.float64)
+        upper = (packed_quants >> np.uint8(4)).astype(np.float64)
+        low += ((high & np.uint8(1 << (2 * group))) != 0) * 16.0
+        upper += ((high & np.uint8(2 << (2 * group))) != 0) * 16.0
+        low_scale = d * scales[:, 2 * group].astype(np.float64)
+        low_min = dmin * mins[:, 2 * group].astype(np.float64)
+        upper_scale = d * scales[:, 2 * group + 1].astype(np.float64)
+        upper_min = dmin * mins[:, 2 * group + 1].astype(np.float64)
+        decoded[:, group * 64 : group * 64 + 32] = (
+            low_scale[:, None] * low - low_min[:, None]
+        ).astype(np.float32)
+        decoded[:, group * 64 + 32 : group * 64 + 64] = (
+            upper_scale[:, None] * upper - upper_min[:, None]
+        ).astype(np.float32)
+    return np.ascontiguousarray(decoded.reshape(-1))
+
+
+def dequantize_matrix_q5_k_numpy(encoded: bytes, rows: int, cols: int):
+    """Vector-decode one exact row-major Q5_K matrix to ``[rows, cols]`` f32."""
+
+    if rows <= 0 or cols <= 0:
+        raise ValueError("rows and cols must be positive")
+    if cols % QK_K != 0:
+        raise ValueError("cols must be multiple of 256 for pure Q5_K rows")
+    row_bytes = (cols // QK_K) * Q5_K_BLOCK
+    expected = rows * row_bytes
+    if len(encoded) != expected:
+        raise ValueError(f"matrix size mismatch {len(encoded)} != {expected}")
+    return dequantize_blocks_q5_k_numpy(encoded).reshape(rows, cols)
+
+
 Q2_K_BLOCK = 84
 Q3_K_BLOCK = 110
 
