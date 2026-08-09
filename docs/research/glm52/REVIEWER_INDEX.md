@@ -136,6 +136,10 @@
   and [generated table](tables/post-f016-trunk-q6-residency-0001.md) — four
   process-isolated matrix lifecycles, exact output, observed RSS/setup/reuse
   costs, and inherited full-trunk logical budget dispositions
+- [Post-Feature-016 cleanup cadence study](raw/post-f016-trunk-cleanup-0001.json)
+  and [generated table](tables/post-f016-trunk-cleanup-0001.md) — cleanup-only,
+  per-matvec, and batched-cleanup populations with exact output and resource
+  gates on one retained decoded matrix
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

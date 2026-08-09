@@ -238,3 +238,21 @@ See
 Compressed-all residency is not recommended from this result: warm storage was
 not material, and the catalog-only 12.549 GiB option remains too close to the
 reserve without allocator measurement. No all-trunk allocation was attempted.
+
+## Phase E: cleanup cost
+
+**Result: cleanup is measurable but not the dominant layer cost.**
+
+At clean source `919d575e7b2ec5d5b6cc0a6d5ac04a36d5990ebb`, a retained decoded
+Q6_K matrix produced exact identical output with cleanup after every matvec and
+with cleanup batched every five matvecs. Cleanup-only median was 0.001804 s.
+Current per-operation cleanup median was 0.003173 s and total median was
+0.005945 s. Batched cleanup-event median was 0.003276 s, amortized to
+0.000729 s per operation; operation total median was 0.002736 s. Memory
+pressure remained normal.
+
+This safely demonstrates batching only for the retained-matrix fixture. It does
+not authorize cleanup removal or prove a layer-wide lifetime policy. Compared
+with the optimized representative layer's 44.266 s median, millisecond cleanup
+is not the current dominant recoverable boundary. See
+[`tables/post-f016-trunk-cleanup-0001.md`](tables/post-f016-trunk-cleanup-0001.md).
