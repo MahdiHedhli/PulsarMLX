@@ -17,6 +17,7 @@
 | 5 | P1 inference golden first-token match recovered after reboot | this focused recovery commit |
 | 6 | Exact cache working-set diagnosis + deterministic simulator | this focused simulator commit |
 | 7 | Compact fail-closed shared-expert MLX residency + split evidence fields | pending focused runtime commit |
+| 8 | First P2 attempt stopped in stack 1 and retained as superseded | pending decoder-priority commit |
 
 ## Recovered P1 evidence
 
@@ -32,11 +33,11 @@
 
 ## Next (autonomous continuation)
 
-1. Run exactly two new tokens from the committed P2 protocol; require
-   `[9703, 21615, 220]` plus meaningful
-   cross-token reuse
-2. Run the full eight-token golden only after P2 passes correctness and reuse
-3. Evaluate prefetch only after useful cache residency is demonstrated
+1. Qualify a whole-matrix NumPy IQ2_XXS decoder against exact scalar f32 bits
+2. Integrate one-read/one-decode matrix execution behind explicit decoder modes
+3. Run the bounded ladder through a P1 full stack and re-profile hotspots
+4. Re-evaluate shared-cache value, then retry P2
+5. Run the full eight-token golden only after P2 passes correctness and reuse
 
 ## Cache diagnosis result
 

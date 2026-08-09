@@ -186,6 +186,11 @@ a fresh process from a clean committed worktree with the admitted six-shard
 checkpoint, the `P-MIN` prompt, exactly two new greedy tokens, the
 `decoded_shared_only` policy, and a 16-GiB logical decoded-cache cap.
 
+**Reordered gate**: after the first P2 attempt was superseded inside stack 1,
+no further P2 or eight-token run is eligible until the vectorized IQ2_XXS
+decoder passes exact f32-bit qualification and the bounded performance ladder
+through P1 is committed. This changes experiment order, not P2 acceptance.
+
 Before opening the tensor store:
 
 1. notify `Mahdi-Dev` that local inference hardware is required;

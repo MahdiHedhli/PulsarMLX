@@ -4170,3 +4170,18 @@ six local shard hashes to all six LFS etags at immutable upstream revision
 `abc55e72527792c6e77069c99b4cb7de16fa9f23`. No checkpoint payload was
 downloaded. The original acquisition record remains unchanged; the later
 binding is append-only in `docs/validation/glm52-revision-binding.json`.
+
+## 2026-08-09 — P2 superseded by decoder-priority finding
+
+The clean P2 attempt at source `a34964e` was interrupted gracefully after
+46m15s because it remained inside the first full stack when the experiment was
+reprioritized. No atomic stack checkpoint existed and no token, parity, or
+cache-reuse result was produced. RSS was 18112118784 bytes at the stop sample;
+system memory remained 97% free. The traceback stopped inside scalar
+`dequantize_row_iq2_xxs` while loading a routed up-projection.
+
+The superseded record is retained at
+`docs/research/glm52/raw/f016-inference-p2-superseded-0001.json`. The cache work
+is preserved, but another P2 is prohibited until a whole-matrix vectorized
+IQ2_XXS decoder passes exact f32-bit comparison and the bounded benchmark ladder
+through P1 is committed.

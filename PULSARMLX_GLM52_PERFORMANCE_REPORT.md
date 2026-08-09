@@ -34,7 +34,7 @@ Narrative: `docs/research/glm52/HOTSPOT_REPORT.md`
 | Milestone | Status |
 | --- | --- |
 | P1 first new token + expert cache | **golden prefix matched** — token `21615`; 15146.448 s |
-| P2 two-token golden + useful reuse | ready after clean committed gate |
+| P2 two-token golden + useful reuse | paused in stack 1; decoder ladder now precedes retry |
 | Full 8-token golden match | blocked on P2 correctness + reuse |
 | Expert prefetch | not started |
 | Published tok/s | **not claimed** |
@@ -123,6 +123,33 @@ storage experiment because its hits do not avoid dequantization.
   `tensor_name#expert_id`
 - P2 policy: compact evaluated MLX/f32 shared-expert protection; 16 GiB logical
   cap, routed-matrix transient release, live memory admission, and RSS evidence
+
+### Superseded P2 attempt
+
+The first P2 attempt at source commit `a34964e` was gracefully interrupted at
+46m15s while still inside its first full stack. No stack checkpoint, generated
+token, parity result, or reuse result existed. Current RSS was 18112118784 bytes
+and system memory remained 97% free. The retained record is
+`docs/research/glm52/raw/f016-inference-p2-superseded-0001.json`.
+
+The stop was caused by experiment reprioritization, not a correctness or memory
+failure. The interrupt traceback landed in scalar IQ2_XXS dequantization while
+loading a routed up-projection. Source review shows nested Python scalar loops,
+row-by-row reads, and Python-float materialization before MLX construction. A
+whole-matrix vectorized decoder correctness/performance ladder therefore runs
+before another P2 attempt. The cache implementation and diagnosis remain
+preserved; their real two-token benefit is still unverified.
+
+### Revised experiment order
+
+1. exact-f32-bit NumPy IQ2_XXS qualification on synthetic blocks, real rows,
+   and complete real expert matrices;
+2. one positional matrix read, one contiguous vector decode, one evaluated MLX
+   matrix, and the existing MLX matvec behind an explicit decoder mode;
+3. decode, real matrix, routed expert, layer-3 MoE, layer, then P1 benchmarks;
+4. mixed-quant hotspot ranking by measured golden-trace time;
+5. dedicated bit-exact Rust f32 boundary design;
+6. cache re-evaluation, then P2 retry.
 
 ## Limitations
 

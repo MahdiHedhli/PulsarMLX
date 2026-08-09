@@ -57,7 +57,14 @@
 - [x] Diagnose 0% decoded-cache hits with exact working-set accounting
 - [x] Add a deterministic cache simulator with decoded/compressed/shared policy separation
 - [x] Replace Python-row global LRU with compact fail-closed shared-expert residency and split metrics
+- [x] Retain the first-stack-incomplete P2 attempt as superseded by the decoder-priority finding
+- [ ] Qualify a whole-block/whole-matrix NumPy IQ2_XXS decoder against exact scalar f32 bits
+- [ ] Integrate one-read, one-decode, one-MLX-build matrix execution behind explicit decoder modes
+- [ ] Benchmark decode → real matrix → routed expert → layer-3 MoE → layer → P1 in order
+- [ ] Inventory golden-trace mixed quant formats by measured token time
+- [ ] Design a dedicated bit-exact Rust f32 dequantization boundary; do not reuse x86 Q8_K throughput claims
+- [ ] Re-profile P1 and re-evaluate shared-cache value after vectorization
 - [ ] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
 - [ ] Run the frozen eight-token golden only after P2 passes
-- [ ] Evaluate prefetch, storage, and dequantization changes one measured variable at a time
+- [ ] Evaluate prefetch and storage changes one measured variable at a time after decoder profiling
 - [ ] Publish final optimization report, clean CI, and pushed repository state

@@ -1,0 +1,40 @@
+{
+  "actual_status": "aborted",
+  "cache_budget_bytes": 17179869184,
+  "cache_policy": "decoded_shared_only",
+  "checkpoint": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "quant": "UD-IQ2_XXS",
+    "revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23"
+  },
+  "completed_stacks": 0,
+  "elapsed_seconds_at_stop": 2775,
+  "evidence_disposition": "superseded_before_completion_by_decoder_priority_finding",
+  "feature_id": "016-glm52-full-execution",
+  "generated_token_ids": [],
+  "interruption_location": "scalar IQ2_XXS row dequantization while loading a routed up-projection matrix",
+  "mode": "inference",
+  "ntfy_stop_notification_delivered": true,
+  "process_rss_bytes_at_stop": 18112118784,
+  "progress_artifact": "absent because the first stack did not complete",
+  "prompt_id": "P-MIN",
+  "prompt_token_ids": [
+    9703
+  ],
+  "requested_new_tokens": 2,
+  "schema": "pulsarmlx.research.glm52-inference-superseded",
+  "schema_version": "1.0.0",
+  "source_commit": "a34964ece00e9fd2c28f43949b61b14b5420bc8e",
+  "stop_reason": "operator-approved reprioritization requires vectorized decoder qualification before another long real-model run",
+  "system_memory_free_percent_at_stop": 97,
+  "utc_started_approximate": "2026-08-09T00:59:10Z",
+  "utc_stopped": "2026-08-09T01:45:25Z",
+  "verified_capabilities": [],
+  "unsupported_interpretations": [
+    "golden token parity",
+    "useful cache reuse",
+    "full stack completion",
+    "decoder performance",
+    "tokens per second"
+  ]
+}
