@@ -4208,3 +4208,10 @@ mixed quant formats retain their scalar reference decoder. Model-free tests
 verify one-read matrix behavior, retained scalar row reads, truncated-input
 failure, unknown-mode failure, and split/per-quant telemetry. Real MLX matrix
 execution remains the next acceptance gate.
+
+The committed real matrix boundary at source `d8af70b` passed on MLX GPU. The
+vector path made one complete read versus 2048 scalar row reads, and both modes
+produced bit-identical deterministic 2048-value matvec output. Median total
+before cleanup was 0.090525 seconds vectorized versus 1.393479 seconds scalar
+(15.39×). This completes matrix-granularity integration only; no complete
+routed-expert claim is inferred.

@@ -59,7 +59,7 @@
 - [x] Replace Python-row global LRU with compact fail-closed shared-expert residency and split metrics
 - [x] Retain the first-stack-incomplete P2 attempt as superseded by the decoder-priority finding
 - [x] Qualify a whole-block/whole-matrix NumPy IQ2_XXS decoder against exact scalar f32 bits
-- [ ] Integrate one-read, one-decode, one-MLX-build matrix execution behind explicit decoder modes
+- [x] Integrate one-read, one-decode, one-MLX-build matrix execution behind explicit decoder modes
 - [ ] Benchmark decode → real matrix → routed expert → layer-3 MoE → layer → P1 in order
 - [ ] Inventory golden-trace mixed quant formats by measured token time
 - [ ] Design a dedicated bit-exact Rust f32 dequantization boundary; do not reuse x86 Q8_K throughput claims

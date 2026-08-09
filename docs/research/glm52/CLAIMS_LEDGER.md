@@ -3,6 +3,7 @@
 | ID | Status | Claim | Source | Evidence | Reproduction | Scope and caveat |
 | --- | --- | --- | --- | --- | --- | --- |
 | F016-IQ2-001 | verified | NumPy IQ2_XXS decoding matched the scalar oracle at exact f32 bits for four complete real expert matrices, with a 28.15× median decode-only speedup on the recorded M1 Ultra run. | `968cfac` | `docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json` | `uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json` | Decode boundary only; not routed-expert, MoE, layer, P1/P2, or token speedup. |
+| F016-MATRIX-001 | verified | The vector mode used one complete read and produced exact deterministic MLX matvec output for one real IQ2_XXS expert matrix, with a 15.39× median total-before-cleanup improvement over the scalar-reference mode. | `d8af70b` | `docs/research/glm52/raw/f016-matrix-boundary-0001.json` | `uv run --frozen python scripts/research/benchmark_glm52_matrix_boundary.py --output docs/research/glm52/raw/f016-matrix-boundary-0001.json` | One gate matrix only; not a routed expert, MoE, layer, stack, or token result. OS page cache was uncontrolled. |
 
 ## Prior boundary summary
 

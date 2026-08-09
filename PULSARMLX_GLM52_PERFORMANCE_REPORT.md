@@ -180,6 +180,35 @@ in `docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json`. The
 result verifies only decode correctness and throughput. It does not establish
 a routed-expert, MoE, layer, P1, P2, or token-generation speedup.
 
+### Real matrix load/build/matvec boundary
+
+At source `d8af70b`, the explicit vector mode executed the frozen layer-3
+expert-15 gate matrix through one complete 3,244,032-byte positional read,
+whole-matrix decode, contiguous f32 handoff, synchronized MLX GPU matrix build,
+and MLX matvec. The scalar reference used 2,048 row reads. Ten counterbalanced
+measured samples per mode followed three warmups per mode.
+
+| Component (median) | scalar reference | NumPy vectorized |
+| --- | ---: | ---: |
+| storage read | 0.001586 s | 0.000546 s |
+| dequantization | 1.132615 s | 0.080100 s |
+| contiguous buffer | 0.245952 s | 0.000090 s |
+| MLX matrix build/eval | 0.006688 s | 0.005179 s |
+| MLX matvec | 0.006087 s | 0.004780 s |
+| total before cleanup | 1.393479 s | 0.090525 s |
+| total with cleanup | 1.396795 s | 0.093871 s |
+
+The synchronized output contained 2,048 f32 values with zero bit-pattern
+mismatches between modes and deterministic hashes across every measured run.
+The median total-before-cleanup improvement was **15.39×**. The separately
+retained process-first vector observation was 0.097841 s, but OS page cache was
+not purged, so it is not described as controlled cold latency. Raw evidence:
+`docs/research/glm52/raw/f016-matrix-boundary-0001.json`.
+
+This is a complete real matrix boundary, not a complete routed expert: gate,
+up, activation, down, and weighting are measured together only at the next
+ladder rung.
+
 ## Limitations
 
 - Python research runtime, not a production server

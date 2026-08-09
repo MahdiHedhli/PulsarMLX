@@ -60,6 +60,7 @@
 | --- | --- |
 | exact-bit NumPy IQ2_XXS matrix decode | **passed** — 4 complete matrices, 0 f32-bit mismatches |
 | matrix decode median | 0.050588 s vector vs 1.424142 s scalar; 28.15× at this boundary |
+| real matrix load/build/matvec | **passed** — 1 vector read vs 2048 scalar reads; exact deterministic output; 0.090525 s vs 1.393479 s median total |
 | routed expert / MoE / layer / TTFT / tok/s | pending; not inferred from decode |
 
 Figures and tables must be generated from `raw/` — never hand-hardcoded.

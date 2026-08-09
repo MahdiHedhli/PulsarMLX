@@ -40,14 +40,13 @@ def _sha256_f32(values: list[float]) -> str:
 
 
 def _mlx_memory(backend: MlxMatrixBackend) -> dict[str, int | None]:
-    metal = getattr(backend.mx, "metal", None)
     result: dict[str, int | None] = {}
     for public_name, method_name in (
         ("active_bytes", "get_active_memory"),
         ("peak_bytes", "get_peak_memory"),
         ("cache_bytes", "get_cache_memory"),
     ):
-        method = getattr(metal, method_name, None) if metal is not None else None
+        method = getattr(backend.mx, method_name, None)
         try:
             result[public_name] = int(method()) if method is not None else None
         except Exception:

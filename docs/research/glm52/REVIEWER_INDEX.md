@@ -37,6 +37,8 @@
 - [IQ2_XXS NumPy qualification](raw/f016-iq2-xxs-numpy-qualification-0001.json)
   — four complete matrices, raw timing samples, exact-bit comparisons, and
   allocation/resource observations
+- [Real matrix boundary](raw/f016-matrix-boundary-0001.json) — one-read vector
+  load, synchronized MLX GPU build/matvec, scalar comparison, and raw samples
 
 ### Results (populated after runs)
 
