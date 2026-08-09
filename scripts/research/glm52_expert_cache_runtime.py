@@ -24,6 +24,7 @@ class LoadMetrics:
     storage_bytes_read: int
     storage_read_seconds: float
     dequant_seconds: float
+    contiguous_buffer_seconds: float
     matrix_build_seconds: float
 
 
@@ -35,6 +36,7 @@ class DecodedMatrix:
     decoded_bytes: int
     compressed_bytes: int
     quantization: str
+    decoder_mode: str
 
 
 class MatrixBackend(Protocol):
@@ -54,10 +56,15 @@ class MatrixBackend(Protocol):
 class MlxMatrixBackend:
     """Decode into compact f32 storage and retain an evaluated MLX matrix."""
 
-    def __init__(self) -> None:
+    DECODER_MODES = ("scalar_reference", "numpy_vectorized")
+
+    def __init__(self, decoder_mode: str = "scalar_reference") -> None:
+        if decoder_mode not in self.DECODER_MODES:
+            raise ValueError(f"unsupported decoder mode {decoder_mode}")
         import mlx.core as mx
 
         self.mx = mx
+        self.decoder_mode = decoder_mode
 
     def identity(self) -> dict[str, str]:
         try:
@@ -70,6 +77,7 @@ class MlxMatrixBackend:
             "backend": "mlx",
             "device": str(self.mx.default_device()),
             "mlx_version": mlx_version,
+            "decoder_mode": self.decoder_mode,
         }
 
     def load(
@@ -91,21 +99,41 @@ class MlxMatrixBackend:
         row_bytes = nbytes_for_tensor(loc.type_id, cols)
         compressed_bytes = row_bytes * rows
         base = expert * compressed_bytes if len(loc.dims) == 3 else 0
-        flat = array("f")
         read_seconds = 0.0
         dequant_seconds = 0.0
-        for row in range(rows):
+        contiguous_buffer_seconds = 0.0
+        if self.decoder_mode == "numpy_vectorized" and loc.type_id == 16:
+            from iq2_xxs_dequant import dequantize_matrix_iq2_xxs_numpy
+
             read_start = time.perf_counter()
-            raw = store.pread(name, base + row * row_bytes, row_bytes)
-            read_seconds += time.perf_counter() - read_start
-            if len(raw) != row_bytes:
-                raise OSError(f"{name}: truncated row {row}")
+            raw = store.pread(name, base, compressed_bytes)
+            read_seconds = time.perf_counter() - read_start
+            if len(raw) != compressed_bytes:
+                raise OSError(f"{name}: truncated complete expert matrix")
             decode_start = time.perf_counter()
-            decoded = _dequant_row_bytes(loc.type_id, raw, cols)
-            dequant_seconds += time.perf_counter() - decode_start
-            if len(decoded) != cols:
-                raise ValueError(f"{name}: decoded row {row} has wrong length")
-            flat.extend(decoded)
+            decoded = dequantize_matrix_iq2_xxs_numpy(raw, rows, cols)
+            dequant_seconds = time.perf_counter() - decode_start
+            buffer_start = time.perf_counter()
+            flat = decoded.reshape(-1)
+            if flat.dtype.name != "float32" or not flat.flags.c_contiguous:
+                raise ValueError(f"{name}: vector decoder returned a non-contiguous f32 matrix")
+            contiguous_buffer_seconds = time.perf_counter() - buffer_start
+        else:
+            flat = array("f")
+            for row in range(rows):
+                read_start = time.perf_counter()
+                raw = store.pread(name, base + row * row_bytes, row_bytes)
+                read_seconds += time.perf_counter() - read_start
+                if len(raw) != row_bytes:
+                    raise OSError(f"{name}: truncated row {row}")
+                decode_start = time.perf_counter()
+                decoded = _dequant_row_bytes(loc.type_id, raw, cols)
+                dequant_seconds += time.perf_counter() - decode_start
+                if len(decoded) != cols:
+                    raise ValueError(f"{name}: decoded row {row} has wrong length")
+                buffer_start = time.perf_counter()
+                flat.extend(decoded)
+                contiguous_buffer_seconds += time.perf_counter() - buffer_start
 
         build_start = time.perf_counter()
         value = self.mx.array(flat, dtype=self.mx.float32).reshape((rows, cols))
@@ -118,11 +146,17 @@ class MlxMatrixBackend:
             decoded_bytes=cols * rows * 4,
             compressed_bytes=compressed_bytes,
             quantization=loc.type_name,
+            decoder_mode=(
+                "numpy_vectorized"
+                if self.decoder_mode == "numpy_vectorized" and loc.type_id == 16
+                else "scalar_reference"
+            ),
         )
         metrics = LoadMetrics(
             storage_bytes_read=compressed_bytes,
             storage_read_seconds=read_seconds,
             dequant_seconds=dequant_seconds,
+            contiguous_buffer_seconds=contiguous_buffer_seconds,
             matrix_build_seconds=matrix_build_seconds,
         )
         return matrix, metrics
@@ -169,6 +203,7 @@ class ExpertCacheStats:
     expert_redecode_count: int = 0
     storage_read_seconds: float = 0.0
     dequant_seconds: float = 0.0
+    contiguous_buffer_seconds: float = 0.0
     mlx_matrix_build_seconds: float = 0.0
     mlx_matvec_count: int = 0
     mlx_matvec_seconds: float = 0.0
@@ -177,7 +212,11 @@ class ExpertCacheStats:
     backend: str = "unknown"
     device: str = "unknown"
     mlx_version: str = "unknown"
+    decoder_mode: str = "unknown"
     resident_entries: int = 0
+    quantization_metrics: dict[str, dict[str, int | float]] = field(
+        default_factory=dict
+    )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -202,6 +241,7 @@ class ExpertCacheStats:
             "expert_redecode_count": self.expert_redecode_count,
             "storage_read_seconds": self.storage_read_seconds,
             "dequant_seconds": self.dequant_seconds,
+            "contiguous_buffer_seconds": self.contiguous_buffer_seconds,
             "mlx_matrix_build_seconds": self.mlx_matrix_build_seconds,
             "mlx_matvec_count": self.mlx_matvec_count,
             "mlx_matvec_seconds": self.mlx_matvec_seconds,
@@ -210,6 +250,11 @@ class ExpertCacheStats:
             "backend": self.backend,
             "device": self.device,
             "mlx_version": self.mlx_version,
+            "decoder_mode": self.decoder_mode,
+            "quantization_metrics": {
+                quantization: dict(metrics)
+                for quantization, metrics in sorted(self.quantization_metrics.items())
+            },
         }
 
 
@@ -218,8 +263,9 @@ class ExpertSlabCache:
     """Protected shared-expert decoded cache under an exact logical cap."""
 
     max_bytes: int = 16 * 1024**3
-    backend: MatrixBackend = field(default_factory=MlxMatrixBackend)
+    backend: MatrixBackend | None = None
     policy: str = "decoded_shared_only"
+    decoder_mode: str = "scalar_reference"
     stats: ExpertCacheStats = field(init=False)
     _resident: OrderedDict[str, DecodedMatrix] = field(default_factory=OrderedDict)
 
@@ -228,14 +274,35 @@ class ExpertSlabCache:
             raise ValueError("max_bytes must be non-negative")
         if self.policy != "decoded_shared_only":
             raise ValueError(f"unsupported cache policy {self.policy}")
+        if self.decoder_mode not in MlxMatrixBackend.DECODER_MODES:
+            raise ValueError(f"unsupported decoder mode {self.decoder_mode}")
+        if self.backend is None:
+            self.backend = MlxMatrixBackend(self.decoder_mode)
         self.stats = self._new_stats()
 
     def _new_stats(self) -> ExpertCacheStats:
+        assert self.backend is not None
         identity = self.backend.identity()
         return ExpertCacheStats(
             backend=identity.get("backend", "unknown"),
             device=identity.get("device", "unknown"),
             mlx_version=identity.get("mlx_version", "unknown"),
+            decoder_mode=identity.get("decoder_mode", self.decoder_mode),
+        )
+
+    def _quantization_metrics(self, quantization: str) -> dict[str, int | float]:
+        return self.stats.quantization_metrics.setdefault(
+            quantization,
+            {
+                "matrix_load_count": 0,
+                "storage_bytes_read": 0,
+                "storage_read_seconds": 0.0,
+                "dequant_seconds": 0.0,
+                "contiguous_buffer_seconds": 0.0,
+                "mlx_matrix_build_seconds": 0.0,
+                "mlx_matvec_count": 0,
+                "mlx_matvec_seconds": 0.0,
+            },
         )
 
     @staticmethod
@@ -266,13 +333,22 @@ class ExpertSlabCache:
         self.stats.misses += 1
         self.stats.storage_cache_misses += 1
         self.stats.decoded_cache_misses += 1
+        assert self.backend is not None
         matrix, metrics = self.backend.load(store, name, expert)
         self.stats.storage_bytes_read += metrics.storage_bytes_read
         self.stats.storage_read_seconds += metrics.storage_read_seconds
         self.stats.dequant_seconds += metrics.dequant_seconds
+        self.stats.contiguous_buffer_seconds += metrics.contiguous_buffer_seconds
         self.stats.mlx_matrix_build_seconds += metrics.matrix_build_seconds
         self.stats.decoded_bytes_materialized += matrix.decoded_bytes
         self.stats.expert_redecode_count += 1
+        quantization = self._quantization_metrics(matrix.quantization)
+        quantization["matrix_load_count"] += 1
+        quantization["storage_bytes_read"] += metrics.storage_bytes_read
+        quantization["storage_read_seconds"] += metrics.storage_read_seconds
+        quantization["dequant_seconds"] += metrics.dequant_seconds
+        quantization["contiguous_buffer_seconds"] += metrics.contiguous_buffer_seconds
+        quantization["mlx_matrix_build_seconds"] += metrics.matrix_build_seconds
 
         if not self._is_shared(name):
             self.stats.policy_bypasses += 1
@@ -291,15 +367,20 @@ class ExpertSlabCache:
         return matrix
 
     def matvec(self, matrix: DecodedMatrix, x: list[float]) -> list[float]:
+        assert self.backend is not None
         result, seconds = self.backend.matvec(matrix, x)
         self.stats.mlx_matvec_count += 1
         self.stats.mlx_matvec_seconds += seconds
+        quantization = self._quantization_metrics(matrix.quantization)
+        quantization["mlx_matvec_count"] += 1
+        quantization["mlx_matvec_seconds"] += seconds
         return result
 
     def is_resident(self, name: str, expert: int) -> bool:
         return self._key(name, expert) in self._resident
 
     def release_transient(self) -> None:
+        assert self.backend is not None
         self.backend.release_transient()
         self.stats.transient_releases += 1
 

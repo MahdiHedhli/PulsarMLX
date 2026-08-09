@@ -50,6 +50,24 @@ The current P2 design protects only decoded shared-expert matrices:
 - storage hits, decoded hits, reads, redequants, MLX evaluation, and memory are
   recorded separately
 
+## Decoder modes
+
+The inference cache now exposes two explicit IQ2_XXS decoder modes:
+
+- `scalar_reference` retains row-by-row positional reads and the unchanged
+  scalar Python decoder;
+- `numpy_vectorized` performs one bounded positional read for a complete
+  selected IQ2_XXS expert matrix, one whole-matrix vector decode into contiguous
+  f32 storage, one synchronized MLX matrix build, and the existing MLX matvec.
+
+Mixed-quant matrices not using IQ2_XXS retain their existing scalar reference
+decoder until profiling identifies the next dominant format. Unknown types,
+dimensions, expert IDs, truncated reads, and non-contiguous/wrong-dtype vector
+outputs fail closed. Evidence records storage read, dequant, contiguous-buffer
+verification, MLX build/evaluation, matvec, and per-quant totals separately.
+The default remains `scalar_reference`; optimized experiments must select
+`--decoder-mode numpy_vectorized` explicitly.
+
 The simulator and machine-readable policy evidence are
 `scripts/research/glm52_cache_simulator.py` and
 `docs/research/glm52/raw/f016-cache-simulation-0001.json`. Its identical C09

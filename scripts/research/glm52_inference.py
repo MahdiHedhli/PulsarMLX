@@ -31,7 +31,11 @@ from glm52_dense_primitives import (
     rms_norm,
 )
 from glm52_expert import run_expert_swiglu
-from glm52_expert_cache_runtime import ExpertSlabCache, expert_matvec_cached
+from glm52_expert_cache_runtime import (
+    ExpertSlabCache,
+    MlxMatrixBackend,
+    expert_matvec_cached,
+)
 from glm52_layer import layer_forward_token, moe_ffn
 from glm52_memory_pressure import sample_pressure
 from glm52_mla import CompactKVCache, RMS_EPS
@@ -59,6 +63,7 @@ _CACHE_DELTA_FIELDS = (
     "expert_redecode_count",
     "storage_read_seconds",
     "dequant_seconds",
+    "contiguous_buffer_seconds",
     "mlx_matrix_build_seconds",
     "mlx_matvec_count",
     "mlx_matvec_seconds",
@@ -265,11 +270,16 @@ def generate(
     mode: str = "inference",
     cache_bytes: int = 16 * 1024**3,
     cache_policy: str = "decoded_shared_only",
+    decoder_mode: str = "scalar_reference",
     progress_path: Path | None = None,
     evidence_context: dict[str, Any] | None = None,
 ) -> dict:
     expert_cache = (
-        ExpertSlabCache(max_bytes=cache_bytes, policy=cache_policy)
+        ExpertSlabCache(
+            max_bytes=cache_bytes,
+            policy=cache_policy,
+            decoder_mode=decoder_mode,
+        )
         if mode == "inference"
         else None
     )
@@ -290,6 +300,7 @@ def generate(
             **context,
             "mode": mode,
             "cache_policy": cache_policy if expert_cache is not None else "not_applicable",
+            "decoder_mode": decoder_mode if expert_cache is not None else "not_applicable",
             "cache_budget_bytes": cache_bytes if expert_cache is not None else 0,
             "generated_token_ids": list(generated),
             "golden": GOLDEN,
@@ -397,6 +408,11 @@ def main() -> int:
     ap.add_argument(
         "--cache-policy", choices=("decoded_shared_only",), default="decoded_shared_only"
     )
+    ap.add_argument(
+        "--decoder-mode",
+        choices=MlxMatrixBackend.DECODER_MODES,
+        default="scalar_reference",
+    )
     ap.add_argument("--out", type=Path, default=Path("docs/research/glm52/raw/f016-inference-run.json"))
     args = ap.parse_args()
 
@@ -419,6 +435,7 @@ def main() -> int:
             mode=args.mode,
             cache_bytes=int(args.cache_gib * 1024**3),
             cache_policy=args.cache_policy,
+            decoder_mode=args.decoder_mode,
             progress_path=args.out,
             evidence_context={
                 **source,

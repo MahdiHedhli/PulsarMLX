@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import json
+import importlib.util
+import struct
 import sys
 import tempfile
 import unittest
@@ -18,6 +20,7 @@ from glm52_expert_cache_runtime import (  # noqa: E402
     DecodedMatrix,
     ExpertSlabCache,
     LoadMetrics,
+    MlxMatrixBackend,
     expert_matvec_cached,
     matvec_cached_rows,
 )
@@ -49,11 +52,13 @@ class FakeBackend:
             decoded_bytes=self.decoded_bytes,
             compressed_bytes=2,
             quantization="TEST",
+            decoder_mode="scalar_reference",
         )
         metrics = LoadMetrics(
             storage_bytes_read=2,
             storage_read_seconds=0.25,
             dequant_seconds=0.5,
+            contiguous_buffer_seconds=0.03125,
             matrix_build_seconds=0.125,
         )
         return matrix, metrics
@@ -142,6 +147,108 @@ def test_backend_failure_propagates_without_cpu_fallback() -> None:
 def test_matvec_cached_rows_reference() -> None:
     rows = [[1.0, 0.0], [0.0, 2.0]]
     assert matvec_cached_rows(rows, [3.0, 4.0]) == [3.0, 8.0]
+
+
+class _FakeMlxArray:
+    def __init__(self, value: object) -> None:
+        self.value = value
+        self.shape: tuple[int, ...] | None = None
+
+    def reshape(self, shape: tuple[int, ...]) -> "_FakeMlxArray":
+        self.shape = shape
+        return self
+
+
+class _FakeMlx:
+    float32 = "float32"
+
+    def __init__(self) -> None:
+        self.arrays: list[_FakeMlxArray] = []
+
+    def array(self, value: object, dtype: object) -> _FakeMlxArray:
+        assert dtype == self.float32
+        result = _FakeMlxArray(value)
+        self.arrays.append(result)
+        return result
+
+    def eval(self, value: object) -> None:
+        assert isinstance(value, _FakeMlxArray)
+
+
+class _MatrixStore:
+    def __init__(self, encoded: bytes) -> None:
+        self.encoded = encoded
+        self.calls: list[tuple[str, int, int]] = []
+        self.tensors = {
+            "toy.weight": SimpleNamespace(
+                name="toy.weight",
+                dims=[256, 2, 1],
+                type_id=16,
+                type_name="IQ2_XXS",
+            )
+        }
+
+    def pread(self, name: str, rel: int, n: int) -> bytes:
+        self.calls.append((name, rel, n))
+        return self.encoded[rel : rel + n]
+
+
+def _backend_without_mlx_import(mode: str) -> MlxMatrixBackend:
+    backend = object.__new__(MlxMatrixBackend)
+    backend.decoder_mode = mode
+    backend.mx = _FakeMlx()
+    return backend
+
+
+@unittest.skipUnless(importlib.util.find_spec("numpy"), "NumPy is lockfile-backed")
+def test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once() -> None:
+    encoded = (struct.pack("<e", 1.0) + bytes(64)) * 2
+    store = _MatrixStore(encoded)
+    backend = _backend_without_mlx_import("numpy_vectorized")
+    matrix, metrics = backend.load(store, "toy.weight", 0)
+
+    assert store.calls == [("toy.weight", 0, len(encoded))]
+    assert matrix.rows == 2
+    assert matrix.cols == 256
+    assert matrix.decoded_bytes == 2 * 256 * 4
+    assert matrix.compressed_bytes == len(encoded)
+    assert matrix.quantization == "IQ2_XXS"
+    assert matrix.decoder_mode == "numpy_vectorized"
+    assert matrix.value.shape == (2, 256)
+    assert metrics.storage_bytes_read == len(encoded)
+    assert metrics.storage_read_seconds >= 0
+    assert metrics.dequant_seconds >= 0
+    assert metrics.contiguous_buffer_seconds >= 0
+    assert metrics.matrix_build_seconds >= 0
+
+
+def test_scalar_mode_retains_row_reads_as_the_reference_path() -> None:
+    encoded = (struct.pack("<e", 1.0) + bytes(64)) * 2
+    store = _MatrixStore(encoded)
+    backend = _backend_without_mlx_import("scalar_reference")
+    matrix, metrics = backend.load(store, "toy.weight", 0)
+
+    assert store.calls == [
+        ("toy.weight", 0, len(encoded) // 2),
+        ("toy.weight", len(encoded) // 2, len(encoded) // 2),
+    ]
+    assert matrix.decoder_mode == "scalar_reference"
+    assert metrics.storage_bytes_read == len(encoded)
+
+
+@unittest.skipUnless(importlib.util.find_spec("numpy"), "NumPy is lockfile-backed")
+def test_numpy_mode_fails_closed_on_truncated_complete_matrix() -> None:
+    encoded = (struct.pack("<e", 1.0) + bytes(64)) * 2
+    store = _MatrixStore(encoded[:-1])
+    backend = _backend_without_mlx_import("numpy_vectorized")
+    with unittest.TestCase().assertRaisesRegex(OSError, "truncated complete"):
+        backend.load(store, "toy.weight", 0)
+    assert len(store.calls) == 1
+
+
+def test_unknown_decoder_mode_fails_before_mlx_import() -> None:
+    with unittest.TestCase().assertRaisesRegex(ValueError, "unsupported decoder mode"):
+        MlxMatrixBackend("invented")
 
 
 def test_inference_context_forbids_auto_cpu_fallback() -> None:
@@ -259,9 +366,12 @@ def test_inference_progress_is_atomic_identity_bound_and_route_complete() -> Non
             }
 
     class FakeCache:
-        def __init__(self, max_bytes: int, policy: str) -> None:
+        def __init__(
+            self, max_bytes: int, policy: str, decoder_mode: str = "scalar_reference"
+        ) -> None:
             assert max_bytes == 16
             assert policy == "decoded_shared_only"
+            assert decoder_mode == "scalar_reference"
             self.stats = FakeStats()
 
     class Pressure:
@@ -353,6 +463,10 @@ def load_tests(
         test_clear_drops_residency_but_resets_all_counters,
         test_backend_failure_propagates_without_cpu_fallback,
         test_matvec_cached_rows_reference,
+        test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once,
+        test_scalar_mode_retains_row_reads_as_the_reference_path,
+        test_numpy_mode_fails_closed_on_truncated_complete_matrix,
+        test_unknown_decoder_mode_fails_before_mlx_import,
         test_inference_context_forbids_auto_cpu_fallback,
         test_inference_stats_delta_keeps_split_cache_metrics,
         test_checkpoint_revision_binding_matches_every_acquired_file,

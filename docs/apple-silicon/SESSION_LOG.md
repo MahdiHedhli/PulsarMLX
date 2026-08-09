@@ -4200,3 +4200,11 @@ layer-3 benchmark retained three warmups and ten samples per decoder: median
 scalar decode was 1.424142 seconds and median NumPy decode was 0.050588 seconds
 (28.15× at the decode-only boundary). The result does not promote routed
 expert, MoE, layer, or token performance claims.
+
+The next checkpoint-free integration slice added explicit `scalar_reference`
+and `numpy_vectorized` modes to the MLX expert backend. The vector mode uses a
+single complete-matrix positional read only for IQ2_XXS, while other admitted
+mixed quant formats retain their scalar reference decoder. Model-free tests
+verify one-read matrix behavior, retained scalar row reads, truncated-input
+failure, unknown-mode failure, and split/per-quant telemetry. Real MLX matrix
+execution remains the next acceptance gate.
