@@ -246,6 +246,30 @@ Token IDs recorded after tokenizer identity freeze (not invented here).
 | Warm generation perf | 3 | preliminary if 1–2 |
 | Process-cold perf | 1 pilot | always pilot |
 
+## 13A. Decoder-priority bounded ladder (frozen before integration timing)
+
+The optimization ladder runs strictly in this order: decoder qualification,
+one real matrix, one routed expert, layer-3 top-8 plus shared MoE, one complete
+transformer layer, then a P1 full stack. P2 remains ineligible until the P1
+result and revised hotspot profile are committed.
+
+The real-matrix boundary freezes layer 3, routed expert 15 from the committed
+golden hotspot trace, `blk.3.ffn_gate_exps.weight`, and activation
+`rms_norm(token_embedding[9703], blk.3.ffn_norm.weight)`. It compares explicit
+`scalar_reference` and `numpy_vectorized` modes through synchronized MLX
+matvec. Pass requires exact output f32 bits, deterministic hashes for all ten
+measured executions per mode, one complete positional read for every vector
+sample, and 2048 row reads for every scalar-reference sample. Each mode uses
+three warmups and ten measured samples in counterbalanced alternating order.
+
+Every sample retains storage-read count/bytes/time, dequantization,
+contiguous-buffer verification, synchronized MLX matrix build/evaluation,
+matvec, cleanup, total time, RSS/peak RSS, and available MLX memory gauges. A
+single process-first vector observation is retained separately. Because the OS
+page cache is not purged, it is labeled process-first rather than controlled
+cold. Matrix results MUST NOT be promoted to expert, MoE, layer, stack, or
+token throughput.
+
 ## 14. Change control
 
 Any protocol change after first real-weight measurement requires:

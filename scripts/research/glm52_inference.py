@@ -57,6 +57,7 @@ _CACHE_DELTA_FIELDS = (
     "decoded_cache_hits",
     "decoded_cache_misses",
     "storage_bytes_read",
+    "storage_read_count",
     "storage_bytes_avoided",
     "decoded_bytes_materialized",
     "decoded_bytes_avoided",

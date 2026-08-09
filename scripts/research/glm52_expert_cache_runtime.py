@@ -22,6 +22,7 @@ from glm52_tensor_store import Glm52TensorStore, nbytes_for_tensor
 @dataclass(frozen=True)
 class LoadMetrics:
     storage_bytes_read: int
+    storage_read_count: int
     storage_read_seconds: float
     dequant_seconds: float
     contiguous_buffer_seconds: float
@@ -154,6 +155,11 @@ class MlxMatrixBackend:
         )
         metrics = LoadMetrics(
             storage_bytes_read=compressed_bytes,
+            storage_read_count=(
+                1
+                if self.decoder_mode == "numpy_vectorized" and loc.type_id == 16
+                else rows
+            ),
             storage_read_seconds=read_seconds,
             dequant_seconds=dequant_seconds,
             contiguous_buffer_seconds=contiguous_buffer_seconds,
@@ -197,6 +203,7 @@ class ExpertCacheStats:
     decoded_cache_hits: int = 0
     decoded_cache_misses: int = 0
     storage_bytes_read: int = 0
+    storage_read_count: int = 0
     storage_bytes_avoided: int = 0
     decoded_bytes_materialized: int = 0
     decoded_bytes_avoided: int = 0
@@ -235,6 +242,7 @@ class ExpertCacheStats:
             "decoded_cache_hits": self.decoded_cache_hits,
             "decoded_cache_misses": self.decoded_cache_misses,
             "storage_bytes_read": self.storage_bytes_read,
+            "storage_read_count": self.storage_read_count,
             "storage_bytes_avoided": self.storage_bytes_avoided,
             "decoded_bytes_materialized": self.decoded_bytes_materialized,
             "decoded_bytes_avoided": self.decoded_bytes_avoided,
@@ -296,6 +304,7 @@ class ExpertSlabCache:
             {
                 "matrix_load_count": 0,
                 "storage_bytes_read": 0,
+                "storage_read_count": 0,
                 "storage_read_seconds": 0.0,
                 "dequant_seconds": 0.0,
                 "contiguous_buffer_seconds": 0.0,
@@ -336,6 +345,7 @@ class ExpertSlabCache:
         assert self.backend is not None
         matrix, metrics = self.backend.load(store, name, expert)
         self.stats.storage_bytes_read += metrics.storage_bytes_read
+        self.stats.storage_read_count += metrics.storage_read_count
         self.stats.storage_read_seconds += metrics.storage_read_seconds
         self.stats.dequant_seconds += metrics.dequant_seconds
         self.stats.contiguous_buffer_seconds += metrics.contiguous_buffer_seconds
@@ -345,6 +355,7 @@ class ExpertSlabCache:
         quantization = self._quantization_metrics(matrix.quantization)
         quantization["matrix_load_count"] += 1
         quantization["storage_bytes_read"] += metrics.storage_bytes_read
+        quantization["storage_read_count"] += metrics.storage_read_count
         quantization["storage_read_seconds"] += metrics.storage_read_seconds
         quantization["dequant_seconds"] += metrics.dequant_seconds
         quantization["contiguous_buffer_seconds"] += metrics.contiguous_buffer_seconds

@@ -56,6 +56,7 @@ class FakeBackend:
         )
         metrics = LoadMetrics(
             storage_bytes_read=2,
+            storage_read_count=1,
             storage_read_seconds=0.25,
             dequant_seconds=0.5,
             contiguous_buffer_seconds=0.03125,
@@ -216,6 +217,7 @@ def test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once() -> None:
     assert matrix.decoder_mode == "numpy_vectorized"
     assert matrix.value.shape == (2, 256)
     assert metrics.storage_bytes_read == len(encoded)
+    assert metrics.storage_read_count == 1
     assert metrics.storage_read_seconds >= 0
     assert metrics.dequant_seconds >= 0
     assert metrics.contiguous_buffer_seconds >= 0
@@ -234,6 +236,7 @@ def test_scalar_mode_retains_row_reads_as_the_reference_path() -> None:
     ]
     assert matrix.decoder_mode == "scalar_reference"
     assert metrics.storage_bytes_read == len(encoded)
+    assert metrics.storage_read_count == 2
 
 
 @unittest.skipUnless(importlib.util.find_spec("numpy"), "NumPy is lockfile-backed")
