@@ -13,6 +13,26 @@ pub struct ShardPath {
     pub path: PathBuf,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct MatrixReadSpec {
+    pub tensor_offset: u64,
+    pub rows: u64,
+    pub row_bytes: u64,
+}
+
+impl MatrixReadSpec {
+    pub fn total_bytes(&self) -> Option<u64> {
+        self.rows.checked_mul(self.row_bytes)
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct ReadTelemetry {
+    pub request_count: u64,
+    pub requested_bytes: u64,
+    pub actual_bytes: u64,
+}
+
 /// An exact, owned payload returned by an [`ExpertSource`].
 ///
 /// This type deliberately does not implement `Clone`: transferring a fetched
@@ -138,6 +158,100 @@ impl PositionalSource {
             ));
         }
         Self::from_readers(readers)
+    }
+
+    pub fn fetch_matrix_whole(
+        &mut self,
+        spec: MatrixReadSpec,
+        max_request_bytes: u64,
+        telemetry: &mut ReadTelemetry,
+    ) -> Result<Vec<OwnedSlab>, SourceError> {
+        let row_bytes = usize::try_from(spec.row_bytes)
+            .map_err(|_| SourceError::MatrixParameterTooLarge {
+                rows: spec.rows,
+                row_bytes: spec.row_bytes,
+            })?;
+        let rows = usize::try_from(spec.rows).map_err(|_| SourceError::MatrixParameterTooLarge {
+            rows: spec.rows,
+            row_bytes: spec.row_bytes,
+        })?;
+        if row_bytes == 0 || rows == 0 {
+            return Err(SourceError::ZeroLengthMatrix {
+                tensor_offset: spec.tensor_offset,
+            });
+        }
+
+        let total_bytes = spec
+            .total_bytes()
+            .and_then(|total| usize::try_from(total).ok())
+            .ok_or(SourceError::MatrixParameterTooLarge {
+                rows: spec.rows,
+                row_bytes: spec.row_bytes,
+            })?;
+
+        let max_request_bytes = if max_request_bytes == 0 {
+            total_bytes
+        } else {
+            usize::try_from(max_request_bytes).map_err(|_| SourceError::MatrixParameterTooLarge {
+                rows: spec.rows,
+                row_bytes: spec.row_bytes,
+            })?
+        };
+
+        let max_rows = if max_request_bytes >= row_bytes {
+            max_request_bytes / row_bytes
+        } else {
+            0
+        }
+        .max(1);
+
+        let mut offset = spec.tensor_offset;
+        let mut remaining_rows = rows;
+        let mut out = Vec::new();
+
+        while remaining_rows > 0 {
+            let chunk_rows = remaining_rows.min(max_rows);
+            let chunk_bytes = chunk_rows
+                .checked_mul(row_bytes)
+                .ok_or(SourceError::MatrixParameterTooLarge {
+                    rows: chunk_rows as u64,
+                    row_bytes: spec.row_bytes,
+                })?;
+            if chunk_bytes == 0 {
+                return Err(SourceError::ZeroLengthMatrix {
+                    tensor_offset: spec.tensor_offset,
+                });
+            }
+
+            out.push(self.fetch_exact_with_telemetry(
+                Read {
+                    offset,
+                    len: chunk_bytes as u64,
+                },
+                telemetry,
+            )?);
+            remaining_rows -= chunk_rows;
+            let chunk_offset = u64::try_from(chunk_bytes)
+                .map_err(|_| SourceError::MatrixParameterTooLarge {
+                    rows: chunk_rows as u64,
+                    row_bytes: spec.row_bytes,
+                })?;
+            offset = offset
+                .checked_add(chunk_offset)
+                .ok_or(SourceError::MatrixParameterTooLarge {
+                    rows: chunk_rows as u64,
+                    row_bytes: spec.row_bytes,
+                })?;
+        }
+        Ok(out)
+    }
+
+    pub fn fetch_matrix_rows(
+        &mut self,
+        spec: MatrixReadSpec,
+        telemetry: &mut ReadTelemetry,
+    ) -> Result<Vec<OwnedSlab>, SourceError> {
+        self.fetch_matrix_whole(spec, spec.row_bytes, telemetry)
     }
 
     /// Constructs a source over injected positional readers.
@@ -300,6 +414,18 @@ impl PositionalSource {
             bytes,
         })
     }
+
+    fn fetch_exact_with_telemetry(
+        &mut self,
+        read: Read,
+        telemetry: &mut ReadTelemetry,
+    ) -> Result<OwnedSlab, SourceError> {
+        telemetry.request_count += 1;
+        telemetry.requested_bytes += read.len;
+        let slab = self.fetch_exact(read)?;
+        telemetry.actual_bytes += slab.payload().len() as u64;
+        Ok(slab)
+    }
 }
 
 impl ExpertSource for PositionalSource {
@@ -386,6 +512,13 @@ pub enum SourceError {
         expected: usize,
         actual: usize,
     },
+    ZeroLengthMatrix {
+        tensor_offset: u64,
+    },
+    MatrixParameterTooLarge {
+        rows: u64,
+        row_bytes: u64,
+    },
     Io {
         operation: &'static str,
         shard: usize,
@@ -465,6 +598,12 @@ impl fmt::Display for SourceError {
                 formatter,
                 "short read from shard {shard} at local offset {local_offset}: expected {expected}, got {actual}"
             ),
+            Self::ZeroLengthMatrix { tensor_offset } => {
+                write!(formatter, "matrix read with zero logical length at tensor offset {tensor_offset}")
+            }
+            Self::MatrixParameterTooLarge { rows, row_bytes } => {
+                write!(formatter, "matrix params overflow: rows {rows}, row_bytes {row_bytes}")
+            }
             Self::Io {
                 operation,
                 shard,

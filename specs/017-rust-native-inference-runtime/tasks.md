@@ -36,11 +36,15 @@
 
 ## Phase 4 — Positional I/O and read-path contract
 
-- [ ] T017-40 Implement sync pread-like reads with shard identity and offset overflow guard.
-- [ ] T017-41 Add read exactness contract: short-read != requested bytes is an error.
-- [ ] T017-42 Add whole-matrix reader API and explicit tensor-size-guided chunking.
-- [ ] T017-43 Record read request count plus requested/actual bytes separately.
-- [ ] T017-44 Add synthetic and local fixture tests comparing bulk path to row reads.
+- [x] T017-30 Implement page-aligned allocator contract with stable slot IDs and bounded max in-use limit.
+- [x] T017-31 Add deterministic reuse policy and reuse counters.
+- [x] T017-32 Add zeroing policy documentation + tests.
+- [x] T017-33 Add telemetry for requested bytes, allocated bytes, alignment, slot-count, reuse-count, peak logical residency.
+- [x] T017-40 Implement sync pread-like reads with shard identity and offset overflow guard.
+- [x] T017-41 Add read exactness contract: short-read != requested bytes is an error.
+- [x] T017-42 Add whole-matrix reader API and explicit tensor-size-guided chunking.
+- [x] T017-43 Record read request count plus requested/actual bytes separately.
+- [x] T017-44 Add synthetic and local fixture tests comparing bulk path to row reads.
 
 ## Phase 5 — Telemetry attribution
 

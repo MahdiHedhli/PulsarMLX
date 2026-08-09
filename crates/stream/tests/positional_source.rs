@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 use stream::{
     ExpertSource, OwnedSlab, PositionalRead, PositionalSource, Read, ReaderShard, ShardPath,
-    SourceError,
+    MatrixReadSpec, ReadTelemetry, SourceError,
 };
 
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
@@ -588,4 +588,69 @@ fn owned_payload_survives_source_drop_and_thread_move() {
         .expect("move slab to another thread");
     assert_eq!(range, Read { offset: 6, len: 7 });
     assert_eq!(payload, b"payload");
+}
+
+#[test]
+fn matrix_whole_read_matches_row_reads_and_tracks_telemetry() {
+    let bytes: Vec<u8> = (0_u8..64_u8).collect();
+    let file = TestFile::new("matrix-whole", &bytes);
+    let mut source = PositionalSource::open(file.path()).expect("open matrix fixture");
+
+    let shape = MatrixReadSpec {
+        tensor_offset: 0,
+        rows: 8,
+        row_bytes: 8,
+    };
+
+    let mut whole_traffic = ReadTelemetry::default();
+    let matrix = source
+        .fetch_matrix_whole(shape, 64, &mut whole_traffic)
+        .expect("fetch whole matrix");
+    let matrix_payload: Vec<u8> = matrix
+        .iter()
+        .flat_map(|slab| slab.payload().iter().copied())
+        .collect();
+
+    let mut row_traffic = ReadTelemetry::default();
+    let rows = source
+        .fetch_matrix_rows(shape, &mut row_traffic)
+        .expect("fetch matrix rows");
+    let row_payload: Vec<u8> = rows
+        .iter()
+        .flat_map(|slab| slab.payload().iter().copied())
+        .collect();
+
+    assert_eq!(matrix_payload.len(), 64);
+    assert_eq!(matrix_payload, row_payload);
+    assert_eq!(whole_traffic.request_count, 1);
+    assert_eq!(whole_traffic.requested_bytes, 64);
+    assert_eq!(whole_traffic.actual_bytes, 64);
+    assert_eq!(row_traffic.request_count, 8);
+    assert_eq!(row_traffic.requested_bytes, 64);
+    assert_eq!(row_traffic.actual_bytes, 64);
+}
+
+#[test]
+fn matrix_read_honors_request_sizing_and_chunks() {
+    let bytes: Vec<u8> = (0_u8..100_u8).collect();
+    let file = TestFile::new("matrix-chunk", &bytes);
+    let mut source = PositionalSource::open(file.path()).expect("open matrix chunk fixture");
+
+    let shape = MatrixReadSpec {
+        tensor_offset: 0,
+        rows: 10,
+        row_bytes: 9,
+    };
+
+    let mut telemetry = ReadTelemetry::default();
+    let chunks = source
+        .fetch_matrix_whole(shape, 32, &mut telemetry)
+        .expect("fetch matrix in chunks");
+
+    assert!(chunks.len() >= 2);
+    let chunk_rows = chunks.iter().map(|slab| slab.payload().len()).collect::<Vec<_>>();
+    assert_eq!(chunk_rows.iter().sum::<usize>(), 90);
+    assert_eq!(telemetry.request_count, chunk_rows.len() as u64);
+    assert_eq!(telemetry.requested_bytes, 90);
+    assert_eq!(telemetry.actual_bytes, 90);
 }
