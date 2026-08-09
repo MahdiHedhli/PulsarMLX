@@ -4268,3 +4268,17 @@ as design references or candidates for separately tested clean
 reimplementation. No Colibri code was copied or adapted, no performance result
 was adopted, and no endorsement is implied. Feature 016 remains focused on the
 mixed-quant profile, cache re-evaluation, and P2 gate.
+
+## 2026-08-09 — P1 mixed-quant ranking
+
+A deterministic checkpoint-free generator ranked the quant formats actually
+exercised by the committed vectorized P1 trace using the sum of recorded
+storage-read, dequantization, contiguous-buffer, MLX-build, and MLX-matvec
+seconds. It did not use the checkpoint's global tensor-count histogram.
+
+Nine formats were exercised. IQ3_XXS ranked first at 1791.413883 seconds and
+61.78% of the quantified component sum, followed by Q6_K at 475.307709 seconds
+and Q5_K at 225.687310 seconds. The result identifies IQ3_XXS as the next
+exact-bit decoder candidate; it does not claim IQ3_XXS acceleration or equate
+instrumented component sums with P1 wall time. Cache re-profiling and P2 remain
+incomplete.

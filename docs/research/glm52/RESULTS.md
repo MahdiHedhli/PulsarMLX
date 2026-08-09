@@ -50,9 +50,9 @@
 
 ## C11 Generation
 
-| Prompt ID | status |
-| --- | --- |
-| P-MIN | **in progress** (full 79-layer steps; multi-hour) |
+| Prompt ID | status | generated sequence |
+| --- | --- | --- |
+| P-MIN | **passed** | `[21615, 220, 16, 13, 16, 16, 15, 15]` |
 
 ## Performance (MLX-only)
 
@@ -65,6 +65,10 @@
 | layer-3 top-8 + shared MoE | **passed** — CPU oracle 0 mismatches; exact route/mode bits; 14.062472 s vs 36.309373 s warm median |
 | complete layer 3 | **passed** — frozen attention midpoint/routes; exact mode bits; 31.687686 s vs 53.230274 s warm median |
 | vectorized P1 full stack | **passed** — golden `[9703,21615]`; 6294.015 s; 228 shared-cache hits; zero fallback |
+| P1 mixed-quant ranking | **passed** — 9 formats exercised; IQ3_XXS accounts for 1791.414 s / 61.78% of the quantified component sum |
 | P2 / steady-state tok/s | pending; not inferred from one P1 pilot |
 
-Figures and tables must be generated from `raw/` — never hand-hardcoded.
+The mixed-quant inventory is generated at
+[`tables/f016-p1-quant-hotspots.md`](tables/f016-p1-quant-hotspots.md) from the
+committed P1 record. Figures and tables must be generated from `raw/` — never
+hand-hardcoded.

@@ -117,6 +117,17 @@ python3 -m unittest discover -s scripts/research/tests \
   -p 'test_glm52_p1_record.py' -v
 ```
 
+### P1 mixed-quant hotspot ranking
+
+```sh
+uv run --frozen python scripts/research/rank_glm52_quant_hotspots.py --check
+python3 -m unittest discover -s scripts/research/tests \
+  -p 'test_glm52_quant_hotspot_ranking.py' -v
+```
+
+This is checkpoint-free: it deterministically derives the JSON inventory and
+Markdown table from the committed public-safe P1 record.
+
 ## Protocol freeze
 
 Numerical tolerances and stop conditions live in

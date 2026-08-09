@@ -49,6 +49,10 @@
 - [Vectorized P1](raw/f016-inference-p1-vectorized-0001.json) — clean full-stack
   golden-prefix run, complete routes, split cache metrics, per-quant timing,
   resources, and MLX GPU identity
+- [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
+  [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
+  from the committed P1 per-quant metrics; ranks measured component time rather
+  than catalog tensor count
 
 ### Results (populated after runs)
 
