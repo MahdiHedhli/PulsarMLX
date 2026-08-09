@@ -1633,6 +1633,22 @@ def _verify_generated_directory(
 
 def _reviewer_sections(text: str) -> dict[str, str]:
     lines = text.splitlines()
+    feature_heading = "# Feature 002 Reviewer Index"
+    try:
+        feature_start = lines.index(feature_heading)
+    except ValueError as exc:
+        raise VerificationError(
+            "reviewer index is missing the Feature 002 heading"
+        ) from exc
+    feature_end = next(
+        (
+            index
+            for index in range(feature_start + 1, len(lines))
+            if lines[index].startswith("# Feature ")
+        ),
+        len(lines),
+    )
+    lines = lines[feature_start:feature_end]
     positions: list[int] = []
     for heading in REVIEWER_SECTIONS:
         matches = [index for index, line in enumerate(lines) if line == heading]
