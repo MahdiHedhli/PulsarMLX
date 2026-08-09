@@ -130,3 +130,21 @@ The exact storage-only result is retained in
 [`tables/post-f016-q8-head-bulk-scalar-0001.md`](tables/post-f016-q8-head-bulk-scalar-0001.md).
 It supports the next one-variable experiment—NumPy head-slab decode—but does
 not justify a storage-prefetch project or a token-speed claim.
+
+## Phase B5: per-head Q8_0 NumPy integration
+
+**Result: exact and material; the MLA residual is now directly bounded.**
+
+At clean source `a6f233822dade6096209a165d5085c4234063960`, both modes read one
+complete head slab. NumPy decoding reduced one real head median from 0.009862 s
+to 0.001535 s (6.43x). Complete layer-3 MLA fell from 2.037030 s to 0.769746 s
+(2.65x), with exact f32-bit output.
+
+Across the 128 head operations, decode median fell from 0.980048 s to 0.017462 s.
+The newly instrumented residual fell to 0.007187 s, while the four 2-D
+projections retained a 0.705703 s median total. The generated table is
+[`tables/post-f016-q8-head-numpy-integration-0001.md`](tables/post-f016-q8-head-numpy-integration-0001.md).
+
+Q6_K remains justified because the Phase-A layer-8 attention-output matrix spent
+about 46.9 s in scalar decode and the inventory contains five exercised Q6_K
+trunk tensors. Q6_K qualification therefore precedes complete-layer and P1 gates.
