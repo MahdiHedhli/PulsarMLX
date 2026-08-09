@@ -16,6 +16,7 @@ from typing import Any, Iterator
 
 from glm52_tensor_store import Glm52TensorStore, TensorLoc, nbytes_for_tensor
 from iq2_xxs_dequant import dequantize_row_iq2_xxs
+from q8_0_dequant import dequantize_matrix_q8_0_numpy
 from ggml_kquants import (
     dequantize_matrix_q5_k_numpy,
     dequantize_row_q4_k,
@@ -111,7 +112,12 @@ def require_mlx_backend() -> Iterator[None]:
 def dense_read_mode(mode: str) -> Iterator[None]:
     """Select the experimental dense matrix read strategy for this context."""
 
-    if mode not in {"row_reference", "whole_matrix_scalar", "whole_matrix_numpy_q5"}:
+    if mode not in {
+        "row_reference",
+        "whole_matrix_scalar",
+        "whole_matrix_numpy_q5",
+        "whole_matrix_numpy_q5_q8",
+    }:
         raise ValueError(f"unsupported dense read mode {mode}")
     reset_handle = _DENSE_READ_MODE.set(mode)
     try:
@@ -278,7 +284,12 @@ def _load_scalar_dense_matrix(
 ) -> tuple[list[float], ScalarMatrixLoadMetrics]:
     """Read and scalar-decode one complete matrix with exact byte accounting."""
 
-    if read_mode not in {"row_reference", "whole_matrix_scalar", "whole_matrix_numpy_q5"}:
+    if read_mode not in {
+        "row_reference",
+        "whole_matrix_scalar",
+        "whole_matrix_numpy_q5",
+        "whole_matrix_numpy_q5_q8",
+    }:
         raise ValueError(f"unsupported dense read mode {read_mode}")
     row_bytes = nbytes_for_tensor(loc.type_id, cols)
     encoded_bytes = row_bytes * rows
@@ -289,7 +300,7 @@ def _load_scalar_dense_matrix(
     contiguous_buffer_seconds = 0.0
     storage_read_count = 0
     complete_raw: bytes | None = None
-    if read_mode in {"whole_matrix_scalar", "whole_matrix_numpy_q5"}:
+    if read_mode != "row_reference":
         read_start = time.perf_counter()
         complete_raw = store.pread(loc.name, 0, encoded_bytes)
         storage_read_seconds = time.perf_counter() - read_start
@@ -297,12 +308,20 @@ def _load_scalar_dense_matrix(
         if len(complete_raw) != encoded_bytes:
             raise OSError(f"{loc.name}: truncated complete matrix")
 
-    if read_mode == "whole_matrix_numpy_q5" and loc.type_id == 13:
+    vector_decoder = None
+    decoder_name = None
+    if read_mode in {"whole_matrix_numpy_q5", "whole_matrix_numpy_q5_q8"} and loc.type_id == 13:
+        vector_decoder = dequantize_matrix_q5_k_numpy
+        decoder_name = "numpy_vectorized_q5_k"
+    elif read_mode == "whole_matrix_numpy_q5_q8" and loc.type_id == 8:
+        vector_decoder = dequantize_matrix_q8_0_numpy
+        decoder_name = "numpy_vectorized_q8_0"
+    if vector_decoder is not None:
         import numpy as np
 
         assert complete_raw is not None
         decode_start = time.perf_counter()
-        decoded = dequantize_matrix_q5_k_numpy(complete_raw, rows, cols)
+        decoded = vector_decoder(complete_raw, rows, cols)
         dequant_seconds = time.perf_counter() - decode_start
         buffer_start = time.perf_counter()
         flat = np.ascontiguousarray(decoded.reshape(-1), dtype=np.float32)
@@ -314,7 +333,7 @@ def _load_scalar_dense_matrix(
             dequant_seconds=dequant_seconds,
             contiguous_buffer_seconds=contiguous_buffer_seconds,
             read_mode=read_mode,
-            decoder_mode="numpy_vectorized_q5_k",
+            decoder_mode=decoder_name,
         )
 
     # Decode rows in the same order with the same scalar decoder as the reference.

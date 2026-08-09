@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark exact Q5_K NumPy integration at real matrix and MLA boundaries."""
+"""Benchmark exact selected NumPy trunk decoders at matrix and MLA boundaries."""
 
 from __future__ import annotations
 
@@ -35,9 +35,39 @@ from qualify_iq2_xxs_numpy import _summary  # noqa: E402
 
 MODES = ("whole_matrix_scalar", "whole_matrix_numpy_q5")
 TENSOR = "blk.3.attn_output.weight"
+EXPECTED_TYPE_ID = 13
+SCHEMA = "pulsarmlx.research.glm52-trunk-q5-integration"
+EXPERIMENT_ID = "trunk-q5-integration-0001"
+CHANGED_VARIABLE = "Q5_K scalar row decode versus exact-bit whole-matrix NumPy Q5_K decode"
 LAYER = 3
 WARMUPS = 3
 MEASURED = 10
+
+
+def _expected_decoder(mode: str, quantization: str) -> str:
+    if quantization == "Q5_K" and mode in {
+        "whole_matrix_numpy_q5",
+        "whole_matrix_numpy_q5_q8",
+    }:
+        return "numpy_vectorized_q5_k"
+    if quantization == "Q8_0" and mode == "whole_matrix_numpy_q5_q8":
+        return "numpy_vectorized_q8_0"
+    return "scalar_reference"
+
+
+def _configure(experiment: str) -> None:
+    global MODES, TENSOR, EXPECTED_TYPE_ID, SCHEMA, EXPERIMENT_ID, CHANGED_VARIABLE
+    if experiment == "q5":
+        return
+    if experiment == "q8-2d":
+        MODES = ("whole_matrix_numpy_q5", "whole_matrix_numpy_q5_q8")
+        TENSOR = "blk.3.attn_q_b.weight"
+        EXPECTED_TYPE_ID = 8
+        SCHEMA = "pulsarmlx.research.glm52-trunk-q8-2d-integration"
+        EXPERIMENT_ID = "trunk-q8-2d-integration-0001"
+        CHANGED_VARIABLE = "Q8_0 scalar row decode versus exact-bit whole-matrix NumPy Q8_0 decode; Q5_K remains vectorized"
+        return
+    raise ValueError(f"unsupported experiment {experiment}")
 
 
 def _f32_bits(values: list[float]) -> np.ndarray:
@@ -108,8 +138,8 @@ def _matrix_operation(store, activation, mode):
 
 def _benchmark_matrix(store: Glm52TensorStore) -> dict[str, Any]:
     loc = store.tensors[TENSOR]
-    if loc.type_id != 13:
-        raise TypeError(f"{TENSOR}: expected Q5_K")
+    if loc.type_id != EXPECTED_TYPE_ID:
+        raise TypeError(f"{TENSOR}: unexpected quantization {loc.type_name}")
     cols, rows = map(int, loc.dims)
     activation, activation_identity = _activation(cols)
     encoded_bytes = nbytes_for_tensor(loc.type_id, cols) * rows
@@ -139,16 +169,16 @@ def _benchmark_matrix(store: Glm52TensorStore) -> dict[str, Any]:
             sample["sample_index"] = index
             samples[mode].append(sample)
             outputs[mode] = output
-        print(json.dumps({"progress": "q5-matrix", "measured_pair": index + 1}), flush=True)
-    scalar_bits = _f32_bits(outputs["whole_matrix_scalar"])
-    vector_bits = _f32_bits(outputs["whole_matrix_numpy_q5"])
+        print(json.dumps({"progress": "trunk-matrix", "measured_pair": index + 1}), flush=True)
+    scalar_bits = _f32_bits(outputs[MODES[0]])
+    vector_bits = _f32_bits(outputs[MODES[1]])
     mismatch = np.flatnonzero(scalar_bits != vector_bits)
     hashes = {
         mode: sorted({sample["output_f32_sha256"] for sample in mode_samples})
         for mode, mode_samples in samples.items()
     }
     for mode, mode_samples in samples.items():
-        expected_decoder = "numpy_vectorized_q5_k" if mode.endswith("q5") else "scalar_reference"
+        expected_decoder = _expected_decoder(mode, loc.type_name)
         if any(sample["storage_read_count"] != 1 for sample in mode_samples):
             raise RuntimeError("Q5 matrix read-count contract failed")
         if any(sample["decoder_mode"] != expected_decoder for sample in mode_samples):
@@ -214,26 +244,26 @@ def _benchmark_mla(store: Glm52TensorStore) -> dict[str, Any]:
             sample["sample_index"] = index
             samples[mode].append(sample)
             outputs[mode] = output
-        print(json.dumps({"progress": "mla-layer-3-q5", "measured_pair": index + 1}), flush=True)
-    scalar_bits = _f32_bits(outputs["whole_matrix_scalar"])
-    vector_bits = _f32_bits(outputs["whole_matrix_numpy_q5"])
+        print(json.dumps({"progress": "mla-layer-3", "measured_pair": index + 1}), flush=True)
+    scalar_bits = _f32_bits(outputs[MODES[0]])
+    vector_bits = _f32_bits(outputs[MODES[1]])
     mismatch = np.flatnonzero(scalar_bits != vector_bits)
     if mismatch.size:
         raise RuntimeError("Q5 integrated MLA output diverged")
-    for sample in samples["whole_matrix_numpy_q5"]:
+    candidate_mode = MODES[1]
+    for sample in samples[candidate_mode]:
         operations = sample["dense_2d"]["operations"]
-        q5_operations = [op for op in operations if op["quantization"] == "Q5_K"]
-        other_operations = [op for op in operations if op["quantization"] != "Q5_K"]
-        if not q5_operations or any(op["decoder_mode"] != "numpy_vectorized_q5_k" for op in q5_operations):
-            raise RuntimeError("MLA Q5 vector decoder contract failed")
-        if any(op["decoder_mode"] != "scalar_reference" for op in other_operations):
-            raise RuntimeError("MLA non-Q5 scalar decoder contract failed")
+        if any(
+            op["decoder_mode"] != _expected_decoder(candidate_mode, op["quantization"])
+            for op in operations
+        ):
+            raise RuntimeError("MLA decoder contract failed")
     fields = tuple(_summaries(samples[MODES[0]])) + ("uninstrumented_residual_seconds",)
     summaries = {
         mode: {field: _summary([float(sample[field]) for sample in values]) for field in fields}
         for mode, values in samples.items()
     }
-    vector_ops = samples["whole_matrix_numpy_q5"][0]["dense_2d"]["operations"]
+    vector_ops = samples[candidate_mode][0]["dense_2d"]["operations"]
     return {
         "layer": LAYER,
         "boundary": "complete_single_position_mla_attention",
@@ -250,6 +280,7 @@ def _benchmark_mla(store: Glm52TensorStore) -> dict[str, Any]:
         "captured_operation_contract": {
             "operation_count": len(vector_ops),
             "q5_vectorized_count": sum(op["decoder_mode"] == "numpy_vectorized_q5_k" for op in vector_ops),
+            "q8_vectorized_count": sum(op["decoder_mode"] == "numpy_vectorized_q8_0" for op in vector_ops),
             "other_scalar_count": sum(op["decoder_mode"] == "scalar_reference" for op in vector_ops),
         },
     }
@@ -269,10 +300,10 @@ def benchmark(model: Path) -> dict[str, Any]:
     finally:
         store.close()
     record = {
-        "schema": "pulsarmlx.research.glm52-trunk-q5-integration",
+        "schema": SCHEMA,
         "schema_version": "1.0.0",
         "feature_id": "post-f016-trunk-optimization",
-        "experiment_id": "trunk-q5-integration-0001",
+        "experiment_id": EXPERIMENT_ID,
         "actual_status": "passed",
         **source,
         "checkpoint": _checkpoint_identity(),
@@ -285,9 +316,9 @@ def benchmark(model: Path) -> dict[str, Any]:
             "storage_role": "internal_ssd",
         },
         "protocol": {
-            "changed_variable": "Q5_K scalar row decode versus exact-bit whole-matrix NumPy Q5_K decode",
+            "changed_variable": CHANGED_VARIABLE,
             "read_mode_both": "one bounded whole-matrix positional read",
-            "non_q5_decoder": "scalar_reference",
+            "decoder_contract": {mode: {quant: _expected_decoder(mode, quant) for quant in ("Q5_K", "Q8_0", "Q6_K")} for mode in MODES},
             "warmups_per_mode": WARMUPS,
             "measured_samples_per_mode": MEASURED,
             "measurement_order": "counterbalanced_alternation",
@@ -304,7 +335,8 @@ def benchmark(model: Path) -> dict[str, Any]:
         "unsupported_interpretations": [
             "complete transformer-layer speedup",
             "full-stack or token-generation speedup",
-            "Q8_0 or Q6_K vectorization",
+            "per-head 3D Q8_0 vectorization",
+            "Q6_K vectorization",
             "Rust or direct quantized Metal evidence",
         ],
     }
@@ -317,7 +349,9 @@ def benchmark(model: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--experiment", choices=("q5", "q8-2d"), default="q5")
     args = parser.parse_args()
+    _configure(args.experiment)
     model = os.environ.get("PULSARMLX_GLM_GGUF")
     if not model:
         raise SystemExit("PULSARMLX_GLM_GGUF is required; no checkpoint was searched")
@@ -327,10 +361,10 @@ def main() -> int:
         record = benchmark(Path(model))
     except Exception as error:
         record = {
-            "schema": "pulsarmlx.research.glm52-trunk-q5-integration",
+            "schema": SCHEMA,
             "schema_version": "1.0.0",
             "feature_id": "post-f016-trunk-optimization",
-            "experiment_id": "trunk-q5-integration-0001",
+            "experiment_id": EXPERIMENT_ID,
             "actual_status": "failed",
             **_source_identity(),
             "failure": {"reason": "bounded_experiment_failed", "error_type": type(error).__name__},
