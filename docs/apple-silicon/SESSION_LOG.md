@@ -4335,3 +4335,26 @@ of 19.391364 seconds vectorized versus 52.924374 seconds scalar (2.73×).
 Attention remained essentially unchanged at 17.668091 versus 17.662864 seconds,
 while MoE fell to 1.719293 from 35.257526 seconds. This is one layer only; P1
 is the next gate and no full-stack speedup is inferred yet.
+
+## 2026-08-09 — Faster P1 and revised hotspot
+
+The clean full-stack P1 at source `99751b9` reproduced the exact golden prefix
+`[9703,21615]` with MLX GPU execution, 228 decoded shared-cache hits, zero
+evictions, and zero CPU fallbacks. Total wall time was 4582.511032 seconds;
+the prompt stack took 2583.443795 seconds and the shared-warm generated-token
+stack took 1921.573691 seconds. Both resource checkpoints remained normal.
+
+The prior committed P1 took 6294.014912 seconds, so the new single run is
+1711.503880 seconds (27.19%) faster. This is a cross-commit observation between
+two clean single-process pilots, not a controlled benchmark population or a
+steady-state throughput claim.
+
+The regenerated mixed-quant ranking reduced the quantified component sum from
+2899.499809 to 1185.470056 seconds. IQ3_XXS moved from first to fourth, while
+Q6_K became first at 468.856301 seconds (39.55%), followed by Q5_K at
+225.731846 seconds (19.04%). The warm stack reused all 228 shared matrices,
+avoiding 2,105,769,984 compressed bytes and 11,475,615,744 decoded bytes.
+Shared residency therefore retains measured value and stays enabled for P2.
+Q6_K is the next exact-bit decoder candidate for later work, but does not block
+the admitted two-token correctness/reuse gate because those shared matrices are
+already resident after the prompt stack.

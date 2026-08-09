@@ -64,6 +64,14 @@ uv run --frozen python scripts/research/benchmark_glm52_moe.py \
   --output docs/research/glm52/raw/f016-moe-layer3-iq3-0001.json
 uv run --frozen python scripts/research/benchmark_glm52_layer.py \
   --output docs/research/glm52/raw/f016-layer3-iq3-0001.json
+uv run --frozen python scripts/research/glm52_inference.py \
+  --mode inference --n-new 1 --cache-gib 16 \
+  --cache-policy decoded_shared_only --decoder-mode numpy_vectorized \
+  --out docs/research/glm52/raw/f016-inference-p1-iq3-0001.json
+uv run --frozen python scripts/research/rank_glm52_quant_hotspots.py \
+  --source docs/research/glm52/raw/f016-inference-p1-iq3-0001.json \
+  --json-out docs/research/glm52/raw/f016-p1-iq3-quant-hotspot-ranking-0001.json \
+  --table-out docs/research/glm52/tables/f016-p1-iq3-quant-hotspots.md --check
 python3 -m unittest discover -s scripts/research/tests \
   -p 'test_iq*_xxs_qualification_record.py' -v
 ```

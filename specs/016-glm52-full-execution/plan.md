@@ -50,8 +50,11 @@
    matrix** at source `15a8aa2`; the **complete routed expert passed** at source
    `a8a3d71`, and **layer-3 top-8 plus shared MoE passed** at source `b675365`.
    The **complete transformer layer passed** at source `a589dcf`; the faster P1
-   full-stack golden-token run is next.
-7. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
+   **full-stack golden-token run passed** at source `99751b9`.
+7. Re-profile cache value. **Passed**: Q6_K is now the leading quantified
+   format, while all 228 protected shared matrices hit in the warm stack and
+   avoided 11.476 GB of decoded materialization. The cache remains enabled.
+8. Retry P2. No full golden-eight run is eligible until P2 passes.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).

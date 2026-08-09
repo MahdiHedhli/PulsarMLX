@@ -66,6 +66,8 @@
 | complete routed expert with vector IQ2_XXS + IQ3_XXS | **passed** — independent CPU oracle 0 mismatches; exact deterministic decoder modes; 0.243532 s vs 4.378363 s median total (17.98×) |
 | layer-3 top-8 + shared MoE with vector IQ2_XXS + IQ3_XXS | **passed** — independent CPU oracle 0 mismatches; exact route/mode bits; 1.698580 s vs 34.964010 s warm median (20.58×) |
 | complete layer 3 with vector IQ2_XXS + IQ3_XXS | **passed** — frozen attention midpoint/routes; exact mode bits; 19.391364 s vs 52.924374 s warm median (2.73×) |
+| P1 with vector IQ2_XXS + IQ3_XXS | **passed** — golden `[9703,21615]`; 4582.511 s; 228 shared hits; zero fallback |
+| revised P1 mixed-quant ranking | **passed** — Q6_K is now first at 468.856 s / 39.55% of quantified component time; shared residency avoids its warm-stack reload |
 | real matrix load/build/matvec | **passed** — 1 vector read vs 2048 scalar reads; exact deterministic output; 0.090525 s vs 1.393479 s median total |
 | complete routed expert | **passed** — CPU oracle 0 mismatches; exact deterministic MLX modes; 1.706290 s vs 4.365715 s median total |
 | layer-3 top-8 + shared MoE | **passed** — CPU oracle 0 mismatches; exact route/mode bits; 14.062472 s vs 36.309373 s warm median |
@@ -81,8 +83,13 @@ expert, layer, P1, or P2 speedup. The subsequent complete routed-expert rung
 does establish expert-boundary benefit with an independent CPU oracle. The
 subsequent top-8 plus shared MoE rung establishes its bounded warm-cache benefit,
 and the complete layer rung preserves the frozen midpoint and route while
-showing unchanged attention cost. Neither result establishes P1 or P2
-performance. The mixed-quant inventory is generated at
+showing unchanged attention cost. The subsequent P1 establishes the exact
+one-token golden prefix and a 1711.504-second (27.19%) cross-commit wall-time
+reduction from the prior P1 pilot; this is an observation across two single-run
+commits, not a controlled benchmark population or steady-state throughput. The
+revised mixed-quant inventory is generated at
+[`tables/f016-p1-iq3-quant-hotspots.md`](tables/f016-p1-iq3-quant-hotspots.md).
+The earlier inventory is retained at
 [`tables/f016-p1-quant-hotspots.md`](tables/f016-p1-quant-hotspots.md) from the
-committed P1 record. Figures and tables must be generated from `raw/` — never
-hand-hardcoded.
+prior committed P1 record. Figures and tables must be generated from `raw/` —
+never hand-hardcoded.

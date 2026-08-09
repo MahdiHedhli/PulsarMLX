@@ -39,3 +39,20 @@ Probe: layer 3, token 9703 (P-MIN).
 
 Raw: `docs/research/glm52/raw/f016-hotspot-profile-0001.json` and
 `docs/research/glm52/raw/f016-p1-quant-hotspot-ranking-0001.json`
+
+## Revised P1 profile after IQ3_XXS vectorization
+
+The clean P1 at source `99751b9` reproduced `[9703,21615]` in 4582.511032
+seconds. Its regenerated ranking contains the same nine exercised formats but
+reduces the quantified component sum from 2899.499809 to 1185.470056 seconds.
+IQ3_XXS moved from first at 1791.413883 seconds to fourth at 101.107184 seconds.
+
+Q6_K is now first at 468.856301 seconds (39.55%), followed by Q5_K at
+225.731846 seconds (19.04%). The warm stack reported all 228 decoded
+shared-cache hits and avoided 2,105,769,984 compressed bytes plus
+11,475,615,744 decoded bytes. The retained cache therefore has measured reuse
+value and remains enabled for P2. Q6_K is the next candidate for any later
+exact-bit decoder work, but it does not block the two-token correctness/reuse
+gate because the admitted warm shared matrices are already resident.
+
+Raw: `docs/research/glm52/raw/f016-p1-iq3-quant-hotspot-ranking-0001.json`
