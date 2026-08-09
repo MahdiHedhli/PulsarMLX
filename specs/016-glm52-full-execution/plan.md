@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active** at Phase 8 closeout (weekend inference optimization). Qwen remains frozen at
+**Closed** after Phase 8 validation. Qwen remains frozen at
 `v0.2.0-qwen30b-e2e-research`; the GLM research baseline is frozen at
 `v0.3.0-glm52-e2e-research`.
 
@@ -18,7 +18,7 @@
 | 5 | Correctness ladder C01–C11 | Done |
 | 6 | Full execution evidence | Done |
 | 7 | Research publication + `v0.3.0` tag | Done |
-| 8 | Inference optimization | Closeout validation; golden eight, derived profile, prefetch decision, and Rust design passed |
+| 8 | Inference optimization | Done; golden eight, derived profile, prefetch decision, Rust design, and CI passed |
 
 ## Technical approach
 

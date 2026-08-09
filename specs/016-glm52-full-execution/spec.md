@@ -2,7 +2,7 @@
 
 **Feature Branch**: `016-glm52-full-execution`
 **Created**: 2026-08-07
-**Status**: Active (weekend inference optimization; C01–C11 baseline complete)
+**Status**: Closed (golden-eight optimization, evidence, and design gates complete)
 **Input**: Complete transition from verified Qwen3-30B-A3B research runtime to verified full-model GLM-5.2 execution and performance on M1 Ultra internal SSD.
 
 ## Background and baseline

@@ -69,4 +69,4 @@
 - [x] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
 - [x] Run the frozen eight-token golden only after P2 passes
 - [x] Evaluate prefetch and storage from golden-eight evidence; defer implementation because warm storage is not material
-- [ ] Publish final optimization report, clean CI, and pushed repository state
+- [x] Publish final optimization report, clean CI, and pushed repository state

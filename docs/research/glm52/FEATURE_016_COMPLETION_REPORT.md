@@ -2,13 +2,13 @@
 
 ## Executive result
 
-Feature 016's implementation and evidence gates are complete. The deepest
+Feature 016 is complete. The deepest
 verified boundary is one clean M1 Ultra MLX GPU execution of the exact frozen
 eight-token continuation across nine complete 79-layer stacks. The run matched
 `[9703,21615,220,16,13,16,16,15,15]`, retained shared-expert reuse, and recorded
-zero CPU fallbacks, evictions, or admission rejections. Final repository
-closeout remains contingent only on the exact-head CI result recorded after
-this report is committed.
+zero CPU fallbacks, evictions, or admission rejections. The implementation and
+report commit passed both Apple Silicon CI jobs; the task-closing reconciliation
+is validated again before publication.
 
 This is a research correctness/reuse milestone. It is not production readiness,
 interactive performance, steady-state tokens per second, long-context support,
@@ -21,8 +21,9 @@ serving, a Rust-native runtime, or direct quantized Metal execution.
 - Raw evidence commit: `540f29c85324f79315bb859a3ad7608e55ddbda6`
 - Derived profile commit: `2167fc227ac4afc82a8d02883158d0c6c3a4b57d`
 - Branch: `main`
-- Final closeout SHA, remote parity, clean-worktree state, and CI run are added
-  only after the exact committed head passes the repository gates.
+- Validated implementation/report SHA: `c37807687191f2f69c2b9ad174c9fa763ce57479`
+- Reconciliation SHA: the commit containing the final 44/44 task-state change;
+  its exact identity and remote parity are reported in the session handoff.
 
 ## Golden-eight result
 
@@ -131,6 +132,20 @@ to Feature 017; no Rust runtime code was added by Feature 016.
 - The final stack is terminal state advance, not required to expose token eight.
 - No long-context, serving, cancellation-under-full-load, multi-machine,
   external RAID, Rust-native, or direct Metal claim is established.
+
+## CI
+
+GitHub Actions run
+[`31325691273`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31325691273)
+passed at `c37807687191f2f69c2b9ad174c9fa763ce57479`:
+
+- Apple Silicon workspace baseline: passed in 1m41s;
+- Apple MLX small-fixture validation: passed in 2m14s.
+
+The fixture job excludes external model access and covers the research suite,
+evidence package, worker protocol, generated router integration, native device
+smoke, tensor fixtures, and synthetic routed MoE. The exact reconciliation
+commit receives the same workflow before final handoff.
 
 ## Next feature
 

@@ -2,8 +2,8 @@
 
 **Started**: 2026-08-07  
 **Golden tag**: `v0.3.0-glm52-e2e-research` @ `07dc9fc` (tag object; tip may advance)
-**Current status**: frozen optimized golden-eight and derived hotspot profile
-passed; design and final validation closeout active
+**Current status**: Feature 016 closed; frozen optimized golden-eight, derived
+hotspot profile, Rust boundary design, and CI passed
 
 ## Completed
 
@@ -37,12 +37,13 @@ passed; design and final validation closeout active
   checkpoint set hash, or execution commit; it is a valid golden-prefix
   observation but not yet a self-contained publication record
 
-## Next (autonomous closeout)
+## Next feature
 
-1. Commit the Rust exact-decode boundary design without beginning Feature 017.
-2. Publish the final Feature 016 report and run the complete closeout gates.
-3. Keep Feature 018 profile-neutral until representative M2 Max trunk fixtures
-   close the 87% warm residual.
+1. Specify `017-rust-native-inference-runtime` from the committed exact-decode
+   boundary; Feature 016 did not begin that implementation.
+2. Use representative M2 Max trunk fixtures to close the 87% warm residual.
+3. Keep `018-direct-quantized-metal-runtime` profile-neutral until that evidence
+   can be combined with the expert-cache-only ranking.
 
 ## Cache diagnosis result
 

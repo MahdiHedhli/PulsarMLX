@@ -1,7 +1,7 @@
 # GLM-5.2 Results
 
-**Status**: golden-eight optimization gate and derived hotspot analysis passed;
-Feature 016 design closeout active
+**Status**: Feature 016 closed; golden-eight, derived hotspot, design, and CI
+gates passed
 **Protocol**: `EXPERIMENT_PROTOCOL.md` (frozen)
 
 ## Checkpoint
