@@ -11,7 +11,9 @@ pub mod cpu_dot;
 pub mod cpu_dot_tables;
 pub mod iq;
 mod q8_0_ref;
+mod q6_k_ref;
 
+pub use q6_k_ref::{decode_q6_k_matrix, Q6KError, Q6_K_BLOCK_BYTES};
 pub use q8_0_ref::{decode_q8_0_matrix, decode_q8_0_row, matvec_q8_0, Q8_0Error};
 
 pub const QK8_0: usize = 32;

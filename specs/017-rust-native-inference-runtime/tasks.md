@@ -29,10 +29,10 @@
 
 ## Phase 3 — Native slab allocator
 
-- [ ] T017-30 Implement page-aligned allocator contract with stable slot IDs and bounded max in-use limit.
-- [ ] T017-31 Add deterministic reuse policy and reuse counters.
-- [ ] T017-32 Add zeroing policy documentation + tests.
-- [ ] T017-33 Add telemetry for requested bytes, allocated bytes, alignment, slot-count, reuse-count, peak logical residency.
+- [x] T017-30 Implement page-aligned allocator contract with stable slot IDs and bounded max in-use limit.
+- [x] T017-31 Add deterministic reuse policy and reuse counters.
+- [x] T017-32 Add zeroing policy documentation + tests.
+- [x] T017-33 Add telemetry for requested bytes, allocated bytes, alignment, slot-count, reuse-count, peak logical residency.
 
 ## Phase 4 — Positional I/O and read-path contract
 
