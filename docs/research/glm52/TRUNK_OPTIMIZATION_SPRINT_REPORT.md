@@ -148,3 +148,21 @@ projections retained a 0.705703 s median total. The generated table is
 Q6_K remains justified because the Phase-A layer-8 attention-output matrix spent
 about 46.9 s in scalar decode and the inventory contains five exercised Q6_K
 trunk tensors. Q6_K qualification therefore precedes complete-layer and P1 gates.
+
+## Phase B6: Q6_K decoder qualification
+
+**Result: exact for every exercised Q6_K trunk tensor.**
+
+At clean source `06f0ff8ace8b3c38fbb2d344b76ba0d110f28fd9`, all five Q6_K
+trunk tensors across layers 0, 1, 2, and 8 matched scalar f32 bits,
+deterministic hashes, and signed-zero counts. The bounded layer-8 Q-A timing
+population measured a 6.181737 s scalar median and 0.143820 s NumPy median
+(42.98x). The layer-8 attention-output first comparison measured 49.118090 s
+scalar versus 1.351459 s vector.
+
+The record and table are
+[`raw/post-f016-q6-k-numpy-qualification-0001.json`](raw/post-f016-q6-k-numpy-qualification-0001.json)
+and
+[`tables/post-f016-q6-k-numpy-qualification-0001.md`](tables/post-f016-q6-k-numpy-qualification-0001.md).
+This qualifies Q6_K integration; it does not yet establish a layer-8 MLA or
+complete transformer-layer result.

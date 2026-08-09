@@ -118,6 +118,10 @@
   and [generated table](tables/post-f016-q8-head-numpy-integration-0001.md)
   — exact single-head and complete layer-3 MLA output with one read in both
   modes, split 128-head operation timing, and scalar-to-NumPy decoder isolation
+- [Post-Feature-016 NumPy Q6_K qualification](raw/post-f016-q6-k-numpy-qualification-0001.json)
+  and [generated table](tables/post-f016-q6-k-numpy-qualification-0001.md) — all
+  five exercised trunk tensors, complete real matrices, exact f32-bit oracle
+  comparisons, deterministic repeats, signed-zero checks, and raw timing samples
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
