@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark one real IQ2_XXS matrix through read, decode, MLX build, and matvec."""
+"""Benchmark one real expert matrix through read, decode, MLX build, and matvec."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from glm52_dense_primitives import embed_token, load_f32_vector, rms_norm  # noqa: E402
+from glm52_expert import _silu, expert_matvec  # noqa: E402
 from glm52_expert_cache_runtime import MlxMatrixBackend  # noqa: E402
 from glm52_inference import _checkpoint_identity, _source_identity  # noqa: E402
 from glm52_memory_pressure import sample_pressure  # noqa: E402
@@ -32,7 +33,10 @@ from qualify_iq2_xxs_numpy import _summary  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 LAYER = 3
 EXPERT = 15
-TENSOR = f"blk.{LAYER}.ffn_gate_exps.weight"
+PROJECTIONS = {
+    "gate": {"type_id": 16, "quantization": "IQ2_XXS"},
+    "down": {"type_id": 18, "quantization": "IQ3_XXS"},
+}
 
 
 def _sha256_f32(values: list[float]) -> str:
@@ -54,21 +58,37 @@ def _mlx_memory(backend: MlxMatrixBackend) -> dict[str, int | None]:
     return result
 
 
-def _activation(store: Glm52TensorStore) -> list[float]:
+def _activation(store: Glm52TensorStore, projection: str) -> tuple[list[float], str]:
     embedded = embed_token(store, 9703)
     norm = load_f32_vector(store, f"blk.{LAYER}.ffn_norm.weight")
-    return rms_norm(embedded, norm, RMS_EPS)
+    normalized = rms_norm(embedded, norm, RMS_EPS)
+    if projection == "gate":
+        return normalized, "rms_norm(token_embedding[9703], blk.3.ffn_norm.weight)"
+    if projection == "down":
+        gate = expert_matvec(
+            store, f"blk.{LAYER}.ffn_gate_exps.weight", EXPERT, normalized
+        )
+        up = expert_matvec(
+            store, f"blk.{LAYER}.ffn_up_exps.weight", EXPERT, normalized
+        )
+        swiglu = [_silu(left) * right for left, right in zip(gate, up, strict=True)]
+        return swiglu, (
+            "scalar_reference_swiglu(blk.3.ffn_gate_exps.weight, "
+            "blk.3.ffn_up_exps.weight, expert=15, token=9703)"
+        )
+    raise ValueError(f"unsupported matrix projection {projection}")
 
 
 def _run_once(
     backend: MlxMatrixBackend,
     store: Glm52TensorStore,
+    tensor: str,
     activation: list[float],
 ) -> tuple[dict[str, Any], list[float]]:
     resource_before = sample_pressure().to_public_dict()
     mlx_before = _mlx_memory(backend)
     total_start = time.perf_counter()
-    matrix, load = backend.load(store, TENSOR, EXPERT)
+    matrix, load = backend.load(store, tensor, EXPERT)
     result, matvec_seconds = backend.matvec(matrix, activation)
     total_seconds = time.perf_counter() - total_start
     cleanup_start = time.perf_counter()
@@ -129,7 +149,9 @@ def _compare(left: list[float], right: list[float]) -> dict[str, Any]:
     }
 
 
-def benchmark(model: Path) -> dict[str, Any]:
+def benchmark(model: Path, *, projection: str = "gate") -> dict[str, Any]:
+    if projection not in PROJECTIONS:
+        raise ValueError(f"unsupported matrix projection {projection}")
     source = _source_identity()
     if source["source_dirty"]:
         raise RuntimeError("worktree must be clean before the real matrix benchmark")
@@ -143,16 +165,20 @@ def benchmark(model: Path) -> dict[str, Any]:
         identities = {"scalar_reference": scalar.identity(), "numpy_vectorized": vector.identity()}
         if any("gpu" not in identity["device"].lower() for identity in identities.values()):
             raise RuntimeError("matrix benchmark requires the MLX GPU device")
-        activation = _activation(store)
-        location = store.tensors[TENSOR]
+        tensor = f"blk.{LAYER}.ffn_{projection}_exps.weight"
+        activation, activation_identity = _activation(store, projection)
+        location = store.tensors[tensor]
         cols, rows, experts = map(int, location.dims)
-        if location.type_id != 16 or not 0 <= EXPERT < experts:
-            raise RuntimeError("frozen matrix is not an admitted IQ2_XXS expert")
+        expected = PROJECTIONS[projection]
+        if location.type_id != expected["type_id"] or not 0 <= EXPERT < experts:
+            raise RuntimeError(
+                f"frozen matrix is not an admitted {expected['quantization']} expert"
+            )
 
-        first_vector, first_output = _run_once(vector, store, activation)
+        first_vector, first_output = _run_once(vector, store, tensor, activation)
         for _ in range(3):
-            _run_once(scalar, store, activation)
-            _run_once(vector, store, activation)
+            _run_once(scalar, store, tensor, activation)
+            _run_once(vector, store, tensor, activation)
 
         measured: dict[str, list[dict[str, Any]]] = {
             "scalar_reference": [],
@@ -168,7 +194,7 @@ def benchmark(model: Path) -> dict[str, Any]:
                 ("numpy_vectorized", vector),
             )
             for mode, backend in order:
-                sample, output = _run_once(backend, store, activation)
+                sample, output = _run_once(backend, store, tensor, activation)
                 sample["sample_index"] = index
                 measured[mode].append(sample)
                 last_outputs[mode] = output
@@ -222,7 +248,8 @@ def benchmark(model: Path) -> dict[str, Any]:
             "matrix": {
                 "layer": LAYER,
                 "expert": EXPERT,
-                "tensor": TENSOR,
+                "projection": projection,
+                "tensor": tensor,
                 "shard": location.file.name,
                 "quantization": location.type_name,
                 "shape": [rows, cols],
@@ -230,7 +257,7 @@ def benchmark(model: Path) -> dict[str, Any]:
                 "decoded_bytes": rows * cols * 4,
             },
             "activation": {
-                "identity": "rms_norm(token_embedding[9703], blk.3.ffn_norm.weight)",
+                "identity": activation_identity,
                 "length": len(activation),
                 "f32_sha256": _sha256_f32(activation),
             },
@@ -268,11 +295,12 @@ def benchmark(model: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--projection", choices=tuple(PROJECTIONS), default="gate")
     args = parser.parse_args()
     model = os.environ.get("PULSARMLX_GLM_GGUF")
     if not model:
         raise SystemExit("PULSARMLX_GLM_GGUF is required; no checkpoint was searched")
-    result = benchmark(Path(model))
+    result = benchmark(Path(model), projection=args.projection)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_name(f".{args.output.name}.tmp")
     temporary.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
