@@ -41,6 +41,8 @@
   load, synchronized MLX GPU build/matvec, scalar comparison, and raw samples
 - [Complete routed expert](raw/f016-routed-expert-0001.json) — gate/up/down,
   independent CPU oracle, mixed-quant timing, and deterministic MLX comparison
+- [Layer-3 top-8 plus shared MoE](raw/f016-moe-layer3-0001.json) — exact route,
+  independent CPU oracle, shared-cache cold/warm observations, and raw samples
 
 ### Results (populated after runs)
 

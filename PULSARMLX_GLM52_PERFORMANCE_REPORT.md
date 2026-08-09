@@ -237,6 +237,38 @@ inventory motivates later mixed-quant ranking but does not authorize changing
 the ladder order or claiming top-8 MoE/token performance. Raw evidence:
 `docs/research/glm52/raw/f016-routed-expert-0001.json`.
 
+### Layer-3 top-8 plus shared MoE
+
+At source `c2337db`, the complete layer-3 MoE boundary passed with the exact
+golden top-8 IDs and architecture-normalized weights, eight routed experts,
+shared expert 0, aggregation, and residual addition. Two 49-second independent
+CPU-oracle passes had identical output hashes. The vector MLX result had zero
+tolerance mismatches, 3.73e-9 maximum absolute error, cosine similarity above
+0.999999999999999, and exact deterministic bits against scalar-reference MLX.
+
+After three warmups populated the three protected shared matrices, ten measured
+samples per mode each recorded three shared-cache hits, 24 routed misses, and
+27 synchronized MLX matvecs:
+
+| Component (warm median) | scalar reference | NumPy vectorized |
+| --- | ---: | ---: |
+| storage read | 0.065709 s | 0.041934 s |
+| dequantization | 29.580994 s | 11.561970 s |
+| contiguous buffer | 6.126871 s | 2.040321 s |
+| MLX matrix build/eval | 0.163397 s | 0.135225 s |
+| MLX matvec | 0.222778 s | 0.133762 s |
+| router/aggregation/cleanup remainder | 0.158726 s | 0.150191 s |
+| total | 36.309373 s | 14.062472 s |
+
+Median warm-MoE improvement was **2.58×**. The separately retained
+process-first vector sample was 23.172902 seconds with zero cache hits and all
+three shared matrices loaded; the 9.11-second difference from the warm median
+is an observed same-process shared-residency effect, not controlled cold-file
+latency. Raw evidence: `docs/research/glm52/raw/f016-moe-layer3-0001.json`.
+
+This boundary excludes attention and therefore is not a complete transformer
+layer or token-generation result.
+
 ## Limitations
 
 - Python research runtime, not a production server

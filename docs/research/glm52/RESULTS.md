@@ -62,6 +62,7 @@
 | matrix decode median | 0.050588 s vector vs 1.424142 s scalar; 28.15× at this boundary |
 | real matrix load/build/matvec | **passed** — 1 vector read vs 2048 scalar reads; exact deterministic output; 0.090525 s vs 1.393479 s median total |
 | complete routed expert | **passed** — CPU oracle 0 mismatches; exact deterministic MLX modes; 1.706290 s vs 4.365715 s median total |
-| top-8 MoE / layer / TTFT / tok/s | pending; not inferred from one expert |
+| layer-3 top-8 + shared MoE | **passed** — CPU oracle 0 mismatches; exact route/mode bits; 14.062472 s vs 36.309373 s warm median |
+| complete layer / TTFT / tok/s | pending; not inferred from MoE-only timing |
 
 Figures and tables must be generated from `raw/` — never hand-hardcoded.

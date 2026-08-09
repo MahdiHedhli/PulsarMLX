@@ -4222,3 +4222,11 @@ path had zero tolerance mismatches and the two MLX decoder modes were exactly
 bit-identical. Median total fell from 4.365715 seconds to 1.706290 seconds
 (2.56×). Split timing identified the still-scalar IQ3_XXS down projection as
 the remaining expert hotspot. Top-8/shared MoE performance remains unmeasured.
+
+The complete layer-3 top-8 plus shared MoE rung passed at source `c2337db`.
+The dedicated CPU oracle repeated exactly; MLX matched within the frozen gate,
+with exact top-8 routes and bit-identical decoder-mode outputs. Under warm
+shared residency, median total fell from 36.309373 seconds to 14.062472 seconds
+(2.58×). The retained process-first vector sample was 23.172902 seconds with
+no cache hits; measured samples each reused all three shared matrices. Attention
+and complete-layer performance remain the next boundary.
