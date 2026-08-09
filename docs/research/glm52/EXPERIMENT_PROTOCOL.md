@@ -286,6 +286,23 @@ MLX build/evaluation, matvec, remaining activation/scale/cleanup time, RSS,
 and peak RSS. This rung MUST NOT be promoted to top-8 MoE, transformer-layer,
 stack, or token performance.
 
+The MoE rung freezes the complete layer-3 boundary on residual
+`token_embedding[9703]`: the exact golden top-8 IDs and normalized weights,
+eight routed experts, shared expert 0 at weight 1.0, aggregation, and residual
+addition. A dedicated CPU oracle forces the router projection to the CPU and
+uses only scalar expert operations; it runs twice with identical route and
+output hashes. MLX scalar-reference and NumPy-vectorized modes use protected
+decoded shared-expert residency. One process-first vector sample retains the
+cold-in-process shared loads; three warmups populate both caches; ten measured
+samples per mode are counterbalanced with exactly three shared-cache hits per
+sample. Pass requires the frozen residual tolerance/geometry gate, exact
+cross-mode f32 bits, deterministic outputs, and stable top-8 routes.
+
+Every sample retains read/decode/build/matvec/aggregation totals, per-quant
+timing, shared-cache reuse, RSS, and peak RSS. OS page cache remains uncontrolled.
+The MoE rung MUST NOT be promoted to a complete transformer layer, stack, or
+token performance result.
+
 ## 14. Change control
 
 Any protocol change after first real-weight measurement requires:
