@@ -303,6 +303,25 @@ timing, shared-cache reuse, RSS, and peak RSS. OS page cache remains uncontrolle
 The MoE rung MUST NOT be promoted to a complete transformer layer, stack, or
 token performance result.
 
+The complete-layer rung freezes layer 3 at position 0 with residual
+`token_embedding[9703]`, the attention midpoint f32 hash
+`7a19b425…7832aa`, and post-attention top-8 IDs
+`[15,177,233,41,166,26,10,152]`. Each execution creates a fresh compact KV
+cache, synchronously executes MLA/DSA attention, then the complete optimized
+MoE and both residual updates. Two architecture-reference executions use
+`glm52_layer.layer_forward_token`; they must repeat exactly, but are explicitly
+not called an independent CPU oracle because dense attention helpers may use
+the shared MLX reference path. Correctness is additionally anchored by the
+independent MoE oracle from the prior rung.
+
+The scalar-reference and NumPy-vectorized expert modes each use three warmups
+and ten counterbalanced measured samples with protected shared residency. Pass
+requires the frozen midpoint and routes, complete-layer tolerance/geometry,
+exact cross-mode f32 bits, deterministic outputs, and three shared-cache hits
+per measured sample. Attention, MoE, component timings, per-quant totals, RSS,
+and peak RSS are retained separately. The layer rung MUST NOT be promoted to a
+full-stack or token-generation result.
+
 ## 14. Change control
 
 Any protocol change after first real-weight measurement requires:
