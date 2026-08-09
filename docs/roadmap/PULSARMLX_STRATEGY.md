@@ -21,17 +21,17 @@ The C01–C11 research ladder is complete and frozen at
 [`v0.3.0-glm52-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.3.0-glm52-e2e-research), including the golden generated sequence
 `[21615, 220, 16, 13, 16, 16, 15, 15]`.
 
-Feature 016's committed vectorized reference path has additionally reproduced
-the exact P1 prefix `[9703, 21615]` on MLX GPU with zero CPU fallbacks. The
-deepest committed optimization rung is P2 with vector IQ2_XXS and IQ3_XXS,
-recorded in
-[`f016-inference-p2-iq3-0001.json`](../research/glm52/raw/f016-inference-p2-iq3-0001.json)
-at source commit `d5e1cf3cc092c7629d5905fd9da1a85afd1fd363`: exact prefix
-`[9703,21615,220]`, 456 decoded shared-cache hits, and zero CPU fallbacks. This
-is one bounded research run, not a tokens-per-second or production-runtime
-claim. The revised ranking names Q6_K next, but its protected shared matrices
-are already resident in warm stacks; the full golden-eight run is the next
-correctness gate.
+Feature 016's vectorized reference path reproduced the complete frozen
+sequence `[9703,21615,220,16,13,16,16,15,15]` on the MLX GPU. The deepest
+committed optimization rung is the golden-eight record
+[`f016-inference-golden8-iq3-0001.json`](../research/glm52/raw/f016-inference-golden8-iq3-0001.json)
+at source commit `1a2ca76ee2df0f518bfc9ddbaafd31500a5e6a26`: nine complete
+79-layer stacks, 1,824 decoded shared-cache hits, zero fallbacks or evictions,
+and normal retained resource states. This is one bounded research correctness
+and reuse run, not a tokens-per-second or production-runtime claim. Its
+expert-cache quant metrics leave a material uninstrumented trunk residual, so
+the first direct-quantized Metal target remains undecided pending trunk-side
+fixture evidence.
 
 ## Architectural principles
 
@@ -247,8 +247,8 @@ license review, independently written tests, attribution, and measured benefit.
 
 ## Proposed next feature
 
-`017-rust-native-inference-runtime` is proposed after Feature 016 establishes
-its final P1/P2 optimization baseline. Likely scope: a Rust checkpoint/catalog
+`017-rust-native-inference-runtime` is proposed after Feature 016 closes its
+golden-eight optimization baseline. Likely scope: a Rust checkpoint/catalog
 and whole-slab read boundary; exact f32 decode interface; low-copy MLX bridge;
 model lifecycle, routing, MLA/DSA state, layer loop, logits, tokenizer,
 generation, telemetry, cancellation, and recovery. No Spec Kit artifacts or

@@ -1,4 +1,4 @@
-# PulsarMLX GLM-5.2 performance report (in progress)
+# PulsarMLX GLM-5.2 performance report (closeout in progress)
 
 **Status**: living document for the weekend optimization sprint  
 **Golden tag**: `v0.3.0-glm52-e2e-research`  
@@ -35,9 +35,10 @@ Narrative: `docs/research/glm52/HOTSPOT_REPORT.md`
 | --- | --- |
 | P1 first new token + expert cache | **golden prefix matched** — token `21615`; 15146.448 s |
 | vectorized P1 rerun | **golden prefix matched** — token `21615`; 6294.015 s; 228 decoded hits |
-| P2 two-token golden + useful reuse | paused in stack 1; decoder ladder now precedes retry |
-| Full 8-token golden match | blocked on P2 correctness + reuse |
-| Expert prefetch | not started |
+| vectorized P1 after IQ3_XXS | **golden prefix matched** — 4582.511 s; 228 decoded hits |
+| P2 two-token golden + useful reuse | **passed** — exact prefix; 6552.475 s; 456 decoded hits |
+| Full 8-token golden match | **passed** — exact sequence; 18522.659 s; 1824 decoded hits |
+| Expert prefetch | pending evidence-backed decision; storage is not assumed dominant |
 | Published tok/s | **not claimed** |
 
 ### Recovered P1 result
@@ -111,9 +112,10 @@ decodes into compact f32 storage, builds and synchronizes an MLX matrix, retains
 only shared matrices, and releases each non-resident routed matrix after
 synchronized use. It fails closed on MLX errors and records current/peak RSS
 plus separate storage, decode, matrix-build, matvec, reuse, and transient-release
-counters. These are model-free implementation facts; useful real-checkpoint
-reuse remains unverified until P2. A compressed tier remains a later measured
-storage experiment because its hits do not avoid dequantization.
+counters. P2 and golden-eight subsequently verified 228 shared hits in every
+warm stack, with zero eviction or CPU fallback. A compressed tier remains a
+later measured storage experiment because its hits do not avoid
+dequantization.
 
 ## Configuration (defaults)
 
@@ -139,7 +141,8 @@ loading a routed up-projection. Source review shows nested Python scalar loops,
 row-by-row reads, and Python-float materialization before MLX construction. A
 whole-matrix vectorized decoder correctness/performance ladder therefore runs
 before another P2 attempt. The cache implementation and diagnosis remain
-preserved; their real two-token benefit is still unverified.
+preserved; the later P2 and golden-eight records verify their real-checkpoint
+reuse separately.
 
 ### Revised experiment order
 
@@ -152,9 +155,10 @@ preserved; their real two-token benefit is still unverified.
 5. dedicated bit-exact Rust f32 boundary design;
 6. cache re-evaluation, then P2 retry.
 
-The bounded ladder has now passed through the complete layer rung. P1 remains
-the next required boundary; no new P2 is eligible until that clean full-stack
-result and its revised mixed-quant hotspot inventory are committed.
+The bounded ladder passed through P1, P2, and the frozen golden-eight gate.
+Closeout analysis now separates expert-cache per-quant timing from the
+uninstrumented trunk before any new decoder, prefetch, or Metal target is
+selected.
 
 ### Qualified IQ2_XXS decode boundary
 
@@ -322,8 +326,9 @@ decoded shared-cache hits, zero evictions, 2,105,769,984 storage bytes avoided,
 and 11,475,615,744 decoded bytes avoided. Peak RSS was 82,768,297,984 bytes;
 every resource sample remained normal.
 
-This is one P1 pilot, not P2 correctness, golden-8 generation, steady-state
-throughput, or a controlled cold/warm population. Raw evidence:
+This is one P1 pilot and does not itself establish P2 correctness,
+golden-eight generation, steady-state throughput, or a controlled cold/warm
+population. Later records establish the first two gates separately. Raw evidence:
 `docs/research/glm52/raw/f016-inference-p1-vectorized-0001.json`.
 
 ## Limitations
@@ -331,9 +336,11 @@ throughput, or a controlled cold/warm population. Raw evidence:
 - Python research runtime, not a production server
 - Residual scale on long research ladders is large; quality not claimed
 - ssd-llm used for design only (no runtime dependency)
-- P1 did not retain routing IDs, storage/dequant timing, bytes read, RSS, or a
-  source/checkpoint identity inside the result; P2 uses a new self-contained
-  evidence schema and is not merged with the legacy P1 record
+- Legacy P1 did not retain routing IDs, storage/dequant timing, bytes read,
+  RSS, or source/checkpoint identity. P2 and golden-eight use self-contained
+  records and are not merged with that legacy observation.
+- Nested per-quant metrics cover only the expert-cache path. Dense trunk and
+  logits work require separate attribution before selecting a Metal target.
 
 ## Commands
 
@@ -341,8 +348,12 @@ throughput, or a controlled cold/warm population. Raw evidence:
 export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS
 uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py \
   --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json
-# P2 remains blocked until the intervening benchmark ladder through P1 passes.
 uv run --frozen python scripts/research/glm52_inference.py --mode inference \
   --n-new 2 --cache-gib 16 --cache-policy decoded_shared_only \
-  --out docs/research/glm52/raw/f016-inference-p2-token2.json
+  --decoder-mode numpy_vectorized \
+  --out docs/research/glm52/raw/f016-inference-p2-iq3-0001.json
+uv run --frozen python scripts/research/glm52_inference.py --mode inference \
+  --n-new 8 --cache-gib 16 --cache-policy decoded_shared_only \
+  --decoder-mode numpy_vectorized \
+  --out docs/research/glm52/raw/f016-inference-golden8-iq3-0001.json
 ```

@@ -2,6 +2,7 @@
 
 **Started**: 2026-08-07  
 **Golden tag**: `v0.3.0-glm52-e2e-research` @ `07dc9fc` (tag object; tip may advance)
+**Current status**: frozen optimized golden-eight gate passed; closeout active
 
 ## Completed
 
@@ -16,8 +17,11 @@
 | 4 design | MLA compact-KV incremental design doc | `a23b4d0` |
 | 5 | P1 inference golden first-token match recovered after reboot | this focused recovery commit |
 | 6 | Exact cache working-set diagnosis + deterministic simulator | this focused simulator commit |
-| 7 | Compact fail-closed shared-expert MLX residency + split evidence fields | pending focused runtime commit |
-| 8 | First P2 attempt stopped in stack 1 and retained as superseded | pending decoder-priority commit |
+| 7 | Compact fail-closed shared-expert MLX residency + split evidence fields | `2a00512` |
+| 8 | First P2 attempt stopped in stack 1 and retained as superseded | `35e342b` |
+| 9 | Exact-bit IQ2_XXS and IQ3_XXS vectorization through matrix, expert, MoE, layer, and P1 | `968cfac`…`d5e1cf3` |
+| 10 | P2 exact two-token correctness and useful shared reuse | `5bc6fe6` |
+| 11 | Frozen golden-eight exact sequence, nine complete stacks, and 1,824 shared hits | source `1a2ca76` |
 
 ## Recovered P1 evidence
 
@@ -31,12 +35,14 @@
   checkpoint set hash, or execution commit; it is a valid golden-prefix
   observation but not yet a self-contained publication record
 
-## Next (autonomous continuation)
+## Next (autonomous closeout)
 
-1. Rerun the affected bounded ladder with qualified IQ2_XXS and IQ3_XXS
-2. Run a faster P1 full stack and regenerate the measured hotspot ranking
-3. Re-evaluate shared-cache value, then retry P2
-4. Run the full eight-token golden only after P2 passes correctness and reuse
+1. Derive cold/warm timing, expert-cache quant deltas, and trunk residuals from
+   the committed golden-eight record and passively retained snapshots.
+2. Regenerate the hotspot ranking without treating expert-only metrics as the
+   complete token path.
+3. Resolve prefetch/storage by measured benefit or evidence-backed deferral.
+4. Commit the Rust exact-decode boundary design and complete Feature 016 gates.
 
 ## Cache diagnosis result
 
@@ -52,7 +58,8 @@
   policy-mechanics proxy rather than a P1-to-P2 overlap measurement.
 - Implemented next step: compact evaluated MLX/f32 shared-expert residency with
   fail-closed MLX, transient routed-matrix release, and current/peak
-  RSS/storage/dequant/MLX counters. Real-checkpoint reuse remains pending P2.
+  RSS/storage/dequant/MLX counters. P2 and golden-eight subsequently verified
+  exactly 228 shared hits per warm stack with zero eviction or CPU fallback.
 
 ## Non-goals this weekend (unless free)
 

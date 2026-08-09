@@ -2,7 +2,7 @@
 
 ## Status
 
-**Active** at Phase 8 (weekend inference optimization). Qwen remains frozen at
+**Active** at Phase 8 closeout (weekend inference optimization). Qwen remains frozen at
 `v0.2.0-qwen30b-e2e-research`; the GLM research baseline is frozen at
 `v0.3.0-glm52-e2e-research`.
 
@@ -18,7 +18,7 @@
 | 5 | Correctness ladder C01–C11 | Done |
 | 6 | Full execution evidence | Done |
 | 7 | Research publication + `v0.3.0` tag | Done |
-| 8 | Inference optimization | Active; exact-bit decoder qualification precedes the bounded performance ladder and P2 |
+| 8 | Inference optimization | Active closeout; frozen golden eight passed, derived analysis and design remain |
 
 ## Technical approach
 
@@ -56,12 +56,17 @@
    avoided 11.476 GB of decoded materialization. The cache remains enabled.
 8. Retry P2. **Passed** at source `d5e1cf3`: exact `[9703,21615,220]`,
    228 shared hits per warm stack, and zero CPU fallbacks.
-9. Run the full golden eight, then publish the final optimization report.
+9. Run the full golden eight. **Passed** at source `1a2ca76`: exact full
+   sequence, nine complete 79-layer stacks, 1,824 shared hits, zero CPU
+   fallbacks, and normal retained resource states.
+10. Derive cold/warm observations and expert-cache-only quant deltas, quantify
+    the uninstrumented trunk residual, resolve prefetch by evidence, then
+    publish the final optimization report and Rust boundary design.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).
-They remain deferred from Feature 016: this feature first finishes the
-vectorized Python/MLX reference ladder and P2 correctness/reuse gate.
+They remain deferred from Feature 016: this feature closes the vectorized
+Python/MLX golden-eight reference evidence and its measured follow-up.
 
 ## Retained P2 streaming profile (experimental)
 

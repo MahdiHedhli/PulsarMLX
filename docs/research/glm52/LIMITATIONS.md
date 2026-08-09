@@ -1,16 +1,23 @@
 # GLM-5.2 Limitations
 
-## Active (methodology phase)
+## Active
 
-1. Full multi-shard checkpoint may still be downloading; **no full-model claim**.
-2. Architecture residual op order partially confirmed from upstream source + KV; tensor-name walk pending complete catalog.
-3. Mixed quant inventory incomplete until C01 full catalog.
-4. Research streaming path is not an optimized production server.
-5. OS page cache not controlled unless a run explicitly documents scrubbing.
+1. The frozen golden-eight result is one bounded M1 Ultra correctness/reuse run,
+   not a steady-state throughput population or production-readiness claim.
+2. Expert-cache nested quantization metrics do not instrument the dense trunk,
+   including MLA/attention projections, embeddings, and the output projection.
+3. The passively retained warm intervals leave roughly 87% of stack wall in an
+   uninstrumented residual; expert-only quant rankings cannot select a first
+   direct-Metal kernel without trunk-side fixture measurements.
+4. The final recorded stack advances terminal model state after the eighth
+   generated token was selected; it is not user-visible eighth-token latency.
+5. The Python/MLX research streaming path is not an optimized production server.
+6. OS page cache was not controlled, so storage observations are not controlled
+   process-cold storage measurements.
 
 ## Policy
 
-- No M2 Max / external RAID in this feature.
+- No M2 Max full-checkpoint or external RAID run in this feature.
 - No llama/CUDA bit-parity requirement.
 - No silent CPU fallback in performance mode.
 - No tolerance loosening after first real-weight measurement without versioned protocol change.
