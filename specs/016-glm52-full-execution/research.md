@@ -18,7 +18,11 @@
 
 Architecture metadata (HF card): `glm-dsa`, ~754B params.
 
-**Local**: not present under models root or HF hub cache.
+**Local**: the six admitted shards are present on the internal SSD. Their exact
+sizes, per-file SHA-256 values, and checkpoint-set hash are frozen in
+`docs/validation/glm52-checkpoint.json`. The remote revision was not recorded
+at acquisition; the content hashes, not an inferred branch head, are the
+immutable identity used by this feature.
 
 ### Single-file note (upstream README)
 
@@ -27,7 +31,7 @@ Upstream Pulsar README also references a single-file antirez build
 if disk gate passes and identity/hash can be pinned. Do not switch to Unsloth
 11-shard Q4.
 
-## Disk admission (internal APFS)
+## Original disk admission (internal APFS; superseded)
 
 | Metric | Value |
 | --- | --- |
@@ -37,10 +41,10 @@ if disk gate passes and identity/hash can be pinned. Do not switch to Unsloth
 | Required before download | **500 GiB** |
 | Required after checkpoint | **250 GiB** |
 | Projected free after 222 GiB download | ~124 GiB |
-| **Result** | **failed** |
+| **Initial result** | **failed; later resolved and passed** |
 
-Safe cleanup policy exhausted without touching user media, Documents (233 GiB),
-Music (129 GiB), or the canonical Qwen 30 GiB checkpoint.
+The initial stop was preserved as evidence. A later safe space-clearance pass
+met the gate without weakening it; acquisition then completed.
 
 ## Architecture (from public upstream notes; freeze after GGUF open)
 
@@ -59,8 +63,8 @@ Music (129 GiB), or the canonical Qwen 30 GiB checkpoint.
   never define reference as copy of MLX output.
 - Implementation-specific fused differences → root-cause + document (F008 style).
 
-## Open questions (non-blocking for disk)
+## Resolved architecture questions
 
-1. Exact shared-expert layout and routing norm for this quant.
-2. DSA indexer tensor names and prefill vs decode state.
-3. Whether single-file antirez build is DS4-compatible and hash-pinned.
+The shared-expert layout, routing normalization, and DSA tensor/state contract
+were resolved by C01–C11 and are frozen in `docs/architecture/GLM52_CONTRACT.md`.
+The alternate single-file build was not downloaded and remains out of scope.

@@ -1,24 +1,34 @@
 # Quickstart: 016-glm52-full-execution
 
-## When disk-blocked (current)
+## Current optimization gate
 
 ```sh
-# Inspect formal admission result
-python3 -c "import json;print(json.load(open('docs/validation/glm52-disk-admission.json'))['admission_result'])"
-
-# Free space (internal only)
-python3 -c "import shutil;u=shutil.disk_usage('/');print(f'free_GiB={u.free/1024**3:.2f}')"
+.venv/bin/python -m pytest -q \
+  scripts/research/tests/test_glm52_checkpoint_free.py \
+  scripts/research/tests/test_glm52_cache_simulator.py \
+  scripts/research/tests/test_glm52_expert_cache_runtime.py
+.venv/bin/python scripts/research/glm52_cache_simulator.py --check
 ```
 
-Do **not** start download until admission is `passed`.
+P2 is permitted only from a clean committed worktree after notifying
+`Mahdi-Dev` and passing live disk, memory-pressure, and competing-load checks.
 
-## When unblocked
+## Tier-3 P2 command
 
 ```sh
 export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS  # file or shard dir
-# atomic download → validate size/hash → set env → run correctness ladder
-# (commands will be filled as implementation lands)
+.venv/bin/python scripts/research/glm52_inference.py \
+  --mode inference \
+  --n-new 2 \
+  --cache-gib 16 \
+  --cache-policy decoded_shared_only \
+  --out docs/research/glm52/raw/f016-inference-p2-token2.json
 ```
+
+Pass requires exact IDs `[9703, 21615, 220]`, zero CPU fallbacks, MLX GPU
+identity, a non-critical resource record at every completed stack, and at least
+228 decoded shared-cache hits in the first generated-token stack. Do not run
+the eight-token gate unless P2 passes.
 
 ## Qwen baseline (must remain green)
 

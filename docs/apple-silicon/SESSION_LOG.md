@@ -4137,3 +4137,30 @@ llama bit-parity not claimed. F006-C02 recorded.
   `GLM-5.2-UD-IQ2_XXS` (~222 GiB / 6 shards). No download attempted.
 - Evidence: `docs/validation/glm52-disk-admission.json`.
 - Deferred: M2 Max, external RAID (policy).
+
+## 2026-08-08 — GLM research baseline and P1 recovery
+
+The original disk stop was later resolved without weakening its thresholds.
+The six `UD-IQ2_XXS` shards were admitted by exact sizes and SHA-256 values,
+and the architecture research path completed C01–C11. The eight-new-token
+golden sequence is frozen at `v0.3.0-glm52-e2e-research`.
+
+After a reboot, the unchanged legacy P1 result was recovered and published. It
+matched the first generated token (`[9703, 21615]`) in 15146.448 seconds but
+recorded 0 cache hits, 4104 misses, and 3934 evictions. Its legacy JSON does not
+self-bind source commit or checkpoint identity, so it is retained as a bounded
+golden-prefix observation rather than a throughput claim.
+
+## 2026-08-08 — Cache diagnosis and P2 runtime gate
+
+Exact catalog accounting and deterministic trace simulation established that
+the global decoded LRU cycles through a 96.1875-GiB stack while P1 admitted only
+8 GiB. The selected bounded policy protects the 10.6875-GiB decoded
+shared-expert set under a 16-GiB logical cap; routed matrices remain transient.
+
+The P2 runtime now retains compact evaluated MLX/f32 shared matrices, releases
+non-resident matrices after synchronized evaluation, forbids inference-mode CPU
+fallbacks, records routes and split storage/dequant/MLX/cache metrics, samples
+current and peak RSS, and atomically checkpoints completed stacks. Model-free
+tests and a tiny native MLX GPU matvec pass. These facts do not establish
+real-checkpoint cache reuse; exactly two new tokens are the next Tier-3 gate.

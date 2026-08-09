@@ -2,40 +2,42 @@
 
 ## Status
 
-**Blocked** at Phase 1 (disk admission). Qwen baseline frozen at tag
-`v0.2.0-qwen30b-e2e-research` (commit `493234a`).
+**Active** at Phase 8 (weekend inference optimization). Qwen remains frozen at
+`v0.2.0-qwen30b-e2e-research`; the GLM research baseline is frozen at
+`v0.3.0-glm52-e2e-research`.
 
 ## Phases
 
 | Phase | Name | Gate |
 | --- | --- | --- |
 | 0 | Preserve Qwen baseline + tag | Done |
-| 1 | Internal SSD disk admission | **Failed** — stop download |
-| 2 | Immutable checkpoint acquisition | Blocked on Phase 1 |
-| 3 | M1 Ultra streaming runtime | Spec/design may proceed offline |
-| 4 | Architecture contract freeze | Offline from upstream + GGUF once present |
-| 5 | Correctness ladder C01–C11 | Requires checkpoint |
-| 6 | Full execution evidence | Requires C09–C11 |
-| 7 | Performance + publication + `v0.3.0` tag | Requires Phase 6 |
+| 1 | Internal SSD disk admission | Done; original stop resolved |
+| 2 | Immutable checkpoint acquisition | Done; six shards and hashes frozen |
+| 3 | M1 Ultra streaming runtime | Research path done; inference optimization active |
+| 4 | Architecture contract freeze | Done |
+| 5 | Correctness ladder C01–C11 | Done |
+| 6 | Full execution evidence | Done |
+| 7 | Research publication + `v0.3.0` tag | Done |
+| 8 | Inference optimization | Active; P2 is next real-checkpoint gate |
 
-## Technical approach (when unblocked)
+## Technical approach
 
 1. **Acquire** `UD-IQ2_XXS` shards (or single-file DS4 equivalent) to internal
    SSD via atomic `.partial` → validate → rename; set `PULSARMLX_GLM_GGUF`.
-2. **Runtime**: positional GGUF reads, expert-level residency, compressed expert
-   cache (~48 GB start profile), stream remaining layers, MLX-only performance
-   path, CPU oracle for bounded parity only.
+2. **Runtime**: positional GGUF reads, compact evaluated MLX matrices, protected
+   shared-expert residency under a 16-GiB logical cap, transient routed experts,
+   and no CPU fallback in inference mode.
 3. **Contract**: derive `docs/architecture/GLM52_CONTRACT.md` from GGUF KV +
    upstream Pulsar `glm-dsa` (MLA, DSA indexer, routing, shared experts).
 4. **Validate** C01→C11 with per-layer drift metrics; stop on material divergence.
 5. **Benchmark** cold/warm TTFT, prefill, decode; publish under `docs/research/glm52/`.
 
-## Initial streaming profile (experimental)
+## Active P2 streaming profile (experimental)
 
-- 48 GB compressed expert cache
-- 16 fully streamed layers (tune from evidence)
+- 16 GiB logical decoded shared-expert cache
+- routed experts streamed one matrix at a time and released after evaluation
 - ≥24 GB OS/runtime headroom
-- Configurable: total UM budget, prefetch depth, max in-flight expert reads
+- no prefetch until the two-token reuse gate passes
 
 ## Risk register
 

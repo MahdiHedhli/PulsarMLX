@@ -1,19 +1,151 @@
 #!/usr/bin/env python3
-"""Bounded expert dequant cache for GLM inference path.
+"""Compact, bounded decoded expert residency for GLM inference mode.
 
-Caches full expert slabs (gate/up/down rows as f32) under a byte budget.
-Deterministic LRU by expert key. Used by inference mode; research path
-may remain uncached.
+The policy protects only shared-expert matrices because their cross-token reuse
+is architecture-guaranteed. Routed experts bypass this tier until measured
+routing history justifies another policy. The production backend is MLX-only
+and propagates every backend failure; no CPU fallback exists here.
 """
 
 from __future__ import annotations
 
+import gc
+import time
+from array import array
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
-from glm52_expert import expert_matvec
-from glm52_tensor_store import Glm52TensorStore
+from glm52_tensor_store import Glm52TensorStore, nbytes_for_tensor
+
+
+@dataclass(frozen=True)
+class LoadMetrics:
+    storage_bytes_read: int
+    storage_read_seconds: float
+    dequant_seconds: float
+    matrix_build_seconds: float
+
+
+@dataclass(frozen=True)
+class DecodedMatrix:
+    value: Any
+    rows: int
+    cols: int
+    decoded_bytes: int
+    compressed_bytes: int
+    quantization: str
+
+
+class MatrixBackend(Protocol):
+    def load(
+        self, store: Glm52TensorStore, name: str, expert: int
+    ) -> tuple[DecodedMatrix, LoadMetrics]: ...
+
+    def matvec(
+        self, matrix: DecodedMatrix, x: list[float]
+    ) -> tuple[list[float], float]: ...
+
+    def identity(self) -> dict[str, str]: ...
+
+    def release_transient(self) -> None: ...
+
+
+class MlxMatrixBackend:
+    """Decode into compact f32 storage and retain an evaluated MLX matrix."""
+
+    def __init__(self) -> None:
+        import mlx.core as mx
+
+        self.mx = mx
+
+    def identity(self) -> dict[str, str]:
+        try:
+            from importlib.metadata import version
+
+            mlx_version = version("mlx")
+        except Exception:
+            mlx_version = "unknown"
+        return {
+            "backend": "mlx",
+            "device": str(self.mx.default_device()),
+            "mlx_version": mlx_version,
+        }
+
+    def load(
+        self, store: Glm52TensorStore, name: str, expert: int
+    ) -> tuple[DecodedMatrix, LoadMetrics]:
+        from glm52_expert import _dequant_row_bytes
+
+        loc = store.tensors[name]
+        if len(loc.dims) not in (2, 3):
+            raise ValueError(f"{name}: expected 2D or 3D expert tensor")
+        cols, rows = int(loc.dims[0]), int(loc.dims[1])
+        if len(loc.dims) == 3:
+            n_expert = int(loc.dims[2])
+            if not 0 <= expert < n_expert:
+                raise IndexError(expert)
+        elif expert != 0:
+            raise IndexError(f"{name}: shared expert index must be zero")
+
+        row_bytes = nbytes_for_tensor(loc.type_id, cols)
+        compressed_bytes = row_bytes * rows
+        base = expert * compressed_bytes if len(loc.dims) == 3 else 0
+        flat = array("f")
+        read_seconds = 0.0
+        dequant_seconds = 0.0
+        for row in range(rows):
+            read_start = time.perf_counter()
+            raw = store.pread(name, base + row * row_bytes, row_bytes)
+            read_seconds += time.perf_counter() - read_start
+            if len(raw) != row_bytes:
+                raise OSError(f"{name}: truncated row {row}")
+            decode_start = time.perf_counter()
+            decoded = _dequant_row_bytes(loc.type_id, raw, cols)
+            dequant_seconds += time.perf_counter() - decode_start
+            if len(decoded) != cols:
+                raise ValueError(f"{name}: decoded row {row} has wrong length")
+            flat.extend(decoded)
+
+        build_start = time.perf_counter()
+        value = self.mx.array(flat, dtype=self.mx.float32).reshape((rows, cols))
+        self.mx.eval(value)
+        matrix_build_seconds = time.perf_counter() - build_start
+        matrix = DecodedMatrix(
+            value=value,
+            rows=rows,
+            cols=cols,
+            decoded_bytes=cols * rows * 4,
+            compressed_bytes=compressed_bytes,
+            quantization=loc.type_name,
+        )
+        metrics = LoadMetrics(
+            storage_bytes_read=compressed_bytes,
+            storage_read_seconds=read_seconds,
+            dequant_seconds=dequant_seconds,
+            matrix_build_seconds=matrix_build_seconds,
+        )
+        return matrix, metrics
+
+    def matvec(
+        self, matrix: DecodedMatrix, x: list[float]
+    ) -> tuple[list[float], float]:
+        if len(x) != matrix.cols:
+            raise ValueError(f"activation length {len(x)} != {matrix.cols}")
+        start = time.perf_counter()
+        xv = self.mx.array(x, dtype=self.mx.float32)
+        y = matrix.value @ xv
+        self.mx.eval(y)
+        result = y.tolist()
+        return result, time.perf_counter() - start
+
+    def release_transient(self) -> None:
+        """Release unretained Python and MLX objects after synchronized use."""
+
+        gc.collect()
+        clear_cache = getattr(self.mx, "clear_cache", None)
+        if clear_cache is not None:
+            clear_cache()
 
 
 @dataclass
@@ -21,82 +153,155 @@ class ExpertCacheStats:
     hits: int = 0
     misses: int = 0
     evictions: int = 0
+    admissions: int = 0
+    admission_rejections: int = 0
+    policy_bypasses: int = 0
     bytes_resident: int = 0
+    peak_bytes_resident: int = 0
+    storage_cache_hits: int = 0
+    storage_cache_misses: int = 0
+    decoded_cache_hits: int = 0
+    decoded_cache_misses: int = 0
+    storage_bytes_read: int = 0
+    storage_bytes_avoided: int = 0
+    decoded_bytes_materialized: int = 0
+    decoded_bytes_avoided: int = 0
+    expert_redecode_count: int = 0
+    storage_read_seconds: float = 0.0
+    dequant_seconds: float = 0.0
+    mlx_matrix_build_seconds: float = 0.0
+    mlx_matvec_count: int = 0
+    mlx_matvec_seconds: float = 0.0
+    transient_releases: int = 0
+    cpu_fallbacks: int = 0
+    backend: str = "unknown"
+    device: str = "unknown"
+    mlx_version: str = "unknown"
+    resident_entries: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "hits": self.hits,
             "misses": self.misses,
             "evictions": self.evictions,
+            "admissions": self.admissions,
+            "admission_rejections": self.admission_rejections,
+            "policy_bypasses": self.policy_bypasses,
             "bytes_resident": self.bytes_resident,
+            "peak_bytes_resident": self.peak_bytes_resident,
+            "resident_entries": self.resident_entries,
             "hit_rate": self.hits / max(1, self.hits + self.misses),
+            "storage_cache_hits": self.storage_cache_hits,
+            "storage_cache_misses": self.storage_cache_misses,
+            "decoded_cache_hits": self.decoded_cache_hits,
+            "decoded_cache_misses": self.decoded_cache_misses,
+            "storage_bytes_read": self.storage_bytes_read,
+            "storage_bytes_avoided": self.storage_bytes_avoided,
+            "decoded_bytes_materialized": self.decoded_bytes_materialized,
+            "decoded_bytes_avoided": self.decoded_bytes_avoided,
+            "expert_redecode_count": self.expert_redecode_count,
+            "storage_read_seconds": self.storage_read_seconds,
+            "dequant_seconds": self.dequant_seconds,
+            "mlx_matrix_build_seconds": self.mlx_matrix_build_seconds,
+            "mlx_matvec_count": self.mlx_matvec_count,
+            "mlx_matvec_seconds": self.mlx_matvec_seconds,
+            "transient_releases": self.transient_releases,
+            "cpu_fallbacks": self.cpu_fallbacks,
+            "backend": self.backend,
+            "device": self.device,
+            "mlx_version": self.mlx_version,
         }
 
 
 @dataclass
 class ExpertSlabCache:
-    """LRU cache of decoded expert matrix rows for matvec reuse."""
+    """Protected shared-expert decoded cache under an exact logical cap."""
 
-    max_bytes: int = 2 * 1024**3  # 2 GiB default decoded
-    stats: ExpertCacheStats = field(default_factory=ExpertCacheStats)
-    _lru: OrderedDict[str, list[list[float]]] = field(default_factory=OrderedDict)
-    _sizes: dict[str, int] = field(default_factory=dict)
+    max_bytes: int = 16 * 1024**3
+    backend: MatrixBackend = field(default_factory=MlxMatrixBackend)
+    policy: str = "decoded_shared_only"
+    stats: ExpertCacheStats = field(init=False)
+    _resident: OrderedDict[str, DecodedMatrix] = field(default_factory=OrderedDict)
 
-    def _key(self, name: str, expert: int) -> str:
+    def __post_init__(self) -> None:
+        if self.max_bytes < 0:
+            raise ValueError("max_bytes must be non-negative")
+        if self.policy != "decoded_shared_only":
+            raise ValueError(f"unsupported cache policy {self.policy}")
+        self.stats = self._new_stats()
+
+    def _new_stats(self) -> ExpertCacheStats:
+        identity = self.backend.identity()
+        return ExpertCacheStats(
+            backend=identity.get("backend", "unknown"),
+            device=identity.get("device", "unknown"),
+            mlx_version=identity.get("mlx_version", "unknown"),
+        )
+
+    @staticmethod
+    def _key(name: str, expert: int) -> str:
         return f"{name}#{expert}"
 
+    @staticmethod
+    def _is_shared(name: str) -> bool:
+        return "_shexp.weight" in name
+
     def clear(self) -> None:
-        self._lru.clear()
-        self._sizes.clear()
-        self.stats = ExpertCacheStats()
+        self._resident.clear()
+        self.stats = self._new_stats()
 
-    def get_or_load_rows(
-        self,
-        store: Glm52TensorStore,
-        name: str,
-        expert: int,
-    ) -> list[list[float]]:
-        """Return list of dequantized rows for y = W @ x matvec."""
-        from glm52_tensor_store import nbytes_for_tensor
-        from glm52_dense_primitives import dequant_row
-        from glm52_expert import _dequant_row_bytes
-
-        k = self._key(name, expert)
-        if k in self._lru:
-            self._lru.move_to_end(k)
+    def get_or_load_matrix(
+        self, store: Glm52TensorStore, name: str, expert: int
+    ) -> DecodedMatrix:
+        key = self._key(name, expert)
+        matrix = self._resident.get(key)
+        if matrix is not None:
             self.stats.hits += 1
-            return self._lru[k]
+            self.stats.storage_cache_hits += 1
+            self.stats.decoded_cache_hits += 1
+            self.stats.storage_bytes_avoided += matrix.compressed_bytes
+            self.stats.decoded_bytes_avoided += matrix.decoded_bytes
+            return matrix
 
         self.stats.misses += 1
-        loc = store.tensors[name]
-        if len(loc.dims) == 2:
-            cols, rows = int(loc.dims[0]), int(loc.dims[1])
-            mat = [dequant_row(store, loc, r) for r in range(rows)]
-        elif len(loc.dims) == 3:
-            cols, rows, n_exp = int(loc.dims[0]), int(loc.dims[1]), int(loc.dims[2])
-            if expert < 0 or expert >= n_exp:
-                raise IndexError(expert)
-            rb = nbytes_for_tensor(loc.type_id, cols)
-            expert_bytes = rb * rows
-            base = expert * expert_bytes
-            mat = []
-            for r in range(rows):
-                raw = store.pread(name, base + r * rb, rb)
-                mat.append(_dequant_row_bytes(loc.type_id, raw, cols))
-        else:
-            raise ValueError(name)
+        self.stats.storage_cache_misses += 1
+        self.stats.decoded_cache_misses += 1
+        matrix, metrics = self.backend.load(store, name, expert)
+        self.stats.storage_bytes_read += metrics.storage_bytes_read
+        self.stats.storage_read_seconds += metrics.storage_read_seconds
+        self.stats.dequant_seconds += metrics.dequant_seconds
+        self.stats.mlx_matrix_build_seconds += metrics.matrix_build_seconds
+        self.stats.decoded_bytes_materialized += matrix.decoded_bytes
+        self.stats.expert_redecode_count += 1
 
-        nbytes = sum(len(r) for r in mat) * 4
-        while self.stats.bytes_resident + nbytes > self.max_bytes and self._lru:
-            old_k, _ = self._lru.popitem(last=False)
-            old_n = self._sizes.pop(old_k, 0)
-            self.stats.bytes_resident -= old_n
-            self.stats.evictions += 1
-        if nbytes <= self.max_bytes:
-            self._lru[k] = mat
-            self._sizes[k] = nbytes
-            self.stats.bytes_resident += nbytes
-        return mat
+        if not self._is_shared(name):
+            self.stats.policy_bypasses += 1
+            return matrix
+        if self.stats.bytes_resident + matrix.decoded_bytes > self.max_bytes:
+            self.stats.admission_rejections += 1
+            return matrix
+
+        self._resident[key] = matrix
+        self.stats.admissions += 1
+        self.stats.bytes_resident += matrix.decoded_bytes
+        self.stats.peak_bytes_resident = max(
+            self.stats.peak_bytes_resident, self.stats.bytes_resident
+        )
+        self.stats.resident_entries = len(self._resident)
+        return matrix
+
+    def matvec(self, matrix: DecodedMatrix, x: list[float]) -> list[float]:
+        result, seconds = self.backend.matvec(matrix, x)
+        self.stats.mlx_matvec_count += 1
+        self.stats.mlx_matvec_seconds += seconds
+        return result
+
+    def is_resident(self, name: str, expert: int) -> bool:
+        return self._key(name, expert) in self._resident
+
+    def release_transient(self) -> None:
+        self.backend.release_transient()
+        self.stats.transient_releases += 1
 
 
 def matvec_cached_rows(rows: list[list[float]], x: list[float]) -> list[float]:
@@ -110,18 +315,12 @@ def expert_matvec_cached(
     expert: int,
     x: list[float],
 ) -> list[float]:
-    rows = cache.get_or_load_rows(store, name, expert)
-    if len(rows[0]) != len(x):
-        # fall back
-        return expert_matvec(store, name, expert, x)
-    try:
-        import mlx.core as mx
-
-        # rows as matrix
-        flat = [v for row in rows for v in row]
-        w = mx.array(flat, dtype=mx.float32).reshape((len(rows), len(x)))
-        y = w @ mx.array(x, dtype=mx.float32)
-        mx.eval(y)
-        return y.tolist()
-    except Exception:
-        return matvec_cached_rows(rows, x)
+    matrix = cache.get_or_load_matrix(store, name, expert)
+    resident = cache.is_resident(name, expert)
+    if matrix.cols != len(x):
+        raise ValueError(f"{name}: activation length {len(x)} != {matrix.cols}")
+    result = cache.matvec(matrix, x)
+    if not resident:
+        del matrix
+        cache.release_transient()
+    return result

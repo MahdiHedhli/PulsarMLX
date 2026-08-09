@@ -16,6 +16,7 @@
 | 4 design | MLA compact-KV incremental design doc | `a23b4d0` |
 | 5 | P1 inference golden first-token match recovered after reboot | this focused recovery commit |
 | 6 | Exact cache working-set diagnosis + deterministic simulator | this focused simulator commit |
+| 7 | Compact fail-closed shared-expert MLX residency + split evidence fields | pending focused runtime commit |
 
 ## Recovered P1 evidence
 
@@ -31,15 +32,11 @@
 
 ## Next (autonomous continuation)
 
-1. Bank the unchanged P1 evidence and report updates
-2. Explain the 0% cache-hit result quantitatively from exact tensor sizes and
-   deterministic reuse-distance simulation
-3. Select the simplest promising cache policy and add storage/dequant/cache
-   metrics before another real run
-4. Run exactly two new tokens; require `[9703, 21615, 220]` plus meaningful
+1. Run exactly two new tokens from the committed P2 protocol; require
+   `[9703, 21615, 220]` plus meaningful
    cross-token reuse
-5. Run the full eight-token golden only after P2 passes correctness and reuse
-6. Evaluate prefetch only after useful cache residency is demonstrated
+2. Run the full eight-token golden only after P2 passes correctness and reuse
+3. Evaluate prefetch only after useful cache residency is demonstrated
 
 ## Cache diagnosis result
 
@@ -53,8 +50,9 @@
   the next stack.
 - P1 did not record routed IDs, so the committed C09 trace is explicitly a
   policy-mechanics proxy rather than a P1-to-P2 overlap measurement.
-- Selected next step: compact evaluated MLX/f32 shared-expert residency with
-  fail-closed MLX and real RSS/storage/dequant counters before P2.
+- Implemented next step: compact evaluated MLX/f32 shared-expert residency with
+  fail-closed MLX, transient routed-matrix release, and current/peak
+  RSS/storage/dequant/MLX counters. Real-checkpoint reuse remains pending P2.
 
 ## Non-goals this weekend (unless free)
 

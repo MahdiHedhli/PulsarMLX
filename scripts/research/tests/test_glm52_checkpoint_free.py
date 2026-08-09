@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from glm52_expert_cache import ExpertCache, ExpertKey, FakeExpertStore
 from glm52_fail_closed import ExecutionGuard, ExecutionPolicy, FailClosedError
 from glm52_generation_harness import FROZEN_PROMPTS, DummyForward, generate_greedy
+from glm52_memory_pressure import sample_pressure
 from glm52_synthetic_router import glm_route, router_scores, synthetic_moe_forward
 from glm52_telemetry import TelemetryCollector, assert_public_safe, contains_private_leak
 from iq2_xxs_dequant import BLOCK_BYTES, QK_K, dequantize_row_iq2_xxs
@@ -97,6 +98,14 @@ class TestTelemetryPrivacy(unittest.TestCase):
 
     def test_leak_detector(self):
         self.assertTrue(contains_private_leak("username=bob"))
+
+    def test_pressure_snapshot_has_current_and_peak_rss_without_private_fields(self):
+        snapshot = sample_pressure().to_public_dict()
+        assert_public_safe(snapshot)
+        self.assertIsInstance(snapshot["rss_bytes"], int)
+        self.assertIsInstance(snapshot["peak_rss_bytes"], int)
+        self.assertNotIn("hostname", snapshot)
+        self.assertNotIn("username", snapshot)
 
 
 class TestFailClosed(unittest.TestCase):

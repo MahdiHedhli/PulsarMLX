@@ -16,14 +16,15 @@
 - [x] Requirements testable
 - [x] Success criteria measurable
 - [x] Scope bounded; assumptions listed
-- [x] Active disk blocker recorded
+- [x] Original disk blocker and its later resolution recorded
 
 ## Feature Readiness
 
 - [x] Functional requirements have acceptance criteria
 - [x] User scenarios cover admission → correctness → performance
-- [ ] Implementation unblocked (disk free space) — **blocked**
+- [x] Implementation unblocked; checkpoint admitted and C01–C11 complete
 
 ## Notes
 
-Disk admission failure is intentional hard stop per sprint policy.
+The initial disk failure was an intentional hard stop. It was later resolved
+without changing the gate; Phase 8 inference optimization is active.

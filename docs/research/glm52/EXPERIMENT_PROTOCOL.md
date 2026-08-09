@@ -179,6 +179,55 @@ Committed evidence must not contain:
 | P-CODE | short code | `Write a Python function that returns 42.` |
 | P-REASON | short reasoning | `If all cats are animals and some animals are black, can we conclude some cats are black? Answer yes or no and one sentence.` |
 
+## 13. P2 two-token reuse gate (frozen before execution)
+
+P2 is a costly Tier-3 pilot, not a throughput benchmark population. It runs in
+a fresh process from a clean committed worktree with the admitted six-shard
+checkpoint, the `P-MIN` prompt, exactly two new greedy tokens, the
+`decoded_shared_only` policy, and a 16-GiB logical decoded-cache cap.
+
+Before opening the tensor store:
+
+1. notify `Mahdi-Dev` that local inference hardware is required;
+2. confirm the six local filenames and sizes against
+   `docs/validation/glm52-checkpoint.json` (do not re-download or duplicate);
+3. record the checkpoint-set SHA-256 and the fact that the remote revision was
+   not captured at acquisition rather than inferring one after the fact;
+4. require a clean worktree and record the exact source commit;
+5. require sufficient disk and a non-critical macOS memory-pressure sample;
+6. confirm there is no competing GLM run and no declared material local
+   inference workload.
+
+The exact command is:
+
+```sh
+export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS
+.venv/bin/python scripts/research/glm52_inference.py \
+  --mode inference \
+  --n-new 2 \
+  --cache-gib 16 \
+  --cache-policy decoded_shared_only \
+  --out docs/research/glm52/raw/f016-inference-p2-token2.json
+```
+
+The output is atomically replaced after each completed stack. P2 passes only
+when all of the following hold without tolerance changes:
+
+- `generated_token_ids == [9703, 21615, 220]`;
+- `matches_golden_prefix == true` and `actual_status == "passed"`;
+- backend identity is MLX on GPU and `cpu_fallbacks == 0`;
+- the first generated-token stack records at least 228 decoded shared-cache
+  hits, positive avoided storage/decode bytes, and zero evictions;
+- each completed-stack resource sample is non-critical;
+- route IDs and normalized weights are retained for every MoE layer;
+- source commit, clean-worktree state, checkpoint-set identity, cache policy,
+  split timing/counter fields, current RSS, and peak RSS are present.
+
+Failure, interruption, or missing prerequisites is retained and reported; it
+does not authorize the eight-token run. P2 results are compared only with
+explicitly labeled P1/C11 observations because the implementation, cache
+policy, and evidence schema differ.
+
 Token IDs recorded after tokenizer identity freeze (not invented here).
 
 ## 13. Sample-count rules

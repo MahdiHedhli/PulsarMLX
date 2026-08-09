@@ -34,7 +34,7 @@ Narrative: `docs/research/glm52/HOTSPOT_REPORT.md`
 | Milestone | Status |
 | --- | --- |
 | P1 first new token + expert cache | **golden prefix matched** — token `21615`; 15146.448 s |
-| P2 two-token golden + useful reuse | pending cache diagnosis |
+| P2 two-token golden + useful reuse | ready after clean committed gate |
 | Full 8-token golden match | blocked on P2 correctness + reuse |
 | Expert prefetch | not started |
 | Published tok/s | **not claimed** |
@@ -102,25 +102,27 @@ The simulator separates storage and decode reuse:
 | decoded shared-only | 8 GiB | 170 | 170 | 1882 |
 | decoded shared-only | 16–48 GiB | 228 | 228 | 1824 |
 
-The simplest promising next design is a protected decoded shared-expert tier:
+The implemented P2 design is a protected decoded shared-expert tier:
 shared experts execute at every MoE layer, so their reuse is guaranteed without
 predicting routed experts. A logical 16 GiB budget contains all 228 shared
-slabs and avoids their redequantization on the next token. The current Python
-list representation materially undercounts real heap use, however, so P2 must
-not start until the tier stores compact evaluated MLX/f32 matrices, fails
-closed instead of silently falling back to CPU, and records RSS plus separate
-storage/dequant/MLX counters. A compressed tier remains a later measured
+slabs and avoids their redequantization on the next token. The P2 runtime now
+decodes into compact f32 storage, builds and synchronizes an MLX matrix, retains
+only shared matrices, and releases each non-resident routed matrix after
+synchronized use. It fails closed on MLX errors and records current/peak RSS
+plus separate storage, decode, matrix-build, matvec, reuse, and transient-release
+counters. These are model-free implementation facts; useful real-checkpoint
+reuse remains unverified until P2. A compressed tier remains a later measured
 storage experiment because its hits do not avoid dequantization.
 
 ## Configuration (defaults)
 
-- Expert decoded cache budget: 8 GiB (P1 run)
+- Expert decoded cache budget: 8 GiB (legacy P1); 16 GiB (P2 protocol)
 - Storage: existing multi-shard positional pread (no mmap change yet)
 - Mode: inference (cached experts) vs research (uncached)
 - P1 cache representation: decoded Python f32 rows, one cache entry per
   `tensor_name#expert_id`
-- Selected next policy: compact decoded shared-expert protection; 16 GiB
-  logical cap subject to live memory admission and actual RSS accounting
+- P2 policy: compact evaluated MLX/f32 shared-expert protection; 16 GiB logical
+  cap, routed-matrix transient release, live memory admission, and RSS evidence
 
 ## Limitations
 
@@ -128,13 +130,15 @@ storage experiment because its hits do not avoid dequantization.
 - Residual scale on long research ladders is large; quality not claimed
 - ssd-llm used for design only (no runtime dependency)
 - P1 did not retain routing IDs, storage/dequant timing, bytes read, RSS, or a
-  source/checkpoint identity inside the result; the cache redesign must add
-  these fields before P2
+  source/checkpoint identity inside the result; P2 uses a new self-contained
+  evidence schema and is not merged with the legacy P1 record
 
 ## Commands
 
 ```sh
-export PULSARMLX_GLM_GGUF=$HOME/Models/PulsarMLX/GLM-5.2-UD-IQ2_XXS
+export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS
 .venv/bin/python scripts/research/glm52_profile_hotspots.py
-.venv/bin/python scripts/research/glm52_inference.py --mode inference --n-new 1 --cache-gib 8
+.venv/bin/python scripts/research/glm52_inference.py --mode inference \
+  --n-new 2 --cache-gib 16 --cache-policy decoded_shared_only \
+  --out docs/research/glm52/raw/f016-inference-p2-token2.json
 ```

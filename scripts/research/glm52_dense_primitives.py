@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import math
 import struct
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from glm52_tensor_store import Glm52TensorStore, TensorLoc
 from iq2_xxs_dequant import dequantize_row_iq2_xxs, QK_K, BLOCK_BYTES as IQ2_BLOCK
@@ -23,6 +25,22 @@ from ggml_kquants import (
 )
 
 EPS_DEFAULT = 1e-5  # override from KV when present
+_REQUIRE_MLX: ContextVar[bool] = ContextVar("glm52_require_mlx", default=False)
+
+
+def mlx_backend_required() -> bool:
+    return _REQUIRE_MLX.get()
+
+
+@contextmanager
+def require_mlx_backend() -> Iterator[None]:
+    """Make every auto matvec fail closed instead of selecting CPU."""
+
+    token = _REQUIRE_MLX.set(True)
+    try:
+        yield
+    finally:
+        _REQUIRE_MLX.reset(token)
 
 
 def rms_norm(x: list[float], w: list[float], eps: float = EPS_DEFAULT) -> list[float]:
@@ -112,6 +130,10 @@ def matvec_weight(
     cols, rows = int(loc.dims[0]), int(loc.dims[1])
     if len(x) != cols:
         raise ValueError(f"{name}: act {len(x)} != cols {cols}")
+    if mlx_backend_required():
+        if backend == "cpu":
+            raise RuntimeError("CPU matvec forbidden while MLX is required")
+        backend = "mlx"
     use_mlx = backend == "mlx" or (backend == "auto" and rows * cols >= 256 * 256)
     if use_mlx:
         try:

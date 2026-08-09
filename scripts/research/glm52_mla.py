@@ -153,6 +153,10 @@ def _matvec_3d_q8(
         mx.eval(y)
         return y.tolist()
     except Exception:
+        from glm52_dense_primitives import mlx_backend_required
+
+        if mlx_backend_required():
+            raise
         y = [0.0] * rows
         for r in range(rows):
             wrow = flat[r * cols : (r + 1) * cols]

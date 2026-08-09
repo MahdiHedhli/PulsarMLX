@@ -56,7 +56,7 @@
 - [x] Preserve unchanged recovered P1 first-token evidence and golden prefix
 - [x] Diagnose 0% decoded-cache hits with exact working-set accounting
 - [x] Add a deterministic cache simulator with decoded/compressed/shared policy separation
-- [ ] Replace Python-row global LRU with compact fail-closed shared-expert residency and split metrics
+- [x] Replace Python-row global LRU with compact fail-closed shared-expert residency and split metrics
 - [ ] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
 - [ ] Run the frozen eight-token golden only after P2 passes
 - [ ] Evaluate prefetch, storage, and dequantization changes one measured variable at a time

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `016-glm52-full-execution`
 **Created**: 2026-08-07
-**Status**: Blocked (disk admission)
+**Status**: Active (weekend inference optimization; C01–C11 baseline complete)
 **Input**: Complete transition from verified Qwen3-30B-A3B research runtime to verified full-model GLM-5.2 execution and performance on M1 Ultra internal SSD.
 
 ## Background and baseline
@@ -147,9 +147,11 @@ on the MLX-only path with synchronized timers.
 - Architecture-level numerical contract may differ from fused CUDA paths;
   differences require root-cause documentation (Qwen F008 pattern).
 
-## Current blocker
+## Current state
 
-**Disk admission failed** (2026-08-07): ~346 GiB free after safe cleanup vs
-500 GiB pre-download gate; checkpoint ~222 GiB; projected free after download
-~124 GiB < 250 GiB post gate. See
-`docs/validation/glm52-disk-admission.json`.
+The original disk stop was resolved without weakening the gate. The six-shard
+checkpoint was admitted, hashed, and exercised through C11; the research
+baseline is frozen at `v0.3.0-glm52-e2e-research`. The active work is the
+bounded inference optimization in Phase 8 of `tasks.md`. The next external
+checkpoint gate is P2: exactly two new tokens with exact golden-prefix parity,
+MLX-only execution, and useful shared-expert cache reuse.

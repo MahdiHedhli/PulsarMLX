@@ -35,16 +35,18 @@ cache lifetime spans tokens; sequential early-layer misses evict every retained
 late-layer slab before reuse. Budgets through 48 GiB retain the same cyclic
 failure under identical replay.
 
-The next bounded design protects only decoded shared-expert matrices:
+The current P2 design protects only decoded shared-expert matrices:
 
 - 228 gate/up/down slabs across 76 MoE layers
 - 10.6875 GiB logical f32 payload
 - guaranteed reuse on every later token
 - routed experts bypass the decoded tier until measured routing history
   justifies a separate policy
-- cache values become compact evaluated MLX/f32 matrices rather than Python
+- cache values are compact evaluated MLX/f32 matrices rather than Python
   float/list graphs
 - inference mode fails closed on missing MLX instead of silently selecting CPU
+- routed and over-budget matrices are synchronized, dereferenced, and followed
+  by explicit MLX transient-cache release instead of accumulating residency
 - storage hits, decoded hits, reads, redequants, MLX evaluation, and memory are
   recorded separately
 
@@ -71,11 +73,15 @@ generate(P-MIN, n_new=8, mode=inference) == GOLDEN C11 sequence
 
 before any tokens/sec publication.
 
-## CLI (planned)
+## Current Tier-3 CLI
 
-```text
-pulsar-mlx run $PULSARMLX_GLM_GGUF --prompt Hello --max-new 8 --greedy \
-  --expert-cache-gib 8 --mode inference
+```sh
+.venv/bin/python scripts/research/glm52_inference.py --mode inference \
+  --n-new 2 --cache-gib 16 --cache-policy decoded_shared_only \
+  --out docs/research/glm52/raw/f016-inference-p2-token2.json
 ```
 
-Current entry: `scripts/research/glm52_inference.py`.
+The output is source/checkpoint bound and atomically checkpointed after each
+completed stack. P2 must pass exact `[9703, 21615, 220]` parity and record at
+least 228 decoded hits in the first generated-token stack before eight-token
+execution or prefetch work is eligible.
