@@ -18,7 +18,7 @@
 | 5 | Correctness ladder C01–C11 | Done |
 | 6 | Full execution evidence | Done |
 | 7 | Research publication + `v0.3.0` tag | Done |
-| 8 | Inference optimization | Active closeout; golden eight and derived profile passed, design remains |
+| 8 | Inference optimization | Closeout validation; golden eight, derived profile, prefetch decision, and Rust design passed |
 
 ## Technical approach
 
@@ -71,6 +71,8 @@ The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).
 They remain deferred from Feature 016: this feature closes the vectorized
 Python/MLX golden-eight reference evidence and its measured follow-up.
+The exact native entry contract is frozen in
+[`docs/architecture/RUST_EXACT_DECODE_BOUNDARY.md`](../../docs/architecture/RUST_EXACT_DECODE_BOUNDARY.md).
 
 ## Retained P2 streaming profile (experimental)
 

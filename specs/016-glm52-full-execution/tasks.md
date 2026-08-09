@@ -49,7 +49,7 @@
 ## Phase 6–7
 
 - [x] Full research execution evidence + `PULSARMLX_GLM52_REPORT.md` + tag `v0.3.0-glm52-e2e-research`
-- [ ] Optimized inference performance and final optimization report
+- [x] Optimized inference performance and final optimization report
 
 ## Phase 8 — Weekend inference optimization
 
@@ -64,7 +64,7 @@
 - [x] Record the product architecture decision separately without starting Rust/Metal implementation in Feature 016
 - [x] Inventory golden-trace mixed quant formats by measured token time
 - [x] Qualify and integrate the next measured dominant format, IQ3_XXS, against exact scalar f32 bits
-- [ ] Design a dedicated bit-exact Rust f32 dequantization boundary; do not reuse x86 Q8_K throughput claims
+- [x] Design a dedicated bit-exact Rust f32 dequantization boundary; do not reuse x86 Q8_K throughput claims
 - [x] Re-profile P1 and re-evaluate shared-cache value after vectorization
 - [x] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
 - [x] Run the frozen eight-token golden only after P2 passes

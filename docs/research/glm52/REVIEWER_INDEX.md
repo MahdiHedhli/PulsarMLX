@@ -24,6 +24,7 @@
 ### Architecture
 
 - [GLM52_CONTRACT.md](../../architecture/GLM52_CONTRACT.md)
+- [Rust exact-decode boundary](../../architecture/RUST_EXACT_DECODE_BOUNDARY.md)
 - Upstream pin: Pulsar `17dac547898e0e65bb073f13444708daf68edc3d`
 
 ### Admission
@@ -90,6 +91,7 @@
 ### Results (populated after runs)
 
 - [RESULTS.md](RESULTS.md)
+- [Feature 016 completion report](FEATURE_016_COMPLETION_REPORT.md)
 - `tables/` / `figures/` generated from raw only
 - Deterministic profile check:
   `python3 scripts/research/analyze_glm52_golden8.py --check`

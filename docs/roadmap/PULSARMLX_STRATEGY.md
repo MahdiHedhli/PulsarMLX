@@ -29,9 +29,11 @@ at source commit `1a2ca76ee2df0f518bfc9ddbaafd31500a5e6a26`: nine complete
 79-layer stacks, 1,824 decoded shared-cache hits, zero fallbacks or evictions,
 and normal retained resource states. This is one bounded research correctness
 and reuse run, not a tokens-per-second or production-runtime claim. Its
-expert-cache quant metrics leave a material uninstrumented trunk residual, so
-the first direct-quantized Metal target remains undecided pending trunk-side
-fixture evidence.
+derived [cold/warm profile](../research/glm52/raw/f016-golden8-derived-profile-0001.json)
+found a 1675.492-second median warm uninstrumented trunk residual (87.18% median
+of stack wall), while expert-cache storage averaged only 3.872 seconds (0.20%
+of mean stack wall). Prefetch is deferred, and the first direct-quantized Metal
+target remains undecided pending trunk-side fixture evidence.
 
 ## Architectural principles
 
@@ -252,6 +254,12 @@ golden-eight optimization baseline. Likely scope: a Rust checkpoint/catalog
 and whole-slab read boundary; exact f32 decode interface; low-copy MLX bridge;
 model lifecycle, routing, MLA/DSA state, layer loop, logits, tokenizer,
 generation, telemetry, cancellation, and recovery. No Spec Kit artifacts or
-tasks should be generated until Feature 016's remaining gates establish the
-correct starting point. Direct quantized Metal kernels may be a later separate
-feature if profiling justifies that split.
+tasks are generated here. The exact-decode entry contract is documented in
+[`RUST_EXACT_DECODE_BOUNDARY.md`](../architecture/RUST_EXACT_DECODE_BOUNDARY.md).
+
+The material uninstrumented warm trunk residual justifies keeping the following
+feature separate and profile-neutral: `018-direct-quantized-metal-runtime`.
+Feature 017 should first provide the native ownership/orchestration boundary
+and representative M2 Max trunk fixtures. Feature 018's first kernel is chosen
+only after those fixture measurements are combined with Feature 016's
+expert-cache-only per-quant evidence.
