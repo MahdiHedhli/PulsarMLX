@@ -26,12 +26,32 @@ from glm52_inference import _checkpoint_identity, _source_identity  # noqa: E402
 from glm52_memory_pressure import sample_pressure  # noqa: E402
 from glm52_telemetry import assert_public_safe  # noqa: E402
 from glm52_tensor_store import Glm52TensorStore  # noqa: E402
-from qualify_iq2_xxs_numpy import _summary  # noqa: E402
 
 TENSOR = "blk.8.attn_output.weight"
 CANDIDATES = ("transient", "compressed_resident", "decoded_hot", "hybrid_compressed_decoded_hot")
 WARMUPS = 3
 MEASURED = 10
+
+
+def _summary_nonnegative(samples: list[float]) -> dict[str, float | int]:
+    if not samples or any(not math.isfinite(value) or value < 0 for value in samples):
+        raise ValueError("samples must be finite and nonnegative")
+    values = np.asarray(samples, dtype=np.float64)
+    mean = float(values.mean())
+    standard_deviation = float(values.std(ddof=1)) if len(samples) > 1 else 0.0
+    return {
+        "sample_count": len(samples),
+        "median_seconds": float(np.median(values)),
+        "mean_seconds": mean,
+        "standard_deviation_seconds": standard_deviation,
+        "minimum_seconds": float(values.min()),
+        "maximum_seconds": float(values.max()),
+        "p5_seconds": float(np.percentile(values, 5)),
+        "p25_seconds": float(np.percentile(values, 25)),
+        "p75_seconds": float(np.percentile(values, 75)),
+        "p95_seconds": float(np.percentile(values, 95)),
+        "coefficient_of_variation": standard_deviation / mean if mean else 0.0,
+    }
 
 
 def _cleanup() -> float:
@@ -180,7 +200,7 @@ def _worker(model: Path, candidate: str) -> dict[str, Any]:
             "setup": setup,
             "setup_rss_delta_bytes": pressure_after_setup["rss_bytes"] - rss_before_setup,
             "samples": samples,
-            "summaries": {field: _summary([float(sample[field]) for sample in samples]) for field in fields},
+            "summaries": {field: _summary_nonnegative([float(sample[field]) for sample in samples]) for field in fields},
             "deterministic_output_sha256": sorted(set(hashes)),
             "pressure_before_setup": pressure_before,
             "pressure_after_setup": pressure_after_setup,
@@ -203,11 +223,12 @@ def _run_child(model: Path, candidate: str) -> dict[str, Any]:
     env["PULSARMLX_GLM_GGUF"] = str(model)
     completed = subprocess.run(
         [sys.executable, str(Path(__file__).resolve()), "--worker", candidate],
-        check=True,
         capture_output=True,
         text=True,
         env=env,
     )
+    if completed.returncode:
+        raise RuntimeError(f"{candidate} worker failed: {completed.stderr.strip()}")
     return json.loads(completed.stdout)
 
 
