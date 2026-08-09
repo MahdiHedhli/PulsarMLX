@@ -9,11 +9,11 @@
 
 ## Phase 1 — Portable fixture contract and parser
 
-- [ ] T017-10 Define `portable-fixture-contract-v1` manifest schema:
+- [x] T017-10 Define `portable-fixture-contract-v1` manifest schema:
   - source commit + checkpoint identity + tensor identity + shard + layer/position + quant + dtype + offsets + hashes.
-- [ ] T017-11 Add schema validators and fail-closed behavior for missing identities or hash mismatches.
-- [ ] T017-12 Add manifest fixture examples for public-safe synthetic artifacts and one local-only real manifest pointer.
-- [ ] T017-13 Add tests for malformed/unsigned/duplicate manifests.
+- [x] T017-11 Add schema validators and fail-closed behavior for missing identities or hash mismatches.
+- [x] T017-12 Add manifest fixture examples for public-safe synthetic artifacts and one local-only real manifest pointer.
+- [x] T017-13 Add tests for malformed/unsigned/duplicate manifests.
 
 ## Phase 2 — Inventory-driven slot sizing and residency boundaries
 

@@ -7,6 +7,9 @@ description = "Expert streaming core: io_uring fetch engine (Linux)."
 
 [dependencies]
 gguf = { path = "../gguf" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 io-uring = "0.7"

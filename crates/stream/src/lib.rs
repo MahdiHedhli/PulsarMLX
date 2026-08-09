@@ -17,6 +17,18 @@ pub use positional::{
     MatrixReadSpec, ReadTelemetry,
 };
 
+mod portable_fixture;
+pub use portable_fixture::{
+    ArtifactRecord,
+    ByteRange,
+    FixtureManifestPolicy,
+    PortableFixtureBoundaryArtifacts,
+    PortableFixtureManifest,
+    PortableFixtureManifestSet,
+    PortableFixtureValidationError,
+    TrunkInventoryReference,
+};
+
 pub use stable_slab::{
     SlabAllocatorError, StableSlab, StableSlabAllocator, StableSlabConfig, StableSlabTelemetry,
     SlotId, ZeroingPolicy,
