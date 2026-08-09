@@ -34,6 +34,7 @@ Narrative: `docs/research/glm52/HOTSPOT_REPORT.md`
 | Milestone | Status |
 | --- | --- |
 | P1 first new token + expert cache | **golden prefix matched** — token `21615`; 15146.448 s |
+| vectorized P1 rerun | **golden prefix matched** — token `21615`; 6294.015 s; 228 decoded hits |
 | P2 two-token golden + useful reuse | paused in stack 1; decoder ladder now precedes retry |
 | Full 8-token golden match | blocked on P2 correctness + reuse |
 | Expert prefetch | not started |
@@ -308,6 +309,22 @@ was 7,076,659,200 bytes and memory pressure remained normal. Raw evidence:
 
 This is one complete layer, not a full 79-layer stack, first-token latency, or
 token-generation throughput result.
+
+### Vectorized P1 full-stack pilot
+
+At clean source `2de160f`, explicit `numpy_vectorized` mode executed both
+79-layer stacks and reproduced `[9703,21615]` exactly on MLX GPU with zero CPU
+fallbacks. Total wall time was 6294.014912 seconds versus 15146.448246 seconds
+for the recovered legacy cross-commit observation (2.41× lower wall time, not a
+controlled benchmark population). Cold prompt and shared-warm generated-token
+stacks took 3446.820720 and 2769.003203 seconds. The warm stack recorded 228
+decoded shared-cache hits, zero evictions, 2,105,769,984 storage bytes avoided,
+and 11,475,615,744 decoded bytes avoided. Peak RSS was 82,768,297,984 bytes;
+every resource sample remained normal.
+
+This is one P1 pilot, not P2 correctness, golden-8 generation, steady-state
+throughput, or a controlled cold/warm population. Raw evidence:
+`docs/research/glm52/raw/f016-inference-p1-vectorized-0001.json`.
 
 ## Limitations
 

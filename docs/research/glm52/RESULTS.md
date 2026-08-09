@@ -64,6 +64,7 @@
 | complete routed expert | **passed** — CPU oracle 0 mismatches; exact deterministic MLX modes; 1.706290 s vs 4.365715 s median total |
 | layer-3 top-8 + shared MoE | **passed** — CPU oracle 0 mismatches; exact route/mode bits; 14.062472 s vs 36.309373 s warm median |
 | complete layer 3 | **passed** — frozen attention midpoint/routes; exact mode bits; 31.687686 s vs 53.230274 s warm median |
-| full stack / TTFT / tok/s | pending; not inferred from one-layer timing |
+| vectorized P1 full stack | **passed** — golden `[9703,21615]`; 6294.015 s; 228 shared-cache hits; zero fallback |
+| P2 / steady-state tok/s | pending; not inferred from one P1 pilot |
 
 Figures and tables must be generated from `raw/` — never hand-hardcoded.

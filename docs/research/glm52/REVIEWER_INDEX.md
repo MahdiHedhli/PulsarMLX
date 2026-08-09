@@ -46,6 +46,9 @@
 - [Complete layer 3](raw/f016-layer3-0001.json) — frozen attention midpoint and
   route, architecture-reference comparison, exact decoder-mode bits, split
   attention/MoE timing, and raw samples
+- [Vectorized P1](raw/f016-inference-p1-vectorized-0001.json) — clean full-stack
+  golden-prefix run, complete routes, split cache metrics, per-quant timing,
+  resources, and MLX GPU identity
 
 ### Results (populated after runs)
 

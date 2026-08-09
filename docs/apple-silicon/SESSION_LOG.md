@@ -4241,3 +4241,11 @@ essentially unchanged at about 18 seconds and MoE falling from 35.210090 to
 full-stack or token-generation performance. The architecture reference is not
 promoted to an independent CPU oracle for complete attention because its dense
 helper may use the shared MLX reference path.
+
+The vectorized P1 rung then passed at clean source `2de160f`, reproducing the
+exact golden prefix `[9703,21615]` on MLX GPU with zero CPU fallbacks. Total
+wall time was 6294.014912 seconds; cold prompt and shared-warm generated-token
+stacks were 3446.820720 and 2769.003203 seconds. The warm stack recorded all
+228 guaranteed shared-matrix hits, zero evictions, and normal resource status.
+This completes the decoder-priority ladder through P1; mixed-quant ranking and
+reprofiling remain next, and P2 is still ineligible until those are committed.
