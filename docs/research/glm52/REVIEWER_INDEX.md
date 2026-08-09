@@ -132,6 +132,10 @@
   [generated table](tables/post-f016-trunk-complete-layer8-q6-0001.md) — exact
   layer output and route across ten pairs; original harness rejection is
   retained while the audit corrects its zero-miss versus 24 transient-miss gate
+- [Post-Feature-016 bounded Q6_K trunk residency study](raw/post-f016-trunk-q6-residency-0001.json)
+  and [generated table](tables/post-f016-trunk-q6-residency-0001.md) — four
+  process-isolated matrix lifecycles, exact output, observed RSS/setup/reuse
+  costs, and inherited full-trunk logical budget dispositions
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

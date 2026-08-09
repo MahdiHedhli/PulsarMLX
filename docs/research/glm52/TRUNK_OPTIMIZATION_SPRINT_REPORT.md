@@ -214,3 +214,27 @@ rerun samples. See
 This representative complete-layer reduction is substantial enough to admit a
 single exact P1 full-stack gate after the remaining bounded cleanup and
 residency experiments. It is not itself a stack or token-generation claim.
+
+## Phase D: bounded trunk residency
+
+**Result: decoded-hot reuse is material, but allocator-aware admission is required.**
+
+At clean source `bb6c9994`, four matrix lifecycles ran in separate processes
+against the same 82,575,360-byte Q6_K layer-8 attention-output matrix. All
+produced the same exact deterministic f32 output. Transient reuse had a
+1.389852 s median; compressed residency was 1.427976 s because it avoided only
+the 0.008247 s warm read while retaining decode/build. Decoded-hot and hybrid
+reuse medians were 0.002910 s and 0.002970 s respectively.
+
+The observed setup RSS delta was about 1,557 MiB for the 384 MiB logical decoded
+matrix, versus about 159 MiB for the 78.8 MiB compressed matrix. This is a
+process-local allocation observation, not a universal MLX multiplier. It
+reinforces the existing logical-budget disposition: decoded all-trunk,
+attention/MLA-only, and compressed-all-plus-decoded-hot remain unsafe under the
+24 GiB reserve; only bounded decoded hot subsets are admitted for further study.
+See
+[`tables/post-f016-trunk-q6-residency-0001.md`](tables/post-f016-trunk-q6-residency-0001.md).
+
+Compressed-all residency is not recommended from this result: warm storage was
+not material, and the catalog-only 12.549 GiB option remains too close to the
+reserve without allocator measurement. No all-trunk allocation was attempted.
