@@ -127,6 +127,11 @@
   complete real layer-8 attention-output matrix and MLA output, with Q5_K and
   all Q8_0 paths held vectorized; validator-derived operation counts audit the
   raw record's retained legacy summary-label omission
+- [Post-Feature-016 complete layer-8 attempt](raw/post-f016-trunk-complete-layer8-q6-attempt-0001.json),
+  [semantic audit](raw/post-f016-trunk-complete-layer8-q6-audit-0001.json), and
+  [generated table](tables/post-f016-trunk-complete-layer8-q6-0001.md) — exact
+  layer output and route across ten pairs; original harness rejection is
+  retained while the audit corrects its zero-miss versus 24 transient-miss gate
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

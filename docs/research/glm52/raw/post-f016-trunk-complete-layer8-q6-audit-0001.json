@@ -1,0 +1,104 @@
+{
+  "actual_status": "passed",
+  "comparison": {
+    "exact_f32_bits": true,
+    "first_mismatch": null,
+    "mid_hashes": {
+      "whole_matrix_numpy_q5_q8_head_numpy": [
+        "41ddbf9576c7ae37586d2a5569d3cedfc34e66d919bb116e3b9ef3c39a00c62f"
+      ],
+      "whole_matrix_numpy_q5_q8_q6_head_numpy": [
+        "41ddbf9576c7ae37586d2a5569d3cedfc34e66d919bb116e3b9ef3c39a00c62f"
+      ]
+    },
+    "mismatch_count": 0,
+    "output_hashes": {
+      "whole_matrix_numpy_q5_q8_head_numpy": [
+        "0b496dac61128ce4d781c9e6c4a1787f097d3f7bb6296b266efe2c02aa89dee4"
+      ],
+      "whole_matrix_numpy_q5_q8_q6_head_numpy": [
+        "0b496dac61128ce4d781c9e6c4a1787f097d3f7bb6296b266efe2c02aa89dee4"
+      ]
+    },
+    "route_expert_ids": {
+      "whole_matrix_numpy_q5_q8_head_numpy": [
+        [
+          216,
+          244,
+          206,
+          79,
+          102,
+          188,
+          146,
+          78
+        ]
+      ],
+      "whole_matrix_numpy_q5_q8_q6_head_numpy": [
+        [
+          216,
+          244,
+          206,
+          79,
+          102,
+          188,
+          146,
+          78
+        ]
+      ]
+    }
+  },
+  "gate_correction": {
+    "correct_condition": "shared_cache_misses == 24",
+    "measurement_rerun_required": false,
+    "reason": "eight routed experts use three transient matrices each; the three protected shared matrices are hits",
+    "rejected_condition": "shared_cache_misses == 0"
+  },
+  "measurement_record": "docs/research/glm52/raw/post-f016-trunk-complete-layer8-q6-attempt-0001.json",
+  "measurement_record_sha256": "6cafe067a907b45549c086265c9018a9ae4db4870efa85fd1e8748802dcd1d00",
+  "measurement_source_clean": true,
+  "measurement_source_commit": "7abcce2a3448c63df1226a2594734db630c42d9a",
+  "metrics": {
+    "baseline_attention_median_seconds": 54.700836375006475,
+    "baseline_cleanup_median_seconds": 0.003427999996347353,
+    "baseline_dense_attributed_median_seconds": 53.95837496653985,
+    "baseline_moe_median_seconds": 42.43682741650264,
+    "baseline_total_median_seconds": 97.07129106300272,
+    "baseline_uninstrumented_residual_median_seconds": 0.9094551223461167,
+    "candidate_attention_median_seconds": 1.7588703125074971,
+    "candidate_cleanup_median_seconds": 0.0034266880102222785,
+    "candidate_dense_attributed_median_seconds": 1.7964641115322593,
+    "candidate_moe_median_seconds": 42.475365521007916,
+    "candidate_total_median_seconds": 44.26607179149869,
+    "candidate_uninstrumented_residual_median_seconds": 0.13235072161478456,
+    "median_total_ratio": 2.1929050203556866
+  },
+  "mode_audits": {
+    "whole_matrix_numpy_q5_q8_head_numpy": {
+      "expert_decoder_fixed_vectorized": true,
+      "one_deterministic_midpoint": true,
+      "one_deterministic_output": true,
+      "one_deterministic_route": true,
+      "resource_pressure_normal": true,
+      "shared_cache_hits_are_three": true,
+      "three_shared_entries_resident": true,
+      "transient_routed_matrix_misses_are_twenty_four": true
+    },
+    "whole_matrix_numpy_q5_q8_q6_head_numpy": {
+      "expert_decoder_fixed_vectorized": true,
+      "one_deterministic_midpoint": true,
+      "one_deterministic_output": true,
+      "one_deterministic_route": true,
+      "resource_pressure_normal": true,
+      "shared_cache_hits_are_three": true,
+      "three_shared_entries_resident": true,
+      "transient_routed_matrix_misses_are_twenty_four": true
+    }
+  },
+  "schema": "pulsarmlx.research.glm52-trunk-complete-layer-audit",
+  "schema_version": "1.0.0",
+  "scope": "one complete single-position layer-8 MLA plus top-8/shared MoE boundary",
+  "unsupported_interpretations": [
+    "stack, P1, token-generation, or steady-state throughput",
+    "Rust or direct quantized Metal evidence"
+  ]
+}

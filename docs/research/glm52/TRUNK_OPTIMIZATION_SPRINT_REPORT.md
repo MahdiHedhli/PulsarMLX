@@ -188,3 +188,29 @@ See
 
 This admits the next bounded gate: a complete transformer-layer comparison. It
 does not establish a stack, P1, token-generation, Rust, or Metal result.
+
+## Phase C: representative complete layer
+
+**Result: exact and material; P1 is admitted.**
+
+At clean measurement source `7abcce2a3448c63df1226a2594734db630c42d9a`,
+the complete single-position layer-8 boundary retained the same MLX expert
+decoder, protected shared-cache policy, Q5_K path, Q8_0 paths, prompt embedding,
+and arithmetic order. Only dense Q6_K decode changed. Median complete-layer
+wall fell from 97.071291 s to 44.266072 s (2.19x). Attention fell from
+54.700836 s to 1.758870 s while MoE remained effectively unchanged at
+42.436827 s versus 42.475366 s.
+
+The original attempt is preserved with `actual_status: failed`: its compound
+harness gate incorrectly required zero cache misses, while eight transient
+routed experts necessarily miss three matrices each. Every retained sample had
+the correct contract—three protected shared-matrix hits, 24 transient routed
+matrix misses, three resident shared entries, identical top-8 routes, exact
+attention midpoint and complete-layer f32 hashes, and normal resource pressure.
+A deterministic audit corrects only that semantic gate and does not alter or
+rerun samples. See
+[`tables/post-f016-trunk-complete-layer8-q6-0001.md`](tables/post-f016-trunk-complete-layer8-q6-0001.md).
+
+This representative complete-layer reduction is substantial enough to admit a
+single exact P1 full-stack gate after the remaining bounded cleanup and
+residency experiments. It is not itself a stack or token-generation claim.
