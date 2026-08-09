@@ -455,6 +455,7 @@ def test_inference_progress_is_atomic_identity_bound_and_route_complete() -> Non
                 1,
                 mode="inference",
                 cache_bytes=16,
+                dense_mode="whole_matrix_numpy_q5_q8_q6_head_numpy",
                 progress_path=output,
                 evidence_context={
                     "source_commit": "a" * 40,
@@ -469,6 +470,7 @@ def test_inference_progress_is_atomic_identity_bound_and_route_complete() -> Non
     assert result["actual_status"] == "passed"
     assert result["source_commit"] == "a" * 40
     assert result["generated_token_ids"] == [9703, 21615]
+    assert result["dense_read_mode"] == "whole_matrix_numpy_q5_q8_q6_head_numpy"
     assert result["matches_golden_prefix"] is True
     assert len(result["routing"]) == 2
     assert result["routing"][0]["layers"][0]["expert_ids"] == list(range(8))

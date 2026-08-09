@@ -24,6 +24,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from glm52_dense_primitives import (
+    dense_read_mode,
     embed_token,
     load_f32_vector,
     matvec_weight,
@@ -272,6 +273,7 @@ def generate(
     cache_bytes: int = 16 * 1024**3,
     cache_policy: str = "decoded_shared_only",
     decoder_mode: str = "scalar_reference",
+    dense_mode: str = "row_reference",
     progress_path: Path | None = None,
     evidence_context: dict[str, Any] | None = None,
 ) -> dict:
@@ -302,6 +304,7 @@ def generate(
             "mode": mode,
             "cache_policy": cache_policy if expert_cache is not None else "not_applicable",
             "decoder_mode": decoder_mode if expert_cache is not None else "not_applicable",
+            "dense_read_mode": dense_mode,
             "cache_budget_bytes": cache_bytes if expert_cache is not None else 0,
             "generated_token_ids": list(generated),
             "golden": GOLDEN,
@@ -320,7 +323,7 @@ def generate(
             _write_json_atomic(progress_path, snapshot("in_progress"))
 
     execution_context = require_mlx_backend() if mode == "inference" else nullcontext()
-    with execution_context:
+    with execution_context, dense_read_mode(dense_mode):
         x: list[float] | None = None
         for pos, tid in enumerate(seed):
             before = expert_cache.stats.to_dict() if expert_cache is not None else {}
@@ -419,6 +422,15 @@ def main() -> int:
         choices=MlxMatrixBackend.DECODER_MODES,
         default="scalar_reference",
     )
+    ap.add_argument(
+        "--dense-read-mode",
+        choices=(
+            "row_reference",
+            "whole_matrix_numpy_q5_q8_q6_head_numpy",
+        ),
+        default="row_reference",
+        help="experimental dense/trunk storage and decoder mode",
+    )
     ap.add_argument("--out", type=Path, default=Path("docs/research/glm52/raw/f016-inference-run.json"))
     args = ap.parse_args()
 
@@ -442,6 +454,7 @@ def main() -> int:
             cache_bytes=int(args.cache_gib * 1024**3),
             cache_policy=args.cache_policy,
             decoder_mode=args.decoder_mode,
+            dense_mode=args.dense_read_mode,
             progress_path=args.out,
             evidence_context={
                 **source,
