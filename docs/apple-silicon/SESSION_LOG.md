@@ -4316,3 +4316,13 @@ mismatches, and scalar/vector decoder modes were bit-identical and deterministic
 across ten measured samples. Median total was 0.243532 seconds vectorized
 versus 4.378363 seconds scalar (17.98×). This remains one routed expert; the
 complete top-8 plus shared layer-3 MoE is the next measured gate.
+
+The complete layer-3 top-8 plus shared MoE then passed at clean source
+`b675365`. Two independent scalar CPU-oracle executions were deterministic;
+the MLX result had zero tolerance mismatches, exact frozen routes, and exact
+decoder-mode bits across ten samples. After the three shared matrices became
+resident, each vector sample performed 24 whole-matrix reads for the eight
+routed experts. Warm median total was 1.698580 seconds vectorized versus
+34.964010 seconds scalar (20.58×). The first vector sample retained cold shared
+cache and per-format timing. This does not establish complete-layer, P1, or P2
+performance; the transformer-layer rung remains next.

@@ -48,7 +48,8 @@
    four complete matrices across four shards with zero bit mismatches.
 6. Rerun affected boundaries in order. **Committed through the real IQ3 down
    matrix** at source `15a8aa2`; the **complete routed expert passed** at source
-   `a8a3d71`, so layer-3 top-8 plus shared MoE is next.
+   `a8a3d71`, and **layer-3 top-8 plus shared MoE passed** at source `b675365`.
+   The complete transformer layer is next.
 7. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented

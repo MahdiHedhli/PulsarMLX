@@ -64,6 +64,7 @@
 | IQ3_XXS matrix decode median | 0.075513 s vector vs 1.578598 s scalar; 20.90× at this boundary |
 | real IQ3_XXS down-matrix load/build/matvec | **passed** — 1 vector read vs 6144 scalar reads; exact deterministic output; 0.126149 s vs 1.559883 s median total |
 | complete routed expert with vector IQ2_XXS + IQ3_XXS | **passed** — independent CPU oracle 0 mismatches; exact deterministic decoder modes; 0.243532 s vs 4.378363 s median total (17.98×) |
+| layer-3 top-8 + shared MoE with vector IQ2_XXS + IQ3_XXS | **passed** — independent CPU oracle 0 mismatches; exact route/mode bits; 1.698580 s vs 34.964010 s warm median (20.58×) |
 | real matrix load/build/matvec | **passed** — 1 vector read vs 2048 scalar reads; exact deterministic output; 0.090525 s vs 1.393479 s median total |
 | complete routed expert | **passed** — CPU oracle 0 mismatches; exact deterministic MLX modes; 1.706290 s vs 4.365715 s median total |
 | layer-3 top-8 + shared MoE | **passed** — CPU oracle 0 mismatches; exact route/mode bits; 14.062472 s vs 36.309373 s warm median |
@@ -76,8 +77,9 @@ The IQ3_XXS decoder qualification is decode-only. The separate real down-matrix
 boundary includes load, decode, contiguous-buffer verification, synchronized
 MLX matrix build/eval, and matvec, but still does not establish a complete
 expert, layer, P1, or P2 speedup. The subsequent complete routed-expert rung
-does establish expert-boundary benefit with an independent CPU oracle, but not
-top-8 MoE, layer, P1, or P2 performance. The mixed-quant inventory is generated at
+does establish expert-boundary benefit with an independent CPU oracle. The
+subsequent top-8 plus shared MoE rung establishes its bounded warm-cache benefit,
+but not a complete layer, P1, or P2 result. The mixed-quant inventory is generated at
 [`tables/f016-p1-quant-hotspots.md`](tables/f016-p1-quant-hotspots.md) from the
 committed P1 record. Figures and tables must be generated from `raw/` — never
 hand-hardcoded.
