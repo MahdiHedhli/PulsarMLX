@@ -261,7 +261,7 @@ def _benchmark_mla(store: Glm52TensorStore) -> dict[str, Any]:
             sample["sample_index"] = index
             samples[mode].append(sample)
             outputs[mode] = output
-        print(json.dumps({"progress": "mla-layer-3", "measured_pair": index + 1}), flush=True)
+        print(json.dumps({"progress": f"mla-layer-{LAYER}", "measured_pair": index + 1}), flush=True)
     scalar_bits = _f32_bits(outputs[MODES[0]])
     vector_bits = _f32_bits(outputs[MODES[1]])
     mismatch = np.flatnonzero(scalar_bits != vector_bits)
@@ -284,7 +284,7 @@ def _benchmark_mla(store: Glm52TensorStore) -> dict[str, Any]:
     return {
         "layer": LAYER,
         "boundary": "complete_single_position_mla_attention",
-        "scope": "four captured 2D projections; per-head 3D Q8_0 work remains in residual",
+        "scope": "all instrumented dense MLA projections, including per-head Q8_0 slabs",
         "input": input_identity,
         "samples": samples,
         "summaries": summaries,
@@ -298,6 +298,7 @@ def _benchmark_mla(store: Glm52TensorStore) -> dict[str, Any]:
             "operation_count": len(vector_ops),
             "q5_vectorized_count": sum(op["decoder_mode"] == "numpy_vectorized_q5_k" for op in vector_ops),
             "q8_vectorized_count": sum(op["decoder_mode"] == "numpy_vectorized_q8_0" for op in vector_ops),
+            "q6_vectorized_count": sum(op["decoder_mode"] == "numpy_vectorized_q6_k" for op in vector_ops),
             "other_scalar_count": sum(op["decoder_mode"] == "scalar_reference" for op in vector_ops),
         },
     }

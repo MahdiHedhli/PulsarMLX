@@ -122,6 +122,11 @@
   and [generated table](tables/post-f016-q6-k-numpy-qualification-0001.md) — all
   five exercised trunk tensors, complete real matrices, exact f32-bit oracle
   comparisons, deterministic repeats, signed-zero checks, and raw timing samples
+- [Post-Feature-016 Q6_K dense integration](raw/post-f016-trunk-q6-integration-0001.json)
+  and [generated table](tables/post-f016-trunk-q6-integration-0001.md) — exact
+  complete real layer-8 attention-output matrix and MLA output, with Q5_K and
+  all Q8_0 paths held vectorized; validator-derived operation counts audit the
+  raw record's retained legacy summary-label omission
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

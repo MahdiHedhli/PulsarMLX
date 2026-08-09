@@ -166,3 +166,25 @@ and
 [`tables/post-f016-q6-k-numpy-qualification-0001.md`](tables/post-f016-q6-k-numpy-qualification-0001.md).
 This qualifies Q6_K integration; it does not yet establish a layer-8 MLA or
 complete transformer-layer result.
+
+## Phase B7: Q6_K dense integration
+
+**Result: exact and material at the layer-8 MLA boundary.**
+
+At clean source `42c38d3ef61a251fc9823bdca0c35afdcdc171c8`, Q5_K and all Q8_0
+paths remained vectorized in both modes; only Q6_K changed from the scalar
+decoder to the exact-bit NumPy decoder. The complete real layer-8 attention
+output matrix median fell from 48.092368 s to 1.426283 s (33.72x). Complete
+single-position layer-8 MLA fell from 55.137022 s to 1.762948 s (31.28x), with
+exact f32 output bits.
+
+The candidate MLA's 132 retained dense operations comprise 130 vector Q8_0
+operations and two vector Q6_K operations, with no scalar operation. Its median
+decode time was 1.616308 s and its uninstrumented residual was 0.007253 s. The
+raw record retains a legacy summary-label omission for the Q6 operation count;
+the validator derives the corrected count from every immutable nested sample.
+See
+[`tables/post-f016-trunk-q6-integration-0001.md`](tables/post-f016-trunk-q6-integration-0001.md).
+
+This admits the next bounded gate: a complete transformer-layer comparison. It
+does not establish a stack, P1, token-generation, Rust, or Metal result.
