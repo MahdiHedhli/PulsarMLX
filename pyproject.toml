@@ -8,6 +8,8 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "mlx==0.32.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "numpy==2.2.6; python_version < '3.11'",
+    "numpy==2.4.5; python_version >= '3.11'",
 ]
 
 [build-system]

@@ -78,7 +78,16 @@ jobs:
           assert platform.machine() == "arm64"
           assert version("mlx") == "0.32.0"
           assert version("mlx-metal") == "0.32.0"
+          assert version("numpy") == "2.4.5"
           PY
+      - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          uv run --frozen python -m unittest discover \
+            -s scripts/research/tests \
+            -p test_iq2_xxs_numpy.py \
+            -v
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \
