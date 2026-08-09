@@ -322,6 +322,38 @@ per measured sample. Attention, MoE, component timings, per-quant totals, RSS,
 and peak RSS are retained separately. The layer rung MUST NOT be promoted to a
 full-stack or token-generation result.
 
+The P1 rung is a clean-process full-stack correctness and bounded timing pilot,
+not a throughput population. It uses `P-MIN`, exactly one new token, the
+`decoded_shared_only` 16-GiB policy, and explicit `numpy_vectorized` decoder
+mode:
+
+```sh
+export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS
+uv run --frozen python scripts/research/glm52_inference.py \
+  --mode inference \
+  --n-new 1 \
+  --cache-gib 16 \
+  --cache-policy decoded_shared_only \
+  --decoder-mode numpy_vectorized \
+  --out docs/research/glm52/raw/f016-inference-p1-vectorized-0001.json
+```
+
+The CLI semantics execute the 79-layer prompt stack, select token `21615`, and
+then execute the 79-layer generated-token stack before returning. Pass requires
+`generated_token_ids == [9703, 21615]`, exact golden-prefix status, MLX GPU
+execution with zero CPU fallbacks, two complete 79-layer timing records, 76
+complete MoE route records per stack, non-critical memory pressure, and at
+least 228 decoded shared-cache hits in the second stack. The record must retain
+source/checkpoint identity, explicit decoder mode, split per-layer cache
+counters, bytes, decode/build/matvec timing, RSS, and peak RSS.
+
+This one clean-process observation is a pilot. Comparison with the recovered
+legacy P1 is explicitly cross-commit and cross-cache-implementation; it may be
+reported only with those caveats and every raw total. P1 does not establish
+P2 correctness, an eight-token golden continuation, steady-state token speed,
+or a controlled process-cold storage measurement. P2 remains ineligible until
+P1 evidence and the revised mixed-quant hotspot inventory are committed.
+
 ## 14. Change control
 
 Any protocol change after first real-weight measurement requires:
