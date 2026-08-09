@@ -70,6 +70,16 @@ python3 -m unittest discover -s scripts/research/tests \
   -p 'test_glm52_matrix_boundary_record.py' -v
 ```
 
+### Complete routed expert
+
+```sh
+export PULSARMLX_GLM_GGUF=/path/to/GLM-5.2-UD-IQ2_XXS
+uv run --frozen python scripts/research/benchmark_glm52_routed_expert.py \
+  --output docs/research/glm52/raw/f016-routed-expert-0001.json
+python3 -m unittest discover -s scripts/research/tests \
+  -p 'test_glm52_routed_expert_record.py' -v
+```
+
 ## Protocol freeze
 
 Numerical tolerances and stop conditions live in

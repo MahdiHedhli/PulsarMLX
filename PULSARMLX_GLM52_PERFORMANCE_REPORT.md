@@ -209,6 +209,34 @@ This is a complete real matrix boundary, not a complete routed expert: gate,
 up, activation, down, and weighting are measured together only at the next
 ladder rung.
 
+### Complete real routed expert
+
+At source `bbbbaae`, the frozen layer-3 expert 15 executed gate and up in
+IQ2_XXS, SwiGLU, the IQ3_XXS down projection, and its architecture-normalized
+route weight. The independent scalar CPU oracle ran twice with identical f32
+hashes. The vectorized MLX result passed the frozen `5e-3 + 5e-3·|reference|`
+tolerance with zero mismatches, 4.37e-11 maximum absolute error, and cosine
+similarity above 0.9999999999999. Scalar-reference and vectorized MLX outputs
+were bit-identical and deterministic across all ten measured samples.
+
+| Component (median) | scalar reference | NumPy vectorized |
+| --- | ---: | ---: |
+| storage read | 0.007312 s | 0.004877 s |
+| dequantization | 3.557103 s | 1.406925 s |
+| contiguous buffer | 0.741363 s | 0.246274 s |
+| MLX matrix build/eval | 0.021867 s | 0.018218 s |
+| MLX matvec | 0.024966 s | 0.017280 s |
+| total | 4.365715 s | 1.706290 s |
+
+Median complete-expert improvement was **2.56×**. Per-quant timing shows the
+remaining vector-path cost is now dominated by the scalar IQ3_XXS down
+projection: in a representative measured sample it used about 1.28 s dequant
+plus 0.245 s buffer construction, while both IQ2_XXS matrices together used
+about 0.126 s dequant and negligible buffer time. This measured single-expert
+inventory motivates later mixed-quant ranking but does not authorize changing
+the ladder order or claiming top-8 MoE/token performance. Raw evidence:
+`docs/research/glm52/raw/f016-routed-expert-0001.json`.
+
 ## Limitations
 
 - Python research runtime, not a production server

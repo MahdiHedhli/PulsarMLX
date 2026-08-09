@@ -39,6 +39,8 @@
   allocation/resource observations
 - [Real matrix boundary](raw/f016-matrix-boundary-0001.json) — one-read vector
   load, synchronized MLX GPU build/matvec, scalar comparison, and raw samples
+- [Complete routed expert](raw/f016-routed-expert-0001.json) — gate/up/down,
+  independent CPU oracle, mixed-quant timing, and deterministic MLX comparison
 
 ### Results (populated after runs)
 

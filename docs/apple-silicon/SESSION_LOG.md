@@ -4215,3 +4215,10 @@ produced bit-identical deterministic 2048-value matvec output. Median total
 before cleanup was 0.090525 seconds vectorized versus 1.393479 seconds scalar
 (15.39×). This completes matrix-granularity integration only; no complete
 routed-expert claim is inferred.
+
+The next rung completed the full layer-3 routed expert 15 at source `bbbbaae`.
+Two independent scalar CPU-oracle passes were deterministic; the vector MLX
+path had zero tolerance mismatches and the two MLX decoder modes were exactly
+bit-identical. Median total fell from 4.365715 seconds to 1.706290 seconds
+(2.56×). Split timing identified the still-scalar IQ3_XXS down projection as
+the remaining expert hotspot. Top-8/shared MoE performance remains unmeasured.
