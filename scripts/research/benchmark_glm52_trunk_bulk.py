@@ -166,6 +166,13 @@ def _benchmark_matrix(store: Glm52TensorStore, tensor: str) -> dict[str, Any]:
             sample["sample_index"] = index
             samples[mode].append(sample)
             outputs[mode] = output
+        print(
+            json.dumps(
+                {"progress": "matrix", "tensor": tensor, "measured_pair": index + 1},
+                sort_keys=True,
+            ),
+            flush=True,
+        )
 
     reference_bits = _f32_bits(outputs["row_reference"])
     bulk_bits = _f32_bits(outputs["whole_matrix_scalar"])
@@ -257,6 +264,13 @@ def _benchmark_mla(store: Glm52TensorStore) -> dict[str, Any]:
             sample["sample_index"] = index
             samples[mode].append(sample)
             outputs[mode] = output
+        print(
+            json.dumps(
+                {"progress": "mla-layer-8", "measured_pair": index + 1},
+                sort_keys=True,
+            ),
+            flush=True,
+        )
     reference_bits = _f32_bits(outputs["row_reference"])
     bulk_bits = _f32_bits(outputs["whole_matrix_scalar"])
     mismatch = np.flatnonzero(reference_bits != bulk_bits)
@@ -370,7 +384,35 @@ def main() -> int:
         raise SystemExit("PULSARMLX_GLM_GGUF is required; no checkpoint was searched")
     if args.output.exists():
         raise SystemExit("output already exists; refusing overwrite")
-    record = benchmark(Path(model))
+    try:
+        record = benchmark(Path(model))
+    except Exception as error:
+        record = {
+            "schema": "pulsarmlx.research.glm52-trunk-bulk-read",
+            "schema_version": "1.0.0",
+            "feature_id": "post-f016-trunk-optimization",
+            "experiment_id": "trunk-bulk-read-0001",
+            "actual_status": "failed",
+            **_source_identity(),
+            "failure": {
+                "reason": "bounded_experiment_failed",
+                "error_type": type(error).__name__,
+            },
+            "model_inference_executed": False,
+        }
+        assert_public_safe(record)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        temporary = args.output.with_name(f".{args.output.name}.tmp")
+        temporary.write_text(json.dumps(record, separators=(",", ":"), sort_keys=True) + "\n")
+        temporary.replace(args.output)
+        print(
+            json.dumps(
+                {"actual_status": "failed", "error_type": type(error).__name__},
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
+        return 1
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_name(f".{args.output.name}.tmp")
     temporary.write_text(json.dumps(record, separators=(",", ":"), sort_keys=True) + "\n")
