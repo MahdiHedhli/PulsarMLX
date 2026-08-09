@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -18,7 +19,7 @@ class Glm52Iq3QuantHotspotRankingTests(unittest.TestCase):
     def test_generator_is_deterministic_and_committed_outputs_are_current(self) -> None:
         subprocess.run(
             [
-                "uv", "run", "--frozen", "python", str(SCRIPT),
+                sys.executable, str(SCRIPT),
                 "--source", str(SOURCE), "--json-out", str(COMMITTED_JSON),
                 "--table-out", str(COMMITTED_TABLE), "--check",
             ],
@@ -33,7 +34,7 @@ class Glm52Iq3QuantHotspotRankingTests(unittest.TestCase):
             for json_out, table_out in ((first_json, first_table), (second_json, second_table)):
                 subprocess.run(
                     [
-                        "uv", "run", "--frozen", "python", str(SCRIPT),
+                        sys.executable, str(SCRIPT),
                         "--source", str(SOURCE),
                         "--json-out", str(json_out), "--table-out", str(table_out),
                     ],

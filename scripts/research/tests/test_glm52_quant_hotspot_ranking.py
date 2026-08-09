@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,7 +17,7 @@ COMMITTED_TABLE = ROOT / "docs/research/glm52/tables/f016-p1-quant-hotspots.md"
 
 class Glm52QuantHotspotRankingTests(unittest.TestCase):
     def test_generator_is_deterministic_and_committed_outputs_are_current(self) -> None:
-        subprocess.run(["uv", "run", "--frozen", "python", str(SCRIPT), "--check"], cwd=ROOT, check=True)
+        subprocess.run([sys.executable, str(SCRIPT), "--check"], cwd=ROOT, check=True)
         with tempfile.TemporaryDirectory() as temporary:
             first_json = Path(temporary) / "first.json"
             first_table = Path(temporary) / "first.md"
@@ -25,7 +26,7 @@ class Glm52QuantHotspotRankingTests(unittest.TestCase):
             for json_out, table_out in ((first_json, first_table), (second_json, second_table)):
                 subprocess.run(
                     [
-                        "uv", "run", "--frozen", "python", str(SCRIPT),
+                        sys.executable, str(SCRIPT),
                         "--json-out", str(json_out), "--table-out", str(table_out),
                     ],
                     cwd=ROOT,
