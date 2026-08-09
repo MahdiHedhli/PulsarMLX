@@ -59,9 +59,9 @@
 
 ## Phase 6 — Decoder and numerical boundary
 
-- [ ] T017-60 Qualify at least one required format lane with strict criteria.
-- [ ] T017-61 Add malformed and truncated input rejection coverage.
-- [ ] T017-62 Add bit-level comparison or documented epsilon contract where exactness is not yet possible.
+- [x] T017-60 Qualify at least one required format lane with strict criteria.
+- [x] T017-61 Add malformed and truncated input rejection coverage.
+- [x] T017-62 Add bit-level comparison or documented epsilon contract where exactness is not yet possible.
 - [ ] T017-63 Record throughput and allocator impact for qualified formats.
 
 ## Phase 7 — Apple bridge spike and native registration
