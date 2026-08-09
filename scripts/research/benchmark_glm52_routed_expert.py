@@ -238,7 +238,7 @@ def benchmark(model: Path) -> dict[str, Any]:
             == measured["numpy_vectorized"][0]["output_f32_sha256"]
             == first_vector["output_f32_sha256"]
         )
-        expected_vector_reads = 1 + 1 + 6144
+        expected_vector_reads = 1 + 1 + 1
         expected_scalar_reads = 2048 + 2048 + 6144
         pass_gate = (
             len(set(oracle_hashes)) == 1
