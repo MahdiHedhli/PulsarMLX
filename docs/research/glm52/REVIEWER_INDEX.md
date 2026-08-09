@@ -90,6 +90,11 @@
   — exact-bit real Q5_K, Q8_0, and Q6_K matrix comparisons plus a complete
   single-position layer-8 MLA boundary; request granularity is the only changed
   variable, and the result does not establish a token or full-layer speedup
+- [Post-Feature-016 NumPy Q5_K qualification](raw/post-f016-q5-k-numpy-qualification-0001.json)
+  and [generated qualification table](tables/post-f016-q5-k-numpy-qualification-0001.md)
+  — four complete real attention-output matrices across four layers/shards,
+  exact f32-bit scalar-oracle comparisons, deterministic repeats, signed-zero
+  checks, raw decode samples, and bounded allocation/resource observations
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

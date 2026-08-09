@@ -45,3 +45,24 @@ and split read/decode/buffer/MLX timings.
 
 No P1 run is admitted until representative MLA and complete transformer-layer
 boundaries show a substantial exact-output improvement.
+
+## Phase B1: Q5_K decoder qualification
+
+**Result: exact and admitted for dense-path integration.**
+
+The trunk inventory ranks Q5_K first by exercised compressed bytes: 6.384 GB
+across 162 tensors. At clean source `b5ad0059eae9f989c3f24fe7f6208e798fb66a4a`,
+whole-matrix NumPy decoding matched scalar-oracle f32 bits for complete
+attention-output matrices from layers 3, 20, 40, and 60 across four checkpoint
+shards. Deterministic repeats and signed-zero counts also matched.
+
+The retained 10-sample decode-only population measured a 12.232673 s scalar
+median and 0.391463 s NumPy median, a 31.25x ratio. The record and generated
+table are
+[`raw/post-f016-q5-k-numpy-qualification-0001.json`](raw/post-f016-q5-k-numpy-qualification-0001.json)
+and
+[`tables/post-f016-q5-k-numpy-qualification-0001.md`](tables/post-f016-q5-k-numpy-qualification-0001.md).
+
+This qualifies decoder integration only. The next gate measures one complete
+Q5_K read/decode/MLX-build/matvec boundary and representative MLA execution;
+it does not yet justify P1.
