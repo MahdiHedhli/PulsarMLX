@@ -2,10 +2,10 @@
 
 ## Status
 
-The post-Feature-016 bounded trunk study is active on branch
+The post-Feature-016 bounded trunk study is complete on branch
 `codex/glm52-trunk-optimization`, isolated from the independent Feature 017
-checkout. No full-model inference, golden-eight rerun, Feature 018 work, or
-direct Metal implementation is part of this study.
+checkout. It culminated in one admitted exact P1 run. No golden-eight rerun,
+Feature 018 work, or direct Metal implementation is part of this study.
 
 ## Phase A: whole-matrix read only
 
@@ -256,3 +256,91 @@ not authorize cleanup removal or prove a layer-wide lifetime policy. Compared
 with the optimized representative layer's 44.266 s median, millisecond cleanup
 is not the current dominant recoverable boundary. See
 [`tables/post-f016-trunk-cleanup-0001.md`](tables/post-f016-trunk-cleanup-0001.md).
+
+## Phase F: exact P1 admission gate
+
+**Result: passed at clean source `9b6ab666c9dc89eda9b2ddf284a9a2767516d87e`.**
+
+The qualified dense mode `whole_matrix_numpy_q5_q8_q6_head_numpy` and the
+existing vectorized expert mode executed two complete 79-layer stacks on the
+MLX GPU. The result reproduced the exact frozen prefix `[9703,21615]`, recorded
+76 eight-expert routing records per stack, and finished with zero CPU fallbacks,
+zero evictions, zero admission rejections, and normal retained resource state.
+
+| Boundary | Seconds |
+| --- | ---: |
+| Total evidence wall | 1425.756125 |
+| Cold prompt stack | 1021.931135 |
+| Full-vocabulary logits | 87.007223 |
+| First-token selection component boundary | 1108.938358 |
+| Wall-minus-terminal selection upper bound | 1108.997454 |
+| Retained terminal state-advance stack | 316.758671 |
+
+The last stack advances model state after token `21615` was already selected.
+It is retained by the frozen P1 execution contract, but it is not described as
+user-visible first-token selection latency. The 0.059096-second gap between the
+component sum and wall-minus-terminal bound remains runner overhead rather than
+being assigned to a measured stage.
+
+The warm stack recorded 228 decoded shared-cache hits, 2,105,769,984 compressed
+bytes avoided, 11,475,615,744 decoded bytes avoided, and 228 resident shared
+entries occupying 11,475,615,744 logical bytes. Maximum retained peak RSS was
+69,699,502,080 bytes. This is one clean-process P1 correctness run on one M1
+Ultra, not a timing population or a general tokens-per-second result.
+
+Historical walls are cross-commit observations with different implementations
+and are not a controlled same-binary benchmark population:
+
+| Observation | Evidence wall (s) | Cross-commit reduction versus this P1 |
+| --- | ---: | ---: |
+| Research C11, eight generated tokens | 48730.706509 | 97.07% |
+| Recovered legacy P1 | 15146.448246 | 90.59% |
+| Vectorized-expert P1 | 6294.014912 | 77.35% |
+| IQ3-vectorized expert P1 | 4582.511032 | 68.89% |
+| Post-trunk exact P1 | 1425.756125 | -- |
+
+Raw evidence is
+[`raw/post-f016-inference-p1-trunk-q6-0001.json`](raw/post-f016-inference-p1-trunk-q6-0001.json).
+Its CI-safe semantic validator is
+`scripts/research/tests/test_glm52_trunk_p1_record.py`.
+
+## Phase G: post-P1 profile and next decision
+
+**Result: the remaining measured warm boundary is expert decode; storage remains
+deferred, and Feature 018 remains profile-neutral.**
+
+The warm terminal stack took 316.758671 seconds. Its expert-cache attributed
+components totaled 248.615785 seconds: 9.655801 storage, 203.329484 decode,
+18.102678 contiguous-buffer construction, 9.215110 MLX build/evaluation, and
+8.312711 MLX matvec. The remaining 68.142886 seconds is explicitly
+uninstrumented residual. Full-vocabulary logits took 87.007223 seconds outside
+that terminal stack and remain a separate material boundary.
+
+The combined cold-plus-warm expert-cache quantization table ranks Q6_K first at
+472.156732 component-seconds, then Q5_K at 226.858603. That table cannot select
+a warm-path Metal kernel: the P1 schema does not retain per-quant deltas by
+stack, and protected shared Q6_K matrices were resident on the warm pass.
+Feature 018 therefore remains `018-direct-quantized-metal-runtime` with no first
+kernel selected.
+
+Warm expert storage is only 9.655801 seconds versus 203.329484 seconds of expert
+decode, so prefetch and storage complexity remain deferred. The evidence does
+not justify another full-model run in this sprint. The next major runtime work
+belongs to the independently developed Feature 017 Rust exact-decode and
+orchestration boundary; this study changes neither that checkout nor its scope.
+Further Python work, residency, MLX-native changes, and future direct-quantized
+Metal should be selected only from the next post-transition profile.
+
+Deterministic derived evidence is
+[`raw/post-f016-p1-trunk-profile-0001.json`](raw/post-f016-p1-trunk-profile-0001.json),
+[`tables/post-f016-p1-trunk-profile-0001.md`](tables/post-f016-p1-trunk-profile-0001.md),
+[`raw/post-f016-p1-trunk-q6-expert-hotspots-0001.json`](raw/post-f016-p1-trunk-q6-expert-hotspots-0001.json),
+and
+[`tables/post-f016-p1-trunk-q6-expert-hotspots-0001.md`](tables/post-f016-p1-trunk-q6-expert-hotspots-0001.md).
+Regenerate or verify it with:
+
+```sh
+python3 scripts/research/analyze_glm52_trunk_p1.py
+python3 scripts/research/analyze_glm52_trunk_p1.py --check
+python3 -m unittest scripts/research/tests/test_glm52_trunk_p1_record.py
+```

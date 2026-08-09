@@ -1,0 +1,277 @@
+{
+  "actual_status": "passed",
+  "cache": {
+    "bytes_resident": 11475615744,
+    "decoded_bytes_avoided": 11475615744,
+    "decoded_cache_hits": 228,
+    "decoded_cache_misses": 3876,
+    "resident_entries": 228,
+    "storage_bytes_avoided": 2105769984
+  },
+  "correctness": {
+    "admission_rejections": 0,
+    "cache_evictions": 0,
+    "cpu_fallbacks": 0,
+    "dense_read_mode": "whole_matrix_numpy_q5_q8_q6_head_numpy",
+    "expert_decoder_mode": "numpy_vectorized",
+    "generated_token_ids": [
+      9703,
+      21615
+    ],
+    "matches_golden_prefix": true,
+    "mlx_device": "Device(gpu, 0)"
+  },
+  "decision": {
+    "another_full_model_run_required_in_this_sprint": false,
+    "feature_018_first_kernel_selected": false,
+    "feature_018_reason": "the new exact P1 lacks warm per-quant deltas; combined cold-plus-warm Q6_K rank must not be treated as a warm kernel selection",
+    "next_recoverable_boundary": "expert-cache decode dominates the measured warm top-level attribution; full-vocabulary logits and the uninstrumented residual are also material",
+    "storage_prefetch_priority": "deferred; warm expert storage was 9.656 seconds versus 203.329 seconds expert dequant and 316.759 seconds stack wall"
+  },
+  "expert_quantization_ranking": {
+    "quantified_component_seconds": 1191.8361322079145,
+    "ranking": [
+      {
+        "contiguous_buffer_seconds": 19.427031339146197,
+        "dequant_seconds": 447.4819193752046,
+        "fraction_of_quantified_component_time": 0.39615910182683767,
+        "matrix_load_count": 77,
+        "measured_component_seconds": 472.15673166025954,
+        "mlx_matrix_build_seconds": 0.6018799150042469,
+        "mlx_matvec_count": 154,
+        "mlx_matvec_seconds": 1.4571580460033147,
+        "quantization": "Q6_K",
+        "rank": 1,
+        "storage_bytes_read": 794787840,
+        "storage_read_count": 464896,
+        "storage_read_seconds": 3.1887429849011824
+      },
+      {
+        "contiguous_buffer_seconds": 37.24939682739205,
+        "dequant_seconds": 184.63947361760074,
+        "fraction_of_quantified_component_time": 0.19034378741048122,
+        "matrix_load_count": 150,
+        "measured_component_seconds": 226.85860337711347,
+        "mlx_matrix_build_seconds": 1.16062998099369,
+        "mlx_matvec_count": 300,
+        "mlx_matvec_seconds": 2.4322042850399157,
+        "quantization": "Q5_K",
+        "rank": 2,
+        "storage_bytes_read": 1297612800,
+        "storage_read_count": 307200,
+        "storage_read_seconds": 1.3768986660870723
+      },
+      {
+        "contiguous_buffer_seconds": 0.05094684440700803,
+        "dequant_seconds": 107.78291432600236,
+        "fraction_of_quantified_component_time": 0.11454281062646336,
+        "matrix_load_count": 2368,
+        "measured_component_seconds": 136.5162603892677,
+        "mlx_matrix_build_seconds": 11.62023146887077,
+        "mlx_matvec_count": 2368,
+        "mlx_matvec_seconds": 7.462467183038825,
+        "quantization": "IQ2_XXS",
+        "rank": 3,
+        "storage_bytes_read": 7681867776,
+        "storage_read_count": 2368,
+        "storage_read_seconds": 9.59970056694874
+      },
+      {
+        "contiguous_buffer_seconds": 0.024734890161198564,
+        "dequant_seconds": 86.47895605309168,
+        "fraction_of_quantified_component_time": 0.08706182872158115,
+        "matrix_load_count": 1136,
+        "measured_component_seconds": 103.7634332064772,
+        "mlx_matrix_build_seconds": 5.859060819260776,
+        "mlx_matvec_count": 1136,
+        "mlx_matvec_seconds": 4.6762950678530615,
+        "quantization": "IQ3_XXS",
+        "rank": 4,
+        "storage_bytes_read": 5471993856,
+        "storage_read_count": 1136,
+        "storage_read_seconds": 6.724386376110488
+      },
+      {
+        "contiguous_buffer_seconds": 8.029420209655655,
+        "dequant_seconds": 63.37303695364972,
+        "fraction_of_quantified_component_time": 0.060412786978372934,
+        "matrix_load_count": 32,
+        "measured_component_seconds": 72.00214236820466,
+        "mlx_matrix_build_seconds": 0.2447671639965847,
+        "mlx_matvec_count": 32,
+        "mlx_matvec_seconds": 0.2812407510209596,
+        "quantization": "Q2_K",
+        "rank": 5,
+        "storage_bytes_read": 132120576,
+        "storage_read_count": 65536,
+        "storage_read_seconds": 0.07367728988174349
+      },
+      {
+        "contiguous_buffer_seconds": 15.972701877602958,
+        "dequant_seconds": 52.6939142888732,
+        "fraction_of_quantified_component_time": 0.058631413626507554,
+        "matrix_load_count": 64,
+        "measured_component_seconds": 69.87903724249918,
+        "mlx_matrix_build_seconds": 0.4953859560046112,
+        "mlx_matvec_count": 64,
+        "mlx_matvec_seconds": 0.2491229549923446,
+        "quantization": "IQ4_XS",
+        "rank": 6,
+        "storage_bytes_read": 427819008,
+        "storage_read_count": 393216,
+        "storage_read_seconds": 0.46791216502606403
+      },
+      {
+        "contiguous_buffer_seconds": 7.9472561882430455,
+        "dequant_seconds": 59.50131002551643,
+        "fraction_of_quantified_component_time": 0.057634587226182955,
+        "matrix_load_count": 32,
+        "measured_component_seconds": 68.69098352105357,
+        "mlx_matrix_build_seconds": 0.2208219989843201,
+        "mlx_matvec_count": 32,
+        "mlx_matvec_seconds": 0.28401208197465166,
+        "quantization": "IQ2_S",
+        "rank": 7,
+        "storage_bytes_read": 128974848,
+        "storage_read_count": 65536,
+        "storage_read_seconds": 0.7375832263351185
+      },
+      {
+        "contiguous_buffer_seconds": 4.057543973336578,
+        "dequant_seconds": 36.359745924768504,
+        "fraction_of_quantified_component_time": 0.03421205108829234,
+        "matrix_load_count": 16,
+        "measured_component_seconds": 40.77515864396992,
+        "mlx_matrix_build_seconds": 0.13151195702084806,
+        "mlx_matvec_count": 16,
+        "mlx_matvec_seconds": 0.14235225005540997,
+        "quantization": "Q3_K",
+        "rank": 8,
+        "storage_bytes_read": 86507520,
+        "storage_read_count": 98304,
+        "storage_read_seconds": 0.08400453878857661
+      },
+      {
+        "contiguous_buffer_seconds": 0.24817325988260563,
+        "dequant_seconds": 0.890977296498022,
+        "fraction_of_quantified_component_time": 0.0010016324952808215,
+        "matrix_load_count": 1,
+        "measured_component_seconds": 1.1937817990692565,
+        "mlx_matrix_build_seconds": 0.004909666997264139,
+        "mlx_matvec_count": 2,
+        "mlx_matvec_seconds": 0.030393708002520725,
+        "quantization": "Q8_0",
+        "rank": 9,
+        "storage_bytes_read": 13369344,
+        "storage_read_count": 6144,
+        "storage_read_seconds": 0.01932786768884398
+      }
+    ],
+    "scope": "cold plus warm expert-cache path combined; not a warm-only format ranking",
+    "source_record": "docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json"
+  },
+  "feature_id": "post-f016-trunk-optimization",
+  "historical_cross_commit_observations": {
+    "iq3_vectorized_expert_p1": {
+      "cross_commit_reduction_vs_current_fraction": 0.6888701162017916,
+      "record": "docs/research/glm52/raw/f016-inference-p1-iq3-0001.json",
+      "seconds": 4582.511032082999
+    },
+    "legacy_p1": {
+      "cross_commit_reduction_vs_current_fraction": 0.9058686167355408,
+      "record": "docs/research/glm52/raw/f016-inference-p1-token1.json",
+      "seconds": 15146.448245750013
+    },
+    "research_c11": {
+      "cross_commit_reduction_vs_current_fraction": 0.9707421413095395,
+      "record": "docs/research/glm52/raw/f016-c11-generation-0001.json",
+      "seconds": 48730.706508636475
+    },
+    "vectorized_expert_p1": {
+      "cross_commit_reduction_vs_current_fraction": 0.7734743013887817,
+      "record": "docs/research/glm52/raw/f016-inference-p1-vectorized-0001.json",
+      "seconds": 6294.014911584001
+    }
+  },
+  "limitations": [
+    "One clean-process P1 on one M1 Ultra; no timing population or general tokens/second claim.",
+    "Historical reductions are cross-commit observations, not controlled same-binary comparisons.",
+    "The final warm stack advances model state after token 21615 was selected; it is not user-visible selection latency.",
+    "Dense/trunk components were not captured in the P1 schema; stack remainder is uninstrumented and is not labeled trunk.",
+    "Expert per-quant metrics cover cold and warm combined, so they do not select a warm-path Metal kernel."
+  ],
+  "schema": "pulsarmlx.research.glm52-post-trunk-p1-profile",
+  "schema_version": "1.0.0",
+  "source": {
+    "record": "docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json",
+    "sha256": "35ce5f6dac7b2fe6229d53300cebcc341eab57bb50d1450f6385d8e1db6b7c47",
+    "source_commit": "9b6ab666c9dc89eda9b2ddf284a9a2767516d87e",
+    "source_dirty": false
+  },
+  "timing": {
+    "cold_prompt_stack": {
+      "cpu_fallbacks": 0,
+      "decoded_bytes_avoided": 0,
+      "decoded_cache_hits": 0,
+      "decoded_cache_misses": 2052,
+      "expert_cache_components": {
+        "attributed_component_seconds": 943.2203473129484,
+        "contiguous_buffer_seconds": 74.90452710090904,
+        "dequant_seconds": 835.8727638757264,
+        "mlx_matrix_build_seconds": 11.12408854792011,
+        "mlx_matvec_seconds": 8.702534918076708,
+        "storage_read_seconds": 12.616432870316203
+      },
+      "logits_seconds_separate": 0.0,
+      "peak_rss_bytes": 34233237504,
+      "phase": "prefill",
+      "resource_level": "normal",
+      "stack_seconds": 1021.9311351249926,
+      "storage_bytes_avoided": 0,
+      "uninstrumented_residual_seconds": 78.71078781204415
+    },
+    "first_token_selection_component_boundary_seconds": 1108.9383581250004,
+    "first_token_selection_wall_minus_terminal_upper_bound_seconds": 1108.9974541659903,
+    "selection_boundary_runner_remainder_seconds": 0.05909604098997079,
+    "terminal_state_advance_stack_seconds": 316.75867075000133,
+    "total_evidence_wall_seconds": 1425.7561249159917,
+    "warm_generated_token_stack": {
+      "cpu_fallbacks": 0,
+      "decoded_bytes_avoided": 11475615744,
+      "decoded_cache_hits": 228,
+      "decoded_cache_misses": 1824,
+      "expert_cache_components": {
+        "attributed_component_seconds": 248.61578489496605,
+        "contiguous_buffer_seconds": 18.102678308918257,
+        "dequant_seconds": 203.32948398547887,
+        "mlx_matrix_build_seconds": 9.215110379213002,
+        "mlx_matvec_seconds": 8.312711409904296,
+        "storage_read_seconds": 9.655800811451627
+      },
+      "logits_seconds_separate": 87.0072230000078,
+      "peak_rss_bytes": 69699502080,
+      "phase": "decode",
+      "resource_level": "normal",
+      "stack_seconds": 316.75867075000133,
+      "storage_bytes_avoided": 2105769984,
+      "uninstrumented_residual_seconds": 68.14288585503527
+    }
+  },
+  "warm_top_level_ranking": [
+    {
+      "component": "expert_cache_attributed",
+      "rank": 1,
+      "seconds": 248.61578489496605
+    },
+    {
+      "component": "full_vocabulary_logits_separate",
+      "rank": 2,
+      "seconds": 87.0072230000078
+    },
+    {
+      "component": "uninstrumented_residual",
+      "rank": 3,
+      "seconds": 68.14288585503527
+    }
+  ]
+}

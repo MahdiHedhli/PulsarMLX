@@ -377,6 +377,53 @@ Raw evidence: `docs/research/glm52/raw/f016-inference-golden8-iq3-0001.json`
 and `docs/research/glm52/raw/f016-golden8-derived-profile-0001.json`. Generated
 table: `docs/research/glm52/tables/f016-golden8-derived-profile.md`.
 
+### Post-Feature-016 bounded trunk optimization
+
+The isolated M1 Ultra study first changed only read granularity. Whole-matrix
+reads collapsed representative positional-read counts by 6,144x–16,384x while
+keeping scalar decoder arithmetic unchanged, but median boundary walls changed
+between -0.445% and +0.608%. Storage calls were not the material warm cost.
+
+Inventory-driven exact-bit NumPy decoder qualification then measured Q5_K at
+31.25x and Q8_0 at 75.76x decode-only. Q6_K matched scalar f32 bits for every
+exercised trunk tensor and measured 42.98x on the bounded layer-8 Q-A decode.
+Integrated complete MLA boundaries remained exact: layer-3 Q5_K/Q8_0 work fell
+to 0.769746 s after head-slab vectorization, and layer-8 MLA fell from
+55.137022 s to 1.762948 s after Q6_K integration. One complete layer-8 median
+fell from 97.071291 s to 44.266072 s while retaining exact output and routes.
+
+At clean source `9b6ab666`, the admitted exact P1 reproduced `[9703,21615]` on
+MLX GPU with zero CPU fallbacks, zero evictions, and normal resource state:
+
+| P1 boundary | Seconds |
+| --- | ---: |
+| Total evidence wall | 1425.756125 |
+| Cold prompt stack | 1021.931135 |
+| Full-vocabulary logits | 87.007223 |
+| First-token selection component boundary | 1108.938358 |
+| Wall-minus-terminal selection upper bound | 1108.997454 |
+| Retained terminal state-advance stack | 316.758671 |
+
+The terminal stack occurs after token `21615` has already been selected and is
+not user-visible first-token selection latency. The warm stack recorded 228
+shared-cache hits, 2,105,769,984 compressed bytes avoided, 11,475,615,744
+decoded bytes avoided, and 69,699,502,080 bytes maximum retained peak RSS.
+
+Warm expert-cache attribution totaled 248.615785 seconds: 9.655801 storage,
+203.329484 decode, 18.102678 buffer, 9.215110 MLX build/evaluation, and 8.312711
+matvec. Another 68.142886 seconds remains explicitly uninstrumented, and logits
+are separate. Storage prefetch remains deferred. The combined per-quant table
+ranks Q6_K first, but it combines cold and warm; it cannot select a warm-path
+Metal kernel because shared Q6_K matrices were resident and the P1 schema lacks
+per-stack quant deltas. Feature 018 therefore remains profile-neutral.
+
+The P1 is one clean-process correctness run, not a timing population. Its lower
+wall than legacy and earlier vectorized P1 observations is a cross-commit
+observation, not a controlled same-binary comparison or a tokens-per-second
+claim. Raw and derived evidence:
+`docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json` and
+`docs/research/glm52/raw/post-f016-p1-trunk-profile-0001.json`.
+
 ## Limitations
 
 - Python research runtime, not a production server

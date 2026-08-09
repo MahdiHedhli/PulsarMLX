@@ -140,6 +140,19 @@
   and [generated table](tables/post-f016-trunk-cleanup-0001.md) — cleanup-only,
   per-matvec, and batched-cleanup populations with exact output and resource
   gates on one retained decoded matrix
+- [Post-Feature-016 exact trunk P1](raw/post-f016-inference-p1-trunk-q6-0001.json)
+  — clean-source MLX GPU execution of both complete 79-layer stacks, exact
+  `[9703,21615]`, complete routing shape, shared-cache reuse, zero fallback,
+  no eviction, and normal resource state
+- [Post-Feature-016 P1 derived profile](raw/post-f016-p1-trunk-profile-0001.json)
+  and [generated table](tables/post-f016-p1-trunk-profile-0001.md) — separates
+  first-token selection from retained terminal state advance, records warm
+  component attribution and cross-commit observations, and preserves the
+  profile-neutral Feature 018 decision
+- [Post-Feature-016 combined P1 expert ranking](raw/post-f016-p1-trunk-q6-expert-hotspots-0001.json)
+  and [generated table](tables/post-f016-p1-trunk-q6-expert-hotspots-0001.md)
+  — cold-plus-warm expert-cache components only; explicitly not a warm-only
+  quantization or Metal-kernel ranking
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
