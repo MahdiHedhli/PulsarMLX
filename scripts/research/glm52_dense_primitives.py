@@ -8,24 +8,85 @@ from __future__ import annotations
 
 import math
 import struct
+import time
 from contextlib import contextmanager
 from contextvars import ContextVar
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
 from typing import Any, Iterator
 
-from glm52_tensor_store import Glm52TensorStore, TensorLoc
-from iq2_xxs_dequant import dequantize_row_iq2_xxs, QK_K, BLOCK_BYTES as IQ2_BLOCK
+from glm52_tensor_store import Glm52TensorStore, TensorLoc, nbytes_for_tensor
+from iq2_xxs_dequant import dequantize_row_iq2_xxs
 from ggml_kquants import (
     dequantize_row_q4_k,
     dequantize_row_q5_k,
     dequantize_row_q6_k,
-    Q4_K_BLOCK,
-    Q5_K_BLOCK,
-    Q6_K_BLOCK,
 )
 
 EPS_DEFAULT = 1e-5  # override from KV when present
 _REQUIRE_MLX: ContextVar[bool] = ContextVar("glm52_require_mlx", default=False)
+_DENSE_READ_MODE: ContextVar[str] = ContextVar(
+    "glm52_dense_read_mode", default="row_reference"
+)
+
+
+@dataclass(frozen=True)
+class DenseOperationMetrics:
+    tensor: str
+    quantization: str
+    rows: int
+    cols: int
+    encoded_bytes: int
+    storage_read_count: int
+    storage_read_seconds: float
+    dequant_seconds: float
+    contiguous_buffer_seconds: float
+    mlx_matrix_build_seconds: float
+    mlx_matvec_seconds: float
+    total_seconds: float
+    read_mode: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ScalarMatrixLoadMetrics:
+    encoded_bytes: int
+    storage_read_count: int
+    storage_read_seconds: float
+    dequant_seconds: float
+    contiguous_buffer_seconds: float
+    read_mode: str
+
+
+@dataclass
+class DenseMetricsCapture:
+    operations: list[DenseOperationMetrics] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        fields = (
+            "encoded_bytes",
+            "storage_read_count",
+            "storage_read_seconds",
+            "dequant_seconds",
+            "contiguous_buffer_seconds",
+            "mlx_matrix_build_seconds",
+            "mlx_matvec_seconds",
+            "total_seconds",
+        )
+        return {
+            "operation_count": len(self.operations),
+            "totals": {
+                name: sum(getattr(operation, name) for operation in self.operations)
+                for name in fields
+            },
+            "operations": [operation.to_dict() for operation in self.operations],
+        }
+
+
+_DENSE_METRICS: ContextVar[DenseMetricsCapture | None] = ContextVar(
+    "glm52_dense_metrics", default=None
+)
 
 
 def mlx_backend_required() -> bool:
@@ -41,6 +102,31 @@ def require_mlx_backend() -> Iterator[None]:
         yield
     finally:
         _REQUIRE_MLX.reset(token)
+
+
+@contextmanager
+def dense_read_mode(mode: str) -> Iterator[None]:
+    """Select the experimental dense matrix read strategy for this context."""
+
+    if mode not in {"row_reference", "whole_matrix_scalar"}:
+        raise ValueError(f"unsupported dense read mode {mode}")
+    token = _DENSE_READ_MODE.set(mode)
+    try:
+        yield
+    finally:
+        _DENSE_READ_MODE.reset(token)
+
+
+@contextmanager
+def capture_dense_metrics() -> Iterator[DenseMetricsCapture]:
+    """Capture bounded per-matrix timings without changing execution mode."""
+
+    capture = DenseMetricsCapture()
+    token = _DENSE_METRICS.set(capture)
+    try:
+        yield capture
+    finally:
+        _DENSE_METRICS.reset(token)
 
 
 def rms_norm(x: list[float], w: list[float], eps: float = EPS_DEFAULT) -> list[float]:
@@ -69,37 +155,30 @@ def dequant_row(store: Glm52TensorStore, loc: TensorLoc, row: int) -> list[float
     cols, rows = int(loc.dims[0]), int(loc.dims[1])
     if row < 0 or row >= rows:
         raise IndexError(row)
-    if loc.type_id == 0:  # F32
-        row_b = cols * 4
-        raw = store.pread(loc.name, row * row_b, row_b)
+    row_b = nbytes_for_tensor(loc.type_id, cols)
+    raw = store.pread(loc.name, row * row_b, row_b)
+    if len(raw) != row_b:
+        raise OSError(f"{loc.name}: truncated row {row}")
+    return _dequant_row_bytes(loc, raw, cols)
+
+
+def _dequant_row_bytes(loc: TensorLoc, raw: bytes, cols: int) -> list[float]:
+    """Apply the existing scalar row decoder to already-read encoded bytes."""
+
+    expected = nbytes_for_tensor(loc.type_id, cols)
+    if len(raw) != expected:
+        raise ValueError(f"{loc.name}: encoded row length {len(raw)} != {expected}")
+    if loc.type_id == 0:
         return list(struct.unpack(f"<{cols}f", raw))
-    if loc.type_id == 8:  # Q8_0
-        row_b = (cols // 32) * 34
-        raw = store.pread(loc.name, row * row_b, row_b)
+    if loc.type_id == 8:
         return _decode_q8_0_row(raw, cols)
-    if loc.type_id == 16:  # IQ2_XXS
-        if cols % QK_K != 0:
-            raise ValueError(f"IQ2_XXS cols {cols} not multiple of 256")
-        row_b = (cols // QK_K) * IQ2_BLOCK
-        raw = store.pread(loc.name, row * row_b, row_b)
+    if loc.type_id == 16:
         return dequantize_row_iq2_xxs(raw, cols)
-    if loc.type_id == 12:  # Q4_K
-        if cols % QK_K != 0:
-            raise ValueError(f"Q4_K cols {cols}")
-        row_b = (cols // QK_K) * Q4_K_BLOCK
-        raw = store.pread(loc.name, row * row_b, row_b)
+    if loc.type_id == 12:
         return dequantize_row_q4_k(raw, cols)
-    if loc.type_id == 13:  # Q5_K
-        if cols % QK_K != 0:
-            raise ValueError(f"Q5_K cols {cols}")
-        row_b = (cols // QK_K) * Q5_K_BLOCK
-        raw = store.pread(loc.name, row * row_b, row_b)
+    if loc.type_id == 13:
         return dequantize_row_q5_k(raw, cols)
-    if loc.type_id == 14:  # Q6_K
-        if cols % QK_K != 0:
-            raise ValueError(f"Q6_K cols {cols}")
-        row_b = (cols // QK_K) * Q6_K_BLOCK
-        raw = store.pread(loc.name, row * row_b, row_b)
+    if loc.type_id == 14:
         return dequantize_row_q6_k(raw, cols)
     raise TypeError(f"unsupported type {loc.type_name} for {loc.name}")
 
@@ -153,15 +232,110 @@ def _matvec_mlx(
 ) -> list[float]:
     import mlx.core as mx
 
-    # bulk-dequant rows into a flat row-major [rows, cols] buffer
-    flat: list[float] = []
-    for r in range(rows):
-        flat.extend(dequant_row(store, loc, r))
+    total_start = time.perf_counter()
+    flat, load = _load_scalar_dense_matrix(store, loc, cols, rows, _DENSE_READ_MODE.get())
+    build_start = time.perf_counter()
     w = mx.array(flat, dtype=mx.float32).reshape((rows, cols))
+    mx.eval(w)
+    matrix_build_seconds = time.perf_counter() - build_start
+    matvec_start = time.perf_counter()
     xv = mx.array(x, dtype=mx.float32)
     y = w @ xv
     mx.eval(y)
-    return y.tolist()
+    result = y.tolist()
+    mlx_matvec_seconds = time.perf_counter() - matvec_start
+    metrics = DenseOperationMetrics(
+        tensor=loc.name,
+        quantization=loc.type_name,
+        rows=rows,
+        cols=cols,
+        encoded_bytes=load.encoded_bytes,
+        storage_read_count=load.storage_read_count,
+        storage_read_seconds=load.storage_read_seconds,
+        dequant_seconds=load.dequant_seconds,
+        contiguous_buffer_seconds=load.contiguous_buffer_seconds,
+        mlx_matrix_build_seconds=matrix_build_seconds,
+        mlx_matvec_seconds=mlx_matvec_seconds,
+        total_seconds=time.perf_counter() - total_start,
+        read_mode=load.read_mode,
+    )
+    capture = _DENSE_METRICS.get()
+    if capture is not None:
+        capture.operations.append(metrics)
+    return result
+
+
+def _load_scalar_dense_matrix(
+    store: Glm52TensorStore,
+    loc: TensorLoc,
+    cols: int,
+    rows: int,
+    read_mode: str,
+) -> tuple[list[float], ScalarMatrixLoadMetrics]:
+    """Read and scalar-decode one complete matrix with exact byte accounting."""
+
+    if read_mode not in {"row_reference", "whole_matrix_scalar"}:
+        raise ValueError(f"unsupported dense read mode {read_mode}")
+    row_bytes = nbytes_for_tensor(loc.type_id, cols)
+    encoded_bytes = row_bytes * rows
+    if loc.n_bytes != encoded_bytes:
+        raise ValueError(f"{loc.name}: encoded matrix size mismatch")
+    storage_read_seconds = 0.0
+    dequant_seconds = 0.0
+    contiguous_buffer_seconds = 0.0
+    storage_read_count = 0
+    complete_raw: bytes | None = None
+    if read_mode == "whole_matrix_scalar":
+        read_start = time.perf_counter()
+        complete_raw = store.pread(loc.name, 0, encoded_bytes)
+        storage_read_seconds = time.perf_counter() - read_start
+        storage_read_count = 1
+        if len(complete_raw) != encoded_bytes:
+            raise OSError(f"{loc.name}: truncated complete matrix")
+
+    # Decode rows in the same order with the same scalar decoder as the reference.
+    flat: list[float] = []
+    for r in range(rows):
+        if complete_raw is None:
+            read_start = time.perf_counter()
+            raw = store.pread(loc.name, r * row_bytes, row_bytes)
+            storage_read_seconds += time.perf_counter() - read_start
+            storage_read_count += 1
+            if len(raw) != row_bytes:
+                raise OSError(f"{loc.name}: truncated row {r}")
+        else:
+            start = r * row_bytes
+            raw = complete_raw[start : start + row_bytes]
+        decode_start = time.perf_counter()
+        decoded = _dequant_row_bytes(loc, raw, cols)
+        dequant_seconds += time.perf_counter() - decode_start
+        buffer_start = time.perf_counter()
+        flat.extend(decoded)
+        contiguous_buffer_seconds += time.perf_counter() - buffer_start
+    return flat, ScalarMatrixLoadMetrics(
+        encoded_bytes=encoded_bytes,
+        storage_read_count=storage_read_count,
+        storage_read_seconds=storage_read_seconds,
+        dequant_seconds=dequant_seconds,
+        contiguous_buffer_seconds=contiguous_buffer_seconds,
+        read_mode=read_mode,
+    )
+
+
+def matvec_weight_profiled(
+    store: Glm52TensorStore,
+    name: str,
+    x: list[float],
+    *,
+    read_mode: str,
+) -> tuple[list[float], DenseOperationMetrics]:
+    """Execute one MLX dense matvec and return its exact bounded measurements."""
+
+    with dense_read_mode(read_mode), capture_dense_metrics() as capture:
+        result = matvec_weight(store, name, x, backend="mlx")
+    if len(capture.operations) != 1:
+        raise RuntimeError(f"{name}: expected exactly one captured dense operation")
+    return result, capture.operations[0]
 
 
 def embed_token(store: Glm52TensorStore, token_id: int) -> list[float]:
