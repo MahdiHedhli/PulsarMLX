@@ -74,7 +74,7 @@ def _activation(store: Glm52TensorStore, projection: str) -> tuple[list[float], 
         swiglu = [_silu(left) * right for left, right in zip(gate, up, strict=True)]
         return swiglu, (
             "scalar_reference_swiglu(blk.3.ffn_gate_exps.weight, "
-            "blk.3.ffn_up_exps.weight, expert=15, token=9703)"
+            "blk.3.ffn_up_exps.weight, expert 15, token 9703)"
         )
     raise ValueError(f"unsupported matrix projection {projection}")
 
