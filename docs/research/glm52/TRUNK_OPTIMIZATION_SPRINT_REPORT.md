@@ -66,3 +66,21 @@ and
 This qualifies decoder integration only. The next gate measures one complete
 Q5_K read/decode/MLX-build/matvec boundary and representative MLA execution;
 it does not yet justify P1.
+
+## Phase B2: Q5_K dense integration
+
+**Result: exact and material at the MLA boundary.**
+
+At clean source `f6446a07d62118672d6d593d536f834786ad2b54`, both modes used one
+bounded matrix read. The candidate changed only Q5_K decode; non-Q5 formats
+remained scalar. One complete real Q5_K matrix improved from an 11.080288 s
+median to 0.547885 s (20.22x), with exact MLX output bits.
+
+Complete layer-3 MLA vectorized its two captured Q5_K projections and retained
+two non-Q5 scalar projections. Its median changed from 17.983298 s to 5.317590 s
+(3.38x), again with exact output bits. The generated component table is
+[`tables/post-f016-trunk-q5-integration-0001.md`](tables/post-f016-trunk-q5-integration-0001.md).
+
+The remaining 3.091203 s median captured decode and 1.577387 s uninstrumented
+residual justify measuring the next inventory-supported format before a P1
+decision. No complete-layer or token claim is made from this MLA boundary.
