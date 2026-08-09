@@ -56,3 +56,43 @@ exact-bit decoder work, but it does not block the two-token correctness/reuse
 gate because the admitted warm shared matrices are already resident.
 
 Raw: `docs/research/glm52/raw/f016-p1-iq3-quant-hotspot-ranking-0001.json`
+
+## Golden-eight cold/warm profile
+
+The final profile is generated from the committed golden-eight record plus a
+public-safe witness for eight passively archived, SHA-deduplicated snapshots.
+The watcher began after the cold and first warm stacks, so it supports seven
+one-stack warm deltas (completed stack counts 2→3 through 8→9), not a cold
+per-quant table. Every cumulative interval was monotonic; no reset was hidden.
+
+The cold prompt stack took 2569.174 seconds. Its bounded component ranking was:
+
+1. uninstrumented trunk residual: 1636.636 seconds (63.70%)
+2. expert-cache dequantization: 836.066 seconds
+3. expert-cache contiguous buffers: 74.588 seconds
+4. expert-cache MLX matrix build: 11.018 seconds
+5. expert-cache MLX matvec: 8.909 seconds
+6. expert-cache storage: 1.957 seconds
+
+The eight warm stacks had a 1921.882-second median. Their mean bounded ranking
+was 1670.730 seconds of uninstrumented trunk residual, 206.003 seconds of
+expert-cache dequantization, 77.778 seconds of separately recorded logits,
+18.173 seconds of expert-cache contiguous buffers, 9.615 seconds of matrix
+build, 7.972 seconds of matvec, and 3.872 seconds of storage. The median residual
+fraction was 87.18%; it is not assigned to any quantization.
+
+The warm quantization ranking is **EXPERT-CACHE PATH ONLY**, not whole-token
+cost: IQ2_XXS 69.672 mean seconds, IQ3_XXS 50.304, Q2_K 36.153, IQ4_XS 34.654,
+IQ2_S 33.964, Q3_K 20.391, Q5_K 0.813, Q6_K 0.378, and Q8_0 0.014. This reverses
+the earlier inference that Q6_K dominated the complete warm token: that claim
+was valid only for the earlier instrumented P1 expert path.
+
+Storage averaged 0.20% of warm stack wall, so Feature 016 defers prefetch rather
+than adding an unmeasured mechanism. The residual is too large to select the
+first direct-quantized kernel by expert format alone. Provisional Feature 018
+therefore remains profile-neutral pending M2 Max fixtures for MLA/attention
+projections, dense pre/post-attention transforms, embeddings if material,
+final norm/output projection, and any Q6_K tensors in those trunk paths.
+
+Raw: `docs/research/glm52/raw/f016-golden8-derived-profile-0001.json`; generated
+table: `docs/research/glm52/tables/f016-golden8-derived-profile.md`.

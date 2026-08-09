@@ -74,6 +74,10 @@
   — exact full sequence, nine complete 79-layer stacks, 684 complete MoE route
   records, 1,824 shared-cache hits, resource checkpoints, and zero-fallback
   MLX GPU identity
+- [Golden-eight derived profile](raw/f016-golden8-derived-profile-0001.json)
+  and [generated table](tables/f016-golden8-derived-profile.md) — total/cold/warm
+  observations, passive-watcher monotonicity witness, seven expert-cache-only
+  per-quant deltas, trunk residual, and prefetch/Feature-018 decisions
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
@@ -87,6 +91,8 @@
 
 - [RESULTS.md](RESULTS.md)
 - `tables/` / `figures/` generated from raw only
+- Deterministic profile check:
+  `python3 scripts/research/analyze_glm52_golden8.py --check`
 
 ### Claims
 

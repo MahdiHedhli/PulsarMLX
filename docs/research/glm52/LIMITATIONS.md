@@ -14,6 +14,9 @@
 5. The Python/MLX research streaming path is not an optimized production server.
 6. OS page cache was not controlled, so storage observations are not controlled
    process-cold storage measurements.
+7. The passive watcher began after the cold and first warm stacks. It preserved
+   eight complete snapshots and seven valid warm intervals, but cannot provide
+   cold per-quant deltas; no missing earlier snapshot was reconstructed.
 
 ## Policy
 

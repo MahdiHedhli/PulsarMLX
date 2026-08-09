@@ -2,7 +2,8 @@
 
 **Started**: 2026-08-07  
 **Golden tag**: `v0.3.0-glm52-e2e-research` @ `07dc9fc` (tag object; tip may advance)
-**Current status**: frozen optimized golden-eight gate passed; closeout active
+**Current status**: frozen optimized golden-eight and derived hotspot profile
+passed; design and final validation closeout active
 
 ## Completed
 
@@ -22,6 +23,7 @@
 | 9 | Exact-bit IQ2_XXS and IQ3_XXS vectorization through matrix, expert, MoE, layer, and P1 | `968cfac`…`d5e1cf3` |
 | 10 | P2 exact two-token correctness and useful shared reuse | `5bc6fe6` |
 | 11 | Frozen golden-eight exact sequence, nine complete stacks, and 1,824 shared hits | source `1a2ca76` |
+| 12 | Golden-eight cold/warm profile, monotonic snapshot deltas, trunk residual, and evidence-backed prefetch deferral | derived from source `1a2ca76` |
 
 ## Recovered P1 evidence
 
@@ -37,12 +39,10 @@
 
 ## Next (autonomous closeout)
 
-1. Derive cold/warm timing, expert-cache quant deltas, and trunk residuals from
-   the committed golden-eight record and passively retained snapshots.
-2. Regenerate the hotspot ranking without treating expert-only metrics as the
-   complete token path.
-3. Resolve prefetch/storage by measured benefit or evidence-backed deferral.
-4. Commit the Rust exact-decode boundary design and complete Feature 016 gates.
+1. Commit the Rust exact-decode boundary design without beginning Feature 017.
+2. Publish the final Feature 016 report and run the complete closeout gates.
+3. Keep Feature 018 profile-neutral until representative M2 Max trunk fixtures
+   close the 87% warm residual.
 
 ## Cache diagnosis result
 

@@ -18,7 +18,7 @@
 | 5 | Correctness ladder C01–C11 | Done |
 | 6 | Full execution evidence | Done |
 | 7 | Research publication + `v0.3.0` tag | Done |
-| 8 | Inference optimization | Active closeout; frozen golden eight passed, derived analysis and design remain |
+| 8 | Inference optimization | Active closeout; golden eight and derived profile passed, design remains |
 
 ## Technical approach
 
@@ -61,7 +61,11 @@
    fallbacks, and normal retained resource states.
 10. Derive cold/warm observations and expert-cache-only quant deltas, quantify
     the uninstrumented trunk residual, resolve prefetch by evidence, then
-    publish the final optimization report and Rust boundary design.
+    publish the final optimization report and Rust boundary design. **Derived
+    profile passed**: eight snapshots, seven monotonic warm intervals, no
+    counter resets, 87.18% median warm trunk residual, and 0.20% mean warm
+    storage share. Prefetch is therefore deferred and Feature 018 remains
+    profile-neutral pending trunk fixture measurements.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).

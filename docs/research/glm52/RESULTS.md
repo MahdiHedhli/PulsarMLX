@@ -1,6 +1,7 @@
 # GLM-5.2 Results
 
-**Status**: golden-eight optimization gate passed; closeout analysis active
+**Status**: golden-eight optimization gate and derived hotspot analysis passed;
+Feature 016 design closeout active
 **Protocol**: `EXPERIMENT_PROTOCOL.md` (frozen)
 
 ## Checkpoint
@@ -76,6 +77,9 @@
 | P1 mixed-quant ranking | **passed** — 9 formats exercised; IQ3_XXS accounts for 1791.414 s / 61.78% of the quantified component sum |
 | P2 two-token correctness/reuse | **passed** — exact `[9703,21615,220]`; 6552.475 s; 456 shared hits; zero fallback |
 | frozen golden-eight correctness/reuse | **passed** — exact `[9703,21615,220,16,13,16,16,15,15]`; 18522.659 s; 1824 shared hits; zero fallback |
+| golden-eight warm stack population | 8 stacks; median 1921.882 s; mean 1916.364 s; sample standard deviation 12.887 s; range 1892.662–1928.536 s |
+| warm expert-cache storage | mean 3.872 s, 0.20% of mean stack wall; prefetch/storage implementation deferred |
+| warm uninstrumented trunk residual | median 1675.492 s and median 87.18% of stack wall; material, so expert-only quant metrics cannot select a Metal kernel |
 | steady-state tok/s | unsupported; not inferred from one eight-token correctness run |
 
 The IQ3_XXS decoder qualification is decode-only. The separate real down-matrix
@@ -105,3 +109,21 @@ evictions, or admission rejections. Its final generated-token stack advances
 terminal model state after the eighth token has already been selected, so that
 work is not silently counted as user-visible eighth-token latency. This is one
 bounded correctness/reuse run, not a steady-state throughput population.
+
+The deterministic derived profile is committed at
+[`raw/f016-golden8-derived-profile-0001.json`](raw/f016-golden8-derived-profile-0001.json)
+with its generated
+[`table`](tables/f016-golden8-derived-profile.md). A passive external watcher
+preserved eight distinct complete snapshots, beginning only after the first
+generated token; seven consecutive one-stack intervals were valid for
+subtraction and no cumulative counter reset occurred. Earlier overwritten
+snapshots were not reconstructed, so cold per-quant attribution is unavailable.
+
+The warm per-quant table is explicitly **EXPERT-CACHE PATH ONLY**. Across the
+seven observable intervals, IQ2_XXS led that bounded path at 69.672 mean
+component-seconds, followed by IQ3_XXS at 50.304. Q6_K contributed only 0.378
+mean component-seconds because the protected shared matrices were resident.
+Dense trunk operations are outside these counters. Their material residual
+requires representative MLA/attention, dense transform, embedding, final
+norm/output, and Q6_K trunk fixture measurements before the first kernel in
+provisional Feature 018 can be selected.

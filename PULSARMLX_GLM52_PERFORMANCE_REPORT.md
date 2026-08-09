@@ -331,6 +331,52 @@ golden-eight generation, steady-state throughput, or a controlled cold/warm
 population. Later records establish the first two gates separately. Raw evidence:
 `docs/research/glm52/raw/f016-inference-p1-vectorized-0001.json`.
 
+### Frozen golden-eight and derived closeout profile
+
+At clean source `1a2ca76`, the exact frozen sequence
+`[9703,21615,220,16,13,16,16,15,15]` passed across one cold prompt stack and
+eight warm generated-token stacks. The complete evidence wall was 18522.659
+seconds; the recorded time-to-first-token component sum was 2646.650 seconds.
+Warm stack time had median 1921.882 seconds, mean 1916.364 seconds, sample
+standard deviation 12.887 seconds, and range 1892.662–1928.536 seconds. The
+last 1928.536-second stack advances terminal model state after token eight was
+already selected, so it is reported separately from user-visible completion.
+
+The run retained 1,824 shared-cache hits, avoided 16,846,159,872 compressed
+bytes and 91,804,925,952 decoded bytes, and recorded no evictions, admission
+rejections, or CPU fallbacks. All retained resource samples were normal.
+
+A passive watcher preserved eight distinct complete snapshots and observed no
+cumulative-counter reset. Seven one-stack intervals (generated tokens 2–8)
+were valid for subtraction. Earlier overwritten snapshots were not recreated,
+so cold per-quant attribution is unavailable. The warm per-quant ranking is
+**EXPERT-CACHE PATH ONLY**: IQ2_XXS led at 69.672 mean component-seconds and
+IQ3_XXS followed at 50.304; Q6_K contributed only 0.378 because protected
+shared matrices were resident.
+
+Warm expert-cache storage averaged 3.872 seconds, only 0.20% of mean stack
+wall, so prefetch/storage implementation is deferred. By contrast, the warm
+uninstrumented trunk residual had a 1675.492-second median and 87.18% median
+fraction. This prevents selecting the first direct-quantized Metal kernel from
+expert-only quantization counters. Representative M2 Max fixtures must first
+attribute MLA/attention projections, dense transforms, embeddings if material,
+final norm/output projection, and any Q6_K tensors on those paths.
+
+Historical walls below are cross-commit observations with different scopes,
+not a controlled same-binary population and not a tokens-per-second estimate:
+
+| Boundary | Recorded wall seconds | Scope |
+| --- | ---: | --- |
+| Research C11 | ~48730.7 | eight-token research generation baseline |
+| Legacy P1 | 15146.448 | recovered one-token prefix observation |
+| Vectorized P1 | 4582.511 | IQ2_XXS + IQ3_XXS, one-token prefix |
+| P2 | 6552.475 | two-token prefix, three stacks |
+| Golden eight | 18522.659 | exact eight-token continuation, nine stacks |
+
+Raw evidence: `docs/research/glm52/raw/f016-inference-golden8-iq3-0001.json`
+and `docs/research/glm52/raw/f016-golden8-derived-profile-0001.json`. Generated
+table: `docs/research/glm52/tables/f016-golden8-derived-profile.md`.
+
 ## Limitations
 
 - Python research runtime, not a production server
@@ -356,4 +402,5 @@ uv run --frozen python scripts/research/glm52_inference.py --mode inference \
   --n-new 8 --cache-gib 16 --cache-policy decoded_shared_only \
   --decoder-mode numpy_vectorized \
   --out docs/research/glm52/raw/f016-inference-golden8-iq3-0001.json
+python3 scripts/research/analyze_glm52_golden8.py --check
 ```

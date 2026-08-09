@@ -32,7 +32,17 @@ git checkout main
 python -m pytest scripts/research/tests/ -q
 # GLM checkpoint-free suite (when present):
 python -m pytest scripts/research/tests/test_glm52_*.py -q
+
+# Regenerate/check the committed golden-eight derived profile.
+python3 scripts/research/analyze_glm52_golden8.py
+python3 scripts/research/analyze_glm52_golden8.py --check
 ```
+
+The committed profile embeds the public-safe passive-watcher witness needed for
+CI-safe verification. Recreating the watcher archive itself is neither required
+nor possible from a later checkout; no overwritten historical snapshot is
+fabricated. Regeneration from a new run requires passing its external watcher
+summary explicitly as documented by `--help`.
 
 ## Real-model Tier-3
 
