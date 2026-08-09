@@ -4282,3 +4282,20 @@ and Q5_K at 225.687310 seconds. The result identifies IQ3_XXS as the next
 exact-bit decoder candidate; it does not claim IQ3_XXS acceleration or equate
 instrumented component sums with P1 wall time. Cache re-profiling and P2 remain
 incomplete.
+
+## 2026-08-09 — IQ3_XXS exact-bit qualification
+
+The next dominant decoder was implemented behind the existing explicit
+`numpy_vectorized` mode while retaining the scalar Python decoder as the
+oracle. Checkpoint-free randomized-block, signed-zero, malformed-input,
+determinism, and one-read integration tests passed at source `be47a95`.
+
+The clean real-checkpoint qualification then decoded four complete routed
+down-expert matrices from layers 3, 20, 40, and 60 across four distinct shards.
+Every vector output matched the scalar oracle at exact f32 bits with zero
+mismatches and deterministic repeat hashes. For one 12,582,912-weight matrix,
+10 measured samples after three warmups recorded median decode time of
+0.075513 seconds vectorized versus 1.578598 seconds scalar, or 20.90× at the
+decode boundary. The vector allocation observation retained raw RSS and
+`tracemalloc` values. This does not establish a complete routed-expert, layer,
+P1, or P2 speedup; the affected bounded ladder must now be rerun in order.

@@ -30,10 +30,12 @@ Probe: layer 3, token 9703 (P-MIN).
   than global tensor count. IQ3_XXS is first at 1791.414 seconds (61.78% of the
   quantified component sum), followed by Q6_K at 475.308 seconds and Q5_K at
   225.687 seconds.
-- IQ3_XXS is therefore the next decoder candidate. This ranking is not an
-  IQ3_XXS speedup claim; it must pass its own exact-bit qualification first.
-- Current order: qualify and integrate IQ3_XXS, rerun bounded rungs needed to
-  establish benefit, then re-profile shared residency before P2.
+- IQ3_XXS therefore became the next decoder candidate. It subsequently passed
+  exact-bit qualification for four complete matrices at source `be47a95`; the
+  ranking itself remains only the reason for that selection, not a speedup
+  claim.
+- Current order: rerun the affected bounded rungs to establish end-to-end
+  benefit, then re-profile shared residency before P2.
 
 Raw: `docs/research/glm52/raw/f016-hotspot-profile-0001.json` and
 `docs/research/glm52/raw/f016-p1-quant-hotspot-ranking-0001.json`

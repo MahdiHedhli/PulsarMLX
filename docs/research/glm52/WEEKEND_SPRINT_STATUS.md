@@ -33,11 +33,10 @@
 
 ## Next (autonomous continuation)
 
-1. Qualify a whole-matrix NumPy IQ2_XXS decoder against exact scalar f32 bits
-2. Integrate one-read/one-decode matrix execution behind explicit decoder modes
-3. Run the bounded ladder through a P1 full stack and re-profile hotspots
-4. Re-evaluate shared-cache value, then retry P2
-5. Run the full eight-token golden only after P2 passes correctness and reuse
+1. Rerun the affected bounded ladder with qualified IQ2_XXS and IQ3_XXS
+2. Run a faster P1 full stack and regenerate the measured hotspot ranking
+3. Re-evaluate shared-cache value, then retry P2
+4. Run the full eight-token golden only after P2 passes correctness and reuse
 
 ## Cache diagnosis result
 

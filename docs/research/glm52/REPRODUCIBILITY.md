@@ -52,8 +52,11 @@ export PULSARMLX_GLM_GGUF=/path/to/GLM-5.2-UD-IQ2_XXS
 uv sync --frozen
 uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py \
   --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json
+
+uv run --frozen python scripts/research/qualify_iq3_xxs_numpy.py \
+  --output docs/research/glm52/raw/f016-iq3-xxs-numpy-qualification-0001.json
 python3 -m unittest discover -s scripts/research/tests \
-  -p 'test_iq2_xxs_qualification_record.py' -v
+  -p 'test_iq*_xxs_qualification_record.py' -v
 ```
 
 The command requires a clean worktree and fails closed when the checkpoint

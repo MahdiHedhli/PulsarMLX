@@ -41,8 +41,12 @@
 3. Benchmark decode, real matrix, routed expert, layer-3 MoE, layer, and P1 in
    that order. **Committed through P1** at `32230e1`; the exact golden prefix
    matched with zero CPU fallback.
-4. Inventory mixed quant formats by measured P1 golden-trace time, re-profile
-   cache value, then retry P2. No new long P2 is eligible earlier.
+4. Inventory mixed quant formats by measured P1 golden-trace time. **Committed
+   at `492fcfb`**; IQ3_XXS accounted for 61.78% of the quantified component sum.
+5. Qualify and integrate IQ3_XXS at exact scalar f32 bits before re-running the
+   affected measured ladder. **Qualification passed** at source `be47a95` for
+   four complete matrices across four shards with zero bit mismatches.
+6. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
 
 The eventual Rust-owned runtime and direct quantized Metal path are documented
 in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).

@@ -52,16 +52,18 @@ The current P2 design protects only decoded shared-expert matrices:
 
 ## Decoder modes
 
-The inference cache now exposes two explicit IQ2_XXS decoder modes:
+The inference cache exposes two explicit decoder modes for the qualified
+IQ2_XXS and IQ3_XXS formats:
 
 - `scalar_reference` retains row-by-row positional reads and the unchanged
   scalar Python decoder;
 - `numpy_vectorized` performs one bounded positional read for a complete
-  selected IQ2_XXS expert matrix, one whole-matrix vector decode into contiguous
-  f32 storage, one synchronized MLX matrix build, and the existing MLX matvec.
+  selected IQ2_XXS or IQ3_XXS expert matrix, one whole-matrix vector decode into
+  contiguous f32 storage, one synchronized MLX matrix build, and the existing
+  MLX matvec.
 
-Mixed-quant matrices not using IQ2_XXS retain their existing scalar reference
-decoder until profiling identifies the next dominant format. Unknown types,
+Other mixed-quant matrices retain their existing scalar reference decoder until
+profiling establishes another dominant format. Unknown types,
 dimensions, expert IDs, truncated reads, and non-contiguous/wrong-dtype vector
 outputs fail closed. Evidence records storage read, dequant, contiguous-buffer
 verification, MLX build/evaluation, matvec, and per-quant totals separately.
