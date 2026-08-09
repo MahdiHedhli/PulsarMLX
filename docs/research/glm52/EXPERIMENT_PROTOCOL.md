@@ -270,6 +270,22 @@ page cache is not purged, it is labeled process-first rather than controlled
 cold. Matrix results MUST NOT be promoted to expert, MoE, layer, stack, or
 token throughput.
 
+The routed-expert rung freezes the same layer-3 activation and golden route,
+including routed expert 15 and its architecture-normalized weight. It executes
+gate (IQ2_XXS), up (IQ2_XXS), SwiGLU, down (IQ3_XXS), and weighting. The
+independent CPU oracle is `glm52_expert.run_expert_swiglu`, which does not call
+the MLX implementation. It runs twice and must have identical f32 output
+hashes. The MLX scalar-reference and NumPy-vectorized paths each use three
+warmups and ten counterbalanced measured samples, must be deterministic and
+bit-identical to each other, and must pass the frozen dequant/matvec tolerance
+against the CPU oracle (`5e-3 + 5e-3·|reference|` per element).
+
+Each routed-expert sample retains totals for IQ2_XXS and IQ3_XXS separately,
+read counts/bytes, storage, dequantization, contiguous-buffer construction,
+MLX build/evaluation, matvec, remaining activation/scale/cleanup time, RSS,
+and peak RSS. This rung MUST NOT be promoted to top-8 MoE, transformer-layer,
+stack, or token performance.
+
 ## 14. Change control
 
 Any protocol change after first real-weight measurement requires:
