@@ -110,11 +110,11 @@ def dense_read_mode(mode: str) -> Iterator[None]:
 
     if mode not in {"row_reference", "whole_matrix_scalar"}:
         raise ValueError(f"unsupported dense read mode {mode}")
-    token = _DENSE_READ_MODE.set(mode)
+    reset_handle = _DENSE_READ_MODE.set(mode)
     try:
         yield
     finally:
-        _DENSE_READ_MODE.reset(token)
+        _DENSE_READ_MODE.reset(reset_handle)
 
 
 @contextmanager
@@ -122,11 +122,11 @@ def capture_dense_metrics() -> Iterator[DenseMetricsCapture]:
     """Capture bounded per-matrix timings without changing execution mode."""
 
     capture = DenseMetricsCapture()
-    token = _DENSE_METRICS.set(capture)
+    reset_handle = _DENSE_METRICS.set(capture)
     try:
         yield capture
     finally:
-        _DENSE_METRICS.reset(token)
+        _DENSE_METRICS.reset(reset_handle)
 
 
 def rms_norm(x: list[float], w: list[float], eps: float = EPS_DEFAULT) -> list[float]:
