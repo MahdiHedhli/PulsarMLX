@@ -100,6 +100,11 @@
   — one complete real Q5_K MLX matrix boundary and complete layer-3 MLA,
   exact f32-bit output, explicit non-Q5 scalar behavior, split timings, and raw
   counterbalanced samples
+- [Post-Feature-016 NumPy Q8_0 qualification](raw/post-f016-q8-0-numpy-qualification-0001.json)
+  and [generated qualification table](tables/post-f016-q8-0-numpy-qualification-0001.md)
+  — four complete real 2-D matrices across four layers/shards, exact f32-bit
+  scalar-oracle comparisons, deterministic repeats, signed-zero checks, and raw
+  decode samples; per-head 3-D Q8_0 remains explicitly excluded
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

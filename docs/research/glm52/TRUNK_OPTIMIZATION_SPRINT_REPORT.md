@@ -84,3 +84,19 @@ two non-Q5 scalar projections. Its median changed from 17.983298 s to 5.317590 s
 The remaining 3.091203 s median captured decode and 1.577387 s uninstrumented
 residual justify measuring the next inventory-supported format before a P1
 decision. No complete-layer or token claim is made from this MLA boundary.
+
+## Phase B3: Q8_0 decoder qualification
+
+**Result: exact for complete 2-D matrices.**
+
+At clean source `d24549193e3f9718c34e34b70904a5273af5978c`, four complete real
+`attn_q_b` matrices from layers 3, 20, 40, and 60 matched scalar-oracle f32
+bits, deterministic hashes, and signed-zero counts. The retained decode-only
+population measured a 3.056227 s scalar median and 0.040342 s NumPy median
+(75.76x).
+
+The evidence and generated table are
+[`raw/post-f016-q8-0-numpy-qualification-0001.json`](raw/post-f016-q8-0-numpy-qualification-0001.json)
+and
+[`tables/post-f016-q8-0-numpy-qualification-0001.md`](tables/post-f016-q8-0-numpy-qualification-0001.md).
+Per-head 3-D Q8_0 remains scalar and row-read; it is not included in this claim.
