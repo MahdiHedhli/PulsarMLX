@@ -100,3 +100,18 @@ The evidence and generated table are
 and
 [`tables/post-f016-q8-0-numpy-qualification-0001.md`](tables/post-f016-q8-0-numpy-qualification-0001.md).
 Per-head 3-D Q8_0 remains scalar and row-read; it is not included in this claim.
+
+## Phase B4: 2-D Q8_0 dense integration
+
+**Result: exact and material; 3-D Q8_0 is now the next bounded gate.**
+
+At clean source `15a358de4a48387e9c0d9d1b1da1d781be1a3c08`, Q5_K remained
+vectorized in both modes and only captured 2-D Q8_0 changed. The real Q8 matrix
+median fell from 2.754374 s to 0.137694 s (20.00x). Complete layer-3 MLA fell
+from 5.253066 s to 2.057474 s (2.55x), with exact f32-bit output.
+
+The candidate MLA retained a 1.326647 s median uninstrumented residual, 64.5%
+of median boundary wall by ratio of medians. Because per-head 3-D Q8_0 remains
+row-read and scalar inside that residual, it must be isolated before Q6_K or P1.
+The generated table is
+[`tables/post-f016-trunk-q8-2d-integration-0001.md`](tables/post-f016-trunk-q8-2d-integration-0001.md).

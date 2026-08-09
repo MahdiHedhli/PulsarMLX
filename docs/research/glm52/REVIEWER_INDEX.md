@@ -105,6 +105,11 @@
   — four complete real 2-D matrices across four layers/shards, exact f32-bit
   scalar-oracle comparisons, deterministic repeats, signed-zero checks, and raw
   decode samples; per-head 3-D Q8_0 remains explicitly excluded
+- [Post-Feature-016 2-D Q8_0 dense integration](raw/post-f016-trunk-q8-2d-integration-0001.json)
+  and [generated integration table](tables/post-f016-trunk-q8-2d-integration-0001.md)
+  — exact real matrix and complete layer-3 MLA output, with Q5_K held
+  vectorized, only captured 2-D Q8_0 changed, and the unmodified per-head 3-D
+  path retained in the residual
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
