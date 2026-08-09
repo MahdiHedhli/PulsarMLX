@@ -10,7 +10,6 @@ import json
 import math
 import os
 import platform
-import statistics
 import subprocess
 import sys
 import time
@@ -43,20 +42,21 @@ def _summary(samples: list[float]) -> dict[str, float | int]:
         raise ValueError("timing samples must be finite and positive")
     values = np.asarray(samples, dtype=np.float64)
     mean = float(values.mean())
+    sample_standard_deviation = (
+        float(values.std(ddof=1)) if len(samples) > 1 else 0.0
+    )
     return {
         "sample_count": len(samples),
         "median_seconds": float(np.median(values)),
         "mean_seconds": mean,
-        "standard_deviation_seconds": float(values.std(ddof=1)) if len(samples) > 1 else 0.0,
+        "standard_deviation_seconds": sample_standard_deviation,
         "minimum_seconds": float(values.min()),
         "maximum_seconds": float(values.max()),
         "p5_seconds": float(np.percentile(values, 5)),
         "p25_seconds": float(np.percentile(values, 25)),
         "p75_seconds": float(np.percentile(values, 75)),
         "p95_seconds": float(np.percentile(values, 95)),
-        "coefficient_of_variation": (
-            float(statistics.stdev(samples) / mean) if len(samples) > 1 else 0.0
-        ),
+        "coefficient_of_variation": sample_standard_deviation / mean,
     }
 
 

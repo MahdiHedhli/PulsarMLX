@@ -22,6 +22,7 @@ from iq2_xxs_dequant import (  # noqa: E402
     dequantize_matrix_iq2_xxs_numpy,
     dequantize_row_iq2_xxs,
 )
+from qualify_iq2_xxs_numpy import _summary  # noqa: E402
 
 
 def scalar_f32_bits(encoded: bytes) -> np.ndarray:
@@ -31,6 +32,13 @@ def scalar_f32_bits(encoded: bytes) -> np.ndarray:
 
 @unittest.skipIf(np is None, "NumPy is installed by the lockfile-backed CI tier")
 class NumpyIq2XxsDecoderTests(unittest.TestCase):
+    def test_timing_summary_uses_sample_deviation_without_module_shadowing(self) -> None:
+        summary = _summary([1.0, 2.0, 3.0])
+        self.assertEqual(summary["sample_count"], 3)
+        self.assertEqual(summary["mean_seconds"], 2.0)
+        self.assertEqual(summary["standard_deviation_seconds"], 1.0)
+        self.assertEqual(summary["coefficient_of_variation"], 0.5)
+
     def assert_exact_bits(self, encoded: bytes) -> np.ndarray:
         expected = scalar_f32_bits(encoded)
         actual = dequantize_blocks_iq2_xxs_numpy(encoded)
