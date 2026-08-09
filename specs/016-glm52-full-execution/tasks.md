@@ -61,6 +61,7 @@
 - [x] Qualify a whole-block/whole-matrix NumPy IQ2_XXS decoder against exact scalar f32 bits
 - [x] Integrate one-read, one-decode, one-MLX-build matrix execution behind explicit decoder modes
 - [x] Benchmark decode → real matrix → routed expert → layer-3 MoE → layer → P1 in order
+- [x] Record the product architecture decision separately without starting Rust/Metal implementation in Feature 016
 - [ ] Inventory golden-trace mixed quant formats by measured token time
 - [ ] Design a dedicated bit-exact Rust f32 dequantization boundary; do not reuse x86 Q8_K throughput claims
 - [ ] Re-profile P1 and re-evaluate shared-cache value after vectorization

@@ -6,6 +6,11 @@
 
 PulsarMLX is an experimental inference runtime for oversized Mixture-of-Experts models on Apple Silicon. It uses MLX for GPU execution, treats unified memory and fast internal NVMe as first-class resources, and validates results against an independent architecture-level CPU oracle with an evidence-first research workflow.
 
+The current research/reference execution path uses Python, NumPy, and MLX. The
+planned shipping runtime is Rust-native with no required Python process; direct
+quantized Metal expert kernels are roadmap work, not a verified current
+capability. See the [PulsarMLX strategy](docs/roadmap/PULSARMLX_STRATEGY.md).
+
 It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisanni/pulsar). The Apple path has grown into a substantially independent runtime: MLX backend, portable storage, architecture-oracle methodology, research/evidence framework, and unified-memory-aware residency work—while still preserving Pulsar’s MIT license, Git history, and Linux/CUDA implementation.
 
 > [!IMPORTANT]
@@ -264,7 +269,7 @@ GLM is the model that **forces** SSD-backed expert residency rather than “fit 
 | Complete dense layer 0 | ✅ C08 |
 | Single-token **79-layer** depth ladder (finite) | ✅ C09 |
 | Full-vocab logits after 79 layers | ✅ C10 |
-| Multi-token greedy generation | 🚧 **not** a committed final claim (work may be in flight; only raw evidence counts when committed) |
+| Multi-token greedy generation | ✅ C11 frozen golden sequence; vectorized P1 prefix also committed |
 | MLX-only performance | ❌ Not claimed |
 
 Evidence: [`docs/research/glm52/`](docs/research/glm52/) · ledger: [`docs/research/glm52/CLAIMS_LEDGER.md`](docs/research/glm52/CLAIMS_LEDGER.md).
@@ -348,6 +353,7 @@ python/                  MLX worker integration
 scripts/research/        oracles, parity runners, GLM research tools
 docs/research/           evidence, claims, reviewer indexes
 docs/architecture/       architecture contracts (e.g. GLM-5.2)
+docs/roadmap/            high-level product and runtime strategy
 docs/validation/         Apple bring-up evidence index
 docs/upstream/           inherited Pulsar docs (not Apple results)
 specs/                   Spec Kit feature history
@@ -385,15 +391,13 @@ Those are **historical/inherited Pulsar results**, not PulsarMLX Apple benchmark
 
 ## Roadmap
 
-1. Finish GLM-5.2 correctness (generation + MLX-only path under the frozen protocol)
-2. Establish MLX-only execution for the verified graph
-3. KV-cached incremental decode
-4. Expert residency + prefetch under memory budgets
-5. SSD streaming optimization
-6. Reproducible performance benchmarks (then—and only then—tok/s)
-7. OpenAI-compatible serving on Apple (when justified by evidence)
-8. Cross-machine validation
-9. Optional M2 Max + external NVMe RAID study (explicitly out of current GLM scope)
+The single high-level source of truth is
+**[docs/roadmap/PULSARMLX_STRATEGY.md](docs/roadmap/PULSARMLX_STRATEGY.md)**.
+
+1. Finish Feature 016's measured mixed-quant, P1, and P2 optimization gates.
+2. Begin the proposed Rust-native runtime only from that committed baseline.
+3. Qualify direct quantized Metal work in measured format order.
+4. Add the product CLI and serving surface only after the local runtime is stable.
 
 ## License & attribution
 

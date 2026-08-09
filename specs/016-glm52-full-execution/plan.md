@@ -39,8 +39,15 @@
 2. Integrate explicit `scalar_reference` and `numpy_vectorized` modes using one
    bounded matrix read, one contiguous decode, and one evaluated MLX matrix.
 3. Benchmark decode, real matrix, routed expert, layer-3 MoE, layer, and P1 in
-   that order; inventory mixed quant formats by measured golden-trace time.
-4. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
+   that order. **Committed through P1** at `32230e1`; the exact golden prefix
+   matched with zero CPU fallback.
+4. Inventory mixed quant formats by measured P1 golden-trace time, re-profile
+   cache value, then retry P2. No new long P2 is eligible earlier.
+
+The eventual Rust-owned runtime and direct quantized Metal path are documented
+in [`docs/roadmap/PULSARMLX_STRATEGY.md`](../../docs/roadmap/PULSARMLX_STRATEGY.md).
+They remain deferred from Feature 016: this feature first finishes the
+vectorized Python/MLX reference ladder and P2 correctness/reuse gate.
 
 ## Retained P2 streaming profile (experimental)
 

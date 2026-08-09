@@ -4249,3 +4249,22 @@ stacks were 3446.820720 and 2769.003203 seconds. The warm stack recorded all
 228 guaranteed shared-matrix hits, zero evictions, and normal resource status.
 This completes the decoder-priority ladder through P1; mixed-quant ranking and
 reprofiling remain next, and P2 is still ineligible until those are committed.
+
+## 2026-08-09 — Product architecture and Colibri qualification
+
+After the P1 evidence was committed and pushed at `32230e1`, the product
+direction was consolidated in `docs/roadmap/PULSARMLX_STRATEGY.md`. The shipping
+runtime is planned as Rust-owned with no required Python process, while the
+independently understandable Python/NumPy path remains the permanent oracle and
+research environment. The target expert path keeps weights compressed through
+stable unified-memory residency and eventually performs quantized compute in
+Metal; neither the Rust-native runtime nor direct quantized Metal kernels are
+claimed as current Feature 016 capabilities.
+
+Colibri was reviewed at pinned revision
+`8f512fc8c2f48ffa18cd624cd4a5bcaae4a4abfc` under Apache-2.0. Its Metal design,
+tests, expert-store interface, and GLM/expert-cache call sites were classified
+as design references or candidates for separately tested clean
+reimplementation. No Colibri code was copied or adapted, no performance result
+was adopted, and no endorsement is implied. Feature 016 remains focused on the
+mixed-quant profile, cache re-evaluation, and P2 gate.
