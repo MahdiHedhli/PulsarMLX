@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import struct
+import random
 import sys
 import unittest
 from pathlib import Path
@@ -35,6 +36,59 @@ def f32_bits(values: list[float]) -> bytes:
 
 
 class DenseBulkReadTests(unittest.TestCase):
+    def test_q5_numpy_mode_matches_scalar_bits_with_one_read(self) -> None:
+        rng = random.Random(0x5137)
+        cols, rows = 256, 2
+        encoded = b"".join(
+            struct.pack("<ee", scale, minimum)
+            + bytes(rng.randrange(256) for _ in range(12 + 32 + 128))
+            for scale, minimum in ((0.5, -0.25), (-1.0, 0.125))
+        )
+        loc = TensorLoc(
+            name="q5.weight",
+            file=Path("fixture.gguf"),
+            offset=0,
+            n_bytes=len(encoded),
+            type_id=13,
+            type_name="Q5_K",
+            dims=[cols, rows],
+        )
+        scalar_store = FakeStore(loc, encoded)
+        vector_store = FakeStore(loc, encoded)
+        reference, reference_metrics = _load_scalar_dense_matrix(
+            scalar_store, loc, cols, rows, "whole_matrix_scalar"
+        )
+        actual, actual_metrics = _load_scalar_dense_matrix(
+            vector_store, loc, cols, rows, "whole_matrix_numpy_q5"
+        )
+        self.assertEqual(f32_bits(actual), f32_bits(reference))
+        self.assertEqual(reference_metrics.decoder_mode, "scalar_reference")
+        self.assertEqual(actual_metrics.decoder_mode, "numpy_vectorized_q5_k")
+        self.assertEqual(scalar_store.calls, [(loc.name, 0, len(encoded))])
+        self.assertEqual(vector_store.calls, [(loc.name, 0, len(encoded))])
+
+    def test_q5_mode_keeps_other_formats_on_explicit_scalar_decoder(self) -> None:
+        cols, rows = 32, 1
+        encoded = struct.pack("<e", 0.5) + struct.pack("<32b", *range(-16, 16))
+        loc = TensorLoc(
+            name="q8.weight",
+            file=Path("fixture.gguf"),
+            offset=0,
+            n_bytes=len(encoded),
+            type_id=8,
+            type_name="Q8_0",
+            dims=[cols, rows],
+        )
+        actual, metrics = _load_scalar_dense_matrix(
+            FakeStore(loc, encoded), loc, cols, rows, "whole_matrix_numpy_q5"
+        )
+        reference, _ = _load_scalar_dense_matrix(
+            FakeStore(loc, encoded), loc, cols, rows, "whole_matrix_scalar"
+        )
+        self.assertEqual(f32_bits(actual), f32_bits(reference))
+        self.assertEqual(metrics.decoder_mode, "scalar_reference")
+        self.assertEqual(metrics.storage_read_count, 1)
+
     def test_q8_scalar_decoder_bits_match_with_one_complete_read(self) -> None:
         cols = 32
         rows = 3

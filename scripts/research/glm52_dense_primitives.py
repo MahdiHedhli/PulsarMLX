@@ -17,6 +17,7 @@ from typing import Any, Iterator
 from glm52_tensor_store import Glm52TensorStore, TensorLoc, nbytes_for_tensor
 from iq2_xxs_dequant import dequantize_row_iq2_xxs
 from ggml_kquants import (
+    dequantize_matrix_q5_k_numpy,
     dequantize_row_q4_k,
     dequantize_row_q5_k,
     dequantize_row_q6_k,
@@ -44,6 +45,7 @@ class DenseOperationMetrics:
     mlx_matvec_seconds: float
     total_seconds: float
     read_mode: str
+    decoder_mode: str
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -57,6 +59,7 @@ class ScalarMatrixLoadMetrics:
     dequant_seconds: float
     contiguous_buffer_seconds: float
     read_mode: str
+    decoder_mode: str
 
 
 @dataclass
@@ -108,7 +111,7 @@ def require_mlx_backend() -> Iterator[None]:
 def dense_read_mode(mode: str) -> Iterator[None]:
     """Select the experimental dense matrix read strategy for this context."""
 
-    if mode not in {"row_reference", "whole_matrix_scalar"}:
+    if mode not in {"row_reference", "whole_matrix_scalar", "whole_matrix_numpy_q5"}:
         raise ValueError(f"unsupported dense read mode {mode}")
     reset_handle = _DENSE_READ_MODE.set(mode)
     try:
@@ -258,6 +261,7 @@ def _matvec_mlx(
         mlx_matvec_seconds=mlx_matvec_seconds,
         total_seconds=time.perf_counter() - total_start,
         read_mode=load.read_mode,
+        decoder_mode=load.decoder_mode,
     )
     capture = _DENSE_METRICS.get()
     if capture is not None:
@@ -274,7 +278,7 @@ def _load_scalar_dense_matrix(
 ) -> tuple[list[float], ScalarMatrixLoadMetrics]:
     """Read and scalar-decode one complete matrix with exact byte accounting."""
 
-    if read_mode not in {"row_reference", "whole_matrix_scalar"}:
+    if read_mode not in {"row_reference", "whole_matrix_scalar", "whole_matrix_numpy_q5"}:
         raise ValueError(f"unsupported dense read mode {read_mode}")
     row_bytes = nbytes_for_tensor(loc.type_id, cols)
     encoded_bytes = row_bytes * rows
@@ -285,13 +289,33 @@ def _load_scalar_dense_matrix(
     contiguous_buffer_seconds = 0.0
     storage_read_count = 0
     complete_raw: bytes | None = None
-    if read_mode == "whole_matrix_scalar":
+    if read_mode in {"whole_matrix_scalar", "whole_matrix_numpy_q5"}:
         read_start = time.perf_counter()
         complete_raw = store.pread(loc.name, 0, encoded_bytes)
         storage_read_seconds = time.perf_counter() - read_start
         storage_read_count = 1
         if len(complete_raw) != encoded_bytes:
             raise OSError(f"{loc.name}: truncated complete matrix")
+
+    if read_mode == "whole_matrix_numpy_q5" and loc.type_id == 13:
+        import numpy as np
+
+        assert complete_raw is not None
+        decode_start = time.perf_counter()
+        decoded = dequantize_matrix_q5_k_numpy(complete_raw, rows, cols)
+        dequant_seconds = time.perf_counter() - decode_start
+        buffer_start = time.perf_counter()
+        flat = np.ascontiguousarray(decoded.reshape(-1), dtype=np.float32)
+        contiguous_buffer_seconds = time.perf_counter() - buffer_start
+        return flat, ScalarMatrixLoadMetrics(
+            encoded_bytes=encoded_bytes,
+            storage_read_count=storage_read_count,
+            storage_read_seconds=storage_read_seconds,
+            dequant_seconds=dequant_seconds,
+            contiguous_buffer_seconds=contiguous_buffer_seconds,
+            read_mode=read_mode,
+            decoder_mode="numpy_vectorized_q5_k",
+        )
 
     # Decode rows in the same order with the same scalar decoder as the reference.
     flat: list[float] = []
@@ -319,6 +343,7 @@ def _load_scalar_dense_matrix(
         dequant_seconds=dequant_seconds,
         contiguous_buffer_seconds=contiguous_buffer_seconds,
         read_mode=read_mode,
+        decoder_mode="scalar_reference",
     )
 
 
