@@ -52,11 +52,19 @@ def _expected_decoder(mode: str, quantization: str) -> str:
         return "numpy_vectorized_q5_k"
     if quantization == "Q8_0" and mode == "whole_matrix_numpy_q5_q8":
         return "numpy_vectorized_q8_0"
+    if quantization == "Q8_0" and mode in {
+        "whole_matrix_numpy_q5_q8_head_bulk_scalar",
+        "whole_matrix_numpy_q5_q8_head_numpy",
+        "whole_matrix_numpy_q5_q8_q6_head_numpy",
+    }:
+        return "numpy_vectorized_q8_0"
+    if quantization == "Q6_K" and mode == "whole_matrix_numpy_q5_q8_q6_head_numpy":
+        return "numpy_vectorized_q6_k"
     return "scalar_reference"
 
 
 def _configure(experiment: str) -> None:
-    global MODES, TENSOR, EXPECTED_TYPE_ID, SCHEMA, EXPERIMENT_ID, CHANGED_VARIABLE
+    global MODES, TENSOR, EXPECTED_TYPE_ID, SCHEMA, EXPERIMENT_ID, CHANGED_VARIABLE, LAYER
     if experiment == "q5":
         return
     if experiment == "q8-2d":
@@ -66,6 +74,15 @@ def _configure(experiment: str) -> None:
         SCHEMA = "pulsarmlx.research.glm52-trunk-q8-2d-integration"
         EXPERIMENT_ID = "trunk-q8-2d-integration-0001"
         CHANGED_VARIABLE = "Q8_0 scalar row decode versus exact-bit whole-matrix NumPy Q8_0 decode; Q5_K remains vectorized"
+        return
+    if experiment == "q6":
+        MODES = ("whole_matrix_numpy_q5_q8_head_numpy", "whole_matrix_numpy_q5_q8_q6_head_numpy")
+        TENSOR = "blk.8.attn_output.weight"
+        EXPECTED_TYPE_ID = 14
+        LAYER = 8
+        SCHEMA = "pulsarmlx.research.glm52-trunk-q6-integration"
+        EXPERIMENT_ID = "trunk-q6-integration-0001"
+        CHANGED_VARIABLE = "Q6_K scalar row decode versus exact-bit whole-matrix NumPy Q6_K decode; Q5_K and all Q8_0 paths remain vectorized"
         return
     raise ValueError(f"unsupported experiment {experiment}")
 
@@ -335,8 +352,7 @@ def benchmark(model: Path) -> dict[str, Any]:
         "unsupported_interpretations": [
             "complete transformer-layer speedup",
             "full-stack or token-generation speedup",
-            "per-head 3D Q8_0 vectorization",
-            "Q6_K vectorization",
+            *([] if EXPECTED_TYPE_ID == 14 else ["Q6_K vectorization"]),
             "Rust or direct quantized Metal evidence",
         ],
     }
@@ -349,7 +365,7 @@ def benchmark(model: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--experiment", choices=("q5", "q8-2d"), default="q5")
+    parser.add_argument("--experiment", choices=("q5", "q8-2d", "q6"), default="q5")
     args = parser.parse_args()
     _configure(args.experiment)
     model = os.environ.get("PULSARMLX_GLM_GGUF")

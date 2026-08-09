@@ -150,6 +150,7 @@ def _matvec_3d_q8(
     bulk_modes = {
         "whole_matrix_numpy_q5_q8_head_bulk_scalar",
         "whole_matrix_numpy_q5_q8_head_numpy",
+        "whole_matrix_numpy_q5_q8_q6_head_numpy",
     }
     total_start = time.perf_counter()
     storage_read_count = 0
@@ -165,7 +166,7 @@ def _matvec_3d_q8(
         if len(complete_raw) != head_bytes:
             raise OSError(f"{name}: truncated head slab {head}")
 
-    if mode == "whole_matrix_numpy_q5_q8_head_numpy":
+    if mode in {"whole_matrix_numpy_q5_q8_head_numpy", "whole_matrix_numpy_q5_q8_q6_head_numpy"}:
         import numpy as np
         from q8_0_dequant import dequantize_matrix_q8_0_numpy
 

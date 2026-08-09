@@ -114,6 +114,33 @@ class DenseBulkReadTests(unittest.TestCase):
         self.assertEqual(metrics.decoder_mode, "numpy_vectorized_q8_0")
         self.assertEqual(metrics.storage_read_count, 1)
 
+    def test_all_qualified_mode_vectorizes_q6_exactly(self) -> None:
+        rng = random.Random(6)
+        cols, rows = 256, 2
+        encoded = b"".join(
+            bytes(rng.randrange(256) for _ in range(128 + 64 + 16))
+            + struct.pack("<e", scale)
+            for scale in (0.5, -0.25)
+        )
+        loc = TensorLoc(
+            name="q6-vector.weight",
+            file=Path("fixture.gguf"),
+            offset=0,
+            n_bytes=len(encoded),
+            type_id=14,
+            type_name="Q6_K",
+            dims=[cols, rows],
+        )
+        reference, _ = _load_scalar_dense_matrix(
+            FakeStore(loc, encoded), loc, cols, rows, "whole_matrix_numpy_q5_q8_head_numpy"
+        )
+        actual, metrics = _load_scalar_dense_matrix(
+            FakeStore(loc, encoded), loc, cols, rows, "whole_matrix_numpy_q5_q8_q6_head_numpy"
+        )
+        self.assertEqual(f32_bits(actual), f32_bits(reference))
+        self.assertEqual(metrics.decoder_mode, "numpy_vectorized_q6_k")
+        self.assertEqual(metrics.storage_read_count, 1)
+
     def test_q8_scalar_decoder_bits_match_with_one_complete_read(self) -> None:
         cols = 32
         rows = 3

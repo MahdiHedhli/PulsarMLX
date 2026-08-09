@@ -19,6 +19,7 @@ from iq2_xxs_dequant import dequantize_row_iq2_xxs
 from q8_0_dequant import dequantize_matrix_q8_0_numpy
 from ggml_kquants import (
     dequantize_matrix_q5_k_numpy,
+    dequantize_matrix_q6_k_numpy,
     dequantize_row_q4_k,
     dequantize_row_q5_k,
     dequantize_row_q6_k,
@@ -120,6 +121,7 @@ def dense_read_mode(mode: str) -> Iterator[None]:
         "whole_matrix_numpy_q5_q8",
         "whole_matrix_numpy_q5_q8_head_bulk_scalar",
         "whole_matrix_numpy_q5_q8_head_numpy",
+        "whole_matrix_numpy_q5_q8_q6_head_numpy",
     }:
         raise ValueError(f"unsupported dense read mode {mode}")
     reset_handle = _DENSE_READ_MODE.set(mode)
@@ -306,6 +308,7 @@ def _load_scalar_dense_matrix(
         "whole_matrix_numpy_q5_q8",
         "whole_matrix_numpy_q5_q8_head_bulk_scalar",
         "whole_matrix_numpy_q5_q8_head_numpy",
+        "whole_matrix_numpy_q5_q8_q6_head_numpy",
     }:
         raise ValueError(f"unsupported dense read mode {read_mode}")
     row_bytes = nbytes_for_tensor(loc.type_id, cols)
@@ -331,6 +334,7 @@ def _load_scalar_dense_matrix(
         "whole_matrix_numpy_q5_q8",
         "whole_matrix_numpy_q5_q8_head_bulk_scalar",
         "whole_matrix_numpy_q5_q8_head_numpy",
+        "whole_matrix_numpy_q5_q8_q6_head_numpy",
     }
     if read_mode in {"whole_matrix_numpy_q5", *q5_q8_modes} and loc.type_id == 13:
         vector_decoder = dequantize_matrix_q5_k_numpy
@@ -338,6 +342,9 @@ def _load_scalar_dense_matrix(
     elif read_mode in q5_q8_modes and loc.type_id == 8:
         vector_decoder = dequantize_matrix_q8_0_numpy
         decoder_name = "numpy_vectorized_q8_0"
+    elif read_mode == "whole_matrix_numpy_q5_q8_q6_head_numpy" and loc.type_id == 14:
+        vector_decoder = dequantize_matrix_q6_k_numpy
+        decoder_name = "numpy_vectorized_q6_k"
     if vector_decoder is not None:
         import numpy as np
 
