@@ -1,6 +1,12 @@
-# GLM-5.2 Results
+# GLM-5.2 Claims Ledger
 
-**Status**: partial — real-weight C01–C08 recorded; C09 ladder in progress
+| ID | Status | Claim | Source | Evidence | Reproduction | Scope and caveat |
+| --- | --- | --- | --- | --- | --- | --- |
+| F016-IQ2-001 | verified | NumPy IQ2_XXS decoding matched the scalar oracle at exact f32 bits for four complete real expert matrices, with a 28.15× median decode-only speedup on the recorded M1 Ultra run. | `968cfac` | `docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json` | `uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json` | Decode boundary only; not routed-expert, MoE, layer, P1/P2, or token speedup. |
+
+## Prior boundary summary
+
+**Status**: C01–C11 research baseline complete; optimization ladder active
 **Protocol**: `EXPERIMENT_PROTOCOL.md` (frozen)
 
 ## Checkpoint

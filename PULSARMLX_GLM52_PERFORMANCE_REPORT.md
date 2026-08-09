@@ -151,6 +151,35 @@ preserved; their real two-token benefit is still unverified.
 5. dedicated bit-exact Rust f32 boundary design;
 6. cache re-evaluation, then P2 retry.
 
+### Qualified IQ2_XXS decode boundary
+
+Source commit `968cfac` passed the clean-worktree Tier-3 qualification on the
+M1 Ultra with NumPy 2.4.5. Four complete `2048 × 6144` gate matrices selected
+from layers 3, 20, 40, and 60 spanned checkpoint shards 2–5. Every matrix and
+the three sampled rows per matrix matched the unchanged scalar decoder at the
+exact f32 `uint32` bit pattern, with zero mismatches and deterministic repeat
+hashes. The synthetic suite separately retained signed-zero coverage.
+
+For the layer-3 matrix (12,582,912 weights), after three warmups per mode and
+ten retained measurements per mode:
+
+| Decoder | Median seconds | Mean seconds | Sample stddev | Median weights/s |
+| --- | ---: | ---: | ---: | ---: |
+| scalar reference | 1.424142 | 1.425866 | 0.007503 | 8,835,434 |
+| NumPy vectorized | 0.050588 | 0.051395 | 0.002059 | 248,733,448 |
+
+The median decoder-only speedup was **28.15×**. Instrumented vector decode
+reported a 363,726,280-byte traced peak and a 16,826,368-byte RSS increase from
+its post-benchmark baseline while producing a 50,331,648-byte contiguous f32
+matrix. Process peak RSS was 2,335,965,184 bytes; this includes prior scalar
+reference allocations and must not be interpreted as the vector decoder's
+standalone working set.
+
+Raw samples, matrix hashes, allocation observations, and exact environment are
+in `docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json`. The
+result verifies only decode correctness and throughput. It does not establish
+a routed-expert, MoE, layer, P1, P2, or token-generation speedup.
+
 ## Limitations
 
 - Python research runtime, not a production server

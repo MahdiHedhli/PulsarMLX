@@ -4192,3 +4192,11 @@ signed-zero, deterministic, and malformed-input tests. A clean-source Tier-3
 qualifier is prepared for four complete expert matrices at layers 3, 20, 40,
 and 60 across four checkpoint shards. No real-matrix result is claimed until
 that qualifier runs from its committed source revision.
+
+The clean Tier-3 qualifier then passed at source `968cfac`. It compared four
+complete 2048-by-6144 expert matrices from layers 3, 20, 40, and 60 across
+shards 2–5, with zero f32-bit mismatches and deterministic repeat hashes. The
+layer-3 benchmark retained three warmups and ten samples per decoder: median
+scalar decode was 1.424142 seconds and median NumPy decode was 0.050588 seconds
+(28.15× at the decode-only boundary). The result does not promote routed
+expert, MoE, layer, or token performance claims.

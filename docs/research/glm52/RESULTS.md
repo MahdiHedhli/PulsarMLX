@@ -1,6 +1,6 @@
 # GLM-5.2 Results
 
-**Status**: partial — real-weight C01–C08 recorded; C09 ladder in progress
+**Status**: optimization active after completed C01–C11 research baseline
 **Protocol**: `EXPERIMENT_PROTOCOL.md` (frozen)
 
 ## Checkpoint
@@ -58,6 +58,8 @@
 
 | Metric | status |
 | --- | --- |
-| TTFT / tok/s | pending (after C11) |
+| exact-bit NumPy IQ2_XXS matrix decode | **passed** — 4 complete matrices, 0 f32-bit mismatches |
+| matrix decode median | 0.050588 s vector vs 1.424142 s scalar; 28.15× at this boundary |
+| routed expert / MoE / layer / TTFT / tok/s | pending; not inferred from decode |
 
 Figures and tables must be generated from `raw/` — never hand-hardcoded.

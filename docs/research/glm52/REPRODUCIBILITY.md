@@ -45,6 +45,21 @@ python scripts/research/glm52_gguf_catalog.py \
   --source-commit "$(git rev-parse HEAD)"
 ```
 
+### Exact-bit IQ2_XXS matrix qualification
+
+```sh
+export PULSARMLX_GLM_GGUF=/path/to/GLM-5.2-UD-IQ2_XXS
+uv sync --frozen
+uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py \
+  --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json
+python3 -m unittest discover -s scripts/research/tests \
+  -p 'test_iq2_xxs_qualification_record.py' -v
+```
+
+The command requires a clean worktree and fails closed when the checkpoint
+environment variable, complete matrix bytes, IQ2_XXS type, or exact-bit gate
+is unavailable.
+
 ## Protocol freeze
 
 Numerical tolerances and stop conditions live in

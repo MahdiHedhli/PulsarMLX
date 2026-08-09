@@ -34,6 +34,9 @@
 ### Raw evidence
 
 - `docs/research/glm52/raw/` — machine-readable parity and perf records
+- [IQ2_XXS NumPy qualification](raw/f016-iq2-xxs-numpy-qualification-0001.json)
+  — four complete matrices, raw timing samples, exact-bit comparisons, and
+  allocation/resource observations
 
 ### Results (populated after runs)
 
