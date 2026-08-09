@@ -177,15 +177,21 @@ class _FakeMlx:
 
 
 class _MatrixStore:
-    def __init__(self, encoded: bytes) -> None:
+    def __init__(
+        self,
+        encoded: bytes,
+        *,
+        type_id: int = 16,
+        type_name: str = "IQ2_XXS",
+    ) -> None:
         self.encoded = encoded
         self.calls: list[tuple[str, int, int]] = []
         self.tensors = {
             "toy.weight": SimpleNamespace(
                 name="toy.weight",
                 dims=[256, 2, 1],
-                type_id=16,
-                type_name="IQ2_XXS",
+                type_id=type_id,
+                type_name=type_name,
             )
         }
 
@@ -222,6 +228,25 @@ def test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once() -> None:
     assert metrics.dequant_seconds >= 0
     assert metrics.contiguous_buffer_seconds >= 0
     assert metrics.matrix_build_seconds >= 0
+
+
+@unittest.skipUnless(importlib.util.find_spec("numpy"), "NumPy is lockfile-backed")
+def test_numpy_mode_reads_and_decodes_complete_iq3_matrix_once() -> None:
+    encoded = (struct.pack("<e", 1.0) + bytes(96)) * 2
+    store = _MatrixStore(encoded, type_id=18, type_name="IQ3_XXS")
+    backend = _backend_without_mlx_import("numpy_vectorized")
+    matrix, metrics = backend.load(store, "toy.weight", 0)
+
+    assert store.calls == [("toy.weight", 0, len(encoded))]
+    assert matrix.rows == 2
+    assert matrix.cols == 256
+    assert matrix.decoded_bytes == 2 * 256 * 4
+    assert matrix.compressed_bytes == len(encoded)
+    assert matrix.quantization == "IQ3_XXS"
+    assert matrix.decoder_mode == "numpy_vectorized"
+    assert matrix.value.shape == (2, 256)
+    assert metrics.storage_bytes_read == len(encoded)
+    assert metrics.storage_read_count == 1
 
 
 def test_scalar_mode_retains_row_reads_as_the_reference_path() -> None:
@@ -467,6 +492,7 @@ def load_tests(
         test_backend_failure_propagates_without_cpu_fallback,
         test_matvec_cached_rows_reference,
         test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once,
+        test_numpy_mode_reads_and_decodes_complete_iq3_matrix_once,
         test_scalar_mode_retains_row_reads_as_the_reference_path,
         test_numpy_mode_fails_closed_on_truncated_complete_matrix,
         test_unknown_decoder_mode_fails_before_mlx_import,

@@ -103,8 +103,17 @@ class MlxMatrixBackend:
         read_seconds = 0.0
         dequant_seconds = 0.0
         contiguous_buffer_seconds = 0.0
+        vector_decoder = None
         if self.decoder_mode == "numpy_vectorized" and loc.type_id == 16:
             from iq2_xxs_dequant import dequantize_matrix_iq2_xxs_numpy
+
+            vector_decoder = dequantize_matrix_iq2_xxs_numpy
+        elif self.decoder_mode == "numpy_vectorized" and loc.type_id == 18:
+            from iq3_xxs_dequant import dequantize_matrix_iq3_xxs_numpy
+
+            vector_decoder = dequantize_matrix_iq3_xxs_numpy
+
+        if vector_decoder is not None:
 
             read_start = time.perf_counter()
             raw = store.pread(name, base, compressed_bytes)
@@ -112,7 +121,7 @@ class MlxMatrixBackend:
             if len(raw) != compressed_bytes:
                 raise OSError(f"{name}: truncated complete expert matrix")
             decode_start = time.perf_counter()
-            decoded = dequantize_matrix_iq2_xxs_numpy(raw, rows, cols)
+            decoded = vector_decoder(raw, rows, cols)
             dequant_seconds = time.perf_counter() - decode_start
             buffer_start = time.perf_counter()
             flat = decoded.reshape(-1)
@@ -149,7 +158,7 @@ class MlxMatrixBackend:
             quantization=loc.type_name,
             decoder_mode=(
                 "numpy_vectorized"
-                if self.decoder_mode == "numpy_vectorized" and loc.type_id == 16
+                if vector_decoder is not None
                 else "scalar_reference"
             ),
         )
@@ -157,7 +166,7 @@ class MlxMatrixBackend:
             storage_bytes_read=compressed_bytes,
             storage_read_count=(
                 1
-                if self.decoder_mode == "numpy_vectorized" and loc.type_id == 16
+                if vector_decoder is not None
                 else rows
             ),
             storage_read_seconds=read_seconds,
