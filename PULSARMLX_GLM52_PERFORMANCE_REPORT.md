@@ -164,8 +164,10 @@ preserved; their real two-token benefit is still unverified.
 
 ```sh
 export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS
-.venv/bin/python scripts/research/glm52_profile_hotspots.py
-.venv/bin/python scripts/research/glm52_inference.py --mode inference \
+uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py \
+  --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json
+# P2 remains blocked until the intervening benchmark ladder through P1 passes.
+uv run --frozen python scripts/research/glm52_inference.py --mode inference \
   --n-new 2 --cache-gib 16 --cache-policy decoded_shared_only \
   --out docs/research/glm52/raw/f016-inference-p2-token2.json
 ```

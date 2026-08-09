@@ -18,7 +18,7 @@
 | 5 | Correctness ladder C01–C11 | Done |
 | 6 | Full execution evidence | Done |
 | 7 | Research publication + `v0.3.0` tag | Done |
-| 8 | Inference optimization | Active; P2 is next real-checkpoint gate |
+| 8 | Inference optimization | Active; exact-bit decoder qualification precedes the bounded performance ladder and P2 |
 
 ## Technical approach
 
@@ -32,7 +32,17 @@
 4. **Validate** C01→C11 with per-layer drift metrics; stop on material divergence.
 5. **Benchmark** cold/warm TTFT, prefill, decode; publish under `docs/research/glm52/`.
 
-## Active P2 streaming profile (experimental)
+## Active decoder-priority sequence
+
+1. Qualify the NumPy whole-matrix IQ2_XXS decoder against exact scalar f32
+   bits on synthetic blocks and complete matrices from multiple real shards.
+2. Integrate explicit `scalar_reference` and `numpy_vectorized` modes using one
+   bounded matrix read, one contiguous decode, and one evaluated MLX matrix.
+3. Benchmark decode, real matrix, routed expert, layer-3 MoE, layer, and P1 in
+   that order; inventory mixed quant formats by measured golden-trace time.
+4. Re-profile cache value, then retry P2. No new long P2 is eligible earlier.
+
+## Retained P2 streaming profile (experimental)
 
 - 16 GiB logical decoded shared-expert cache
 - routed experts streamed one matrix at a time and released after evaluation

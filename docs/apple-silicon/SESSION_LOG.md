@@ -4185,3 +4185,10 @@ The superseded record is retained at
 is preserved, but another P2 is prohibited until a whole-matrix vectorized
 IQ2_XXS decoder passes exact f32-bit comparison and the bounded benchmark ladder
 through P1 is committed.
+
+The checkpoint-free decoder slice now keeps the scalar oracle unchanged and
+adds an opt-in NumPy whole-block/whole-matrix path with exact `uint32` f32-bit,
+signed-zero, deterministic, and malformed-input tests. A clean-source Tier-3
+qualifier is prepared for four complete expert matrices at layers 3, 20, 40,
+and 60 across four checkpoint shards. No real-matrix result is claimed until
+that qualifier runs from its committed source revision.

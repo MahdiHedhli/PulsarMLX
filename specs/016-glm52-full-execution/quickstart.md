@@ -1,17 +1,25 @@
 # Quickstart: 016-glm52-full-execution
 
-## Current optimization gate
+## Current optimization gate (checkpoint-free)
 
 ```sh
-.venv/bin/python -m pytest -q \
-  scripts/research/tests/test_glm52_checkpoint_free.py \
-  scripts/research/tests/test_glm52_cache_simulator.py \
-  scripts/research/tests/test_glm52_expert_cache_runtime.py
-.venv/bin/python scripts/research/glm52_cache_simulator.py --check
+uv sync --frozen
+uv run --frozen python -m unittest discover \
+  -s scripts/research/tests -p 'test_iq2_xxs_numpy.py' -v
 ```
 
-P2 is permitted only from a clean committed worktree after notifying
-`Mahdi-Dev` and passing live disk, memory-pressure, and competing-load checks.
+The real-matrix qualification is run only from a clean committed worktree,
+after notifying `Mahdi-Dev` and confirming the admitted checkpoint, storage,
+memory pressure, and competing load:
+
+```sh
+export PULSARMLX_GLM_GGUF=/path/to/final/GLM-5.2-UD-IQ2_XXS
+uv run --frozen python scripts/research/qualify_iq2_xxs_numpy.py \
+  --output docs/research/glm52/raw/f016-iq2-xxs-numpy-qualification-0001.json
+```
+
+P2 remains ineligible until exact-bit qualification and the bounded benchmark
+ladder through P1 are committed.
 
 ## Tier-3 P2 command
 
