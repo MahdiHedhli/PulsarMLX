@@ -1,0 +1,42 @@
+{
+  "expert_cache": {
+    "bytes_resident": 8556380160,
+    "evictions": 3934,
+    "hit_rate": 0.0,
+    "hits": 0,
+    "misses": 4104
+  },
+  "generated_token_ids": [
+    9703,
+    21615
+  ],
+  "golden": [
+    9703,
+    21615,
+    220,
+    16,
+    13,
+    16,
+    16,
+    15,
+    15
+  ],
+  "matches_golden_full": false,
+  "matches_golden_prefix": true,
+  "mode": "inference",
+  "seconds": 15146.448245750013,
+  "timings": [
+    {
+      "phase": "prefill",
+      "pos": 0,
+      "sec": 6850.770356416004
+    },
+    {
+      "logits_sec": 92.97717149998061,
+      "phase": "decode",
+      "stack_sec": 8202.700665666023,
+      "step": 0,
+      "token": 21615
+    }
+  ]
+}

@@ -14,20 +14,31 @@
 | 3 | Inference mode scaffold + expert slab cache | `a23b4d0` |
 | 3 | Public-safe memory pressure helper | `0126ef1` |
 | 4 design | MLA compact-KV incremental design doc | `a23b4d0` |
+| 5 | P1 inference golden first-token match recovered after reboot | this focused recovery commit |
 
-## In flight
+## Recovered P1 evidence
 
-| Item | Notes |
-| --- | --- |
-| P1 golden first new token | `glm52_inference.py --n-new 1 --cache-gib 8` background |
+- Generated sequence: `[9703, 21615]`
+- Expected prefix: `[9703, 21615]`
+- Wall time: 15146.448245750013 seconds (~4.2 hours)
+- Decoded cache: 0 hits, 4104 misses, 3934 evictions
+- Original evidence SHA-256:
+  `b62c3062adc21498e1af19111202ac4a976aaa48106e7de7852f78280b8b2bfb`
+- Limitation: the recovered legacy output does not embed its schema,
+  checkpoint set hash, or execution commit; it is a valid golden-prefix
+  observation but not yet a self-contained publication record
 
 ## Next (autonomous continuation)
 
-1. Finish P1; confirm first new token == **21615**
-2. Run full 8-token golden with cache (expect << 13.5 h if cache warm helps multi-step; prefill still heavy)
-3. Expert prefetch after correct P1
-4. Wire `pulsar-mlx` CLI subcommand when path stable
-5. Update `PULSARMLX_GLM52_PERFORMANCE_REPORT.md` with measured P1 numbers
+1. Bank the unchanged P1 evidence and report updates
+2. Explain the 0% cache-hit result quantitatively from exact tensor sizes and
+   deterministic reuse-distance simulation
+3. Select the simplest promising cache policy and add storage/dequant/cache
+   metrics before another real run
+4. Run exactly two new tokens; require `[9703, 21615, 220]` plus meaningful
+   cross-token reuse
+5. Run the full eight-token golden only after P2 passes correctness and reuse
+6. Evaluate prefetch only after useful cache residency is demonstrated
 
 ## Non-goals this weekend (unless free)
 
