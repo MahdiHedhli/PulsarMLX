@@ -4326,3 +4326,12 @@ routed experts. Warm median total was 1.698580 seconds vectorized versus
 34.964010 seconds scalar (20.58×). The first vector sample retained cold shared
 cache and per-format timing. This does not establish complete-layer, P1, or P2
 performance; the transformer-layer rung remains next.
+
+The complete position-0 layer-3 rung then passed at clean source `a589dcf`.
+It retained the frozen attention midpoint and post-attention route, passed the
+architecture-reference numerical gate, and produced bit-identical deterministic
+outputs across decoder modes. Ten measured samples recorded warm median total
+of 19.391364 seconds vectorized versus 52.924374 seconds scalar (2.73×).
+Attention remained essentially unchanged at 17.668091 versus 17.662864 seconds,
+while MoE fell to 1.719293 from 35.257526 seconds. This is one layer only; P1
+is the next gate and no full-stack speedup is inferred yet.

@@ -62,6 +62,8 @@ uv run --frozen python scripts/research/benchmark_glm52_routed_expert.py \
   --output docs/research/glm52/raw/f016-routed-expert-iq3-0001.json
 uv run --frozen python scripts/research/benchmark_glm52_moe.py \
   --output docs/research/glm52/raw/f016-moe-layer3-iq3-0001.json
+uv run --frozen python scripts/research/benchmark_glm52_layer.py \
+  --output docs/research/glm52/raw/f016-layer3-iq3-0001.json
 python3 -m unittest discover -s scripts/research/tests \
   -p 'test_iq*_xxs_qualification_record.py' -v
 ```
