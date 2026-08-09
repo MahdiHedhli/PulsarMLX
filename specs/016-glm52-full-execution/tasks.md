@@ -8,12 +8,12 @@
 
 - [x] Passed after space clearance (`docs/validation/glm52-disk-admission.json`)
 
-## Phase 2 — Checkpoint acquisition (in progress)
+## Phase 2 — Checkpoint acquisition (done)
 
 - [x] NTFY start; download to internal `Models/PulsarMLX/GLM-5.2-UD-IQ2_XXS`
-- [ ] All 6 shards complete + size check
-- [ ] Per-file SHA-256 + `docs/validation/glm52-checkpoint.json`
-- [ ] NTFY acquisition complete
+- [x] All 6 shards complete + size check
+- [x] Per-file SHA-256 + `docs/validation/glm52-checkpoint.json`
+- [x] NTFY acquisition complete
 
 ## Checkpoint-independent (done / ongoing)
 
@@ -29,23 +29,35 @@
 - [x] Multi-shard catalog/store tooling
 - [x] CI suite `test_glm52_checkpoint_free.py`
 
-## Phase 3 — Streaming runtime (partial)
+## Phase 3 — Streaming runtime (partial; optimization continues)
 
 - [x] Expert cache API (fake store)
 - [x] Telemetry collector
 - [x] Fail-closed mode
-- [ ] Wire cache to real multi-shard positional reads
+- [x] Wire cache to real multi-shard positional reads
 - [ ] Prefetch policy integration
 
 ## Phase 4 — Architecture contract
 
 - [x] KV freeze + upstream map
-- [ ] Complete tensor-name walk after C01 full catalog
+- [x] Complete tensor-name walk after C01 full catalog
 
-## Phase 5 — Correctness ladder (real weights)
+## Phase 5 — Correctness ladder (real weights, done)
 
-- [ ] C01–C11 after checkpoint identity
+- [x] C01–C11 after checkpoint identity
 
 ## Phase 6–7
 
-- [ ] Performance + `PULSARMLX_GLM52_REPORT.md` + tag `v0.3.0-glm52-e2e-research`
+- [x] Full research execution evidence + `PULSARMLX_GLM52_REPORT.md` + tag `v0.3.0-glm52-e2e-research`
+- [ ] Optimized inference performance and final optimization report
+
+## Phase 8 — Weekend inference optimization
+
+- [x] Preserve unchanged recovered P1 first-token evidence and golden prefix
+- [x] Diagnose 0% decoded-cache hits with exact working-set accounting
+- [x] Add a deterministic cache simulator with decoded/compressed/shared policy separation
+- [ ] Replace Python-row global LRU with compact fail-closed shared-expert residency and split metrics
+- [ ] Run P2 exactly two new tokens; require `[9703, 21615, 220]` and useful reuse
+- [ ] Run the frozen eight-token golden only after P2 passes
+- [ ] Evaluate prefetch, storage, and dequantization changes one measured variable at a time
+- [ ] Publish final optimization report, clean CI, and pushed repository state

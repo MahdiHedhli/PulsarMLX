@@ -61,6 +61,57 @@ embed a schema identifier, checkpoint set hash, or execution commit. Its
 checkpoint and source provenance therefore remain contextual rather than
 self-contained, and no throughput or full-golden claim is promoted from P1.
 
+### Cache-thrash diagnosis
+
+The committed catalog and a committed 76-layer C09 routing trace drive the
+checkpoint-free simulator at
+`scripts/research/glm52_cache_simulator.py`. Its deterministic output is
+`docs/research/glm52/raw/f016-cache-simulation-0001.json`. The trace is replayed
+identically to isolate policy mechanics; P1 did not retain its own routed
+expert IDs, so routed-expert overlap is not claimed.
+
+| Quantity | Exact value |
+| --- | ---: |
+| Cache key | `tensor_name#expert_id` |
+| Entries per full MoE stack | 2052 |
+| Decoded bytes per tensor slab | 50331648 (48 MiB) |
+| Decoded bytes per complete expert | 150994944 (144 MiB) |
+| Decoded stack working set | 103280541696 (96.1875 GiB) |
+| Compressed stack working set | 9070411776 (~8.4475 GiB) |
+| Shared-expert decoded set | 11475615744 (10.6875 GiB) |
+| Shared-expert compressed set | 2105769984 (~1.9612 GiB) |
+| 8 GiB decoded capacity | 170 slabs (56 complete experts + 2 slabs) |
+
+The legacy cache stores gate, up, and down as independent decoded Python-f32
+row-list entries. It is created once per `generate` call and is not reset
+between tokens. P1 performed exactly two 2052-access stacks; 4104 misses minus
+3934 evictions equals the 170 resident entries, so the counters reconcile and
+the second stack was not merely cold-start accounting. For an identical
+sequential replay, each key's LRU stack distance is 2051 entries. Every tested
+decoded-LRU budget from 8 through 48 GiB is smaller than the 96.1875 GiB set
+and therefore produces zero warm decoded hits. This is classical cyclic LRU
+thrash, not a router bottleneck or per-token cache reset.
+
+The simulator separates storage and decode reuse:
+
+| Policy | Budget | Warm storage hits | Warm decoded hits | Redequants |
+| --- | ---: | ---: | ---: | ---: |
+| decoded global LRU | 8–48 GiB | 0 | 0 | 2052 |
+| compressed global LRU | 8 GiB | 0 | 0 | 2052 |
+| compressed global LRU | 16–48 GiB | 2052 | 0 | 2052 |
+| decoded shared-only | 8 GiB | 170 | 170 | 1882 |
+| decoded shared-only | 16–48 GiB | 228 | 228 | 1824 |
+
+The simplest promising next design is a protected decoded shared-expert tier:
+shared experts execute at every MoE layer, so their reuse is guaranteed without
+predicting routed experts. A logical 16 GiB budget contains all 228 shared
+slabs and avoids their redequantization on the next token. The current Python
+list representation materially undercounts real heap use, however, so P2 must
+not start until the tier stores compact evaluated MLX/f32 matrices, fails
+closed instead of silently falling back to CPU, and records RSS plus separate
+storage/dequant/MLX counters. A compressed tier remains a later measured
+storage experiment because its hits do not avoid dequantization.
+
 ## Configuration (defaults)
 
 - Expert decoded cache budget: 8 GiB (P1 run)
@@ -68,6 +119,8 @@ self-contained, and no throughput or full-golden claim is promoted from P1.
 - Mode: inference (cached experts) vs research (uncached)
 - P1 cache representation: decoded Python f32 rows, one cache entry per
   `tensor_name#expert_id`
+- Selected next policy: compact decoded shared-expert protection; 16 GiB
+  logical cap subject to live memory admission and actual RSS accounting
 
 ## Limitations
 

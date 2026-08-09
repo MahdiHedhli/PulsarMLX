@@ -15,6 +15,7 @@
 | 3 | Public-safe memory pressure helper | `0126ef1` |
 | 4 design | MLA compact-KV incremental design doc | `a23b4d0` |
 | 5 | P1 inference golden first-token match recovered after reboot | this focused recovery commit |
+| 6 | Exact cache working-set diagnosis + deterministic simulator | this focused simulator commit |
 
 ## Recovered P1 evidence
 
@@ -39,6 +40,21 @@
    cross-token reuse
 5. Run the full eight-token golden only after P2 passes correctness and reuse
 6. Evaluate prefetch only after useful cache residency is demonstrated
+
+## Cache diagnosis result
+
+- P1's 8-GiB decoded LRU held 170 of 2052 per-stack tensor slabs.
+- One decoded stack is 96.1875 GiB; identical sequential replay has an LRU
+  stack distance of 2051, so decoded LRU remains 0-hit through 48 GiB.
+- One compressed stack is ~8.4475 GiB. At 16 GiB it can avoid storage reads on
+  identical replay, but it still redequantizes all 2052 slabs.
+- All shared experts occupy 10.6875 GiB decoded and are guaranteed to repeat.
+  A protected shared tier at a 16-GiB logical cap predicts 228 decoded hits on
+  the next stack.
+- P1 did not record routed IDs, so the committed C09 trace is explicitly a
+  policy-mechanics proxy rather than a P1-to-P2 overlap measurement.
+- Selected next step: compact evaluated MLX/f32 shared-expert residency with
+  fail-closed MLX and real RSS/storage/dequant counters before P2.
 
 ## Non-goals this weekend (unless free)
 

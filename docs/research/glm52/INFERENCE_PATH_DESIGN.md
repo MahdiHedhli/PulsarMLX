@@ -22,18 +22,42 @@ DSA: short context uses range-fill (`visible <= top_k`). Long-context indexer se
 
 ## Expert residency
 
-`ExpertSlabCache` (Python research runtime):
+Legacy P1 `ExpertSlabCache` (Python research runtime):
 
 - key: `tensor_name#expert_id`
 - value: dequantized f32 rows
 - policy: deterministic LRU under byte budget
 - matvec: MLX when available
 
+P1 recorded 0 hits across two complete stacks because one stack is 2052
+48-MiB decoded slabs (96.1875 GiB) while the 8-GiB LRU retained only 170. The
+cache lifetime spans tokens; sequential early-layer misses evict every retained
+late-layer slab before reuse. Budgets through 48 GiB retain the same cyclic
+failure under identical replay.
+
+The next bounded design protects only decoded shared-expert matrices:
+
+- 228 gate/up/down slabs across 76 MoE layers
+- 10.6875 GiB logical f32 payload
+- guaranteed reuse on every later token
+- routed experts bypass the decoded tier until measured routing history
+  justifies a separate policy
+- cache values become compact evaluated MLX/f32 matrices rather than Python
+  float/list graphs
+- inference mode fails closed on missing MLX instead of silently selecting CPU
+- storage hits, decoded hits, reads, redequants, MLX evaluation, and memory are
+  recorded separately
+
+The simulator and machine-readable policy evidence are
+`scripts/research/glm52_cache_simulator.py` and
+`docs/research/glm52/raw/f016-cache-simulation-0001.json`. Its identical C09
+route replay tests policy mechanics only; P1 did not retain its route IDs.
+
 Maps ssd-llm **layer** LRU idea onto **expert slabs** (GLM-appropriate).
 
 ## Prefetch (planned)
 
-Only after golden match:
+Only after the two-token golden and reuse gate:
 
 - after router, issue async loads for selected expert IDs (next layer optional)
 - bounded in-flight reads
