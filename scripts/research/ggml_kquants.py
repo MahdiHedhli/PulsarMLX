@@ -237,6 +237,60 @@ def _q6_from_ggml_source(ql: bytes, qh: bytes, scales: tuple, d: float) -> list[
     return out
 
 
+def dequantize_blocks_q6_k_numpy(encoded: bytes):
+    """Vector-decode complete Q6_K blocks with scalar f64 operation order."""
+
+    import numpy as np
+
+    if len(encoded) == 0 or len(encoded) % Q6_K_BLOCK != 0:
+        raise ValueError("encoded length must be a nonzero multiple of 210")
+    blocks = np.frombuffer(encoded, dtype=np.uint8).reshape(-1, Q6_K_BLOCK)
+    ql = blocks[:, :128]
+    qh = blocks[:, 128:192]
+    scales = np.ascontiguousarray(blocks[:, 192:208]).view(np.int8)
+    d = (
+        np.ascontiguousarray(blocks[:, 208:210])
+        .view("<f2")
+        .reshape(-1)
+        .astype(np.float64)
+    )
+    if not np.isfinite(d).all():
+        raise ValueError("Q6_K scale must be finite")
+    decoded = np.empty((len(blocks), QK_K), dtype=np.float32)
+    group_offsets = (0, 2, 4, 6)
+    for half in range(2):
+        ql_half = ql[:, 64 * half : 64 * half + 64]
+        qh_half = qh[:, 32 * half : 32 * half + 32]
+        scale_half = scales[:, 8 * half : 8 * half + 8]
+        scale_select = np.arange(32) // 16
+        quant_groups = (
+            (ql_half[:, :32] & np.uint8(15)) | ((qh_half & np.uint8(3)) << np.uint8(4)),
+            (ql_half[:, :32] >> np.uint8(4)) | (((qh_half >> np.uint8(2)) & np.uint8(3)) << np.uint8(4)),
+            (ql_half[:, 32:64] & np.uint8(15)) | (((qh_half >> np.uint8(4)) & np.uint8(3)) << np.uint8(4)),
+            (ql_half[:, 32:64] >> np.uint8(4)) | (((qh_half >> np.uint8(6)) & np.uint8(3)) << np.uint8(4)),
+        )
+        for group, (quant, scale_offset) in enumerate(zip(quant_groups, group_offsets, strict=True)):
+            signed_quant = quant.astype(np.int16) - 32
+            group_scale = scale_half[:, scale_select + scale_offset].astype(np.float64)
+            values = (d[:, None] * group_scale) * signed_quant.astype(np.float64)
+            start = 128 * half + 32 * group
+            decoded[:, start : start + 32] = values.astype(np.float32)
+    return np.ascontiguousarray(decoded.reshape(-1))
+
+
+def dequantize_matrix_q6_k_numpy(encoded: bytes, rows: int, cols: int):
+    """Vector-decode one exact row-major Q6_K matrix to ``[rows, cols]`` f32."""
+
+    if rows <= 0 or cols <= 0:
+        raise ValueError("rows and cols must be positive")
+    if cols % QK_K != 0:
+        raise ValueError("cols must be multiple of 256 for pure Q6_K rows")
+    expected = rows * (cols // QK_K) * Q6_K_BLOCK
+    if len(encoded) != expected:
+        raise ValueError(f"matrix size mismatch {len(encoded)} != {expected}")
+    return dequantize_blocks_q6_k_numpy(encoded).reshape(rows, cols)
+
+
 def dequantize_row_q5_k(encoded: bytes, n: int | None = None) -> list[float]:
     """Q5_K block: d,dmin (f16), scales[12], qh[32], qs[128] = 176 bytes."""
     if n is None:
