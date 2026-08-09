@@ -85,6 +85,11 @@
   boundary, per-layer uninstrumented residual, cleanup non-attribution, complete
   non-expert GGUF inventory, logical residency budgets, request amplification,
   and the two bounded trunk experiments
+- [Post-Feature-016 whole-matrix trunk-read experiment](raw/post-f016-trunk-bulk-read-0001.json)
+  and [generated comparison table](tables/post-f016-trunk-bulk-read-0001.md)
+  — exact-bit real Q5_K, Q8_0, and Q6_K matrix comparisons plus a complete
+  single-position layer-8 MLA boundary; request granularity is the only changed
+  variable, and the result does not establish a token or full-layer speedup
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
