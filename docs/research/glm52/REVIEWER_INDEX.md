@@ -110,6 +110,10 @@
   — exact real matrix and complete layer-3 MLA output, with Q5_K held
   vectorized, only captured 2-D Q8_0 changed, and the unmodified per-head 3-D
   path retained in the residual
+- [Post-Feature-016 Q8_0 head-slab storage experiment](raw/post-f016-q8-head-bulk-scalar-0001.json)
+  and [generated table](tables/post-f016-q8-head-bulk-scalar-0001.md) — exact
+  single-head and complete layer-3 MLA comparisons with unchanged scalar decode;
+  49,152 row requests collapse to 128 head-slab reads without a material wall gain
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

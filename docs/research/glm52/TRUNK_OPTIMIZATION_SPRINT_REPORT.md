@@ -115,3 +115,18 @@ of median boundary wall by ratio of medians. Because per-head 3-D Q8_0 remains
 row-read and scalar inside that residual, it must be isolated before Q6_K or P1.
 The generated table is
 [`tables/post-f016-trunk-q8-2d-integration-0001.md`](tables/post-f016-trunk-q8-2d-integration-0001.md).
+
+## Phase A supplement: per-head Q8_0 bulk reads
+
+**Result: exact plumbing, not a material wall improvement.**
+
+At clean source `0f38f1d4448789b5a938ed9db3baa659c797ecf0`, the scalar Q8_0
+decoder and MLX path were unchanged. One read per head slab reduced complete
+layer-3 MLA head-path requests from 49,152 to 128 and storage median from
+0.025127 s to 0.000754 s. MLA median changed only from 2.073939 s to 2.062230 s
+(1.006x). Scalar head decode remained about 0.985 s.
+
+The exact storage-only result is retained in
+[`tables/post-f016-q8-head-bulk-scalar-0001.md`](tables/post-f016-q8-head-bulk-scalar-0001.md).
+It supports the next one-variable experiment—NumPy head-slab decode—but does
+not justify a storage-prefetch project or a token-speed claim.
