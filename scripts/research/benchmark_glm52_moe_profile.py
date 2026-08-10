@@ -36,6 +36,7 @@ from glm52_telemetry import assert_public_safe  # noqa: E402
 from glm52_tensor_store import Glm52TensorStore  # noqa: E402
 
 LAYERS = (3, 8, 40, 78)
+ADMITTED_LAYERS = (3, 8, 40, 75, 76, 77, 78)
 WARMUPS = 3
 MEASURED = 10
 TOKEN_ID = 9703
@@ -240,8 +241,8 @@ def _parse_layers(value: str) -> tuple[int, ...]:
         layers = tuple(int(item) for item in value.split(",") if item)
     except ValueError as error:
         raise argparse.ArgumentTypeError("layers must be comma-separated integers") from error
-    if not layers or len(set(layers)) != len(layers) or any(layer not in LAYERS for layer in layers):
-        raise argparse.ArgumentTypeError(f"layers must be a unique subset of {LAYERS}")
+    if not layers or len(set(layers)) != len(layers) or any(layer not in ADMITTED_LAYERS for layer in layers):
+        raise argparse.ArgumentTypeError(f"layers must be a unique subset of {ADMITTED_LAYERS}")
     return layers
 
 

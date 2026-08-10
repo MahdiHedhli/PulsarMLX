@@ -48,6 +48,7 @@ class MoeStageProfileTests(unittest.TestCase):
     def test_layer_parser_accepts_only_unique_admitted_subsets(self) -> None:
         self.assertEqual(_parse_layers("78"), (78,))
         self.assertEqual(_parse_layers("3,40"), (3, 40))
+        self.assertEqual(_parse_layers("75,76,77"), (75, 76, 77))
         for value in ("", "3,3", "7", "bad"):
             with self.assertRaises(Exception):
                 _parse_layers(value)
