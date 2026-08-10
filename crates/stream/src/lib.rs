@@ -53,6 +53,11 @@ pub use stable_slab::{
 
 mod stable_slab;
 
+mod telemetry;
+pub use telemetry::{
+    RuntimeTelemetry, TelemetryBucket, TelemetryError, TelemetrySnapshot,
+};
+
 #[cfg(target_os = "macos")]
 mod apple_metal_bridge;
 

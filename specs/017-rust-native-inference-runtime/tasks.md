@@ -48,14 +48,14 @@
 
 ## Phase 5 — Telemetry attribution
 
-- [ ] T017-50 Add separate timers/counters for:
+- [x] T017-50 Add separate timers/counters for:
   - storage/read
   - decode
   - buffer/materialization
   - backend build/import
   - compute
-- [ ] T017-51 Ensure layer-level aggregates and fixture events can attribute each bucket independently.
-- [ ] T017-52 Add fail-closed behavior if any bucket overflows uninitialized telemetry states.
+- [x] T017-51 Ensure layer-level aggregates and fixture events can attribute each bucket independently.
+- [x] T017-52 Add fail-closed behavior if any bucket overflows uninitialized telemetry states.
 
 ## Phase 6 — Decoder and numerical boundary
 
