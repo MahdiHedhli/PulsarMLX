@@ -37,3 +37,24 @@ python3 scripts/research/analyze_glm52_moe_p1.py
 python3 scripts/research/analyze_glm52_moe_p1.py --check
 python3 -m unittest scripts/research/tests/test_glm52_moe_p1_attribution.py
 ```
+
+## Phase 2 protocol: bounded expert harness
+
+The opt-in telemetry path leaves default inference behavior unchanged. When a
+bounded harness enables it, every gate/up/down event records tensor identity,
+expert ID, shared/routed role, quantization, cache disposition, compressed and
+decoded bytes, read/decode/buffer time, MLX construction and evaluation time,
+matvec time, and transient cleanup time. Expert-level timers additionally
+retain SwiGLU activation and route-weight application; the MoE boundary retains
+normalization, router projection, route selection, routed/shared aggregation,
+and residual-add timers.
+
+The admitted real-checkpoint ladder uses layers 3, 8, 40, and 78 to cover early,
+exceptional early, middle, and late quantization layouts. Each residual is a
+real checkpoint MLA result from frozen token `9703` at position zero, but is not
+described as a sequential full-stack hidden state. One untimed reference,
+one process-first observation, three warmups, and ten retained warm samples are
+required per layer. Timed and untimed paths must match exact f32 output bits and
+routes with normal resource pressure, zero fallback, and zero eviction.
+
+The harness does not execute 79 layers, P1/P2, golden-eight, Rust, or Metal.

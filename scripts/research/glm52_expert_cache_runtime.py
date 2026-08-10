@@ -27,6 +27,8 @@ class LoadMetrics:
     dequant_seconds: float
     contiguous_buffer_seconds: float
     matrix_build_seconds: float
+    matrix_construct_seconds: float = 0.0
+    matrix_eval_seconds: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -145,10 +147,13 @@ class MlxMatrixBackend:
                 flat.extend(decoded)
                 contiguous_buffer_seconds += time.perf_counter() - buffer_start
 
-        build_start = time.perf_counter()
+        construct_start = time.perf_counter()
         value = self.mx.array(flat, dtype=self.mx.float32).reshape((rows, cols))
+        matrix_construct_seconds = time.perf_counter() - construct_start
+        eval_start = time.perf_counter()
         self.mx.eval(value)
-        matrix_build_seconds = time.perf_counter() - build_start
+        matrix_eval_seconds = time.perf_counter() - eval_start
+        matrix_build_seconds = matrix_construct_seconds + matrix_eval_seconds
         matrix = DecodedMatrix(
             value=value,
             rows=rows,
@@ -173,6 +178,8 @@ class MlxMatrixBackend:
             dequant_seconds=dequant_seconds,
             contiguous_buffer_seconds=contiguous_buffer_seconds,
             matrix_build_seconds=matrix_build_seconds,
+            matrix_construct_seconds=matrix_construct_seconds,
+            matrix_eval_seconds=matrix_eval_seconds,
         )
         return matrix, metrics
 
@@ -283,8 +290,11 @@ class ExpertSlabCache:
     backend: MatrixBackend | None = None
     policy: str = "decoded_shared_only"
     decoder_mode: str = "scalar_reference"
+    capture_events: bool = False
     stats: ExpertCacheStats = field(init=False)
     _resident: OrderedDict[str, DecodedMatrix] = field(default_factory=OrderedDict)
+    _events: list[dict[str, Any]] = field(default_factory=list, init=False)
+    _active_event: int | None = field(default=None, init=False)
 
     def __post_init__(self) -> None:
         if self.max_bytes < 0:
@@ -334,6 +344,54 @@ class ExpertSlabCache:
     def clear(self) -> None:
         self._resident.clear()
         self.stats = self._new_stats()
+        self._events.clear()
+        self._active_event = None
+
+    def event_snapshot(self) -> list[dict[str, Any]]:
+        """Return independent bounded event dictionaries when capture is enabled."""
+
+        return [dict(event) for event in self._events]
+
+    def _record_load_event(
+        self,
+        *,
+        name: str,
+        expert: int,
+        matrix: DecodedMatrix,
+        hit: bool,
+        metrics: LoadMetrics | None,
+    ) -> None:
+        if not self.capture_events:
+            return
+        self._events.append(
+            {
+                "tensor_name": name,
+                "projection": next(
+                    projection
+                    for projection in ("gate", "up", "down")
+                    if f"ffn_{projection}_" in name
+                ),
+                "expert_id": expert,
+                "shared": self._is_shared(name),
+                "cache_hit": hit,
+                "quantization": matrix.quantization,
+                "decoder_mode": matrix.decoder_mode,
+                "rows": matrix.rows,
+                "cols": matrix.cols,
+                "compressed_bytes": matrix.compressed_bytes,
+                "decoded_f32_bytes": matrix.decoded_bytes,
+                "storage_read_count": 0 if metrics is None else metrics.storage_read_count,
+                "storage_read_seconds": 0.0 if metrics is None else metrics.storage_read_seconds,
+                "dequant_seconds": 0.0 if metrics is None else metrics.dequant_seconds,
+                "contiguous_buffer_seconds": 0.0 if metrics is None else metrics.contiguous_buffer_seconds,
+                "mlx_matrix_construct_seconds": 0.0 if metrics is None else metrics.matrix_construct_seconds,
+                "mlx_matrix_eval_seconds": 0.0 if metrics is None else metrics.matrix_eval_seconds,
+                "mlx_matrix_build_seconds": 0.0 if metrics is None else metrics.matrix_build_seconds,
+                "mlx_matvec_seconds": 0.0,
+                "cleanup_seconds": 0.0,
+            }
+        )
+        self._active_event = len(self._events) - 1
 
     def get_or_load_matrix(
         self, store: Glm52TensorStore, name: str, expert: int
@@ -346,6 +404,13 @@ class ExpertSlabCache:
             self.stats.decoded_cache_hits += 1
             self.stats.storage_bytes_avoided += matrix.compressed_bytes
             self.stats.decoded_bytes_avoided += matrix.decoded_bytes
+            self._record_load_event(
+                name=name,
+                expert=expert,
+                matrix=matrix,
+                hit=True,
+                metrics=None,
+            )
             return matrix
 
         self.stats.misses += 1
@@ -369,6 +434,13 @@ class ExpertSlabCache:
         quantization["dequant_seconds"] += metrics.dequant_seconds
         quantization["contiguous_buffer_seconds"] += metrics.contiguous_buffer_seconds
         quantization["mlx_matrix_build_seconds"] += metrics.matrix_build_seconds
+        self._record_load_event(
+            name=name,
+            expert=expert,
+            matrix=matrix,
+            hit=False,
+            metrics=metrics,
+        )
 
         if not self._is_shared(name):
             self.stats.policy_bypasses += 1
@@ -394,6 +466,10 @@ class ExpertSlabCache:
         quantization = self._quantization_metrics(matrix.quantization)
         quantization["mlx_matvec_count"] += 1
         quantization["mlx_matvec_seconds"] += seconds
+        if self.capture_events:
+            if self._active_event is None:
+                raise RuntimeError("matvec event has no matching matrix load")
+            self._events[self._active_event]["mlx_matvec_seconds"] += seconds
         return result
 
     def is_resident(self, name: str, expert: int) -> bool:
@@ -401,7 +477,14 @@ class ExpertSlabCache:
 
     def release_transient(self) -> None:
         assert self.backend is not None
+        cleanup_start = time.perf_counter() if self.capture_events else 0.0
         self.backend.release_transient()
+        if self.capture_events:
+            if self._active_event is None:
+                raise RuntimeError("cleanup event has no matching matrix load")
+            self._events[self._active_event]["cleanup_seconds"] += (
+                time.perf_counter() - cleanup_start
+            )
         self.stats.transient_releases += 1
 
 

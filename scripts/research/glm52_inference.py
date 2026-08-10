@@ -148,18 +148,44 @@ def run_expert_swiglu_cached(
     weight: float = 1.0,
     *,
     shared: bool = False,
+    timing_sink: dict[str, Any] | None = None,
 ) -> list[float]:
+    event_start = len(cache.event_snapshot()) if timing_sink is not None else 0
+    total_start = time.perf_counter() if timing_sink is not None else 0.0
     if shared:
         g = expert_matvec_cached(store, cache, f"blk.{layer}.ffn_gate_shexp.weight", 0, x)
         u = expert_matvec_cached(store, cache, f"blk.{layer}.ffn_up_shexp.weight", 0, x)
+        activation_start = time.perf_counter() if timing_sink is not None else 0.0
         h = [silu(a) * b for a, b in zip(g, u, strict=True)]
+        activation_seconds = (
+            time.perf_counter() - activation_start if timing_sink is not None else 0.0
+        )
         d = expert_matvec_cached(store, cache, f"blk.{layer}.ffn_down_shexp.weight", 0, h)
     else:
         g = expert_matvec_cached(store, cache, f"blk.{layer}.ffn_gate_exps.weight", expert, x)
         u = expert_matvec_cached(store, cache, f"blk.{layer}.ffn_up_exps.weight", expert, x)
+        activation_start = time.perf_counter() if timing_sink is not None else 0.0
         h = [silu(a) * b for a, b in zip(g, u, strict=True)]
+        activation_seconds = (
+            time.perf_counter() - activation_start if timing_sink is not None else 0.0
+        )
         d = expert_matvec_cached(store, cache, f"blk.{layer}.ffn_down_exps.weight", expert, h)
-    return [weight * v for v in d]
+    weighting_start = time.perf_counter() if timing_sink is not None else 0.0
+    result = [weight * v for v in d]
+    if timing_sink is not None:
+        timing_sink.update(
+            {
+                "layer": layer,
+                "expert_id": expert,
+                "shared": shared,
+                "weight": weight,
+                "activation_swiglu_seconds": activation_seconds,
+                "weighting_seconds": time.perf_counter() - weighting_start,
+                "matrix_events": cache.event_snapshot()[event_start:],
+                "total_seconds": time.perf_counter() - total_start,
+            }
+        )
+    return result
 
 
 def moe_ffn_cached(
@@ -168,13 +194,25 @@ def moe_ffn_cached(
     layer: int,
     residual: list[float],
     route_sink: list[dict[str, Any]] | None = None,
+    timing_sink: dict[str, Any] | None = None,
 ) -> list[float]:
     from glm52_router import glm_route_real
 
+    total_start = time.perf_counter() if timing_sink is not None else 0.0
+    norm_start = time.perf_counter() if timing_sink is not None else 0.0
     x = rms_norm(residual, load_f32_vector(store, f"blk.{layer}.ffn_norm.weight"), RMS_EPS)
+    norm_seconds = time.perf_counter() - norm_start if timing_sink is not None else 0.0
+    router_projection_start = time.perf_counter() if timing_sink is not None else 0.0
     logits = matvec_weight(store, f"blk.{layer}.ffn_gate_inp.weight", x)
+    router_projection_seconds = (
+        time.perf_counter() - router_projection_start if timing_sink is not None else 0.0
+    )
+    router_selection_start = time.perf_counter() if timing_sink is not None else 0.0
     bias = load_f32_vector(store, f"blk.{layer}.exp_probs_b.bias")
     route = glm_route_real(logits, bias)
+    router_selection_seconds = (
+        time.perf_counter() - router_selection_start if timing_sink is not None else 0.0
+    )
     if route_sink is not None:
         route_sink.append(
             {
@@ -185,14 +223,49 @@ def moe_ffn_cached(
             }
         )
     acc = [0.0] * len(residual)
+    routed_timings: list[dict[str, Any]] = []
+    routed_aggregation_seconds = 0.0
     for eid, w in zip(route["expert_ids"], route["weights"], strict=True):
-        part = run_expert_swiglu_cached(store, cache, layer, eid, x, w, shared=False)
+        expert_timing: dict[str, Any] | None = {} if timing_sink is not None else None
+        part = run_expert_swiglu_cached(
+            store, cache, layer, eid, x, w, shared=False, timing_sink=expert_timing
+        )
+        aggregation_start = time.perf_counter() if timing_sink is not None else 0.0
         for i, v in enumerate(part):
             acc[i] += v
-    she = run_expert_swiglu_cached(store, cache, layer, 0, x, 1.0, shared=True)
+        if timing_sink is not None:
+            routed_aggregation_seconds += time.perf_counter() - aggregation_start
+            assert expert_timing is not None
+            routed_timings.append(expert_timing)
+    shared_timing: dict[str, Any] | None = {} if timing_sink is not None else None
+    she = run_expert_swiglu_cached(
+        store, cache, layer, 0, x, 1.0, shared=True, timing_sink=shared_timing
+    )
+    shared_aggregation_start = time.perf_counter() if timing_sink is not None else 0.0
     for i, v in enumerate(she):
         acc[i] += v
-    return [a + b for a, b in zip(residual, acc, strict=True)]
+    shared_aggregation_seconds = (
+        time.perf_counter() - shared_aggregation_start if timing_sink is not None else 0.0
+    )
+    residual_start = time.perf_counter() if timing_sink is not None else 0.0
+    result = [a + b for a, b in zip(residual, acc, strict=True)]
+    if timing_sink is not None:
+        assert shared_timing is not None
+        timing_sink.update(
+            {
+                "layer": layer,
+                "ffn_norm_seconds": norm_seconds,
+                "router_projection_seconds": router_projection_seconds,
+                "router_selection_seconds": router_selection_seconds,
+                "routed_experts": routed_timings,
+                "shared_expert": shared_timing,
+                "routed_aggregation_seconds": routed_aggregation_seconds,
+                "shared_aggregation_seconds": shared_aggregation_seconds,
+                "residual_add_seconds": time.perf_counter() - residual_start,
+                "total_seconds": time.perf_counter() - total_start,
+            }
+        )
+    return result
 
 
 def layer_forward_inference(

@@ -109,6 +109,30 @@ def test_shared_only_policy_bypasses_routed_and_reuses_shared() -> None:
     assert stats["device"] == "fake_gpu"
 
 
+def test_opt_in_events_retain_projection_identity_and_cleanup() -> None:
+    backend = FakeBackend()
+    cache = ExpertSlabCache(
+        max_bytes=16,
+        backend=backend,
+        policy="decoded_shared_only",
+        capture_events=True,
+    )
+    matrix = cache.get_or_load_matrix(
+        object(), "blk.3.ffn_gate_exps.weight", 7
+    )
+    cache.matvec(matrix, [3.0, 4.0])
+    cache.release_transient()
+    events = cache.event_snapshot()
+    assert len(events) == 1
+    assert events[0]["projection"] == "gate"
+    assert events[0]["expert_id"] == 7
+    assert events[0]["shared"] is False
+    assert events[0]["cache_hit"] is False
+    assert events[0]["mlx_matvec_seconds"] == 0.0625
+    assert events[0]["cleanup_seconds"] >= 0.0
+    assert cache.stats.to_dict()["mlx_matvec_count"] == 1
+
+
 def test_shared_admission_is_protected_and_bounded_without_eviction() -> None:
     backend = FakeBackend(decoded_bytes=8)
     cache = ExpertSlabCache(max_bytes=16, backend=backend, policy="decoded_shared_only")
