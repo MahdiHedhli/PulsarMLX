@@ -4,6 +4,13 @@
 
 use gguf::Gguf;
 
+mod iq2_xxs;
+pub use iq2_xxs::{
+    iq2_xxs_gemv_reference, iq2_xxs_grid_bytes, iq2_xxs_lookup_sha256,
+    iq2_xxs_sign_bytes, synthetic_iq2_xxs_matrix, Iq2XxsGemvSpec, IQ2_XXS_BLOCK_BYTES,
+    IQ2_XXS_BLOCK_WEIGHTS, IQ2_XXS_GRID_BYTES, IQ2_XXS_SIGN_BYTES,
+};
+
 /// One disk read: an expert tensor slab at an absolute file offset.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Read {
@@ -29,7 +36,7 @@ mod apple_metal_bridge;
 
 #[cfg(target_os = "macos")]
 pub use apple_metal_bridge::{
-    Iq2XxsGemvSpec, Iq2XxsGemvTelemetry, MetalBridge, MetalRegistration,
+    Iq2XxsGemvResult, Iq2XxsGemvTelemetry, MetalBridge, MetalRegistration,
 };
 
 /// Build the universe of per-expert slab reads for every streamed layer of

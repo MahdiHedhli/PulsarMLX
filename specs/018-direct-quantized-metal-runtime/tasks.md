@@ -62,11 +62,11 @@
 
 **Independent Test**: A generated packed matrix matches the Rust/Python scalar reference for 100 deterministic native executions and rejects malformed inputs before dispatch.
 
-- [ ] T017 [US2] Add deterministic IQ2_XXS grid/sign table generation and hashes in `crates/stream/src/iq2_xxs.rs`
-- [ ] T018 [US2] Add scalar Rust packed IQ2_XXS GEMV oracle and exact synthetic fixture generation in `crates/stream/src/iq2_xxs.rs`
-- [ ] T019 [US2] Add the smallest packed-IQ2_XXS f32-accumulating kernel and pipeline lifecycle in `crates/stream/src/apple_metal_bridge.mm`
-- [ ] T020 [US2] Implement Rust bridge dispatch, completion, telemetry, and zero-materialization accounting in `crates/stream/src/apple_metal_bridge.rs`
-- [ ] T021 [US2] Pass native deterministic, malformed, in-flight lifetime, and teardown tests in `crates/stream/tests/iq2_xxs_metal.rs`
+- [x] T017 [US2] Add deterministic IQ2_XXS grid/sign table generation and hashes in `crates/stream/src/iq2_xxs.rs`
+- [x] T018 [US2] Add scalar Rust packed IQ2_XXS GEMV oracle and exact synthetic fixture generation in `crates/stream/src/iq2_xxs.rs`
+- [x] T019 [US2] Add the smallest packed-IQ2_XXS f32-accumulating kernel and pipeline lifecycle in `crates/stream/src/apple_metal_bridge.mm`
+- [x] T020 [US2] Implement Rust bridge dispatch, completion, telemetry, and zero-materialization accounting in `crates/stream/src/apple_metal_bridge.rs`
+- [x] T021 [US2] Pass native deterministic, malformed, in-flight lifetime, and teardown tests in `crates/stream/tests/iq2_xxs_metal.rs`
 - [ ] T022 [US2] Record checkpoint-free synthetic evidence and generated review table under `docs/research/glm52/raw/` and `docs/research/glm52/tables/`
 - [ ] T023 [US2] Commit and push the synthetic direct-quantized Metal gate
 

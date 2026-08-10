@@ -1041,6 +1041,9 @@ dependencies = [
  "gguf",
  "io-uring",
  "libc",
+ "quant",
+ "serde_json",
+ "sha2",
 ]
 
 [[package]]
