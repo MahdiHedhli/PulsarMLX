@@ -17,11 +17,13 @@ from glm52_tensor_store import Glm52TensorStore, nbytes_for_tensor
 class DirectIq2MetalWorker:
     """Two-slot research worker; never silently falls back to CPU or MLX."""
 
-    def __init__(self, executable: Path, source_commit: str) -> None:
+    def __init__(
+        self, executable: Path, source_commit: str, *, combined_iq3: bool = False
+    ) -> None:
         if not executable.is_file():
             raise FileNotFoundError(executable)
         self._process = subprocess.Popen(
-            [str(executable)],
+            [str(executable), *(["--combined-iq3"] if combined_iq3 else [])],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -34,8 +36,12 @@ class DirectIq2MetalWorker:
             raise RuntimeError("direct Metal worker did not become ready")
         if ready.get("source_commit") != source_commit:
             raise RuntimeError("direct Metal worker source identity mismatch")
-        if ready.get("max_resident_matrices") != 2:
+        expected_resident = 3 if combined_iq3 else 2
+        if ready.get("max_resident_matrices") != expected_resident:
             raise RuntimeError("direct Metal worker residency bound changed")
+        if ready.get("combined_iq3") is not combined_iq3:
+            raise RuntimeError("direct Metal worker capability mode changed")
+        self._combined_iq3 = combined_iq3
         self.identity = ready
         self._stats: dict[str, float | int] = {
             "gemv_count": 0,
@@ -98,8 +104,15 @@ class DirectIq2MetalWorker:
         activation: list[float],
     ) -> tuple[list[float], dict[str, Any]]:
         location = store.tensors[tensor_name]
-        if location.type_id != 16 or location.type_name != "IQ2_XXS":
-            raise ValueError(f"{tensor_name}: direct worker supports IQ2_XXS only")
+        supported = location.type_id == 16 and location.type_name == "IQ2_XXS"
+        supported |= (
+            self._combined_iq3
+            and location.type_id == 18
+            and location.type_name == "IQ3_XXS"
+        )
+        if not supported:
+            scope = "IQ2_XXS/IQ3_XXS" if self._combined_iq3 else "IQ2_XXS"
+            raise ValueError(f"{tensor_name}: direct worker supports {scope} only")
         if len(location.dims) != 3:
             raise ValueError(f"{tensor_name}: direct worker requires a routed-expert tensor")
         columns, rows, experts = map(int, location.dims)
@@ -118,12 +131,15 @@ class DirectIq2MetalWorker:
                 "offset": location.offset + expert_id * packed_bytes,
                 "rows": rows,
                 "columns": columns,
+                "quantization": location.type_name,
                 "activation_f32_bits": activation_bits,
             }
         )
         bits = response.pop("output_f32_bits", None)
         if not isinstance(bits, list) or len(bits) != rows:
             raise RuntimeError("direct Metal worker output shape mismatch")
+        if response.get("quantization") != location.type_name:
+            raise RuntimeError("direct Metal worker quantization identity mismatch")
         output = [struct.unpack("<f", struct.pack("<I", int(value)))[0] for value in bits]
         output_sha256 = __import__("hashlib").sha256(
             np.asarray(output, dtype="<f4").tobytes()
@@ -190,3 +206,10 @@ class DirectIq2MetalWorker:
             if exc is None:
                 raise
             self._process.kill()
+
+
+class DirectIq2Iq3MetalWorker(DirectIq2MetalWorker):
+    """Three-slot IQ2 gate/up plus IQ3 routed-down validation worker."""
+
+    def __init__(self, executable: Path, source_commit: str) -> None:
+        super().__init__(executable, source_commit, combined_iq3=True)

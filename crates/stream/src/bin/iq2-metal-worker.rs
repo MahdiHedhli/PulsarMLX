@@ -20,7 +20,19 @@ fn run() -> Result<(), String> {
     use std::process::Command;
     use stream::{MetalBridge, StableSlab};
 
-    const MAX_RESIDENT_MATRICES: usize = 2;
+    const IQ2_ONLY_RESIDENT_MATRICES: usize = 2;
+    const COMBINED_RESIDENT_MATRICES: usize = 3;
+    let mut args = std::env::args().skip(1);
+    let combined_iq3 = match args.next().as_deref() {
+        None => false,
+        Some("--combined-iq3") if args.next().is_none() => true,
+        _ => return Err("usage: iq2-metal-worker [--combined-iq3]".into()),
+    };
+    let max_resident_matrices = if combined_iq3 {
+        COMBINED_RESIDENT_MATRICES
+    } else {
+        IQ2_ONLY_RESIDENT_MATRICES
+    };
     let status = Command::new("git")
         .args(["status", "--porcelain"])
         .output()
@@ -59,7 +71,13 @@ fn run() -> Result<(), String> {
                 "math_floating_point_functions": "precise",
                 "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
             },
-            "max_resident_matrices": MAX_RESIDENT_MATRICES,
+            "pipeline_identities": if combined_iq3 {
+                json!(["iq2_xxs_sequential_scaffold_v1", "iq3_xxs_sequential_scaffold_v1"])
+            } else {
+                json!(["iq2_xxs_sequential_scaffold_v1"])
+            },
+            "combined_iq3": combined_iq3,
+            "max_resident_matrices": max_resident_matrices,
         })
     )
     .map_err(|error| error.to_string())?;
@@ -114,7 +132,8 @@ fn run() -> Result<(), String> {
                     &request,
                     &mut resident,
                     &mut evictions,
-                    MAX_RESIDENT_MATRICES,
+                    max_resident_matrices,
+                    combined_iq3,
                 );
                 match response {
                     Ok(value) => writeln!(stdout, "{value}").map_err(|error| error.to_string())?,
@@ -150,6 +169,7 @@ fn handle_gemv(
     resident: &mut std::collections::HashMap<String, stream::StableSlab>,
     evictions: &mut u64,
     max_resident: usize,
+    combined_iq3: bool,
 ) -> Result<serde_json::Value, String> {
     use serde_json::{json, Value};
     use sha2::{Digest, Sha256};
@@ -157,7 +177,9 @@ fn handle_gemv(
     use std::os::unix::fs::FileExt;
     use std::path::Path;
     use std::time::Instant;
-    use stream::{Iq2XxsGemvSpec, StableSlabAllocator, StableSlabConfig, ZeroingPolicy};
+    use stream::{
+        Iq2XxsGemvSpec, Iq3XxsGemvSpec, StableSlabAllocator, StableSlabConfig, ZeroingPolicy,
+    };
 
     let request_id = request
         .get("request_id")
@@ -181,6 +203,13 @@ fn handle_gemv(
         .and_then(Value::as_u64)
         .and_then(|value| usize::try_from(value).ok())
         .ok_or("columns must fit usize")?;
+    let quantization = request
+        .get("quantization")
+        .and_then(Value::as_str)
+        .unwrap_or("IQ2_XXS");
+    if quantization != "IQ2_XXS" && !(combined_iq3 && quantization == "IQ3_XXS") {
+        return Err(format!("unsupported direct quantization: {quantization}"));
+    }
     let activation_bits = request
         .get("activation_f32_bits")
         .and_then(Value::as_array)
@@ -195,14 +224,14 @@ fn handle_gemv(
                 .ok_or_else(|| "activation bit pattern must fit u32".to_owned())
         })
         .collect::<Result<Vec<_>, _>>()?;
+    let block_bytes = if quantization == "IQ3_XXS" { 98 } else { 66 };
     let packed_row_bytes = (columns / 256)
-        .checked_mul(66)
+        .checked_mul(block_bytes)
         .ok_or("packed row size overflow")?;
     let packed_bytes = rows
         .checked_mul(packed_row_bytes)
         .ok_or("packed matrix size overflow")?;
-    let spec = Iq2XxsGemvSpec::new(rows, columns, packed_bytes, activation.len())?;
-    let key = format!("{path}\0{offset}\0{packed_bytes}");
+    let key = format!("{quantization}\0{path}\0{offset}\0{packed_bytes}");
     let cache_hit = resident.contains_key(&key);
     let mut storage_read_seconds = 0.0;
     if !cache_hit {
@@ -238,15 +267,36 @@ fn handle_gemv(
     }
     let slab = resident.get(&key).ok_or("resident slab disappeared")?;
     let registration = bridge.register(slab)?;
-    let result = bridge.iq2_xxs_gemv(&registration, spec, &activation)?;
-    let output_bytes = result
-        .output
+    let (output, dispatch_seconds, kernel_seconds, synchronization_seconds, total_seconds) =
+        if quantization == "IQ3_XXS" {
+            let spec = Iq3XxsGemvSpec::new(rows, columns, packed_bytes, activation.len())?;
+            let result = bridge.iq3_xxs_gemv(&registration, spec, &activation)?;
+            (
+                result.output,
+                result.telemetry.dispatch_seconds,
+                result.telemetry.kernel_seconds,
+                result.telemetry.synchronization_seconds,
+                result.telemetry.total_seconds,
+            )
+        } else {
+            let spec = Iq2XxsGemvSpec::new(rows, columns, packed_bytes, activation.len())?;
+            let result = bridge.iq2_xxs_gemv(&registration, spec, &activation)?;
+            (
+                result.output,
+                result.telemetry.dispatch_seconds,
+                result.telemetry.kernel_seconds,
+                result.telemetry.synchronization_seconds,
+                result.telemetry.total_seconds,
+            )
+        };
+    let output_bytes = output
         .iter()
         .flat_map(|value| value.to_bits().to_le_bytes())
         .collect::<Vec<_>>();
     Ok(json!({
         "status": "ok",
         "request_id": request_id,
+        "quantization": quantization,
         "cache_hit": cache_hit,
         "resident_entries": resident.len(),
         "evictions": *evictions,
@@ -254,11 +304,11 @@ fn handle_gemv(
         "storage_bytes_read": if cache_hit { 0 } else { packed_bytes },
         "storage_read_seconds": storage_read_seconds,
         "registration_seconds": registration.registration_seconds(),
-        "dispatch_seconds": result.telemetry.dispatch_seconds,
-        "kernel_seconds": result.telemetry.kernel_seconds,
-        "synchronization_seconds": result.telemetry.synchronization_seconds,
-        "total_seconds": result.telemetry.total_seconds,
-        "output_f32_bits": result.output.iter().map(|value| value.to_bits()).collect::<Vec<_>>(),
+        "dispatch_seconds": dispatch_seconds,
+        "kernel_seconds": kernel_seconds,
+        "synchronization_seconds": synchronization_seconds,
+        "total_seconds": total_seconds,
+        "output_f32_bits": output.iter().map(|value| value.to_bits()).collect::<Vec<_>>(),
         "output_sha256": format!("{:x}", Sha256::digest(&output_bytes)),
         "cpu_fallback_count": 0,
         "complete_f32_weight_materialized_bytes": 0,

@@ -25,6 +25,7 @@ from glm52_expert_cache_runtime import (  # noqa: E402
     expert_matvec_cached,
     matvec_cached_rows,
     run_routed_expert_direct_iq2,
+    run_routed_expert_direct_iq2_iq3,
 )
 from glm52_dense_primitives import (  # noqa: E402
     matvec_weight,
@@ -224,6 +225,42 @@ def test_direct_iq2_routed_expert_keeps_down_on_reference_backend() -> None:
     assert backend.load_calls == [("blk.3.ffn_down_exps.weight", 15)]
     assert len(detail["down_reference_events"]) == 1
     assert detail["down_reference_events"][0]["projection"] == "down"
+
+
+def test_direct_iq2_iq3_routed_expert_dispatches_all_three_projections() -> None:
+    class FakeWorker:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def gemv(
+            self, store: object, name: str, expert: int, activation: list[float]
+        ) -> tuple[list[float], dict[str, object]]:
+            del store, expert
+            self.calls.append(name)
+            if "_gate_" in name:
+                output = [1.0, 2.0]
+            elif "_up_" in name:
+                output = [3.0, 4.0]
+            else:
+                output = [activation[0] + activation[1], activation[0] - activation[1]]
+            return output, {"tensor_name": name, "cpu_fallback_count": 0}
+
+    worker = FakeWorker()
+    output, detail = run_routed_expert_direct_iq2_iq3(
+        object(),
+        worker,
+        layer=3,
+        expert=15,
+        activation=[0.25, -0.5],
+        weight=0.5,
+    )
+    assert worker.calls == [
+        "blk.3.ffn_gate_exps.weight",
+        "blk.3.ffn_up_exps.weight",
+        "blk.3.ffn_down_exps.weight",
+    ]
+    assert detail["down_direct_metal"]["tensor_name"].endswith("ffn_down_exps.weight")
+    assert len(output) == 2
 
 
 def test_inference_rejects_direct_mode_without_worker() -> None:

@@ -585,3 +585,50 @@ def run_routed_expert_direct_iq2(
         "weighting_seconds": weighting_seconds,
         "total_seconds": time.perf_counter() - total_start,
     }
+
+
+def run_routed_expert_direct_iq2_iq3(
+    store: Glm52TensorStore,
+    worker: Any,
+    *,
+    layer: int,
+    expert: int,
+    activation: list[float],
+    weight: float,
+) -> tuple[list[float], dict[str, Any]]:
+    """Run IQ2 gate/up and IQ3 routed down directly with fail-closed dispatch."""
+
+    total_start = time.perf_counter()
+    gate, gate_event = worker.gemv(
+        store, f"blk.{layer}.ffn_gate_exps.weight", expert, activation
+    )
+    up, up_event = worker.gemv(
+        store, f"blk.{layer}.ffn_up_exps.weight", expert, activation
+    )
+    activation_start = time.perf_counter()
+
+    def silu(value: float) -> float:
+        if value >= 0.0:
+            return value / (1.0 + math.exp(-value))
+        exponential = math.exp(value)
+        return value * exponential / (1.0 + exponential)
+
+    hidden = [silu(left) * right for left, right in zip(gate, up, strict=True)]
+    activation_seconds = time.perf_counter() - activation_start
+    down, down_event = worker.gemv(
+        store, f"blk.{layer}.ffn_down_exps.weight", expert, hidden
+    )
+    weighting_start = time.perf_counter()
+    result = [weight * value for value in down]
+    weighting_seconds = time.perf_counter() - weighting_start
+    return result, {
+        "layer": layer,
+        "expert_id": expert,
+        "weight": weight,
+        "gate_direct_metal": gate_event,
+        "up_direct_metal": up_event,
+        "down_direct_metal": down_event,
+        "activation_swiglu_seconds": activation_seconds,
+        "weighting_seconds": weighting_seconds,
+        "total_seconds": time.perf_counter() - total_start,
+    }
