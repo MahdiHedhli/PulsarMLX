@@ -169,6 +169,11 @@
   four complete real layer-78 expert matrices, exact f32-bit scalar-oracle
   comparisons, deterministic and signed-zero gates, ten-sample decode
   populations, and the checkpoint's explicit two-tensor Q2_K census limit
+- [Post-Feature-016 layer-78 Q2_K integration](raw/post-f016-moe-layer78-q2-0001.json),
+  [derived analysis](raw/post-f016-moe-layer78-q2-analysis-0001.json), and
+  [generated table](tables/post-f016-moe-layer78-q2-0001.md) — exact
+  scalar-reference MoE output and routes, ten retained samples, complete stage
+  timing, and Q3_K as the next measured decoder gate
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

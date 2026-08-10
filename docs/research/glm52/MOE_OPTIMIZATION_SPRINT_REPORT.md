@@ -116,3 +116,14 @@ expert, MoE, layer, stack, or token speedup.
 
 - [`raw/post-f016-q2-k-numpy-qualification-0001.json`](raw/post-f016-q2-k-numpy-qualification-0001.json)
 - [`tables/post-f016-q2-k-numpy-qualification-0001.md`](tables/post-f016-q2-k-numpy-qualification-0001.md)
+
+The exact layer-78 integration then reduced the ten-sample MoE median from
+56.373736 s to 22.898163 s (2.46x) against a scalar-reference MoE output and
+route. Candidate decode fell to 20.424514 s, buffer handling to 2.002285 s,
+MLX construct/eval was 0.142778 s, matvec 0.131529 s, cleanup 0.076882 s, and
+SwiGLU 0.002240 s. Q3_K now accounts for a 20.166532-second attributed median,
+including 17.969160 s decode, so it is the next bounded decoder gate.
+
+- [`raw/post-f016-moe-layer78-q2-0001.json`](raw/post-f016-moe-layer78-q2-0001.json)
+- [`raw/post-f016-moe-layer78-q2-analysis-0001.json`](raw/post-f016-moe-layer78-q2-analysis-0001.json)
+- [`tables/post-f016-moe-layer78-q2-0001.md`](tables/post-f016-moe-layer78-q2-0001.md)

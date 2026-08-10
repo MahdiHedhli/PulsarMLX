@@ -1,0 +1,107 @@
+{
+  "absolute_seconds_reduced": 33.47557308348769,
+  "actual_status": "passed",
+  "baseline": {
+    "medians": {
+      "activation_swiglu_seconds": 0.002267938012664672,
+      "cleanup_seconds": 0.08706837601494044,
+      "contiguous_buffer_seconds": 5.960593579671695,
+      "dequant_seconds": 49.81181381576607,
+      "mlx_matrix_construct_seconds": 0.12208943898440339,
+      "mlx_matrix_eval_seconds": 0.003124458518868778,
+      "mlx_matvec_seconds": 0.21351527147635352,
+      "storage_read_seconds": 0.06598967850004556,
+      "total_seconds": 56.373736249996,
+      "uninstrumented_residual_seconds": 0.03171411434595939,
+      "weighting_seconds": 0.0012538544906419702
+    },
+    "record": "docs/research/glm52/raw/post-f016-moe-stage-profile-0001.json",
+    "sha256": "8eee87606c5fd81db43ad15945228eaa8b44e59ee2d1ee0555716d3d213c570b",
+    "source_commit": "4879c38b43f396c13038b78fa9114a5e496823e8"
+  },
+  "boundary_speedup": 2.4619326816768554,
+  "candidate": {
+    "cpu_fallbacks": 0,
+    "evictions": 0,
+    "exact_f32_bits_against_scalar_reference": true,
+    "medians": {
+      "activation_swiglu_seconds": 0.0022399170047719963,
+      "cleanup_seconds": 0.0768817100324668,
+      "contiguous_buffer_seconds": 2.0022849071610835,
+      "dequant_seconds": 20.42451379094564,
+      "mlx_matrix_construct_seconds": 0.139630395497079,
+      "mlx_matrix_eval_seconds": 0.0031472489863517694,
+      "mlx_matvec_seconds": 0.13152899697888643,
+      "storage_read_seconds": 0.04168535477219848,
+      "total_seconds": 22.89816316650831,
+      "uninstrumented_residual_seconds": 0.013997904461575672,
+      "weighting_seconds": 0.0010483119913260452
+    },
+    "quantization_ranking": [
+      {
+        "median_attributed_seconds": 20.166531880604452,
+        "median_components": {
+          "cleanup_seconds": 0.02584143700369168,
+          "contiguous_buffer_seconds": 2.0018647401593626,
+          "dequant_seconds": 17.969159812942962,
+          "mlx_matrix_construct_seconds": 0.06223804249748355,
+          "mlx_matrix_eval_seconds": 0.00103566449979553,
+          "mlx_matvec_seconds": 0.07058651950501371,
+          "storage_read_seconds": 0.03580566399614327
+        },
+        "quantization": "Q3_K"
+      },
+      {
+        "median_attributed_seconds": 2.656544416953693,
+        "median_components": {
+          "cleanup_seconds": 0.051213501013990026,
+          "contiguous_buffer_seconds": 0.00042508349724812433,
+          "dequant_seconds": 2.4592855404989677,
+          "mlx_matrix_construct_seconds": 0.07702164549846202,
+          "mlx_matrix_eval_seconds": 0.002087811990350019,
+          "mlx_matvec_seconds": 0.060567728978639934,
+          "storage_read_seconds": 0.005943105476035271
+        },
+        "quantization": "Q2_K"
+      },
+      {
+        "median_attributed_seconds": 0.005183208006201312,
+        "median_components": {
+          "cleanup_seconds": 0.0,
+          "contiguous_buffer_seconds": 0.0,
+          "dequant_seconds": 0.0,
+          "mlx_matrix_construct_seconds": 0.0,
+          "mlx_matrix_eval_seconds": 0.0,
+          "mlx_matvec_seconds": 0.005183208006201312,
+          "storage_read_seconds": 0.0
+        },
+        "quantization": "Q5_K"
+      },
+      {
+        "median_attributed_seconds": 0.0016841870019561611,
+        "median_components": {
+          "cleanup_seconds": 0.0,
+          "contiguous_buffer_seconds": 0.0,
+          "dequant_seconds": 0.0,
+          "mlx_matrix_construct_seconds": 0.0,
+          "mlx_matrix_eval_seconds": 0.0,
+          "mlx_matvec_seconds": 0.0016841870019561611,
+          "storage_read_seconds": 0.0
+        },
+        "quantization": "Q6_K"
+      }
+    ],
+    "record": "docs/research/glm52/raw/post-f016-moe-layer78-q2-0001.json",
+    "resource_levels": [
+      "normal"
+    ],
+    "retained_samples": 10,
+    "sha256": "a3125c89a11d8b52e7d5dba5b23aba01fecebe699a8b0738b7d85bf3ce82c7f9",
+    "source_commit": "ec2a981de58957e17ebf7c9b539ec9c71522218f"
+  },
+  "claim_boundary": "One bounded layer-78 MoE boundary; not a sequential full-stack layer activation, P1/P2, token latency, Rust, or Metal result.",
+  "feature_018_kernel_selected": false,
+  "next_measured_gate": "exact whole-matrix Q3_K decoder qualification and layer-78 integration",
+  "schema": "pulsarmlx.research.glm52-moe-q2-integration-analysis",
+  "schema_version": "1.0.0"
+}
