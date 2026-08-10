@@ -86,6 +86,12 @@ mod apple_metal_bridge;
 #[cfg(target_os = "macos")]
 pub use apple_metal_bridge::{MetalBridge, MetalRegistration};
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+mod apple_mlx_bridge;
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+pub use apple_mlx_bridge::{MlxArray, MlxComputedArray, MlxContext, MlxDevice, MlxStreamMode};
+
 /// Build the universe of per-expert slab reads for every streamed layer of
 /// a MoE gguf: for each routed-expert tensor (gate/up/down) of each layer,
 /// one Read per expert. Mirrors ds4's expert addressing: slab e lives at

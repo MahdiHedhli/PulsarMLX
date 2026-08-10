@@ -20,9 +20,9 @@ pinned deployment can prove all of the following:
 - teardown cannot destroy a buffer while an MLX or Metal command is in flight;
 - the API is available under the project macOS deployment and build policy.
 
-Until that qualification exists, the adapter exposes capability discovery and
-fail-closed operation only. Existing Python/MLX functionality remains the
-research/reference path, not a required shipping process.
+For unsupported versions or environments, the adapter exposes capability
+discovery and fail-closed operation only. Existing Python/MLX functionality
+remains the research/reference path, not a required shipping process.
 
 ## ColPanicM2 qualification evidence
 
@@ -55,6 +55,14 @@ The qualified MLX C contract is not a general MLX/Metal zero-copy claim. It
 requires initialized handles, explicit `mlx_synchronize(stream)`, and retaining
 the host owner through array and dependent stream teardown. Rust slab to Metal
 `newBufferWithBytesNoCopy` remains a separate direct path.
+
+The actual Rust/Objective-C++ adapter is implemented in
+`crates/stream/src/apple_mlx_bridge.rs` and
+`crates/stream/src/apple_mlx_bridge.mm`. Its native tests cover CPU and GPU
+managed imports, borrowed/default and owned streams, explicit operations and
+synchronization, pointer identity, exactly-once callbacks, 30 borrowed cycles,
+100 owned cycles, and fail-closed invalid imports. Builds without the native
+MLX C installation compile with an explicit adapter-test skip.
 
 ## Options considered
 

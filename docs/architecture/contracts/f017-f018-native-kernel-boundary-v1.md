@@ -30,6 +30,27 @@ The native adapter returns an explicit completion or error. Rust releases or
 reuses the slot only after completion. Protected shared-expert slots remain
 under Rust residency policy; a kernel cannot evict them.
 
+## F017 native MLX adapter contract
+
+The Rust `stream::MlxContext` and Objective-C++ MLX adapter encode the
+qualified managed-import invariants:
+
+- output handles are initialized before MLX getter APIs;
+- borrowed/default streams are not destroyed by the adapter;
+- explicitly owned streams are destroyed exactly once;
+- array evaluation is followed by explicit synchronization on the submission
+  stream before host reuse or teardown;
+- Rust retains the mutable host owner for the entire imported-array lifetime;
+- managed ownership callbacks are exactly once;
+- unsupported or malformed imports fail closed without transferring ownership.
+
+The adapter is synchronous at this boundary. The installed MLX C API exposes
+no queued-cancellation primitive, so runtime cancellation remains an outer
+Rust lifecycle decision and cannot bypass the required completion barrier.
+Feature 018 direct Metal dispatch continues to use the separate Rust-owned
+`newBufferWithBytesNoCopy` registration contract and does not depend on MLX
+managed-array import.
+
 ## Qualified versus reference path
 
 Every dispatch records one of:

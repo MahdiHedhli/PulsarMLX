@@ -15,6 +15,11 @@
   `mlx_get_default_stream`; initialized handles, explicit synchronization,
   ownership callbacks, teardown order, and reuse all pass. The recommendation
   remains a narrow Rust C ABI plus Objective-C++ adapter with these invariants.
+- The actual Rust/Objective-C++ adapter now carries those invariants in
+  `crates/stream/src/apple_mlx_bridge.rs` and `.mm`. Adapter tests cover
+  borrowed/default and owned streams, explicit evaluation/synchronization,
+  pointer identity, exactly-once callbacks, 30 borrowed cycles, 100 owned
+  cycles, and fail-closed invalid imports.
 - A 500-iteration deterministic semantic soak passed through final
   norm/logits/top-k with stable fingerprint, bounded RSS growth, balanced
   registrations/generations/teardowns, protected-shared residency, and stale
@@ -66,8 +71,8 @@ full-model inference and direct quantized Metal kernel implementation.
 ## Native MLX and F018 boundary
 
 - ADR 0005 selects a narrow Rust C ABI with an Objective-C++ implementation
-  boundary; official MLX native APIs are preferred only after copy and
-  lifetime qualification.
+  boundary. The qualified stream initialization, explicit synchronization,
+  owner-last, and exactly-once callback rules are now implemented and tested.
 - Python remains the research/reference path and is not a shipping
   dependency.
 - The F017/F018 boundary contract defines capability discovery, ownership
@@ -97,11 +102,11 @@ full-model inference and direct quantized Metal kernel implementation.
 
 ## Remaining P1 prerequisites
 
-- Carry the qualified MLX handle-initialization, synchronization, and owner-last
-  rules into the Rust/Objective-C++ adapter and regression tests.
+- Obtain a green remote CI run for the final adapter-integrated SHA.
 - Complete numerical checkpoint-free executors for real bound model slabs;
   synthetic semantic gates are already banked through logits/top-k.
 - Retain the existing Apple registration and cancellation/teardown tests as
-  prerequisites for the native GPU bridge.
+  prerequisites for the native GPU bridge; queued MLX cancellation is not
+  exposed by the official C API and remains an outer Rust lifecycle concern.
 - Select additional decoder formats only from a bound inventory/fixture need.
 - Run public-safe workspace CI and resolve independent review blockers.
