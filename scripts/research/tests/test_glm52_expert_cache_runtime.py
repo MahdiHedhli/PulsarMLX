@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import importlib.util
+import math
 import struct
 import sys
 import tempfile
@@ -23,6 +24,7 @@ from glm52_expert_cache_runtime import (  # noqa: E402
     MlxMatrixBackend,
     expert_matvec_cached,
     matvec_cached_rows,
+    run_routed_expert_direct_iq2,
 )
 from glm52_dense_primitives import (  # noqa: E402
     matvec_weight,
@@ -172,6 +174,56 @@ def test_backend_failure_propagates_without_cpu_fallback() -> None:
 def test_matvec_cached_rows_reference() -> None:
     rows = [[1.0, 0.0], [0.0, 2.0]]
     assert matvec_cached_rows(rows, [3.0, 4.0]) == [3.0, 8.0]
+
+
+def test_direct_iq2_routed_expert_keeps_down_on_reference_backend() -> None:
+    class FakeWorker:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, int]] = []
+
+        def gemv(
+            self, store: object, name: str, expert: int, activation: list[float]
+        ) -> tuple[list[float], dict[str, object]]:
+            del store, activation
+            self.calls.append((name, expert))
+            output = [1.0, 2.0] if "_gate_" in name else [3.0, 4.0]
+            return output, {
+                "tensor_name": name,
+                "expert_id": expert,
+                "cache_hit": False,
+                "cpu_fallback_count": 0,
+                "complete_f32_weight_materialized_bytes": 0,
+            }
+
+    backend = FakeBackend()
+    cache = ExpertSlabCache(
+        max_bytes=0,
+        backend=backend,
+        policy="decoded_shared_only",
+        capture_events=True,
+    )
+    worker = FakeWorker()
+    output, detail = run_routed_expert_direct_iq2(
+        object(),
+        cache,
+        worker,
+        layer=3,
+        expert=15,
+        activation=[0.25, -0.5],
+        weight=0.5,
+    )
+    hidden = [
+        (1.0 / (1.0 + math.exp(-1.0))) * 3.0,
+        (2.0 / (1.0 + math.exp(-2.0))) * 4.0,
+    ]
+    assert output == [hidden[0] * 0.5, hidden[1]]
+    assert worker.calls == [
+        ("blk.3.ffn_gate_exps.weight", 15),
+        ("blk.3.ffn_up_exps.weight", 15),
+    ]
+    assert backend.load_calls == [("blk.3.ffn_down_exps.weight", 15)]
+    assert len(detail["down_reference_events"]) == 1
+    assert detail["down_reference_events"][0]["projection"] == "down"
 
 
 class _FakeMlxArray:

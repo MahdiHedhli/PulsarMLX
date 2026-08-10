@@ -97,8 +97,8 @@
 
 **Independent Test**: Each eligible rung passes its scalar/NumPy/MLX reference comparison with setup, compute, memory, and claim scope recorded.
 
-- [ ] T030 [US3] Integrate explicit direct IQ2_XXS gate/up selection into the bounded expert harness in `scripts/research/glm52_expert_cache_runtime.py`
-- [ ] T031 [US3] Add a complete routed-expert candidate to `scripts/research/benchmark_glm52_routed_expert.py` and retain IQ3_XXS down on the qualified reference path
+- [x] T030 [US3] Integrate explicit direct IQ2_XXS gate/up selection into the bounded expert harness in `scripts/research/glm52_expert_cache_runtime.py`
+- [x] T031 [US3] Add a complete routed-expert candidate in `scripts/research/benchmark_glm52_routed_expert_metal.py` and retain IQ3_XXS down on the qualified reference path
 - [ ] T032 [US3] Run and commit one qualified routed expert record under `docs/research/glm52/raw/`
 - [ ] T033 [US3] Add and run the eligible top-8 plus shared MoE rung through `scripts/research/benchmark_glm52_moe_profile.py`
 - [ ] T034 [US3] Add and run the eligible representative complete-layer rung through `scripts/research/benchmark_glm52_complete_layer.py`

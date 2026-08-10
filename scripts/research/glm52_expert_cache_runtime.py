@@ -10,6 +10,7 @@ and propagates every backend failure; no CPU fallback exists here.
 from __future__ import annotations
 
 import gc
+import math
 import time
 from array import array
 from collections import OrderedDict
@@ -524,3 +525,63 @@ def expert_matvec_cached(
         del matrix
         cache.release_transient()
     return result
+
+
+def run_routed_expert_direct_iq2(
+    store: Glm52TensorStore,
+    cache: ExpertSlabCache,
+    worker: Any,
+    *,
+    layer: int,
+    expert: int,
+    activation: list[float],
+    weight: float,
+) -> tuple[list[float], dict[str, Any]]:
+    """Run IQ2_XXS gate/up directly and retain down on the reference backend.
+
+    This is an explicit bounded research path. Unsupported gate/up formats fail
+    through the worker adapter and never fall back silently.
+    """
+
+    total_start = time.perf_counter()
+    gate, gate_event = worker.gemv(
+        store, f"blk.{layer}.ffn_gate_exps.weight", expert, activation
+    )
+    up, up_event = worker.gemv(
+        store, f"blk.{layer}.ffn_up_exps.weight", expert, activation
+    )
+    activation_start = time.perf_counter()
+
+    def silu(value: float) -> float:
+        if value >= 0.0:
+            return value / (1.0 + math.exp(-value))
+        exponential = math.exp(value)
+        return value * exponential / (1.0 + exponential)
+
+    hidden = [silu(left) * right for left, right in zip(gate, up, strict=True)]
+    activation_seconds = time.perf_counter() - activation_start
+    event_start = len(cache.event_snapshot())
+    down = expert_matvec_cached(
+        store,
+        cache,
+        f"blk.{layer}.ffn_down_exps.weight",
+        expert,
+        hidden,
+    )
+    down_events = cache.event_snapshot()[event_start:]
+    if cache.capture_events and len(down_events) != 1:
+        raise RuntimeError("direct IQ2 expert must retain exactly one down event")
+    weighting_start = time.perf_counter()
+    result = [weight * value for value in down]
+    weighting_seconds = time.perf_counter() - weighting_start
+    return result, {
+        "layer": layer,
+        "expert_id": expert,
+        "weight": weight,
+        "gate_direct_metal": gate_event,
+        "up_direct_metal": up_event,
+        "down_reference_events": down_events,
+        "activation_swiglu_seconds": activation_seconds,
+        "weighting_seconds": weighting_seconds,
+        "total_seconds": time.perf_counter() - total_start,
+    }
