@@ -91,6 +91,30 @@ class F018EvidenceTests(unittest.TestCase):
         "f018-post-opus-qualification-0001.json": "F018-POSTOPUS-001",
     }
 
+    def test_iq3_synthetic_contract_accepts_only_strict_distinct_dispatch(self) -> None:
+        record = valid_record()
+        record["schema"] = "pulsarmlx.research.f018-direct-iq3-xxs"
+        record["kernel"].update(
+            {
+                "quantization": "IQ3_XXS",
+                "compiler": {
+                    "fast_math_enabled": False,
+                    "language_version": "3.2",
+                    "math_mode": "safe",
+                    "math_floating_point_functions": "precise",
+                    "pipeline_identity": "iq3_xxs_sequential_scaffold_v1",
+                },
+            }
+        )
+        record["correctness"]["contract_version"] = "f018-iq3-down-v1"
+        self.assertEqual(validate_record(record)["kernel"]["quantization"], "IQ3_XXS")
+        wrong_pipeline = deepcopy(record)
+        wrong_pipeline["kernel"]["compiler"]["pipeline_identity"] = (
+            "iq2_xxs_sequential_scaffold_v1"
+        )
+        with self.assertRaisesRegex(ValueError, "strict compiler settings"):
+            validate_record(wrong_pipeline)
+
     def test_feature018_claims_ledger_resolves_every_public_record(self) -> None:
         ledger = (ROOT / "docs/research/glm52/CLAIMS_LEDGER.md").read_text()
         # Gate and up share the single F018-MATRIX-001 claim row.

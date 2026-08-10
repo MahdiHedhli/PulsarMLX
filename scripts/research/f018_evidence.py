@@ -71,7 +71,11 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         return _validate_moe_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
         return _validate_complete_layer_record(record)
-    if record.get("schema") != "pulsarmlx.research.f018-direct-iq2-xxs":
+    matrix_schema = record.get("schema")
+    if matrix_schema not in {
+        "pulsarmlx.research.f018-direct-iq2-xxs",
+        "pulsarmlx.research.f018-direct-iq3-xxs",
+    }:
         raise ValueError("unexpected Feature 018 schema")
     if record.get("schema_version") not in {"1.0.0", "1.1.0"}:
         raise ValueError("unexpected Feature 018 schema_version")
@@ -84,22 +88,28 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("source commit must be lowercase 40-character SHA")
     if source.get("dirty") is not False:
         raise ValueError("source must be clean")
+    is_iq3 = matrix_schema == "pulsarmlx.research.f018-direct-iq3-xxs"
+    expected_quantization = "IQ3_XXS" if is_iq3 else "IQ2_XXS"
     kernel = record.get("kernel")
-    if not isinstance(kernel, dict) or kernel.get("quantization") != "IQ2_XXS":
-        raise ValueError("kernel quantization must be IQ2_XXS")
+    if not isinstance(kernel, dict) or kernel.get("quantization") != expected_quantization:
+        raise ValueError(f"kernel quantization must be {expected_quantization}")
     if kernel.get("cpu_fallback_count") != 0:
         raise ValueError("cpu_fallback_count must be zero")
     if kernel.get("complete_f32_weight_materialized_bytes") != 0:
         raise ValueError("complete_f32_weight_materialized_bytes must be zero")
-    if record.get("schema_version") == "1.1.0":
+    if record.get("schema_version") == "1.1.0" or is_iq3:
         compiler = kernel.get("compiler", {})
+        expected_pipeline = (
+            "iq3_xxs_sequential_scaffold_v1"
+            if is_iq3
+            else "iq2_xxs_sequential_scaffold_v1"
+        )
         if (
             compiler.get("fast_math_enabled") is not False
             or compiler.get("language_version") != "3.2"
             or compiler.get("math_mode") != "safe"
             or compiler.get("math_floating_point_functions") != "precise"
-            or compiler.get("pipeline_identity")
-            != "iq2_xxs_sequential_scaffold_v1"
+            or compiler.get("pipeline_identity") != expected_pipeline
         ):
             raise ValueError("strict compiler settings are incomplete")
     if record.get("resource", {}).get("level") != "normal":
@@ -137,7 +147,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
     missing = sorted(required_correctness - correctness.keys())
     if missing:
         raise ValueError(f"correctness fields missing: {missing}")
-    if correctness["contract_version"] != "f018-numerical-v1":
+    expected_contract = "f018-iq3-down-v1" if is_iq3 else "f018-numerical-v1"
+    if correctness["contract_version"] != expected_contract:
         raise ValueError("correctness contract version mismatch")
     if correctness.get("classification", record["classification"]) != record["classification"]:
         raise ValueError("correctness classification does not match record")
