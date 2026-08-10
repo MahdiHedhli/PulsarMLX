@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts/research"))
-from benchmark_glm52_moe_profile import stage_totals  # noqa: E402
+from benchmark_glm52_moe_profile import _nonnegative_summary, stage_totals  # noqa: E402
 
 
 def _event(projection: str, *, shared: bool, hit: bool) -> dict:
@@ -41,6 +41,12 @@ def _expert(expert_id: int, *, shared: bool, hit: bool) -> dict:
 
 
 class MoeStageProfileTests(unittest.TestCase):
+    def test_stage_summary_accepts_legitimate_all_zero_samples(self) -> None:
+        summary = _nonnegative_summary([0.0, 0.0, 0.0])
+        self.assertEqual(summary["sample_count"], 3)
+        self.assertEqual(summary["mean_seconds"], 0.0)
+        self.assertEqual(summary["coefficient_of_variation"], 0.0)
+
     def test_stage_totals_keep_routed_shared_and_residual_disjoint(self) -> None:
         detail = {
             "total_seconds": 1000.0,

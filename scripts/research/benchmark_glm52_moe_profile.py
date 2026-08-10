@@ -7,6 +7,7 @@ import argparse
 import gc
 import hashlib
 import json
+import math
 import os
 import platform
 import sys
@@ -33,7 +34,6 @@ from glm52_memory_pressure import sample_pressure  # noqa: E402
 from glm52_mla import CompactKVCache, mla_forward_token  # noqa: E402
 from glm52_telemetry import assert_public_safe  # noqa: E402
 from glm52_tensor_store import Glm52TensorStore  # noqa: E402
-from qualify_iq2_xxs_numpy import _summary  # noqa: E402
 
 LAYERS = (3, 8, 40, 78)
 WARMUPS = 3
@@ -197,7 +197,29 @@ def _summaries(samples: list[dict[str, Any]]) -> dict[str, Any]:
                 fields[field].append(float(totals[scope][nested]))
             elif field != "total_seconds":
                 fields[field].append(float(totals[field]))
-    return {field: _summary(values) for field, values in fields.items()}
+    return {field: _nonnegative_summary(values) for field, values in fields.items()}
+
+
+def _nonnegative_summary(samples: list[float]) -> dict[str, float | int]:
+    """Summarize stage durations, including legitimate all-zero cache-hit stages."""
+    if not samples or any(not math.isfinite(value) or value < 0 for value in samples):
+        raise ValueError("stage timing samples must be finite and non-negative")
+    values = np.asarray(samples, dtype=np.float64)
+    mean = float(values.mean())
+    standard_deviation = float(values.std(ddof=1)) if len(samples) > 1 else 0.0
+    return {
+        "sample_count": len(samples),
+        "median_seconds": float(np.median(values)),
+        "mean_seconds": mean,
+        "standard_deviation_seconds": standard_deviation,
+        "minimum_seconds": float(values.min()),
+        "maximum_seconds": float(values.max()),
+        "p5_seconds": float(np.percentile(values, 5)),
+        "p25_seconds": float(np.percentile(values, 25)),
+        "p75_seconds": float(np.percentile(values, 75)),
+        "p95_seconds": float(np.percentile(values, 95)),
+        "coefficient_of_variation": standard_deviation / mean if mean else 0.0,
+    }
 
 
 def _cleanup() -> None:
