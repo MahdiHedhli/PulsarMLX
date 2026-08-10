@@ -10,8 +10,13 @@
 pub mod cpu_dot;
 pub mod cpu_dot_tables;
 pub mod iq;
+mod iq_ref;
 mod q8_0_ref;
 
+pub use iq_ref::{
+    decode_iq2_xxs_matrix, decode_iq3_xxs_matrix, IQXXSError, IQ2_XXS_BLOCK_BYTES,
+    IQ3_XXS_BLOCK_BYTES, IQ_XXS_VALUES_PER_BLOCK,
+};
 pub use q8_0_ref::{decode_q8_0_row, matvec_q8_0, Q8_0Error};
 
 pub const QK8_0: usize = 32;

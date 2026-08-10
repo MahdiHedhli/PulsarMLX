@@ -57,9 +57,10 @@ No constitution exception is requested.
 
 ## Design Decisions
 
-1. **Selective Feature 017 reuse**: cherry-pick only clean commits `111ffb6d`
-   (stable slab allocator) and `f2b1b130` (no-copy Metal registration), resolving
-   only mechanical conflicts. Do not merge Feature 017 or touch its worktree.
+1. **Selective Feature 017 reuse**: cherry-pick clean commits `111ffb6d`
+   (stable slab allocator), `f2b1b130` (no-copy Metal registration), and
+   `a5fcf92f` (exact IQ2/IQ3 f32 reference decoder), resolving only mechanical
+   conflicts. Do not merge Feature 017 or touch its worktree.
 2. **Smallest kernel**: initially dispatch one logical output row per Metal
    thread. Each thread walks packed 66-byte IQ2_XXS blocks in row order, looks
    up magnitude/sign bytes, multiplies the f32 activation, and accumulates f32.

@@ -43,6 +43,19 @@ reuse may be faster but introduce reduction-order and synchronization changes.
 Full f32 materialization followed by MLX is already the reference path and is
 not direct quantized.
 
+## Rust scalar oracle
+
+**Decision**: Selectively reuse clean Feature 017 commit `a5fcf92f` for its
+exact IQ2_XXS/IQ3_XXS f32 decoder and tests.
+
+**Rationale**: The decoder is independently tested, stays on CPU, and gives the
+Rust native Metal test a reviewed oracle without inventing a second packed
+layout. It is reference infrastructure, not a second direct-kernel target.
+
+**Alternatives considered**: Duplicating the decoder in `stream` would create
+avoidable drift. The existing `cpu_dot` IQ2_XXS path quantizes activations to
+Q8_K and therefore is not the f32-activation oracle required here.
+
 ## Lookup-table placement
 
 **Decision**: Upload immutable IQ2_XXS grid magnitudes and sign masks once per
