@@ -1,5 +1,10 @@
 # Feature 018 Overnight Review
 
+> Post-review status: the required Opus fixes and decisive strict qualification
+> are documented in [F018_POST_OPUS_QUALIFICATION.md](F018_POST_OPUS_QUALIFICATION.md).
+> The later same-boundary verdict is GO; this overnight report remains the
+> immutable pre-review handoff.
+
 ## Executive result
 
 Feature 018 qualified a true direct-packed IQ2_XXS Metal GEMV from a synthetic

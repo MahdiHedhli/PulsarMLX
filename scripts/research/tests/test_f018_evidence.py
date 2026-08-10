@@ -83,19 +83,32 @@ class F018EvidenceTests(unittest.TestCase):
         "f018-iq2-xxs-complete-layer3-0001.json": "f8108fa1",
         "f018-inference-p1-direct-iq2-0001.json": "2f51333e",
     }
+    POST_OPUS_ARTIFACTS = {
+        "f018-iq2-xxs-synthetic-strict-0001.json": "F018-STRICT-001",
+        "f018-iq2-xxs-gate-matrix-strict-0001.json": "F018-STRICT-001",
+        "f018-p1-reference-dispatch-inventory-0001.json": "F018-DISPATCH-001",
+        "f018-iq2-lookup-address-space-0001.json": "F018-LOOKUP-001",
+        "f018-post-opus-qualification-0001.json": "F018-POSTOPUS-001",
+    }
 
     def test_feature018_claims_ledger_resolves_every_public_record(self) -> None:
         ledger = (ROOT / "docs/research/glm52/CLAIMS_LEDGER.md").read_text()
         # Gate and up share the single F018-MATRIX-001 claim row.
-        self.assertEqual(ledger.count("| F018-"), 6)
+        self.assertEqual(ledger.count("| F018-"), 10)
         for filename, source in self.FEATURE_ARTIFACTS.items():
             with self.subTest(filename=filename):
                 self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
                 self.assertIn(f"`{source}`", ledger)
+        for filename, claim_id in self.POST_OPUS_ARTIFACTS.items():
+            with self.subTest(filename=filename):
+                self.assertIn(f"| {claim_id} | verified |", ledger)
+                self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
+                self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
 
     def test_feature018_reviewer_index_resolves_raw_tables_contract_and_review(self) -> None:
         index = (ROOT / "docs/research/glm52/REVIEWER_INDEX.md").read_text()
         self.assertIn("F018_OVERNIGHT_REVIEW.md", index)
+        self.assertIn("F018_POST_OPUS_QUALIFICATION.md", index)
         self.assertIn(
             "../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md",
             index,
@@ -112,12 +125,17 @@ class F018EvidenceTests(unittest.TestCase):
                         / filename.replace(".json", ".md")
                     ).is_file()
                 )
+        for filename in self.POST_OPUS_ARTIFACTS:
+            with self.subTest(filename=filename):
+                self.assertIn(f"raw/{filename}", index)
+                self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
 
     def test_feature018_publication_has_no_private_paths_or_credentials(self) -> None:
         paths = [
             *(ROOT / "docs/research/glm52/raw").glob("f018*.json"),
             *(ROOT / "docs/research/glm52/tables").glob("f018*.md"),
             ROOT / "docs/research/glm52/F018_OVERNIGHT_REVIEW.md",
+            ROOT / "docs/research/glm52/F018_POST_OPUS_QUALIFICATION.md",
             ROOT / "docs/research/glm52/CLAIMS_LEDGER.md",
             ROOT / "docs/research/glm52/REVIEWER_INDEX.md",
         ]

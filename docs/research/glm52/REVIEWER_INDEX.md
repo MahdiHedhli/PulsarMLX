@@ -8,6 +8,9 @@
 - [Feature 018 overnight review](F018_OVERNIGHT_REVIEW.md) — kernel design,
   numerical gates, ownership, bounded ladder, exact P1, failures, risks, and
   next review questions
+- [Feature 018 post-Opus qualification](F018_POST_OPUS_QUALIFICATION.md) —
+  strict compiler semantics, fail-closed dispatch, in-flight ownership,
+  lookup placement, same-boundary benchmark, and final GO decision
 - Spec Kit: `specs/018-direct-quantized-metal-runtime/`
 - [Frozen numerical contract](../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md)
 - [Synthetic packed Metal gate](raw/f018-iq2-xxs-synthetic-0002.json) and
@@ -24,10 +27,20 @@
   [generated table](tables/f018-iq2-xxs-complete-layer3-0001.md)
 - [Exact P1](raw/f018-inference-p1-direct-iq2-0001.json) and
   [generated table](tables/f018-inference-p1-direct-iq2-0001.md)
+- [Strict synthetic scaffold](raw/f018-iq2-xxs-synthetic-strict-0001.json)
+- [Strict real gate matrix](raw/f018-iq2-xxs-gate-matrix-strict-0001.json)
+  and [generated table](tables/f018-iq2-xxs-gate-matrix-strict-0001.md)
+- [P1 explicit-reference inventory](raw/f018-p1-reference-dispatch-inventory-0001.json)
+- [Lookup address-space decision](raw/f018-iq2-lookup-address-space-0001.json)
+  and [generated table](tables/f018-iq2-lookup-address-space-0001.md)
+- [Post-Opus three-way decision](raw/f018-post-opus-qualification-0001.json)
+  and [generated table](tables/f018-post-opus-qualification-0001.md)
+- [Feature 017 / Feature 018 boundary](../../architecture/F017_F018_RUNTIME_BOUNDARY.md)
 - [Feature 018 claims](CLAIMS_LEDGER.md): `F018-SYNTHETIC-001` through
-  `F018-P1-001`
+  `F018-POSTOPUS-001`
 
-The candidate consumes packed IQ2_XXS weights directly. IQ3 down, shared
+The candidate consumes packed IQ2_XXS weights directly. The post-Opus gate is
+GO, but IQ3-down implementation was not started. IQ3 down, shared
 experts, attention, logits, and other quantizations remain reference paths.
 No P2 or golden-eight run belongs to Feature 018.
 
