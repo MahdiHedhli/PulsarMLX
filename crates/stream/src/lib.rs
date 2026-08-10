@@ -36,6 +36,13 @@ pub use residency::{
     ResidencyOptionId, ResidencySlot, ResidencyTransitionError, SlotLifecycle, GIB,
 };
 
+mod expert_residency;
+pub use expert_residency::{
+    ExpertAdmissionError, ExpertAdmissionPolicy, ExpertAdmissionRequest, ExpertFallback,
+    ExpertKey, ExpertKind, ExpertLifecycle, ExpertLookup, ExpertResidencyTable,
+    ExpertResidencyTier, ExpertResident,
+};
+
 mod slot_classes;
 pub use slot_classes::{observed_slot_classes, ObservedSlotClass, SlotEncoding};
 
