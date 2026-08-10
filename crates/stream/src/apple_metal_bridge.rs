@@ -5,8 +5,9 @@ use std::ptr;
 use std::time::Instant;
 
 use crate::{
-    iq2_xxs_grid_bytes, iq2_xxs_sign_bytes, Iq2XxsGemvSpec, StableSlab, IQ2_XXS_GRID_BYTES,
-    IQ2_XXS_SIGN_BYTES,
+    iq2_xxs_grid_bytes, iq2_xxs_sign_bytes, iq3_xxs_grid_bytes, iq3_xxs_sign_bytes, Iq2XxsGemvSpec,
+    Iq3XxsGemvSpec, StableSlab, IQ2_XXS_GRID_BYTES, IQ2_XXS_SIGN_BYTES, IQ3_XXS_GRID_BYTES,
+    IQ3_XXS_SIGN_BYTES,
 };
 
 #[repr(C)]
@@ -28,6 +29,8 @@ struct RawIq2XxsGemvTelemetry {
     total_seconds: f64,
 }
 
+type RawIq3XxsGemvTelemetry = RawIq2XxsGemvTelemetry;
+
 unsafe extern "C" {
     fn pulsar_metal_context_create(
         out_context: *mut *mut RawMetalContext,
@@ -36,6 +39,15 @@ unsafe extern "C" {
     ) -> i32;
     fn pulsar_metal_context_destroy(context: *mut RawMetalContext);
     fn pulsar_metal_context_configure_iq2_xxs(
+        context: *mut RawMetalContext,
+        grid: *const u8,
+        grid_length: usize,
+        signs: *const u8,
+        signs_length: usize,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
+    fn pulsar_metal_context_configure_iq3_xxs(
         context: *mut RawMetalContext,
         grid: *const u8,
         grid_length: usize,
@@ -87,6 +99,20 @@ unsafe extern "C" {
         error_buffer: *mut c_char,
         error_capacity: usize,
     ) -> i32;
+    fn pulsar_metal_iq3_xxs_gemv(
+        context: *mut RawMetalContext,
+        registration: *mut RawMetalRegistration,
+        rows: u32,
+        columns: u32,
+        packed_row_bytes: u32,
+        activation: *const f32,
+        activation_len: usize,
+        output: *mut f32,
+        output_len: usize,
+        out_telemetry: *mut RawIq3XxsGemvTelemetry,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
     fn pulsar_metal_registration_address(registration: *mut RawMetalRegistration) -> usize;
     fn pulsar_metal_registration_in_flight_count(registration: *mut RawMetalRegistration) -> u64;
 }
@@ -109,6 +135,24 @@ pub struct Iq2XxsGemvTelemetry {
 pub struct Iq2XxsGemvResult {
     pub output: Vec<f32>,
     pub telemetry: Iq2XxsGemvTelemetry,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct Iq3XxsGemvTelemetry {
+    pub registration_seconds: f64,
+    pub compilation_seconds: f64,
+    pub dispatch_seconds: f64,
+    pub kernel_seconds: Option<f64>,
+    pub synchronization_seconds: f64,
+    pub total_seconds: f64,
+    pub cpu_fallback_count: u64,
+    pub complete_f32_weight_materialized_bytes: u64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Iq3XxsGemvResult {
+    pub output: Vec<f32>,
+    pub telemetry: Iq3XxsGemvTelemetry,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -194,6 +238,25 @@ impl MetalBridge {
                 grid.len(),
                 signs.as_ptr(),
                 signs.len(),
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 {
+            unsafe { pulsar_metal_context_destroy(raw) };
+            return Err(bridge_error(status, &error));
+        }
+        let iq3_grid = iq3_xxs_grid_bytes();
+        let iq3_signs = iq3_xxs_sign_bytes();
+        debug_assert_eq!(iq3_grid.len(), IQ3_XXS_GRID_BYTES);
+        debug_assert_eq!(iq3_signs.len(), IQ3_XXS_SIGN_BYTES);
+        let status = unsafe {
+            pulsar_metal_context_configure_iq3_xxs(
+                raw,
+                iq3_grid.as_ptr(),
+                iq3_grid.len(),
+                iq3_signs.as_ptr(),
+                iq3_signs.len(),
                 error.as_mut_ptr(),
                 ERROR_CAPACITY,
             )
@@ -335,6 +398,65 @@ impl MetalBridge {
         Ok(Iq2XxsGemvResult {
             output,
             telemetry: Iq2XxsGemvTelemetry {
+                registration_seconds: registration.registration_seconds,
+                compilation_seconds: self.compilation_seconds(),
+                dispatch_seconds: raw_telemetry.dispatch_seconds,
+                kernel_seconds: (raw_telemetry.kernel_seconds >= 0.0)
+                    .then_some(raw_telemetry.kernel_seconds),
+                synchronization_seconds: raw_telemetry.synchronization_seconds,
+                total_seconds: raw_telemetry.total_seconds,
+                cpu_fallback_count: 0,
+                complete_f32_weight_materialized_bytes: 0,
+            },
+        })
+    }
+
+    pub fn iq3_xxs_gemv(
+        &self,
+        registration: &MetalRegistration<'_>,
+        spec: Iq3XxsGemvSpec,
+        activation: &[f32],
+    ) -> Result<Iq3XxsGemvResult, String> {
+        if registration.length != spec.packed_matrix_bytes() {
+            return Err("Metal registration length does not match IQ3_XXS request".into());
+        }
+        if activation.len() != spec.columns() || !activation.iter().all(|value| value.is_finite()) {
+            return Err("IQ3_XXS activation must have exact finite values".into());
+        }
+        let rows =
+            u32::try_from(spec.rows()).map_err(|_| "IQ3_XXS rows exceed Metal ABI".to_owned())?;
+        let columns = u32::try_from(spec.columns())
+            .map_err(|_| "IQ3_XXS columns exceed Metal ABI".to_owned())?;
+        let packed_row_bytes = u32::try_from(spec.packed_row_bytes())
+            .map_err(|_| "IQ3_XXS row bytes exceed Metal ABI".to_owned())?;
+        let mut output = vec![0.0_f32; spec.rows()];
+        let mut raw_telemetry = RawIq3XxsGemvTelemetry::default();
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_metal_iq3_xxs_gemv(
+                self.raw,
+                registration.raw,
+                rows,
+                columns,
+                packed_row_bytes,
+                activation.as_ptr(),
+                activation.len(),
+                output.as_mut_ptr(),
+                output.len(),
+                &mut raw_telemetry,
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 {
+            return Err(bridge_error(status, &error));
+        }
+        if !output.iter().all(|value| value.is_finite()) {
+            return Err("Metal IQ3_XXS output contains non-finite values".into());
+        }
+        Ok(Iq3XxsGemvResult {
+            output,
+            telemetry: Iq3XxsGemvTelemetry {
                 registration_seconds: registration.registration_seconds,
                 compilation_seconds: self.compilation_seconds(),
                 dispatch_seconds: raw_telemetry.dispatch_seconds,

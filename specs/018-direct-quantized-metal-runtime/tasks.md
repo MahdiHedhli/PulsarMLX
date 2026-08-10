@@ -241,9 +241,9 @@
 
 ## Phase 14: IQ3 Synthetic Scaffold
 
-- [ ] T067 Add failing IQ3 request/layout/oracle, malformed/truncated, scale/sign, boundary-shape, finite-value, deterministic, fallback, and materialization tests
-- [ ] T068 Implement the separate Rust IQ3 spec, lookup identities, deterministic synthetic generator, and same-order scalar GEMV oracle
-- [ ] T069 Implement the strict sequential packed IQ3 Metal kernel and distinct bridge dispatch using the qualified compiler/lifetime/telemetry infrastructure
+- [x] T067 Add failing IQ3 request/layout/oracle, malformed/truncated, scale/sign, boundary-shape, finite-value, deterministic, fallback, and materialization tests
+- [x] T068 Implement the separate Rust IQ3 spec, lookup identities, deterministic synthetic generator, and same-order scalar GEMV oracle
+- [x] T069 Implement the strict sequential packed IQ3 Metal kernel and distinct bridge dispatch using the qualified compiler/lifetime/telemetry infrastructure
 - [ ] T070 Pass 100 deterministic synthetic executions, retain public-safe evidence/table, and commit/push the synthetic gate
 
 ---

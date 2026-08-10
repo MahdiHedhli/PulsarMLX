@@ -9,6 +9,8 @@
 static constexpr uintptr_t kPageAlignment = 4096;
 static constexpr NSUInteger kIQ2GridBytes = 256 * 8;
 static constexpr NSUInteger kIQ2SignBytes = 128;
+static constexpr NSUInteger kIQ3GridBytes = 256 * 4;
+static constexpr NSUInteger kIQ3SignBytes = 128;
 
 static NSString *const kKernelSource = @R"METAL(
 #include <metal_stdlib>
@@ -78,6 +80,65 @@ kernel void pulsar_iq2_xxs_gemv(
     }
     output[row] = sum;
 }
+
+struct IQ3XXSParams {
+    uint rows;
+    uint columns;
+    uint packed_row_bytes;
+};
+
+kernel void pulsar_iq3_xxs_gemv(
+    device const uchar *packed [[buffer(0)]],
+    device const float *activation [[buffer(1)]],
+    device float *output [[buffer(2)]],
+    device const uchar *grid_table [[buffer(3)]],
+    device const uchar *sign_table [[buffer(4)]],
+    constant IQ3XXSParams &params [[buffer(5)]],
+    uint row [[thread_position_in_grid]]) {
+    if (row >= params.rows) {
+        return;
+    }
+    const uint blocks_per_row = params.columns / 256u;
+    const uint row_base = row * params.packed_row_bytes;
+    float sum = 0.0f;
+    for (uint block_index = 0; block_index < blocks_per_row; ++block_index) {
+        const uint block_base = row_base + block_index * 98u;
+        const ushort scale_bits = ushort(packed[block_base]) |
+            (ushort(packed[block_base + 1u]) << 8u);
+        const float d = float(as_type<half>(scale_bits));
+        for (uint group = 0; group < 8u; ++group) {
+            const uint aux_base = block_base + 66u + group * 4u;
+            const uint aux = uint(packed[aux_base]) |
+                (uint(packed[aux_base + 1u]) << 8u) |
+                (uint(packed[aux_base + 2u]) << 16u) |
+                (uint(packed[aux_base + 3u]) << 24u);
+            const float block_scale = d * (0.5f + float(aux >> 28u)) * 0.5f;
+            for (uint pair = 0; pair < 4u; ++pair) {
+                const uint sign_index = (aux >> (7u * pair)) & 127u;
+                const uchar sign_mask = sign_table[sign_index];
+                const uint first_grid = uint(packed[
+                    block_base + 2u + group * 8u + pair * 2u]);
+                const uint second_grid = uint(packed[
+                    block_base + 3u + group * 8u + pair * 2u]);
+                for (uint element = 0; element < 4u; ++element) {
+                    const uint column = block_index * 256u + group * 32u +
+                        pair * 8u + element * 2u;
+                    const float first_sign =
+                        (sign_mask & uchar(1u << element)) != 0 ? -1.0f : 1.0f;
+                    const float second_sign =
+                        (sign_mask & uchar(1u << (4u + element))) != 0 ? -1.0f : 1.0f;
+                    const float first_weight = block_scale *
+                        float(grid_table[first_grid * 4u + element]) * first_sign;
+                    const float second_weight = block_scale *
+                        float(grid_table[second_grid * 4u + element]) * second_sign;
+                    sum += first_weight * activation[column];
+                    sum += second_weight * activation[column + 1u];
+                }
+            }
+        }
+    }
+    output[row] = sum;
+}
 )METAL";
 
 @interface PulsarMetalContextObject : NSObject
@@ -85,8 +146,11 @@ kernel void pulsar_iq2_xxs_gemv(
 @property(nonatomic, strong) id<MTLCommandQueue> queue;
 @property(nonatomic, strong) id<MTLComputePipelineState> checksumPipeline;
 @property(nonatomic, strong) id<MTLComputePipelineState> iq2Pipeline;
+@property(nonatomic, strong) id<MTLComputePipelineState> iq3Pipeline;
 @property(nonatomic, strong) id<MTLBuffer> iq2GridBuffer;
 @property(nonatomic, strong) id<MTLBuffer> iq2SignBuffer;
+@property(nonatomic, strong) id<MTLBuffer> iq3GridBuffer;
+@property(nonatomic, strong) id<MTLBuffer> iq3SignBuffer;
 @property(nonatomic, assign) double compilationSeconds;
 @property(nonatomic, assign) double pipelineCreationSeconds;
 @property(nonatomic, assign) BOOL fastMathEnabled;
@@ -166,6 +230,13 @@ typedef void PulsarMetalContext;
 typedef void PulsarMetalRegistration;
 
 struct PulsarIq2XxsGemvTelemetry {
+    double dispatch_seconds;
+    double kernel_seconds;
+    double synchronization_seconds;
+    double total_seconds;
+};
+
+struct PulsarIq3XxsGemvTelemetry {
     double dispatch_seconds;
     double kernel_seconds;
     double synchronization_seconds;
@@ -261,6 +332,15 @@ int pulsar_metal_context_create(
             error_capacity,
             pipeline_error.localizedDescription ?: @"Metal IQ2_XXS pipeline creation failed");
     }
+    pipeline_error = nil;
+    id<MTLComputePipelineState> iq3_pipeline =
+        build_pipeline(device, library, @"pulsar_iq3_xxs_gemv", &pipeline_error);
+    if (iq3_pipeline == nil) {
+        return set_error(
+            error_buffer,
+            error_capacity,
+            pipeline_error.localizedDescription ?: @"Metal IQ3_XXS pipeline creation failed");
+    }
     const auto pipeline_end = std::chrono::steady_clock::now();
 
     PulsarMetalContextObject *context = [PulsarMetalContextObject new];
@@ -268,6 +348,7 @@ int pulsar_metal_context_create(
     context.queue = queue;
     context.checksumPipeline = checksum_pipeline;
     context.iq2Pipeline = iq2_pipeline;
+    context.iq3Pipeline = iq3_pipeline;
     context.compilationSeconds = elapsed_seconds(library_start, library_end);
     context.pipelineCreationSeconds = elapsed_seconds(pipeline_start, pipeline_end);
     context.fastMathEnabled = NO;
@@ -305,6 +386,33 @@ int pulsar_metal_context_configure_iq2_xxs(
         options:MTLResourceStorageModeShared];
     if (context.iq2GridBuffer == nil || context.iq2SignBuffer == nil) {
         return set_error(error_buffer, error_capacity, @"IQ2_XXS lookup-buffer allocation failed");
+    }
+    return 0;
+}
+
+int pulsar_metal_context_configure_iq3_xxs(
+    PulsarMetalContext *raw_context,
+    const uint8_t *grid,
+    size_t grid_length,
+    const uint8_t *signs,
+    size_t signs_length,
+    char *error_buffer,
+    size_t error_capacity) {
+    if (raw_context == nullptr || grid == nullptr || signs == nullptr) {
+        return set_error(error_buffer, error_capacity, @"null IQ3_XXS table argument");
+    }
+    if (grid_length != kIQ3GridBytes || signs_length != kIQ3SignBytes) {
+        return set_error(error_buffer, error_capacity, @"IQ3_XXS lookup-table length mismatch");
+    }
+    PulsarMetalContextObject *context = (__bridge PulsarMetalContextObject *)raw_context;
+    context.iq3GridBuffer = [context.device newBufferWithBytes:grid
+        length:grid_length
+        options:MTLResourceStorageModeShared];
+    context.iq3SignBuffer = [context.device newBufferWithBytes:signs
+        length:signs_length
+        options:MTLResourceStorageModeShared];
+    if (context.iq3GridBuffer == nil || context.iq3SignBuffer == nil) {
+        return set_error(error_buffer, error_capacity, @"IQ3_XXS lookup-buffer allocation failed");
     }
     return 0;
 }
@@ -544,6 +652,115 @@ int pulsar_metal_iq2_xxs_gemv(
     if (command_buffer.status != MTLCommandBufferStatusCompleted) {
         return set_error(error_buffer, error_capacity,
             command_buffer.error.localizedDescription ?: @"IQ2_XXS Metal command failed");
+    }
+    memcpy(output_values, output_buffer.contents, output_len * sizeof(float));
+
+    out_telemetry->dispatch_seconds = elapsed_seconds(dispatch_start, dispatch_end);
+    out_telemetry->synchronization_seconds =
+        elapsed_seconds(synchronization_start, synchronization_end);
+    out_telemetry->total_seconds = elapsed_seconds(total_start, synchronization_end);
+    if (command_buffer.GPUEndTime >= command_buffer.GPUStartTime &&
+        command_buffer.GPUStartTime > 0.0) {
+        out_telemetry->kernel_seconds = command_buffer.GPUEndTime - command_buffer.GPUStartTime;
+    } else {
+        out_telemetry->kernel_seconds = -1.0;
+    }
+    return 0;
+}
+
+int pulsar_metal_iq3_xxs_gemv(
+    PulsarMetalContext *raw_context,
+    PulsarMetalRegistration *raw_registration,
+    uint32_t rows,
+    uint32_t columns,
+    uint32_t packed_row_bytes,
+    const float *activation,
+    size_t activation_len,
+    float *output_values,
+    size_t output_len,
+    PulsarIq3XxsGemvTelemetry *out_telemetry,
+    char *error_buffer,
+    size_t error_capacity) {
+    if (raw_context == nullptr || raw_registration == nullptr || activation == nullptr ||
+        output_values == nullptr || out_telemetry == nullptr) {
+        return set_error(error_buffer, error_capacity, @"null IQ3_XXS GEMV argument");
+    }
+    PulsarMetalContextObject *context = (__bridge PulsarMetalContextObject *)raw_context;
+    PulsarMetalRegistrationObject *registration =
+        (__bridge PulsarMetalRegistrationObject *)raw_registration;
+    if (registration.context != context) {
+        return set_error(error_buffer, error_capacity,
+            @"IQ3_XXS registration belongs to another context");
+    }
+    if (rows == 0 || columns == 0 || columns % 256u != 0 ||
+        activation_len != columns || output_len != rows) {
+        return set_error(error_buffer, error_capacity, @"invalid IQ3_XXS GEMV dimensions");
+    }
+    const uint64_t expected_row_bytes = (uint64_t(columns) / 256u) * 98u;
+    const uint64_t expected_matrix_bytes = uint64_t(rows) * expected_row_bytes;
+    if (packed_row_bytes != expected_row_bytes || registration.length != expected_matrix_bytes) {
+        return set_error(error_buffer, error_capacity,
+            @"IQ3_XXS packed byte accounting mismatch");
+    }
+    if (context.iq3GridBuffer == nil || context.iq3SignBuffer == nil) {
+        return set_error(error_buffer, error_capacity, @"IQ3_XXS lookup buffers are unavailable");
+    }
+
+    const auto total_start = std::chrono::steady_clock::now();
+    const auto dispatch_start = total_start;
+    id<MTLBuffer> activation_buffer = [context.device newBufferWithBytes:activation
+        length:activation_len * sizeof(float)
+        options:MTLResourceStorageModeShared];
+    id<MTLBuffer> output_buffer = [context.device newBufferWithLength:output_len * sizeof(float)
+        options:MTLResourceStorageModeShared];
+    if (activation_buffer == nil || output_buffer == nil) {
+        return set_error(error_buffer, error_capacity,
+            @"IQ3_XXS activation/output allocation failed");
+    }
+    memset(output_buffer.contents, 0, output_len * sizeof(float));
+
+    struct IQ3XXSParams {
+        uint32_t rows;
+        uint32_t columns;
+        uint32_t packed_row_bytes;
+    } params = {rows, columns, packed_row_bytes};
+
+    id<MTLCommandBuffer> command_buffer = [context.queue commandBuffer];
+    id<MTLComputeCommandEncoder> encoder = [command_buffer computeCommandEncoder];
+    if (command_buffer == nil || encoder == nil) {
+        return set_error(error_buffer, error_capacity,
+            @"IQ3_XXS Metal command encoder unavailable");
+    }
+    if (![registration beginUse]) {
+        return set_error(error_buffer, error_capacity,
+            @"IQ3_XXS Metal registration is closing");
+    }
+    PulsarMetalRegistrationObject *retained_registration = registration;
+    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+        (void)completed;
+        [retained_registration completeUse];
+    }];
+    [encoder setComputePipelineState:context.iq3Pipeline];
+    [encoder setBuffer:registration.buffer offset:0 atIndex:0];
+    [encoder setBuffer:activation_buffer offset:0 atIndex:1];
+    [encoder setBuffer:output_buffer offset:0 atIndex:2];
+    [encoder setBuffer:context.iq3GridBuffer offset:0 atIndex:3];
+    [encoder setBuffer:context.iq3SignBuffer offset:0 atIndex:4];
+    [encoder setBytes:&params length:sizeof(params) atIndex:5];
+    const NSUInteger width = MIN((NSUInteger)256,
+        context.iq3Pipeline.maxTotalThreadsPerThreadgroup);
+    [encoder dispatchThreads:MTLSizeMake(rows, 1, 1)
+        threadsPerThreadgroup:MTLSizeMake(width, 1, 1)];
+    [encoder endEncoding];
+    [command_buffer commit];
+    const auto dispatch_end = std::chrono::steady_clock::now();
+    const auto synchronization_start = dispatch_end;
+    [command_buffer waitUntilCompleted];
+    [registration waitUntilIdle];
+    const auto synchronization_end = std::chrono::steady_clock::now();
+    if (command_buffer.status != MTLCommandBufferStatusCompleted) {
+        return set_error(error_buffer, error_capacity,
+            command_buffer.error.localizedDescription ?: @"IQ3_XXS Metal command failed");
     }
     memcpy(output_values, output_buffer.contents, output_len * sizeof(float));
 
