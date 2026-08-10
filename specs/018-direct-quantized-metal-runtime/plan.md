@@ -84,6 +84,10 @@ No constitution exception is requested.
    semantics, make validation fallback fail closed, harden native in-flight
    ownership, and compare the strict scaffold against the optimized reference
    at the same real-matrix boundary before admitting IQ3-down.
+9. **Independent IQ3-down qualification**: bind layer-3 expert-15
+   `blk.3.ffn_down_exps.weight` (`[6144,2048]`, 4,816,896 packed bytes), freeze
+   the stricter `f018-iq3-down-v1` matrix envelope before implementation, and
+   reuse only format-neutral compiler/lifetime/telemetry infrastructure.
 
 ## Bounded Ladder and Gates
 
@@ -98,6 +102,11 @@ No constitution exception is requested.
 | G | Top-8 plus shared MoE | Exact routes; numerical classification and component timings |
 | H | Representative complete layer | Exact route/midpoint contract and material absolute gain |
 | Optional P1 | `[9703,21615]` | Clean committed source, normal pressure, no competing inference, H material and green |
+
+The IQ3 extension repeats the ladder for one routed down matrix: synthetic,
+real matrix, warm reuse, composed IQ2-gate/up plus IQ3-down expert, top-8/shared,
+complete layer, and only then an optional P1 admission decision. No third
+kernel begins during this extension.
 
 Failure, divergence, unsafe lifetime, or critical/urgent pressure stops deeper
 admission while preserving the failing record.
@@ -127,11 +136,13 @@ specs/018-direct-quantized-metal-runtime/
 ├── research.md
 ├── data-model.md
 ├── numerical-qualification-contract.md
+├── iq3-down-numerical-qualification-contract.md
 ├── quickstart.md
 ├── checklists/
 │   └── requirements.md
 ├── contracts/
 │   ├── direct-metal-iq2-xxs.md
+│   ├── direct-metal-iq3-xxs.md
 │   └── evidence-record.md
 └── tasks.md
 ```

@@ -227,3 +227,59 @@
 - Focused commits follow independently testable boundaries.
 - No private checkpoint path or weight bytes may enter version control.
 - Feature 017 remains independent; only named clean commits may be reused.
+
+---
+
+## Phase 13: IQ3-Down Contract Freeze
+
+**Purpose**: Freeze the independent second-format boundary before candidate code or output.
+
+- [x] T065 Bind the authoritative layer-3 expert-15 IQ3_XXS down matrix and freeze `iq3-down-numerical-qualification-contract.md`
+- [x] T066 Add the IQ3 packed-layout contract, extend Feature 018 spec/plan/research/data model/quickstart, and commit/push the pre-candidate contract boundary
+
+---
+
+## Phase 14: IQ3 Synthetic Scaffold
+
+- [ ] T067 Add failing IQ3 request/layout/oracle, malformed/truncated, scale/sign, boundary-shape, finite-value, deterministic, fallback, and materialization tests
+- [ ] T068 Implement the separate Rust IQ3 spec, lookup identities, deterministic synthetic generator, and same-order scalar GEMV oracle
+- [ ] T069 Implement the strict sequential packed IQ3 Metal kernel and distinct bridge dispatch using the qualified compiler/lifetime/telemetry infrastructure
+- [ ] T070 Pass 100 deterministic synthetic executions, retain public-safe evidence/table, and commit/push the synthetic gate
+
+---
+
+## Phase 15: Real IQ3 Matrix and Same-Boundary Gate
+
+- [ ] T071 Add the fail-closed real IQ3 matrix harness, semantic evidence validator, generator checks, and immutable binding
+- [ ] T072 Send the hardware NTFY, verify checkpoint/resource admission, and run scalar/NumPy+MLX/strict-Metal on one real layer-3 expert-15 down matrix
+- [ ] T073 Retain 3 warmups/30 samples, classify under `f018-iq3-down-v1`, generate the comparison table, apply the material-performance decision, and commit/push
+- [ ] T074 If the strict scaffold is not materially faster, retain it and qualify a separate Tier-B parallel IQ3 kernel; otherwise record why no parallel kernel was built
+
+---
+
+## Phase 16: Composed IQ2 + IQ3 Ladder
+
+- [ ] T075 Extend validation dispatch so qualified IQ2 gate/up and IQ3 down execute directly while unsupported roles/formats remain explicit reference dispatches and direct failures remain fatal
+- [ ] T076 Run and commit one qualified complete routed expert with separated IQ2, activation, IQ3, registration, kernel, sync, total, memory, and dispatch accounting
+- [ ] T077 Run repeated-warm same-expert reuse and validate registration/pipeline/native-ready reuse, deterministic output, teardown, generation, mutation, fallback, and materialization gates
+- [ ] T078 Run and commit the eligible representative top-8 plus shared MoE boundary with direct IQ2/IQ3 and explicit shared/reference accounting
+- [ ] T079 Run and commit the eligible representative complete-layer boundary with a layer-scoped numerical/performance claim
+
+---
+
+## Phase 17: IQ3 Closeout and Next Profile
+
+- [ ] T080 Generate the post-IQ3 bounded hotspot profile and select no third kernel before the measured ranking is committed
+- [ ] T081 Decide optional P1 from the complete-layer gate; if admitted run exactly one clean-source P1 `[9703,21615]`, otherwise document deferral; never run P2/golden-eight
+- [ ] T082 Record only format-neutral IQ3 lessons as concrete Feature 017 requirements without moving IQ3 semantics into Feature 017
+- [ ] T083 Create `F018_IQ3_DOWN_QUALIFICATION.md`, update claims/reviewer indexes, regenerate artifacts, and send the final acknowledged NTFY result
+- [ ] T084 Run IQ2/IQ3 native, lifetime, Cargo, research, privacy, generated-artifact, Spec Kit, staged-safety, `git diff --check`, push, and confirm both Apple Silicon CI jobs
+
+### IQ3 extension dependencies
+
+- T065-T066 precede every IQ3 candidate implementation or output.
+- T067-T070 are sequential TDD and synthetic gates.
+- T071 precedes checkpoint access; T072-T074 bank the real matrix before any composed work.
+- T075-T079 advance expert → reuse → MoE → complete layer and stop at the first failed or non-material gate.
+- T080 precedes any third-kernel recommendation. T081 is optional and may run only after T079 passes materially from a clean committed source.
+- No P2, golden-eight, third kernel, or Feature 017 implementation belongs to this extension.

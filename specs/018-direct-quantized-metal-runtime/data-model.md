@@ -84,3 +84,19 @@ classified -> admitted_next_rung
 Only `golden_identical` and `numerically_qualified_greedy_identical` may admit
 performance advancement. `numerically_qualified_greedy_divergent` preserves
 teacher-forced research evidence but cannot admit a greedy execution claim.
+
+## Iq3DownQualification
+
+- `contract_version`: `f018-iq3-down-v1`
+- `quantization`: `IQ3_XXS`; `projection_role`: `down`
+- `rows`: 6144; `columns`: 2048
+- `block_weights`: 256; `block_bytes`: 98
+- `packed_row_bytes`: 784; `packed_matrix_bytes`: 4,816,896
+- `matrix_absolute_tolerance`: 0.00025
+- `matrix_relative_tolerance`: 0.00025
+- `matrix_cosine_minimum`: 0.9999995
+- `matrix_norm_ratio`: `[0.99975, 1.00025]`
+- exact source/checkpoint/tensor/range/packed/activation/reference identities
+- strict compiler settings and distinct IQ3 pipeline identity
+- direct IQ2/IQ3, explicit-reference, direct-error, fallback, and complete-f32
+  materialization counts at composed boundaries

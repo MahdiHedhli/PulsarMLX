@@ -109,3 +109,25 @@ material qualified complete-layer improvement.
 
 **Rationale**: A matrix result cannot establish expert or token performance.
 P2 and golden-eight are already unnecessary and explicitly out of scope.
+
+## IQ3-down contract and target
+
+**Decision**: Use layer-3 expert-15 `blk.3.ffn_down_exps.weight`, logical shape
+`[6144,2048]`, as the second-format real boundary.
+
+**Rationale**: It is the down projection already bound by the exact Feature 016
+matrix and Feature 018 routed-expert evidence. The matrix is IQ3_XXS in the
+admitted checkpoint, spans 4,816,896 compressed bytes, and consumes the frozen
+2,048-element SwiGLU activation. IQ3_XXS routed down is the second modeled warm
+opportunity at 43.125401 seconds across 568 touches.
+
+**Numerical decision**: Freeze a distinct `0.00025 + 0.00025*abs(reference)`
+elementwise matrix gate, cosine `0.9999995`, and norm ratio
+`[0.99975,1.00025]`. The 2,048-term IQ3 dot is one third the admitted IQ2
+gate/up column count, so copying the looser IQ2 constants is unjustified.
+Composed-boundary tolerances remain the already frozen Feature 018 values.
+
+**Alternatives considered**: selecting a different layer would discard the
+existing bound activation/reference lineage; using the composed tolerance for
+a single matrix would be unnecessarily loose; implementing a parallel kernel
+first would confound packed-format correctness with reduction ordering.

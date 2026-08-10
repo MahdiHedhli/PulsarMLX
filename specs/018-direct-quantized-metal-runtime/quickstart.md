@@ -61,3 +61,16 @@ specify integration status
 
 P1, P2, and golden-eight are not part of the quickstart. P1 requires a separate
 clean-source admission decision after the complete-layer rung.
+
+## IQ3-down extension
+
+Checkpoint-free native qualification:
+
+```sh
+cargo test -p stream --test iq3_xxs_metal -- --nocapture
+```
+
+The Tier-3 matrix entry point is added only after the independent
+`iq3-down-numerical-qualification-contract.md` source is committed. It must use
+a fresh output and the already admitted symbolic checkpoint directory. P2,
+golden-eight, and a third kernel remain excluded.

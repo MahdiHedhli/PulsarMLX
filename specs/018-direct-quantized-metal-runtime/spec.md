@@ -258,3 +258,32 @@ teardown, malformed requests, classification, evidence parsing, and privacy.
 - Server, packaging, or product-surface implementation
 - Replacing the Python/NumPy reference oracle
 - Wholesale merge of the Feature 017 branch
+
+## Post-Opus IQ3_XXS-Down Extension
+
+The strict IQ2 same-boundary verdict admitted IQ3_XXS routed down as the second
+format-specific primitive. This extension advances through an independent
+IQ3 contract, synthetic scaffold, one real layer-3 expert-15 down matrix,
+repeated warm reuse, one composed expert, top-8 plus shared MoE, and one
+representative complete layer. It stops before a third format and retains the
+existing no-P2/no-golden-eight exclusion.
+
+- **FR-018-018**: IQ3 thresholds, packed layout, role, and reference ordering
+  MUST be frozen independently before any IQ3 Metal candidate output.
+- **FR-018-019**: IQ3-specific decode, tables, parameters, and kernel source
+  MUST remain separated from format-neutral slab/lifetime infrastructure and
+  from the retained IQ2 scaffold.
+- **FR-018-020**: Direct IQ3 validation MUST fail closed on unexpected fallback
+  and MUST preserve explicit reference dispatch for unsupported formats/roles.
+- **FR-018-021**: The IQ3 ladder MUST advance synthetic → real matrix → warm
+  reuse → composed expert → top-8/shared → complete layer, committing each
+  admitted boundary before proceeding.
+- **FR-018-022**: A third direct quantization kernel MUST NOT begin in this
+  extension; the next candidate is selected only from the post-IQ3 measured
+  bounded profile.
+- **SC-018-009**: At least 100 deterministic synthetic IQ3 executions and one
+  real 3-warmup/30-sample matrix population pass the frozen IQ3 contract or a
+  qualified negative result is preserved.
+- **SC-018-010**: The deepest admitted composed boundary reports direct IQ2,
+  direct IQ3, explicit-reference, fallback, materialization, setup, reuse,
+  numerical, and resource evidence without a P2 or golden-eight run.
