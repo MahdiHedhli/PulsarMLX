@@ -1,0 +1,195 @@
+{
+  "actual_status": "passed",
+  "binding": {
+    "activation_sha256": "b286b0baea31b825002e1dd5d7aa41f6055e7ca94cb7e2d27c0e97a50a56e3c9",
+    "expert_id": 15,
+    "layer": 3,
+    "packed_sha256": "3822822b98505bb0c0447174b1f53d984ca3b78e95e9e118d61e5de84fa2fdc3",
+    "projection": "gate",
+    "reference_output_sha256": "47ddfedf7f4b1ae8211d381479d57768c695436b0066a8d79093dd320a42088d",
+    "shape": [
+      2048,
+      6144
+    ],
+    "tensor_name": "blk.3.ffn_gate_exps.weight"
+  },
+  "claim_boundary": "One real IQ2_XXS gate matrix on one M1 Ultra. Historical/default compilation is contextual, not a controlled current-source population. No expert, layer, token, P2, or golden-eight result is inferred.",
+  "inputs": {
+    "dispatch_inventory": {
+      "path": "docs/research/glm52/raw/f018-p1-reference-dispatch-inventory-0001.json",
+      "sha256": "2c18d0a90feff330b5c3bffe3e99e36659b2d0ff6b5224acf83c37c64608656e"
+    },
+    "historical_default": {
+      "path": "docs/research/glm52/raw/f018-iq2-xxs-gate-matrix-0001.json",
+      "sha256": "ef4ebfe44fbf704d34d8dc382acd304334ceddb863f9766321489585e472e93d"
+    },
+    "lookup_experiment": {
+      "path": "docs/research/glm52/raw/f018-iq2-lookup-address-space-0001.json",
+      "sha256": "1d67f97313007dd9ad2fba88e83081cf7eac276aa783faf8ff58bc0c5ce337f7"
+    },
+    "strict": {
+      "path": "docs/research/glm52/raw/f018-iq2-xxs-gate-matrix-strict-0001.json",
+      "sha256": "24f70f5ca30a9b0f774510df0fd8ac63b27447a41c5e2e55869a3c9d0016d6bf"
+    }
+  },
+  "iq3_down_admission": "eligible_after_final_CI_and_review_closeout",
+  "lookup_decision": {
+    "constant_tables_retained": false,
+    "reason": "The bounded constant-table population preserved output identity but had a higher median; it offered no measured benefit.",
+    "retained_address_space": "device"
+  },
+  "p1_dispatch_accounting": {
+    "direct_error_count": 0,
+    "direct_routed_expert_count": 1184,
+    "explicit_reference_routed_expert_count": 32,
+    "fallback_count": 0,
+    "projection_quantization_counts": {
+      "IQ2_S": 32,
+      "Q2_K": 32
+    },
+    "reason_counts": {
+      "intentional_out_of_scope_quantization": 32
+    }
+  },
+  "parallel_iq2_kernel_required_before_iq3": false,
+  "performance": {
+    "absolute_median_seconds_recovered": 0.09021243749517109,
+    "materially_faster": true,
+    "strict_over_optimized_ratio": 67.69742617821439
+  },
+  "safety": {
+    "complete_f32_weight_materialized_bytes": 0,
+    "cpu_fallback_count": 0,
+    "direct_error_count": 0,
+    "native_in_flight_lifetime_committed": true,
+    "resource_level_after": "normal",
+    "resource_level_before": "normal",
+    "strict_compiler_committed": true,
+    "validation_fails_closed": true
+  },
+  "schema": "pulsarmlx.research.f018-post-opus-qualification",
+  "schema_version": "1.0.0",
+  "strict_correctness": {
+    "absolute_tolerance": 0.0005,
+    "boundary": "matrix",
+    "candidate_output_sha256": "79fa9d2f16d4c41d448760c3fb573c48e67b0d5f259955ac255fe7aa5653e5b2",
+    "classification": "numerically_qualified_greedy_identical",
+    "complete_f32_weight_materialized_bytes": 0,
+    "contract_version": "f018-numerical-v1",
+    "cosine_minimum": 0.999999,
+    "cosine_similarity": 0.9999999999989305,
+    "cpu_fallback_count": 0,
+    "deterministic": true,
+    "deterministic_repetitions": 30,
+    "elementwise_mismatch_count": 0,
+    "exact_f32_bits": false,
+    "f32_bit_mismatch_count": 2008,
+    "finite": true,
+    "first_f32_bit_mismatch_index": 0,
+    "greedy_applicable": false,
+    "greedy_matches": true,
+    "identity_matches": true,
+    "length_matches": true,
+    "maximum_absolute_error": 2.3096799850463867e-07,
+    "maximum_meaningful_relative_error": 5.62736155138208e-05,
+    "mean_absolute_error": 1.5332592973038572e-08,
+    "norm_ratio": 1.0000000124169286,
+    "norm_ratio_maximum": 1.0005,
+    "norm_ratio_minimum": 0.9995,
+    "numerically_qualified": true,
+    "optimized_reference_exact_f32_bits": true,
+    "optimized_reference_output_sha256": "47ddfedf7f4b1ae8211d381479d57768c695436b0066a8d79093dd320a42088d",
+    "reference_output_sha256": "47ddfedf7f4b1ae8211d381479d57768c695436b0066a8d79093dd320a42088d",
+    "relative_tolerance": 0.0005,
+    "rmse": 2.5522323593914772e-08,
+    "routes_match": true,
+    "signed_zero_mismatch_count": 0,
+    "unique_output_hashes": 1
+  },
+  "strict_resource_after": {
+    "allow_prefetch": true,
+    "budget_fraction": 1.0,
+    "free_pages_approx": 4804204,
+    "level": "normal",
+    "notes": "memory_pressure_query",
+    "peak_rss_bytes": 547504128,
+    "platform": "Darwin",
+    "process_cpu_system_seconds": 1.557899,
+    "process_cpu_user_seconds": 3.566517,
+    "rss_bytes": 447168512,
+    "system_free_percent": 93
+  },
+  "strict_resource_before": {
+    "allow_prefetch": true,
+    "budget_fraction": 1.0,
+    "free_pages_approx": 4839253,
+    "level": "normal",
+    "notes": "memory_pressure_query",
+    "peak_rss_bytes": 35831808,
+    "platform": "Darwin",
+    "process_cpu_system_seconds": 0.01491,
+    "process_cpu_user_seconds": 0.059139,
+    "rss_bytes": 35831808,
+    "system_free_percent": 93
+  },
+  "strict_setup": {
+    "checkpoint_storage_bytes": 3244032,
+    "checkpoint_storage_read_count": 1,
+    "checkpoint_storage_seconds": 0.0038252919912338257,
+    "compilation_seconds": 0.000707792,
+    "packed_temp_read_seconds": 0.00059075,
+    "pipeline_creation_seconds": 0.047232625,
+    "process_first": {
+      "dispatch_seconds": 0.000318167,
+      "kernel_seconds": 0.0010871249833144248,
+      "synchronization_seconds": 0.002887667,
+      "total_seconds": 0.003205834
+    },
+    "registration_seconds": 2.9083e-05,
+    "runner_peak_rss_bytes": 22020096,
+    "slab_allocated_bytes": 3244032,
+    "slab_copy_seconds": 0.000139417,
+    "slab_logical_bytes": 3244032
+  },
+  "variants": {
+    "A_optimized_numpy_mlx": {
+      "maximum_seconds": 0.10794937500031665,
+      "mean_seconds": 0.09206249853596091,
+      "median_seconds": 0.09156499999517109,
+      "minimum_seconds": 0.08911079200333916,
+      "role": "authoritative optimized reference",
+      "sample_count": 30,
+      "sample_standard_deviation_seconds": 0.00310447573254434,
+      "source_commit": "5e4056cb3fe5ba9ce0a2279b1f543b29349e2aa1"
+    },
+    "B_historical_default_direct": {
+      "compiler_semantics": "unversioned defaults (options:nil)",
+      "maximum_seconds": 0.001495916,
+      "mean_seconds": 0.0013970431333333332,
+      "median_seconds": 0.001387167,
+      "minimum_seconds": 0.001320834,
+      "role": "historical comparison only",
+      "sample_count": 30,
+      "sample_standard_deviation_seconds": 4.51277176335032e-05,
+      "source_commit": "20612556ecd2a5830c75ac7710414977faf1bafd"
+    },
+    "C_strict_direct": {
+      "compiler": {
+        "fast_math_enabled": false,
+        "language_version": "3.2",
+        "math_floating_point_functions": "precise",
+        "math_mode": "safe",
+        "pipeline_identity": "iq2_xxs_sequential_scaffold_v1"
+      },
+      "maximum_seconds": 0.002702625,
+      "mean_seconds": 0.0014633889,
+      "median_seconds": 0.0013525625,
+      "minimum_seconds": 0.001252666,
+      "role": "authoritative direct qualification candidate",
+      "sample_count": 30,
+      "sample_standard_deviation_seconds": 0.0003640087549755525,
+      "source_commit": "5e4056cb3fe5ba9ce0a2279b1f543b29349e2aa1"
+    }
+  },
+  "verdict": "GO"
+}

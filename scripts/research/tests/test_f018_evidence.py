@@ -479,6 +479,42 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_post_opus_three_way_gate_returns_go(self) -> None:
+        path = ROOT / "docs/research/glm52/raw/f018-post-opus-qualification-0001.json"
+        table = ROOT / "docs/research/glm52/tables/f018-post-opus-qualification-0001.md"
+        record = load_unique_json(path)
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["verdict"], "GO")
+        self.assertTrue(record["performance"]["materially_faster"])
+        self.assertGreater(record["performance"]["strict_over_optimized_ratio"], 2.0)
+        self.assertGreater(
+            record["performance"]["absolute_median_seconds_recovered"], 0.05
+        )
+        self.assertEqual(
+            record["strict_correctness"]["classification"],
+            "numerically_qualified_greedy_identical",
+        )
+        self.assertEqual(record["strict_correctness"]["elementwise_mismatch_count"], 0)
+        self.assertEqual(record["safety"]["cpu_fallback_count"], 0)
+        self.assertEqual(
+            record["safety"]["complete_f32_weight_materialized_bytes"], 0
+        )
+        self.assertFalse(record["parallel_iq2_kernel_required_before_iq3"])
+        self.assertEqual(
+            record["iq3_down_admission"],
+            "eligible_after_final_CI_and_review_closeout",
+        )
+        self.assertTrue(table.is_file())
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_f018_post_opus.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")
