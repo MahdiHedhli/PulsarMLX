@@ -13,6 +13,7 @@ from f018_numerical_contract import CLASSES
 from glm52_telemetry import assert_public_safe
 
 _HEX40 = re.compile(r"^[0-9a-f]{40}$")
+_HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _unique_pairs(pairs: Iterable[tuple[str, Any]]) -> dict[str, Any]:
@@ -63,6 +64,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("unexpected Feature 018 schema")
     if record.get("schema_version") != "1.0.0":
         raise ValueError("unexpected Feature 018 schema_version")
+    if record.get("actual_status") != "passed":
+        raise ValueError("only passed Feature 018 evidence is publishable")
     if record.get("classification") not in CLASSES:
         raise ValueError("unsupported numerical classification")
     source = record.get("source")
@@ -114,6 +117,10 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"correctness fields missing: {missing}")
     if correctness["contract_version"] != "f018-numerical-v1":
         raise ValueError("correctness contract version mismatch")
+    if correctness.get("classification", record["classification"]) != record["classification"]:
+        raise ValueError("correctness classification does not match record")
+    if not _HEX64.fullmatch(str(correctness["candidate_output_sha256"])):
+        raise ValueError("candidate output SHA-256 is malformed")
     if correctness["elementwise_mismatch_count"] != 0:
         raise ValueError("elementwise numerical mismatch is not qualified")
     if correctness["signed_zero_mismatch_count"] != 0:
@@ -140,4 +147,77 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         component_samples = summary.get("measured_samples_seconds")
         if not isinstance(component_samples, list) or len(component_samples) != len(samples):
             raise ValueError(f"{component} raw samples must align with total samples")
+    binding = record.get("binding", {})
+    if isinstance(binding, dict) and "tensor_name" in binding:
+        _validate_real_matrix_record(record)
     return record
+
+
+def _validate_real_matrix_record(record: dict[str, Any]) -> None:
+    binding = record["binding"]
+    required_binding = {
+        "layer",
+        "expert_id",
+        "projection",
+        "tensor_name",
+        "shard_filename",
+        "quantization",
+        "shape",
+        "packed_bytes",
+        "packed_sha256",
+        "activation_identity",
+        "activation_token_id",
+        "activation_length",
+        "activation_sha256",
+        "reference_output_sha256",
+    }
+    missing = sorted(required_binding - binding.keys())
+    if missing:
+        raise ValueError(f"real matrix binding fields missing: {missing}")
+    if binding["projection"] not in {"gate", "up"}:
+        raise ValueError("real matrix projection must be gate or up")
+    if binding["quantization"] != "IQ2_XXS":
+        raise ValueError("real matrix binding must be IQ2_XXS")
+    if not str(binding["tensor_name"]).endswith(
+        f"ffn_{binding['projection']}_exps.weight"
+    ):
+        raise ValueError("real matrix tensor role does not match projection")
+    shape = binding["shape"]
+    if (
+        not isinstance(shape, list)
+        or len(shape) != 2
+        or any(not isinstance(value, int) or value <= 0 for value in shape)
+    ):
+        raise ValueError("real matrix shape must contain two positive integers")
+    for field in ("packed_sha256", "activation_sha256", "reference_output_sha256"):
+        if not _HEX64.fullmatch(str(binding[field])):
+            raise ValueError(f"real matrix {field} is malformed")
+    checkpoint = record.get("checkpoint")
+    if not isinstance(checkpoint, dict):
+        raise ValueError("real matrix checkpoint identity is required")
+    if not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", ""))):
+        raise ValueError("real matrix checkpoint set SHA-256 is malformed")
+    if checkpoint.get("file_count") != 6 or checkpoint.get("total_bytes") != 238_458_632_928:
+        raise ValueError("real matrix checkpoint cardinality or size changed")
+    protocol = record.get("protocol", {})
+    if protocol.get("direct_metal_warmups") != 3 or protocol.get("direct_metal_measured") != 30:
+        raise ValueError("real matrix direct Metal protocol must retain 3 warmups and 30 samples")
+    if record["timing"].get("sample_count") != 30:
+        raise ValueError("real matrix direct Metal timing must retain 30 samples")
+    if record["correctness"].get("deterministic_repetitions") != 30:
+        raise ValueError("real matrix deterministic repetition count must be 30")
+    optimized = record.get("optimized_reference")
+    if not isinstance(optimized, dict):
+        raise ValueError("real matrix optimized reference is required")
+    if optimized.get("deterministic") is not True:
+        raise ValueError("real matrix optimized reference must be deterministic")
+    if optimized.get("exact_f32_bits_vs_scalar") is not True:
+        raise ValueError("real matrix optimized reference must match scalar f32 bits")
+    samples = optimized.get("samples")
+    if not isinstance(samples, list) or len(samples) != 30:
+        raise ValueError("real matrix optimized reference must retain 30 raw samples")
+    setup = record.get("setup", {})
+    if setup.get("checkpoint_storage_read_count") != 1:
+        raise ValueError("real matrix checkpoint path must use one bounded read")
+    if setup.get("checkpoint_storage_bytes") != binding["packed_bytes"]:
+        raise ValueError("real matrix checkpoint byte accounting mismatch")

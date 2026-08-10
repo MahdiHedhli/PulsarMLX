@@ -93,6 +93,63 @@ class F018EvidenceTests(unittest.TestCase):
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")
 
+    def test_real_matrix_semantics(self) -> None:
+        record = valid_record()
+        samples = [0.01 + index * 0.0001 for index in range(30)]
+        record["timing"].update(
+            {
+                "measured_samples_seconds": samples,
+                "sample_count": len(samples),
+                "minimum_seconds": min(samples),
+                "maximum_seconds": max(samples),
+                "mean_seconds": sum(samples) / len(samples),
+                "dispatch": {"measured_samples_seconds": samples},
+                "synchronization": {"measured_samples_seconds": samples},
+                "kernel": {"measured_samples_seconds": samples},
+            }
+        )
+        record["correctness"]["deterministic_repetitions"] = len(samples)
+        record["binding"] = {
+            "layer": 3,
+            "expert_id": 15,
+            "projection": "gate",
+            "tensor_name": "blk.3.ffn_gate_exps.weight",
+            "shard_filename": "model-00002-of-00006.gguf",
+            "quantization": "IQ2_XXS",
+            "shape": [2048, 6144],
+            "packed_bytes": 3_244_032,
+            "packed_sha256": "b" * 64,
+            "activation_identity": "frozen fixture",
+            "activation_token_id": 9703,
+            "activation_length": 6144,
+            "activation_sha256": "c" * 64,
+            "reference_output_sha256": "d" * 64,
+        }
+        record["checkpoint"] = {
+            "checkpoint_set_sha256": "e" * 64,
+            "file_count": 6,
+            "total_bytes": 238_458_632_928,
+        }
+        record["protocol"] = {
+            "direct_metal_warmups": 3,
+            "direct_metal_measured": 30,
+        }
+        record["optimized_reference"] = {
+            "deterministic": True,
+            "exact_f32_bits_vs_scalar": True,
+            "samples": [{} for _ in range(30)],
+        }
+        record["setup"] = {
+            "checkpoint_storage_read_count": 1,
+            "checkpoint_storage_bytes": 3_244_032,
+        }
+        record["correctness"]["reference_output_sha256"] = "d" * 64
+        record["correctness"]["optimized_reference_output_sha256"] = "d" * 64
+        self.assertEqual(validate_record(record)["binding"]["expert_id"], 15)
+        record["optimized_reference"]["exact_f32_bits_vs_scalar"] = False
+        with self.assertRaisesRegex(ValueError, "match scalar"):
+            validate_record(record)
+
     def test_duplicate_json_key_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "duplicate.json"
