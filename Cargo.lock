@@ -204,6 +204,7 @@ dependencies = [
  "backend",
  "gguf",
  "kernels",
+ "libc",
  "quant",
  "sha2",
  "stream",

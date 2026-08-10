@@ -1,6 +1,6 @@
 # ADR 0005: Keep the MLX boundary narrow and native
 
-- **Status**: Accepted for Feature 017 infrastructure; native MLX buffer import remains to be qualified
+- **Status**: Accepted for Feature 017 infrastructure; CPU managed import is qualified, GPU/Metal lifecycle remains unqualified
 - **Date**: 2026-08-10
 
 ## Decision
@@ -23,6 +23,26 @@ pinned deployment can prove all of the following:
 Until that qualification exists, the adapter exposes capability discovery and
 fail-closed operation only. Existing Python/MLX functionality remains the
 research/reference path, not a required shipping process.
+
+## ColPanicM2 qualification evidence
+
+The installed native environment on 2026-08-10 contains MLX C 0.6.0_2 and
+MLX 0.31.2 under Homebrew, while the project Python reference path currently
+pins MLX 0.32.0. The public-safe probe in
+`scripts/research/f017_mlx_c_qualification.cpp` passed the following CPU
+checks:
+
+- `mlx_array_new_data_managed_payload` accepted a 4096-byte-aligned host buffer.
+- `mlx_array_eval` followed by `mlx_synchronize` completed deterministically.
+- `mlx_array_data_float32` returned the same host pointer for this CPU array.
+- `mlx_array_free` invoked the ownership callback exactly once, followed by
+  explicit stream teardown.
+
+This is evidence for a CPU managed-import path, not a general MLX/Metal
+zero-copy claim. Metal and GPU availability were reported, but a separate
+GPU managed-array teardown probe aborted with exit 134 after evaluation. The
+GPU/Metal ownership and completion ordering therefore remain a blocker for a
+shipping native MLX bridge and must be re-qualified on the M1 handoff path.
 
 ## Options considered
 

@@ -62,14 +62,14 @@
 - [x] T017-60 Qualify at least one required format lane with strict criteria.
 - [x] T017-61 Add malformed and truncated input rejection coverage.
 - [x] T017-62 Add bit-level comparison or documented epsilon contract where exactness is not yet possible.
-- [ ] T017-63 Record throughput and allocator impact for qualified formats.
+- [x] T017-63 Record throughput and allocator impact for qualified formats.
 
 ## Phase 7 — Apple bridge spike and native registration
 
 - [x] T017-70 Build native bridge registration spike with deterministic buffer ownership and teardown ordering.
 - [x] T017-71 Demonstrate stable address behavior across command submission boundaries.
-- [ ] T017-72 Add no-copy or explicit `newBufferWithBytesNoCopy` qualification matrix.
-- [ ] T017-73 Add fail-closed teardown and cancellation path tests.
+- [x] T017-72 Add no-copy or explicit `newBufferWithBytesNoCopy` qualification matrix.
+- [x] T017-73 Add fail-closed teardown and cancellation path tests.
 
 ## Phase 8 — Runtime skeleton and mode-aware validation
 

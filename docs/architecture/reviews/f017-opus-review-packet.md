@@ -2,12 +2,23 @@
 
 ## Numerical parity sprint update
 
-- Final parity boundary: `8adee21`; current feature branch tip: `8bfca2a`.
+- Final parity boundary: `8adee21`; current feature branch tip is recorded by
+  the sprint commit that updates this packet.
 - Checkpoint-free synthetic gates now pass in strict order: projection, router, complete expert, top-8 plus shared, MLA/dense, complete layer, and final norm/logits/top-k.
 - Q8_0 remains the only decoder exercised by these public-safe parity gates; no new decoder was added because the current fixtures do not require Q2_K, Q3_K, IQ2_S, IQ4_XS, or Q5_K.
 - Final output is classified `numerically_qualified_greedy_identical` under `golden_strict`; it is not claimed `golden_identical` because the independent RMS reference differs by operation order below the explicit `1e-14` threshold.
 - Apple lifecycle qualification now has a fail-closed Rust contract covering register, submit, completion, cancel-before-submit, queued cancellation modeling, release, destroy, repeated generations, and stale-generation rejection. This is lifecycle evidence, not proof of MLX import behavior.
-- MLX native import/synchronization remains unqualified. The M2 checkout has Metal/Xcode but no discovered MLX native headers/library; the current recommendation remains a narrow Rust C ABI plus Objective-C++ adapter only after a real MLX-native import/copy/fence experiment.
+- Official MLX C API CPU managed import/synchronization is now qualified by
+  `scripts/research/f017_mlx_c_qualification.cpp`: source/result pointer
+  identity and exactly-once destruction passed. GPU/Metal managed-array
+  teardown still aborts in the local probe, so the shipping bridge remains
+  fail-closed and unqualified for GPU use. The recommendation remains a
+  narrow Rust C ABI plus Objective-C++ adapter.
+- A 500-iteration deterministic semantic soak passed through final
+  norm/logits/top-k with stable fingerprint, bounded RSS growth, balanced
+  registrations/generations/teardowns, protected-shared residency, and stale
+  generation rejection. The public-safe decoder report separates decode time
+  from allocator behavior for Q8_0, Q6_K, IQ2_XXS, and IQ3_XXS.
 - No full-model inference or Feature 018 kernel work was performed.
 
 ## Review scope
@@ -85,12 +96,11 @@ full-model inference and direct quantized Metal kernel implementation.
 
 ## Remaining P1 prerequisites
 
-- Complete numerical checkpoint-free executors for the first projection/router
-  and expert boundaries, then extend through MLA/layer/logits.
-- Qualify MLX native import/copy/synchronization behavior; current Metal
-  no-copy evidence does not prove MLX import behavior.
-- Finish Apple registration qualification and cancellation/teardown stress
-  tests.
-- Complete decoder throughput/allocation reporting and select any additional
-  format only from bound inventory/fixtures.
+- Re-qualify GPU/Metal MLX managed-buffer teardown and completion ordering on a
+  supported native MLX environment.
+- Complete numerical checkpoint-free executors for real bound model slabs;
+  synthetic semantic gates are already banked through logits/top-k.
+- Retain the existing Apple registration and cancellation/teardown tests as
+  prerequisites for the native GPU bridge.
+- Select additional decoder formats only from a bound inventory/fixture need.
 - Run public-safe workspace CI and resolve independent review blockers.

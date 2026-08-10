@@ -14,6 +14,7 @@
 //! ended up.
 
 pub mod f017_parity;
+pub mod f017_soak;
 
 #[cfg(target_os = "linux")]
 mod real {
