@@ -4447,3 +4447,17 @@ was 0.026545 seconds, and direct IQ3 down synchronized work was 0.007851
 seconds. No third kernel was selected from this one-layer population. Because
 the complete-layer numerical gate passed and materially improved, one clean P1
 was admitted to establish the next full-stack ranking.
+
+The single admitted P1 at clean source `8b7a1bfc` passed the exact frozen prefix
+`[9703,21615]` in 990.044243 seconds. The cold prompt stack took 833.188530
+seconds, full-vocabulary logits took 77.987068 seconds, and the terminal warm
+stack took 78.446275 seconds. The run executed 1,136 routed experts through all
+three direct projections (3,408 direct GEMVs) while 80 out-of-scope routed
+experts used explicit reference dispatch. It retained 228 shared-cache hits,
+zero shared evictions, zero CPU fallbacks, zero direct errors, and normal
+resource state.
+
+For cross-commit context only, the prior IQ2-only direct P1 was 1043.248 seconds
+with a 127.010-second terminal warm stack. The new single run is 53.204 seconds
+shorter overall and 48.564 seconds shorter at the terminal warm stack. These are
+not controlled same-binary populations, and no P2 or golden-eight run was made.

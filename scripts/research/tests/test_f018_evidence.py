@@ -358,6 +358,22 @@ class F018EvidenceTests(unittest.TestCase):
         self.assertFalse(record["decision"]["third_kernel_selected"])
         self.assertTrue(record["decision"]["optional_p1_admitted"])
 
+    def test_committed_iq2_iq3_p1_record_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/f018-inference-p1-direct-iq2-iq3-0001.json"
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["generated_token_ids"], [9703, 21615])
+        self.assertEqual(record["expert_execution_mode"], "direct_iq2_gate_up_iq3_down")
+        self.assertEqual(record["direct_quantized_metal"]["worker"]["cpu_fallback_count"], 0)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_f018_iq3_p1.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_committed_real_matrix_records(self) -> None:
         records = sorted(
             (ROOT / "docs/research/glm52/raw").glob(

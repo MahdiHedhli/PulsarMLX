@@ -211,9 +211,11 @@ def _validate_p1_record(record: dict[str, Any]) -> dict[str, Any]:
         or checkpoint.get("total_bytes") != 238_458_632_928
     ):
         raise ValueError("Feature 018 P1 checkpoint identity changed")
+    combined_iq3 = record.get("expert_execution_mode") == "direct_iq2_gate_up_iq3_down"
     if (
         record.get("mode") != "inference"
-        or record.get("expert_execution_mode") != "direct_iq2_gate_up"
+        or record.get("expert_execution_mode")
+        not in {"direct_iq2_gate_up", "direct_iq2_gate_up_iq3_down"}
         or record.get("decoder_mode") != "numpy_vectorized"
         or record.get("dense_read_mode")
         != "whole_matrix_numpy_q5_q8_q6_head_numpy"
@@ -263,7 +265,9 @@ def _validate_p1_record(record: dict[str, Any]) -> dict[str, Any]:
         or cache.get("resident_entries") != 228
     ):
         raise ValueError("Feature 018 P1 protected shared-cache gate failed")
-    direct = record.get("direct_iq2_metal", {})
+    direct = record.get(
+        "direct_quantized_metal" if combined_iq3 else "direct_iq2_metal", {}
+    )
     selection = direct.get("selection", {})
     worker = direct.get("worker", {})
     identity = direct.get("worker_identity", {})
@@ -278,13 +282,19 @@ def _validate_p1_record(record: dict[str, Any]) -> dict[str, Any]:
     ):
         raise ValueError("Feature 018 P1 routed execution accounting failed")
     if (
-        worker.get("gemv_count") != direct_count * 2
+        worker.get("gemv_count") != direct_count * (3 if combined_iq3 else 2)
         or worker.get("cpu_fallback_count") != 0
         or worker.get("complete_f32_weight_materialized_bytes") != 0
         or identity.get("source_commit") != record["source_commit"]
-        or identity.get("max_resident_matrices") != 2
+        or identity.get("max_resident_matrices") != (3 if combined_iq3 else 2)
     ):
         raise ValueError("Feature 018 P1 direct worker gate failed")
+    if combined_iq3 and (
+        identity.get("combined_iq3") is not True
+        or identity.get("pipeline_identities")
+        != ["iq2_xxs_sequential_scaffold_v1", "iq3_xxs_sequential_scaffold_v1"]
+    ):
+        raise ValueError("Feature 018 P1 combined IQ3 worker identity changed")
     if record.get("resource_before", {}).get("level") != "normal":
         raise ValueError("Feature 018 P1 resource admission was not normal")
     return record
