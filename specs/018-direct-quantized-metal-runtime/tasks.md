@@ -115,7 +115,7 @@
 
 **Independent Test**: CI-safe lifecycle/evidence tests pass; optional P1 is either admitted with exact `[9703,21615]` or explicitly deferred.
 
-- [ ] T037 [P] [US4] Add command failure, cross-context registration, stale-generation, and repeated-teardown tests in `crates/stream/tests/iq2_xxs_metal.rs`
+- [x] T037 [P] [US4] Add command failure, cross-context registration, stale-generation, and repeated-teardown tests in `crates/stream/tests/iq2_xxs_metal.rs`
 - [ ] T038 [P] [US4] Add reviewer-index, claims-ledger, and privacy checks for Feature 018 evidence in `scripts/research/tests/test_f018_evidence.py`
 - [ ] T039 [US4] Evaluate P1 admission from the complete-layer evidence and document the decision in `docs/research/glm52/F018_OVERNIGHT_REVIEW.md`
 - [ ] T040 [US4] If admitted, run one clean-source exact P1 to a fresh public-safe record; otherwise record the evidence-backed deferral in `docs/research/glm52/F018_OVERNIGHT_REVIEW.md`

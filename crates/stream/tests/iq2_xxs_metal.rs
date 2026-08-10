@@ -137,3 +137,102 @@ fn direct_gemv_rejects_bad_activation_before_dispatch() {
         .iq2_xxs_gemv(&registration, spec, &nonfinite)
         .is_err());
 }
+
+#[test]
+fn direct_gemv_rejects_registration_from_another_context() {
+    let rows = 1;
+    let columns = 256;
+    let packed = synthetic_iq2_xxs_matrix(rows, columns).expect("synthetic packed matrix");
+    let spec = Iq2XxsGemvSpec::new(rows, columns, packed.len(), columns).expect("valid spec");
+    let allocator = StableSlabAllocator::new(StableSlabConfig::new(
+        packed.len(),
+        4096,
+        1,
+        ZeroingPolicy::ZeroInitialize,
+    ))
+    .expect("allocator");
+    let mut slab = allocator.acquire().expect("slab");
+    slab.as_mut_slice().copy_from_slice(&packed);
+    let owner = MetalBridge::new().expect("owning Metal context");
+    let other = MetalBridge::new().expect("second Metal context");
+    let registration = owner.register(&slab).expect("registration");
+
+    let checksum_error = other
+        .checksum(&registration)
+        .expect_err("cross-context checksum must fail closed");
+    assert!(checksum_error.contains("belongs to another context"));
+    let gemv_error = other
+        .iq2_xxs_gemv(&registration, spec, &vec![0.0; columns])
+        .expect_err("cross-context GEMV must fail closed");
+    assert!(gemv_error.contains("belongs to another context"));
+}
+
+#[test]
+fn reused_stable_slot_has_new_logical_generation() {
+    let allocator = StableSlabAllocator::new(StableSlabConfig::new(
+        4096,
+        4096,
+        1,
+        ZeroingPolicy::ZeroOnAcquire,
+    ))
+    .expect("allocator");
+    let first = allocator.acquire().expect("first occupancy");
+    let id = first.id();
+    let address = first.as_ptr();
+    let generation = first.generation();
+    drop(first);
+
+    let second = allocator.acquire().expect("reused occupancy");
+    assert_eq!(second.id(), id);
+    assert_eq!(second.as_ptr(), address);
+    assert_eq!(second.generation(), generation + 1);
+}
+
+#[test]
+fn registration_length_mismatch_fails_before_command_submission() {
+    let packed = synthetic_iq2_xxs_matrix(1, 512).expect("two-block packed matrix");
+    let mismatched_spec = Iq2XxsGemvSpec::new(1, 256, 66, 256).expect("smaller valid spec");
+    let allocator = StableSlabAllocator::new(StableSlabConfig::new(
+        packed.len(),
+        4096,
+        1,
+        ZeroingPolicy::ZeroInitialize,
+    ))
+    .expect("allocator");
+    let mut slab = allocator.acquire().expect("slab");
+    slab.as_mut_slice().copy_from_slice(&packed);
+    let bridge = MetalBridge::new().expect("Metal context");
+    let registration = bridge.register(&slab).expect("registration");
+    let error = bridge
+        .iq2_xxs_gemv(&registration, mismatched_spec, &vec![0.0; 256])
+        .expect_err("registration byte mismatch must fail closed");
+    assert!(error.contains("registration length"));
+}
+
+#[test]
+fn repeated_context_registration_and_teardown_is_stable() {
+    let rows = 2;
+    let columns = 256;
+    let packed = synthetic_iq2_xxs_matrix(rows, columns).expect("synthetic packed matrix");
+    let activation = vec![0.125_f32; columns];
+    let spec = Iq2XxsGemvSpec::new(rows, columns, packed.len(), columns).expect("valid spec");
+
+    for _ in 0..32 {
+        let allocator = StableSlabAllocator::new(StableSlabConfig::new(
+            packed.len(),
+            4096,
+            1,
+            ZeroingPolicy::ZeroInitialize,
+        ))
+        .expect("allocator");
+        let mut slab = allocator.acquire().expect("slab");
+        slab.as_mut_slice().copy_from_slice(&packed);
+        let bridge = MetalBridge::new().expect("Metal context");
+        let registration = bridge.register(&slab).expect("registration");
+        let result = bridge
+            .iq2_xxs_gemv(&registration, spec, &activation)
+            .expect("direct GEMV");
+        assert_eq!(result.telemetry.cpu_fallback_count, 0);
+        assert_eq!(result.telemetry.complete_f32_weight_materialized_bytes, 0);
+    }
+}
