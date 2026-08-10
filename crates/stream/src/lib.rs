@@ -24,6 +24,12 @@ pub use stable_slab::{
 
 mod stable_slab;
 
+#[cfg(target_os = "macos")]
+mod apple_metal_bridge;
+
+#[cfg(target_os = "macos")]
+pub use apple_metal_bridge::{MetalBridge, MetalRegistration};
+
 /// Build the universe of per-expert slab reads for every streamed layer of
 /// a MoE gguf: for each routed-expert tensor (gate/up/down) of each layer,
 /// one Read per expert. Mirrors ds4's expert addressing: slab e lives at
