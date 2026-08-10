@@ -31,6 +31,13 @@ allocate or write a `[rows, columns]` f32 weight matrix.
   the slab and context.
 - Activation, lookup, and output buffers remain alive through command-buffer
   completion.
+- Every submitted command increments native in-flight registration ownership;
+  its completion handler retains and releases that ownership. Registration
+  teardown marks the registration closing and waits until the count reaches
+  zero. Synchronous bridge calls also wait for the completion handler before
+  returning.
+- The Rust registration borrow prevents mutable host access and slot release or
+  reuse until registration teardown. Compile-fail tests enforce both cases.
 - Registration teardown occurs only after no command references the buffer.
 - Slot generation prevents stale registration reuse after allocator reuse.
 

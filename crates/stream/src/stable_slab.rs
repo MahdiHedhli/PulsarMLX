@@ -266,8 +266,8 @@ impl StableSlab {
         self.generation
     }
 
-    pub fn as_ptr(&self) -> *mut u8 {
-        self.ptr.as_ptr()
+    pub fn as_ptr(&self) -> *const u8 {
+        self.ptr.as_ptr().cast_const()
     }
 
     pub fn as_slice(&self) -> &[u8] {

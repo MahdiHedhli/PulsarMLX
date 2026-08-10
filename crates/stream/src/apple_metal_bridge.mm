@@ -101,9 +101,63 @@ kernel void pulsar_iq2_xxs_gemv(
 @property(nonatomic, strong) PulsarMetalContextObject *context;
 @property(nonatomic, assign) const void *address;
 @property(nonatomic, assign) NSUInteger length;
+@property(nonatomic, strong) NSCondition *inFlightCondition;
+@property(nonatomic, assign) NSUInteger inFlightCount;
+@property(nonatomic, assign) BOOL closing;
+- (BOOL)beginUse;
+- (void)completeUse;
+- (void)waitUntilIdle;
+- (void)closeAndWait;
 @end
 
 @implementation PulsarMetalRegistrationObject
+- (instancetype)init {
+    self = [super init];
+    if (self != nil) {
+        _inFlightCondition = [NSCondition new];
+        _inFlightCount = 0;
+        _closing = NO;
+    }
+    return self;
+}
+
+- (BOOL)beginUse {
+    [self.inFlightCondition lock];
+    if (self.closing) {
+        [self.inFlightCondition unlock];
+        return NO;
+    }
+    self.inFlightCount += 1;
+    [self.inFlightCondition unlock];
+    return YES;
+}
+
+- (void)completeUse {
+    [self.inFlightCondition lock];
+    NSCAssert(self.inFlightCount > 0, @"Metal registration use underflow");
+    self.inFlightCount -= 1;
+    if (self.inFlightCount == 0) {
+        [self.inFlightCondition broadcast];
+    }
+    [self.inFlightCondition unlock];
+}
+
+- (void)closeAndWait {
+    [self.inFlightCondition lock];
+    self.closing = YES;
+    while (self.inFlightCount != 0) {
+        [self.inFlightCondition wait];
+    }
+    [self.inFlightCondition unlock];
+}
+
+- (void)waitUntilIdle {
+    [self.inFlightCondition lock];
+    while (self.inFlightCount != 0) {
+        [self.inFlightCondition wait];
+    }
+    [self.inFlightCondition unlock];
+}
 @end
 
 extern "C" {
@@ -345,7 +399,9 @@ int pulsar_metal_register_no_copy(
 
 void pulsar_metal_registration_destroy(PulsarMetalRegistration *registration) {
     if (registration != nullptr) {
-        CFBridgingRelease((void *)registration);
+        PulsarMetalRegistrationObject *object =
+            (PulsarMetalRegistrationObject *)CFBridgingRelease((void *)registration);
+        [object closeAndWait];
     }
 }
 
@@ -377,6 +433,14 @@ int pulsar_metal_checksum(
     if (command_buffer == nil || encoder == nil) {
         return set_error(error_buffer, error_capacity, @"Metal command encoder unavailable");
     }
+    if (![registration beginUse]) {
+        return set_error(error_buffer, error_capacity, @"Metal registration is closing");
+    }
+    PulsarMetalRegistrationObject *retained_registration = registration;
+    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+        (void)completed;
+        [retained_registration completeUse];
+    }];
     [encoder setComputePipelineState:context.checksumPipeline];
     [encoder setBuffer:registration.buffer offset:0 atIndex:0];
     [encoder setBuffer:output offset:0 atIndex:1];
@@ -386,6 +450,7 @@ int pulsar_metal_checksum(
     [encoder endEncoding];
     [command_buffer commit];
     [command_buffer waitUntilCompleted];
+    [registration waitUntilIdle];
     if (command_buffer.status != MTLCommandBufferStatusCompleted) {
         return set_error(error_buffer, error_capacity, command_buffer.error.localizedDescription ?: @"Metal command failed");
     }
@@ -451,6 +516,14 @@ int pulsar_metal_iq2_xxs_gemv(
     if (command_buffer == nil || encoder == nil) {
         return set_error(error_buffer, error_capacity, @"IQ2_XXS Metal command encoder unavailable");
     }
+    if (![registration beginUse]) {
+        return set_error(error_buffer, error_capacity, @"IQ2_XXS Metal registration is closing");
+    }
+    PulsarMetalRegistrationObject *retained_registration = registration;
+    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> completed) {
+        (void)completed;
+        [retained_registration completeUse];
+    }];
     [encoder setComputePipelineState:context.iq2Pipeline];
     [encoder setBuffer:registration.buffer offset:0 atIndex:0];
     [encoder setBuffer:activation_buffer offset:0 atIndex:1];
@@ -466,6 +539,7 @@ int pulsar_metal_iq2_xxs_gemv(
     const auto dispatch_end = std::chrono::steady_clock::now();
     const auto synchronization_start = dispatch_end;
     [command_buffer waitUntilCompleted];
+    [registration waitUntilIdle];
     const auto synchronization_end = std::chrono::steady_clock::now();
     if (command_buffer.status != MTLCommandBufferStatusCompleted) {
         return set_error(error_buffer, error_capacity,
@@ -492,6 +566,19 @@ uintptr_t pulsar_metal_registration_address(PulsarMetalRegistration *raw_registr
     }
     PulsarMetalRegistrationObject *registration = (__bridge PulsarMetalRegistrationObject *)raw_registration;
     return reinterpret_cast<uintptr_t>(registration.address);
+}
+
+uint64_t pulsar_metal_registration_in_flight_count(
+    PulsarMetalRegistration *raw_registration) {
+    if (raw_registration == nullptr) {
+        return UINT64_MAX;
+    }
+    PulsarMetalRegistrationObject *registration =
+        (__bridge PulsarMetalRegistrationObject *)raw_registration;
+    [registration.inFlightCondition lock];
+    const uint64_t count = registration.inFlightCount;
+    [registration.inFlightCondition unlock];
+    return count;
 }
 
 }

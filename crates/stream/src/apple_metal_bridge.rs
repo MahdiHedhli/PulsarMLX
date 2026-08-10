@@ -88,6 +88,7 @@ unsafe extern "C" {
         error_capacity: usize,
     ) -> i32;
     fn pulsar_metal_registration_address(registration: *mut RawMetalRegistration) -> usize;
+    fn pulsar_metal_registration_in_flight_count(registration: *mut RawMetalRegistration) -> u64;
 }
 
 const ERROR_CAPACITY: usize = 512;
@@ -128,6 +129,34 @@ pub struct MetalBridge {
     raw: *mut RawMetalContext,
 }
 
+/// No-copy registration whose borrow prevents host mutation or slot reuse.
+///
+/// The native owner additionally retains each registration until its command
+/// completion handler runs and makes destruction wait for the in-flight count.
+///
+/// ```compile_fail
+/// use stream::{MetalBridge, StableSlabAllocator, StableSlabConfig, ZeroingPolicy};
+/// let allocator = StableSlabAllocator::new(StableSlabConfig::new(
+///     4096, 4096, 1, ZeroingPolicy::ZeroInitialize,
+/// )).unwrap();
+/// let slab = allocator.acquire().unwrap();
+/// let bridge = MetalBridge::new().unwrap();
+/// let registration = bridge.register(&slab).unwrap();
+/// drop(slab); // cannot release/reuse the host slot while registered
+/// let _ = registration.registration_seconds();
+/// ```
+///
+/// ```compile_fail
+/// use stream::{MetalBridge, StableSlabAllocator, StableSlabConfig, ZeroingPolicy};
+/// let allocator = StableSlabAllocator::new(StableSlabConfig::new(
+///     4096, 4096, 1, ZeroingPolicy::ZeroInitialize,
+/// )).unwrap();
+/// let mut slab = allocator.acquire().unwrap();
+/// let bridge = MetalBridge::new().unwrap();
+/// let registration = bridge.register(&slab).unwrap();
+/// slab.as_mut_slice()[0] = 1; // immutable registration borrow is still live
+/// let _ = registration.registration_seconds();
+/// ```
 pub struct MetalRegistration<'a> {
     raw: *mut RawMetalRegistration,
     length: usize,
@@ -138,6 +167,10 @@ pub struct MetalRegistration<'a> {
 impl MetalRegistration<'_> {
     pub fn registration_seconds(&self) -> f64 {
         self.registration_seconds
+    }
+
+    pub fn in_flight_count(&self) -> u64 {
+        unsafe { pulsar_metal_registration_in_flight_count(self.raw) }
     }
 }
 

@@ -82,6 +82,7 @@ fn native_iq2_xxs_direct_gemv_matches_reference_and_repeats() {
     let first = bridge
         .iq2_xxs_gemv(&registration, spec, &activation)
         .expect("first direct GEMV");
+    assert_eq!(registration.in_flight_count(), 0);
     let first_bits = first
         .output
         .iter()
@@ -120,6 +121,7 @@ fn native_iq2_xxs_direct_gemv_matches_reference_and_repeats() {
         );
         assert_eq!(repeated.telemetry.cpu_fallback_count, 0);
         assert_eq!(repeated.telemetry.complete_f32_weight_materialized_bytes, 0);
+        assert_eq!(registration.in_flight_count(), 0);
     }
 }
 
@@ -148,6 +150,7 @@ fn direct_gemv_rejects_bad_activation_before_dispatch() {
     assert!(bridge
         .iq2_xxs_gemv(&registration, spec, &nonfinite)
         .is_err());
+    assert_eq!(registration.in_flight_count(), 0);
 }
 
 #[test]
@@ -177,6 +180,7 @@ fn direct_gemv_rejects_registration_from_another_context() {
         .iq2_xxs_gemv(&registration, spec, &vec![0.0; columns])
         .expect_err("cross-context GEMV must fail closed");
     assert!(gemv_error.contains("belongs to another context"));
+    assert_eq!(registration.in_flight_count(), 0);
 }
 
 #[test]
@@ -246,5 +250,6 @@ fn repeated_context_registration_and_teardown_is_stable() {
             .expect("direct GEMV");
         assert_eq!(result.telemetry.cpu_fallback_count, 0);
         assert_eq!(result.telemetry.complete_f32_weight_materialized_bytes, 0);
+        assert_eq!(registration.in_flight_count(), 0);
     }
 }
