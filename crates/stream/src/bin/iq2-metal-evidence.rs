@@ -110,6 +110,21 @@ fn run() -> Result<(), String> {
         .zip(&candidate)
         .map(|(expected, actual)| (expected - actual).abs())
         .collect::<Vec<_>>();
+    let bit_mismatch_indices = reference
+        .iter()
+        .zip(&candidate)
+        .enumerate()
+        .filter_map(|(index, (expected, actual))| {
+            (expected.to_bits() != actual.to_bits()).then_some(index)
+        })
+        .collect::<Vec<_>>();
+    let signed_zero_mismatch_count = reference
+        .iter()
+        .zip(&candidate)
+        .filter(|(expected, actual)| {
+            **expected == 0.0 && **actual == 0.0 && expected.to_bits() != actual.to_bits()
+        })
+        .count();
     let mismatch_count = reference
         .iter()
         .zip(&errors)
@@ -124,6 +139,33 @@ fn run() -> Result<(), String> {
         .iter()
         .zip(&candidate)
         .all(|(expected, actual)| expected.to_bits() == actual.to_bits());
+    let reference_norm = reference
+        .iter()
+        .map(|value| f64::from(*value) * f64::from(*value))
+        .sum::<f64>()
+        .sqrt();
+    let candidate_norm = candidate
+        .iter()
+        .map(|value| f64::from(*value) * f64::from(*value))
+        .sum::<f64>()
+        .sqrt();
+    let dot = reference
+        .iter()
+        .zip(&candidate)
+        .map(|(expected, actual)| f64::from(*expected) * f64::from(*actual))
+        .sum::<f64>();
+    let cosine_similarity = dot / (reference_norm * candidate_norm);
+    let norm_ratio = candidate_norm / reference_norm;
+    if cosine_similarity < 0.999999 || !(0.9995..=1.0005).contains(&norm_ratio) {
+        return Err(format!(
+            "direct IQ2_XXS geometry failed: cosine={cosine_similarity} norm_ratio={norm_ratio}"
+        ));
+    }
+    let maximum_meaningful_relative_error = reference
+        .iter()
+        .zip(&errors)
+        .filter_map(|(expected, error)| (expected.abs() > 0.0005).then_some(error / expected.abs()))
+        .fold(0.0_f32, f32::max);
     let classification = if exact_bits {
         "golden_identical"
     } else {
@@ -132,12 +174,34 @@ fn run() -> Result<(), String> {
     let summarize = |values: &[f64]| {
         let mut ordered = values.to_vec();
         ordered.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+        let mean = values.iter().sum::<f64>() / values.len() as f64;
+        let sample_standard_deviation = if values.len() > 1 {
+            (values
+                .iter()
+                .map(|value| (value - mean).powi(2))
+                .sum::<f64>()
+                / (values.len() - 1) as f64)
+                .sqrt()
+        } else {
+            0.0
+        };
+        let percentile = |fraction: f64| {
+            let index = ((ordered.len() - 1) as f64 * fraction).round() as usize;
+            ordered[index]
+        };
         json!({
             "sample_count": values.len(),
+            "measured_samples_seconds": values,
             "minimum_seconds": ordered[0],
             "maximum_seconds": ordered[ordered.len() - 1],
-            "mean_seconds": values.iter().sum::<f64>() / values.len() as f64,
+            "mean_seconds": mean,
             "median_seconds": (ordered[(ordered.len() - 1) / 2] + ordered[ordered.len() / 2]) / 2.0,
+            "sample_standard_deviation_seconds": sample_standard_deviation,
+            "p5_seconds": percentile(0.05),
+            "p25_seconds": percentile(0.25),
+            "p75_seconds": percentile(0.75),
+            "p95_seconds": percentile(0.95),
+            "coefficient_of_variation": if mean == 0.0 { 0.0 } else { sample_standard_deviation / mean },
         })
     };
     let total_summary = summarize(&total_samples);
@@ -182,13 +246,25 @@ fn run() -> Result<(), String> {
         "correctness": {
             "contract_version": "f018-numerical-v1",
             "exact_f32_bits": exact_bits,
+            "greedy_applicable": false,
             "deterministic_repetitions": MEASURED,
             "unique_output_hashes": 1,
             "candidate_output_sha256": repeat_hashes[0],
+            "f32_bit_mismatch_count": bit_mismatch_indices.len(),
+            "first_f32_bit_mismatch_index": bit_mismatch_indices.first(),
+            "signed_zero_mismatch_count": signed_zero_mismatch_count,
             "elementwise_mismatch_count": mismatch_count,
             "maximum_absolute_error": errors.iter().copied().fold(0.0_f32, f32::max),
             "mean_absolute_error": errors.iter().sum::<f32>() / errors.len() as f32,
             "rmse": (errors.iter().map(|error| error * error).sum::<f32>() / errors.len() as f32).sqrt(),
+            "maximum_meaningful_relative_error": maximum_meaningful_relative_error,
+            "cosine_similarity": cosine_similarity,
+            "norm_ratio": norm_ratio,
+            "absolute_tolerance": 0.0005,
+            "relative_tolerance": 0.0005,
+            "cosine_minimum": 0.999999,
+            "norm_ratio_minimum": 0.9995,
+            "norm_ratio_maximum": 1.0005,
         },
         "setup": {
             "compilation_seconds": bridge.compilation_seconds(),
@@ -210,6 +286,9 @@ fn run() -> Result<(), String> {
             "dispatch": dispatch_summary,
             "synchronization": synchronization_summary,
             "kernel": kernel_summary,
+            "storage_read_seconds": 0.0,
+            "buffer_import_seconds": registration.registration_seconds(),
+            "shader_compile_first_use_seconds": bridge.compilation_seconds(),
         },
         "resource": {"level": "normal"},
         "claim_boundary": "Synthetic packed IQ2_XXS matrix GEMV on one M1 Ultra; not a real checkpoint matrix, expert, layer, token, Rust runtime, or production result.",
