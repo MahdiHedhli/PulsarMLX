@@ -127,3 +127,16 @@ including 17.969160 s decode, so it is the next bounded decoder gate.
 - [`raw/post-f016-moe-layer78-q2-0001.json`](raw/post-f016-moe-layer78-q2-0001.json)
 - [`raw/post-f016-moe-layer78-q2-analysis-0001.json`](raw/post-f016-moe-layer78-q2-analysis-0001.json)
 - [`tables/post-f016-moe-layer78-q2-0001.md`](tables/post-f016-moe-layer78-q2-0001.md)
+
+## Phase 3 continuation: exact Q3_K decoder boundary
+
+At clean source `0a7e2c61`, the whole-matrix NumPy Q3_K decoder matched the
+scalar decoder at exact f32 bits for four complete real layer-78 routed down
+matrices, with deterministic hashes, matching signed-zero counts, fail-closed
+malformed/non-finite tests, and normal resources. The checkpoint contains one
+Q3_K tensor only—layer-78 routed down in shard 6—so broader layer/shard coverage
+does not exist and is not claimed. The ten-sample expert-242 decode median fell
+from 2.550016 s scalar to 0.135837 s NumPy (18.77x).
+
+- [`raw/post-f016-q3-k-numpy-qualification-0001.json`](raw/post-f016-q3-k-numpy-qualification-0001.json)
+- [`tables/post-f016-q3-k-numpy-qualification-0001.md`](tables/post-f016-q3-k-numpy-qualification-0001.md)

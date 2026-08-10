@@ -174,6 +174,11 @@
   [generated table](tables/post-f016-moe-layer78-q2-0001.md) — exact
   scalar-reference MoE output and routes, ten retained samples, complete stage
   timing, and Q3_K as the next measured decoder gate
+- [Post-Feature-016 NumPy Q3_K qualification](raw/post-f016-q3-k-numpy-qualification-0001.json)
+  and [generated table](tables/post-f016-q3-k-numpy-qualification-0001.md) —
+  four complete real layer-78 down-projection expert matrices, exact f32-bit
+  scalar-oracle comparisons, deterministic and signed-zero gates, ten-sample
+  decode populations, and the checkpoint's explicit one-tensor Q3_K limit
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
