@@ -84,6 +84,24 @@ const MLA_DENSE_RESIDUAL_SHA256: &str =
     "c60fb7d5e38a94bfbe33b33f187596b2b1cd91c78bf15bbaf0769d6a9edbe90c";
 const MLA_DENSE_OUTPUT_SHA256: &str =
     "98e7e51398cd0186f16f5b2295d1e502416ef40e3746b43f9d3966fa1ceb62a3";
+pub const COMPLETE_LAYER_FIXTURE_VERSION: &str = "glm52-runtime-complete-layer-v1";
+pub const COMPLETE_LAYER_INPUT_TENSOR_NAME: &str = "synthetic.blk.0.layer_input";
+pub const COMPLETE_LAYER_OUTPUT_TENSOR_NAME: &str = "synthetic.blk.0.layer_output";
+pub const COMPLETE_LAYER_TENSOR_SHARD: &str = "synthetic-trunk-00001";
+const COMPLETE_LAYER_INPUT_SHA256: &str =
+    "b908ca8cb2cfc68c65f8f5a7fb8e6b118544248ad71278c8aa9dc2fbfdfd8d2f";
+const COMPLETE_LAYER_ATTENTION_SHA256: &str =
+    "a084810e7c2a939ffa5af0a8540ded8acccd39d21be922c668a89bfaa4b98e9c";
+const COMPLETE_LAYER_ROUTED_SHA256: &str =
+    "b75ba3b875def5d2f34361fcc7cbea9b45aa3f9ef590f96ad71c90a955800533";
+const COMPLETE_LAYER_SHARED_SHA256: &str =
+    "15d49616eec2a72fcda75235c943acc8a27cb15fdb75d661307ee8c389a227be";
+const COMPLETE_LAYER_RESIDUAL_SHA256: &str =
+    "c72a21ee29414d5488c45aa7bcb069b79e13bad6cedf16a1f518e3be4aef7435";
+const COMPLETE_LAYER_PROJECTION_SHA256: &str =
+    "4443867ce6abb5336ba266d7d06479a87cb41d70bd91cdec3979d9b13f1e5b6e";
+const COMPLETE_LAYER_OUTPUT_SHA256: &str =
+    "eb779c48219e08d830fd17bf0a9f46541db7b223cadfb0dc4fde00169149876e";
 const M2_MAX_TOTAL_BYTES: u64 = 64 * 1024 * 1024 * 1024;
 const M2_MAX_SAFETY_RESERVE_BYTES: u64 = 24 * 1024 * 1024 * 1024;
 const M2_MAX_REQUIRED_MARGIN_BYTES: u64 = 4 * 1024 * 1024 * 1024;
@@ -1130,6 +1148,295 @@ fn reference_matvec2(matrix: &[f64], vector: &[f64]) -> Vec<f64> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct CompleteLayerFixture {
+    pub source_commit: &'static str,
+    pub fixture_version: &'static str,
+    pub tensor_names: [&'static str; 2],
+    pub tensor_shard: &'static str,
+    pub dimensions: [usize; 2],
+    pub dtype: &'static str,
+    pub input: Vec<f64>,
+    pub attention: Vec<f64>,
+    pub routed: Vec<f64>,
+    pub shared: Vec<f64>,
+    pub residual: Vec<f64>,
+    pub output_projection: Vec<f64>,
+}
+
+impl CompleteLayerFixture {
+    pub fn synthetic() -> Self {
+        Self {
+            source_commit: PROJECTION_SOURCE_COMMIT,
+            fixture_version: COMPLETE_LAYER_FIXTURE_VERSION,
+            tensor_names: [
+                COMPLETE_LAYER_INPUT_TENSOR_NAME,
+                COMPLETE_LAYER_OUTPUT_TENSOR_NAME,
+            ],
+            tensor_shard: COMPLETE_LAYER_TENSOR_SHARD,
+            dimensions: [1, 2],
+            dtype: "f64",
+            input: vec![0.5, -1.0],
+            attention: vec![0.25, 0.75],
+            routed: vec![1.0, -0.5],
+            shared: vec![0.1, 0.2],
+            residual: vec![0.5, -0.25],
+            output_projection: vec![1.0, -0.25, 0.5, 1.0],
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), CompleteLayerParityError> {
+        if self.source_commit != PROJECTION_SOURCE_COMMIT {
+            return Err(CompleteLayerParityError::InvalidFixture("source_commit"));
+        }
+        if self.fixture_version != COMPLETE_LAYER_FIXTURE_VERSION {
+            return Err(CompleteLayerParityError::InvalidFixture("fixture_version"));
+        }
+        if self.tensor_names
+            != [
+                COMPLETE_LAYER_INPUT_TENSOR_NAME,
+                COMPLETE_LAYER_OUTPUT_TENSOR_NAME,
+            ]
+            || self.tensor_shard != COMPLETE_LAYER_TENSOR_SHARD
+            || self.dimensions != [1, 2]
+            || self.dtype != "f64"
+        {
+            return Err(CompleteLayerParityError::InvalidFixture("tensor identity"));
+        }
+        if self.input.len() != 2
+            || self.attention.len() != 2
+            || self.routed.len() != 2
+            || self.shared.len() != 2
+            || self.residual.len() != 2
+            || self.output_projection.len() != 4
+        {
+            return Err(CompleteLayerParityError::InvalidFixture("shape"));
+        }
+        for (values, hash, name) in [
+            (&self.input, COMPLETE_LAYER_INPUT_SHA256, "input"),
+            (
+                &self.attention,
+                COMPLETE_LAYER_ATTENTION_SHA256,
+                "attention",
+            ),
+            (&self.routed, COMPLETE_LAYER_ROUTED_SHA256, "routed"),
+            (&self.shared, COMPLETE_LAYER_SHARED_SHA256, "shared"),
+            (&self.residual, COMPLETE_LAYER_RESIDUAL_SHA256, "residual"),
+            (
+                &self.output_projection,
+                COMPLETE_LAYER_PROJECTION_SHA256,
+                "output projection",
+            ),
+        ] {
+            if hash_f64(values) != hash {
+                return Err(CompleteLayerParityError::HashMismatch(name));
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CompleteLayerParityError {
+    InvalidFixture(&'static str),
+    HashMismatch(&'static str),
+    Component(&'static str, String),
+    MemoryRejected,
+    UnexpectedDispatch {
+        expected: ProjectionDispatch,
+        actual: ProjectionDispatch,
+    },
+    NumericalMismatch(&'static str),
+    Telemetry(String),
+}
+
+impl fmt::Display for CompleteLayerParityError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidFixture(field) => {
+                write!(formatter, "invalid complete-layer fixture: {field}")
+            }
+            Self::HashMismatch(field) => {
+                write!(formatter, "complete-layer fixture hash mismatch: {field}")
+            }
+            Self::Component(component, error) => {
+                write!(formatter, "complete-layer {component} failed: {error}")
+            }
+            Self::MemoryRejected => {
+                formatter.write_str("complete-layer fixture rejected by memory budget")
+            }
+            Self::UnexpectedDispatch { expected, actual } => write!(
+                formatter,
+                "unexpected complete-layer dispatch: expected {expected:?}, got {actual:?}"
+            ),
+            Self::NumericalMismatch(stage) => {
+                write!(formatter, "complete-layer numerical mismatch: {stage}")
+            }
+            Self::Telemetry(error) => write!(formatter, "complete-layer telemetry failed: {error}"),
+        }
+    }
+}
+
+impl std::error::Error for CompleteLayerParityError {}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CompleteLayerParityResult {
+    pub classification: ValidationClassification,
+    pub dispatch: ProjectionDispatch,
+    pub memory_admitted: bool,
+    pub telemetry: TelemetrySnapshot,
+    pub component_boundaries: [&'static str; 5],
+    pub output_sha256: String,
+}
+
+pub fn run_complete_layer_fixture(
+    fixture: &CompleteLayerFixture,
+    expected_dispatch: ProjectionDispatch,
+) -> Result<CompleteLayerParityResult, CompleteLayerParityError> {
+    fixture.validate()?;
+    let memory = MemoryBudget::try_new(
+        M2_MAX_TOTAL_BYTES,
+        M2_MAX_SAFETY_RESERVE_BYTES,
+        M2_MAX_TOTAL_BYTES - M2_MAX_SAFETY_RESERVE_BYTES - M2_MAX_REQUIRED_MARGIN_BYTES,
+    )
+    .map_err(|_| CompleteLayerParityError::MemoryRejected)?;
+    let requested_bytes = (fixture.input.len()
+        + fixture.attention.len()
+        + fixture.routed.len()
+        + fixture.shared.len()
+        + fixture.residual.len()
+        + fixture.output_projection.len()) as u64
+        * std::mem::size_of::<f64>() as u64;
+    if !memory.admits(requested_bytes) {
+        return Err(CompleteLayerParityError::MemoryRejected);
+    }
+    let actual_dispatch = ProjectionDispatch::ExplicitReference;
+    if actual_dispatch != expected_dispatch {
+        return Err(CompleteLayerParityError::UnexpectedDispatch {
+            expected: expected_dispatch,
+            actual: actual_dispatch,
+        });
+    }
+    for (name, result) in [
+        (
+            "projection",
+            run_projection_fixture(
+                &ProjectionFixture::synthetic_q8_0(),
+                ProjectionDispatch::ExplicitReference,
+            )
+            .map(|_| ())
+            .map_err(|error| error.to_string()),
+        ),
+        (
+            "router",
+            run_router_fixture(
+                &RouterFixture::synthetic(),
+                ProjectionDispatch::ExplicitReference,
+            )
+            .map(|_| ())
+            .map_err(|error| error.to_string()),
+        ),
+        (
+            "expert",
+            run_expert_fixture(
+                &ExpertFixture::synthetic(),
+                ProjectionDispatch::ExplicitReference,
+            )
+            .map(|_| ())
+            .map_err(|error| error.to_string()),
+        ),
+        (
+            "top8_shared",
+            run_top8_shared_fixture(
+                &Top8SharedFixture::synthetic(),
+                ProjectionDispatch::ExplicitReference,
+            )
+            .map(|_| ())
+            .map_err(|error| error.to_string()),
+        ),
+        (
+            "mla_dense",
+            run_mla_dense_fixture(
+                &MlaDenseFixture::synthetic(),
+                ProjectionDispatch::ExplicitReference,
+            )
+            .map(|_| ())
+            .map_err(|error| error.to_string()),
+        ),
+    ] {
+        result.map_err(|error| CompleteLayerParityError::Component(name, error))?;
+    }
+
+    let mut telemetry = RuntimeTelemetry::new();
+    telemetry
+        .record_storage_read(Duration::from_nanos(1), 6, requested_bytes)
+        .map_err(|error| CompleteLayerParityError::Telemetry(format!("{error:?}")))?;
+    telemetry
+        .record_stage(
+            TelemetryBucket::BufferMaterialization,
+            Duration::from_nanos(1),
+            6,
+        )
+        .and_then(|_| telemetry.record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 5))
+        .map_err(|error| CompleteLayerParityError::Telemetry(format!("{error:?}")))?;
+
+    let combined = fixture
+        .attention
+        .iter()
+        .zip(fixture.routed.iter())
+        .zip(fixture.shared.iter())
+        .map(|((attention, routed), shared)| attention + routed + shared)
+        .collect::<Vec<_>>();
+    let output = matvec2(&fixture.output_projection, &combined)
+        .iter()
+        .zip(fixture.residual.iter())
+        .map(|(projected, residual)| projected + residual)
+        .collect::<Vec<_>>();
+    let reference_combined = fixture
+        .attention
+        .iter()
+        .zip(fixture.routed.iter())
+        .zip(fixture.shared.iter())
+        .map(|((attention, routed), shared)| {
+            let routed_sum = *attention + *routed;
+            routed_sum + *shared
+        })
+        .collect::<Vec<_>>();
+    let reference_output = reference_matvec2(&fixture.output_projection, &reference_combined)
+        .iter()
+        .zip(fixture.residual.iter())
+        .map(|(projected, residual)| {
+            let residual_sum = *projected + *residual;
+            residual_sum
+        })
+        .collect::<Vec<_>>();
+    if output != reference_output {
+        return Err(CompleteLayerParityError::NumericalMismatch(
+            "layer residual output",
+        ));
+    }
+    let output_sha256 = hash_f64(&reference_output);
+    if output_sha256 != COMPLETE_LAYER_OUTPUT_SHA256 {
+        return Err(CompleteLayerParityError::HashMismatch("reference output"));
+    }
+    Ok(CompleteLayerParityResult {
+        classification: ValidationClassification::GoldenIdentical,
+        dispatch: actual_dispatch,
+        memory_admitted: true,
+        telemetry: telemetry
+            .snapshot()
+            .map_err(|error| CompleteLayerParityError::Telemetry(format!("{error:?}")))?,
+        component_boundaries: [
+            "projection",
+            "router",
+            "complete_expert",
+            "top8_shared",
+            "mla_dense",
+        ],
+        output_sha256,
+    })
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExpertFixture {
     pub source_commit: &'static str,
     pub fixture_version: &'static str,
@@ -1605,6 +1912,54 @@ mod tests {
         assert_eq!(result.telemetry.buffer_materialization_operations, 4);
         assert_eq!(result.telemetry.compute_operations, 4);
         assert_eq!(result.output_sha256, MLA_DENSE_OUTPUT_SHA256);
+    }
+
+    #[test]
+    fn complete_layer_passes_after_all_prior_boundaries() {
+        let fixture = CompleteLayerFixture::synthetic();
+        let result =
+            run_complete_layer_fixture(&fixture, ProjectionDispatch::ExplicitReference).unwrap();
+        assert_eq!(
+            result.classification,
+            ValidationClassification::GoldenIdentical
+        );
+        assert!(result.memory_admitted);
+        assert_eq!(result.dispatch, ProjectionDispatch::ExplicitReference);
+        assert_eq!(result.component_boundaries.len(), 5);
+        assert_eq!(result.telemetry.storage_read_requests, 6);
+        assert_eq!(result.telemetry.buffer_materialization_operations, 6);
+        assert_eq!(result.telemetry.compute_operations, 5);
+        assert_eq!(result.output_sha256, COMPLETE_LAYER_OUTPUT_SHA256);
+    }
+
+    #[test]
+    fn malformed_complete_layer_fixture_fails_before_components() {
+        let mut fixture = CompleteLayerFixture::synthetic();
+        fixture.input[0] = f64::NAN;
+        assert_eq!(
+            run_complete_layer_fixture(&fixture, ProjectionDispatch::ExplicitReference),
+            Err(CompleteLayerParityError::HashMismatch("input"))
+        );
+    }
+
+    #[test]
+    fn unexpected_complete_layer_direct_dispatch_fails_closed() {
+        let fixture = CompleteLayerFixture::synthetic();
+        assert!(matches!(
+            run_complete_layer_fixture(&fixture, ProjectionDispatch::QualifiedDirect),
+            Err(CompleteLayerParityError::UnexpectedDispatch {
+                expected: ProjectionDispatch::QualifiedDirect,
+                actual: ProjectionDispatch::ExplicitReference,
+            })
+        ));
+    }
+
+    #[test]
+    fn complete_layer_result_is_deterministic() {
+        let fixture = CompleteLayerFixture::synthetic();
+        let first = run_complete_layer_fixture(&fixture, ProjectionDispatch::ExplicitReference);
+        let second = run_complete_layer_fixture(&fixture, ProjectionDispatch::ExplicitReference);
+        assert_eq!(first, second);
     }
 
     #[test]
