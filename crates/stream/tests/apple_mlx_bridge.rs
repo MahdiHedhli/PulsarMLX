@@ -35,6 +35,24 @@ fn run_managed_matrix(mode: MlxStreamMode, repeats: usize) {
     assert_eq!(accounting.derived_live, 0);
 }
 
+fn assert_stream_deltas_balanced(
+    before: stream::MlxDebugStreamCounters,
+    after: stream::MlxDebugStreamCounters,
+) {
+    assert_eq!(
+        after.default_cpu_created - before.default_cpu_created,
+        after.default_cpu_freed - before.default_cpu_freed
+    );
+    assert_eq!(
+        after.default_gpu_created - before.default_gpu_created,
+        after.default_gpu_freed - before.default_gpu_freed
+    );
+    assert_eq!(
+        after.owned_created - before.owned_created,
+        after.owned_freed - before.owned_freed
+    );
+}
+
 #[test]
 fn gpu_managed_import_lifecycle_matrix_is_balanced() {
     let _guard = test_lock();
@@ -100,9 +118,31 @@ fn derived_first_teardown_reconciles_accounting() {
 }
 
 #[test]
-fn owned_stream_creation_and_teardown_balance_over_1000_contexts() {
+fn default_and_owned_stream_creation_balance_over_1000_contexts_each() {
     let _guard = test_lock();
     let before = MlxContext::debug_stream_counters().expect("stream counters");
+
+    for _ in 0..1000 {
+        let context = MlxContext::new(MlxDevice::Cpu, MlxStreamMode::BorrowedDefault)
+            .expect("default CPU MLX context");
+        assert_eq!(context.stream_mode(), MlxStreamMode::BorrowedDefault);
+        drop(context);
+    }
+    let after_cpu = MlxContext::debug_stream_counters().expect("stream counters");
+    assert_stream_deltas_balanced(before, after_cpu);
+    assert_eq!(after_cpu.default_cpu_created - before.default_cpu_created, 2000);
+
+    for _ in 0..1000 {
+        let context = MlxContext::new(MlxDevice::Gpu, MlxStreamMode::BorrowedDefault)
+            .expect("default GPU MLX context");
+        assert_eq!(context.stream_mode(), MlxStreamMode::BorrowedDefault);
+        drop(context);
+    }
+    let after_gpu = MlxContext::debug_stream_counters().expect("stream counters");
+    assert_stream_deltas_balanced(after_cpu, after_gpu);
+    assert_eq!(after_gpu.default_cpu_created - after_cpu.default_cpu_created, 1000);
+    assert_eq!(after_gpu.default_gpu_created - after_cpu.default_gpu_created, 1000);
+
     for _ in 0..1000 {
         let context = MlxContext::new(MlxDevice::Gpu, MlxStreamMode::Owned)
             .expect("owned GPU MLX context");
@@ -110,8 +150,31 @@ fn owned_stream_creation_and_teardown_balance_over_1000_contexts() {
         drop(context);
     }
     let after = MlxContext::debug_stream_counters().expect("stream counters");
-    assert_eq!(after.created - before.created, 1000);
-    assert_eq!(after.freed - before.freed, 1000);
+    assert_stream_deltas_balanced(after_gpu, after);
+    assert_eq!(after.default_cpu_created - after_gpu.default_cpu_created, 1000);
+    assert_eq!(after.owned_created - after_gpu.owned_created, 1000);
+}
+
+#[test]
+fn partial_stream_construction_failures_release_handles_and_singleton() {
+    let _guard = test_lock();
+    let before = MlxContext::debug_stream_counters().expect("stream counters");
+    for (device, mode) in [
+        (MlxDevice::Cpu, MlxStreamMode::BorrowedDefault),
+        (MlxDevice::Gpu, MlxStreamMode::BorrowedDefault),
+        (MlxDevice::Gpu, MlxStreamMode::Owned),
+    ] {
+        MlxContext::debug_fail_next_after_stream_create();
+        let error = match MlxContext::new(device, mode) {
+            Ok(_) => panic!("injected construction failure unexpectedly succeeded"),
+            Err(error) => error,
+        };
+        assert!(error.contains("injected failure after MLX stream creation"));
+        let recreated = MlxContext::new(device, mode).expect("singleton released after failure");
+        drop(recreated);
+    }
+    let after = MlxContext::debug_stream_counters().expect("stream counters");
+    assert_stream_deltas_balanced(before, after);
 }
 
 #[test]
@@ -134,10 +197,14 @@ fn shape_count_guard_rejects_zero_and_int_overflow() {
 #[test]
 fn empty_import_fails_closed_without_an_owner() {
     let _guard = test_lock();
+    let before = MlxContext::debug_stream_counters().expect("stream counters");
     let context = MlxContext::new(MlxDevice::Gpu, MlxStreamMode::Owned)
         .expect("GPU MLX context");
     let mut owner = Vec::new();
     assert!(context.import_f32(&mut owner).is_err());
+    drop(context);
+    let after = MlxContext::debug_stream_counters().expect("stream counters");
+    assert_stream_deltas_balanced(before, after);
 }
 
 #[cfg(not(pulsar_native_mlx))]

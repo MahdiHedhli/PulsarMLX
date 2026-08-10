@@ -39,11 +39,16 @@ unsafe extern "C" {
         error_capacity: usize,
     ) -> i32;
     fn pulsar_mlx_debug_stream_counters(
-        created: *mut u64,
-        freed: *mut u64,
+        default_cpu_created: *mut u64,
+        default_cpu_freed: *mut u64,
+        default_gpu_created: *mut u64,
+        default_gpu_freed: *mut u64,
+        owned_created: *mut u64,
+        owned_freed: *mut u64,
         error_buffer: *mut c_char,
         error_capacity: usize,
     ) -> i32;
+    fn pulsar_mlx_debug_fail_next_after_stream_create();
     fn pulsar_mlx_validate_f32_count(
         count: usize,
         error_buffer: *mut c_char,
@@ -110,8 +115,12 @@ pub struct MlxOwnershipSnapshot {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct MlxDebugStreamCounters {
-    pub created: u64,
-    pub freed: u64,
+    pub default_cpu_created: u64,
+    pub default_cpu_freed: u64,
+    pub default_gpu_created: u64,
+    pub default_gpu_freed: u64,
+    pub owned_created: u64,
+    pub owned_freed: u64,
 }
 
 fn bridge_error(status: i32, buffer: &[i8; ERROR_CAPACITY]) -> String {
@@ -211,13 +220,21 @@ impl MlxContext {
     }
 
     pub fn debug_stream_counters() -> Result<MlxDebugStreamCounters, String> {
-        let mut created = 0;
-        let mut freed = 0;
+        let mut default_cpu_created = 0;
+        let mut default_cpu_freed = 0;
+        let mut default_gpu_created = 0;
+        let mut default_gpu_freed = 0;
+        let mut owned_created = 0;
+        let mut owned_freed = 0;
         let mut error = [0_i8; ERROR_CAPACITY];
         let status = unsafe {
             pulsar_mlx_debug_stream_counters(
-                &mut created,
-                &mut freed,
+                &mut default_cpu_created,
+                &mut default_cpu_freed,
+                &mut default_gpu_created,
+                &mut default_gpu_freed,
+                &mut owned_created,
+                &mut owned_freed,
                 error.as_mut_ptr(),
                 ERROR_CAPACITY,
             )
@@ -225,7 +242,19 @@ impl MlxContext {
         if status != 0 {
             return Err(bridge_error(status, &error));
         }
-        Ok(MlxDebugStreamCounters { created, freed })
+        Ok(MlxDebugStreamCounters {
+            default_cpu_created,
+            default_cpu_freed,
+            default_gpu_created,
+            default_gpu_freed,
+            owned_created,
+            owned_freed,
+        })
+    }
+
+    #[doc(hidden)]
+    pub fn debug_fail_next_after_stream_create() {
+        unsafe { pulsar_mlx_debug_fail_next_after_stream_create() };
     }
 
     pub fn validate_f32_count(count: usize) -> Result<(), String> {

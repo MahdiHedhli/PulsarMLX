@@ -25,10 +25,18 @@ struct OwnershipState {
     OwnershipState *next = nullptr;
 };
 
+enum class StreamOrigin : uint8_t {
+    None = 0,
+    DefaultCpu = 1,
+    DefaultGpu = 2,
+    OwnedDevice = 3,
+};
+
 struct MlxContextObject {
     mlx_device device{};
     mlx_stream stream{};
-    bool stream_owned = false;
+    StreamOrigin stream_origin = StreamOrigin::None;
+    bool stream_handle_owned = false;
     bool singleton_claimed = false;
     AccountingState *accounting = nullptr;
     OwnershipState *ownership_states = nullptr;
@@ -42,8 +50,13 @@ struct MlxArrayObject {
 };
 
 std::atomic<bool> context_active{false};
+std::atomic<uint64_t> default_cpu_stream_created{0};
+std::atomic<uint64_t> default_cpu_stream_freed{0};
+std::atomic<uint64_t> default_gpu_stream_created{0};
+std::atomic<uint64_t> default_gpu_stream_freed{0};
 std::atomic<uint64_t> owned_stream_created{0};
 std::atomic<uint64_t> owned_stream_freed{0};
+std::atomic<bool> fail_next_after_stream_create{false};
 
 int set_error(char *buffer, size_t capacity, const char *message) {
     if (buffer != nullptr && capacity > 0) {
@@ -99,6 +112,49 @@ void managed_owner_released(void *payload) {
     release_ownership(ownership);
 }
 
+void record_stream_created(StreamOrigin origin) {
+    switch (origin) {
+        case StreamOrigin::DefaultCpu:
+            default_cpu_stream_created.fetch_add(1, std::memory_order_relaxed);
+            break;
+        case StreamOrigin::DefaultGpu:
+            default_gpu_stream_created.fetch_add(1, std::memory_order_relaxed);
+            break;
+        case StreamOrigin::OwnedDevice:
+            owned_stream_created.fetch_add(1, std::memory_order_relaxed);
+            break;
+        case StreamOrigin::None:
+            break;
+    }
+}
+
+void record_stream_freed(StreamOrigin origin) {
+    switch (origin) {
+        case StreamOrigin::DefaultCpu:
+            default_cpu_stream_freed.fetch_add(1, std::memory_order_relaxed);
+            break;
+        case StreamOrigin::DefaultGpu:
+            default_gpu_stream_freed.fetch_add(1, std::memory_order_relaxed);
+            break;
+        case StreamOrigin::OwnedDevice:
+            owned_stream_freed.fetch_add(1, std::memory_order_relaxed);
+            break;
+        case StreamOrigin::None:
+            break;
+    }
+}
+
+void release_stream_handle(MlxContextObject *context) {
+    if (context == nullptr || !context->stream_handle_owned ||
+        context->stream.ctx == nullptr) {
+        return;
+    }
+    mlx_stream_free(context->stream);
+    record_stream_freed(context->stream_origin);
+    context->stream = {};
+    context->stream_handle_owned = false;
+}
+
 void restore_default_cpu_context() {
     mlx_device cpu = mlx_device_new_type(MLX_CPU, 0);
     bool available = false;
@@ -112,8 +168,10 @@ void restore_default_cpu_context() {
 
     mlx_stream cpu_stream = mlx_default_cpu_stream_new();
     if (cpu_stream.ctx != nullptr) {
+        record_stream_created(StreamOrigin::DefaultCpu);
         mlx_set_default_stream(cpu_stream);
         mlx_stream_free(cpu_stream);
+        record_stream_freed(StreamOrigin::DefaultCpu);
     }
 }
 
@@ -122,10 +180,7 @@ void destroy_context(MlxContextObject *context) {
         return;
     }
     restore_default_cpu_context();
-    if (context->stream_owned && context->stream.ctx != nullptr) {
-        mlx_stream_free(context->stream);
-        owned_stream_freed.fetch_add(1, std::memory_order_relaxed);
-    }
+    release_stream_handle(context);
     if (context->device.ctx != nullptr) {
         mlx_device_free(context->device);
     }
@@ -226,9 +281,10 @@ int pulsar_mlx_context_create(
 
     if (stream_mode == 1) {
         context->stream = mlx_stream_new_device(context->device);
-        context->stream_owned = true;
+        context->stream_origin = StreamOrigin::OwnedDevice;
         if (context->stream.ctx != nullptr) {
-            owned_stream_created.fetch_add(1, std::memory_order_relaxed);
+            context->stream_handle_owned = true;
+            record_stream_created(context->stream_origin);
         }
         if (context->stream.ctx == nullptr ||
             mlx_set_default_stream(context->stream) != 0) {
@@ -237,14 +293,27 @@ int pulsar_mlx_context_create(
                              "owned MLX stream creation failed");
         }
     } else {
+        context->stream_origin = device_type == MLX_CPU
+                                     ? StreamOrigin::DefaultCpu
+                                     : StreamOrigin::DefaultGpu;
         context->stream = device_type == MLX_CPU
                               ? mlx_default_cpu_stream_new()
                               : mlx_default_gpu_stream_new();
+        if (context->stream.ctx != nullptr) {
+            context->stream_handle_owned = true;
+            record_stream_created(context->stream_origin);
+        }
         if (context->stream.ctx == nullptr) {
             destroy_context(context);
             return set_error(error_buffer, error_capacity,
                              "default MLX stream lookup failed");
         }
+    }
+    if (fail_next_after_stream_create.exchange(false,
+                                                std::memory_order_acq_rel)) {
+        destroy_context(context);
+        return set_error(error_buffer, error_capacity,
+                         "injected failure after MLX stream creation");
     }
     *out_context = reinterpret_cast<PulsarMlxContext *>(context);
     return 0;
@@ -252,7 +321,10 @@ int pulsar_mlx_context_create(
 
 int pulsar_mlx_context_stream_owned(PulsarMlxContext *raw_context) {
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
-    return context != nullptr && context->stream_owned ? 1 : 0;
+    return context != nullptr &&
+                   context->stream_origin == StreamOrigin::OwnedDevice
+               ? 1
+               : 0;
 }
 
 void pulsar_mlx_context_destroy(PulsarMlxContext *raw_context) {
@@ -439,17 +511,35 @@ int pulsar_mlx_context_ownership_snapshot(
 }
 
 int pulsar_mlx_debug_stream_counters(
-    uint64_t *created,
-    uint64_t *freed,
+    uint64_t *default_cpu_created,
+    uint64_t *default_cpu_freed,
+    uint64_t *default_gpu_created,
+    uint64_t *default_gpu_freed,
+    uint64_t *owned_created,
+    uint64_t *owned_freed,
     char *error_buffer,
     size_t error_capacity) {
-    if (created == nullptr || freed == nullptr) {
+    if (default_cpu_created == nullptr || default_cpu_freed == nullptr ||
+        default_gpu_created == nullptr || default_gpu_freed == nullptr ||
+        owned_created == nullptr || owned_freed == nullptr) {
         return set_error(error_buffer, error_capacity,
                          "invalid MLX stream counter arguments");
     }
-    *created = owned_stream_created.load(std::memory_order_acquire);
-    *freed = owned_stream_freed.load(std::memory_order_acquire);
+    *default_cpu_created =
+        default_cpu_stream_created.load(std::memory_order_acquire);
+    *default_cpu_freed =
+        default_cpu_stream_freed.load(std::memory_order_acquire);
+    *default_gpu_created =
+        default_gpu_stream_created.load(std::memory_order_acquire);
+    *default_gpu_freed =
+        default_gpu_stream_freed.load(std::memory_order_acquire);
+    *owned_created = owned_stream_created.load(std::memory_order_acquire);
+    *owned_freed = owned_stream_freed.load(std::memory_order_acquire);
     return 0;
+}
+
+void pulsar_mlx_debug_fail_next_after_stream_create() {
+    fail_next_after_stream_create.store(true, std::memory_order_release);
 }
 
 int pulsar_mlx_validate_f32_count(
