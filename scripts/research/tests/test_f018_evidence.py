@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import subprocess
@@ -73,6 +74,61 @@ def valid_record() -> dict:
 
 
 class F018EvidenceTests(unittest.TestCase):
+    FEATURE_ARTIFACTS = {
+        "f018-iq2-xxs-synthetic-0002.json": "da8f6b1a",
+        "f018-iq2-xxs-gate-matrix-0001.json": "20612556",
+        "f018-iq2-xxs-up-matrix-0001.json": "2d00f9d0",
+        "f018-iq2-xxs-routed-expert-0001.json": "0435ab36",
+        "f018-iq2-xxs-moe-layer3-0001.json": "687c82ad",
+        "f018-iq2-xxs-complete-layer3-0001.json": "f8108fa1",
+        "f018-inference-p1-direct-iq2-0001.json": "2f51333e",
+    }
+
+    def test_feature018_claims_ledger_resolves_every_public_record(self) -> None:
+        ledger = (ROOT / "docs/research/glm52/CLAIMS_LEDGER.md").read_text()
+        # Gate and up share the single F018-MATRIX-001 claim row.
+        self.assertEqual(ledger.count("| F018-"), 6)
+        for filename, source in self.FEATURE_ARTIFACTS.items():
+            with self.subTest(filename=filename):
+                self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
+                self.assertIn(f"`{source}`", ledger)
+
+    def test_feature018_reviewer_index_resolves_raw_tables_contract_and_review(self) -> None:
+        index = (ROOT / "docs/research/glm52/REVIEWER_INDEX.md").read_text()
+        self.assertIn("F018_OVERNIGHT_REVIEW.md", index)
+        self.assertIn(
+            "../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md",
+            index,
+        )
+        for filename in self.FEATURE_ARTIFACTS:
+            with self.subTest(filename=filename):
+                self.assertIn(f"raw/{filename}", index)
+                self.assertIn(f"tables/{filename.removesuffix('.json')}.md", index)
+                self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
+                self.assertTrue(
+                    (
+                        ROOT
+                        / "docs/research/glm52/tables"
+                        / filename.replace(".json", ".md")
+                    ).is_file()
+                )
+
+    def test_feature018_publication_has_no_private_paths_or_credentials(self) -> None:
+        paths = [
+            *(ROOT / "docs/research/glm52/raw").glob("f018*.json"),
+            *(ROOT / "docs/research/glm52/tables").glob("f018*.md"),
+            ROOT / "docs/research/glm52/F018_OVERNIGHT_REVIEW.md",
+            ROOT / "docs/research/glm52/CLAIMS_LEDGER.md",
+            ROOT / "docs/research/glm52/REVIEWER_INDEX.md",
+        ]
+        forbidden = re.compile(
+            r"/Users/|/home/|/Volumes/|file://|BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY|"
+            r"\b(?:hf_|gh[pousr]_)[A-Za-z0-9_-]+"
+        )
+        for path in paths:
+            with self.subTest(path=path.name):
+                self.assertIsNone(forbidden.search(path.read_text()), path)
+
     def _synthetic_p1_record(self) -> dict:
         record = load_unique_json(
             ROOT

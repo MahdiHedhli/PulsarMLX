@@ -75,6 +75,10 @@ No constitution exception is requested.
    input. Reference execution is an explicit caller-selected mode.
 6. **Evidence before integration**: the direct bridge remains opt-in and does
    not alter default inference until the complete bounded ladder supports it.
+7. **Measured integration decision**: the complete layer-3 candidate reduced
+   median wall by 0.741972 seconds (30.5%), admitting one P1. The opt-in P1
+   passed exact `[9703,21615]`; default inference remains unchanged, and P2,
+   golden-eight, and a second quantization kernel remain out of scope.
 
 ## Bounded Ladder and Gates
 

@@ -3,6 +3,34 @@
 **Feature**: `016-glm52-full-execution`
 **Protocol**: [EXPERIMENT_PROTOCOL.md](EXPERIMENT_PROTOCOL.md)
 
+## Feature 018 direct-quantized Metal review
+
+- [Feature 018 overnight review](F018_OVERNIGHT_REVIEW.md) — kernel design,
+  numerical gates, ownership, bounded ladder, exact P1, failures, risks, and
+  next review questions
+- Spec Kit: `specs/018-direct-quantized-metal-runtime/`
+- [Frozen numerical contract](../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md)
+- [Synthetic packed Metal gate](raw/f018-iq2-xxs-synthetic-0002.json) and
+  [generated table](tables/f018-iq2-xxs-synthetic-0002.md)
+- [Real gate matrix](raw/f018-iq2-xxs-gate-matrix-0001.json) and
+  [generated table](tables/f018-iq2-xxs-gate-matrix-0001.md)
+- [Real up matrix](raw/f018-iq2-xxs-up-matrix-0001.json) and
+  [generated table](tables/f018-iq2-xxs-up-matrix-0001.md)
+- [Complete routed expert](raw/f018-iq2-xxs-routed-expert-0001.json) and
+  [generated table](tables/f018-iq2-xxs-routed-expert-0001.md)
+- [Top-8 plus shared MoE](raw/f018-iq2-xxs-moe-layer3-0001.json) and
+  [generated table](tables/f018-iq2-xxs-moe-layer3-0001.md)
+- [Complete layer 3](raw/f018-iq2-xxs-complete-layer3-0001.json) and
+  [generated table](tables/f018-iq2-xxs-complete-layer3-0001.md)
+- [Exact P1](raw/f018-inference-p1-direct-iq2-0001.json) and
+  [generated table](tables/f018-inference-p1-direct-iq2-0001.md)
+- [Feature 018 claims](CLAIMS_LEDGER.md): `F018-SYNTHETIC-001` through
+  `F018-P1-001`
+
+The candidate consumes packed IQ2_XXS weights directly. IQ3 down, shared
+experts, attention, logits, and other quantizations remain reference paths.
+No P2 or golden-eight run belongs to Feature 018.
+
 ## How to review
 
 1. Confirm protocol freeze predates real-weight measurements.
