@@ -262,7 +262,7 @@
 - [x] T075 Extend validation dispatch so qualified IQ2 gate/up and IQ3 down execute directly while unsupported roles/formats remain explicit reference dispatches and direct failures remain fatal
 - [x] T076 Run and commit one qualified complete routed expert with separated IQ2, activation, IQ3, registration, kernel, sync, total, memory, and dispatch accounting
 - [x] T077 Run repeated-warm same-expert reuse and validate registration/pipeline/native-ready reuse, deterministic output, teardown, generation, mutation, fallback, and materialization gates
-- [ ] T078 Run and commit the eligible representative top-8 plus shared MoE boundary with direct IQ2/IQ3 and explicit shared/reference accounting
+- [x] T078 Run and commit the eligible representative top-8 plus shared MoE boundary with direct IQ2/IQ3 and explicit shared/reference accounting
 - [ ] T079 Run and commit the eligible representative complete-layer boundary with a layer-scoped numerical/performance claim
 
 ---

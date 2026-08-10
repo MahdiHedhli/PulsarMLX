@@ -4418,3 +4418,14 @@ The complete expert median fell from 0.269965292 seconds for the optimized
 NumPy+MLX reference to 0.018807751 seconds for the composed direct candidate,
 a 14.35× same-boundary ratio and 0.251157541-second absolute difference. This
 is one expert only; top-8 plus shared MoE remains the next acceptance rung.
+
+At clean source `39397d48`, the frozen layer-3 top-8 plus shared MoE passed
+with 16 direct IQ2 gate/up projections, eight direct IQ3 down projections, and
+the existing protected shared expert as an explicit MLX reference dispatch.
+All ten measured outputs were deterministic, the route remained
+`[15,177,10,233,166,41,152,26]`, and the composed numerical gate recorded zero
+tolerance or signed-zero mismatches, zero fallback, and zero complete-f32 Metal
+weight materialization. The optimized-reference median was 1.705199125 seconds;
+the direct-IQ2/IQ3 candidate median was 0.226394771 seconds (7.53× and
+1.478804355 seconds absolute difference at this boundary). The complete
+transformer layer remains the next gate.

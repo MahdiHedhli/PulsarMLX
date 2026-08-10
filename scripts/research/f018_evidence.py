@@ -71,6 +71,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         return _validate_iq2_iq3_routed_expert_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
         return _validate_moe_record(record)
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-iq3-moe":
+        return _validate_iq2_iq3_moe_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
         return _validate_complete_layer_record(record)
     matrix_schema = record.get("schema")
@@ -573,6 +575,88 @@ def _validate_moe_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("MoE boundary resource state is not normal")
     if not record.get("unsupported_interpretations"):
         raise ValueError("MoE unsupported interpretations are required")
+    return record
+
+
+def _validate_iq2_iq3_moe_record(record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("schema_version") != "1.0.0" or record.get("actual_status") != "passed":
+        raise ValueError("IQ2/IQ3 MoE evidence must use schema 1.0.0 and pass")
+    source = record.get("source", {})
+    if not _HEX40.fullmatch(str(source.get("commit", ""))) or source.get("dirty") is not False:
+        raise ValueError("IQ2/IQ3 MoE source must be a clean commit")
+    checkpoint = record.get("checkpoint", {})
+    if (
+        not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", "")))
+        or checkpoint.get("file_count") != 6
+        or checkpoint.get("total_bytes") != 238_458_632_928
+    ):
+        raise ValueError("IQ2/IQ3 MoE checkpoint identity changed")
+    binding = record.get("binding", {})
+    if (
+        binding.get("layer") != 3
+        or binding.get("expert_ids") != [15, 177, 10, 233, 166, 41, 152, 26]
+        or binding.get("shared_expert") != 0
+        or binding.get("historical_reference_hash_match") is not True
+    ):
+        raise ValueError("IQ2/IQ3 MoE frozen route or reference binding changed")
+    worker = record.get("worker", {})
+    if (
+        worker.get("source_commit") != source["commit"]
+        or worker.get("max_resident_matrices") != 3
+        or worker.get("pipeline_identities")
+        != ["iq2_xxs_sequential_scaffold_v1", "iq3_xxs_sequential_scaffold_v1"]
+    ):
+        raise ValueError("IQ2/IQ3 MoE worker identity changed")
+    protocol = record.get("protocol", {})
+    if (
+        protocol.get("optimized_reference_warmups") != 3
+        or protocol.get("optimized_reference_measured") != 10
+        or protocol.get("direct_warmups") != 3
+        or protocol.get("direct_measured") != 10
+        or protocol.get("direct_compressed_slot_limit") != 3
+    ):
+        raise ValueError("IQ2/IQ3 MoE protocol changed")
+    numerical = record.get("numerical_qualification", {})
+    if (
+        numerical.get("contract_version") != "f018-numerical-v1"
+        or numerical.get("classification") != record.get("classification")
+        or numerical.get("numerically_qualified") is not True
+        or numerical.get("deterministic") is not True
+        or numerical.get("routes_match") is not True
+        or numerical.get("elementwise_mismatch_count") != 0
+        or numerical.get("signed_zero_mismatch_count") != 0
+        or numerical.get("cpu_fallback_count") != 0
+        or numerical.get("complete_f32_weight_materialized_bytes") != 0
+    ):
+        raise ValueError("IQ2/IQ3 MoE numerical qualification failed")
+    samples = record.get("direct_samples")
+    if not isinstance(samples, list) or len(samples) != 10:
+        raise ValueError("IQ2/IQ3 MoE samples are incomplete")
+    hashes = set()
+    for sample in samples:
+        hashes.add(sample.get("output_f32_sha256"))
+        iq2 = sample.get("direct_iq2", {})
+        iq3 = sample.get("direct_iq3", {})
+        shared = sample.get("shared_reference", {})
+        if (
+            iq2.get("matrix_count") != 16
+            or iq3.get("matrix_count") != 8
+            or iq2.get("cpu_fallback_count") != 0
+            or iq3.get("cpu_fallback_count") != 0
+            or iq2.get("complete_f32_weight_materialized_bytes") != 0
+            or iq3.get("complete_f32_weight_materialized_bytes") != 0
+            or shared.get("cache_hits") != 3
+            or sample.get("resource_after", {}).get("level") != "normal"
+        ):
+            raise ValueError("IQ2/IQ3 MoE direct/reference dispatch accounting failed")
+    if len(hashes) != 1 or not _HEX64.fullmatch(str(next(iter(hashes), ""))):
+        raise ValueError("IQ2/IQ3 MoE outputs are not deterministic")
+    if record.get("resource_before", {}).get("level") != "normal" or record.get(
+        "resource_after", {}
+    ).get("level") != "normal":
+        raise ValueError("IQ2/IQ3 MoE resource state is not normal")
+    if not record.get("unsupported_interpretations"):
+        raise ValueError("IQ2/IQ3 MoE unsupported interpretations are required")
     return record
 
 
