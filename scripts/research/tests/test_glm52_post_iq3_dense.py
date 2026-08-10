@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 import unittest
+import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -42,6 +44,27 @@ class PostIq3DenseProfileTests(unittest.TestCase):
         self.assertEqual(grouped[0]["encoded_bytes"], 208896)
         self.assertAlmostEqual(grouped[0]["dequant_seconds"], 0.04)
         self.assertAlmostEqual(grouped[0]["total_seconds"], 0.08)
+
+    def test_committed_multilayer_profile_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/post-f018-dense-multilayer-profile-0001.json"
+        table = ROOT / "docs/research/glm52/tables/post-f018-dense-multilayer-profile-0001.md"
+        record = json.loads(raw.read_text())
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["classification"], "golden_identical")
+        self.assertEqual(record["protocol"]["layers"], [3, 8, 40, 78])
+        self.assertTrue(all(layer["comparison"]["exact_f32_output_hash"] for layer in record["layers"]))
+        self.assertTrue(all(layer["candidate_summaries"]["wall_seconds"]["sample_count"] == 10 for layer in record["layers"]))
+        self.assertEqual(record["resource_before"]["level"], "normal")
+        self.assertEqual(record["resource_after"]["level"], "normal")
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_post_iq3_dense.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
 
 
 if __name__ == "__main__":
