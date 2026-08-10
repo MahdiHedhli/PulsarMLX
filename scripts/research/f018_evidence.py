@@ -60,6 +60,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         assert_public_safe(record)
     except ValueError as exc:
         raise ValueError(f"record is not public-safe: {exc}") from exc
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":
+        return _validate_routed_expert_record(record)
     if record.get("schema") != "pulsarmlx.research.f018-direct-iq2-xxs":
         raise ValueError("unexpected Feature 018 schema")
     if record.get("schema_version") != "1.0.0":
@@ -150,6 +152,98 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
     binding = record.get("binding", {})
     if isinstance(binding, dict) and "tensor_name" in binding:
         _validate_real_matrix_record(record)
+    return record
+
+
+def _validate_routed_expert_record(record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("schema_version") != "1.0.0" or record.get("actual_status") != "passed":
+        raise ValueError("routed-expert evidence must use schema 1.0.0 and pass")
+    if record.get("classification") not in CLASSES:
+        raise ValueError("routed-expert classification is unsupported")
+    source = record.get("source", {})
+    if not _HEX40.fullmatch(str(source.get("commit", ""))) or source.get("dirty") is not False:
+        raise ValueError("routed-expert source must be a clean commit")
+    checkpoint = record.get("checkpoint", {})
+    if not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", ""))):
+        raise ValueError("routed-expert checkpoint set SHA-256 is malformed")
+    if checkpoint.get("file_count") != 6 or checkpoint.get("total_bytes") != 238_458_632_928:
+        raise ValueError("routed-expert checkpoint identity changed")
+    binding = record.get("binding", {})
+    if (
+        binding.get("layer") != 3
+        or binding.get("expert_id") != 15
+        or binding.get("gate_quantization") != "IQ2_XXS"
+        or binding.get("up_quantization") != "IQ2_XXS"
+        or binding.get("down_quantization") != "IQ3_XXS"
+    ):
+        raise ValueError("routed-expert frozen tensor binding changed")
+    routes = binding.get("route_expert_ids")
+    weights = binding.get("route_weights")
+    if not isinstance(routes, list) or len(routes) != 8 or not isinstance(weights, list) or len(weights) != 8:
+        raise ValueError("routed-expert top-8 route binding is incomplete")
+    for field in ("activation_sha256", "reference_output_sha256"):
+        if not _HEX64.fullmatch(str(binding.get(field, ""))):
+            raise ValueError(f"routed-expert {field} is malformed")
+    worker = record.get("worker", {})
+    if worker.get("source_commit") != source["commit"] or worker.get("max_resident_matrices") != 2:
+        raise ValueError("routed-expert worker identity or residency bound changed")
+    protocol = record.get("protocol", {})
+    if (
+        protocol.get("optimized_reference_warmups") != 3
+        or protocol.get("optimized_reference_measured") != 10
+        or protocol.get("direct_warmups") != 3
+        or protocol.get("direct_measured") != 10
+    ):
+        raise ValueError("routed-expert sample protocol changed")
+    if record.get("oracle_comparison", {}).get("passed") is not True:
+        raise ValueError("routed-expert optimized reference did not pass the CPU oracle")
+    numerical = record.get("numerical_qualification", {})
+    if (
+        numerical.get("contract_version") != "f018-numerical-v1"
+        or numerical.get("classification") != record["classification"]
+        or numerical.get("numerically_qualified") is not True
+        or numerical.get("deterministic") is not True
+        or numerical.get("elementwise_mismatch_count") != 0
+        or numerical.get("signed_zero_mismatch_count") != 0
+        or numerical.get("cpu_fallback_count") != 0
+        or numerical.get("complete_f32_weight_materialized_bytes") != 0
+    ):
+        raise ValueError("routed-expert numerical qualification failed")
+    reference_samples = record.get("optimized_reference", {}).get("samples")
+    direct_samples = record.get("direct_samples")
+    if not isinstance(reference_samples, list) or len(reference_samples) != 10:
+        raise ValueError("routed-expert optimized reference raw samples are incomplete")
+    if not isinstance(direct_samples, list) or len(direct_samples) != 10:
+        raise ValueError("routed-expert direct raw samples are incomplete")
+    direct_hashes = set()
+    for sample in direct_samples:
+        direct_hashes.add(sample.get("output_f32_sha256"))
+        direct = sample.get("direct_iq2", {})
+        if (
+            direct.get("cache_hits") != 2
+            or direct.get("resident_entries") != 2
+            or direct.get("evictions") != 0
+            or direct.get("cpu_fallback_count") != 0
+            or direct.get("complete_f32_weight_materialized_bytes") != 0
+        ):
+            raise ValueError("routed-expert warm direct-IQ2 lifecycle failed")
+        if sample.get("resource_after", {}).get("level") != "normal":
+            raise ValueError("routed-expert sample resource state is not normal")
+    if len(direct_hashes) != 1 or not _HEX64.fullmatch(str(next(iter(direct_hashes), ""))):
+        raise ValueError("routed-expert direct outputs are not deterministic")
+    process_first = record.get("process_first_direct", {}).get("direct_iq2", {})
+    if (
+        process_first.get("cache_hits") != 0
+        or process_first.get("storage_read_count") != 2
+        or process_first.get("evictions") != 0
+    ):
+        raise ValueError("routed-expert process-first lifecycle is malformed")
+    if record.get("resource_before", {}).get("level") != "normal" or record.get(
+        "resource_after", {}
+    ).get("level") != "normal":
+        raise ValueError("routed-expert boundary resource state is not normal")
+    if not record.get("unsupported_interpretations"):
+        raise ValueError("routed-expert unsupported interpretations are required")
     return record
 
 

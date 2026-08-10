@@ -133,6 +133,34 @@ class F018EvidenceTests(unittest.TestCase):
                         check=True,
                     )
 
+    def test_committed_routed_expert_record(self) -> None:
+        path = (
+            ROOT
+            / "docs/research/glm52/raw/f018-iq2-xxs-routed-expert-0001.json"
+        )
+        if not path.exists():
+            self.skipTest("Feature 018 routed-expert record not committed yet")
+        record = validate_record(load_unique_json(path))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["numerical_qualification"]["elementwise_mismatch_count"], 0)
+        self.assertEqual(len(record["direct_samples"]), 10)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq2_xxs_metal.py"),
+                "--input",
+                str(path),
+                "--output",
+                str(
+                    ROOT
+                    / "docs/research/glm52/tables/f018-iq2-xxs-routed-expert-0001.md"
+                ),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")

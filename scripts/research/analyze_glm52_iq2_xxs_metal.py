@@ -17,6 +17,57 @@ DEFAULT_INPUT = ROOT / "docs/research/glm52/raw/f018-iq2-xxs-synthetic-0002.json
 DEFAULT_OUTPUT = ROOT / "docs/research/glm52/tables/f018-iq2-xxs-synthetic-0002.md"
 
 
+def _render_routed_expert(record: dict, raw_sha256: str) -> str:
+    binding = record["binding"]
+    numerical = record["numerical_qualification"]
+    reference = record["optimized_reference"]["summaries"]
+    direct = record["direct_summaries"]
+    process_first = record["process_first_direct"]["direct_iq2"]
+    reference_total = reference["total_seconds"]["median_seconds"]
+    direct_total = direct["total_seconds"]["median_seconds"]
+    rows = [
+        ("Current storage read", reference["storage_read_seconds"]["median_seconds"]),
+        ("Current decode", reference["dequant_seconds"]["median_seconds"]),
+        ("Current contiguous buffer", reference["contiguous_buffer_seconds"]["median_seconds"]),
+        ("Current MLX build/eval", reference["mlx_matrix_build_eval_seconds"]["median_seconds"]),
+        ("Current MLX matvec", reference["mlx_matvec_seconds"]["median_seconds"]),
+        ("Current total", reference_total),
+        ("Direct IQ2 gate/up storage (warm)", direct["direct_iq2.storage_read_seconds"]["median_seconds"]),
+        ("Direct IQ2 gate/up registration", direct["direct_iq2.registration_seconds"]["median_seconds"]),
+        ("Direct IQ2 gate/up GPU interval", direct["direct_iq2.kernel_seconds"]["median_seconds"]),
+        ("Direct IQ2 gate/up synchronized total", direct["direct_iq2.total_seconds"]["median_seconds"]),
+        ("Reference IQ3 down decode", direct["reference_down.dequant_seconds"]["median_seconds"]),
+        ("Reference IQ3 down MLX build", direct["reference_down.mlx_matrix_build_seconds"]["median_seconds"]),
+        ("Reference IQ3 down matvec", direct["reference_down.mlx_matvec_seconds"]["median_seconds"]),
+        ("SwiGLU activation", direct["activation_swiglu_seconds"]["median_seconds"]),
+        ("Direct candidate total", direct_total),
+    ]
+    return "\n".join(
+        [
+            "# Feature 018 complete routed-expert gate",
+            "",
+            "> One real routed expert only: direct IQ2_XXS gate/up plus the existing qualified IQ3_XXS reference down path.",
+            "",
+            f"- Source: `{record['source']['commit']}` (clean)",
+            f"- Raw SHA-256: `{raw_sha256}`",
+            f"- Checkpoint set: `{record['checkpoint']['checkpoint_set_sha256']}`",
+            f"- Layer/expert: `{binding['layer']}` / `{binding['expert_id']}`; selected top-8 route: `{binding['route_expert_ids']}`",
+            f"- Classification: `{record['classification']}`; elementwise mismatches: `{numerical['elementwise_mismatch_count']}`",
+            f"- Max absolute error: `{numerical['maximum_absolute_error']:.9g}`; RMSE: `{numerical['rmse']:.9g}`; cosine: `{numerical['cosine_similarity']:.12f}`",
+            f"- Rust worker: two stable page-aligned resident slots; process-first reads `{process_first['storage_read_count']}` / `{process_first['storage_bytes_read']}` bytes; warm hits `2` per sample; evictions `0`.",
+            "",
+            "| Component | Median (s) |",
+            "| --- | ---: |",
+            *(f"| {name} | {value:.9f} |" for name, value in rows),
+            "",
+            f"For this bounded expert, the current optimized-reference median is `{reference_total:.9f}` s and the direct-IQ2 candidate median is `{direct_total:.9f}` s (ratio `{reference_total / direct_total:.2f}×`; absolute difference `{reference_total - direct_total:.9f}` s).",
+            "",
+            "The largest retained candidate component is the reference IQ3_XXS down decode. This result does not select or implement a second kernel and is not a layer/model speedup claim.",
+            "",
+        ]
+    )
+
+
 def _render_real_matrix(record: dict, raw_sha256: str) -> str:
     binding = record["binding"]
     correctness = record["correctness"]
@@ -85,6 +136,8 @@ def _render_real_matrix(record: dict, raw_sha256: str) -> str:
 
 
 def render(record: dict, raw_sha256: str) -> str:
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":
+        return _render_routed_expert(record, raw_sha256)
     if "tensor_name" in record.get("binding", {}):
         return _render_real_matrix(record, raw_sha256)
     timing = record["timing"]
