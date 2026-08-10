@@ -501,6 +501,26 @@ class F018EvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "match scalar"):
             validate_record(record)
 
+    def test_strict_matrix_schema_requires_pinned_compiler(self) -> None:
+        record = valid_record()
+        record["schema_version"] = "1.1.0"
+        record["kernel"]["compiler"] = {
+            "fast_math_enabled": False,
+            "language_version": "3.2",
+            "math_mode": "safe",
+            "math_floating_point_functions": "precise",
+            "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
+        }
+        record["timing"]["dispatch_preparation"] = {
+            "measured_samples_seconds": record["timing"][
+                "measured_samples_seconds"
+            ]
+        }
+        self.assertEqual(validate_record(record)["schema_version"], "1.1.0")
+        record["kernel"]["compiler"]["fast_math_enabled"] = True
+        with self.assertRaisesRegex(ValueError, "strict compiler"):
+            validate_record(record)
+
     def test_duplicate_json_key_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "duplicate.json"

@@ -73,7 +73,7 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         return _validate_complete_layer_record(record)
     if record.get("schema") != "pulsarmlx.research.f018-direct-iq2-xxs":
         raise ValueError("unexpected Feature 018 schema")
-    if record.get("schema_version") != "1.0.0":
+    if record.get("schema_version") not in {"1.0.0", "1.1.0"}:
         raise ValueError("unexpected Feature 018 schema_version")
     if record.get("actual_status") != "passed":
         raise ValueError("only passed Feature 018 evidence is publishable")
@@ -91,6 +91,17 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("cpu_fallback_count must be zero")
     if kernel.get("complete_f32_weight_materialized_bytes") != 0:
         raise ValueError("complete_f32_weight_materialized_bytes must be zero")
+    if record.get("schema_version") == "1.1.0":
+        compiler = kernel.get("compiler", {})
+        if (
+            compiler.get("fast_math_enabled") is not False
+            or compiler.get("language_version") != "3.2"
+            or compiler.get("math_mode") != "safe"
+            or compiler.get("math_floating_point_functions") != "precise"
+            or compiler.get("pipeline_identity")
+            != "iq2_xxs_sequential_scaffold_v1"
+        ):
+            raise ValueError("strict compiler settings are incomplete")
     if record.get("resource", {}).get("level") != "normal":
         raise ValueError("resource level must be normal for a passed record")
     if not isinstance(record.get("claim_boundary"), str) or not record["claim_boundary"]:
@@ -147,7 +158,10 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         correctness["norm_ratio_maximum"]
     ):
         raise ValueError("norm ratio is outside the frozen interval")
-    for component in ("dispatch", "synchronization", "kernel"):
+    required_components = ["dispatch", "synchronization", "kernel"]
+    if record.get("schema_version") == "1.1.0":
+        required_components.append("dispatch_preparation")
+    for component in required_components:
         summary = record["timing"].get(component)
         if summary is None:
             if component != "kernel":

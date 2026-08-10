@@ -29,6 +29,16 @@ fn run() -> Result<(), String> {
     const WARMUPS: usize = 3;
     const MEASURED: usize = 30;
 
+    fn peak_rss_bytes() -> Result<u64, String> {
+        let mut usage = std::mem::MaybeUninit::<libc::rusage>::zeroed();
+        let status = unsafe { libc::getrusage(libc::RUSAGE_SELF, usage.as_mut_ptr()) };
+        if status != 0 {
+            return Err("getrusage failed".into());
+        }
+        let bytes = unsafe { usage.assume_init() }.ru_maxrss;
+        u64::try_from(bytes).map_err(|_| "peak RSS was negative".to_owned())
+    }
+
     let mut values = BTreeMap::new();
     let mut args = std::env::args().skip(1);
     while let Some(flag) = args.next() {
@@ -188,7 +198,7 @@ fn run() -> Result<(), String> {
     };
     let record = json!({
         "schema": "pulsarmlx.internal.f018-iq2-metal-runner",
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "source": {"commit": commit, "dirty": false},
         "device": device_name,
         "binding": {
@@ -217,6 +227,7 @@ fn run() -> Result<(), String> {
             },
             "slab_logical_bytes": slab.len(),
             "slab_allocated_bytes": allocator.telemetry().allocated_bytes,
+            "peak_rss_bytes_after_measurement": peak_rss_bytes()?,
         },
         "protocol": {"warmups": WARMUPS, "measured": MEASURED},
         "process_first": {
@@ -228,6 +239,7 @@ fn run() -> Result<(), String> {
         "timing": {
             "total": summarize(&totals),
             "dispatch": summarize(&dispatch),
+            "dispatch_preparation": summarize(&dispatch),
             "synchronization": summarize(&synchronization),
             "kernel": if kernel.len() == MEASURED { summarize(&kernel) } else { serde_json::Value::Null },
         },

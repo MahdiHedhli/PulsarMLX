@@ -79,6 +79,8 @@ def _validate_runner_record(
 ) -> None:
     if record.get("schema") != "pulsarmlx.internal.f018-iq2-metal-runner":
         raise ValueError("unexpected Metal runner schema")
+    if record.get("schema_version") != "1.1.0":
+        raise ValueError("strict Metal runner schema version mismatch")
     if record.get("source") != {"commit": source_commit, "dirty": False}:
         raise ValueError("Metal runner source identity mismatch")
     expected_binding = {
@@ -98,7 +100,27 @@ def _validate_runner_record(
         raise ValueError("Metal candidate materialized a complete f32 matrix")
     if record.get("unique_output_hashes") != 1:
         raise ValueError("Metal runner was not deterministic")
-    for component in ("total", "dispatch", "synchronization"):
+    setup = record.get("setup", {})
+    compiler = setup.get("compiler", {})
+    if (
+        compiler.get("fast_math_enabled") is not False
+        or compiler.get("language_version") != "3.2"
+        or compiler.get("math_mode") != "safe"
+        or compiler.get("math_floating_point_functions") != "precise"
+        or compiler.get("pipeline_identity")
+        != "iq2_xxs_sequential_scaffold_v1"
+    ):
+        raise ValueError("strict Metal runner compiler contract mismatch")
+    for field in (
+        "compilation_seconds",
+        "pipeline_creation_seconds",
+        "registration_seconds",
+        "peak_rss_bytes_after_measurement",
+    ):
+        value = setup.get(field)
+        if not isinstance(value, (int, float)) or value < 0:
+            raise ValueError(f"Metal runner setup field is invalid: {field}")
+    for component in ("total", "dispatch", "dispatch_preparation", "synchronization"):
         summary = record.get("timing", {}).get(component)
         if not isinstance(summary, dict) or summary.get("sample_count") != MEASURED:
             raise ValueError(f"Metal runner {component} samples are incomplete")
@@ -262,7 +284,7 @@ def benchmark(model: Path, runner: Path, *, projection: str) -> dict[str, Any]:
         direct_total = metal["timing"]["total"]
         record = {
             "schema": "pulsarmlx.research.f018-direct-iq2-xxs",
-            "schema_version": "1.0.0",
+            "schema_version": "1.1.0",
             "feature_id": "018-direct-quantized-metal-runtime",
             "actual_status": "passed" if passed else "failed",
             "classification": numerical["classification"],
@@ -299,6 +321,8 @@ def benchmark(model: Path, runner: Path, *, projection: str) -> dict[str, Any]:
                 "values_per_block": 256,
                 "accumulation": "f32_sequential_per_output_row",
                 "dispatch_geometry": "one_logical_thread_per_output_row",
+                "pipeline_identity": metal["setup"]["compiler"]["pipeline_identity"],
+                "compiler": metal["setup"]["compiler"],
                 "cpu_fallback_count": metal["cpu_fallback_count"],
                 "complete_f32_weight_materialized_bytes": metal[
                     "complete_f32_weight_materialized_bytes"
@@ -323,9 +347,15 @@ def benchmark(model: Path, runner: Path, *, projection: str) -> dict[str, Any]:
                 "slab_copy_seconds": metal["setup"]["slab_copy_seconds"],
                 "registration_seconds": metal["setup"]["registration_seconds"],
                 "compilation_seconds": metal["setup"]["compilation_seconds"],
+                "pipeline_creation_seconds": metal["setup"][
+                    "pipeline_creation_seconds"
+                ],
                 "process_first": metal["process_first"],
                 "slab_logical_bytes": metal["setup"]["slab_logical_bytes"],
                 "slab_allocated_bytes": metal["setup"]["slab_allocated_bytes"],
+                "runner_peak_rss_bytes": metal["setup"][
+                    "peak_rss_bytes_after_measurement"
+                ],
             },
             "scalar_reference": scalar_sample,
             "optimized_reference": {
@@ -339,6 +369,7 @@ def benchmark(model: Path, runner: Path, *, projection: str) -> dict[str, Any]:
                 **direct_total,
                 "storage_read_seconds": checkpoint_storage_seconds,
                 "dispatch": metal["timing"]["dispatch"],
+                "dispatch_preparation": metal["timing"]["dispatch_preparation"],
                 "synchronization": metal["timing"]["synchronization"],
                 "kernel": metal["timing"]["kernel"],
             },

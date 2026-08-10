@@ -163,7 +163,7 @@
 
 **Purpose**: Decide IQ3 admission from a strict direct-versus-optimized-reference comparison, not the whole-model P1 delta.
 
-- [ ] T057 Extend the real-matrix harness and evidence contract with compiler settings, pipeline creation, first-use, dispatch preparation, kernel, synchronization, RSS, and every warm sample
+- [x] T057 Extend the real-matrix harness and evidence contract with compiler settings, pipeline creation, first-use, dispatch preparation, kernel, synchronization, RSS, and every warm sample
 - [ ] T058 Run the admitted representative IQ2_XXS gate matrix against optimized NumPy+MLX and the strict sequential Metal scaffold under identical bindings
 - [ ] T059 Generate and validate a three-way review artifact, retaining historical/default compilation only as labeled historical evidence when comparable
 - [ ] T060 Apply the frozen verdict rule: `GO`, `GO WITH PERFORMANCE REDESIGN`, or `NO-GO`

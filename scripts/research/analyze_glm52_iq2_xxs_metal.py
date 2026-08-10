@@ -232,6 +232,19 @@ def _render_real_matrix(record: dict, raw_sha256: str) -> str:
         ("Steady synchronized call", timing["synchronization"]["median_seconds"]),
         ("Steady total", timing["median_seconds"]),
     ]
+    if "pipeline_creation_seconds" in setup:
+        direct_rows.insert(
+            4,
+            ("Pipeline creation (process setup)", setup["pipeline_creation_seconds"]),
+        )
+    if "dispatch_preparation" in timing:
+        direct_rows.insert(
+            -4,
+            (
+                "Steady dispatch preparation",
+                timing["dispatch_preparation"]["median_seconds"],
+            ),
+        )
     optimized_total = optimized["total_seconds"]["median_seconds"]
     direct_total = timing["median_seconds"]
     return "\n".join(
