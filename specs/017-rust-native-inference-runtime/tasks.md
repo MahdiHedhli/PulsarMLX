@@ -74,8 +74,8 @@
 ## Phase 8 — Runtime skeleton and mode-aware validation
 
 - [ ] T017-80 Add reusable runtime contracts and GLM plugin boundary stubs.
-- [ ] T017-81 Add `teacher_forced_validation` and `golden_strict` result classes.
-- [ ] T017-82 Add mismatch classification and deterministic stopping policy.
+- [x] T017-81 Add `teacher_forced_validation` and `golden_strict` result classes.
+- [x] T017-82 Add mismatch classification and deterministic stopping policy.
 
 ## Phase 9 — Checkpoint-free fixture ladder
 

@@ -58,6 +58,12 @@ pub use telemetry::{
     RuntimeTelemetry, TelemetryBucket, TelemetryError, TelemetrySnapshot,
 };
 
+mod validation;
+pub use validation::{
+    BoundaryEvidence, ParityBoundary, ParityLadder, ParityLadderError, ValidationClassification,
+    ValidationMode,
+};
+
 #[cfg(target_os = "macos")]
 mod apple_metal_bridge;
 
