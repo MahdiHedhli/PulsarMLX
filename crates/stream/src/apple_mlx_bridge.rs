@@ -22,6 +22,33 @@ unsafe extern "C" {
         error_capacity: usize,
     ) -> i32;
     fn pulsar_mlx_context_destroy(context: *mut RawMlxContext);
+    fn pulsar_mlx_context_synchronize(
+        context: *mut RawMlxContext,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
+    fn pulsar_mlx_context_ownership_snapshot(
+        context: *mut RawMlxContext,
+        callback_count: *mut u64,
+        managed_created: *mut u64,
+        managed_destroyed: *mut u64,
+        derived_created: *mut u64,
+        derived_destroyed: *mut u64,
+        derived_live: *mut u64,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
+    fn pulsar_mlx_debug_stream_counters(
+        created: *mut u64,
+        freed: *mut u64,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
+    fn pulsar_mlx_validate_f32_count(
+        count: usize,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
     fn pulsar_mlx_import_f32(
         context: *mut RawMlxContext,
         data: *mut f32,
@@ -71,6 +98,22 @@ pub enum MlxStreamMode {
     Owned,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MlxOwnershipSnapshot {
+    pub callback_count: u64,
+    pub managed_created: u64,
+    pub managed_destroyed: u64,
+    pub derived_created: u64,
+    pub derived_destroyed: u64,
+    pub derived_live: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MlxDebugStreamCounters {
+    pub created: u64,
+    pub freed: u64,
+}
+
 fn bridge_error(status: i32, buffer: &[i8; ERROR_CAPACITY]) -> String {
     let message = unsafe { CStr::from_ptr(buffer.as_ptr()) };
     format!("MLX bridge status {status}: {}", message.to_string_lossy())
@@ -84,13 +127,13 @@ pub struct MlxContext {
 pub struct MlxArray<'a> {
     raw: *mut RawMlxArray,
     context: &'a MlxContext,
-    _owner: PhantomData<&'a mut [f32]>,
+    _owner: PhantomData<&'a [f32]>,
 }
 
 pub struct MlxComputedArray<'a> {
     raw: *mut RawMlxArray,
     context: &'a MlxContext,
-    _source: PhantomData<&'a MlxArray<'a>>,
+    _owner: PhantomData<&'a [f32]>,
 }
 
 impl MlxContext {
@@ -120,6 +163,80 @@ impl MlxContext {
 
     pub fn stream_mode(&self) -> MlxStreamMode {
         self.stream_mode
+    }
+
+    pub fn synchronize(&self) -> Result<(), String> {
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_context_synchronize(self.raw, error.as_mut_ptr(), ERROR_CAPACITY)
+        };
+        if status != 0 {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(())
+    }
+
+    pub fn ownership_snapshot(&self) -> Result<MlxOwnershipSnapshot, String> {
+        let mut callback_count = 0;
+        let mut managed_created = 0;
+        let mut managed_destroyed = 0;
+        let mut derived_created = 0;
+        let mut derived_destroyed = 0;
+        let mut derived_live = 0;
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_context_ownership_snapshot(
+                self.raw,
+                &mut callback_count,
+                &mut managed_created,
+                &mut managed_destroyed,
+                &mut derived_created,
+                &mut derived_destroyed,
+                &mut derived_live,
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(MlxOwnershipSnapshot {
+            callback_count,
+            managed_created,
+            managed_destroyed,
+            derived_created,
+            derived_destroyed,
+            derived_live,
+        })
+    }
+
+    pub fn debug_stream_counters() -> Result<MlxDebugStreamCounters, String> {
+        let mut created = 0;
+        let mut freed = 0;
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_debug_stream_counters(
+                &mut created,
+                &mut freed,
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(MlxDebugStreamCounters { created, freed })
+    }
+
+    pub fn validate_f32_count(count: usize) -> Result<(), String> {
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_validate_f32_count(count, error.as_mut_ptr(), ERROR_CAPACITY)
+        };
+        if status != 0 {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(())
     }
 
     pub fn import_f32<'a>(&'a self, owner: &'a mut [f32]) -> Result<MlxArray<'a>, String> {
@@ -166,7 +283,7 @@ impl<'a> MlxArray<'a> {
         Ok(())
     }
 
-    pub fn add_self(&'a self) -> Result<MlxComputedArray<'a>, String> {
+    pub fn add_self(&self) -> Result<MlxComputedArray<'a>, String> {
         let mut raw = ptr::null_mut();
         let mut error = [0_i8; ERROR_CAPACITY];
         let status = unsafe {
@@ -184,7 +301,7 @@ impl<'a> MlxArray<'a> {
         Ok(MlxComputedArray {
             raw,
             context: self.context,
-            _source: PhantomData,
+            _owner: PhantomData,
         })
     }
 

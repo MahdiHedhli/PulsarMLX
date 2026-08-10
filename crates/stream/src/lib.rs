@@ -27,6 +27,7 @@ mod portable_fixture;
 pub use portable_fixture::{
     ArtifactRecord,
     ByteRange,
+    FixtureProvenance,
     FixtureManifestPolicy,
     PortableFixtureBoundaryArtifacts,
     PortableFixtureManifest,
@@ -90,7 +91,10 @@ pub use apple_metal_bridge::{MetalBridge, MetalRegistration};
 mod apple_mlx_bridge;
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
-pub use apple_mlx_bridge::{MlxArray, MlxComputedArray, MlxContext, MlxDevice, MlxStreamMode};
+pub use apple_mlx_bridge::{
+    MlxArray, MlxComputedArray, MlxContext, MlxDebugStreamCounters, MlxDevice,
+    MlxOwnershipSnapshot, MlxStreamMode,
+};
 
 /// Build the universe of per-expert slab reads for every streamed layer of
 /// a MoE gguf: for each routed-expert tensor (gate/up/down) of each layer,

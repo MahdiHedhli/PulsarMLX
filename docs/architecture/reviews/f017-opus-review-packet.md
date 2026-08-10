@@ -128,3 +128,34 @@ full-model inference and direct quantized Metal kernel implementation.
 - The M1 handoff is prepared at
   `docs/architecture/reviews/f017-m1-ultra-p1-handoff.md`; it is not executed
   on ColPanicM2.
+
+## Adversarial remediation mapping
+
+- B1: owned-stream construction now creates exactly one owned stream. The
+  adapter counter delta was 1,000 created and 1,000 freed across 1,000 context
+  lifecycles. The bounded run reached 130,334,720 bytes maximum RSS with no
+  swap; MLX emitted repeated internal CoreAnalytics context diagnostics, which
+  remain explicit verification evidence.
+- B2: `OwnershipState` and its accounting state use atomic refcounts. The MLX
+  callback owns a final reference, so late deallocation cannot dereference a
+  freed payload. The source-first derived-array regression passed without an
+  evaluation/synchronization inserted between source destruction and derived
+  destruction.
+- B3: managed and derived arrays share an ownership record while accounting
+  tracks managed-created/destroyed, derived-created/destroyed, live derived
+  arrays, and callback totals separately. Source-first, derived-first, and
+  multiple-derived cycles reconcile exactly.
+- B4: context creation now has a process-wide fail-closed singleton. A second
+  context is rejected and creation succeeds again after complete teardown.
+  CPU device and temporary CPU stream handles are released on restoration and
+  all partial construction paths.
+- Shape hardening: zero and `INT_MAX + 1` logical element counts fail before
+  allocation or `size_t` to `int` conversion.
+- Fixture provenance is explicit in the portable manifest. The semantic
+  ladder is generated at source SHA `60145f8` by the synthetic constructors;
+  its scalar `reference_*` paths and frozen hashes are separate from the
+  candidate decode/orchestration paths. The scope is synthetic checkpoint-free
+  validation only, not real-checkpoint determinism.
+- The M1 handoff now requires environment identity, stream mode, singleton
+  assertion, ownership reconciliation, and an absolute 16 GiB free-memory
+  floor before P1.

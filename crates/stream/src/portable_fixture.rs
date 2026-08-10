@@ -56,6 +56,17 @@ pub struct PortableFixtureBoundaryArtifacts {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", deny_unknown_fields)]
+pub struct FixtureProvenance {
+    pub generator: String,
+    pub generator_source_commit: String,
+    pub reference_implementation: String,
+    pub candidate_implementation: String,
+    pub independent: bool,
+    pub scope: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PortableFixtureManifest {
     pub schema: String,
@@ -68,6 +79,7 @@ pub struct PortableFixtureManifest {
     pub checkpoint_set_sha256: String,
     pub checkpoint_revision: String,
     pub trunk_inventory_reference: TrunkInventoryReference,
+    pub provenance: FixtureProvenance,
 
     pub tensor_name: String,
     pub tensor_shard: String,
@@ -121,6 +133,7 @@ pub enum PortableFixtureValidationError {
     },
     DuplicateFixtureId(String),
     InvalidFeature,
+    NonIndependentProvenance,
     MissingField(String),
     InvalidSha256 { field: String, value: String },
     InvalidCommitHash(String),
@@ -192,6 +205,27 @@ impl PortableFixtureManifest {
         self.ensure_non_empty("source_commit", &self.source_commit)?;
         self.ensure_non_empty("source_catalog_sha256", &self.source_catalog_sha256)?;
         self.ensure_non_empty("checkpoint_set_sha256", &self.checkpoint_set_sha256)?;
+        self.ensure_non_empty("provenance.generator", &self.provenance.generator)?;
+        self.ensure_non_empty(
+            "provenance.generator_source_commit",
+            &self.provenance.generator_source_commit,
+        )?;
+        self.ensure_non_empty(
+            "provenance.reference_implementation",
+            &self.provenance.reference_implementation,
+        )?;
+        self.ensure_non_empty(
+            "provenance.candidate_implementation",
+            &self.provenance.candidate_implementation,
+        )?;
+        self.ensure_non_empty("provenance.scope", &self.provenance.scope)?;
+        validate_commit_sha(
+            &self.provenance.generator_source_commit,
+            "provenance.generator_source_commit",
+        )?;
+        if !self.provenance.independent {
+            return Err(PortableFixtureValidationError::NonIndependentProvenance);
+        }
         self.ensure_non_empty(
             "trunk_inventory_reference.path",
             &self.trunk_inventory_reference.path,
@@ -410,6 +444,10 @@ impl fmt::Display for PortableFixtureValidationError {
                 write!(formatter, "duplicate fixture_id '{fixture_id}' in set")
             }
             Self::InvalidFeature => write!(formatter, "fixture feature_id must be '017'"),
+            Self::NonIndependentProvenance => write!(
+                formatter,
+                "fixture provenance must identify an independent reference implementation",
+            ),
             Self::MissingField(field) => write!(formatter, "missing required field: {field}"),
             Self::InvalidCommitHash(field) => {
                 write!(formatter, "invalid commit SHA in '{field}', expected 40 hex chars")
@@ -557,6 +595,21 @@ mod tests {
             .expect("local-only manifest parses");
         fixture.validate_identity().expect("local-only manifest validates");
         assert!(!fixture.redistributable);
+    }
+
+    #[test]
+    fn reject_non_independent_provenance() {
+        let mut value: serde_json::Value =
+            serde_json::from_str(&synthetic_manifest_text()).expect("parse manifest JSON");
+        value["provenance"]["independent"] = serde_json::Value::Bool(false);
+        let fixture = PortableFixtureManifest::from_json(
+            &serde_json::to_string(&value).expect("serialize manifest JSON"),
+        )
+        .expect("manifest parses");
+        assert!(matches!(
+            fixture.validate_identity(),
+            Err(PortableFixtureValidationError::NonIndependentProvenance)
+        ));
     }
 
     #[test]

@@ -64,6 +64,29 @@ synchronization, pointer identity, exactly-once callbacks, 30 borrowed cycles,
 100 owned cycles, and fail-closed invalid imports. Builds without the native
 MLX C installation compile with an explicit adapter-test skip.
 
+The adapter is intentionally single-context for the Feature 017 P1 era.
+MLX device and default-stream state is process-global, so a second context in
+the same process is rejected explicitly. Context creation claims the guard
+only after argument validation and releases it after complete teardown; every
+partial-construction error releases the claim. Owned-stream creation creates
+one owned stream, while borrowed default streams are never freed by the
+adapter. The CPU restoration path frees every CPU device and stream handle it
+creates.
+
+Managed ownership state is refcounted independently from Rust array wrappers.
+The context retains a safety reference, each array wrapper retains one, and
+the MLX deallocator callback retains one until callback entry completes.
+Derived arrays share the ownership record but are accounted separately from
+managed arrays. This keeps a late callback harmless and makes source-first
+derived teardown a tested contract rather than an assumption.
+
+The adapter rejects zero or `size_t` counts above `INT_MAX` before constructing
+the one-dimensional MLX shape. The 1,000-context stress test records balanced
+owned-stream creation/free counters and bounded RSS; MLX 0.31.2 currently
+prints its own `Context leak detected, CoreAnalytics returned false` diagnostic
+during that stress, so the diagnostic is preserved in the verification packet
+and is not treated as proof of leak-free upstream teardown.
+
 ## Options considered
 
 | Option | Decision | Reason |

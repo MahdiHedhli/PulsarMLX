@@ -42,7 +42,15 @@ qualified managed-import invariants:
   stream before host reuse or teardown;
 - Rust retains the mutable host owner for the entire imported-array lifetime;
 - managed ownership callbacks are exactly once;
+- derived arrays share a refcounted ownership record and are reconciled as a
+  separate lifecycle class; they do not create additional managed-owner
+  callbacks;
 - unsupported or malformed imports fail closed without transferring ownership.
+
+The current F017 adapter is process-wide single-context by design. A second
+MLX-using context is rejected explicitly, and the singleton is released only
+after the first context has completed stream/device/ownership teardown. This
+is a qualification boundary, not a multi-context guarantee.
 
 The adapter is synchronous at this boundary. The installed MLX C API exposes
 no queued-cancellation primitive, so runtime cancellation remains an outer

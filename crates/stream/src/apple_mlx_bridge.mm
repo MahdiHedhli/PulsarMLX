@@ -1,29 +1,49 @@
 #include <mlx/c/mlx.h>
 
+#include <atomic>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <cstdlib>
 #include <new>
 
 namespace {
 
+struct AccountingState {
+    std::atomic<uint64_t> refs{1};
+    std::atomic<uint64_t> callback_count{0};
+    std::atomic<uint64_t> managed_created{0};
+    std::atomic<uint64_t> managed_destroyed{0};
+    std::atomic<uint64_t> derived_created{0};
+    std::atomic<uint64_t> derived_destroyed{0};
+};
+
 struct OwnershipState {
-    uint64_t callback_count = 0;
+    std::atomic<uint64_t> refs{1};
+    std::atomic<uint64_t> callback_count{0};
+    AccountingState *accounting = nullptr;
+    OwnershipState *next = nullptr;
 };
 
 struct MlxContextObject {
     mlx_device device{};
     mlx_stream stream{};
     bool stream_owned = false;
+    bool singleton_claimed = false;
+    AccountingState *accounting = nullptr;
+    OwnershipState *ownership_states = nullptr;
 };
 
 struct MlxArrayObject {
     mlx_array array{};
     MlxContextObject *context = nullptr;
     OwnershipState *ownership = nullptr;
+    bool derived = false;
 };
+
+std::atomic<bool> context_active{false};
+std::atomic<uint64_t> owned_stream_created{0};
+std::atomic<uint64_t> owned_stream_freed{0};
 
 int set_error(char *buffer, size_t capacity, const char *message) {
     if (buffer != nullptr && capacity > 0) {
@@ -32,9 +52,51 @@ int set_error(char *buffer, size_t capacity, const char *message) {
     return -1;
 }
 
+void retain_accounting(AccountingState *accounting) {
+    if (accounting != nullptr) {
+        accounting->refs.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+void release_accounting(AccountingState *accounting) {
+    if (accounting != nullptr &&
+        accounting->refs.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        delete accounting;
+    }
+}
+
+void retain_ownership(OwnershipState *ownership) {
+    if (ownership != nullptr) {
+        ownership->refs.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+void release_ownership(OwnershipState *ownership) {
+    if (ownership != nullptr &&
+        ownership->refs.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        release_accounting(ownership->accounting);
+        delete ownership;
+    }
+}
+
+void adopt_ownership(MlxContextObject *context, OwnershipState *ownership) {
+    ownership->accounting = context->accounting;
+    retain_accounting(ownership->accounting);
+    ownership->next = context->ownership_states;
+    context->ownership_states = ownership;
+}
+
 void managed_owner_released(void *payload) {
     auto *ownership = static_cast<OwnershipState *>(payload);
-    ownership->callback_count += 1;
+    if (ownership == nullptr) {
+        return;
+    }
+    ownership->callback_count.fetch_add(1, std::memory_order_relaxed);
+    if (ownership->accounting != nullptr) {
+        ownership->accounting->callback_count.fetch_add(1,
+                                                        std::memory_order_relaxed);
+    }
+    release_ownership(ownership);
 }
 
 void restore_default_cpu_context() {
@@ -43,11 +105,15 @@ void restore_default_cpu_context() {
     if (cpu.ctx != nullptr && mlx_device_is_available(&available, cpu) == 0 &&
         available) {
         mlx_set_default_device(cpu);
+    }
+    if (cpu.ctx != nullptr) {
         mlx_device_free(cpu);
     }
+
     mlx_stream cpu_stream = mlx_default_cpu_stream_new();
     if (cpu_stream.ctx != nullptr) {
         mlx_set_default_stream(cpu_stream);
+        mlx_stream_free(cpu_stream);
     }
 }
 
@@ -58,9 +124,21 @@ void destroy_context(MlxContextObject *context) {
     restore_default_cpu_context();
     if (context->stream_owned && context->stream.ctx != nullptr) {
         mlx_stream_free(context->stream);
+        owned_stream_freed.fetch_add(1, std::memory_order_relaxed);
     }
     if (context->device.ctx != nullptr) {
         mlx_device_free(context->device);
+    }
+
+    OwnershipState *ownership = context->ownership_states;
+    while (ownership != nullptr) {
+        OwnershipState *next = ownership->next;
+        release_ownership(ownership);
+        ownership = next;
+    }
+    release_accounting(context->accounting);
+    if (context->singleton_claimed) {
+        context_active.store(false, std::memory_order_release);
     }
     delete context;
 }
@@ -70,12 +148,26 @@ int destroy_array(MlxArrayObject *array, uint64_t *callback_count) {
         return -1;
     }
     int status = mlx_array_free(array->array);
-    if (callback_count != nullptr) {
-        *callback_count = array->ownership == nullptr
-                              ? 0
-                              : array->ownership->callback_count;
+    if (array->ownership != nullptr) {
+        if (array->ownership->accounting != nullptr) {
+            if (array->derived) {
+                array->ownership->accounting->derived_destroyed.fetch_add(
+                    1, std::memory_order_relaxed);
+            } else {
+                array->ownership->accounting->managed_destroyed.fetch_add(
+                    1, std::memory_order_relaxed);
+            }
+        }
+        if (callback_count != nullptr) {
+            *callback_count = array->derived
+                                  ? 0
+                                  : array->ownership->callback_count.load(
+                                        std::memory_order_acquire);
+        }
+        release_ownership(array->ownership);
+    } else if (callback_count != nullptr) {
+        *callback_count = 0;
     }
-    delete array->ownership;
     delete array;
     return status;
 }
@@ -99,11 +191,28 @@ int pulsar_mlx_context_create(
         return set_error(error_buffer, error_capacity,
                          "invalid MLX context arguments");
     }
+
+    bool expected = false;
+    if (!context_active.compare_exchange_strong(expected, true,
+                                                std::memory_order_acq_rel)) {
+        return set_error(error_buffer, error_capacity,
+                         "only one MLX context is supported per process");
+    }
+
     auto *context = new (std::nothrow) MlxContextObject();
     if (context == nullptr) {
+        context_active.store(false, std::memory_order_release);
         return set_error(error_buffer, error_capacity,
                          "MLX context allocation failed");
     }
+    context->singleton_claimed = true;
+    context->accounting = new (std::nothrow) AccountingState();
+    if (context->accounting == nullptr) {
+        destroy_context(context);
+        return set_error(error_buffer, error_capacity,
+                         "MLX accounting allocation failed");
+    }
+
     context->device = mlx_device_new_type(
         static_cast<mlx_device_type>(device_type), 0);
     bool available = false;
@@ -115,21 +224,27 @@ int pulsar_mlx_context_create(
                          "requested MLX device unavailable");
     }
 
-    context->stream = mlx_stream_new();
     if (stream_mode == 1) {
         context->stream = mlx_stream_new_device(context->device);
         context->stream_owned = true;
+        if (context->stream.ctx != nullptr) {
+            owned_stream_created.fetch_add(1, std::memory_order_relaxed);
+        }
         if (context->stream.ctx == nullptr ||
             mlx_set_default_stream(context->stream) != 0) {
             destroy_context(context);
             return set_error(error_buffer, error_capacity,
                              "owned MLX stream creation failed");
         }
-    } else if (mlx_get_default_stream(&context->stream, context->device) != 0 ||
-               context->stream.ctx == nullptr) {
-        destroy_context(context);
-        return set_error(error_buffer, error_capacity,
-                         "default MLX stream lookup failed");
+    } else {
+        context->stream = device_type == MLX_CPU
+                              ? mlx_default_cpu_stream_new()
+                              : mlx_default_gpu_stream_new();
+        if (context->stream.ctx == nullptr) {
+            destroy_context(context);
+            return set_error(error_buffer, error_capacity,
+                             "default MLX stream lookup failed");
+        }
     }
     *out_context = reinterpret_cast<PulsarMlxContext *>(context);
     return 0;
@@ -157,6 +272,7 @@ int pulsar_mlx_import_f32(
         return set_error(error_buffer, error_capacity,
                          "invalid MLX f32 import arguments");
     }
+
     auto *ownership = new (std::nothrow) OwnershipState();
     auto *array = new (std::nothrow) MlxArrayObject();
     if (ownership == nullptr || array == nullptr) {
@@ -165,17 +281,24 @@ int pulsar_mlx_import_f32(
         return set_error(error_buffer, error_capacity,
                          "MLX managed-array allocation failed");
     }
+    adopt_ownership(context, ownership);
+    retain_ownership(ownership);  // array wrapper reference
+    retain_ownership(ownership);  // MLX callback reference
+
     int shape[1] = {static_cast<int>(count)};
     array->ownership = ownership;
     array->context = context;
     array->array = mlx_array_new_data_managed_payload(
         data, shape, 1, MLX_FLOAT32, ownership, managed_owner_released);
     if (array->array.ctx == nullptr) {
-        delete ownership;
+        release_ownership(ownership);  // callback reference
+        release_ownership(ownership);  // array wrapper reference
         delete array;
         return set_error(error_buffer, error_capacity,
                          "MLX managed-array construction failed");
     }
+    context->accounting->managed_created.fetch_add(1,
+                                                   std::memory_order_relaxed);
     *out_array = reinterpret_cast<PulsarMlxArray *>(array);
     return 0;
 }
@@ -210,7 +333,7 @@ int pulsar_mlx_array_add_self(
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
     auto *source = reinterpret_cast<MlxArrayObject *>(raw_array);
     if (context == nullptr || source == nullptr || source->context != context ||
-        out_array == nullptr) {
+        source->ownership == nullptr || out_array == nullptr) {
         return set_error(error_buffer, error_capacity,
                          "MLX add ownership mismatch");
     }
@@ -225,6 +348,11 @@ int pulsar_mlx_array_add_self(
         delete result;
         return set_error(error_buffer, error_capacity, "MLX add dispatch failed");
     }
+    result->ownership = source->ownership;
+    result->derived = true;
+    retain_ownership(result->ownership);
+    result->ownership->accounting->derived_created.fetch_add(
+        1, std::memory_order_relaxed);
     *out_array = reinterpret_cast<PulsarMlxArray *>(result);
     return 0;
 }
@@ -262,6 +390,75 @@ int pulsar_mlx_array_destroy(
     if (status != 0) {
         return set_error(error_buffer, error_capacity,
                          "MLX array destruction failed");
+    }
+    return 0;
+}
+
+int pulsar_mlx_context_synchronize(
+    PulsarMlxContext *raw_context,
+    char *error_buffer,
+    size_t error_capacity) {
+    auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
+    if (context == nullptr || context->stream.ctx == nullptr) {
+        return set_error(error_buffer, error_capacity,
+                         "invalid MLX context synchronization arguments");
+    }
+    if (mlx_synchronize(context->stream) != 0) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX context synchronization failed");
+    }
+    return 0;
+}
+
+int pulsar_mlx_context_ownership_snapshot(
+    PulsarMlxContext *raw_context,
+    uint64_t *callback_count,
+    uint64_t *managed_created,
+    uint64_t *managed_destroyed,
+    uint64_t *derived_created,
+    uint64_t *derived_destroyed,
+    uint64_t *derived_live,
+    char *error_buffer,
+    size_t error_capacity) {
+    auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
+    if (context == nullptr || context->accounting == nullptr ||
+        callback_count == nullptr || managed_created == nullptr ||
+        managed_destroyed == nullptr || derived_created == nullptr ||
+        derived_destroyed == nullptr || derived_live == nullptr) {
+        return set_error(error_buffer, error_capacity,
+                         "invalid MLX ownership snapshot arguments");
+    }
+    auto *accounting = context->accounting;
+    *callback_count = accounting->callback_count.load(std::memory_order_acquire);
+    *managed_created = accounting->managed_created.load(std::memory_order_acquire);
+    *managed_destroyed = accounting->managed_destroyed.load(std::memory_order_acquire);
+    *derived_created = accounting->derived_created.load(std::memory_order_acquire);
+    *derived_destroyed = accounting->derived_destroyed.load(std::memory_order_acquire);
+    *derived_live = *derived_created - *derived_destroyed;
+    return 0;
+}
+
+int pulsar_mlx_debug_stream_counters(
+    uint64_t *created,
+    uint64_t *freed,
+    char *error_buffer,
+    size_t error_capacity) {
+    if (created == nullptr || freed == nullptr) {
+        return set_error(error_buffer, error_capacity,
+                         "invalid MLX stream counter arguments");
+    }
+    *created = owned_stream_created.load(std::memory_order_acquire);
+    *freed = owned_stream_freed.load(std::memory_order_acquire);
+    return 0;
+}
+
+int pulsar_mlx_validate_f32_count(
+    size_t count,
+    char *error_buffer,
+    size_t error_capacity) {
+    if (count == 0 || count > static_cast<size_t>(INT_MAX)) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX f32 shape count is outside int range");
     }
     return 0;
 }

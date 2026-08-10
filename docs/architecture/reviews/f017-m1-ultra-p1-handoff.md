@@ -14,6 +14,17 @@ Status: prepared, not executed on ColPanicM2.
   synchronization, owner-last teardown, and exactly-once callbacks.
 - Keep validation fail-closed. Unexpected backend errors or fallback are a
   failed P1, not a reference success.
+- Require at least `17179869184` bytes (16 GiB) of free memory immediately
+  before P1 admission. Record the measurement and reject the run below this
+  absolute floor; normal-pressure labels alone are insufficient.
+- Record macOS build, MLX C/native version, Metal version/driver context, and
+  Xcode/compiler versions where available.
+- Record the adapter stream mode as `borrowed_default` or `owned` and assert it
+  matches the selected path.
+- Assert exactly one MLX-using F017 context exists in the process.
+- Assert pre-run managed/derived/callback counters are zero and post-run
+  managed callbacks, managed array lifecycle, and derived lifecycle reconcile
+  exactly. Derived arrays must be reported separately from managed callbacks.
 
 ## Single bounded run
 
