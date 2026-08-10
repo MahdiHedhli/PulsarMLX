@@ -79,13 +79,13 @@
 
 ## Phase 9 — Checkpoint-free fixture ladder
 
-- [ ] T017-90 Implement boundaries 1→11 in strict order and stop on mismatch.
-- [ ] T017-91 Validate boundary 2 and 3 on M2 Max using hash-bound local fixtures.
-- [ ] T017-92 Capture residual telemetry and memory admission outcomes at every boundary.
+- [x] T017-90 Implement boundaries 1→11 in strict order and stop on mismatch.
+- [x] T017-91 Validate boundary 2 and 3 on M2 Max using hash-bound local fixtures.
+- [x] T017-92 Capture residual telemetry and memory admission outcomes at every boundary.
 
 ## M2 Max safety gate (mandatory)
 
-- [ ] T017-99 Reject dec-trunk residency plans requiring swap-risky memory profiles unless allocator study is complete and green.
+- [x] T017-99 Reject dec-trunk residency plans requiring swap-risky memory profiles unless allocator study is complete and green.
 
 ## Release-prep
 
