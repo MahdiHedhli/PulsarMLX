@@ -58,6 +58,8 @@ def _direct_run_once(
     residual: list[float],
     cache: ExpertSlabCache,
     worker: DirectIq2MetalWorker,
+    *,
+    expected_expert_ids: list[int] | None = FROZEN_EXPERT_IDS,
 ) -> tuple[dict[str, Any], list[float]]:
     resource_before = sample_pressure().to_public_dict()
     total_start = time.perf_counter()
@@ -71,7 +73,7 @@ def _direct_run_once(
     bias = load_f32_vector(store, f"blk.{LAYER}.exp_probs_b.bias")
     route = glm_route_real(logits, bias)
     router_seconds = time.perf_counter() - router_start
-    if route["expert_ids"] != FROZEN_EXPERT_IDS:
+    if expected_expert_ids is not None and route["expert_ids"] != expected_expert_ids:
         raise RuntimeError("direct MoE route differs from the frozen top-8")
 
     aggregate = [0.0] * len(residual)
