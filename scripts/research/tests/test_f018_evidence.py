@@ -89,6 +89,22 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_committed_real_matrix_records(self) -> None:
+        records = sorted(
+            (ROOT / "docs/research/glm52/raw").glob(
+                "f018-iq2-xxs-*-matrix-0001.json"
+            )
+        )
+        for path in records:
+            with self.subTest(path=path.name):
+                record = validate_record(load_unique_json(path))
+                self.assertEqual(record["actual_status"], "passed")
+                self.assertEqual(record["correctness"]["deterministic_repetitions"], 30)
+                self.assertEqual(record["kernel"]["cpu_fallback_count"], 0)
+                self.assertEqual(
+                    record["kernel"]["complete_f32_weight_materialized_bytes"], 0
+                )
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")
