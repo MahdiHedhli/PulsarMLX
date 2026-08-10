@@ -33,8 +33,6 @@ from glm52_inference import _checkpoint_identity, _source_identity  # noqa: E402
 from glm52_memory_pressure import sample_pressure  # noqa: E402
 from glm52_telemetry import assert_public_safe  # noqa: E402
 from glm52_tensor_store import Glm52TensorStore  # noqa: E402
-from qualify_iq2_xxs_numpy import _summary  # noqa: E402
-
 MODE = "whole_matrix_numpy_q5_q8_q6_head_numpy"
 WARMUPS = 3
 MEASURED = 10
@@ -55,6 +53,27 @@ TARGETS = {
         "transient_record": None,
     },
 }
+
+
+def _summary_nonnegative(samples: list[float]) -> dict[str, float | int]:
+    if not samples or any(not math.isfinite(value) or value < 0 for value in samples):
+        raise ValueError("samples must be finite and nonnegative")
+    values = np.asarray(samples, dtype=np.float64)
+    mean = float(values.mean())
+    standard_deviation = float(values.std(ddof=1)) if len(samples) > 1 else 0.0
+    return {
+        "sample_count": len(samples),
+        "median_seconds": float(np.median(values)),
+        "mean_seconds": mean,
+        "standard_deviation_seconds": standard_deviation,
+        "minimum_seconds": float(values.min()),
+        "maximum_seconds": float(values.max()),
+        "p5_seconds": float(np.percentile(values, 5)),
+        "p25_seconds": float(np.percentile(values, 25)),
+        "p75_seconds": float(np.percentile(values, 75)),
+        "p95_seconds": float(np.percentile(values, 95)),
+        "coefficient_of_variation": standard_deviation / mean if mean else 0.0,
+    }
 
 
 def _hash(values: Any) -> str:
@@ -216,7 +235,10 @@ def _worker(model: Path, target: str, candidate: str) -> dict[str, Any]:
             "setup_rss_delta_bytes": after_setup["rss_bytes"] - before["rss_bytes"],
             "retained_rss_bytes": retained_rss["rss_bytes"],
             "samples": samples,
-            "summaries": {field: _summary([float(sample[field]) for sample in samples]) for field in fields},
+            "summaries": {
+                field: _summary_nonnegative([float(sample[field]) for sample in samples])
+                for field in fields
+            },
             "determinism": {"unique_output_hashes": len(set(hashes)), "output_f32_sha256": sorted(set(hashes))},
             "resource_before": before,
             "resource_after_setup": after_setup,
