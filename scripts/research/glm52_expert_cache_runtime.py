@@ -118,6 +118,10 @@ class MlxMatrixBackend:
             from ggml_kquants import dequantize_matrix_q2_k_numpy
 
             vector_decoder = dequantize_matrix_q2_k_numpy
+        elif self.decoder_mode == "numpy_vectorized" and loc.type_id == 11:
+            from ggml_kquants import dequantize_matrix_q3_k_numpy
+
+            vector_decoder = dequantize_matrix_q3_k_numpy
 
         if vector_decoder is not None:
 

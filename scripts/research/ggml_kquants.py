@@ -531,3 +531,61 @@ def dequantize_row_q3_k(encoded: bytes, n: int | None = None) -> list[float]:
                     y[idx] = d * sc[idx // 16] * q
         out.extend(y)
     return out
+
+
+def dequantize_blocks_q3_k_numpy(encoded: bytes):
+    """Vector-decode complete Q3_K blocks with scalar f64 operation order."""
+
+    import numpy as np
+
+    if len(encoded) == 0 or len(encoded) % Q3_K_BLOCK != 0:
+        raise ValueError("encoded length must be a nonzero multiple of 110")
+    blocks = np.frombuffer(encoded, dtype=np.uint8).reshape(-1, Q3_K_BLOCK)
+    hmask = blocks[:, :32]
+    quants = blocks[:, 32:96]
+    scale_bytes = blocks[:, 96:108]
+    low = np.concatenate(
+        (scale_bytes[:, :8] & np.uint8(15), scale_bytes[:, :8] >> np.uint8(4)),
+        axis=1,
+    )
+    indices = np.arange(16)
+    high = (
+        scale_bytes[:, 8 + indices % 4]
+        >> (2 * (indices // 4)).astype(np.uint8)
+    ) & np.uint8(3)
+    scales = (low | (high << np.uint8(4))).astype(np.int16) - 32
+    d = (
+        np.ascontiguousarray(blocks[:, 108:110])
+        .view("<f2")
+        .reshape(-1)
+        .astype(np.float64)
+    )
+    if not np.isfinite(d).all():
+        raise ValueError("Q3_K scale must be finite")
+
+    decoded = np.empty((len(blocks), QK_K), dtype=np.float32)
+    for half in range(2):
+        packed = quants[:, 32 * half : 32 * half + 32]
+        for group in range(4):
+            start = 128 * half + 32 * group
+            quant = ((packed >> np.uint8(2 * group)) & np.uint8(3)).astype(np.int16)
+            present = (hmask & np.uint8(1 << (4 * half + group))) != 0
+            signed_quant = quant - (~present).astype(np.int16) * 4
+            subgroups = (np.arange(start, start + 32) // 16).astype(np.intp)
+            group_scale = scales[:, subgroups].astype(np.float64)
+            values = (d[:, None] * group_scale) * signed_quant.astype(np.float64)
+            decoded[:, start : start + 32] = values.astype(np.float32)
+    return np.ascontiguousarray(decoded.reshape(-1))
+
+
+def dequantize_matrix_q3_k_numpy(encoded: bytes, rows: int, cols: int):
+    """Vector-decode one exact row-major Q3_K matrix to ``[rows, cols]`` f32."""
+
+    if rows <= 0 or cols <= 0:
+        raise ValueError("rows and cols must be positive")
+    if cols % QK_K != 0:
+        raise ValueError("cols must be multiple of 256 for pure Q3_K rows")
+    expected = rows * (cols // QK_K) * Q3_K_BLOCK
+    if len(encoded) != expected:
+        raise ValueError(f"matrix size mismatch {len(encoded)} != {expected}")
+    return dequantize_blocks_q3_k_numpy(encoded).reshape(rows, cols)
