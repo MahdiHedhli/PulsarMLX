@@ -29,13 +29,13 @@
 
 **⚠️ CRITICAL**: No real candidate kernel result is observed before this phase is committed.
 
-- [ ] T006 [P] Add failing numerical-classification tests, including teacher-forced continuation after argmax divergence, in `scripts/research/tests/test_f018_numerical_contract.py`
-- [ ] T007 [P] Add failing evidence-contract/privacy/duplicate-key tests in `scripts/research/tests/test_f018_evidence.py`
-- [ ] T008 Implement immutable Feature 018 numerical classification in `scripts/research/f018_numerical_contract.py`
-- [ ] T009 Implement Feature 018 evidence parsing and semantic validation in `scripts/research/f018_evidence.py`
-- [ ] T010 Add failing packed-layout, shape, overflow, and malformed-request tests in `crates/stream/tests/iq2_xxs_metal.rs`
-- [ ] T011 Define the macOS-gated packed IQ2_XXS request/result and telemetry API in `crates/stream/src/apple_metal_bridge.rs`
-- [ ] T012 Validate all foundational tests, mark the frozen contract source identity, and commit the numerical/ABI boundary
+- [x] T006 [P] Add failing numerical-classification tests, including teacher-forced continuation after argmax divergence, in `scripts/research/tests/test_f018_numerical_contract.py`
+- [x] T007 [P] Add failing evidence-contract/privacy/duplicate-key tests in `scripts/research/tests/test_f018_evidence.py`
+- [x] T008 Implement immutable Feature 018 numerical classification in `scripts/research/f018_numerical_contract.py`
+- [x] T009 Implement Feature 018 evidence parsing and semantic validation in `scripts/research/f018_evidence.py`
+- [x] T010 Add failing packed-layout, shape, overflow, and malformed-request tests in `crates/stream/tests/iq2_xxs_metal.rs`
+- [x] T011 Define the macOS-gated packed IQ2_XXS request/result and telemetry API in `crates/stream/src/apple_metal_bridge.rs`
+- [x] T012 Validate all foundational tests, mark the frozen contract source identity, and commit the numerical/ABI boundary
 
 **Checkpoint**: Tolerances and failure semantics are immutable before any candidate output.
 
@@ -47,10 +47,10 @@
 
 **Independent Test**: Synthetic records exercise all four classes and every teacher-forced position remains evaluated after disagreement.
 
-- [ ] T013 [US1] Add deterministic signed-zero, non-finite, shape, route, and repeat-hash cases to `scripts/research/tests/test_f018_numerical_contract.py`
-- [ ] T014 [US1] Add a public-safe generated numerical-contract fixture in `fixtures/metal/iq2-xxs-numerical-v1.json`
-- [ ] T015 [US1] Validate deterministic fixture regeneration and exact frozen constants through `scripts/research/f018_numerical_contract.py`
-- [ ] T016 [US1] Commit and push the independently testable numerical-classification MVP
+- [x] T013 [US1] Add deterministic signed-zero, non-finite, shape, route, and repeat-hash cases to `scripts/research/tests/test_f018_numerical_contract.py`
+- [x] T014 [US1] Add a public-safe generated numerical-contract fixture in `fixtures/metal/iq2-xxs-numerical-v1.json`
+- [x] T015 [US1] Validate deterministic fixture regeneration and exact frozen constants through `scripts/research/f018_numerical_contract.py`
+- [x] T016 [US1] Commit and push the independently testable numerical-classification MVP
 
 **Checkpoint**: Numerical classification works without Metal or checkpoint access.
 

@@ -1,0 +1,28 @@
+{
+  "classes": [
+    "golden_identical",
+    "numerically_failed",
+    "numerically_qualified_greedy_divergent",
+    "numerically_qualified_greedy_identical"
+  ],
+  "contract_version": "f018-numerical-v1",
+  "envelopes": {
+    "composed": {
+      "absolute_tolerance": 0.005,
+      "cosine_minimum": 0.999,
+      "norm_ratio_maximum": 1.005,
+      "norm_ratio_minimum": 0.995,
+      "relative_tolerance": 0.005
+    },
+    "matrix": {
+      "absolute_tolerance": 0.0005,
+      "cosine_minimum": 0.999999,
+      "norm_ratio_maximum": 1.0005,
+      "norm_ratio_minimum": 0.9995,
+      "relative_tolerance": 0.0005
+    }
+  },
+  "schema": "pulsarmlx.fixture.f018-numerical-contract",
+  "schema_version": "1.0.0",
+  "teacher_forced_rule": "continue_all_frozen_positions_after_argmax_divergence"
+}
