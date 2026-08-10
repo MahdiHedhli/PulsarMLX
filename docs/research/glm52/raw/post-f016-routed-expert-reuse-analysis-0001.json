@@ -1,0 +1,116 @@
+{
+  "actual_status": "passed",
+  "boundary": {
+    "expert_id": 183,
+    "layer": 64,
+    "logical_decoded_f32_bytes": 150994944,
+    "route_history": "selected in all nine frozen golden-eight stacks"
+  },
+  "candidates": {
+    "decoded_host_rebuild": {
+      "medians": {
+        "activation_swiglu_seconds": 0.0002838540021912195,
+        "cleanup_seconds": 0.008399750986427534,
+        "contiguous_buffer_seconds": 0.0,
+        "dequant_seconds": 0.0,
+        "mlx_matrix_build_seconds": 0.014354582999658305,
+        "mlx_matrix_construct_seconds": 0.014337937500386033,
+        "mlx_matrix_eval_seconds": 1.585400605108589e-05,
+        "mlx_matvec_seconds": 0.008986624488898087,
+        "storage_read_seconds": 0.0,
+        "total_with_cleanup_seconds": 0.03208614599861903,
+        "total_without_cleanup_seconds": 0.023742915996990632,
+        "weighting_seconds": 0.00012102049367967993
+      },
+      "setup": {
+        "contiguous_buffer_seconds": 0.0,
+        "dequant_seconds": 0.21891449901158921,
+        "mlx_matrix_build_seconds": 0.0,
+        "mlx_matrix_construct_seconds": 0.0,
+        "mlx_matrix_eval_seconds": 0.0,
+        "storage_bytes_read": 11304960,
+        "storage_read_count": 3,
+        "storage_read_seconds": 0.0015246669936459512
+      },
+      "setup_rss_delta_bytes": 162578432
+    },
+    "mlx_ready_reuse": {
+      "medians": {
+        "activation_swiglu_seconds": 0.00026356249873060733,
+        "cleanup_seconds": 0.0,
+        "contiguous_buffer_seconds": 0.0,
+        "dequant_seconds": 0.0,
+        "mlx_matrix_build_seconds": 0.0,
+        "mlx_matrix_construct_seconds": 0.0,
+        "mlx_matrix_eval_seconds": 0.0,
+        "mlx_matvec_seconds": 0.0020395215033204295,
+        "storage_read_seconds": 0.0,
+        "total_with_cleanup_seconds": 0.002416916504444089,
+        "total_without_cleanup_seconds": 0.002416916504444089,
+        "weighting_seconds": 9.804150613490492e-05
+      },
+      "setup": {
+        "contiguous_buffer_seconds": 0.0,
+        "dequant_seconds": 0.22005429201817606,
+        "mlx_matrix_build_seconds": 0.011995999986538664,
+        "mlx_matrix_construct_seconds": 0.0119759579829406,
+        "mlx_matrix_eval_seconds": 2.0042003598064184e-05,
+        "storage_bytes_read": 11304960,
+        "storage_read_count": 3,
+        "storage_read_seconds": 0.0014949589822208509
+      },
+      "setup_rss_delta_bytes": 263208960
+    },
+    "transient": {
+      "medians": {
+        "activation_swiglu_seconds": 0.00027527099882718176,
+        "cleanup_seconds": 0.009363915989524685,
+        "contiguous_buffer_seconds": 9.46455038501881e-05,
+        "dequant_seconds": 0.21104637499229284,
+        "mlx_matrix_build_seconds": 0.015782166003191378,
+        "mlx_matrix_construct_seconds": 0.015358207994722761,
+        "mlx_matrix_eval_seconds": 0.0004261029971530661,
+        "mlx_matvec_seconds": 0.010805646496010013,
+        "storage_read_seconds": 0.0005755004967795685,
+        "total_with_cleanup_seconds": 0.24825829150358913,
+        "total_without_cleanup_seconds": 0.23891527100204257,
+        "weighting_seconds": 0.00011797900515375659
+      },
+      "setup": {
+        "contiguous_buffer_seconds": 0.0,
+        "dequant_seconds": 0.0,
+        "mlx_matrix_build_seconds": 0.0,
+        "mlx_matrix_construct_seconds": 0.0,
+        "mlx_matrix_eval_seconds": 0.0,
+        "storage_bytes_read": 0,
+        "storage_read_count": 0,
+        "storage_read_seconds": 0.0
+      },
+      "setup_rss_delta_bytes": 0
+    }
+  },
+  "claim_boundary": "One recurrent routed expert on one M1 Ultra; setup and reuse are process-isolated and do not establish a full MoE/layer/token speedup.",
+  "decision": {
+    "decode_remains_largest_transient_stage": true,
+    "feature_018_kernel_selected": false,
+    "mlx_build_import_dominant": false,
+    "next_gate": "P2 admission after clean-source evidence commit",
+    "retained_mlx_matrix_has_material_reuse_benefit": true,
+    "safe_static_per_layer_cache_proven": false
+  },
+  "exact_output_f32_sha256": [
+    "6368e782919c9c072f7973ca5a872b9aef55a1f9e730242f7dcb2c95ff25225e"
+  ],
+  "reuse_ratios": {
+    "decoded_host_rebuild_to_mlx_ready_reuse": 13.275653478149058,
+    "transient_to_decoded_host_rebuild": 7.737242469515473,
+    "transient_to_mlx_ready_reuse": 102.7169499017057
+  },
+  "schema": "pulsarmlx.research.glm52-routed-expert-reuse-analysis",
+  "schema_version": "1.0.0",
+  "source": {
+    "record": "docs/research/glm52/raw/post-f016-routed-expert-reuse-0001.json",
+    "sha256": "11eab57a194413129fc65edd25289113ebb33cc87c4ef0476a171ce5eca08624",
+    "source_commit": "a83276bc886add471fd847c63d47dfd980858c81"
+  }
+}

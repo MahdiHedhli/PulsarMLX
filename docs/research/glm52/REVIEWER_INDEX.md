@@ -104,6 +104,11 @@
   and [generated table](tables/post-f016-routed-residency-economics-0001.md) —
   exact P1/P2/golden route-prefix consistency, adjacent reuse, logical policy
   budgets, and explicit separation from unmeasured RSS or latency savings
+- [Bounded routed-expert lifecycle reuse](raw/post-f016-routed-expert-reuse-0001.json)
+  with [generated analysis](raw/post-f016-routed-expert-reuse-analysis-0001.json)
+  and [review table](tables/post-f016-routed-expert-reuse-0001.md) — exact
+  process-isolated transient, decoded-host, and MLX-ready reuse for the only
+  routed unit present in all nine frozen route stacks, including RSS deltas
 - [Post-Feature-016 Q5_K dense integration](raw/post-f016-trunk-q5-integration-0001.json)
   and [generated integration table](tables/post-f016-trunk-q5-integration-0001.md)
   — one complete real Q5_K MLX matrix boundary and complete layer-3 MLA,

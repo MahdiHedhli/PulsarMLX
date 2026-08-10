@@ -269,3 +269,35 @@ residency is rejected as unsafe.
 
 - [`raw/post-f016-routed-residency-economics-0001.json`](raw/post-f016-routed-residency-economics-0001.json)
 - [`tables/post-f016-routed-residency-economics-0001.md`](tables/post-f016-routed-residency-economics-0001.md)
+
+## Phase 5: decoded-buffer and MLX-ready reuse
+
+At clean source `a83276bc`, a process-isolated lifecycle study exercised layer
+64 expert 183, the only routed `(layer, expert)` unit selected in all nine
+frozen golden-eight stacks. All three candidates produced the same exact f32
+output hash across ten retained uses with normal resource pressure.
+
+The current transient lifecycle took 0.248258 s median: 0.211046 s decode,
+0.015782 s MLX build/evaluation, 0.010806 s matvec, 0.000275 s SwiGLU, and
+0.009364 s cleanup. Retaining decoded host buffers removed reads/decode but
+rebuilt MLX matrices, reducing reuse to 0.032086 s (7.74x). Retaining evaluated
+MLX matrices reduced reuse to 0.002417 s (102.72x), dominated by 0.002040 s of
+matvec. Decode remains the largest transient stage; build/import is measurable
+but not dominant.
+
+The 144-MiB logical expert produced setup RSS deltas of about 155 MiB for host
+buffers and 251 MiB for MLX-ready matrices. This validates a bounded hot pin
+but rejects extrapolation to top-one-per-layer residency without a separate
+allocator-aware admission gate. No unbounded routed cache was added.
+
+- [`raw/post-f016-routed-expert-reuse-0001.json`](raw/post-f016-routed-expert-reuse-0001.json)
+- [`raw/post-f016-routed-expert-reuse-analysis-0001.json`](raw/post-f016-routed-expert-reuse-analysis-0001.json)
+- [`tables/post-f016-routed-expert-reuse-0001.md`](tables/post-f016-routed-expert-reuse-0001.md)
+
+## Phase 6: shared-expert recheck
+
+The complete layer-8 profile retains all three protected shared matrices. Its
+shared expert costs about 0.007045 s, with zero read, decode, or build work on
+the warm path. The remaining cost is synchronized MLX matvec plus negligible
+activation/aggregation. The working shared-cache policy therefore remains
+unchanged; redesigning it would not address the current dominant cost.
