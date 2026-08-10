@@ -169,6 +169,28 @@ uv run --frozen python -m unittest scripts.research.tests.test_f018_evidence
 Real checkpoint runners additionally require the already admitted checkpoint
 through `PULSARMLX_GLM_GGUF`; no private path or checkpoint bytes are committed.
 
+## Closeout validation
+
+The local closeout passed:
+
+- 10 IQ2 and 8 IQ3 native Metal tests;
+- 2 compile-fail lifetime tests;
+- 474 complete research tests and 89 Python worker tests;
+- workspace `cargo check --workspace --all-targets` and
+  `cargo test --workspace --no-fail-fast`;
+- native MLX device smoke, 7 bounded tensor fixtures, synthetic routed-MoE,
+  and the Rust-to-worker router integration;
+- evidence/package, generated-artifact, privacy, staged-safety, Spec Kit, and
+  `git diff --check` gates.
+
+Publication commit `91572eb9` passed both Apple Silicon jobs in GitHub Actions
+run `31416369616`: `Apple Silicon workspace baseline` and
+`Apple MLX small-fixture validation`. The inherited macOS warnings remain
+documented and were not promoted to new failures.
+
+The final `Mahdi-Dev` notification was acknowledged by the repository helper at
+`2026-08-10T17:57:47Z`.
+
 ## Unsupported capabilities
 
 - no P2 or golden-eight evidence for the direct IQ2/IQ3 mode;

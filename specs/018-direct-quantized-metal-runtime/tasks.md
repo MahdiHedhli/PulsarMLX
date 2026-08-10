@@ -272,8 +272,8 @@
 - [x] T080 Generate the post-IQ3 bounded hotspot profile and select no third kernel before the measured ranking is committed
 - [x] T081 Decide optional P1 from the complete-layer gate; if admitted run exactly one clean-source P1 `[9703,21615]`, otherwise document deferral; never run P2/golden-eight
 - [x] T082 Record only format-neutral IQ3 lessons as concrete Feature 017 requirements without moving IQ3 semantics into Feature 017
-- [ ] T083 Create `F018_IQ3_DOWN_QUALIFICATION.md`, update claims/reviewer indexes, regenerate artifacts, and send the final acknowledged NTFY result
-- [ ] T084 Run IQ2/IQ3 native, lifetime, Cargo, research, privacy, generated-artifact, Spec Kit, staged-safety, `git diff --check`, push, and confirm both Apple Silicon CI jobs
+- [x] T083 Create `F018_IQ3_DOWN_QUALIFICATION.md`, update claims/reviewer indexes, regenerate artifacts, and send the final acknowledged NTFY result
+- [x] T084 Run IQ2/IQ3 native, lifetime, Cargo, research, privacy, generated-artifact, Spec Kit, staged-safety, `git diff --check`, push, and confirm both Apple Silicon CI jobs
 
 ### IQ3 extension dependencies
 
