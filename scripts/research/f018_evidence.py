@@ -62,6 +62,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"record is not public-safe: {exc}") from exc
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":
         return _validate_routed_expert_record(record)
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
+        return _validate_moe_record(record)
     if record.get("schema") != "pulsarmlx.research.f018-direct-iq2-xxs":
         raise ValueError("unexpected Feature 018 schema")
     if record.get("schema_version") != "1.0.0":
@@ -244,6 +246,110 @@ def _validate_routed_expert_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("routed-expert boundary resource state is not normal")
     if not record.get("unsupported_interpretations"):
         raise ValueError("routed-expert unsupported interpretations are required")
+    return record
+
+
+def _validate_moe_record(record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("schema_version") != "1.0.0" or record.get("actual_status") != "passed":
+        raise ValueError("MoE evidence must use schema 1.0.0 and pass")
+    if record.get("classification") not in CLASSES:
+        raise ValueError("MoE classification is unsupported")
+    source = record.get("source", {})
+    if not _HEX40.fullmatch(str(source.get("commit", ""))) or source.get("dirty") is not False:
+        raise ValueError("MoE source must be a clean commit")
+    checkpoint = record.get("checkpoint", {})
+    if (
+        not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", "")))
+        or checkpoint.get("file_count") != 6
+        or checkpoint.get("total_bytes") != 238_458_632_928
+    ):
+        raise ValueError("MoE checkpoint identity changed")
+    binding = record.get("binding", {})
+    if (
+        binding.get("layer") != 3
+        or binding.get("expert_ids") != [15, 177, 10, 233, 166, 41, 152, 26]
+        or binding.get("shared_expert") != 0
+        or binding.get("historical_reference_hash_match") is not True
+    ):
+        raise ValueError("MoE frozen route or historical reference binding changed")
+    for field in (
+        "residual_sha256",
+        "reference_output_sha256",
+        "historical_reference_output_sha256",
+    ):
+        if not _HEX64.fullmatch(str(binding.get(field, ""))):
+            raise ValueError(f"MoE {field} is malformed")
+    if binding["reference_output_sha256"] != binding["historical_reference_output_sha256"]:
+        raise ValueError("MoE current reference does not match committed historical evidence")
+    worker = record.get("worker", {})
+    if worker.get("source_commit") != source["commit"] or worker.get("max_resident_matrices") != 2:
+        raise ValueError("MoE worker identity or residency bound changed")
+    protocol = record.get("protocol", {})
+    if (
+        protocol.get("optimized_reference_warmups") != 3
+        or protocol.get("optimized_reference_measured") != 10
+        or protocol.get("direct_warmups") != 3
+        or protocol.get("direct_measured") != 10
+        or protocol.get("direct_compressed_slot_limit") != 2
+    ):
+        raise ValueError("MoE sample protocol changed")
+    numerical = record.get("numerical_qualification", {})
+    if (
+        numerical.get("contract_version") != "f018-numerical-v1"
+        or numerical.get("classification") != record["classification"]
+        or numerical.get("numerically_qualified") is not True
+        or numerical.get("deterministic") is not True
+        or numerical.get("routes_match") is not True
+        or numerical.get("elementwise_mismatch_count") != 0
+        or numerical.get("signed_zero_mismatch_count") != 0
+        or numerical.get("cpu_fallback_count") != 0
+        or numerical.get("complete_f32_weight_materialized_bytes") != 0
+    ):
+        raise ValueError("MoE numerical qualification failed")
+    reference_samples = record.get("optimized_reference", {}).get("samples")
+    direct_samples = record.get("direct_samples")
+    if not isinstance(reference_samples, list) or len(reference_samples) != 10:
+        raise ValueError("MoE optimized-reference raw samples are incomplete")
+    if not isinstance(direct_samples, list) or len(direct_samples) != 10:
+        raise ValueError("MoE direct raw samples are incomplete")
+    hashes = set()
+    previous_evictions = -1
+    for sample in direct_samples:
+        hashes.add(sample.get("output_f32_sha256"))
+        direct = sample.get("direct_iq2", {})
+        evictions = direct.get("evictions_cumulative_end")
+        if (
+            direct.get("matrix_count") != 16
+            or direct.get("storage_read_count") != 16
+            or direct.get("cache_hits") != 0
+            or direct.get("resident_entries_end") != 2
+            or not isinstance(evictions, int)
+            or evictions <= previous_evictions
+            or direct.get("cpu_fallback_count") != 0
+            or direct.get("complete_f32_weight_materialized_bytes") != 0
+        ):
+            raise ValueError("MoE bounded direct-IQ2 lifecycle failed")
+        previous_evictions = evictions
+        if sample.get("shared_reference", {}).get("cache_hits") != 3:
+            raise ValueError("MoE protected shared reference did not retain three hits")
+        if sample.get("resource_after", {}).get("level") != "normal":
+            raise ValueError("MoE sample resource state is not normal")
+    if len(hashes) != 1 or not _HEX64.fullmatch(str(next(iter(hashes), ""))):
+        raise ValueError("MoE direct outputs are not deterministic")
+    process_first = record.get("process_first_direct", {}).get("direct_iq2", {})
+    if (
+        process_first.get("matrix_count") != 16
+        or process_first.get("storage_read_count") != 16
+        or process_first.get("cache_hits") != 0
+        or process_first.get("evictions_cumulative_end") != 14
+    ):
+        raise ValueError("MoE process-first lifecycle is malformed")
+    if record.get("resource_before", {}).get("level") != "normal" or record.get(
+        "resource_after", {}
+    ).get("level") != "normal":
+        raise ValueError("MoE boundary resource state is not normal")
+    if not record.get("unsupported_interpretations"):
+        raise ValueError("MoE unsupported interpretations are required")
     return record
 
 

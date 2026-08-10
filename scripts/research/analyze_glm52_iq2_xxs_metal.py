@@ -68,6 +68,55 @@ def _render_routed_expert(record: dict, raw_sha256: str) -> str:
     )
 
 
+def _render_moe(record: dict, raw_sha256: str) -> str:
+    binding = record["binding"]
+    numerical = record["numerical_qualification"]
+    reference = record["optimized_reference"]["summaries"]
+    direct = record["direct_summaries"]
+    process_first = record["process_first_direct"]["direct_iq2"]
+    reference_total = reference["total_seconds"]["median_seconds"]
+    direct_total = direct["total_seconds"]["median_seconds"]
+    rows = [
+        ("Current decode", reference["dequant_seconds"]["median_seconds"]),
+        ("Current MLX build/eval", reference["mlx_matrix_build_eval_seconds"]["median_seconds"]),
+        ("Current MLX matvec", reference["mlx_matvec_seconds"]["median_seconds"]),
+        ("Current total", reference_total),
+        ("Direct routed IQ2 storage", direct["direct_iq2.storage_read_seconds"]["median_seconds"]),
+        ("Direct routed IQ2 GPU interval", direct["direct_iq2.kernel_seconds"]["median_seconds"]),
+        ("Direct routed IQ2 synchronized total", direct["direct_iq2.total_seconds"]["median_seconds"]),
+        ("Reference routed IQ3 down decode", direct["routed_down_reference.dequant_seconds"]["median_seconds"]),
+        ("Reference routed IQ3 down MLX build", direct["routed_down_reference.mlx_matrix_build_seconds"]["median_seconds"]),
+        ("Reference routed IQ3 down matvec", direct["routed_down_reference.mlx_matvec_seconds"]["median_seconds"]),
+        ("Router", direct["router_seconds"]["median_seconds"]),
+        ("Shared reference expert", direct["shared_reference.total_seconds"]["median_seconds"]),
+        ("Direct candidate total", direct_total),
+    ]
+    return "\n".join(
+        [
+            "# Feature 018 top-8 plus shared MoE gate",
+            "",
+            "> One real layer-3 MoE boundary only; routed IQ2_XXS gate/up is direct Metal while routed down and all shared-expert projections remain on qualified reference paths.",
+            "",
+            f"- Source: `{record['source']['commit']}` (clean)",
+            f"- Raw SHA-256: `{raw_sha256}`",
+            f"- Checkpoint set: `{record['checkpoint']['checkpoint_set_sha256']}`",
+            f"- Top-8 route: `{binding['expert_ids']}`; shared expert: `{binding['shared_expert']}`",
+            f"- Current reference hash matches committed Feature 016 evidence: `{str(binding['historical_reference_hash_match']).lower()}`",
+            f"- Classification: `{record['classification']}`; tolerance mismatches: `{numerical['elementwise_mismatch_count']}`; max absolute error: `{numerical['maximum_absolute_error']:.9g}`",
+            f"- Direct worker process-first: `{process_first['matrix_count']}` matrices, `{process_first['storage_read_count']}` reads, `{process_first['storage_bytes_read']}` bytes, `{process_first['evictions_cumulative_end']}` bounded slot evictions.",
+            "",
+            "| Component | Median (s) |",
+            "| --- | ---: |",
+            *(f"| {name} | {value:.9f} |" for name, value in rows),
+            "",
+            f"For this bounded top-8 plus shared block, the optimized-reference median is `{reference_total:.9f}` s and the candidate median is `{direct_total:.9f}` s (ratio `{reference_total / direct_total:.2f}×`; absolute difference `{reference_total - direct_total:.9f}` s).",
+            "",
+            "The two-slot worker intentionally rereads routed gate/up slabs at this rung; it proves bounded lifecycle behavior, not a routed-residency policy. This is not a complete-layer or model speedup claim.",
+            "",
+        ]
+    )
+
+
 def _render_real_matrix(record: dict, raw_sha256: str) -> str:
     binding = record["binding"]
     correctness = record["correctness"]
@@ -136,6 +185,8 @@ def _render_real_matrix(record: dict, raw_sha256: str) -> str:
 
 
 def render(record: dict, raw_sha256: str) -> str:
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
+        return _render_moe(record, raw_sha256)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":
         return _render_routed_expert(record, raw_sha256)
     if "tensor_name" in record.get("binding", {}):
