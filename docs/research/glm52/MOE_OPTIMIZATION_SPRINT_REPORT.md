@@ -140,3 +140,14 @@ from 2.550016 s scalar to 0.135837 s NumPy (18.77x).
 
 - [`raw/post-f016-q3-k-numpy-qualification-0001.json`](raw/post-f016-q3-k-numpy-qualification-0001.json)
 - [`tables/post-f016-q3-k-numpy-qualification-0001.md`](tables/post-f016-q3-k-numpy-qualification-0001.md)
+
+Combined exact Q2_K/Q3_K integration reduced the same layer-78 MoE median to
+3.828766 s: 14.72x versus the 56.373736-second baseline and 5.98x versus the
+Q2_K-only boundary. Median routed decode is now 3.471512 s, MLX construct/eval
+0.120354 s, matvec 0.087634 s, cleanup 0.076701 s, and residual 0.003052 s.
+The remaining Q2_K and Q3_K vector decode is measurable but layer 8's
+42.965916-second scalar IQ2_S/IQ4_XS path is now the larger absolute target.
+
+- [`raw/post-f016-moe-layer78-q2-q3-0001.json`](raw/post-f016-moe-layer78-q2-q3-0001.json)
+- [`raw/post-f016-moe-layer78-q2-q3-analysis-0001.json`](raw/post-f016-moe-layer78-q2-q3-analysis-0001.json)
+- [`tables/post-f016-moe-layer78-q2-q3-0001.md`](tables/post-f016-moe-layer78-q2-q3-0001.md)
