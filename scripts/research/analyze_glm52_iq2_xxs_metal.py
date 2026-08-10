@@ -117,6 +117,52 @@ def _render_moe(record: dict, raw_sha256: str) -> str:
     )
 
 
+def _render_complete_layer(record: dict, raw_sha256: str) -> str:
+    binding = record["binding"]
+    numerical = record["numerical_qualification"]
+    reference = record["optimized_reference"]["summaries"]
+    direct_layer = record["direct_summaries"]["layer"]
+    direct_moe = record["direct_summaries"]["moe"]
+    reference_total = reference["total_seconds"]["median_seconds"]
+    direct_total = direct_layer["total_seconds"]["median_seconds"]
+    absolute = reference_total - direct_total
+    reduction = absolute / reference_total
+    rows = [
+        ("Current attention/MLA", reference["attention_seconds"]["median_seconds"]),
+        ("Current MoE", reference["moe_seconds"]["median_seconds"]),
+        ("Current complete layer", reference_total),
+        ("Candidate attention/MLA", direct_layer["attention_seconds"]["median_seconds"]),
+        ("Candidate MoE", direct_layer["moe_seconds"]["median_seconds"]),
+        ("Candidate direct routed IQ2", direct_moe["direct_iq2.total_seconds"]["median_seconds"]),
+        ("Candidate routed IQ3 down decode", direct_moe["routed_down_reference.dequant_seconds"]["median_seconds"]),
+        ("Candidate complete layer", direct_total),
+    ]
+    return "\n".join(
+        [
+            "# Feature 018 complete layer-3 gate",
+            "",
+            "> One real layer-3 MLA plus top-8/shared MoE boundary; not a 79-layer stack or token-generation result.",
+            "",
+            f"- Source: `{record['source']['commit']}` (clean)",
+            f"- Raw SHA-256: `{raw_sha256}`",
+            f"- Checkpoint set: `{record['checkpoint']['checkpoint_set_sha256']}`",
+            f"- Input token: `{binding['input_token_id']}`; midpoint SHA-256: `{binding['midpoint_sha256']}`",
+            f"- Top-8 route: `{binding['expert_ids']}`",
+            f"- Current reference matches committed layer-3 evidence: `{str(binding['historical_reference_hash_match']).lower()}`",
+            f"- Classification: `{record['classification']}`; tolerance mismatches: `{numerical['elementwise_mismatch_count']}`; max absolute error: `{numerical['maximum_absolute_error']:.9g}`",
+            "",
+            "| Boundary/component | Median (s) |",
+            "| --- | ---: |",
+            *(f"| {name} | {value:.9f} |" for name, value in rows),
+            "",
+            f"The candidate reduces this bounded complete-layer median by `{absolute:.9f}` s (`{reduction:.1%}`), from `{reference_total:.9f}` s to `{direct_total:.9f}` s. This is material for the frozen Feature 018 P1 admission decision.",
+            "",
+            "Attention/MLA and IQ3 down remain reference paths. The result does not establish full-stack or user-visible latency improvement.",
+            "",
+        ]
+    )
+
+
 def _render_real_matrix(record: dict, raw_sha256: str) -> str:
     binding = record["binding"]
     correctness = record["correctness"]
@@ -185,6 +231,8 @@ def _render_real_matrix(record: dict, raw_sha256: str) -> str:
 
 
 def render(record: dict, raw_sha256: str) -> str:
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
+        return _render_complete_layer(record, raw_sha256)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
         return _render_moe(record, raw_sha256)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":

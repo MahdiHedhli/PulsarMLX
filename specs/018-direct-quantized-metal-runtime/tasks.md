@@ -101,9 +101,9 @@
 - [x] T031 [US3] Add a complete routed-expert candidate in `scripts/research/benchmark_glm52_routed_expert_metal.py` and retain IQ3_XXS down on the qualified reference path
 - [x] T032 [US3] Run and commit one qualified routed expert record under `docs/research/glm52/raw/`
 - [x] T033 [US3] Add and run the eligible top-8 plus shared MoE rung through the bounded `scripts/research/benchmark_glm52_moe_metal.py` profile
-- [ ] T034 [US3] Add and run the eligible representative complete-layer rung through `scripts/research/benchmark_glm52_complete_layer.py`
-- [ ] T035 [US3] Generate before/after absolute-opportunity analysis and decide whether complete-layer improvement is material in `scripts/research/analyze_glm52_iq2_xxs_metal.py`
-- [ ] T036 [US3] Commit and push the deepest qualified bounded rung
+- [x] T034 [US3] Add and run the eligible representative complete-layer rung through `scripts/research/benchmark_glm52_complete_layer_metal.py`
+- [x] T035 [US3] Generate before/after absolute-opportunity analysis and decide that the 0.742-second (30.5%) complete-layer median reduction is material in `scripts/research/analyze_glm52_iq2_xxs_metal.py`
+- [x] T036 [US3] Commit and push the deepest qualified bounded rung
 
 **Checkpoint**: Rungs F-H stop at the first divergence, unsafe resource state, or non-material design result.
 

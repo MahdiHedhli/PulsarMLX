@@ -64,6 +64,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         return _validate_routed_expert_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
         return _validate_moe_record(record)
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
+        return _validate_complete_layer_record(record)
     if record.get("schema") != "pulsarmlx.research.f018-direct-iq2-xxs":
         raise ValueError("unexpected Feature 018 schema")
     if record.get("schema_version") != "1.0.0":
@@ -350,6 +352,114 @@ def _validate_moe_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("MoE boundary resource state is not normal")
     if not record.get("unsupported_interpretations"):
         raise ValueError("MoE unsupported interpretations are required")
+    return record
+
+
+def _validate_complete_layer_record(record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("schema_version") != "1.0.0" or record.get("actual_status") != "passed":
+        raise ValueError("complete-layer evidence must use schema 1.0.0 and pass")
+    if record.get("classification") not in CLASSES:
+        raise ValueError("complete-layer classification is unsupported")
+    source = record.get("source", {})
+    if not _HEX40.fullmatch(str(source.get("commit", ""))) or source.get("dirty") is not False:
+        raise ValueError("complete-layer source must be a clean commit")
+    checkpoint = record.get("checkpoint", {})
+    if (
+        not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", "")))
+        or checkpoint.get("file_count") != 6
+        or checkpoint.get("total_bytes") != 238_458_632_928
+    ):
+        raise ValueError("complete-layer checkpoint identity changed")
+    binding = record.get("binding", {})
+    if (
+        binding.get("layer") != 3
+        or binding.get("input_token_id") != 9703
+        or not isinstance(binding.get("expert_ids"), list)
+        or len(binding["expert_ids"]) != 8
+        or binding.get("historical_reference_hash_match") is not True
+    ):
+        raise ValueError("complete-layer frozen input, route, or history binding changed")
+    for field in (
+        "input_sha256",
+        "midpoint_sha256",
+        "reference_output_sha256",
+        "historical_reference_output_sha256",
+    ):
+        if not _HEX64.fullmatch(str(binding.get(field, ""))):
+            raise ValueError(f"complete-layer {field} is malformed")
+    if binding["reference_output_sha256"] != binding["historical_reference_output_sha256"]:
+        raise ValueError("complete-layer current reference does not match historical evidence")
+    worker = record.get("worker", {})
+    if worker.get("source_commit") != source["commit"] or worker.get("max_resident_matrices") != 2:
+        raise ValueError("complete-layer worker identity or residency bound changed")
+    protocol = record.get("protocol", {})
+    if (
+        protocol.get("optimized_reference_warmups") != 3
+        or protocol.get("optimized_reference_measured") != 10
+        or protocol.get("direct_warmups") != 3
+        or protocol.get("direct_measured") != 10
+        or protocol.get("direct_compressed_slot_limit") != 2
+    ):
+        raise ValueError("complete-layer sample protocol changed")
+    numerical = record.get("numerical_qualification", {})
+    if (
+        numerical.get("contract_version") != "f018-numerical-v1"
+        or numerical.get("classification") != record["classification"]
+        or numerical.get("numerically_qualified") is not True
+        or numerical.get("identity_matches") is not True
+        or numerical.get("routes_match") is not True
+        or numerical.get("deterministic") is not True
+        or numerical.get("elementwise_mismatch_count") != 0
+        or numerical.get("signed_zero_mismatch_count") != 0
+        or numerical.get("cpu_fallback_count") != 0
+        or numerical.get("complete_f32_weight_materialized_bytes") != 0
+    ):
+        raise ValueError("complete-layer numerical qualification failed")
+    reference_samples = record.get("optimized_reference", {}).get("samples")
+    direct_samples = record.get("direct_samples")
+    if not isinstance(reference_samples, list) or len(reference_samples) != 10:
+        raise ValueError("complete-layer optimized-reference raw samples are incomplete")
+    if not isinstance(direct_samples, list) or len(direct_samples) != 10:
+        raise ValueError("complete-layer direct raw samples are incomplete")
+    reference_hashes = {sample.get("output_f32_sha256") for sample in reference_samples}
+    direct_hashes = {sample.get("output_f32_sha256") for sample in direct_samples}
+    midpoint_hashes = {
+        sample.get("midpoint_f32_sha256") for sample in reference_samples + direct_samples
+    }
+    if (
+        reference_hashes != {binding["reference_output_sha256"]}
+        or len(direct_hashes) != 1
+        or not _HEX64.fullmatch(str(next(iter(direct_hashes), "")))
+        or midpoint_hashes != {binding["midpoint_sha256"]}
+    ):
+        raise ValueError("complete-layer outputs or midpoint are not deterministic")
+    for sample in direct_samples:
+        direct = sample.get("moe", {}).get("direct_iq2", {})
+        if (
+            direct.get("matrix_count") != 16
+            or direct.get("storage_read_count") != 16
+            or direct.get("cpu_fallback_count") != 0
+            or direct.get("complete_f32_weight_materialized_bytes") != 0
+            or sample.get("moe", {}).get("shared_reference", {}).get("cache_hits") != 3
+            or sample.get("resource_after", {}).get("level") != "normal"
+        ):
+            raise ValueError("complete-layer direct lifecycle or resource gate failed")
+    reference_median = record.get("optimized_reference", {}).get("summaries", {}).get(
+        "total_seconds", {}
+    ).get("median_seconds")
+    direct_median = record.get("direct_summaries", {}).get("layer", {}).get(
+        "total_seconds", {}
+    ).get("median_seconds")
+    if not isinstance(reference_median, (int, float)) or not isinstance(
+        direct_median, (int, float)
+    ) or direct_median >= reference_median:
+        raise ValueError("complete-layer candidate did not reduce the measured median")
+    if record.get("resource_before", {}).get("level") != "normal" or record.get(
+        "resource_after", {}
+    ).get("level") != "normal":
+        raise ValueError("complete-layer boundary resource state is not normal")
+    if not record.get("unsupported_interpretations"):
+        raise ValueError("complete-layer unsupported interpretations are required")
     return record
 
 
