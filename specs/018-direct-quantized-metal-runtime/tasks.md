@@ -155,7 +155,7 @@
 - [x] T053 Add explicit native in-flight registration accounting and completion-handler retention for every submitted command
 - [x] T054 Add submit/wait/destroy, attempted early destroy/reuse, repeated lifecycle, error/cancellation, and generation-protection tests
 - [x] T055 Evaluate IQ2 grid/sign tables in Metal constant address space and retain the change only if exactness and bounded safety pass
-- [ ] T056 Document the generic Feature 017 lifecycle/telemetry boundary versus Feature 018 format-specific kernel ownership
+- [x] T056 Document the generic Feature 017 lifecycle/telemetry boundary versus Feature 018 format-specific kernel ownership
 
 ---
 
