@@ -203,6 +203,11 @@
   and [generated table](tables/post-f016-moe-layer8-iq2-s-iq4-xs-0001.md)
   — exact scalar-reference output/routes and a complete three-rung stage
   comparison showing the exceptional scalar decoder hotspot collapsed
+- [Post-Feature-016 final bounded multi-layer MoE profile](raw/post-f016-moe-multilayer-all-vector-0001.json),
+  [derived analysis](raw/post-f016-moe-multilayer-all-vector-analysis-0001.json),
+  and [generated table](tables/post-f016-moe-multilayer-all-vector-0001.md)
+  — 60 exact scalar-reference samples across layers 8, 40, 75–78, current
+  individual expert rankings, per-format costs, and stage decomposition
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

@@ -197,3 +197,23 @@ construct/eval 0.125503 s, matvec 0.071072 s, cleanup 0.078595 s, and residual
 - [`raw/post-f016-moe-layer8-iq2-s-iq4-xs-0001.json`](raw/post-f016-moe-layer8-iq2-s-iq4-xs-0001.json)
 - [`raw/post-f016-moe-layer8-iq2-s-iq4-xs-analysis-0001.json`](raw/post-f016-moe-layer8-iq2-s-iq4-xs-analysis-0001.json)
 - [`tables/post-f016-moe-layer8-iq2-s-iq4-xs-0001.md`](tables/post-f016-moe-layer8-iq2-s-iq4-xs-0001.md)
+
+## Phase 7 result: final bounded multi-layer reprofile
+
+At clean source `7b4e51ee`, layers 8, 40, 75, 76, 77, and 78 each passed ten
+retained exact scalar-reference output/route comparisons. All 60 samples had
+normal resource observations, with zero fallback and eviction. MoE medians are
+1.659900 s, 1.720982 s, 1.462585 s, 1.457447 s, 1.449233 s, and 3.845930 s
+respectively. The formerly exceptional IQ4_XS layers 75–77 now sit below the
+representative layer-40 IQ2_XXS/IQ3_XXS boundary.
+
+Vectorized decode remains the largest bounded stage: 1.10–1.36 s for layers
+8/40/75–77 and 3.483794 s for layer 78. MLX build/eval is about 0.12–0.13 s,
+matvec 0.07–0.09 s, cleanup 0.08–0.09 s, and retained shared-expert execution
+about 0.007 s per boundary. This profile resolves individual expert and
+projection costs but is not a full-token population and therefore does not by
+itself select a Feature 018 kernel.
+
+- [`raw/post-f016-moe-multilayer-all-vector-0001.json`](raw/post-f016-moe-multilayer-all-vector-0001.json)
+- [`raw/post-f016-moe-multilayer-all-vector-analysis-0001.json`](raw/post-f016-moe-multilayer-all-vector-analysis-0001.json)
+- [`tables/post-f016-moe-multilayer-all-vector-0001.md`](tables/post-f016-moe-multilayer-all-vector-0001.md)
