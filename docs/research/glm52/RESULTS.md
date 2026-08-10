@@ -68,6 +68,11 @@ gates passed
 | layer-3 top-8 + shared MoE with vector IQ2_XXS + IQ3_XXS | **passed** — independent CPU oracle 0 mismatches; exact route/mode bits; 1.698580 s vs 34.964010 s warm median (20.58×) |
 | complete layer 3 with vector IQ2_XXS + IQ3_XXS | **passed** — frozen attention midpoint/routes; exact mode bits; 19.391364 s vs 52.924374 s warm median (2.73×) |
 | P1 with vector IQ2_XXS + IQ3_XXS | **passed** — golden `[9703,21615]`; 4582.511 s; 228 shared hits; zero fallback |
+| direct packed IQ3_XXS down matrix | **passed Tier B** — 0.000611 s strict Metal vs 0.123235 s optimized NumPy+MLX median at the same boundary |
+| direct IQ2/IQ3 complete routed expert | **passed Tier B** — 0.018808 s vs 0.269965 s optimized reference median (14.35x) |
+| direct IQ2/IQ3 layer-3 top-8 plus shared MoE | **passed Tier B** — 0.226395 s vs 1.705199 s optimized reference median (7.53x); shared remains reference |
+| direct IQ2/IQ3 complete layer 3 | **passed Tier B** — 0.950992 s vs 2.677491 s optimized reference median (2.82x) |
+| direct IQ2/IQ3 exact P1 | **passed** — golden `[9703,21615]`; 990.044 s; 228 protected shared hits; zero CPU fallback/direct error |
 | revised P1 mixed-quant ranking | **passed** — Q6_K is now first at 468.856 s / 39.55% of quantified component time; shared residency avoids its warm-stack reload |
 | real matrix load/build/matvec | **passed** — 1 vector read vs 2048 scalar reads; exact deterministic output; 0.090525 s vs 1.393479 s median total |
 | complete routed expert | **passed** — CPU oracle 0 mismatches; exact deterministic MLX modes; 1.706290 s vs 4.365715 s median total |
@@ -127,6 +132,13 @@ Dense trunk operations are outside these counters. The material residual is not
 a direct trunk or cleanup measurement; it requires representative MLA/attention,
 dense transform, embedding, final norm/output, and Q6_K trunk fixture measurements
 before the first kernel in provisional Feature 018 can be selected.
+
+Feature 018 subsequently qualified packed IQ2_XXS gate/up and packed IQ3_XXS
+down kernels through an exact combined P1. The one-layer post-IQ3 profile ranks
+dense/trunk dequantization at 0.651696 s above the 0.207312 s complete MoE
+boundary. That bounded result defers a third expert kernel; it does not select a
+full-stack next target. See
+[`F018_IQ3_DOWN_QUALIFICATION.md`](F018_IQ3_DOWN_QUALIFICATION.md).
 
 The checkpoint-free [post-run calculation report](POST_GOLDEN8_CALCULATIONS.md)
 with its [machine-readable record](raw/f016-golden8-post-run-calculations-0001.json)

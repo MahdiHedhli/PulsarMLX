@@ -17,6 +17,15 @@
 7. The passive watcher began after the cold and first warm stacks. It preserved
    eight complete snapshots and seven valid warm intervals, but cannot provide
    cold per-quant deltas; no missing earlier snapshot was reconstructed.
+8. Feature 018 direct IQ2/IQ3 results are bounded to one M1 Ultra, one
+   checkpoint, selected layer-3 boundaries, and one exact P1. They do not
+   establish P2, golden-eight, steady-state throughput, or production use.
+9. The combined research worker has three routed compressed slots and therefore
+   rotates expert slabs. Its eviction count is not a production-cache result and
+   is distinct from the protected decoded shared-expert cache.
+10. The isolated IQ3 kernel follows the Python research-path byte
+    interpretation. Shipping integration still requires a formal cross-runtime
+    packed-format fixture.
 
 ## Policy
 

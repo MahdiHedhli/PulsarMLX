@@ -440,6 +440,28 @@ at 55.750817 s across 1,184 matrix touches. This does not claim a Metal kernel
 exists or predict its speedup. Full evidence and caveats are in
 [`docs/research/glm52/MOE_OPTIMIZATION_SPRINT_REPORT.md`](docs/research/glm52/MOE_OPTIMIZATION_SPRINT_REPORT.md).
 
+### Feature 018 direct IQ2/IQ3 qualification
+
+The strict packed IQ3_XXS down scaffold passed its frozen Tier B numerical
+contract and materially beat the optimized NumPy+MLX reference at the same real
+matrix boundary: 0.000610605 s versus 0.123234876 s median. Composed direct
+IQ2 gate/up plus IQ3 down measured 0.018807751 s for one routed expert,
+0.226394771 s for layer-3 top-8 plus shared MoE, and 0.950992354 s for the
+complete layer, versus same-boundary optimized-reference medians of
+0.269965292, 1.705199125, and 2.677491229 s.
+
+One clean-source P1 reproduced exact `[9703,21615]` in 990.044242625 s total,
+with an 833.188530042 s cold stack, 77.987068333 s logits boundary, and
+78.446275458 s terminal warm stack. It recorded 1,136 direct routed experts,
+80 intentional explicit references, 3,408 direct GEMVs, 228 protected shared
+hits, and zero CPU fallback/direct error. This is one correctness run, not a
+timing population.
+
+The post-IQ3 bounded layer profile places dense/trunk dequantization first at
+0.651695598 s, ahead of the 0.207311958 s MoE boundary. No third kernel is
+selected from this one-layer evidence. The complete report is
+[`docs/research/glm52/F018_IQ3_DOWN_QUALIFICATION.md`](docs/research/glm52/F018_IQ3_DOWN_QUALIFICATION.md).
+
 ## Limitations
 
 - Python research runtime, not a production server

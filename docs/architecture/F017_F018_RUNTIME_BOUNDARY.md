@@ -13,6 +13,10 @@ only through focused commits or an explicit later integration change.
 - No-copy Metal registration lifecycle and in-flight completion safety.
 - Generic backend timing, dispatch, failure, and resource telemetry.
 - Native-ready compressed residency representation and bounded admission.
+- Format-neutral capability descriptors for more than one packed format and
+  projection role, without embedding a quantization layout in the runtime.
+- A format-independent multi-projection request/response contract whose slot,
+  generation, cancellation, and completion ownership remains explicit.
 - Generic direct/reference dispatch contract.
 - Validation-mode fail-closed semantics: a selected direct operation that
   fails cannot recover to reference and produce a passing validation record.
@@ -29,7 +33,8 @@ specific shader geometry.
 - IQ2_XXS parameter validation and packed GEMV dispatch.
 - IQ2_XXS numerical qualification, evidence schema, and benchmark ladder.
 - Any future IQ2 performance kernel and its separate Tier-B qualification.
-- Any future IQ3 implementation after its own admission gate.
+- IQ3_XXS packed layout, lookup identities, same-order oracle, deterministic
+  qualification scaffold, dispatch, and numerical evidence.
 
 Feature 018 can consume the shared ownership and telemetry contracts but does
 not become the permanent allocator, cache policy, scheduler, or generation
@@ -40,7 +45,16 @@ loop.
 The Feature 018 branch selectively carries reviewed stable-slab and no-copy
 registration lineage. Its post-Opus hardening adds completion-handler retention
 and native in-flight accounting that are candidates for a focused Feature 017
-integration review. No wholesale branch merge has occurred.
+integration review. The composed IQ2/IQ3 ladder also demonstrates that one
+worker context can own multiple strict Metal pipelines and a bounded set of
+generation-protected compressed slots. Generic telemetry must therefore retain
+format and role as data fields while direct failures remain fatal in validation
+mode and intentionally unsupported roles remain explicit reference dispatches.
+No wholesale branch merge has occurred.
+
+Only these format-neutral lessons are Feature 017 inputs. IQ3 block tables,
+bit extraction, tensor names, shape assumptions, shader source, tolerances, and
+format-specific evidence remain Feature 018 responsibilities.
 
 The Python worker remains a bounded research bridge. A shipping runtime should
 invoke the same generic native contract from Rust orchestration without a

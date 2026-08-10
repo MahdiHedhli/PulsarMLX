@@ -90,6 +90,15 @@ class F018EvidenceTests(unittest.TestCase):
         "f018-iq2-lookup-address-space-0001.json": "F018-LOOKUP-001",
         "f018-post-opus-qualification-0001.json": "F018-POSTOPUS-001",
     }
+    IQ3_ARTIFACTS = {
+        "f018-iq3-xxs-synthetic-0001.json": "F018-IQ3-SYNTHETIC-001",
+        "f018-iq3-xxs-down-matrix-0001.json": "F018-IQ3-MATRIX-001",
+        "f018-iq2-iq3-routed-expert-0001.json": "F018-IQ3-EXPERT-001",
+        "f018-iq2-iq3-moe-layer3-0001.json": "F018-IQ3-MOE-001",
+        "f018-iq2-iq3-complete-layer3-0001.json": "F018-IQ3-LAYER-001",
+        "f018-iq3-post-layer-hotspots-0001.json": "F018-IQ3-HOTSPOT-001",
+        "f018-inference-p1-direct-iq2-iq3-0001.json": "F018-IQ3-P1-001",
+    }
 
     def test_iq3_synthetic_contract_accepts_only_strict_distinct_dispatch(self) -> None:
         record = valid_record()
@@ -118,7 +127,7 @@ class F018EvidenceTests(unittest.TestCase):
     def test_feature018_claims_ledger_resolves_every_public_record(self) -> None:
         ledger = (ROOT / "docs/research/glm52/CLAIMS_LEDGER.md").read_text()
         # Gate and up share the single F018-MATRIX-001 claim row.
-        self.assertEqual(ledger.count("| F018-"), 10)
+        self.assertEqual(ledger.count("| F018-"), 17)
         for filename, source in self.FEATURE_ARTIFACTS.items():
             with self.subTest(filename=filename):
                 self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
@@ -128,11 +137,17 @@ class F018EvidenceTests(unittest.TestCase):
                 self.assertIn(f"| {claim_id} | verified |", ledger)
                 self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
                 self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
+        for filename, claim_id in self.IQ3_ARTIFACTS.items():
+            with self.subTest(filename=filename):
+                self.assertIn(f"| {claim_id} | verified |", ledger)
+                self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
+                self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
 
     def test_feature018_reviewer_index_resolves_raw_tables_contract_and_review(self) -> None:
         index = (ROOT / "docs/research/glm52/REVIEWER_INDEX.md").read_text()
         self.assertIn("F018_OVERNIGHT_REVIEW.md", index)
         self.assertIn("F018_POST_OPUS_QUALIFICATION.md", index)
+        self.assertIn("F018_IQ3_DOWN_QUALIFICATION.md", index)
         self.assertIn(
             "../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md",
             index,
@@ -153,6 +168,18 @@ class F018EvidenceTests(unittest.TestCase):
             with self.subTest(filename=filename):
                 self.assertIn(f"raw/{filename}", index)
                 self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
+        for filename in self.IQ3_ARTIFACTS:
+            with self.subTest(filename=filename):
+                self.assertIn(f"raw/{filename}", index)
+                self.assertIn(f"tables/{filename.removesuffix('.json')}.md", index)
+                self.assertTrue((ROOT / "docs/research/glm52/raw" / filename).is_file())
+                self.assertTrue(
+                    (
+                        ROOT
+                        / "docs/research/glm52/tables"
+                        / filename.replace(".json", ".md")
+                    ).is_file()
+                )
 
     def test_feature018_publication_has_no_private_paths_or_credentials(self) -> None:
         paths = [
@@ -160,6 +187,7 @@ class F018EvidenceTests(unittest.TestCase):
             *(ROOT / "docs/research/glm52/tables").glob("f018*.md"),
             ROOT / "docs/research/glm52/F018_OVERNIGHT_REVIEW.md",
             ROOT / "docs/research/glm52/F018_POST_OPUS_QUALIFICATION.md",
+            ROOT / "docs/research/glm52/F018_IQ3_DOWN_QUALIFICATION.md",
             ROOT / "docs/research/glm52/CLAIMS_LEDGER.md",
             ROOT / "docs/research/glm52/REVIEWER_INDEX.md",
         ]

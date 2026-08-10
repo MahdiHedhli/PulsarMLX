@@ -11,6 +11,9 @@
 - [Feature 018 post-Opus qualification](F018_POST_OPUS_QUALIFICATION.md) —
   strict compiler semantics, fail-closed dispatch, in-flight ownership,
   lookup placement, same-boundary benchmark, and final GO decision
+- [Feature 018 IQ3-down qualification](F018_IQ3_DOWN_QUALIFICATION.md) —
+  frozen IQ3 contract, strict packed kernel, composed ladder, exact P1, and
+  post-IQ3 bounded hotspot decision
 - Spec Kit: `specs/018-direct-quantized-metal-runtime/`
 - [Frozen numerical contract](../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md)
 - [Synthetic packed Metal gate](raw/f018-iq2-xxs-synthetic-0002.json) and
@@ -35,14 +38,29 @@
   and [generated table](tables/f018-iq2-lookup-address-space-0001.md)
 - [Post-Opus three-way decision](raw/f018-post-opus-qualification-0001.json)
   and [generated table](tables/f018-post-opus-qualification-0001.md)
+- [IQ3 numerical contract](../../../specs/018-direct-quantized-metal-runtime/iq3-down-numerical-qualification-contract.md)
+- [Synthetic IQ3 scaffold](raw/f018-iq3-xxs-synthetic-0001.json) and
+  [generated table](tables/f018-iq3-xxs-synthetic-0001.md)
+- [Real IQ3 down matrix](raw/f018-iq3-xxs-down-matrix-0001.json) and
+  [generated table](tables/f018-iq3-xxs-down-matrix-0001.md)
+- [Direct IQ2/IQ3 routed expert](raw/f018-iq2-iq3-routed-expert-0001.json)
+  and [generated table](tables/f018-iq2-iq3-routed-expert-0001.md)
+- [Direct IQ2/IQ3 top-8 plus shared MoE](raw/f018-iq2-iq3-moe-layer3-0001.json)
+  and [generated table](tables/f018-iq2-iq3-moe-layer3-0001.md)
+- [Direct IQ2/IQ3 complete layer](raw/f018-iq2-iq3-complete-layer3-0001.json)
+  and [generated table](tables/f018-iq2-iq3-complete-layer3-0001.md)
+- [Post-IQ3 bounded hotspot profile](raw/f018-iq3-post-layer-hotspots-0001.json)
+  and [generated table](tables/f018-iq3-post-layer-hotspots-0001.md)
+- [Exact direct-IQ2/IQ3 P1](raw/f018-inference-p1-direct-iq2-iq3-0001.json)
+  and [generated table](tables/f018-inference-p1-direct-iq2-iq3-0001.md)
 - [Feature 017 / Feature 018 boundary](../../architecture/F017_F018_RUNTIME_BOUNDARY.md)
-- [Feature 018 claims](CLAIMS_LEDGER.md): `F018-SYNTHETIC-001` through
-  `F018-POSTOPUS-001`
+- [Feature 018 claims](CLAIMS_LEDGER.md): IQ2 qualification plus the distinct
+  `F018-IQ3-*` ladder
 
-The candidate consumes packed IQ2_XXS weights directly. The post-Opus gate is
-GO, but IQ3-down implementation was not started. IQ3 down, shared
-experts, attention, logits, and other quantizations remain reference paths.
-No P2 or golden-eight run belongs to Feature 018.
+The candidates consume packed IQ2_XXS gate/up and packed IQ3_XXS down weights
+directly. Shared experts, attention, logits, and other quantizations remain
+reference paths. The exact combined P1 passed, but no P2 or golden-eight run
+belongs to Feature 018.
 
 ## How to review
 
