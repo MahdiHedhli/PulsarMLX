@@ -264,6 +264,45 @@ class F018EvidenceTests(unittest.TestCase):
             record["kernel"]["complete_f32_weight_materialized_bytes"], 0
         )
 
+    def test_strict_real_gate_matrix_is_qualified_and_faster(self) -> None:
+        raw = (
+            ROOT
+            / "docs/research/glm52/raw/f018-iq2-xxs-gate-matrix-strict-0001.json"
+        )
+        table = (
+            ROOT
+            / "docs/research/glm52/tables/f018-iq2-xxs-gate-matrix-strict-0001.md"
+        )
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["schema_version"], "1.1.0")
+        self.assertEqual(
+            record["classification"], "numerically_qualified_greedy_identical"
+        )
+        self.assertEqual(record["correctness"]["elementwise_mismatch_count"], 0)
+        self.assertEqual(record["kernel"]["cpu_fallback_count"], 0)
+        self.assertEqual(
+            record["kernel"]["complete_f32_weight_materialized_bytes"], 0
+        )
+        self.assertLess(
+            record["timing"]["median_seconds"],
+            record["optimized_reference"]["summaries"]["total_seconds"][
+                "median_seconds"
+            ],
+        )
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq2_xxs_metal.py"),
+                "--input",
+                str(raw),
+                "--output",
+                str(table),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_committed_routed_expert_record(self) -> None:
         path = (
             ROOT
