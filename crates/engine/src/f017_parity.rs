@@ -66,6 +66,24 @@ const TOP8_SHARED_RESIDUAL_SHA256: &str =
     "b74fce6cd8bcafd014a1ce8c6585beac59c5f4098a6d499f5d1d42d464146633";
 const TOP8_SHARED_OUTPUT_SHA256: &str =
     "08f6285a290c60d7e9f6d39890fd7173e28044499ddc3c5e64266522c91089bc";
+pub const MLA_DENSE_FIXTURE_VERSION: &str = "glm52-runtime-mla-dense-v1";
+pub const MLA_DENSE_QUERY_TENSOR_NAME: &str = "synthetic.blk.0.attn_q.weight";
+pub const MLA_DENSE_KEY_TENSOR_NAME: &str = "synthetic.blk.0.attn_k.weight";
+pub const MLA_DENSE_VALUE_TENSOR_NAME: &str = "synthetic.blk.0.attn_v.weight";
+pub const MLA_DENSE_OUTPUT_TENSOR_NAME: &str = "synthetic.blk.0.attn_o.weight";
+pub const MLA_DENSE_TENSOR_SHARD: &str = "synthetic-trunk-00001";
+const MLA_DENSE_QUERY_SHA256: &str =
+    "dc91ce9a50ddc828740aa26743716897fdb2bb64f1db662fe263a59be56145ae";
+const MLA_DENSE_KEYS_SHA256: &str =
+    "f652af1297e907749725d45a6880a3f4c541fd9290bc2c79e8c68b013ec1d4ab";
+const MLA_DENSE_VALUES_SHA256: &str =
+    "9f94a24f3f648f60bc02bcb8844d3ca21708f17f9833a200b7f9fd65281acff5";
+const MLA_DENSE_PROJECTION_SHA256: &str =
+    "71b86374c0cb45f7268948d366a6cc9b43d2de00c92c5f4417097c4e17fa4b36";
+const MLA_DENSE_RESIDUAL_SHA256: &str =
+    "c60fb7d5e38a94bfbe33b33f187596b2b1cd91c78bf15bbaf0769d6a9edbe90c";
+const MLA_DENSE_OUTPUT_SHA256: &str =
+    "98e7e51398cd0186f16f5b2295d1e502416ef40e3746b43f9d3966fa1ceb62a3";
 const M2_MAX_TOTAL_BYTES: u64 = 64 * 1024 * 1024 * 1024;
 const M2_MAX_SAFETY_RESERVE_BYTES: u64 = 24 * 1024 * 1024 * 1024;
 const M2_MAX_REQUIRED_MARGIN_BYTES: u64 = 4 * 1024 * 1024 * 1024;
@@ -794,6 +812,324 @@ fn reference_aggregate(weights: &[f64], selected_outputs: &[f64]) -> Vec<f64> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct MlaDenseFixture {
+    pub source_commit: &'static str,
+    pub fixture_version: &'static str,
+    pub tensor_names: [&'static str; 4],
+    pub tensor_shard: &'static str,
+    pub dimensions: [usize; 3],
+    pub dtype: &'static str,
+    pub query: Vec<f64>,
+    pub keys: Vec<f64>,
+    pub values: Vec<f64>,
+    pub output_projection: Vec<f64>,
+    pub residual: Vec<f64>,
+    pub query_position: u64,
+    pub key_positions: [u64; 2],
+    pub rope_theta: f64,
+}
+
+impl MlaDenseFixture {
+    pub fn synthetic() -> Self {
+        Self {
+            source_commit: PROJECTION_SOURCE_COMMIT,
+            fixture_version: MLA_DENSE_FIXTURE_VERSION,
+            tensor_names: [
+                MLA_DENSE_QUERY_TENSOR_NAME,
+                MLA_DENSE_KEY_TENSOR_NAME,
+                MLA_DENSE_VALUE_TENSOR_NAME,
+                MLA_DENSE_OUTPUT_TENSOR_NAME,
+            ],
+            tensor_shard: MLA_DENSE_TENSOR_SHARD,
+            dimensions: [2, 2, 2],
+            dtype: "f64",
+            query: vec![1.0, 2.0],
+            keys: vec![2.0, 1.0, 1.5, -0.5],
+            values: vec![0.5, -1.0, 1.5, 0.25],
+            output_projection: vec![1.0, -0.5, 0.25, 1.25],
+            residual: vec![0.75, -0.25],
+            query_position: 2,
+            key_positions: [0, 1],
+            rope_theta: 0.25,
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), MlaDenseParityError> {
+        if self.source_commit != PROJECTION_SOURCE_COMMIT {
+            return Err(MlaDenseParityError::InvalidFixture("source_commit"));
+        }
+        if self.fixture_version != MLA_DENSE_FIXTURE_VERSION {
+            return Err(MlaDenseParityError::InvalidFixture("fixture_version"));
+        }
+        if self.tensor_names
+            != [
+                MLA_DENSE_QUERY_TENSOR_NAME,
+                MLA_DENSE_KEY_TENSOR_NAME,
+                MLA_DENSE_VALUE_TENSOR_NAME,
+                MLA_DENSE_OUTPUT_TENSOR_NAME,
+            ]
+            || self.tensor_shard != MLA_DENSE_TENSOR_SHARD
+            || self.dimensions != [2, 2, 2]
+            || self.dtype != "f64"
+        {
+            return Err(MlaDenseParityError::InvalidFixture("tensor identity"));
+        }
+        if self.query.len() != 2
+            || self.keys.len() != 4
+            || self.values.len() != 4
+            || self.output_projection.len() != 4
+            || self.residual.len() != 2
+            || !self.rope_theta.is_finite()
+            || self.rope_theta <= 0.0
+        {
+            return Err(MlaDenseParityError::InvalidFixture("shape or position"));
+        }
+        if hash_f64(&self.query) != MLA_DENSE_QUERY_SHA256 {
+            return Err(MlaDenseParityError::HashMismatch("query"));
+        }
+        if hash_f64(&self.keys) != MLA_DENSE_KEYS_SHA256 {
+            return Err(MlaDenseParityError::HashMismatch("keys"));
+        }
+        if hash_f64(&self.values) != MLA_DENSE_VALUES_SHA256 {
+            return Err(MlaDenseParityError::HashMismatch("values"));
+        }
+        if hash_f64(&self.output_projection) != MLA_DENSE_PROJECTION_SHA256 {
+            return Err(MlaDenseParityError::HashMismatch("output projection"));
+        }
+        if hash_f64(&self.residual) != MLA_DENSE_RESIDUAL_SHA256 {
+            return Err(MlaDenseParityError::HashMismatch("residual"));
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MlaDenseParityError {
+    InvalidFixture(&'static str),
+    HashMismatch(&'static str),
+    MemoryRejected,
+    UnexpectedDispatch {
+        expected: ProjectionDispatch,
+        actual: ProjectionDispatch,
+    },
+    NumericalMismatch(&'static str),
+    Telemetry(String),
+}
+
+impl fmt::Display for MlaDenseParityError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidFixture(field) => write!(formatter, "invalid MLA/dense fixture: {field}"),
+            Self::HashMismatch(field) => {
+                write!(formatter, "MLA/dense fixture hash mismatch: {field}")
+            }
+            Self::MemoryRejected => {
+                formatter.write_str("MLA/dense fixture rejected by memory budget")
+            }
+            Self::UnexpectedDispatch { expected, actual } => write!(
+                formatter,
+                "unexpected MLA/dense dispatch: expected {expected:?}, got {actual:?}"
+            ),
+            Self::NumericalMismatch(stage) => {
+                write!(formatter, "MLA/dense numerical mismatch: {stage}")
+            }
+            Self::Telemetry(error) => write!(formatter, "MLA/dense telemetry failed: {error}"),
+        }
+    }
+}
+
+impl std::error::Error for MlaDenseParityError {}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MlaDenseParityResult {
+    pub classification: ValidationClassification,
+    pub dispatch: ProjectionDispatch,
+    pub memory_admitted: bool,
+    pub telemetry: TelemetrySnapshot,
+    pub output_sha256: String,
+}
+
+pub fn run_mla_dense_fixture(
+    fixture: &MlaDenseFixture,
+    expected_dispatch: ProjectionDispatch,
+) -> Result<MlaDenseParityResult, MlaDenseParityError> {
+    fixture.validate()?;
+    let memory = MemoryBudget::try_new(
+        M2_MAX_TOTAL_BYTES,
+        M2_MAX_SAFETY_RESERVE_BYTES,
+        M2_MAX_TOTAL_BYTES - M2_MAX_SAFETY_RESERVE_BYTES - M2_MAX_REQUIRED_MARGIN_BYTES,
+    )
+    .map_err(|_| MlaDenseParityError::MemoryRejected)?;
+    let requested_bytes = (fixture.query.len()
+        + fixture.keys.len()
+        + fixture.values.len()
+        + fixture.output_projection.len()
+        + fixture.residual.len()) as u64
+        * std::mem::size_of::<f64>() as u64;
+    if !memory.admits(requested_bytes) {
+        return Err(MlaDenseParityError::MemoryRejected);
+    }
+    let actual_dispatch = ProjectionDispatch::ExplicitReference;
+    if actual_dispatch != expected_dispatch {
+        return Err(MlaDenseParityError::UnexpectedDispatch {
+            expected: expected_dispatch,
+            actual: actual_dispatch,
+        });
+    }
+    let mut telemetry = RuntimeTelemetry::new();
+    telemetry
+        .record_storage_read(Duration::from_nanos(1), 4, requested_bytes)
+        .map_err(|error| MlaDenseParityError::Telemetry(format!("{error:?}")))?;
+    telemetry
+        .record_stage(
+            TelemetryBucket::BufferMaterialization,
+            Duration::from_nanos(1),
+            4,
+        )
+        .map_err(|error| MlaDenseParityError::Telemetry(format!("{error:?}")))?;
+
+    let rotated_query = rotate_pair(&fixture.query, fixture.query_position, fixture.rope_theta);
+    let rotated_keys = [
+        rotate_pair(
+            &fixture.keys[0..2],
+            fixture.key_positions[0],
+            fixture.rope_theta,
+        ),
+        rotate_pair(
+            &fixture.keys[2..4],
+            fixture.key_positions[1],
+            fixture.rope_theta,
+        ),
+    ];
+    let scores = rotated_keys
+        .iter()
+        .map(|key| dot2(&rotated_query, key) / 2.0_f64.sqrt())
+        .collect::<Vec<_>>();
+    let weights = softmax_two(&scores);
+    let attention = vec![
+        weights[0] * fixture.values[0] + weights[1] * fixture.values[2],
+        weights[0] * fixture.values[1] + weights[1] * fixture.values[3],
+    ];
+    let projected = matvec2(&fixture.output_projection, &attention);
+    let output = projected
+        .iter()
+        .zip(fixture.residual.iter())
+        .map(|(projected, residual)| projected + residual)
+        .collect::<Vec<_>>();
+
+    let reference_query =
+        reference_rotate_pair(&fixture.query, fixture.query_position, fixture.rope_theta);
+    let reference_keys = [
+        reference_rotate_pair(
+            &fixture.keys[0..2],
+            fixture.key_positions[0],
+            fixture.rope_theta,
+        ),
+        reference_rotate_pair(
+            &fixture.keys[2..4],
+            fixture.key_positions[1],
+            fixture.rope_theta,
+        ),
+    ];
+    let reference_scores = reference_keys
+        .iter()
+        .map(|key| reference_dot2(&reference_query, key) / 2.0_f64.sqrt())
+        .collect::<Vec<_>>();
+    let reference_weights = reference_softmax_two(&reference_scores);
+    let reference_attention = vec![
+        reference_weights[0] * fixture.values[0] + reference_weights[1] * fixture.values[2],
+        reference_weights[0] * fixture.values[1] + reference_weights[1] * fixture.values[3],
+    ];
+    let reference_projected = reference_matvec2(&fixture.output_projection, &reference_attention);
+    let reference_output = reference_projected
+        .iter()
+        .zip(fixture.residual.iter())
+        .map(|(projected, residual)| projected + residual)
+        .collect::<Vec<_>>();
+    if output != reference_output {
+        return Err(MlaDenseParityError::NumericalMismatch("MLA/dense output"));
+    }
+    let output_sha256 = hash_f64(&reference_output);
+    if output_sha256 != MLA_DENSE_OUTPUT_SHA256 {
+        return Err(MlaDenseParityError::HashMismatch("reference output"));
+    }
+    telemetry
+        .record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 4)
+        .map_err(|error| MlaDenseParityError::Telemetry(format!("{error:?}")))?;
+    Ok(MlaDenseParityResult {
+        classification: ValidationClassification::GoldenIdentical,
+        dispatch: actual_dispatch,
+        memory_admitted: true,
+        telemetry: telemetry
+            .snapshot()
+            .map_err(|error| MlaDenseParityError::Telemetry(format!("{error:?}")))?,
+        output_sha256,
+    })
+}
+
+fn rotate_pair(values: &[f64], position: u64, theta: f64) -> Vec<f64> {
+    let angle = position as f64 * theta;
+    let (sin, cos) = angle.sin_cos();
+    vec![
+        values[0] * cos - values[1] * sin,
+        values[0] * sin + values[1] * cos,
+    ]
+}
+
+fn reference_rotate_pair(values: &[f64], position: u64, theta: f64) -> Vec<f64> {
+    let angle = theta * position as f64;
+    let cos = angle.cos();
+    let sin = angle.sin();
+    vec![
+        cos * values[0] - sin * values[1],
+        sin * values[0] + cos * values[1],
+    ]
+}
+
+fn dot2(left: &[f64], right: &[f64]) -> f64 {
+    left[0] * right[0] + left[1] * right[1]
+}
+
+fn reference_dot2(left: &[f64], right: &[f64]) -> f64 {
+    let first = left[0] * right[0];
+    let second = left[1] * right[1];
+    first + second
+}
+
+fn softmax_two(scores: &[f64]) -> Vec<f64> {
+    let max = scores[0].max(scores[1]);
+    let first = (scores[0] - max).exp();
+    let second = (scores[1] - max).exp();
+    let total = first + second;
+    vec![first / total, second / total]
+}
+
+fn reference_softmax_two(scores: &[f64]) -> Vec<f64> {
+    let max = if scores[0] > scores[1] {
+        scores[0]
+    } else {
+        scores[1]
+    };
+    let first_exp = (scores[0] - max).exp();
+    let second_exp = (scores[1] - max).exp();
+    let denominator = first_exp + second_exp;
+    vec![first_exp / denominator, second_exp / denominator]
+}
+
+fn matvec2(matrix: &[f64], vector: &[f64]) -> Vec<f64> {
+    vec![
+        matrix[0] * vector[0] + matrix[1] * vector[1],
+        matrix[2] * vector[0] + matrix[3] * vector[1],
+    ]
+}
+
+fn reference_matvec2(matrix: &[f64], vector: &[f64]) -> Vec<f64> {
+    let first = matrix[0] * vector[0] + matrix[1] * vector[1];
+    let second = matrix[2] * vector[0] + matrix[3] * vector[1];
+    vec![first, second]
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExpertFixture {
     pub source_commit: &'static str,
     pub fixture_version: &'static str,
@@ -1252,6 +1588,53 @@ mod tests {
             run_top8_shared_fixture(&fixture, ProjectionDispatch::ExplicitReference),
             Err(Top8SharedParityError::HashMismatch("router scores"))
         );
+    }
+
+    #[test]
+    fn mla_dense_passes_with_explicit_reference_dispatch() {
+        let fixture = MlaDenseFixture::synthetic();
+        let result =
+            run_mla_dense_fixture(&fixture, ProjectionDispatch::ExplicitReference).unwrap();
+        assert_eq!(
+            result.classification,
+            ValidationClassification::GoldenIdentical
+        );
+        assert!(result.memory_admitted);
+        assert_eq!(result.dispatch, ProjectionDispatch::ExplicitReference);
+        assert_eq!(result.telemetry.storage_read_requests, 4);
+        assert_eq!(result.telemetry.buffer_materialization_operations, 4);
+        assert_eq!(result.telemetry.compute_operations, 4);
+        assert_eq!(result.output_sha256, MLA_DENSE_OUTPUT_SHA256);
+    }
+
+    #[test]
+    fn malformed_mla_dense_fixture_fails_before_dispatch() {
+        let mut fixture = MlaDenseFixture::synthetic();
+        fixture.query[0] = f64::NAN;
+        assert_eq!(
+            run_mla_dense_fixture(&fixture, ProjectionDispatch::ExplicitReference),
+            Err(MlaDenseParityError::HashMismatch("query"))
+        );
+    }
+
+    #[test]
+    fn unexpected_mla_dense_direct_dispatch_fails_closed() {
+        let fixture = MlaDenseFixture::synthetic();
+        assert!(matches!(
+            run_mla_dense_fixture(&fixture, ProjectionDispatch::QualifiedDirect),
+            Err(MlaDenseParityError::UnexpectedDispatch {
+                expected: ProjectionDispatch::QualifiedDirect,
+                actual: ProjectionDispatch::ExplicitReference,
+            })
+        ));
+    }
+
+    #[test]
+    fn mla_dense_result_is_deterministic() {
+        let fixture = MlaDenseFixture::synthetic();
+        let first = run_mla_dense_fixture(&fixture, ProjectionDispatch::ExplicitReference);
+        let second = run_mla_dense_fixture(&fixture, ProjectionDispatch::ExplicitReference);
+        assert_eq!(first, second);
     }
 
     #[test]
