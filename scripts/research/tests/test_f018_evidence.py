@@ -237,6 +237,33 @@ class F018EvidenceTests(unittest.TestCase):
                         check=True,
                     )
 
+    def test_strict_compiler_synthetic_record_is_tier_b_qualified(self) -> None:
+        raw = (
+            ROOT
+            / "docs/research/glm52/raw/f018-iq2-xxs-synthetic-strict-0001.json"
+        )
+        record = validate_record(load_unique_json(raw))
+        compiler = record["setup"]["compiler"]
+        self.assertFalse(compiler["fast_math_enabled"])
+        self.assertEqual(compiler["language_version"], "3.2")
+        self.assertEqual(compiler["math_mode"], "safe")
+        self.assertEqual(compiler["math_floating_point_functions"], "precise")
+        self.assertEqual(
+            compiler["pipeline_identity"], "iq2_xxs_sequential_scaffold_v1"
+        )
+        self.assertEqual(
+            record["classification"], "numerically_qualified_greedy_identical"
+        )
+        self.assertFalse(record["correctness"]["exact_f32_bits"])
+        self.assertGreater(record["correctness"]["f32_bit_mismatch_count"], 0)
+        self.assertEqual(record["correctness"]["signed_zero_mismatch_count"], 0)
+        self.assertEqual(record["correctness"]["elementwise_mismatch_count"], 0)
+        self.assertEqual(record["correctness"]["deterministic_repetitions"], 100)
+        self.assertEqual(record["kernel"]["cpu_fallback_count"], 0)
+        self.assertEqual(
+            record["kernel"]["complete_f32_weight_materialized_bytes"], 0
+        )
+
     def test_committed_routed_expert_record(self) -> None:
         path = (
             ROOT

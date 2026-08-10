@@ -142,7 +142,7 @@
 
 - [x] T048 Freeze the same-order scalar/NumPy oracle, Tier-B MLX role, scaffold status, and future parallel-kernel classification in `numerical-qualification-contract.md`
 - [x] T049 Pin qualification compilation to `fastMathEnabled = NO` and an explicit Metal language version, expose those settings in native telemetry, and add failing-then-passing assertions
-- [ ] T050 Re-run the synthetic IQ2_XXS fixtures under strict compilation and record whether the sequential scaffold is `golden_identical` or Tier-B qualified without changing tolerances
+- [x] T050 Re-run the synthetic IQ2_XXS fixtures under strict compilation and record whether the sequential scaffold is `golden_identical` or Tier-B qualified without changing tolerances
 - [ ] T051 Inventory every explicit P1 reference dispatch with layer, expert, tensor role/name, quantization, shape, and reason code
 - [ ] T052 Make validation-mode unexpected fallback/error a hard failure while retaining explicit, observable production-policy fallback as a separate state
 
