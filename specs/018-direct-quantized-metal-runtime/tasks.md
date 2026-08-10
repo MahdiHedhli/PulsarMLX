@@ -136,6 +136,51 @@
 
 ---
 
+## Phase 9: Post-Opus Contract and Compiler Qualification
+
+**Purpose**: Close the required review fixes before admitting another quantized format.
+
+- [ ] T048 Freeze the same-order scalar/NumPy oracle, Tier-B MLX role, scaffold status, and future parallel-kernel classification in `numerical-qualification-contract.md`
+- [ ] T049 Pin qualification compilation to `fastMathEnabled = NO` and an explicit Metal language version, expose those settings in native telemetry, and add failing-then-passing assertions
+- [ ] T050 Re-run the synthetic IQ2_XXS fixtures under strict compilation and record whether the sequential scaffold is `golden_identical` or Tier-B qualified without changing tolerances
+- [ ] T051 Inventory every explicit P1 reference dispatch with layer, expert, tensor role/name, quantization, shape, and reason code
+- [ ] T052 Make validation-mode unexpected fallback/error a hard failure while retaining explicit, observable production-policy fallback as a separate state
+
+---
+
+## Phase 10: In-Flight Ownership and Lookup Placement
+
+**Purpose**: Make registration destruction, slot reuse, and immutable lookup ownership mechanically safe through command completion.
+
+- [ ] T053 Add explicit native in-flight registration accounting and completion-handler retention for every submitted command
+- [ ] T054 Add submit/wait/destroy, attempted early destroy/reuse, repeated lifecycle, error/cancellation, and generation-protection tests
+- [ ] T055 Evaluate IQ2 grid/sign tables in Metal constant address space and retain the change only if exactness and bounded safety pass
+- [ ] T056 Document the generic Feature 017 lifecycle/telemetry boundary versus Feature 018 format-specific kernel ownership
+
+---
+
+## Phase 11: Decisive Same-Boundary Performance Gate
+
+**Purpose**: Decide IQ3 admission from a strict direct-versus-optimized-reference comparison, not the whole-model P1 delta.
+
+- [ ] T057 Extend the real-matrix harness and evidence contract with compiler settings, pipeline creation, first-use, dispatch preparation, kernel, synchronization, RSS, and every warm sample
+- [ ] T058 Run the admitted representative IQ2_XXS gate matrix against optimized NumPy+MLX and the strict sequential Metal scaffold under identical bindings
+- [ ] T059 Generate and validate a three-way review artifact, retaining historical/default compilation only as labeled historical evidence when comparable
+- [ ] T060 Apply the frozen verdict rule: `GO`, `GO WITH PERFORMANCE REDESIGN`, or `NO-GO`
+- [ ] T061 If required by T060, retain the sequential scaffold and specify/implement a separately qualified parallel IQ2 kernel through the bounded ladder; otherwise record why it was not started
+- [ ] T062 Admit IQ3-down only if the final verdict is `GO` and every compiler, numerical, fallback, lifetime, evidence, and CI gate is committed
+
+---
+
+## Phase 12: Post-Opus Closeout
+
+**Purpose**: Publish a reviewable, reproducible qualification boundary.
+
+- [ ] T063 Create `docs/research/glm52/F018_POST_OPUS_QUALIFICATION.md`, update claims/reviewer indexes, regenerate artifacts, and send the final acknowledged NTFY result
+- [ ] T064 Run all Feature 018 native, Cargo, research, privacy, generated-artifact, Spec Kit, staged-safety, and `git diff --check` gates; commit, push, and confirm CI
+
+---
+
 ## Dependencies and Execution Order
 
 - Phase 1 precedes every implementation task.
@@ -146,6 +191,10 @@
 - US3 proceeds expert → MoE → layer and stops at the first failed gate.
 - US4 may admit P1 only after a material qualified complete-layer result.
 - P2, golden-eight, second-format implementation, and all-format coverage are not tasks in this feature sprint.
+- Phase 9 through Phase 12 are the post-Opus qualification gate. T048-T060 are
+  sequential. T061 is eligible only for a performance-redesign verdict. T062
+  is a decision task and MUST NOT start IQ3 implementation unless every named
+  admission condition passes.
 
 ## Parallel Opportunities
 

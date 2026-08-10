@@ -79,6 +79,11 @@ No constitution exception is requested.
    median wall by 0.741972 seconds (30.5%), admitting one P1. The opt-in P1
    passed exact `[9703,21615]`; default inference remains unchanged, and P2,
    golden-eight, and a second quantization kernel remain out of scope.
+8. **Post-Opus qualification**: retain the one-thread-per-row implementation
+   permanently as the deterministic Metal qualification scaffold. Pin compiler
+   semantics, make validation fallback fail closed, harden native in-flight
+   ownership, and compare the strict scaffold against the optimized reference
+   at the same real-matrix boundary before admitting IQ3-down.
 
 ## Bounded Ladder and Gates
 
@@ -96,6 +101,20 @@ No constitution exception is requested.
 
 Failure, divergence, unsafe lifetime, or critical/urgent pressure stops deeper
 admission while preserving the failing record.
+
+## Post-Opus Verdict Gate
+
+- `GO`: strict compilation qualifies, fallback and lifetime gates pass, and the
+  strict direct scaffold materially beats optimized NumPy+MLX at the identical
+  matrix/input boundary. IQ3-down may then be planned.
+- `GO WITH PERFORMANCE REDESIGN`: correctness and safety pass but the strict
+  scaffold is similar to or slower than the optimized reference. Retain the
+  scaffold and qualify a separate parallel IQ2 kernel before IQ3 work.
+- `NO-GO`: any compiler, numerical, fallback, or lifetime blocker remains.
+
+The optional historical/default-compiler measurement is context only. It does
+not determine the verdict, and the prior P1 delta is not a substitute for the
+same-boundary comparison.
 
 ## Project Structure
 
