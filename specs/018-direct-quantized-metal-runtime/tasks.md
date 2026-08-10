@@ -168,7 +168,7 @@
 - [x] T059 Generate and validate a three-way review artifact, retaining historical/default compilation only as labeled historical evidence when comparable
 - [x] T060 Apply the frozen verdict rule: `GO`, `GO WITH PERFORMANCE REDESIGN`, or `NO-GO`
 - [x] T061 If required by T060, retain the sequential scaffold and specify/implement a separately qualified parallel IQ2 kernel through the bounded ladder; otherwise record why it was not started
-- [ ] T062 Admit IQ3-down only if the final verdict is `GO` and every compiler, numerical, fallback, lifetime, evidence, and CI gate is committed
+- [x] T062 Admit IQ3-down only if the final verdict is `GO` and every compiler, numerical, fallback, lifetime, evidence, and CI gate is committed
 
 ---
 
@@ -176,8 +176,8 @@
 
 **Purpose**: Publish a reviewable, reproducible qualification boundary.
 
-- [ ] T063 Create `docs/research/glm52/F018_POST_OPUS_QUALIFICATION.md`, update claims/reviewer indexes, regenerate artifacts, and send the final acknowledged NTFY result
-- [ ] T064 Run all Feature 018 native, Cargo, research, privacy, generated-artifact, Spec Kit, staged-safety, and `git diff --check` gates; commit, push, and confirm CI
+- [x] T063 Create `docs/research/glm52/F018_POST_OPUS_QUALIFICATION.md`, update claims/reviewer indexes, regenerate artifacts, and send the final acknowledged NTFY result
+- [x] T064 Run all Feature 018 native, Cargo, research, privacy, generated-artifact, Spec Kit, staged-safety, and `git diff --check` gates; commit, push, and confirm CI
 
 ---
 
