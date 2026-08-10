@@ -159,3 +159,5 @@ full-model inference and direct quantized Metal kernel implementation.
 - The M1 handoff now requires environment identity, stream mode, singleton
   assertion, ownership reconciliation, and an absolute 16 GiB free-memory
   floor before P1.
+- Remediation commit `4d0e01514d9f1807c8066eec9a85b5bed44ce167` passed both
+  Apple Silicon jobs in [GitHub Actions run 31437662431](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31437662431).

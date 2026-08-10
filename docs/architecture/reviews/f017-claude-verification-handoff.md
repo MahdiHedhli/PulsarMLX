@@ -7,8 +7,9 @@ and do not request a second broad design review.
 
 - Prior reviewed SHA: `0e59d9786b96ce0aaad513bae71702a57ef23b6f`.
 - Remediation branch: `feat/017-rust-native-inference-runtime`.
-- Final SHA and final CI run are recorded in the sprint report and this packet
-  is updated with the corresponding remediation commit.
+- Remediation SHA: `4d0e01514d9f1807c8066eec9a85b5bed44ce167`.
+- Verification CI: [GitHub Actions run 31437662431](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31437662431),
+  with both Apple Silicon jobs green.
 
 ## Fixes to verify
 
@@ -34,8 +35,11 @@ and do not request a second broad design review.
 - Native adapter regression matrix: 8 tests passed locally, including 30/100
   lifecycle cycles and 1,000 owned-context cycles.
 - Existing parity/lifecycle/Metal/soak evidence remains unchanged.
-- Remote CI must be green for the final remediation SHA before this request is
-  marked GO.
+- The final remediation SHA passed both Apple Silicon jobs in run
+  `31437662431`. The bounded 1,000-context test still emits MLX 0.31.2's
+  `Context leak detected, CoreAnalytics returned false` diagnostic; RSS and
+  explicit stream counters remain bounded and balanced, so this is retained as
+  review evidence rather than hidden.
 
 ## Decision requested
 
