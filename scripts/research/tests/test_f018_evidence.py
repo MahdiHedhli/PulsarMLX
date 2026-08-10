@@ -284,6 +284,23 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_committed_iq2_iq3_routed_expert_record_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/f018-iq2-iq3-routed-expert-0001.json"
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["worker"]["max_resident_matrices"], 3)
+        self.assertEqual(record["process_first_direct"]["direct"]["storage_read_count"], 3)
+        self.assertTrue(all(sample["direct"]["cache_hits"] == 3 for sample in record["direct_samples"]))
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_routed_expert_iq3_metal.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_committed_real_matrix_records(self) -> None:
         records = sorted(
             (ROOT / "docs/research/glm52/raw").glob(

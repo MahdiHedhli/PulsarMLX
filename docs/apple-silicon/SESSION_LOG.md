@@ -4404,3 +4404,17 @@ seconds compilation, 0.049038 seconds pipeline creation, and 0.005643 seconds
 for the first synchronized dispatch. The strict sequential scaffold materially
 passed the frozen gate, so no separate parallel IQ3 kernel was justified before
 the composed expert ladder.
+
+At clean source `feeb222e`, the composed layer-3 expert-15 gate passed with
+direct IQ2_XXS gate/up and direct IQ3_XXS down. Ten measured warm executions
+were deterministic and numerically qualified against the independent optimized
+reference, with zero tolerance or signed-zero mismatches, maximum absolute
+error 3.6379788e-10, and RMSE 7.9036905e-11. The process-first execution read
+and admitted three packed slabs (11,304,960 bytes total); every measured warm
+execution recorded three residency hits, three resident entries, zero evictions,
+zero fallbacks, and zero complete-f32 Metal weight materialization.
+
+The complete expert median fell from 0.269965292 seconds for the optimized
+NumPy+MLX reference to 0.018807751 seconds for the composed direct candidate,
+a 14.35× same-boundary ratio and 0.251157541-second absolute difference. This
+is one expert only; top-8 plus shared MoE remains the next acceptance rung.

@@ -67,6 +67,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         return _validate_p1_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":
         return _validate_routed_expert_record(record)
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-iq3-routed-expert":
+        return _validate_iq2_iq3_routed_expert_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
         return _validate_moe_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
@@ -373,6 +375,100 @@ def _validate_routed_expert_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("routed-expert boundary resource state is not normal")
     if not record.get("unsupported_interpretations"):
         raise ValueError("routed-expert unsupported interpretations are required")
+    return record
+
+
+def _validate_iq2_iq3_routed_expert_record(record: dict[str, Any]) -> dict[str, Any]:
+    if record.get("schema_version") != "1.0.0" or record.get("actual_status") != "passed":
+        raise ValueError("IQ2/IQ3 routed-expert evidence must use schema 1.0.0 and pass")
+    if record.get("classification") not in CLASSES:
+        raise ValueError("IQ2/IQ3 routed-expert classification is unsupported")
+    source = record.get("source", {})
+    if not _HEX40.fullmatch(str(source.get("commit", ""))) or source.get("dirty") is not False:
+        raise ValueError("IQ2/IQ3 routed-expert source must be a clean commit")
+    checkpoint = record.get("checkpoint", {})
+    if (
+        not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", "")))
+        or checkpoint.get("file_count") != 6
+        or checkpoint.get("total_bytes") != 238_458_632_928
+    ):
+        raise ValueError("IQ2/IQ3 routed-expert checkpoint identity changed")
+    binding = record.get("binding", {})
+    if (
+        binding.get("layer") != 3
+        or binding.get("expert_id") != 15
+        or binding.get("gate_quantization") != "IQ2_XXS"
+        or binding.get("up_quantization") != "IQ2_XXS"
+        or binding.get("down_quantization") != "IQ3_XXS"
+    ):
+        raise ValueError("IQ2/IQ3 routed-expert frozen binding changed")
+    worker = record.get("worker", {})
+    if (
+        worker.get("source_commit") != source["commit"]
+        or worker.get("max_resident_matrices") != 3
+        or worker.get("pipeline_identities")
+        != ["iq2_xxs_sequential_scaffold_v1", "iq3_xxs_sequential_scaffold_v1"]
+    ):
+        raise ValueError("IQ2/IQ3 worker identity or residency bound changed")
+    protocol = record.get("protocol", {})
+    if (
+        protocol.get("optimized_reference_warmups") != 3
+        or protocol.get("optimized_reference_measured") != 10
+        or protocol.get("direct_warmups") != 3
+        or protocol.get("direct_measured") != 10
+    ):
+        raise ValueError("IQ2/IQ3 routed-expert protocol changed")
+    if record.get("oracle_comparison", {}).get("passed") is not True:
+        raise ValueError("IQ2/IQ3 optimized reference did not pass the CPU oracle")
+    numerical = record.get("numerical_qualification", {})
+    if (
+        numerical.get("contract_version") != "f018-numerical-v1"
+        or numerical.get("classification") != record["classification"]
+        or numerical.get("numerically_qualified") is not True
+        or numerical.get("deterministic") is not True
+        or numerical.get("elementwise_mismatch_count") != 0
+        or numerical.get("signed_zero_mismatch_count") != 0
+        or numerical.get("cpu_fallback_count") != 0
+        or numerical.get("complete_f32_weight_materialized_bytes") != 0
+    ):
+        raise ValueError("IQ2/IQ3 routed-expert numerical qualification failed")
+    samples = record.get("direct_samples")
+    if not isinstance(samples, list) or len(samples) != 10:
+        raise ValueError("IQ2/IQ3 routed-expert raw samples are incomplete")
+    hashes = set()
+    for sample in samples:
+        hashes.add(sample.get("output_f32_sha256"))
+        direct = sample.get("direct", {})
+        events = direct.get("events")
+        if (
+            direct.get("cache_hits") != 3
+            or direct.get("resident_entries") != 3
+            or direct.get("evictions") != 0
+            or direct.get("cpu_fallback_count") != 0
+            or direct.get("complete_f32_weight_materialized_bytes") != 0
+            or not isinstance(events, list)
+            or [event.get("quantization") for event in events]
+            != ["IQ2_XXS", "IQ2_XXS", "IQ3_XXS"]
+        ):
+            raise ValueError("IQ2/IQ3 routed-expert warm lifecycle failed")
+        if sample.get("resource_after", {}).get("level") != "normal":
+            raise ValueError("IQ2/IQ3 routed-expert resource state changed")
+    if len(hashes) != 1 or not _HEX64.fullmatch(str(next(iter(hashes), ""))):
+        raise ValueError("IQ2/IQ3 routed-expert outputs are not deterministic")
+    first = record.get("process_first_direct", {}).get("direct", {})
+    if (
+        first.get("cache_hits") != 0
+        or first.get("storage_read_count") != 3
+        or first.get("resident_entries") != 3
+        or first.get("evictions") != 0
+    ):
+        raise ValueError("IQ2/IQ3 process-first lifecycle is malformed")
+    if record.get("resource_before", {}).get("level") != "normal" or record.get(
+        "resource_after", {}
+    ).get("level") != "normal":
+        raise ValueError("IQ2/IQ3 boundary resource state is not normal")
+    if not record.get("unsupported_interpretations"):
+        raise ValueError("IQ2/IQ3 unsupported interpretations are required")
     return record
 
 
