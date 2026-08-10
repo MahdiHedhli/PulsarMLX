@@ -295,6 +295,33 @@ belongs to Feature 018.
   post-IQ3 ranking; identifies Q6_K as the next measured format and quantifies
   why shared residency remains valuable before P2
 
+- [Post-IQ3 fresh complete layer-3 profile](raw/post-f018-iq2-iq3-complete-layer3-profile-0001.json)
+  and [generated table](tables/post-f018-iq2-iq3-complete-layer3-profile-0001.md)
+  — ten warm direct and reference samples at the same real layer boundary,
+  retained numerical classification, nested dense/MoE attribution, and normal
+  resource state
+- [Post-IQ3 multi-layer dense profile](raw/post-f018-dense-multilayer-profile-0001.json)
+  and [generated table](tables/post-f018-dense-multilayer-profile-0001.md) —
+  exact scalar-oracle comparisons and ten measured current-path samples for
+  MLA boundaries at layers 3, 8, 40, and 78 with per-tensor stage timing
+- [Post-IQ3 output-head profile](raw/post-f018-output-head-profile-0001.json)
+  and [generated table](tables/post-f018-output-head-profile-0001.md) — one real
+  full-vocabulary Q4_K matrix, ten deterministic samples, separate storage,
+  scalar decode/materialization, MLX build, matvec, cleanup, and resource data
+- [Post-IQ3 Q4_K output reuse](raw/post-f018-output-q4-residency-0001.json),
+  [Q5_K attention reuse](raw/post-f018-late-attention-q5-residency-0001.json),
+  and the prior [Q6_K reuse study](raw/post-f016-trunk-q6-residency-0001.json)
+  — process-isolated exact host-rebuild and MLX-ready lifecycle measurements;
+  individual entries only, not decoded-all trunk admission
+- [Post-IQ3 bottleneck ranking](raw/post-f018-bottleneck-ranking-0001.json)
+  and [generated table](tables/post-f018-bottleneck-ranking-0001.md) — hashed
+  derivation from the committed layer, dense, output, reuse, and exact P1
+  records; selects bounded output-head residency before a third kernel
+- [Post-IQ3 bottleneck and integration report](POST_IQ3_BOTTLENECK_AND_INTEGRATION_REPORT.md)
+  and [F017/F018 handoff](../../architecture/F017_F018_POST_IQ3_HANDOFF.md) —
+  truthful sprint closeout, precise generic runtime interface deltas, and an
+  M2 fixture-only test request
+
 ### Results (populated after runs)
 
 - [RESULTS.md](RESULTS.md)

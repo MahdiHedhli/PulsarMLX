@@ -127,7 +127,7 @@ class F018EvidenceTests(unittest.TestCase):
     def test_feature018_claims_ledger_resolves_every_public_record(self) -> None:
         ledger = (ROOT / "docs/research/glm52/CLAIMS_LEDGER.md").read_text()
         # Gate and up share the single F018-MATRIX-001 claim row.
-        self.assertEqual(ledger.count("| F018-"), 17)
+        self.assertEqual(ledger.count("| F018-"), 22)
         for filename, source in self.FEATURE_ARTIFACTS.items():
             with self.subTest(filename=filename):
                 self.assertIn(f"docs/research/glm52/raw/{filename}", ledger)
@@ -148,6 +148,8 @@ class F018EvidenceTests(unittest.TestCase):
         self.assertIn("F018_OVERNIGHT_REVIEW.md", index)
         self.assertIn("F018_POST_OPUS_QUALIFICATION.md", index)
         self.assertIn("F018_IQ3_DOWN_QUALIFICATION.md", index)
+        self.assertIn("POST_IQ3_BOTTLENECK_AND_INTEGRATION_REPORT.md", index)
+        self.assertIn("../../architecture/F017_F018_POST_IQ3_HANDOFF.md", index)
         self.assertIn(
             "../../../specs/018-direct-quantized-metal-runtime/numerical-qualification-contract.md",
             index,
@@ -188,6 +190,8 @@ class F018EvidenceTests(unittest.TestCase):
             ROOT / "docs/research/glm52/F018_OVERNIGHT_REVIEW.md",
             ROOT / "docs/research/glm52/F018_POST_OPUS_QUALIFICATION.md",
             ROOT / "docs/research/glm52/F018_IQ3_DOWN_QUALIFICATION.md",
+            ROOT / "docs/research/glm52/POST_IQ3_BOTTLENECK_AND_INTEGRATION_REPORT.md",
+            ROOT / "docs/architecture/F017_F018_POST_IQ3_HANDOFF.md",
             ROOT / "docs/research/glm52/CLAIMS_LEDGER.md",
             ROOT / "docs/research/glm52/REVIEWER_INDEX.md",
         ]
@@ -419,6 +423,24 @@ class F018EvidenceTests(unittest.TestCase):
         )
         self.assertFalse(record["decision"]["third_kernel_selected"])
         self.assertTrue(record["decision"]["optional_p1_admitted"])
+
+    def test_post_iq3_bottleneck_decision_is_generated_and_profile_bounded(self) -> None:
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_post_iq3_bottlenecks.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+        record = load_unique_json(
+            ROOT / "docs/research/glm52/raw/post-f018-bottleneck-ranking-0001.json"
+        )
+        self.assertEqual(record["decision"]["outcome"], "B")
+        self.assertFalse(record["decision"]["third_kernel_admitted"])
+        self.assertFalse(record["decision"]["fresh_p1_run"])
+        self.assertEqual(record["ranking"][0]["operation"], "full-vocabulary output.weight")
 
     def test_committed_iq2_iq3_p1_record_and_table(self) -> None:
         raw = ROOT / "docs/research/glm52/raw/f018-inference-p1-direct-iq2-iq3-0001.json"

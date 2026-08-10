@@ -71,3 +71,11 @@ Before shared runtime code is moved between features:
 4. keep format-specific shader/layout code behind an explicit capability;
 5. preserve the Python/NumPy oracle and deterministic Metal scaffold;
 6. record the exact commits integrated rather than merging unrelated work.
+
+## Post-IQ3 measured handoff
+
+The format-neutral deltas found after the IQ2/IQ3 combined P1 and dense/trunk
+profile are specified in [F017_F018_POST_IQ3_HANDOFF.md](F017_F018_POST_IQ3_HANDOFF.md).
+That review is bound to Feature 017 revision `c2021e304f` and does not merge the
+branches. It adds no third-kernel decision and moves no IQ2/IQ3 layout logic
+into Feature 017.
