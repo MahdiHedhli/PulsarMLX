@@ -265,6 +265,30 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_committed_p1_record(self) -> None:
+        path = ROOT / "docs/research/glm52/raw/f018-inference-p1-direct-iq2-0001.json"
+        if not path.exists():
+            self.skipTest("Feature 018 P1 record not committed yet")
+        record = validate_record(load_unique_json(path))
+        self.assertEqual(record["generated_token_ids"], [9703, 21615])
+        self.assertEqual(record["direct_iq2_metal"]["worker"]["cpu_fallback_count"], 0)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq2_xxs_metal.py"),
+                "--input",
+                str(path),
+                "--output",
+                str(
+                    ROOT
+                    / "docs/research/glm52/tables/f018-inference-p1-direct-iq2-0001.md"
+                ),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")

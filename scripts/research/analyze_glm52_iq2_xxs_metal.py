@@ -17,6 +17,50 @@ DEFAULT_INPUT = ROOT / "docs/research/glm52/raw/f018-iq2-xxs-synthetic-0002.json
 DEFAULT_OUTPUT = ROOT / "docs/research/glm52/tables/f018-iq2-xxs-synthetic-0002.md"
 
 
+def _render_p1(record: dict, raw_sha256: str) -> str:
+    cold, warm = record["timings"]
+    direct = record["direct_iq2_metal"]
+    worker = direct["worker"]
+    selection = direct["selection"]
+    cache = record["expert_cache"]
+    historical = load_unique_json(
+        ROOT / "docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json"
+    )
+    historical_wall = float(historical["seconds"])
+    wall = float(record["seconds"])
+    return "\n".join(
+        [
+            "# Feature 018 exact P1 gate",
+            "",
+            "> One M1 Ultra P1 execution at a clean source commit; not P2, golden-eight, steady-state throughput, or production evidence.",
+            "",
+            f"- Source: `{record['source_commit']}` (clean)",
+            f"- Raw SHA-256: `{raw_sha256}`",
+            f"- Checkpoint set: `{record['checkpoint']['checkpoint_set_sha256']}` at immutable revision `{record['checkpoint']['revision']}`",
+            f"- Exact sequence: `{record['generated_token_ids']}`; golden prefix: `{str(record['matches_golden_prefix']).lower()}`",
+            f"- Metal device: `{direct['worker_identity']['device']}`; zero fallback: `{worker['cpu_fallback_count'] == 0}`; complete f32 Metal weight materialization: `{worker['complete_f32_weight_materialized_bytes']}` bytes",
+            "",
+            "| Boundary/component | Seconds |",
+            "| --- | ---: |",
+            f"| Complete evidence wall | {wall:.9f} |",
+            f"| Cold prompt stack | {float(cold['stack_seconds']):.9f} |",
+            f"| Full-vocabulary logits | {float(warm['logits_seconds']):.9f} |",
+            f"| Terminal warm stack | {float(warm['stack_seconds']):.9f} |",
+            f"| Direct IQ2 storage | {float(worker['storage_read_seconds']):.9f} |",
+            f"| Direct IQ2 registration | {float(worker['registration_seconds']):.9f} |",
+            f"| Direct IQ2 GPU command intervals | {float(worker['kernel_seconds']):.9f} |",
+            f"| Direct IQ2 synchronized calls | {float(worker['total_seconds']):.9f} |",
+            "",
+            f"Direct IQ2 gate/up handled `{selection['direct_routed_expert_count']}` routed experts (`{worker['gemv_count']}` GEMVs). `{selection['explicit_reference_routed_expert_count']}` routed experts used the explicit non-IQ2 reference path. The two-slot worker retained `{worker['cache_hits']}` hits and `{worker['evictions']}` bounded slot evictions.",
+            "",
+            f"The protected shared cache finished with `{cache['resident_entries']}` entries, `{cache['decoded_cache_hits']}` decoded hits, `{cache['evictions']}` evictions, and `{cache['cpu_fallbacks']}` CPU fallbacks.",
+            "",
+            f"For context only, the committed post-trunk P1 wall was `{historical_wall:.9f}` s; this Feature 018 wall is `{wall:.9f}` s (cross-commit difference `{historical_wall - wall:.9f}` s). This is not a controlled same-binary benchmark population.",
+            "",
+        ]
+    )
+
+
 def _render_routed_expert(record: dict, raw_sha256: str) -> str:
     binding = record["binding"]
     numerical = record["numerical_qualification"]
@@ -231,6 +275,11 @@ def _render_real_matrix(record: dict, raw_sha256: str) -> str:
 
 
 def render(record: dict, raw_sha256: str) -> str:
+    if (
+        record.get("schema") == "pulsarmlx.research.glm52-inference"
+        and record.get("feature_id") == "018-direct-quantized-metal-runtime"
+    ):
+        return _render_p1(record, raw_sha256)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
         return _render_complete_layer(record, raw_sha256)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
