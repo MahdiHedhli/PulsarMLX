@@ -6,15 +6,37 @@
 
 ## Reference hierarchy
 
-1. The scalar Python IQ2_XXS decoder and scalar f32 matrix-vector operation are
-   the architecture oracle.
+1. The **bit-exact oracle** is the scalar IQ2_XXS decode followed by f32
+   multiplication and same-order sequential-column f32 accumulation. The Rust
+   and Python/NumPy oracle implementations MUST visit logical columns in the
+   same increasing order and compare outputs through exact `f32` bit patterns,
+   including signed zero.
 2. The exact-bit qualified whole-matrix NumPy decoder plus synchronized MLX
-   matvec is the optimized reference.
+   tiled matmul is the optimized performance reference. MLX matmul is a
+   **Tier-B numerical comparator**, not the bit-exact oracle, because its tiled
+   reduction order is an implementation detail.
 3. The direct packed Metal path is always the candidate under test and MUST NOT
    be called by either reference.
 
 Checkpoint, tensor, packed bytes, activation, orientation, output length, and
 reference hashes are frozen before a real candidate dispatch.
+
+## Qualification implementations
+
+- The current one-thread-per-row Metal kernel is the deterministic
+  qualification scaffold. It decodes packed IQ2_XXS values and accumulates in
+  increasing sequential-column order.
+- Qualification/scaffold builds compile with fast math disabled and an
+  explicitly recorded Metal language version. Compiler defaults are not part
+  of the contract.
+- If the strict sequential scaffold matches the same-order oracle exactly, it
+  is `golden_identical` at that bounded output. If any bit differs, it is
+  classified under the frozen Tier-B envelope; thresholds MUST NOT change in
+  response to the observation.
+- A future SIMD-group or threadgroup performance kernel may reorder reduction.
+  It is a separate implementation and normally qualifies under Tier B, even
+  when the deterministic scaffold remains bit exact. It MUST NOT replace or
+  delete the scaffold.
 
 ## Frozen matrix/projection envelope
 
@@ -55,8 +77,8 @@ without widening.
 
 ### `golden_identical`
 
-- Candidate f32 output bits equal the frozen reference bits at every admitted
-  boundary.
+- Candidate f32 output bits equal the same-order scalar/NumPy oracle bits at
+  every admitted boundary.
 - Signed-zero positions match.
 - Routes, top-k order, greedy tokens, shapes, and identities are exact.
 - Repeated output hashes are identical.
@@ -102,3 +124,14 @@ This contract is immutable for Feature 018 v1. A future change requires a new
 version, preserved failing pre-change evidence, technical justification before
 rerun, and a complete rerun of every affected boundary. No in-place widening is
 permitted.
+
+## Validation dispatch semantics
+
+- An intentional out-of-scope format or role is an **explicit reference
+  dispatch** selected before candidate invocation. It is not a fallback.
+- A selected direct operation that cannot execute is a **direct error**. In
+  validation mode it fails the boundary immediately; reference recovery cannot
+  turn that boundary into a pass.
+- A production policy may permit an explicit, observable fallback, but that
+  execution is ineligible for `golden_identical` and every qualified Feature
+  018 validation claim.

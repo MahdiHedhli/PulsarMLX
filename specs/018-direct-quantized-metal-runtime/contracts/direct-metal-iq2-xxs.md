@@ -42,6 +42,18 @@ allocate or write a `[rows, columns]` f32 weight matrix.
 - Accumulation is f32.
 - Tail columns are unsupported in v1 because admitted columns are divisible by
   256; unsupported tails fail before dispatch.
+- This sequential kernel remains the permanent deterministic Metal-side
+  qualification scaffold. A future parallel performance kernel uses a distinct
+  pipeline identity and is qualified independently under the numerical
+  contract.
+
+## Qualification compilation
+
+- `MTLCompileOptions.fastMathEnabled` is `NO`.
+- `MTLCompileOptions.languageVersion` is pinned explicitly and recorded in
+  evidence.
+- Compiler defaults or process-global settings MUST NOT determine validation
+  semantics.
 
 ## Errors
 
@@ -50,5 +62,8 @@ arithmetic overflow, size mismatch, unsupported quantization, non-finite
 activation, lookup hash mismatch, or device/pipeline unavailability.
 
 A committed successful result requires command-buffer completion and zero
-fallback. Reference fallback is an explicit separate mode, never internal to
-this contract.
+fallback. An intentionally unsupported role may be selected as an explicit
+reference dispatch before candidate invocation. A selected direct operation
+that fails is an error, and validation mode MUST NOT recover to reference and
+report success. Any production fallback policy is explicit and observable and
+cannot support a Feature 018 qualification claim.
