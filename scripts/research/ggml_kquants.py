@@ -440,6 +440,64 @@ def dequantize_row_q2_k(encoded: bytes, n: int | None = None) -> list[float]:
     return out
 
 
+def dequantize_blocks_q2_k_numpy(encoded: bytes):
+    """Vector-decode complete Q2_K blocks with scalar f64 operation order."""
+
+    import numpy as np
+
+    if len(encoded) == 0 or len(encoded) % Q2_K_BLOCK != 0:
+        raise ValueError("encoded length must be a nonzero multiple of 84")
+    blocks = np.frombuffer(encoded, dtype=np.uint8).reshape(-1, Q2_K_BLOCK)
+    scales = blocks[:, :16]
+    quants = blocks[:, 16:80]
+    d = (
+        np.ascontiguousarray(blocks[:, 80:82])
+        .view("<f2")
+        .reshape(-1)
+        .astype(np.float64)
+    )
+    dmin = (
+        np.ascontiguousarray(blocks[:, 82:84])
+        .view("<f2")
+        .reshape(-1)
+        .astype(np.float64)
+    )
+    if not np.isfinite(d).all() or not np.isfinite(dmin).all():
+        raise ValueError("Q2_K scales must be finite")
+
+    decoded = np.empty((len(blocks), QK_K), dtype=np.float32)
+    for half in range(2):
+        packed = quants[:, 32 * half : 32 * half + 32]
+        for group in range(4):
+            start = 128 * half + 32 * group
+            subgroups = (np.arange(start, start + 32) // 16).astype(np.intp)
+            scale_bytes = scales[:, subgroups]
+            quant = (packed >> np.uint8(2 * group)) & np.uint8(3)
+            scale = (scale_bytes & np.uint8(15)).astype(np.float64)
+            minimum = (scale_bytes >> np.uint8(4)).astype(np.float64)
+            # Match the scalar expression's binary64 operation order exactly:
+            # d * scale * q - dmin * minimum, followed by one f32 conversion.
+            values = (
+                (d[:, None] * scale) * quant.astype(np.float64)
+                - dmin[:, None] * minimum
+            )
+            decoded[:, start : start + 32] = values.astype(np.float32)
+    return np.ascontiguousarray(decoded.reshape(-1))
+
+
+def dequantize_matrix_q2_k_numpy(encoded: bytes, rows: int, cols: int):
+    """Vector-decode one exact row-major Q2_K matrix to ``[rows, cols]`` f32."""
+
+    if rows <= 0 or cols <= 0:
+        raise ValueError("rows and cols must be positive")
+    if cols % QK_K != 0:
+        raise ValueError("cols must be multiple of 256 for pure Q2_K rows")
+    expected = rows * (cols // QK_K) * Q2_K_BLOCK
+    if len(encoded) != expected:
+        raise ValueError(f"matrix size mismatch {len(encoded)} != {expected}")
+    return dequantize_blocks_q2_k_numpy(encoded).reshape(rows, cols)
+
+
 def _q3_scales(sb: bytes) -> list[int]:
     sc = [0] * 16
     for j in range(16):
