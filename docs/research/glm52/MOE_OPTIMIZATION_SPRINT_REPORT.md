@@ -164,3 +164,14 @@ ten-sample expert-216 gate decode median fell from 2.128742 s scalar to
 
 - [`raw/post-f016-iq2-s-numpy-qualification-0001.json`](raw/post-f016-iq2-s-numpy-qualification-0001.json)
 - [`tables/post-f016-iq2-s-numpy-qualification-0001.md`](tables/post-f016-iq2-s-numpy-qualification-0001.md)
+
+Exact IQ2_S integration reduced the layer-8 MoE median from 42.965916 s to
+10.004603 s (4.29x). Candidate decode was 7.599570 s, buffer handling
+1.990244 s, MLX construct/eval 0.142864 s, matvec 0.071304 s, cleanup
+0.076885 s, and residual 0.015654 s. IQ4_XS now accounts for 8.722821 s of
+median attributed work, including 6.585108 s decode and 1.989881 s buffer
+construction, and becomes the next measured decoder gate.
+
+- [`raw/post-f016-moe-layer8-iq2-s-0001.json`](raw/post-f016-moe-layer8-iq2-s-0001.json)
+- [`raw/post-f016-moe-layer8-iq2-s-analysis-0001.json`](raw/post-f016-moe-layer8-iq2-s-analysis-0001.json)
+- [`tables/post-f016-moe-layer8-iq2-s-0001.md`](tables/post-f016-moe-layer8-iq2-s-0001.md)

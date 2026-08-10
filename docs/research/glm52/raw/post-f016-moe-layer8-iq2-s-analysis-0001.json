@@ -1,0 +1,106 @@
+{
+  "actual_status": "passed",
+  "baseline": {
+    "medians": {
+      "activation_swiglu_seconds": 0.002235852494777646,
+      "cleanup_seconds": 0.08639354201295646,
+      "contiguous_buffer_seconds": 5.9740862028629635,
+      "dequant_seconds": 36.423419207989355,
+      "mlx_matrix_construct_seconds": 0.13032931048655882,
+      "mlx_matrix_eval_seconds": 0.003059646514884662,
+      "mlx_matvec_seconds": 0.16356429350707913,
+      "storage_read_seconds": 0.06472408271656604,
+      "total_seconds": 42.96591635399818,
+      "uninstrumented_residual_seconds": 0.030152915125654545,
+      "weighting_seconds": 0.001186958012112882
+    },
+    "record": "docs/research/glm52/raw/post-f016-moe-stage-profile-0001.json",
+    "sha256": "8eee87606c5fd81db43ad15945228eaa8b44e59ee2d1ee0555716d3d213c570b",
+    "source_commit": "4879c38b43f396c13038b78fa9114a5e496823e8"
+  },
+  "boundary_speedup": 4.29461496714006,
+  "candidate": {
+    "medians": {
+      "activation_swiglu_seconds": 0.002213958985521458,
+      "cleanup_seconds": 0.07688477303599939,
+      "contiguous_buffer_seconds": 1.9902441005542642,
+      "dequant_seconds": 7.599569742909807,
+      "mlx_matrix_construct_seconds": 0.13986208347341744,
+      "mlx_matrix_eval_seconds": 0.0030014595031389035,
+      "mlx_matvec_seconds": 0.0713039789989125,
+      "storage_read_seconds": 0.04195163596159546,
+      "total_seconds": 10.004602667002473,
+      "uninstrumented_residual_seconds": 0.01565365841088351,
+      "weighting_seconds": 0.001015125511912629
+    },
+    "quantization_ranking": [
+      {
+        "median_attributed_seconds": 8.72282072868984,
+        "median_components": {
+          "cleanup_seconds": 0.025709731016831938,
+          "contiguous_buffer_seconds": 1.9898806230630726,
+          "dequant_seconds": 6.585108472398133,
+          "mlx_matrix_construct_seconds": 0.057520395996107254,
+          "mlx_matrix_eval_seconds": 0.001049812497512903,
+          "mlx_matvec_seconds": 0.028186708004795946,
+          "storage_read_seconds": 0.03536498571338598
+        },
+        "quantization": "IQ4_XS"
+      },
+      {
+        "median_attributed_seconds": 1.200566333005554,
+        "median_components": {
+          "cleanup_seconds": 0.05117504201916745,
+          "contiguous_buffer_seconds": 0.00036193550477037206,
+          "dequant_seconds": 1.0139024169911863,
+          "mlx_matrix_construct_seconds": 0.08328772898676107,
+          "mlx_matrix_eval_seconds": 0.001969647484656889,
+          "mlx_matvec_seconds": 0.04335791551420698,
+          "storage_read_seconds": 0.006511646504804958
+        },
+        "quantization": "IQ2_S"
+      },
+      {
+        "median_attributed_seconds": 0.005168812996998895,
+        "median_components": {
+          "cleanup_seconds": 0.0,
+          "contiguous_buffer_seconds": 0.0,
+          "dequant_seconds": 0.0,
+          "mlx_matrix_construct_seconds": 0.0,
+          "mlx_matrix_eval_seconds": 0.0,
+          "mlx_matvec_seconds": 0.005168812996998895,
+          "storage_read_seconds": 0.0
+        },
+        "quantization": "Q6_K"
+      },
+      {
+        "median_attributed_seconds": 0.0016811669993330725,
+        "median_components": {
+          "cleanup_seconds": 0.0,
+          "contiguous_buffer_seconds": 0.0,
+          "dequant_seconds": 0.0,
+          "mlx_matrix_construct_seconds": 0.0,
+          "mlx_matrix_eval_seconds": 0.0,
+          "mlx_matvec_seconds": 0.0016811669993330725,
+          "storage_read_seconds": 0.0
+        },
+        "quantization": "Q8_0"
+      }
+    ],
+    "record": "docs/research/glm52/raw/post-f016-moe-layer8-iq2-s-0001.json",
+    "sha256": "57e9490541d249afc14e46b2618de0e898d6bcbd68a74bf086a33096617cea3c",
+    "source_commit": "5546d9553e7793509ac00b95ac9409cfbfb401ef"
+  },
+  "claim_boundary": "One bounded layer-8 MoE boundary; not sequential full-stack activation, P1/P2, token latency, Rust, or Metal.",
+  "cpu_fallbacks": 0,
+  "evictions": 0,
+  "exact_f32_bits_against_scalar_reference": true,
+  "feature_018_kernel_selected": false,
+  "next_measured_gate": "exact whole-matrix IQ4_XS decoder qualification and layer-8 integration",
+  "resource_levels": [
+    "normal"
+  ],
+  "retained_samples": 10,
+  "schema": "pulsarmlx.research.glm52-moe-iq2-s-integration-analysis",
+  "schema_version": "1.0.0"
+}

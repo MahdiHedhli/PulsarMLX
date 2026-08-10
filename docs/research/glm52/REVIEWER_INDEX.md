@@ -189,6 +189,11 @@
   four complete real layer-8 gate/up expert matrices, exact f32-bit oracle,
   deterministic/signed-zero gates, ten-sample decode populations, and the
   checkpoint's explicit two-tensor IQ2_S limit
+- [Post-Feature-016 layer-8 IQ2_S integration](raw/post-f016-moe-layer8-iq2-s-0001.json),
+  [derived analysis](raw/post-f016-moe-layer8-iq2-s-analysis-0001.json), and
+  [generated table](tables/post-f016-moe-layer8-iq2-s-0001.md) — exact
+  scalar-reference output/routes, ten retained samples, and IQ4_XS as the
+  remaining dominant layer-8 routed-expert format
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
