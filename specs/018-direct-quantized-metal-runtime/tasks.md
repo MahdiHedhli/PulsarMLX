@@ -129,8 +129,8 @@
 
 - [x] T042 Create the complete morning handoff and Opus review questions in `docs/research/glm52/F018_OVERNIGHT_REVIEW.md`
 - [x] T043 Regenerate every Feature 018 table from committed raw data and verify deterministic output
-- [ ] T044 Run full research, privacy, generated-artifact, Cargo workspace, native Metal/MLX, Spec Kit, and `git diff --check` gates
-- [ ] T045 Review the staged diff for private paths, checkpoint bytes, credentials, donor code, and unsupported claims with `scripts/research/check_staged.sh`
+- [x] T044 Run full research, privacy, generated-artifact, Cargo workspace, native Metal/MLX, Spec Kit, and `git diff --check` gates
+- [x] T045 Review the staged diff for private paths, checkpoint bytes, credentials, donor code, and unsupported claims with `scripts/research/check_staged.sh`
 - [ ] T046 Commit and push Feature 018 overnight closeout and confirm both Apple Silicon CI jobs
 - [ ] T047 Send final acknowledged NTFY milestone to `Mahdi-Dev` with the deepest qualified boundary and exact next gate
 

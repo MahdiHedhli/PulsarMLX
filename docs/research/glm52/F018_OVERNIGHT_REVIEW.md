@@ -161,6 +161,29 @@ boundary.
 - P1 is one machine/checkpoint/prompt observation and cannot establish general
   token throughput, long-context correctness, thermal stability, or serving.
 
+## Validation
+
+- Complete checkpoint-free research suite: 455 tests passed.
+- Python worker protocol suite: 89 tests passed.
+- Cargo workspace check and full workspace tests passed; only documented
+  inherited macOS/quant warnings remain.
+- Native direct-IQ2 Metal tests: 10 passed, including 100 deterministic repeats,
+  cross-context rejection, stale-generation identity, and repeated teardown.
+- Native MLX device smoke, seven tensor fixtures, synthetic routed MoE, and the
+  Rust-to-Python worker integration passed explicitly.
+- Feature 002 schema/package fixture gates remain green and checkpoint-free.
+- Every Feature 018 raw record passes duplicate-key, semantic, source/checkpoint,
+  fallback, materialization, resource, claims-ledger, reviewer-index, and
+  privacy validation.
+- All seven Feature 018 Markdown tables regenerate byte-for-byte from their raw
+  JSON records.
+- `specify check`, `specify integration status`, the Feature 018 prerequisites
+  script, and `git diff --check` passed.
+
+The workspace check still reports the inherited `unused_mut` in
+`crates/quant/src/iq.rs` and inherited macOS-only unused serve items. They were
+not introduced or broadly cleaned in this feature.
+
 ## Opus review questions
 
 1. Does sequential f32 accumulation in one Metal thread preserve the intended
