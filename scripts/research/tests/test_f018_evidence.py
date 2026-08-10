@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 
 from f018_evidence import load_unique_json, validate_record  # noqa: E402
 from benchmark_glm52_routed_expert_metal import _nonnegative_summary  # noqa: E402
+from benchmark_glm52_complete_layer_metal import _historical_layer3  # noqa: E402
 
 
 def valid_record() -> dict:
@@ -71,6 +72,11 @@ def valid_record() -> dict:
 
 
 class F018EvidenceTests(unittest.TestCase):
+    def test_complete_layer_historical_reference_resolves_layer3(self) -> None:
+        layer = _historical_layer3()
+        self.assertEqual(layer["layer"], 3)
+        self.assertRegex(layer["reference_output_f32_sha256"], r"^[0-9a-f]{64}$")
+
     def test_resident_worker_zero_storage_samples_are_valid(self) -> None:
         summary = _nonnegative_summary([0.0, 0.0, 0.0])
         self.assertEqual(summary["median_seconds"], 0.0)

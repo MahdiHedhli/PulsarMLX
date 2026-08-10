@@ -50,10 +50,21 @@ TOKEN_ID = 9703
 DENSE_MODE = "whole_matrix_numpy_q5_q8_q6_head_numpy"
 WARMUPS = 3
 MEASURED = 10
+HISTORICAL_REFERENCE = (
+    ROOT / "docs/research/glm52/raw/post-f016-moe-stage-profile-0001.json"
+)
 
 
 def _sha(values: list[float]) -> str:
     return hashlib.sha256(np.asarray(values, dtype="<f4").tobytes()).hexdigest()
+
+
+def _historical_layer3() -> dict[str, Any]:
+    evidence = json.loads(HISTORICAL_REFERENCE.read_text())
+    layers = [layer for layer in evidence.get("layers", []) if layer.get("layer") == LAYER]
+    if len(layers) != 1 or not layers[0].get("reference_output_f32_sha256"):
+        raise ValueError("committed historical layer-3 reference is missing or ambiguous")
+    return layers[0]
 
 
 def _reference_run(
@@ -248,15 +259,7 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
                 for sample in direct_samples
             ),
         )
-        historical = json.loads(
-            (
-                ROOT
-                / "docs/research/glm52/raw/post-f016-moe-multilayer-all-vector-0001.json"
-            ).read_text()
-        )
-        historical_layer = next(
-            layer for layer in historical["layers"] if layer["layer"] == LAYER
-        )
+        historical_layer = _historical_layer3()
         historical_reference_hash = historical_layer["reference_output_f32_sha256"]
         reference_hash = next(iter(reference_hashes))
         historical_hash_match = reference_hash == historical_reference_hash
@@ -291,7 +294,7 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
                 "midpoint_sha256": next(iter(midpoint_hashes)),
                 "expert_ids": expected_expert_ids,
                 "reference_output_sha256": reference_hash,
-                "historical_reference_evidence": "docs/research/glm52/raw/post-f016-moe-multilayer-all-vector-0001.json",
+                "historical_reference_evidence": "docs/research/glm52/raw/post-f016-moe-stage-profile-0001.json",
                 "historical_reference_output_sha256": historical_reference_hash,
                 "historical_reference_hash_match": historical_hash_match,
             },
