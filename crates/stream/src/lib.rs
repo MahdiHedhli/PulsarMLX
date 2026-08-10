@@ -36,7 +36,8 @@ mod apple_metal_bridge;
 
 #[cfg(target_os = "macos")]
 pub use apple_metal_bridge::{
-    Iq2XxsGemvResult, Iq2XxsGemvTelemetry, MetalBridge, MetalRegistration,
+    Iq2XxsGemvResult, Iq2XxsGemvTelemetry, MetalBridge, MetalCompilerSettings,
+    MetalRegistration,
 };
 
 /// Build the universe of per-expert slab reads for every streamed layer of

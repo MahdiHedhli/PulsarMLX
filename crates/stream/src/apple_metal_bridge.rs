@@ -45,6 +45,13 @@ unsafe extern "C" {
         error_capacity: usize,
     ) -> i32;
     fn pulsar_metal_context_compilation_seconds(context: *mut RawMetalContext) -> f64;
+    fn pulsar_metal_context_pipeline_creation_seconds(context: *mut RawMetalContext) -> f64;
+    fn pulsar_metal_context_compiler_settings(
+        context: *mut RawMetalContext,
+        out_fast_math_enabled: *mut i32,
+        out_language_version_major: *mut u32,
+        out_language_version_minor: *mut u32,
+    ) -> i32;
     fn pulsar_metal_context_device_name(
         context: *mut RawMetalContext,
         output: *mut c_char,
@@ -101,6 +108,12 @@ pub struct Iq2XxsGemvTelemetry {
 pub struct Iq2XxsGemvResult {
     pub output: Vec<f32>,
     pub telemetry: Iq2XxsGemvTelemetry,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MetalCompilerSettings {
+    pub fast_math_enabled: bool,
+    pub language_version: String,
 }
 
 fn bridge_error(status: i32, buffer: &[i8; ERROR_CAPACITY]) -> String {
@@ -174,6 +187,29 @@ impl MetalBridge {
 
     pub fn compilation_seconds(&self) -> f64 {
         unsafe { pulsar_metal_context_compilation_seconds(self.raw) }
+    }
+
+    pub fn pipeline_creation_seconds(&self) -> f64 {
+        unsafe { pulsar_metal_context_pipeline_creation_seconds(self.raw) }
+    }
+
+    pub fn compiler_settings(&self) -> MetalCompilerSettings {
+        let mut fast_math_enabled = -1_i32;
+        let mut major = 0_u32;
+        let mut minor = 0_u32;
+        let status = unsafe {
+            pulsar_metal_context_compiler_settings(
+                self.raw,
+                &mut fast_math_enabled,
+                &mut major,
+                &mut minor,
+            )
+        };
+        assert_eq!(status, 0, "Metal compiler settings must be available");
+        MetalCompilerSettings {
+            fast_math_enabled: fast_math_enabled != 0,
+            language_version: format!("{major}.{minor}"),
+        }
     }
 
     pub fn register<'a>(&'a self, slab: &'a StableSlab) -> Result<MetalRegistration<'a>, String> {

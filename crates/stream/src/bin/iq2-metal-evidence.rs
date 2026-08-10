@@ -213,6 +213,7 @@ fn run() -> Result<(), String> {
         summarize(&kernel_samples)
     };
     let (grid_sha, signs_sha) = iq2_xxs_lookup_sha256();
+    let compiler = bridge.compiler_settings();
     let record = json!({
         "schema": "pulsarmlx.research.f018-direct-iq2-xxs",
         "schema_version": "1.0.0",
@@ -268,6 +269,14 @@ fn run() -> Result<(), String> {
         },
         "setup": {
             "compilation_seconds": bridge.compilation_seconds(),
+            "pipeline_creation_seconds": bridge.pipeline_creation_seconds(),
+            "compiler": {
+                "fast_math_enabled": compiler.fast_math_enabled,
+                "language_version": compiler.language_version,
+                "math_mode": "safe",
+                "math_floating_point_functions": "precise",
+                "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
+            },
             "registration_seconds": registration.registration_seconds(),
             "logical_packed_bytes": packed.len(),
             "allocator_telemetry": {
@@ -289,6 +298,7 @@ fn run() -> Result<(), String> {
             "storage_read_seconds": 0.0,
             "buffer_import_seconds": registration.registration_seconds(),
             "shader_compile_first_use_seconds": bridge.compilation_seconds(),
+            "pipeline_creation_seconds": bridge.pipeline_creation_seconds(),
         },
         "resource": {"level": "normal"},
         "claim_boundary": "Synthetic packed IQ2_XXS matrix GEMV on one M1 Ultra; not a real checkpoint matrix, expert, layer, token, Rust runtime, or production result.",

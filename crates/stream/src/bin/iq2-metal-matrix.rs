@@ -114,6 +114,7 @@ fn run() -> Result<(), String> {
     let slab_copy_seconds = slab_copy_start.elapsed().as_secs_f64();
     let bridge = MetalBridge::new()?;
     let device_name = bridge.device_name()?;
+    let compiler = bridge.compiler_settings();
     let registration = bridge.register(&slab)?;
     let process_first = bridge.iq2_xxs_gemv(&registration, spec, &activation)?;
     for _ in 0..WARMUPS {
@@ -206,6 +207,14 @@ fn run() -> Result<(), String> {
             "slab_copy_seconds": slab_copy_seconds,
             "registration_seconds": registration.registration_seconds(),
             "compilation_seconds": bridge.compilation_seconds(),
+            "pipeline_creation_seconds": bridge.pipeline_creation_seconds(),
+            "compiler": {
+                "fast_math_enabled": compiler.fast_math_enabled,
+                "language_version": compiler.language_version,
+                "math_mode": "safe",
+                "math_floating_point_functions": "precise",
+                "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
+            },
             "slab_logical_bytes": slab.len(),
             "slab_allocated_bytes": allocator.telemetry().allocated_bytes,
         },

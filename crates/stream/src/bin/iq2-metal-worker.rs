@@ -41,6 +41,7 @@ fn run() -> Result<(), String> {
         .to_owned();
     let bridge = MetalBridge::new()?;
     let device = bridge.device_name()?;
+    let compiler = bridge.compiler_settings();
     let mut stdout = std::io::stdout().lock();
     writeln!(
         stdout,
@@ -50,6 +51,14 @@ fn run() -> Result<(), String> {
             "source_commit": commit,
             "device": device,
             "compilation_seconds": bridge.compilation_seconds(),
+            "pipeline_creation_seconds": bridge.pipeline_creation_seconds(),
+            "compiler": {
+                "fast_math_enabled": compiler.fast_math_enabled,
+                "language_version": compiler.language_version,
+                "math_mode": "safe",
+                "math_floating_point_functions": "precise",
+                "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
+            },
             "max_resident_matrices": MAX_RESIDENT_MATRICES,
         })
     )

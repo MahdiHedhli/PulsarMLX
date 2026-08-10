@@ -88,6 +88,9 @@ kernel void pulsar_iq2_xxs_gemv(
 @property(nonatomic, strong) id<MTLBuffer> iq2GridBuffer;
 @property(nonatomic, strong) id<MTLBuffer> iq2SignBuffer;
 @property(nonatomic, assign) double compilationSeconds;
+@property(nonatomic, assign) double pipelineCreationSeconds;
+@property(nonatomic, assign) BOOL fastMathEnabled;
+@property(nonatomic, assign) MTLLanguageVersion languageVersion;
 @end
 
 @implementation PulsarMetalContextObject
@@ -157,7 +160,6 @@ int pulsar_metal_context_create(
     if (out_context == nullptr) {
         return set_error(error_buffer, error_capacity, @"null context output");
     }
-    const auto compilation_start = std::chrono::steady_clock::now();
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (device == nil) {
         return set_error(error_buffer, error_capacity, @"Metal device unavailable");
@@ -166,14 +168,27 @@ int pulsar_metal_context_create(
     if (queue == nil) {
         return set_error(error_buffer, error_capacity, @"Metal command queue unavailable");
     }
+    MTLCompileOptions *compile_options = [MTLCompileOptions new];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    compile_options.fastMathEnabled = NO;
+#pragma clang diagnostic pop
+    compile_options.mathMode = MTLMathModeSafe;
+    compile_options.mathFloatingPointFunctions = MTLMathFloatingPointFunctionsPrecise;
+    compile_options.languageVersion = MTLLanguageVersion3_2;
     NSError *library_error = nil;
-    id<MTLLibrary> library = [device newLibraryWithSource:kKernelSource options:nil error:&library_error];
+    const auto library_start = std::chrono::steady_clock::now();
+    id<MTLLibrary> library = [device newLibraryWithSource:kKernelSource
+        options:compile_options
+        error:&library_error];
+    const auto library_end = std::chrono::steady_clock::now();
     if (library == nil) {
         return set_error(
             error_buffer,
             error_capacity,
             library_error.localizedDescription ?: @"Metal library compilation failed");
     }
+    const auto pipeline_start = std::chrono::steady_clock::now();
     NSError *pipeline_error = nil;
     id<MTLComputePipelineState> checksum_pipeline =
         build_pipeline(device, library, @"pulsar_checksum", &pipeline_error);
@@ -192,14 +207,17 @@ int pulsar_metal_context_create(
             error_capacity,
             pipeline_error.localizedDescription ?: @"Metal IQ2_XXS pipeline creation failed");
     }
+    const auto pipeline_end = std::chrono::steady_clock::now();
 
     PulsarMetalContextObject *context = [PulsarMetalContextObject new];
     context.device = device;
     context.queue = queue;
     context.checksumPipeline = checksum_pipeline;
     context.iq2Pipeline = iq2_pipeline;
-    context.compilationSeconds = elapsed_seconds(
-        compilation_start, std::chrono::steady_clock::now());
+    context.compilationSeconds = elapsed_seconds(library_start, library_end);
+    context.pipelineCreationSeconds = elapsed_seconds(pipeline_start, pipeline_end);
+    context.fastMathEnabled = NO;
+    context.languageVersion = compile_options.languageVersion;
     *out_context = (PulsarMetalContext *)CFBridgingRetain(context);
     return 0;
 }
@@ -243,6 +261,35 @@ double pulsar_metal_context_compilation_seconds(PulsarMetalContext *raw_context)
     }
     PulsarMetalContextObject *context = (__bridge PulsarMetalContextObject *)raw_context;
     return context.compilationSeconds;
+}
+
+double pulsar_metal_context_pipeline_creation_seconds(PulsarMetalContext *raw_context) {
+    if (raw_context == nullptr) {
+        return -1.0;
+    }
+    PulsarMetalContextObject *context = (__bridge PulsarMetalContextObject *)raw_context;
+    return context.pipelineCreationSeconds;
+}
+
+int pulsar_metal_context_compiler_settings(
+    PulsarMetalContext *raw_context,
+    int *out_fast_math_enabled,
+    uint32_t *out_language_version_major,
+    uint32_t *out_language_version_minor) {
+    if (raw_context == nullptr || out_fast_math_enabled == nullptr ||
+        out_language_version_major == nullptr || out_language_version_minor == nullptr) {
+        return -1;
+    }
+    PulsarMetalContextObject *context = (__bridge PulsarMetalContextObject *)raw_context;
+    *out_fast_math_enabled = context.fastMathEnabled ? 1 : 0;
+    switch (context.languageVersion) {
+        case MTLLanguageVersion3_2:
+            *out_language_version_major = 3;
+            *out_language_version_minor = 2;
+            return 0;
+        default:
+            return -1;
+    }
 }
 
 int pulsar_metal_context_device_name(

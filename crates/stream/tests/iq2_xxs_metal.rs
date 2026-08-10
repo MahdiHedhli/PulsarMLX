@@ -74,6 +74,10 @@ fn native_iq2_xxs_direct_gemv_matches_reference_and_repeats() {
     let bridge = MetalBridge::new().expect("Metal IQ2_XXS pipeline");
     assert!(!bridge.device_name().expect("Metal device name").is_empty());
     assert!(bridge.compilation_seconds() >= 0.0);
+    assert!(bridge.pipeline_creation_seconds() >= 0.0);
+    let compiler = bridge.compiler_settings();
+    assert!(!compiler.fast_math_enabled);
+    assert_eq!(compiler.language_version, "3.2");
     let registration = bridge.register(&slab).expect("no-copy packed registration");
     let first = bridge
         .iq2_xxs_gemv(&registration, spec, &activation)
@@ -83,6 +87,14 @@ fn native_iq2_xxs_direct_gemv_matches_reference_and_repeats() {
         .iter()
         .map(|value| value.to_bits())
         .collect::<Vec<_>>();
+    assert_ne!(
+        first_bits,
+        reference
+            .iter()
+            .map(|value| value.to_bits())
+            .collect::<Vec<_>>(),
+        "the observed strict scaffold is Tier-B qualified, not bit exact",
+    );
     for (expected, actual) in reference.iter().zip(&first.output) {
         let error = (expected - actual).abs();
         assert!(
