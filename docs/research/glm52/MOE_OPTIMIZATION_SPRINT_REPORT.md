@@ -187,3 +187,13 @@ NumPy (24.64x).
 
 - [`raw/post-f016-iq4-xs-numpy-qualification-0001.json`](raw/post-f016-iq4-xs-numpy-qualification-0001.json)
 - [`tables/post-f016-iq4-xs-numpy-qualification-0001.md`](tables/post-f016-iq4-xs-numpy-qualification-0001.md)
+
+Combined exact IQ2_S/IQ4_XS integration reduced the layer-8 MoE median to
+1.713339 s: 25.08x versus the 42.965916-second baseline and 5.84x versus the
+IQ2_S-only boundary. Median routed decode is now 1.364327 s, MLX
+construct/eval 0.125503 s, matvec 0.071072 s, cleanup 0.078595 s, and residual
+0.003297 s. The exceptional layer-8 scalar decoder hotspot has collapsed.
+
+- [`raw/post-f016-moe-layer8-iq2-s-iq4-xs-0001.json`](raw/post-f016-moe-layer8-iq2-s-iq4-xs-0001.json)
+- [`raw/post-f016-moe-layer8-iq2-s-iq4-xs-analysis-0001.json`](raw/post-f016-moe-layer8-iq2-s-iq4-xs-analysis-0001.json)
+- [`tables/post-f016-moe-layer8-iq2-s-iq4-xs-0001.md`](tables/post-f016-moe-layer8-iq2-s-iq4-xs-0001.md)

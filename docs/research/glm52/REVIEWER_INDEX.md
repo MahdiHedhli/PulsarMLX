@@ -198,6 +198,11 @@
   and [generated table](tables/post-f016-iq4-xs-numpy-qualification-0001.md)
   — complete real matrices across layers 8, 75, 76, and 77 in shards 2 and 6,
   exact f32-bit oracle, deterministic/signed-zero gates, and ten-sample timing
+- [Post-Feature-016 combined layer-8 IQ2_S/IQ4_XS integration](raw/post-f016-moe-layer8-iq2-s-iq4-xs-0001.json),
+  [derived analysis](raw/post-f016-moe-layer8-iq2-s-iq4-xs-analysis-0001.json),
+  and [generated table](tables/post-f016-moe-layer8-iq2-s-iq4-xs-0001.md)
+  — exact scalar-reference output/routes and a complete three-rung stage
+  comparison showing the exceptional scalar decoder hotspot collapsed
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
