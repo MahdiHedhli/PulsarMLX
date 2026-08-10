@@ -370,6 +370,40 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_post_f018_iq2_iq3_complete_layer_profile_is_reproducible(self) -> None:
+        raw = (
+            ROOT
+            / "docs/research/glm52/raw/post-f018-iq2-iq3-complete-layer3-profile-0001.json"
+        )
+        table = (
+            ROOT
+            / "docs/research/glm52/tables/post-f018-iq2-iq3-complete-layer3-profile-0001.md"
+        )
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(
+            record["source"]["commit"],
+            "6db38f1c937b9ad48321586be85cc558fb48e815",
+        )
+        self.assertFalse(record["source"]["dirty"])
+        self.assertEqual(record["classification"], "numerically_qualified_greedy_identical")
+        self.assertEqual(record["worker"]["max_resident_matrices"], 3)
+        self.assertEqual(record["numerical_qualification"]["elementwise_mismatch_count"], 0)
+        self.assertEqual(record["direct_summaries"]["layer"]["total_seconds"]["sample_count"], 10)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq3_composed_metal.py"),
+                "--input",
+                str(raw),
+                "--output",
+                str(table),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_post_iq3_hotspot_profile_is_generated_from_committed_evidence(self) -> None:
         subprocess.run(
             [
