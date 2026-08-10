@@ -9,7 +9,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts/research"))
-from benchmark_glm52_moe_profile import _nonnegative_summary, stage_totals  # noqa: E402
+from benchmark_glm52_moe_profile import (  # noqa: E402
+    _nonnegative_summary,
+    _parse_layers,
+    stage_totals,
+)
 
 
 def _event(projection: str, *, shared: bool, hit: bool) -> dict:
@@ -41,6 +45,13 @@ def _expert(expert_id: int, *, shared: bool, hit: bool) -> dict:
 
 
 class MoeStageProfileTests(unittest.TestCase):
+    def test_layer_parser_accepts_only_unique_admitted_subsets(self) -> None:
+        self.assertEqual(_parse_layers("78"), (78,))
+        self.assertEqual(_parse_layers("3,40"), (3, 40))
+        for value in ("", "3,3", "7", "bad"):
+            with self.assertRaises(Exception):
+                _parse_layers(value)
+
     def test_stage_summary_accepts_legitimate_all_zero_samples(self) -> None:
         summary = _nonnegative_summary([0.0, 0.0, 0.0])
         self.assertEqual(summary["sample_count"], 3)

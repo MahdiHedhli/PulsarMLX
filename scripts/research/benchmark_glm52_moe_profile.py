@@ -24,7 +24,7 @@ from glm52_dense_primitives import (  # noqa: E402
     embed_token,
     require_mlx_backend,
 )
-from glm52_expert_cache_runtime import ExpertSlabCache  # noqa: E402
+from glm52_expert_cache_runtime import ExpertSlabCache, MlxMatrixBackend  # noqa: E402
 from glm52_inference import (  # noqa: E402
     _checkpoint_identity,
     _source_identity,
@@ -159,11 +159,12 @@ def _untimed_reference(
     store: Glm52TensorStore,
     layer: int,
     residual: list[float],
+    decoder_mode: str = "numpy_vectorized",
 ) -> tuple[list[float], dict[str, Any]]:
     cache = ExpertSlabCache(
         max_bytes=16 * 1024**3,
         policy="decoded_shared_only",
-        decoder_mode="numpy_vectorized",
+        decoder_mode=decoder_mode,
     )
     routes: list[dict[str, Any]] = []
     output = moe_ffn_cached(store, cache, layer, residual, routes)
@@ -234,7 +235,23 @@ def _cleanup() -> None:
         pass
 
 
-def benchmark(model: Path) -> dict[str, Any]:
+def _parse_layers(value: str) -> tuple[int, ...]:
+    try:
+        layers = tuple(int(item) for item in value.split(",") if item)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("layers must be comma-separated integers") from error
+    if not layers or len(set(layers)) != len(layers) or any(layer not in LAYERS for layer in layers):
+        raise argparse.ArgumentTypeError(f"layers must be a unique subset of {LAYERS}")
+    return layers
+
+
+def benchmark(
+    model: Path,
+    *,
+    layers: tuple[int, ...] = LAYERS,
+    reference_decoder_mode: str = "numpy_vectorized",
+    experiment_id: str = "post-f016-moe-stage-profile-0001",
+) -> dict[str, Any]:
     source = _source_identity()
     if source["source_dirty"]:
         raise RuntimeError("worktree must be clean before real checkpoint measurement")
@@ -245,7 +262,7 @@ def benchmark(model: Path) -> dict[str, Any]:
     try:
         embedded = embed_token(store, TOKEN_ID)
         layer_records: list[dict[str, Any]] = []
-        for layer in LAYERS:
+        for layer in layers:
             with require_mlx_backend(), dense_read_mode(DENSE_MODE):
                 attention_start = time.perf_counter()
                 residual, _ = mla_forward_token(
@@ -253,7 +270,9 @@ def benchmark(model: Path) -> dict[str, Any]:
                 )
                 attention_setup_seconds = time.perf_counter() - attention_start
 
-            reference, reference_route = _untimed_reference(store, layer, residual)
+            reference, reference_route = _untimed_reference(
+                store, layer, residual, reference_decoder_mode
+            )
             _cleanup()
             cache = ExpertSlabCache(
                 max_bytes=16 * 1024**3,
@@ -312,7 +331,7 @@ def benchmark(model: Path) -> dict[str, Any]:
             "schema": "pulsarmlx.research.glm52-moe-stage-profile",
             "schema_version": "1.0.0",
             "feature_id": "post-f016-moe-optimization",
-            "experiment_id": "post-f016-moe-stage-profile-0001",
+            "experiment_id": experiment_id,
             "actual_status": "passed" if passed else "failed",
             **source,
             "checkpoint": _checkpoint_identity(),
@@ -324,7 +343,7 @@ def benchmark(model: Path) -> dict[str, Any]:
                 "storage_role": "internal_ssd",
             },
             "protocol": {
-                "layers": list(LAYERS),
+                "layers": list(layers),
                 "input_token_id": TOKEN_ID,
                 "representative_activation_scope": "real checkpoint MLA boundary from token embedding; not a sequential full-stack hidden state",
                 "decoder_mode": "numpy_vectorized with scalar fallback for unsupported formats",
@@ -332,6 +351,7 @@ def benchmark(model: Path) -> dict[str, Any]:
                 "shared_cache_policy": "decoded_shared_only",
                 "shared_cache_budget_bytes": 16 * 1024**3,
                 "untimed_reference_repetitions": 1,
+                "untimed_reference_decoder_mode": reference_decoder_mode,
                 "process_first_samples": 1,
                 "warmups": WARMUPS,
                 "measured_samples": MEASURED,
@@ -359,13 +379,27 @@ def benchmark(model: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--layers", type=_parse_layers, default=LAYERS)
+    parser.add_argument(
+        "--reference-decoder-mode",
+        choices=MlxMatrixBackend.DECODER_MODES,
+        default="numpy_vectorized",
+    )
+    parser.add_argument(
+        "--experiment-id", default="post-f016-moe-stage-profile-0001"
+    )
     args = parser.parse_args()
     model = os.environ.get("PULSARMLX_GLM_GGUF")
     if not model:
         raise SystemExit("PULSARMLX_GLM_GGUF is required; no checkpoint was searched")
     if args.output.exists():
         raise SystemExit(f"refusing to overwrite existing output: {args.output}")
-    result = benchmark(Path(model))
+    result = benchmark(
+        Path(model),
+        layers=args.layers,
+        reference_decoder_mode=args.reference_decoder_mode,
+        experiment_id=args.experiment_id,
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.output.with_name(f".{args.output.name}.tmp")
     temporary.write_text(json.dumps(result, separators=(",", ":"), sort_keys=True) + "\n")
