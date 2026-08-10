@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import unittest
 from pathlib import Path
 
@@ -24,6 +25,24 @@ class PostIq3ResidencyTests(unittest.TestCase):
         self.assertIn('"blk.78.attn_output.weight"', source)
         self.assertIn('("transient", "decoded_host_rebuild", "mlx_ready")', source)
         self.assertNotIn("golden-eight", source)
+
+    def test_committed_q5_record_is_exact_and_resource_admitted(self) -> None:
+        path = ROOT / "docs/research/glm52/raw/post-f018-late-attention-q5-residency-0001.json"
+        record = json.loads(path.read_text())
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertFalse(record["source"]["dirty"])
+        self.assertEqual(record["binding"]["tensor"], "blk.78.attn_output.weight")
+        self.assertEqual(record["binding"]["quantization"], "Q5_K")
+        self.assertTrue(record["comparison"]["exact_output_hash_across_candidates"])
+        self.assertEqual(len(record["comparison"]["output_f32_sha256"]), 1)
+        self.assertEqual(
+            [candidate["candidate"] for candidate in record["candidates"]],
+            ["transient", "decoded_host_rebuild", "mlx_ready"],
+        )
+        for candidate in record["candidates"]:
+            self.assertEqual(candidate["resource_after_setup"]["level"], "normal")
+            self.assertEqual(candidate["resource_after_teardown"]["level"], "normal")
+            self.assertEqual(candidate["summaries"]["total_seconds"]["sample_count"], 10)
 
 
 if __name__ == "__main__":
