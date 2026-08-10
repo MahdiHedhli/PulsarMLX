@@ -29,6 +29,9 @@ pub use portable_fixture::{
     TrunkInventoryReference,
 };
 
+mod fixture_ladder;
+pub use fixture_ladder::{FixtureLadder, FixtureLadderError};
+
 mod residency;
 pub use residency::{
     authoritative_candidates, AdmissionDecision, AdmissionRejection, HostMemoryBudget,
