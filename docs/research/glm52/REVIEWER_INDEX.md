@@ -194,6 +194,10 @@
   [generated table](tables/post-f016-moe-layer8-iq2-s-0001.md) — exact
   scalar-reference output/routes, ten retained samples, and IQ4_XS as the
   remaining dominant layer-8 routed-expert format
+- [Post-Feature-016 NumPy IQ4_XS qualification](raw/post-f016-iq4-xs-numpy-qualification-0001.json)
+  and [generated table](tables/post-f016-iq4-xs-numpy-qualification-0001.md)
+  — complete real matrices across layers 8, 75, 76, and 77 in shards 2 and 6,
+  exact f32-bit oracle, deterministic/signed-zero gates, and ten-sample timing
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

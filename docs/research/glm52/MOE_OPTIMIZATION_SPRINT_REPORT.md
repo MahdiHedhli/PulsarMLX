@@ -175,3 +175,15 @@ construction, and becomes the next measured decoder gate.
 - [`raw/post-f016-moe-layer8-iq2-s-0001.json`](raw/post-f016-moe-layer8-iq2-s-0001.json)
 - [`raw/post-f016-moe-layer8-iq2-s-analysis-0001.json`](raw/post-f016-moe-layer8-iq2-s-analysis-0001.json)
 - [`tables/post-f016-moe-layer8-iq2-s-0001.md`](tables/post-f016-moe-layer8-iq2-s-0001.md)
+
+## Phase 3 continuation: exact IQ4_XS decoder boundary
+
+At clean source `bf44192a`, whole-matrix NumPy IQ4_XS decoding matched the
+scalar decoder at exact f32 bits for complete expert matrices from layers 8,
+75, 76, and 77, spanning shards 2 and 6. Deterministic hashes, signed-zero
+counts, malformed/non-finite gates, and normal resources passed. The ten-sample
+layer-8 expert-216 down decode median fell from 1.052149 s scalar to 0.042700 s
+NumPy (24.64x).
+
+- [`raw/post-f016-iq4-xs-numpy-qualification-0001.json`](raw/post-f016-iq4-xs-numpy-qualification-0001.json)
+- [`tables/post-f016-iq4-xs-numpy-qualification-0001.md`](tables/post-f016-iq4-xs-numpy-qualification-0001.md)
