@@ -95,6 +95,11 @@
   — four complete real attention-output matrices across four layers/shards,
   exact f32-bit scalar-oracle comparisons, deterministic repeats, signed-zero
   checks, raw decode samples, and bounded allocation/resource observations
+- [Current complete layer-8 result](raw/post-f016-complete-layer8-all-vector-0001.json)
+  with its [generated analysis](raw/post-f016-complete-layer8-all-vector-analysis-0001.json)
+  and [review table](tables/post-f016-complete-layer8-all-vector-0001.md) — ten
+  exact current-path samples retaining the prior committed midpoint, route, and
+  output hashes; split attention/MoE stages, resources, and cross-commit caveat
 - [Post-Feature-016 Q5_K dense integration](raw/post-f016-trunk-q5-integration-0001.json)
   and [generated integration table](tables/post-f016-trunk-q5-integration-0001.md)
   — one complete real Q5_K MLX matrix boundary and complete layer-3 MLA,

@@ -1,0 +1,78 @@
+{
+  "actual_status": "passed",
+  "claim_boundary": "One complete single-position layer-8 boundary. The before/after ratios are cross-commit observations, not a counterbalanced same-binary population.",
+  "cross_commit_complete_layer_ratio": 12.605608965583956,
+  "cross_commit_moe_ratio": 24.572597937190995,
+  "current": {
+    "cpu_fallbacks": 0,
+    "evictions": 0,
+    "medians": {
+      "attention_seconds": 1.7870921455032658,
+      "boundary_overhead_seconds": 2.500019036233425e-07,
+      "dense_buffer_seconds": 0.003262083038862329,
+      "dense_build_seconds": 0.08162048106896691,
+      "dense_dequant_seconds": 1.6579899660064257,
+      "dense_matvec_seconds": 0.06325993951759301,
+      "dense_storage_seconds": 0.014306701981695369,
+      "dense_total_seconds": 1.8213536065886728,
+      "moe.activation_swiglu_seconds": 0.0022623755066888407,
+      "moe.explicit_stage_seconds": 1.7246081628836691,
+      "moe.routed_aggregation_seconds": 0.001776000004610978,
+      "moe.routed_matrix_stages.cleanup_seconds": 0.08513248099916382,
+      "moe.routed_matrix_stages.contiguous_buffer_seconds": 0.0005228949958109297,
+      "moe.routed_matrix_stages.dequant_seconds": 1.3666000864759553,
+      "moe.routed_matrix_stages.mlx_matrix_construct_seconds": 0.11993781245837454,
+      "moe.routed_matrix_stages.mlx_matrix_eval_seconds": 0.0029694979821215384,
+      "moe.routed_matrix_stages.mlx_matvec_seconds": 0.07678708148159785,
+      "moe.routed_matrix_stages.storage_read_seconds": 0.0037256040013744496,
+      "moe.router_projection_seconds": 0.050508208500104956,
+      "moe.router_selection_seconds": 0.00012106249778298661,
+      "moe.shared_aggregation_seconds": 0.00022300000273389742,
+      "moe.shared_matrix_stages.cleanup_seconds": 0.0,
+      "moe.shared_matrix_stages.contiguous_buffer_seconds": 0.0,
+      "moe.shared_matrix_stages.dequant_seconds": 0.0,
+      "moe.shared_matrix_stages.mlx_matrix_construct_seconds": 0.0,
+      "moe.shared_matrix_stages.mlx_matrix_eval_seconds": 0.0,
+      "moe.shared_matrix_stages.mlx_matvec_seconds": 0.007045249003567733,
+      "moe.shared_matrix_stages.storage_read_seconds": 0.0,
+      "moe.uninstrumented_residual_seconds": 0.0036618125886889175,
+      "moe.weighting_seconds": 0.0011463750124676153,
+      "moe_seconds": 1.7285663335060235,
+      "total_seconds": 3.5116170835026423
+    },
+    "midpoint_f32_sha256": "41ddbf9576c7ae37586d2a5569d3cedfc34e66d919bb116e3b9ef3c39a00c62f",
+    "output_f32_sha256": "0b496dac61128ce4d781c9e6c4a1787f097d3f7bb6296b266efe2c02aa89dee4",
+    "resource_levels": [
+      "normal"
+    ],
+    "retained_samples": 10,
+    "route_expert_ids": [
+      216,
+      244,
+      206,
+      79,
+      102,
+      188,
+      146,
+      78
+    ]
+  },
+  "exact_boundary_identity_preserved": true,
+  "feature_018_kernel_selected": false,
+  "next_gate": "route-history residency economics and matrix reuse study; P2 only if they do not require unsafe memory",
+  "prior": {
+    "attention_median_seconds": 1.7588703125074971,
+    "complete_layer_median_seconds": 44.26607179149869,
+    "moe_median_seconds": 42.475365521007916,
+    "record": "docs/research/glm52/raw/post-f016-trunk-complete-layer8-q6-audit-0001.json",
+    "sha256": "02951c02b9a43d52e5c3388521c23ce298e726d6a63a3076d0a3476f0b2a6672",
+    "source_commit": "7abcce2a3448c63df1226a2594734db630c42d9a"
+  },
+  "schema": "pulsarmlx.research.glm52-complete-layer-current-analysis",
+  "schema_version": "1.0.0",
+  "source": {
+    "record": "docs/research/glm52/raw/post-f016-complete-layer8-all-vector-0001.json",
+    "sha256": "bb7517f67b07ed07872f570ea255a7227a1b6245879f10f5342e5bb4e6dd09a0",
+    "source_commit": "29c33ba6604425a20ecb46858561fd3d5ae06424"
+  }
+}

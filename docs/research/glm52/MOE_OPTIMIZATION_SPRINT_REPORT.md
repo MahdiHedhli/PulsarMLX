@@ -217,3 +217,28 @@ itself select a Feature 018 kernel.
 - [`raw/post-f016-moe-multilayer-all-vector-0001.json`](raw/post-f016-moe-multilayer-all-vector-0001.json)
 - [`raw/post-f016-moe-multilayer-all-vector-analysis-0001.json`](raw/post-f016-moe-multilayer-all-vector-analysis-0001.json)
 - [`tables/post-f016-moe-multilayer-all-vector-0001.md`](tables/post-f016-moe-multilayer-all-vector-0001.md)
+
+## Phase 7 result: complete layer-8 gate
+
+At clean source `29c33ba6`, the current all-vector dense and expert paths
+passed one complete single-position layer-8 boundary across ten retained
+samples. Every sample preserved the exact prior committed attention midpoint,
+route `[216,244,206,79,102,188,146,78]`, and final f32 output hash. Resource
+observations remained normal, and CPU fallback and cache eviction stayed zero.
+
+The current complete-layer median is **3.511617 s**, split into 1.787092 s of
+attention/MLA and 1.728566 s of MoE. The prior committed warm boundary was
+44.266072 s with 42.475366 s of MoE, giving cross-commit observations of
+12.60x for the complete layer and 24.58x for MoE. These are not a
+counterbalanced same-binary population and are not token-latency claims.
+
+The current MoE median includes 1.366600 s of routed matrix decode, 0.122907 s
+of MLX matrix construct/evaluation, 0.076787 s of matrix-vector products, and
+0.085132 s of cleanup. The protected shared expert remains a cache hit and
+costs about 0.007045 s, dominated by its three retained MLX matvecs. Decode is
+therefore still the largest bounded expert stage; neither build/import nor the
+shared cache policy is the immediate bottleneck.
+
+- [`raw/post-f016-complete-layer8-all-vector-0001.json`](raw/post-f016-complete-layer8-all-vector-0001.json)
+- [`raw/post-f016-complete-layer8-all-vector-analysis-0001.json`](raw/post-f016-complete-layer8-all-vector-analysis-0001.json)
+- [`tables/post-f016-complete-layer8-all-vector-0001.md`](tables/post-f016-complete-layer8-all-vector-0001.md)
