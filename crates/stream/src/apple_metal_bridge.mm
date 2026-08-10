@@ -39,8 +39,8 @@ kernel void pulsar_iq2_xxs_gemv(
     device const uchar *packed [[buffer(0)]],
     device const float *activation [[buffer(1)]],
     device float *output [[buffer(2)]],
-    constant const uchar *grid_table [[buffer(3)]],
-    constant const uchar *sign_table [[buffer(4)]],
+    device const uchar *grid_table [[buffer(3)]],
+    device const uchar *sign_table [[buffer(4)]],
     constant IQ2XXSParams &params [[buffer(5)]],
     uint row [[thread_position_in_grid]]) {
     if (row >= params.rows) {

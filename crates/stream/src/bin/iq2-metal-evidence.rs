@@ -276,7 +276,6 @@ fn run() -> Result<(), String> {
                 "math_mode": "safe",
                 "math_floating_point_functions": "precise",
                 "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
-                "lookup_address_space": "constant",
             },
             "registration_seconds": registration.registration_seconds(),
             "logical_packed_bytes": packed.len(),

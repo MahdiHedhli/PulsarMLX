@@ -214,7 +214,6 @@ fn run() -> Result<(), String> {
                 "math_mode": "safe",
                 "math_floating_point_functions": "precise",
                 "pipeline_identity": "iq2_xxs_sequential_scaffold_v1",
-                "lookup_address_space": "constant",
             },
             "slab_logical_bytes": slab.len(),
             "slab_allocated_bytes": allocator.telemetry().allocated_bytes,
