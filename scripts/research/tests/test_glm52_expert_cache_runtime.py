@@ -311,6 +311,128 @@ def test_moe_direct_selection_is_explicit_and_format_gated() -> None:
     }
 
 
+def test_moe_out_of_scope_quantization_is_explicit_reference_not_fallback() -> None:
+    import glm52_inference as inference
+
+    store = SimpleNamespace(
+        tensors={
+            "blk.8.ffn_gate_exps.weight": SimpleNamespace(
+                type_id=10, type_name="IQ2_S", dims=[6144, 2048, 256]
+            ),
+            "blk.8.ffn_up_exps.weight": SimpleNamespace(
+                type_id=10, type_name="IQ2_S", dims=[6144, 2048, 256]
+            ),
+        }
+    )
+    route = {"expert_ids": list(range(8)), "weights": [0.125] * 8}
+    stats = {
+        "direct_routed_expert_count": 0,
+        "explicit_reference_routed_expert_count": 0,
+        "direct_error_count": 0,
+        "fallback_count": 0,
+        "reference_dispatches": [],
+    }
+
+    def fake_reference(*args: object, shared: bool, **kwargs: object) -> list[float]:
+        del args, kwargs
+        return [0.0, 0.0] if not shared else [1.0, 1.0]
+
+    with ExitStack() as patches:
+        patches.enter_context(patch.object(inference, "rms_norm", lambda *args: [1.0, 1.0]))
+        patches.enter_context(
+            patch.object(inference, "load_f32_vector", lambda *args: [0.0, 0.0])
+        )
+        patches.enter_context(patch.object(inference, "matvec_weight", lambda *args: [0.0]))
+        patches.enter_context(patch("glm52_router.glm_route_real", return_value=route))
+        patches.enter_context(
+            patch.object(inference, "run_expert_swiglu_cached", fake_reference)
+        )
+        inference.moe_ffn_cached(
+            store,
+            object(),
+            8,
+            [1.0, 1.0],
+            direct_worker=object(),
+            direct_stats=stats,
+        )
+
+    assert stats["direct_routed_expert_count"] == 0
+    assert stats["explicit_reference_routed_expert_count"] == 8
+    assert stats["direct_error_count"] == 0
+    assert stats["fallback_count"] == 0
+    assert len(stats["reference_dispatches"]) == 8
+    assert all(
+        event["dispatch"] == "explicit_reference"
+        and event["reason_code"] == "intentional_out_of_scope_quantization"
+        and event["layer"] == 8
+        and event["fallback"] is False
+        for event in stats["reference_dispatches"]
+    )
+
+
+def test_selected_direct_failure_stops_without_reference_recovery() -> None:
+    import glm52_inference as inference
+
+    store = SimpleNamespace(
+        tensors={
+            "blk.3.ffn_gate_exps.weight": SimpleNamespace(
+                type_id=16, type_name="IQ2_XXS", dims=[6144, 2048, 256]
+            ),
+            "blk.3.ffn_up_exps.weight": SimpleNamespace(
+                type_id=16, type_name="IQ2_XXS", dims=[6144, 2048, 256]
+            ),
+        }
+    )
+    route = {"expert_ids": list(range(8)), "weights": [0.125] * 8}
+    reference_calls = 0
+    stats = {
+        "direct_routed_expert_count": 0,
+        "explicit_reference_routed_expert_count": 0,
+        "direct_error_count": 0,
+        "fallback_count": 0,
+        "reference_dispatches": [],
+    }
+
+    def fail_direct(*args: object, **kwargs: object) -> tuple[list[float], dict]:
+        del args, kwargs
+        raise RuntimeError("synthetic direct failure")
+
+    def fake_reference(*args: object, **kwargs: object) -> list[float]:
+        nonlocal reference_calls
+        del args, kwargs
+        reference_calls += 1
+        return [0.0, 0.0]
+
+    with ExitStack() as patches:
+        patches.enter_context(patch.object(inference, "rms_norm", lambda *args: [1.0, 1.0]))
+        patches.enter_context(
+            patch.object(inference, "load_f32_vector", lambda *args: [0.0, 0.0])
+        )
+        patches.enter_context(patch.object(inference, "matvec_weight", lambda *args: [0.0]))
+        patches.enter_context(patch("glm52_router.glm_route_real", return_value=route))
+        patches.enter_context(
+            patch.object(inference, "run_routed_expert_direct_iq2", fail_direct)
+        )
+        patches.enter_context(
+            patch.object(inference, "run_expert_swiglu_cached", fake_reference)
+        )
+        with unittest.TestCase().assertRaisesRegex(
+            RuntimeError, "failed closed; reference recovery is forbidden"
+        ):
+            inference.moe_ffn_cached(
+                store,
+                object(),
+                3,
+                [1.0, 1.0],
+                direct_worker=object(),
+                direct_stats=stats,
+            )
+
+    assert stats["direct_error_count"] == 1
+    assert stats["fallback_count"] == 0
+    assert reference_calls == 0
+
+
 class _FakeMlxArray:
     def __init__(self, value: object) -> None:
         self.value = value
@@ -724,6 +846,8 @@ def load_tests(
         test_direct_iq2_routed_expert_keeps_down_on_reference_backend,
         test_inference_rejects_direct_mode_without_worker,
         test_moe_direct_selection_is_explicit_and_format_gated,
+        test_moe_out_of_scope_quantization_is_explicit_reference_not_fallback,
+        test_selected_direct_failure_stops_without_reference_recovery,
         test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once,
         test_numpy_mode_reads_and_decodes_complete_iq3_matrix_once,
         test_scalar_mode_retains_row_reads_as_the_reference_path,

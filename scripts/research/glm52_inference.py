@@ -197,7 +197,7 @@ def moe_ffn_cached(
     route_sink: list[dict[str, Any]] | None = None,
     timing_sink: dict[str, Any] | None = None,
     direct_worker: Any | None = None,
-    direct_stats: dict[str, int] | None = None,
+    direct_stats: dict[str, Any] | None = None,
 ) -> list[float]:
     from glm52_router import glm_route_real
 
@@ -240,15 +240,25 @@ def moe_ffn_cached(
             and up.type_name == "IQ2_XXS"
         )
         if direct_eligible:
-            part, direct_timing = run_routed_expert_direct_iq2(
-                store,
-                cache,
-                direct_worker,
-                layer=layer,
-                expert=eid,
-                activation=x,
-                weight=w,
-            )
+            try:
+                part, direct_timing = run_routed_expert_direct_iq2(
+                    store,
+                    cache,
+                    direct_worker,
+                    layer=layer,
+                    expert=eid,
+                    activation=x,
+                    weight=w,
+                )
+            except Exception as error:
+                if direct_stats is not None:
+                    direct_stats["direct_error_count"] = (
+                        int(direct_stats.get("direct_error_count", 0)) + 1
+                    )
+                    direct_stats["last_error_reason_code"] = "direct_execution_error"
+                raise RuntimeError(
+                    "direct IQ2 validation dispatch failed closed; reference recovery is forbidden"
+                ) from error
             if direct_stats is not None:
                 direct_stats["direct_routed_expert_count"] += 1
             if expert_timing is not None:
@@ -260,6 +270,26 @@ def moe_ffn_cached(
             )
             if direct_stats is not None:
                 direct_stats["explicit_reference_routed_expert_count"] += 1
+                direct_stats.setdefault("reference_dispatches", []).append(
+                    {
+                        "dispatch": "explicit_reference",
+                        "reason_code": "intentional_out_of_scope_quantization",
+                        "capability_miss": False,
+                        "runtime_error": False,
+                        "fallback": False,
+                        "layer": layer,
+                        "expert_id": eid,
+                        "projections": [
+                            {
+                                "role": role,
+                                "tensor_name": f"blk.{layer}.ffn_{role}_exps.weight",
+                                "quantization": location.type_name,
+                                "shape": list(map(int, location.dims)),
+                            }
+                            for role, location in (("gate", gate), ("up", up))
+                        ],
+                    }
+                )
             if expert_timing is not None:
                 expert_timing["execution_path"] = "explicit_reference"
         aggregation_start = time.perf_counter() if timing_sink is not None else 0.0
@@ -309,7 +339,7 @@ def layer_forward_inference(
     pos: int,
     route_sink: list[dict[str, Any]] | None = None,
     direct_worker: Any | None = None,
-    direct_stats: dict[str, int] | None = None,
+    direct_stats: dict[str, Any] | None = None,
 ) -> list[float]:
     from glm52_mla import mla_forward_token, N_LEADING_DENSE, dense_ffn
 
@@ -349,7 +379,7 @@ def _run_stack(
     cache: ExpertSlabCache | None,
     kvs: list[CompactKVCache],
     direct_worker: Any | None = None,
-    direct_stats: dict[str, int] | None = None,
+    direct_stats: dict[str, Any] | None = None,
 ) -> tuple[list[float], dict[str, Any]]:
     stack_start = time.perf_counter()
     x = embed_token(store, token_id)
@@ -433,6 +463,9 @@ def generate(
     direct_stats = {
         "direct_routed_expert_count": 0,
         "explicit_reference_routed_expert_count": 0,
+        "direct_error_count": 0,
+        "fallback_count": 0,
+        "reference_dispatches": [],
     }
     direct_worker: Any | None = None
 

@@ -51,6 +51,8 @@ class DirectIq2MetalWorker:
             "total_seconds": 0.0,
             "cpu_fallback_count": 0,
             "complete_f32_weight_materialized_bytes": 0,
+            "direct_error_count": 0,
+            "fallback_count": 0,
         }
 
     def _read_response(self) -> dict[str, Any]:
@@ -77,10 +79,12 @@ class DirectIq2MetalWorker:
         if response.get("request_id") != self._request_id:
             raise RuntimeError("direct Metal worker response ID mismatch")
         if response.get("status") != "ok":
+            self._stats["direct_error_count"] += 1
             raise RuntimeError(
                 f"direct Metal worker rejected request: {response.get('error', 'unknown error')}"
             )
         if response.get("cpu_fallback_count") != 0:
+            self._stats["fallback_count"] += int(response["cpu_fallback_count"])
             raise RuntimeError("direct Metal worker used a CPU fallback")
         if response.get("complete_f32_weight_materialized_bytes") != 0:
             raise RuntimeError("direct Metal worker materialized a complete f32 matrix")
