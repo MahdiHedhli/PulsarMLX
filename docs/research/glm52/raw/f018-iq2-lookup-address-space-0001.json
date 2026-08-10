@@ -1,0 +1,45 @@
+{
+  "actual_status": "passed",
+  "claim_boundary": "Two sequential 100-sample synthetic populations on one M1 Ultra; not a counterbalanced hardware benchmark or real-matrix result.",
+  "constant": {
+    "candidate_output_sha256": "53d9b490e7a3022a95263d660095b611e8cdd21b260e4cfce7f685fbec13ef05",
+    "classification": "numerically_qualified_greedy_identical",
+    "maximum_seconds": 0.002168333,
+    "mean_seconds": 0.00101568334,
+    "median_seconds": 0.0009275209999999999,
+    "minimum_seconds": 0.000838375,
+    "sample_count": 100,
+    "sample_standard_deviation_seconds": 0.0002599221374075504,
+    "source_commit": "655bef329ef31ebb7de31088ae465f370e0caeed"
+  },
+  "constant_over_device_median_ratio": 1.291249978247629,
+  "decision": {
+    "constant_tables_retained": false,
+    "reason": "The bounded constant-table population preserved output identity but had a higher median; it offered no measured benefit.",
+    "retained_address_space": "device"
+  },
+  "device": {
+    "candidate_output_sha256": "53d9b490e7a3022a95263d660095b611e8cdd21b260e4cfce7f685fbec13ef05",
+    "classification": "numerically_qualified_greedy_identical",
+    "maximum_seconds": 0.002392834,
+    "mean_seconds": 0.00081409626,
+    "median_seconds": 0.0007183125,
+    "minimum_seconds": 0.00055525,
+    "sample_count": 100,
+    "sample_standard_deviation_seconds": 0.0003308189205566011,
+    "source_commit": "44bf5ee0e8b1140396137040bd12d3b81c528a99"
+  },
+  "exact_candidate_output_identity": true,
+  "inputs": {
+    "constant": {
+      "path": "docs/research/glm52/raw/f018-iq2-xxs-synthetic-strict-constant-0001.json",
+      "sha256": "f8c728b7a6e152eb9030850250761ee0d0d37854e3d165a43f9213437b700c64"
+    },
+    "device": {
+      "path": "docs/research/glm52/raw/f018-iq2-xxs-synthetic-strict-device-0002.json",
+      "sha256": "52ee35d5658e13557161795b5244a4fa3a604f7761f5d1f178da9dc61326d52e"
+    }
+  },
+  "schema": "pulsarmlx.research.f018-iq2-lookup-address-space",
+  "schema_version": "1.0.0"
+}

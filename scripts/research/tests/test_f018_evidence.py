@@ -419,6 +419,27 @@ class F018EvidenceTests(unittest.TestCase):
                 self.assertEqual(projection["selected_expert_shape"], [2048, 6144])
                 self.assertGreater(projection["selected_expert_compressed_bytes"], 0)
 
+    def test_lookup_address_space_negative_result_is_reproducible(self) -> None:
+        path = (
+            ROOT
+            / "docs/research/glm52/raw/f018-iq2-lookup-address-space-0001.json"
+        )
+        record = load_unique_json(path)
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertTrue(record["exact_candidate_output_identity"])
+        self.assertFalse(record["decision"]["constant_tables_retained"])
+        self.assertEqual(record["decision"]["retained_address_space"], "device")
+        self.assertGreater(record["constant_over_device_median_ratio"], 1.0)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_f018_lookup_address_space.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")
