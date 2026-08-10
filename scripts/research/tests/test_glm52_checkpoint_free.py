@@ -89,6 +89,9 @@ class TestTelemetryPrivacy(unittest.TestCase):
         with self.assertRaises(ValueError):
             assert_public_safe({"token": "secret"})
 
+    def test_allows_numeric_model_token_id(self):
+        assert_public_safe({"token": 9703})
+
     def test_snapshot_public(self):
         c = TelemetryCollector()
         c.record_read(100, 0.01)

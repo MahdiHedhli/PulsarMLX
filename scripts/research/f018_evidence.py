@@ -60,6 +60,11 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         assert_public_safe(record)
     except ValueError as exc:
         raise ValueError(f"record is not public-safe: {exc}") from exc
+    if (
+        record.get("schema") == "pulsarmlx.research.glm52-inference"
+        and record.get("feature_id") == "018-direct-quantized-metal-runtime"
+    ):
+        return _validate_p1_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-routed-expert":
         return _validate_routed_expert_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-moe":
@@ -156,6 +161,101 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
     binding = record.get("binding", {})
     if isinstance(binding, dict) and "tensor_name" in binding:
         _validate_real_matrix_record(record)
+    return record
+
+
+def _validate_p1_record(record: dict[str, Any]) -> dict[str, Any]:
+    """Validate the optional clean-source Feature 018 P1 acceptance record."""
+
+    if record.get("schema_version") != "2.0.0" or record.get("actual_status") != "passed":
+        raise ValueError("Feature 018 P1 must use inference schema 2.0.0 and pass")
+    if record.get("source_dirty") is not False or not _HEX40.fullmatch(
+        str(record.get("source_commit", ""))
+    ):
+        raise ValueError("Feature 018 P1 source must be a clean commit")
+    checkpoint = record.get("checkpoint", {})
+    if (
+        not _HEX64.fullmatch(str(checkpoint.get("checkpoint_set_sha256", "")))
+        or checkpoint.get("file_count") != 6
+        or checkpoint.get("total_bytes") != 238_458_632_928
+    ):
+        raise ValueError("Feature 018 P1 checkpoint identity changed")
+    if (
+        record.get("mode") != "inference"
+        or record.get("expert_execution_mode") != "direct_iq2_gate_up"
+        or record.get("decoder_mode") != "numpy_vectorized"
+        or record.get("dense_read_mode")
+        != "whole_matrix_numpy_q5_q8_q6_head_numpy"
+        or record.get("cache_policy") != "decoded_shared_only"
+    ):
+        raise ValueError("Feature 018 P1 execution policy changed")
+    if (
+        record.get("prompt_token_ids") != [9703]
+        or record.get("requested_new_tokens") != 1
+        or record.get("generated_token_ids") != [9703, 21615]
+        or record.get("matches_golden_prefix") is not True
+    ):
+        raise ValueError("Feature 018 P1 exact token gate failed")
+    timings = record.get("timings")
+    routing = record.get("routing")
+    if not isinstance(timings, list) or len(timings) != 2:
+        raise ValueError("Feature 018 P1 must retain exactly two complete stacks")
+    if not isinstance(routing, list) or len(routing) != 2:
+        raise ValueError("Feature 018 P1 routing population is incomplete")
+    for stack in timings:
+        layers = stack.get("layers")
+        if (
+            not isinstance(layers, list)
+            or [layer.get("layer") for layer in layers] != list(range(79))
+            or stack.get("resource_after", {}).get("level") != "normal"
+        ):
+            raise ValueError("Feature 018 P1 stack or resource shape changed")
+    for stack in routing:
+        layers = stack.get("layers")
+        if not isinstance(layers, list) or len(layers) != 76:
+            raise ValueError("Feature 018 P1 must retain 76 MoE routes per stack")
+        if [layer.get("layer") for layer in layers] != list(range(3, 79)):
+            raise ValueError("Feature 018 P1 MoE layer identities changed")
+        if any(
+            not isinstance(layer.get("expert_ids"), list)
+            or len(layer["expert_ids"]) != 8
+            or layer.get("shared_expert") != 0
+            for layer in layers
+        ):
+            raise ValueError("Feature 018 P1 route shape is incomplete")
+    cache = record.get("expert_cache", {})
+    if (
+        cache.get("cpu_fallbacks") != 0
+        or cache.get("evictions") != 0
+        or cache.get("admission_rejections") != 0
+        or cache.get("decoded_cache_hits") != 228
+        or cache.get("resident_entries") != 228
+    ):
+        raise ValueError("Feature 018 P1 protected shared-cache gate failed")
+    direct = record.get("direct_iq2_metal", {})
+    selection = direct.get("selection", {})
+    worker = direct.get("worker", {})
+    identity = direct.get("worker_identity", {})
+    direct_count = selection.get("direct_routed_expert_count")
+    reference_count = selection.get("explicit_reference_routed_expert_count")
+    if (
+        not isinstance(direct_count, int)
+        or direct_count <= 0
+        or not isinstance(reference_count, int)
+        or reference_count < 0
+        or direct_count + reference_count != 2 * 76 * 8
+    ):
+        raise ValueError("Feature 018 P1 routed execution accounting failed")
+    if (
+        worker.get("gemv_count") != direct_count * 2
+        or worker.get("cpu_fallback_count") != 0
+        or worker.get("complete_f32_weight_materialized_bytes") != 0
+        or identity.get("source_commit") != record["source_commit"]
+        or identity.get("max_resident_matrices") != 2
+    ):
+        raise ValueError("Feature 018 P1 direct worker gate failed")
+    if record.get("resource_before", {}).get("level") != "normal":
+        raise ValueError("Feature 018 P1 resource admission was not normal")
     return record
 
 

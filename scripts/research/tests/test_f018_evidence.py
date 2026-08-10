@@ -8,6 +8,7 @@ import sys
 import tempfile
 import subprocess
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -72,6 +73,47 @@ def valid_record() -> dict:
 
 
 class F018EvidenceTests(unittest.TestCase):
+    def _synthetic_p1_record(self) -> dict:
+        record = load_unique_json(
+            ROOT
+            / "docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json"
+        )
+        record = deepcopy(record)
+        record["feature_id"] = "018-direct-quantized-metal-runtime"
+        record["expert_execution_mode"] = "direct_iq2_gate_up"
+        record["direct_iq2_metal"] = {
+            "selection": {
+                "direct_routed_expert_count": 1000,
+                "explicit_reference_routed_expert_count": 216,
+            },
+            "worker": {
+                "gemv_count": 2000,
+                "cpu_fallback_count": 0,
+                "complete_f32_weight_materialized_bytes": 0,
+            },
+            "worker_identity": {
+                "source_commit": record["source_commit"],
+                "max_resident_matrices": 2,
+            },
+        }
+        return record
+
+    def test_p1_contract_accepts_exact_explicit_mixed_path(self) -> None:
+        record = self._synthetic_p1_record()
+        self.assertEqual(validate_record(record)["generated_token_ids"], [9703, 21615])
+
+    def test_p1_contract_rejects_hidden_fallback_and_incomplete_accounting(self) -> None:
+        fallback = self._synthetic_p1_record()
+        fallback["direct_iq2_metal"]["worker"]["cpu_fallback_count"] = 1
+        with self.assertRaisesRegex(ValueError, "direct worker gate"):
+            validate_record(fallback)
+        incomplete = self._synthetic_p1_record()
+        incomplete["direct_iq2_metal"]["selection"][
+            "explicit_reference_routed_expert_count"
+        ] -= 1
+        with self.assertRaisesRegex(ValueError, "execution accounting"):
+            validate_record(incomplete)
+
     def test_complete_layer_historical_reference_resolves_layer3(self) -> None:
         layer = _historical_layer3()
         self.assertEqual(layer["layer"], 3)

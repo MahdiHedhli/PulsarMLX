@@ -37,6 +37,21 @@ class DirectIq2MetalWorker:
         if ready.get("max_resident_matrices") != 2:
             raise RuntimeError("direct Metal worker residency bound changed")
         self.identity = ready
+        self._stats: dict[str, float | int] = {
+            "gemv_count": 0,
+            "cache_hits": 0,
+            "storage_read_count": 0,
+            "storage_bytes_read": 0,
+            "evictions": 0,
+            "storage_read_seconds": 0.0,
+            "registration_seconds": 0.0,
+            "dispatch_seconds": 0.0,
+            "kernel_seconds": 0.0,
+            "synchronization_seconds": 0.0,
+            "total_seconds": 0.0,
+            "cpu_fallback_count": 0,
+            "complete_f32_weight_materialized_bytes": 0,
+        }
 
     def _read_response(self) -> dict[str, Any]:
         assert self._process.stdout is not None
@@ -120,7 +135,32 @@ class DirectIq2MetalWorker:
             "columns": columns,
             "packed_bytes": packed_bytes,
         }
+        self._stats["gemv_count"] += 1
+        self._stats["cache_hits"] += int(bool(event["cache_hit"]))
+        for field in (
+            "storage_read_count",
+            "storage_bytes_read",
+            "cpu_fallback_count",
+            "complete_f32_weight_materialized_bytes",
+        ):
+            self._stats[field] += int(event[field])
+        self._stats["evictions"] = max(
+            int(self._stats["evictions"]), int(event["evictions"])
+        )
+        for field in (
+            "storage_read_seconds",
+            "registration_seconds",
+            "dispatch_seconds",
+            "synchronization_seconds",
+            "total_seconds",
+        ):
+            self._stats[field] += float(event[field])
+        if event["kernel_seconds"] is not None:
+            self._stats["kernel_seconds"] += float(event["kernel_seconds"])
         return output, event
+
+    def stats_snapshot(self) -> dict[str, float | int]:
+        return dict(self._stats)
 
     def close(self) -> None:
         if self._process.poll() is not None:

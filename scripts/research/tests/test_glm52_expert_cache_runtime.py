@@ -226,6 +226,91 @@ def test_direct_iq2_routed_expert_keeps_down_on_reference_backend() -> None:
     assert detail["down_reference_events"][0]["projection"] == "down"
 
 
+def test_inference_rejects_direct_mode_without_worker() -> None:
+    import glm52_inference as inference
+
+    with unittest.TestCase().assertRaisesRegex(ValueError, "requires a direct Metal worker"):
+        inference.generate(
+            object(),
+            [9703],
+            1,
+            expert_execution_mode="direct_iq2_gate_up",
+        )
+
+
+def test_moe_direct_selection_is_explicit_and_format_gated() -> None:
+    import glm52_inference as inference
+
+    store = SimpleNamespace(
+        tensors={
+            "blk.3.ffn_gate_exps.weight": SimpleNamespace(
+                type_id=16, type_name="IQ2_XXS"
+            ),
+            "blk.3.ffn_up_exps.weight": SimpleNamespace(
+                type_id=16, type_name="IQ2_XXS"
+            ),
+        }
+    )
+    route = {"expert_ids": list(range(8)), "weights": [0.125] * 8}
+    direct_calls: list[int] = []
+    reference_calls: list[tuple[int, bool]] = []
+
+    def fake_direct(*args: object, **kwargs: object) -> tuple[list[float], dict]:
+        del args
+        expert = int(kwargs["expert"])
+        direct_calls.append(expert)
+        return [0.125, 0.125], {}
+
+    def fake_reference(
+        store: object,
+        cache: object,
+        layer: int,
+        expert: int,
+        x: list[float],
+        weight: float,
+        *,
+        shared: bool,
+        timing_sink: dict | None,
+    ) -> list[float]:
+        del store, cache, layer, x, weight, timing_sink
+        reference_calls.append((expert, shared))
+        return [1.0, 1.0]
+
+    direct_stats = {
+        "direct_routed_expert_count": 0,
+        "explicit_reference_routed_expert_count": 0,
+    }
+    with ExitStack() as patches:
+        patches.enter_context(patch.object(inference, "rms_norm", lambda *args: [1.0, 1.0]))
+        patches.enter_context(
+            patch.object(inference, "load_f32_vector", lambda *args: [0.0, 0.0])
+        )
+        patches.enter_context(patch.object(inference, "matvec_weight", lambda *args: [0.0]))
+        patches.enter_context(patch("glm52_router.glm_route_real", return_value=route))
+        patches.enter_context(
+            patch.object(inference, "run_routed_expert_direct_iq2", fake_direct)
+        )
+        patches.enter_context(
+            patch.object(inference, "run_expert_swiglu_cached", fake_reference)
+        )
+        output = inference.moe_ffn_cached(
+            store,
+            object(),
+            3,
+            [1.0, 1.0],
+            direct_worker=object(),
+            direct_stats=direct_stats,
+        )
+
+    assert output == [3.0, 3.0]
+    assert direct_calls == list(range(8))
+    assert reference_calls == [(0, True)]
+    assert direct_stats == {
+        "direct_routed_expert_count": 8,
+        "explicit_reference_routed_expert_count": 0,
+    }
+
+
 class _FakeMlxArray:
     def __init__(self, value: object) -> None:
         self.value = value
@@ -580,8 +665,10 @@ def test_inference_stops_before_executing_a_divergent_token_stack() -> None:
         mode: str,
         cache: FakeCache,
         kvs: list[object],
+        direct_worker: object = None,
+        direct_stats: object = None,
     ) -> tuple[list[float], dict[str, object]]:
-        del store, position, mode, cache, kvs
+        del store, position, mode, cache, kvs, direct_worker, direct_stats
         completed_tokens.append(token_id)
         return [0.0], {
             "stack_seconds": 1.0,
@@ -634,6 +721,9 @@ def load_tests(
         test_clear_drops_residency_but_resets_all_counters,
         test_backend_failure_propagates_without_cpu_fallback,
         test_matvec_cached_rows_reference,
+        test_direct_iq2_routed_expert_keeps_down_on_reference_backend,
+        test_inference_rejects_direct_mode_without_worker,
+        test_moe_direct_selection_is_explicit_and_format_gated,
         test_numpy_mode_reads_and_decodes_complete_iq2_matrix_once,
         test_numpy_mode_reads_and_decodes_complete_iq3_matrix_once,
         test_scalar_mode_retains_row_reads_as_the_reference_path,

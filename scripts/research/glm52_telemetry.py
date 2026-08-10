@@ -37,7 +37,11 @@ def assert_public_safe(obj: Any, path: str = "$") -> None:
     if isinstance(obj, dict):
         for k, v in obj.items():
             kl = str(k).lower()
-            if kl in {"username", "hostname", "home", "serial", "uuid", "ip", "token", "password"}:
+            if kl in {"username", "hostname", "home", "serial", "uuid", "ip", "password"}:
+                raise ValueError(f"private key forbidden at {path}.{k}")
+            # Model token IDs are public numerical evidence. Credential-like
+            # strings under a generic `token` key remain forbidden.
+            if kl == "token" and not isinstance(v, (int, float)):
                 raise ValueError(f"private key forbidden at {path}.{k}")
             assert_public_safe(v, f"{path}.{k}")
     elif isinstance(obj, (list, tuple)):

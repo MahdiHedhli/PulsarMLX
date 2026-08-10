@@ -17,7 +17,7 @@ import os
 import subprocess
 import sys
 import time
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +36,7 @@ from glm52_expert_cache_runtime import (
     ExpertSlabCache,
     MlxMatrixBackend,
     expert_matvec_cached,
+    run_routed_expert_direct_iq2,
 )
 from glm52_layer import layer_forward_token, moe_ffn
 from glm52_memory_pressure import sample_pressure
@@ -195,6 +196,8 @@ def moe_ffn_cached(
     residual: list[float],
     route_sink: list[dict[str, Any]] | None = None,
     timing_sink: dict[str, Any] | None = None,
+    direct_worker: Any | None = None,
+    direct_stats: dict[str, int] | None = None,
 ) -> list[float]:
     from glm52_router import glm_route_real
 
@@ -227,9 +230,38 @@ def moe_ffn_cached(
     routed_aggregation_seconds = 0.0
     for eid, w in zip(route["expert_ids"], route["weights"], strict=True):
         expert_timing: dict[str, Any] | None = {} if timing_sink is not None else None
-        part = run_expert_swiglu_cached(
-            store, cache, layer, eid, x, w, shared=False, timing_sink=expert_timing
+        gate = store.tensors[f"blk.{layer}.ffn_gate_exps.weight"]
+        up = store.tensors[f"blk.{layer}.ffn_up_exps.weight"]
+        direct_eligible = (
+            direct_worker is not None
+            and gate.type_id == 16
+            and gate.type_name == "IQ2_XXS"
+            and up.type_id == 16
+            and up.type_name == "IQ2_XXS"
         )
+        if direct_eligible:
+            part, direct_timing = run_routed_expert_direct_iq2(
+                store,
+                cache,
+                direct_worker,
+                layer=layer,
+                expert=eid,
+                activation=x,
+                weight=w,
+            )
+            if direct_stats is not None:
+                direct_stats["direct_routed_expert_count"] += 1
+            if expert_timing is not None:
+                expert_timing.update(direct_timing)
+                expert_timing["execution_path"] = "direct_iq2_gate_up"
+        else:
+            part = run_expert_swiglu_cached(
+                store, cache, layer, eid, x, w, shared=False, timing_sink=expert_timing
+            )
+            if direct_stats is not None:
+                direct_stats["explicit_reference_routed_expert_count"] += 1
+            if expert_timing is not None:
+                expert_timing["execution_path"] = "explicit_reference"
         aggregation_start = time.perf_counter() if timing_sink is not None else 0.0
         for i, v in enumerate(part):
             acc[i] += v
@@ -276,13 +308,23 @@ def layer_forward_inference(
     kv: CompactKVCache,
     pos: int,
     route_sink: list[dict[str, Any]] | None = None,
+    direct_worker: Any | None = None,
+    direct_stats: dict[str, int] | None = None,
 ) -> list[float]:
     from glm52_mla import mla_forward_token, N_LEADING_DENSE, dense_ffn
 
     mid, _ = mla_forward_token(store, layer, residual, kv, pos)
     if layer < N_LEADING_DENSE:
         return dense_ffn(store, layer, mid)
-    return moe_ffn_cached(store, cache, layer, mid, route_sink)
+    return moe_ffn_cached(
+        store,
+        cache,
+        layer,
+        mid,
+        route_sink,
+        direct_worker=direct_worker,
+        direct_stats=direct_stats,
+    )
 
 
 def logits_from_hidden(store: Glm52TensorStore, h: list[float]) -> list[float]:
@@ -306,6 +348,8 @@ def _run_stack(
     mode: str,
     cache: ExpertSlabCache | None,
     kvs: list[CompactKVCache],
+    direct_worker: Any | None = None,
+    direct_stats: dict[str, int] | None = None,
 ) -> tuple[list[float], dict[str, Any]]:
     stack_start = time.perf_counter()
     x = embed_token(store, token_id)
@@ -315,9 +359,22 @@ def _run_stack(
         before = cache.stats.to_dict() if cache is not None else {}
         layer_start = time.perf_counter()
         if mode == "inference" and cache is not None:
-            x = layer_forward_inference(
-                store, cache, layer, x, kvs[layer], position, routes
-            )
+            if direct_worker is None:
+                x = layer_forward_inference(
+                    store, cache, layer, x, kvs[layer], position, routes
+                )
+            else:
+                x = layer_forward_inference(
+                    store,
+                    cache,
+                    layer,
+                    x,
+                    kvs[layer],
+                    position,
+                    routes,
+                    direct_worker=direct_worker,
+                    direct_stats=direct_stats,
+                )
         else:
             x, _ = layer_forward_token(store, layer, x, kvs[layer], position)
         layer_record: dict[str, Any] = {
@@ -349,7 +406,15 @@ def generate(
     dense_mode: str = "row_reference",
     progress_path: Path | None = None,
     evidence_context: dict[str, Any] | None = None,
+    expert_execution_mode: str = "reference",
+    direct_worker_path: Path | None = None,
 ) -> dict:
+    if expert_execution_mode not in {"reference", "direct_iq2_gate_up"}:
+        raise ValueError(f"unsupported expert execution mode: {expert_execution_mode}")
+    if expert_execution_mode == "direct_iq2_gate_up" and direct_worker_path is None:
+        raise ValueError("direct_iq2_gate_up requires a direct Metal worker path")
+    if expert_execution_mode == "direct_iq2_gate_up" and mode != "inference":
+        raise ValueError("direct_iq2_gate_up is available only in inference mode")
     expert_cache = (
         ExpertSlabCache(
             max_bytes=cache_bytes,
@@ -365,19 +430,29 @@ def generate(
     routing: list[dict[str, Any]] = []
     t_all = time.perf_counter()
     context = dict(evidence_context or {})
+    direct_stats = {
+        "direct_routed_expert_count": 0,
+        "explicit_reference_routed_expert_count": 0,
+    }
+    direct_worker: Any | None = None
 
     def snapshot(status: str) -> dict[str, Any]:
         golden_ok = generated[: len(GOLDEN)] == GOLDEN[: len(generated)]
         return {
             "schema": "pulsarmlx.research.glm52-inference",
             "schema_version": "2.0.0",
-            "feature_id": "016-glm52-full-execution",
+            "feature_id": (
+                "018-direct-quantized-metal-runtime"
+                if expert_execution_mode == "direct_iq2_gate_up"
+                else "016-glm52-full-execution"
+            ),
             "actual_status": status,
             **context,
             "mode": mode,
             "cache_policy": cache_policy if expert_cache is not None else "not_applicable",
             "decoder_mode": decoder_mode if expert_cache is not None else "not_applicable",
             "dense_read_mode": dense_mode,
+            "expert_execution_mode": expert_execution_mode,
             "cache_budget_bytes": cache_bytes if expert_cache is not None else 0,
             "generated_token_ids": list(generated),
             "golden": GOLDEN,
@@ -389,6 +464,15 @@ def generate(
             "timings": list(timings),
             "routing": list(routing),
             "expert_cache": expert_cache.stats.to_dict() if expert_cache else None,
+            "direct_iq2_metal": (
+                {
+                    "selection": dict(direct_stats),
+                    "worker": direct_worker.stats_snapshot(),
+                    "worker_identity": dict(direct_worker.identity),
+                }
+                if direct_worker is not None
+                else None
+            ),
         }
 
     def checkpoint_progress() -> None:
@@ -396,7 +480,15 @@ def generate(
             _write_json_atomic(progress_path, snapshot("in_progress"))
 
     execution_context = require_mlx_backend() if mode == "inference" else nullcontext()
-    with execution_context, dense_read_mode(dense_mode):
+    with ExitStack() as contexts:
+        contexts.enter_context(execution_context)
+        contexts.enter_context(dense_read_mode(dense_mode))
+        if expert_execution_mode == "direct_iq2_gate_up":
+            from glm52_direct_metal_runtime import DirectIq2MetalWorker
+
+            direct_worker = contexts.enter_context(
+                DirectIq2MetalWorker(direct_worker_path, context["source_commit"])
+            )
         x: list[float] | None = None
         for pos, tid in enumerate(seed):
             before = expert_cache.stats.to_dict() if expert_cache is not None else {}
@@ -407,6 +499,8 @@ def generate(
                 mode=mode,
                 cache=expert_cache,
                 kvs=kvs,
+                direct_worker=direct_worker,
+                direct_stats=direct_stats,
             )
             stack_routes = stack.pop("routes")
             record = {
@@ -450,6 +544,8 @@ def generate(
                 mode=mode,
                 cache=expert_cache,
                 kvs=kvs,
+                direct_worker=direct_worker,
+                direct_stats=direct_stats,
             )
             stack_routes = stack.pop("routes")
             record = {
@@ -504,6 +600,17 @@ def main() -> int:
         default="row_reference",
         help="experimental dense/trunk storage and decoder mode",
     )
+    ap.add_argument(
+        "--expert-execution-mode",
+        choices=("reference", "direct_iq2_gate_up"),
+        default="reference",
+        help="explicit routed-expert execution path; defaults to the reference path",
+    )
+    ap.add_argument(
+        "--direct-worker",
+        type=Path,
+        default=ROOT / "target/debug/iq2-metal-worker",
+    )
     ap.add_argument("--out", type=Path, default=Path("docs/research/glm52/raw/f016-inference-run.json"))
     args = ap.parse_args()
 
@@ -528,6 +635,8 @@ def main() -> int:
             cache_policy=args.cache_policy,
             decoder_mode=args.decoder_mode,
             dense_mode=args.dense_read_mode,
+            expert_execution_mode=args.expert_execution_mode,
+            direct_worker_path=args.direct_worker,
             progress_path=args.out,
             evidence_context={
                 **source,
