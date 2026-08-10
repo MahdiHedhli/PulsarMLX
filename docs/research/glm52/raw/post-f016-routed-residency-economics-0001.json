@@ -1,0 +1,507 @@
+{
+  "actual_status": "passed",
+  "adjacent_repeat_fraction_overall": 0.38898026315789475,
+  "adjacent_repeated_experts_total": 1892,
+  "adjacent_stack_reuse": [
+    {
+      "from_stack": 0,
+      "logical_compressed_bytes_reusable": 648118272,
+      "logical_decoded_f32_bytes_reusable": 8606711808,
+      "repeat_fraction": 0.09375,
+      "repeated_experts": 57,
+      "selected_experts": 608,
+      "to_stack": 1
+    },
+    {
+      "from_stack": 1,
+      "logical_compressed_bytes_reusable": 2152660992,
+      "logical_decoded_f32_bytes_reusable": 28387049472,
+      "repeat_fraction": 0.3092105263157895,
+      "repeated_experts": 188,
+      "selected_experts": 608,
+      "to_stack": 2
+    },
+    {
+      "from_stack": 2,
+      "logical_compressed_bytes_reusable": 2685075456,
+      "logical_decoded_f32_bytes_reusable": 35332816896,
+      "repeat_fraction": 0.3848684210526316,
+      "repeated_experts": 234,
+      "selected_experts": 608,
+      "to_stack": 3
+    },
+    {
+      "from_stack": 3,
+      "logical_compressed_bytes_reusable": 2633859072,
+      "logical_decoded_f32_bytes_reusable": 34728837120,
+      "repeat_fraction": 0.3782894736842105,
+      "repeated_experts": 230,
+      "selected_experts": 608,
+      "to_stack": 4
+    },
+    {
+      "from_stack": 4,
+      "logical_compressed_bytes_reusable": 2905276416,
+      "logical_decoded_f32_bytes_reusable": 38201720832,
+      "repeat_fraction": 0.4161184210526316,
+      "repeated_experts": 253,
+      "selected_experts": 608,
+      "to_stack": 5
+    },
+    {
+      "from_stack": 5,
+      "logical_compressed_bytes_reusable": 3303112704,
+      "logical_decoded_f32_bytes_reusable": 43486543872,
+      "repeat_fraction": 0.47368421052631576,
+      "repeated_experts": 288,
+      "selected_experts": 608,
+      "to_stack": 6
+    },
+    {
+      "from_stack": 6,
+      "logical_compressed_bytes_reusable": 3650813952,
+      "logical_decoded_f32_bytes_reusable": 48167387136,
+      "repeat_fraction": 0.524671052631579,
+      "repeated_experts": 319,
+      "selected_experts": 608,
+      "to_stack": 7
+    },
+    {
+      "from_stack": 7,
+      "logical_compressed_bytes_reusable": 3700555776,
+      "logical_decoded_f32_bytes_reusable": 48771366912,
+      "repeat_fraction": 0.53125,
+      "repeated_experts": 323,
+      "selected_experts": 608,
+      "to_stack": 8
+    }
+  ],
+  "decision": {
+    "compressed_residency_avoids_decode": false,
+    "decoded_all_observed_routed_units_safe": false,
+    "feature_018_kernel_selected": false,
+    "next_experiment": "one real expert lifecycle: transient, decoded-host rebuild, and retained MLX-ready matrices",
+    "static_decoded_top1_per_layer_requires_real_rss_gate": true
+  },
+  "golden_route_population": {
+    "expert_selections": 5472,
+    "experts_per_layer": 8,
+    "moe_layers_per_stack": 76,
+    "stacks": 9,
+    "unique_layer_expert_units": 2912
+  },
+  "inputs": {
+    "catalog": {
+      "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+      "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+    },
+    "golden8": {
+      "path": "docs/research/glm52/raw/f016-inference-golden8-iq3-0001.json",
+      "sha256": "be4232f2bb4df103756158bfd9d7f6a807c2b332ff651b1670a98a04be5c0018",
+      "source_commit": "1a2ca76ee2df0f518bfc9ddbaafd31500a5e6a26",
+      "stacks": 9
+    },
+    "p1": {
+      "path": "docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json",
+      "sha256": "35ce5f6dac7b2fe6229d53300cebcc341eab57bb50d1450f6385d8e1db6b7c47",
+      "source_commit": "9b6ab666c9dc89eda9b2ddf284a9a2767516d87e",
+      "stacks": 2
+    },
+    "p2": {
+      "path": "docs/research/glm52/raw/f016-inference-p2-iq3-0001.json",
+      "sha256": "9274e719abc84c15562047c75e8aa08d7b4f6d60d2300313e2be156b292123e9",
+      "source_commit": "d5e1cf3cc092c7629d5905fd9da1a85afd1fd363",
+      "stacks": 3
+    }
+  },
+  "limitations": [
+    "Nine stacks from one frozen short-context continuation do not establish general prompt reuse.",
+    "Logical f32 bytes exclude NumPy/MLX allocator overhead and fragmentation.",
+    "Reuse counts measure opportunity; they are not latency savings.",
+    "The route histories predate the current decoder commit, but their P1/P2 prefixes are exactly identical across the committed runs."
+  ],
+  "memory_context": {
+    "conservative_reserve_bytes": 25769803776,
+    "logical_budget_only": true,
+    "observed_post_trunk_p1_peak_rss_bytes": 32787431424,
+    "protected_shared_cache_budget_bytes": 17179869184,
+    "unified_memory_bytes": 137438953472
+  },
+  "policies": [
+    {
+      "decode_avoided_on_hit": false,
+      "expert_accesses": 5472,
+      "first_use_setups": 5472,
+      "later_expert_hits": 0,
+      "later_matrix_hits": 0,
+      "later_storage_hits": 0,
+      "logical_compressed_bytes": 0,
+      "logical_decoded_f32_bytes": 0,
+      "notes": "Measured current lifecycle releases all routed matrices.",
+      "observed_memory_pressure": "existing_runs_only_not_isolated",
+      "observed_rss_delta_bytes": null,
+      "policy": "transient_current_path",
+      "resident_experts": 0
+    },
+    {
+      "decode_avoided_on_hit": true,
+      "expert_accesses": 9,
+      "first_use_setups": 1,
+      "later_expert_hits": 8,
+      "later_matrix_hits": 24,
+      "later_storage_hits": 24,
+      "logical_compressed_bytes": 11304960,
+      "logical_decoded_f32_bytes": 150994944,
+      "notes": "One globally hottest (layer, expert) unit; bounded but benefits only one layer.",
+      "observed_memory_pressure": "not_executed_catalog_analysis",
+      "observed_rss_delta_bytes": null,
+      "policy": "decoded_single_expert_hot_pin",
+      "resident_experts": 1
+    },
+    {
+      "decode_avoided_on_hit": true,
+      "expert_accesses": 504,
+      "first_use_setups": 76,
+      "later_expert_hits": 428,
+      "later_matrix_hits": 1284,
+      "later_storage_hits": 1284,
+      "logical_compressed_bytes": 870580224,
+      "logical_decoded_f32_bytes": 11475615744,
+      "notes": "One static hottest routed expert in each MoE layer; logical bytes exclude allocator overhead.",
+      "observed_memory_pressure": "not_executed_catalog_analysis",
+      "observed_rss_delta_bytes": null,
+      "policy": "decoded_per_layer_top1",
+      "resident_experts": 76
+    },
+    {
+      "decode_avoided_on_hit": false,
+      "expert_accesses": 504,
+      "first_use_setups": 76,
+      "later_expert_hits": 428,
+      "later_matrix_hits": 0,
+      "later_storage_hits": 1284,
+      "logical_compressed_bytes": 870580224,
+      "logical_decoded_f32_bytes": 0,
+      "notes": "Avoids reads on reuse but not decode/build; golden warm storage was already secondary.",
+      "observed_memory_pressure": "not_executed_catalog_analysis",
+      "observed_rss_delta_bytes": null,
+      "policy": "compressed_per_layer_top1",
+      "resident_experts": 76
+    },
+    {
+      "decode_avoided_on_hit": true,
+      "decoded_tier": {
+        "decode_avoided_on_hit": true,
+        "expert_accesses": 65,
+        "first_use_setups": 8,
+        "later_expert_hits": 57,
+        "later_matrix_hits": 171,
+        "later_storage_hits": 171,
+        "logical_compressed_bytes": 90439680,
+        "logical_decoded_f32_bytes": 1207959552,
+        "notes": "Decoded component of hybrid policy",
+        "observed_memory_pressure": "not_executed_catalog_analysis",
+        "observed_rss_delta_bytes": null,
+        "policy": "decoded_global_top8_component",
+        "resident_experts": 8
+      },
+      "expert_accesses": 504,
+      "first_use_setups": 76,
+      "later_expert_hits": 428,
+      "later_matrix_hits": 171,
+      "later_storage_hits": 1284,
+      "logical_compressed_bytes": 870580224,
+      "logical_decoded_f32_bytes": 1207959552,
+      "notes": "Compressed top-one-per-layer tier plus a separately counted eight-expert decoded tier.",
+      "observed_memory_pressure": "not_executed_catalog_analysis",
+      "observed_rss_delta_bytes": null,
+      "policy": "compressed_top1_plus_decoded_global_top8",
+      "resident_experts": 76
+    }
+  ],
+  "prefix_routes_identical": true,
+  "schema": "pulsarmlx.research.glm52-routed-residency-economics",
+  "schema_version": "1.0.0",
+  "top_20_routed_units_by_history_frequency": [
+    {
+      "adjacent_reuses": 8,
+      "appearances": 9,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 183,
+      "layer": 64,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 1
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 134,
+      "layer": 19,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 2
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 156,
+      "layer": 28,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 3
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 80,
+      "layer": 30,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 4
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 208,
+      "layer": 35,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 5
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 227,
+      "layer": 35,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 6
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 115,
+      "layer": 37,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 7
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 98,
+      "layer": 38,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 8
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 177,
+      "layer": 41,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 9
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 45,
+      "layer": 45,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 10
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 7,
+      "layer": 52,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 11
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 47,
+      "layer": 54,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 12
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 0,
+      "layer": 55,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 13
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 103,
+      "layer": 56,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 14
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 44,
+      "layer": 57,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 15
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 237,
+      "layer": 57,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 16
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 36,
+      "layer": 58,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 17
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 246,
+      "layer": 60,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 18
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 234,
+      "layer": 62,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 19
+    },
+    {
+      "adjacent_reuses": 7,
+      "appearances": 8,
+      "compressed_bytes": 11304960,
+      "decoded_f32_bytes": 150994944,
+      "expert_id": 182,
+      "layer": 67,
+      "quantizations": {
+        "down": "IQ3_XXS",
+        "gate": "IQ2_XXS",
+        "up": "IQ2_XXS"
+      },
+      "rank": 20
+    }
+  ]
+}

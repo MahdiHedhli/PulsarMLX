@@ -100,6 +100,10 @@
   and [review table](tables/post-f016-complete-layer8-all-vector-0001.md) — ten
   exact current-path samples retaining the prior committed midpoint, route, and
   output hashes; split attention/MoE stages, resources, and cross-commit caveat
+- [Routed-expert residency economics](raw/post-f016-routed-residency-economics-0001.json)
+  and [generated table](tables/post-f016-routed-residency-economics-0001.md) —
+  exact P1/P2/golden route-prefix consistency, adjacent reuse, logical policy
+  budgets, and explicit separation from unmeasured RSS or latency savings
 - [Post-Feature-016 Q5_K dense integration](raw/post-f016-trunk-q5-integration-0001.json)
   and [generated integration table](tables/post-f016-trunk-q5-integration-0001.md)
   — one complete real Q5_K MLX matrix boundary and complete layer-3 MLA,

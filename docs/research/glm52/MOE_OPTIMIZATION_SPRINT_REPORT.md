@@ -242,3 +242,30 @@ shared cache policy is the immediate bottleneck.
 - [`raw/post-f016-complete-layer8-all-vector-0001.json`](raw/post-f016-complete-layer8-all-vector-0001.json)
 - [`raw/post-f016-complete-layer8-all-vector-analysis-0001.json`](raw/post-f016-complete-layer8-all-vector-analysis-0001.json)
 - [`tables/post-f016-complete-layer8-all-vector-0001.md`](tables/post-f016-complete-layer8-all-vector-0001.md)
+
+## Phase 4: routed-expert residency economics
+
+The committed P1 and P2 routes exactly match the first two and first three
+stacks of the frozen golden-eight trace. Across its eight adjacent stack
+intervals, 1,892 of 4,864 routed selections repeat the same expert in the same
+layer (38.90%). The interval fraction increases from 9.38% to 53.12%, so the
+frozen continuation contains real adjacent-token reuse opportunity, but it is
+only one short-context prompt and cannot establish a general hit rate.
+
+A static decoded top-one expert in every MoE layer would retain 76 expert
+units, require 10.6875 GiB of logical f32 storage, and turn 428 later expert
+uses (1,284 matrices) into decoded hits over the nine-stack trace. A single
+global hot pin costs 0.140625 GiB and yields eight later expert hits. Compressed
+top-one-per-layer residency costs 0.8108 GiB and avoids reads on the same uses,
+but does not avoid decode/build; prior warm evidence already makes storage the
+secondary stage. A compressed top-one tier plus eight decoded hot experts uses
+1.125 GiB logical f32 for the decoded tier and exposes 171 decoded matrix hits.
+
+These are deterministic route/catalog economics, not allocated RSS results or
+latency savings. Observed policy RSS is intentionally recorded as unavailable,
+and the 10.6875-GiB candidate remains inadmissible until a bounded real
+ownership/lifetime experiment measures allocator overhead. Decoded-all routed
+residency is rejected as unsafe.
+
+- [`raw/post-f016-routed-residency-economics-0001.json`](raw/post-f016-routed-residency-economics-0001.json)
+- [`tables/post-f016-routed-residency-economics-0001.md`](tables/post-f016-routed-residency-economics-0001.md)
