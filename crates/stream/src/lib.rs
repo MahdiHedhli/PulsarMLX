@@ -17,6 +17,12 @@ pub use positional::{
     MatrixReadSpec, ReadTelemetry,
 };
 
+mod apple_lifecycle;
+pub use apple_lifecycle::{
+    AppleBridgeEvent, AppleBridgeGeneration, AppleBridgeLifecycle, AppleBridgeLifecycleError,
+    AppleBridgeState,
+};
+
 mod portable_fixture;
 pub use portable_fixture::{
     ArtifactRecord,

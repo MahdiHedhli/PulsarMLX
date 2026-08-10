@@ -1,5 +1,15 @@
 # PulsarMLX Feature 017 Opus review packet
 
+## Numerical parity sprint update
+
+- Feature branch boundary: `8adee21`.
+- Checkpoint-free synthetic gates now pass in strict order: projection, router, complete expert, top-8 plus shared, MLA/dense, complete layer, and final norm/logits/top-k.
+- Q8_0 remains the only decoder exercised by these public-safe parity gates; no new decoder was added because the current fixtures do not require Q2_K, Q3_K, IQ2_S, IQ4_XS, or Q5_K.
+- Final output is classified `numerically_qualified_greedy_identical` under `golden_strict`; it is not claimed `golden_identical` because the independent RMS reference differs by operation order below the explicit `1e-14` threshold.
+- Apple lifecycle qualification now has a fail-closed Rust contract covering register, submit, completion, cancel-before-submit, queued cancellation modeling, release, destroy, repeated generations, and stale-generation rejection. This is lifecycle evidence, not proof of MLX import behavior.
+- MLX native import/synchronization remains unqualified. The M2 checkout has Metal/Xcode but no discovered MLX native headers/library; the current recommendation remains a narrow Rust C ABI plus Objective-C++ adapter only after a real MLX-native import/copy/fence experiment.
+- No full-model inference or Feature 018 kernel work was performed.
+
 ## Review scope
 
 Independent review of the native runtime foundation after the M2 Max recovery
