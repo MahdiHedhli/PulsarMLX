@@ -1,0 +1,457 @@
+{
+  "actual_status": "passed",
+  "caveats": [
+    "Ranked scopes overlap and must not be summed.",
+    "The P1 warm stack and logits are single exact-run observations; matrix populations use ten measured samples.",
+    "MLX-ready output residency has a large one-time scalar-decode setup and measured RSS above logical f32 bytes.",
+    "All-layer decoded attention residency remains unsafe; individual matrix reuse does not admit that policy.",
+    "No third direct-quantized kernel, P2, or golden-eight run was executed."
+  ],
+  "complete_layer3": {
+    "attention_median_seconds": 0.7501352289982606,
+    "boundary_overhead_median_seconds": 0.028961666495888494,
+    "classification": "numerically_qualified_greedy_identical",
+    "dense_nested": {
+      "dense_buffer_seconds": 0.003134614205919206,
+      "dense_build_seconds": 0.03856616385746747,
+      "dense_dequant_seconds": 0.6821027813275578,
+      "dense_matvec_seconds": 0.04810738809464965,
+      "dense_storage_seconds": 0.011545292058144696
+    },
+    "moe_median_seconds": 0.21192004201293457,
+    "moe_nested": {
+      "activation_seconds": 0.0018086670024786144,
+      "aggregation_seconds": 0.0018154999852413312,
+      "iq2_total_seconds": 0.0265829375,
+      "iq3_total_seconds": 0.007959958,
+      "router_seconds": 0.051138479000655934,
+      "shared_seconds": 0.0024113745021168143
+    },
+    "total_median_seconds": 0.9920196670136647,
+    "total_standard_deviation_seconds": 0.022534970215909677
+  },
+  "decision": {
+    "fresh_p1_run": false,
+    "next_experiment": "Host output.weight as one identity-bound native-ready resident entry, run exact final-logits fixtures, then one clean P1 only if the bounded runtime integration passes.",
+    "outcome": "B",
+    "reason": "The exact output boundary is token-scale and setup-dominated, while measured MLX-ready reuse preserves the output hash and reduces repeated use to milliseconds under normal pressure. This measured lower-risk target precedes a Q4_K direct kernel.",
+    "selected_target": "decoded/native-ready output-head residency with bounded admission",
+    "third_kernel_admitted": false
+  },
+  "dense_layers": [
+    {
+      "dense_attributed_median_seconds": 0.8079094864078797,
+      "layer": 3,
+      "mla_wall_median_seconds": 0.8148045624984661,
+      "orchestration_other_median_seconds": 0.006938242426258512
+    },
+    {
+      "dense_attributed_median_seconds": 1.8112545435869833,
+      "layer": 8,
+      "mla_wall_median_seconds": 1.8188426249980694,
+      "orchestration_other_median_seconds": 0.0074367215420352295
+    },
+    {
+      "dense_attributed_median_seconds": 0.8471901429438731,
+      "layer": 40,
+      "mla_wall_median_seconds": 0.8556885004945798,
+      "orchestration_other_median_seconds": 0.008498357550706714
+    },
+    {
+      "dense_attributed_median_seconds": 0.8496447920042556,
+      "layer": 78,
+      "mla_wall_median_seconds": 0.8578367919981247,
+      "orchestration_other_median_seconds": 0.008522104544681497
+    }
+  ],
+  "inputs": [
+    {
+      "name": "layer3",
+      "path": "docs/research/glm52/raw/post-f018-iq2-iq3-complete-layer3-profile-0001.json",
+      "sha256": "984d4d0811990c9f54dc47d2d56d9d956881489ece9a4c844dc5d5a7cc629dee"
+    },
+    {
+      "name": "dense",
+      "path": "docs/research/glm52/raw/post-f018-dense-multilayer-profile-0001.json",
+      "sha256": "700721306a74516619ed11cc99cbe841a01d7f6a740d00cd55052bda51da31a3"
+    },
+    {
+      "name": "output",
+      "path": "docs/research/glm52/raw/post-f018-output-head-profile-0001.json",
+      "sha256": "ff97c9c156c018d617c59ef14fce3580f6da02405ba6ea7a3159656be510d277"
+    },
+    {
+      "name": "q4_reuse",
+      "path": "docs/research/glm52/raw/post-f018-output-q4-residency-0001.json",
+      "sha256": "876f2d0a0a0e4b22d268ed356fe72d7afa906af651f1182f07d9c56f8eb34e3a"
+    },
+    {
+      "name": "q5_reuse",
+      "path": "docs/research/glm52/raw/post-f018-late-attention-q5-residency-0001.json",
+      "sha256": "edf86d10c76e10daf8b0731ca2e0cf6ca7d8b74adf79f557af8f133aa7864af7"
+    },
+    {
+      "name": "q6_reuse",
+      "path": "docs/research/glm52/raw/post-f016-trunk-q6-residency-0001.json",
+      "sha256": "2bfe25841488d7831917215cfe75066c779ac7302758921570d398ce3b583ffe"
+    },
+    {
+      "name": "p1",
+      "path": "docs/research/glm52/raw/f018-inference-p1-direct-iq2-iq3-0001.json",
+      "sha256": "574c90898f1ca3569272757b8adefee953abb16f58ad3b2275698ed4f113392d"
+    }
+  ],
+  "p1_warm": {
+    "direct_routed_expert_count": 1136,
+    "explicit_reference_routed_expert_count": 80,
+    "fallback_count": 0,
+    "logits_seconds": 77.98706833299366,
+    "stack_seconds": 78.44627545800176,
+    "top_layers": [
+      {
+        "cache_hits": 3,
+        "cache_misses": 24,
+        "layer": 78,
+        "seconds": 4.748119625000982
+      },
+      {
+        "cache_hits": 3,
+        "cache_misses": 24,
+        "layer": 8,
+        "seconds": 3.5718995420029387
+      },
+      {
+        "cache_hits": 0,
+        "cache_misses": 0,
+        "layer": 0,
+        "seconds": 2.2840636250039097
+      },
+      {
+        "cache_hits": 3,
+        "cache_misses": 24,
+        "layer": 76,
+        "seconds": 2.230803417012794
+      },
+      {
+        "cache_hits": 3,
+        "cache_misses": 24,
+        "layer": 77,
+        "seconds": 2.2015886250010226
+      },
+      {
+        "cache_hits": 3,
+        "cache_misses": 24,
+        "layer": 75,
+        "seconds": 2.1577822500257753
+      },
+      {
+        "cache_hits": 0,
+        "cache_misses": 0,
+        "layer": 2,
+        "seconds": 2.1380370419938117
+      },
+      {
+        "cache_hits": 0,
+        "cache_misses": 0,
+        "layer": 1,
+        "seconds": 2.1243865840078797
+      },
+      {
+        "cache_hits": 3,
+        "cache_misses": 0,
+        "layer": 51,
+        "seconds": 0.8763315829855856
+      },
+      {
+        "cache_hits": 3,
+        "cache_misses": 0,
+        "layer": 21,
+        "seconds": 0.8729914999858011
+      }
+    ]
+  },
+  "ranking": [
+    {
+      "absolute_seconds": 72.53428370848997,
+      "current_path": "Q4_K scalar decode -> f32 materialization -> MLX import -> matvec",
+      "likely_optimization_class": "reuse/residency",
+      "operation": "full-vocabulary output.weight",
+      "rank": 1,
+      "scope": "one logits matrix boundary"
+    },
+    {
+      "absolute_seconds": 4.748119625000982,
+      "current_path": "dense MLA plus intentional reference experts",
+      "likely_optimization_class": "distributed; profile format-specific references before a kernel",
+      "operation": "complete layer 78",
+      "rank": 2,
+      "scope": "one exact P1 warm-stack layer"
+    },
+    {
+      "absolute_seconds": 3.5718995420029387,
+      "current_path": "Q6_K dense MLA plus IQ2_S/IQ4_XS reference experts",
+      "likely_optimization_class": "mixed dense reuse and explicit-reference formats",
+      "operation": "complete layer 8",
+      "rank": 3,
+      "scope": "one exact P1 warm-stack layer"
+    },
+    {
+      "absolute_seconds": 1.438365291498485,
+      "current_path": "Q6_K NumPy decode -> f32 MLX",
+      "likely_optimization_class": "reuse/residency, subject to bounded hot-set admission",
+      "operation": "blk.8.attn_output.weight",
+      "rank": 4,
+      "scope": "one dense matrix boundary"
+    },
+    {
+      "absolute_seconds": 0.7501352289982606,
+      "current_path": "vectorized dense decode -> f32 MLX",
+      "likely_optimization_class": "vectorized decode or bounded reuse",
+      "operation": "layer 3 attention/MLA",
+      "rank": 5,
+      "scope": "one complete-layer sub-boundary"
+    },
+    {
+      "absolute_seconds": 0.532296833494911,
+      "current_path": "Q5_K NumPy decode -> f32 MLX",
+      "likely_optimization_class": "reuse/residency, but all-layer retention is unsafe",
+      "operation": "blk.78.attn_output.weight",
+      "rank": 6,
+      "scope": "one dense matrix boundary"
+    }
+  ],
+  "reuse": [
+    {
+      "decoded_f32_bytes": 3806330880,
+      "host_rebuild_median_seconds": 0.4670453959988663,
+      "native_ready_median_seconds": 0.006228458500117995,
+      "native_ready_rss_delta_bytes": 9093480448,
+      "native_ready_setup_seconds": 82.50621920800768,
+      "peak_rss_bytes": 43499241472,
+      "pressure": "normal",
+      "quantization": "Q4_K",
+      "tensor": "output.weight",
+      "transient_median_seconds": 72.53428370848997
+    },
+    {
+      "decoded_f32_bytes": 402653184,
+      "host_rebuild_median_seconds": 0.05292639551043976,
+      "native_ready_median_seconds": 0.0027861254930030555,
+      "native_ready_rss_delta_bytes": 1463861248,
+      "native_ready_setup_seconds": 0.5380574169976171,
+      "peak_rss_bytes": 1503936512,
+      "pressure": "normal",
+      "quantization": "Q5_K",
+      "tensor": "blk.78.attn_output.weight",
+      "transient_median_seconds": 0.532296833494911
+    },
+    {
+      "decoded_f32_bytes": 402653184,
+      "host_rebuild_median_seconds": null,
+      "native_ready_median_seconds": 0.0029098130034981295,
+      "native_ready_rss_delta_bytes": 1632829440,
+      "native_ready_setup_seconds": 1.4247820419986965,
+      "peak_rss_bytes": 1673035776,
+      "pressure": "normal",
+      "quantization": "Q6_K",
+      "tensor": "blk.8.attn_output.weight",
+      "transient_median_seconds": 1.389851792002446
+    }
+  ],
+  "schema": "pulsarmlx.research.post-f018-bottleneck-ranking",
+  "schema_version": "1.0.0",
+  "top_dense_tensors": [
+    {
+      "build_median_seconds": 0.03641791650443338,
+      "compressed_bytes": 82575360,
+      "dequant_median_seconds": 1.370043479008018,
+      "layer": 8,
+      "matvec_median_seconds": 0.019929312999011017,
+      "quantization": "Q6_K",
+      "shape_rows_cols_per_slice": [
+        6144,
+        16384
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.00882777049264405,
+      "tensor": "blk.8.attn_output.weight",
+      "total_median_seconds": 1.438365291498485
+    },
+    {
+      "build_median_seconds": 0.03920902099343948,
+      "compressed_bytes": 69206016,
+      "dequant_median_seconds": 0.4981965415063314,
+      "layer": 78,
+      "matvec_median_seconds": 0.01379460449970793,
+      "quantization": "Q5_K",
+      "shape_rows_cols_per_slice": [
+        6144,
+        16384
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.007783332985127345,
+      "tensor": "blk.78.attn_output.weight",
+      "total_median_seconds": 0.5598156250052853
+    },
+    {
+      "build_median_seconds": 0.040979500001412816,
+      "compressed_bytes": 69206016,
+      "dequant_median_seconds": 0.48971868750231806,
+      "layer": 40,
+      "matvec_median_seconds": 0.01309262499853503,
+      "quantization": "Q5_K",
+      "shape_rows_cols_per_slice": [
+        6144,
+        16384
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.00808381249953527,
+      "tensor": "blk.40.attn_output.weight",
+      "total_median_seconds": 0.5515501874906477
+    },
+    {
+      "build_median_seconds": 0.03812081250362098,
+      "compressed_bytes": 69206016,
+      "dequant_median_seconds": 0.4735488335136324,
+      "layer": 3,
+      "matvec_median_seconds": 0.013328353990800679,
+      "quantization": "Q5_K",
+      "shape_rows_cols_per_slice": [
+        6144,
+        16384
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.007320603996049613,
+      "tensor": "blk.3.attn_output.weight",
+      "total_median_seconds": 0.536415541995666
+    },
+    {
+      "build_median_seconds": 0.005193520511966199,
+      "compressed_bytes": 10321920,
+      "dequant_median_seconds": 0.1604171039944049,
+      "layer": 8,
+      "matvec_median_seconds": 0.007195791491540149,
+      "quantization": "Q6_K",
+      "shape_rows_cols_per_slice": [
+        2048,
+        6144
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0011049794993596151,
+      "tensor": "blk.8.attn_q_a.weight",
+      "total_median_seconds": 0.17463866650359705
+    },
+    {
+      "build_median_seconds": 0.015082582976901904,
+      "compressed_bytes": 35651584,
+      "dequant_median_seconds": 0.12532833401928656,
+      "layer": 40,
+      "matvec_median_seconds": 0.004629958508303389,
+      "quantization": "Q8_0",
+      "shape_rows_cols_per_slice": [
+        16384,
+        2048
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0009181454952340573,
+      "tensor": "blk.40.attn_q_b.weight",
+      "total_median_seconds": 0.14446393749676645
+    },
+    {
+      "build_median_seconds": 0.01378543749160599,
+      "compressed_bytes": 35651584,
+      "dequant_median_seconds": 0.11545177049993072,
+      "layer": 78,
+      "matvec_median_seconds": 0.005099021509522572,
+      "quantization": "Q8_0",
+      "shape_rows_cols_per_slice": [
+        16384,
+        2048
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0009158335014944896,
+      "tensor": "blk.78.attn_q_b.weight",
+      "total_median_seconds": 0.1383797294984106
+    },
+    {
+      "build_median_seconds": 0.012451270493329503,
+      "compressed_bytes": 35651584,
+      "dequant_median_seconds": 0.11568764550611377,
+      "layer": 8,
+      "matvec_median_seconds": 0.005288250496960245,
+      "quantization": "Q8_0",
+      "shape_rows_cols_per_slice": [
+        16384,
+        2048
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0008128129848046228,
+      "tensor": "blk.8.attn_q_b.weight",
+      "total_median_seconds": 0.13494881300721318
+    },
+    {
+      "build_median_seconds": 0.012984666987904347,
+      "compressed_bytes": 35651584,
+      "dequant_median_seconds": 0.11410527100088075,
+      "layer": 3,
+      "matvec_median_seconds": 0.005067562509793788,
+      "quantization": "Q8_0",
+      "shape_rows_cols_per_slice": [
+        16384,
+        2048
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0008311669953400269,
+      "tensor": "blk.3.attn_q_b.weight",
+      "total_median_seconds": 0.1323542294994695
+    },
+    {
+      "build_median_seconds": 0.00599393698212225,
+      "compressed_bytes": 8650752,
+      "dequant_median_seconds": 0.06282777051092125,
+      "layer": 40,
+      "matvec_median_seconds": 0.0059710835048463196,
+      "quantization": "Q5_K",
+      "shape_rows_cols_per_slice": [
+        2048,
+        6144
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0011629795044427738,
+      "tensor": "blk.40.attn_q_a.weight",
+      "total_median_seconds": 0.07679404200462159
+    },
+    {
+      "build_median_seconds": 0.005501521009136923,
+      "compressed_bytes": 8650752,
+      "dequant_median_seconds": 0.06203337499755435,
+      "layer": 78,
+      "matvec_median_seconds": 0.005449979013064876,
+      "quantization": "Q5_K",
+      "shape_rows_cols_per_slice": [
+        2048,
+        6144
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0010240420087939128,
+      "tensor": "blk.78.attn_q_a.weight",
+      "total_median_seconds": 0.07515306200366467
+    },
+    {
+      "build_median_seconds": 0.0051266249938635156,
+      "compressed_bytes": 8650752,
+      "dequant_median_seconds": 0.059082875508465804,
+      "layer": 3,
+      "matvec_median_seconds": 0.009102875017561018,
+      "quantization": "Q5_K",
+      "shape_rows_cols_per_slice": [
+        2048,
+        6144
+      ],
+      "slice_count": 1,
+      "storage_median_seconds": 0.0009149374964181334,
+      "tensor": "blk.3.attn_q_a.weight",
+      "total_median_seconds": 0.07398070899944287
+    }
+  ]
+}
