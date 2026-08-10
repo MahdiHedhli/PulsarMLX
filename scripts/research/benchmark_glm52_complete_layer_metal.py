@@ -32,7 +32,10 @@ from glm52_dense_primitives import (  # noqa: E402
     embed_token,
     require_mlx_backend,
 )
-from glm52_direct_metal_runtime import DirectIq2MetalWorker  # noqa: E402
+from glm52_direct_metal_runtime import (  # noqa: E402
+    DirectIq2Iq3MetalWorker,
+    DirectIq2MetalWorker,
+)
 from glm52_expert_cache_runtime import ExpertSlabCache  # noqa: E402
 from glm52_inference import (  # noqa: E402
     _checkpoint_identity,
@@ -112,7 +115,7 @@ def _direct_run(
     store: Glm52TensorStore,
     embedding: list[float],
     cache: ExpertSlabCache,
-    worker: DirectIq2MetalWorker,
+    worker: DirectIq2MetalWorker | DirectIq2Iq3MetalWorker,
     expected_expert_ids: list[int],
 ) -> tuple[dict[str, Any], list[float]]:
     resource_before = sample_pressure().to_public_dict()
@@ -174,7 +177,9 @@ def _layer_summaries(samples: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
+def benchmark(
+    model: Path, worker_path: Path, *, combined_iq3: bool = False
+) -> dict[str, Any]:
     source = _source_identity()
     if source["source_dirty"]:
         raise RuntimeError("worktree must be clean before complete-layer measurement")
@@ -207,7 +212,8 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             decoder_mode="numpy_vectorized",
             capture_events=True,
         )
-        with DirectIq2MetalWorker(worker_path, source["source_commit"]) as worker:
+        worker_type = DirectIq2Iq3MetalWorker if combined_iq3 else DirectIq2MetalWorker
+        with worker_type(worker_path, source["source_commit"]) as worker:
             process_first_direct, process_first_output = _direct_run(
                 store, embedding, direct_cache, worker, expected_expert_ids
             )
@@ -248,11 +254,17 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             deterministic=len(direct_hashes) == 1,
             cpu_fallback_count=sum(
                 int(sample["moe"]["direct_iq2"]["cpu_fallback_count"])
+                + int(sample["moe"]["direct_iq3"]["cpu_fallback_count"])
                 for sample in direct_samples
             ),
             complete_f32_weight_materialized_bytes=sum(
                 int(
                     sample["moe"]["direct_iq2"][
+                        "complete_f32_weight_materialized_bytes"
+                    ]
+                )
+                + int(
+                    sample["moe"]["direct_iq3"][
                         "complete_f32_weight_materialized_bytes"
                     ]
                 )
@@ -274,7 +286,11 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             and resource_after["level"] == "normal"
         )
         record = {
-            "schema": "pulsarmlx.research.f018-direct-iq2-complete-layer",
+            "schema": (
+                "pulsarmlx.research.f018-direct-iq2-iq3-complete-layer"
+                if combined_iq3
+                else "pulsarmlx.research.f018-direct-iq2-complete-layer"
+            ),
             "schema_version": "1.0.0",
             "feature_id": "018-direct-quantized-metal-runtime",
             "actual_status": "passed" if passed else "failed",
@@ -301,6 +317,7 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             "worker": {
                 "source_commit": worker_identity["source_commit"],
                 "compilation_seconds": worker_identity["compilation_seconds"],
+                "pipeline_identities": worker_identity["pipeline_identities"],
                 "max_resident_matrices": worker_identity["max_resident_matrices"],
             },
             "protocol": {
@@ -313,7 +330,7 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
                 "direct_measured": MEASURED,
                 "shared_cache_policy": "decoded_shared_only",
                 "shared_cache_budget_bytes": 16 * 1024**3,
-                "direct_compressed_slot_limit": 2,
+                "direct_compressed_slot_limit": 3 if combined_iq3 else 2,
                 "mlx_synchronized": True,
                 "os_page_cache_controlled": False,
             },
@@ -334,10 +351,14 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             "numerical_qualification": numerical,
             "resource_before": resource_before,
             "resource_after": resource_after,
-            "claim_boundary": "one complete real layer-3 MLA plus top-8/shared MoE boundary",
+            "claim_boundary": (
+                "one complete real layer-3 MLA plus top-8/shared MoE with direct IQ2 gate/up and IQ3 down"
+                if combined_iq3
+                else "one complete real layer-3 MLA plus top-8/shared MoE boundary"
+            ),
             "unsupported_interpretations": [
                 "79-layer stack, P1, P2, or token generation",
-                "direct attention, IQ3_XXS, or shared-expert support",
+                "direct attention or shared-expert support",
                 "general model speedup",
                 "production readiness",
             ],
@@ -354,13 +375,14 @@ def main() -> int:
     parser.add_argument(
         "--worker", type=Path, default=ROOT / "target/debug/iq2-metal-worker"
     )
+    parser.add_argument("--combined-iq3", action="store_true")
     args = parser.parse_args()
     model = os.environ.get("PULSARMLX_GLM_GGUF")
     if not model:
         raise SystemExit("PULSARMLX_GLM_GGUF is required; checkpoint discovery is disabled")
     if args.out.exists():
         raise SystemExit(f"refusing to overwrite existing evidence: {args.out}")
-    record = benchmark(Path(model), args.worker)
+    record = benchmark(Path(model), args.worker, combined_iq3=args.combined_iq3)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.out.with_name(f".{args.out.name}.tmp")
     temporary.write_text(json.dumps(record, separators=(",", ":"), sort_keys=True) + "\n")

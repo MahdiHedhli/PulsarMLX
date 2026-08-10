@@ -32,10 +32,14 @@ from glm52_dense_primitives import (  # noqa: E402
     matvec_weight,
     rms_norm,
 )
-from glm52_direct_metal_runtime import DirectIq2MetalWorker  # noqa: E402
+from glm52_direct_metal_runtime import (  # noqa: E402
+    DirectIq2Iq3MetalWorker,
+    DirectIq2MetalWorker,
+)
 from glm52_expert_cache_runtime import (  # noqa: E402
     ExpertSlabCache,
     run_routed_expert_direct_iq2,
+    run_routed_expert_direct_iq2_iq3,
 )
 from glm52_inference import (  # noqa: E402
     _checkpoint_identity,
@@ -57,7 +61,7 @@ def _direct_run_once(
     store: Glm52TensorStore,
     residual: list[float],
     cache: ExpertSlabCache,
-    worker: DirectIq2MetalWorker,
+    worker: DirectIq2MetalWorker | DirectIq2Iq3MetalWorker,
     *,
     expected_expert_ids: list[int] | None = FROZEN_EXPERT_IDS,
 ) -> tuple[dict[str, Any], list[float]]:
@@ -80,15 +84,25 @@ def _direct_run_once(
     routed_details: list[dict[str, Any]] = []
     routed_aggregation_seconds = 0.0
     for expert_id, weight in zip(route["expert_ids"], route["weights"], strict=True):
-        part, detail = run_routed_expert_direct_iq2(
-            store,
-            cache,
-            worker,
-            layer=LAYER,
-            expert=int(expert_id),
-            activation=activation,
-            weight=float(weight),
-        )
+        if worker.identity.get("combined_iq3") is True:
+            part, detail = run_routed_expert_direct_iq2_iq3(
+                store,
+                worker,
+                layer=LAYER,
+                expert=int(expert_id),
+                activation=activation,
+                weight=float(weight),
+            )
+        else:
+            part, detail = run_routed_expert_direct_iq2(
+                store,
+                cache,
+                worker,
+                layer=LAYER,
+                expert=int(expert_id),
+                activation=activation,
+                weight=float(weight),
+            )
         aggregation_start = time.perf_counter()
         for index, value in enumerate(part):
             aggregate[index] += value
@@ -122,7 +136,14 @@ def _direct_run_once(
         for projection in ("gate_direct_metal", "up_direct_metal")
     ]
     down_events = [
-        detail["down_reference_events"][0] for detail in routed_details
+        detail["down_reference_events"][0]
+        for detail in routed_details
+        if "down_reference_events" in detail
+    ]
+    direct_iq3_events = [
+        detail["down_direct_metal"]
+        for detail in routed_details
+        if "down_direct_metal" in detail
     ]
     return {
         "total_seconds": time.perf_counter() - total_start,
@@ -153,6 +174,24 @@ def _direct_run_once(
                 for event in direct_events
             ),
             "events": direct_events,
+        },
+        "direct_iq3": {
+            "matrix_count": len(direct_iq3_events),
+            "storage_read_count": sum(int(event["storage_read_count"]) for event in direct_iq3_events),
+            "storage_bytes_read": sum(int(event["storage_bytes_read"]) for event in direct_iq3_events),
+            "storage_read_seconds": sum(float(event["storage_read_seconds"]) for event in direct_iq3_events),
+            "registration_seconds": sum(float(event["registration_seconds"]) for event in direct_iq3_events),
+            "dispatch_seconds": sum(float(event["dispatch_seconds"]) for event in direct_iq3_events),
+            "kernel_seconds": sum(float(event["kernel_seconds"]) for event in direct_iq3_events),
+            "synchronization_seconds": sum(float(event["synchronization_seconds"]) for event in direct_iq3_events),
+            "total_seconds": sum(float(event["total_seconds"]) for event in direct_iq3_events),
+            "cache_hits": sum(bool(event["cache_hit"]) for event in direct_iq3_events),
+            "cpu_fallback_count": sum(int(event["cpu_fallback_count"]) for event in direct_iq3_events),
+            "complete_f32_weight_materialized_bytes": sum(
+                int(event["complete_f32_weight_materialized_bytes"])
+                for event in direct_iq3_events
+            ),
+            "events": direct_iq3_events,
         },
         "routed_down_reference": {
             "matrix_count": len(down_events),
@@ -222,6 +261,17 @@ def _summaries(samples: list[dict[str, Any]]) -> dict[str, Any]:
                 "cleanup_seconds",
             ),
         ),
+        (
+            "direct_iq3",
+            (
+                "storage_read_seconds",
+                "registration_seconds",
+                "dispatch_seconds",
+                "kernel_seconds",
+                "synchronization_seconds",
+                "total_seconds",
+            ),
+        ),
         ("shared_reference", ("total_seconds",)),
     ):
         for field in nested:
@@ -231,7 +281,9 @@ def _summaries(samples: list[dict[str, Any]]) -> dict[str, Any]:
     return {name: _nonnegative_summary(values) for name, values in fields.items()}
 
 
-def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
+def benchmark(
+    model: Path, worker_path: Path, *, combined_iq3: bool = False
+) -> dict[str, Any]:
     source = _source_identity()
     if source["source_dirty"]:
         raise RuntimeError("worktree must be clean before top-8 direct-Metal measurement")
@@ -266,7 +318,8 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             decoder_mode="numpy_vectorized",
             capture_events=True,
         )
-        with DirectIq2MetalWorker(worker_path, source["source_commit"]) as worker:
+        worker_type = DirectIq2Iq3MetalWorker if combined_iq3 else DirectIq2MetalWorker
+        with worker_type(worker_path, source["source_commit"]) as worker:
             process_first, process_first_output = _direct_run_once(
                 store, residual, direct_cache, worker
             )
@@ -300,10 +353,12 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             deterministic=len(direct_hashes) == 1,
             cpu_fallback_count=sum(
                 int(sample["direct_iq2"]["cpu_fallback_count"])
+                + int(sample["direct_iq3"]["cpu_fallback_count"])
                 for sample in direct_samples
             ),
             complete_f32_weight_materialized_bytes=sum(
                 int(sample["direct_iq2"]["complete_f32_weight_materialized_bytes"])
+                + int(sample["direct_iq3"]["complete_f32_weight_materialized_bytes"])
                 for sample in direct_samples
             ),
         )
@@ -320,10 +375,18 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             and historical_hash_match
             and all(sample["shared_reference"]["cache_hits"] == 3 for sample in direct_samples)
             and all(sample["direct_iq2"]["matrix_count"] == 16 for sample in direct_samples)
+            and all(
+                sample["direct_iq3"]["matrix_count"] == (8 if combined_iq3 else 0)
+                for sample in direct_samples
+            )
             and resource_after["level"] == "normal"
         )
         record = {
-            "schema": "pulsarmlx.research.f018-direct-iq2-moe",
+            "schema": (
+                "pulsarmlx.research.f018-direct-iq2-iq3-moe"
+                if combined_iq3
+                else "pulsarmlx.research.f018-direct-iq2-moe"
+            ),
             "schema_version": "1.0.0",
             "feature_id": "018-direct-quantized-metal-runtime",
             "actual_status": "passed" if passed else "failed",
@@ -349,6 +412,7 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             "worker": {
                 "source_commit": worker_identity["source_commit"],
                 "compilation_seconds": worker_identity["compilation_seconds"],
+                "pipeline_identities": worker_identity["pipeline_identities"],
                 "max_resident_matrices": worker_identity["max_resident_matrices"],
             },
             "protocol": {
@@ -359,7 +423,7 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
                 "direct_measured": MEASURED,
                 "shared_cache_policy": "decoded_shared_only",
                 "shared_cache_budget_bytes": 16 * 1024**3,
-                "direct_compressed_slot_limit": 2,
+                "direct_compressed_slot_limit": 3 if combined_iq3 else 2,
                 "mlx_synchronized": True,
                 "os_page_cache_controlled": False,
             },
@@ -376,12 +440,16 @@ def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:
             "numerical_qualification": numerical,
             "resource_before": resource_before,
             "resource_after": resource_after,
-            "claim_boundary": "one real layer-3 top-8 plus shared MoE boundary",
+            "claim_boundary": (
+                "one real layer-3 top-8 plus shared MoE boundary with direct IQ2 gate/up and IQ3 down"
+                if combined_iq3
+                else "one real layer-3 top-8 plus shared MoE boundary"
+            ),
             "unsupported_interpretations": [
                 "complete transformer-layer speedup",
                 "full-stack inference or token-generation speedup",
                 "steady routed-residency benefit",
-                "direct IQ3_XXS or shared-expert support",
+                "direct shared-expert support",
                 "production readiness",
             ],
         }
@@ -397,13 +465,14 @@ def main() -> int:
     parser.add_argument(
         "--worker", type=Path, default=ROOT / "target/debug/iq2-metal-worker"
     )
+    parser.add_argument("--combined-iq3", action="store_true")
     args = parser.parse_args()
     model = os.environ.get("PULSARMLX_GLM_GGUF")
     if not model:
         raise SystemExit("PULSARMLX_GLM_GGUF is required; checkpoint discovery is disabled")
     if args.out.exists():
         raise SystemExit(f"refusing to overwrite existing evidence: {args.out}")
-    record = benchmark(Path(model), args.worker)
+    record = benchmark(Path(model), args.worker, combined_iq3=args.combined_iq3)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.out.with_name(f".{args.out.name}.tmp")
     temporary.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
