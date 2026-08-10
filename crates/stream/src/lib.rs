@@ -14,7 +14,15 @@ pub struct Read {
 mod positional;
 pub use positional::{
     ExpertSource, OwnedSlab, PositionalRead, PositionalSource, ReaderShard, ShardPath, SourceError,
+    MatrixReadSpec, ReadTelemetry,
 };
+
+pub use stable_slab::{
+    SlabAllocatorError, StableSlab, StableSlabAllocator, StableSlabConfig, StableSlabTelemetry,
+    SlotId, ZeroingPolicy,
+};
+
+mod stable_slab;
 
 /// Build the universe of per-expert slab reads for every streamed layer of
 /// a MoE gguf: for each routed-expert tensor (gate/up/down) of each layer,

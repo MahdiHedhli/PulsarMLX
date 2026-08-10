@@ -17,7 +17,7 @@
 
 - [x] T001 Create and validate Feature 018 specification artifacts in `specs/018-direct-quantized-metal-runtime/`
 - [x] T002 Commit and push the clean Feature 018 specification boundary from `specs/018-direct-quantized-metal-runtime/`
-- [ ] T003 Selectively import reviewed Feature 017 stable-slab commit `111ffb6d` into `crates/stream/` without touching the Feature 017 worktree
+- [x] T003 Selectively import reviewed Feature 017 stable-slab commit `111ffb6d` into `crates/stream/` without touching the Feature 017 worktree
 - [ ] T004 Selectively import reviewed Feature 017 no-copy Metal registration commit `f2b1b130` into `crates/stream/` and resolve only mechanical branch conflicts
 - [ ] T005 Validate imported slab/registration ownership with `cargo test -p stream` and commit the infrastructure boundary
 
