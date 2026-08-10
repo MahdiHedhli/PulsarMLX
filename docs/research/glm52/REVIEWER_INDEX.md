@@ -164,6 +164,11 @@
   and route parity across layers 3, 8, 40, and 78; ten retained samples per
   layer; individual expert/projection read, decode, buffer, MLX build/eval,
   matvec, activation, weighting, aggregation, cleanup, and residual timing
+- [Post-Feature-016 NumPy Q2_K qualification](raw/post-f016-q2-k-numpy-qualification-0001.json)
+  and [generated table](tables/post-f016-q2-k-numpy-qualification-0001.md) —
+  four complete real layer-78 expert matrices, exact f32-bit scalar-oracle
+  comparisons, deterministic and signed-zero gates, ten-sample decode
+  populations, and the checkpoint's explicit two-tensor Q2_K census limit
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

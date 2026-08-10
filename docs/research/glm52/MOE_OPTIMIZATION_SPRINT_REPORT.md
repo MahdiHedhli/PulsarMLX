@@ -97,3 +97,22 @@ python3 -m unittest \
   scripts/research/tests/test_glm52_moe_profile_record.py \
   scripts/research/tests/test_glm52_moe_stage_analysis.py
 ```
+
+## Phase 3 result: exact Q2_K decoder boundary
+
+At clean source `296e8868`, the whole-matrix NumPy Q2_K decoder matched the
+committed scalar decoder at exact f32 bits for four complete real layer-78
+routed gate/up expert matrices. Deterministic hashes and signed-zero counts
+matched, malformed and non-finite synthetic inputs fail closed, one bounded
+read replaces 2,048 row reads when integrated, and every resource observation
+remained normal.
+
+The checkpoint census contains Q2_K only in the layer-78 routed gate/up tensor
+pair, both in shard 6. Cross-layer or cross-shard Q2_K qualification is
+therefore impossible for this immutable checkpoint and is not claimed. The
+ten-sample gate/expert-242 decode median fell from 2.265407 s scalar to
+0.147176 s NumPy, a 15.39x decoder-boundary ratio. This is not yet a complete
+expert, MoE, layer, stack, or token speedup.
+
+- [`raw/post-f016-q2-k-numpy-qualification-0001.json`](raw/post-f016-q2-k-numpy-qualification-0001.json)
+- [`tables/post-f016-q2-k-numpy-qualification-0001.md`](tables/post-f016-q2-k-numpy-qualification-0001.md)
