@@ -2,7 +2,7 @@
 
 ## Numerical parity sprint update
 
-- Feature branch boundary: `8adee21`.
+- Final parity boundary: `8adee21`; current feature branch tip: `8bfca2a`.
 - Checkpoint-free synthetic gates now pass in strict order: projection, router, complete expert, top-8 plus shared, MLA/dense, complete layer, and final norm/logits/top-k.
 - Q8_0 remains the only decoder exercised by these public-safe parity gates; no new decoder was added because the current fixtures do not require Q2_K, Q3_K, IQ2_S, IQ4_XS, or Q5_K.
 - Final output is classified `numerically_qualified_greedy_identical` under `golden_strict`; it is not claimed `golden_identical` because the independent RMS reference differs by operation order below the explicit `1e-14` threshold.
