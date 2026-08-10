@@ -321,6 +321,27 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_committed_iq2_iq3_complete_layer_record_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/f018-iq2-iq3-complete-layer3-0001.json"
+        table = ROOT / "docs/research/glm52/tables/f018-iq2-iq3-complete-layer3-0001.md"
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["worker"]["max_resident_matrices"], 3)
+        self.assertTrue(all(sample["moe"]["direct_iq3"]["matrix_count"] == 8 for sample in record["direct_samples"]))
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq3_composed_metal.py"),
+                "--input",
+                str(raw),
+                "--output",
+                str(table),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_committed_real_matrix_records(self) -> None:
         records = sorted(
             (ROOT / "docs/research/glm52/raw").glob(

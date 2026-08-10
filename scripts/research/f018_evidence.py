@@ -75,6 +75,8 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         return _validate_iq2_iq3_moe_record(record)
     if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-complete-layer":
         return _validate_complete_layer_record(record)
+    if record.get("schema") == "pulsarmlx.research.f018-direct-iq2-iq3-complete-layer":
+        return _validate_complete_layer_record(record)
     matrix_schema = record.get("schema")
     if matrix_schema not in {
         "pulsarmlx.research.f018-direct-iq2-xxs",
@@ -661,6 +663,7 @@ def _validate_iq2_iq3_moe_record(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def _validate_complete_layer_record(record: dict[str, Any]) -> dict[str, Any]:
+    combined_iq3 = record.get("schema") == "pulsarmlx.research.f018-direct-iq2-iq3-complete-layer"
     if record.get("schema_version") != "1.0.0" or record.get("actual_status") != "passed":
         raise ValueError("complete-layer evidence must use schema 1.0.0 and pass")
     if record.get("classification") not in CLASSES:
@@ -695,15 +698,21 @@ def _validate_complete_layer_record(record: dict[str, Any]) -> dict[str, Any]:
     if binding["reference_output_sha256"] != binding["historical_reference_output_sha256"]:
         raise ValueError("complete-layer current reference does not match historical evidence")
     worker = record.get("worker", {})
-    if worker.get("source_commit") != source["commit"] or worker.get("max_resident_matrices") != 2:
+    expected_slots = 3 if combined_iq3 else 2
+    if worker.get("source_commit") != source["commit"] or worker.get("max_resident_matrices") != expected_slots:
         raise ValueError("complete-layer worker identity or residency bound changed")
+    if combined_iq3 and worker.get("pipeline_identities") != [
+        "iq2_xxs_sequential_scaffold_v1",
+        "iq3_xxs_sequential_scaffold_v1",
+    ]:
+        raise ValueError("complete-layer IQ3 pipeline identity changed")
     protocol = record.get("protocol", {})
     if (
         protocol.get("optimized_reference_warmups") != 3
         or protocol.get("optimized_reference_measured") != 10
         or protocol.get("direct_warmups") != 3
         or protocol.get("direct_measured") != 10
-        or protocol.get("direct_compressed_slot_limit") != 2
+        or protocol.get("direct_compressed_slot_limit") != expected_slots
     ):
         raise ValueError("complete-layer sample protocol changed")
     numerical = record.get("numerical_qualification", {})
@@ -740,11 +749,22 @@ def _validate_complete_layer_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("complete-layer outputs or midpoint are not deterministic")
     for sample in direct_samples:
         direct = sample.get("moe", {}).get("direct_iq2", {})
+        direct_iq3 = sample.get("moe", {}).get(
+            "direct_iq3",
+            {
+                "matrix_count": 0,
+                "cpu_fallback_count": 0,
+                "complete_f32_weight_materialized_bytes": 0,
+            },
+        )
         if (
             direct.get("matrix_count") != 16
             or direct.get("storage_read_count") != 16
             or direct.get("cpu_fallback_count") != 0
             or direct.get("complete_f32_weight_materialized_bytes") != 0
+            or direct_iq3.get("matrix_count") != (8 if combined_iq3 else 0)
+            or direct_iq3.get("cpu_fallback_count") != 0
+            or direct_iq3.get("complete_f32_weight_materialized_bytes") != 0
             or sample.get("moe", {}).get("shared_reference", {}).get("cache_hits") != 3
             or sample.get("resource_after", {}).get("level") != "normal"
         ):

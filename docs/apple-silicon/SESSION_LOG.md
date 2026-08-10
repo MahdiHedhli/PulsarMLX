@@ -4429,3 +4429,13 @@ weight materialization. The optimized-reference median was 1.705199125 seconds;
 the direct-IQ2/IQ3 candidate median was 0.226394771 seconds (7.53× and
 1.478804355 seconds absolute difference at this boundary). The complete
 transformer layer remains the next gate.
+
+At the same clean source `39397d48`, the complete position-0 layer-3 gate also
+passed. Ten direct samples retained one deterministic midpoint and output,
+the frozen top-8 route, zero tolerance or signed-zero mismatches, zero fallback,
+zero f32 Metal weight materialization, and normal resource state. The optimized
+reference median was 2.677491229 seconds and the direct-IQ2/IQ3 layer median was
+0.950992354 seconds (2.82× and 1.726498875 seconds absolute difference).
+Within the direct candidate, attention remained 0.715570771 seconds and the MoE
+boundary was 0.207311958 seconds. This is one complete layer only and does not
+establish a 79-layer stack or token speedup.
