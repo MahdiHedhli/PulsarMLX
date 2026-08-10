@@ -179,6 +179,8 @@ boundary.
   JSON records.
 - `specify check`, `specify integration status`, the Feature 018 prerequisites
   script, and `git diff --check` passed.
+- Both Apple Silicon CI jobs passed for validation attestation `25afd71b` in
+  run `31358282448`.
 
 The workspace check still reports the inherited `unused_mut` in
 `crates/quant/src/iq.rs` and inherited macOS-only unused serve items. They were
