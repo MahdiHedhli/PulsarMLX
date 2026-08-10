@@ -4388,3 +4388,19 @@ as `numerically_qualified_greedy_identical` under the independently frozen
 The 64×2048 synthetic fixture measured a 0.000454979-second median synchronized
 call across 100 samples. This is only the checkpoint-free synthetic scaffold;
 the frozen layer-3 expert-15 IQ3_XXS down matrix remains the next gate.
+
+The subsequent real-matrix gate at clean source `20c2be41` admitted the exact
+six-shard checkpoint and frozen `blk.3.ffn_down_exps.weight` expert-15 slice.
+The strict direct kernel passed 30 deterministic samples with zero tolerance
+or signed-zero mismatches, zero fallback, and zero f32 weight materialization.
+It was not bit exact: 5,941 of 6,144 output bits differed, while maximum
+absolute error was 6.9849193e-10, RMSE 1.0313848e-10, cosine similarity
+0.9999999999996638, and norm ratio 0.9999999756666862.
+
+The optimized NumPy+MLX reference median was 0.123234876 seconds and strict
+direct Metal was 0.000610605 seconds, a 201.82× same-boundary ratio and
+0.122624271-second absolute difference. Process-first setup recorded 0.002497
+seconds compilation, 0.049038 seconds pipeline creation, and 0.005643 seconds
+for the first synchronized dispatch. The strict sequential scaffold materially
+passed the frozen gate, so no separate parallel IQ3 kernel was justified before
+the composed expert ladder.

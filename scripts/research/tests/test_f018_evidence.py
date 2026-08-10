@@ -259,6 +259,31 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_committed_iq3_real_matrix_record_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/f018-iq3-xxs-down-matrix-0001.json"
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["binding"]["projection"], "down")
+        self.assertEqual(record["correctness"]["deterministic_repetitions"], 30)
+        self.assertEqual(record["correctness"]["elementwise_mismatch_count"], 0)
+        self.assertEqual(record["kernel"]["cpu_fallback_count"], 0)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq3_xxs_metal.py"),
+                "--input",
+                str(raw),
+                "--output",
+                str(
+                    ROOT
+                    / "docs/research/glm52/tables/f018-iq3-xxs-down-matrix-0001.md"
+                ),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_committed_real_matrix_records(self) -> None:
         records = sorted(
             (ROOT / "docs/research/glm52/raw").glob(

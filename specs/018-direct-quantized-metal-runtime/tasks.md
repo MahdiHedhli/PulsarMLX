@@ -251,9 +251,9 @@
 ## Phase 15: Real IQ3 Matrix and Same-Boundary Gate
 
 - [x] T071 Add the fail-closed real IQ3 matrix harness, semantic evidence validator, generator checks, and immutable binding
-- [ ] T072 Send the hardware NTFY, verify checkpoint/resource admission, and run scalar/NumPy+MLX/strict-Metal on one real layer-3 expert-15 down matrix
-- [ ] T073 Retain 3 warmups/30 samples, classify under `f018-iq3-down-v1`, generate the comparison table, apply the material-performance decision, and commit/push
-- [ ] T074 If the strict scaffold is not materially faster, retain it and qualify a separate Tier-B parallel IQ3 kernel; otherwise record why no parallel kernel was built
+- [x] T072 Send the hardware NTFY, verify checkpoint/resource admission, and run scalar/NumPy+MLX/strict-Metal on one real layer-3 expert-15 down matrix
+- [x] T073 Retain 3 warmups/30 samples, classify under `f018-iq3-down-v1`, generate the comparison table, apply the material-performance decision, and commit/push
+- [x] T074 If the strict scaffold is not materially faster, retain it and qualify a separate Tier-B parallel IQ3 kernel; otherwise record why no parallel kernel was built
 
 ---
 
