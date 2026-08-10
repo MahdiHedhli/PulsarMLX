@@ -83,5 +83,61 @@ def validate_record(record: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("claim_boundary is required")
     if not record.get("unsupported_interpretations"):
         raise ValueError("unsupported_interpretations are required")
-    _samples(record)
+    samples = _samples(record)
+    correctness = record.get("correctness")
+    if not isinstance(correctness, dict):
+        raise ValueError("correctness must be an object")
+    required_correctness = {
+        "contract_version",
+        "exact_f32_bits",
+        "deterministic_repetitions",
+        "unique_output_hashes",
+        "candidate_output_sha256",
+        "f32_bit_mismatch_count",
+        "first_f32_bit_mismatch_index",
+        "signed_zero_mismatch_count",
+        "elementwise_mismatch_count",
+        "maximum_absolute_error",
+        "mean_absolute_error",
+        "rmse",
+        "maximum_meaningful_relative_error",
+        "cosine_similarity",
+        "norm_ratio",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "cosine_minimum",
+        "norm_ratio_minimum",
+        "norm_ratio_maximum",
+    }
+    missing = sorted(required_correctness - correctness.keys())
+    if missing:
+        raise ValueError(f"correctness fields missing: {missing}")
+    if correctness["contract_version"] != "f018-numerical-v1":
+        raise ValueError("correctness contract version mismatch")
+    if correctness["elementwise_mismatch_count"] != 0:
+        raise ValueError("elementwise numerical mismatch is not qualified")
+    if correctness["signed_zero_mismatch_count"] != 0:
+        raise ValueError("signed-zero mismatch is not admitted for this record")
+    if correctness["unique_output_hashes"] != 1:
+        raise ValueError("deterministic output hash count must be one")
+    if correctness["deterministic_repetitions"] != len(samples):
+        raise ValueError("deterministic repetition count must match measured samples")
+    if float(correctness["cosine_similarity"]) < float(correctness["cosine_minimum"]):
+        raise ValueError("cosine similarity is below the frozen minimum")
+    norm_ratio = float(correctness["norm_ratio"])
+    if not float(correctness["norm_ratio_minimum"]) <= norm_ratio <= float(
+        correctness["norm_ratio_maximum"]
+    ):
+        raise ValueError("norm ratio is outside the frozen interval")
+    for component in ("dispatch", "synchronization", "kernel"):
+        summary = record["timing"].get(component)
+        if summary is None:
+            if component != "kernel":
+                raise ValueError(f"{component} timing is required")
+            continue
+        if not isinstance(summary, dict):
+            raise ValueError(f"{component} timing must be an object or null")
+        component_samples = summary.get("measured_samples_seconds")
+        if not isinstance(component_samples, list) or len(component_samples) != len(samples):
+            raise ValueError(f"{component} raw samples must align with total samples")
     return record

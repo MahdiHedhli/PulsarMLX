@@ -67,8 +67,8 @@
 - [x] T019 [US2] Add the smallest packed-IQ2_XXS f32-accumulating kernel and pipeline lifecycle in `crates/stream/src/apple_metal_bridge.mm`
 - [x] T020 [US2] Implement Rust bridge dispatch, completion, telemetry, and zero-materialization accounting in `crates/stream/src/apple_metal_bridge.rs`
 - [x] T021 [US2] Pass native deterministic, malformed, in-flight lifetime, and teardown tests in `crates/stream/tests/iq2_xxs_metal.rs`
-- [ ] T022 [US2] Record checkpoint-free synthetic evidence and generated review table under `docs/research/glm52/raw/` and `docs/research/glm52/tables/`
-- [ ] T023 [US2] Commit and push the synthetic direct-quantized Metal gate
+- [x] T022 [US2] Record checkpoint-free synthetic evidence and generated review table under `docs/research/glm52/raw/` and `docs/research/glm52/tables/`
+- [x] T023 [US2] Commit and push the synthetic direct-quantized Metal gate
 
 **Checkpoint**: Rung A passes; no real checkpoint claim yet.
 

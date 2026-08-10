@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from f018_evidence import load_unique_json, validate_record  # noqa: E402
 
 def valid_record() -> dict:
     samples = [0.01, 0.02, 0.03]
+    component = {"measured_samples_seconds": samples}
     return {
         "schema": "pulsarmlx.research.f018-direct-iq2-xxs",
         "schema_version": "1.0.0",
@@ -36,6 +38,31 @@ def valid_record() -> dict:
             "minimum_seconds": min(samples),
             "maximum_seconds": max(samples),
             "mean_seconds": sum(samples) / len(samples),
+            "dispatch": component,
+            "synchronization": component,
+            "kernel": component,
+        },
+        "correctness": {
+            "contract_version": "f018-numerical-v1",
+            "exact_f32_bits": True,
+            "deterministic_repetitions": len(samples),
+            "unique_output_hashes": 1,
+            "candidate_output_sha256": "a" * 64,
+            "f32_bit_mismatch_count": 0,
+            "first_f32_bit_mismatch_index": None,
+            "signed_zero_mismatch_count": 0,
+            "elementwise_mismatch_count": 0,
+            "maximum_absolute_error": 0.0,
+            "mean_absolute_error": 0.0,
+            "rmse": 0.0,
+            "maximum_meaningful_relative_error": 0.0,
+            "cosine_similarity": 1.0,
+            "norm_ratio": 1.0,
+            "absolute_tolerance": 0.0005,
+            "relative_tolerance": 0.0005,
+            "cosine_minimum": 0.999999,
+            "norm_ratio_minimum": 0.9995,
+            "norm_ratio_maximum": 1.0005,
         },
         "resource": {"level": "normal"},
         "unsupported_interpretations": ["full model inference"],
@@ -43,6 +70,25 @@ def valid_record() -> dict:
 
 
 class F018EvidenceTests(unittest.TestCase):
+    def test_committed_synthetic_record_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/f018-iq2-xxs-synthetic-0002.json"
+        if not raw.exists():
+            self.skipTest("synthetic Feature 018 record not committed yet")
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["correctness"]["deterministic_repetitions"], 100)
+        self.assertEqual(record["kernel"]["cpu_fallback_count"], 0)
+        self.assertEqual(record["kernel"]["complete_f32_weight_materialized_bytes"], 0)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq2_xxs_metal.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")
