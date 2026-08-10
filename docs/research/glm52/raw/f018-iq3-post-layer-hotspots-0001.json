@@ -1,0 +1,117 @@
+{
+  "actual_status": "passed",
+  "attention_median_seconds": 0.7155707710044226,
+  "complete_layer_median_seconds": 0.9509923540026648,
+  "decision": {
+    "optional_p1_admitted": true,
+    "optional_p1_reason": "The complete-layer direct candidate passed numerically and reduced the same-boundary median from 2.677491229 to 0.950992354 seconds.",
+    "reason": "Measured complete-layer dense/trunk dequantization is larger than either direct expert quantized component; no third Metal kernel is selected from one layer.",
+    "third_kernel_selected": false
+  },
+  "inputs": [
+    {
+      "path": "docs/research/glm52/raw/f018-iq2-iq3-complete-layer3-0001.json",
+      "sha256": "be1e54f071164bf4d3f6d0a2141ba6bb38879755c179861900fc2aa9d9f33ec1"
+    },
+    {
+      "path": "docs/research/glm52/raw/f018-iq2-iq3-moe-layer3-0001.json",
+      "sha256": "513cfaaa3fe13d731cd477229f6e92acf1ce8c45d9236bf38ac9f90836b8b53d"
+    }
+  ],
+  "moe_median_seconds": 0.20731195849657524,
+  "ranking": [
+    {
+      "component": "dense_trunk_dequant",
+      "fraction_of_complete_layer_median": 0.6852795343527164,
+      "median_seconds": 0.6516955975239398,
+      "rank": 1,
+      "scope": "complete_layer"
+    },
+    {
+      "component": "moe_boundary",
+      "fraction_of_complete_layer_median": 0.2179953998830934,
+      "median_seconds": 0.20731195849657524,
+      "rank": 2,
+      "scope": "complete_layer"
+    },
+    {
+      "component": "router",
+      "fraction_of_complete_layer_median": 0.05893183973666954,
+      "median_seconds": 0.056043728996883146,
+      "rank": 3,
+      "scope": "moe"
+    },
+    {
+      "component": "dense_trunk_matvec",
+      "fraction_of_complete_layer_median": 0.04395617773062079,
+      "median_seconds": 0.041801988933002576,
+      "rank": 4,
+      "scope": "complete_layer"
+    },
+    {
+      "component": "dense_trunk_build",
+      "fraction_of_complete_layer_median": 0.04021258872789894,
+      "median_seconds": 0.03824186441488564,
+      "rank": 5,
+      "scope": "complete_layer"
+    },
+    {
+      "component": "layer_boundary_overhead",
+      "fraction_of_complete_layer_median": 0.02959242142661419,
+      "median_seconds": 0.028142166513134725,
+      "rank": 6,
+      "scope": "complete_layer"
+    },
+    {
+      "component": "direct_iq2_gate_up_synchronized",
+      "fraction_of_complete_layer_median": 0.029004921421190214,
+      "median_seconds": 0.027583458499999998,
+      "rank": 7,
+      "scope": "moe"
+    },
+    {
+      "component": "dense_trunk_storage",
+      "fraction_of_complete_layer_median": 0.014312266409218878,
+      "median_seconds": 0.013610855923616327,
+      "rank": 8,
+      "scope": "complete_layer"
+    },
+    {
+      "component": "direct_iq3_down_synchronized",
+      "fraction_of_complete_layer_median": 0.008731778404999386,
+      "median_seconds": 0.0083038545,
+      "rank": 9,
+      "scope": "moe"
+    },
+    {
+      "component": "shared_reference",
+      "fraction_of_complete_layer_median": 0.0028521086170289005,
+      "median_seconds": 0.002712333487579599,
+      "rank": 10,
+      "scope": "moe"
+    },
+    {
+      "component": "routed_aggregation",
+      "fraction_of_complete_layer_median": 0.0020009566868026503,
+      "median_seconds": 0.0019028945098398253,
+      "rank": 11,
+      "scope": "moe"
+    },
+    {
+      "component": "routed_activation",
+      "fraction_of_complete_layer_median": 0.0019652944299848956,
+      "median_seconds": 0.001868979976279661,
+      "rank": 12,
+      "scope": "moe"
+    }
+  ],
+  "schema": "pulsarmlx.research.f018-iq3-post-layer-hotspots",
+  "schema_version": "1.0.0",
+  "source_commit": "111aa9d0711502090e5573dd815c5a98f60a6d2d",
+  "unsupported_interpretations": [
+    "79-layer or token hotspot ranking",
+    "general tokens per second",
+    "third-kernel selection",
+    "production performance"
+  ]
+}

@@ -4439,3 +4439,11 @@ reference median was 2.677491229 seconds and the direct-IQ2/IQ3 layer median was
 Within the direct candidate, attention remained 0.715570771 seconds and the MoE
 boundary was 0.207311958 seconds. This is one complete layer only and does not
 establish a 79-layer stack or token speedup.
+
+The derived bounded hotspot profile keeps Feature 018 profile-neutral beyond
+IQ3. At the complete layer-3 boundary, dense/trunk dequantization was 0.651696
+seconds, the full MoE was 0.207312 seconds, direct IQ2 gate/up synchronized work
+was 0.026545 seconds, and direct IQ3 down synchronized work was 0.007851
+seconds. No third kernel was selected from this one-layer population. Because
+the complete-layer numerical gate passed and materially improved, one clean P1
+was admitted to establish the next full-stack ranking.

@@ -342,6 +342,22 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_post_iq3_hotspot_profile_is_generated_from_committed_evidence(self) -> None:
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_f018_iq3_hotspots.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+        record = load_unique_json(
+            ROOT / "docs/research/glm52/raw/f018-iq3-post-layer-hotspots-0001.json"
+        )
+        self.assertFalse(record["decision"]["third_kernel_selected"])
+        self.assertTrue(record["decision"]["optional_p1_admitted"])
+
     def test_committed_real_matrix_records(self) -> None:
         records = sorted(
             (ROOT / "docs/research/glm52/raw").glob(
