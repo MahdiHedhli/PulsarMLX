@@ -372,6 +372,53 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_p1_reference_dispatch_inventory_explains_every_execution(self) -> None:
+        path = (
+            ROOT
+            / "docs/research/glm52/raw/f018-p1-reference-dispatch-inventory-0001.json"
+        )
+        record = load_unique_json(path)
+        self.assertEqual(
+            record["schema"], "pulsarmlx.research.f018-p1-dispatch-inventory"
+        )
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(
+            [row["direct_routed_expert_count"] for row in record["stack_summaries"]],
+            [592, 592],
+        )
+        self.assertEqual(
+            [
+                row["explicit_reference_routed_expert_count"]
+                for row in record["stack_summaries"]
+            ],
+            [16, 16],
+        )
+        self.assertEqual(record["full_run"]["direct_routed_expert_count"], 1184)
+        self.assertEqual(
+            record["full_run"]["explicit_reference_routed_expert_count"], 32
+        )
+        self.assertEqual(record["full_run"]["direct_error_count"], 0)
+        self.assertEqual(record["full_run"]["fallback_count"], 0)
+        self.assertEqual(len(record["reference_dispatches"]), 32)
+        self.assertEqual(
+            {event["layer"] for event in record["reference_dispatches"]}, {8, 78}
+        )
+        for event in record["reference_dispatches"]:
+            self.assertEqual(event["dispatch"], "explicit_reference")
+            self.assertEqual(
+                event["reason_code"], "intentional_out_of_scope_quantization"
+            )
+            self.assertFalse(event["capability_miss"])
+            self.assertFalse(event["runtime_error"])
+            self.assertFalse(event["fallback"])
+            self.assertEqual([row["role"] for row in event["projections"]], ["gate", "up"])
+            for projection in event["projections"]:
+                self.assertRegex(projection["tensor_name"], r"^blk\.(?:8|78)\.ffn_(?:gate|up)_exps\.weight$")
+                self.assertIn(projection["quantization"], {"IQ2_S", "Q2_K"})
+                self.assertEqual(projection["shape"], [6144, 2048, 256])
+                self.assertEqual(projection["selected_expert_shape"], [2048, 6144])
+                self.assertGreater(projection["selected_expert_compressed_bytes"], 0)
+
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
         self.assertEqual(result["actual_status"], "passed")

@@ -1,0 +1,1537 @@
+{
+  "actual_status": "passed",
+  "analysis_source_commit": "85d1d25ad27bd730c9cf6b95ac16e898b13d4aa8",
+  "checkpoint": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "file_count": 6,
+    "files": [
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",
+        "sha256": "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18",
+        "size_bytes": 9423744
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+        "size_bytes": 49105028960
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",
+        "sha256": "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",
+        "sha256": "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",
+        "sha256": "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",
+        "sha256": "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d",
+        "size_bytes": 41914650304
+      }
+    ],
+    "quant": "UD-IQ2_XXS",
+    "repo": "unsloth/GLM-5.2-GGUF",
+    "revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23",
+    "revision_binding_evidence": "docs/validation/glm52-revision-binding.json",
+    "revision_status": "post_acquisition_content_binding",
+    "total_bytes": 238458632928
+  },
+  "claim_boundary": "Catalog-derived explanation of the 16 explicit reference routed experts in each of the two committed P1 stacks; no new inference was executed.",
+  "full_run": {
+    "direct_error_count": 0,
+    "direct_routed_expert_count": 1184,
+    "explicit_reference_routed_expert_count": 32,
+    "fallback_count": 0,
+    "projection_quantization_counts": {
+      "IQ2_S": 32,
+      "Q2_K": 32
+    },
+    "reason_counts": {
+      "intentional_out_of_scope_quantization": 32
+    }
+  },
+  "interpretation": {
+    "direct_error": "a selected direct operation failed; validation stops without reference recovery",
+    "explicit_reference_dispatch": "selected before candidate invocation because the quantization is outside the IQ2_XXS gate/up scope",
+    "production_fallback": "not implemented by this research mode; any future policy must be explicit and observable"
+  },
+  "mode": "validation_fail_closed",
+  "reference_dispatches": [
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 206,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 86,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 102,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 188,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 43,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 21,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 141,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 252,
+      "fallback": false,
+      "layer": 8,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 159,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 61,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 35,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 105,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 87,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 134,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 133,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 30,
+      "fallback": false,
+      "layer": 78,
+      "phase": "prefill",
+      "position": 0,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 31,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 146,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 203,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 140,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 204,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 123,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 88,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 190,
+      "fallback": false,
+      "layer": 8,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "IQ2_S",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "IQ2_S",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4030464,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.8.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 211,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 135,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 221,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 54,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 224,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 75,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 230,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    },
+    {
+      "capability_miss": false,
+      "dispatch": "explicit_reference",
+      "expert_id": 48,
+      "fallback": false,
+      "layer": 78,
+      "phase": "decode",
+      "position": 1,
+      "projections": [
+        {
+          "quantization": "Q2_K",
+          "role": "gate",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_gate_exps.weight"
+        },
+        {
+          "quantization": "Q2_K",
+          "role": "up",
+          "selected_expert_compressed_bytes": 4128768,
+          "selected_expert_shape": [
+            2048,
+            6144
+          ],
+          "shape": [
+            6144,
+            2048,
+            256
+          ],
+          "tensor_name": "blk.78.ffn_up_exps.weight"
+        }
+      ],
+      "reason_code": "intentional_out_of_scope_quantization",
+      "runtime_error": false,
+      "stack_index": 1,
+      "step": 0
+    }
+  ],
+  "schema": "pulsarmlx.research.f018-p1-dispatch-inventory",
+  "schema_version": "1.0.0",
+  "source_evidence": {
+    "path": "docs/research/glm52/raw/f018-inference-p1-direct-iq2-0001.json",
+    "sha256": "08672b9edf976710cca973068234eedfdbeca27b5172fbe5dbfec992e7f9f07a",
+    "source_commit": "2f51333e2e393f8db8e62e2f794afc393775b92d"
+  },
+  "stack_summaries": [
+    {
+      "direct_error_count": 0,
+      "direct_routed_expert_count": 592,
+      "explicit_reference_routed_expert_count": 16,
+      "fallback_count": 0,
+      "phase": "prefill",
+      "position": 0,
+      "stack_index": 0,
+      "step": null
+    },
+    {
+      "direct_error_count": 0,
+      "direct_routed_expert_count": 592,
+      "explicit_reference_routed_expert_count": 16,
+      "fallback_count": 0,
+      "phase": "decode",
+      "position": 1,
+      "stack_index": 1,
+      "step": 0
+    }
+  ]
+}
