@@ -153,6 +153,11 @@
   and [generated table](tables/post-f016-p1-trunk-q6-expert-hotspots-0001.md)
   — cold-plus-warm expert-cache components only; explicitly not a warm-only
   quantization or Metal-kernel ranking
+- [Post-trunk P1 MoE attribution](raw/post-f016-p1-moe-attribution-0001.json)
+  and [generated table](tables/post-f016-p1-moe-attribution-0001.md) — exact
+  per-layer warm routed-load attribution, top-20 routed expert sets with
+  projection quantization, shared-hit lifecycle, and explicit visibility limits
+  for individual experts, projections, activation, aggregation, and matvec split
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
