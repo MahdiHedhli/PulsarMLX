@@ -13,6 +13,8 @@
 //! always receive explicit per-slot device pointers, wherever the bytes
 //! ended up.
 
+pub mod f017_parity;
+
 #[cfg(target_os = "linux")]
 mod real {
     /// Bytes per GiB. Memory sizes are reported in GiB everywhere so a

@@ -6,9 +6,11 @@ license.workspace = true
 description = "hy-v3 forward graph and decode loop over the pulsar CUDA kernels."
 
 [dependencies]
+backend = { path = "../backend" }
 gguf = { path = "../gguf" }
 kernels = { path = "../kernels" }
 quant = { path = "../quant" }
+sha2 = "0.10"
 stream = { path = "../stream" }
 tokenizer = { path = "../tokenizer" }
 
