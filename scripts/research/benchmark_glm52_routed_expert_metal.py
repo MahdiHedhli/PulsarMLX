@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import platform
+import math
 import sys
 import time
 from pathlib import Path
@@ -41,6 +42,48 @@ from glm52_tensor_store import Glm52TensorStore  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 WARMUPS = 3
 MEASURED = 10
+
+
+def _nonnegative_summary(samples: list[float]) -> dict[str, float | int]:
+    if not samples or any(not math.isfinite(value) or value < 0.0 for value in samples):
+        raise ValueError("timing samples must be finite and nonnegative")
+    ordered = sorted(samples)
+
+    def percentile(fraction: float) -> float:
+        position = (len(ordered) - 1) * fraction
+        lower = int(math.floor(position))
+        upper = int(math.ceil(position))
+        if lower == upper:
+            return ordered[lower]
+        return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
+
+    mean = sum(samples) / len(samples)
+    standard_deviation = (
+        math.sqrt(
+            sum((value - mean) ** 2 for value in samples) / (len(samples) - 1)
+        )
+        if len(samples) > 1
+        else 0.0
+    )
+    midpoint = len(ordered) // 2
+    median = (
+        ordered[midpoint]
+        if len(ordered) % 2
+        else (ordered[midpoint - 1] + ordered[midpoint]) / 2.0
+    )
+    return {
+        "sample_count": len(samples),
+        "median_seconds": median,
+        "mean_seconds": mean,
+        "standard_deviation_seconds": standard_deviation,
+        "minimum_seconds": ordered[0],
+        "maximum_seconds": ordered[-1],
+        "p5_seconds": percentile(0.05),
+        "p25_seconds": percentile(0.25),
+        "p75_seconds": percentile(0.75),
+        "p95_seconds": percentile(0.95),
+        "coefficient_of_variation": standard_deviation / mean if mean else 0.0,
+    }
 
 
 def _direct_sample(
@@ -138,7 +181,7 @@ def _direct_summaries(samples: list[dict[str, Any]]) -> dict[str, Any]:
             fields[f"{scope}.{key}"] = [
                 float(sample[scope][key]) for sample in samples
             ]
-    return {name: _summary(values) for name, values in fields.items()}
+    return {name: _nonnegative_summary(values) for name, values in fields.items()}
 
 
 def benchmark(model: Path, worker_path: Path) -> dict[str, Any]:

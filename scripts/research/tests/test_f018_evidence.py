@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts/research"))
 
 from f018_evidence import load_unique_json, validate_record  # noqa: E402
+from benchmark_glm52_routed_expert_metal import _nonnegative_summary  # noqa: E402
 
 
 def valid_record() -> dict:
@@ -70,6 +71,11 @@ def valid_record() -> dict:
 
 
 class F018EvidenceTests(unittest.TestCase):
+    def test_resident_worker_zero_storage_samples_are_valid(self) -> None:
+        summary = _nonnegative_summary([0.0, 0.0, 0.0])
+        self.assertEqual(summary["median_seconds"], 0.0)
+        self.assertEqual(summary["coefficient_of_variation"], 0.0)
+
     def test_committed_synthetic_record_and_table(self) -> None:
         raw = ROOT / "docs/research/glm52/raw/f018-iq2-xxs-synthetic-0002.json"
         if not raw.exists():
