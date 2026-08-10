@@ -4372,3 +4372,19 @@ and zero CPU fallbacks. All three resource checkpoints remained normal.
 This establishes the two-token correctness and shared-reuse gate only. Two
 warm stack observations are not a steady-state throughput population, and the
 full frozen golden-eight sequence remains the next correctness boundary.
+
+## 2026-08-10 — Feature 018 IQ3_XXS synthetic direct-Metal gate
+
+At clean source `9b4ca284`, the strict sequential IQ3_XXS Metal scaffold passed
+100 deterministic checkpoint-free executions on the M1 Ultra with one unique
+output hash, zero tolerance or signed-zero mismatches, zero CPU fallbacks, and
+zero complete-f32 weight materialization. The candidate was not f32-bit exact
+to the same-order scalar oracle: 46 of 64 outputs differed in bits, with maximum
+absolute error 0.0029296875, RMSE 0.0007100052, cosine similarity
+0.9999999999999722, and norm ratio 0.9999999677101955. It therefore qualified
+as `numerically_qualified_greedy_identical` under the independently frozen
+`f018-iq3-down-v1` matrix contract, not as `golden_identical`.
+
+The 64×2048 synthetic fixture measured a 0.000454979-second median synchronized
+call across 100 samples. This is only the checkpoint-free synthetic scaffold;
+the frozen layer-3 expert-15 IQ3_XXS down matrix remains the next gate.

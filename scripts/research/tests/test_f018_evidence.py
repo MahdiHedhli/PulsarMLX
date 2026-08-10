@@ -241,6 +241,24 @@ class F018EvidenceTests(unittest.TestCase):
             check=True,
         )
 
+    def test_committed_iq3_synthetic_record_and_table(self) -> None:
+        raw = ROOT / "docs/research/glm52/raw/f018-iq3-xxs-synthetic-0001.json"
+        record = validate_record(load_unique_json(raw))
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertEqual(record["kernel"]["quantization"], "IQ3_XXS")
+        self.assertEqual(record["correctness"]["deterministic_repetitions"], 100)
+        self.assertEqual(record["kernel"]["cpu_fallback_count"], 0)
+        self.assertEqual(record["kernel"]["complete_f32_weight_materialized_bytes"], 0)
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/analyze_glm52_iq3_xxs_metal.py"),
+                "--check",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+
     def test_committed_real_matrix_records(self) -> None:
         records = sorted(
             (ROOT / "docs/research/glm52/raw").glob(
