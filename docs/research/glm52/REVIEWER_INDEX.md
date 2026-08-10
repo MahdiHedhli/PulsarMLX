@@ -158,6 +158,12 @@
   per-layer warm routed-load attribution, top-20 routed expert sets with
   projection quantization, shared-hit lifecycle, and explicit visibility limits
   for individual experts, projections, activation, aggregation, and matvec split
+- [Post-Feature-016 bounded MoE stage profile](raw/post-f016-moe-stage-profile-0001.json),
+  [derived analysis](raw/post-f016-moe-stage-analysis-0001.json), and
+  [generated table](tables/post-f016-moe-stage-analysis-0001.md) — exact f32-bit
+  and route parity across layers 3, 8, 40, and 78; ten retained samples per
+  layer; individual expert/projection read, decode, buffer, MLX build/eval,
+  matvec, activation, weighting, aggregation, cleanup, and residual timing
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather

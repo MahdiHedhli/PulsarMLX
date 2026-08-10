@@ -58,3 +58,42 @@ required per layer. Timed and untimed paths must match exact f32 output bits and
 routes with normal resource pressure, zero fallback, and zero eviction.
 
 The harness does not execute 79 layers, P1/P2, golden-eight, Rust, or Metal.
+
+## Phase 2 result: bounded expert harness
+
+The clean source at `4879c38b` passed all four admitted real-checkpoint MoE
+boundaries. Every one of the ten retained samples per layer matched the
+unchanged untimed path at exact f32 output bits and exact routes. All shared
+gate/up/down matrices were protected cache hits; CPU fallback, eviction, and
+admission rejection stayed zero, and every resource observation was normal.
+
+The deterministic raw record and generated analysis are:
+
+- [`raw/post-f016-moe-stage-profile-0001.json`](raw/post-f016-moe-stage-profile-0001.json)
+- [`raw/post-f016-moe-stage-analysis-0001.json`](raw/post-f016-moe-stage-analysis-0001.json)
+- [`tables/post-f016-moe-stage-analysis-0001.md`](tables/post-f016-moe-stage-analysis-0001.md)
+
+Median MoE boundary time was 1.711785 s at layer 3, 42.965916 s at layer 8,
+1.735408 s at layer 40, and 56.373736 s at layer 78. Routed expert execution
+accounted for 42.903692 s and 56.311461 s at the two exceptional layers;
+their retained shared expert cost was only 0.007494 s and 0.007482 s.
+
+The newly separated MLX build/eval, matvec, SwiGLU, weighting, aggregation,
+cleanup, and residual timers are not the dominant bounded costs. At layer 78,
+Q2_K decode had a 31.711137 s median and Q3_K decode 18.114957 s. At layer 8,
+IQ2_S decode had a 29.908856 s median and IQ4_XS decode 6.520325 s. The
+corresponding MLX build/eval medians were about 0.125 s per complete boundary,
+while routed/shared matrix matvec was about 0.164 s at layer 8 and 0.214 s at
+layer 78. The evidence therefore selects exact Q2_K decoder qualification as
+the next bounded change, followed by the remaining measured scalar formats if
+their absolute opportunity remains material. It does not select a Feature 018
+Metal kernel.
+
+Reproduce the committed derivation without checkpoint access:
+
+```sh
+python3 scripts/research/analyze_glm52_moe_profile.py --check
+python3 -m unittest \
+  scripts/research/tests/test_glm52_moe_profile_record.py \
+  scripts/research/tests/test_glm52_moe_stage_analysis.py
+```
