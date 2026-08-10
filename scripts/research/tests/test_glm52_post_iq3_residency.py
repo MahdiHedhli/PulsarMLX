@@ -44,6 +44,30 @@ class PostIq3ResidencyTests(unittest.TestCase):
             self.assertEqual(candidate["resource_after_teardown"]["level"], "normal")
             self.assertEqual(candidate["summaries"]["total_seconds"]["sample_count"], 10)
 
+    def test_committed_q4_record_matches_transient_baseline(self) -> None:
+        path = ROOT / "docs/research/glm52/raw/post-f018-output-q4-residency-0001.json"
+        record = json.loads(path.read_text())
+        baseline = json.loads(
+            (ROOT / "docs/research/glm52/raw/post-f018-output-head-profile-0001.json").read_text()
+        )
+        self.assertEqual(record["actual_status"], "passed")
+        self.assertFalse(record["source"]["dirty"])
+        self.assertEqual(record["binding"]["tensor"], "output.weight")
+        self.assertEqual(record["binding"]["quantization"], "Q4_K")
+        self.assertTrue(record["comparison"]["exact_output_hash_across_candidates"])
+        self.assertEqual(
+            record["comparison"]["output_f32_sha256"],
+            baseline["determinism"]["output_f32_sha256"],
+        )
+        self.assertEqual(
+            [candidate["candidate"] for candidate in record["candidates"]],
+            ["decoded_host_rebuild", "mlx_ready"],
+        )
+        for candidate in record["candidates"]:
+            self.assertEqual(candidate["resource_after_setup"]["level"], "normal")
+            self.assertEqual(candidate["resource_after_teardown"]["level"], "normal")
+            self.assertEqual(candidate["summaries"]["total_seconds"]["sample_count"], 10)
+
 
 if __name__ == "__main__":
     unittest.main()
