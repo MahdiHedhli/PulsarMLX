@@ -590,6 +590,7 @@ def _validate_complete_layer_record(record: dict[str, Any]) -> dict[str, Any]:
 
 def _validate_real_matrix_record(record: dict[str, Any]) -> None:
     binding = record["binding"]
+    is_iq3 = record.get("schema") == "pulsarmlx.research.f018-direct-iq3-xxs"
     required_binding = {
         "layer",
         "expert_id",
@@ -609,10 +610,12 @@ def _validate_real_matrix_record(record: dict[str, Any]) -> None:
     missing = sorted(required_binding - binding.keys())
     if missing:
         raise ValueError(f"real matrix binding fields missing: {missing}")
-    if binding["projection"] not in {"gate", "up"}:
-        raise ValueError("real matrix projection must be gate or up")
-    if binding["quantization"] != "IQ2_XXS":
-        raise ValueError("real matrix binding must be IQ2_XXS")
+    expected_projections = {"down"} if is_iq3 else {"gate", "up"}
+    expected_quantization = "IQ3_XXS" if is_iq3 else "IQ2_XXS"
+    if binding["projection"] not in expected_projections:
+        raise ValueError("real matrix projection does not match its direct kernel")
+    if binding["quantization"] != expected_quantization:
+        raise ValueError("real matrix binding quantization does not match its direct kernel")
     if not str(binding["tensor_name"]).endswith(
         f"ffn_{binding['projection']}_exps.weight"
     ):

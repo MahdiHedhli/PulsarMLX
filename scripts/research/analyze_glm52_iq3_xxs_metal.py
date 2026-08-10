@@ -17,7 +17,7 @@ DEFAULT_INPUT = ROOT / "docs/research/glm52/raw/f018-iq3-xxs-synthetic-0001.json
 DEFAULT_OUTPUT = ROOT / "docs/research/glm52/tables/f018-iq3-xxs-synthetic-0001.md"
 
 
-def render(record: dict, raw_sha256: str) -> str:
+def _render_synthetic(record: dict, raw_sha256: str) -> str:
     binding = record["binding"]
     correctness = record["correctness"]
     timing = record["timing"]
@@ -51,6 +51,49 @@ def render(record: dict, raw_sha256: str) -> str:
             "",
         ]
     )
+
+
+def _render_real(record: dict, raw_sha256: str) -> str:
+    binding = record["binding"]
+    correctness = record["correctness"]
+    direct = record["timing"]
+    reference = record["optimized_reference"]["summaries"]
+    return "\n".join(
+        [
+            "# Feature 018 real IQ3_XXS routed-down matrix qualification",
+            "",
+            "> One real selected-expert down matrix on one M1 Ultra; not a complete expert, layer, token, or production result.",
+            "",
+            f"- Source: `{record['source']['commit']}` (clean)",
+            f"- Raw SHA-256: `{raw_sha256}`",
+            f"- Tensor: `{binding['tensor_name']}`; layer/expert: `{binding['layer']}` / `{binding['expert_id']}`",
+            f"- Shape: `{binding['shape']}`; packed bytes: `{binding['packed_bytes']}`; quantization: `{binding['quantization']}`",
+            f"- Classification: `{record['classification']}`; exact f32 bits: `{str(correctness['exact_f32_bits']).lower()}`",
+            f"- Elementwise/signed-zero mismatches: `{correctness['elementwise_mismatch_count']}` / `{correctness['signed_zero_mismatch_count']}`",
+            f"- CPU fallbacks: `{record['kernel']['cpu_fallback_count']}`; complete f32 Metal weight materialization: `{record['kernel']['complete_f32_weight_materialized_bytes']}` bytes",
+            "",
+            "| Boundary/component | Median (s) |",
+            "| --- | ---: |",
+            f"| Optimized reference storage | {float(reference['storage_read_seconds']['median_seconds']):.9f} |",
+            f"| Optimized reference decode | {float(reference['dequant_seconds']['median_seconds']):.9f} |",
+            f"| Optimized reference contiguous buffer | {float(reference['contiguous_buffer_seconds']['median_seconds']):.9f} |",
+            f"| Optimized reference MLX build/eval | {float(reference['mlx_matrix_build_eval_seconds']['median_seconds']):.9f} |",
+            f"| Optimized reference MLX matvec | {float(reference['mlx_matvec_seconds']['median_seconds']):.9f} |",
+            f"| Optimized reference total | {float(reference['total_seconds']['median_seconds']):.9f} |",
+            f"| Strict direct Metal synchronized total | {float(direct['median_seconds']):.9f} |",
+            f"| Strict direct Metal kernel | {float(direct['kernel']['median_seconds']):.9f} |",
+            f"| Strict direct Metal synchronization | {float(direct['synchronization']['median_seconds']):.9f} |",
+            "",
+            f"The same-boundary median ratio is `{float(reference['total_seconds']['median_seconds']) / float(direct['median_seconds']):.3f}×` in favor of the strict direct candidate. This does not predict complete-expert or token performance.",
+            "",
+        ]
+    )
+
+
+def render(record: dict, raw_sha256: str) -> str:
+    if "tensor_name" in record.get("binding", {}):
+        return _render_real(record, raw_sha256)
+    return _render_synthetic(record, raw_sha256)
 
 
 def main() -> int:
