@@ -1,6 +1,6 @@
 # ADR 0005: Keep the MLX boundary narrow and native
 
-- **Status**: Accepted for Feature 017 infrastructure; CPU managed import is qualified, GPU/Metal lifecycle remains unqualified
+- **Status**: Accepted for Feature 017 infrastructure; official CPU/GPU managed import is qualified with initialized handles and explicit stream synchronization
 - **Date**: 2026-08-10
 
 ## Decision
@@ -38,11 +38,23 @@ checks:
 - `mlx_array_free` invoked the ownership callback exactly once, followed by
   explicit stream teardown.
 
-This is evidence for a CPU managed-import path, not a general MLX/Metal
-zero-copy claim. Metal and GPU availability were reported, but a separate
-GPU managed-array teardown probe aborted with exit 134 after evaluation. The
-GPU/Metal ownership and completion ordering therefore remain a blocker for a
-shipping native MLX bridge and must be re-qualified on the M1 handoff path.
+The standalone lifecycle matrix in
+`docs/architecture/reviews/f017-mlx-gpu-teardown-forensics.md` also passed the
+GPU managed-array path, including initialized `mlx_get_default_stream`, owned
+streams, explicit synchronization, stream-first and array-first teardown,
+same-process reuse, and copy-backed controls. Every variant passed its
+30-repeat matrix; the copy-backed GPU control passed 100/100.
+
+The earlier exit-134 result was caused by passing an uninitialized
+`mlx_stream` output object to `mlx_get_default_stream`. The minimized child
+stopped before array import at `libmlxc.dylib` `mlx_get_default_stream + 52`.
+Initializing the output with `mlx_stream_new()` removes the failure. This is a
+probe contract correction, not an upstream MLX managed-buffer defect.
+
+The qualified MLX C contract is not a general MLX/Metal zero-copy claim. It
+requires initialized handles, explicit `mlx_synchronize(stream)`, and retaining
+the host owner through array and dependent stream teardown. Rust slab to Metal
+`newBufferWithBytesNoCopy` remains a separate direct path.
 
 ## Options considered
 

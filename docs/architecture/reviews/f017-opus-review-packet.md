@@ -8,12 +8,13 @@
 - Q8_0 remains the only decoder exercised by these public-safe parity gates; no new decoder was added because the current fixtures do not require Q2_K, Q3_K, IQ2_S, IQ4_XS, or Q5_K.
 - Final output is classified `numerically_qualified_greedy_identical` under `golden_strict`; it is not claimed `golden_identical` because the independent RMS reference differs by operation order below the explicit `1e-14` threshold.
 - Apple lifecycle qualification now has a fail-closed Rust contract covering register, submit, completion, cancel-before-submit, queued cancellation modeling, release, destroy, repeated generations, and stale-generation rejection. This is lifecycle evidence, not proof of MLX import behavior.
-- Official MLX C API CPU managed import/synchronization is now qualified by
-  `scripts/research/f017_mlx_c_qualification.cpp`: source/result pointer
-  identity and exactly-once destruction passed. GPU/Metal managed-array
-  teardown still aborts in the local probe, so the shipping bridge remains
-  fail-closed and unqualified for GPU use. The recommendation remains a
-  narrow Rust C ABI plus Objective-C++ adapter.
+- Official MLX C API CPU and GPU managed import/synchronization are qualified
+  by the standalone child-process matrix in
+  `docs/architecture/reviews/f017-mlx-gpu-teardown-forensics.md`. The prior
+  exit-134 result was caused by an uninitialized `mlx_stream` output passed to
+  `mlx_get_default_stream`; initialized handles, explicit synchronization,
+  ownership callbacks, teardown order, and reuse all pass. The recommendation
+  remains a narrow Rust C ABI plus Objective-C++ adapter with these invariants.
 - A 500-iteration deterministic semantic soak passed through final
   norm/logits/top-k with stable fingerprint, bounded RSS growth, balanced
   registrations/generations/teardowns, protected-shared residency, and stale
@@ -96,8 +97,8 @@ full-model inference and direct quantized Metal kernel implementation.
 
 ## Remaining P1 prerequisites
 
-- Re-qualify GPU/Metal MLX managed-buffer teardown and completion ordering on a
-  supported native MLX environment.
+- Carry the qualified MLX handle-initialization, synchronization, and owner-last
+  rules into the Rust/Objective-C++ adapter and regression tests.
 - Complete numerical checkpoint-free executors for real bound model slabs;
   synthetic semantic gates are already banked through logits/top-k.
 - Retain the existing Apple registration and cancellation/teardown tests as
