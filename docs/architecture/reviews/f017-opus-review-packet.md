@@ -102,7 +102,9 @@ full-model inference and direct quantized Metal kernel implementation.
 
 ## Remaining P1 prerequisites
 
-- Obtain a green remote CI run for the final adapter-integrated SHA.
+- Remote CI for adapter-integrated SHA `6cf0d18419f5782870d43268a65d976492113c39`
+  passed in [run 31424679913](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31424679913),
+  including both Apple Silicon jobs.
 - Complete numerical checkpoint-free executors for real bound model slabs;
   synthetic semantic gates are already banked through logits/top-k.
 - Retain the existing Apple registration and cancellation/teardown tests as
@@ -110,3 +112,19 @@ full-model inference and direct quantized Metal kernel implementation.
   exposed by the official C API and remains an outer Rust lifecycle concern.
 - Select additional decoder formats only from a bound inventory/fixture need.
 - Run public-safe workspace CI and resolve independent review blockers.
+
+## Final adapter integration evidence
+
+- The actual Rust/Objective-C++ adapter carries initialized MLX output handles,
+  borrowed versus owned stream lifetimes, explicit submission-stream
+  synchronization, Rust owner retention through array teardown, fail-closed
+  import validation, and exactly-once managed ownership callbacks.
+- Local native tests cover CPU and GPU managed import, borrowed/default and
+  owned streams, pointer identity, explicit operations and synchronization,
+  invalid input, repeated lifecycle cycles, and callback balance.
+- The adapter is synchronous at this boundary because the installed MLX C API
+  does not expose queued cancellation. Outer Rust cancellation must therefore
+  complete or reject work before host reuse.
+- The M1 handoff is prepared at
+  `docs/architecture/reviews/f017-m1-ultra-p1-handoff.md`; it is not executed
+  on ColPanicM2.
