@@ -151,3 +151,16 @@ The remaining Q2_K and Q3_K vector decode is measurable but layer 8's
 - [`raw/post-f016-moe-layer78-q2-q3-0001.json`](raw/post-f016-moe-layer78-q2-q3-0001.json)
 - [`raw/post-f016-moe-layer78-q2-q3-analysis-0001.json`](raw/post-f016-moe-layer78-q2-q3-analysis-0001.json)
 - [`tables/post-f016-moe-layer78-q2-q3-0001.md`](tables/post-f016-moe-layer78-q2-q3-0001.md)
+
+## Phase 3 continuation: exact IQ2_S decoder boundary
+
+At clean source `fd98f89d`, the whole-matrix NumPy IQ2_S decoder matched the
+scalar decoder at exact f32 bits for four complete real layer-8 routed gate/up
+matrices. Deterministic hashes, signed-zero counts, malformed/non-finite input
+tests, and resource gates passed. IQ2_S exists only in the layer-8 routed
+gate/up tensor pair, so broader layer/shard coverage is unavailable. The
+ten-sample expert-216 gate decode median fell from 2.128742 s scalar to
+0.067880 s NumPy (31.36x).
+
+- [`raw/post-f016-iq2-s-numpy-qualification-0001.json`](raw/post-f016-iq2-s-numpy-qualification-0001.json)
+- [`tables/post-f016-iq2-s-numpy-qualification-0001.md`](tables/post-f016-iq2-s-numpy-qualification-0001.md)

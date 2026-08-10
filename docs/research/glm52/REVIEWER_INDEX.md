@@ -184,6 +184,11 @@
   [generated table](tables/post-f016-moe-layer78-q2-q3-0001.md) — exact
   scalar-reference output/routes and a complete three-rung stage comparison
   showing layer 8 as the next larger bounded MoE opportunity
+- [Post-Feature-016 NumPy IQ2_S qualification](raw/post-f016-iq2-s-numpy-qualification-0001.json)
+  and [generated table](tables/post-f016-iq2-s-numpy-qualification-0001.md) —
+  four complete real layer-8 gate/up expert matrices, exact f32-bit oracle,
+  deterministic/signed-zero gates, ten-sample decode populations, and the
+  checkpoint's explicit two-tensor IQ2_S limit
 - [P1 mixed-quant ranking](raw/f016-p1-quant-hotspot-ranking-0001.json) and
   [generated table](tables/f016-p1-quant-hotspots.md) — deterministic derivation
   from the committed P1 per-quant metrics; ranks measured component time rather
