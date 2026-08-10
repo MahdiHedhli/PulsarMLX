@@ -102,6 +102,23 @@ const COMPLETE_LAYER_PROJECTION_SHA256: &str =
     "4443867ce6abb5336ba266d7d06479a87cb41d70bd91cdec3979d9b13f1e5b6e";
 const COMPLETE_LAYER_OUTPUT_SHA256: &str =
     "eb779c48219e08d830fd17bf0a9f46541db7b223cadfb0dc4fde00169149876e";
+pub const FINAL_OUTPUT_FIXTURE_VERSION: &str = "glm52-runtime-final-output-v1";
+pub const FINAL_OUTPUT_HIDDEN_TENSOR_NAME: &str = "synthetic.final.hidden";
+pub const FINAL_OUTPUT_NORM_TENSOR_NAME: &str = "synthetic.final.norm";
+pub const FINAL_OUTPUT_HEAD_TENSOR_NAME: &str = "synthetic.output_head.weight";
+pub const FINAL_OUTPUT_TENSOR_SHARD: &str = "synthetic-trunk-00001";
+const FINAL_OUTPUT_HIDDEN_SHA256: &str =
+    "da7fcf6c5e636743580a6030fbdfff3c514e25873ec8fb8b1ccbb4b6fb385b68";
+const FINAL_OUTPUT_NORM_SCALE_SHA256: &str =
+    "21304cdc068531a906daa0dc44ea2f03b8963c24a5da70cc0a988e9f0d99e35e";
+const FINAL_OUTPUT_HEAD_SHA256: &str =
+    "cb11bdbbfb07e82735bf6cca925884b6bf517b6f299a2d7fb9b0ef9950037dcf";
+const FINAL_OUTPUT_NORM_SHA256: &str =
+    "d054324a92970e9435c1d2ad4c3937f4982f75895599990c7dfa3719eb9d3760";
+const FINAL_OUTPUT_LOGITS_SHA256: &str =
+    "839a70b5322d540d5e7a3dbc1aa669b2d2d7f1b6e417d8223d59b72dab3676e8";
+const FINAL_OUTPUT_TOPK_SHA256: &str =
+    "96fb5e4a2704b410bbf097c41e40ff8118ef0bc819ccf4344f31f694d12d536a";
 const M2_MAX_TOTAL_BYTES: u64 = 64 * 1024 * 1024 * 1024;
 const M2_MAX_SAFETY_RESERVE_BYTES: u64 = 24 * 1024 * 1024 * 1024;
 const M2_MAX_REQUIRED_MARGIN_BYTES: u64 = 4 * 1024 * 1024 * 1024;
@@ -1437,6 +1454,319 @@ pub fn run_complete_layer_fixture(
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct FinalOutputFixture {
+    pub source_commit: &'static str,
+    pub fixture_version: &'static str,
+    pub tensor_names: [&'static str; 3],
+    pub tensor_shard: &'static str,
+    pub dimensions: [usize; 2],
+    pub dtype: &'static str,
+    pub hidden: Vec<f64>,
+    pub norm_scale: Vec<f64>,
+    pub output_head: Vec<f64>,
+    pub bias: Vec<f64>,
+    pub epsilon: f64,
+    pub top_k: usize,
+}
+
+impl FinalOutputFixture {
+    pub fn synthetic() -> Self {
+        Self {
+            source_commit: PROJECTION_SOURCE_COMMIT,
+            fixture_version: FINAL_OUTPUT_FIXTURE_VERSION,
+            tensor_names: [
+                FINAL_OUTPUT_HIDDEN_TENSOR_NAME,
+                FINAL_OUTPUT_NORM_TENSOR_NAME,
+                FINAL_OUTPUT_HEAD_TENSOR_NAME,
+            ],
+            tensor_shard: FINAL_OUTPUT_TENSOR_SHARD,
+            dimensions: [4, 3],
+            dtype: "f64",
+            hidden: vec![1.2, -0.8, 0.4],
+            norm_scale: vec![1.0, 0.5, 1.5],
+            output_head: vec![
+                1.0, -0.5, 0.25, 0.1, 1.2, -0.3, -0.7, 0.4, 1.5, 0.9, -1.0, 0.2,
+            ],
+            bias: vec![0.1, -0.2, 0.05, 0.0],
+            epsilon: 1.0e-5,
+            top_k: 2,
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), FinalOutputParityError> {
+        if self.source_commit != PROJECTION_SOURCE_COMMIT {
+            return Err(FinalOutputParityError::InvalidFixture("source_commit"));
+        }
+        if self.fixture_version != FINAL_OUTPUT_FIXTURE_VERSION {
+            return Err(FinalOutputParityError::InvalidFixture("fixture_version"));
+        }
+        if self.tensor_names
+            != [
+                FINAL_OUTPUT_HIDDEN_TENSOR_NAME,
+                FINAL_OUTPUT_NORM_TENSOR_NAME,
+                FINAL_OUTPUT_HEAD_TENSOR_NAME,
+            ]
+            || self.tensor_shard != FINAL_OUTPUT_TENSOR_SHARD
+            || self.dimensions != [4, 3]
+            || self.dtype != "f64"
+        {
+            return Err(FinalOutputParityError::InvalidFixture("tensor identity"));
+        }
+        if self.hidden.len() != 3
+            || self.norm_scale.len() != 3
+            || self.output_head.len() != 12
+            || self.bias.len() != 4
+            || !self.epsilon.is_finite()
+            || self.epsilon <= 0.0
+            || self.top_k == 0
+            || self.top_k > self.bias.len()
+        {
+            return Err(FinalOutputParityError::InvalidFixture("shape or top-k"));
+        }
+        for (values, hash, name) in [
+            (&self.hidden, FINAL_OUTPUT_HIDDEN_SHA256, "hidden"),
+            (
+                &self.norm_scale,
+                FINAL_OUTPUT_NORM_SCALE_SHA256,
+                "norm scale",
+            ),
+            (&self.output_head, FINAL_OUTPUT_HEAD_SHA256, "output head"),
+        ] {
+            if hash_f64(values) != hash {
+                return Err(FinalOutputParityError::HashMismatch(name));
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FinalOutputParityError {
+    InvalidFixture(&'static str),
+    HashMismatch(&'static str),
+    Component(String),
+    MemoryRejected,
+    UnexpectedDispatch {
+        expected: ProjectionDispatch,
+        actual: ProjectionDispatch,
+    },
+    NumericalMismatch(&'static str),
+    Telemetry(String),
+}
+
+impl fmt::Display for FinalOutputParityError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidFixture(field) => {
+                write!(formatter, "invalid final-output fixture: {field}")
+            }
+            Self::HashMismatch(field) => {
+                write!(formatter, "final-output fixture hash mismatch: {field}")
+            }
+            Self::Component(error) => write!(formatter, "final-output component failed: {error}"),
+            Self::MemoryRejected => {
+                formatter.write_str("final-output fixture rejected by memory budget")
+            }
+            Self::UnexpectedDispatch { expected, actual } => write!(
+                formatter,
+                "unexpected final-output dispatch: expected {expected:?}, got {actual:?}"
+            ),
+            Self::NumericalMismatch(stage) => {
+                write!(formatter, "final-output numerical mismatch: {stage}")
+            }
+            Self::Telemetry(error) => write!(formatter, "final-output telemetry failed: {error}"),
+        }
+    }
+}
+
+impl std::error::Error for FinalOutputParityError {}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct FinalOutputParityResult {
+    pub classification: ValidationClassification,
+    pub validation_mode: &'static str,
+    pub dispatch: ProjectionDispatch,
+    pub memory_admitted: bool,
+    pub telemetry: TelemetrySnapshot,
+    pub norm_sha256: String,
+    pub logits_sha256: String,
+    pub topk_sha256: String,
+    pub argmax: usize,
+}
+
+pub fn run_final_output_fixture(
+    fixture: &FinalOutputFixture,
+    expected_dispatch: ProjectionDispatch,
+) -> Result<FinalOutputParityResult, FinalOutputParityError> {
+    fixture.validate()?;
+    let memory = MemoryBudget::try_new(
+        M2_MAX_TOTAL_BYTES,
+        M2_MAX_SAFETY_RESERVE_BYTES,
+        M2_MAX_TOTAL_BYTES - M2_MAX_SAFETY_RESERVE_BYTES - M2_MAX_REQUIRED_MARGIN_BYTES,
+    )
+    .map_err(|_| FinalOutputParityError::MemoryRejected)?;
+    let requested_bytes = (fixture.hidden.len()
+        + fixture.norm_scale.len()
+        + fixture.output_head.len()
+        + fixture.bias.len()) as u64
+        * std::mem::size_of::<f64>() as u64;
+    if !memory.admits(requested_bytes) {
+        return Err(FinalOutputParityError::MemoryRejected);
+    }
+    let actual_dispatch = ProjectionDispatch::ExplicitReference;
+    if actual_dispatch != expected_dispatch {
+        return Err(FinalOutputParityError::UnexpectedDispatch {
+            expected: expected_dispatch,
+            actual: actual_dispatch,
+        });
+    }
+    run_complete_layer_fixture(
+        &CompleteLayerFixture::synthetic(),
+        ProjectionDispatch::ExplicitReference,
+    )
+    .map_err(|error| FinalOutputParityError::Component(error.to_string()))?;
+
+    let mut telemetry = RuntimeTelemetry::new();
+    telemetry
+        .record_storage_read(Duration::from_nanos(1), 3, requested_bytes)
+        .map_err(|error| FinalOutputParityError::Telemetry(format!("{error:?}")))?;
+    telemetry
+        .record_stage(
+            TelemetryBucket::BufferMaterialization,
+            Duration::from_nanos(1),
+            3,
+        )
+        .map_err(|error| FinalOutputParityError::Telemetry(format!("{error:?}")))?;
+
+    let norm = rms_norm(&fixture.hidden, &fixture.norm_scale, fixture.epsilon);
+    let logits = output_logits(&fixture.output_head, &norm, &fixture.bias);
+    let topk = top_k_indices(&logits, fixture.top_k);
+    let reference_norm = reference_rms_norm(&fixture.hidden, &fixture.norm_scale, fixture.epsilon);
+    let reference_logits =
+        reference_output_logits(&fixture.output_head, &reference_norm, &fixture.bias);
+    let reference_topk = reference_top_k_indices(&reference_logits, fixture.top_k);
+    if norm
+        .iter()
+        .zip(reference_norm.iter())
+        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-14)
+        || logits
+            .iter()
+            .zip(reference_logits.iter())
+            .any(|(actual, expected)| (actual - expected).abs() > 1.0e-14)
+        || topk != reference_topk
+    {
+        return Err(FinalOutputParityError::NumericalMismatch(
+            "norm/logits/top-k",
+        ));
+    }
+    let norm_sha256 = hash_f64(&reference_norm);
+    let logits_sha256 = hash_f64(&reference_logits);
+    let topk_as_u64: Vec<u64> = reference_topk.iter().map(|index| *index as u64).collect();
+    let topk_sha256 = hash_u64(&topk_as_u64);
+    if norm_sha256 != FINAL_OUTPUT_NORM_SHA256 {
+        return Err(FinalOutputParityError::HashMismatch("norm output"));
+    }
+    if logits_sha256 != FINAL_OUTPUT_LOGITS_SHA256 {
+        return Err(FinalOutputParityError::HashMismatch("logits"));
+    }
+    if topk_sha256 != FINAL_OUTPUT_TOPK_SHA256 {
+        return Err(FinalOutputParityError::HashMismatch("top-k"));
+    }
+    telemetry
+        .record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 3)
+        .map_err(|error| FinalOutputParityError::Telemetry(format!("{error:?}")))?;
+    Ok(FinalOutputParityResult {
+        classification: ValidationClassification::NumericallyQualifiedGreedyIdentical,
+        validation_mode: "golden_strict",
+        dispatch: actual_dispatch,
+        memory_admitted: true,
+        telemetry: telemetry
+            .snapshot()
+            .map_err(|error| FinalOutputParityError::Telemetry(format!("{error:?}")))?,
+        norm_sha256,
+        logits_sha256,
+        topk_sha256,
+        argmax: reference_topk[0],
+    })
+}
+
+fn rms_norm(hidden: &[f64], scale: &[f64], epsilon: f64) -> Vec<f64> {
+    let mean_square = hidden.iter().map(|value| value * value).sum::<f64>() / hidden.len() as f64;
+    let inverse = (mean_square + epsilon).sqrt().recip();
+    hidden
+        .iter()
+        .zip(scale.iter())
+        .map(|(value, scale)| value * inverse * scale)
+        .collect()
+}
+
+fn reference_rms_norm(hidden: &[f64], scale: &[f64], epsilon: f64) -> Vec<f64> {
+    let mut sum = 0.0;
+    for value in hidden {
+        sum += value * value;
+    }
+    let inverse = 1.0 / (sum / hidden.len() as f64 + epsilon).sqrt();
+    let mut normalized = Vec::with_capacity(hidden.len());
+    for (value, scale) in hidden.iter().zip(scale.iter()) {
+        normalized.push(*value * inverse * *scale);
+    }
+    normalized
+}
+
+fn output_logits(head: &[f64], norm: &[f64], bias: &[f64]) -> Vec<f64> {
+    (0..bias.len())
+        .map(|row| {
+            head[row * norm.len()..(row + 1) * norm.len()]
+                .iter()
+                .zip(norm.iter())
+                .map(|(weight, value)| weight * value)
+                .sum::<f64>()
+                + bias[row]
+        })
+        .collect()
+}
+
+fn reference_output_logits(head: &[f64], norm: &[f64], bias: &[f64]) -> Vec<f64> {
+    let width = norm.len();
+    let mut logits = Vec::with_capacity(bias.len());
+    for row in 0..bias.len() {
+        let mut value = bias[row];
+        for column in 0..width {
+            value += head[row * width + column] * norm[column];
+        }
+        logits.push(value);
+    }
+    logits
+}
+
+fn top_k_indices(logits: &[f64], top_k: usize) -> Vec<usize> {
+    let mut indices: Vec<usize> = (0..logits.len()).collect();
+    indices.sort_unstable_by(|left, right| {
+        logits[*right]
+            .partial_cmp(&logits[*left])
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| left.cmp(right))
+    });
+    indices.truncate(top_k);
+    indices
+}
+
+fn reference_top_k_indices(logits: &[f64], top_k: usize) -> Vec<usize> {
+    let mut indices = (0..logits.len()).collect::<Vec<_>>();
+    for index in 0..indices.len() {
+        for next in (index + 1)..indices.len() {
+            let left = indices[index];
+            let right = indices[next];
+            if logits[right] > logits[left] || (logits[right] == logits[left] && right < left) {
+                indices.swap(index, next);
+            }
+        }
+    }
+    indices.truncate(top_k);
+    indices
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct ExpertFixture {
     pub source_commit: &'static str,
     pub fixture_version: &'static str,
@@ -1930,6 +2260,57 @@ mod tests {
         assert_eq!(result.telemetry.buffer_materialization_operations, 6);
         assert_eq!(result.telemetry.compute_operations, 5);
         assert_eq!(result.output_sha256, COMPLETE_LAYER_OUTPUT_SHA256);
+    }
+
+    #[test]
+    fn final_output_passes_norm_logits_and_topk() {
+        let fixture = FinalOutputFixture::synthetic();
+        let result =
+            run_final_output_fixture(&fixture, ProjectionDispatch::ExplicitReference).unwrap();
+        assert_eq!(
+            result.classification,
+            ValidationClassification::NumericallyQualifiedGreedyIdentical
+        );
+        assert_eq!(result.validation_mode, "golden_strict");
+        assert!(result.memory_admitted);
+        assert_eq!(result.dispatch, ProjectionDispatch::ExplicitReference);
+        assert_eq!(result.telemetry.storage_read_requests, 3);
+        assert_eq!(result.telemetry.buffer_materialization_operations, 3);
+        assert_eq!(result.telemetry.compute_operations, 3);
+        assert_eq!(result.argmax, 0);
+        assert_eq!(result.norm_sha256, FINAL_OUTPUT_NORM_SHA256);
+        assert_eq!(result.logits_sha256, FINAL_OUTPUT_LOGITS_SHA256);
+        assert_eq!(result.topk_sha256, FINAL_OUTPUT_TOPK_SHA256);
+    }
+
+    #[test]
+    fn malformed_final_output_fixture_fails_before_components() {
+        let mut fixture = FinalOutputFixture::synthetic();
+        fixture.hidden[0] = f64::NAN;
+        assert_eq!(
+            run_final_output_fixture(&fixture, ProjectionDispatch::ExplicitReference),
+            Err(FinalOutputParityError::HashMismatch("hidden"))
+        );
+    }
+
+    #[test]
+    fn unexpected_final_output_direct_dispatch_fails_closed() {
+        let fixture = FinalOutputFixture::synthetic();
+        assert!(matches!(
+            run_final_output_fixture(&fixture, ProjectionDispatch::QualifiedDirect),
+            Err(FinalOutputParityError::UnexpectedDispatch {
+                expected: ProjectionDispatch::QualifiedDirect,
+                actual: ProjectionDispatch::ExplicitReference,
+            })
+        ));
+    }
+
+    #[test]
+    fn final_output_result_is_deterministic() {
+        let fixture = FinalOutputFixture::synthetic();
+        let first = run_final_output_fixture(&fixture, ProjectionDispatch::ExplicitReference);
+        let second = run_final_output_fixture(&fixture, ProjectionDispatch::ExplicitReference);
+        assert_eq!(first, second);
     }
 
     #[test]
