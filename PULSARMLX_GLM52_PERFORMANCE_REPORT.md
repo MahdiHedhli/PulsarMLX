@@ -424,6 +424,22 @@ claim. Raw and derived evidence:
 `docs/research/glm52/raw/post-f016-inference-p1-trunk-q6-0001.json` and
 `docs/research/glm52/raw/post-f016-p1-trunk-profile-0001.json`.
 
+### Post-Feature-016 MoE optimization
+
+The isolated M1 Ultra MoE study passed exact P2 `[9703,21615,220]` at clean
+source `c115c7f6`. Total evidence wall was 1479.009580 s; stack walls were
+921.235962 s cold and 197.928826/194.063845 s warm. The two warm-stack sample
+mean/median is 195.996335 s. The result retained 456 shared hits and zero CPU
+fallbacks, evictions, or admission rejections. It is a correctness gate, not a
+general throughput population.
+
+Warm expert decode remained largest at a 103.525836-second two-stack mean.
+Catalog touches weighted by exact bounded per-format medians model 104.719147 s
+and select IQ2_XXS routed gate/up as the largest measured Feature 018 candidate
+at 55.750817 s across 1,184 matrix touches. This does not claim a Metal kernel
+exists or predict its speedup. Full evidence and caveats are in
+[`docs/research/glm52/MOE_OPTIMIZATION_SPRINT_REPORT.md`](docs/research/glm52/MOE_OPTIMIZATION_SPRINT_REPORT.md).
+
 ## Limitations
 
 - Python research runtime, not a production server

@@ -109,6 +109,11 @@
   and [review table](tables/post-f016-routed-expert-reuse-0001.md) — exact
   process-isolated transient, decoded-host, and MLX-ready reuse for the only
   routed unit present in all nine frozen route stacks, including RSS deltas
+- [Post-MoE exact P2](raw/post-f016-inference-p2-moe-vector-0001.json) with
+  [generated analysis](raw/post-f016-inference-p2-moe-vector-analysis-0001.json)
+  and [review table](tables/post-f016-inference-p2-moe-vector-0001.md) — exact
+  frozen prefix, complete stacks/routes, split warm attribution, cache/resource
+  gates, and catalog-weighted format opportunity validated against warm decode
 - [Post-Feature-016 Q5_K dense integration](raw/post-f016-trunk-q5-integration-0001.json)
   and [generated integration table](tables/post-f016-trunk-q5-integration-0001.md)
   — one complete real Q5_K MLX matrix boundary and complete layer-3 MLA,

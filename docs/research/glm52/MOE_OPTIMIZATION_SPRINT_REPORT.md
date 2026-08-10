@@ -2,9 +2,10 @@
 
 ## Status
 
-The bounded M1 Ultra MoE study begins at `cb1a0e06` on the isolated branch
-`codex/glm52-moe-optimization`. It does not modify the independent Feature 017
-checkout, run golden-eight, or implement direct quantized Metal.
+The bounded M1 Ultra MoE study began at `cb1a0e06` on the isolated branch
+`codex/glm52-moe-optimization` and passed its optional exact P2 gate at clean
+source `c115c7f6`. It did not modify the independent Feature 017 checkout, run
+golden-eight, or implement direct quantized Metal.
 
 ## Phase 1: post-trunk P1 attribution
 
@@ -301,3 +302,49 @@ shared expert costs about 0.007045 s, with zero read, decode, or build work on
 the warm path. The remaining cost is synchronized MLX matvec plus negligible
 activation/aggregation. The working shared-cache policy therefore remains
 unchanged; redesigning it would not address the current dominant cost.
+
+## Phase 9: exact P2 gate
+
+Material exact improvement at the complete layer admitted one clean-source P2.
+At `c115c7f6`, the unchanged frozen prompt produced exact prefix
+`[9703,21615,220]` across three complete 79-layer stacks and three complete
+76-layer top-8 route traces. Total evidence wall was 1479.009580 s. The cold
+stack took 921.235962 s; the two warm stacks took 197.928826 s and 194.063845 s.
+Their preceding full-vocabulary logits boundaries took 89.246947 s and
+76.430414 s.
+
+All retained resource observations were normal. The run recorded 456 protected
+shared-cache hits, 228 resident entries, 4,211,539,968 compressed bytes and
+22,951,231,488 decoded bytes avoided, zero CPU fallbacks, zero evictions, and
+zero admission rejections. The warm-stack mean/median is 195.996335 s across
+two samples; this is an exact correctness gate, not a general steady-state
+throughput population.
+
+Warm expert-cache decode was 103.146919 s and 103.904752 s. Expert storage was
+9.165052 s and 7.078381 s, MLX build/evaluation 9.032754 s and 9.052198 s,
+matvec 8.096326 s and 6.768674 s, and the uninstrumented stack residual
+68.448357 s and 67.219210 s. Expert decode remains the largest warm stack
+stage; logits and the residual are also material.
+
+- [`raw/post-f016-inference-p2-moe-vector-0001.json`](raw/post-f016-inference-p2-moe-vector-0001.json)
+- [`raw/post-f016-inference-p2-moe-vector-analysis-0001.json`](raw/post-f016-inference-p2-moe-vector-analysis-0001.json)
+- [`tables/post-f016-inference-p2-moe-vector-0001.md`](tables/post-f016-inference-p2-moe-vector-0001.md)
+
+## Revised bottleneck and Feature 017/018 implications
+
+A deterministic catalog-touch model uses the exact bounded layer medians and
+predicts 104.719147 s of warm routed decode, within 1.15% of the observed
+103.525836-second two-stack mean. Its largest buckets are IQ2_XXS routed
+gate/up at 55.750817 s across 1,184 matrix touches and IQ3_XXS routed down at
+43.125401 s across 568 touches. The remaining formats are each below 2.4 s of
+modeled warm decode.
+
+The evidence is now sufficient to select **IQ2_XXS routed gate/up** as Feature
+018's first direct-quantized Metal candidate by largest measured absolute warm
+opportunity. This is candidate selection only; no Metal implementation or
+performance claim is made. Feature 017 should prioritize exact whole-slab
+IQ2_XXS/IQ3_XXS decode, low-copy evaluated-matrix handoff, and allocator-aware
+bounded route residency. The one-expert hot-pin result warrants that native
+interface, but not a 76-expert Python cache.
+
+No additional full-model or golden-eight run is required for this sprint.

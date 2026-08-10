@@ -1,0 +1,308 @@
+{
+  "actual_status": "passed",
+  "bounded_profile_source": {
+    "record": "docs/research/glm52/raw/post-f016-moe-multilayer-all-vector-analysis-0001.json",
+    "sha256": "8875801b55174b194e4ffd797cb481c14e6e3860fac253bb008e11452e4fae7a",
+    "source_commit": "7b4e51eec875c071e69c2b43c1422a85f157231a"
+  },
+  "cache": {
+    "bytes_resident": 11475615744,
+    "decoded_bytes_avoided": 22951231488,
+    "decoded_cache_hits": 456,
+    "decoded_cache_misses": 5700,
+    "resident_entries": 228,
+    "storage_bytes_avoided": 4211539968
+  },
+  "correctness": {
+    "admission_rejections": 0,
+    "cache_evictions": 0,
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "complete_route_stack_count": 3,
+    "complete_stack_count": 3,
+    "cpu_fallbacks": 0,
+    "generated_token_ids": [
+      9703,
+      21615,
+      220
+    ],
+    "matches_golden_prefix": true,
+    "mlx_device": "Device(gpu, 0)"
+  },
+  "decision": {
+    "another_full_model_run_required": false,
+    "feature_017_native_primitive": "whole-slab exact IQ2_XXS/IQ3_XXS decode with low-copy evaluated-matrix handoff and bounded route-aware residency",
+    "feature_018_first_kernel_candidate": {
+      "matrix_touches_per_warm_stack": 1184,
+      "modeled_decode_seconds_per_warm_stack": 55.75081748639059,
+      "quantization": "IQ2_XXS",
+      "shape_rows_cols": [
+        2048,
+        6144
+      ],
+      "status": "selected_candidate_not_implemented",
+      "tensor_role": "routed gate/up"
+    },
+    "feature_018_scope_sufficient": true,
+    "largest_remaining_measured_warm_stage": "routed expert decode"
+  },
+  "historical_cross_commit_observation": {
+    "cross_commit_wall_ratio": 4.430313009638665,
+    "cross_commit_warm_median_ratio": 9.76144491146681,
+    "current_p2_wall_seconds": 1479.009580124999,
+    "current_warm_stack_seconds": [
+      197.92882595799165,
+      194.06384483299917
+    ],
+    "prior_p2_source_commit": "d5e1cf3cc092c7629d5905fd9da1a85afd1fd363",
+    "prior_p2_wall_seconds": 6552.475384208003,
+    "prior_warm_stack_seconds": [
+      1903.5982779589976,
+      1922.8165836660046
+    ]
+  },
+  "limitations": [
+    "Two warm stacks are an exact correctness gate, not a general throughput population.",
+    "Per-quant warm opportunity is a catalog-weighted model from bounded exact medians; P2 retained only top-level per-stack cache deltas.",
+    "Historical ratios are cross-commit observations, not same-binary populations.",
+    "Kernel candidate selection is not kernel implementation or a direct-Metal performance claim.",
+    "No golden-eight rerun was performed."
+  ],
+  "modeled_warm_quantization_opportunity": {
+    "absolute_error_seconds": 1.1933113182967645,
+    "method": "catalog touch counts multiplied by retained per-quant medians from exact bounded layers; validated against observed P2 warm total decode, not direct per-quant P2 counters",
+    "modeled_decode_seconds": 104.71914687332173,
+    "observed_warm_decode_mean_seconds": 103.52583555502497,
+    "ranking": [
+      {
+        "attributed_seconds": 69.61490748059441,
+        "cleanup_seconds": 4.079742793095647,
+        "contiguous_buffer_seconds": 0.028244890105270315,
+        "dequant_seconds": 55.75081748639059,
+        "layer_count": 74,
+        "matrix_touches_per_warm_stack": 1184,
+        "mlx_matrix_build_seconds": 6.156314393199864,
+        "mlx_matrix_construct_seconds": 6.017365710758895,
+        "mlx_matrix_eval_seconds": 0.1389486824409687,
+        "mlx_matvec_seconds": 3.462332516661263,
+        "quantization": "IQ2_XXS",
+        "rank_by_modeled_warm_decode": 1,
+        "shape_rows_cols": [
+          2048,
+          6144
+        ],
+        "storage_read_seconds": 0.13745540114177857,
+        "tensor_role": "routed gate/up"
+      },
+      {
+        "attributed_seconds": 50.59202628663479,
+        "cleanup_seconds": 1.9505874387032236,
+        "contiguous_buffer_seconds": 0.01243092952790903,
+        "dequant_seconds": 43.12540149094275,
+        "layer_count": 71,
+        "matrix_touches_per_warm_stack": 568,
+        "mlx_matrix_build_seconds": 3.027590873542067,
+        "mlx_matrix_construct_seconds": 2.96184487453138,
+        "mlx_matrix_eval_seconds": 0.06574599901068723,
+        "mlx_matvec_seconds": 2.408987151553447,
+        "quantization": "IQ3_XXS",
+        "rank_by_modeled_warm_decode": 2,
+        "shape_rows_cols": [
+          6144,
+          2048
+        ],
+        "storage_read_seconds": 0.06702840236539487,
+        "tensor_role": "routed down"
+      },
+      {
+        "attributed_seconds": 2.5768173769756686,
+        "cleanup_seconds": 0.05921531499188859,
+        "contiguous_buffer_seconds": 0.0003899809889844619,
+        "dequant_seconds": 2.377654021489434,
+        "layer_count": 1,
+        "matrix_touches_per_warm_stack": 16,
+        "mlx_matrix_build_seconds": 0.07957558001362486,
+        "mlx_matrix_construct_seconds": 0.07759164550952846,
+        "mlx_matrix_eval_seconds": 0.0019839345040963963,
+        "mlx_matvec_seconds": 0.0582798334871768,
+        "quantization": "Q2_K",
+        "rank_by_modeled_warm_decode": 3,
+        "shape_rows_cols": [
+          2048,
+          6144
+        ],
+        "storage_read_seconds": 0.0017026460045599379,
+        "tensor_role": "routed gate/up"
+      },
+      {
+        "attributed_seconds": 1.7638803484878736,
+        "cleanup_seconds": 0.1113645620062016,
+        "contiguous_buffer_seconds": 0.0006743940466549248,
+        "dequant_seconds": 1.383195375012292,
+        "layer_count": 4,
+        "matrix_touches_per_warm_stack": 32,
+        "mlx_matrix_build_seconds": 0.16358239251712803,
+        "mlx_matrix_construct_seconds": 0.15975576899654698,
+        "mlx_matrix_eval_seconds": 0.0038266235205810517,
+        "mlx_matvec_seconds": 0.0989755634800531,
+        "quantization": "IQ4_XS",
+        "rank_by_modeled_warm_decode": 4,
+        "shape_rows_cols": [
+          6144,
+          2048
+        ],
+        "storage_read_seconds": 0.006088061425543856,
+        "tensor_role": "routed down"
+      },
+      {
+        "attributed_seconds": 1.2010487305233255,
+        "cleanup_seconds": 0.029263979493407533,
+        "contiguous_buffer_seconds": 0.00018160352919949219,
+        "dequant_seconds": 1.1014590209742892,
+        "layer_count": 1,
+        "matrix_touches_per_warm_stack": 8,
+        "mlx_matrix_build_seconds": 0.03970864800794516,
+        "mlx_matrix_construct_seconds": 0.03867598050419474,
+        "mlx_matrix_eval_seconds": 0.0010326675037504174,
+        "mlx_matvec_seconds": 0.029234082525363192,
+        "quantization": "Q3_K",
+        "rank_by_modeled_warm_decode": 5,
+        "shape_rows_cols": [
+          6144,
+          2048
+        ],
+        "storage_read_seconds": 0.0012013959931209683,
+        "tensor_role": "routed down"
+      },
+      {
+        "attributed_seconds": 1.161280498963606,
+        "cleanup_seconds": 0.05034929150133394,
+        "contiguous_buffer_seconds": 0.00034702147968346253,
+        "dequant_seconds": 0.9806194785123807,
+        "layer_count": 1,
+        "matrix_touches_per_warm_stack": 16,
+        "mlx_matrix_build_seconds": 0.08316872897557914,
+        "mlx_matrix_construct_seconds": 0.08132747950730845,
+        "mlx_matrix_eval_seconds": 0.0018412494682706892,
+        "mlx_matvec_seconds": 0.044533372987643816,
+        "quantization": "IQ2_S",
+        "rank_by_modeled_warm_decode": 6,
+        "shape_rows_cols": [
+          2048,
+          6144
+        ],
+        "storage_read_seconds": 0.0022626055069849826,
+        "tensor_role": "routed gate/up"
+      }
+    ],
+    "relative_error_fraction": 0.011526700672340946
+  },
+  "schema": "pulsarmlx.research.glm52-post-moe-p2-analysis",
+  "schema_version": "1.0.0",
+  "source": {
+    "record": "docs/research/glm52/raw/post-f016-inference-p2-moe-vector-0001.json",
+    "sha256": "fee7f9ff146ab8781dd8989303df3d98aff9b1483a4460e19eed39795e0b0ab6",
+    "source_commit": "c115c7f6f09fcdcfe13a11ca8d3b94940863b7ab"
+  },
+  "timing": {
+    "stacks": [
+      {
+        "decoded_bytes_avoided": 0,
+        "decoded_cache_hits": 0,
+        "decoded_cache_misses": 2052,
+        "expert_cache_attributed_seconds": 841.0694381279027,
+        "expert_cache_components": {
+          "contiguous_buffer_seconds": 57.95462975994451,
+          "dequant_seconds": 752.7296606266464,
+          "mlx_matrix_build_seconds": 11.190148363952176,
+          "mlx_matvec_seconds": 8.545507497925428,
+          "storage_read_seconds": 10.649491879434208
+        },
+        "layer_count": 79,
+        "logits_seconds_separate": 0.0,
+        "phase": "prefill",
+        "resource_level": "normal",
+        "stack_seconds": 921.2359624999954,
+        "storage_bytes_avoided": 0,
+        "token": 9703,
+        "uninstrumented_residual_seconds": 80.16652437209268
+      },
+      {
+        "decoded_bytes_avoided": 11475615744,
+        "decoded_cache_hits": 228,
+        "decoded_cache_misses": 1824,
+        "expert_cache_attributed_seconds": 129.48046853483538,
+        "expert_cache_components": {
+          "contiguous_buffer_seconds": 0.03941712655068841,
+          "dequant_seconds": 103.1469192779623,
+          "mlx_matrix_build_seconds": 9.032754486557678,
+          "mlx_matvec_seconds": 8.096325654230895,
+          "storage_read_seconds": 9.165051989533822
+        },
+        "layer_count": 79,
+        "logits_seconds_separate": 89.24694737499522,
+        "phase": "decode",
+        "resource_level": "normal",
+        "stack_seconds": 197.92882595799165,
+        "storage_bytes_avoided": 2105769984,
+        "token": 21615,
+        "uninstrumented_residual_seconds": 68.44835742315627
+      },
+      {
+        "decoded_bytes_avoided": 11475615744,
+        "decoded_cache_hits": 228,
+        "decoded_cache_misses": 1824,
+        "expert_cache_attributed_seconds": 126.8446352268802,
+        "expert_cache_components": {
+          "contiguous_buffer_seconds": 0.040630960909766145,
+          "dequant_seconds": 103.90475183208764,
+          "mlx_matrix_build_seconds": 9.05219783213397,
+          "mlx_matvec_seconds": 6.768673522834433,
+          "storage_read_seconds": 7.07838107891439
+        },
+        "layer_count": 79,
+        "logits_seconds_separate": 76.43041437500506,
+        "phase": "decode",
+        "resource_level": "normal",
+        "stack_seconds": 194.06384483299917,
+        "storage_bytes_avoided": 2105769984,
+        "token": 220,
+        "uninstrumented_residual_seconds": 67.21920960611897
+      }
+    ],
+    "total_evidence_wall_seconds": 1479.009580124999,
+    "warm_population": {
+      "expert_cache_attributed_seconds": {
+        "maximum_seconds": 129.48046853483538,
+        "mean_seconds": 128.1625518808578,
+        "median_seconds": 128.1625518808578,
+        "minimum_seconds": 126.8446352268802,
+        "sample_count": 2,
+        "sample_standard_deviation_seconds": 1.863815606132478
+      },
+      "logits_seconds_separate": {
+        "maximum_seconds": 89.24694737499522,
+        "mean_seconds": 82.83868087500014,
+        "median_seconds": 82.83868087500014,
+        "minimum_seconds": 76.43041437500506,
+        "sample_count": 2,
+        "sample_standard_deviation_seconds": 9.062657395594208
+      },
+      "stack_seconds": {
+        "maximum_seconds": 197.92882595799165,
+        "mean_seconds": 195.9963353954954,
+        "median_seconds": 195.9963353954954,
+        "minimum_seconds": 194.06384483299917,
+        "sample_count": 2,
+        "sample_standard_deviation_seconds": 2.7329543626401955
+      },
+      "uninstrumented_residual_seconds": {
+        "maximum_seconds": 68.44835742315627,
+        "mean_seconds": 67.83378351463762,
+        "median_seconds": 67.83378351463762,
+        "minimum_seconds": 67.21920960611897,
+        "sample_count": 2,
+        "sample_standard_deviation_seconds": 0.8691387565077174
+      }
+    }
+  }
+}
