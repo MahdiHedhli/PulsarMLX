@@ -83,9 +83,9 @@
 - [x] T024 [US2] Add the fail-closed real matrix runner and immutable binding in `scripts/research/benchmark_glm52_iq2_xxs_metal.py`
 - [x] T025 [US2] Add semantic validation for real matrix identity, raw samples, zero fallback, and zero full-f32 materialization in `scripts/research/tests/test_f018_evidence.py`
 - [x] T026 [US2] Run the admitted real gate matrix and preserve raw evidence in `docs/research/glm52/raw/f018-iq2-xxs-gate-matrix-0001.json`
-- [ ] T027 [US2] Run the admitted real up matrix only after T026 passes and preserve `docs/research/glm52/raw/f018-iq2-xxs-up-matrix-0001.json`
-- [ ] T028 [US2] Generate deterministic matrix comparison tables with `scripts/research/analyze_glm52_iq2_xxs_metal.py`
-- [ ] T029 [US2] Commit and push the real matrix and repeated-warm lifecycle evidence
+- [x] T027 [US2] Run the admitted real up matrix only after T026 passes and preserve `docs/research/glm52/raw/f018-iq2-xxs-up-matrix-0001.json`
+- [x] T028 [US2] Generate deterministic matrix comparison tables with `scripts/research/analyze_glm52_iq2_xxs_metal.py`
+- [x] T029 [US2] Commit and push the real matrix and repeated-warm lifecycle evidence
 
 **Checkpoint**: Rungs B-E pass or the feature stops with a qualified negative/failing record.
 

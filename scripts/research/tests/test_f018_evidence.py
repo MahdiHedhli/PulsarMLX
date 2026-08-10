@@ -104,6 +104,28 @@ class F018EvidenceTests(unittest.TestCase):
                 self.assertEqual(
                     record["kernel"]["complete_f32_weight_materialized_bytes"], 0
                 )
+                table = (
+                    ROOT
+                    / "docs/research/glm52/tables"
+                    / path.name.replace(".json", ".md")
+                )
+                if table.exists():
+                    subprocess.run(
+                        [
+                            sys.executable,
+                            str(
+                                ROOT
+                                / "scripts/research/analyze_glm52_iq2_xxs_metal.py"
+                            ),
+                            "--input",
+                            str(path),
+                            "--output",
+                            str(table),
+                            "--check",
+                        ],
+                        cwd=ROOT,
+                        check=True,
+                    )
 
     def test_valid_record(self) -> None:
         result = validate_record(valid_record())
