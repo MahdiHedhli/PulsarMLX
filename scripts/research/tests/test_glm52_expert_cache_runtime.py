@@ -266,13 +266,9 @@ def test_direct_iq2_iq3_routed_expert_dispatches_all_three_projections() -> None
 def test_inference_rejects_direct_mode_without_worker() -> None:
     import glm52_inference as inference
 
-    with unittest.TestCase().assertRaisesRegex(ValueError, "requires a direct Metal worker"):
-        inference.generate(
-            object(),
-            [9703],
-            1,
-            expert_execution_mode="direct_iq2_gate_up",
-        )
+    for mode in ("direct_iq2_gate_up", "direct_iq2_gate_up_iq3_down"):
+        with unittest.TestCase().assertRaisesRegex(ValueError, "requires a direct Metal worker"):
+            inference.generate(object(), [9703], 1, expert_execution_mode=mode)
 
 
 def test_moe_direct_selection_is_explicit_and_format_gated() -> None:

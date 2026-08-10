@@ -37,6 +37,7 @@ from glm52_expert_cache_runtime import (
     MlxMatrixBackend,
     expert_matvec_cached,
     run_routed_expert_direct_iq2,
+    run_routed_expert_direct_iq2_iq3,
 )
 from glm52_layer import layer_forward_token, moe_ffn
 from glm52_memory_pressure import sample_pressure
@@ -232,24 +233,47 @@ def moe_ffn_cached(
         expert_timing: dict[str, Any] | None = {} if timing_sink is not None else None
         gate = store.tensors[f"blk.{layer}.ffn_gate_exps.weight"]
         up = store.tensors[f"blk.{layer}.ffn_up_exps.weight"]
+        down = store.tensors.get(f"blk.{layer}.ffn_down_exps.weight")
+        combined_iq3 = (
+            direct_worker is not None
+            and getattr(direct_worker, "identity", {}).get("combined_iq3") is True
+        )
         direct_eligible = (
             direct_worker is not None
             and gate.type_id == 16
             and gate.type_name == "IQ2_XXS"
             and up.type_id == 16
             and up.type_name == "IQ2_XXS"
+            and (
+                not combined_iq3
+                or (
+                    down is not None
+                    and down.type_id == 18
+                    and down.type_name == "IQ3_XXS"
+                )
+            )
         )
         if direct_eligible:
             try:
-                part, direct_timing = run_routed_expert_direct_iq2(
-                    store,
-                    cache,
-                    direct_worker,
-                    layer=layer,
-                    expert=eid,
-                    activation=x,
-                    weight=w,
-                )
+                if combined_iq3:
+                    part, direct_timing = run_routed_expert_direct_iq2_iq3(
+                        store,
+                        direct_worker,
+                        layer=layer,
+                        expert=eid,
+                        activation=x,
+                        weight=w,
+                    )
+                else:
+                    part, direct_timing = run_routed_expert_direct_iq2(
+                        store,
+                        cache,
+                        direct_worker,
+                        layer=layer,
+                        expert=eid,
+                        activation=x,
+                        weight=w,
+                    )
             except Exception as error:
                 if direct_stats is not None:
                     direct_stats["direct_error_count"] = (
@@ -257,13 +281,17 @@ def moe_ffn_cached(
                     )
                     direct_stats["last_error_reason_code"] = "direct_execution_error"
                 raise RuntimeError(
-                    "direct IQ2 validation dispatch failed closed; reference recovery is forbidden"
+                    "direct quantized validation dispatch failed closed; reference recovery is forbidden"
                 ) from error
             if direct_stats is not None:
                 direct_stats["direct_routed_expert_count"] += 1
             if expert_timing is not None:
                 expert_timing.update(direct_timing)
-                expert_timing["execution_path"] = "direct_iq2_gate_up"
+                expert_timing["execution_path"] = (
+                    "direct_iq2_gate_up_iq3_down"
+                    if combined_iq3
+                    else "direct_iq2_gate_up"
+                )
         else:
             part = run_expert_swiglu_cached(
                 store, cache, layer, eid, x, w, shared=False, timing_sink=expert_timing
@@ -286,7 +314,8 @@ def moe_ffn_cached(
                                 "quantization": location.type_name,
                                 "shape": list(map(int, location.dims)),
                             }
-                            for role, location in (("gate", gate), ("up", up))
+                            for role, location in (("gate", gate), ("up", up), ("down", down))
+                            if location is not None
                         ],
                     }
                 )
@@ -439,12 +468,13 @@ def generate(
     expert_execution_mode: str = "reference",
     direct_worker_path: Path | None = None,
 ) -> dict:
-    if expert_execution_mode not in {"reference", "direct_iq2_gate_up"}:
+    direct_modes = {"direct_iq2_gate_up", "direct_iq2_gate_up_iq3_down"}
+    if expert_execution_mode not in {"reference", *direct_modes}:
         raise ValueError(f"unsupported expert execution mode: {expert_execution_mode}")
-    if expert_execution_mode == "direct_iq2_gate_up" and direct_worker_path is None:
-        raise ValueError("direct_iq2_gate_up requires a direct Metal worker path")
-    if expert_execution_mode == "direct_iq2_gate_up" and mode != "inference":
-        raise ValueError("direct_iq2_gate_up is available only in inference mode")
+    if expert_execution_mode in direct_modes and direct_worker_path is None:
+        raise ValueError("direct expert execution requires a direct Metal worker path")
+    if expert_execution_mode in direct_modes and mode != "inference":
+        raise ValueError("direct expert execution is available only in inference mode")
     expert_cache = (
         ExpertSlabCache(
             max_bytes=cache_bytes,
@@ -476,7 +506,7 @@ def generate(
             "schema_version": "2.0.0",
             "feature_id": (
                 "018-direct-quantized-metal-runtime"
-                if expert_execution_mode == "direct_iq2_gate_up"
+                if expert_execution_mode in direct_modes
                 else "016-glm52-full-execution"
             ),
             "actual_status": status,
@@ -504,6 +534,17 @@ def generate(
                     "worker_identity": dict(direct_worker.identity),
                 }
                 if direct_worker is not None
+                and expert_execution_mode == "direct_iq2_gate_up"
+                else None
+            ),
+            "direct_quantized_metal": (
+                {
+                    "selection": dict(direct_stats),
+                    "worker": direct_worker.stats_snapshot(),
+                    "worker_identity": dict(direct_worker.identity),
+                }
+                if direct_worker is not None
+                and expert_execution_mode == "direct_iq2_gate_up_iq3_down"
                 else None
             ),
         }
@@ -516,11 +557,19 @@ def generate(
     with ExitStack() as contexts:
         contexts.enter_context(execution_context)
         contexts.enter_context(dense_read_mode(dense_mode))
-        if expert_execution_mode == "direct_iq2_gate_up":
-            from glm52_direct_metal_runtime import DirectIq2MetalWorker
+        if expert_execution_mode in direct_modes:
+            from glm52_direct_metal_runtime import (
+                DirectIq2Iq3MetalWorker,
+                DirectIq2MetalWorker,
+            )
 
+            worker_type = (
+                DirectIq2Iq3MetalWorker
+                if expert_execution_mode == "direct_iq2_gate_up_iq3_down"
+                else DirectIq2MetalWorker
+            )
             direct_worker = contexts.enter_context(
-                DirectIq2MetalWorker(direct_worker_path, context["source_commit"])
+                worker_type(direct_worker_path, context["source_commit"])
             )
         x: list[float] | None = None
         for pos, tid in enumerate(seed):
@@ -635,7 +684,7 @@ def main() -> int:
     )
     ap.add_argument(
         "--expert-execution-mode",
-        choices=("reference", "direct_iq2_gate_up"),
+        choices=("reference", "direct_iq2_gate_up", "direct_iq2_gate_up_iq3_down"),
         default="reference",
         help="explicit routed-expert execution path; defaults to the reference path",
     )
