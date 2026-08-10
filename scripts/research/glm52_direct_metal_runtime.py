@@ -146,4 +146,3 @@ class DirectIq2MetalWorker:
             if exc is None:
                 raise
             self._process.kill()
-
