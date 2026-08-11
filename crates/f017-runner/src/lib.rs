@@ -9,6 +9,7 @@ pub mod layer_qualification;
 pub mod numerical_classification;
 pub mod qualification;
 pub mod store;
+pub mod tiny_model;
 
 use crate::checkpoint::{CheckpointKind, CheckpointManifest, VerifiedCheckpoint};
 use crate::cli::{Config, RunnerMode};

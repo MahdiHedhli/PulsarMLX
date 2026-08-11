@@ -207,6 +207,97 @@ fn actual_binary_keeps_exact_scaffold_explicit_and_separate() {
     );
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[test]
+fn actual_binary_runs_r12_tiny_model_in_exact_and_production_modes() {
+    let fixture = fixture(false);
+    let model = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../specs/017-rust-native-inference-runtime/fixtures/f017-r12-tiny-model/model.json",
+    );
+
+    let exact_out = fixture.root.join("r12-exact.json");
+    let exact_status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &exact_out))
+        .arg("--fixture-mode")
+        .arg(&model)
+        .args(["--numerical-mode", "exact-qualification-scaffold"])
+        .status()
+        .unwrap();
+    assert!(exact_status.success());
+    let exact: Evidence = parse_json_no_duplicates(&fs::read(&exact_out).unwrap()).unwrap();
+    assert_eq!(exact.execution.generated_token, Some(10));
+    assert_eq!(exact.input.tokens, vec![3]);
+    assert_eq!(exact.input.n_new, 1);
+    assert_eq!(exact.input.expected_token, Some(10));
+    assert_eq!(exact.execution.layers.len(), 2);
+    assert!(exact
+        .execution
+        .layers
+        .iter()
+        .all(|layer| layer.total_seconds > 0.0));
+    assert_eq!(exact.execution.dispatch.qualification_scaffold, 690);
+    assert_eq!(exact.execution.dispatch.fallback, 0);
+    assert!(exact.lifecycle.reconciled);
+
+    let production_out = fixture.root.join("r12-production.json");
+    let production_status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &production_out))
+        .arg("--fixture-mode")
+        .arg(&model)
+        .args(["--numerical-mode", "production-mlx-tier-b"])
+        .status()
+        .unwrap();
+    assert!(production_status.success());
+    let production: Evidence =
+        parse_json_no_duplicates(&fs::read(&production_out).unwrap()).unwrap();
+    assert_eq!(production.execution.generated_token, Some(10));
+    assert_eq!(
+        production.execution.numerical_classification,
+        Some(
+            f017_runner::numerical_classification::NumericalClassification::NumericallyQualifiedGreedyIdentical
+        )
+    );
+    assert_eq!(production.execution.dispatch.native, 690);
+    assert_eq!(production.execution.dispatch.fallback, 0);
+    assert_eq!(production.execution.dispatch.errors, 0);
+    assert_eq!(production.residency.decoded_hot, 81);
+    assert_eq!(production.residency.misses, 81);
+    assert!(production
+        .execution
+        .layers
+        .iter()
+        .all(|layer| layer.total_seconds > 0.0));
+    assert!(production.lifecycle.reconciled);
+    assert!(production.identity.checkpoint.accessed);
+}
+
+#[test]
+fn actual_binary_banks_malformed_r12_manifest_without_false_pass() {
+    let fixture = fixture(false);
+    let malformed = fixture.root.join("malformed-r12.json");
+    fs::write(
+        &malformed,
+        b"{\"schema\":\"pulsarmlx.f017.r12-tiny-model-oracle\",\"schema\":\"duplicate\"}\n",
+    )
+    .unwrap();
+    let out = fixture.root.join("malformed-r12-evidence.json");
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .arg("--fixture-mode")
+        .arg(&malformed)
+        .args(["--numerical-mode", "exact-qualification-scaffold"])
+        .status()
+        .unwrap();
+    assert_eq!(status.code(), Some(14));
+    let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+    assert_eq!(
+        evidence.result.classification,
+        f017_runner::evidence::ResultClassification::FailInfrastructureEvidence
+    );
+    assert!(!evidence.identity.checkpoint.accessed);
+    assert!(!evidence.result.completed || evidence.result.first_failure.is_some());
+}
+
 fn common_args(environment: &Path, out: &Path) -> Vec<std::ffi::OsString> {
     [
         "--out".into(),

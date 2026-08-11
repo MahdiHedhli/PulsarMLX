@@ -90,6 +90,12 @@ fn run_projection_fixture_impl(
             format!("cannot read fixture manifest: {error}"),
         )
     })?;
+    let envelope: serde_json::Value = parse_json_no_duplicates(&bytes).map_err(|error| {
+        fixture_error(FailureClass::InfrastructureEvidence, "fixture_json", error)
+    })?;
+    if envelope["schema"] == "pulsarmlx.f017.r12-tiny-model-oracle" {
+        return crate::tiny_model::run_tiny_model_fixture(manifest, config, evidence);
+    }
     let oracle: OracleFixture = parse_json_no_duplicates(&bytes).map_err(|error| {
         fixture_error(FailureClass::InfrastructureEvidence, "fixture_json", error)
     })?;

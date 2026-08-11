@@ -16,6 +16,18 @@ pub struct Glm52TensorMap {
     tensors: BTreeMap<String, TensorInfo>,
 }
 
+#[derive(Debug, Clone)]
+pub struct Glm52FixtureTensorContract {
+    pub name: String,
+    pub dims: Vec<u64>,
+    pub tensor_type: TensorType,
+}
+
+#[derive(Debug, Clone)]
+pub struct Glm52FixtureTensorMap {
+    tensors: BTreeMap<String, TensorInfo>,
+}
+
 impl Glm52TensorMap {
     pub fn from_gguf(catalog: &Gguf) -> Result<Self, RunnerError> {
         require_arch_meta(catalog, "block_count", GLM52_LAYER_COUNT)?;
@@ -36,77 +48,8 @@ impl Glm52TensorMap {
         architecture: Option<&str>,
         tensors: impl IntoIterator<Item = TensorInfo>,
     ) -> Result<Self, RunnerError> {
-        if architecture != Some("glm-dsa") {
-            return Err(map_error(
-                "glm52_architecture",
-                "tensor map requires architecture glm-dsa",
-            ));
-        }
-        let mut actual = HashMap::new();
-        for tensor in tensors {
-            if actual.insert(tensor.name.clone(), tensor).is_some() {
-                return Err(map_error(
-                    "glm52_duplicate_tensor",
-                    "tensor map contains a duplicate name",
-                ));
-            }
-        }
         let expected = expected_contracts();
-        if actual.len() != expected.len() || expected.len() != GLM52_TENSOR_COUNT {
-            return Err(map_error(
-                "glm52_tensor_count",
-                format!(
-                    "tensor map has {} names; exact P1 contract requires {}",
-                    actual.len(),
-                    GLM52_TENSOR_COUNT
-                ),
-            ));
-        }
-        let expected_names = expected
-            .iter()
-            .map(|contract| contract.name.as_str())
-            .collect::<HashSet<_>>();
-        let unexpected = actual
-            .keys()
-            .filter(|name| !expected_names.contains(name.as_str()))
-            .take(3)
-            .cloned()
-            .collect::<Vec<_>>();
-        if !unexpected.is_empty() {
-            return Err(map_error(
-                "glm52_unexpected_tensor",
-                format!("unexpected tensor names: {}", unexpected.join(", ")),
-            ));
-        }
-
-        let mut bindings = BTreeMap::new();
-        for contract in expected {
-            let tensor = actual.remove(&contract.name).ok_or_else(|| {
-                map_error(
-                    "glm52_missing_tensor",
-                    format!("missing tensor {}", contract.name),
-                )
-            })?;
-            if tensor.dims != contract.dims {
-                return Err(map_error(
-                    "glm52_tensor_shape",
-                    format!(
-                        "tensor {} has dimensions {:?}; expected {:?}",
-                        tensor.name, tensor.dims, contract.dims
-                    ),
-                ));
-            }
-            if !contract.types.contains(&tensor.ty) {
-                return Err(map_error(
-                    "glm52_tensor_quantization",
-                    format!(
-                        "tensor {} has unsupported type {:?}; accepted {:?}",
-                        tensor.name, tensor.ty, contract.types
-                    ),
-                ));
-            }
-            bindings.insert(tensor.name.clone(), tensor);
-        }
+        let bindings = bind_exact_contracts(architecture, tensors, expected, GLM52_TENSOR_COUNT)?;
         Ok(Self { tensors: bindings })
     }
 
@@ -127,11 +70,43 @@ impl Glm52TensorMap {
     }
 }
 
+impl Glm52FixtureTensorMap {
+    pub fn from_parts(
+        architecture: Option<&str>,
+        tensors: impl IntoIterator<Item = TensorInfo>,
+        contracts: impl IntoIterator<Item = Glm52FixtureTensorContract>,
+    ) -> Result<Self, RunnerError> {
+        let expected = contracts
+            .into_iter()
+            .map(|contract| TensorContract {
+                name: contract.name,
+                dims: contract.dims,
+                types: vec![contract.tensor_type],
+            })
+            .collect::<Vec<_>>();
+        let count = expected.len();
+        let tensors = bind_exact_contracts(architecture, tensors, expected, count)?;
+        Ok(Self { tensors })
+    }
+
+    pub fn tensor(&self, name: &str) -> Option<&TensorInfo> {
+        self.tensors.get(name)
+    }
+
+    pub fn len(&self) -> usize {
+        self.tensors.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.tensors.is_empty()
+    }
+}
+
 #[derive(Debug)]
 struct TensorContract {
     name: String,
     dims: Vec<u64>,
-    types: &'static [TensorType],
+    types: Vec<TensorType>,
 }
 
 const F32: &[TensorType] = &[TensorType::F32];
@@ -238,8 +213,86 @@ fn contract(name: impl Into<String>, dims: &[u64], types: &'static [TensorType])
     TensorContract {
         name: name.into(),
         dims: dims.to_vec(),
-        types,
+        types: types.to_vec(),
     }
+}
+
+fn bind_exact_contracts(
+    architecture: Option<&str>,
+    tensors: impl IntoIterator<Item = TensorInfo>,
+    expected: Vec<TensorContract>,
+    required_count: usize,
+) -> Result<BTreeMap<String, TensorInfo>, RunnerError> {
+    if architecture != Some("glm-dsa") {
+        return Err(map_error(
+            "glm52_architecture",
+            "tensor map requires architecture glm-dsa",
+        ));
+    }
+    let mut actual = HashMap::new();
+    for tensor in tensors {
+        if actual.insert(tensor.name.clone(), tensor).is_some() {
+            return Err(map_error(
+                "glm52_duplicate_tensor",
+                "tensor map contains a duplicate name",
+            ));
+        }
+    }
+    if actual.len() != expected.len() || expected.len() != required_count {
+        return Err(map_error(
+            "glm52_tensor_count",
+            format!(
+                "tensor map has {} names; exact contract requires {}",
+                actual.len(),
+                required_count
+            ),
+        ));
+    }
+    let expected_names = expected
+        .iter()
+        .map(|contract| contract.name.as_str())
+        .collect::<HashSet<_>>();
+    let unexpected = actual
+        .keys()
+        .filter(|name| !expected_names.contains(name.as_str()))
+        .take(3)
+        .cloned()
+        .collect::<Vec<_>>();
+    if !unexpected.is_empty() {
+        return Err(map_error(
+            "glm52_unexpected_tensor",
+            format!("unexpected tensor names: {}", unexpected.join(", ")),
+        ));
+    }
+    let mut bindings = BTreeMap::new();
+    for contract in expected {
+        let tensor = actual.remove(&contract.name).ok_or_else(|| {
+            map_error(
+                "glm52_missing_tensor",
+                format!("missing tensor {}", contract.name),
+            )
+        })?;
+        if tensor.dims != contract.dims {
+            return Err(map_error(
+                "glm52_tensor_shape",
+                format!(
+                    "tensor {} has dimensions {:?}; expected {:?}",
+                    tensor.name, tensor.dims, contract.dims
+                ),
+            ));
+        }
+        if !contract.types.contains(&tensor.ty) {
+            return Err(map_error(
+                "glm52_tensor_quantization",
+                format!(
+                    "tensor {} has unsupported type {:?}; accepted {:?}",
+                    tensor.name, tensor.ty, contract.types
+                ),
+            ));
+        }
+        bindings.insert(tensor.name.clone(), tensor);
+    }
+    Ok(bindings)
 }
 
 fn require_arch_meta(catalog: &Gguf, suffix: &str, expected: u64) -> Result<(), RunnerError> {
