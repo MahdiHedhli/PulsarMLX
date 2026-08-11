@@ -1,0 +1,23 @@
+{
+  "architecture": "glm-dsa",
+  "catalog_sha256": "6e0340448e503e22ec0d9f8a632a706a7c667d34f7b58c9732cc06511ab6294f",
+  "checkpoint_set_sha256": "cfc6054e95e3977d7684a55073825d86d6898805fa967cef3fde5fce42efe5e8",
+  "immutable_revision": "f017-r12-tiny-model-v1",
+  "kind": "fixture",
+  "schema": "pulsarmlx.f017.checkpoint-manifest",
+  "schema_version": "1.0.0",
+  "shards": [
+    {
+      "filename": "f017-r12-00001-of-00002.fixture",
+      "sha256": "dd421ea6156873240587e260d540048fb26e93f65fc20d943a9c699aba424978",
+      "size_bytes": 3299936
+    },
+    {
+      "filename": "f017-r12-00002-of-00002.fixture",
+      "sha256": "4045878bfd6a6c408e874630faeedd0edb304b14ce1bbe2f7597cc16cdf51f37",
+      "size_bytes": 3286848
+    }
+  ],
+  "tensor_count": 105,
+  "tokenizer_identity": "exact-token-ids"
+}
