@@ -1,5 +1,11 @@
 # PulsarMLX F017 Canonical Runner Sprint Report
 
+> Status update: the original R7 block documented below has been resolved by
+> the exact-order scaffold and independently frozen Tier-B contract. R8 now
+> passes checkpoint-free. See
+> `docs/architecture/reviews/f017-r7-numerical-contract-report.md`. The
+> historical text below is retained to preserve the original sprint stop.
+
 ## Executive result
 
 The sprint created a real, dedicated Rust executable and advanced the
