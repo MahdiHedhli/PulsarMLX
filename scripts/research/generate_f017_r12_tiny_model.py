@@ -173,7 +173,7 @@ def _layer(layer: int, residual: list[np.float32]) -> tuple[list[dict[str, objec
     selected_ids = sorted(range(EXPERTS), key=lambda index: (-router_scores[index], index))[:TOP_K]
     denominator = math.fsum(router_probabilities[index] for index in selected_ids)
     routing_weights = [router_probabilities[index] / max(denominator, 6.103515625e-5) * 2.5 for index in selected_ids]
-    routed_outputs: list[list[np.float32]] = []
+    routed_outputs_by_id: dict[int, list[np.float32]] = {}
     for expert_id in range(EXPERTS):
         decoded: list[list[np.float32]] = []
         for role, salt in (("gate", 101), ("up", 151), ("down", 211)):
@@ -181,7 +181,7 @@ def _layer(layer: int, residual: list[np.float32]) -> tuple[list[dict[str, objec
             tensors.append(tensor)
             decoded.append(matrix)
         if expert_id in selected_ids:
-            routed_outputs.append(R10._expert(decoded, normalized)["down"])
+            routed_outputs_by_id[expert_id] = R10._expert(decoded, normalized)["down"]
     shared_matrices: list[list[np.float32]] = []
     for role, salt in (("gate", 307), ("up", 359), ("down", 401)):
         tensor, matrix = _q8(f"blk.{layer}.shared.{role}.weight", WIDTH, salt + layer * 107)
@@ -189,12 +189,26 @@ def _layer(layer: int, residual: list[np.float32]) -> tuple[list[dict[str, objec
         shared_matrices.append(matrix)
     shared_output = R10._expert(shared_matrices, normalized)["down"]
     routed_aggregate = [
-        math.fsum(routing_weights[route] * float(routed_outputs[route][column]) for route in range(TOP_K))
+        math.fsum(
+            routing_weights[route]
+            * float(routed_outputs_by_id[selected_ids[route]][column])
+            for route in range(TOP_K)
+        )
         for column in range(WIDTH)
     ]
     output = [_f32(float(attention_output[column]) + routed_aggregate[column] + float(shared_output[column])) for column in range(WIDTH)]
     expected = {
         "input": _record(residual),
+        "runtime_inputs": {
+            "prior_cache_latents": _record(value for row in prior_latents for value in row),
+            "prior_cache_ropes": _record(value for row in prior_ropes for value in row),
+            "q_rope_cosine": _record(cosine),
+            "q_rope_sine": _record(sine),
+            "rms_epsilon": float(RMS_EPS),
+            "attention_scale": float(ATTENTION_SCALE),
+            "query_position": 2,
+            "visible_positions": 3,
+        },
         "attention_output": _record(attention_output),
         "selected_ids": selected_ids,
         "routing_weights": routing_weights,
