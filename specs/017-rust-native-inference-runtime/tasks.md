@@ -120,6 +120,9 @@
 - [x] T017-132 Compose MLA/DSA and complete layer runtime boundaries R9-R10.
 - [x] T017-132R Add fail-closed greedy-applicability vocabulary and
   mechanically reconcile R7-R10 without changing numerical payloads.
+- [x] T017-132V Preserve immutable R9/R10 v1 contracts, publish reviewed v2
+  semantic tightening, record the R7 amendment, and rebind evidence without
+  numerical reruns.
 - [ ] T017-133 Compose final norm/logits/top-k runtime boundary R11.
 - [ ] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
 - [ ] T017-140 Add local-only real boundary fixture manifest/validator for R13.

@@ -187,8 +187,8 @@ MLX operations for the first P1.
 | R6 router | Passed | Explicit deterministic Rust CPU boundary |
 | R7 complete expert | Passed | Exact scaffold plus frozen production Tier-B gate |
 | R8 top-8 plus shared | Passed | Exact routing, native experts, zero fallback |
-| R9 MLA/DSA | Passed, review pending | Exact scaffold plus 10-repeat native Tier-B gate |
-| R10 complete layer | Passed, review pending | Composed R9 + router + top-8/shared native layer |
+| R9 MLA/DSA | Passed, review accepted | Exact scaffold plus 10-repeat native Tier-B gate; evidence bound to R9 v2 |
+| R10 complete layer | Passed, review accepted | Composed R9 + router + top-8/shared native layer; evidence bound to R10 v2 |
 | R11 final logits | Next eligible | RMSNorm/output-head path remains open |
 | R12 tiny end to end | Not eligible | Complete component composition absent |
 | R13 local real fixtures | Not started | No local fixture/model access in this sprint |

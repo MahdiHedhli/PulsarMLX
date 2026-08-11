@@ -7,6 +7,11 @@ implemented without rerunning a numerical experiment. The classification
 contract now distinguishes a qualified boundary with no model-token greedy
 decision from one that proves exact top-k and argmax identity.
 
+R7/R8 use vocabulary normalization. R9/R10 additionally tighten internal
+selection/routing divergence from qualified-divergent to hard numerical
+failure. Because their contracts prohibit in-place mutation, the latter change
+is published in R9/R10 v2 rather than retained under v1.
+
 This remediation does not admit a checkpoint, P1, Feature 018 kernel, or
 output-head residency experiment.
 
@@ -53,9 +58,10 @@ R7, R8, R9, and R10 are reclassified from
 - R10 retains exact routed-expert IDs without conflating them with vocabulary
   argmax.
 
-The frozen Tier-B thresholds and exact requirements are unchanged. Internal
-router or indexer selection drift remains fail-closed numerical failure at
-these boundaries.
+The frozen Tier-B thresholds and exact requirements are unchanged. R7 records
+its vocabulary update in an explicit amendment. R9/R10 preserve immutable v1
+and bind current evidence to v2, where internal router or indexer selection
+drift is fail-closed numerical failure.
 
 ## Numerical-payload proof
 

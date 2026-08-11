@@ -8,7 +8,7 @@ R7/R8 vocabulary remediation**.
 - production source: `43569b6920972e83155bfd1f1928d597ab7e9593`
 - independent fixture: `f017-r9-mla-dsa-q8-0-v1`
 - exact scaffold: `f017-r9-mla-dsa-exact-v1`
-- production contract: `f017-production-r9-tier-b-v1`
+- production contract: `f017-production-r9-tier-b-v2`
 - backend: MLX native 0.31.2 / MLX C 0.6.0 through the production adapter
 - checkpoint access: none
 
@@ -51,9 +51,10 @@ in-flight work after teardown.
 ## Promotion boundary
 
 The adversarial reviewer accepted the numerical evidence with a required
-classification-vocabulary fix. That mechanical remediation is applied and
-passed final-head CI; no numerical value, threshold, fixture, or production
-output changed. R9/R10 inheritance is cleared.
+classification/applicability fix. R9 v2 additionally makes selection drift a
+hard numerical failure; this is semantic tightening under the immutable
+retuning policy. No numerical value, threshold, fixture, or production output
+changed. R9/R10 inheritance is cleared after final-head validation.
 
 Machine-readable evidence:
 `docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json`.

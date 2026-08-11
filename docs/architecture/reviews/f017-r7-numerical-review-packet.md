@@ -4,9 +4,10 @@
 > The numerical evidence, exact scaffold, attribution, Tier-B derivation,
 > stress suite, R7/R8 results, lifecycle, and provenance were accepted. The
 > required fix was a machine-readable classification/applicability mismatch;
-> no numerical rerun or threshold change was requested. Checkpoint-free R9
-> MLA/DSA and R10 complete-layer evidence inherit the accepted contract after
-> this remediation. See
+> no numerical rerun or threshold change was requested. R7 records the fix in
+> `production-expert-tier-b-v1-amendment-001.json`. R9/R10 moved to v2 because
+> internal selection/routing divergence was semantically tightened to a hard
+> numerical failure under their immutable-version policies. See
 > `docs/architecture/reviews/f017-r9-r10-numerical-boundary-report.md` and its
 > linked machine-readable evidence. No contract threshold was changed.
 
@@ -99,9 +100,18 @@ The reviewer found that the former
 `greedy_applicability: not_applicable`. Schema version `1.2.0` adds
 `numerically_qualified_greedy_not_applicable` and fails closed on inconsistent
 classification, applicability, or missing top-k/argmax identity evidence.
-R7-R10 were mechanically reclassified. The reconciliation manifest proves
-that their metrics, thresholds, fixtures, oracle data, output data, fallback
-counts, and lifecycle counters are unchanged.
+R7/R8 were mechanically reclassified. R9/R10 preserve their original v1
+contracts and bind current evidence to v2 contracts whose internal
+selection/routing divergence is `numerically_failed`. The reconciliation
+manifest proves that metrics, thresholds, fixtures, oracle data, output data,
+fallback counts, and lifecycle counters are unchanged.
+
+The authoritative audit artifacts are repository-relative:
+
+- `specs/017-rust-native-inference-runtime/contracts/production-expert-tier-b-v1-amendment-001.json`
+- `specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v2.json`
+- `specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json`
+- `docs/architecture/reviews/evidence/f017-contract-version-reconciliation-v2.json`
 
 GitHub Actions run
 [`31521791761`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31521791761)

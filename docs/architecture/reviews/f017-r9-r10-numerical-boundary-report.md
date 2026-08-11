@@ -9,8 +9,10 @@ post-attention RMSNorm, GLM sigmoid+bias top-8 routing, eight routed experts,
 one shared expert, deterministic aggregation, and the final residual.
 
 The adversarial numerical review accepted the underlying evidence with one
-required classification-vocabulary repair. That repair is now applied: R9 and
-R10 are numerically qualified with model-token greedy selection not applicable.
+required classification/applicability repair. The resulting R9/R10 change is
+semantic tightening, not vocabulary-only: internal selection or routing
+divergence now fails numerically. R9 and R10 remain numerically qualified with
+model-token greedy selection not applicable.
 No checkpoint was accessed, no M1 model-time boundary was admitted, and no
 Feature 018 kernel or output-head residency path was included.
 
@@ -23,8 +25,10 @@ Feature 018 kernel or output-head residency path was included.
 - R10 fixture: `f017-r10-complete-layer-q8-0-v1`
 - exact scaffolds: `f017-r9-mla-dsa-exact-v1`,
   `f017-r10-complete-layer-exact-v1`
-- production contracts: `f017-production-r9-tier-b-v1`,
+- historical contracts: `f017-production-r9-tier-b-v1`,
   `f017-production-r10-tier-b-v1`
+- current evidence contracts: `f017-production-r9-tier-b-v2`,
+  `f017-production-r10-tier-b-v2`
 
 Each independent Python/NumPy fixture was committed before production
 execution and transports floating-point truth as canonical IEEE-754 bytes with
@@ -122,9 +126,11 @@ backend errors, fallback, and lifecycle imbalance are hard failures.
 ## Review and next gate
 
 The R7/R8 adversarial numerical review accepted the numerical evidence with a
-required machine-readable vocabulary fix. The fail-closed remediation rejects
-greedy-identical classification at a non-applicable boundary and changes no
-threshold, metric, oracle value, fixture value, or production output.
+required machine-readable repair. R7 received an explicit vocabulary
+amendment. R9/R10 moved to v2 because their divergence dispositions were
+tightened from qualified-divergent to hard numerical failure under their
+immutable-version policies. No threshold, metric, oracle value, fixture value,
+or production output changed.
 
 T017-132 is complete and its numerical inheritance cleared when remediation
 head `bc5922626df9eaed8d1e843d021b268ecf50579d` passed both jobs in GitHub

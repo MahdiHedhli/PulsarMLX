@@ -113,7 +113,10 @@ oracles. Production R7/R8 qualify under the frozen expert Tier-B contract; R9
 MLA/DSA and R10 complete-layer execution qualify under separately frozen,
 fail-closed composition contracts with ten deterministic repeats. The
 adversarial review accepted the numerical evidence subject to the now-applied
-classification-vocabulary remediation. R11/R12 are the next checkpoint-free
+classification/applicability remediation. R7 carries an explicit vocabulary
+amendment; current R9/R10 evidence binds to reviewed v2 contracts that preserve
+all thresholds while tightening internal-selection divergence to numerical
+failure. R11/R12 are the next checkpoint-free
 gates; no checkpoint or M1 model time is admitted.
 
 ## Final phase
