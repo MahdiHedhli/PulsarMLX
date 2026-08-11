@@ -6,6 +6,9 @@
 //! add. Production execution must select its own mode explicitly.
 
 pub const EXACT_SCAFFOLD_VERSION: &str = "f017-exact-f32-sequential-v1";
+pub const TIER_B_CONTRACT_VERSION: &str = "f017-production-expert-tier-b-v1";
+const F32_UNIT_ROUNDOFF: f64 = 5.960_464_477_539_063e-8;
+const F32_SMALLEST_SUBNORMAL: f64 = 1.401_298_464_324_817e-45;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct FirstDivergence {
@@ -27,6 +30,27 @@ pub struct NumericalMetrics {
     pub rmse: f64,
     pub cosine_similarity: Option<f64>,
     pub first_divergence: Option<FirstDivergence>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct TierBRowQualification {
+    pub index: usize,
+    pub l1_products: f64,
+    pub absolute_bound: f64,
+    pub absolute_error: f64,
+    pub relative_bound: Option<f64>,
+    pub relative_error: Option<f64>,
+    pub passes: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct TierBQualification {
+    pub contract_version: &'static str,
+    pub metrics: NumericalMetrics,
+    pub rows: Vec<TierBRowQualification>,
+    pub rmse_bound: f64,
+    pub cosine_minimum: Option<f64>,
+    pub passes: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -195,6 +219,130 @@ pub fn measure_f32(
     })
 }
 
+/// Apply the frozen Tier-B v1 down-projection contract.
+///
+/// This evaluator does not execute a candidate or provide a fallback. The
+/// matrix and input must be the exact scaffold operands so the condition-aware
+/// forward-error budget is independent of candidate output.
+pub fn qualify_tier_b_down(
+    matrix: &[f32],
+    rows: usize,
+    columns: usize,
+    vector: &[f32],
+    expected: &[f32],
+    actual: &[f32],
+) -> Result<TierBQualification, QualificationError> {
+    if rows == 0 || columns == 0 {
+        return Err(QualificationError::EmptyShape);
+    }
+    let elements = rows
+        .checked_mul(columns)
+        .ok_or(QualificationError::ShapeOverflow)?;
+    if matrix.len() != elements {
+        return Err(QualificationError::MatrixLength);
+    }
+    if vector.len() != columns {
+        return Err(QualificationError::VectorLength);
+    }
+    if expected.len() != rows || actual.len() != rows {
+        return Err(QualificationError::OutputLength);
+    }
+    let operation_count = columns
+        .checked_mul(2)
+        .ok_or(QualificationError::ShapeOverflow)?;
+    let ku = operation_count as f64 * F32_UNIT_ROUNDOFF;
+    if ku >= 1.0 {
+        return Err(QualificationError::ShapeOverflow);
+    }
+    let bound_factor = 2.0 * ku / (1.0 - ku);
+    let subnormal_floor = 4.0 * columns as f64 * F32_SMALLEST_SUBNORMAL;
+    let metrics = measure_f32(expected, actual)?;
+    let mut qualifications = Vec::with_capacity(rows);
+    let mut squared_bounds = 0.0_f64;
+
+    for row in 0..rows {
+        let mut products = Vec::with_capacity(columns);
+        for column in 0..columns {
+            products.push(
+                (f64::from(matrix[row * columns + column]) * f64::from(vector[column])).abs(),
+            );
+        }
+        let l1_products = compensated_sum(&products);
+        let absolute_bound = bound_factor * l1_products + subnormal_floor;
+        let absolute_error = (f64::from(actual[row]) - f64::from(expected[row])).abs();
+        let (relative_bound, relative_error) = if expected[row] == 0.0 {
+            (None, None)
+        } else {
+            (
+                Some(absolute_bound / f64::from(expected[row]).abs()),
+                Some(absolute_error / f64::from(expected[row]).abs()),
+            )
+        };
+        let finite = expected[row].is_finite() && actual[row].is_finite();
+        let signed_zero_matches = !(expected[row] == 0.0
+            && actual[row] == 0.0
+            && expected[row].is_sign_negative() != actual[row].is_sign_negative());
+        let passes = finite && signed_zero_matches && absolute_error <= absolute_bound;
+        squared_bounds += absolute_bound * absolute_bound;
+        qualifications.push(TierBRowQualification {
+            index: row,
+            l1_products,
+            absolute_bound,
+            absolute_error,
+            relative_bound,
+            relative_error,
+            passes,
+        });
+    }
+
+    let rmse_bound = (squared_bounds / rows as f64).sqrt();
+    let expected_norm = expected
+        .iter()
+        .map(|value| f64::from(*value).powi(2))
+        .sum::<f64>()
+        .sqrt();
+    let bounds_norm = squared_bounds.sqrt();
+    let cosine_minimum = if expected_norm > bounds_norm {
+        Some((expected_norm - bounds_norm) / (expected_norm + bounds_norm))
+    } else {
+        None
+    };
+    let cosine_passes = match (cosine_minimum, metrics.cosine_similarity) {
+        (Some(minimum), Some(actual_cosine)) => actual_cosine >= minimum,
+        (Some(_), None) => false,
+        (None, _) => true,
+    };
+    let passes = metrics.non_finite_count == 0
+        && metrics.signed_zero_mismatch_count == 0
+        && qualifications.iter().all(|row| row.passes)
+        && metrics.rmse <= rmse_bound
+        && cosine_passes;
+
+    Ok(TierBQualification {
+        contract_version: TIER_B_CONTRACT_VERSION,
+        metrics,
+        rows: qualifications,
+        rmse_bound,
+        cosine_minimum,
+        passes,
+    })
+}
+
+fn compensated_sum(values: &[f64]) -> f64 {
+    let mut sum = 0.0_f64;
+    let mut compensation = 0.0_f64;
+    for value in values {
+        let next = sum + value;
+        if sum.abs() >= value.abs() {
+            compensation += (sum - next) + value;
+        } else {
+            compensation += (value - next) + sum;
+        }
+        sum = next;
+    }
+    sum + compensation
+}
+
 // Keeping each operation behind a non-inlined call makes the semantic
 // rounding boundaries independently auditable and prevents multiply-add
 // contraction across scaffold steps. `to_bits`/`from_bits` also materializes
@@ -268,5 +416,21 @@ mod tests {
         assert_eq!(metrics.max_abs_error, 0.5);
         assert_eq!(metrics.max_relative_error, Some(0.25));
         assert_eq!(metrics.first_divergence.unwrap().index, 0);
+    }
+
+    #[test]
+    fn tier_b_uses_operand_conditioning_not_observed_candidate_error() {
+        let matrix = [16_777_216.0_f32, 1.0, -16_777_216.0];
+        let vector = [1.0_f32; 3];
+        let expected = [0.0_f32];
+        let within = [1.0_f32];
+        let qualification =
+            qualify_tier_b_down(&matrix, 1, 3, &vector, &expected, &within).unwrap();
+        assert!(qualification.passes);
+        assert!(qualification.rows[0].absolute_bound > 1.0);
+
+        let beyond = [(qualification.rows[0].absolute_bound * 2.0) as f32];
+        let rejected = qualify_tier_b_down(&matrix, 1, 3, &vector, &expected, &beyond).unwrap();
+        assert!(!rejected.passes);
     }
 }
