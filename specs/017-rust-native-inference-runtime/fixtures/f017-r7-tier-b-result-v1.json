@@ -1,0 +1,54 @@
+{
+  "schema": "pulsarmlx.f017.r7-tier-b-result",
+  "schema_version": "1.0.0",
+  "source_sha": "5b701d16ce93964419380f4505c52e220584ec4d",
+  "fixture_version": "glm52-runtime-expert-q8-0-v2",
+  "fixture_sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
+  "oracle_generator_sha": "a9779097de029f26be1cb9fde3543cc517ff153e",
+  "scaffold_version": "f017-exact-f32-sequential-v1",
+  "numerical_mode": "production_mlx_tier_b",
+  "production_backend_version": "mlx-c-matmul; mlx-native-0.31.2; mlx-c-0.6.0",
+  "frozen_contract_version": "f017-production-expert-tier-b-v1",
+  "classification": "numerically_qualified_greedy_identical",
+  "greedy_applicability": "not_applicable",
+  "deterministic_repeat_count": 10,
+  "unexpected_fallback_count": 0,
+  "boundaries": {
+    "gate": {"bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0},
+    "up": {"bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0},
+    "activated_hidden": {"bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0},
+    "down_and_final_output": {
+      "bit_mismatch_count": 24,
+      "signed_zero_mismatch_count": 0,
+      "non_finite_count": 0,
+      "max_abs_error": 1.375,
+      "max_relative_error": 0.000003911221529240683,
+      "rmse": 0.693598660294626,
+      "rmse_bound": 517.7241872969238,
+      "cosine_similarity": 0.9999999999999881,
+      "cosine_minimum": 0.999756577997848,
+      "maximum_row_absolute_bound": 549.9749723910232,
+      "all_rows_pass": true,
+      "first_divergence": {
+        "index": 0,
+        "expected": 427908.5,
+        "expected_bits_hex": "0x48d0f090",
+        "actual": 427909.0,
+        "actual_bits_hex": "0x48d0f0a0"
+      }
+    }
+  },
+  "production_output_sha256": "507b954bfa7e42ea0f2b6ad94e1fb7263a3e2bb61fdbcc86cde6096653c103b0",
+  "lifecycle": {
+    "managed_created": 60,
+    "managed_destroyed": 60,
+    "derived_created": 30,
+    "derived_destroyed": 30,
+    "callback_count": 60,
+    "owned_stream_created": 1,
+    "owned_stream_freed": 1,
+    "context_active_after": false,
+    "reconciled": true
+  },
+  "checkpoint_accessed": false
+}

@@ -113,7 +113,7 @@
 - [x] T017-131D Attribute the original production MLX mismatch at every retained intermediate.
 - [x] T017-131E Freeze an independently derived production expert Tier-B contract before additional production expert fixtures.
 - [x] T017-131F Qualify the frozen Tier-B contract with independent stress fixtures.
-- [ ] T017-131G Requalify production R7 under the frozen Tier-B contract with fail-closed mode evidence.
+- [x] T017-131G Requalify production R7 under the frozen Tier-B contract with fail-closed mode evidence.
 - [ ] T017-131H Admit and run only checkpoint-free R8 if every R7 gate passes.
 - [ ] T017-131 Compose router and complete expert runtime boundaries R6-R8.
 - [ ] T017-132 Compose MLA/DSA and complete layer runtime boundaries R9-R10.
