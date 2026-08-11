@@ -1,0 +1,85 @@
+{
+  "schema": "pulsarmlx.f017.r7-production-attribution",
+  "schema_version": "1.0.0",
+  "source_sha": "e140a5acbb83f4575ac400ca0eef8a319c7f9d8c",
+  "fixture_version": "glm52-runtime-expert-q8-0-v2",
+  "fixture_sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
+  "scaffold_version": "f017-exact-f32-sequential-v1",
+  "production_backend": "mlx-c-matmul",
+  "deterministic_repeat_count": 10,
+  "deterministic": true,
+  "checkpoint_accessed": false,
+  "boundaries": {
+    "gate": {
+      "bit_mismatch_count": 0,
+      "max_abs_error": 0.0,
+      "rmse": 0.0
+    },
+    "up": {
+      "bit_mismatch_count": 0,
+      "max_abs_error": 0.0,
+      "rmse": 0.0
+    },
+    "activated_hidden": {
+      "bit_mismatch_count": 0,
+      "max_abs_error": 0.0,
+      "rmse": 0.0
+    },
+    "down_and_final_output": {
+      "element_count": 32,
+      "bit_mismatch_count": 24,
+      "signed_zero_mismatch_count": 0,
+      "non_finite_count": 0,
+      "max_abs_error": 1.375,
+      "max_relative_error": 0.000003911221529240683,
+      "rmse": 0.693598660294626,
+      "cosine_similarity": 0.9999999999999881,
+      "first_divergence": {
+        "index": 0,
+        "expected": 427908.5,
+        "expected_bits_hex": "0x48d0f090",
+        "actual": 427909.0,
+        "actual_bits_hex": "0x48d0f0a0"
+      }
+    }
+  },
+  "production_hashes": {
+    "gate_sha256": "188a782b07a44c9066f43c8e1cb4bc8521096d5a550d394e9296724889b345f6",
+    "up_sha256": "65d93ab6ded27512d242f0028067fff6e2f416ef05ff82b187c20f242031fba8",
+    "activated_hidden_sha256": "dd111ed9d308564620cf0503cc2f1c68bf3dadbd9e4e35e4af89d6602e47e7d0",
+    "output_sha256": "507b954bfa7e42ea0f2b6ad94e1fb7263a3e2bb61fdbcc86cde6096653c103b0"
+  },
+  "reduction_model_search": {
+    "tested_models": [
+      "sequential_fma",
+      "adjacent_pairwise_tree",
+      "halving_pairwise_tree",
+      "four_sequential_chunks",
+      "eight_sequential_chunks"
+    ],
+    "exact_production_match_count": 0
+  },
+  "attribution": {
+    "first_divergent_boundary": "down_projection_mlx_matmul",
+    "excluded_causes": [
+      "q8_0_decode",
+      "gate_projection",
+      "up_projection",
+      "swiglu_activation",
+      "host_materialization_before_down_projection"
+    ],
+    "supported_cause": "production_mlx_down_matmul_arithmetic_or_reduction_semantics",
+    "specific_reduction_tree_known": false
+  },
+  "lifecycle": {
+    "managed_created": 60,
+    "managed_destroyed": 60,
+    "derived_created": 30,
+    "derived_destroyed": 30,
+    "callback_count": 60,
+    "owned_stream_created": 1,
+    "owned_stream_freed": 1,
+    "context_active_after": false,
+    "reconciled": true
+  }
+}
