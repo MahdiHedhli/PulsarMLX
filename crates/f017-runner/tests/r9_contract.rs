@@ -15,6 +15,8 @@ struct Contract {
     #[serde(rename = "final")]
     final_bounds: Bounds,
     exact_requirements: ExactRequirements,
+    classification: std::collections::BTreeMap<String, String>,
+    greedy_applicability: String,
     retuning_policy: String,
     review_status: String,
 }
@@ -72,6 +74,11 @@ fn r9_contract_is_frozen_narrow_and_fail_closed() {
     assert_eq!(contract.exact_requirements.unexpected_fallback_count, 0);
     assert_eq!(contract.exact_requirements.backend_error_count, 0);
     assert_eq!(contract.exact_requirements.in_flight_after_teardown, 0);
+    assert_eq!(
+        contract.classification["pass"],
+        "numerically_qualified_greedy_not_applicable"
+    );
+    assert_eq!(contract.greedy_applicability, "not_applicable");
     assert!(contract
         .retuning_policy
         .starts_with("never mutate this version"));

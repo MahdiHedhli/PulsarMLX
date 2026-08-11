@@ -67,8 +67,10 @@ bounds remain mandatory.
 The repository classification names remain:
 
 - `golden_identical`: every retained f32 boundary is bit-identical.
+- `numerically_qualified_greedy_not_applicable`: Tier B passes at a boundary
+  that defines no model-level greedy, top-k, or argmax decision.
 - `numerically_qualified_greedy_identical`: Tier B passes and every applicable
-  route, top-k, or greedy decision matches.
+  model-level top-k and argmax decision matches exactly.
 - `numerically_qualified_greedy_divergent`: numerical bounds pass but an
   applicable behavioral decision differs. `golden_strict` rejects this;
   teacher-forced validation records the divergence and continues.
@@ -76,10 +78,12 @@ The repository classification names remain:
   determinism, identity, dispatch, or lifecycle gate fails.
 
 R7 has no greedy decision, so it records greedy applicability as
-`not_applicable`; if its Tier-B gates pass, it uses
-`numerically_qualified_greedy_identical` only as the stable repository class.
-R8 must additionally retain exact router IDs, tie-breaking, routing weights,
-and applicable aggregate/selection behavior.
+`not_applicable` and uses `numerically_qualified_greedy_not_applicable` when
+its Tier-B gates pass. R8 must additionally retain exact router IDs,
+tie-breaking, routing weights, and aggregate behavior, but those internal
+routing selections do not make model-token greedy selection applicable.
+`numerically_qualified_greedy_identical` is reserved for a later boundary
+that records exact model-level top-k and argmax identity evidence.
 
 ## Freeze boundary
 

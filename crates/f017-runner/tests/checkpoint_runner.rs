@@ -163,8 +163,8 @@ fn actual_binary_passes_independent_projection_through_production_adapter() {
     assert!(status.success());
     let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
     assert_eq!(
-        evidence.execution.numerical_classification.as_deref(),
-        Some("golden_identical")
+        evidence.execution.numerical_classification,
+        Some(f017_runner::numerical_classification::NumericalClassification::GoldenIdentical)
     );
     assert_eq!(evidence.execution.dispatch.native, 1);
     assert_eq!(evidence.execution.dispatch.qualification_scaffold, 0);
@@ -202,8 +202,8 @@ fn actual_binary_keeps_exact_scaffold_explicit_and_separate() {
     assert_eq!(evidence.execution.dispatch.native, 0);
     assert_eq!(evidence.execution.dispatch.fallback, 0);
     assert_eq!(
-        evidence.execution.numerical_classification.as_deref(),
-        Some("golden_identical")
+        evidence.execution.numerical_classification,
+        Some(f017_runner::numerical_classification::NumericalClassification::GoldenIdentical)
     );
 }
 

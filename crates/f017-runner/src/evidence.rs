@@ -1,4 +1,8 @@
 use crate::cli::Config;
+use crate::numerical_classification::{
+    validate_classification_applicability, GreedyApplicability, GreedyIdentityEvidence,
+    NumericalClassification,
+};
 use crate::{FailureClass, RunnerError};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -7,7 +11,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 pub const EVIDENCE_SCHEMA: &str = "pulsarmlx.f017.canonical-runner-evidence";
-pub const EVIDENCE_SCHEMA_VERSION: &str = "1.1.0";
+pub const EVIDENCE_SCHEMA_VERSION: &str = "1.2.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evidence {
@@ -79,13 +83,15 @@ pub struct ExecutionEvidence {
     pub storage: StorageEvidence,
     pub dispatch: DispatchEvidence,
     pub generated_token: Option<u32>,
-    pub numerical_classification: Option<String>,
+    pub numerical_classification: Option<NumericalClassification>,
     pub numerical: NumericalEvidence,
     pub progress_state: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct NumericalEvidence {
+    pub greedy_applicability: Option<GreedyApplicability>,
+    pub greedy_identity: Option<GreedyIdentityEvidence>,
     pub oracle_generator_sha: Option<String>,
     pub scaffold_version: Option<String>,
     pub production_backend_version: Option<String>,
@@ -288,6 +294,36 @@ impl Evidence {
                 "required evidence fields are empty",
             ));
         }
+        match (
+            self.execution.numerical_classification,
+            self.execution.numerical.greedy_applicability,
+        ) {
+            (Some(classification), Some(applicability)) => {
+                validate_classification_applicability(
+                    classification,
+                    applicability,
+                    self.execution.numerical.greedy_identity.as_ref(),
+                )
+                .map_err(|message| evidence_error("numerical_classification", message))?;
+            }
+            (None, None) if self.execution.numerical.greedy_identity.is_none() => {}
+            _ => {
+                return Err(evidence_error(
+                    "numerical_classification",
+                    "classification, applicability, and identity evidence are inconsistent",
+                ));
+            }
+        }
+        if self.execution.numerical_classification
+            == Some(NumericalClassification::NumericallyQualifiedGreedyDivergent)
+            && self.input.validation_mode == "golden_strict"
+            && self.result.classification != ResultClassification::FailNumericalBehavioral
+        {
+            return Err(evidence_error(
+                "numerical_classification",
+                "golden-strict greedy divergence must be a numerical/behavioral failure",
+            ));
+        }
         Ok(())
     }
 }
@@ -434,5 +470,85 @@ mod tests {
         let parsed: Evidence = parse_json_no_duplicates(&bytes).unwrap();
         assert_eq!(parsed, evidence);
         fs::remove_file(path).unwrap();
+    }
+
+    fn classified_evidence(
+        classification: NumericalClassification,
+        applicability: GreedyApplicability,
+        identity: Option<GreedyIdentityEvidence>,
+    ) -> Evidence {
+        let mut evidence = Evidence::initial(&config(PathBuf::from("unused.json")), "a".repeat(64));
+        evidence.execution.numerical_classification = Some(classification);
+        evidence.execution.numerical.greedy_applicability = Some(applicability);
+        evidence.execution.numerical.greedy_identity = identity;
+        evidence
+    }
+
+    #[test]
+    fn evidence_rejects_non_applicable_greedy_identical() {
+        let evidence = classified_evidence(
+            NumericalClassification::NumericallyQualifiedGreedyIdentical,
+            GreedyApplicability::NotApplicable,
+            None,
+        );
+        assert!(evidence.validate().is_err());
+    }
+
+    #[test]
+    fn evidence_rejects_applicable_greedy_identical_without_identity() {
+        let evidence = classified_evidence(
+            NumericalClassification::NumericallyQualifiedGreedyIdentical,
+            GreedyApplicability::Applicable,
+            None,
+        );
+        assert!(evidence.validate().is_err());
+    }
+
+    #[test]
+    fn evidence_accepts_non_applicable_numerical_qualification() {
+        let evidence = classified_evidence(
+            NumericalClassification::NumericallyQualifiedGreedyNotApplicable,
+            GreedyApplicability::NotApplicable,
+            None,
+        );
+        assert!(evidence.validate().is_ok());
+    }
+
+    #[test]
+    fn evidence_accepts_applicable_exact_greedy_identity() {
+        let evidence = classified_evidence(
+            NumericalClassification::NumericallyQualifiedGreedyIdentical,
+            GreedyApplicability::Applicable,
+            Some(GreedyIdentityEvidence {
+                top_k_ids_exact: true,
+                argmax_exact: true,
+            }),
+        );
+        assert!(evidence.validate().is_ok());
+    }
+
+    #[test]
+    fn evidence_rejects_changed_greedy_choice_as_not_applicable() {
+        let evidence = classified_evidence(
+            NumericalClassification::NumericallyQualifiedGreedyNotApplicable,
+            GreedyApplicability::Applicable,
+            Some(GreedyIdentityEvidence {
+                top_k_ids_exact: false,
+                argmax_exact: false,
+            }),
+        );
+        assert!(evidence.validate().is_err());
+
+        let mut divergent = classified_evidence(
+            NumericalClassification::NumericallyQualifiedGreedyDivergent,
+            GreedyApplicability::Applicable,
+            Some(GreedyIdentityEvidence {
+                top_k_ids_exact: false,
+                argmax_exact: false,
+            }),
+        );
+        assert!(divergent.validate().is_err());
+        divergent.result.classification = ResultClassification::FailNumericalBehavioral;
+        assert!(divergent.validate().is_ok());
     }
 }

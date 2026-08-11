@@ -1,6 +1,7 @@
 #![cfg(all(target_os = "macos", pulsar_native_mlx))]
 
 use f017_runner::json::{parse_json_no_duplicates, sha256_bytes, sha256_file};
+use f017_runner::numerical_classification::NumericalClassification;
 use f017_runner::qualification::{qualify_tier_b_down, TierBQualification};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -73,7 +74,7 @@ struct CaseReport {
     deterministic: bool,
     candidate_argmax_lowest_index_tie_break: usize,
     behavioral_selection_matches: Option<bool>,
-    classification: &'static str,
+    classification: NumericalClassification,
     qualification: TierBQualification,
     import_seconds: f64,
     compute_sync_seconds: f64,
@@ -143,13 +144,15 @@ fn frozen_independent_stresses_qualify_production_mlx_without_contract_tuning() 
             .behavioral_selection
             .then_some(candidate_argmax == case.expected_argmax_lowest_index_tie_break);
         let classification = if !qualification.passes {
-            "numerically_failed"
+            NumericalClassification::NumericallyFailed
         } else if qualification.metrics.bit_mismatch_count == 0 {
-            "golden_identical"
+            NumericalClassification::GoldenIdentical
         } else if behavioral_matches == Some(false) {
-            "numerically_qualified_greedy_divergent"
+            NumericalClassification::NumericallyQualifiedGreedyDivergent
+        } else if behavioral_matches.is_none() {
+            NumericalClassification::NumericallyQualifiedGreedyNotApplicable
         } else {
-            "numerically_qualified_greedy_identical"
+            NumericalClassification::NumericallyQualifiedGreedyIdentical
         };
         reports.push(CaseReport {
             name: case.name,

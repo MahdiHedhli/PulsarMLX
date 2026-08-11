@@ -17,7 +17,7 @@
   ],
   "properties": {
     "schema": { "const": "pulsarmlx.f017.canonical-runner-evidence" },
-    "schema_version": { "const": "1.1.0" },
+    "schema_version": { "const": "1.2.0" },
     "identity": {
       "type": "object",
       "additionalProperties": false,
@@ -76,6 +76,29 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "input": {
+            "properties": { "validation_mode": { "const": "golden_strict" } }
+          },
+          "execution": {
+            "properties": {
+              "numerical_classification": { "const": "numerically_qualified_greedy_divergent" }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "result": {
+            "properties": { "classification": { "const": "FAIL_NUMERICAL_BEHAVIORAL" } }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "sha256OrGit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
@@ -101,12 +124,36 @@
         "storage": { "type": "object" },
         "dispatch": { "type": "object" },
         "generated_token": { "type": ["integer", "null"] },
-        "numerical_classification": { "type": ["string", "null"] },
+        "numerical_classification": {
+          "enum": [
+            "golden_identical",
+            "numerically_qualified_greedy_not_applicable",
+            "numerically_qualified_greedy_identical",
+            "numerically_qualified_greedy_divergent",
+            "numerically_failed",
+            null
+          ]
+        },
         "numerical": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence"],
+          "required": ["greedy_applicability", "greedy_identity", "oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence"],
           "properties": {
+            "greedy_applicability": { "enum": ["not_applicable", "applicable", null] },
+            "greedy_identity": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["top_k_ids_exact", "argmax_exact"],
+                  "properties": {
+                    "top_k_ids_exact": { "type": "boolean" },
+                    "argmax_exact": { "type": "boolean" }
+                  }
+                }
+              ]
+            },
             "oracle_generator_sha": { "type": ["string", "null"] },
             "scaffold_version": { "type": ["string", "null"] },
             "production_backend_version": { "type": ["string", "null"] },
@@ -121,7 +168,67 @@
           }
         },
         "progress_state": { "type": "string" }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "numerical": {
+                "properties": { "greedy_applicability": { "const": "not_applicable" } }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "numerical_classification": {
+                "enum": ["golden_identical", "numerically_qualified_greedy_not_applicable", "numerically_failed"]
+              },
+              "numerical": { "properties": { "greedy_identity": { "type": "null" } } }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "numerical_classification": { "const": "numerically_qualified_greedy_identical" }
+            }
+          },
+          "then": {
+            "properties": {
+              "numerical": {
+                "properties": {
+                  "greedy_applicability": { "const": "applicable" },
+                  "greedy_identity": {
+                    "type": "object",
+                    "properties": {
+                      "top_k_ids_exact": { "const": true },
+                      "argmax_exact": { "const": true }
+                    },
+                    "required": ["top_k_ids_exact", "argmax_exact"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "numerical_classification": { "const": "numerically_qualified_greedy_not_applicable" }
+            }
+          },
+          "then": {
+            "properties": {
+              "numerical": {
+                "properties": {
+                  "greedy_applicability": { "const": "not_applicable" },
+                  "greedy_identity": { "type": "null" }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "residency": {
       "type": "object",

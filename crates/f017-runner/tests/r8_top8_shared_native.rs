@@ -1,6 +1,7 @@
 #![cfg(all(target_os = "macos", pulsar_native_mlx))]
 
 use f017_runner::json::{parse_json_no_duplicates, sha256_bytes, sha256_file};
+use f017_runner::numerical_classification::{GreedyApplicability, NumericalClassification};
 use f017_runner::qualification::{
     exact_matvec_f32, exact_swiglu_f32, measure_f32, qualify_tier_b_down, NumericalMetrics,
     TierBQualification, EXACT_SCAFFOLD_VERSION, TIER_B_CONTRACT_VERSION,
@@ -109,7 +110,8 @@ struct R8Report {
     shared_expert: ExpertReport,
     aggregate: F64Metrics,
     final_output: F64Metrics,
-    classification: &'static str,
+    classification: NumericalClassification,
+    greedy_applicability: GreedyApplicability,
     direct_native_dispatch_count: u64,
     qualification_scaffold_dispatch_count: u64,
     explicit_reference_dispatch_count: u64,
@@ -340,7 +342,8 @@ fn checkpoint_free_r8_top8_shared_qualifies_without_fallback() {
         shared_expert: shared_report,
         aggregate: aggregate_metrics,
         final_output: final_metrics,
-        classification: "numerically_qualified_greedy_identical",
+        classification: NumericalClassification::NumericallyQualifiedGreedyNotApplicable,
+        greedy_applicability: GreedyApplicability::NotApplicable,
         direct_native_dispatch_count: (REPEATS * 9 * 3 + 9 * 2) as u64,
         qualification_scaffold_dispatch_count: (9 * 3) as u64,
         explicit_reference_dispatch_count: 0,

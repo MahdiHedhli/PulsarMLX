@@ -7,7 +7,7 @@
     "boundary": "checkpoint_free_q8_0_complete_expert",
     "dot_width": 32,
     "production_backend": "mlx_c_matmul",
-    "greedy_applicability": "not_applicable_at_r7"
+    "greedy_applicability": "not_applicable"
   },
   "exact_boundaries": [
     "decoded_inputs",
@@ -33,6 +33,7 @@
   "partial_write_on_error": "forbidden",
   "classification_names": [
     "golden_identical",
+    "numerically_qualified_greedy_not_applicable",
     "numerically_qualified_greedy_identical",
     "numerically_qualified_greedy_divergent",
     "numerically_failed"

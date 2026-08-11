@@ -6,6 +6,7 @@ use f017_runner::layer_qualification::{
     R10Inputs, R10Matrices, R10Output, R9Error, R9Inputs, R9Matrices, R9Output,
     R10_SCAFFOLD_VERSION, R9_SCAFFOLD_VERSION,
 };
+use f017_runner::numerical_classification::{GreedyApplicability, NumericalClassification};
 use f017_runner::qualification::{
     exact_matvec_f32, measure_f32, qualify_tier_b_down, NumericalMetrics, TierBQualification,
 };
@@ -40,7 +41,8 @@ struct Report {
     r10_f32_boundaries: BTreeMap<String, NumericalMetrics>,
     r10_f64_boundaries: BTreeMap<String, F64Metrics>,
     first_repeat_matvec_qualifications: Vec<MatvecReport>,
-    classification: &'static str,
+    classification: NumericalClassification,
+    greedy_applicability: GreedyApplicability,
     direct_native_dispatch_count: u64,
     qualification_scaffold_dispatch_count: u64,
     explicit_reference_dispatch_count: u64,
@@ -351,10 +353,11 @@ fn checkpoint_free_r10_complete_layer_qualifies_without_fallback() {
         r10_f64_boundaries,
         first_repeat_matvec_qualifications: first_reports,
         classification: if all_exact {
-            "golden_identical"
+            NumericalClassification::GoldenIdentical
         } else {
-            "numerically_qualified_greedy_identical"
+            NumericalClassification::NumericallyQualifiedGreedyNotApplicable
         },
+        greedy_applicability: GreedyApplicability::NotApplicable,
         direct_native_dispatch_count: (REPEATS * 34) as u64,
         qualification_scaffold_dispatch_count: (REPEATS * 34 + 34) as u64,
         explicit_reference_dispatch_count: 0,

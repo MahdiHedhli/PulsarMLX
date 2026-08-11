@@ -5,6 +5,7 @@ use f017_runner::layer_qualification::{
     dsa_select_stable, run_r9_exact, run_r9_with_matvec, R9Error, R9Inputs, R9Matrices, R9Output,
     R9_SCAFFOLD_VERSION,
 };
+use f017_runner::numerical_classification::{GreedyApplicability, NumericalClassification};
 use f017_runner::qualification::{
     exact_matvec_f32, measure_f32, qualify_tier_b_down, NumericalMetrics, TierBQualification,
 };
@@ -35,7 +36,8 @@ struct Report {
     boundaries: BTreeMap<String, NumericalMetrics>,
     per_matvec: Vec<MatvecReport>,
     dsa: DsaReport,
-    classification: &'static str,
+    classification: NumericalClassification,
+    greedy_applicability: GreedyApplicability,
     direct_native_dispatch_count: u64,
     qualification_scaffold_dispatch_count: u64,
     explicit_reference_dispatch_count: u64,
@@ -231,10 +233,11 @@ fn checkpoint_free_r9_production_mlx_qualifies_fail_closed() {
             exact: true,
         },
         classification: if all_exact {
-            "golden_identical"
+            NumericalClassification::GoldenIdentical
         } else {
-            "numerically_qualified_greedy_identical"
+            NumericalClassification::NumericallyQualifiedGreedyNotApplicable
         },
+        greedy_applicability: GreedyApplicability::NotApplicable,
         direct_native_dispatch_count: (REPEATS * 6) as u64,
         qualification_scaffold_dispatch_count: (REPEATS * 6 + 6) as u64,
         explicit_reference_dispatch_count: 0,

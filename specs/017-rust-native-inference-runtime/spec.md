@@ -131,6 +131,7 @@ Acceptance:
 - **FR-017-10**: Implement a native-bridge-safe, no-Python ordinary inference topology for runtime scaffold operations.
 - **FR-017-11**: Add `teacher_forced_validation` and `golden_strict` with stable mismatch classes:
   - `golden_identical`
+  - `numerically_qualified_greedy_not_applicable`
   - `numerically_qualified_greedy_identical`
   - `numerically_qualified_greedy_divergent`
   - `numerically_failed`

@@ -166,7 +166,10 @@ fn run_projection_fixture_impl(
             );
             require_exact_output(&output, &projection)?;
             evidence.execution.dispatch.qualification_scaffold = 1;
-            evidence.execution.numerical_classification = Some("golden_identical".to_owned());
+            evidence.execution.numerical_classification =
+                Some(crate::numerical_classification::NumericalClassification::GoldenIdentical);
+            evidence.execution.numerical.greedy_applicability =
+                Some(crate::numerical_classification::GreedyApplicability::NotApplicable);
             evidence.execution.numerical.bit_mismatch_count = Some(0);
             evidence.execution.numerical.max_abs_error = Some(0.0);
             evidence.execution.numerical.relative_error = Some(0.0);
@@ -278,7 +281,10 @@ fn run_projection_fixture_impl(
     }
 
     evidence.execution.dispatch.native = 1;
-    evidence.execution.numerical_classification = Some("golden_identical".to_owned());
+    evidence.execution.numerical_classification =
+        Some(crate::numerical_classification::NumericalClassification::GoldenIdentical);
+    evidence.execution.numerical.greedy_applicability =
+        Some(crate::numerical_classification::GreedyApplicability::NotApplicable);
     evidence.execution.numerical.production_backend_version =
         Some("mlx-c-matmul; mlx-native-0.31.2; mlx-c-0.6.0".to_owned());
     evidence.execution.numerical.bit_mismatch_count = Some(0);

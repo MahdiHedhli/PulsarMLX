@@ -1,6 +1,7 @@
 #![cfg(all(target_os = "macos", pulsar_native_mlx))]
 
 use f017_runner::json::{parse_json_no_duplicates, sha256_bytes};
+use f017_runner::numerical_classification::{GreedyApplicability, NumericalClassification};
 use f017_runner::qualification::{
     exact_matvec_f32, exact_swiglu_f32, measure_f32, qualify_tier_b_down, NumericalMetrics,
     TierBQualification, EXACT_SCAFFOLD_VERSION, TIER_B_CONTRACT_VERSION,
@@ -81,8 +82,8 @@ struct Attribution {
     activated_hidden: NumericalMetrics,
     down_and_final_output: NumericalMetrics,
     tier_b_qualification: TierBQualification,
-    classification: &'static str,
-    greedy_applicability: &'static str,
+    classification: NumericalClassification,
+    greedy_applicability: GreedyApplicability,
     unexpected_fallback_count: u64,
     production_hashes: ProductionHashes,
     reduction_models: Vec<ReductionModelResult>,
@@ -246,8 +247,8 @@ fn original_r7_mismatch_is_attributed_without_a_tolerance() {
         activated_hidden: hidden_metrics,
         down_and_final_output: measure_f32(&expected_output, &output).unwrap(),
         tier_b_qualification,
-        classification: "numerically_qualified_greedy_identical",
-        greedy_applicability: "not_applicable",
+        classification: NumericalClassification::NumericallyQualifiedGreedyNotApplicable,
+        greedy_applicability: GreedyApplicability::NotApplicable,
         unexpected_fallback_count: 0,
         production_hashes: ProductionHashes {
             gate_sha256: sha256_bytes(&f32_bytes(&gate)),

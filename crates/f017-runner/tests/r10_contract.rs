@@ -40,6 +40,11 @@ fn r10_contract_is_frozen_before_candidate_and_fail_closed() {
         0
     );
     assert_eq!(
+        contract["classification"]["pass"],
+        "numerically_qualified_greedy_not_applicable"
+    );
+    assert_eq!(contract["greedy_applicability"], "not_applicable");
+    assert_eq!(
         contract["review_status"],
         "pending_adversarial_numerical_review"
     );

@@ -34,11 +34,13 @@
     "in_flight_after_teardown": 0
   },
   "classification": {
-    "pass": "numerically_qualified_greedy_identical",
+    "pass": "numerically_qualified_greedy_not_applicable",
     "exact_pass": "golden_identical",
-    "routing_divergence": "numerically_qualified_greedy_divergent",
+    "routing_divergence": "numerically_failed",
     "failure": "numerically_failed"
   },
+  "greedy_applicability": "not_applicable",
+  "selection_evidence": "router expert IDs are exact internal architecture evidence; no model-token top-k or argmax exists in R10",
   "threshold_origin": "power-of-two envelopes frozen for one R9 residual, one router projection, 27 expert projections, nonlinear activation, weighted aggregation, and final residual before production R10 output",
   "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
   "review_status": "pending_adversarial_numerical_review"

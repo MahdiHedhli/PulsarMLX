@@ -33,12 +33,13 @@
     "in_flight_after_teardown": 0
   },
   "classification": {
-    "pass": "numerically_qualified_greedy_identical",
+    "pass": "numerically_qualified_greedy_not_applicable",
     "exact_pass": "golden_identical",
-    "selection_divergence": "numerically_qualified_greedy_divergent",
+    "selection_divergence": "numerically_failed",
     "failure": "numerically_failed"
   },
-  "greedy_applicability": "DSA/index selections only; no vocabulary argmax in R9",
+  "greedy_applicability": "not_applicable",
+  "selection_evidence": "DSA/index selections are exact internal architecture evidence; no model-token top-k or argmax exists in R9",
   "threshold_origin": "binary power-of-two envelopes frozen from the six width-32 projection/reduction stages and the existing operand-conditioned matvec model; values are independent of production candidate output",
   "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
   "review_status": "pending_adversarial_numerical_review"

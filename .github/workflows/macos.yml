@@ -133,6 +133,12 @@ jobs:
           cargo test -p f017-runner --test r10_contract -- --nocapture
           cargo test -p f017-runner --test r10_exact_scaffold -- --nocapture
           cargo test -p f017-runner --test r10_production_native -- --nocapture
+          python3 scripts/research/reconcile_f017_numerical_classification.py
+          python3 scripts/research/validate_f017_numerical_classification.py \
+            specs/017-rust-native-inference-runtime/fixtures/f017-r7-tier-b-result-v1.json \
+            docs/architecture/reviews/evidence/f017-r8-top8-shared-production-v1.json \
+            docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json \
+            docs/architecture/reviews/evidence/f017-r10-complete-layer-production-v1.json
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
