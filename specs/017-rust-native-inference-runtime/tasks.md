@@ -130,5 +130,5 @@
 - [x] T017-150 Add checkpoint-free CI for CLI/schema/store/tensor-map/runner/cancellation/privacy gates.
 - [x] T017-151 Require native Apple CI to execute adapter and projection tests without skips.
 - [ ] T017-160 Obtain internal implementation review of the runner composition.
-- [ ] T017-161 Obtain independent adversarial review of P1 meaningfulness and fail-closed behavior.
+- [x] T017-161 Obtain independent adversarial review of P1 meaningfulness and fail-closed behavior.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

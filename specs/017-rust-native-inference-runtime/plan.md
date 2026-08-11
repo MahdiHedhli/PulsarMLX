@@ -127,9 +127,13 @@ telemetry and hard gates; the reviewed environment manifest and actually
 loaded MLX libraries are verified; evidence output is exclusively acquired;
 PASS is persisted only after teardown and dispatch reconciliation; identity
 mode validates the complete production `Glm52TensorMap`; and R12 production no
-longer invokes the qualification scaffold. T017-140, T017-141, T017-160, and
-T017-161 remain open. M1-A/B remain blocked pending final-head CI and both
-follow-up reviews; M1-C and P1 remain blocked independently.
+longer invokes the qualification scaffold. Production stage modes now require
+the `production_reviewed` environment before telemetry, adapter, or checkpoint
+work, while an explicit fixture identity mode preserves checkpoint-free CI.
+Apple-native CI explicitly executes both loaded-library match/mismatch tests.
+T017-161 is closed by the independent adversarial GO. T017-140, T017-141, and
+T017-160 remain open; M1-A remains blocked pending final-head CI and internal
+re-review, and M1-B, M1-C, and P1 remain separately blocked.
 
 ## Final phase
 

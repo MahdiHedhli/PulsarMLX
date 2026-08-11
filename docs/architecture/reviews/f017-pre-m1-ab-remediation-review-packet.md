@@ -1,5 +1,11 @@
 # F017 Unified Pre-M1-A/B Remediation Review Packet
 
+> **Final isolation appendix:** the independent adversarial review returned GO,
+> while the internal review identified two final checkpoint-free blockers.
+> Their remediation and re-review anchors are recorded in
+> [`f017-final-environment-isolation-remediation.md`](f017-final-environment-isolation-remediation.md).
+> T017-161 is closed; T017-160 remains open pending the final internal GO.
+
 ## Requested disposition
 
 Review the checkpoint-free remediation and return one of:
@@ -105,7 +111,7 @@ the reviewers.
 - T017-140 remains open and blocks M1-C.
 - T017-141 remains open and blocks the canonical P1 command.
 - T017-160 remains open until the internal review reruns and returns GO.
-- T017-161 remains open until the independent review reruns and returns GO.
+- T017-161 is closed by the independent adversarial GO.
 - M1-A/B are not executed by this remediation.
 - Real checkpoint access, M1-C, and P1 remain blocked.
 

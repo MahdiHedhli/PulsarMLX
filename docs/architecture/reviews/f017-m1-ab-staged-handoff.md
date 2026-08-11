@@ -1,10 +1,14 @@
 # F017 Prepared M1-A/B Staged Handoff
 
+> **Superseded for the next action:** use the narrower
+> [`f017-m1-a-adapter-preflight-handoff.md`](f017-m1-a-adapter-preflight-handoff.md).
+> M1-B remains separately gated after M1-A evidence review.
+
 ## Status
 
-Prepared, not authorized. This handoff becomes usable only after T017-160 and
-T017-161 each close with GO on the remediated final head and a new explicit
-operator prompt authorizes the named stage.
+Prepared, not authorized. The independent review closed T017-161. M1-A remains
+blocked until T017-160 closes with internal GO on the final head and a new
+explicit operator prompt authorizes that stage.
 
 ## M1-A — adapter preflight only
 
