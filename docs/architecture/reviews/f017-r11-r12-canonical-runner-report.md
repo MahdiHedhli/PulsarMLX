@@ -156,6 +156,27 @@ dispatch/fallback/error counts, bounded residency, lifecycle, result class, and
 first failure. Parsing rejects duplicate keys, public evidence uses symbolic or
 repository-relative identities, and earlier frozen contracts remain immutable.
 
+## Validation and CI
+
+Local validation completed on the M1 Ultra:
+
+- 373 Python research/oracle/evidence tests;
+- deterministic R11 and R12 oracle regeneration;
+- all F017 runner tests with pinned native MLX required;
+- all 11 native MLX ownership/stream tests and the Metal registration test;
+- `cargo check --workspace --all-targets`;
+- `cargo test --workspace --no-fail-fast`;
+- Spec Kit prerequisite and integration checks;
+- duplicate-key, privacy/path, generated-artifact, link, and `git diff --check`
+  gates.
+
+GitHub Actions run
+[`31539889918`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31539889918)
+passed on implementation/evidence head
+`fef0f87fa55b8bd18ff9bd16e17c9e4639d0bffb`. The Apple Silicon workspace job
+passed in 1m33s. The Apple-native MLX job passed in 8m44s with native execution
+required; no skipped native test satisfied the R11/R12 gate.
+
 ## Limitations and review status
 
 - R11/R12 are synthetic, checkpoint-free evidence.
