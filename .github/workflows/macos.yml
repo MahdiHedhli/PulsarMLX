@@ -31,6 +31,7 @@ jobs:
     runs-on: macos-15
     env:
       PULSARMLX_MODEL_GGUF: ""
+      PULSAR_REQUIRE_NATIVE_MLX: "1"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,6 +50,13 @@ jobs:
           test -f docs/validation/mlx-device-smoke.json
           test -f docs/validation/mlx-tensor-fixtures.json
           test -f docs/validation/synthetic-moe-v1.json
+      - name: Build pinned official native MLX dependencies
+        run: |
+          brew install cmake ninja
+          scripts/ci/install_native_mlx.sh "$RUNNER_TEMP/pulsar-native-mlx"
+          echo "MLX_C_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
+          echo "MLX_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
+          echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/pulsar-native-mlx/lib" >> "$GITHUB_ENV"
       - name: Validate Feature 002 research methodology
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
@@ -65,21 +73,41 @@ jobs:
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           version: "0.11.17"
-          python-version: "3.12.13"
+          python-version: "3.13.13"
           enable-cache: true
       - name: Sync lockfile-backed MLX environment
         run: |
-          uv python install 3.12.13
-          uv sync --frozen --python 3.12.13
+          uv python install 3.13.13
+          uv sync --frozen --python 3.13.13
           .venv/bin/python - <<'PY'
           import platform
+          import sys
           from importlib.metadata import version
 
           assert platform.machine() == "arm64"
+          assert sys.version_info[:3] == (3, 13, 13)
           assert version("mlx") == "0.32.0"
           assert version("mlx-metal") == "0.32.0"
           assert version("numpy") == "2.4.5"
           PY
+      - name: Validate independent Feature 017 oracle
+        run: |
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_independent_oracle -v
+          .venv/bin/python scripts/research/generate_f017_independent_oracle.py \
+            --generator-commit a9779097de029f26be1cb9fde3543cc517ff153e \
+            --output specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json \
+            --rust-output crates/engine/src/f017_oracle_generated.rs \
+            --check
+          cargo test -p engine --test f017_independent_oracle -- --nocapture
+      - name: Execute required native MLX adapter matrix
+        run: |
+          echo "PULSAR_REQUIRE_NATIVE_MLX=1; executing native adapter tests (no skip permitted)"
+          test -f "$MLX_C_PREFIX/include/mlx/c/mlx.h"
+          test -f "$MLX_C_PREFIX/lib/libmlxc.dylib"
+          test -f "$MLX_PREFIX/lib/libmlx.dylib"
+          cargo test -p stream --test apple_mlx_bridge -- --nocapture
+          cargo test -p stream --test apple_metal_bridge -- --nocapture
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"

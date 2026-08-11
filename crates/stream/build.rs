@@ -1,6 +1,13 @@
 fn main() {
     println!("cargo:rustc-check-cfg=cfg(pulsar_native_mlx)");
+    println!("cargo:rerun-if-env-changed=PULSAR_REQUIRE_NATIVE_MLX");
+    let require_native_mlx = std::env::var("PULSAR_REQUIRE_NATIVE_MLX")
+        .map(|value| value == "1")
+        .unwrap_or(false);
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("macos") {
+        if require_native_mlx {
+            panic!("PULSAR_REQUIRE_NATIVE_MLX=1 requires a macOS target");
+        }
         return;
     }
 
@@ -45,8 +52,15 @@ fn main() {
         println!("cargo:rustc-link-arg=-Wl,-rpath,{}", mlx_c_lib.display());
         println!("cargo:rustc-link-arg=-Wl,-rpath,{}", mlx_lib.display());
     } else {
-        println!(
-            "cargo:warning=native MLX C API unavailable; MLX adapter tests are skipped"
+        let detail = format!(
+            "native MLX C API unavailable: header={}, mlxc={}, mlx={}",
+            mlx_header.display(),
+            mlx_c_library.display(),
+            mlx_library.display()
         );
+        if require_native_mlx {
+            panic!("PULSAR_REQUIRE_NATIVE_MLX=1 but {detail}");
+        }
+        println!("cargo:warning={detail}; MLX adapter tests are skipped");
     }
 }
