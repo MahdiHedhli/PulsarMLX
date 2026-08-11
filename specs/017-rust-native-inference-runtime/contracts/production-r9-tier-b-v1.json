@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.production-r9-tier-b-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-production-r9-tier-b-v1",
+  "status": "frozen_before_production_r9_execution",
+  "oracle": "independent Python/NumPy strict-order f32 oracle",
+  "exact_scaffold": "f017-r9-mla-dsa-exact-v1",
+  "per_matvec_contract": "f017-production-expert-tier-b-v1",
+  "scope": [
+    "checkpoint-free reduced-dimension one-token GLM-5.2 MLA range-fill path",
+    "checkpoint-free deterministic DSA indexer selection fixture"
+  ],
+  "required_repeats": 10,
+  "intermediate": {
+    "max_absolute_error": 0.00390625,
+    "rmse": 0.001953125,
+    "cosine_similarity_minimum": 0.999999
+  },
+  "final": {
+    "max_absolute_error": 0.0078125,
+    "rmse": 0.00390625,
+    "cosine_similarity_minimum": 0.99999
+  },
+  "exact_requirements": {
+    "dsa_mode": "range_fill",
+    "selected_positions": true,
+    "dsa_indexer_selection": true,
+    "dsa_tie_break": "lower_position",
+    "signed_zero": true,
+    "deterministic_candidate_bits": true,
+    "unexpected_fallback_count": 0,
+    "backend_error_count": 0,
+    "in_flight_after_teardown": 0
+  },
+  "classification": {
+    "pass": "numerically_qualified_greedy_identical",
+    "exact_pass": "golden_identical",
+    "selection_divergence": "numerically_qualified_greedy_divergent",
+    "failure": "numerically_failed"
+  },
+  "greedy_applicability": "DSA/index selections only; no vocabulary argmax in R9",
+  "threshold_origin": "binary power-of-two envelopes frozen from the six width-32 projection/reduction stages and the existing operand-conditioned matvec model; values are independent of production candidate output",
+  "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
+  "review_status": "pending_adversarial_numerical_review"
+}
