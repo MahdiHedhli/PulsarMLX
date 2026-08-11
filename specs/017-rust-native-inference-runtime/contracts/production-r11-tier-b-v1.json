@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.production-r11-tier-b-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-production-r11-tier-b-v1",
+  "status": "frozen_before_production_candidate_execution",
+  "oracle": "independent Python/NumPy strict-order f32 oracle",
+  "exact_scaffold": "f017-r11-final-output-exact-v1",
+  "required_contracts": [
+    "f017-production-expert-tier-b-v1",
+    "f017-production-r9-tier-b-v2",
+    "f017-production-r10-tier-b-v2"
+  ],
+  "scope": "checkpoint-free final RMSNorm, Q4_K output-head projection, full logits, stable top-k, and argmax",
+  "required_repeats": 10,
+  "logit_contract": {
+    "kind": "operand_conditioned_f32_reduction_bound",
+    "per_element_absolute_bound": "2*gamma(2*n)*sum(abs(f64(weight)*f64(input))) + 4*n*2^-149",
+    "per_element_relative_bound": "absolute_bound/abs(expected) when expected != 0",
+    "rmse_bound": "sqrt(mean(per_element_absolute_bound^2))",
+    "cosine_minimum": "(||expected||2-||bounds||2)/(||expected||2+||bounds||2) when ||expected||2 > ||bounds||2; otherwise not_applicable",
+    "bound_source": "f017-production-expert-tier-b-v1 evaluator applied to the frozen output-head operands",
+    "threshold_fit_to_observed_candidate": false
+  },
+  "exact_requirements": {
+    "final_rms_norm": true,
+    "decoded_q4_k_output_head": true,
+    "top_k_ids_and_order": true,
+    "argmax": true,
+    "tie_break": "descending_total_order_then_lower_index",
+    "signed_zero": true,
+    "deterministic_candidate_bits": true,
+    "unexpected_fallback_count": 0,
+    "backend_error_count": 0,
+    "explicit_reference_dispatch_count": 0,
+    "in_flight_after_teardown": 0
+  },
+  "greedy_applicability": "applicable",
+  "classification": {
+    "pass": "numerically_qualified_greedy_identical",
+    "exact_pass": "golden_identical",
+    "top_k_or_argmax_divergence": "numerically_failed",
+    "numerical_failure": "numerically_failed"
+  },
+  "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
+  "checkpoint_accessed": false
+}
