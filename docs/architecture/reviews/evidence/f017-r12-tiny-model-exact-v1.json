@@ -1,0 +1,170 @@
+{
+  "schema": "pulsarmlx.f017.canonical-runner-evidence",
+  "schema_version": "1.2.0",
+  "identity": {
+    "source_sha": "4c2728c21ececee687fe88192f45188ca0168cd2",
+    "source_clean": true,
+    "runner_version": "0.1.0",
+    "environment_manifest_sha256": "81c6a3572ffe6c089ce61794aab6651150df44c15ecd3172a645220a0778d48d",
+    "platform": {
+      "architecture": "aarch64",
+      "os": "macos"
+    },
+    "toolchain": {
+      "rust_package": "0.1.0"
+    },
+    "checkpoint": {
+      "accessed": true,
+      "revision": "f017-r12-tiny-model-v1",
+      "checkpoint_set_sha256": "cfc6054e95e3977d7684a55073825d86d6898805fa967cef3fde5fce42efe5e8",
+      "catalog_sha256": "6e0340448e503e22ec0d9f8a632a706a7c667d34f7b58c9732cc06511ab6294f",
+      "shards": [
+        {
+          "filename": "f017-r12-00001-of-00002.fixture",
+          "size_bytes": 3299936,
+          "sha256": "dd421ea6156873240587e260d540048fb26e93f65fc20d943a9c699aba424978"
+        },
+        {
+          "filename": "f017-r12-00002-of-00002.fixture",
+          "size_bytes": 3286848,
+          "sha256": "4045878bfd6a6c408e874630faeedd0edb304b14ce1bbe2f7597cc16cdf51f37"
+        }
+      ]
+    }
+  },
+  "admission": {
+    "memory_floor_bytes": 1,
+    "available_memory_bytes": 0,
+    "memory_pressure": "unknown",
+    "swap_used_bytes": 0,
+    "disk_free_bytes": 0,
+    "load_averages": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "competing_processes_clear": false,
+    "stream_mode": "owned_device",
+    "singleton_initially_unclaimed": false
+  },
+  "input": {
+    "tokens": [
+      3
+    ],
+    "n_new": 1,
+    "expected_token": 10,
+    "validation_mode": "golden_strict",
+    "mode": "fixture",
+    "numerical_mode": "exact_qualification_scaffold"
+  },
+  "execution": {
+    "layers": [
+      {
+        "layer": 0,
+        "total_seconds": 0.023278679200000003
+      },
+      {
+        "layer": 1,
+        "total_seconds": 0.023338979000000003
+      }
+    ],
+    "timings": {
+      "complete_run_seconds": 1.051274625,
+      "output_head_decode_seconds": 0.000648668,
+      "storage_decode_materialization_seconds": 0.266656083,
+      "total_seconds": 0.470123708
+    },
+    "storage": {
+      "read_bytes": 11626624,
+      "read_count": 85
+    },
+    "dispatch": {
+      "native": 0,
+      "direct": 0,
+      "qualification_scaffold": 690,
+      "explicit_reference": 0,
+      "fallback": 0,
+      "errors": 0
+    },
+    "generated_token": 10,
+    "numerical_classification": "golden_identical",
+    "numerical": {
+      "greedy_applicability": "applicable",
+      "greedy_identity": {
+        "top_k_ids_exact": true,
+        "argmax_exact": true
+      },
+      "oracle_generator_sha": "1ef0c1aed0c286461a3ca65eceee54c6d8bed30be12eba4769701066924f4176",
+      "scaffold_version": "f017-r9-mla-dsa-exact-v1+f017-r10-complete-layer-exact-v1+f017-r11-final-output-exact-v1",
+      "production_backend_version": null,
+      "frozen_contract_version": "f017-production-r11-tier-b-v1",
+      "bit_mismatch_count": 0,
+      "max_abs_error": 0.0,
+      "relative_error": 0.0,
+      "rmse": 0.0,
+      "cosine_similarity": 1.0,
+      "deterministic_repeat_count": 10,
+      "first_divergence": null
+    },
+    "progress_state": "r12_tiny_model_complete"
+  },
+  "residency": {
+    "compressed": 0,
+    "decoded_hot": 81,
+    "native_ready_hot": 0,
+    "transient": 0,
+    "protected_shared": 0,
+    "hits": 0,
+    "misses": 81,
+    "evictions": 0
+  },
+  "lifecycle": {
+    "pre": {
+      "managed_created": 0,
+      "managed_destroyed": 0,
+      "derived_created": 0,
+      "derived_destroyed": 0,
+      "callback_count": 0,
+      "default_cpu_stream_created": 0,
+      "default_cpu_stream_freed": 0,
+      "default_gpu_stream_created": 0,
+      "default_gpu_stream_freed": 0,
+      "owned_stream_created": 0,
+      "owned_stream_freed": 0,
+      "active_contexts": 0,
+      "singleton_claimed": false,
+      "active_registrations": 0,
+      "pending_registration_destructions": 0,
+      "in_flight_work": 0,
+      "live_owner_tokens": 0,
+      "stale_generations": 0
+    },
+    "post": {
+      "managed_created": 0,
+      "managed_destroyed": 0,
+      "derived_created": 0,
+      "derived_destroyed": 0,
+      "callback_count": 0,
+      "default_cpu_stream_created": 0,
+      "default_cpu_stream_freed": 0,
+      "default_gpu_stream_created": 0,
+      "default_gpu_stream_freed": 0,
+      "owned_stream_created": 0,
+      "owned_stream_freed": 0,
+      "active_contexts": 0,
+      "singleton_claimed": false,
+      "active_registrations": 0,
+      "pending_registration_destructions": 0,
+      "in_flight_work": 0,
+      "live_owner_tokens": 0,
+      "stale_generations": 0
+    },
+    "reconciled": true
+  },
+  "result": {
+    "classification": "PASS",
+    "first_failure": null,
+    "stop_reason": null,
+    "completed": true
+  }
+}
