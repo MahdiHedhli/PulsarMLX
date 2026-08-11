@@ -1,9 +1,10 @@
 # PulsarMLX F017 Canonical Runner Sprint Report
 
 > Status update: the original R7 block documented below has been resolved by
-> the exact-order scaffold and independently frozen Tier-B contract. R8 now
-> passes checkpoint-free. See
-> `docs/architecture/reviews/f017-r7-numerical-contract-report.md`. The
+> the exact-order scaffold and independently frozen Tier-B contract. R8, R9
+> MLA/DSA, and R10 complete-layer execution now pass checkpoint-free. R9/R10
+> are pending adversarial numerical review. See
+> `docs/architecture/reviews/f017-r9-r10-numerical-boundary-report.md`. The
 > historical text below is retained to preserve the original sprint stop.
 
 ## Executive result
@@ -182,12 +183,12 @@ MLX operations for the first P1.
 | R3 GGUF catalog | Passed | Merged catalog and duplicate-name rejection |
 | R4 exact tensor read/hash | Passed | Exact positional read and short-read failure |
 | R5 projection | Passed | Independent Q8_0 oracle, exact f32 bits, native MLX |
-| R6 router | Not composed | Explicit Rust CPU boundary still required |
-| R7 complete expert | Blocked | MLX accumulation differs from frozen exact-f32 contract |
-| R8 top-8 plus shared | Not eligible | Depends on R6 and R7 |
-| R9 MLA/dense | Not eligible | Required native operations/state are missing |
-| R10 complete layer | Not eligible | Depends on R6-R9 |
-| R11 final logits | Not eligible | RMSNorm/output-head path missing |
+| R6 router | Passed | Explicit deterministic Rust CPU boundary |
+| R7 complete expert | Passed | Exact scaffold plus frozen production Tier-B gate |
+| R8 top-8 plus shared | Passed | Exact routing, native experts, zero fallback |
+| R9 MLA/DSA | Passed, review pending | Exact scaffold plus 10-repeat native Tier-B gate |
+| R10 complete layer | Passed, review pending | Composed R9 + router + top-8/shared native layer |
+| R11 final logits | Next eligible | RMSNorm/output-head path remains open |
 | R12 tiny end to end | Not eligible | Complete component composition absent |
 | R13 local real fixtures | Not started | No local fixture/model access in this sprint |
 | R14 M1 identity only | Not started | Requires reviewed runner composition handoff |

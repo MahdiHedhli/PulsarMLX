@@ -1,5 +1,12 @@
 # Feature 017 R7 adversarial numerical review packet
 
+> Downstream review addendum: checkpoint-free R9 MLA/DSA and R10 complete-layer
+> evidence now also pass their separately frozen contracts. They remain pending
+> this same adversarial numerical review and must be treated as exploratory if
+> the reviewer rejects the R7/R8 foundation. See
+> `docs/architecture/reviews/f017-r9-r10-numerical-boundary-report.md` and its
+> linked machine-readable evidence. No contract threshold was changed.
+
 ## Review question
 
 Is `f017-production-expert-tier-b-v1` principled, frozen independently, and
