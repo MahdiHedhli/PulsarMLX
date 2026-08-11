@@ -47,6 +47,15 @@
     "conclusion": "success",
     "native_tests_executed": true
   },
+  "remediation_ci": {
+    "run_id": 31545411413,
+    "source_sha": "2af41b8999cacdc4b622f1d9a5fd2512073db8bf",
+    "conclusion": "success",
+    "workspace_job": "success",
+    "apple_native_job": "success",
+    "native_tests_executed": true,
+    "r7_r12_ladder_executed": true
+  },
   "review_state": {
     "T017-140": "open",
     "T017-141": "open",

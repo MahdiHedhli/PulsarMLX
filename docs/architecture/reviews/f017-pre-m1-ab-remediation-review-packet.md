@@ -91,9 +91,14 @@ workspace baseline and Apple MLX small-fixture validation jobs passed; the
 native adapter and R7-R12 gates executed rather than satisfying the workflow
 through a skip.
 
-The remediation must receive a green final-head run before either review may
-return GO. The final CI run is recorded in the remediation report after it
-becomes terminal.
+Remediation implementation/evidence run
+[`31545411413`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31545411413)
+passed at `2af41b8999cacdc4b622f1d9a5fd2512073db8bf`. The Apple Silicon workspace
+baseline passed in 2m18s. The Apple MLX small-fixture validation passed in
+7m28s; its pinned native adapter, canonical projection, and complete R7-R12
+numerical ladder steps all executed and passed. The containing documentation
+commit must also receive green final-head CI before the packet is handed to
+the reviewers.
 
 ## Open tasks and admission state
 
