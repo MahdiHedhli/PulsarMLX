@@ -59,10 +59,12 @@ production cannot silently fall back to the scaffold.
 
 ## CI and validation
 
-The last pre-R8 current-head Apple workflow was run
-[`31489368876`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31489368876):
-both the workspace and native MLX jobs passed at `29394da7`. Final-head CI is
-required after this report and R8 evidence are committed.
+The R8/report head Apple workflow
+[`31491623025`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31491623025)
+passed at `e58d3f1f`: the workspace job completed in 1m38s and the native MLX
+job completed in 7m31s. The native job explicitly executed the exact scaffold,
+R7 attribution, independent Tier-B stress, production R7, and R8 gates without
+checkpoint access.
 
 ## Next gate
 
