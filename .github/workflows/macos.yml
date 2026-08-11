@@ -108,6 +108,8 @@ jobs:
           test -f "$MLX_PREFIX/lib/libmlx.dylib"
           cargo test -p stream --test apple_mlx_bridge -- --nocapture
           cargo test -p stream --test apple_metal_bridge -- --nocapture
+          cargo test -p f017-runner --lib \
+            environment::tests::loaded_library -- --nocapture
       - name: Execute canonical F017 runner projection gate
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
