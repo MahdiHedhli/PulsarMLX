@@ -114,6 +114,14 @@ The authoritative audit artifacts are repository-relative:
 - `docs/architecture/reviews/evidence/f017-contract-version-reconciliation-v2.json`
 
 GitHub Actions run
+[`31528221838`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31528221838)
+passed at versioning implementation head
+`96783168026f70867999c975d3adb9536821bef9`. Both the workspace baseline and
+pinned Apple-native job passed; the native adapter and exact/Tier-B R7-R10
+ladder executed without an invalidating skip. This closes the R9/R10
+contract-version audit item.
+
+GitHub Actions run
 [`31521791761`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31521791761)
 passed both jobs at remediation head
 `bc5922626df9eaed8d1e843d021b268ecf50579d`, including native R7-R10 tests

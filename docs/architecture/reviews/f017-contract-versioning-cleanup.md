@@ -122,10 +122,33 @@ unchanged.
 ## Review disposition
 
 - R7/R8 numerical blocker: **closed**
-- R9/R10 contract-version cleanup: **closed after validation and final-head CI**
-- R11/R12 checkpoint-free gate: **eligible after validation and final-head CI**
+- R9/R10 contract-version cleanup: **closed**
+- R11/R12 checkpoint-free gate: **eligible**
 - real checkpoint: **blocked**
 - P1: **blocked**
+
+## Validation and CI
+
+Local validation passed:
+
+- `cargo check --workspace --all-targets`
+- `cargo test --workspace --no-fail-fast`
+- focused R7-R10 contract, schema, applicability-negative, oracle-regeneration,
+  duplicate-key, deterministic-generation, privacy/path, and semantic-diff
+  checks
+- `specify check`
+- `specify integration status --json`
+- `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks`
+- `git diff --check`
+
+GitHub Actions run
+[`31528221838`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31528221838)
+passed at versioning implementation head
+`96783168026f70867999c975d3adb9536821bef9`. The Apple Silicon workspace job
+passed in 2m40s. The pinned native-MLX job passed in 7m46s, including the
+native adapter, canonical runner projection, exact/Tier-B R7-R10 ladder,
+contract/evidence generation, privacy checks, and no-checkpoint assertion with
+no invalidating native skip.
 
 The next permitted implementation work is the already prepared checkpoint-free
 R11 final-output and R12 tiny end-to-end runner sprint.

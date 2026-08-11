@@ -134,6 +134,9 @@ or production output changed.
 
 T017-132 is complete and its numerical inheritance cleared when remediation
 head `bc5922626df9eaed8d1e843d021b268ecf50579d` passed both jobs in GitHub
-Actions run `31521791761`. The exact next checkpoint-free gate is R11/R12:
+Actions run `31521791761`. Contract-version implementation head
+`96783168026f70867999c975d3adb9536821bef9` subsequently passed both jobs in
+GitHub Actions run `31528221838`, including the pinned native R7-R10 ladder.
+The exact next checkpoint-free gate is R11/R12:
 independent final norm/logits/top-k followed by the tiny actual-runner
 end-to-end fixture. No real checkpoint, P1 command, or M1 model time is admitted.
