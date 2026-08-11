@@ -1,5 +1,6 @@
 import hashlib
 import importlib.util
+import json
 import unittest
 from pathlib import Path
 
@@ -17,6 +18,19 @@ SPEC.loader.exec_module(MODULE)
 
 
 class R8OracleTests(unittest.TestCase):
+    def test_committed_oracle_is_generated_without_drift(self):
+        artifact_path = (
+            ROOT
+            / "specs/017-rust-native-inference-runtime/fixtures/f017-r8-top8-shared-oracle-v1.json"
+        )
+        artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+        generator_sha = hashlib.sha256(GENERATOR.read_bytes()).hexdigest()
+        self.assertEqual(artifact["generator_sha256"], generator_sha)
+        self.assertEqual(
+            artifact,
+            MODULE.build_oracle(artifact["source_commit"], generator_sha, R7_FIXTURE),
+        )
+
     def test_oracle_is_independent_deterministic_and_complete(self):
         generator_sha = hashlib.sha256(GENERATOR.read_bytes()).hexdigest()
         first = MODULE.build_oracle("0" * 40, generator_sha, R7_FIXTURE)
