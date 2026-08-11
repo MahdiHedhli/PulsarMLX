@@ -28,7 +28,7 @@ kernels are absent.
 - Immutable M1 evidence worktree: unchanged
 - Development host observed by the runner sprint: Apple M1 Ultra, not the
   requested ColPanicM2 host
-- Feature 017 task state at report drafting: 58 complete, 12 open
+- Feature 017 task state at closeout: 61 complete, 9 open
 
 Focused commits through the first CI integration commit:
 
@@ -41,6 +41,8 @@ Focused commits through the first CI integration commit:
 | `83e4a301` | R5 typed production-MLX projection |
 | `366d3dcd` | Complete 79-layer GLM-5.2 tensor map |
 | `228dfff9` | Required Apple-native runner projection CI gate |
+| `07b4e1c4` | Truthful R5/R7 sprint report and stop boundary |
+| `216166e7` | Collision-proof parallel runner fixture paths |
 
 ## Gap analysis
 
@@ -237,10 +239,13 @@ The existing inherited `quant::iq` `unused_mut` warning remains unchanged.
 The native context-cycle suite also retains the already documented MLX
 CoreAnalytics diagnostic while all counters and tests pass.
 
-The Apple workflow now explicitly executes the canonical runner projection
-with `PULSAR_REQUIRE_NATIVE_MLX=1`; a skipped native test cannot satisfy that
-job. The final workflow run and final report commit status must be recorded
-after GitHub reaches a terminal state.
+The Apple workflow explicitly executes the canonical runner projection with
+`PULSAR_REQUIRE_NATIVE_MLX=1`; a skipped native test cannot satisfy that job.
+GitHub Actions run
+[`31472083921`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31472083921)
+passed on `216166e7`: the workspace job passed in 1m58s and the Apple-native
+job passed in 9m01s, including the production adapter matrix and canonical
+runner projection gate.
 
 ## Review status
 
