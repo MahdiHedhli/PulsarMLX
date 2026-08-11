@@ -28,7 +28,6 @@ cmake -S "${WORK_ROOT}/mlx" -B "${WORK_ROOT}/mlx-build" -G Ninja \
   -DMLX_BUILD_EXAMPLES=OFF \
   -DMLX_BUILD_BENCHMARKS=OFF \
   -DMLX_BUILD_PYTHON_BINDINGS=OFF \
-  -DMLX_METAL_JIT=ON \
   -DMLX_BUILD_GGUF=OFF \
   -DMLX_BUILD_SAFETENSORS=OFF
 cmake --build "${WORK_ROOT}/mlx-build" --target install --parallel 3
