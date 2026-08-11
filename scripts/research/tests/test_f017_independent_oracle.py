@@ -28,6 +28,10 @@ class IndependentOracleTests(unittest.TestCase):
                 "final_norm_logits_topk",
             },
         )
+        self.assertGreater(
+            first["boundaries"]["final_norm_logits_topk"]["expected"]["margin"],
+            0.0,
+        )
         self.assertEqual(first["independence"]["classification"], "INDEPENDENT")
         self.assertFalse(first["independence"]["uses_rust_candidate"])
         self.assertFalse(first["independence"]["uses_rust_reference_functions"])
