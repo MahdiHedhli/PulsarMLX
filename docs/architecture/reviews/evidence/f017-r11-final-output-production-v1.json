@@ -1,0 +1,260 @@
+{
+  "schema": "pulsarmlx.f017.r11-production-result",
+  "schema_version": "1.0.0",
+  "source_commit": "3e10cecf67c2bff9634edaac4e621f09ca764f46",
+  "fixture_version": "f017-r11-final-output-q4-k-v1",
+  "fixture_sha256": "1aa4c8c334abdda063e1f69f53c3b4ee5d96cecc607b4871e000858180913b70",
+  "oracle_generator_sha": "970fdcf76d166a0a32bd2006fcdf25f225df059a08eec2991938109cf5524275",
+  "exact_scaffold_version": "f017-r11-final-output-exact-v1",
+  "frozen_contract_versions": [
+    "f017-production-expert-tier-b-v1",
+    "f017-production-r9-tier-b-v2",
+    "f017-production-r10-tier-b-v2",
+    "f017-production-r11-tier-b-v1"
+  ],
+  "production_backend_version": "mlx-native-0.31.2-mlxc-0.6.0-production-adapter",
+  "numerical_mode": "production_mlx_tier_b",
+  "deterministic_repeat_count": 10,
+  "logit_qualification": {
+    "contract_version": "f017-production-expert-tier-b-v1",
+    "metrics": {
+      "element_count": 16,
+      "bit_mismatch_count": 14,
+      "signed_zero_mismatch_count": 0,
+      "non_finite_count": 0,
+      "max_abs_error": 7.62939453125e-6,
+      "max_relative_error": 2.2816551126186935e-6,
+      "rmse": 3.3122167562126646e-6,
+      "cosine_similarity": 0.9999999999999626,
+      "first_divergence": {
+        "index": 0,
+        "expected": -8.40555,
+        "expected_bits_hex": "0xc1067d22",
+        "actual": -8.405551,
+        "actual_bits_hex": "0xc1067d23"
+      }
+    },
+    "rows": [
+      {
+        "index": 0,
+        "l1_products": 214.96216921508312,
+        "absolute_bound": 0.013120649996342852,
+        "absolute_error": 9.5367431640625e-7,
+        "relative_bound": 0.0015609507993622318,
+        "relative_error": 1.1345769355485418e-7,
+        "passes": true
+      },
+      {
+        "index": 1,
+        "l1_products": 266.0632363590412,
+        "absolute_bound": 0.01623970680007576,
+        "absolute_error": 0.0,
+        "relative_bound": 0.03489932408398726,
+        "relative_error": 0.0,
+        "passes": true
+      },
+      {
+        "index": 2,
+        "l1_products": 335.0032933978364,
+        "absolute_bound": 0.020447602368104275,
+        "absolute_error": 2.86102294921875e-6,
+        "relative_bound": 0.002151494751953131,
+        "relative_error": 3.010365591842391e-7,
+        "passes": true
+      },
+      {
+        "index": 3,
+        "l1_products": 207.92884865566157,
+        "absolute_bound": 0.012691357076061987,
+        "absolute_error": 1.430511474609375e-6,
+        "relative_bound": 0.02024261970116216,
+        "relative_error": 2.2816551126186935e-6,
+        "passes": true
+      },
+      {
+        "index": 4,
+        "l1_products": 253.77669203002006,
+        "absolute_bound": 0.015489772761010776,
+        "absolute_error": 9.5367431640625e-7,
+        "relative_bound": 0.0012074132520042931,
+        "relative_error": 7.433801809045405e-8,
+        "passes": true
+      },
+      {
+        "index": 5,
+        "l1_products": 312.06746424688026,
+        "absolute_bound": 0.01904766772953766,
+        "absolute_error": 7.62939453125e-6,
+        "relative_bound": 0.00106765613089415,
+        "relative_error": 4.2764132396470977e-7,
+        "passes": true
+      },
+      {
+        "index": 6,
+        "l1_products": 217.90501892194152,
+        "absolute_bound": 0.01330027276967324,
+        "absolute_error": 7.62939453125e-6,
+        "relative_bound": 0.0011388210759242167,
+        "relative_error": 6.532584285443883e-7,
+        "passes": true
+      },
+      {
+        "index": 7,
+        "l1_products": 270.67863055923954,
+        "absolute_bound": 0.01652141670334419,
+        "absolute_error": 1.9073486328125e-6,
+        "relative_bound": 0.001024571014104374,
+        "relative_error": 1.1828368947172257e-7,
+        "passes": true
+      },
+      {
+        "index": 8,
+        "l1_products": 330.94199107494205,
+        "absolute_bound": 0.020199712581251996,
+        "absolute_error": 3.337860107421875e-6,
+        "relative_bound": 0.004011769957220829,
+        "relative_error": 6.629167047054586e-7,
+        "passes": true
+      },
+      {
+        "index": 9,
+        "l1_products": 201.16143090557307,
+        "absolute_bound": 0.012278294070593773,
+        "absolute_error": 4.76837158203125e-7,
+        "relative_bound": 0.0019487800426374856,
+        "relative_error": 7.568239790898617e-8,
+        "passes": true
+      },
+      {
+        "index": 10,
+        "l1_products": 260.54279873194173,
+        "absolute_bound": 0.015902755744007187,
+        "absolute_error": 0.0,
+        "relative_bound": 0.0011292929429029908,
+        "relative_error": 0.0,
+        "passes": true
+      },
+      {
+        "index": 11,
+        "l1_products": 326.9217643230222,
+        "absolute_bound": 0.019954329924803747,
+        "absolute_error": 1.9073486328125e-6,
+        "relative_bound": 0.0012572875745201783,
+        "relative_error": 1.2017871536404357e-7,
+        "passes": true
+      },
+      {
+        "index": 12,
+        "l1_products": 222.3259568088688,
+        "absolute_bound": 0.01357011363926321,
+        "absolute_error": 2.86102294921875e-6,
+        "relative_bound": 0.0017338558488124765,
+        "relative_error": 3.6555341436027846e-7,
+        "passes": true
+      },
+      {
+        "index": 13,
+        "l1_products": 266.1168759758584,
+        "absolute_bound": 0.01624298080238401,
+        "absolute_error": 4.291534423828125e-6,
+        "relative_bound": 0.0021279874566983367,
+        "relative_error": 5.622324827567983e-7,
+        "passes": true
+      },
+      {
+        "index": 14,
+        "l1_products": 321.20714405272156,
+        "absolute_bound": 0.019605526539061956,
+        "absolute_error": 9.5367431640625e-7,
+        "relative_bound": 0.0015391368504000767,
+        "relative_error": 7.486844491202284e-8,
+        "passes": true
+      },
+      {
+        "index": 15,
+        "l1_products": 200.67091909307055,
+        "absolute_bound": 0.012248354691797879,
+        "absolute_error": 9.5367431640625e-7,
+        "relative_bound": 0.001926061243856896,
+        "relative_error": 1.499658677684959e-7,
+        "passes": true
+      }
+    ],
+    "rmse_bound": 0.016316967361041632,
+    "cosine_minimum": 0.9969926095873173,
+    "passes": true
+  },
+  "top_k_ids": [
+    7,
+    4,
+    12,
+    13,
+    9,
+    8,
+    1,
+    3
+  ],
+  "top_k_score_deltas": [
+    -1.9073486328125e-6,
+    9.5367431640625e-7,
+    -2.86102294921875e-6,
+    -4.291534423828125e-6,
+    -4.76837158203125e-7,
+    3.337860107421875e-6,
+    0.0,
+    1.430511474609375e-6
+  ],
+  "argmax": 7,
+  "top1_top2_margin": 3.2963104248046875,
+  "classification": "numerically_qualified_greedy_identical",
+  "greedy_applicability": "applicable",
+  "top_k_ids_exact": true,
+  "argmax_exact": true,
+  "direct_native_dispatch_count": 10,
+  "qualification_scaffold_dispatch_count": 1,
+  "explicit_reference_dispatch_count": 0,
+  "unexpected_fallback_count": 0,
+  "backend_error_count": 0,
+  "materialized_f32_elements": 4096,
+  "packed_q4_k_bytes": 2304,
+  "timings": {
+    "exact_scaffold_seconds": 0.00012975,
+    "q4_k_decode_seconds": 0.000633291,
+    "production_total_seconds": 0.017772752,
+    "backend_import_seconds": 0.00025729099999999993,
+    "output_head_compute_sync_seconds": 0.016505748999999997,
+    "readback_seconds": 0.000012624,
+    "rms_norm_topk_orchestration_seconds": 0.0003637970000000018,
+    "per_repeat_total_seconds": [
+      0.013575667,
+      0.000612625,
+      0.000455708,
+      0.000425167,
+      0.000432209,
+      0.000455208,
+      0.000437583,
+      0.000468459,
+      0.000446959,
+      0.000463167
+    ],
+    "first_use_seconds": 0.013575667,
+    "warm_median_seconds": 0.000455208,
+    "warm_min_seconds": 0.000425167,
+    "warm_max_seconds": 0.000612625
+  },
+  "lifecycle": {
+    "managed_created": 20,
+    "managed_destroyed": 20,
+    "derived_created": 10,
+    "derived_destroyed": 10,
+    "callback_count": 20,
+    "owned_stream_created_delta": 1,
+    "owned_stream_freed_delta": 1,
+    "context_active_after": false,
+    "in_flight_after_teardown": 0,
+    "stale_generation_count": 0,
+    "reconciled": true
+  },
+  "review_status": "pending_adversarial_canonical_runner_review",
+  "checkpoint_accessed": false
+}
