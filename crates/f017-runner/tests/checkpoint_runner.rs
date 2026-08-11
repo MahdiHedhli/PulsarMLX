@@ -298,6 +298,77 @@ fn actual_binary_banks_malformed_r12_manifest_without_false_pass() {
     assert!(!evidence.result.completed || evidence.result.first_failure.is_some());
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[test]
+fn actual_binary_cancels_r12_before_and_between_layers_without_false_pass() {
+    let fixture = fixture(false);
+    let model = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../specs/017-rust-native-inference-runtime/fixtures/f017-r12-tiny-model/model.json",
+    );
+    for (case, point) in [
+        ("before-first-layer", "before_first_layer"),
+        ("after-layer-0", "after_layer_0"),
+    ] {
+        let out = fixture.root.join(format!("r12-cancel-{case}.json"));
+        let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+            .args(common_args(&fixture.environment, &out))
+            .arg("--fixture-mode")
+            .arg(&model)
+            .args(["--numerical-mode", "exact-qualification-scaffold"])
+            .env("PULSAR_F017_FIXTURE_CANCEL_AT", point)
+            .status()
+            .unwrap();
+        assert_eq!(status.code(), Some(15));
+        let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+        assert_eq!(
+            evidence.result.classification,
+            f017_runner::evidence::ResultClassification::Cancelled
+        );
+        assert_eq!(
+            evidence.result.first_failure.as_ref().unwrap().code,
+            "r12_cancelled"
+        );
+        assert_ne!(
+            evidence.result.classification,
+            f017_runner::evidence::ResultClassification::Pass
+        );
+        assert!(evidence.lifecycle.reconciled);
+        assert_eq!(evidence.execution.dispatch.fallback, 0);
+    }
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[test]
+fn actual_binary_banks_backend_failure_after_reconciling_adapter_lifecycle() {
+    let fixture = fixture(false);
+    let model = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../specs/017-rust-native-inference-runtime/fixtures/f017-r12-tiny-model/model.json",
+    );
+    let out = fixture.root.join("r12-backend-error.json");
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .arg("--fixture-mode")
+        .arg(&model)
+        .args(["--numerical-mode", "production-mlx-tier-b"])
+        .env("PULSAR_F017_FIXTURE_BACKEND_ERROR", "1")
+        .status()
+        .unwrap();
+    assert_eq!(status.code(), Some(14));
+    let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+    assert_eq!(
+        evidence.result.classification,
+        f017_runner::evidence::ResultClassification::FailInfrastructureEvidence
+    );
+    assert_eq!(
+        evidence.result.first_failure.as_ref().unwrap().code,
+        "r12_backend_error"
+    );
+    assert!(evidence.lifecycle.reconciled);
+    assert_eq!(evidence.lifecycle.post.owned_stream_created, 1);
+    assert_eq!(evidence.lifecycle.post.owned_stream_freed, 1);
+    assert!(!evidence.lifecycle.post.singleton_claimed);
+}
+
 fn common_args(environment: &Path, out: &Path) -> Vec<std::ffi::OsString> {
     [
         "--out".into(),

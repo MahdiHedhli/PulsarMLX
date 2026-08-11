@@ -31,7 +31,7 @@ use {
     std::collections::BTreeMap,
     std::fs,
     std::time::Instant,
-    stream::{MlxContext, MlxDevice, MlxStreamMode},
+    stream::{MlxContext, MlxDebugStreamCounters, MlxDevice, MlxStreamMode},
 };
 
 pub fn run_tiny_model_fixture(
@@ -97,7 +97,12 @@ fn run_tiny_model_fixture_impl(
     evidence.execution.storage.read_bytes = verified.identity_bytes_read;
     evidence.execution.storage.read_count = verified.identity_read_count;
     let store = RunnerTensorStore::open(verified)?;
-    let cancellation = CancellationToken::new();
+    let mut cancellation = CancellationToken::new();
+    if std::env::var("PULSAR_F017_FIXTURE_CANCEL_AT").as_deref()
+        == Ok("before_tensor_load")
+    {
+        cancellation.cancel();
+    }
     let identity_read_count = evidence.execution.storage.read_count;
     let load_started = Instant::now();
     let mut runtime = load_runtime(
@@ -129,6 +134,7 @@ fn run_tiny_model_fixture_impl(
 
     let result = match config.numerical_mode {
         Some(crate::cli::NumericalMode::ExactQualificationScaffold) => {
+            evidence.lifecycle.reconciled = true;
             run_exact(&runtime, &model, evidence)
         }
         Some(crate::cli::NumericalMode::ProductionMlxTierB) => {
@@ -171,6 +177,7 @@ struct TinyRuntime {
     layers: Vec<LayerRuntime>,
     r11: R11Inputs,
     loaded_tensor_count: u64,
+    cancel_before_layer: Option<usize>,
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
@@ -460,6 +467,14 @@ fn load_runtime(
         layers,
         r11,
         loaded_tensor_count: 0,
+        cancel_before_layer: match std::env::var("PULSAR_F017_FIXTURE_CANCEL_AT")
+            .ok()
+            .as_deref()
+        {
+            Some("before_first_layer") => Some(0),
+            Some("after_layer_0") => Some(1),
+            _ => None,
+        },
     })
 }
 
@@ -529,9 +544,13 @@ fn read_tensor(
     let contract = contracts
         .get(name)
         .ok_or_else(|| infrastructure("r12_tensor_contract", name))?;
-    let bytes = store
-        .read_tensor_exact(name, cancellation)
-        .map_err(|error| infrastructure("r12_tensor_read", error.to_string()))?;
+    let bytes = store.read_tensor_exact(name, cancellation).map_err(|error| {
+        if error.code() == "cancelled" {
+            cancelled("r12_cancelled", error.to_string())
+        } else {
+            infrastructure("r12_tensor_read", error.to_string())
+        }
+    })?;
     if bytes.len() != contract.payload_bytes || sha256_bytes(&bytes) != contract.payload_sha256 {
         return Err(infrastructure(
             "r12_tensor_hash",
@@ -643,6 +662,7 @@ fn run_production(
     evidence: &mut Evidence,
 ) -> Result<(), RunnerError> {
     let repeats = model["deterministic_repeats"].as_u64().unwrap() as usize;
+    let exact = execute_once(runtime, None)?;
     let streams_before = MlxContext::debug_stream_counters().map_err(adapter_error)?;
     if MlxContext::debug_context_active() {
         return Err(lifecycle(
@@ -659,7 +679,13 @@ fn run_production(
         },
     )
     .map_err(adapter_error)?;
-    let exact = execute_once(runtime, None)?;
+    if std::env::var("PULSAR_F017_FIXTURE_BACKEND_ERROR").as_deref() == Ok("1") {
+        close_production_context(context, streams_before, evidence)?;
+        return Err(infrastructure(
+            "r12_backend_error",
+            "injected fixture backend error",
+        ));
+    }
     let mut first = None;
     let mut layer_seconds = vec![0.0; runtime.layers.len()];
     let mut output_head_decode_seconds = 0.0;
@@ -667,11 +693,20 @@ fn run_production(
     let mut compute_seconds = 0.0;
     let started = Instant::now();
     for _ in 0..repeats {
-        let output = execute_once(
+        let output = match execute_once(
             runtime,
             Some((&context, &mut import_seconds, &mut compute_seconds)),
-        )?;
-        validate_production(model, runtime, &exact, &output)?;
+        ) {
+            Ok(output) => output,
+            Err(error) => {
+                close_production_context(context, streams_before, evidence)?;
+                return Err(error);
+            }
+        };
+        if let Err(error) = validate_production(model, runtime, &exact, &output) {
+            close_production_context(context, streams_before, evidence)?;
+            return Err(error);
+        }
         for (total, observed) in layer_seconds.iter_mut().zip(&output.layer_seconds) {
             *total += observed;
         }
@@ -688,34 +723,7 @@ fn run_production(
     }
     output.layer_seconds = layer_seconds;
     output.output_head_decode_seconds = output_head_decode_seconds;
-    context.synchronize().map_err(adapter_error)?;
-    let ownership = context.ownership_snapshot().map_err(adapter_error)?;
-    drop(context);
-    let streams_after = MlxContext::debug_stream_counters().map_err(adapter_error)?;
-    let active = MlxContext::debug_context_active();
-    let reconciled = ownership.managed_created == ownership.managed_destroyed
-        && ownership.derived_created == ownership.derived_destroyed
-        && ownership.derived_live == 0
-        && ownership.callback_count == ownership.managed_created
-        && streams_after.owned_created - streams_before.owned_created
-            == streams_after.owned_freed - streams_before.owned_freed
-        && !active;
-    if !reconciled {
-        return Err(lifecycle(
-            "r12_lifecycle",
-            "production R12 lifecycle did not reconcile",
-        ));
-    }
-    evidence.lifecycle.post.managed_created = ownership.managed_created;
-    evidence.lifecycle.post.managed_destroyed = ownership.managed_destroyed;
-    evidence.lifecycle.post.derived_created = ownership.derived_created;
-    evidence.lifecycle.post.derived_destroyed = ownership.derived_destroyed;
-    evidence.lifecycle.post.callback_count = ownership.callback_count;
-    evidence.lifecycle.post.owned_stream_created = streams_after.owned_created;
-    evidence.lifecycle.post.owned_stream_freed = streams_after.owned_freed;
-    evidence.lifecycle.post.active_contexts = u64::from(active);
-    evidence.lifecycle.post.singleton_claimed = active;
-    evidence.lifecycle.reconciled = true;
+    close_production_context(context, streams_before, evidence)?;
     let total = started.elapsed().as_secs_f64();
     evidence
         .execution
@@ -782,7 +790,13 @@ fn execute_once(
     let mut residual = runtime.embedding.clone();
     let mut outputs = Vec::new();
     let mut layer_seconds = Vec::new();
-    for layer in &runtime.layers {
+    for (layer_index, layer) in runtime.layers.iter().enumerate() {
+        if runtime.cancel_before_layer == Some(layer_index) {
+            return Err(cancelled(
+                "r12_cancelled",
+                format!("fixture cancellation requested before layer {layer_index}"),
+            ));
+        }
         let layer_started = Instant::now();
         let mut r9_inputs = layer.r9_inputs.clone();
         r9_inputs.residual = residual;
@@ -867,6 +881,43 @@ fn production_matvec(
     matrix_array.destroy().map_err(|_| "matrix destroy")?;
     *compute_seconds += started.elapsed().as_secs_f64();
     Ok(output)
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+fn close_production_context(
+    context: MlxContext,
+    streams_before: MlxDebugStreamCounters,
+    evidence: &mut Evidence,
+) -> Result<(), RunnerError> {
+    context.synchronize().map_err(adapter_error)?;
+    let ownership = context.ownership_snapshot().map_err(adapter_error)?;
+    drop(context);
+    let streams_after = MlxContext::debug_stream_counters().map_err(adapter_error)?;
+    let active = MlxContext::debug_context_active();
+    let reconciled = ownership.managed_created == ownership.managed_destroyed
+        && ownership.derived_created == ownership.derived_destroyed
+        && ownership.derived_live == 0
+        && ownership.callback_count == ownership.managed_created
+        && streams_after.owned_created - streams_before.owned_created
+            == streams_after.owned_freed - streams_before.owned_freed
+        && !active;
+    evidence.lifecycle.post.managed_created = ownership.managed_created;
+    evidence.lifecycle.post.managed_destroyed = ownership.managed_destroyed;
+    evidence.lifecycle.post.derived_created = ownership.derived_created;
+    evidence.lifecycle.post.derived_destroyed = ownership.derived_destroyed;
+    evidence.lifecycle.post.callback_count = ownership.callback_count;
+    evidence.lifecycle.post.owned_stream_created = streams_after.owned_created;
+    evidence.lifecycle.post.owned_stream_freed = streams_after.owned_freed;
+    evidence.lifecycle.post.active_contexts = u64::from(active);
+    evidence.lifecycle.post.singleton_claimed = active;
+    evidence.lifecycle.reconciled = reconciled;
+    if !reconciled {
+        return Err(lifecycle(
+            "r12_lifecycle",
+            "production R12 lifecycle did not reconcile",
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
@@ -1090,6 +1141,11 @@ fn numerical(code: &'static str, message: impl ToString) -> RunnerError {
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
 fn lifecycle(code: &'static str, message: impl ToString) -> RunnerError {
     RunnerError::new(FailureClass::LifecycleOwnership, code, message.to_string())
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+fn cancelled(code: &'static str, message: impl ToString) -> RunnerError {
+    RunnerError::new(FailureClass::Cancelled, code, message.to_string())
 }
 
 #[cfg(not(all(target_os = "macos", pulsar_native_mlx)))]
