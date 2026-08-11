@@ -4,6 +4,7 @@ pub mod evidence;
 pub mod fixture;
 pub mod glm52_map;
 pub mod json;
+pub mod qualification;
 pub mod store;
 
 use crate::checkpoint::{CheckpointKind, CheckpointManifest, VerifiedCheckpoint};
