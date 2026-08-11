@@ -51,4 +51,3 @@ the reviewed content hash and identify the actually loaded pinned libraries.
 This handoff does not authorize M1-B. M1-B requires review of M1-A evidence and
 a separate prompt. T017-140/M1-C, T017-141/P1 command publication, P1,
 Feature 018 integration, and output-head residency remain blocked.
-

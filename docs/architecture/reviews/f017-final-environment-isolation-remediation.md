@@ -120,4 +120,3 @@ Do the authoritative mode/environment policy, early rejection, PASS validator
 defense, explicit fixture identity mode, zero-checkpoint-open proof, and
 Apple-native execution of both loaded-library identity tests close the final
 pre-M1-A implementation blockers?
-
