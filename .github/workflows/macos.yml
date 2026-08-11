@@ -56,7 +56,6 @@ jobs:
           scripts/ci/install_native_mlx.sh "$RUNNER_TEMP/pulsar-native-mlx"
           echo "MLX_C_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
           echo "MLX_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
-          echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/pulsar-native-mlx/lib" >> "$GITHUB_ENV"
       - name: Install pinned uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
@@ -101,6 +100,8 @@ jobs:
             --check
           cargo test -p engine --test f017_independent_oracle -- --nocapture
       - name: Execute required native MLX adapter matrix
+        env:
+          DYLD_LIBRARY_PATH: ${{ runner.temp }}/pulsar-native-mlx/lib
         run: |
           echo "PULSAR_REQUIRE_NATIVE_MLX=1; executing native adapter tests (no skip permitted)"
           test -f "$MLX_C_PREFIX/include/mlx/c/mlx.h"
