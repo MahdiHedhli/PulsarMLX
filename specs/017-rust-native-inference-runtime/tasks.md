@@ -98,11 +98,11 @@
 - [x] T017-102 Commit a source-backed real-checkpoint runner gap analysis.
 - [x] T017-103 Freeze the canonical runner CLI, exit-class, evidence, and mode contract.
 - [x] T017-104 Define versioned runner evidence schema and duplicate-key rule.
-- [ ] T017-110 Add dedicated `f017-glm52-runner` crate and strict CLI parser.
-- [ ] T017-111 Add atomic evidence/progress writer and deterministic validator.
-- [ ] T017-112 Add immutable fake multi-shard checkpoint manifest and identity parser.
-- [ ] T017-113 Compose GGUF catalog and positional tensor store with exact range/hash evidence.
-- [ ] T017-114 Add runner dry-run and checkpoint-identity-only vertical slices.
+- [x] T017-110 Add dedicated `f017-glm52-runner` crate and strict CLI parser.
+- [x] T017-111 Add atomic evidence/progress writer and deterministic validator.
+- [x] T017-112 Add immutable fake multi-shard checkpoint manifest and identity parser.
+- [x] T017-113 Compose GGUF catalog and positional tensor store with exact range/hash evidence.
+- [x] T017-114 Add runner dry-run and checkpoint-identity-only vertical slices.
 - [ ] T017-120 Bind adapter-preflight-only to the production F017 adapter with zero-state/reconciliation evidence.
 - [ ] T017-121 Add the smallest typed MLX compute operation required by the real-shaped projection gate.
 - [ ] T017-122 Pass R5 production-adapter projection against the independent oracle.

@@ -21,9 +21,10 @@
     "identity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source_sha", "runner_version", "environment_manifest_sha256", "platform", "toolchain", "checkpoint"],
+      "required": ["source_sha", "source_clean", "runner_version", "environment_manifest_sha256", "platform", "toolchain", "checkpoint"],
       "properties": {
         "source_sha": { "$ref": "#/$defs/sha256OrGit" },
+        "source_clean": { "type": "boolean" },
         "runner_version": { "type": "string", "minLength": 1 },
         "environment_manifest_sha256": { "$ref": "#/$defs/sha256" },
         "platform": { "type": "object" },
