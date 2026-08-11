@@ -108,19 +108,36 @@ pub fn run_r11_exact(inputs: &R11Inputs) -> Result<R11Output, R11Error> {
     })
 }
 
-pub fn run_r11_with_matvec<F>(inputs: &R11Inputs, mut matvec: F) -> Result<R11Output, R11Error>
+pub fn run_r11_with_matvec<F>(inputs: &R11Inputs, matvec: F) -> Result<R11Output, R11Error>
 where
     F: FnMut(&[f32], usize, usize, &[f32], &'static str) -> Result<Vec<f32>, R11Error>,
 {
-    if inputs.final_hidden.is_empty()
-        || inputs.final_hidden.len() != inputs.output_norm_scale.len()
-        || inputs.output_columns != inputs.final_hidden.len()
-        || inputs.top_k == 0
-        || inputs.top_k > inputs.output_rows
-        || !inputs.rms_epsilon.is_finite()
-        || inputs.rms_epsilon <= 0.0
+    validate_inputs(inputs)?;
+    let decoded_output_head = decode_q4_k_matrix(
+        &inputs.output_head_packed,
+        inputs.output_rows,
+        inputs.output_columns,
+    )?;
+    run_r11_with_decoded_matvec(inputs, decoded_output_head, matvec)
+}
+
+pub fn run_r11_with_decoded_matvec<F>(
+    inputs: &R11Inputs,
+    decoded_output_head: Vec<f32>,
+    mut matvec: F,
+) -> Result<R11Output, R11Error>
+where
+    F: FnMut(&[f32], usize, usize, &[f32], &'static str) -> Result<Vec<f32>, R11Error>,
+{
+    validate_inputs(inputs)?;
+    let expected_elements = inputs
+        .output_rows
+        .checked_mul(inputs.output_columns)
+        .ok_or(R11Error::InvalidShape("q4_k_output"))?;
+    if decoded_output_head.len() != expected_elements
+        || decoded_output_head.iter().any(|value| !value.is_finite())
     {
-        return Err(R11Error::InvalidShape("R11 inputs"));
+        return Err(R11Error::Decode);
     }
     let normalized = exact_rms_norm_f32(
         &inputs.final_hidden,
@@ -128,11 +145,6 @@ where
         inputs.rms_epsilon,
     )
     .map_err(|_| R11Error::InvalidShape("final_rms_norm"))?;
-    let decoded_output_head = decode_q4_k_matrix(
-        &inputs.output_head_packed,
-        inputs.output_rows,
-        inputs.output_columns,
-    )?;
     let logits = matvec(
         &decoded_output_head,
         inputs.output_rows,
@@ -153,6 +165,20 @@ where
         top_k_ids,
         top_k_scores,
     })
+}
+
+fn validate_inputs(inputs: &R11Inputs) -> Result<(), R11Error> {
+    if inputs.final_hidden.is_empty()
+        || inputs.final_hidden.len() != inputs.output_norm_scale.len()
+        || inputs.output_columns != inputs.final_hidden.len()
+        || inputs.top_k == 0
+        || inputs.top_k > inputs.output_rows
+        || !inputs.rms_epsilon.is_finite()
+        || inputs.rms_epsilon <= 0.0
+    {
+        return Err(R11Error::InvalidShape("R11 inputs"));
+    }
+    Ok(())
 }
 
 pub fn stable_top_k(logits: &[f32], count: usize) -> Result<Vec<usize>, R11Error> {
