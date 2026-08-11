@@ -108,11 +108,7 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
             Ok(())
         }
         RunnerMode::CheckpointIdentity => verify_checkpoint_mode(&config, &mut evidence),
-        RunnerMode::AdapterPreflight => Err(RunnerError::new(
-            FailureClass::InfrastructureEvidence,
-            "adapter_preflight_not_implemented",
-            "R1 adapter preflight is not yet bound to the canonical runner",
-        )),
+        RunnerMode::AdapterPreflight => run_adapter_preflight(&config, &mut evidence),
         RunnerMode::Fixture { .. } => Err(RunnerError::new(
             FailureClass::InfrastructureEvidence,
             "fixture_mode_not_implemented",
@@ -146,6 +142,66 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
             Err(error)
         }
     }
+}
+
+fn run_adapter_preflight(config: &Config, evidence: &mut Evidence) -> Result<(), RunnerError> {
+    let mode = match config.stream_mode {
+        cli::StreamMode::DefaultGpu => stream::NativeMlxPreflightMode::DefaultGpu,
+        cli::StreamMode::OwnedDevice => stream::NativeMlxPreflightMode::OwnedDevice,
+    };
+    let report = stream::run_native_mlx_preflight(mode).map_err(|error| {
+        let (class, code) = if error.contains("was not compiled") {
+            (FailureClass::AdmissionEnvironment, "native_mlx_unavailable")
+        } else {
+            (FailureClass::LifecycleOwnership, "adapter_preflight_failed")
+        };
+        RunnerError::new(class, code, error)
+    })?;
+    if report.default_cpu_created_before != 0
+        || report.default_cpu_freed_before != 0
+        || report.default_gpu_created_before != 0
+        || report.default_gpu_freed_before != 0
+        || report.owned_created_before != 0
+        || report.owned_freed_before != 0
+        || report.context_initially_active
+    {
+        return Err(RunnerError::new(
+            FailureClass::LifecycleOwnership,
+            "adapter_preflight_nonzero_baseline",
+            "fresh adapter-preflight process did not begin at zero state",
+        ));
+    }
+    evidence.admission.singleton_initially_unclaimed = true;
+    evidence.lifecycle.pre.default_cpu_stream_created = report.default_cpu_created_before;
+    evidence.lifecycle.pre.default_cpu_stream_freed = report.default_cpu_freed_before;
+    evidence.lifecycle.pre.default_gpu_stream_created = report.default_gpu_created_before;
+    evidence.lifecycle.pre.default_gpu_stream_freed = report.default_gpu_freed_before;
+    evidence.lifecycle.pre.owned_stream_created = report.owned_created_before;
+    evidence.lifecycle.pre.owned_stream_freed = report.owned_freed_before;
+    evidence.lifecycle.post.managed_created = report.managed_created;
+    evidence.lifecycle.post.managed_destroyed = report.managed_destroyed;
+    evidence.lifecycle.post.derived_created = report.derived_created;
+    evidence.lifecycle.post.derived_destroyed = report.derived_destroyed;
+    evidence.lifecycle.post.callback_count = report.callback_count;
+    evidence.lifecycle.post.default_cpu_stream_created = report.default_cpu_created_after;
+    evidence.lifecycle.post.default_cpu_stream_freed = report.default_cpu_freed_after;
+    evidence.lifecycle.post.default_gpu_stream_created = report.default_gpu_created_after;
+    evidence.lifecycle.post.default_gpu_stream_freed = report.default_gpu_freed_after;
+    evidence.lifecycle.post.owned_stream_created = report.owned_created_after;
+    evidence.lifecycle.post.owned_stream_freed = report.owned_freed_after;
+    evidence.lifecycle.post.active_contexts = u64::from(report.context_active_after);
+    evidence.lifecycle.post.singleton_claimed = report.context_active_after;
+    evidence.lifecycle.reconciled = report.reconciled();
+    evidence.execution.dispatch.native = 1;
+    evidence.execution.progress_state = "adapter_preflight_complete".to_owned();
+    if !evidence.lifecycle.reconciled {
+        return Err(RunnerError::new(
+            FailureClass::LifecycleOwnership,
+            "adapter_preflight_reconciliation",
+            "production adapter preflight did not return to zero",
+        ));
+    }
+    Ok(())
 }
 
 fn verify_checkpoint_mode(config: &Config, evidence: &mut Evidence) -> Result<(), RunnerError> {

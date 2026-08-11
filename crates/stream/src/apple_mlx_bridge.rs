@@ -48,6 +48,7 @@ unsafe extern "C" {
         error_buffer: *mut c_char,
         error_capacity: usize,
     ) -> i32;
+    fn pulsar_mlx_debug_context_active() -> i32;
     fn pulsar_mlx_debug_fail_next_after_stream_create();
     fn pulsar_mlx_validate_f32_count(
         count: usize,
@@ -250,6 +251,10 @@ impl MlxContext {
             owned_created,
             owned_freed,
         })
+    }
+
+    pub fn debug_context_active() -> bool {
+        unsafe { pulsar_mlx_debug_context_active() != 0 }
     }
 
     #[doc(hidden)]

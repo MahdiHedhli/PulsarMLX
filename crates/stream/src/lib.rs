@@ -96,6 +96,11 @@ pub use apple_mlx_bridge::{
     MlxOwnershipSnapshot, MlxStreamMode,
 };
 
+mod apple_mlx_preflight;
+pub use apple_mlx_preflight::{
+    run_native_mlx_preflight, NativeMlxPreflightMode, NativeMlxPreflightReport,
+};
+
 /// Build the universe of per-expert slab reads for every streamed layer of
 /// a MoE gguf: for each routed-expert tensor (gate/up/down) of each layer,
 /// one Read per expert. Mirrors ds4's expert addressing: slab e lives at

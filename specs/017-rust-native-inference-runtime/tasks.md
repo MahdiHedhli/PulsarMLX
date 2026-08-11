@@ -103,7 +103,7 @@
 - [x] T017-112 Add immutable fake multi-shard checkpoint manifest and identity parser.
 - [x] T017-113 Compose GGUF catalog and positional tensor store with exact range/hash evidence.
 - [x] T017-114 Add runner dry-run and checkpoint-identity-only vertical slices.
-- [ ] T017-120 Bind adapter-preflight-only to the production F017 adapter with zero-state/reconciliation evidence.
+- [x] T017-120 Bind adapter-preflight-only to the production F017 adapter with zero-state/reconciliation evidence.
 - [ ] T017-121 Add the smallest typed MLX compute operation required by the real-shaped projection gate.
 - [ ] T017-122 Pass R5 production-adapter projection against the independent oracle.
 - [ ] T017-130 Add fully validated 79-layer `glm-dsa` tensor map.

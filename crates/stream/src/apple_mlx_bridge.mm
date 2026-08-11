@@ -538,6 +538,10 @@ int pulsar_mlx_debug_stream_counters(
     return 0;
 }
 
+int pulsar_mlx_debug_context_active() {
+    return context_active.load(std::memory_order_acquire) ? 1 : 0;
+}
+
 void pulsar_mlx_debug_fail_next_after_stream_create() {
     fail_next_after_stream_create.store(true, std::memory_order_release);
 }
