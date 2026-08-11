@@ -1,6 +1,7 @@
 pub mod checkpoint;
 pub mod cli;
 pub mod evidence;
+pub mod final_output_qualification;
 pub mod fixture;
 pub mod glm52_map;
 pub mod json;
