@@ -8,7 +8,9 @@ closed and exactly one bounded M1 Ultra P1 is admitted.
 
 - Prior reviewed SHA: `0e59d9786b96ce0aaad513bae71702a57ef23b6f`.
 - Branch: `feat/017-rust-native-inference-runtime`.
-- Final SHA and final CI run: populated after the required native CI run.
+- Verified implementation SHA:
+  `47575474b52b68f6f1a8ab7f4d373c598024212a`.
+- Required native CI run: `31449698582` (success).
 - Historical run `31437864529` targeted
   `b7585de3cd431f448c39eeb0a46df5d1a87acc6a` and passed, but native MLX tests
   skipped; it is not final-gate evidence.
@@ -64,12 +66,21 @@ registrations/teardowns, in-flight work, and native-ready generations.
 
 ## Final CI evidence
 
-Final CI must build official MLX v0.31.2 and MLX C v0.6.0 source commits plus
-the hash-verified upstream patch set from the Homebrew `0.6.0_2` recipe, set
-`PULSAR_REQUIRE_NATIVE_MLX=1`, execute the native adapter matrix without skip,
-validate deterministic oracle regeneration, and pass both Apple jobs. Final
-SHA, run ID, job names, and execution log lines are populated only after that
-run succeeds.
+- Run: `31449698582`, success, head
+  `47575474b52b68f6f1a8ab7f4d373c598024212a`.
+- URL: <https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31449698582>.
+- `Apple MLX small-fixture validation` job `93651317894`: success.
+- `Apple Silicon workspace baseline` job `93651317916`: success.
+- The native job built official MLX v0.31.2 and MLX C v0.6.0 source commits
+  plus the hash-verified upstream patch set from Homebrew `0.6.0_2`.
+- The native log states
+  `PULSAR_REQUIRE_NATIVE_MLX=1; executing native adapter tests (no skip permitted)`.
+- Native adapter result: `9 passed; 0 failed; 0 ignored`.
+- Independent-oracle results: Python `Ran 2 tests ... OK`; Rust
+  `3 passed; 0 failed; 0 ignored`.
+- The dedicated native job did not skip native tests. The separate workspace
+  baseline intentionally compiles without MLX C and reports its existing skip;
+  that skip is not used as native qualification evidence.
 
 ## Decision requested
 
