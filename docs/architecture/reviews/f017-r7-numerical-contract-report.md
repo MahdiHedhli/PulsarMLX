@@ -51,9 +51,11 @@ fallback count was zero.
 
 ## Evidence schema and modes
 
-Runner evidence schema `1.1.0` records explicit numerical mode, oracle and
+Runner evidence schema `1.2.0` records explicit numerical mode, oracle and
 scaffold identities, backend/contract versions, mismatches, error metrics,
-deterministic repeats, first divergence, and classification. The runner
+deterministic repeats, first divergence, classification, greedy applicability,
+and exact top-k/argmax identity when applicable. It rejects greedy-identical
+classification at a non-applicable boundary. The runner
 requires one of `exact-qualification-scaffold` or `production-mlx-tier-b`;
 production cannot silently fall back to the scaffold.
 

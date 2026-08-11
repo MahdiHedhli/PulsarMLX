@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.f017.numerical-classification-reconciliation",
+  "schema_version": "1.0.0",
+  "baseline_ref": "a572a2d560f5bc33f823e74c3bbc95ff2b164314",
+  "allowed_changes": [
+    "classification",
+    "greedy_applicability"
+  ],
+  "numerical_payload_unchanged": true,
+  "files": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/fixtures/f017-r7-tier-b-result-v1.json",
+      "old_sha256": "fb6d3399e47fbfa7445860c620ddf0d9a0e4c0be5522fa8b0051f259f2242e45",
+      "new_sha256": "9e70aad09f23252bc296b79912441501a7dfe88db617a737e51666d321fb16bf",
+      "unchanged_numerical_payload_sha256": "c0e42c98bd8f3f27ad496769eff0177463d0bfefc1fd81364fabbdc9853e7336",
+      "old_classification": "numerically_qualified_greedy_identical",
+      "new_classification": "numerically_qualified_greedy_not_applicable",
+      "greedy_applicability": "not_applicable"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-r8-top8-shared-production-v1.json",
+      "old_sha256": "427a3f2caf76bcb8e54cb5d8a853c0e26e4ec5989cb8afb612e76c98644ac4e4",
+      "new_sha256": "6970f85cadcfa2ce8c4e36b0493869e1858feec67b30eaf8985e00429b2b67bf",
+      "unchanged_numerical_payload_sha256": "7d65d99cbd39a06be5f3f07e1e1d7b1276919f855c428fbc8406cc4ae042f216",
+      "old_classification": "numerically_qualified_greedy_identical",
+      "new_classification": "numerically_qualified_greedy_not_applicable",
+      "greedy_applicability": "not_applicable"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json",
+      "old_sha256": "b37a5b9705176d353e0ef3132954ff214d12fda25e2e6881628f665ade50c792",
+      "new_sha256": "2a0fb632db94ee4d77b6d7c62472855ce3a27aa19d9a81a2bf5e5814602ead1b",
+      "unchanged_numerical_payload_sha256": "f44756739abd0c0a080530cc39aa01f8431ba931683c35dbc2c8724bd5ab22ea",
+      "old_classification": "numerically_qualified_greedy_identical",
+      "new_classification": "numerically_qualified_greedy_not_applicable",
+      "greedy_applicability": "not_applicable"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-r10-complete-layer-production-v1.json",
+      "old_sha256": "c8ffaafc28b32592eed0c205bced51c83555fd8d507a0276a3a534652e84b34d",
+      "new_sha256": "332b1268ddc0b16b16f3183c983e0f9901f40d2bdf6cd5c7277d050e8d6e01b6",
+      "unchanged_numerical_payload_sha256": "d1e605fa363bcac7f7375a926a563d528ef4542f1c95b0c273390ebf9689db83",
+      "old_classification": "numerically_qualified_greedy_identical",
+      "new_classification": "numerically_qualified_greedy_not_applicable",
+      "greedy_applicability": "not_applicable"
+    }
+  ]
+}

@@ -9,7 +9,7 @@
   "numerical_mode": "production_mlx_tier_b",
   "production_backend_version": "mlx-c-matmul; mlx-native-0.31.2; mlx-c-0.6.0",
   "frozen_contract_version": "f017-production-expert-tier-b-v1",
-  "classification": "numerically_qualified_greedy_identical",
+  "classification": "numerically_qualified_greedy_not_applicable",
   "greedy_applicability": "not_applicable",
   "deterministic_repeat_count": 10,
   "unexpected_fallback_count": 0,

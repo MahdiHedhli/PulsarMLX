@@ -118,6 +118,8 @@
 - [x] T017-131H Admit and run only checkpoint-free R8 if every R7 gate passes.
 - [x] T017-131 Compose router and complete expert runtime boundaries R6-R8.
 - [x] T017-132 Compose MLA/DSA and complete layer runtime boundaries R9-R10.
+- [x] T017-132R Add fail-closed greedy-applicability vocabulary and
+  mechanically reconcile R7-R10 without changing numerical payloads.
 - [ ] T017-133 Compose final norm/logits/top-k runtime boundary R11.
 - [ ] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
 - [ ] T017-140 Add local-only real boundary fixture manifest/validator for R13.

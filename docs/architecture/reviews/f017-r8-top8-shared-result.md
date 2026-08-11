@@ -19,7 +19,9 @@ and qualified all eight routed experts plus one shared expert under the frozen
 - Both aggregate boundaries stayed within propagated frozen bounds, including
   the independently bounded router-weight transport difference.
 - Ten identical executions produced deterministic output bits.
-- Classification: `numerically_qualified_greedy_identical`.
+- Classification: `numerically_qualified_greedy_not_applicable`. The exact
+  routed expert IDs are architecture evidence, not a model-token greedy
+  decision.
 
 ## Dispatch and lifecycle
 
@@ -39,7 +41,7 @@ model performance evidence.
 - Production result:
   `docs/architecture/reviews/evidence/f017-r8-top8-shared-production-v1.json`
 - Production result SHA-256:
-  `427a3f2caf76bcb8e54cb5d8a853c0e26e4ec5989cb8afb612e76c98644ac4e4`
+  `445e6015f275e0afc29a19db79cf0ec88e6445ea2cc975dece808d17ffb9152e`
 
 The original v1 oracle remains committed as the rejected decimal-only f64
 transport record. It was rejected before candidate execution because two

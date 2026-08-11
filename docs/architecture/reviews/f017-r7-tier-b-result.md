@@ -14,8 +14,8 @@ tolerance. The independent stress suite was already frozen before this run
 and passed bit-exactly.
 
 The stable repository classification is
-`numerically_qualified_greedy_identical`; greedy applicability at standalone
-R7 is explicitly `not_applicable`. The run was deterministic across 10
+`numerically_qualified_greedy_not_applicable`; greedy applicability at
+standalone R7 is explicitly `not_applicable`. The run was deterministic across 10
 executions, used no fallback or checkpoint, and reconciled all adapter
 ownership and stream counters.
 

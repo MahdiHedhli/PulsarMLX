@@ -111,8 +111,9 @@ Current boundary: R6-R10 are composed checkpoint-free. The permanent exact-order
 qualification scaffold is bit-identical to the independent R7, R9, and R10
 oracles. Production R7/R8 qualify under the frozen expert Tier-B contract; R9
 MLA/DSA and R10 complete-layer execution qualify under separately frozen,
-fail-closed composition contracts with ten deterministic repeats. R9/R10 remain
-pending adversarial numerical review. R11/R12 are the next checkpoint-free
+fail-closed composition contracts with ten deterministic repeats. The
+adversarial review accepted the numerical evidence subject to the now-applied
+classification-vocabulary remediation. R11/R12 are the next checkpoint-free
 gates; no checkpoint or M1 model time is admitted.
 
 ## Final phase

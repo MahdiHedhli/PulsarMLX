@@ -1,9 +1,12 @@
 # Feature 017 R7 adversarial numerical review packet
 
-> Downstream review addendum: checkpoint-free R9 MLA/DSA and R10 complete-layer
-> evidence now also pass their separately frozen contracts. They remain pending
-> this same adversarial numerical review and must be treated as exploratory if
-> the reviewer rejects the R7/R8 foundation. See
+> Review closeout addendum: the reviewer returned **GO WITH REQUIRED FIXES**.
+> The numerical evidence, exact scaffold, attribution, Tier-B derivation,
+> stress suite, R7/R8 results, lifecycle, and provenance were accepted. The
+> required fix was a machine-readable classification/applicability mismatch;
+> no numerical rerun or threshold change was requested. Checkpoint-free R9
+> MLA/DSA and R10 complete-layer evidence inherit the accepted contract after
+> this remediation. See
 > `docs/architecture/reviews/f017-r9-r10-numerical-boundary-report.md` and its
 > linked machine-readable evidence. No contract threshold was changed.
 
@@ -62,11 +65,12 @@ sign changes, shapes 1/2/4/8/32, and a near tie. All were bit-identical across
 
 ## Production classifications
 
-- R7: `numerically_qualified_greedy_identical`; greedy applicability is
+- R7: `numerically_qualified_greedy_not_applicable`; greedy applicability is
   `not_applicable` at the standalone expert boundary.
-- R8: `numerically_qualified_greedy_identical`; router IDs agree exactly,
+- R8: `numerically_qualified_greedy_not_applicable`; router IDs agree exactly,
   routing weights satisfy the frozen `1e-12` bound, all nine experts qualify,
-  and routed/shared aggregation remains inside propagated bounds.
+  and routed/shared aggregation remains inside propagated bounds. Router IDs
+  are internal architecture selections, not model-token greedy identity.
 - Both runs record zero fallback, deterministic repeats, reconciled lifecycle,
   and no checkpoint access.
 
@@ -88,5 +92,17 @@ mathematics. This is an evidence-transport correction, not threshold tuning.
 - `docs/architecture/reviews/f017-r7-tier-b-result.md`
 - `docs/architecture/reviews/f017-r8-top8-shared-result.md`
 
-Independent adversarial review of this packet remains pending; its existence
-must not be described as reviewer approval.
+## Required-fix closeout
+
+The reviewer found that the former
+`numerically_qualified_greedy_identical` label contradicted
+`greedy_applicability: not_applicable`. Schema version `1.2.0` adds
+`numerically_qualified_greedy_not_applicable` and fails closed on inconsistent
+classification, applicability, or missing top-k/argmax identity evidence.
+R7-R10 were mechanically reclassified. The reconciliation manifest proves
+that their metrics, thresholds, fixtures, oracle data, output data, fallback
+counts, and lifecycle counters are unchanged.
+
+The review blocker is resolved after the remediation tests and final-head CI
+pass. This clears R9/R10 inheritance and R11/R12 checkpoint-free work only; it
+does not admit a real checkpoint or P1.

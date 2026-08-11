@@ -1,6 +1,7 @@
 # Feature 017 R9 MLA/DSA result
 
-Status: **checkpoint-free R9 passed; pending adversarial numerical review**.
+Status: **checkpoint-free R9 passed; numerical inheritance cleared by the
+R7/R8 vocabulary remediation**.
 
 ## Frozen inputs
 
@@ -28,7 +29,7 @@ Ten identical production repetitions completed with 60 native MLX matvec
 dispatches, zero explicit-reference dispatches, zero unexpected fallbacks, and
 zero backend errors. Each matvec independently passed the frozen
 operand-conditioned Tier-B rule. The composed boundary classified
-`numerically_qualified_greedy_identical`:
+`numerically_qualified_greedy_not_applicable`:
 
 | Metric | Observed |
 |---|---:|
@@ -49,10 +50,10 @@ in-flight work after teardown.
 
 ## Promotion boundary
 
-R10 complete-layer fixture generation is now eligible. R9 remains labeled
-pending adversarial numerical review; reviewer rejection blocks downstream
-promotion and does not authorize changing the frozen contract or rewriting
-this evidence.
+The adversarial reviewer accepted the numerical evidence with a required
+classification-vocabulary fix. That mechanical remediation is now applied;
+no numerical value, threshold, fixture, or production output changed. R9/R10
+inheritance is cleared after the remediation validators and final-head CI pass.
 
 Machine-readable evidence:
 `docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json`.

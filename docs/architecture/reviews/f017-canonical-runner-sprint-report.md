@@ -2,8 +2,9 @@
 
 > Status update: the original R7 block documented below has been resolved by
 > the exact-order scaffold and independently frozen Tier-B contract. R8, R9
-> MLA/DSA, and R10 complete-layer execution now pass checkpoint-free. R9/R10
-> are pending adversarial numerical review. See
+> MLA/DSA, and R10 complete-layer execution now pass checkpoint-free. The
+> adversarial reviewer accepted the numerical evidence subject to the
+> fail-closed classification-vocabulary remediation. See
 > `docs/architecture/reviews/f017-r9-r10-numerical-boundary-report.md`. The
 > historical text below is retained to preserve the original sprint stop.
 

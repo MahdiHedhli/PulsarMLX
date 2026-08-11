@@ -11908,7 +11908,8 @@
       }
     }
   ],
-  "classification": "numerically_qualified_greedy_identical",
+  "classification": "numerically_qualified_greedy_not_applicable",
+  "greedy_applicability": "not_applicable",
   "direct_native_dispatch_count": 340,
   "qualification_scaffold_dispatch_count": 374,
   "explicit_reference_dispatch_count": 0,

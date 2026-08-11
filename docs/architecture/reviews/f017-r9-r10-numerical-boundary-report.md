@@ -8,9 +8,11 @@ selection/state semantics. R10 composes that production attention result with
 post-attention RMSNorm, GLM sigmoid+bias top-8 routing, eight routed experts,
 one shared expert, deterministic aggregation, and the final residual.
 
-Both results remain **pending adversarial numerical review**. No checkpoint was
-accessed, no M1 model-time boundary was admitted, and no Feature 018 kernel or
-output-head residency path was included.
+The adversarial numerical review accepted the underlying evidence with one
+required classification-vocabulary repair. That repair is now applied: R9 and
+R10 are numerically qualified with model-token greedy selection not applicable.
+No checkpoint was accessed, no M1 model-time boundary was admitted, and no
+Feature 018 kernel or output-head residency path was included.
 
 ## Source and fixtures
 
@@ -67,7 +69,8 @@ R10 branch; the test does not substitute the frozen attention output after the
 native branch begins.
 
 Ten complete-layer production repeats classified
-`numerically_qualified_greedy_identical`:
+`numerically_qualified_greedy_not_applicable`. The exact expert routing IDs
+remain separately recorded architecture evidence:
 
 | Measure | Result |
 |---|---:|
@@ -118,10 +121,13 @@ backend errors, fallback, and lifecycle imbalance are hard failures.
 
 ## Review and next gate
 
-The R7/R8 adversarial numerical review is still pending, and the review packet
-now includes R9/R10 as downstream pending evidence. Reviewer rejection stops
-promotion; it does not authorize threshold changes or history rewriting.
+The R7/R8 adversarial numerical review accepted the numerical evidence with a
+required machine-readable vocabulary fix. The fail-closed remediation rejects
+greedy-identical classification at a non-applicable boundary and changes no
+threshold, metric, oracle value, fixture value, or production output.
 
-T017-132 is complete. The exact next checkpoint-free gate is R11/R12:
+T017-132 is complete and its numerical inheritance is cleared after the
+remediation validators and final-head CI pass. The exact next checkpoint-free
+gate is R11/R12:
 independent final norm/logits/top-k followed by the tiny actual-runner
 end-to-end fixture. No real checkpoint, P1 command, or M1 model time is admitted.
