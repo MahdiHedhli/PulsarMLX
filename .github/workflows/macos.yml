@@ -108,6 +108,13 @@ jobs:
           test -f "$MLX_PREFIX/lib/libmlx.dylib"
           cargo test -p stream --test apple_mlx_bridge -- --nocapture
           cargo test -p stream --test apple_metal_bridge -- --nocapture
+      - name: Execute canonical F017 runner projection gate
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          cargo test -p f017-runner --test checkpoint_runner \
+            actual_binary_passes_independent_projection_through_production_adapter \
+            -- --exact --nocapture
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
