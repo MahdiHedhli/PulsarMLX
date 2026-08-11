@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.pre-m1-remediation-reconciliation",
+  "schema_version": "1.0.0",
+  "starting_source_sha": "74cd1f3af3538dfdff0fa1343542a9ec7656c0ef",
+  "checkpoint_accessed": false,
+  "numerical_thresholds_unchanged": true,
+  "numerical_metrics_unchanged": true,
+  "r12": {
+    "exact": {
+      "historical_artifact": "docs/architecture/reviews/evidence/f017-r12-tiny-model-exact-v1.json",
+      "historical_sha256": "b280ebfaacf776201d08b104efb1db6954a71a7eb7d9d74c86c2f4ae299aeb17",
+      "remediated_artifact": "docs/architecture/reviews/evidence/f017-r12-tiny-model-exact-v2.json",
+      "remediated_sha256": "b2dc94fe3d9467b2a38fd071d4ffa0b78ba5c400ab17d78f4c069b9eb81e9cac"
+    },
+    "production": {
+      "historical_artifact": "docs/architecture/reviews/evidence/f017-r12-tiny-model-production-v1.json",
+      "historical_sha256": "87ba02df98ccba3572a8687d2e73961496449ce9a6e81ec6a62e5cedb0d6ed0f",
+      "remediated_artifact": "docs/architecture/reviews/evidence/f017-r12-tiny-model-production-v2.json",
+      "remediated_sha256": "182340d0054fd556bd6abaf500e93b4b396ca8e0c4b8a8f9d282eb550fae2c7f"
+    },
+    "unchanged_payload": [
+      "generated_token",
+      "routing_ids",
+      "numerical_metrics",
+      "candidate_outputs",
+      "fallback_and_error_counts",
+      "ownership_and_stream_counts"
+    ],
+    "expected_changes": [
+      "schema_version",
+      "source_identity",
+      "fresh_timings",
+      "lifecycle_applicability",
+      "complete_contract_bindings",
+      "production_scaffold_removal"
+    ]
+  },
+  "contract_bindings": {
+    "f017-production-expert-tier-b-v1": "1953adbf822a21f7fa4f8d569432e747c8c43c9fd273589bec8849b57475cee2",
+    "f017-production-r9-tier-b-v2": "56dd1e9a51752045d2f01e7c964b2d13ffbee0303bd459e734d2f7d7ae7797a1",
+    "f017-production-r10-tier-b-v2": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+    "f017-production-r11-tier-b-v1": "754b67aa10235d958ddce09f9ec0bb82f22138a3c3e5227a694a585da1aebece"
+  },
+  "historical_ci": {
+    "run_id": 31540615532,
+    "source_sha": "74cd1f3af3538dfdff0fa1343542a9ec7656c0ef",
+    "conclusion": "success",
+    "native_tests_executed": true
+  },
+  "review_state": {
+    "T017-140": "open",
+    "T017-141": "open",
+    "T017-160": "open",
+    "T017-161": "open",
+    "M1-A": "blocked_pending_reviews",
+    "M1-B": "blocked_pending_M1-A_review_and_explicit_authorization",
+    "M1-C": "blocked",
+    "P1": "blocked"
+  }
+}

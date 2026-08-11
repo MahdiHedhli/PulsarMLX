@@ -122,6 +122,15 @@ fallback, and reconciled lifecycle accounting. The next gate is internal plus
 independent adversarial review; no real checkpoint or M1-C/P1 model time is
 admitted.
 
+Pre-M1 remediation status: production admission now uses measured host
+telemetry and hard gates; the reviewed environment manifest and actually
+loaded MLX libraries are verified; evidence output is exclusively acquired;
+PASS is persisted only after teardown and dispatch reconciliation; identity
+mode validates the complete production `Glm52TensorMap`; and R12 production no
+longer invokes the qualification scaffold. T017-140, T017-141, T017-160, and
+T017-161 remain open. M1-A/B remain blocked pending final-head CI and both
+follow-up reviews; M1-C and P1 remain blocked independently.
+
 ## Final phase
 
 - No 018 kernels are selected inside this feature.

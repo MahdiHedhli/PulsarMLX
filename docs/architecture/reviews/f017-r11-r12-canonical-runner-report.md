@@ -89,13 +89,16 @@ top-8 routing, and one shared expert. It exercises embedding, MLA/DSA state,
 router, routed experts, shared expert, residual composition, final RMSNorm,
 Q4_K output head, logits, stable top-k, and token selection.
 
-Fixture mode selects synthetic model data but does not select another engine.
-Both modes use the canonical CLI, evidence schema, `RunnerTensorStore`, exact
-tensor-map validation, layer composition, dispatch policy, and lifecycle code.
-Production mode uses the production MLX adapter for all large matrix-vector
-operations; small deterministic norm, activation, routing, aggregation, and
-selection operations remain explicit Rust CPU semantics. No Python process is
-part of runner execution.
+Fixture mode selects synthetic model data and a fixture-specific composition.
+Both modes use the canonical CLI, evidence writer, `RunnerTensorStore`,
+production `MlxContext` adapter, semantic components, dispatch policy, and
+lifecycle code. R12 uses `TinyRuntime` and `Glm52FixtureTensorMap`; the future
+real checkpoint path will use the production map/runtime composition, so this
+report does not claim a shared production runtime abstraction. Production
+mode uses the production MLX adapter for all large matrix-vector operations;
+small deterministic norm, activation, routing, aggregation, and selection
+operations remain explicit Rust CPU semantics. No Python process is part of
+runner execution.
 
 ## R12 exact and production results
 
@@ -109,15 +112,15 @@ The production adapter also ran ten deterministic repeats and selected token
 
 | Measure | Exact scaffold | Production MLX |
 | --- | ---: | ---: |
-| Complete fixture wall | 1.051274625 s | 0.900415875 s |
-| Repeated execution wall | 0.470123708 s | 0.227912750 s |
-| Storage/decode/materialization setup | 0.266656083 s | 0.270068625 s |
+| Complete fixture wall | 1.116313333 s | 0.831120958 s |
+| Repeated execution wall | 0.523472708 s | 0.225207250 s |
+| Storage/decode/materialization setup | 0.276347792 s | 0.265569833 s |
 | Layer 0 mean | 0.0232786792 s | 0.0118180627 s |
 | Layer 1 mean | 0.0233389790 s | 0.0103502125 s |
-| Backend import | not applicable | 0.014022286 s |
-| Compute/sync/readback | not applicable | 0.201134248 s |
-| Output-head Q4_K decode | 0.000648668 s | 0.000658542 s |
-| Orchestration | not separately attributed | 0.012097674 s |
+| Backend import | not applicable | 0.013920283 s |
+| Compute/sync/readback | not applicable | 0.195533543 s |
+| Output-head Q4_K decode | 0.000647999 s | 0.000648290 s |
+| Orchestration | not separately attributed | 0.015105134 s |
 | Native / scaffold dispatches | 0 / 690 | 690 / 0 |
 | Fallback / errors | 0 / 0 | 0 / 0 |
 
@@ -128,14 +131,21 @@ bounded fixture-resident entries with 81 first-use misses and zero evictions;
 this is not an output-head-residency result.
 
 Production lifecycle reconciled at 1,380 managed creates/destroys, 690 derived
-creates/destroys, 1,380 callbacks, and one owned stream create/free. Context,
-registrations, in-flight work, owner tokens, and stale generations were zero
-after teardown.
+creates/destroys, 1,380 callbacks, and one owned stream create/free. Context
+state was measured at zero after teardown. Registration, generation,
+in-flight, and owner-token domains are explicitly `not_applicable` for this
+fixture rather than being reported as measured zero.
 
 Evidence:
 
-- [`f017-r12-tiny-model-exact-v1.json`](evidence/f017-r12-tiny-model-exact-v1.json)
-- [`f017-r12-tiny-model-production-v1.json`](evidence/f017-r12-tiny-model-production-v1.json)
+- [`f017-r12-tiny-model-exact-v2.json`](evidence/f017-r12-tiny-model-exact-v2.json)
+- [`f017-r12-tiny-model-production-v2.json`](evidence/f017-r12-tiny-model-production-v2.json)
+
+The v2 production record does not run the qualification scaffold. It compares
+the candidate against the already-frozen independent outputs and records 690
+native, zero scaffold, zero explicit-reference, zero fallback, and zero error
+dispatches. Both v2 records bind the complete inherited contract set: expert
+v1, R9 v2, R10 v2, and R11 v1, including exact contract hashes.
 
 ## Failure and cancellation coverage
 
@@ -149,7 +159,7 @@ fresh-output enforcement and atomic-write failures.
 
 ## Evidence schema
 
-The canonical schema records source and environment identity, synthetic
+The canonical schema version 1.3.0 records source and environment identity, synthetic
 checkpoint identity, input token, expected token, numerical mode, layer
 progress, stage timings, greedy applicability, exact top-k/argmax identity,
 dispatch/fallback/error counts, bounded residency, lifecycle, result class, and

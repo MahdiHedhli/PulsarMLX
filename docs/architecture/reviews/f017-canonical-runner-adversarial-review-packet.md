@@ -4,8 +4,8 @@
 
 Please answer:
 
-> Is the canonical runner now real enough to begin staged M1 checkpoint
-> integration at M1-A/B/C without hiding behind synthetic/reference paths?
+> Does the remediated canonical runner close the checkpoint-free blockers for
+> separately authorized M1-A and, only after M1-A review, M1-B?
 
 The requested disposition is GO, GO WITH REQUIRED FIXES, or NO-GO. This packet
 does not request real-checkpoint execution or P1 authorization.
@@ -53,10 +53,13 @@ MLA/DSA, routing, eight routed experts, one shared expert, residuals, final
 RMSNorm, Q4_K output head, logits, and selection.
 
 Both exact and production runs execute through `f017-glm52-runner` with the
-same CLI, evidence writer, `RunnerTensorStore`, fixture tensor map, layer loop,
-and fail-closed dispatch. Fixture mode changes model identity only; it does not
-select a second engine. Production uses `MlxContext` for 69 large matvecs per
-repeat and explicit Rust CPU semantics for small deterministic operations.
+same CLI, evidence writer, `RunnerTensorStore`, production `MlxContext`
+adapter, semantic components, and fail-closed dispatch. R12 currently composes
+those components with fixture-specific `TinyRuntime` and
+`Glm52FixtureTensorMap` types; it is not evidence that the future real
+checkpoint path already shares one production runtime abstraction. Production
+uses `MlxContext` for 69 large matvecs per repeat and explicit Rust CPU
+semantics for small deterministic operations.
 
 - Exact: ten repeats, token 10, 690 scaffold dispatches, golden-identical.
 - Production: ten repeats, token 10, 690 native dispatches.
@@ -69,8 +72,8 @@ repeat and explicit Rust CPU semantics for small deterministic operations.
 Evidence:
 
 - [`f017-r12-tiny-model`](../../../specs/017-rust-native-inference-runtime/fixtures/f017-r12-tiny-model/)
-- [`f017-r12-tiny-model-exact-v1.json`](evidence/f017-r12-tiny-model-exact-v1.json)
-- [`f017-r12-tiny-model-production-v1.json`](evidence/f017-r12-tiny-model-production-v1.json)
+- [`f017-r12-tiny-model-exact-v2.json`](evidence/f017-r12-tiny-model-exact-v2.json)
+- [`f017-r12-tiny-model-production-v2.json`](evidence/f017-r12-tiny-model-production-v2.json)
 
 ## Failure behavior
 
@@ -120,13 +123,23 @@ format inventory and tensor ranges remain staged R13/M1 work.
 4. Are lifecycle and cancellation failures complete enough for M1-A/B/C?
 5. Are independent oracle provenance and contract inheritance sufficiently
    separated from the candidate implementation?
-6. Does any gap require another checkpoint-free gate before M1-A/B/C?
+6. Does any gap require another checkpoint-free gate before M1-A/B?
 
 ## Admission state
 
 - R11: passed, adversarial review pending.
 - R12: passed, adversarial review pending.
 - Internal implementation review: pending.
-- M1-A/B/C: blocked pending reviews.
+- M1-A/B: blocked pending reviews and separate stage authorizations.
+- M1-C: independently blocked by T017-140.
 - Real checkpoint: blocked.
 - P1: blocked.
+
+## Unified pre-M1 remediation appendix
+
+The two pre-M1 reviews returned `GO WITH REQUIRED FIXES`. Their shared
+checkpoint-free remediation is mapped, with functions and tests, in
+[`f017-pre-m1-ab-remediation-review-packet.md`](f017-pre-m1-ab-remediation-review-packet.md).
+No M1-A or M1-B execution is authorized by that packet. T017-160 and T017-161
+remain open until the internal and independent reviews are rerun and return
+GO.
