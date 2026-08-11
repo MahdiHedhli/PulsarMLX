@@ -59,19 +59,23 @@ the host owner through array and dependent stream teardown. Rust slab to Metal
 The actual Rust/Objective-C++ adapter is implemented in
 `crates/stream/src/apple_mlx_bridge.rs` and
 `crates/stream/src/apple_mlx_bridge.mm`. Its native tests cover CPU and GPU
-managed imports, borrowed/default and owned streams, explicit operations and
-synchronization, pointer identity, exactly-once callbacks, 30 borrowed cycles,
-100 owned cycles, and fail-closed invalid imports. Builds without the native
-MLX C installation compile with an explicit adapter-test skip.
+managed imports, default and explicitly owned streams, explicit operations and
+synchronization, pointer identity, exactly-once callbacks, 30/100 managed
+cycles, 1,000 context cycles for each stream mode, and fail-closed invalid
+imports. Ordinary builds without MLX C retain an explicit skip; final-gate CI
+sets `PULSAR_REQUIRE_NATIVE_MLX=1`, making absence a build failure.
 
 The adapter is intentionally single-context for the Feature 017 P1 era.
 MLX device and default-stream state is process-global, so a second context in
 the same process is rejected explicitly. Context creation claims the guard
 only after argument validation and releases it after complete teardown; every
-partial-construction error releases the claim. Owned-stream creation creates
-one owned stream, while borrowed default streams are never freed by the
-adapter. The CPU restoration path frees every CPU device and stream handle it
-creates.
+partial-construction error releases the claim. Stream semantic mode and handle
+ownership are separate: `default_cpu`, `default_gpu`, and `owned_device`
+identify origin, while `stream_handle_owned` is the destruction authority.
+`mlx_default_cpu_stream_new`, `mlx_default_gpu_stream_new`, and
+`mlx_stream_new_device` all return handles that this adapter frees exactly
+once. No truly borrowed handle is currently admitted. The CPU restoration path
+also frees every CPU device and stream handle it creates.
 
 Managed ownership state is refcounted independently from Rust array wrappers.
 The context retains a safety reference, each array wrapper retains one, and
@@ -82,10 +86,19 @@ derived teardown a tested contract rather than an assumption.
 
 The adapter rejects zero or `size_t` counts above `INT_MAX` before constructing
 the one-dimensional MLX shape. The 1,000-context stress test records balanced
-owned-stream creation/free counters and bounded RSS; MLX 0.31.2 currently
+default-CPU, default-GPU, and owned-stream creation/free counters and bounded
+RSS; MLX 0.31.2 currently
 prints its own `Context leak detected, CoreAnalytics returned false` diagnostic
 during that stress, so the diagnostic is preserved in the verification packet
 and is not treated as proof of leak-free upstream teardown.
+
+Final native CI builds official MLX commit
+`68cf2fddd8de5edd8ab3d926391772b2e2cedad8` (v0.31.2) and MLX C commit
+`0726ca922fc902c4c61ef9c27d94132be418e945` (v0.6.0) into an isolated prefix.
+The MLX C source receives the four hash-verified upstream patches used by the
+official Homebrew `mlx-c 0.6.0_2` recipe, including regenerated MLX 0.31.2
+bindings. Those exact sources match the locally qualified native version and
+avoid Homebrew formula drift.
 
 ## Options considered
 

@@ -1,163 +1,71 @@
-# PulsarMLX Feature 017 Opus review packet
+# PulsarMLX Feature 017 final independent review packet
 
-## Numerical parity sprint update
+## Scope
 
-- Final parity boundary: `8adee21`; current feature branch tip is recorded by
-  the sprint commit that updates this packet.
-- Checkpoint-free synthetic gates now pass in strict order: projection, router, complete expert, top-8 plus shared, MLA/dense, complete layer, and final norm/logits/top-k.
-- Q8_0 remains the only decoder exercised by these public-safe parity gates; no new decoder was added because the current fixtures do not require Q2_K, Q3_K, IQ2_S, IQ4_XS, or Q5_K.
-- Final output is classified `numerically_qualified_greedy_identical` under `golden_strict`; it is not claimed `golden_identical` because the independent RMS reference differs by operation order below the explicit `1e-14` threshold.
-- Apple lifecycle qualification now has a fail-closed Rust contract covering register, submit, completion, cancel-before-submit, queued cancellation modeling, release, destroy, repeated generations, and stale-generation rejection. This is lifecycle evidence, not proof of MLX import behavior.
-- Official MLX C API CPU and GPU managed import/synchronization are qualified
-  by the standalone child-process matrix in
-  `docs/architecture/reviews/f017-mlx-gpu-teardown-forensics.md`. The prior
-  exit-134 result was caused by an uninitialized `mlx_stream` output passed to
-  `mlx_get_default_stream`; initialized handles, explicit synchronization,
-  ownership callbacks, teardown order, and reuse all pass. The recommendation
-  remains a narrow Rust C ABI plus Objective-C++ adapter with these invariants.
-- The actual Rust/Objective-C++ adapter now carries those invariants in
-  `crates/stream/src/apple_mlx_bridge.rs` and `.mm`. Adapter tests cover
-  borrowed/default and owned streams, explicit evaluation/synchronization,
-  pointer identity, exactly-once callbacks, 30 borrowed cycles, 100 owned
-  cycles, and fail-closed invalid imports.
-- A 500-iteration deterministic semantic soak passed through final
-  norm/logits/top-k with stable fingerprint, bounded RSS growth, balanced
-  registrations/generations/teardowns, protected-shared residency, and stale
-  generation rejection. The public-safe decoder report separates decode time
-  from allocator behavior for Q8_0, Q6_K, IQ2_XXS, and IQ3_XXS.
-- No full-model inference or Feature 018 kernel work was performed.
+Verification of the last Feature 017 admission gates only: MLX stream
+ownership, late callback safety, independent checkpoint-free provenance,
+non-skipping native CI, and the single bounded M1 Ultra P1 contract. No
+full-model run or Feature 018 kernel work occurred on ColPanicM2.
 
-## Review scope
+## Native ownership boundary
 
-Independent review of the native runtime foundation after the M2 Max recovery
-and checkpoint-free contract milestones. This packet intentionally excludes
-full-model inference and direct quantized Metal kernel implementation.
+- Rust retains the host slab owner through MLX array and dependent stream work.
+- The Objective-C++ adapter synchronizes the submission stream before host
+  reuse or free.
+- Stream origin (`default_cpu`, `default_gpu`, `owned_device`) is separate from
+  handle ownership. Every admitted `_new` handle is freed exactly once.
+- Per-context ownership state is refcounted across managed source, derived
+  arrays, callback payload, and context accounting.
+- A process-wide singleton rejects concurrent MLX contexts for the P1-era
+  runtime and releases on every complete or partial teardown path.
+- The shape boundary rejects zero and `INT_MAX + 1` before allocation.
 
-## Branch and evidence
+## Falsifying regressions
 
-- Branch: `feat/017-rust-native-inference-runtime`
-- Recovery: the externally-mutated Studio linked worktree was archived outside
-  the repository and removed using normal Git worktree cleanup. Only the M2
-  worktree remains registered.
-- F017 branch ancestry preserves `c4a760ae` and all later F017 commits.
-- Current committed boundaries include the page-aligned slab, whole-matrix
-  positional I/O, inventory-driven residency budgets, Q8_0/Q6_K/IQ2_XXS/IQ3_XXS
-  exact Rust decoders, Metal no-copy registration, attributed telemetry,
-  mode-aware validation, expert residency tiers, fixture ladder adapter, and
-  backend-neutral runtime contracts.
+- 1,000 default-CPU, 1,000 default-GPU, and 1,000 explicitly owned GPU context
+  lifecycles reconcile all six stream counters.
+- Source managed array destroyed first, derived `add_self` array destroyed
+  later, with no intervening eval/sync: no UAF, exactly one callback, and
+  managed/derived accounting reconciled.
+- Partial construction after stream creation releases the stream and singleton;
+  context recreation succeeds.
 
-## Ownership and residency
+## Independent parity evidence
 
-- Rust owns checkpoint identity, slots, admission, lifecycle, cancellation,
-  and telemetry.
-- Metal registration is an opaque adapter handle over Rust-owned aligned
-  storage; reuse and teardown are explicit.
-- Expert tiers are compressed resident, decoded hot, native-ready hot, and
-  transient. Admission is bounded and does not implicitly evict.
-- Shared entries can be required to remain protected.
-- Missing entries return an explicit reference fallback.
-- Decoded-all trunk residency remains rejected by the M2 Max safety policy.
+- Python/NumPy generator SHA:
+  `a9779097de029f26be1cb9fde3543cc517ff153e`.
+- CPython 3.13.13, NumPy 2.4.5, seed 17017.
+- Oracle artifact SHA-256:
+  `16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960`.
+- All seven ordered boundaries are `INDEPENDENT`; no Rust, FFI, MLX,
+  checkpoint, or Rust `reference_*` code generated expected values.
+- Historical Rust-reference fixtures remain for history but are explicitly
+  non-independent and excluded from the validated set.
+- Edge cases cover f16 Q8 scales, denormal-adjacent values, grid/sign extremes,
+  zero/near-zero, cancellation, ties/near-ties, and top-k ordering. This is
+  still synthetic evidence; real-checkpoint tails remain a P1 risk.
 
-## Validation and fixtures
+## F017/F018 boundary
 
-- `golden_strict` and `teacher_forced_validation` use the frozen classification
-  vocabulary and deterministic stop/continue behavior.
-- The synthetic public-safe manifest binds all 11 ordered ladder boundaries to
-  hash-bound artifacts and telemetry/memory evidence.
-- The adapter is structural only: router, expert, MLA, layer, and logits math
-  still require real local or generated boundary executors before numerical
-  parity can be claimed.
+F017 owns generic native-ready ownership, stream/fence lifetime, import and
+registration lifecycle, capability/version metadata, fail-closed dispatch,
+cancellation/teardown, and attributed telemetry. IQ2/IQ3 kernel semantics stay
+in F018. The separately qualified Metal `newBufferWithBytesNoCopy` path is not
+generalized into an MLX zero-copy claim.
 
-## Native MLX and F018 boundary
+## P1 and CI
 
-- ADR 0005 selects a narrow Rust C ABI with an Objective-C++ implementation
-  boundary. The qualified stream initialization, explicit synchronization,
-  owner-last, and exactly-once callback rules are now implemented and tested.
-- Python remains the research/reference path and is not a shipping
-  dependency.
-- The F017/F018 boundary contract defines capability discovery, ownership
-  handoff, qualified-direct versus reference-fallback classification,
-  validation mode, telemetry, cancellation, and qualification metadata.
+The P1 handoff requires exact environment/checkpoint identity, one context,
+stream origin/ownership, 16 GiB free memory, no competing inference, complete
+pre/post accounting, prompt token 9703, expected token 21615, exactly one run,
+and a mandatory stop. Final CI evidence is populated after official pinned
+MLX/MLX C source builds execute the native adapter matrix without skip.
 
-## Format scope
+## Verification questions
 
-- Q5_K is the next justified exact Rust decoder candidate from 162 real
-  non-expert trunk tensors and existing real reference evidence.
-- Q2_K, Q3_K, IQ2_S, and IQ4_XS are deferred until a GLM52 expert manifest or
-  other format-bound fixture justifies them.
-
-## Questions for Opus
-
-1. Is any Rust/FFI lifetime or `newBufferWithBytesNoCopy` teardown ordering
-   unsound under asynchronous completion?
-2. Does the expert residency abstraction support future compressed expert
-   residency and native-ready reuse without coupling Feature 018 policy into
-   Feature 017?
-3. Is the official-MLX-through-Objective-C++ recommendation maintainable, or
-   is a narrower C-only API required before native import qualification?
-4. Is the F017/F018 capability and ownership boundary sufficiently narrow for
-   future direct kernels?
-5. What minimum checkpoint-free router, complete-expert, MLA/layer, and logits
-   evidence must pass before requesting the first M1 Ultra P1 run?
-
-## Remaining P1 prerequisites
-
-- Remote CI for adapter-integrated SHA `6cf0d18419f5782870d43268a65d976492113c39`
-  passed in [run 31424679913](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31424679913),
-  including both Apple Silicon jobs.
-- Complete numerical checkpoint-free executors for real bound model slabs;
-  synthetic semantic gates are already banked through logits/top-k.
-- Retain the existing Apple registration and cancellation/teardown tests as
-  prerequisites for the native GPU bridge; queued MLX cancellation is not
-  exposed by the official C API and remains an outer Rust lifecycle concern.
-- Select additional decoder formats only from a bound inventory/fixture need.
-- Run public-safe workspace CI and resolve independent review blockers.
-
-## Final adapter integration evidence
-
-- The actual Rust/Objective-C++ adapter carries initialized MLX output handles,
-  borrowed versus owned stream lifetimes, explicit submission-stream
-  synchronization, Rust owner retention through array teardown, fail-closed
-  import validation, and exactly-once managed ownership callbacks.
-- Local native tests cover CPU and GPU managed import, borrowed/default and
-  owned streams, pointer identity, explicit operations and synchronization,
-  invalid input, repeated lifecycle cycles, and callback balance.
-- The adapter is synchronous at this boundary because the installed MLX C API
-  does not expose queued cancellation. Outer Rust cancellation must therefore
-  complete or reject work before host reuse.
-- The M1 handoff is prepared at
-  `docs/architecture/reviews/f017-m1-ultra-p1-handoff.md`; it is not executed
-  on ColPanicM2.
-
-## Adversarial remediation mapping
-
-- B1: owned-stream construction now creates exactly one owned stream. The
-  adapter counter delta was 1,000 created and 1,000 freed across 1,000 context
-  lifecycles. The bounded run reached 130,334,720 bytes maximum RSS with no
-  swap; MLX emitted repeated internal CoreAnalytics context diagnostics, which
-  remain explicit verification evidence.
-- B2: `OwnershipState` and its accounting state use atomic refcounts. The MLX
-  callback owns a final reference, so late deallocation cannot dereference a
-  freed payload. The source-first derived-array regression passed without an
-  evaluation/synchronization inserted between source destruction and derived
-  destruction.
-- B3: managed and derived arrays share an ownership record while accounting
-  tracks managed-created/destroyed, derived-created/destroyed, live derived
-  arrays, and callback totals separately. Source-first, derived-first, and
-  multiple-derived cycles reconcile exactly.
-- B4: context creation now has a process-wide fail-closed singleton. A second
-  context is rejected and creation succeeds again after complete teardown.
-  CPU device and temporary CPU stream handles are released on restoration and
-  all partial construction paths.
-- Shape hardening: zero and `INT_MAX + 1` logical element counts fail before
-  allocation or `size_t` to `int` conversion.
-- Fixture provenance is explicit in the portable manifest. The semantic
-  ladder is generated at source SHA `60145f8` by the synthetic constructors;
-  its scalar `reference_*` paths and frozen hashes are separate from the
-  candidate decode/orchestration paths. The scope is synthetic checkpoint-free
-  validation only, not real-checkpoint determinism.
-- The M1 handoff now requires environment identity, stream mode, singleton
-  assertion, ownership reconciliation, and an absolute 16 GiB free-memory
-  floor before P1.
-- Remediation commit `4d0e01514d9f1807c8066eec9a85b5bed44ce167` passed both
-  Apple Silicon jobs in [GitHub Actions run 31437662431](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31437662431).
+1. Are any B1-B4 ownership, callback, singleton, or shape blockers still open?
+2. Is the seven-boundary Python/NumPy evidence independent from the Rust
+   candidate under test?
+3. Does final native CI prove the MLX adapter tests executed rather than
+   skipped?
+4. Is exactly one bounded M1 Ultra P1 admitted?

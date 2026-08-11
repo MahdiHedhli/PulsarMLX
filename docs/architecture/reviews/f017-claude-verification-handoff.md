@@ -1,53 +1,82 @@
-# PulsarMLX Feature 017 Claude verification request
+# PulsarMLX Feature 017 final Claude verification request
 
-This is a verification-only request. Do not reopen the accepted architecture
-and do not request a second broad design review.
+This is verification-only. Do not reopen the accepted architecture. Review
+the final feature SHA and answer only whether the remaining blockers are
+closed and exactly one bounded M1 Ultra P1 is admitted.
 
-## Reviewed boundary
+## Reviewed and remediated boundaries
 
 - Prior reviewed SHA: `0e59d9786b96ce0aaad513bae71702a57ef23b6f`.
-- Remediation branch: `feat/017-rust-native-inference-runtime`.
-- Remediation SHA: `4d0e01514d9f1807c8066eec9a85b5bed44ce167`.
-- Verification CI: [GitHub Actions run 31437662431](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31437662431),
-  with both Apple Silicon jobs green.
+- Branch: `feat/017-rust-native-inference-runtime`.
+- Final SHA and final CI run: populated after the required native CI run.
+- Historical run `31437864529` targeted
+  `b7585de3cd431f448c39eeb0a46df5d1a87acc6a` and passed, but native MLX tests
+  skipped; it is not final-gate evidence.
 
-## Fixes to verify
+## B1: default-stream ownership
 
-- B1: owned-stream construction has one creation and one destruction path;
-  1,000-cycle counter evidence is balanced.
-- B2: refcounted ownership state survives late MLX callbacks; source-first
-  derived teardown passes without a sync inserted between the two destructions.
-- B3: managed callback accounting and derived-array lifecycle accounting are
-  separate and reconcile for source-first, derived-first, and multiple-derived
-  cycles.
-- B4: process-wide singleton context enforcement rejects a second context and
-  recovers after full teardown; CPU restoration frees allocated handles.
-- Shape conversion rejects zero and `INT_MAX + 1` counts before allocation.
-- Fixture provenance is bound to source SHA `60145f8` and explicitly scoped to
-  synthetic checkpoint-free validation. The real-checkpoint limitation is
-  recorded rather than overclaimed.
-- M1 P1 admission now requires environment identity, stream mode, singleton
-  assertion, ownership reconciliation, and a 16 GiB absolute free-memory
-  floor.
+- Official MLX C v0.6.0 examples construct a default stream with
+  `mlx_default_cpu_stream_new()` and release it with `mlx_stream_free()`.
+- Fix `4d80c85` separates stream origin from handle ownership. Handles from
+  `mlx_default_cpu_stream_new`, `mlx_default_gpu_stream_new`, and
+  `mlx_stream_new_device` are freed exactly once.
+- Six process counters cover default CPU, default GPU, and owned stream
+  creation/free. Local 1,000-context tests for each mode reconcile exactly,
+  including partial-construction failure and singleton reacquisition.
 
-## Evidence
+## B2/B3/B4 and shape guard
 
-- Native adapter regression matrix: 8 tests passed locally, including 30/100
-  lifecycle cycles and 1,000 owned-context cycles.
-- Existing parity/lifecycle/Metal/soak evidence remains unchanged.
-- The final remediation SHA passed both Apple Silicon jobs in run
-  `31437662431`. The bounded 1,000-context test still emits MLX 0.31.2's
-  `Context leak detected, CoreAnalytics returned false` diagnostic; RSS and
-  explicit stream counters remain bounded and balanced, so this is retained as
-  review evidence rather than hidden.
+- The source-first/derived-later regression performs no evaluation or
+  synchronization between source destruction and derived destruction. The
+  refcounted payload survives, the callback fires exactly once, and managed
+  and derived counters reconcile.
+- Managed and derived arrays share lifetime state but are accounted separately.
+- Process-global MLX state is guarded by one fail-closed singleton context;
+  partial failure releases the guard and full teardown permits recreation.
+- `pulsar_mlx_array_create_managed` rejects zero and logical counts above
+  `INT_MAX` before allocation or shape conversion; the `INT_MAX + 1` test does
+  not allocate the requested payload.
+
+## Independent fixture provenance
+
+- Generator: `scripts/research/generate_f017_independent_oracle.py`.
+- Generator SHA: `a9779097de029f26be1cb9fde3543cc517ff153e`.
+- Environment: CPython 3.13.13, NumPy 2.4.5, deterministic seed 17017.
+- Oracle artifact SHA-256:
+  `16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960`.
+- Projection, router, complete expert, top-8/shared, MLA/dense, complete layer,
+  and final norm/logits/top-k are all classified `INDEPENDENT`.
+- The generator calls no Rust, FFI, MLX, checkpoint, or Rust `reference_*`
+  code. Historical v1 fixtures are marked non-independent and excluded from
+  the validated manifest set.
+- Synthetic fixtures cover selected extremes but not real-checkpoint
+  distribution tails. P1 remains the first real-checkpoint integration gate.
+
+## P1 admission
+
+The handoff records exact branch/SHA, clean state, checkpoint hashes,
+OS/MLX/Metal/Xcode/compiler identity, stream origin and handle ownership,
+singleton state, a 16 GiB absolute free-memory floor, no competing inference,
+fail-closed validation, token 9703, expected token 21615, fresh evidence, and
+exactly one P1 followed by a mandatory stop. It explicitly reconciles every
+managed/derived/callback counter, all six stream counters, context singleton,
+registrations/teardowns, in-flight work, and native-ready generations.
+
+## Final CI evidence
+
+Final CI must build official MLX v0.31.2 and MLX C v0.6.0 source commits plus
+the hash-verified upstream patch set from the Homebrew `0.6.0_2` recipe, set
+`PULSAR_REQUIRE_NATIVE_MLX=1`, execute the native adapter matrix without skip,
+validate deterministic oracle regeneration, and pass both Apple jobs. Final
+SHA, run ID, job names, and execution log lines are populated only after that
+run succeeds.
 
 ## Decision requested
 
-Return exactly one of:
+Answer exactly one:
 
-- `GO`: B1-B4 and provenance/admission fixes are closed; one bounded M1 Ultra
-  F017 P1 is admitted.
-- `NO-GO`: list only remaining concrete blockers before that single P1.
+- `GO`: all remaining blockers are closed; exactly one bounded M1 Ultra F017
+  P1 is admitted.
+- `NO-GO`: list only concrete blockers remaining before that P1.
 
-Do not execute P1 from ColPanicM2. Do not authorize P2 or golden-eight from
-this verification request.
+Do not authorize P2 or golden-eight.

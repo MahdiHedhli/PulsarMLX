@@ -19,12 +19,18 @@ Status: prepared, not executed on ColPanicM2.
   absolute floor; normal-pressure labels alone are insufficient.
 - Record macOS build, MLX C/native version, Metal version/driver context, and
   Xcode/compiler versions where available.
-- Record the adapter stream mode as `borrowed_default` or `owned` and assert it
-  matches the selected path.
+- Record the adapter stream origin as `default_cpu`, `default_gpu`, or
+  `owned_device`, plus the separate `stream_handle_owned` destruction state,
+  and assert both match the selected path.
 - Assert exactly one MLX-using F017 context exists in the process.
-- Assert pre-run managed/derived/callback counters are zero and post-run
-  managed callbacks, managed array lifecycle, and derived lifecycle reconcile
-  exactly. Derived arrays must be reported separately from managed callbacks.
+- Capture an accounting baseline immediately before P1. Per-context
+  `callback_count`, `managed_created`, `managed_destroyed`, `derived_created`,
+  and `derived_destroyed` must be zero. Process `context_active` must be false;
+  no registration may be in flight and no native-ready generation may be
+  stale. Record process-lifetime stream counters
+  `default_cpu_created/default_cpu_freed`,
+  `default_gpu_created/default_gpu_freed`, and
+  `owned_created/owned_freed`; each pair must already reconcile at baseline.
 
 ## Single bounded run
 
@@ -49,6 +55,18 @@ Record separately and with timestamps:
   residency state;
 - memory admission, RSS/pressure, slot reuse, registrations, generations,
   teardowns, and every fallback or error reason.
+- post-run ownership reconciliation:
+  `managed_created == managed_destroyed`,
+  `derived_created == derived_destroyed`, and `callback_count` equals the
+  number of managed host ownership events;
+- post-run stream reconciliation:
+  `default_cpu_created == default_cpu_freed`,
+  `default_gpu_created == default_gpu_freed`, and
+  `owned_created == owned_freed` using deltas from the recorded baseline;
+- post-run lifecycle reconciliation: `context_active == false`, singleton
+  reacquisition succeeds in a bounded adapter probe, registrations equal
+  teardowns, no work remains in flight, and no stale native-ready generation
+  remains.
 
 ## Stop rules
 
