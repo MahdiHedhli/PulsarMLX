@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <new>
 
 namespace {
@@ -331,18 +332,34 @@ void pulsar_mlx_context_destroy(PulsarMlxContext *raw_context) {
     destroy_context(reinterpret_cast<MlxContextObject *>(raw_context));
 }
 
-int pulsar_mlx_import_f32(
+int pulsar_mlx_import_f32_shaped(
     PulsarMlxContext *raw_context,
     float *data,
     size_t count,
+    const int *shape,
+    size_t rank,
     PulsarMlxArray **out_array,
     char *error_buffer,
     size_t error_capacity) {
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
     if (context == nullptr || data == nullptr || count == 0 ||
-        count > static_cast<size_t>(INT_MAX) || out_array == nullptr) {
+        count > static_cast<size_t>(INT_MAX) || shape == nullptr || rank == 0 ||
+        rank > 2 || out_array == nullptr) {
         return set_error(error_buffer, error_capacity,
                          "invalid MLX f32 import arguments");
+    }
+    size_t shape_count = 1;
+    for (size_t dimension = 0; dimension < rank; ++dimension) {
+        if (shape[dimension] <= 0 ||
+            shape_count > count / static_cast<size_t>(shape[dimension])) {
+            return set_error(error_buffer, error_capacity,
+                             "invalid MLX f32 import shape");
+        }
+        shape_count *= static_cast<size_t>(shape[dimension]);
+    }
+    if (shape_count != count) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX f32 import shape does not match element count");
     }
 
     auto *ownership = new (std::nothrow) OwnershipState();
@@ -357,11 +374,11 @@ int pulsar_mlx_import_f32(
     retain_ownership(ownership);  // array wrapper reference
     retain_ownership(ownership);  // MLX callback reference
 
-    int shape[1] = {static_cast<int>(count)};
     array->ownership = ownership;
     array->context = context;
     array->array = mlx_array_new_data_managed_payload(
-        data, shape, 1, MLX_FLOAT32, ownership, managed_owner_released);
+        data, shape, static_cast<int>(rank), MLX_FLOAT32, ownership,
+        managed_owner_released);
     if (array->array.ctx == nullptr) {
         release_ownership(ownership);  // callback reference
         release_ownership(ownership);  // array wrapper reference
@@ -373,6 +390,23 @@ int pulsar_mlx_import_f32(
                                                    std::memory_order_relaxed);
     *out_array = reinterpret_cast<PulsarMlxArray *>(array);
     return 0;
+}
+
+int pulsar_mlx_import_f32(
+    PulsarMlxContext *raw_context,
+    float *data,
+    size_t count,
+    PulsarMlxArray **out_array,
+    char *error_buffer,
+    size_t error_capacity) {
+    if (count > static_cast<size_t>(INT_MAX)) {
+        return set_error(error_buffer, error_capacity,
+                         "invalid MLX f32 import arguments");
+    }
+    int shape[1] = {static_cast<int>(count)};
+    return pulsar_mlx_import_f32_shaped(
+        raw_context, data, count, shape, 1, out_array, error_buffer,
+        error_capacity);
 }
 
 int pulsar_mlx_array_eval_sync(
@@ -426,6 +460,84 @@ int pulsar_mlx_array_add_self(
     result->ownership->accounting->derived_created.fetch_add(
         1, std::memory_order_relaxed);
     *out_array = reinterpret_cast<PulsarMlxArray *>(result);
+    return 0;
+}
+
+int pulsar_mlx_array_matvec(
+    PulsarMlxContext *raw_context,
+    PulsarMlxArray *raw_matrix,
+    PulsarMlxArray *raw_vector,
+    PulsarMlxArray **out_array,
+    char *error_buffer,
+    size_t error_capacity) {
+    auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
+    auto *matrix = reinterpret_cast<MlxArrayObject *>(raw_matrix);
+    auto *vector = reinterpret_cast<MlxArrayObject *>(raw_vector);
+    if (context == nullptr || matrix == nullptr || vector == nullptr ||
+        matrix->context != context || vector->context != context ||
+        matrix->ownership == nullptr || vector->ownership == nullptr ||
+        out_array == nullptr) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX matvec ownership mismatch");
+    }
+    if (mlx_array_dtype(matrix->array) != MLX_FLOAT32 ||
+        mlx_array_dtype(vector->array) != MLX_FLOAT32 ||
+        mlx_array_ndim(matrix->array) != 2 ||
+        mlx_array_ndim(vector->array) != 1) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX matvec requires an f32 matrix and f32 vector");
+    }
+    const int *matrix_shape = mlx_array_shape(matrix->array);
+    const int *vector_shape = mlx_array_shape(vector->array);
+    if (matrix_shape == nullptr || vector_shape == nullptr ||
+        matrix_shape[1] != vector_shape[0]) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX matvec shape mismatch");
+    }
+
+    auto *result = new (std::nothrow) MlxArrayObject();
+    if (result == nullptr) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX matvec result allocation failed");
+    }
+    result->context = context;
+    if (mlx_matmul(&result->array, matrix->array, vector->array,
+                   context->stream) != 0 || result->array.ctx == nullptr) {
+        delete result;
+        return set_error(error_buffer, error_capacity,
+                         "MLX matvec dispatch failed");
+    }
+    result->ownership = matrix->ownership;
+    result->derived = true;
+    retain_ownership(result->ownership);
+    result->ownership->accounting->derived_created.fetch_add(
+        1, std::memory_order_relaxed);
+    *out_array = reinterpret_cast<PulsarMlxArray *>(result);
+    return 0;
+}
+
+int pulsar_mlx_array_copy_f32(
+    PulsarMlxContext *raw_context,
+    PulsarMlxArray *raw_array,
+    float *destination,
+    size_t count,
+    char *error_buffer,
+    size_t error_capacity) {
+    auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
+    auto *array = reinterpret_cast<MlxArrayObject *>(raw_array);
+    if (context == nullptr || array == nullptr || array->context != context ||
+        destination == nullptr || count == 0 ||
+        mlx_array_dtype(array->array) != MLX_FLOAT32 ||
+        mlx_array_size(array->array) != count) {
+        return set_error(error_buffer, error_capacity,
+                         "invalid MLX f32 copy arguments");
+    }
+    const float *data = mlx_array_data_float32(array->array);
+    if (data == nullptr) {
+        return set_error(error_buffer, error_capacity,
+                         "MLX array is not evaluated");
+    }
+    std::memcpy(destination, data, count * sizeof(float));
     return 0;
 }
 

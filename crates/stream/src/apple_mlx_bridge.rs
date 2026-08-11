@@ -63,6 +63,16 @@ unsafe extern "C" {
         error_buffer: *mut c_char,
         error_capacity: usize,
     ) -> i32;
+    fn pulsar_mlx_import_f32_shaped(
+        context: *mut RawMlxContext,
+        data: *mut f32,
+        count: usize,
+        shape: *const i32,
+        rank: usize,
+        out_array: *mut *mut RawMlxArray,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
     fn pulsar_mlx_array_eval_sync(
         context: *mut RawMlxContext,
         array: *mut RawMlxArray,
@@ -73,6 +83,22 @@ unsafe extern "C" {
         context: *mut RawMlxContext,
         array: *mut RawMlxArray,
         out_array: *mut *mut RawMlxArray,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
+    fn pulsar_mlx_array_matvec(
+        context: *mut RawMlxContext,
+        matrix: *mut RawMlxArray,
+        vector: *mut RawMlxArray,
+        out_array: *mut *mut RawMlxArray,
+        error_buffer: *mut c_char,
+        error_capacity: usize,
+    ) -> i32;
+    fn pulsar_mlx_array_copy_f32(
+        context: *mut RawMlxContext,
+        array: *mut RawMlxArray,
+        destination: *mut f32,
+        count: usize,
         error_buffer: *mut c_char,
         error_capacity: usize,
     ) -> i32;
@@ -177,9 +203,8 @@ impl MlxContext {
 
     pub fn synchronize(&self) -> Result<(), String> {
         let mut error = [0_i8; ERROR_CAPACITY];
-        let status = unsafe {
-            pulsar_mlx_context_synchronize(self.raw, error.as_mut_ptr(), ERROR_CAPACITY)
-        };
+        let status =
+            unsafe { pulsar_mlx_context_synchronize(self.raw, error.as_mut_ptr(), ERROR_CAPACITY) };
         if status != 0 {
             return Err(bridge_error(status, &error));
         }
@@ -264,9 +289,8 @@ impl MlxContext {
 
     pub fn validate_f32_count(count: usize) -> Result<(), String> {
         let mut error = [0_i8; ERROR_CAPACITY];
-        let status = unsafe {
-            pulsar_mlx_validate_f32_count(count, error.as_mut_ptr(), ERROR_CAPACITY)
-        };
+        let status =
+            unsafe { pulsar_mlx_validate_f32_count(count, error.as_mut_ptr(), ERROR_CAPACITY) };
         if status != 0 {
             return Err(bridge_error(status, &error));
         }
@@ -284,6 +308,55 @@ impl MlxContext {
                 self.raw,
                 owner.as_mut_ptr(),
                 owner.len(),
+                &mut raw,
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 || raw.is_null() {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(MlxArray {
+            raw,
+            context: self,
+            _owner: PhantomData,
+        })
+    }
+
+    pub fn import_f32_shaped<'a>(
+        &'a self,
+        owner: &'a mut [f32],
+        shape: &[usize],
+    ) -> Result<MlxArray<'a>, String> {
+        if owner.is_empty() || shape.is_empty() || shape.len() > 2 {
+            return Err("MLX shaped f32 import requires rank one or two".to_owned());
+        }
+        let mut native_shape = Vec::with_capacity(shape.len());
+        let mut count = 1_usize;
+        for &dimension in shape {
+            if dimension == 0 {
+                return Err("MLX shaped f32 import dimensions must be nonzero".to_owned());
+            }
+            count = count
+                .checked_mul(dimension)
+                .ok_or_else(|| "MLX shaped f32 import size overflow".to_owned())?;
+            native_shape.push(
+                i32::try_from(dimension)
+                    .map_err(|_| "MLX shaped f32 import dimension exceeds i32".to_owned())?,
+            );
+        }
+        if count != owner.len() {
+            return Err("MLX shaped f32 import shape does not match owner length".to_owned());
+        }
+        let mut raw = ptr::null_mut();
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_import_f32_shaped(
+                self.raw,
+                owner.as_mut_ptr(),
+                owner.len(),
+                native_shape.as_ptr(),
+                native_shape.len(),
                 &mut raw,
                 error.as_mut_ptr(),
                 ERROR_CAPACITY,
@@ -339,6 +412,32 @@ impl<'a> MlxArray<'a> {
         })
     }
 
+    pub fn matvec<'b>(&'b self, vector: &'b MlxArray<'_>) -> Result<MlxComputedArray<'b>, String> {
+        if !std::ptr::eq(self.context, vector.context) {
+            return Err("MLX matvec arrays belong to different contexts".to_owned());
+        }
+        let mut raw = ptr::null_mut();
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_array_matvec(
+                self.context.raw,
+                self.raw,
+                vector.raw,
+                &mut raw,
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 || raw.is_null() {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(MlxComputedArray {
+            raw,
+            context: self.context,
+            _owner: PhantomData,
+        })
+    }
+
     pub fn data_pointer(&self) -> Result<usize, String> {
         let mut pointer = 0;
         let mut error = [0_i8; ERROR_CAPACITY];
@@ -367,12 +466,7 @@ impl<'a> MlxArray<'a> {
         let mut callbacks = 0;
         let mut error = [0_i8; ERROR_CAPACITY];
         let status = unsafe {
-            pulsar_mlx_array_destroy(
-                self.raw,
-                &mut callbacks,
-                error.as_mut_ptr(),
-                ERROR_CAPACITY,
-            )
+            pulsar_mlx_array_destroy(self.raw, &mut callbacks, error.as_mut_ptr(), ERROR_CAPACITY)
         };
         self.raw = ptr::null_mut();
         if status != 0 {
@@ -405,6 +499,27 @@ impl<'a> MlxComputedArray<'a> {
         Ok(())
     }
 
+    pub fn copy_f32(&self, destination: &mut [f32]) -> Result<(), String> {
+        if destination.is_empty() {
+            return Err("MLX f32 copy requires a non-empty destination".to_owned());
+        }
+        let mut error = [0_i8; ERROR_CAPACITY];
+        let status = unsafe {
+            pulsar_mlx_array_copy_f32(
+                self.context.raw,
+                self.raw,
+                destination.as_mut_ptr(),
+                destination.len(),
+                error.as_mut_ptr(),
+                ERROR_CAPACITY,
+            )
+        };
+        if status != 0 {
+            return Err(bridge_error(status, &error));
+        }
+        Ok(())
+    }
+
     pub fn destroy(mut self) -> Result<u64, String> {
         self.destroy_inner()
     }
@@ -416,12 +531,7 @@ impl<'a> MlxComputedArray<'a> {
         let mut callbacks = 0;
         let mut error = [0_i8; ERROR_CAPACITY];
         let status = unsafe {
-            pulsar_mlx_array_destroy(
-                self.raw,
-                &mut callbacks,
-                error.as_mut_ptr(),
-                ERROR_CAPACITY,
-            )
+            pulsar_mlx_array_destroy(self.raw, &mut callbacks, error.as_mut_ptr(), ERROR_CAPACITY)
         };
         self.raw = ptr::null_mut();
         if status != 0 {

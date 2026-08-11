@@ -104,8 +104,8 @@
 - [x] T017-113 Compose GGUF catalog and positional tensor store with exact range/hash evidence.
 - [x] T017-114 Add runner dry-run and checkpoint-identity-only vertical slices.
 - [x] T017-120 Bind adapter-preflight-only to the production F017 adapter with zero-state/reconciliation evidence.
-- [ ] T017-121 Add the smallest typed MLX compute operation required by the real-shaped projection gate.
-- [ ] T017-122 Pass R5 production-adapter projection against the independent oracle.
+- [x] T017-121 Add the smallest typed MLX compute operation required by the real-shaped projection gate.
+- [x] T017-122 Pass R5 production-adapter projection against the independent oracle.
 - [ ] T017-130 Add fully validated 79-layer `glm-dsa` tensor map.
 - [ ] T017-131 Compose router and complete expert runtime boundaries R6-R8.
 - [ ] T017-132 Compose MLA/DSA and complete layer runtime boundaries R9-R10.

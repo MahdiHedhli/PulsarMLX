@@ -1,6 +1,7 @@
 pub mod checkpoint;
 pub mod cli;
 pub mod evidence;
+pub mod fixture;
 pub mod json;
 pub mod store;
 
@@ -109,11 +110,9 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
         }
         RunnerMode::CheckpointIdentity => verify_checkpoint_mode(&config, &mut evidence),
         RunnerMode::AdapterPreflight => run_adapter_preflight(&config, &mut evidence),
-        RunnerMode::Fixture { .. } => Err(RunnerError::new(
-            FailureClass::InfrastructureEvidence,
-            "fixture_mode_not_implemented",
-            "R12 fixture execution is not yet implemented",
-        )),
+        RunnerMode::Fixture { ref manifest } => {
+            fixture::run_projection_fixture(manifest, &config, &mut evidence)
+        }
         RunnerMode::P1 => Err(RunnerError::new(
             FailureClass::InfrastructureEvidence,
             "p1_not_admitted",

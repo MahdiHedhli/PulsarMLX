@@ -141,6 +141,32 @@ fn unsupported_p1_fails_before_checkpoint_access_and_banks_failure() {
     );
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[test]
+fn actual_binary_passes_independent_projection_through_production_adapter() {
+    let fixture = fixture(false);
+    let out = fixture.root.join("projection.json");
+    let oracle = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json",
+    );
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .arg("--fixture-mode")
+        .arg(oracle)
+        .status()
+        .unwrap();
+    assert!(status.success());
+    let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+    assert_eq!(
+        evidence.execution.numerical_classification.as_deref(),
+        Some("golden_identical")
+    );
+    assert_eq!(evidence.execution.dispatch.native, 1);
+    assert_eq!(evidence.execution.dispatch.fallback, 0);
+    assert!(evidence.lifecycle.reconciled);
+    assert!(!evidence.identity.checkpoint.accessed);
+}
+
 fn common_args(environment: &Path, out: &Path) -> Vec<std::ffi::OsString> {
     [
         "--out".into(),
