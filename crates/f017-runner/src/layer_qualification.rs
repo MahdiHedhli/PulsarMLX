@@ -6,6 +6,7 @@
 //! mode supplies the fail-closed MLX matvec. CPU-side RMSNorm, RoPE, attention,
 //! DSA selection, and residual ordering stay explicit and deterministic.
 
+use crate::qualification::exact_swiglu_f32;
 use crate::qualification::{exact_matvec_f32, QualificationError};
 
 pub const R9_SCAFFOLD_VERSION: &str = "f017-r9-mla-dsa-exact-v1";
@@ -343,4 +344,274 @@ fn rounded_add(left: f32, right: f32) -> f32 {
 #[inline(never)]
 fn rounded_div(left: f32, right: f32) -> f32 {
     f32::from_bits((left / right).to_bits())
+}
+
+pub const R10_SCAFFOLD_VERSION: &str = "f017-r10-complete-layer-exact-v1";
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExpertMatrices {
+    pub expert_id: usize,
+    pub gate: Vec<f32>,
+    pub up: Vec<f32>,
+    pub down: Vec<f32>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct R10Matrices {
+    pub router: Vec<f32>,
+    pub routed: Vec<ExpertMatrices>,
+    pub shared: ExpertMatrices,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct R10Inputs {
+    pub attention_residual: Vec<f32>,
+    pub post_attention_norm_scale: Vec<f32>,
+    pub router_bias: Vec<f64>,
+    pub rms_epsilon: f32,
+    pub top_k: usize,
+    pub expert_weight_scale: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExpertOutput {
+    pub expert_id: usize,
+    pub gate: Vec<f32>,
+    pub up: Vec<f32>,
+    pub hidden: Vec<f32>,
+    pub down: Vec<f32>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct R10Output {
+    pub normalized: Vec<f32>,
+    pub router_logits: Vec<f32>,
+    pub router_probabilities: Vec<f64>,
+    pub router_scores: Vec<f64>,
+    pub selected_ids: Vec<usize>,
+    pub routing_weights: Vec<f64>,
+    pub routed_experts: Vec<ExpertOutput>,
+    pub shared_expert: ExpertOutput,
+    pub routed_aggregate: Vec<f64>,
+    pub combined_moe: Vec<f64>,
+    pub output: Vec<f32>,
+}
+
+pub fn run_r10_exact(matrices: &R10Matrices, inputs: &R10Inputs) -> Result<R10Output, R9Error> {
+    run_r10_with_matvec(matrices, inputs, |matrix, rows, columns, vector, role| {
+        let mut output = vec![0.0_f32; rows];
+        exact_matvec_f32(matrix, rows, columns, vector, &mut output)
+            .map_err(|_| R9Error::CandidateMatvec(role))?;
+        Ok(output)
+    })
+}
+
+pub fn run_r10_with_matvec<F>(
+    matrices: &R10Matrices,
+    inputs: &R10Inputs,
+    mut matvec: F,
+) -> Result<R10Output, R9Error>
+where
+    F: FnMut(&[f32], usize, usize, &[f32], &'static str) -> Result<Vec<f32>, R9Error>,
+{
+    let width = inputs.attention_residual.len();
+    let expert_count = inputs.router_bias.len();
+    if width == 0
+        || inputs.post_attention_norm_scale.len() != width
+        || expert_count == 0
+        || inputs.top_k == 0
+        || inputs.top_k > expert_count
+        || matrices.router.len() != expert_count * width
+        || matrices.routed.len() != inputs.top_k
+    {
+        return Err(R9Error::InvalidShape("R10 inputs"));
+    }
+    for expert in matrices
+        .routed
+        .iter()
+        .chain(std::iter::once(&matrices.shared))
+    {
+        if expert.gate.len() != width * width
+            || expert.up.len() != width * width
+            || expert.down.len() != width * width
+        {
+            return Err(R9Error::InvalidShape("R10 expert"));
+        }
+    }
+    let normalized = exact_rms_norm_f32(
+        &inputs.attention_residual,
+        &inputs.post_attention_norm_scale,
+        inputs.rms_epsilon,
+    )?;
+    let router_logits = matvec(
+        &matrices.router,
+        expert_count,
+        width,
+        &normalized,
+        "ffn_gate_inp",
+    )?;
+    let router_probabilities = router_logits
+        .iter()
+        .map(|&value| stable_sigmoid_f64(f64::from(value)))
+        .collect::<Vec<_>>();
+    let router_scores = router_probabilities
+        .iter()
+        .zip(&inputs.router_bias)
+        .map(|(&probability, &bias)| probability + bias)
+        .collect::<Vec<_>>();
+    let mut selected_ids = (0..expert_count).collect::<Vec<_>>();
+    selected_ids.sort_by(|left, right| {
+        router_scores[*right]
+            .total_cmp(&router_scores[*left])
+            .then_with(|| left.cmp(right))
+    });
+    selected_ids.truncate(inputs.top_k);
+    if matrices
+        .routed
+        .iter()
+        .map(|expert| expert.expert_id)
+        .collect::<Vec<_>>()
+        != selected_ids
+    {
+        return Err(R9Error::InvalidShape("R10 routed expert identity"));
+    }
+    let denominator = python_fsum(
+        &selected_ids
+            .iter()
+            .map(|&index| router_probabilities[index])
+            .collect::<Vec<_>>(),
+    );
+    let denominator = denominator.max(6.103_515_625e-5);
+    let routing_weights = selected_ids
+        .iter()
+        .map(|&index| router_probabilities[index] / denominator * inputs.expert_weight_scale)
+        .collect::<Vec<_>>();
+    let mut routed_experts = Vec::with_capacity(inputs.top_k);
+    for expert in &matrices.routed {
+        routed_experts.push(run_exact_activation_expert(
+            expert,
+            &normalized,
+            width,
+            &mut matvec,
+        )?);
+    }
+    let shared_expert =
+        run_exact_activation_expert(&matrices.shared, &normalized, width, &mut matvec)?;
+    let routed_aggregate = (0..width)
+        .map(|column| {
+            python_fsum(
+                &(0..inputs.top_k)
+                    .map(|route| {
+                        routing_weights[route] * f64::from(routed_experts[route].down[column])
+                    })
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let combined_moe = routed_aggregate
+        .iter()
+        .zip(&shared_expert.down)
+        .map(|(&routed, &shared)| routed + f64::from(shared))
+        .collect::<Vec<_>>();
+    let output = inputs
+        .attention_residual
+        .iter()
+        .zip(&combined_moe)
+        .map(|(&residual, &moe)| (f64::from(residual) + moe) as f32)
+        .collect();
+    Ok(R10Output {
+        normalized,
+        router_logits,
+        router_probabilities,
+        router_scores,
+        selected_ids,
+        routing_weights,
+        routed_experts,
+        shared_expert,
+        routed_aggregate,
+        combined_moe,
+        output,
+    })
+}
+
+fn run_exact_activation_expert<F>(
+    matrices: &ExpertMatrices,
+    activation: &[f32],
+    width: usize,
+    matvec: &mut F,
+) -> Result<ExpertOutput, R9Error>
+where
+    F: FnMut(&[f32], usize, usize, &[f32], &'static str) -> Result<Vec<f32>, R9Error>,
+{
+    let gate = matvec(&matrices.gate, width, width, activation, "expert_gate")?;
+    let up = matvec(&matrices.up, width, width, activation, "expert_up")?;
+    let mut hidden = vec![0.0_f32; width];
+    exact_swiglu_f32(&gate, &up, &mut hidden).map_err(R9Error::Matvec)?;
+    let down = matvec(&matrices.down, width, width, &hidden, "expert_down")?;
+    Ok(ExpertOutput {
+        expert_id: matrices.expert_id,
+        gate,
+        up,
+        hidden,
+        down,
+    })
+}
+
+fn stable_sigmoid_f64(value: f64) -> f64 {
+    if value >= 0.0 {
+        let factor = (-value).exp();
+        1.0 / (1.0 + factor)
+    } else {
+        let factor = value.exp();
+        factor / (1.0 + factor)
+    }
+}
+
+fn python_fsum(values: &[f64]) -> f64 {
+    let mut partials: Vec<f64> = Vec::new();
+    for &value in values {
+        let mut x = value;
+        let mut next = Vec::with_capacity(partials.len() + 1);
+        for &partial in &partials {
+            let (large, small) = if x.abs() < partial.abs() {
+                (partial, x)
+            } else {
+                (x, partial)
+            };
+            let high = large + small;
+            let low = small - (high - large);
+            if low != 0.0 {
+                next.push(low);
+            }
+            x = high;
+        }
+        next.push(x);
+        partials = next;
+    }
+    let mut high = 0.0_f64;
+    let mut low = 0.0_f64;
+    let mut count = partials.len();
+    while count > 0 {
+        count -= 1;
+        let x = high;
+        let y = partials[count];
+        high = x + y;
+        let rounded_y = high - x;
+        low = y - rounded_y;
+        if low != 0.0 {
+            break;
+        }
+    }
+    // Match CPython math.fsum's final half-even correction when the remaining
+    // partial has the same sign as the following partial.
+    if count > 0
+        && ((low < 0.0 && partials[count - 1] < 0.0) || (low > 0.0 && partials[count - 1] > 0.0))
+    {
+        let doubled = low * 2.0;
+        let corrected = high + doubled;
+        if doubled == corrected - high {
+            high = corrected;
+        }
+    }
+    high
 }
