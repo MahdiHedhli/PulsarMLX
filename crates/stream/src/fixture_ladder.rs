@@ -97,9 +97,9 @@ mod tests {
     use std::fs;
     use std::path::Path;
 
-    fn synthetic_fixture() -> PortableFixtureManifest {
+    fn independent_fixture() -> PortableFixtureManifest {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../specs/017-rust-native-inference-runtime/fixtures/portable-fixture-synthetic-v1.json");
+            .join("../../specs/017-rust-native-inference-runtime/fixtures/portable-fixture-independent-v2.json");
         PortableFixtureManifest::from_json(&fs::read_to_string(path).unwrap()).unwrap()
     }
 
@@ -114,8 +114,8 @@ mod tests {
     }
 
     #[test]
-    fn synthetic_manifest_drives_all_ordered_structural_boundaries() {
-        let fixture = synthetic_fixture();
+    fn independent_manifest_drives_all_ordered_structural_boundaries() {
+        let fixture = independent_fixture();
         let mut ladder = FixtureLadder::new(&fixture, ValidationMode::GoldenStrict).unwrap();
         for boundary in ParityBoundary::ORDERED {
             assert!(ladder.artifact_for(boundary).byte_length > 0);
@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn structural_ladder_preserves_strict_stop_semantics() {
-        let fixture = synthetic_fixture();
+        let fixture = independent_fixture();
         let mut ladder = FixtureLadder::new(&fixture, ValidationMode::GoldenStrict).unwrap();
         let divergent = BoundaryEvidence {
             classification: ValidationClassification::NumericallyQualifiedGreedyDivergent,
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn fixture_ladder_rejects_invalid_manifest_before_progress() {
-        let mut fixture = synthetic_fixture();
+        let mut fixture = independent_fixture();
         fixture.payload.byte_length = 0;
         assert!(matches!(
             FixtureLadder::new(&fixture, ValidationMode::GoldenStrict),
