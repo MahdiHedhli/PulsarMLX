@@ -1,5 +1,14 @@
 # PulsarMLX Feature 017 fixture provenance audit
 
+## Historical claim state before independent regeneration
+
+Classification at `b7585de`: **PARTIALLY INDEPENDENT**. The seven-boundary
+checkpoint-free scaffold passed against scalar Rust reference functions, but
+no independent Python/NumPy oracle generated those expected values. It must
+not be cited as independent-oracle parity. The existing fixtures are retained
+as historical structural/reference artifacts while the independent v2 set is
+generated and validated.
+
 ## Conclusion
 
 The public Feature 017 ladder is a checkpoint-free synthetic semantic ladder.
