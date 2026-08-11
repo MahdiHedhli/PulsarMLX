@@ -107,6 +107,14 @@
 - [x] T017-121 Add the smallest typed MLX compute operation required by the real-shaped projection gate.
 - [x] T017-122 Pass R5 production-adapter projection against the independent oracle.
 - [x] T017-130 Add fully validated 79-layer `glm-dsa` tensor map.
+- [x] T017-131A Freeze the original R7 mismatch, fixture identities, and exact failure classification without re-execution.
+- [ ] T017-131B Add an auditable strict-column-order f32 qualification matvec.
+- [ ] T017-131C Prove exact gate/up/down and complete-expert parity through the qualification scaffold.
+- [ ] T017-131D Attribute the original production MLX mismatch at every retained intermediate.
+- [ ] T017-131E Freeze an independently derived production expert Tier-B contract before additional production expert fixtures.
+- [ ] T017-131F Qualify the frozen Tier-B contract with independent stress fixtures.
+- [ ] T017-131G Requalify production R7 under the frozen Tier-B contract with fail-closed mode evidence.
+- [ ] T017-131H Admit and run only checkpoint-free R8 if every R7 gate passes.
 - [ ] T017-131 Compose router and complete expert runtime boundaries R6-R8.
 - [ ] T017-132 Compose MLA/DSA and complete layer runtime boundaries R9-R10.
 - [ ] T017-133 Compose final norm/logits/top-k runtime boundary R11.

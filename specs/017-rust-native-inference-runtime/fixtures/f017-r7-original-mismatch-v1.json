@@ -1,0 +1,54 @@
+{
+  "schema": "pulsarmlx.f017.r7-original-mismatch",
+  "schema_version": "1.0.0",
+  "classification": "FAIL_NUMERICAL_BEHAVIORAL",
+  "checkpoint_accessed": false,
+  "attempt_identity": {
+    "source_sha": "366d3dcd6c2f5379ad374ab88d2e4ae0760396f6",
+    "source_worktree_clean": false,
+    "raw_failure_artifact_sha256": "191504851fd3ef8be04d78f91fab0be30db83117ee0c8b25a880736209e00f80"
+  },
+  "independent_oracle": {
+    "fixture_path": "specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json",
+    "fixture_sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
+    "fixture_version": "glm52-runtime-expert-q8-0-v2",
+    "generator_path": "scripts/research/generate_f017_independent_oracle.py",
+    "generator_git_sha": "a9779097de029f26be1cb9fde3543cc517ff153e",
+    "generator_source_sha256": "cf6a90f310bf048d2752156ba71cddb6d8a179ce1fed17b4a5831de8412e297e",
+    "numerical_contract": {
+      "kind": "exact_f32_bits",
+      "atol": 0.0,
+      "rtol": 0.0
+    }
+  },
+  "inputs": {
+    "activation_sha256": "dab8e4da31ccc32b7c3bd0b5e405347b1593429bad47b767327519eab6fbc588",
+    "gate_packed_sha256": "ebeadb4a76f33fd37d3c3aa358f0684d255798c911e6a73557aa38c2608216d3",
+    "up_packed_sha256": "d21f5321c74829bd43c697064d290c9d7d84b3739186a6420d57c4f05be8613a",
+    "down_packed_sha256": "2d0eb3dc83f2500e248c26c8413d1182c4dc6a3ca1cfcdf366763176fcf682b4"
+  },
+  "expected_intermediates": {
+    "gate_output_sha256": "188a782b07a44c9066f43c8e1cb4bc8521096d5a550d394e9296724889b345f6",
+    "up_output_sha256": "65d93ab6ded27512d242f0028067fff6e2f416ef05ff82b187c20f242031fba8",
+    "hidden_sha256": "dd111ed9d308564620cf0503cc2f1c68bf3dadbd9e4e35e4af89d6602e47e7d0",
+    "output_sha256": "7f0358e45119a98e862eda497e4f443a65d6447240afcbb3e598a7160369d5f6"
+  },
+  "first_observed_divergence": {
+    "boundary": "complete_expert.output",
+    "index": 0,
+    "oracle_f32": 427908.5,
+    "oracle_f32_bits_hex": "0x48d0f090",
+    "candidate_f32": 427909.0,
+    "candidate_f32_bits_hex": "0x48d0f0a0",
+    "absolute_error": 0.5,
+    "relative_error": 1.1684741013557804e-6,
+    "candidate_scope": "first_observed_element_only",
+    "cause": "unattributed"
+  },
+  "preservation": {
+    "fixture_regenerated": false,
+    "oracle_modified": false,
+    "tolerance_modified": false,
+    "production_result_reexecuted": false
+  }
+}
