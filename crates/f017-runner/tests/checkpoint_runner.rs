@@ -369,6 +369,94 @@ fn actual_binary_banks_backend_failure_after_reconciling_adapter_lifecycle() {
     assert!(!evidence.lifecycle.post.singleton_claimed);
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[test]
+fn actual_binary_fails_closed_on_r12_tensor_contract_corruption() {
+    for mutation in ["missing_tensor", "wrong_shape", "unsupported_quantization"] {
+        let fixture = fixture(false);
+        let model = copy_r12_model(&fixture.root);
+        let mut document: serde_json::Value =
+            parse_json_no_duplicates(&fs::read(&model).unwrap()).unwrap();
+        let contracts = document["tensor_contracts"].as_array_mut().unwrap();
+        match mutation {
+            "missing_tensor" => {
+                contracts.remove(0);
+            }
+            "wrong_shape" => {
+                contracts[0]["dims"] = serde_json::json!([255, 16]);
+            }
+            "unsupported_quantization" => {
+                contracts[0]["type_id"] = serde_json::json!(999);
+            }
+            _ => unreachable!(),
+        }
+        fs::write(&model, serde_json::to_vec_pretty(&document).unwrap()).unwrap();
+        let out = fixture.root.join(format!("r12-{mutation}.json"));
+        let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+            .args(common_args(&fixture.environment, &out))
+            .arg("--fixture-mode")
+            .arg(&model)
+            .args(["--numerical-mode", "exact-qualification-scaffold"])
+            .status()
+            .unwrap();
+        assert!(!status.success());
+        let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+        assert_ne!(
+            evidence.result.classification,
+            f017_runner::evidence::ResultClassification::Pass
+        );
+        assert!(evidence.result.first_failure.is_some());
+    }
+}
+
+#[test]
+fn actual_binary_rejects_truncated_r12_shard_before_execution() {
+    let fixture = fixture(false);
+    let model = copy_r12_model(&fixture.root);
+    let shard = model.parent().unwrap().join("f017-r12-00001-of-00002.fixture");
+    let length = fs::metadata(&shard).unwrap().len();
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&shard)
+        .unwrap()
+        .set_len(length - 1)
+        .unwrap();
+    let out = fixture.root.join("r12-truncated-shard.json");
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .arg("--fixture-mode")
+        .arg(&model)
+        .args(["--numerical-mode", "exact-qualification-scaffold"])
+        .status()
+        .unwrap();
+    assert_eq!(status.code(), Some(11));
+    let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+    assert_eq!(
+        evidence.result.classification,
+        f017_runner::evidence::ResultClassification::FailCheckpointIdentity
+    );
+    assert_eq!(evidence.execution.dispatch.native, 0);
+}
+
+fn copy_r12_model(root: &Path) -> PathBuf {
+    let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../specs/017-rust-native-inference-runtime/fixtures/f017-r12-tiny-model");
+    let destination = root.join(format!(
+        "r12-model-copy-{}",
+        NEXT_FIXTURE_ID.fetch_add(1, Ordering::Relaxed)
+    ));
+    fs::create_dir(&destination).unwrap();
+    for name in [
+        "model.json",
+        "checkpoint.json",
+        "f017-r12-00001-of-00002.fixture",
+        "f017-r12-00002-of-00002.fixture",
+    ] {
+        fs::copy(source.join(name), destination.join(name)).unwrap();
+    }
+    destination.join("model.json")
+}
+
 fn common_args(environment: &Path, out: &Path) -> Vec<std::ffi::OsString> {
     [
         "--out".into(),
