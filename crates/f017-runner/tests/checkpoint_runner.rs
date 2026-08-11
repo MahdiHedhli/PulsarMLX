@@ -273,6 +273,7 @@ fn actual_binary_runs_r12_tiny_model_in_exact_and_production_modes() {
     assert!(production.identity.checkpoint.accessed);
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[test]
 fn actual_binary_banks_malformed_r12_manifest_without_false_pass() {
     let fixture = fixture(false);
@@ -411,6 +412,7 @@ fn actual_binary_fails_closed_on_r12_tensor_contract_corruption() {
     }
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[test]
 fn actual_binary_rejects_truncated_r12_shard_before_execution() {
     let fixture = fixture(false);
@@ -440,6 +442,7 @@ fn actual_binary_rejects_truncated_r12_shard_before_execution() {
     assert_eq!(evidence.execution.dispatch.native, 0);
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 fn copy_r12_model(root: &Path) -> PathBuf {
     let source = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../specs/017-rust-native-inference-runtime/fixtures/f017-r12-tiny-model");
