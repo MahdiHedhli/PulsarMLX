@@ -114,7 +114,7 @@ fn actual_binary_runs_dry_and_identity_modes() {
     assert_eq!(identity.execution.dispatch.native, 0);
     assert_eq!(
         identity.identity.checkpoint.tensor_map.status,
-        f017_runner::evidence::ObservationStatus::NotApplicable
+        f017_runner::evidence::TensorMapStatus::NotApplicable
     );
     let public_json = fs::read_to_string(&identity_out).unwrap();
     assert!(!public_json.contains(fixture.root.to_str().unwrap()));

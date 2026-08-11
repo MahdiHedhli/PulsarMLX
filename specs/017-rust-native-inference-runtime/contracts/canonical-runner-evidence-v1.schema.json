@@ -139,7 +139,7 @@
           "type": "object", "additionalProperties": false,
           "required": ["status", "version", "contract_sha256", "validated_tensor_count"],
           "properties": {
-            "status": { "enum": ["measured_zero", "measured_nonzero", "not_applicable", "unavailable"] },
+            "status": { "enum": ["validated", "not_applicable", "unavailable"] },
             "version": { "type": ["string", "null"] },
             "contract_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
             "validated_tensor_count": { "type": ["integer", "null"], "minimum": 0 }

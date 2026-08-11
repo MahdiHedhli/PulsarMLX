@@ -17,7 +17,7 @@ use crate::admission::HostAdmission;
 use crate::checkpoint::{CheckpointKind, CheckpointManifest, VerifiedCheckpoint};
 use crate::cli::{Config, RunnerMode};
 use crate::environment::ValidatedEnvironment;
-use crate::evidence::{AtomicEvidenceWriter, Evidence, ObservationStatus, ResultClassification};
+use crate::evidence::{AtomicEvidenceWriter, Evidence, ResultClassification};
 use crate::glm52_map::{Glm52TensorMap, GLM52_TENSOR_COUNT, GLM52_TENSOR_MAP_VERSION};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -245,7 +245,7 @@ fn verify_checkpoint_mode(config: &Config, evidence: &mut Evidence) -> Result<()
     evidence.identity.checkpoint = verified.evidence_identity();
     if verified.manifest.kind == CheckpointKind::Production {
         let map = Glm52TensorMap::from_gguf(&verified.catalog)?;
-        evidence.identity.checkpoint.tensor_map.status = ObservationStatus::MeasuredZero;
+        evidence.identity.checkpoint.tensor_map.status = evidence::TensorMapStatus::Validated;
         evidence.identity.checkpoint.tensor_map.version = Some(GLM52_TENSOR_MAP_VERSION.to_owned());
         evidence.identity.checkpoint.tensor_map.contract_sha256 = Some(map.contract_sha256());
         evidence
@@ -261,7 +261,7 @@ fn verify_checkpoint_mode(config: &Config, evidence: &mut Evidence) -> Result<()
             ));
         }
     } else {
-        evidence.identity.checkpoint.tensor_map.status = ObservationStatus::NotApplicable;
+        evidence.identity.checkpoint.tensor_map.status = evidence::TensorMapStatus::NotApplicable;
     }
     evidence.execution.storage.read_bytes = verified.identity_bytes_read;
     evidence.execution.storage.read_count = verified.identity_read_count;

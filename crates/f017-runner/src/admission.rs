@@ -383,5 +383,46 @@ mod tests {
         value.competing_processes_clear = true;
         value.memory_pressure = "urgent".to_owned();
         assert!(value.validate(&mode, true, 1).is_err());
+
+        let mut value = HostAdmission::synthetic_fixture();
+        value.telemetry_source = "measured_host".to_owned();
+        value.physical_memory_bytes = 128;
+        value.available_memory_bytes = 128;
+        value.evidence_volume_free_bytes = MINIMUM_EVIDENCE_DISK_BYTES;
+        value.memory_pressure = "normal".to_owned();
+        value.thermal_state = "normal".to_owned();
+        assert!(value.validate(&mode, true, 0).is_err());
+        value.swap_used_bytes = MAXIMUM_ADMISSION_SWAP_BYTES + 1;
+        assert!(value.validate(&mode, true, 1).is_err());
+        value.swap_used_bytes = 0;
+        value.evidence_volume_free_bytes = MINIMUM_EVIDENCE_DISK_BYTES - 1;
+        assert!(value.validate(&mode, true, 1).is_err());
+        value.evidence_volume_free_bytes = MINIMUM_EVIDENCE_DISK_BYTES;
+        value.thermal_state = "warning".to_owned();
+        assert!(value.validate(&mode, true, 1).is_err());
+        value.thermal_state = "normal".to_owned();
+        value.performance_warning = true;
+        assert!(value.validate(&mode, true, 1).is_err());
+        value.performance_warning = false;
+        value.port_1234_listener = true;
+        assert!(value.validate(&mode, true, 1).is_err());
+    }
+
+    #[test]
+    fn identity_mode_requires_checkpoint_volume_telemetry() {
+        let mut value = HostAdmission::synthetic_fixture();
+        value.telemetry_source = "measured_host".to_owned();
+        value.physical_memory_bytes = 128;
+        value.available_memory_bytes = 128;
+        value.evidence_volume_free_bytes = MINIMUM_EVIDENCE_DISK_BYTES;
+        value.memory_pressure = "normal".to_owned();
+        value.thermal_state = "unavailable".to_owned();
+        assert!(value
+            .validate(&RunnerMode::CheckpointIdentity, true, 1)
+            .is_err());
+        value.checkpoint_volume_free_bytes = Some(1);
+        assert!(value
+            .validate(&RunnerMode::CheckpointIdentity, true, 1)
+            .is_ok());
     }
 }

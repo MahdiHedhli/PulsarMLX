@@ -56,10 +56,19 @@ pub struct CheckpointEvidence {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TensorMapEvidence {
-    pub status: ObservationStatus,
+    pub status: TensorMapStatus,
     pub version: Option<String>,
     pub contract_sha256: Option<String>,
     pub validated_tensor_count: Option<u64>,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum TensorMapStatus {
+    Validated,
+    NotApplicable,
+    #[default]
+    Unavailable,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -525,7 +534,7 @@ impl Evidence {
             || self.execution.dispatch.fallback != 0
             || self.execution.dispatch.errors != 0
         {
-            return Err(evidence_error(
+            return Err(lifecycle_error(
                 "pass_reconciliation",
                 "PASS requires fully reconciled lifecycle and dispatch state",
             ));
@@ -563,7 +572,7 @@ impl Evidence {
         }
         if self.identity.environment_kind == "production_reviewed"
             && self.input.mode == "checkpoint_identity"
-            && (self.identity.checkpoint.tensor_map.status != ObservationStatus::MeasuredZero
+            && (self.identity.checkpoint.tensor_map.status != TensorMapStatus::Validated
                 || self.identity.checkpoint.tensor_map.validated_tensor_count != Some(1_809))
         {
             return Err(evidence_error(
@@ -677,6 +686,10 @@ fn serialize(evidence: &Evidence) -> Result<Vec<u8>, RunnerError> {
 
 fn evidence_error(code: &'static str, message: impl Into<String>) -> RunnerError {
     RunnerError::new(FailureClass::InfrastructureEvidence, code, message)
+}
+
+fn lifecycle_error(code: &'static str, message: impl Into<String>) -> RunnerError {
+    RunnerError::new(FailureClass::LifecycleOwnership, code, message)
 }
 
 #[cfg(test)]
@@ -839,6 +852,65 @@ mod tests {
         fs::remove_file(path).unwrap();
     }
 
+    #[test]
+    fn exclusive_create_rejects_non_directory_parent_and_symlink_target() {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let parent = std::env::temp_dir().join(format!(
+            "f017-evidence-parent-{}-{suffix}",
+            std::process::id()
+        ));
+        fs::write(&parent, b"not a directory").unwrap();
+        let target = parent.join("evidence.json");
+        let evidence = Evidence::initial(&config(target.clone()), "a".repeat(64));
+        assert!(AtomicEvidenceWriter::create(target, &evidence).is_err());
+        fs::remove_file(parent).unwrap();
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::symlink;
+            let real = std::env::temp_dir().join(format!(
+                "f017-evidence-real-{}-{suffix}.json",
+                std::process::id()
+            ));
+            let link = std::env::temp_dir().join(format!(
+                "f017-evidence-link-{}-{suffix}.json",
+                std::process::id()
+            ));
+            fs::write(&real, b"preserve").unwrap();
+            symlink(&real, &link).unwrap();
+            let evidence = Evidence::initial(&config(link.clone()), "a".repeat(64));
+            assert!(AtomicEvidenceWriter::create(link.clone(), &evidence).is_err());
+            assert_eq!(fs::read(&real).unwrap(), b"preserve");
+            fs::remove_file(link).unwrap();
+            fs::remove_file(real).unwrap();
+        }
+    }
+
+    #[test]
+    fn interrupted_temporary_update_cannot_replace_acquired_target() {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "f017-evidence-interrupted-{}-{suffix}.json",
+            std::process::id()
+        ));
+        let evidence = Evidence::initial(&config(path.clone()), "a".repeat(64));
+        let before = serialize(&evidence).unwrap();
+        let mut writer = AtomicEvidenceWriter::create(path.clone(), &evidence).unwrap();
+        let name = path.file_name().unwrap().to_str().unwrap();
+        let interrupted = path.with_file_name(format!(".{name}.{}.1.tmp", std::process::id()));
+        fs::write(&interrupted, b"incomplete").unwrap();
+        assert!(writer.update(&evidence).is_err());
+        assert_eq!(fs::read(&path).unwrap(), before);
+        fs::remove_file(interrupted).unwrap();
+        fs::remove_file(path).unwrap();
+    }
+
     fn success_ready(mode: &str) -> Evidence {
         let mut evidence = Evidence::initial(&config(PathBuf::from("unused.json")), "a".repeat(64));
         evidence.input.mode = mode.to_owned();
@@ -895,7 +967,8 @@ mod tests {
         value.lifecycle.reconciled = false;
         cases.push(value);
         for value in cases {
-            assert!(value.validate_success_ready().is_err());
+            let error = value.validate_success_ready().unwrap_err();
+            assert_eq!(error.class, FailureClass::LifecycleOwnership);
         }
     }
 
