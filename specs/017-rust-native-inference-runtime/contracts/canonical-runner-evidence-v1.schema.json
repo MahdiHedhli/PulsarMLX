@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/canonical-runner-evidence-v1.schema.json",
+  "title": "PulsarMLX Feature 017 canonical runner evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "identity",
+    "admission",
+    "input",
+    "execution",
+    "residency",
+    "lifecycle",
+    "result"
+  ],
+  "properties": {
+    "schema": { "const": "pulsarmlx.f017.canonical-runner-evidence" },
+    "schema_version": { "const": "1.0.0" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_sha", "runner_version", "environment_manifest_sha256", "platform", "toolchain", "checkpoint"],
+      "properties": {
+        "source_sha": { "$ref": "#/$defs/sha256OrGit" },
+        "runner_version": { "type": "string", "minLength": 1 },
+        "environment_manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "platform": { "type": "object" },
+        "toolchain": { "type": "object" },
+        "checkpoint": { "$ref": "#/$defs/checkpointIdentity" }
+      }
+    },
+    "admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["memory_floor_bytes", "available_memory_bytes", "memory_pressure", "swap_used_bytes", "disk_free_bytes", "load_averages", "competing_processes_clear", "stream_mode", "singleton_initially_unclaimed"],
+      "properties": {
+        "memory_floor_bytes": { "type": "integer", "minimum": 1 },
+        "available_memory_bytes": { "type": "integer", "minimum": 0 },
+        "memory_pressure": { "enum": ["normal", "warning", "critical", "unknown"] },
+        "swap_used_bytes": { "type": "integer", "minimum": 0 },
+        "disk_free_bytes": { "type": "integer", "minimum": 0 },
+        "load_averages": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number", "minimum": 0 } },
+        "competing_processes_clear": { "type": "boolean" },
+        "stream_mode": { "enum": ["default_gpu", "owned_device"] },
+        "singleton_initially_unclaimed": { "type": "boolean" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokens", "n_new", "expected_token", "validation_mode", "mode"],
+      "properties": {
+        "tokens": { "type": "array", "minItems": 0, "items": { "type": "integer", "minimum": 0, "maximum": 4294967295 } },
+        "n_new": { "type": "integer", "minimum": 0 },
+        "expected_token": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
+        "validation_mode": { "enum": ["golden_strict", "teacher_forced_validation"] },
+        "mode": { "enum": ["dry_run", "adapter_preflight", "checkpoint_identity", "fixture", "p1"] }
+      }
+    },
+    "execution": { "$ref": "#/$defs/execution" },
+    "residency": { "$ref": "#/$defs/residency" },
+    "lifecycle": { "$ref": "#/$defs/lifecycle" },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "first_failure", "stop_reason", "completed"],
+      "properties": {
+        "classification": { "enum": ["PASS", "FAIL_ADMISSION_ENVIRONMENT", "FAIL_CHECKPOINT_IDENTITY", "FAIL_LIFECYCLE_OWNERSHIP", "FAIL_NUMERICAL_BEHAVIORAL", "FAIL_INFRASTRUCTURE_EVIDENCE", "CANCELLED", "INCOMPLETE"] },
+        "first_failure": { "type": ["object", "null"] },
+        "stop_reason": { "type": ["string", "null"] },
+        "completed": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sha256OrGit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+    "checkpointIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accessed", "revision", "checkpoint_set_sha256", "catalog_sha256", "shards"],
+      "properties": {
+        "accessed": { "type": "boolean" },
+        "revision": { "type": ["string", "null"] },
+        "checkpoint_set_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "catalog_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "shards": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layers", "timings", "storage", "dispatch", "generated_token", "numerical_classification", "progress_state"],
+      "properties": {
+        "layers": { "type": "array", "items": { "type": "object" } },
+        "timings": { "type": "object" },
+        "storage": { "type": "object" },
+        "dispatch": { "type": "object" },
+        "generated_token": { "type": ["integer", "null"] },
+        "numerical_classification": { "type": ["string", "null"] },
+        "progress_state": { "type": "string" }
+      }
+    },
+    "residency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compressed", "decoded_hot", "native_ready_hot", "transient", "protected_shared", "hits", "misses", "evictions"],
+      "properties": {
+        "compressed": { "type": "integer", "minimum": 0 },
+        "decoded_hot": { "type": "integer", "minimum": 0 },
+        "native_ready_hot": { "type": "integer", "minimum": 0 },
+        "transient": { "type": "integer", "minimum": 0 },
+        "protected_shared": { "type": "integer", "minimum": 0 },
+        "hits": { "type": "integer", "minimum": 0 },
+        "misses": { "type": "integer", "minimum": 0 },
+        "evictions": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pre", "post", "reconciled"],
+      "properties": {
+        "pre": { "$ref": "#/$defs/lifecycleCounters" },
+        "post": { "$ref": "#/$defs/lifecycleCounters" },
+        "reconciled": { "type": "boolean" }
+      }
+    },
+    "lifecycleCounters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managed_created", "managed_destroyed", "derived_created", "derived_destroyed", "callback_count", "default_cpu_stream_created", "default_cpu_stream_freed", "default_gpu_stream_created", "default_gpu_stream_freed", "owned_stream_created", "owned_stream_freed", "active_contexts", "singleton_claimed", "active_registrations", "pending_registration_destructions", "in_flight_work", "live_owner_tokens", "stale_generations"],
+      "properties": {
+        "managed_created": { "type": "integer", "minimum": 0 },
+        "managed_destroyed": { "type": "integer", "minimum": 0 },
+        "derived_created": { "type": "integer", "minimum": 0 },
+        "derived_destroyed": { "type": "integer", "minimum": 0 },
+        "callback_count": { "type": "integer", "minimum": 0 },
+        "default_cpu_stream_created": { "type": "integer", "minimum": 0 },
+        "default_cpu_stream_freed": { "type": "integer", "minimum": 0 },
+        "default_gpu_stream_created": { "type": "integer", "minimum": 0 },
+        "default_gpu_stream_freed": { "type": "integer", "minimum": 0 },
+        "owned_stream_created": { "type": "integer", "minimum": 0 },
+        "owned_stream_freed": { "type": "integer", "minimum": 0 },
+        "active_contexts": { "type": "integer", "minimum": 0 },
+        "singleton_claimed": { "type": "boolean" },
+        "active_registrations": { "type": "integer", "minimum": 0 },
+        "pending_registration_destructions": { "type": "integer", "minimum": 0 },
+        "in_flight_work": { "type": "integer", "minimum": 0 },
+        "live_owner_tokens": { "type": "integer", "minimum": 0 },
+        "stale_generations": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

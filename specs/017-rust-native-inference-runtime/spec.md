@@ -134,6 +134,9 @@ Acceptance:
   - `numerically_qualified_greedy_identical`
   - `numerically_qualified_greedy_divergent`
   - `numerically_failed`
+- **FR-017-12**: Add a canonical Rust-native GLM-5.2 runner executable that composes the production F017 adapter, checkpoint store, architecture plugin, telemetry, evidence, and lifecycle contracts without Python orchestration.
+- **FR-017-13**: Add checkpoint-free modes for CLI/schema validation, production-adapter preflight, fake multi-shard execution, and tiny end-to-end model execution.
+- **FR-017-14**: Add identity-only checkpoint admission that never executes a tensor and cannot silently search for, download, or substitute model files.
 
 ## Validation boundary order
 
@@ -145,6 +148,12 @@ Acceptance:
 6. Native bridge registration lifecycle
 7. Runtime skeleton and GLM interfaces
 8. Checkpoint-free ladder to representative logits
+9. Canonical runner CLI, evidence, fake multi-shard store, and tensor map
+10. Production-adapter compute operations required by the runner
+11. Actual runner binary executes a tiny synthetic model end to end
+12. Local-only real boundary fixtures
+13. M1 identity-only admission
+14. One separately authorized M1 P1
 
 ## Completion for first bounded milestone
 
@@ -156,3 +165,24 @@ Acceptance:
 - Bridge spike telemetry-backed and teardown-safe
 - MLX boundary ADR drafted and reviewed
 - checkpoint-free ladder reaches representative layer/logits boundary without checkpoint download
+
+## Canonical real-checkpoint runner extension
+
+The first bounded milestone above established infrastructure but did not create
+a real-checkpoint executable. Feature 017 therefore remains open for a
+canonical runner extension. The extension MUST provide:
+
+- a dedicated `f017-glm52-runner` executable rather than routing through the
+  Linux/CUDA `pulsar-cli`;
+- strict CLI and stable exit classes;
+- versioned, atomic, duplicate-key-free evidence;
+- an immutable six-shard checkpoint manifest and exact bounded tensor store;
+- a fully validated `glm-dsa` tensor map before weight execution;
+- one process-wide production `MlxContext` with explicit operation capability,
+  synchronization, and lifecycle reconciliation;
+- checkpoint-free end-to-end execution through the actual binary;
+- local-only real boundary fixtures before any full-model P1 admission.
+
+Python remains the independent oracle and fixture producer. It MUST NOT be
+invoked by the shipping runner. Feature 018 direct Metal kernels and
+output-head residency experiments remain disabled for the first F017 P1.

@@ -90,3 +90,31 @@
 ## Release-prep
 
 - [ ] T018-00 Send milestone NTFY update after authoritative input incorporation and milestone gates.
+
+## Canonical real-checkpoint runner extension
+
+- [x] T017-100 Reconcile reviewed F017 source and preserve immutable M1 and existing dirty worktrees.
+- [x] T017-101 Create and push dedicated `feat/017-real-checkpoint-runner` from reviewed `a4b08e1`.
+- [x] T017-102 Commit a source-backed real-checkpoint runner gap analysis.
+- [x] T017-103 Freeze the canonical runner CLI, exit-class, evidence, and mode contract.
+- [x] T017-104 Define versioned runner evidence schema and duplicate-key rule.
+- [ ] T017-110 Add dedicated `f017-glm52-runner` crate and strict CLI parser.
+- [ ] T017-111 Add atomic evidence/progress writer and deterministic validator.
+- [ ] T017-112 Add immutable fake multi-shard checkpoint manifest and identity parser.
+- [ ] T017-113 Compose GGUF catalog and positional tensor store with exact range/hash evidence.
+- [ ] T017-114 Add runner dry-run and checkpoint-identity-only vertical slices.
+- [ ] T017-120 Bind adapter-preflight-only to the production F017 adapter with zero-state/reconciliation evidence.
+- [ ] T017-121 Add the smallest typed MLX compute operation required by the real-shaped projection gate.
+- [ ] T017-122 Pass R5 production-adapter projection against the independent oracle.
+- [ ] T017-130 Add fully validated 79-layer `glm-dsa` tensor map.
+- [ ] T017-131 Compose router and complete expert runtime boundaries R6-R8.
+- [ ] T017-132 Compose MLA/DSA and complete layer runtime boundaries R9-R10.
+- [ ] T017-133 Compose final norm/logits/top-k runtime boundary R11.
+- [ ] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
+- [ ] T017-140 Add local-only real boundary fixture manifest/validator for R13.
+- [ ] T017-141 Add literal canonical P1 command only after M1-A through M1-G review gates pass.
+- [ ] T017-150 Add checkpoint-free CI for CLI/schema/store/tensor-map/runner/cancellation/privacy gates.
+- [ ] T017-151 Require native Apple CI to execute adapter and projection tests without skips.
+- [ ] T017-160 Obtain internal implementation review of the runner composition.
+- [ ] T017-161 Obtain independent adversarial review of P1 meaningfulness and fail-closed behavior.
+- [ ] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

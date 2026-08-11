@@ -111,3 +111,58 @@ Gate: ladder advances only when previous boundary remains deterministic and boun
 
 - No 018 kernels are selected inside this feature.
 - M1 Ultra parity is not requested until the ladder, residency budget gates, and bridge ownership are green.
+
+## Phase 12 — Canonical runner contract
+
+- Freeze the dedicated binary name, strict CLI, exit classes, validation modes,
+  public-safe evidence schema, and atomic progress rules.
+- Bind the runner to the production F017 adapter; prohibit Python orchestration,
+  Linux/CUDA engine substitution, Feature 018 kernels, and hidden fallback.
+
+Gate: contract/schema tests reject unknown options, duplicate keys, invalid
+mode combinations, and incomplete lifecycle evidence.
+
+## Phase 13 — Runner identity and storage vertical slice
+
+- Add an immutable multi-shard manifest with exact shard identities.
+- Compose the existing GGUF parser and positional reader into one production
+  catalog/store with overflow, short-read, duplicate-name, and path-sanitizing
+  failures.
+- Implement `--dry-run`, `--checkpoint-identity-only`, and a fake split-GGUF
+  fixture without checkpoint downloads.
+
+Gate: the actual binary reaches R4 and records exact read/hash evidence from a
+tiny public-safe multi-shard fixture.
+
+## Phase 14 — Production adapter execution surface
+
+- Bind `--adapter-preflight-only` to the actual production adapter.
+- Add only typed MLX C operations required by the next semantic boundary,
+  starting with shaped f32 import, matvec, bounded result extraction, and
+  explicit synchronization.
+- Record capability, dispatch, setup, compute, synchronization, and ownership
+  telemetry with no silent fallback.
+
+Gate: R5 projection fixture passes against its independent oracle on the native
+Apple job and every lifecycle counter reconciles.
+
+## Phase 15 — GLM-5.2 runtime composition
+
+- Validate the complete 79-layer `glm-dsa` tensor map before execution.
+- Compose router, expert, MLA/DSA, layer, final-output, and generation state in
+  R6 through R11 order.
+- Run a tiny synthetic multi-layer model through the actual runner binary at
+  R12; no unit-only bypass satisfies this gate.
+
+Gate: the checkpoint-free end-to-end runner produces its expected token,
+complete evidence, cancellation behavior, and zero lifecycle state.
+
+## Phase 16 — Local-only and M1 ladder
+
+- Consume hash-bound, non-redistributed R13 boundary fixtures on the M2/M1
+  development machines.
+- Review and bank M1-A through M1-G separately before documenting the literal
+  M1-H command.
+- M1-H requires a new independent review and a fresh one-P1 authorization.
+
+Gate: do not claim P1 readiness before R0-R14 and M1-A through M1-G are green.
