@@ -1,23 +1,28 @@
 use crate::cli::Config;
 use crate::evidence::Evidence;
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 use crate::json::{parse_json_no_duplicates, sha256_bytes};
 use crate::{FailureClass, RunnerError};
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 use serde::Deserialize;
-use std::fs;
 use std::path::Path;
-use std::time::Instant;
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+use std::{fs, time::Instant};
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[derive(Debug, Deserialize)]
 struct OracleFixture {
     schema: String,
     boundaries: OracleBoundaries,
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[derive(Debug, Deserialize)]
 struct OracleBoundaries {
     projection: ProjectionBoundary,
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[derive(Debug, Deserialize)]
 struct ProjectionBoundary {
     classification: String,
@@ -30,6 +35,7 @@ struct ProjectionBoundary {
     numerical_contract: NumericalContract,
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[derive(Debug, Deserialize)]
 struct ProjectionInputs {
     activation: Vec<f32>,
@@ -38,6 +44,7 @@ struct ProjectionInputs {
     packed_sha256: String,
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[derive(Debug, Deserialize)]
 struct ProjectionExpected {
     decoded_sha256: String,
@@ -45,6 +52,7 @@ struct ProjectionExpected {
     output_sha256: String,
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 #[derive(Debug, Deserialize)]
 struct NumericalContract {
     kind: String,
@@ -252,6 +260,7 @@ fn run_projection_fixture_impl(
     ))
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 fn validate_contract(schema: &str, projection: &ProjectionBoundary) -> Result<(), RunnerError> {
     if schema != "glm52-f017-independent-oracle-v1"
         || projection.classification != "INDEPENDENT"
@@ -274,6 +283,7 @@ fn validate_contract(schema: &str, projection: &ProjectionBoundary) -> Result<()
     Ok(())
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 fn require_hash(code: &'static str, bytes: &[u8], expected: &str) -> Result<(), RunnerError> {
     if sha256_bytes(bytes) != expected {
         return Err(fixture_error(
@@ -315,6 +325,7 @@ fn decode_hex(encoded: &str) -> Result<Vec<u8>, RunnerError> {
         .collect()
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 fn f32_bytes(values: &[f32]) -> Vec<u8> {
     values
         .iter()
@@ -322,6 +333,7 @@ fn f32_bytes(values: &[f32]) -> Vec<u8> {
         .collect()
 }
 
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
 fn adapter_error(message: String) -> RunnerError {
     fixture_error(FailureClass::LifecycleOwnership, "fixture_adapter", message)
 }
