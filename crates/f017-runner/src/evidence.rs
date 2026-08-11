@@ -1,4 +1,4 @@
-use crate::cli::Config;
+use crate::cli::{mode_environment_policy, Config, EnvironmentPolicy};
 use crate::contract_bindings::r12_contract_bindings;
 use crate::environment::{LoadedLibraryEvidence, ValidatedEnvironment};
 use crate::numerical_classification::{
@@ -540,6 +540,7 @@ impl Evidence {
             ));
         }
         let production_execution = self.input.mode == "adapter_preflight"
+            || self.input.mode == "p1"
             || (self.input.mode == "fixture"
                 && self.input.numerical_mode.as_deref() == Some("production_mlx_tier_b"));
         if production_execution
@@ -551,27 +552,40 @@ impl Evidence {
                 "production PASS forbids scaffold/reference dispatch",
             ));
         }
-        if self.identity.environment_kind == "production_reviewed"
-            && matches!(
-                self.input.mode.as_str(),
-                "adapter_preflight" | "checkpoint_identity"
+        let environment_policy = mode_environment_policy(&self.input.mode).ok_or_else(|| {
+            evidence_error(
+                "pass_environment_policy",
+                "PASS evidence has an unknown runner mode",
             )
-        {
+        })?;
+        if environment_policy == EnvironmentPolicy::ProductionReviewed {
+            if self.identity.environment_kind != "production_reviewed" {
+                return Err(evidence_error(
+                    "pass_environment_kind",
+                    "production stage PASS requires the reviewed production environment",
+                ));
+            }
             if !self.identity.source_clean
                 || self.admission.telemetry_source != "measured_host"
                 || self.admission.available_memory_bytes < self.admission.memory_floor_bytes
                 || !self.admission.competing_processes_clear
                 || self.admission.port_1234_listener
-                || self.identity.loaded_libraries.len() != 2
+                || !loaded_libraries_verified(&self.identity.loaded_libraries)
             {
                 return Err(evidence_error(
                     "pass_admission",
                     "production PASS requires admitted measured host and loaded-library identity",
                 ));
             }
+        } else if environment_policy == EnvironmentPolicy::CheckpointFreeFixture
+            && self.identity.environment_kind != "checkpoint_free_fixture"
+        {
+            return Err(evidence_error(
+                "pass_environment_kind",
+                "fixture identity PASS requires the checkpoint-free fixture environment",
+            ));
         }
-        if self.identity.environment_kind == "production_reviewed"
-            && self.input.mode == "checkpoint_identity"
+        if self.input.mode == "checkpoint_identity"
             && (self.identity.checkpoint.tensor_map.status != TensorMapStatus::Validated
                 || self.identity.checkpoint.tensor_map.validated_tensor_count != Some(1_809))
         {
@@ -582,6 +596,32 @@ impl Evidence {
         }
         Ok(())
     }
+}
+
+fn loaded_libraries_verified(libraries: &[LoadedLibraryEvidence]) -> bool {
+    if libraries.len() != 2 {
+        return false;
+    }
+    let mut identities = libraries
+        .iter()
+        .map(|library| {
+            (
+                library.artifact.as_str(),
+                library.resolved_basename.as_str(),
+            )
+        })
+        .collect::<Vec<_>>();
+    identities.sort_unstable();
+    identities == [("mlx_c", "libmlxc.dylib"), ("mlx_native", "libmlx.dylib")]
+        && libraries.iter().all(|library| {
+            library.actual_sha256 == library.expected_sha256
+                && library.actual_sha256.len() == 64
+                && library
+                    .actual_sha256
+                    .bytes()
+                    .all(|byte| byte.is_ascii_hexdigit())
+                && library.architecture == "arm64"
+        })
 }
 
 fn source_worktree_clean() -> bool {
@@ -925,6 +965,36 @@ mod tests {
         evidence
     }
 
+    fn production_success_ready(mode: &str) -> Evidence {
+        let mut evidence = success_ready(mode);
+        evidence.identity.source_clean = true;
+        evidence.identity.environment_kind = "production_reviewed".to_owned();
+        evidence.admission.telemetry_source = "measured_host".to_owned();
+        evidence.admission.physical_memory_bytes = 128;
+        evidence.admission.available_memory_bytes = evidence.admission.memory_floor_bytes;
+        evidence.admission.memory_pressure = "normal".to_owned();
+        evidence.admission.evidence_volume_free_bytes = 16 * 1024 * 1024;
+        evidence.admission.competing_processes_clear = true;
+        evidence.identity.loaded_libraries = vec![
+            LoadedLibraryEvidence {
+                artifact: "mlx_native".to_owned(),
+                resolved_basename: "libmlx.dylib".to_owned(),
+                actual_sha256: "1".repeat(64),
+                expected_sha256: "1".repeat(64),
+                architecture: "arm64".to_owned(),
+            },
+            LoadedLibraryEvidence {
+                artifact: "mlx_c".to_owned(),
+                resolved_basename: "libmlxc.dylib".to_owned(),
+                actual_sha256: "2".repeat(64),
+                expected_sha256: "2".repeat(64),
+                architecture: "arm64".to_owned(),
+            },
+        ];
+        evidence.execution.dispatch.native = 1;
+        evidence
+    }
+
     #[test]
     fn pass_validation_rejects_every_unreconciled_domain() {
         let baseline = success_ready("dry_run");
@@ -995,5 +1065,69 @@ mod tests {
             value: None,
         };
         assert!(malformed.validate().is_err());
+    }
+
+    #[test]
+    fn production_stage_pass_rejects_fixture_environment_and_synthetic_telemetry() {
+        for mode in ["adapter_preflight", "checkpoint_identity", "p1"] {
+            let mut evidence = production_success_ready(mode);
+            evidence.identity.environment_kind = "checkpoint_free_fixture".to_owned();
+            evidence.admission.telemetry_source = "synthetic_fixture".to_owned();
+            evidence.identity.loaded_libraries.clear();
+            assert_eq!(
+                evidence.validate_success_ready().unwrap_err().code,
+                "pass_environment_kind"
+            );
+        }
+
+        let mut evidence = production_success_ready("adapter_preflight");
+        evidence.admission.telemetry_source = "synthetic_fixture".to_owned();
+        assert_eq!(
+            evidence.validate_success_ready().unwrap_err().code,
+            "pass_admission"
+        );
+    }
+
+    #[test]
+    fn production_stage_pass_requires_exact_loaded_library_evidence() {
+        let mut missing = production_success_ready("adapter_preflight");
+        missing.identity.loaded_libraries.clear();
+        assert!(missing.validate_success_ready().is_err());
+
+        let mut mismatch = production_success_ready("adapter_preflight");
+        mismatch.identity.loaded_libraries[0].actual_sha256 = "3".repeat(64);
+        assert!(mismatch.validate_success_ready().is_err());
+
+        let valid = production_success_ready("adapter_preflight");
+        assert!(valid.validate_success_ready().is_ok());
+    }
+
+    #[test]
+    fn checkpoint_identity_pass_requires_production_environment_and_validated_map() {
+        let mut valid = production_success_ready("checkpoint_identity");
+        valid.identity.checkpoint.tensor_map = TensorMapEvidence {
+            status: TensorMapStatus::Validated,
+            version: Some("f017-glm52-tensor-map-v1".to_owned()),
+            contract_sha256: Some("4".repeat(64)),
+            validated_tensor_count: Some(1_809),
+        };
+        assert!(valid.validate_success_ready().is_ok());
+
+        valid.identity.environment_kind = "checkpoint_free_fixture".to_owned();
+        valid.admission.telemetry_source = "synthetic_fixture".to_owned();
+        valid.identity.loaded_libraries.clear();
+        assert_eq!(
+            valid.validate_success_ready().unwrap_err().code,
+            "pass_environment_kind"
+        );
+    }
+
+    #[test]
+    fn fixture_checkpoint_identity_pass_requires_fixture_environment() {
+        let mut valid = success_ready("fixture_checkpoint_identity");
+        valid.identity.environment_kind = "checkpoint_free_fixture".to_owned();
+        assert!(valid.validate_success_ready().is_ok());
+        valid.identity.environment_kind = "production_reviewed".to_owned();
+        assert!(valid.validate_success_ready().is_err());
     }
 }

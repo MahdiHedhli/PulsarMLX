@@ -91,13 +91,16 @@ fn actual_binary_runs_dry_and_identity_modes() {
     let identity_out = fixture.root.join("identity.json");
     let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
         .args(common_args(&fixture.environment, &identity_out))
-        .args(["--checkpoint-identity-only", "--checkpoint-manifest"])
+        .args([
+            "--fixture-checkpoint-identity-only",
+            "--checkpoint-manifest",
+        ])
         .arg(&fixture.manifest)
         .status()
         .unwrap();
     assert!(status.success());
     let identity: Evidence = parse_json_no_duplicates(&fs::read(&identity_out).unwrap()).unwrap();
-    assert_eq!(identity.input.mode, "checkpoint_identity");
+    assert_eq!(identity.input.mode, "fixture_checkpoint_identity");
     assert!(identity.identity.checkpoint.accessed);
     assert_eq!(identity.identity.checkpoint.shards.len(), 2);
     assert_eq!(identity.execution.storage.read_count, 4);
@@ -136,12 +139,15 @@ fn adapter_preflight_mode_rejects_every_checkpoint_argument() {
 }
 
 #[test]
-fn identity_mode_never_constructs_execution_or_dispatch_state() {
+fn fixture_identity_mode_never_constructs_execution_or_dispatch_state() {
     let fixture = fixture(false);
     let out = fixture.root.join("identity-isolation.json");
     let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
         .args(common_args(&fixture.environment, &out))
-        .args(["--checkpoint-identity-only", "--checkpoint-manifest"])
+        .args([
+            "--fixture-checkpoint-identity-only",
+            "--checkpoint-manifest",
+        ])
         .arg(&fixture.manifest)
         .status()
         .unwrap();
@@ -154,7 +160,34 @@ fn identity_mode_never_constructs_execution_or_dispatch_state() {
 }
 
 #[test]
-fn unsupported_p1_fails_before_checkpoint_access_and_banks_failure() {
+fn production_stage_modes_reject_fixture_environment_before_stage_work() {
+    let fixture = fixture(false);
+
+    let adapter_out = fixture.root.join("adapter-fixture-environment.json");
+    let adapter = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &adapter_out))
+        .arg("--adapter-preflight-only")
+        .status()
+        .unwrap();
+    assert_eq!(adapter.code(), Some(10));
+    assert!(!adapter_out.exists());
+
+    let identity_out = fixture.root.join("identity-fixture-environment.json");
+    let missing_checkpoint = fixture.root.join("must-not-open-checkpoint.json");
+    assert!(!missing_checkpoint.exists());
+    let identity = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &identity_out))
+        .args(["--checkpoint-identity-only", "--checkpoint-manifest"])
+        .arg(&missing_checkpoint)
+        .status()
+        .unwrap();
+    assert_eq!(identity.code(), Some(10));
+    assert!(!identity_out.exists());
+    assert!(!missing_checkpoint.exists());
+}
+
+#[test]
+fn p1_rejects_fixture_environment_before_checkpoint_access() {
     let fixture = fixture(false);
     let out = fixture.root.join("p1-failure.json");
     let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
@@ -173,13 +206,8 @@ fn unsupported_p1_fails_before_checkpoint_access_and_banks_failure() {
         ])
         .status()
         .unwrap();
-    assert_eq!(status.code(), Some(14));
-    let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
-    assert!(!evidence.identity.checkpoint.accessed);
-    assert_eq!(
-        evidence.result.first_failure.unwrap().code,
-        "p1_not_admitted"
-    );
+    assert_eq!(status.code(), Some(10));
+    assert!(!out.exists());
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]

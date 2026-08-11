@@ -28,8 +28,17 @@ not invoke Python, the Linux/CUDA `pulsar-cli`, or Feature 018 kernels.
 
 - `--dry-run`: CLI, source, environment, and schema only; no checkpoint access.
 - `--adapter-preflight-only`: production adapter lifecycle only; no checkpoint.
-- `--checkpoint-identity-only`: shard hashes and catalog only; no tensor read.
+- `--checkpoint-identity-only`: production-reviewed M1-B shard, catalog, and
+  tensor-map identity only; no tensor execution. It requires the reviewed
+  production environment.
+- `--fixture-checkpoint-identity-only`: checkpoint-free split-GGUF identity
+  fixture only. It requires the checkpoint-free fixture environment and its
+  evidence cannot satisfy M1-B.
 - `--fixture-mode <manifest>`: public-safe tiny end-to-end fixture only.
+
+The authoritative mode/environment policy requires `production_reviewed` for
+adapter preflight, production checkpoint identity, future real-checkpoint
+stages, and P1. Dry-run and fixture execution remain checkpoint-free-capable.
 
 With no mode flag the runner requests real execution. Real execution remains
 fail-closed until every required capability and tensor-map gate is present.

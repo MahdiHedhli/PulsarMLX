@@ -67,7 +67,7 @@
         "n_new": { "type": "integer", "minimum": 0 },
         "expected_token": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
         "validation_mode": { "enum": ["golden_strict", "teacher_forced_validation"] },
-        "mode": { "enum": ["dry_run", "adapter_preflight", "checkpoint_identity", "fixture", "p1"] },
+        "mode": { "enum": ["dry_run", "adapter_preflight", "checkpoint_identity", "fixture_checkpoint_identity", "fixture", "p1"] },
         "numerical_mode": { "enum": ["exact_qualification_scaffold", "production_mlx_tier_b", null] }
       }
     },

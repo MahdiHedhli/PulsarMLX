@@ -10,7 +10,7 @@ pub const USAGE: &str = "usage: f017-glm52-runner \
   --memory-floor-bytes BYTES \
   --environment-manifest JSON \
   [--numerical-mode exact-qualification-scaffold|production-mlx-tier-b] \
-  [--dry-run | --adapter-preflight-only | --checkpoint-identity-only | --fixture-mode MANIFEST] \
+  [--dry-run | --adapter-preflight-only | --checkpoint-identity-only | --fixture-checkpoint-identity-only | --fixture-mode MANIFEST] \
   [--checkpoint-manifest JSON --tokens IDS --n-new N --expected-token ID]";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -63,8 +63,27 @@ pub enum RunnerMode {
     DryRun,
     AdapterPreflight,
     CheckpointIdentity,
+    FixtureCheckpointIdentity,
     Fixture { manifest: PathBuf },
     P1,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EnvironmentPolicy {
+    ProductionReviewed,
+    CheckpointFreeFixture,
+    AnyValidated,
+}
+
+pub fn mode_environment_policy(mode: &str) -> Option<EnvironmentPolicy> {
+    match mode {
+        "adapter_preflight" | "checkpoint_identity" | "p1" => {
+            Some(EnvironmentPolicy::ProductionReviewed)
+        }
+        "fixture_checkpoint_identity" => Some(EnvironmentPolicy::CheckpointFreeFixture),
+        "dry_run" | "fixture" => Some(EnvironmentPolicy::AnyValidated),
+        _ => None,
+    }
 }
 
 impl RunnerMode {
@@ -73,9 +92,14 @@ impl RunnerMode {
             Self::DryRun => "dry_run",
             Self::AdapterPreflight => "adapter_preflight",
             Self::CheckpointIdentity => "checkpoint_identity",
+            Self::FixtureCheckpointIdentity => "fixture_checkpoint_identity",
             Self::Fixture { .. } => "fixture",
             Self::P1 => "p1",
         }
+    }
+
+    pub fn environment_policy(&self) -> EnvironmentPolicy {
+        mode_environment_policy(self.as_str()).expect("all runner modes have an environment policy")
     }
 }
 
@@ -218,6 +242,9 @@ where
             "--checkpoint-identity-only" => {
                 select_mode(&mut selected_mode, RunnerMode::CheckpointIdentity)?
             }
+            "--fixture-checkpoint-identity-only" => {
+                select_mode(&mut selected_mode, RunnerMode::FixtureCheckpointIdentity)?
+            }
             "--fixture-mode" => {
                 let manifest = path_value(&args, &mut index, flag)?;
                 select_mode(&mut selected_mode, RunnerMode::Fixture { manifest })?;
@@ -271,7 +298,7 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                 ));
             }
         }
-        RunnerMode::CheckpointIdentity => {
+        RunnerMode::CheckpointIdentity | RunnerMode::FixtureCheckpointIdentity => {
             if config.checkpoint_manifest.is_none() {
                 return Err(cli_error(
                     "missing_option",
@@ -493,5 +520,55 @@ mod tests {
             .map(OsString::from),
         );
         assert_eq!(parse_args(p1).unwrap_err().code, "p1_token_bound");
+    }
+
+    #[test]
+    fn mode_environment_policy_is_explicit_for_every_mode() {
+        assert_eq!(
+            RunnerMode::AdapterPreflight.environment_policy(),
+            EnvironmentPolicy::ProductionReviewed
+        );
+        assert_eq!(
+            RunnerMode::CheckpointIdentity.environment_policy(),
+            EnvironmentPolicy::ProductionReviewed
+        );
+        assert_eq!(
+            RunnerMode::P1.environment_policy(),
+            EnvironmentPolicy::ProductionReviewed
+        );
+        assert_eq!(
+            RunnerMode::FixtureCheckpointIdentity.environment_policy(),
+            EnvironmentPolicy::CheckpointFreeFixture
+        );
+        assert_eq!(
+            RunnerMode::Fixture {
+                manifest: PathBuf::from("fixture.json")
+            }
+            .environment_policy(),
+            EnvironmentPolicy::AnyValidated
+        );
+        assert_eq!(
+            RunnerMode::DryRun.environment_policy(),
+            EnvironmentPolicy::AnyValidated
+        );
+        assert_eq!(mode_environment_policy("unknown"), None);
+    }
+
+    #[test]
+    fn parses_explicit_fixture_checkpoint_identity_mode() {
+        let mut args = common();
+        args.extend(
+            [
+                "--fixture-checkpoint-identity-only",
+                "--checkpoint-manifest",
+                "checkpoint.json",
+            ]
+            .into_iter()
+            .map(OsString::from),
+        );
+        let ParseOutcome::Run(config) = parse_args(args).unwrap() else {
+            panic!("run")
+        };
+        assert_eq!(config.mode, RunnerMode::FixtureCheckpointIdentity);
     }
 }

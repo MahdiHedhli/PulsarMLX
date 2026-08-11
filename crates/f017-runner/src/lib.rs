@@ -81,6 +81,7 @@ impl std::error::Error for RunnerError {}
 
 pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
     let environment = ValidatedEnvironment::load(&config.environment_manifest)?;
+    environment.validate_for_mode(&config.mode)?;
     let mut evidence = Evidence::initial_with_environment(&config, &environment);
     let mut writer = AtomicEvidenceWriter::create(config.out.clone(), &evidence)?;
 
@@ -113,7 +114,7 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
         if environment.production
             && matches!(
                 config.mode,
-                RunnerMode::AdapterPreflight | RunnerMode::CheckpointIdentity
+                RunnerMode::AdapterPreflight | RunnerMode::CheckpointIdentity | RunnerMode::P1
             )
         {
             evidence.identity.loaded_libraries = environment.verify_loaded_libraries()?;
@@ -127,7 +128,9 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
                 evidence.execution.progress_state = "dry_run_complete".to_owned();
                 Ok(())
             }
-            RunnerMode::CheckpointIdentity => verify_checkpoint_mode(&config, &mut evidence),
+            RunnerMode::CheckpointIdentity | RunnerMode::FixtureCheckpointIdentity => {
+                verify_checkpoint_mode(&config, &mut evidence)
+            }
             RunnerMode::AdapterPreflight => run_adapter_preflight(&config, &mut evidence),
             RunnerMode::Fixture { ref manifest } => {
                 fixture::run_projection_fixture(manifest, &config, &mut evidence)

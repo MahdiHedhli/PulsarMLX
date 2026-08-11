@@ -1,3 +1,4 @@
+use crate::cli::{EnvironmentPolicy, RunnerMode};
 use crate::json::{parse_json_no_duplicates, sha256_file};
 use crate::{FailureClass, RunnerError};
 use serde::{Deserialize, Serialize};
@@ -158,6 +159,24 @@ impl ValidatedEnvironment {
             return Ok(Vec::new());
         }
         verify_loaded_libraries(&self.manifest)
+    }
+
+    pub fn validate_for_mode(&self, mode: &RunnerMode) -> Result<(), RunnerError> {
+        let allowed = match mode.environment_policy() {
+            EnvironmentPolicy::ProductionReviewed => self.production,
+            EnvironmentPolicy::CheckpointFreeFixture => !self.production,
+            EnvironmentPolicy::AnyValidated => true,
+        };
+        if !allowed {
+            return Err(admission(
+                "mode_environment_kind",
+                format!(
+                    "runner mode {} rejects this environment kind",
+                    mode.as_str()
+                ),
+            ));
+        }
+        Ok(())
     }
 }
 
@@ -491,6 +510,50 @@ mod tests {
         let mut invalid = valid;
         invalid["purpose"] = serde_json::json!("production");
         assert!(load(&invalid).is_err());
+    }
+
+    #[test]
+    fn production_stage_modes_reject_fixture_environments() {
+        let fixture = serde_json::json!({"schema":"pulsarmlx.f017.fixture-environment", "schema_version":1,
+            "architecture":std::env::consts::ARCH, "purpose":"checkpoint_free_ci"});
+        let fixture = load(&fixture).unwrap();
+        for mode in [
+            RunnerMode::AdapterPreflight,
+            RunnerMode::CheckpointIdentity,
+            RunnerMode::P1,
+        ] {
+            let error = fixture.validate_for_mode(&mode).unwrap_err();
+            assert_eq!(error.class, FailureClass::AdmissionEnvironment);
+            assert_eq!(error.code, "mode_environment_kind");
+        }
+    }
+
+    #[test]
+    fn reviewed_and_fixture_environments_obey_the_authoritative_policy() {
+        let production = load(&production_value()).unwrap();
+        assert!(production
+            .validate_for_mode(&RunnerMode::AdapterPreflight)
+            .is_ok());
+        assert!(production
+            .validate_for_mode(&RunnerMode::CheckpointIdentity)
+            .is_ok());
+        assert!(production.validate_for_mode(&RunnerMode::P1).is_ok());
+
+        let fixture = serde_json::json!({"schema":"pulsarmlx.f017.fixture-environment", "schema_version":1,
+            "architecture":std::env::consts::ARCH, "purpose":"checkpoint_free_ci"});
+        let fixture = load(&fixture).unwrap();
+        assert!(fixture
+            .validate_for_mode(&RunnerMode::FixtureCheckpointIdentity)
+            .is_ok());
+        assert!(fixture
+            .validate_for_mode(&RunnerMode::Fixture {
+                manifest: PathBuf::from("fixture.json")
+            })
+            .is_ok());
+        assert!(fixture.validate_for_mode(&RunnerMode::DryRun).is_ok());
+        assert!(production
+            .validate_for_mode(&RunnerMode::FixtureCheckpointIdentity)
+            .is_err());
     }
 
     #[cfg(all(target_os = "macos", pulsar_native_mlx))]
