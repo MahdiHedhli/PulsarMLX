@@ -109,7 +109,7 @@
 - [x] T017-130 Add fully validated 79-layer `glm-dsa` tensor map.
 - [x] T017-131A Freeze the original R7 mismatch, fixture identities, and exact failure classification without re-execution.
 - [x] T017-131B Add an auditable strict-column-order f32 qualification matvec.
-- [ ] T017-131C Prove exact gate/up/down and complete-expert parity through the qualification scaffold.
+- [x] T017-131C Prove exact gate/up/down and complete-expert parity through the qualification scaffold.
 - [ ] T017-131D Attribute the original production MLX mismatch at every retained intermediate.
 - [ ] T017-131E Freeze an independently derived production expert Tier-B contract before additional production expert fixtures.
 - [ ] T017-131F Qualify the frozen Tier-B contract with independent stress fixtures.

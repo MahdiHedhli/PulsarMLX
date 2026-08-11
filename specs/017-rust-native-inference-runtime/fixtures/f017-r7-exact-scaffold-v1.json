@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.r7-exact-scaffold",
+  "schema_version": "1.0.0",
+  "source": {
+    "git_sha": "57736aaaabba494ab8d1ac7ed7d536bec3ec658f",
+    "worktree_clean_at_test_start": true,
+    "scaffold_version": "f017-exact-f32-sequential-v1",
+    "scaffold_source_sha256": "badc381a7799636ffe5a0b642925cc7b98fa18f9c863c259318dd79877dc007a",
+    "test_source_sha256": "a2318089bfa3e63dad66656b5119ecc19947aa70752fda210fa75e617f29f194"
+  },
+  "oracle": {
+    "fixture_version": "glm52-runtime-expert-q8-0-v2",
+    "fixture_sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
+    "generator_git_sha": "a9779097de029f26be1cb9fde3543cc517ff153e",
+    "generator_source_sha256": "cf6a90f310bf048d2752156ba71cddb6d8a179ce1fed17b4a5831de8412e297e",
+    "contract": "exact_f32_bits"
+  },
+  "qualification": {
+    "matrix_order": "row-major, strict increasing-column accumulation",
+    "multiplication": "separate rounded f32 operation",
+    "addition": "separate rounded f32 operation",
+    "fast_math": false,
+    "reassociation": false,
+    "parallel_reduction": false,
+    "mlx_used": false,
+    "hidden_allocation": false,
+    "fallback_count": 0,
+    "deterministic_repeat_count": 10
+  },
+  "exact_results": {
+    "gate": {
+      "bit_mismatch_count": 0,
+      "actual_sha256": "188a782b07a44c9066f43c8e1cb4bc8521096d5a550d394e9296724889b345f6",
+      "expected_sha256": "188a782b07a44c9066f43c8e1cb4bc8521096d5a550d394e9296724889b345f6"
+    },
+    "up": {
+      "bit_mismatch_count": 0,
+      "actual_sha256": "65d93ab6ded27512d242f0028067fff6e2f416ef05ff82b187c20f242031fba8",
+      "expected_sha256": "65d93ab6ded27512d242f0028067fff6e2f416ef05ff82b187c20f242031fba8"
+    },
+    "activated_hidden": {
+      "bit_mismatch_count": 0,
+      "actual_sha256": "dd111ed9d308564620cf0503cc2f1c68bf3dadbd9e4e35e4af89d6602e47e7d0",
+      "expected_sha256": "dd111ed9d308564620cf0503cc2f1c68bf3dadbd9e4e35e4af89d6602e47e7d0"
+    },
+    "down_and_final_output": {
+      "bit_mismatch_count": 0,
+      "actual_sha256": "7f0358e45119a98e862eda497e4f443a65d6447240afcbb3e598a7160369d5f6",
+      "expected_sha256": "7f0358e45119a98e862eda497e4f443a65d6447240afcbb3e598a7160369d5f6",
+      "first_output_f32": 427908.5,
+      "first_output_f32_bits_hex": "0x48d0f090"
+    }
+  },
+  "classification": "golden_identical",
+  "checkpoint_accessed": false,
+  "r8_admitted": false
+}
