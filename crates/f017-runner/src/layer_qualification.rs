@@ -492,11 +492,12 @@ where
             expert,
             &normalized,
             width,
+            false,
             &mut matvec,
         )?);
     }
     let shared_expert =
-        run_exact_activation_expert(&matrices.shared, &normalized, width, &mut matvec)?;
+        run_exact_activation_expert(&matrices.shared, &normalized, width, true, &mut matvec)?;
     let routed_aggregate = (0..width)
         .map(|column| {
             python_fsum(
@@ -538,16 +539,20 @@ fn run_exact_activation_expert<F>(
     matrices: &ExpertMatrices,
     activation: &[f32],
     width: usize,
+    shared: bool,
     matvec: &mut F,
 ) -> Result<ExpertOutput, R9Error>
 where
     F: FnMut(&[f32], usize, usize, &[f32], &'static str) -> Result<Vec<f32>, R9Error>,
 {
-    let gate = matvec(&matrices.gate, width, width, activation, "expert_gate")?;
-    let up = matvec(&matrices.up, width, width, activation, "expert_up")?;
+    let gate_role = if shared { "shared_gate" } else { "routed_gate" };
+    let up_role = if shared { "shared_up" } else { "routed_up" };
+    let down_role = if shared { "shared_down" } else { "routed_down" };
+    let gate = matvec(&matrices.gate, width, width, activation, gate_role)?;
+    let up = matvec(&matrices.up, width, width, activation, up_role)?;
     let mut hidden = vec![0.0_f32; width];
     exact_swiglu_f32(&gate, &up, &mut hidden).map_err(R9Error::Matvec)?;
-    let down = matvec(&matrices.down, width, width, &hidden, "expert_down")?;
+    let down = matvec(&matrices.down, width, width, &hidden, down_role)?;
     Ok(ExpertOutput {
         expert_id: matrices.expert_id,
         gate,
