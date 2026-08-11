@@ -48,6 +48,7 @@ fn run_tiny_model_fixture_impl(
     config: &Config,
     evidence: &mut Evidence,
 ) -> Result<(), RunnerError> {
+    let fixture_started = Instant::now();
     let bytes = fs::read(manifest).map_err(|error| infrastructure("r12_manifest_read", error))?;
     let model: Value = parse_json_no_duplicates(&bytes)
         .map_err(|error| infrastructure("r12_manifest_json", error))?;
@@ -126,7 +127,7 @@ fn run_tiny_model_fixture_impl(
     evidence.input.n_new = model["input"]["n_new"].as_u64().unwrap() as u32;
     evidence.input.expected_token = Some(model["input"]["expected_token"].as_u64().unwrap() as u32);
 
-    match config.numerical_mode {
+    let result = match config.numerical_mode {
         Some(crate::cli::NumericalMode::ExactQualificationScaffold) => {
             run_exact(&runtime, &model, evidence)
         }
@@ -137,7 +138,12 @@ fn run_tiny_model_fixture_impl(
             "r12_numerical_mode",
             "R12 requires an explicit numerical mode",
         )),
-    }
+    };
+    evidence.execution.timings.insert(
+        "complete_run_seconds".to_owned(),
+        fixture_started.elapsed().as_secs_f64(),
+    );
+    result
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
