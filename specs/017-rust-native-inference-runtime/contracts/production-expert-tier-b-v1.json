@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.production-expert-tier-b-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-production-expert-tier-b-v1",
+  "freeze_input_source_sha": "239bbca9",
+  "scope": {
+    "boundary": "checkpoint_free_q8_0_complete_expert",
+    "dot_width": 32,
+    "production_backend": "mlx_c_matmul",
+    "greedy_applicability": "not_applicable_at_r7"
+  },
+  "exact_boundaries": [
+    "decoded_inputs",
+    "gate_projection",
+    "up_projection",
+    "activated_hidden"
+  ],
+  "numerical_boundary": "down_projection_and_final_expert_output",
+  "constants": {
+    "f32_unit_roundoff": 5.960464477539063e-8,
+    "f32_smallest_positive_subnormal": 1.401298464324817e-45,
+    "gamma_64": 0.0000038147118175957395,
+    "two_gamma_64": 0.000007629423635191479
+  },
+  "per_element_absolute_bound": "2*gamma(2*n)*sum(abs(f64(weight)*f64(input))) + 4*n*2^-149",
+  "per_element_relative_bound": "absolute_bound/abs(expected) when expected != 0",
+  "rmse_bound": "sqrt(mean(per_element_absolute_bound^2))",
+  "cosine_minimum": "(||expected||2-||bounds||2)/(||expected||2+||bounds||2) when ||expected||2 > ||bounds||2; otherwise not_applicable",
+  "non_finite_allowed": false,
+  "signed_zero": "exact_bits",
+  "deterministic_repeat_minimum": 10,
+  "unexpected_fallback": "numerically_failed",
+  "partial_write_on_error": "forbidden",
+  "classification_names": [
+    "golden_identical",
+    "numerically_qualified_greedy_identical",
+    "numerically_qualified_greedy_divergent",
+    "numerically_failed"
+  ],
+  "threshold_fit_to_observed_candidate": false
+}
