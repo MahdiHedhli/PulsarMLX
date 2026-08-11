@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.tier-b-production-stress-result",
+  "schema_version": "1.0.0",
+  "source_sha": "45e91120a0b67628e0895fd72ab090302bfe840b",
+  "contract_version": "f017-production-expert-tier-b-v1",
+  "oracle_fixture_sha256": "5ccd4e2f86b8129283e5e26815f6d3350509a1019595f5ad1fd167618edef6b3",
+  "oracle_source_commit": "99d7ace4a72ac88d87e0c415241b095154dc348b",
+  "oracle_generator_sha256": "7edcf6eadf3e0e6a0ac328ceb0061985e782d1503cd1a804d05e020621bd6769",
+  "production_backend": "mlx-c-matmul",
+  "deterministic_repeat_count": 10,
+  "cases": [
+    {"name": "one_row_positive", "shape": [1, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "alternating_signs", "shape": [4, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "cancellation_sensitive", "shape": [4, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "large_dynamic_range", "shape": [8, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "small_residual_after_large_partials", "shape": [4, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "denormal_adjacent", "shape": [4, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "large_magnitude", "shape": [8, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "full_shape_sign_changes", "shape": [32, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true},
+    {"name": "near_tie_rows", "shape": [2, 32], "classification": "golden_identical", "bit_mismatch_count": 0, "max_abs_error": 0.0, "rmse": 0.0, "passes": true, "behavioral_selection_matches": true}
+  ],
+  "all_numerically_qualified": true,
+  "all_applicable_behavior_identical": true,
+  "lifecycle": {
+    "managed_created": 180,
+    "managed_destroyed": 180,
+    "derived_created": 90,
+    "derived_destroyed": 90,
+    "callback_count": 180,
+    "owned_stream_created": 1,
+    "owned_stream_freed": 1,
+    "context_active_after": false,
+    "reconciled": true
+  },
+  "checkpoint_accessed": false
+}
