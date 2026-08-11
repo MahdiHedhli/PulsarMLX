@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.production-r10-tier-b-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-production-r10-tier-b-v1",
+  "status": "frozen_before_production_r10_execution",
+  "oracle": "independent Python/NumPy complete-layer oracle",
+  "exact_scaffold": "f017-r10-complete-layer-exact-v1",
+  "required_contracts": [
+    "f017-production-expert-tier-b-v1",
+    "f017-production-r9-tier-b-v1"
+  ],
+  "required_repeats": 10,
+  "router": {
+    "selected_ids": "exact",
+    "tie_break": "lower_expert_id",
+    "routing_weight_max_absolute_error": 0.00001
+  },
+  "intermediate": {
+    "max_absolute_error": 0.015625,
+    "rmse": 0.0078125,
+    "cosine_similarity_minimum": 0.9999
+  },
+  "final": {
+    "max_absolute_error": 0.0625,
+    "rmse": 0.03125,
+    "cosine_similarity_minimum": 0.999
+  },
+  "exact_requirements": {
+    "signed_zero": true,
+    "deterministic_candidate_bits": true,
+    "unexpected_fallback_count": 0,
+    "backend_error_count": 0,
+    "explicit_reference_dispatch_count": 0,
+    "in_flight_after_teardown": 0
+  },
+  "classification": {
+    "pass": "numerically_qualified_greedy_identical",
+    "exact_pass": "golden_identical",
+    "routing_divergence": "numerically_qualified_greedy_divergent",
+    "failure": "numerically_failed"
+  },
+  "threshold_origin": "power-of-two envelopes frozen for one R9 residual, one router projection, 27 expert projections, nonlinear activation, weighted aggregation, and final residual before production R10 output",
+  "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
+  "review_status": "pending_adversarial_numerical_review"
+}
