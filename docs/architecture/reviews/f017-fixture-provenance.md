@@ -6,60 +6,71 @@ Classification at `b7585de`: **PARTIALLY INDEPENDENT**. The seven-boundary
 checkpoint-free scaffold passed against scalar Rust reference functions, but
 no independent Python/NumPy oracle generated those expected values. It must
 not be cited as independent-oracle parity. The existing fixtures are retained
-as historical structural/reference artifacts while the independent v2 set is
-generated and validated.
+as historical structural/reference artifacts.
 
 ## Conclusion
 
-The public Feature 017 ladder is a checkpoint-free synthetic semantic ladder.
-It is not a real GLM-5.2 value distribution and must not be presented as
-real-checkpoint determinism.
+Final classification: **INDEPENDENT** for the seven v2 checkpoint-free
+boundaries. Expected values are generated entirely by Python/NumPy outside the
+Rust/native candidate path.
 
-The frozen generator source is commit
-`60145f8f18531e169e9fbfb676d1754efbfc4873` in
-`crates/engine/src/f017_parity.rs`. The synthetic constructors generate packed
-inputs, activations, routing vectors, expert matrices, attention values, layer
-values, and output-head values. The frozen expected values are produced by the
-scalar `reference_*` paths in the same source file and are compared against
-the candidate decoder/orchestration paths. The candidate Q8_0 decoder is
-`quant::decode_q8_0_matrix`; candidate semantic execution is in the
-`run_*_fixture` functions.
+- Generator: `scripts/research/generate_f017_independent_oracle.py`
+- Generator source SHA: `a9779097de029f26be1cb9fde3543cc517ff153e`
+- Environment: CPython `3.13.13`, NumPy `2.4.5`, resolved by `uv.lock`
+- Deterministic seed: `17017`; fixture values are fixed and regeneration is
+  byte deterministic
+- Oracle artifact:
+  `specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json`
+- Oracle artifact SHA-256:
+  `16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960`
+- Fixture source SHA: `60145f8f18531e169e9fbfb676d1754efbfc4873`
+- Checkpoint-set identity:
+  `0b38dfc3b79bf6dd3eac3c80cd2b62cb6eb46b2f84e3e51c1a340ad1876c1a42`
 
-This is an independent implementation path at the algorithm boundary: the
-reference decoder, scalar matvec, scalar SiLU, reference attention, reference
-normalization, reference logits, and reference top-k routines are separate
-from the candidate/vectorized routines. It is not an independent language or
-process. The manifests therefore state the exact implementation paths and
-scope instead of claiming a Python-oracle run that did not occur.
+The generator does not call Rust, Rust `reference_*` functions, FFI, MLX, or
+checkpoint code. Packed Q8_0 bytes and all expected semantic values are
+constructed and evaluated in the Python module. The candidate remains
+`crates/engine/src/f017_parity.rs::run_*` plus
+`quant::decode_q8_0_matrix`. No implementation code is shared across the
+oracle/candidate boundary.
 
 ## Boundary mapping
 
-- Projection: `ProjectionFixture::synthetic_q8_0`, `run_projection_fixture`,
-  `reference_decode`, and `project`.
-- Router: `RouterFixture::synthetic`, `run_router_fixture`, frozen routing
-  weights/IDs/output, and independent routing assertions.
-- Complete expert: `ExpertFixture::synthetic`, `run_expert_fixture`,
-  `reference_decode_matrix`, `reference_matvec`, and `reference_silu`.
-- Top-8/shared: `Top8SharedFixture::synthetic`, `run_top8_shared_fixture`,
-  `reference_softmax`, and `reference_aggregate`.
-- MLA/dense: `MlaDenseFixture::synthetic`, `run_mla_dense_fixture`,
-  `reference_rotate_pair`, `reference_dot2`, `reference_softmax_two`, and
-  `reference_matvec2`.
-- Complete layer: `CompleteLayerFixture::synthetic` and
-  `run_complete_layer_fixture`, with component boundaries from the prior
-  reference paths.
-- Final norm/logits/top-k: `FinalOutputFixture::synthetic`,
-  `run_final_output_fixture`, `reference_rms_norm`,
-  `reference_output_logits`, and `reference_top_k_indices`.
+- Projection: INDEPENDENT, exact f32 bits for decode and output.
+- Router: INDEPENDENT, absolute tolerance `1e-12`, deterministic lowest-ID tie
+  break, selected IDs, weights, and aggregate output.
+- Complete expert: INDEPENDENT, exact f32 bits through gate/up, SiLU, down, and
+  final output.
+- Top-8 plus shared: INDEPENDENT, absolute tolerance `1e-12`, ordered routes,
+  weights, shared contribution, residual, and aggregate output.
+- MLA/dense: INDEPENDENT, absolute tolerance `1e-14`, positional rotation,
+  attention scores/weights, output projection, residual, and output.
+- Complete layer: INDEPENDENT, exact f64 bits after the ordered component
+  ladder and residual output.
+- Final norm/logits/top-k: INDEPENDENT, absolute tolerance `1e-14`, stable
+  top-k/argmax ordering, and frozen top-1 margin.
 
-The portable manifests bind generator path, generator source SHA, reference
-path, candidate path, and synthetic-only scope. No model weight bytes are
-redistributed.
+The generated Rust constants are derived from the same committed JSON and are
+the sole candidate-side acceptance authority. Retained scalar Rust
+`reference_*` helpers are historical scaffolding and do not determine v2
+pass/fail. The old portable v1 manifests are marked `independent: false`; the
+validated set contains only `portable-fixture-independent-v2.json`. No model
+weight bytes or private paths are committed.
+
+## Edge-distribution coverage
+
+The independent bundle adds Q8_0 f16 maximum, minimum-normal, and
+minimum-subnormal scales; zero/near-zero activations; signed quant-grid
+extremes; exact and one-ULP router ties; cancellation-sensitive residual sums;
+signed zero; top-k ordering; and final-logit margin evidence. Tolerances were
+frozen in the generator before Rust comparison.
 
 ## Limitation carried to P1
 
-The synthetic ladder does not cover every real GLM-5.2 pattern, including f16
-scale extremes, denormals, grid/sign edge patterns, and real-checkpoint
-distribution tails. The first M1 Ultra P1 is the first real-checkpoint
-integration test for those paths. P1 must retain fail-closed validation and
-must not promote synthetic parity to a real-checkpoint claim.
+Synthetic/checkpoint-free fixtures still do not exhaust real GLM-5.2 value
+distributions. Although explicit f16 scale, denormal-adjacent, grid/sign,
+near-zero, cancellation, tie, and top-k edge cases are present, uncommon
+combinations and real-checkpoint distribution tails remain underrepresented.
+The first M1 Ultra P1 is the first real-checkpoint integration gate. Passing
+this ladder is not real-checkpoint proof and must not be promoted to a
+shipping-runtime or real-checkpoint determinism claim.

@@ -1,0 +1,862 @@
+{
+  "boundaries": {
+    "complete_expert": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        32,
+        32
+      ],
+      "dtype": "f32",
+      "expected": {
+        "gate_output_sha256": "188a782b07a44c9066f43c8e1cb4bc8521096d5a550d394e9296724889b345f6",
+        "hidden_sha256": "dd111ed9d308564620cf0503cc2f1c68bf3dadbd9e4e35e4af89d6602e47e7d0",
+        "output": [
+          427908.5,
+          -3573309.75,
+          1912304.0,
+          -3129086.0,
+          -6734107.0,
+          -2279680.5,
+          2045949.5,
+          6605501.5,
+          -5853937.0,
+          -1619892.0,
+          2771008.75,
+          6989516.0,
+          3687623.5,
+          -319593.25,
+          3140646.0,
+          8442094.0,
+          4790992.0,
+          496801.5,
+          -3579269.75,
+          1609775.0,
+          -3260476.0,
+          -6634240.0,
+          -2191947.5,
+          2031451.5,
+          6605501.5,
+          -5868910.0,
+          -1709212.0,
+          2744644.75,
+          7098075.5,
+          3803301.5,
+          -375838.5625,
+          3186047.5
+        ],
+        "output_sha256": "7f0358e45119a98e862eda497e4f443a65d6447240afcbb3e598a7160369d5f6",
+        "up_output_sha256": "65d93ab6ded27512d242f0028067fff6e2f416ef05ff82b187c20f242031fba8"
+      },
+      "fixture_version": "glm52-runtime-expert-q8-0-v2",
+      "inputs": {
+        "activation": [
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875,
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875,
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875,
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875
+        ],
+        "activation_sha256": "dab8e4da31ccc32b7c3bd0b5e405347b1593429bad47b767327519eab6fbc588",
+        "down_packed_hex": "003c02fbfe010407f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd00003c0502fafd000306f8fbfe010407f9fcff020508fafd000306f8fbfe010407f9fc003c010402f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd000306f8003cfd000302f8fbfe010407f9fcff020508fafd000306f8fbfe010407f9fcff0205003cf9fcff020208fafd000306f8fbfe010407f9fcff020508fafd000306f8fbfe01003c06f8fbfe010207f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd003c020508fafd000206f8fbfe010407f9fcff020508fafd000306f8fbfe010407f9003cfe010407f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd000306003cfafd000306f8fbfe020407f9fcff020508fafd000306f8fbfe010407f9fcff02003c07f9fcff020508fafd020306f8fbfe010407f9fcff020508fafd000306f8fbfe003c0306f8fbfe010407f9fc02020508fafd000306f8fbfe010407f9fcff020508fa003cff020508fafd000306f8fb02010407f9fcff020508fafd000306f8fbfe010407003cfbfe010407f9fcff020508fa02000306f8fbfe010407f9fcff020508fafd0003003c08fafd000306f8fbfe010407f902ff020508fafd000306f8fbfe010407f9fcff003c0407f9fcff020508fafd000306f802fe010407f9fcff020508fafd000306f8fb003c000306f8fbfe010407f9fcff02050802fd000306f8fbfe010407f9fcff020508003cfcff020508fafd000306f8fbfe01040702fcff020508fafd000306f8fbfe0104003cf8fbfe010407f9fcff020508fafd00030602fbfe010407f9fcff020508fafd00003c0508fafd000306f8fbfe010407f9fcff020502fafd000306f8fbfe010407f9fc003c010407f9fcff020508fafd000306f8fbfe010402f9fcff020508fafd000306f8003cfd000306f8fbfe010407f9fcff020508fafd000302f8fbfe010407f9fcff0205003cf9fcff020508fafd000306f8fbfe010407f9fcff020208fafd000306f8fbfe01003c06f8fbfe010407f9fcff020508fafd000306f8fbfe010207f9fcff020508fafd003c020508fafd000306f8fbfe010407f9fcff020508fafd000206f8fbfe010407f9003cfe010407f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd000306003cfafd000306f8fbfe010407f9fcff020508fafd000306f8fbfe020407f9fcff02003c07f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd020306f8fbfe003c0306f8fbfe010407f9fcff020508fafd000306f8fbfe010407f9fc02020508fa003cff020508fafd000306f8fbfe010407f9fcff020508fafd000306f8fb02010407003cfbfe010407f9fcff020508fafd000306f8fbfe010407f9fcff020508fa020003003c08fafd000306f8fbfe010407f9fcff020508fafd000306f8fbfe010407f902ff003c0407f9fcff020508fafd000306f8fbfe010407f9fcff020508fafd000306f802",
+        "down_packed_sha256": "2d0eb3dc83f2500e248c26c8413d1182c4dc6a3ca1cfcdf366763176fcf682b4",
+        "gate_packed_hex": "003c01060b10151a1f050a0f14191e04090e13181d03080d12171c02070c11161b01003c04090e13181d03080d12171c02070c11161b01060b10151a1f050a0f14191e04003c070c11161b01060b10151a1f050a0f14191e04090e13181d03080d12171c0207003c0a0f14191e04090e13181d03080d12171c02070c11161b01060b10151a1f050a003c0d12171c02070c11161b01060b10151a1f050a0f14191e04090e13181d03080d003c10151a1f050a0f14191e04090e13181d03080d12171c02070c11161b01060b10003c13181d03080d12171c02070c11161b01060b10151a1f050a0f14191e04090e13003c161b01060b10151a1f050a0f14191e04090e13181d03080d12171c02070c1116003c191e04090e13181d03080d12171c02070c11161b01060b10151a1f050a0f1419003c1c02070c11161b01060b10151a1f050a0f14191e04090e13181d03080d12171c003c1f050a0f14191e04090e13181d03080d12171c02070c11161b01060b10151a1f003c03080d12171c02070c11161b01060b10151a1f050a0f14191e04090e13181d03003c060b10151a1f050a0f14191e04090e13181d03080d12171c02070c11161b0106003c090e13181d03080d12171c02070c11161b01060b10151a1f050a0f14191e0409003c0c11161b01060b10151a1f050a0f14191e04090e13181d03080d12171c02070c003c0f14191e04090e13181d03080d12171c02070c11161b01060b10151a1f050a0f003c12171c02070c11161b01060b10151a1f050a0f14191e04090e13181d03080d12003c151a1f050a0f14191e04090e13181d03080d12171c02070c11161b01060b1015003c181d03080d12171c02070c11161b01060b10151a1f050a0f14191e04090e1318003c1b01060b10151a1f050a0f14191e04090e13181d03080d12171c02070c11161b003c1e04090e13181d03080d12171c02070c11161b01060b10151a1f050a0f14191e003c02070c11161b01060b10151a1f050a0f14191e04090e13181d03080d12171c02003c050a0f14191e04090e13181d03080d12171c02070c11161b01060b10151a1f05003c080d12171c02070c11161b01060b10151a1f050a0f14191e04090e13181d0308003c0b10151a1f050a0f14191e04090e13181d03080d12171c02070c11161b01060b003c0e13181d03080d12171c02070c11161b01060b10151a1f050a0f14191e04090e003c11161b01060b10151a1f050a0f14191e04090e13181d03080d12171c02070c11003c14191e04090e13181d03080d12171c02070c11161b01060b10151a1f050a0f14003c171c02070c11161b01060b10151a1f050a0f14191e04090e13181d03080d1217003c1a1f050a0f14191e04090e13181d03080d12171c02070c11161b01060b10151a003c1d03080d12171c02070c11161b01060b10151a1f050a0f14191e04090e13181d003c01060b10151a1f050a0f14191e04090e13181d03080d12171c02070c11161b01",
+        "gate_packed_sha256": "ebeadb4a76f33fd37d3c3aa358f0684d255798c911e6a73557aa38c2608216d3",
+        "up_packed_hex": "003c010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c17003c0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a081301003c0f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a08003c16040f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f003c1d0b16040f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b16003c07121d0b16040f1a0813010c1705101b0914020d1806111c0a15030e1907121d003c0e1907121d0b16040f1a0813010c1705101b0914020d1806111c0a15030e1907003c15030e1907121d0b16040f1a0813010c1705101b0914020d1806111c0a15030e003c1c0a15030e1907121d0b16040f1a0813010c1705101b0914020d1806111c0a15003c06111c0a15030e1907121d0b16040f1a0813010c1705101b0914020d1806111c003c0d1806111c0a15030e1907121d0b16040f1a0813010c1705101b0914020d1806003c14020d1806111c0a15030e1907121d0b16040f1a0813010c1705101b0914020d003c1b0914020d1806111c0a15030e1907121d0b16040f1a0813010c1705101b0914003c05101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c1705101b003c0c1705101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c1705003c13010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c003c1a0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a0813003c040f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a003c0b16040f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b1604003c121d0b16040f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b003c1907121d0b16040f1a0813010c1705101b0914020d1806111c0a15030e190712003c030e1907121d0b16040f1a0813010c1705101b0914020d1806111c0a15030e19003c0a15030e1907121d0b16040f1a0813010c1705101b0914020d1806111c0a1503003c111c0a15030e1907121d0b16040f1a0813010c1705101b0914020d1806111c0a003c1806111c0a15030e1907121d0b16040f1a0813010c1705101b0914020d180611003c020d1806111c0a15030e1907121d0b16040f1a0813010c1705101b0914020d18003c0914020d1806111c0a15030e1907121d0b16040f1a0813010c1705101b091402003c101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c1705101b09003c1705101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c170510003c010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a0813010c17003c0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a081301003c0f1a0813010c1705101b0914020d1806111c0a15030e1907121d0b16040f1a08",
+        "up_packed_sha256": "d21f5321c74829bd43c697064d290c9d7d84b3739186a6420d57c4f05be8613a"
+      },
+      "numerical_contract": {
+        "atol": 0.0,
+        "kind": "exact_f32_bits",
+        "rtol": 0.0
+      },
+      "quantization": "Q8_0",
+      "tensor_roles": [
+        "expert_gate",
+        "expert_up",
+        "expert_down"
+      ]
+    },
+    "complete_layer": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        1,
+        2
+      ],
+      "dtype": "f64",
+      "expected": {
+        "combined": [
+          1.35,
+          0.45
+        ],
+        "output": [
+          1.7375,
+          0.875
+        ],
+        "output_sha256": "eb779c48219e08d830fd17bf0a9f46541db7b223cadfb0dc4fde00169149876e"
+      },
+      "fixture_version": "glm52-runtime-complete-layer-v2",
+      "inputs": {
+        "attention": [
+          0.25,
+          0.75
+        ],
+        "attention_sha256": "a084810e7c2a939ffa5af0a8540ded8acccd39d21be922c668a89bfaa4b98e9c",
+        "input": [
+          0.5,
+          -1.0
+        ],
+        "input_sha256": "b908ca8cb2cfc68c65f8f5a7fb8e6b118544248ad71278c8aa9dc2fbfdfd8d2f",
+        "output_projection": [
+          1.0,
+          -0.25,
+          0.5,
+          1.0
+        ],
+        "output_projection_sha256": "4443867ce6abb5336ba266d7d06479a87cb41d70bd91cdec3979d9b13f1e5b6e",
+        "residual": [
+          0.5,
+          -0.25
+        ],
+        "residual_sha256": "c72a21ee29414d5488c45aa7bcb069b79e13bad6cedf16a1f518e3be4aef7435",
+        "routed": [
+          1.0,
+          -0.5
+        ],
+        "routed_sha256": "b75ba3b875def5d2f34361fcc7cbea9b45aa3f9ef590f96ad71c90a955800533",
+        "shared": [
+          0.1,
+          0.2
+        ],
+        "shared_sha256": "15d49616eec2a72fcda75235c943acc8a27cb15fdb75d661307ee8c389a227be"
+      },
+      "numerical_contract": {
+        "atol": 0.0,
+        "kind": "exact_f64_bits",
+        "rtol": 0.0
+      },
+      "quantization": "F64",
+      "tensor_roles": [
+        "layer_input",
+        "attention",
+        "routed_experts",
+        "shared_expert",
+        "residual",
+        "output_projection"
+      ]
+    },
+    "final_norm_logits_topk": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        4,
+        3
+      ],
+      "dtype": "f64",
+      "expected": {
+        "argmax": 0,
+        "logits": [
+          1.8937644315341469,
+          -0.8249243825989931,
+          -0.06572673751833195,
+          1.8516278002933129
+        ],
+        "logits_sha256": "a2a79316cb00cae3b5e484e0f804498eda5e4a706b9823f08b2a2182cbc7bc57",
+        "margin": 0.042136631240834,
+        "margin_sha256": "10488e577be2fa02f3c5ca6d297d07006c9c0b7794f797131dba348fa8310f45",
+        "normalized": [
+          1.3887208502199846,
+          -0.4629069500733282,
+          0.6943604251099923
+        ],
+        "normalized_sha256": "d054324a92970e9435c1d2ad4c3937f4982f75895599990c7dfa3719eb9d3760",
+        "topk": [
+          0,
+          3
+        ],
+        "topk_sha256": "96fb5e4a2704b410bbf097c41e40ff8118ef0bc819ccf4344f31f694d12d536a"
+      },
+      "fixture_version": "glm52-runtime-final-output-v2",
+      "inputs": {
+        "bias": [
+          0.1,
+          -0.2,
+          0.05,
+          0.0
+        ],
+        "bias_sha256": "bbd715974e12a1b3a03ae0aaaa48e042b3fcd5c9b701b941e3ae94dba9b34ba2",
+        "epsilon": 1e-05,
+        "hidden": [
+          1.2,
+          -0.8,
+          0.4
+        ],
+        "hidden_sha256": "da7fcf6c5e636743580a6030fbdfff3c514e25873ec8fb8b1ccbb4b6fb385b68",
+        "norm_scale": [
+          1.0,
+          0.5,
+          1.5
+        ],
+        "norm_scale_sha256": "21304cdc068531a906daa0dc44ea2f03b8963c24a5da70cc0a988e9f0d99e35e",
+        "output_head": [
+          1.0,
+          -0.5,
+          0.25,
+          0.1,
+          1.2,
+          -0.3,
+          -0.7,
+          0.4,
+          1.5,
+          0.9,
+          -1.0,
+          0.2
+        ],
+        "output_head_sha256": "cb11bdbbfb07e82735bf6cca925884b6bf517b6f299a2d7fb9b0ef9950037dcf",
+        "top_k": 2
+      },
+      "numerical_contract": {
+        "atol": 1e-14,
+        "kind": "absolute",
+        "rtol": 0.0,
+        "tie_break": "lowest_index"
+      },
+      "quantization": "F64",
+      "tensor_roles": [
+        "final_hidden",
+        "final_norm",
+        "output_head",
+        "logits"
+      ]
+    },
+    "mla_dense": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        2,
+        2,
+        2
+      ],
+      "dtype": "f64",
+      "expected": {
+        "output": [
+          1.8062359729086146,
+          -1.103192797608362
+        ],
+        "output_sha256": "98e7e51398cd0186f16f5b2295d1e502416ef40e3746b43f9d3966fa1ceb62a3",
+        "scores": [
+          1.4651631739918478,
+          -0.26973128860071865
+        ],
+        "weights": [
+          0.8500374055770272,
+          0.14996259442297272
+        ]
+      },
+      "fixture_version": "glm52-runtime-mla-dense-v2",
+      "inputs": {
+        "key_positions": [
+          0,
+          1
+        ],
+        "keys": [
+          2.0,
+          1.0,
+          1.5,
+          -0.5
+        ],
+        "keys_sha256": "f652af1297e907749725d45a6880a3f4c541fd9290bc2c79e8c68b013ec1d4ab",
+        "output_projection": [
+          1.0,
+          -0.5,
+          0.25,
+          1.25
+        ],
+        "output_projection_sha256": "71b86374c0cb45f7268948d366a6cc9b43d2de00c92c5f4417097c4e17fa4b36",
+        "query": [
+          1.0,
+          2.0
+        ],
+        "query_position": 2,
+        "query_sha256": "dc91ce9a50ddc828740aa26743716897fdb2bb64f1db662fe263a59be56145ae",
+        "residual": [
+          0.75,
+          -0.25
+        ],
+        "residual_sha256": "c60fb7d5e38a94bfbe33b33f187596b2b1cd91c78bf15bbaf0769d6a9edbe90c",
+        "rope_theta": 0.25,
+        "values": [
+          0.5,
+          -1.0,
+          1.5,
+          0.25
+        ],
+        "values_sha256": "9f94a24f3f648f60bc02bcb8844d3ca21708f17f9833a200b7f9fd65281acff5"
+      },
+      "numerical_contract": {
+        "atol": 1e-14,
+        "kind": "absolute",
+        "rtol": 0.0
+      },
+      "quantization": "F64",
+      "tensor_roles": [
+        "query",
+        "keys",
+        "values",
+        "output_projection",
+        "residual"
+      ]
+    },
+    "projection": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        2,
+        32
+      ],
+      "dtype": "f32",
+      "expected": {
+        "decoded_sha256": "7010901f549dd99418f5ef96a8c284181ab831f98c4010a84e229dbaef0dbd1c",
+        "output": [
+          780.0,
+          56.0
+        ],
+        "output_sha256": "f05588d152f98331a25df1d2efe2ad97fcc66e8e047ad567edf9c5c0bd182bfc"
+      },
+      "fixture_version": "glm52-runtime-projection-q8-0-v2",
+      "inputs": {
+        "activation": [
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875,
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875,
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875,
+          1.0,
+          1.125,
+          1.25,
+          1.375,
+          1.5,
+          1.625,
+          1.75,
+          1.875
+        ],
+        "activation_sha256": "dab8e4da31ccc32b7c3bd0b5e405347b1593429bad47b767327519eab6fbc588",
+        "packed_hex": "003c0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20003cff02fd04fb06f908f70af50cf30ef110ef12ed14eb16e918e71ae51ce31ee120",
+        "packed_sha256": "f49f515968e7229c1939529f1569b3ad2e61f43373a5f4ba5b2a862388b654c1"
+      },
+      "numerical_contract": {
+        "atol": 0.0,
+        "kind": "exact_f32_bits",
+        "rtol": 0.0
+      },
+      "quantization": "Q8_0",
+      "tensor_roles": [
+        "attention_projection"
+      ]
+    },
+    "router": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        2,
+        4
+      ],
+      "dtype": "f64",
+      "expected": {
+        "output": [
+          2.0,
+          2.0,
+          4.069116116437531,
+          4.0378828427399895
+        ],
+        "output_sha256": "ca8d4320966c2ead4bae672d026b28f18dd55648eef7c794bb6fe2e3e5c778d2",
+        "selected_ids": [
+          1,
+          2,
+          3,
+          1
+        ],
+        "selected_ids_sha256": "dfe9b3c36426d5beb760e4b14e6135cdc4a2a1d2bf9c76536ed32cbc308fedd0",
+        "weights": [
+          0.5,
+          0.5,
+          0.7310585786300049,
+          0.2689414213699951
+        ],
+        "weights_sha256": "ca9c5d274493a1c288420b8b32065e30183f7b0b164d67689c3c7830c7f823da"
+      },
+      "fixture_version": "glm52-runtime-router-v2",
+      "inputs": {
+        "scores": [
+          1.0,
+          3.0,
+          3.0,
+          -1.0,
+          2.0,
+          3.0,
+          1.0,
+          4.0
+        ],
+        "scores_sha256": "bde55fc1851c0d669532ee9faa681100c971dea54db974db57d804737dec4ba5",
+        "selected_outputs": [
+          3.0,
+          2.0,
+          1.0,
+          2.0,
+          5.75,
+          3.5,
+          -0.5,
+          5.5
+        ],
+        "selected_outputs_sha256": "17ecc25c201fdb71ad45e4991c51b2791358bfef866dd84657fcda25c0383fb0"
+      },
+      "numerical_contract": {
+        "atol": 1e-12,
+        "kind": "absolute",
+        "rtol": 0.0,
+        "tie_break": "lowest_expert_id"
+      },
+      "quantization": "F64",
+      "tensor_roles": [
+        "router_logits",
+        "selected_expert_outputs"
+      ]
+    },
+    "top8_shared": {
+      "classification": "INDEPENDENT",
+      "dimensions": [
+        1,
+        8,
+        2
+      ],
+      "dtype": "f64",
+      "expected": {
+        "output": [
+          2.8292921052625966,
+          -2.0792921052625966
+        ],
+        "output_sha256": "08f6285a290c60d7e9f6d39890fd7173e28044499ddc3c5e64266522c91089bc",
+        "selected_ids": [
+          7,
+          6,
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ],
+        "weights": [
+          0.6323326828120425,
+          0.23262219398733308,
+          0.08557692272813494,
+          0.03148199051039798,
+          0.011581577075929859,
+          0.004260624102577063,
+          0.0015673960138976283,
+          0.0005766127696870058
+        ]
+      },
+      "fixture_version": "glm52-runtime-top8-shared-v2",
+      "inputs": {
+        "residual": [
+          1.0,
+          -1.0
+        ],
+        "residual_sha256": "b74fce6cd8bcafd014a1ce8c6585beac59c5f4098a6d499f5d1d42d464146633",
+        "routed_outputs": [
+          1.0,
+          -0.0,
+          2.0,
+          -1.0,
+          3.0,
+          -2.0,
+          4.0,
+          -3.0,
+          5.0,
+          -4.0,
+          6.0,
+          -5.0,
+          7.0,
+          -6.0,
+          8.0,
+          -7.0
+        ],
+        "routed_outputs_sha256": "d65ec8230922af8bf4bbf3a1e7d412788b6f498da72051f72b0fc21cddf29908",
+        "scores": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "scores_sha256": "e718add56286e18ff81450763e0c2f227a35a73195fe0ed038a3d155711599e9",
+        "shared_output": [
+          0.25,
+          -0.5
+        ],
+        "shared_output_sha256": "ffd197f51045b6ab70c0b9e786c2e9d3098dbccdeafa53f32a2d7b0920b3c5c2"
+      },
+      "numerical_contract": {
+        "atol": 1e-12,
+        "kind": "absolute",
+        "rtol": 0.0
+      },
+      "quantization": "F64",
+      "tensor_roles": [
+        "router_logits",
+        "routed_experts",
+        "shared_expert",
+        "residual"
+      ]
+    }
+  },
+  "edge_distributions": {
+    "q8_0": [
+      {
+        "contract": {
+          "atol": 0.0,
+          "kind": "exact_f32_bits",
+          "rtol": 0.0
+        },
+        "decoded": [
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0,
+          8319008.0,
+          -8384512.0
+        ],
+        "decoded_sha256": "4007509d1b0000a6fe76f021b1568a1682bc6ce10e10052e6f772028c867fc21",
+        "name": "f16_max_scale",
+        "packed_hex": "ff7b7f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f80",
+        "packed_sha256": "fa78d20f227eec04e1f33212f96a0dcd0423f5f0a417387fc865e79c59f5719d"
+      },
+      {
+        "contract": {
+          "atol": 0.0,
+          "kind": "exact_f32_bits",
+          "rtol": 0.0
+        },
+        "decoded": [
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05,
+          -6.103515625e-05,
+          6.103515625e-05,
+          -6.103515625e-05
+        ],
+        "decoded_sha256": "d77f261c5843841523945bcd38f29e154a8d372ebf71b027275772ec7a7a6a61",
+        "name": "f16_min_normal_scale",
+        "packed_hex": "000401ffff01ffff01ffff01ffff01ffff01ffff01ffff01ffff01ffff01ffff01ff",
+        "packed_sha256": "577ff26f59eeed1fb47305073f703e1a33312412b07d4fa49152c7b40dbd3873"
+      },
+      {
+        "contract": {
+          "atol": 0.0,
+          "kind": "exact_f32_bits",
+          "rtol": 0.0
+        },
+        "decoded": [
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06,
+          7.569789886474609e-06,
+          -7.569789886474609e-06
+        ],
+        "decoded_sha256": "d0582ceb93d69e25c56ee7407dd57a13e6a8415eb865b2836192f642b1f4ade4",
+        "name": "f16_min_subnormal_scale",
+        "packed_hex": "01007f817f817f817f817f817f817f817f817f817f817f817f817f817f817f817f81",
+        "packed_sha256": "dd128683aee6bbbafb962cb8c7b8cda30e6f0b3ad0a9397ad93def9623be8b82"
+      },
+      {
+        "contract": {
+          "atol": 0.0,
+          "kind": "exact_f32_bits",
+          "rtol": 0.0
+        },
+        "decoded": [
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.0
+        ],
+        "decoded_sha256": "9fe55b26bb3eefefb0b6146f60d4017182da4321431e3ec81b9946a46e0a73de",
+        "name": "zero_and_near_zero",
+        "packed_hex": "003c000100ff000100ff000100ff000100ff000100ff000100ff000100ff000100ff",
+        "packed_sha256": "f466597aecbbe9e5c833d77bd675daa4a0dd382c3e6739b215c52ae77d8fea7f"
+      },
+      {
+        "contract": {
+          "atol": 0.0,
+          "kind": "exact_f32_bits",
+          "rtol": 0.0
+        },
+        "decoded": [
+          -64.0,
+          -63.5,
+          -32.0,
+          -0.5,
+          0.0,
+          0.5,
+          31.5,
+          63.5,
+          -64.0,
+          -63.5,
+          -32.0,
+          -0.5,
+          0.0,
+          0.5,
+          31.5,
+          63.5,
+          -64.0,
+          -63.5,
+          -32.0,
+          -0.5,
+          0.0,
+          0.5,
+          31.5,
+          63.5,
+          -64.0,
+          -63.5,
+          -32.0,
+          -0.5,
+          0.0,
+          0.5,
+          31.5,
+          63.5
+        ],
+        "decoded_sha256": "587033eb87d2b7d6694e6506767b8f2b69e3f9d87273f92fb943ab1f66fd46ff",
+        "name": "grid_sign_extremes",
+        "packed_hex": "00388081c0ff00013f7f8081c0ff00013f7f8081c0ff00013f7f8081c0ff00013f7f",
+        "packed_sha256": "1b37b2741a7b02879a6991531ca19693a589b2dd5f32408197c8cef82d2f91cb"
+      }
+    ],
+    "residual": [
+      {
+        "name": "exact_cancellation",
+        "sequential_sum": 1.0,
+        "terms": [
+          1e+16,
+          -1e+16,
+          1.0
+        ]
+      },
+      {
+        "name": "signed_zero",
+        "sequential_sum": 0.0,
+        "terms": [
+          0.0,
+          -0.0
+        ]
+      }
+    ],
+    "router": [
+      {
+        "name": "exact_tie",
+        "scores": [
+          3.0,
+          3.0,
+          2.0,
+          -1.0
+        ],
+        "topk": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "near_tie",
+        "scores": [
+          3.0,
+          3.0000000000000004,
+          2.0,
+          -1.0
+        ],
+        "topk": [
+          1,
+          0
+        ]
+      }
+    ]
+  },
+  "feature_id": "017",
+  "generator": {
+    "deterministic_seed": 17017,
+    "implementation": "independent Python/NumPy scalar oracle",
+    "numpy_version": "2.4.5",
+    "path": "scripts/research/generate_f017_independent_oracle.py",
+    "python_version": "3.13.13",
+    "source_commit": "a9779097de029f26be1cb9fde3543cc517ff153e"
+  },
+  "independence": {
+    "classification": "INDEPENDENT",
+    "statement": "Expected values are generated entirely by this Python/NumPy module.",
+    "uses_mlx": false,
+    "uses_rust_candidate": false,
+    "uses_rust_ffi": false,
+    "uses_rust_reference_functions": false
+  },
+  "limitations": [
+    "Synthetic fixtures do not exhaust real-checkpoint value distributions.",
+    "The M1 Ultra P1 remains the first real-checkpoint integration gate."
+  ],
+  "schema": "glm52-f017-independent-oracle-v1",
+  "schema_version": 1,
+  "source_identity": {
+    "checkpoint_revision": "public-safe-synthetic-no-checkpoint-bytes",
+    "checkpoint_set_sha256": "0b38dfc3b79bf6dd3eac3c80cd2b62cb6eb46b2f84e3e51c1a340ad1876c1a42",
+    "fixture_source_commit": "60145f8f18531e169e9fbfb676d1754efbfc4873"
+  }
+}

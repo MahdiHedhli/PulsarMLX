@@ -11,209 +11,101 @@
       "source_catalog": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
       "source_catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
       "checkpoint_set_sha256": "0b38dfc3b79bf6dd3eac3c80cd2b62cb6eb46b2f84e3e51c1a340ad1876c1a42",
-      "checkpoint_revision": "f016-gguf-trunk-inventory-0001",
+      "checkpoint_revision": "public-safe-synthetic-no-checkpoint-bytes",
       "trunk_inventory_reference": {
         "path": "docs/research/glm52/raw/f016-gguf-trunk-inventory-0001.json",
         "content_sha256": "0b38dfc3b79bf6dd3eac3c80cd2b62cb6eb46b2f84e3e51c1a340ad1876c1a42"
       },
-      "tensor_name": "blk.0.attn_q_a.weight",
-      "tensor_shard": "trunk-00001",
+      "tensor_name": "synthetic.f017.semantic_ladder",
+      "tensor_shard": "public-safe-oracle",
       "tensor_range": {
         "offset": 0,
-        "length": 64
+        "length": 28406
       },
       "tensor_shape": [
-        1,
-        64
+        28406
       ],
-      "quantization": "IQ3_XXS",
-      "dtype": "float16",
-      "payload_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
+      "quantization": "MIXED_Q8_0_F32_F64",
+      "dtype": "mixed",
+      "payload_sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
       "generation_position": 0,
       "layer": 0,
       "redistributable": true,
-      "fixture_id": "glm52-runtime-fixture-synthetic-v1",
+      "fixture_id": "glm52-f017-independent-oracle-v1",
       "payload": {
-        "byte_length": 64,
-        "content_sha256": "fdeab9acf3710362bd2658cdc9a29e8f9c757fcf9811603a8c447cd1d9151108",
-        "path": "artifacts/synthetic-matrix-payload.bin"
+        "byte_length": 28406,
+        "content_sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
+        "path": "f017-independent-oracle-v1.json"
       },
       "required_fields": {
         "input_residual": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+          "byte_length": 16,
+          "content_sha256": "b908ca8cb2cfc68c65f8f5a7fb8e6b118544248ad71278c8aa9dc2fbfdfd8d2f"
         },
         "normalized_activation": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+          "byte_length": 128,
+          "content_sha256": "dab8e4da31ccc32b7c3bd0b5e405347b1593429bad47b767327519eab6fbc588"
         },
         "attention_or_mla_output": {
           "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "content_sha256": "98e7e51398cd0186f16f5b2295d1e502416ef40e3746b43f9d3966fa1ceb62a3"
         },
         "router_logits": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "byte_length": 64,
+          "content_sha256": "bde55fc1851c0d669532ee9faa681100c971dea54db974db57d804737dec4ba5"
         },
         "routed_expert_ids": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "byte_length": 32,
+          "content_sha256": "dfe9b3c36426d5beb760e4b14e6135cdc4a2a1d2bf9c76536ed32cbc308fedd0"
         },
         "routed_weights": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "byte_length": 32,
+          "content_sha256": "ca9c5d274493a1c288420b8b32065e30183f7b0b164d67689c3c7830c7f823da"
         },
         "selected_expert_output": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "byte_length": 128,
+          "content_sha256": "7f0358e45119a98e862eda497e4f443a65d6447240afcbb3e598a7160369d5f6"
         },
         "shared_expert_output": {
           "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "content_sha256": "ffd197f51045b6ab70c0b9e786c2e9d3098dbccdeafa53f32a2d7b0920b3c5c2"
         },
         "moe_aggregate": {
           "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "content_sha256": "08f6285a290c60d7e9f6d39890fd7173e28044499ddc3c5e64266522c91089bc"
         },
         "residual_output": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+          "byte_length": 16,
+          "content_sha256": "eb779c48219e08d830fd17bf0a9f46541db7b223cadfb0dc4fde00169149876e"
         },
         "final_hidden_state": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+          "byte_length": 24,
+          "content_sha256": "da7fcf6c5e636743580a6030fbdfff3c514e25873ec8fb8b1ccbb4b6fb385b68"
         },
         "final_norm_output": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
+          "byte_length": 24,
+          "content_sha256": "d054324a92970e9435c1d2ad4c3937f4982f75895599990c7dfa3719eb9d3760"
         },
         "topk_logits": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "byte_length": 32,
+          "content_sha256": "a2a79316cb00cae3b5e484e0f804498eda5e4a706b9823f08b2a2182cbc7bc57"
         },
         "topk_argmax": {
           "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "content_sha256": "96fb5e4a2704b410bbf097c41e40ff8118ef0bc819ccf4344f31f694d12d536a"
         },
         "margins": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
+          "byte_length": 8,
+          "content_sha256": "10488e577be2fa02f3c5ca6d297d07006c9c0b7794f797131dba348fa8310f45"
         }
       },
       "provenance": {
-        "generator": "crates/engine/src/f017_parity.rs::synthetic_*",
-        "generator_source_commit": "60145f8f18531e169e9fbfb676d1754efbfc4873",
-        "reference_implementation": "crates/engine/src/f017_parity.rs::reference_* and frozen reference values",
-        "candidate_implementation": "crates/engine/src/f017_parity.rs::run_* plus quant decoder",
+        "generator": "scripts/research/generate_f017_independent_oracle.py",
+        "generator_source_commit": "a9779097de029f26be1cb9fde3543cc517ff153e",
+        "reference_implementation": "independent Python 3.13.13 / NumPy 2.4.5 scalar oracle",
+        "candidate_implementation": "crates/engine/src/f017_parity.rs::run_* plus quant::decode_q8_0_matrix",
         "independent": true,
-        "scope": "checkpoint-free synthetic semantic gates only; not real-checkpoint parity"
-      }
-    },
-    {
-      "schema": "pulsarmlx.runtime.portable-fixture-v1",
-      "schema_version": 1,
-      "feature_id": "017",
-      "spec_version": "1.0.0",
-      "source_commit": "60145f8f18531e169e9fbfb676d1754efbfc4873",
-      "source_catalog": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
-      "source_catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
-      "checkpoint_set_sha256": "0b38dfc3b79bf6dd3eac3c80cd2b62cb6eb46b2f84e3e51c1a340ad1876c1a42",
-      "checkpoint_revision": "f016-gguf-trunk-inventory-0001",
-      "trunk_inventory_reference": {
-        "path": "docs/research/glm52/raw/f016-gguf-trunk-inventory-0001.json",
-        "content_sha256": "0b38dfc3b79bf6dd3eac3c80cd2b62cb6eb46b2f84e3e51c1a340ad1876c1a42"
-      },
-      "tensor_name": "blk.1.attn_norm.weight",
-      "tensor_shard": "trunk-00002",
-      "tensor_range": {
-        "offset": 64,
-        "length": 64
-      },
-      "tensor_shape": [
-        1,
-        64
-      ],
-      "quantization": "IQ2_XXS",
-      "dtype": "float16",
-      "payload_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
-      "generation_position": 4,
-      "layer": 1,
-      "redistributable": false,
-      "fixture_id": "glm52-runtime-fixture-local-only-v1",
-      "payload": {
-        "byte_length": 32,
-        "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd",
-        "path": "/local-only/glm52/fixtures/route-block.bin"
-      },
-      "required_fields": {
-        "input_residual": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
-        },
-        "normalized_activation": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
-        },
-        "attention_or_mla_output": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "router_logits": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "routed_expert_ids": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "routed_weights": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "selected_expert_output": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "shared_expert_output": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "moe_aggregate": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "residual_output": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
-        },
-        "final_hidden_state": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
-        },
-        "final_norm_output": {
-          "byte_length": 32,
-          "content_sha256": "630dcd2966c4336691125448bbb25b4ff412a49c732db2c8abc1b8581bd710dd"
-        },
-        "topk_logits": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "topk_argmax": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        },
-        "margins": {
-          "byte_length": 16,
-          "content_sha256": "180f7fa739fd34e445c336aa3faa3b4ad22f49bde073b07da119c04fbe547630"
-        }
-      },
-      "provenance": {
-        "generator": "crates/engine/src/f017_parity.rs::synthetic_*",
-        "generator_source_commit": "60145f8f18531e169e9fbfb676d1754efbfc4873",
-        "reference_implementation": "crates/engine/src/f017_parity.rs::reference_* and frozen reference values",
-        "candidate_implementation": "crates/engine/src/f017_parity.rs::run_* plus quant decoder",
-        "independent": true,
-        "scope": "checkpoint-free synthetic semantic gates only; not real-checkpoint parity"
+        "scope": "checkpoint-free public-safe synthetic parity; not real-checkpoint parity"
       }
     }
   ]

@@ -15,6 +15,9 @@ sha2 = "0.10"
 stream = { path = "../stream" }
 tokenizer = { path = "../tokenizer" }
 
+[dev-dependencies]
+serde_json = "1"
+
 [[bin]]
 name = "pulsar-cli"
 path = "src/bin/pulsar-cli.rs"

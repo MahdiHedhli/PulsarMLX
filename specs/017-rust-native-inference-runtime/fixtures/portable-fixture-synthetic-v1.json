@@ -101,7 +101,7 @@
     "generator_source_commit": "60145f8f18531e169e9fbfb676d1754efbfc4873",
     "reference_implementation": "crates/engine/src/f017_parity.rs::reference_* and frozen reference values",
     "candidate_implementation": "crates/engine/src/f017_parity.rs::run_* plus quant decoder",
-    "independent": true,
-    "scope": "checkpoint-free synthetic semantic gates only; not real-checkpoint parity"
+    "independent": false,
+    "scope": "historical structural fixture only; not admissible as independent parity evidence"
   }
 }

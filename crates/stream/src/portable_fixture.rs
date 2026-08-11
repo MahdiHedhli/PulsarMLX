@@ -135,7 +135,10 @@ pub enum PortableFixtureValidationError {
     InvalidFeature,
     NonIndependentProvenance,
     MissingField(String),
-    InvalidSha256 { field: String, value: String },
+    InvalidSha256 {
+        field: String,
+        value: String,
+    },
     InvalidCommitHash(String),
     EmptyField(String),
     InvalidTensorShape,
@@ -235,7 +238,9 @@ impl PortableFixtureManifest {
             self.payload.path.as_deref().unwrap_or_default(),
         )?;
         if self.tensor_shape.is_empty() {
-            return Err(PortableFixtureValidationError::MissingField("tensor_shape".to_owned()));
+            return Err(PortableFixtureValidationError::MissingField(
+                "tensor_shape".to_owned(),
+            ));
         }
 
         if self.tensor_range.length == 0 {
@@ -255,7 +260,10 @@ impl PortableFixtureManifest {
         validate_commit_sha(&self.source_commit, "source_commit")?;
         validate_sha256(&self.source_catalog_sha256, "source_catalog_sha256")?;
         validate_sha256(&self.checkpoint_set_sha256, "checkpoint_set_sha256")?;
-        validate_sha256(&self.trunk_inventory_reference.content_sha256, "trunk_inventory_reference.content_sha256")?;
+        validate_sha256(
+            &self.trunk_inventory_reference.content_sha256,
+            "trunk_inventory_reference.content_sha256",
+        )?;
         validate_sha256(&self.payload_sha256, "payload_sha256")?;
         validate_artifact_record("payload", &self.payload)?;
         if self.payload_sha256 != self.payload.content_sha256 {
@@ -279,10 +287,7 @@ impl PortableFixtureManifest {
             "routed_expert_ids",
             &self.required_boundaries.routed_expert_ids,
         )?;
-        validate_artifact_record(
-            "routed_weights",
-            &self.required_boundaries.routed_weights,
-        )?;
+        validate_artifact_record("routed_weights", &self.required_boundaries.routed_weights)?;
         validate_artifact_record(
             "selected_expert_output",
             &self.required_boundaries.selected_expert_output,
@@ -291,13 +296,16 @@ impl PortableFixtureManifest {
             "shared_expert_output",
             &self.required_boundaries.shared_expert_output,
         )?;
-        validate_artifact_record(
-            "moe_aggregate",
-            &self.required_boundaries.moe_aggregate,
-        )?;
+        validate_artifact_record("moe_aggregate", &self.required_boundaries.moe_aggregate)?;
         validate_artifact_record("residual_output", &self.required_boundaries.residual_output)?;
-        validate_artifact_record("final_hidden_state", &self.required_boundaries.final_hidden_state)?;
-        validate_artifact_record("final_norm_output", &self.required_boundaries.final_norm_output)?;
+        validate_artifact_record(
+            "final_hidden_state",
+            &self.required_boundaries.final_hidden_state,
+        )?;
+        validate_artifact_record(
+            "final_norm_output",
+            &self.required_boundaries.final_norm_output,
+        )?;
         validate_artifact_record("topk_logits", &self.required_boundaries.topk_logits)?;
         validate_artifact_record("topk_argmax", &self.required_boundaries.topk_argmax)?;
         validate_artifact_record("margins", &self.required_boundaries.margins)?;
@@ -337,8 +345,10 @@ impl PortableFixtureManifest {
             });
         }
 
-        let path = self.payload_path(root).ok_or_else(|| PortableFixtureValidationError::MissingPayloadPath {
-            fixture_id: self.fixture_id.clone(),
+        let path = self.payload_path(root).ok_or_else(|| {
+            PortableFixtureValidationError::MissingPayloadPath {
+                fixture_id: self.fixture_id.clone(),
+            }
         })?;
 
         let bytes = fs::read(&path).map_err(|source| PortableFixtureValidationError::Io {
@@ -376,7 +386,11 @@ impl PortableFixtureManifest {
         Ok(())
     }
 
-    fn ensure_non_empty(&self, field: &str, value: &str) -> Result<(), PortableFixtureValidationError> {
+    fn ensure_non_empty(
+        &self,
+        field: &str,
+        value: &str,
+    ) -> Result<(), PortableFixtureValidationError> {
         if value.trim().is_empty() {
             return Err(PortableFixtureValidationError::EmptyField(field.to_owned()));
         }
@@ -520,7 +534,9 @@ fn validate_sha256(value: &str, field: &str) -> Result<(), PortableFixtureValida
 
 fn validate_commit_sha(value: &str, field: &str) -> Result<(), PortableFixtureValidationError> {
     if value.len() != 40 || !value.chars().all(|ch| ch.is_ascii_hexdigit()) {
-        return Err(PortableFixtureValidationError::InvalidCommitHash(field.to_owned()));
+        return Err(PortableFixtureValidationError::InvalidCommitHash(
+            field.to_owned(),
+        ));
     }
     Ok(())
 }
@@ -530,7 +546,9 @@ fn validate_artifact_record(
     artifact: &ArtifactRecord,
 ) -> Result<(), PortableFixtureValidationError> {
     if artifact.byte_length == 0 {
-        return Err(PortableFixtureValidationError::MissingField(format!("{field}.byte_length")));
+        return Err(PortableFixtureValidationError::MissingField(format!(
+            "{field}.byte_length"
+        )));
     }
     validate_sha256(&artifact.content_sha256, &format!("{field}.content_sha256"))
 }
@@ -562,19 +580,18 @@ mod tests {
     }
 
     fn set_manifest_text() -> String {
-        fs::read_to_string(
-            fixture_dir()
-                .join("portable-fixture-set-v1.json")
-                .as_path(),
-        )
-        .expect("read synthetic fixture set manifest")
+        fs::read_to_string(fixture_dir().join("portable-fixture-set-v1.json").as_path())
+            .expect("read synthetic fixture set manifest")
     }
 
     #[test]
     fn parse_and_validate_synthetic_manifest_examples() {
         let fixture = PortableFixtureManifest::from_json(&synthetic_manifest_text())
             .expect("synthetic manifest parses");
-        fixture.validate_identity().expect("synthetic manifest validates");
+        assert!(matches!(
+            fixture.validate_identity(),
+            Err(PortableFixtureValidationError::NonIndependentProvenance)
+        ));
 
         let payload_policy = FixtureManifestPolicy {
             verify_payload_hashes: true,
@@ -591,9 +608,12 @@ mod tests {
     fn parse_local_only_manifest_examples() {
         let data = fs::read_to_string(fixture_dir().join("portable-fixture-local-only-v1.json"))
             .expect("read local-only fixture manifest");
-        let fixture = PortableFixtureManifest::from_json(&data)
-            .expect("local-only manifest parses");
-        fixture.validate_identity().expect("local-only manifest validates");
+        let fixture =
+            PortableFixtureManifest::from_json(&data).expect("local-only manifest parses");
+        assert!(matches!(
+            fixture.validate_identity(),
+            Err(PortableFixtureValidationError::NonIndependentProvenance)
+        ));
         assert!(!fixture.redistributable);
     }
 
@@ -616,8 +636,8 @@ mod tests {
     fn reject_relative_local_only_payload_path_when_verifying() {
         let data = fs::read_to_string(fixture_dir().join("portable-fixture-local-only-v1.json"))
             .expect("read local-only fixture manifest");
-        let mut fixture = PortableFixtureManifest::from_json(&data)
-            .expect("local-only manifest parses");
+        let mut fixture =
+            PortableFixtureManifest::from_json(&data).expect("local-only manifest parses");
         fixture.payload.path = Some("relative-local-only.bin".to_owned());
 
         let policy = FixtureManifestPolicy {

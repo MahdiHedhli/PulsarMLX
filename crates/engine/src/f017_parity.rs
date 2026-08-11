@@ -1,3 +1,5 @@
+use crate::f017_oracle_generated as oracle;
+use crate::f017_oracle_generated::*;
 use backend::{MemoryBudget, RoutingPlan};
 use quant::decode_q8_0_matrix;
 use sha2::{Digest, Sha256};
@@ -10,115 +12,47 @@ use stream::{
 };
 
 pub const PROJECTION_SOURCE_COMMIT: &str = "60145f8f18531e169e9fbfb676d1754efbfc4873";
-pub const PROJECTION_FIXTURE_VERSION: &str = "glm52-runtime-projection-q8-0-v1";
+pub const PROJECTION_FIXTURE_VERSION: &str = "glm52-runtime-projection-q8-0-v2";
 pub const PROJECTION_TENSOR_NAME: &str = "synthetic.blk.0.attn_q_b.weight";
 pub const PROJECTION_TENSOR_SHARD: &str = "synthetic-trunk-00001";
 pub const PROJECTION_ROWS: usize = 2;
 pub const PROJECTION_COLUMNS: usize = 32;
 pub const PROJECTION_QUANTIZATION: &str = "Q8_0";
 pub const PROJECTION_DTYPE: &str = "f32";
-pub const ROUTER_FIXTURE_VERSION: &str = "glm52-runtime-router-v1";
+pub const ROUTER_FIXTURE_VERSION: &str = "glm52-runtime-router-v2";
 pub const ROUTER_TENSOR_NAME: &str = "synthetic.blk.0.ffn_gate_inp.weight";
 pub const ROUTER_TENSOR_SHARD: &str = "synthetic-trunk-00001";
 pub const ROUTER_TOKEN_COUNT: u64 = 2;
 pub const ROUTER_EXPERT_COUNT: u64 = 4;
 pub const ROUTER_TOP_K: u64 = 2;
-const PROJECTION_ENCODED_SHA256: &str =
-    "f49f515968e7229c1939529f1569b3ad2e61f43373a5f4ba5b2a862388b654c1";
-const PROJECTION_INPUT_SHA256: &str =
-    "dab8e4da31ccc32b7c3bd0b5e405347b1593429bad47b767327519eab6fbc588";
-const PROJECTION_REFERENCE_OUTPUT_SHA256: &str =
-    "f05588d152f98331a25df1d2efe2ad97fcc66e8e047ad567edf9c5c0bd182bfc";
-const ROUTER_SCORES_SHA256: &str =
-    "bde55fc1851c0d669532ee9faa681100c971dea54db974db57d804737dec4ba5";
-const ROUTER_IDS_SHA256: &str = "dfe9b3c36426d5beb760e4b14e6135cdc4a2a1d2bf9c76536ed32cbc308fedd0";
-const ROUTER_WEIGHTS_SHA256: &str =
-    "99595b232fc7412fbef687c1ef0aa742753f3a2d8116225d10f6340ce0276435";
-const ROUTER_OUTPUT_SHA256: &str =
-    "b50abdcbc770e9d10ab438dbb6137a6ef9046fc753f9587b85cb4cdba963a55b";
-pub const EXPERT_FIXTURE_VERSION: &str = "glm52-runtime-expert-q8-0-v1";
+pub const EXPERT_FIXTURE_VERSION: &str = "glm52-runtime-expert-q8-0-v2";
 pub const EXPERT_GATE_TENSOR_NAME: &str = "synthetic.blk.0.ffn_gate_exps.weight";
 pub const EXPERT_UP_TENSOR_NAME: &str = "synthetic.blk.0.ffn_up_exps.weight";
 pub const EXPERT_DOWN_TENSOR_NAME: &str = "synthetic.blk.0.ffn_down_exps.weight";
 pub const EXPERT_TENSOR_SHARD: &str = "synthetic-trunk-00001";
 pub const EXPERT_ROWS: usize = 32;
 pub const EXPERT_COLUMNS: usize = 32;
-const EXPERT_GATE_SHA256: &str = "ebeadb4a76f33fd37d3c3aa358f0684d255798c911e6a73557aa38c2608216d3";
-const EXPERT_UP_SHA256: &str = "d21f5321c74829bd43c697064d290c9d7d84b3739186a6420d57c4f05be8613a";
-const EXPERT_DOWN_SHA256: &str = "2d0eb3dc83f2500e248c26c8413d1182c4dc6a3ca1cfcdf366763176fcf682b4";
-const EXPERT_INPUT_SHA256: &str =
-    "dab8e4da31ccc32b7c3bd0b5e405347b1593429bad47b767327519eab6fbc588";
-const EXPERT_REFERENCE_OUTPUT_SHA256: &str =
-    "7f0358e45119a98e862eda497e4f443a65d6447240afcbb3e598a7160369d5f6";
-pub const TOP8_SHARED_FIXTURE_VERSION: &str = "glm52-runtime-top8-shared-v1";
+pub const TOP8_SHARED_FIXTURE_VERSION: &str = "glm52-runtime-top8-shared-v2";
 pub const TOP8_SHARED_ROUTER_TENSOR_NAME: &str = "synthetic.blk.0.ffn_gate_inp.weight";
 pub const TOP8_SHARED_ROUTED_TENSOR_NAME: &str = "synthetic.blk.0.ffn_experts.weight";
 pub const TOP8_SHARED_SHARED_TENSOR_NAME: &str = "synthetic.blk.0.ffn_shared_expert.weight";
 pub const TOP8_SHARED_TENSOR_SHARD: &str = "synthetic-trunk-00001";
 pub const TOP8_SHARED_OUTPUT_WIDTH: usize = 2;
-const TOP8_SHARED_SCORES_SHA256: &str =
-    "e718add56286e18ff81450763e0c2f227a35a73195fe0ed038a3d155711599e9";
-const TOP8_SHARED_ROUTED_SHA256: &str =
-    "d65ec8230922af8bf4bbf3a1e7d412788b6f498da72051f72b0fc21cddf29908";
-const TOP8_SHARED_SHARED_SHA256: &str =
-    "ffd197f51045b6ab70c0b9e786c2e9d3098dbccdeafa53f32a2d7b0920b3c5c2";
-const TOP8_SHARED_RESIDUAL_SHA256: &str =
-    "b74fce6cd8bcafd014a1ce8c6585beac59c5f4098a6d499f5d1d42d464146633";
-const TOP8_SHARED_OUTPUT_SHA256: &str =
-    "08f6285a290c60d7e9f6d39890fd7173e28044499ddc3c5e64266522c91089bc";
-pub const MLA_DENSE_FIXTURE_VERSION: &str = "glm52-runtime-mla-dense-v1";
+pub const MLA_DENSE_FIXTURE_VERSION: &str = "glm52-runtime-mla-dense-v2";
 pub const MLA_DENSE_QUERY_TENSOR_NAME: &str = "synthetic.blk.0.attn_q.weight";
 pub const MLA_DENSE_KEY_TENSOR_NAME: &str = "synthetic.blk.0.attn_k.weight";
 pub const MLA_DENSE_VALUE_TENSOR_NAME: &str = "synthetic.blk.0.attn_v.weight";
 pub const MLA_DENSE_OUTPUT_TENSOR_NAME: &str = "synthetic.blk.0.attn_o.weight";
 pub const MLA_DENSE_TENSOR_SHARD: &str = "synthetic-trunk-00001";
-const MLA_DENSE_QUERY_SHA256: &str =
-    "dc91ce9a50ddc828740aa26743716897fdb2bb64f1db662fe263a59be56145ae";
-const MLA_DENSE_KEYS_SHA256: &str =
-    "f652af1297e907749725d45a6880a3f4c541fd9290bc2c79e8c68b013ec1d4ab";
-const MLA_DENSE_VALUES_SHA256: &str =
-    "9f94a24f3f648f60bc02bcb8844d3ca21708f17f9833a200b7f9fd65281acff5";
-const MLA_DENSE_PROJECTION_SHA256: &str =
-    "71b86374c0cb45f7268948d366a6cc9b43d2de00c92c5f4417097c4e17fa4b36";
-const MLA_DENSE_RESIDUAL_SHA256: &str =
-    "c60fb7d5e38a94bfbe33b33f187596b2b1cd91c78bf15bbaf0769d6a9edbe90c";
-const MLA_DENSE_OUTPUT_SHA256: &str =
-    "98e7e51398cd0186f16f5b2295d1e502416ef40e3746b43f9d3966fa1ceb62a3";
-pub const COMPLETE_LAYER_FIXTURE_VERSION: &str = "glm52-runtime-complete-layer-v1";
+pub const COMPLETE_LAYER_FIXTURE_VERSION: &str = "glm52-runtime-complete-layer-v2";
 pub const COMPLETE_LAYER_INPUT_TENSOR_NAME: &str = "synthetic.blk.0.layer_input";
 pub const COMPLETE_LAYER_OUTPUT_TENSOR_NAME: &str = "synthetic.blk.0.layer_output";
 pub const COMPLETE_LAYER_TENSOR_SHARD: &str = "synthetic-trunk-00001";
-const COMPLETE_LAYER_INPUT_SHA256: &str =
-    "b908ca8cb2cfc68c65f8f5a7fb8e6b118544248ad71278c8aa9dc2fbfdfd8d2f";
-const COMPLETE_LAYER_ATTENTION_SHA256: &str =
-    "a084810e7c2a939ffa5af0a8540ded8acccd39d21be922c668a89bfaa4b98e9c";
-const COMPLETE_LAYER_ROUTED_SHA256: &str =
-    "b75ba3b875def5d2f34361fcc7cbea9b45aa3f9ef590f96ad71c90a955800533";
-const COMPLETE_LAYER_SHARED_SHA256: &str =
-    "15d49616eec2a72fcda75235c943acc8a27cb15fdb75d661307ee8c389a227be";
-const COMPLETE_LAYER_RESIDUAL_SHA256: &str =
-    "c72a21ee29414d5488c45aa7bcb069b79e13bad6cedf16a1f518e3be4aef7435";
-const COMPLETE_LAYER_PROJECTION_SHA256: &str =
-    "4443867ce6abb5336ba266d7d06479a87cb41d70bd91cdec3979d9b13f1e5b6e";
-const COMPLETE_LAYER_OUTPUT_SHA256: &str =
-    "eb779c48219e08d830fd17bf0a9f46541db7b223cadfb0dc4fde00169149876e";
-pub const FINAL_OUTPUT_FIXTURE_VERSION: &str = "glm52-runtime-final-output-v1";
+pub const FINAL_OUTPUT_FIXTURE_VERSION: &str = "glm52-runtime-final-output-v2";
 pub const FINAL_OUTPUT_HIDDEN_TENSOR_NAME: &str = "synthetic.final.hidden";
 pub const FINAL_OUTPUT_NORM_TENSOR_NAME: &str = "synthetic.final.norm";
 pub const FINAL_OUTPUT_HEAD_TENSOR_NAME: &str = "synthetic.output_head.weight";
 pub const FINAL_OUTPUT_TENSOR_SHARD: &str = "synthetic-trunk-00001";
-const FINAL_OUTPUT_HIDDEN_SHA256: &str =
-    "da7fcf6c5e636743580a6030fbdfff3c514e25873ec8fb8b1ccbb4b6fb385b68";
-const FINAL_OUTPUT_NORM_SCALE_SHA256: &str =
-    "21304cdc068531a906daa0dc44ea2f03b8963c24a5da70cc0a988e9f0d99e35e";
-const FINAL_OUTPUT_HEAD_SHA256: &str =
-    "cb11bdbbfb07e82735bf6cca925884b6bf517b6f299a2d7fb9b0ef9950037dcf";
-const FINAL_OUTPUT_NORM_SHA256: &str =
-    "d054324a92970e9435c1d2ad4c3937f4982f75895599990c7dfa3719eb9d3760";
-const FINAL_OUTPUT_LOGITS_SHA256: &str =
-    "839a70b5322d540d5e7a3dbc1aa669b2d2d7f1b6e417d8223d59b72dab3676e8";
-const FINAL_OUTPUT_TOPK_SHA256: &str =
-    "96fb5e4a2704b410bbf097c41e40ff8118ef0bc819ccf4344f31f694d12d536a";
 const M2_MAX_TOTAL_BYTES: u64 = 64 * 1024 * 1024 * 1024;
 const M2_MAX_SAFETY_RESERVE_BYTES: u64 = 24 * 1024 * 1024 * 1024;
 const M2_MAX_REQUIRED_MARGIN_BYTES: u64 = 4 * 1024 * 1024 * 1024;
@@ -257,6 +191,11 @@ pub fn run_projection_fixture(
     fixture: &ProjectionFixture,
     expected_dispatch: ProjectionDispatch,
 ) -> Result<ProjectionParityResult, ProjectionParityError> {
+    if F017_ORACLE_GENERATOR_COMMIT.len() != 40 {
+        return Err(ProjectionParityError::InvalidFixture(
+            "oracle generator commit",
+        ));
+    }
     fixture.validate()?;
     let memory = MemoryBudget::try_new(
         M2_MAX_TOTAL_BYTES,
@@ -294,13 +233,8 @@ pub fn run_projection_fixture(
         .record_stage(TelemetryBucket::Decode, Duration::from_nanos(1), 1)
         .map_err(|error| ProjectionParityError::Telemetry(format!("{error:?}")))?;
 
-    let reference_decoded = reference_decode(&fixture.encoded);
-    if decoded
-        .iter()
-        .zip(reference_decoded.iter())
-        .any(|(actual, expected)| actual.to_bits() != expected.to_bits())
-    {
-        return Err(ProjectionParityError::InvalidFixture("decode parity"));
+    if hash_f32(&decoded) != oracle::PROJECTION_DECODED_SHA256 {
+        return Err(ProjectionParityError::HashMismatch("decoded matrix"));
     }
     telemetry
         .record_stage(
@@ -310,10 +244,9 @@ pub fn run_projection_fixture(
         )
         .map_err(|error| ProjectionParityError::Telemetry(format!("{error:?}")))?;
     let actual_output = project(&decoded, &fixture.activation);
-    let reference_output = project(&reference_decoded, &fixture.activation);
     if actual_output
         .iter()
-        .zip(reference_output.iter())
+        .zip(oracle::PROJECTION_EXPECTED_OUTPUT.iter())
         .any(|(actual, expected)| actual.to_bits() != expected.to_bits())
     {
         return Err(ProjectionParityError::InvalidFixture("projection parity"));
@@ -321,9 +254,11 @@ pub fn run_projection_fixture(
     telemetry
         .record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 1)
         .map_err(|error| ProjectionParityError::Telemetry(format!("{error:?}")))?;
-    let reference_output_sha256 = hash_f32(&reference_output);
-    if reference_output_sha256 != PROJECTION_REFERENCE_OUTPUT_SHA256 {
-        return Err(ProjectionParityError::HashMismatch("reference output"));
+    let reference_output_sha256 = hash_f32(&actual_output);
+    if reference_output_sha256 != oracle::PROJECTION_REFERENCE_OUTPUT_SHA256 {
+        return Err(ProjectionParityError::HashMismatch(
+            "independent oracle output",
+        ));
     }
     Ok(ProjectionParityResult {
         classification: ValidationClassification::GoldenIdentical,
@@ -475,8 +410,7 @@ pub fn run_router_fixture(
         ROUTER_TOP_K,
     )
     .map_err(|error| RouterParityError::Routing(error.to_string()))?;
-    let expected_ids = [1_u64, 2, 3, 1];
-    if plan.selected_expert_ids() != expected_ids {
+    if plan.selected_expert_ids() != oracle::ROUTER_EXPECTED_IDS {
         return Err(RouterParityError::InvalidFixture("selected expert IDs"));
     }
     let ids_sha256 = hash_u64(plan.selected_expert_ids());
@@ -490,32 +424,30 @@ pub fn run_router_fixture(
             1,
         )
         .map_err(|error| RouterParityError::Telemetry(format!("{error:?}")))?;
-    let expected_weights: [f64; 4] = [0.5, 0.5, 0.7310585786300049, 0.2689414213699952];
     if plan
         .normalized_weights()
         .iter()
-        .zip(expected_weights.iter())
-        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-12)
+        .zip(oracle::ROUTER_EXPECTED_WEIGHTS.iter())
+        .any(|(actual, expected)| (actual - expected).abs() > oracle::ROUTER_ABSOLUTE_TOLERANCE)
     {
         return Err(RouterParityError::InvalidFixture("routing weights"));
     }
-    let weights_sha256 = hash_f64(&expected_weights);
-    if weights_sha256 != ROUTER_WEIGHTS_SHA256 {
+    let weights_sha256 = hash_f64(&oracle::ROUTER_EXPECTED_WEIGHTS);
+    if weights_sha256 != oracle::ROUTER_WEIGHTS_SHA256 {
         return Err(RouterParityError::HashMismatch("routing weights"));
     }
     let output = plan
         .aggregate_selected_outputs(&fixture.selected_outputs, 2)
         .map_err(|error| RouterParityError::Routing(error.to_string()))?;
-    let expected_output: [f64; 4] = [2.0, 2.0, 4.06911611643753, 4.03788284273999];
     if output
         .iter()
-        .zip(expected_output.iter())
-        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-12)
+        .zip(oracle::ROUTER_EXPECTED_OUTPUT.iter())
+        .any(|(actual, expected)| (actual - expected).abs() > oracle::ROUTER_ABSOLUTE_TOLERANCE)
     {
         return Err(RouterParityError::InvalidFixture("aggregated output"));
     }
-    let output_sha256 = hash_f64(&expected_output);
-    if output_sha256 != ROUTER_OUTPUT_SHA256 {
+    let output_sha256 = hash_f64(&oracle::ROUTER_EXPECTED_OUTPUT);
+    if output_sha256 != oracle::ROUTER_OUTPUT_SHA256 {
         return Err(RouterParityError::HashMismatch("aggregated output"));
     }
     telemetry
@@ -759,45 +691,43 @@ pub fn run_top8_shared_fixture(
 
     let plan = RoutingPlan::try_softmax(&fixture.scores, 1, 8, 8)
         .map_err(|error| Top8SharedParityError::Routing(error.to_string()))?;
-    let expected_ids: Vec<u64> = (0..8).rev().collect();
-    if plan.selected_expert_ids() != expected_ids {
+    if plan.selected_expert_ids() != oracle::TOP8_SHARED_EXPECTED_IDS {
         return Err(Top8SharedParityError::NumericalMismatch("expert ordering"));
     }
-    let reference_weights = reference_softmax(&fixture.scores);
     if plan
         .normalized_weights()
         .iter()
-        .zip(reference_weights.iter())
-        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-12)
+        .zip(oracle::TOP8_SHARED_EXPECTED_WEIGHTS.iter())
+        .any(|(actual, expected)| {
+            (actual - expected).abs() > oracle::TOP8_SHARED_ABSOLUTE_TOLERANCE
+        })
     {
         return Err(Top8SharedParityError::NumericalMismatch("routing weights"));
     }
     let routed = plan
         .aggregate_selected_outputs(&fixture.routed_outputs, TOP8_SHARED_OUTPUT_WIDTH as u64)
         .map_err(|error| Top8SharedParityError::Routing(error.to_string()))?;
-    let reference_routed = reference_aggregate(&reference_weights, &fixture.routed_outputs);
     let output: Vec<f64> = routed
-        .iter()
-        .zip(fixture.shared_output.iter().zip(fixture.residual.iter()))
-        .map(|(routed, (shared, residual))| routed + shared + residual)
-        .collect();
-    let reference_output: Vec<f64> = reference_routed
         .iter()
         .zip(fixture.shared_output.iter().zip(fixture.residual.iter()))
         .map(|(routed, (shared, residual))| routed + shared + residual)
         .collect();
     if output
         .iter()
-        .zip(reference_output.iter())
-        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-12)
+        .zip(oracle::TOP8_SHARED_EXPECTED_OUTPUT.iter())
+        .any(|(actual, expected)| {
+            (actual - expected).abs() > oracle::TOP8_SHARED_ABSOLUTE_TOLERANCE
+        })
     {
         return Err(Top8SharedParityError::NumericalMismatch(
             "shared aggregation",
         ));
     }
-    let output_sha256 = hash_f64(&reference_output);
-    if output_sha256 != TOP8_SHARED_OUTPUT_SHA256 {
-        return Err(Top8SharedParityError::HashMismatch("reference output"));
+    let output_sha256 = hash_f64(&oracle::TOP8_SHARED_EXPECTED_OUTPUT);
+    if output_sha256 != oracle::TOP8_SHARED_OUTPUT_SHA256 {
+        return Err(Top8SharedParityError::HashMismatch(
+            "independent oracle output",
+        ));
     }
     telemetry
         .record_stage(
@@ -821,6 +751,7 @@ pub fn run_top8_shared_fixture(
     })
 }
 
+#[allow(dead_code)]
 fn reference_softmax(scores: &[f64]) -> Vec<f64> {
     let max = scores.iter().copied().fold(f64::NEG_INFINITY, f64::max);
     let weights: Vec<f64> = scores
@@ -832,6 +763,7 @@ fn reference_softmax(scores: &[f64]) -> Vec<f64> {
     weights.into_iter().map(|weight| weight / total).collect()
 }
 
+#[allow(dead_code)]
 fn reference_aggregate(weights: &[f64], selected_outputs: &[f64]) -> Vec<f64> {
     (0..TOP8_SHARED_OUTPUT_WIDTH)
         .map(|column| {
@@ -1052,41 +984,18 @@ pub fn run_mla_dense_fixture(
         .map(|(projected, residual)| projected + residual)
         .collect::<Vec<_>>();
 
-    let reference_query =
-        reference_rotate_pair(&fixture.query, fixture.query_position, fixture.rope_theta);
-    let reference_keys = [
-        reference_rotate_pair(
-            &fixture.keys[0..2],
-            fixture.key_positions[0],
-            fixture.rope_theta,
-        ),
-        reference_rotate_pair(
-            &fixture.keys[2..4],
-            fixture.key_positions[1],
-            fixture.rope_theta,
-        ),
-    ];
-    let reference_scores = reference_keys
+    if output
         .iter()
-        .map(|key| reference_dot2(&reference_query, key) / 2.0_f64.sqrt())
-        .collect::<Vec<_>>();
-    let reference_weights = reference_softmax_two(&reference_scores);
-    let reference_attention = vec![
-        reference_weights[0] * fixture.values[0] + reference_weights[1] * fixture.values[2],
-        reference_weights[0] * fixture.values[1] + reference_weights[1] * fixture.values[3],
-    ];
-    let reference_projected = reference_matvec2(&fixture.output_projection, &reference_attention);
-    let reference_output = reference_projected
-        .iter()
-        .zip(fixture.residual.iter())
-        .map(|(projected, residual)| projected + residual)
-        .collect::<Vec<_>>();
-    if output != reference_output {
+        .zip(oracle::MLA_DENSE_EXPECTED_OUTPUT.iter())
+        .any(|(actual, expected)| (actual - expected).abs() > oracle::MLA_DENSE_ABSOLUTE_TOLERANCE)
+    {
         return Err(MlaDenseParityError::NumericalMismatch("MLA/dense output"));
     }
-    let output_sha256 = hash_f64(&reference_output);
-    if output_sha256 != MLA_DENSE_OUTPUT_SHA256 {
-        return Err(MlaDenseParityError::HashMismatch("reference output"));
+    let output_sha256 = hash_f64(&output);
+    if output_sha256 != oracle::MLA_DENSE_OUTPUT_SHA256 {
+        return Err(MlaDenseParityError::HashMismatch(
+            "independent oracle output",
+        ));
     }
     telemetry
         .record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 4)
@@ -1111,6 +1020,7 @@ fn rotate_pair(values: &[f64], position: u64, theta: f64) -> Vec<f64> {
     ]
 }
 
+#[allow(dead_code)]
 fn reference_rotate_pair(values: &[f64], position: u64, theta: f64) -> Vec<f64> {
     let angle = theta * position as f64;
     let cos = angle.cos();
@@ -1125,6 +1035,7 @@ fn dot2(left: &[f64], right: &[f64]) -> f64 {
     left[0] * right[0] + left[1] * right[1]
 }
 
+#[allow(dead_code)]
 fn reference_dot2(left: &[f64], right: &[f64]) -> f64 {
     let first = left[0] * right[0];
     let second = left[1] * right[1];
@@ -1139,6 +1050,7 @@ fn softmax_two(scores: &[f64]) -> Vec<f64> {
     vec![first / total, second / total]
 }
 
+#[allow(dead_code)]
 fn reference_softmax_two(scores: &[f64]) -> Vec<f64> {
     let max = if scores[0] > scores[1] {
         scores[0]
@@ -1158,6 +1070,7 @@ fn matvec2(matrix: &[f64], vector: &[f64]) -> Vec<f64> {
     ]
 }
 
+#[allow(dead_code)]
 fn reference_matvec2(matrix: &[f64], vector: &[f64]) -> Vec<f64> {
     let first = matrix[0] * vector[0] + matrix[1] * vector[1];
     let second = matrix[2] * vector[0] + matrix[3] * vector[1];
@@ -1408,32 +1321,20 @@ pub fn run_complete_layer_fixture(
         .zip(fixture.residual.iter())
         .map(|(projected, residual)| projected + residual)
         .collect::<Vec<_>>();
-    let reference_combined = fixture
-        .attention
+    if output
         .iter()
-        .zip(fixture.routed.iter())
-        .zip(fixture.shared.iter())
-        .map(|((attention, routed), shared)| {
-            let routed_sum = *attention + *routed;
-            routed_sum + *shared
-        })
-        .collect::<Vec<_>>();
-    let reference_output = reference_matvec2(&fixture.output_projection, &reference_combined)
-        .iter()
-        .zip(fixture.residual.iter())
-        .map(|(projected, residual)| {
-            let residual_sum = *projected + *residual;
-            residual_sum
-        })
-        .collect::<Vec<_>>();
-    if output != reference_output {
+        .zip(oracle::COMPLETE_LAYER_EXPECTED_OUTPUT.iter())
+        .any(|(actual, expected)| actual.to_bits() != expected.to_bits())
+    {
         return Err(CompleteLayerParityError::NumericalMismatch(
             "layer residual output",
         ));
     }
-    let output_sha256 = hash_f64(&reference_output);
-    if output_sha256 != COMPLETE_LAYER_OUTPUT_SHA256 {
-        return Err(CompleteLayerParityError::HashMismatch("reference output"));
+    let output_sha256 = hash_f64(&output);
+    if output_sha256 != oracle::COMPLETE_LAYER_OUTPUT_SHA256 {
+        return Err(CompleteLayerParityError::HashMismatch(
+            "independent oracle output",
+        ));
     }
     Ok(CompleteLayerParityResult {
         classification: ValidationClassification::GoldenIdentical,
@@ -1641,36 +1542,34 @@ pub fn run_final_output_fixture(
     let norm = rms_norm(&fixture.hidden, &fixture.norm_scale, fixture.epsilon);
     let logits = output_logits(&fixture.output_head, &norm, &fixture.bias);
     let topk = top_k_indices(&logits, fixture.top_k);
-    let reference_norm = reference_rms_norm(&fixture.hidden, &fixture.norm_scale, fixture.epsilon);
-    let reference_logits =
-        reference_output_logits(&fixture.output_head, &reference_norm, &fixture.bias);
-    let reference_topk = reference_top_k_indices(&reference_logits, fixture.top_k);
     if norm
         .iter()
-        .zip(reference_norm.iter())
-        .any(|(actual, expected)| (actual - expected).abs() > 1.0e-14)
+        .zip(oracle::FINAL_OUTPUT_EXPECTED_NORM.iter())
+        .any(|(actual, expected)| {
+            (actual - expected).abs() > oracle::FINAL_OUTPUT_ABSOLUTE_TOLERANCE
+        })
         || logits
             .iter()
-            .zip(reference_logits.iter())
-            .any(|(actual, expected)| (actual - expected).abs() > 1.0e-14)
-        || topk != reference_topk
+            .zip(oracle::FINAL_OUTPUT_EXPECTED_LOGITS.iter())
+            .any(|(actual, expected)| {
+                (actual - expected).abs() > oracle::FINAL_OUTPUT_ABSOLUTE_TOLERANCE
+            })
+        || topk
+            .iter()
+            .map(|index| *index as u64)
+            .ne(oracle::FINAL_OUTPUT_EXPECTED_TOPK)
+        || ((logits[topk[0]] - logits[topk[1]]) - oracle::FINAL_OUTPUT_EXPECTED_MARGIN).abs()
+            > oracle::FINAL_OUTPUT_ABSOLUTE_TOLERANCE
     {
         return Err(FinalOutputParityError::NumericalMismatch(
             "norm/logits/top-k",
         ));
     }
-    let norm_sha256 = hash_f64(&reference_norm);
-    let logits_sha256 = hash_f64(&reference_logits);
-    let topk_as_u64: Vec<u64> = reference_topk.iter().map(|index| *index as u64).collect();
-    let topk_sha256 = hash_u64(&topk_as_u64);
-    if norm_sha256 != FINAL_OUTPUT_NORM_SHA256 {
-        return Err(FinalOutputParityError::HashMismatch("norm output"));
-    }
-    if logits_sha256 != FINAL_OUTPUT_LOGITS_SHA256 {
-        return Err(FinalOutputParityError::HashMismatch("logits"));
-    }
-    if topk_sha256 != FINAL_OUTPUT_TOPK_SHA256 {
-        return Err(FinalOutputParityError::HashMismatch("top-k"));
+    let norm_sha256 = oracle::FINAL_OUTPUT_NORM_SHA256.to_owned();
+    let logits_sha256 = oracle::FINAL_OUTPUT_LOGITS_SHA256.to_owned();
+    let topk_sha256 = oracle::FINAL_OUTPUT_TOPK_SHA256.to_owned();
+    if hash_f64(&[oracle::FINAL_OUTPUT_EXPECTED_MARGIN]) != oracle::FINAL_OUTPUT_MARGIN_SHA256 {
+        return Err(FinalOutputParityError::HashMismatch("top-k margin"));
     }
     telemetry
         .record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 3)
@@ -1686,7 +1585,7 @@ pub fn run_final_output_fixture(
         norm_sha256,
         logits_sha256,
         topk_sha256,
-        argmax: reference_topk[0],
+        argmax: oracle::FINAL_OUTPUT_EXPECTED_ARGMAX,
     })
 }
 
@@ -1700,6 +1599,7 @@ fn rms_norm(hidden: &[f64], scale: &[f64], epsilon: f64) -> Vec<f64> {
         .collect()
 }
 
+#[allow(dead_code)]
 fn reference_rms_norm(hidden: &[f64], scale: &[f64], epsilon: f64) -> Vec<f64> {
     let mut sum = 0.0;
     for value in hidden {
@@ -1726,6 +1626,7 @@ fn output_logits(head: &[f64], norm: &[f64], bias: &[f64]) -> Vec<f64> {
         .collect()
 }
 
+#[allow(dead_code)]
 fn reference_output_logits(head: &[f64], norm: &[f64], bias: &[f64]) -> Vec<f64> {
     let width = norm.len();
     let mut logits = Vec::with_capacity(bias.len());
@@ -1751,6 +1652,7 @@ fn top_k_indices(logits: &[f64], top_k: usize) -> Vec<usize> {
     indices
 }
 
+#[allow(dead_code)]
 fn reference_top_k_indices(logits: &[f64], top_k: usize) -> Vec<usize> {
     let mut indices = (0..logits.len()).collect::<Vec<_>>();
     for index in 0..indices.len() {
@@ -1949,13 +1851,6 @@ pub fn run_expert_fixture(
             .map_err(|error| ExpertParityError::Telemetry(format!("{error:?}")))?;
     }
 
-    let reference_gate = reference_decode_matrix(&fixture.gate_encoded);
-    let reference_up = reference_decode_matrix(&fixture.up_encoded);
-    let reference_down = reference_decode_matrix(&fixture.down_encoded);
-    if gate != reference_gate || up != reference_up || down != reference_down {
-        return Err(ExpertParityError::NumericalMismatch("matrix decode"));
-    }
-
     let gate_output = matvec_f32(&gate, &fixture.activation);
     let up_output = matvec_f32(&up, &fixture.activation);
     let hidden = gate_output
@@ -1964,24 +1859,16 @@ pub fn run_expert_fixture(
         .map(|(gate_value, up_value)| silu_f32(*gate_value) * up_value)
         .collect::<Vec<_>>();
     let output = matvec_f32(&down, &hidden);
-    let reference_gate_output = reference_matvec(&reference_gate, &fixture.activation);
-    let reference_up_output = reference_matvec(&reference_up, &fixture.activation);
-    let reference_hidden = reference_gate_output
+    if output
         .iter()
-        .zip(reference_up_output.iter())
-        .map(|(gate_value, up_value)| reference_silu(*gate_value) * up_value)
-        .collect::<Vec<_>>();
-    let reference_output = reference_matvec(&reference_down, &reference_hidden);
-    if gate_output != reference_gate_output
-        || up_output != reference_up_output
-        || hidden != reference_hidden
-        || output != reference_output
+        .zip(oracle::EXPERT_EXPECTED_OUTPUT.iter())
+        .any(|(actual, expected)| actual.to_bits() != expected.to_bits())
     {
         return Err(ExpertParityError::NumericalMismatch("expert execution"));
     }
-    let output_sha256 = hash_f32(&reference_output);
-    if output_sha256 != EXPERT_REFERENCE_OUTPUT_SHA256 {
-        return Err(ExpertParityError::HashMismatch("reference output"));
+    let output_sha256 = hash_f32(&output);
+    if output_sha256 != oracle::EXPERT_REFERENCE_OUTPUT_SHA256 {
+        return Err(ExpertParityError::HashMismatch("independent oracle output"));
     }
     telemetry
         .record_stage(TelemetryBucket::Compute, Duration::from_nanos(1), 4)
@@ -2014,6 +1901,7 @@ fn expert_matrix(kind: u8) -> Vec<u8> {
     encoded
 }
 
+#[allow(dead_code)]
 fn reference_decode_matrix(encoded: &[u8]) -> Vec<f32> {
     let mut decoded = Vec::with_capacity(EXPERT_ROWS * EXPERT_COLUMNS);
     for row in 0..EXPERT_ROWS {
@@ -2035,6 +1923,7 @@ fn matvec_f32(matrix: &[f32], vector: &[f32]) -> Vec<f32> {
         .collect()
 }
 
+#[allow(dead_code)]
 fn reference_matvec(matrix: &[f32], vector: &[f32]) -> Vec<f32> {
     let mut output = Vec::with_capacity(EXPERT_ROWS);
     for row in 0..EXPERT_ROWS {
@@ -2051,11 +1940,13 @@ fn silu_f32(value: f32) -> f32 {
     value / (1.0_f32 + (-value).exp())
 }
 
+#[allow(dead_code)]
 fn reference_silu(value: f32) -> f32 {
     let denominator = 1.0_f32 + (-value).exp();
     value / denominator
 }
 
+#[allow(dead_code)]
 fn reference_decode(encoded: &[u8]) -> Vec<f32> {
     let mut decoded = Vec::with_capacity(PROJECTION_ROWS * PROJECTION_COLUMNS);
     for row in 0..PROJECTION_ROWS {

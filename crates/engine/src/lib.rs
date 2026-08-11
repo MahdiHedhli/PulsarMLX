@@ -13,6 +13,7 @@
 //! always receive explicit per-slot device pointers, wherever the bytes
 //! ended up.
 
+mod f017_oracle_generated;
 pub mod f017_parity;
 pub mod f017_soak;
 

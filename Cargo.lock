@@ -206,6 +206,7 @@ dependencies = [
  "kernels",
  "libc",
  "quant",
+ "serde_json",
  "sha2",
  "stream",
  "tokenizer",
