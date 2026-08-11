@@ -120,11 +120,19 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
           .venv/bin/python -m unittest \
             scripts.research.tests.test_f017_tierb_stress \
-            scripts.research.tests.test_f017_r8_oracle -v
+            scripts.research.tests.test_f017_r8_oracle \
+            scripts.research.tests.test_f017_r9_oracle \
+            scripts.research.tests.test_f017_r10_oracle -v
           cargo test -p f017-runner --test r7_exact_scaffold -- --nocapture
           cargo test -p f017-runner --test r7_production_attribution -- --nocapture
           cargo test -p f017-runner --test tier_b_stress_native -- --nocapture
           cargo test -p f017-runner --test r8_top8_shared_native -- --nocapture
+          cargo test -p f017-runner --test r9_contract -- --nocapture
+          cargo test -p f017-runner --test r9_exact_scaffold -- --nocapture
+          cargo test -p f017-runner --test r9_production_native -- --nocapture
+          cargo test -p f017-runner --test r10_contract -- --nocapture
+          cargo test -p f017-runner --test r10_exact_scaffold -- --nocapture
+          cargo test -p f017-runner --test r10_production_native -- --nocapture
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
