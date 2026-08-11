@@ -1,4 +1,6 @@
 import importlib.util
+import hashlib
+import json
 import math
 import unittest
 from pathlib import Path
@@ -13,6 +15,19 @@ SPEC.loader.exec_module(MODULE)
 
 
 class TierBStressOracleTests(unittest.TestCase):
+    def test_committed_oracle_is_generated_without_drift(self):
+        artifact_path = (
+            ROOT
+            / "specs/017-rust-native-inference-runtime/fixtures/f017-tier-b-stress-oracle-v1.json"
+        )
+        artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+        generator_sha256 = hashlib.sha256(GENERATOR.read_bytes()).hexdigest()
+        self.assertEqual(artifact["generator_sha256"], generator_sha256)
+        self.assertEqual(
+            artifact,
+            MODULE.build_oracle(artifact["source_commit"], generator_sha256),
+        )
+
     def test_oracle_is_deterministic_independent_and_complete(self):
         first = MODULE.build_oracle("0" * 40, "1" * 64)
         second = MODULE.build_oracle("0" * 40, "1" * 64)
