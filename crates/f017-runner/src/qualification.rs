@@ -7,6 +7,28 @@
 
 pub const EXACT_SCAFFOLD_VERSION: &str = "f017-exact-f32-sequential-v1";
 
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct FirstDivergence {
+    pub index: usize,
+    pub expected: f32,
+    pub expected_bits_hex: String,
+    pub actual: f32,
+    pub actual_bits_hex: String,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct NumericalMetrics {
+    pub element_count: usize,
+    pub bit_mismatch_count: usize,
+    pub signed_zero_mismatch_count: usize,
+    pub non_finite_count: usize,
+    pub max_abs_error: f64,
+    pub max_relative_error: Option<f64>,
+    pub rmse: f64,
+    pub cosine_similarity: Option<f64>,
+    pub first_divergence: Option<FirstDivergence>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QualificationError {
     EmptyShape,
@@ -90,6 +112,89 @@ pub fn exact_swiglu_f32(
     Ok(())
 }
 
+/// Measure a candidate against the exact scaffold without applying a pass
+/// threshold. Contract policy is intentionally separate from observation.
+pub fn measure_f32(
+    expected: &[f32],
+    actual: &[f32],
+) -> Result<NumericalMetrics, QualificationError> {
+    if expected.len() != actual.len() {
+        return Err(QualificationError::OutputLength);
+    }
+    let mut bit_mismatch_count = 0;
+    let mut signed_zero_mismatch_count = 0;
+    let mut non_finite_count = 0;
+    let mut max_abs_error = 0.0_f64;
+    let mut max_relative_error: Option<f64> = None;
+    let mut sum_squared_error = 0.0_f64;
+    let mut dot = 0.0_f64;
+    let mut expected_norm_squared = 0.0_f64;
+    let mut actual_norm_squared = 0.0_f64;
+    let mut first_divergence = None;
+
+    for (index, (&expected_value, &actual_value)) in expected.iter().zip(actual.iter()).enumerate()
+    {
+        let expected_bits = expected_value.to_bits();
+        let actual_bits = actual_value.to_bits();
+        if expected_bits != actual_bits {
+            bit_mismatch_count += 1;
+            first_divergence.get_or_insert_with(|| FirstDivergence {
+                index,
+                expected: expected_value,
+                expected_bits_hex: format!("0x{expected_bits:08x}"),
+                actual: actual_value,
+                actual_bits_hex: format!("0x{actual_bits:08x}"),
+            });
+        }
+        if expected_value == 0.0
+            && actual_value == 0.0
+            && expected_value.is_sign_negative() != actual_value.is_sign_negative()
+        {
+            signed_zero_mismatch_count += 1;
+        }
+        if !expected_value.is_finite() || !actual_value.is_finite() {
+            non_finite_count += 1;
+            continue;
+        }
+        let expected_f64 = f64::from(expected_value);
+        let actual_f64 = f64::from(actual_value);
+        let error = actual_f64 - expected_f64;
+        let absolute_error = error.abs();
+        max_abs_error = max_abs_error.max(absolute_error);
+        sum_squared_error += error * error;
+        if expected_f64 != 0.0 {
+            let relative = absolute_error / expected_f64.abs();
+            max_relative_error = Some(max_relative_error.unwrap_or(0.0).max(relative));
+        }
+        dot += expected_f64 * actual_f64;
+        expected_norm_squared += expected_f64 * expected_f64;
+        actual_norm_squared += actual_f64 * actual_f64;
+    }
+
+    let rmse = if expected.is_empty() {
+        0.0
+    } else {
+        (sum_squared_error / expected.len() as f64).sqrt()
+    };
+    let cosine_similarity = if expected_norm_squared > 0.0 && actual_norm_squared > 0.0 {
+        Some(dot / (expected_norm_squared.sqrt() * actual_norm_squared.sqrt()))
+    } else {
+        None
+    };
+
+    Ok(NumericalMetrics {
+        element_count: expected.len(),
+        bit_mismatch_count,
+        signed_zero_mismatch_count,
+        non_finite_count,
+        max_abs_error,
+        max_relative_error,
+        rmse,
+        cosine_similarity,
+        first_divergence,
+    })
+}
+
 // Keeping each operation behind a non-inlined call makes the semantic
 // rounding boundaries independently auditable and prevents multiply-add
 // contraction across scaffold steps. `to_bits`/`from_bits` also materializes
@@ -150,5 +255,18 @@ mod tests {
             exact_matvec_f32(&matrix, 1, 3, &vector, &mut output).unwrap();
             assert_eq!(output[0].to_bits(), 0.0_f32.to_bits());
         }
+    }
+
+    #[test]
+    fn metrics_preserve_bits_signed_zero_and_first_divergence() {
+        let expected = [0.0_f32, 2.0, -4.0];
+        let actual = [-0.0_f32, 2.5, -4.0];
+        let metrics = measure_f32(&expected, &actual).unwrap();
+        assert_eq!(metrics.bit_mismatch_count, 2);
+        assert_eq!(metrics.signed_zero_mismatch_count, 1);
+        assert_eq!(metrics.non_finite_count, 0);
+        assert_eq!(metrics.max_abs_error, 0.5);
+        assert_eq!(metrics.max_relative_error, Some(0.25));
+        assert_eq!(metrics.first_divergence.unwrap().index, 0);
     }
 }
