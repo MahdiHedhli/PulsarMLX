@@ -107,17 +107,20 @@ Gate: rust-only initialization without requiring model execution service.
 
 Gate: ladder advances only when previous boundary remains deterministic and bounded.
 
-Current boundary: R6-R10 are composed checkpoint-free. The permanent exact-order
-qualification scaffold is bit-identical to the independent R7, R9, and R10
-oracles. Production R7/R8 qualify under the frozen expert Tier-B contract; R9
+Current boundary: R6-R12 are composed checkpoint-free. The permanent exact-order
+qualification scaffold is bit-identical to the independent R7, R9, R10, R11,
+and R12 oracles. Production R7/R8 qualify under the frozen expert Tier-B contract; R9
 MLA/DSA and R10 complete-layer execution qualify under separately frozen,
 fail-closed composition contracts with ten deterministic repeats. The
 adversarial review accepted the numerical evidence subject to the now-applied
 classification/applicability remediation. R7 carries an explicit vocabulary
 amendment; current R9/R10 evidence binds to reviewed v2 contracts that preserve
 all thresholds while tightening internal-selection divergence to numerical
-failure. R11/R12 are the next checkpoint-free
-gates; no checkpoint or M1 model time is admitted.
+failure. R11 final logits/top-k and R12 two-layer canonical-binary execution
+pass their frozen exact and production gates with exact greedy identity, zero
+fallback, and reconciled lifecycle accounting. The next gate is internal plus
+independent adversarial review; no real checkpoint or M1-C/P1 model time is
+admitted.
 
 ## Final phase
 

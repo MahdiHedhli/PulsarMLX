@@ -123,11 +123,11 @@
 - [x] T017-132V Preserve immutable R9/R10 v1 contracts, publish reviewed v2
   semantic tightening, record the R7 amendment, and rebind evidence without
   numerical reruns.
-- [ ] T017-133 Compose final norm/logits/top-k runtime boundary R11.
-- [ ] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
+- [x] T017-133 Compose final norm/logits/top-k runtime boundary R11.
+- [x] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
 - [ ] T017-140 Add local-only real boundary fixture manifest/validator for R13.
 - [ ] T017-141 Add literal canonical P1 command only after M1-A through M1-G review gates pass.
-- [ ] T017-150 Add checkpoint-free CI for CLI/schema/store/tensor-map/runner/cancellation/privacy gates.
+- [x] T017-150 Add checkpoint-free CI for CLI/schema/store/tensor-map/runner/cancellation/privacy gates.
 - [x] T017-151 Require native Apple CI to execute adapter and projection tests without skips.
 - [ ] T017-160 Obtain internal implementation review of the runner composition.
 - [ ] T017-161 Obtain independent adversarial review of P1 meaningfulness and fail-closed behavior.

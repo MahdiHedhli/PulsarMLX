@@ -2,10 +2,13 @@
 
 > Status update: the original R7 block documented below has been resolved by
 > the exact-order scaffold and independently frozen Tier-B contract. R8, R9
-> MLA/DSA, and R10 complete-layer execution now pass checkpoint-free. The
+> MLA/DSA, R10 complete-layer, R11 final-output, and R12 canonical-binary tiny
+> model execution now pass checkpoint-free. The
 > adversarial reviewer accepted the numerical evidence subject to the
 > fail-closed classification-vocabulary remediation. See
 > `docs/architecture/reviews/f017-r9-r10-numerical-boundary-report.md`. The
+> R11/R12 evidence and current review gate are in
+> `docs/architecture/reviews/f017-r11-r12-canonical-runner-report.md`. The
 > historical text below is retained to preserve the original sprint stop.
 
 ## Executive result
@@ -189,8 +192,8 @@ MLX operations for the first P1.
 | R8 top-8 plus shared | Passed | Exact routing, native experts, zero fallback |
 | R9 MLA/DSA | Passed, review accepted | Exact scaffold plus 10-repeat native Tier-B gate; evidence bound to R9 v2 |
 | R10 complete layer | Passed, review accepted | Composed R9 + router + top-8/shared native layer; evidence bound to R10 v2 |
-| R11 final logits | Next eligible | RMSNorm/output-head path remains open |
-| R12 tiny end to end | Not eligible | Complete component composition absent |
+| R11 final logits | Passed, review pending | Exact scaffold plus 10-repeat native logits/top-k/argmax gate |
+| R12 tiny end to end | Passed, review pending | Two-layer split-fixture model through the actual canonical binary |
 | R13 local real fixtures | Not started | No local fixture/model access in this sprint |
 | R14 M1 identity only | Not started | Requires reviewed runner composition handoff |
 | R15 one P1 | Not authorized | Requires R0-R14 and fresh authorization |
@@ -200,12 +203,15 @@ passing public artifact. The exact contract remains unchanged.
 
 ## Tiny end-to-end runner
 
-R12 is not complete. The actual binary does execute its complete current R5
-path, including CLI, evidence, independent fixture parsing, decode, production
-adapter, synchronization, numerical comparison, and teardown. It does not yet
-execute a synthetic multi-layer model, router, expert aggregation, attention
-state, or final logits, so describing it as end-to-end inference would be
-incorrect.
+R12 now executes a two-layer synthetic `glm-dsa` model through the actual
+canonical binary and production adapter. It covers split-fixture storage,
+tensor-map validation, embedding, MLA/DSA, top-8 routed plus shared experts,
+residuals, final norm, Q4_K output head, logits, and token selection. Ten
+production repeats selected token `10` with exact routes/top-k/argmax, 690
+native dispatches, zero fallback/errors, and reconciled lifecycle accounting.
+This remains checkpoint-free synthetic evidence and does not admit real model
+access. See
+[`f017-r11-r12-canonical-runner-report.md`](f017-r11-r12-canonical-runner-report.md).
 
 ## Local-only real fixture plan
 
