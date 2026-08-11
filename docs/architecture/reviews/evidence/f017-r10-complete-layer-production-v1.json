@@ -12,8 +12,8 @@
   ],
   "frozen_contract_versions": [
     "f017-production-expert-tier-b-v1",
-    "f017-production-r9-tier-b-v1",
-    "f017-production-r10-tier-b-v1"
+    "f017-production-r9-tier-b-v2",
+    "f017-production-r10-tier-b-v2"
   ],
   "production_backend_version": "mlx-native-0.31.2-mlxc-0.6.0-production-adapter",
   "numerical_mode": "production_mlx_tier_b",

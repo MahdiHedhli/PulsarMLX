@@ -1,5 +1,6 @@
 use f017_runner::json::parse_json_no_duplicates;
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::Path;
 
@@ -42,18 +43,34 @@ struct ExactRequirements {
 #[test]
 fn r9_contract_is_frozen_narrow_and_fail_closed() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let bytes = fs::read(
+    let v1_bytes = fs::read(
         root.join("specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v1.json"),
     )
     .unwrap();
-    let value: serde_json::Value = parse_json_no_duplicates(&bytes).unwrap();
-    let contract: Contract = serde_json::from_value(value).unwrap();
+    assert_eq!(
+        format!("{:x}", Sha256::digest(&v1_bytes)),
+        "fe6e95d2ea2eb31184cb5617ec27727262ac132812add75933e22a376acf80a8"
+    );
+    let v1: Contract =
+        serde_json::from_value(parse_json_no_duplicates(&v1_bytes).unwrap()).unwrap();
+    assert_eq!(v1.contract_version, "f017-production-r9-tier-b-v1");
+    assert_eq!(
+        v1.classification["selection_divergence"],
+        "numerically_qualified_greedy_divergent"
+    );
+
+    let v2_bytes = fs::read(
+        root.join("specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v2.json"),
+    )
+    .unwrap();
+    let value: serde_json::Value = parse_json_no_duplicates(&v2_bytes).unwrap();
+    let contract: Contract = serde_json::from_value(value.clone()).unwrap();
     assert_eq!(
         contract.schema,
         "pulsarmlx.f017.production-r9-tier-b-contract"
     );
-    assert_eq!(contract.contract_version, "f017-production-r9-tier-b-v1");
-    assert_eq!(contract.status, "frozen_before_production_r9_execution");
+    assert_eq!(contract.contract_version, "f017-production-r9-tier-b-v2");
+    assert_eq!(contract.status, "reviewed_semantic_tightening_of_frozen_v1");
     assert_eq!(contract.exact_scaffold, "f017-r9-mla-dsa-exact-v1");
     assert_eq!(
         contract.per_matvec_contract,
@@ -61,10 +78,18 @@ fn r9_contract_is_frozen_narrow_and_fail_closed() {
     );
     assert_eq!(contract.required_repeats, 10);
     assert_eq!(contract.intermediate.max_absolute_error, 2_f64.powi(-8));
+    assert_eq!(
+        contract.intermediate.max_absolute_error,
+        v1.intermediate.max_absolute_error
+    );
     assert_eq!(contract.intermediate.rmse, 2_f64.powi(-9));
     assert!(contract.intermediate.cosine_similarity_minimum >= 0.999999);
     let final_bounds = contract.final_bounds;
     assert_eq!(final_bounds.max_absolute_error, 2_f64.powi(-7));
+    assert_eq!(
+        final_bounds.max_absolute_error,
+        v1.final_bounds.max_absolute_error
+    );
     assert_eq!(final_bounds.rmse, 2_f64.powi(-8));
     assert!(final_bounds.cosine_similarity_minimum >= 0.99999);
     assert!(contract.exact_requirements.selected_positions);
@@ -79,11 +104,20 @@ fn r9_contract_is_frozen_narrow_and_fail_closed() {
         "numerically_qualified_greedy_not_applicable"
     );
     assert_eq!(contract.greedy_applicability, "not_applicable");
+    assert_eq!(
+        contract.classification["selection_divergence"],
+        "numerically_failed"
+    );
+    assert_eq!(
+        value["versioning"]["supersedes"],
+        "f017-production-r9-tier-b-v1"
+    );
+    assert_eq!(value["versioning"]["thresholds_unchanged"], true);
     assert!(contract
         .retuning_policy
         .starts_with("never mutate this version"));
     assert_eq!(
         contract.review_status,
-        "pending_adversarial_numerical_review"
+        "accepted_after_contract_version_cleanup"
     );
 }

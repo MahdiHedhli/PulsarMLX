@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.contract-amendment",
+  "schema_version": "1.0.0",
+  "amendment_id": "f017-production-expert-tier-b-v1-amendment-001",
+  "contract_id": "f017-production-expert-tier-b-v1",
+  "amendment_time_utc": "2026-08-11T19:22:10Z",
+  "source_commit": "dda37f97e571c32ea469fba1e4e869e9dba8d415",
+  "reviewer_finding": "f017-r7-r8-greedy-applicability-vocabulary",
+  "original_contract_sha256": "3245631ffdd5c9807281f12ae0be33bfa070f1962a71e4b98a3b384364a7cba2",
+  "amended_contract_sha256": "1953adbf822a21f7fa4f8d569432e747c8c43c9fd273589bec8849b57475cee2",
+  "fields_changed": [
+    {
+      "path": "scope.greedy_applicability",
+      "old": "not_applicable_at_r7",
+      "new": "not_applicable",
+      "category": "vocabulary_normalization"
+    },
+    {
+      "path": "classification_names",
+      "old": [
+        "golden_identical",
+        "numerically_qualified_greedy_identical",
+        "numerically_qualified_greedy_divergent",
+        "numerically_failed"
+      ],
+      "new": [
+        "golden_identical",
+        "numerically_qualified_greedy_not_applicable",
+        "numerically_qualified_greedy_identical",
+        "numerically_qualified_greedy_divergent",
+        "numerically_failed"
+      ],
+      "category": "vocabulary_extension"
+    }
+  ],
+  "thresholds_unchanged": true,
+  "numerical_payload_unchanged": true,
+  "accepted_numerical_bindings_remain_valid": true,
+  "contract_version_bumped": false,
+  "reason_no_version_bump": "reviewer requested an explicit vocabulary amendment for the accepted R7 v1 numerical contract; no failure semantics or numerical threshold changed",
+  "review_packet": "docs/architecture/reviews/f017-r7-numerical-review-packet.md",
+  "checkpoint_accessed": false
+}

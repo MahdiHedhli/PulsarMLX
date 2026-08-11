@@ -1,19 +1,19 @@
 {
   "schema": "pulsarmlx.f017.production-r10-tier-b-contract",
   "schema_version": "1.0.0",
-  "contract_version": "f017-production-r10-tier-b-v1",
-  "status": "frozen_before_production_r10_execution",
+  "contract_version": "f017-production-r10-tier-b-v2",
+  "status": "reviewed_semantic_tightening_of_frozen_v1",
   "oracle": "independent Python/NumPy complete-layer oracle",
   "exact_scaffold": "f017-r10-complete-layer-exact-v1",
   "required_contracts": [
     "f017-production-expert-tier-b-v1",
-    "f017-production-r9-tier-b-v1"
+    "f017-production-r9-tier-b-v2"
   ],
   "required_repeats": 10,
   "router": {
     "selected_ids": "exact",
     "tie_break": "lower_expert_id",
-    "routing_weight_max_absolute_error": 0.00001
+    "routing_weight_max_absolute_error": 1e-05
   },
   "intermediate": {
     "max_absolute_error": 0.015625,
@@ -34,12 +34,21 @@
     "in_flight_after_teardown": 0
   },
   "classification": {
-    "pass": "numerically_qualified_greedy_identical",
+    "pass": "numerically_qualified_greedy_not_applicable",
     "exact_pass": "golden_identical",
-    "routing_divergence": "numerically_qualified_greedy_divergent",
+    "routing_divergence": "numerically_failed",
     "failure": "numerically_failed"
   },
   "threshold_origin": "power-of-two envelopes frozen for one R9 residual, one router projection, 27 expert projections, nonlinear activation, weighted aggregation, and final residual before production R10 output",
   "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
-  "review_status": "pending_adversarial_numerical_review"
+  "review_status": "accepted_after_contract_version_cleanup",
+  "greedy_applicability": "not_applicable",
+  "selection_evidence": "router expert IDs are exact internal architecture evidence; no model-token top-k or argmax exists in R10",
+  "versioning": {
+    "supersedes": "f017-production-r10-tier-b-v1",
+    "reason": "reviewed semantic tightening: internal expert-routing divergence is a hard numerical failure and model-token greedy selection is not applicable",
+    "thresholds_unchanged": true,
+    "candidate_outputs_unchanged": true,
+    "rerun_required": false
+  }
 }

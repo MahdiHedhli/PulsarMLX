@@ -7,7 +7,7 @@
   "oracle_generator_sha": "726c2e496471a9fbccba803df4c7c084b1f86547310564ed8af795dac29adb47",
   "exact_scaffold_version": "f017-r9-mla-dsa-exact-v1",
   "production_backend_version": "mlx-native-0.31.2-mlxc-0.6.0-production-adapter",
-  "frozen_contract_version": "f017-production-r9-tier-b-v1",
+  "frozen_contract_version": "f017-production-r9-tier-b-v2",
   "numerical_mode": "production_mlx_tier_b",
   "deterministic_repeat_count": 10,
   "boundaries": {

@@ -46,13 +46,10 @@ does not authorize widening this version.
 - Ownership, streams, singleton, and in-flight work reconcile after teardown.
 
 Passing production R9 is classified
-`numerically_qualified_greedy_not_applicable`; a bit-identical production
-result may be `golden_identical`. R9 has no model-token greedy decision. DSA
-and indexer selections remain separate exact architecture evidence, and their
-drift is `numerically_failed`. Any numerical or lifecycle gate failure is also
-`numerically_failed`.
+`numerically_qualified_greedy_identical`; a bit-identical production result may
+be `golden_identical`. Selection drift is
+`numerically_qualified_greedy_divergent`, and any numerical or lifecycle gate
+failure is `numerically_failed`.
 
-The R7/R8 adversarial review accepted the numerical contract with a required
-classification-vocabulary repair. That repair changes no threshold or
-numerical value. Its fail-closed schema validation and CI passed, clearing this
-contract for inheritance.
+This contract is pending independent adversarial numerical review. Rejection
+blocks downstream promotion but does not rewrite retained R9/R10 history.

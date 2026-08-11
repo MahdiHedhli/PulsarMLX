@@ -49,7 +49,13 @@ def numerical_payload(value: dict[str, Any]) -> bytes:
     retained = {
         key: item
         for key, item in value.items()
-        if key not in {"classification", "greedy_applicability"}
+        if key
+        not in {
+            "classification",
+            "greedy_applicability",
+            "frozen_contract_version",
+            "frozen_contract_versions",
+        }
     }
     return json.dumps(retained, sort_keys=True, separators=(",", ":")).encode()
 
@@ -63,9 +69,17 @@ def baseline(root: Path, relative: str, ref: str) -> bytes:
     ).stdout
 
 
-def reconcile(value: dict[str, Any]) -> dict[str, Any]:
+def reconcile(relative: str, value: dict[str, Any]) -> dict[str, Any]:
     value["classification"] = CLASSIFICATION
     value["greedy_applicability"] = APPLICABILITY
+    if relative.endswith("f017-r9-mla-dsa-production-v1.json"):
+        value["frozen_contract_version"] = "f017-production-r9-tier-b-v2"
+    if relative.endswith("f017-r10-complete-layer-production-v1.json"):
+        value["frozen_contract_versions"] = [
+            "f017-production-expert-tier-b-v1",
+            "f017-production-r9-tier-b-v2",
+            "f017-production-r10-tier-b-v2",
+        ]
     return value
 
 
@@ -84,11 +98,24 @@ def reconcile_bytes(relative: str, old_bytes: bytes) -> bytes:
     marker = new_classification + b",\n"
     if result.count(marker) != 1:
         raise ValueError(f"cannot place applicability beside classification in {relative}")
-    return result.replace(
+    result = result.replace(
         marker,
         marker + b'  "greedy_applicability": "not_applicable",\n',
         1,
     )
+    if relative.endswith("f017-r9-mla-dsa-production-v1.json"):
+        result = result.replace(
+            b'"frozen_contract_version": "f017-production-r9-tier-b-v1"',
+            b'"frozen_contract_version": "f017-production-r9-tier-b-v2"',
+            1,
+        )
+    if relative.endswith("f017-r10-complete-layer-production-v1.json"):
+        result = result.replace(
+            b'"f017-production-r9-tier-b-v1",\n    "f017-production-r10-tier-b-v1"',
+            b'"f017-production-r9-tier-b-v2",\n    "f017-production-r10-tier-b-v2"',
+            1,
+        )
+    return result
 
 
 def main() -> int:
@@ -106,7 +133,7 @@ def main() -> int:
         old = parse(old_bytes)
         current = parse(path.read_bytes())
         expected_bytes = reconcile_bytes(relative, old_bytes)
-        expected = reconcile(parse(old_bytes))
+        expected = reconcile(relative, parse(old_bytes))
         if args.write:
             path.write_bytes(expected_bytes)
             current = parse(path.read_bytes())
@@ -132,7 +159,12 @@ def main() -> int:
         "schema": "pulsarmlx.f017.numerical-classification-reconciliation",
         "schema_version": "1.0.0",
         "baseline_ref": args.baseline_ref,
-        "allowed_changes": ["classification", "greedy_applicability"],
+        "allowed_changes": [
+            "classification",
+            "greedy_applicability",
+            "frozen_contract_version",
+            "frozen_contract_versions",
+        ],
         "numerical_payload_unchanged": True,
         "files": records,
     }

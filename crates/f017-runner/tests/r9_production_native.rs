@@ -92,12 +92,15 @@ fn checkpoint_free_r9_production_mlx_qualifies_fail_closed() {
     let fixture_path = root
         .join("specs/017-rust-native-inference-runtime/fixtures/f017-r9-mla-dsa-oracle-v1.json");
     let contract_path =
-        root.join("specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v1.json");
+        root.join("specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v2.json");
     let fixture_bytes = fs::read(&fixture_path).unwrap();
     let contract_bytes = fs::read(&contract_path).unwrap();
     let oracle: Value = parse_json_no_duplicates(&fixture_bytes).unwrap();
     let contract: Value = parse_json_no_duplicates(&contract_bytes).unwrap();
-    assert_eq!(contract["status"], "frozen_before_production_r9_execution");
+    assert_eq!(
+        contract["status"],
+        "reviewed_semantic_tightening_of_frozen_v1"
+    );
     assert_eq!(contract["required_repeats"], REPEATS);
     assert_eq!(
         oracle["numerical_contract"]["deterministic_repeats"],

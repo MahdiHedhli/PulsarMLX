@@ -1,8 +1,8 @@
 {
   "schema": "pulsarmlx.f017.production-r9-tier-b-contract",
   "schema_version": "1.0.0",
-  "contract_version": "f017-production-r9-tier-b-v1",
-  "status": "frozen_before_production_r9_execution",
+  "contract_version": "f017-production-r9-tier-b-v2",
+  "status": "reviewed_semantic_tightening_of_frozen_v1",
   "oracle": "independent Python/NumPy strict-order f32 oracle",
   "exact_scaffold": "f017-r9-mla-dsa-exact-v1",
   "per_matvec_contract": "f017-production-expert-tier-b-v1",
@@ -33,13 +33,21 @@
     "in_flight_after_teardown": 0
   },
   "classification": {
-    "pass": "numerically_qualified_greedy_identical",
+    "pass": "numerically_qualified_greedy_not_applicable",
     "exact_pass": "golden_identical",
-    "selection_divergence": "numerically_qualified_greedy_divergent",
+    "selection_divergence": "numerically_failed",
     "failure": "numerically_failed"
   },
-  "greedy_applicability": "DSA/index selections only; no vocabulary argmax in R9",
+  "greedy_applicability": "not_applicable",
   "threshold_origin": "binary power-of-two envelopes frozen from the six width-32 projection/reduction stages and the existing operand-conditioned matvec model; values are independent of production candidate output",
   "retuning_policy": "never mutate this version; preserve failure and publish a new reviewed contract version",
-  "review_status": "pending_adversarial_numerical_review"
+  "review_status": "accepted_after_contract_version_cleanup",
+  "selection_evidence": "DSA/index selections are exact internal architecture evidence; no model-token top-k or argmax exists in R9",
+  "versioning": {
+    "supersedes": "f017-production-r9-tier-b-v1",
+    "reason": "reviewed semantic tightening: internal DSA/index selection divergence is a hard numerical failure and model-token greedy selection is not applicable",
+    "thresholds_unchanged": true,
+    "candidate_outputs_unchanged": true,
+    "rerun_required": false
+  }
 }

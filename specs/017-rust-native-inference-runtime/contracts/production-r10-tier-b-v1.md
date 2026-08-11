@@ -20,9 +20,5 @@ They are not inferred from candidate output and may not be widened in place.
 
 Ten candidate repetitions must be bit-deterministic. Signed-zero and non-finite
 violations, any routing-ID change, fallback/reference dispatch, backend error,
-or lifecycle mismatch fail closed. R10 has no model-token greedy decision, so
-a qualified non-bit-identical result is
-`numerically_qualified_greedy_not_applicable`; exact routed expert IDs remain
-separate architecture evidence. The R7/R8 review accepted the inherited
-numerical contract subject to this vocabulary repair. This contract admits no
-checkpoint or downstream real-model gate.
+or lifecycle mismatch fail closed. The contract is pending independent
+adversarial numerical review and admits no checkpoint or downstream gate.

@@ -1,0 +1,138 @@
+{
+  "schema": "pulsarmlx.f017.contract-version-reconciliation",
+  "schema_version": "2.0.0",
+  "baseline_ref": "a572a2d560f5bc33f823e74c3bbc95ff2b164314",
+  "remediation_ref": "dda37f97e571c32ea469fba1e4e869e9dba8d415",
+  "r7_amendment": {
+    "artifact": "specs/017-rust-native-inference-runtime/contracts/production-expert-tier-b-v1-amendment-001.json",
+    "original_contract_sha256": "3245631ffdd5c9807281f12ae0be33bfa070f1962a71e4b98a3b384364a7cba2",
+    "amended_contract_sha256": "1953adbf822a21f7fa4f8d569432e747c8c43c9fd273589bec8849b57475cee2",
+    "thresholds_unchanged": true,
+    "numerical_payload_unchanged": true
+  },
+  "r8_audit": {
+    "independent_immutable_contract": false,
+    "contract_inherited": "f017-production-expert-tier-b-v1",
+    "version_or_amendment_required": false,
+    "reason": "R8 did not publish or mutate an independent retuning-policy contract"
+  },
+  "contracts": [
+    {
+      "boundary": "R9",
+      "v1_path": "specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v1.json",
+      "v1_sha256": "fe6e95d2ea2eb31184cb5617ec27727262ac132812add75933e22a376acf80a8",
+      "mutated_v1_sha256_at_remediation_ref": "4ce9aa87571f8c3d8efc7451eba37003c1e1a99f20935a972d58bf300862e3ba",
+      "v2_path": "specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v2.json",
+      "v2_sha256": "56dd1e9a51752045d2f01e7c964b2d13ffbee0303bd459e734d2f7d7ae7797a1",
+      "mutated_v1_field_diff": [
+        {
+          "path": "classification.pass",
+          "category": "vocabulary_normalization",
+          "old": "numerically_qualified_greedy_identical",
+          "new": "numerically_qualified_greedy_not_applicable"
+        },
+        {
+          "path": "classification.selection_divergence",
+          "category": "semantic_tightening",
+          "old": "numerically_qualified_greedy_divergent",
+          "new": "numerically_failed"
+        },
+        {
+          "path": "greedy_applicability",
+          "category": "vocabulary_normalization",
+          "old": "DSA/index selections only; no vocabulary argmax in R9",
+          "new": "not_applicable"
+        },
+        {
+          "path": "selection_evidence",
+          "category": "metadata_provenance",
+          "old": null,
+          "new": "explicit internal-selection scope statement"
+        }
+      ],
+      "formatting_only_changes": [],
+      "semantic_tightening": {
+        "selection_divergence": {
+          "old": "numerically_qualified_greedy_divergent",
+          "new": "numerically_failed"
+        }
+      },
+      "thresholds_unchanged": true
+    },
+    {
+      "boundary": "R10",
+      "v1_path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v1.json",
+      "v1_sha256": "dc11769af639a207c1528ae6756a315f585a04438d5e5f5115883e0323ebd81f",
+      "mutated_v1_sha256_at_remediation_ref": "736b3fe0a56bf3076da4ad4521312d9a6291380d6bd5a9bfb0b87ca618e2efb3",
+      "v2_path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "v2_sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+      "mutated_v1_field_diff": [
+        {
+          "path": "classification.pass",
+          "category": "vocabulary_normalization",
+          "old": "numerically_qualified_greedy_identical",
+          "new": "numerically_qualified_greedy_not_applicable"
+        },
+        {
+          "path": "classification.routing_divergence",
+          "category": "semantic_tightening",
+          "old": "numerically_qualified_greedy_divergent",
+          "new": "numerically_failed"
+        },
+        {
+          "path": "greedy_applicability",
+          "category": "vocabulary_normalization",
+          "old": null,
+          "new": "not_applicable"
+        },
+        {
+          "path": "selection_evidence",
+          "category": "metadata_provenance",
+          "old": null,
+          "new": "explicit internal-routing scope statement"
+        }
+      ],
+      "formatting_only_changes": [],
+      "semantic_tightening": {
+        "routing_divergence": {
+          "old": "numerically_qualified_greedy_divergent",
+          "new": "numerically_failed"
+        }
+      },
+      "thresholds_unchanged": true
+    }
+  ],
+  "evidence": [
+    {
+      "boundary": "R9",
+      "path": "docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json",
+      "old_sha256": "2a0fb632db94ee4d77b6d7c62472855ce3a27aa19d9a81a2bf5e5814602ead1b",
+      "new_sha256": "e65e95cc626aff0a6a7cd1471acf498399567eca6e66a2abaf72bd674c658645",
+      "old_contract_binding": "f017-production-r9-tier-b-v1",
+      "new_contract_binding": "f017-production-r9-tier-b-v2",
+      "numerical_metrics_unchanged": true,
+      "candidate_outputs_unchanged": true
+    },
+    {
+      "boundary": "R10",
+      "path": "docs/architecture/reviews/evidence/f017-r10-complete-layer-production-v1.json",
+      "old_sha256": "332b1268ddc0b16b16f3183c983e0f9901f40d2bdf6cd5c7277d050e8d6e01b6",
+      "new_sha256": "268b0f685a664866b73fe9195c7111734eb97d6280d31727ab76a9c69dbc8708",
+      "old_contract_bindings": [
+        "f017-production-expert-tier-b-v1",
+        "f017-production-r9-tier-b-v1",
+        "f017-production-r10-tier-b-v1"
+      ],
+      "new_contract_bindings": [
+        "f017-production-expert-tier-b-v1",
+        "f017-production-r9-tier-b-v2",
+        "f017-production-r10-tier-b-v2"
+      ],
+      "numerical_metrics_unchanged": true,
+      "candidate_outputs_unchanged": true
+    }
+  ],
+  "thresholds_unchanged": true,
+  "numerical_metrics_unchanged": true,
+  "checkpoint_accessed": false
+}

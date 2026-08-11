@@ -121,12 +121,12 @@ fn checkpoint_free_r10_complete_layer_qualifies_without_fallback() {
     ))
     .unwrap();
     let r9_contract_bytes = fs::read(
-        root.join("specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v1.json"),
+        root.join("specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v2.json"),
     )
     .unwrap();
     let r10_contract_bytes =
         fs::read(root.join(
-            "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v1.json",
+            "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
         ))
         .unwrap();
     let r9: Value = parse_json_no_duplicates(&r9_bytes).unwrap();
@@ -135,7 +135,7 @@ fn checkpoint_free_r10_complete_layer_qualifies_without_fallback() {
     let r10_contract: Value = parse_json_no_duplicates(&r10_contract_bytes).unwrap();
     assert_eq!(
         r10_contract["status"],
-        "frozen_before_production_r10_execution"
+        "reviewed_semantic_tightening_of_frozen_v1"
     );
     assert_eq!(r10_contract["required_repeats"], REPEATS);
     assert_eq!(sha256_bytes(&r9_bytes), r10["r9_fixture_sha256"]);
