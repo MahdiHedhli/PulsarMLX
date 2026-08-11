@@ -10,7 +10,9 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_FIXTURE_ID: AtomicU64 = AtomicU64::new(0);
 
 struct Fixture {
     root: PathBuf,
@@ -184,10 +186,7 @@ fn common_args(environment: &Path, out: &Path) -> Vec<std::ffi::OsString> {
 }
 
 fn fixture(duplicate_name: bool) -> Fixture {
-    let suffix = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
+    let suffix = NEXT_FIXTURE_ID.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
         "f017-runner-fixture-{}-{suffix}",
         std::process::id()

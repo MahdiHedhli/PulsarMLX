@@ -295,6 +295,7 @@ fn require_hash(code: &'static str, bytes: &[u8], expected: &str) -> Result<(), 
     Ok(())
 }
 
+#[cfg(any(test, all(target_os = "macos", pulsar_native_mlx)))]
 fn decode_hex(encoded: &str) -> Result<Vec<u8>, RunnerError> {
     if encoded.is_empty() || !encoded.len().is_multiple_of(2) {
         return Err(fixture_error(
