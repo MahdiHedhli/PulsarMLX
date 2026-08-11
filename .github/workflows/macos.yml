@@ -57,18 +57,6 @@ jobs:
           echo "MLX_C_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
           echo "MLX_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
           echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/pulsar-native-mlx/lib" >> "$GITHUB_ENV"
-      - name: Validate Feature 002 research methodology
-        run: |
-          test -z "$PULSARMLX_MODEL_GGUF"
-          scripts/research/setup.sh
-          python3 -m unittest discover -s scripts/research/tests -v
-          python3 scripts/research/validate_evidence.py \
-            --schema-dir schemas/research/v1 \
-            --input fixtures/research/router-v1/evidence
-          python3 scripts/research/verify_package.py \
-            --feature 002-qwen-router-parity \
-            --fixture-only
-          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Install pinned uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
@@ -90,6 +78,18 @@ jobs:
           assert version("mlx-metal") == "0.32.0"
           assert version("numpy") == "2.4.5"
           PY
+      - name: Validate Feature 002 research methodology
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          scripts/research/setup.sh
+          .venv/bin/python -m unittest discover -s scripts/research/tests -v
+          python3 scripts/research/validate_evidence.py \
+            --schema-dir schemas/research/v1 \
+            --input fixtures/research/router-v1/evidence
+          python3 scripts/research/verify_package.py \
+            --feature 002-qwen-router-parity \
+            --fixture-only
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Validate independent Feature 017 oracle
         run: |
           .venv/bin/python -m unittest \
