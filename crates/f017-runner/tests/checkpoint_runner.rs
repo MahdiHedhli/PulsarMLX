@@ -112,8 +112,45 @@ fn actual_binary_runs_dry_and_identity_modes() {
             .sum::<u64>()
     );
     assert_eq!(identity.execution.dispatch.native, 0);
+    assert_eq!(
+        identity.identity.checkpoint.tensor_map.status,
+        f017_runner::evidence::ObservationStatus::NotApplicable
+    );
     let public_json = fs::read_to_string(&identity_out).unwrap();
     assert!(!public_json.contains(fixture.root.to_str().unwrap()));
+}
+
+#[test]
+fn adapter_preflight_mode_rejects_every_checkpoint_argument() {
+    let fixture = fixture(false);
+    let out = fixture.root.join("adapter-mixed.json");
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .arg("--adapter-preflight-only")
+        .args(["--checkpoint-manifest"])
+        .arg(&fixture.manifest)
+        .status()
+        .unwrap();
+    assert_eq!(status.code(), Some(14));
+    assert!(!out.exists());
+}
+
+#[test]
+fn identity_mode_never_constructs_execution_or_dispatch_state() {
+    let fixture = fixture(false);
+    let out = fixture.root.join("identity-isolation.json");
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .args(["--checkpoint-identity-only", "--checkpoint-manifest"])
+        .arg(&fixture.manifest)
+        .status()
+        .unwrap();
+    assert!(status.success());
+    let evidence: Evidence = parse_json_no_duplicates(&fs::read(out).unwrap()).unwrap();
+    assert!(evidence.execution.layers.is_empty());
+    assert_eq!(evidence.execution.generated_token, None);
+    assert_eq!(evidence.execution.dispatch, Default::default());
+    assert_eq!(evidence.residency, Default::default());
 }
 
 #[test]
@@ -260,6 +297,8 @@ fn actual_binary_runs_r12_tiny_model_in_exact_and_production_modes() {
         )
     );
     assert_eq!(production.execution.dispatch.native, 690);
+    assert_eq!(production.execution.dispatch.qualification_scaffold, 0);
+    assert_eq!(production.execution.dispatch.explicit_reference, 0);
     assert_eq!(production.execution.dispatch.fallback, 0);
     assert_eq!(production.execution.dispatch.errors, 0);
     assert_eq!(production.residency.decoded_hot, 81);
@@ -271,6 +310,35 @@ fn actual_binary_runs_r12_tiny_model_in_exact_and_production_modes() {
         .all(|layer| layer.total_seconds > 0.0));
     assert!(production.lifecycle.reconciled);
     assert!(production.identity.checkpoint.accessed);
+    assert_eq!(
+        production
+            .execution
+            .numerical
+            .frozen_contract_versions
+            .keys()
+            .map(String::as_str)
+            .collect::<std::collections::BTreeSet<_>>(),
+        std::collections::BTreeSet::from([
+            "f017-production-expert-tier-b-v1",
+            "f017-production-r9-tier-b-v2",
+            "f017-production-r10-tier-b-v2",
+            "f017-production-r11-tier-b-v1",
+        ])
+    );
+    let mut missing = production.clone();
+    missing
+        .execution
+        .numerical
+        .frozen_contract_versions
+        .remove("f017-production-r9-tier-b-v2");
+    assert!(missing.validate().is_err());
+    let mut stale = production;
+    stale
+        .execution
+        .numerical
+        .frozen_contract_versions
+        .insert("f017-production-r10-tier-b-v2".to_owned(), "0".repeat(64));
+    assert!(stale.validate().is_err());
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
@@ -417,7 +485,10 @@ fn actual_binary_fails_closed_on_r12_tensor_contract_corruption() {
 fn actual_binary_rejects_truncated_r12_shard_before_execution() {
     let fixture = fixture(false);
     let model = copy_r12_model(&fixture.root);
-    let shard = model.parent().unwrap().join("f017-r12-00001-of-00002.fixture");
+    let shard = model
+        .parent()
+        .unwrap()
+        .join("f017-r12-00001-of-00002.fixture");
     let length = fs::metadata(&shard).unwrap().len();
     fs::OpenOptions::new()
         .write(true)
@@ -545,7 +616,14 @@ fn fixture(duplicate_name: bool) -> Fixture {
     )
     .unwrap();
     let environment = root.join("environment.json");
-    fs::write(&environment, b"{\"schema\":\"fixture-environment-v1\"}\n").unwrap();
+    fs::write(
+        &environment,
+        format!(
+            "{{\"schema\":\"pulsarmlx.f017.fixture-environment\",\"schema_version\":1,\"architecture\":\"{}\",\"purpose\":\"checkpoint_free_ci\"}}\n",
+            std::env::consts::ARCH
+        ),
+    )
+    .unwrap();
     Fixture {
         root,
         manifest: manifest_path,

@@ -17,33 +17,43 @@
   ],
   "properties": {
     "schema": { "const": "pulsarmlx.f017.canonical-runner-evidence" },
-    "schema_version": { "const": "1.2.0" },
+    "schema_version": { "const": "1.3.0" },
     "identity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source_sha", "source_clean", "runner_version", "environment_manifest_sha256", "platform", "toolchain", "checkpoint"],
+      "required": ["source_sha", "source_clean", "runner_version", "environment_kind", "environment_manifest_sha256", "platform", "toolchain", "loaded_libraries", "checkpoint"],
       "properties": {
         "source_sha": { "$ref": "#/$defs/sha256OrGit" },
         "source_clean": { "type": "boolean" },
         "runner_version": { "type": "string", "minLength": 1 },
+        "environment_kind": { "enum": ["production_reviewed", "checkpoint_free_fixture"] },
         "environment_manifest_sha256": { "$ref": "#/$defs/sha256" },
         "platform": { "type": "object" },
         "toolchain": { "type": "object" },
+        "loaded_libraries": { "type": "array", "items": { "$ref": "#/$defs/loadedLibrary" } },
         "checkpoint": { "$ref": "#/$defs/checkpointIdentity" }
       }
     },
     "admission": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["memory_floor_bytes", "available_memory_bytes", "memory_pressure", "swap_used_bytes", "disk_free_bytes", "load_averages", "competing_processes_clear", "stream_mode", "singleton_initially_unclaimed"],
+      "required": ["telemetry_source", "physical_memory_bytes", "memory_floor_bytes", "available_memory_bytes", "compressed_memory_bytes", "memory_pressure", "swap_used_bytes", "checkpoint_volume_free_bytes", "evidence_volume_free_bytes", "load_averages", "competing_processes_clear", "competing_processes", "port_1234_listener", "thermal_state", "performance_warning", "stream_mode", "singleton_initially_unclaimed"],
       "properties": {
+        "telemetry_source": { "enum": ["measured_host", "synthetic_fixture", "unavailable"] },
+        "physical_memory_bytes": { "type": "integer", "minimum": 0 },
         "memory_floor_bytes": { "type": "integer", "minimum": 1 },
         "available_memory_bytes": { "type": "integer", "minimum": 0 },
-        "memory_pressure": { "enum": ["normal", "warning", "critical", "unknown"] },
+        "compressed_memory_bytes": { "type": "integer", "minimum": 0 },
+        "memory_pressure": { "enum": ["normal", "warning", "critical", "urgent", "unknown", "synthetic"] },
         "swap_used_bytes": { "type": "integer", "minimum": 0 },
-        "disk_free_bytes": { "type": "integer", "minimum": 0 },
+        "checkpoint_volume_free_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "evidence_volume_free_bytes": { "type": "integer", "minimum": 0 },
         "load_averages": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number", "minimum": 0 } },
         "competing_processes_clear": { "type": "boolean" },
+        "competing_processes": { "type": "array", "items": { "type": "string" } },
+        "port_1234_listener": { "type": "boolean" },
+        "thermal_state": { "enum": ["normal", "warning", "unavailable", "not_applicable"] },
+        "performance_warning": { "type": "boolean" },
         "stream_mode": { "enum": ["default_gpu", "owned_device"] },
         "singleton_initially_unclaimed": { "type": "boolean" }
       }
@@ -102,15 +112,39 @@
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "sha256OrGit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+    "loadedLibrary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact", "resolved_basename", "actual_sha256", "expected_sha256", "architecture"],
+      "properties": {
+        "artifact": { "enum": ["mlx_native", "mlx_c"] },
+        "resolved_basename": { "enum": ["libmlx.dylib", "libmlxc.dylib"] },
+        "actual_sha256": { "$ref": "#/$defs/sha256" },
+        "expected_sha256": { "$ref": "#/$defs/sha256" },
+        "architecture": { "const": "arm64" }
+      }
+    },
     "checkpointIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["accessed", "revision", "checkpoint_set_sha256", "catalog_sha256", "shards"],
+      "required": ["accessed", "revision", "checkpoint_set_sha256", "catalog_sha256", "architecture", "tokenizer_identity", "tensor_count", "tensor_map", "shards"],
       "properties": {
         "accessed": { "type": "boolean" },
         "revision": { "type": ["string", "null"] },
         "checkpoint_set_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
         "catalog_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "architecture": { "type": ["string", "null"] },
+        "tokenizer_identity": { "type": ["string", "null"] },
+        "tensor_count": { "type": ["integer", "null"], "minimum": 0 },
+        "tensor_map": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "version", "contract_sha256", "validated_tensor_count"],
+          "properties": {
+            "status": { "enum": ["measured_zero", "measured_nonzero", "not_applicable", "unavailable"] },
+            "version": { "type": ["string", "null"] },
+            "contract_sha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+            "validated_tensor_count": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        },
         "shards": { "type": "array", "items": { "type": "object" } }
       }
     },
@@ -137,7 +171,7 @@
         "numerical": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["greedy_applicability", "greedy_identity", "oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence"],
+          "required": ["greedy_applicability", "greedy_identity", "oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "frozen_contract_versions", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence"],
           "properties": {
             "greedy_applicability": { "enum": ["not_applicable", "applicable", null] },
             "greedy_identity": {
@@ -158,6 +192,7 @@
             "scaffold_version": { "type": ["string", "null"] },
             "production_backend_version": { "type": ["string", "null"] },
             "frozen_contract_version": { "type": ["string", "null"] },
+            "frozen_contract_versions": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } },
             "bit_mismatch_count": { "type": ["integer", "null"], "minimum": 0 },
             "max_abs_error": { "type": ["number", "null"], "minimum": 0 },
             "relative_error": { "type": ["number", "null"], "minimum": 0 },
@@ -273,11 +308,19 @@
         "owned_stream_freed": { "type": "integer", "minimum": 0 },
         "active_contexts": { "type": "integer", "minimum": 0 },
         "singleton_claimed": { "type": "boolean" },
-        "active_registrations": { "type": "integer", "minimum": 0 },
-        "pending_registration_destructions": { "type": "integer", "minimum": 0 },
-        "in_flight_work": { "type": "integer", "minimum": 0 },
-        "live_owner_tokens": { "type": "integer", "minimum": 0 },
-        "stale_generations": { "type": "integer", "minimum": 0 }
+        "active_registrations": { "$ref": "#/$defs/observedCounter" },
+        "pending_registration_destructions": { "$ref": "#/$defs/observedCounter" },
+        "in_flight_work": { "$ref": "#/$defs/observedCounter" },
+        "live_owner_tokens": { "$ref": "#/$defs/observedCounter" },
+        "stale_generations": { "$ref": "#/$defs/observedCounter" }
+      }
+    },
+    "observedCounter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "value"],
+      "properties": {
+        "status": { "enum": ["measured_zero", "measured_nonzero", "not_applicable", "unavailable"] },
+        "value": { "type": ["integer", "null"], "minimum": 0 }
       }
     }
   }

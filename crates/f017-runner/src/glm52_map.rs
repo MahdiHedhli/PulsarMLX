@@ -1,5 +1,6 @@
 use crate::{FailureClass, RunnerError};
 use gguf::{Gguf, TensorInfo, TensorType};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 pub const GLM52_LAYER_COUNT: u64 = 79;
@@ -10,6 +11,7 @@ pub const GLM52_SHARED_EXPERT_COUNT: u64 = 1;
 pub const GLM52_EMBEDDING_LENGTH: u64 = 6144;
 pub const GLM52_VOCAB_SIZE: u64 = 154_880;
 pub const GLM52_TENSOR_COUNT: usize = 1_809;
+pub const GLM52_TENSOR_MAP_VERSION: &str = "f017-glm52-tensor-map-v1";
 
 #[derive(Debug, Clone)]
 pub struct Glm52TensorMap {
@@ -67,6 +69,20 @@ impl Glm52TensorMap {
 
     pub fn layer_tensor(&self, layer: u32, suffix: &str) -> Option<&TensorInfo> {
         self.tensor(&format!("blk.{layer}.{suffix}"))
+    }
+
+    pub fn contract_sha256(&self) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(GLM52_TENSOR_MAP_VERSION.as_bytes());
+        for (name, tensor) in &self.tensors {
+            hasher.update(name.as_bytes());
+            hasher.update([0]);
+            for dimension in &tensor.dims {
+                hasher.update(dimension.to_le_bytes());
+            }
+            hasher.update(tensor.ty.to_id().to_le_bytes());
+        }
+        format!("{:x}", hasher.finalize())
     }
 }
 

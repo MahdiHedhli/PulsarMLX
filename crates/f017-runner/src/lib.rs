@@ -1,5 +1,7 @@
+pub mod admission;
 pub mod checkpoint;
 pub mod cli;
+pub mod contract_bindings;
 pub mod evidence;
 pub mod final_output_qualification;
 pub mod fixture;
@@ -11,11 +13,12 @@ pub mod qualification;
 pub mod store;
 pub mod tiny_model;
 
+use crate::admission::HostAdmission;
 use crate::checkpoint::{CheckpointKind, CheckpointManifest, VerifiedCheckpoint};
 use crate::cli::{Config, RunnerMode};
-use crate::evidence::{AtomicEvidenceWriter, Evidence, ResultClassification};
-use crate::json::{parse_json_no_duplicates, sha256_file};
-use std::fs;
+use crate::environment::ValidatedEnvironment;
+use crate::evidence::{AtomicEvidenceWriter, Evidence, ObservationStatus, ResultClassification};
+use crate::glm52_map::{Glm52TensorMap, GLM52_TENSOR_COUNT, GLM52_TENSOR_MAP_VERSION};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FailureClass {
@@ -77,54 +80,67 @@ impl std::fmt::Display for RunnerError {
 impl std::error::Error for RunnerError {}
 
 pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
-    if config.out.exists() {
-        return Err(RunnerError::new(
-            FailureClass::InfrastructureEvidence,
-            "output_exists",
-            "--out must name a fresh path",
-        ));
-    }
-    let environment_bytes = fs::read(&config.environment_manifest).map_err(|error| {
-        RunnerError::new(
-            FailureClass::AdmissionEnvironment,
-            "environment_manifest_read",
-            format!("cannot read environment manifest: {error}"),
-        )
-    })?;
-    let _: serde_json::Value = parse_json_no_duplicates(&environment_bytes).map_err(|error| {
-        RunnerError::new(
-            FailureClass::AdmissionEnvironment,
-            "environment_manifest_json",
-            error,
-        )
-    })?;
-    let environment_sha256 = sha256_file(&config.environment_manifest).map_err(|error| {
-        RunnerError::new(
-            FailureClass::AdmissionEnvironment,
-            "environment_manifest_hash",
-            error,
-        )
-    })?;
-
-    let mut evidence = Evidence::initial(&config, environment_sha256);
+    let environment = ValidatedEnvironment::load(&config.environment_manifest)?;
+    let mut evidence = Evidence::initial_with_environment(&config, &environment);
     let mut writer = AtomicEvidenceWriter::create(config.out.clone(), &evidence)?;
 
-    let result = match config.mode {
-        RunnerMode::DryRun => {
-            evidence.execution.progress_state = "dry_run_complete".to_owned();
-            Ok(())
+    let result = (|| {
+        let admission = HostAdmission::collect(
+            &config.mode,
+            environment.production,
+            config.checkpoint_manifest.as_deref(),
+            &config.out,
+        )?;
+        admission.validate(
+            &config.mode,
+            environment.production,
+            config.memory_floor_bytes,
+        )?;
+        evidence.admission.telemetry_source = admission.telemetry_source;
+        evidence.admission.physical_memory_bytes = admission.physical_memory_bytes;
+        evidence.admission.available_memory_bytes = admission.available_memory_bytes;
+        evidence.admission.compressed_memory_bytes = admission.compressed_memory_bytes;
+        evidence.admission.memory_pressure = admission.memory_pressure;
+        evidence.admission.swap_used_bytes = admission.swap_used_bytes;
+        evidence.admission.checkpoint_volume_free_bytes = admission.checkpoint_volume_free_bytes;
+        evidence.admission.evidence_volume_free_bytes = admission.evidence_volume_free_bytes;
+        evidence.admission.load_averages = admission.load_averages;
+        evidence.admission.competing_processes_clear = admission.competing_processes_clear;
+        evidence.admission.competing_processes = admission.competing_processes;
+        evidence.admission.port_1234_listener = admission.port_1234_listener;
+        evidence.admission.thermal_state = admission.thermal_state;
+        evidence.admission.performance_warning = admission.performance_warning;
+        if environment.production
+            && matches!(
+                config.mode,
+                RunnerMode::AdapterPreflight | RunnerMode::CheckpointIdentity
+            )
+        {
+            evidence.identity.loaded_libraries = environment.verify_loaded_libraries()?;
         }
-        RunnerMode::CheckpointIdentity => verify_checkpoint_mode(&config, &mut evidence),
-        RunnerMode::AdapterPreflight => run_adapter_preflight(&config, &mut evidence),
-        RunnerMode::Fixture { ref manifest } => {
-            fixture::run_projection_fixture(manifest, &config, &mut evidence)
+        mark_non_registration_domains_not_applicable(&mut evidence);
+        writer.update(&evidence)?;
+
+        match config.mode {
+            RunnerMode::DryRun => {
+                evidence.lifecycle.reconciled = true;
+                evidence.execution.progress_state = "dry_run_complete".to_owned();
+                Ok(())
+            }
+            RunnerMode::CheckpointIdentity => verify_checkpoint_mode(&config, &mut evidence),
+            RunnerMode::AdapterPreflight => run_adapter_preflight(&config, &mut evidence),
+            RunnerMode::Fixture { ref manifest } => {
+                fixture::run_projection_fixture(manifest, &config, &mut evidence)
+            }
+            RunnerMode::P1 => Err(RunnerError::new(
+                FailureClass::InfrastructureEvidence,
+                "p1_not_admitted",
+                "real execution is fail-closed until R0 through R14 pass independent review",
+            )),
         }
-        RunnerMode::P1 => Err(RunnerError::new(
-            FailureClass::InfrastructureEvidence,
-            "p1_not_admitted",
-            "real execution is fail-closed until R0 through R14 pass independent review",
-        )),
-    };
+    })();
+
+    let result = result.and_then(|()| evidence.validate_success_ready());
 
     match result {
         Ok(()) => {
@@ -227,8 +243,41 @@ fn verify_checkpoint_mode(config: &Config, evidence: &mut Evidence) -> Result<()
         ));
     }
     evidence.identity.checkpoint = verified.evidence_identity();
+    if verified.manifest.kind == CheckpointKind::Production {
+        let map = Glm52TensorMap::from_gguf(&verified.catalog)?;
+        evidence.identity.checkpoint.tensor_map.status = ObservationStatus::MeasuredZero;
+        evidence.identity.checkpoint.tensor_map.version = Some(GLM52_TENSOR_MAP_VERSION.to_owned());
+        evidence.identity.checkpoint.tensor_map.contract_sha256 = Some(map.contract_sha256());
+        evidence
+            .identity
+            .checkpoint
+            .tensor_map
+            .validated_tensor_count = Some(map.len() as u64);
+        if map.len() != GLM52_TENSOR_COUNT {
+            return Err(RunnerError::new(
+                FailureClass::CheckpointIdentity,
+                "tensor_map_count",
+                "production GLM52 tensor map count differs",
+            ));
+        }
+    } else {
+        evidence.identity.checkpoint.tensor_map.status = ObservationStatus::NotApplicable;
+    }
     evidence.execution.storage.read_bytes = verified.identity_bytes_read;
     evidence.execution.storage.read_count = verified.identity_read_count;
     evidence.execution.progress_state = "checkpoint_identity_complete".to_owned();
+    evidence.lifecycle.reconciled = true;
     Ok(())
 }
+
+fn mark_non_registration_domains_not_applicable(evidence: &mut Evidence) {
+    use crate::evidence::ObservedCounter;
+    for counters in [&mut evidence.lifecycle.pre, &mut evidence.lifecycle.post] {
+        counters.active_registrations = ObservedCounter::not_applicable();
+        counters.pending_registration_destructions = ObservedCounter::not_applicable();
+        counters.in_flight_work = ObservedCounter::not_applicable();
+        counters.live_owner_tokens = ObservedCounter::not_applicable();
+        counters.stale_generations = ObservedCounter::not_applicable();
+    }
+}
+pub mod environment;

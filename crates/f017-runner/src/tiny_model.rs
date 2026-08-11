@@ -8,6 +8,7 @@ use std::path::Path;
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
 use {
     crate::checkpoint::{CheckpointKind, CheckpointManifest, VerifiedCheckpoint},
+    crate::contract_bindings::{r12_contract_bindings, R12_CONTRACT_VERSIONS},
     crate::evidence::LayerEvidence,
     crate::final_output_qualification::{
         run_r11_exact, run_r11_with_decoded_matvec, R11Error, R11Inputs, R11Output,
@@ -98,9 +99,7 @@ fn run_tiny_model_fixture_impl(
     evidence.execution.storage.read_count = verified.identity_read_count;
     let store = RunnerTensorStore::open(verified)?;
     let mut cancellation = CancellationToken::new();
-    if std::env::var("PULSAR_F017_FIXTURE_CANCEL_AT").as_deref()
-        == Ok("before_tensor_load")
-    {
+    if std::env::var("PULSAR_F017_FIXTURE_CANCEL_AT").as_deref() == Ok("before_tensor_load") {
         cancellation.cancel();
     }
     let identity_read_count = evidence.execution.storage.read_count;
@@ -544,13 +543,15 @@ fn read_tensor(
     let contract = contracts
         .get(name)
         .ok_or_else(|| infrastructure("r12_tensor_contract", name))?;
-    let bytes = store.read_tensor_exact(name, cancellation).map_err(|error| {
-        if error.code() == "cancelled" {
-            cancelled("r12_cancelled", error.to_string())
-        } else {
-            infrastructure("r12_tensor_read", error.to_string())
-        }
-    })?;
+    let bytes = store
+        .read_tensor_exact(name, cancellation)
+        .map_err(|error| {
+            if error.code() == "cancelled" {
+                cancelled("r12_cancelled", error.to_string())
+            } else {
+                infrastructure("r12_tensor_read", error.to_string())
+            }
+        })?;
     if bytes.len() != contract.payload_bytes || sha256_bytes(&bytes) != contract.payload_sha256 {
         return Err(infrastructure(
             "r12_tensor_hash",
@@ -650,7 +651,7 @@ fn run_exact(
         NumericalClassification::GoldenIdentical,
         repeats,
         true,
-    );
+    )?;
     Ok(())
 }
 
@@ -662,7 +663,6 @@ fn run_production(
     evidence: &mut Evidence,
 ) -> Result<(), RunnerError> {
     let repeats = model["deterministic_repeats"].as_u64().unwrap() as usize;
-    let exact = execute_once(runtime, None)?;
     let streams_before = MlxContext::debug_stream_counters().map_err(adapter_error)?;
     if MlxContext::debug_context_active() {
         return Err(lifecycle(
@@ -703,7 +703,7 @@ fn run_production(
                 return Err(error);
             }
         };
-        if let Err(error) = validate_production(model, runtime, &exact, &output) {
+        if let Err(error) = validate_production(model, runtime, &output) {
             close_production_context(context, streams_before, evidence)?;
             return Err(error);
         }
@@ -746,7 +746,8 @@ fn run_production(
         (total - import_seconds - compute_seconds - output.output_head_decode_seconds).max(0.0),
     );
     evidence.execution.dispatch.native = (repeats * 69) as u64;
-    let logit_metrics = measure_f32(&exact.r11.logits, &output.r11.logits)
+    let expected_logits = record_f32(&model["expected"]["logits"])?;
+    let logit_metrics = measure_f32(&expected_logits, &output.r11.logits)
         .map_err(|error| numerical("r12_logits", error.to_string()))?;
     let classification = if logit_metrics.bit_mismatch_count == 0 {
         NumericalClassification::GoldenIdentical
@@ -761,7 +762,7 @@ fn run_production(
         classification,
         repeats,
         false,
-    );
+    )?;
     evidence.execution.numerical.bit_mismatch_count = Some(logit_metrics.bit_mismatch_count as u64);
     evidence.execution.numerical.max_abs_error = Some(logit_metrics.max_abs_error);
     evidence.execution.numerical.relative_error = logit_metrics.max_relative_error;
@@ -944,46 +945,49 @@ fn validate_output(model: &Value, output: &RunOutput, exact: bool) -> Result<(),
 fn validate_production(
     model: &Value,
     runtime: &TinyRuntime,
-    exact: &RunOutput,
     candidate: &RunOutput,
 ) -> Result<(), RunnerError> {
     validate_output(model, candidate, false)?;
-    for (index, ((exact_r9, exact_r10), (candidate_r9, candidate_r10))) in
-        exact.layers.iter().zip(candidate.layers.iter()).enumerate()
-    {
+    for (index, (candidate_r9, candidate_r10)) in candidate.layers.iter().enumerate() {
+        let expected_r9 = record_f32(&model["expected"]["layers"][index]["attention_output"])?;
+        let expected_r10 = record_f32(&model["expected"]["layers"][index]["output"])?;
         require_metrics(
             "r9",
-            &measure_f32(&exact_r9.output, &candidate_r9.output).unwrap(),
+            &measure_f32(&expected_r9, &candidate_r9.output).unwrap(),
             0.0078125,
             0.00390625,
             0.99999,
         )?;
         require_metrics(
             "r10",
-            &measure_f32(&exact_r10.output, &candidate_r10.output).unwrap(),
+            &measure_f32(&expected_r10, &candidate_r10.output).unwrap(),
             0.0625,
             0.03125,
             0.999,
         )?;
-        if exact_r10.selected_ids != candidate_r10.selected_ids {
+        if usize_values(&model["expected"]["layers"][index]["selected_ids"])
+            != candidate_r10.selected_ids
+        {
             return Err(numerical(
                 "r12_routing",
                 format!("layer {index} routing diverged"),
             ));
         }
     }
+    let expected_normalized = record_f32(&model["expected"]["final_normalized"])?;
+    let expected_logits = record_f32(&model["expected"]["logits"])?;
     let qualification = qualify_tier_b_down(
-        &exact.r11.decoded_output_head,
+        &candidate.r11.decoded_output_head,
         runtime.r11.output_rows,
         runtime.r11.output_columns,
-        &exact.r11.normalized,
-        &exact.r11.logits,
+        &expected_normalized,
+        &expected_logits,
         &candidate.r11.logits,
     )
     .map_err(|error| numerical("r12_logits", error.to_string()))?;
     if !qualification.passes
-        || exact.r11.top_k_ids != candidate.r11.top_k_ids
-        || exact.r11.argmax != candidate.r11.argmax
+        || usize_values(&model["expected"]["top_k_ids"]) != candidate.r11.top_k_ids
+        || model["expected"]["argmax"].as_u64().unwrap() as usize != candidate.r11.argmax
     {
         return Err(numerical(
             "r12_greedy",
@@ -1024,7 +1028,7 @@ fn finalize_evidence(
     classification: NumericalClassification,
     repeats: usize,
     exact: bool,
-) {
+) -> Result<(), RunnerError> {
     evidence.execution.generated_token = Some(output.r11.argmax as u32);
     evidence.execution.numerical_classification = Some(classification);
     evidence.execution.numerical.greedy_applicability = Some(GreedyApplicability::Applicable);
@@ -1041,6 +1045,7 @@ fn finalize_evidence(
         (!exact).then(|| "mlx-native-0.31.2-mlxc-0.6.0-production-adapter".to_owned());
     evidence.execution.numerical.frozen_contract_version =
         Some("f017-production-r11-tier-b-v1".to_owned());
+    evidence.execution.numerical.frozen_contract_versions = contract_bindings(model)?;
     evidence.execution.numerical.deterministic_repeat_count = Some(repeats as u64);
     if exact {
         evidence.execution.numerical.bit_mismatch_count = Some(0);
@@ -1062,6 +1067,39 @@ fn finalize_evidence(
     evidence.residency.decoded_hot = runtime.loaded_tensor_count;
     evidence.residency.misses = runtime.loaded_tensor_count;
     evidence.execution.progress_state = "r12_tiny_model_complete".to_owned();
+    Ok(())
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+fn record_f32(record: &Value) -> Result<Vec<f32>, RunnerError> {
+    let bytes = record_bytes(record);
+    if bytes.len() % 4 != 0 {
+        return Err(infrastructure(
+            "r12_expected_record",
+            "expected f32 record is malformed",
+        ));
+    }
+    Ok(bytes
+        .chunks_exact(4)
+        .map(|chunk| f32::from_le_bytes(chunk.try_into().unwrap()))
+        .collect())
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+fn contract_bindings(model: &Value) -> Result<BTreeMap<String, String>, RunnerError> {
+    let observed = model["contracts"]
+        .as_array()
+        .ok_or_else(|| infrastructure("r12_contract_bindings", "missing numerical contract set"))?
+        .iter()
+        .map(|value| value.as_str().unwrap_or_default())
+        .collect::<Vec<_>>();
+    if observed != R12_CONTRACT_VERSIONS {
+        return Err(infrastructure(
+            "r12_contract_bindings",
+            "R12 inherited contract set differs",
+        ));
+    }
+    Ok(r12_contract_bindings())
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]

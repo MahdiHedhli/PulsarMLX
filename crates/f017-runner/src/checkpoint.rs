@@ -1,4 +1,4 @@
-use crate::evidence::{CheckpointEvidence, ShardEvidence};
+use crate::evidence::{CheckpointEvidence, ShardEvidence, TensorMapEvidence};
 use crate::json::{parse_json_no_duplicates, read_exact_at, sha256_file_with_metrics};
 use crate::{FailureClass, RunnerError};
 use gguf::{Gguf, TensorInfo};
@@ -275,6 +275,10 @@ impl VerifiedCheckpoint {
             revision: Some(self.manifest.immutable_revision.clone()),
             checkpoint_set_sha256: Some(self.manifest.checkpoint_set_sha256.clone()),
             catalog_sha256: Some(self.manifest.catalog_sha256.clone()),
+            architecture: Some(self.manifest.architecture.clone()),
+            tokenizer_identity: Some(self.manifest.tokenizer_identity.clone()),
+            tensor_count: Some(self.manifest.tensor_count),
+            tensor_map: TensorMapEvidence::default(),
             shards: self
                 .shards
                 .iter()

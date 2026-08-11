@@ -1,4 +1,6 @@
 use crate::cli::Config;
+use crate::contract_bindings::r12_contract_bindings;
+use crate::environment::{LoadedLibraryEvidence, ValidatedEnvironment};
 use crate::numerical_classification::{
     validate_classification_applicability, GreedyApplicability, GreedyIdentityEvidence,
     NumericalClassification,
@@ -11,7 +13,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 pub const EVIDENCE_SCHEMA: &str = "pulsarmlx.f017.canonical-runner-evidence";
-pub const EVIDENCE_SCHEMA_VERSION: &str = "1.2.0";
+pub const EVIDENCE_SCHEMA_VERSION: &str = "1.3.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evidence {
@@ -31,9 +33,11 @@ pub struct IdentityEvidence {
     pub source_sha: String,
     pub source_clean: bool,
     pub runner_version: String,
+    pub environment_kind: String,
     pub environment_manifest_sha256: String,
     pub platform: BTreeMap<String, String>,
     pub toolchain: BTreeMap<String, String>,
+    pub loaded_libraries: Vec<LoadedLibraryEvidence>,
     pub checkpoint: CheckpointEvidence,
 }
 
@@ -43,7 +47,19 @@ pub struct CheckpointEvidence {
     pub revision: Option<String>,
     pub checkpoint_set_sha256: Option<String>,
     pub catalog_sha256: Option<String>,
+    pub architecture: Option<String>,
+    pub tokenizer_identity: Option<String>,
+    pub tensor_count: Option<u64>,
+    pub tensor_map: TensorMapEvidence,
     pub shards: Vec<ShardEvidence>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TensorMapEvidence {
+    pub status: ObservationStatus,
+    pub version: Option<String>,
+    pub contract_sha256: Option<String>,
+    pub validated_tensor_count: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -55,13 +71,21 @@ pub struct ShardEvidence {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AdmissionEvidence {
+    pub telemetry_source: String,
+    pub physical_memory_bytes: u64,
     pub memory_floor_bytes: u64,
     pub available_memory_bytes: u64,
+    pub compressed_memory_bytes: u64,
     pub memory_pressure: String,
     pub swap_used_bytes: u64,
-    pub disk_free_bytes: u64,
+    pub checkpoint_volume_free_bytes: Option<u64>,
+    pub evidence_volume_free_bytes: u64,
     pub load_averages: [f64; 3],
     pub competing_processes_clear: bool,
+    pub competing_processes: Vec<String>,
+    pub port_1234_listener: bool,
+    pub thermal_state: String,
+    pub performance_warning: bool,
     pub stream_mode: String,
     pub singleton_initially_unclaimed: bool,
 }
@@ -96,6 +120,7 @@ pub struct NumericalEvidence {
     pub scaffold_version: Option<String>,
     pub production_backend_version: Option<String>,
     pub frozen_contract_version: Option<String>,
+    pub frozen_contract_versions: BTreeMap<String, String>,
     pub bit_mismatch_count: Option<u64>,
     pub max_abs_error: Option<f64>,
     pub relative_error: Option<f64>,
@@ -161,11 +186,66 @@ pub struct LifecycleCounters {
     pub owned_stream_freed: u64,
     pub active_contexts: u64,
     pub singleton_claimed: bool,
-    pub active_registrations: u64,
-    pub pending_registration_destructions: u64,
-    pub in_flight_work: u64,
-    pub live_owner_tokens: u64,
-    pub stale_generations: u64,
+    pub active_registrations: ObservedCounter,
+    pub pending_registration_destructions: ObservedCounter,
+    pub in_flight_work: ObservedCounter,
+    pub live_owner_tokens: ObservedCounter,
+    pub stale_generations: ObservedCounter,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ObservationStatus {
+    MeasuredZero,
+    MeasuredNonzero,
+    NotApplicable,
+    #[default]
+    Unavailable,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ObservedCounter {
+    pub status: ObservationStatus,
+    pub value: Option<u64>,
+}
+
+impl ObservedCounter {
+    pub const fn measured(value: u64) -> Self {
+        Self {
+            status: if value == 0 {
+                ObservationStatus::MeasuredZero
+            } else {
+                ObservationStatus::MeasuredNonzero
+            },
+            value: Some(value),
+        }
+    }
+
+    pub const fn not_applicable() -> Self {
+        Self {
+            status: ObservationStatus::NotApplicable,
+            value: None,
+        }
+    }
+
+    fn valid(self) -> bool {
+        matches!(
+            (self.status, self.value),
+            (ObservationStatus::MeasuredZero, Some(0))
+                | (ObservationStatus::MeasuredNonzero, Some(1..))
+                | (
+                    ObservationStatus::NotApplicable | ObservationStatus::Unavailable,
+                    None
+                )
+        )
+    }
+
+    fn pass_zero_or_not_applicable(self) -> bool {
+        matches!(
+            (self.status, self.value),
+            (ObservationStatus::MeasuredZero, Some(0)) | (ObservationStatus::NotApplicable, None)
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -205,6 +285,42 @@ impl Evidence {
             "rust_package".to_owned(),
             env!("CARGO_PKG_VERSION").to_owned(),
         );
+        Self::initial_with_identity(
+            config,
+            environment_manifest_sha256,
+            "checkpoint_free_fixture",
+            platform,
+            toolchain,
+        )
+    }
+
+    pub fn initial_with_environment(config: &Config, environment: &ValidatedEnvironment) -> Self {
+        let platform = environment.public_platform();
+        let mut toolchain = environment.public_toolchain();
+        toolchain.insert(
+            "rust_package".to_owned(),
+            env!("CARGO_PKG_VERSION").to_owned(),
+        );
+        Self::initial_with_identity(
+            config,
+            environment.manifest_sha256.clone(),
+            if environment.production {
+                "production_reviewed"
+            } else {
+                "checkpoint_free_fixture"
+            },
+            platform,
+            toolchain,
+        )
+    }
+
+    fn initial_with_identity(
+        config: &Config,
+        environment_manifest_sha256: String,
+        environment_kind: &str,
+        platform: BTreeMap<String, String>,
+        toolchain: BTreeMap<String, String>,
+    ) -> Self {
         Self {
             schema: EVIDENCE_SCHEMA.to_owned(),
             schema_version: EVIDENCE_SCHEMA_VERSION.to_owned(),
@@ -212,25 +328,39 @@ impl Evidence {
                 source_sha: env!("PULSARMLX_SOURCE_SHA").to_owned(),
                 source_clean: source_worktree_clean(),
                 runner_version: env!("CARGO_PKG_VERSION").to_owned(),
+                environment_kind: environment_kind.to_owned(),
                 environment_manifest_sha256,
                 platform,
                 toolchain,
+                loaded_libraries: Vec::new(),
                 checkpoint: CheckpointEvidence {
                     accessed: false,
                     revision: None,
                     checkpoint_set_sha256: None,
                     catalog_sha256: None,
+                    architecture: None,
+                    tokenizer_identity: None,
+                    tensor_count: None,
+                    tensor_map: TensorMapEvidence::default(),
                     shards: Vec::new(),
                 },
             },
             admission: AdmissionEvidence {
+                telemetry_source: "unavailable".to_owned(),
+                physical_memory_bytes: 0,
                 memory_floor_bytes: config.memory_floor_bytes,
                 available_memory_bytes: 0,
+                compressed_memory_bytes: 0,
                 memory_pressure: "unknown".to_owned(),
                 swap_used_bytes: 0,
-                disk_free_bytes: 0,
+                checkpoint_volume_free_bytes: None,
+                evidence_volume_free_bytes: 0,
                 load_averages: [0.0; 3],
                 competing_processes_clear: false,
+                competing_processes: Vec::new(),
+                port_1234_listener: false,
+                thermal_state: "unavailable".to_owned(),
+                performance_warning: false,
                 stream_mode: config.stream_mode.as_str().to_owned(),
                 singleton_initially_unclaimed: false,
             },
@@ -294,6 +424,22 @@ impl Evidence {
                 "required evidence fields are empty",
             ));
         }
+        for counters in [&self.lifecycle.pre, &self.lifecycle.post] {
+            for counter in [
+                counters.active_registrations,
+                counters.pending_registration_destructions,
+                counters.in_flight_work,
+                counters.live_owner_tokens,
+                counters.stale_generations,
+            ] {
+                if !counter.valid() {
+                    return Err(evidence_error(
+                        "lifecycle_observation",
+                        "lifecycle observation status/value is inconsistent",
+                    ));
+                }
+            }
+        }
         match (
             self.execution.numerical_classification,
             self.execution.numerical.greedy_applicability,
@@ -324,6 +470,107 @@ impl Evidence {
                 "golden-strict greedy divergence must be a numerical/behavioral failure",
             ));
         }
+        if self.input.mode == "fixture"
+            && self.input.numerical_mode.as_deref() == Some("production_mlx_tier_b")
+            && self.execution.progress_state == "r12_tiny_model_complete"
+        {
+            if self.execution.numerical.frozen_contract_versions != r12_contract_bindings() {
+                return Err(evidence_error(
+                    "r12_contract_bindings",
+                    "production R12 evidence must bind the complete inherited contract set",
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn validate_success_ready(&self) -> Result<(), RunnerError> {
+        self.validate()?;
+        if !self.lifecycle.reconciled
+            || self.lifecycle.post.managed_created != self.lifecycle.post.managed_destroyed
+            || self.lifecycle.post.derived_created != self.lifecycle.post.derived_destroyed
+            || self.lifecycle.post.callback_count != self.lifecycle.post.managed_created
+            || self.lifecycle.post.default_cpu_stream_created
+                != self.lifecycle.post.default_cpu_stream_freed
+            || self.lifecycle.post.default_gpu_stream_created
+                != self.lifecycle.post.default_gpu_stream_freed
+            || self.lifecycle.post.owned_stream_created != self.lifecycle.post.owned_stream_freed
+            || self.lifecycle.post.active_contexts != 0
+            || self.lifecycle.post.singleton_claimed
+            || !self
+                .lifecycle
+                .post
+                .active_registrations
+                .pass_zero_or_not_applicable()
+            || !self
+                .lifecycle
+                .post
+                .pending_registration_destructions
+                .pass_zero_or_not_applicable()
+            || !self
+                .lifecycle
+                .post
+                .in_flight_work
+                .pass_zero_or_not_applicable()
+            || !self
+                .lifecycle
+                .post
+                .live_owner_tokens
+                .pass_zero_or_not_applicable()
+            || !self
+                .lifecycle
+                .post
+                .stale_generations
+                .pass_zero_or_not_applicable()
+            || self.execution.dispatch.fallback != 0
+            || self.execution.dispatch.errors != 0
+        {
+            return Err(evidence_error(
+                "pass_reconciliation",
+                "PASS requires fully reconciled lifecycle and dispatch state",
+            ));
+        }
+        let production_execution = self.input.mode == "adapter_preflight"
+            || (self.input.mode == "fixture"
+                && self.input.numerical_mode.as_deref() == Some("production_mlx_tier_b"));
+        if production_execution
+            && (self.execution.dispatch.qualification_scaffold != 0
+                || self.execution.dispatch.explicit_reference != 0)
+        {
+            return Err(evidence_error(
+                "pass_production_dispatch",
+                "production PASS forbids scaffold/reference dispatch",
+            ));
+        }
+        if self.identity.environment_kind == "production_reviewed"
+            && matches!(
+                self.input.mode.as_str(),
+                "adapter_preflight" | "checkpoint_identity"
+            )
+        {
+            if !self.identity.source_clean
+                || self.admission.telemetry_source != "measured_host"
+                || self.admission.available_memory_bytes < self.admission.memory_floor_bytes
+                || !self.admission.competing_processes_clear
+                || self.admission.port_1234_listener
+                || self.identity.loaded_libraries.len() != 2
+            {
+                return Err(evidence_error(
+                    "pass_admission",
+                    "production PASS requires admitted measured host and loaded-library identity",
+                ));
+            }
+        }
+        if self.identity.environment_kind == "production_reviewed"
+            && self.input.mode == "checkpoint_identity"
+            && (self.identity.checkpoint.tensor_map.status != ObservationStatus::MeasuredZero
+                || self.identity.checkpoint.tensor_map.validated_tensor_count != Some(1_809))
+        {
+            return Err(evidence_error(
+                "pass_tensor_map",
+                "production identity PASS requires the complete GLM52 tensor map",
+            ));
+        }
         Ok(())
     }
 }
@@ -342,10 +589,13 @@ pub struct AtomicEvidenceWriter {
 
 impl AtomicEvidenceWriter {
     pub fn create(target: PathBuf, evidence: &Evidence) -> Result<Self, RunnerError> {
-        if target.exists() {
+        let parent = target.parent().unwrap_or_else(|| std::path::Path::new("."));
+        let metadata = fs::symlink_metadata(parent)
+            .map_err(|error| evidence_error("evidence_parent", error.to_string()))?;
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
             return Err(evidence_error(
-                "output_exists",
-                "evidence target already exists",
+                "evidence_parent",
+                "evidence parent must be a real directory",
             ));
         }
         let bytes = serialize(evidence)?;
@@ -434,6 +684,8 @@ mod tests {
     use super::*;
     use crate::cli::{Config, RunnerMode, StreamMode, ValidationMode};
     use crate::json::parse_json_no_duplicates;
+    use std::sync::{Arc, Barrier};
+    use std::thread;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn config(out: PathBuf) -> Config {
@@ -550,5 +802,125 @@ mod tests {
         assert!(divergent.validate().is_err());
         divergent.result.classification = ResultClassification::FailNumericalBehavioral;
         assert!(divergent.validate().is_ok());
+    }
+
+    #[test]
+    fn exclusive_create_has_one_winner_under_race() {
+        let suffix = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "f017-evidence-race-{}-{suffix}.json",
+            std::process::id()
+        ));
+        let evidence = Arc::new(Evidence::initial(&config(path.clone()), "a".repeat(64)));
+        let barrier = Arc::new(Barrier::new(3));
+        let handles = (0..2)
+            .map(|_| {
+                let path = path.clone();
+                let evidence = Arc::clone(&evidence);
+                let barrier = Arc::clone(&barrier);
+                thread::spawn(move || {
+                    barrier.wait();
+                    AtomicEvidenceWriter::create(path, &evidence).is_ok()
+                })
+            })
+            .collect::<Vec<_>>();
+        barrier.wait();
+        assert_eq!(
+            handles
+                .into_iter()
+                .map(|handle| handle.join().unwrap())
+                .filter(|won| *won)
+                .count(),
+            1
+        );
+        fs::remove_file(path).unwrap();
+    }
+
+    fn success_ready(mode: &str) -> Evidence {
+        let mut evidence = Evidence::initial(&config(PathBuf::from("unused.json")), "a".repeat(64));
+        evidence.input.mode = mode.to_owned();
+        evidence.lifecycle.reconciled = true;
+        for counters in [&mut evidence.lifecycle.pre, &mut evidence.lifecycle.post] {
+            counters.active_registrations = ObservedCounter::not_applicable();
+            counters.pending_registration_destructions = ObservedCounter::not_applicable();
+            counters.in_flight_work = ObservedCounter::not_applicable();
+            counters.live_owner_tokens = ObservedCounter::not_applicable();
+            counters.stale_generations = ObservedCounter::not_applicable();
+        }
+        evidence
+    }
+
+    #[test]
+    fn pass_validation_rejects_every_unreconciled_domain() {
+        let baseline = success_ready("dry_run");
+        assert!(baseline.validate_success_ready().is_ok());
+        let mut cases = Vec::new();
+        let mut value = baseline.clone();
+        value.lifecycle.post.managed_created = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.derived_created = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.callback_count = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.owned_stream_created = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.active_contexts = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.singleton_claimed = true;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.active_registrations = ObservedCounter::measured(1);
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.in_flight_work = ObservedCounter::measured(1);
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.post.stale_generations = ObservedCounter::measured(1);
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.execution.dispatch.fallback = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.execution.dispatch.errors = 1;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.lifecycle.reconciled = false;
+        cases.push(value);
+        for value in cases {
+            assert!(value.validate_success_ready().is_err());
+        }
+    }
+
+    #[test]
+    fn production_pass_rejects_scaffold_and_reference_dispatch() {
+        let mut evidence = success_ready("fixture");
+        evidence.input.numerical_mode = Some("production_mlx_tier_b".to_owned());
+        evidence.execution.dispatch.qualification_scaffold = 1;
+        assert!(evidence.validate_success_ready().is_err());
+        evidence.execution.dispatch.qualification_scaffold = 0;
+        evidence.execution.dispatch.explicit_reference = 1;
+        assert!(evidence.validate_success_ready().is_err());
+    }
+
+    #[test]
+    fn measured_zero_cannot_hide_unavailable_or_nonzero_state() {
+        let baseline = success_ready("dry_run");
+        let mut unavailable = baseline.clone();
+        unavailable.lifecycle.post.live_owner_tokens = ObservedCounter::default();
+        assert!(unavailable.validate_success_ready().is_err());
+        let mut malformed = baseline;
+        malformed.lifecycle.post.live_owner_tokens = ObservedCounter {
+            status: ObservationStatus::MeasuredZero,
+            value: None,
+        };
+        assert!(malformed.validate().is_err());
     }
 }

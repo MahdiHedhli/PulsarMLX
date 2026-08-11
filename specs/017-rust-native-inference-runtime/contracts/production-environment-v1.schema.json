@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/production-environment-v1.schema.json",
+  "title": "PulsarMLX Feature 017 reviewed production environment v1",
+  "type": "object",
+  "required": ["schema", "schema_version", "classification", "build_environment", "pinned_installation"],
+  "properties": {
+    "schema": { "const": "pulsarmlx.f017.p1.admission-ready-environment" },
+    "schema_version": { "const": 1 },
+    "classification": { "const": "READY FOR NEW SINGLE-P1 ADMISSION" },
+    "build_environment": {
+      "type": "object",
+      "required": ["architecture", "macos_version", "macos_build", "xcode_version", "sdk_version", "metal_compiler", "compiler", "rustc", "cargo"],
+      "properties": {
+        "architecture": { "const": "arm64" },
+        "macos_version": { "type": "string", "minLength": 1 },
+        "macos_build": { "type": "string", "minLength": 1 },
+        "xcode_version": { "type": "string", "minLength": 1 },
+        "sdk_version": { "type": "string", "minLength": 1 },
+        "metal_compiler": { "type": "string", "minLength": 1 },
+        "compiler": { "type": "string", "minLength": 1 },
+        "rustc": { "type": "string", "minLength": 1 },
+        "cargo": { "type": "string", "minLength": 1 }
+      }
+    },
+    "pinned_installation": {
+      "type": "object",
+      "required": ["prefix", "mlx", "mlx_c", "linkage"],
+      "properties": {
+        "prefix": { "type": "string", "minLength": 1 },
+        "mlx": { "$ref": "#/$defs/mlx" },
+        "mlx_c": { "$ref": "#/$defs/mlxc" },
+        "linkage": {
+          "type": "object",
+          "required": ["adapter_binary_links_mlxc", "adapter_binary_links_mlx", "mlxc_links_mlx", "isolated_prefix_selected", "alternate_mlx_selected"],
+          "properties": {
+            "adapter_binary_links_mlxc": { "const": "@rpath/libmlxc.dylib" },
+            "adapter_binary_links_mlx": { "const": "@rpath/libmlx.dylib" },
+            "mlxc_links_mlx": { "const": "@rpath/libmlx.dylib" },
+            "isolated_prefix_selected": { "const": true },
+            "alternate_mlx_selected": { "const": false }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "mlx": {
+      "type": "object",
+      "required": ["version", "source_sha", "library_sha256", "architecture"],
+      "properties": {
+        "version": { "const": "0.31.2" },
+        "source_sha": { "const": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8" },
+        "library_sha256": { "$ref": "#/$defs/sha256" },
+        "architecture": { "const": "arm64" }
+      }
+    },
+    "mlxc": {
+      "type": "object",
+      "required": ["version", "source_sha", "library_sha256", "header_sha256", "architecture"],
+      "properties": {
+        "version": { "const": "0.6.0" },
+        "source_sha": { "const": "0726ca922fc902c4c61ef9c27d94132be418e945" },
+        "library_sha256": { "$ref": "#/$defs/sha256" },
+        "header_sha256": { "$ref": "#/$defs/sha256" },
+        "architecture": { "const": "arm64" }
+      }
+    }
+  }
+}
