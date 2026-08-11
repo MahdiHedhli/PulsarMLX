@@ -225,6 +225,7 @@ fn actual_binary_runs_r12_tiny_model_in_exact_and_production_modes() {
         .unwrap();
     assert!(exact_status.success());
     let exact: Evidence = parse_json_no_duplicates(&fs::read(&exact_out).unwrap()).unwrap();
+    exact.validate().unwrap();
     assert_eq!(exact.execution.generated_token, Some(10));
     assert_eq!(exact.input.tokens, vec![3]);
     assert_eq!(exact.input.n_new, 1);
@@ -250,6 +251,7 @@ fn actual_binary_runs_r12_tiny_model_in_exact_and_production_modes() {
     assert!(production_status.success());
     let production: Evidence =
         parse_json_no_duplicates(&fs::read(&production_out).unwrap()).unwrap();
+    production.validate().unwrap();
     assert_eq!(production.execution.generated_token, Some(10));
     assert_eq!(
         production.execution.numerical_classification,

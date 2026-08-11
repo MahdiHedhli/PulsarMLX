@@ -122,7 +122,9 @@ jobs:
             scripts.research.tests.test_f017_tierb_stress \
             scripts.research.tests.test_f017_r8_oracle \
             scripts.research.tests.test_f017_r9_oracle \
-            scripts.research.tests.test_f017_r10_oracle -v
+            scripts.research.tests.test_f017_r10_oracle \
+            scripts.research.tests.test_f017_r11_oracle \
+            scripts.research.tests.test_f017_r12_tiny_model -v
           cargo test -p f017-runner --test r7_exact_scaffold -- --nocapture
           cargo test -p f017-runner --test r7_production_attribution -- --nocapture
           cargo test -p f017-runner --test tier_b_stress_native -- --nocapture
@@ -133,6 +135,24 @@ jobs:
           cargo test -p f017-runner --test r10_contract -- --nocapture
           cargo test -p f017-runner --test r10_exact_scaffold -- --nocapture
           cargo test -p f017-runner --test r10_production_native -- --nocapture
+          cargo test -p f017-runner --test r11_contract -- --nocapture
+          cargo test -p f017-runner --test r11_exact_scaffold -- --nocapture
+          cargo test -p f017-runner --test r11_production_native -- --nocapture
+          cargo test -p f017-runner --test checkpoint_runner \
+            actual_binary_runs_r12_tiny_model_in_exact_and_production_modes \
+            -- --exact --nocapture
+          cargo test -p f017-runner --test checkpoint_runner \
+            actual_binary_cancels_r12_before_and_between_layers_without_false_pass \
+            -- --exact --nocapture
+          cargo test -p f017-runner --test checkpoint_runner \
+            actual_binary_banks_backend_failure_after_reconciling_adapter_lifecycle \
+            -- --exact --nocapture
+          cargo test -p f017-runner --test checkpoint_runner \
+            actual_binary_fails_closed_on_r12_tensor_contract_corruption \
+            -- --exact --nocapture
+          cargo test -p f017-runner --test checkpoint_runner \
+            actual_binary_rejects_truncated_r12_shard_before_execution \
+            -- --exact --nocapture
           python3 scripts/research/reconcile_f017_numerical_classification.py
           python3 scripts/research/validate_f017_numerical_classification.py \
             specs/017-rust-native-inference-runtime/fixtures/f017-r7-tier-b-result-v1.json \
