@@ -323,7 +323,7 @@
   },
   "fixture_version": "f017-r11-final-output-q4-k-v1",
   "generator_path": "scripts/research/generate_f017_r11_oracle.py",
-  "generator_sha256": "a763391d8947b9ca6814fda94f3f3067da99af08cc26af82b8fb318dc74b09e4",
+  "generator_sha256": "970fdcf76d166a0a32bd2006fcdf25f225df059a08eec2991938109cf5524275",
   "independence": {
     "classification": "INDEPENDENT",
     "uses_checkpoint": false,
@@ -999,17 +999,17 @@
       "expected_argmax": 2,
       "expected_top_k_ids": [
         2,
-        0,
         1,
+        0,
         3
       ],
       "expected_top_k_scores": {
-        "f32_le_hex": "01000000000000800000000001000080",
-        "sha256": "3ca370ae9674b95a07c60ef47104706ac11380f7580a7c4b19c48060a85e046b",
+        "f32_le_hex": "01000000000000000000008001000080",
+        "sha256": "bb1081e9d7557cbee46802ccd5c2c451fb448d60143980e136d535594fb37829",
         "values": [
           1.401298464324817e-45,
-          -0.0,
           0.0,
+          -0.0,
           -1.401298464324817e-45
         ]
       },

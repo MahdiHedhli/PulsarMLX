@@ -27,6 +27,8 @@ class R11OracleTests(unittest.TestCase):
         self.assertEqual(len(first["top_k_stress_cases"]), 7)
         for case in first["top_k_stress_cases"]:
             self.assertEqual(case["expected_argmax"], case["expected_top_k_ids"][0])
+        near_zero = next(case for case in first["top_k_stress_cases"] if case["name"] == "near_zero")
+        self.assertEqual(near_zero["expected_top_k_ids"], [2, 1, 0, 3])
         self.assertFalse(first["independence"]["uses_rust_candidate"])
         self.assertFalse(first["independence"]["uses_mlx"])
         self.assertFalse(first["checkpoint_accessed"])

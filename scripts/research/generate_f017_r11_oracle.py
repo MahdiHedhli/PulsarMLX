@@ -136,7 +136,16 @@ def _matvec(matrix: list[np.float32], rows: int, vector: list[np.float32]) -> li
 
 
 def _stable_top_k(logits: list[np.float32], count: int) -> tuple[list[int], list[np.float32]]:
-    ids = sorted(range(len(logits)), key=lambda index: (-float(logits[index]), index))[:count]
+    # Mirror finite f32 total-order descending semantics, including +0.0 above
+    # -0.0, then use the lower vocabulary index as the stable tie breaker.
+    ids = sorted(
+        range(len(logits)),
+        key=lambda index: (
+            -float(logits[index]),
+            1 if np.signbit(logits[index]) else 0,
+            index,
+        ),
+    )[:count]
     return ids, [logits[index] for index in ids]
 
 
