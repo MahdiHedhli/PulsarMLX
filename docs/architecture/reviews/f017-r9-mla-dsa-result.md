@@ -51,9 +51,9 @@ in-flight work after teardown.
 ## Promotion boundary
 
 The adversarial reviewer accepted the numerical evidence with a required
-classification-vocabulary fix. That mechanical remediation is now applied;
-no numerical value, threshold, fixture, or production output changed. R9/R10
-inheritance is cleared after the remediation validators and final-head CI pass.
+classification-vocabulary fix. That mechanical remediation is applied and
+passed final-head CI; no numerical value, threshold, fixture, or production
+output changed. R9/R10 inheritance is cleared.
 
 Machine-readable evidence:
 `docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json`.

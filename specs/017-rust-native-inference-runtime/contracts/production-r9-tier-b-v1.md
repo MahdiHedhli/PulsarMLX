@@ -54,5 +54,5 @@ drift is `numerically_failed`. Any numerical or lifecycle gate failure is also
 
 The R7/R8 adversarial review accepted the numerical contract with a required
 classification-vocabulary repair. That repair changes no threshold or
-numerical value and clears this contract for inheritance once its fail-closed
-schema validation and CI pass.
+numerical value. Its fail-closed schema validation and CI passed, clearing this
+contract for inheritance.

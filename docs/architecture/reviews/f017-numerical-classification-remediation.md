@@ -92,9 +92,12 @@ Missing identity evidence or a changed decision fails closed.
 ## Review and downstream status
 
 The underlying numerical review verdict is **GO WITH REQUIRED FIXES**. The
-required code, schema, evidence, and prose repair is complete locally. The
-review blocker is closed only after final-head CI is green.
+required code, schema, evidence, and prose repair passed GitHub Actions run
+[`31521791761`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31521791761)
+at `bc5922626df9eaed8d1e843d021b268ecf50579d`: the workspace baseline passed
+in 2m06s and the Apple native MLX job passed in 5m28s. Native adapter and
+R7-R10 numerical tests executed rather than skipping.
 
-When CI is green, R7/R8 contract inheritance is accepted, R9/R10 may be
-promoted from pending numerical review, and checkpoint-free R11/R12 remain the
-next eligible gates. The real checkpoint and P1 remain blocked.
+The review blocker is resolved. R7/R8 contract inheritance is accepted,
+R9/R10 are promoted from pending numerical review, and checkpoint-free R11/R12
+remain the next eligible gates. The real checkpoint and P1 remain blocked.

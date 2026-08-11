@@ -126,8 +126,8 @@ required machine-readable vocabulary fix. The fail-closed remediation rejects
 greedy-identical classification at a non-applicable boundary and changes no
 threshold, metric, oracle value, fixture value, or production output.
 
-T017-132 is complete and its numerical inheritance is cleared after the
-remediation validators and final-head CI pass. The exact next checkpoint-free
-gate is R11/R12:
+T017-132 is complete and its numerical inheritance cleared when remediation
+head `bc5922626df9eaed8d1e843d021b268ecf50579d` passed both jobs in GitHub
+Actions run `31521791761`. The exact next checkpoint-free gate is R11/R12:
 independent final norm/logits/top-k followed by the tiny actual-runner
 end-to-end fixture. No real checkpoint, P1 command, or M1 model time is admitted.

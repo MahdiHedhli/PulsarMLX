@@ -103,6 +103,10 @@ R7-R10 were mechanically reclassified. The reconciliation manifest proves
 that their metrics, thresholds, fixtures, oracle data, output data, fallback
 counts, and lifecycle counters are unchanged.
 
-The review blocker is resolved after the remediation tests and final-head CI
-pass. This clears R9/R10 inheritance and R11/R12 checkpoint-free work only; it
-does not admit a real checkpoint or P1.
+GitHub Actions run
+[`31521791761`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31521791761)
+passed both jobs at remediation head
+`bc5922626df9eaed8d1e843d021b268ecf50579d`, including native R7-R10 tests
+with no invalidating skip. The review blocker is resolved. This clears R9/R10
+inheritance and R11/R12 checkpoint-free work only; it does not admit a real
+checkpoint or P1.
