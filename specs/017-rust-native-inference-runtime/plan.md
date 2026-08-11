@@ -107,6 +107,12 @@ Gate: rust-only initialization without requiring model execution service.
 
 Gate: ladder advances only when previous boundary remains deterministic and bounded.
 
+Current boundary: R6-R8 are composed checkpoint-free. The permanent exact-order
+qualification scaffold is bit-identical to the independent R7 oracle. The
+production MLX expert and top-8-plus-shared paths qualify under the separately
+frozen Tier-B contract with fail-closed dispatch. R9 remains the next gate; no
+checkpoint or M1 model time is admitted by this result.
+
 ## Final phase
 
 - No 018 kernels are selected inside this feature.

@@ -115,6 +115,17 @@ jobs:
             actual_binary_passes_independent_projection_through_production_adapter \
             -- --exact --nocapture
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Execute F017 exact and Tier-B numerical ladder
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_tierb_stress \
+            scripts.research.tests.test_f017_r8_oracle -v
+          cargo test -p f017-runner --test r7_exact_scaffold -- --nocapture
+          cargo test -p f017-runner --test r7_production_attribution -- --nocapture
+          cargo test -p f017-runner --test tier_b_stress_native -- --nocapture
+          cargo test -p f017-runner --test r8_top8_shared_native -- --nocapture
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
