@@ -2,7 +2,8 @@
 
 use f017_runner::json::{parse_json_no_duplicates, sha256_bytes};
 use f017_runner::qualification::{
-    exact_matvec_f32, exact_swiglu_f32, measure_f32, NumericalMetrics, EXACT_SCAFFOLD_VERSION,
+    exact_matvec_f32, exact_swiglu_f32, measure_f32, qualify_tier_b_down, NumericalMetrics,
+    TierBQualification, EXACT_SCAFFOLD_VERSION, TIER_B_CONTRACT_VERSION,
 };
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -70,13 +71,19 @@ struct Attribution {
     fixture_version: String,
     fixture_sha256: String,
     scaffold_version: &'static str,
+    numerical_mode: &'static str,
     production_backend: &'static str,
+    frozen_contract_version: &'static str,
     deterministic_repeat_count: usize,
     deterministic: bool,
     gate: NumericalMetrics,
     up: NumericalMetrics,
     activated_hidden: NumericalMetrics,
     down_and_final_output: NumericalMetrics,
+    tier_b_qualification: TierBQualification,
+    classification: &'static str,
+    greedy_applicability: &'static str,
+    unexpected_fallback_count: u64,
     production_hashes: ProductionHashes,
     reduction_models: Vec<ReductionModelResult>,
     timings: Timings,
@@ -191,6 +198,22 @@ fn original_r7_mismatch_is_attributed_without_a_tolerance() {
     }
     let (gate, up, hidden, output) = first_outputs.unwrap();
     assert_eq!(output[0].to_bits(), 427_909.0_f32.to_bits());
+    let gate_metrics = measure_f32(&expected_gate, &gate).unwrap();
+    let up_metrics = measure_f32(&expected_up, &up).unwrap();
+    let hidden_metrics = measure_f32(&expected_hidden, &hidden).unwrap();
+    assert_eq!(gate_metrics.bit_mismatch_count, 0);
+    assert_eq!(up_metrics.bit_mismatch_count, 0);
+    assert_eq!(hidden_metrics.bit_mismatch_count, 0);
+    let tier_b_qualification = qualify_tier_b_down(
+        &matrices[2],
+        32,
+        32,
+        &expected_hidden,
+        &expected_output,
+        &output,
+    )
+    .unwrap();
+    assert!(tier_b_qualification.passes);
 
     context.synchronize().unwrap();
     let ownership = context.ownership_snapshot().unwrap();
@@ -213,13 +236,19 @@ fn original_r7_mismatch_is_attributed_without_a_tolerance() {
         fixture_version: expert.fixture_version,
         fixture_sha256,
         scaffold_version: EXACT_SCAFFOLD_VERSION,
+        numerical_mode: "production_mlx_tier_b",
         production_backend: "mlx-c-matmul",
+        frozen_contract_version: TIER_B_CONTRACT_VERSION,
         deterministic_repeat_count: REPEATS,
         deterministic: true,
-        gate: measure_f32(&expected_gate, &gate).unwrap(),
-        up: measure_f32(&expected_up, &up).unwrap(),
-        activated_hidden: measure_f32(&expected_hidden, &hidden).unwrap(),
+        gate: gate_metrics,
+        up: up_metrics,
+        activated_hidden: hidden_metrics,
         down_and_final_output: measure_f32(&expected_output, &output).unwrap(),
+        tier_b_qualification,
+        classification: "numerically_qualified_greedy_identical",
+        greedy_applicability: "not_applicable",
+        unexpected_fallback_count: 0,
         production_hashes: ProductionHashes {
             gate_sha256: sha256_bytes(&f32_bytes(&gate)),
             up_sha256: sha256_bytes(&f32_bytes(&up)),
