@@ -21,7 +21,7 @@ class R8OracleTests(unittest.TestCase):
     def test_committed_oracle_is_generated_without_drift(self):
         artifact_path = (
             ROOT
-            / "specs/017-rust-native-inference-runtime/fixtures/f017-r8-top8-shared-oracle-v1.json"
+            / "specs/017-rust-native-inference-runtime/fixtures/f017-r8-top8-shared-oracle-v2.json"
         )
         artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
         generator_sha = hashlib.sha256(GENERATOR.read_bytes()).hexdigest()
@@ -40,6 +40,7 @@ class R8OracleTests(unittest.TestCase):
         self.assertEqual(len(first["expert_outputs"]), 8)
         self.assertEqual(len(first["shared_output"]), 32)
         self.assertEqual(len(first["aggregate_absolute_bounds"]), 32)
+        self.assertEqual(bytes.fromhex(first["weights_f64_le_hex"]), MODULE._f64_bytes(first["weights"]))
         self.assertFalse(first["independence"]["uses_rust_candidate"])
         self.assertFalse(first["independence"]["uses_mlx"])
         self.assertFalse(first["independence"]["uses_checkpoint"])
@@ -50,6 +51,16 @@ class R8OracleTests(unittest.TestCase):
         self.assertAlmostEqual(sum(oracle["weights"]), 1.0, places=15)
         self.assertTrue(all(value > 0.0 for value in oracle["weights"]))
         self.assertTrue(all(value > 0.0 for value in oracle["aggregate_absolute_bounds"]))
+
+    def test_v1_is_retained_as_rejected_decimal_only_transport(self):
+        artifact_path = (
+            ROOT
+            / "specs/017-rust-native-inference-runtime/fixtures/f017-r8-top8-shared-oracle-v1.json"
+        )
+        self.assertEqual(
+            hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+            "8a0ee21eb97f6b7967123bf05e908c1fca5292777db9feb02f28f9c15841a094",
+        )
 
 
 if __name__ == "__main__":

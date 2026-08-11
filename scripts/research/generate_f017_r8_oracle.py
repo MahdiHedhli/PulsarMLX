@@ -35,6 +35,11 @@ def _f64_bytes(values: Iterable[float]) -> bytes:
     return b"".join(struct.pack("<d", float(value)) for value in values)
 
 
+def _f64_le_hex(values: Iterable[float]) -> str:
+    """Return the canonical cross-language transport for exact f64 values."""
+    return _f64_bytes(values).hex()
+
+
 def _f32(value: float) -> np.float32:
     return np.float32(value)
 
@@ -141,8 +146,8 @@ def build_oracle(
 
     return {
         "schema": SCHEMA,
-        "schema_version": "1.0.0",
-        "fixture_version": "f017-r8-top8-shared-q8-0-v1",
+        "schema_version": "2.0.0",
+        "fixture_version": "f017-r8-top8-shared-q8-0-v2",
         "source_commit": source_commit,
         "generator_path": GENERATOR_PATH,
         "generator_sha256": generator_sha256,
@@ -158,9 +163,11 @@ def build_oracle(
         "shape": [1, 8, WIDTH],
         "quantization": "Q8_0",
         "scores": scores,
+        "scores_f64_le_hex": _f64_le_hex(scores),
         "scores_sha256": _f64_hash(scores),
         "selected_ids": selected_ids,
         "weights": weights,
+        "weights_f64_le_hex": _f64_le_hex(weights),
         "weights_sha256": _f64_hash(weights),
         "activations": [[float(value) for value in activation] for activation in activations],
         "activation_sha256": [_sha256(_f32_bytes(value)) for value in activations],
@@ -170,11 +177,15 @@ def build_oracle(
         "shared_output_sha256": _sha256(_f32_bytes(shared)),
         "per_expert_absolute_bounds": bounds,
         "residual": residual,
+        "residual_f64_le_hex": _f64_le_hex(residual),
         "residual_sha256": _f64_hash(residual),
         "aggregate": aggregate,
+        "aggregate_f64_le_hex": _f64_le_hex(aggregate),
         "aggregate_sha256": _f64_hash(aggregate),
         "aggregate_absolute_bounds": aggregate_bounds,
+        "aggregate_absolute_bounds_f64_le_hex": _f64_le_hex(aggregate_bounds),
         "final_output": final,
+        "final_output_f64_le_hex": _f64_le_hex(final),
         "final_output_sha256": _f64_hash(final),
         "behavioral_contract": {
             "router_ids": "exact",
