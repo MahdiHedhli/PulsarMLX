@@ -13,7 +13,14 @@ use std::{fs, time::Instant};
 #[derive(Debug, Deserialize)]
 struct OracleFixture {
     schema: String,
+    generator: OracleGenerator,
     boundaries: OracleBoundaries,
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[derive(Debug, Deserialize)]
+struct OracleGenerator {
+    source_commit: String,
 }
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
@@ -130,6 +137,57 @@ fn run_projection_fixture_impl(
         &projection.expected.decoded_sha256,
     )?;
 
+    evidence.execution.numerical.oracle_generator_sha = Some(oracle.generator.source_commit);
+    evidence.execution.numerical.scaffold_version =
+        Some(crate::qualification::EXACT_SCAFFOLD_VERSION.to_owned());
+    evidence.execution.numerical.frozen_contract_version =
+        Some(crate::qualification::TIER_B_CONTRACT_VERSION.to_owned());
+    match config.numerical_mode {
+        Some(crate::cli::NumericalMode::ExactQualificationScaffold) => {
+            let started = Instant::now();
+            let mut output = vec![0.0_f32; rows];
+            crate::qualification::exact_matvec_f32(
+                &decoded,
+                rows,
+                columns,
+                &projection.inputs.activation,
+                &mut output,
+            )
+            .map_err(|error| {
+                fixture_error(
+                    FailureClass::NumericalBehavioral,
+                    "fixture_exact_scaffold",
+                    error.to_string(),
+                )
+            })?;
+            evidence.execution.timings.insert(
+                "qualification_scaffold_seconds".to_owned(),
+                started.elapsed().as_secs_f64(),
+            );
+            require_exact_output(&output, &projection)?;
+            evidence.execution.dispatch.qualification_scaffold = 1;
+            evidence.execution.numerical_classification = Some("golden_identical".to_owned());
+            evidence.execution.numerical.bit_mismatch_count = Some(0);
+            evidence.execution.numerical.max_abs_error = Some(0.0);
+            evidence.execution.numerical.relative_error = Some(0.0);
+            evidence.execution.numerical.rmse = Some(0.0);
+            evidence.execution.numerical.cosine_similarity = Some(1.0);
+            evidence.execution.numerical.deterministic_repeat_count = Some(1);
+            evidence.lifecycle.reconciled = true;
+            evidence.execution.progress_state =
+                format!("r5_projection_complete:{}", projection.fixture_version);
+            return Ok(());
+        }
+        Some(crate::cli::NumericalMode::ProductionMlxTierB) => {}
+        None => {
+            return Err(fixture_error(
+                FailureClass::InfrastructureEvidence,
+                "fixture_numerical_mode",
+                "fixture execution requires an explicit numerical mode",
+            ))
+        }
+    }
+
     let stream_before = MlxContext::debug_stream_counters().map_err(adapter_error)?;
     if MlxContext::debug_context_active() {
         return Err(fixture_error(
@@ -155,7 +213,7 @@ fn run_projection_fixture_impl(
         },
     )
     .map_err(adapter_error)?;
-    let mut activation = projection.inputs.activation;
+    let mut activation = projection.inputs.activation.clone();
     let matrix = context
         .import_f32_shaped(&mut decoded, &[rows, columns])
         .map_err(adapter_error)?;
@@ -177,28 +235,7 @@ fn run_projection_fixture_impl(
         compute_started.elapsed().as_secs_f64(),
     );
 
-    if output
-        .iter()
-        .map(|value| value.to_bits())
-        .collect::<Vec<_>>()
-        != projection
-            .expected
-            .output
-            .iter()
-            .map(|value| value.to_bits())
-            .collect::<Vec<_>>()
-    {
-        return Err(fixture_error(
-            FailureClass::NumericalBehavioral,
-            "fixture_output_bits",
-            "production MLX projection differs from independent exact-f32 oracle",
-        ));
-    }
-    require_hash(
-        "fixture_output_hash",
-        &f32_bytes(&output),
-        &projection.expected.output_sha256,
-    )?;
+    require_exact_output(&output, &projection)?;
 
     result.destroy().map_err(adapter_error)?;
     vector.destroy().map_err(adapter_error)?;
@@ -242,9 +279,46 @@ fn run_projection_fixture_impl(
 
     evidence.execution.dispatch.native = 1;
     evidence.execution.numerical_classification = Some("golden_identical".to_owned());
+    evidence.execution.numerical.production_backend_version =
+        Some("mlx-c-matmul; mlx-native-0.31.2; mlx-c-0.6.0".to_owned());
+    evidence.execution.numerical.bit_mismatch_count = Some(0);
+    evidence.execution.numerical.max_abs_error = Some(0.0);
+    evidence.execution.numerical.relative_error = Some(0.0);
+    evidence.execution.numerical.rmse = Some(0.0);
+    evidence.execution.numerical.cosine_similarity = Some(1.0);
+    evidence.execution.numerical.deterministic_repeat_count = Some(1);
     evidence.execution.progress_state =
         format!("r5_projection_complete:{}", projection.fixture_version);
     Ok(())
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+fn require_exact_output(
+    output: &[f32],
+    projection: &ProjectionBoundary,
+) -> Result<(), RunnerError> {
+    if output
+        .iter()
+        .map(|value| value.to_bits())
+        .collect::<Vec<_>>()
+        != projection
+            .expected
+            .output
+            .iter()
+            .map(|value| value.to_bits())
+            .collect::<Vec<_>>()
+    {
+        return Err(fixture_error(
+            FailureClass::NumericalBehavioral,
+            "fixture_output_bits",
+            "selected numerical mode differs from independent exact-f32 oracle",
+        ));
+    }
+    require_hash(
+        "fixture_output_hash",
+        &f32_bytes(output),
+        &projection.expected.output_sha256,
+    )
 }
 
 #[cfg(not(all(target_os = "macos", pulsar_native_mlx)))]

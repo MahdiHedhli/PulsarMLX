@@ -9,6 +9,7 @@ pub const USAGE: &str = "usage: f017-glm52-runner \
   --stream-mode default-gpu|owned-device \
   --memory-floor-bytes BYTES \
   --environment-manifest JSON \
+  [--numerical-mode exact-qualification-scaffold|production-mlx-tier-b] \
   [--dry-run | --adapter-preflight-only | --checkpoint-identity-only | --fixture-mode MANIFEST] \
   [--checkpoint-manifest JSON --tokens IDS --n-new N --expected-token ID]";
 
@@ -31,6 +32,21 @@ impl ValidationMode {
 pub enum StreamMode {
     DefaultGpu,
     OwnedDevice,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NumericalMode {
+    ExactQualificationScaffold,
+    ProductionMlxTierB,
+}
+
+impl NumericalMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::ExactQualificationScaffold => "exact_qualification_scaffold",
+            Self::ProductionMlxTierB => "production_mlx_tier_b",
+        }
+    }
 }
 
 impl StreamMode {
@@ -74,6 +90,7 @@ pub struct Config {
     pub tokens: Vec<u32>,
     pub n_new: u32,
     pub expected_token: Option<u32>,
+    pub numerical_mode: Option<NumericalMode>,
     pub mode: RunnerMode,
 }
 
@@ -106,6 +123,7 @@ where
     let mut tokens = None;
     let mut n_new = None;
     let mut expected_token = None;
+    let mut numerical_mode = None;
     let mut selected_mode = None;
     let mut index = 0;
 
@@ -181,6 +199,18 @@ where
                     cli_error("invalid_expected_token", "--expected-token exceeds u32")
                 })?);
             }
+            "--numerical-mode" => {
+                numerical_mode = Some(match text_value(&args, &mut index, flag)?.as_str() {
+                    "exact-qualification-scaffold" => NumericalMode::ExactQualificationScaffold,
+                    "production-mlx-tier-b" => NumericalMode::ProductionMlxTierB,
+                    value => {
+                        return Err(cli_error(
+                            "invalid_numerical_mode",
+                            format!("unsupported numerical mode {value:?}"),
+                        ))
+                    }
+                });
+            }
             "--dry-run" => select_mode(&mut selected_mode, RunnerMode::DryRun)?,
             "--adapter-preflight-only" => {
                 select_mode(&mut selected_mode, RunnerMode::AdapterPreflight)?
@@ -219,6 +249,7 @@ where
         tokens: tokens.unwrap_or_default(),
         n_new: n_new.unwrap_or(0),
         expected_token,
+        numerical_mode,
         mode,
     };
     validate_combination(&config)?;
@@ -230,7 +261,10 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
         !config.tokens.is_empty() || config.n_new != 0 || config.expected_token.is_some();
     match &config.mode {
         RunnerMode::DryRun | RunnerMode::AdapterPreflight => {
-            if config.checkpoint_manifest.is_some() || has_execution {
+            if config.checkpoint_manifest.is_some()
+                || has_execution
+                || config.numerical_mode.is_some()
+            {
                 return Err(cli_error(
                     "incompatible_options",
                     "checkpoint and token options are forbidden in this mode",
@@ -244,7 +278,7 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                     "checkpoint identity mode requires --checkpoint-manifest",
                 ));
             }
-            if has_execution {
+            if has_execution || config.numerical_mode.is_some() {
                 return Err(cli_error(
                     "incompatible_options",
                     "token execution options are forbidden in identity-only mode",
@@ -256,6 +290,12 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                 return Err(cli_error(
                     "incompatible_options",
                     "fixture mode takes its model and expected token from the fixture manifest",
+                ));
+            }
+            if config.numerical_mode.is_none() {
+                return Err(cli_error(
+                    "missing_option",
+                    "fixture mode requires explicit --numerical-mode",
                 ));
             }
         }
@@ -280,6 +320,12 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                 return Err(cli_error(
                     "p1_token_bound",
                     "the first F017 gate admits exactly one new token",
+                ));
+            }
+            if config.numerical_mode != Some(NumericalMode::ProductionMlxTierB) {
+                return Err(cli_error(
+                    "p1_numerical_mode",
+                    "P1 requires explicit production-mlx-tier-b mode",
                 ));
             }
         }
@@ -391,6 +437,8 @@ mod tests {
                 "1",
                 "--expected-token",
                 "21615",
+                "--numerical-mode",
+                "production-mlx-tier-b",
             ]
             .into_iter()
             .map(OsString::from),
@@ -438,6 +486,8 @@ mod tests {
                 "2",
                 "--expected-token",
                 "21615",
+                "--numerical-mode",
+                "production-mlx-tier-b",
             ]
             .into_iter()
             .map(OsString::from),

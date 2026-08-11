@@ -12,6 +12,10 @@ not invoke Python, the Linux/CUDA `pulsar-cli`, or Feature 018 kernels.
 - `--stream-mode default-gpu|owned-device`: explicit and recorded.
 - `--memory-floor-bytes <u64>`: nonzero absolute admission floor.
 - `--environment-manifest <path>`: exact reviewed environment identity.
+- `--numerical-mode exact-qualification-scaffold|production-mlx-tier-b`:
+  required for fixture and model execution and recorded in evidence. The exact
+  scaffold is qualification-only; the production mode cannot silently recover
+  through it.
 
 ## Execution options
 
@@ -29,6 +33,8 @@ not invoke Python, the Linux/CUDA `pulsar-cli`, or Feature 018 kernels.
 
 With no mode flag the runner requests real execution. Real execution remains
 fail-closed until every required capability and tensor-map gate is present.
+P1 requires explicit `production-mlx-tier-b`; the exact scaffold is never a
+production fallback.
 
 ## Exit codes
 

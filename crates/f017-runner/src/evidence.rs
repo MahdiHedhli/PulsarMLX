@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 pub const EVIDENCE_SCHEMA: &str = "pulsarmlx.f017.canonical-runner-evidence";
-pub const EVIDENCE_SCHEMA_VERSION: &str = "1.0.0";
+pub const EVIDENCE_SCHEMA_VERSION: &str = "1.1.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evidence {
@@ -69,6 +69,7 @@ pub struct InputEvidence {
     pub expected_token: Option<u32>,
     pub validation_mode: String,
     pub mode: String,
+    pub numerical_mode: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -79,7 +80,23 @@ pub struct ExecutionEvidence {
     pub dispatch: DispatchEvidence,
     pub generated_token: Option<u32>,
     pub numerical_classification: Option<String>,
+    pub numerical: NumericalEvidence,
     pub progress_state: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct NumericalEvidence {
+    pub oracle_generator_sha: Option<String>,
+    pub scaffold_version: Option<String>,
+    pub production_backend_version: Option<String>,
+    pub frozen_contract_version: Option<String>,
+    pub bit_mismatch_count: Option<u64>,
+    pub max_abs_error: Option<f64>,
+    pub relative_error: Option<f64>,
+    pub rmse: Option<f64>,
+    pub cosine_similarity: Option<f64>,
+    pub deterministic_repeat_count: Option<u64>,
+    pub first_divergence: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -98,6 +115,7 @@ pub struct StorageEvidence {
 pub struct DispatchEvidence {
     pub native: u64,
     pub direct: u64,
+    pub qualification_scaffold: u64,
     pub explicit_reference: u64,
     pub fallback: u64,
     pub errors: u64,
@@ -216,6 +234,7 @@ impl Evidence {
                 expected_token: config.expected_token,
                 validation_mode: config.validation_mode.as_str().to_owned(),
                 mode: config.mode.as_str().to_owned(),
+                numerical_mode: config.numerical_mode.map(|mode| mode.as_str().to_owned()),
             },
             execution: ExecutionEvidence {
                 layers: Vec::new(),
@@ -224,6 +243,7 @@ impl Evidence {
                 dispatch: DispatchEvidence::default(),
                 generated_token: None,
                 numerical_classification: None,
+                numerical: NumericalEvidence::default(),
                 progress_state: "initialized".to_owned(),
             },
             residency: ResidencyEvidence::default(),
@@ -391,6 +411,7 @@ mod tests {
             tokens: Vec::new(),
             n_new: 0,
             expected_token: None,
+            numerical_mode: None,
             mode: RunnerMode::DryRun,
         }
     }

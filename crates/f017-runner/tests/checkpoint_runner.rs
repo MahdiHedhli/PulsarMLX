@@ -131,6 +131,8 @@ fn unsupported_p1_fails_before_checkpoint_access_and_banks_failure() {
             "1",
             "--expected-token",
             "21615",
+            "--numerical-mode",
+            "production-mlx-tier-b",
         ])
         .status()
         .unwrap();
@@ -155,6 +157,7 @@ fn actual_binary_passes_independent_projection_through_production_adapter() {
         .args(common_args(&fixture.environment, &out))
         .arg("--fixture-mode")
         .arg(oracle)
+        .args(["--numerical-mode", "production-mlx-tier-b"])
         .status()
         .unwrap();
     assert!(status.success());
@@ -164,9 +167,44 @@ fn actual_binary_passes_independent_projection_through_production_adapter() {
         Some("golden_identical")
     );
     assert_eq!(evidence.execution.dispatch.native, 1);
+    assert_eq!(evidence.execution.dispatch.qualification_scaffold, 0);
     assert_eq!(evidence.execution.dispatch.fallback, 0);
     assert!(evidence.lifecycle.reconciled);
     assert!(!evidence.identity.checkpoint.accessed);
+    assert_eq!(
+        evidence.input.numerical_mode.as_deref(),
+        Some("production_mlx_tier_b")
+    );
+}
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+#[test]
+fn actual_binary_keeps_exact_scaffold_explicit_and_separate() {
+    let fixture = fixture(false);
+    let out = fixture.root.join("projection-exact.json");
+    let oracle = Path::new(env!("CARGO_MANIFEST_DIR")).join(
+        "../../specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json",
+    );
+    let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .args(common_args(&fixture.environment, &out))
+        .arg("--fixture-mode")
+        .arg(oracle)
+        .args(["--numerical-mode", "exact-qualification-scaffold"])
+        .status()
+        .unwrap();
+    assert!(status.success());
+    let evidence: Evidence = parse_json_no_duplicates(&fs::read(&out).unwrap()).unwrap();
+    assert_eq!(
+        evidence.input.numerical_mode.as_deref(),
+        Some("exact_qualification_scaffold")
+    );
+    assert_eq!(evidence.execution.dispatch.qualification_scaffold, 1);
+    assert_eq!(evidence.execution.dispatch.native, 0);
+    assert_eq!(evidence.execution.dispatch.fallback, 0);
+    assert_eq!(
+        evidence.execution.numerical_classification.as_deref(),
+        Some("golden_identical")
+    );
 }
 
 fn common_args(environment: &Path, out: &Path) -> Vec<std::ffi::OsString> {

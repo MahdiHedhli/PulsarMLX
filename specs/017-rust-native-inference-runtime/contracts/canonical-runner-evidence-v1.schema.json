@@ -17,7 +17,7 @@
   ],
   "properties": {
     "schema": { "const": "pulsarmlx.f017.canonical-runner-evidence" },
-    "schema_version": { "const": "1.0.0" },
+    "schema_version": { "const": "1.1.0" },
     "identity": {
       "type": "object",
       "additionalProperties": false,
@@ -51,13 +51,14 @@
     "input": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["tokens", "n_new", "expected_token", "validation_mode", "mode"],
+      "required": ["tokens", "n_new", "expected_token", "validation_mode", "mode", "numerical_mode"],
       "properties": {
         "tokens": { "type": "array", "minItems": 0, "items": { "type": "integer", "minimum": 0, "maximum": 4294967295 } },
         "n_new": { "type": "integer", "minimum": 0 },
         "expected_token": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
         "validation_mode": { "enum": ["golden_strict", "teacher_forced_validation"] },
-        "mode": { "enum": ["dry_run", "adapter_preflight", "checkpoint_identity", "fixture", "p1"] }
+        "mode": { "enum": ["dry_run", "adapter_preflight", "checkpoint_identity", "fixture", "p1"] },
+        "numerical_mode": { "enum": ["exact_qualification_scaffold", "production_mlx_tier_b", null] }
       }
     },
     "execution": { "$ref": "#/$defs/execution" },
@@ -93,7 +94,7 @@
     "execution": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["layers", "timings", "storage", "dispatch", "generated_token", "numerical_classification", "progress_state"],
+      "required": ["layers", "timings", "storage", "dispatch", "generated_token", "numerical_classification", "numerical", "progress_state"],
       "properties": {
         "layers": { "type": "array", "items": { "type": "object" } },
         "timings": { "type": "object" },
@@ -101,6 +102,24 @@
         "dispatch": { "type": "object" },
         "generated_token": { "type": ["integer", "null"] },
         "numerical_classification": { "type": ["string", "null"] },
+        "numerical": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence"],
+          "properties": {
+            "oracle_generator_sha": { "type": ["string", "null"] },
+            "scaffold_version": { "type": ["string", "null"] },
+            "production_backend_version": { "type": ["string", "null"] },
+            "frozen_contract_version": { "type": ["string", "null"] },
+            "bit_mismatch_count": { "type": ["integer", "null"], "minimum": 0 },
+            "max_abs_error": { "type": ["number", "null"], "minimum": 0 },
+            "relative_error": { "type": ["number", "null"], "minimum": 0 },
+            "rmse": { "type": ["number", "null"], "minimum": 0 },
+            "cosine_similarity": { "type": ["number", "null"], "minimum": -1, "maximum": 1 },
+            "deterministic_repeat_count": { "type": ["integer", "null"], "minimum": 0 },
+            "first_divergence": { "type": ["object", "null"] }
+          }
+        },
         "progress_state": { "type": "string" }
       }
     },
