@@ -153,4 +153,7 @@
   arbitrary-package-location/cwd independence through the canonical native
   projection loop, preserve attempt 1, and publish a distinct attempt-2
   authorization.
+- [x] T017-168 Execute the separately authorized M1-D attempt 2, preserve the
+  fail-closed `m1d_activation_fixture_read` pre-candidate rejection, and stop
+  without checkpoint access, candidate execution, retry, or M1-E promotion.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

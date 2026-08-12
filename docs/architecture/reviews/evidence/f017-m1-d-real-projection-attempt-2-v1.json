@@ -1,0 +1,100 @@
+{
+  "schema": "pulsarmlx.f017.m1d-pre-candidate-failure-evidence",
+  "schema_version": "1.0.0",
+  "attempt": 2,
+  "evidence_origin": "operator_banked_pre_candidate_failure",
+  "identity": {
+    "runtime_sha": "258127d4b5e4d2cca592c8b3ec5403a98e39f29f",
+    "tooling_sha": "dc95783c9e2666989b038f2744f7b12e2756aa18",
+    "repository_head": "53165bb5ac78bca087e82fe769bdb14110a4df4c",
+    "handoff_sha256": "bd3f1d177190306697a32f2fd71fc1aa39be3eb1cede2a4114849e8faa4ca68b",
+    "path_resolution_contract_sha256": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+    "package_schema_sha256": "eec3ae97ac8c2ecb04ac982abe8b1bcec313a57888fa5bb66370e31485fc2e2a"
+  },
+  "prior_evidence": {
+    "attempt_1": "a5aefaaf59583dad87765303e159986c895017c20ea80eb874cd447ad80f9a62",
+    "m1_a": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+    "m1_b": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+    "m1_c": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e"
+  },
+  "checkpoint_bindings": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+  },
+  "frozen_bindings": {
+    "boundary_sha256": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
+    "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+    "decoder_sha256": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
+    "scaffold_sha256": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+    "tier_b_sha256": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b"
+  },
+  "provenance": {
+    "activation_generation_source_sha256": "29c5c51a8f440e06d6584a71e0b79283d2bd6f806a2435c15ff93f3a0cae7984",
+    "fixture_finalization_source_sha256": "0299066d46211d1921ded772ab907fcd9e9f1c8e3d2c497d979914a30c3dbd92",
+    "real_reference_preparer_source_sha256": "0d1d70671ab424e0dc9bead70dfba58756126bd6d6669cb08fe5e022ed4761d4",
+    "historical_preparer_rejected": "bdcf8b999de5426872cb31f971b455028746959b30fb2bdf4c2f750f335b7fea"
+  },
+  "admission": {
+    "environment_kind": "production_reviewed",
+    "telemetry_source": "measured_host",
+    "architecture": "arm64",
+    "loaded_library_identity_valid": true,
+    "physical_memory_bytes": 137438953472,
+    "available_memory_bytes": 86718431232,
+    "compressed_memory_bytes": 2615853056,
+    "memory_pressure": "normal",
+    "swap_used_bytes": 125829,
+    "checkpoint_volume_free_bytes": 388762181632,
+    "evidence_volume_free_bytes": 388762181632,
+    "competing_processes_clear": true,
+    "port_1234_listener": false,
+    "thermal_state": "normal",
+    "performance_warning": false,
+    "passed": true
+  },
+  "preparer": {
+    "started": true,
+    "completed": false,
+    "failure_stage": "activation_fixture_open",
+    "requested_activation_path": "specs/017-real-checkpoint-runner/fixtures/f017-m1d-projection-oracle-v1.json",
+    "authorized_activation_path": "specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-oracle-v1.json",
+    "activation_opened": false,
+    "checkpoint_opened": false,
+    "matrix_payload_read_count": 0,
+    "oracle_package_created": false,
+    "private_package_created": false
+  },
+  "execution": {
+    "candidate_started": false,
+    "checkpoint_read_count": 0,
+    "real_matrix_payload_count": 0,
+    "conceptual_projection_count": 0,
+    "production_repeat_count": 0,
+    "repeat_hashes": [],
+    "native_dispatch_count": 0,
+    "quant_decode_count": 0,
+    "expert_execution_count": 0,
+    "layer_execution_count": 0,
+    "logits_count": 0,
+    "p1": false
+  },
+  "numerical": {
+    "classification": null,
+    "greedy_applicability": null,
+    "tier_b_evaluated": false,
+    "oracle_ordering_evaluated": false,
+    "repeat_integrity_evaluated": false
+  },
+  "result": {
+    "verdict": "M1-D ATTEMPT 2 REJECTED",
+    "classification": "FAIL_INFRASTRUCTURE_EVIDENCE",
+    "first_failure": {
+      "code": "m1d_activation_fixture_read",
+      "message": "The preparer was invoked with a nonexistent repository-relative activation fixture path before checkpoint access."
+    },
+    "authorization_consumed": true,
+    "retry_permitted": false,
+    "completed_at": "2026-08-12T20:34:45Z"
+  }
+}

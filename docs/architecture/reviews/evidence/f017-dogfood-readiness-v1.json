@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_package_root_remediation_attempt_2_authorized_not_executed",
+  "updated_after": "m1_d_attempt_2_rejected_pre_candidate_activation_fixture_read",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -11,7 +11,7 @@
     "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
-    "m1_d": "attempt_1_rejected_attempt_2_authorized_not_executed",
+    "m1_d": "attempt_1_rejected_attempt_2_rejected",
     "m1_e_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
@@ -50,6 +50,7 @@
     "m1_c_tensor_payload_count": 1,
     "m1_d_oracle_matrix_payload_accessed": true,
     "m1_d_oracle_matrix_payload_count": 1,
+    "m1_d_attempt_2_matrix_payload_count": 0,
     "m1_d_candidate_checkpoint_read_count": 0,
     "tensor_execution_count": 0,
     "quant_decode_count": 0,
@@ -96,9 +97,19 @@
       "authorization": "docs/architecture/reviews/f017-m1-d-attempt-2-authorization.md",
       "binding": "docs/architecture/reviews/evidence/f017-m1-d-attempt-2-authorization-v1.json",
       "runtime_source_sha": "258127d4b5e4d2cca592c8b3ec5403a98e39f29f",
-      "authorized": true,
-      "executed": false
+      "authorized": false,
+      "authorization_consumed": true,
+      "executed": true,
+      "candidate_started": false,
+      "checkpoint_accessed": false,
+      "verdict": "rejected",
+      "failure_classification": "FAIL_INFRASTRUCTURE_EVIDENCE",
+      "failure_code": "m1d_activation_fixture_read",
+      "evidence": {
+        "path": "docs/architecture/reviews/evidence/f017-m1-d-real-projection-attempt-2-v1.json",
+        "sha256": "6a87c36c380fb43393bc79cdc4e22e59bb81c0425ad0285017d6a1bc00dd79f6"
+      }
     }
   },
-  "next_gate": "execute exactly one separately authorized M1-D attempt 2; M1-E remains blocked"
+  "next_gate": "review the preserved M1-D attempt-2 rejection; any attempt 3 requires separate remediation and explicit authorization; M1-E remains blocked"
 }
