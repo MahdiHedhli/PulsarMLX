@@ -9,7 +9,7 @@ This is a new authorization, not a retry hidden inside attempt 1.
 ## Immutable identities
 
 - Runtime: `258127d4b5e4d2cca592c8b3ec5403a98e39f29f`
-- Tooling/validator: `90a37a0ba9e18f4133d02e66d6f5d1fc2a147f87`
+- Tooling/validator: `dc95783c9e2666989b038f2744f7b12e2756aa18`
 - Handoff: `docs/architecture/reviews/f017-m1-d-attempt-2-handoff.md`
 - Handoff SHA-256: `bd3f1d177190306697a32f2fd71fc1aa39be3eb1cede2a4114849e8faa4ca68b`
 
