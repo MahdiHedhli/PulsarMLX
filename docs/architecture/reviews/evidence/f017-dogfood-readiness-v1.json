@@ -7,7 +7,7 @@
     "r7_r12": "complete",
     "m1_a": "accepted",
     "m1_b": "prepared_not_run",
-    "t017_140": "infrastructure_in_progress_real_fixture_missing",
+    "t017_140": "validator_ready_real_fixture_missing",
     "t017_141": "blocked",
     "m1_c_m1_g": "blocked",
     "p1": "blocked",
@@ -20,6 +20,11 @@
   "m1_a_evidence": {
     "path": "docs/architecture/reviews/evidence/f017-m1-a-adapter-preflight-v1.json",
     "sha256": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805"
+  },
+  "m1_b_packet": {
+    "handoff": "docs/architecture/reviews/f017-m1-b-checkpoint-identity-handoff.md",
+    "review_checklist": "docs/architecture/reviews/f017-m1-b-evidence-review-checklist.md",
+    "authorized": false
   },
   "checkpoint_accessed": false,
   "next_authorization": "exactly one M1-B checkpoint-identity-only run after packet review"
