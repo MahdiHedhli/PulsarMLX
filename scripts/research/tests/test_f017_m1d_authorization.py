@@ -20,15 +20,16 @@ def file_sha(path: str) -> str:
 
 
 def valid_document() -> dict:
+    binding = validator.load_json_no_duplicates(
+        ROOT / "docs/architecture/reviews/evidence/f017-m1-d-authorization-binding-v1.json"
+    )
     return {
         "schema": "pulsarmlx.f017.m1d-authorization-binding",
         "schema_version": "1.0.0",
         "status": "authorized_exactly_one_not_executed",
         "runtime_sha": validator.RUNTIME_SHA,
         "previous_tooling_sha": validator.PREVIOUS_TOOLING_SHA,
-        "tooling_sha": subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, text=True, capture_output=True
-        ).stdout.strip(),
+        "tooling_sha": binding["tooling_sha"],
         "handoff": {
             "path": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
             "sha256": file_sha("docs/architecture/reviews/f017-m1-d-real-projection-handoff.md"),
@@ -101,6 +102,12 @@ class AuthorizationValidatorTests(unittest.TestCase):
         value["provenance"] = {"generator_sha256": "29c5c51a" + "0" * 56}
         with self.assertRaisesRegex(validator.ValidationError, "ambiguous"):
             validator.validate_document(value, ROOT, validate_git=False)
+
+    def test_stale_real_tooling_ancestor_is_rejected(self) -> None:
+        value = valid_document()
+        value["tooling_sha"] = validator.PREVIOUS_TOOLING_SHA
+        with self.assertRaises(validator.ValidationError):
+            validator.validate_document(value, ROOT, validate_git=True)
 
     def test_duplicate_keys_are_rejected(self) -> None:
         import tempfile
