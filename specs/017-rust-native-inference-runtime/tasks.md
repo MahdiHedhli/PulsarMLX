@@ -148,4 +148,9 @@
 - [x] T017-166 Execute the exactly-once authorized M1-D attempt, bank the
   fail-closed `m1d_contract_read` infrastructure rejection, and stop without
   retry or M1-E promotion.
+- [x] T017-167 Reproduce the relocated-package `m1d_contract_read` failure,
+  separate typed repository/package roots, hash-bind every artifact, qualify
+  arbitrary-package-location/cwd independence through the canonical native
+  projection loop, preserve attempt 1, and publish a distinct attempt-2
+  authorization.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

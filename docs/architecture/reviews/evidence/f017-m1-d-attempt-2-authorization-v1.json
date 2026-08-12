@@ -1,0 +1,58 @@
+{
+  "schema": "pulsarmlx.f017.m1d-attempt-2-authorization",
+  "schema_version": "1.0.0",
+  "status": "authorized_exactly_one_attempt_2_not_executed",
+  "attempt": 2,
+  "runtime_sha": "258127d4b5e4d2cca592c8b3ec5403a98e39f29f",
+  "tooling_sha": "90a37a0ba9e18f4133d02e66d6f5d1fc2a147f87",
+  "failed_attempt": {
+    "attempt": 1,
+    "verdict": "rejected",
+    "failure_code": "m1d_contract_read",
+    "evidence_sha256": "a5aefaaf59583dad87765303e159986c895017c20ea80eb874cd447ad80f9a62",
+    "authorization_consumed": true
+  },
+  "handoff": {
+    "path": "docs/architecture/reviews/f017-m1-d-attempt-2-handoff.md",
+    "sha256": "bd3f1d177190306697a32f2fd71fc1aa39be3eb1cede2a4114849e8faa4ca68b"
+  },
+  "path_contract": {
+    "version": "f017-m1d-artifact-path-resolution-v1",
+    "sha256": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+    "package_schema_version": "2.0.0",
+    "repository_root": "explicit_git_identity_verified",
+    "package_root": "canonical_package_parent"
+  },
+  "direct_bindings": {
+    "m1_a_evidence": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+    "m1_b_evidence": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+    "m1_c_evidence": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e",
+    "checkpoint_set": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "boundary": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
+    "activation": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+    "decoder": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
+    "scaffold": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+    "tier_b": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
+    "repeat_integrity": "1e8ceff5bca49d8c22c38342c3e938af189b819333c075558e1e242869a6685f",
+    "oracle_ordering": "f8b2d48d4a3ff4ef502c33c4b29c4f2390f80ff4d03a2964c988a189ea341528",
+    "path_resolution": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+    "package_schema": "eec3ae97ac8c2ecb04ac982abe8b1bcec313a57888fa5bb66370e31485fc2e2a"
+  },
+  "provenance": {
+    "activation_generation_source": "29c5c51a8f440e06d6584a71e0b79283d2bd6f806a2435c15ff93f3a0cae7984",
+    "fixture_finalization_source": "0299066d46211d1921ded772ab907fcd9e9f1c8e3d2c497d979914a30c3dbd92",
+    "real_reference_preparer_source": "0d1d70671ab424e0dc9bead70dfba58756126bd6d6669cb08fe5e022ed4761d4"
+  },
+  "execution": {
+    "conceptual_projection_count": 1,
+    "production_repeat_count": 10,
+    "all_repeat_hashes_equal_required": true,
+    "oracle_finalized_before_candidate_required": true
+  },
+  "stop_policy": {
+    "no_auto_retry": true,
+    "mandatory_stop_before_m1_e": true
+  }
+}

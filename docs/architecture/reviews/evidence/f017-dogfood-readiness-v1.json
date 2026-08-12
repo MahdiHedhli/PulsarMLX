@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_first_attempt_rejected_contract_path_resolution",
+  "updated_after": "m1_d_package_root_remediation_attempt_2_authorized_not_executed",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -11,7 +11,7 @@
     "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
-    "m1_d": "rejected_first_attempt_fail_infrastructure_evidence",
+    "m1_d": "attempt_1_rejected_attempt_2_authorized_not_executed",
     "m1_e_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
@@ -91,7 +91,14 @@
     "evidence": {
       "path": "docs/architecture/reviews/evidence/f017-m1-d-real-projection-v1.json",
       "sha256": "a5aefaaf59583dad87765303e159986c895017c20ea80eb874cd447ad80f9a62"
+    },
+    "attempt_2": {
+      "authorization": "docs/architecture/reviews/f017-m1-d-attempt-2-authorization.md",
+      "binding": "docs/architecture/reviews/evidence/f017-m1-d-attempt-2-authorization-v1.json",
+      "runtime_source_sha": "258127d4b5e4d2cca592c8b3ec5403a98e39f29f",
+      "authorized": true,
+      "executed": false
     }
   },
-  "next_gate": "review M1-D contract-path composition failure; M1-E remains blocked"
+  "next_gate": "execute exactly one separately authorized M1-D attempt 2; M1-E remains blocked"
 }
