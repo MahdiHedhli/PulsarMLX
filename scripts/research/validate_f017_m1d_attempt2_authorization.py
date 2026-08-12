@@ -30,6 +30,7 @@ DIRECT_BINDINGS = {
     "repeat_integrity": "1e8ceff5bca49d8c22c38342c3e938af189b819333c075558e1e242869a6685f",
     "oracle_ordering": "f8b2d48d4a3ff4ef502c33c4b29c4f2390f80ff4d03a2964c988a189ea341528",
     "path_resolution": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+    "package_schema": "eec3ae97ac8c2ecb04ac982abe8b1bcec313a57888fa5bb66370e31485fc2e2a",
 }
 
 PROVENANCE = {
@@ -46,6 +47,7 @@ CONTENT_PATHS = {
     "repeat_integrity": "specs/017-rust-native-inference-runtime/contracts/m1d-repeat-integrity-v1.json",
     "oracle_ordering": "specs/017-rust-native-inference-runtime/contracts/m1d-oracle-ordering-v1.json",
     "path_resolution": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+    "package_schema": "specs/017-rust-native-inference-runtime/contracts/m1d-projection-package-v2.schema.json",
 }
 
 ALLOWED_POST_TOOLING = {

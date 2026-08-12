@@ -11,6 +11,7 @@ is `a5aefaaf59583dad87765303e159986c895017c20ea80eb874cd447ad80f9a62`.
 - Runtime source: `258127d4b5e4d2cca592c8b3ec5403a98e39f29f`
 - Prior failed runtime: `d68cb10758693dc61d3af7cf76b8019f6b3b235d`
 - Package schema: `pulsarmlx.f017.m1d-projection-package` version `2.0.0`
+- Package schema SHA-256: `eec3ae97ac8c2ecb04ac982abe8b1bcec313a57888fa5bb66370e31485fc2e2a`
 - Path contract: `f017-m1d-artifact-path-resolution-v1`
 - Path contract SHA-256: `40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d`
 

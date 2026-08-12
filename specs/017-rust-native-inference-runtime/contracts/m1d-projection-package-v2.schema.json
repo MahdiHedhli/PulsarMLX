@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1d-projection-package-v2",
+  "title": "F017 M1-D typed projection package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "package_kind",
+    "path_resolution_contract",
+    "boundary_contract",
+    "decoder_contract",
+    "scaffold_contract",
+    "tier_b_contract",
+    "checkpoint_set_sha256",
+    "catalog_sha256",
+    "tensor_map_sha256",
+    "prior_evidence",
+    "tensor",
+    "oracle",
+    "activation_sha256",
+    "one_attempt"
+  ],
+  "properties": {
+    "schema": { "const": "pulsarmlx.f017.m1d-projection-package" },
+    "schema_version": { "const": "2.0.0" },
+    "package_kind": { "enum": ["checkpoint_free_fixture", "production_reviewed"] },
+    "path_resolution_contract": { "$ref": "#/$defs/repositoryArtifact" },
+    "boundary_contract": { "$ref": "#/$defs/repositoryArtifact" },
+    "decoder_contract": { "$ref": "#/$defs/repositoryArtifact" },
+    "scaffold_contract": { "$ref": "#/$defs/repositoryArtifact" },
+    "tier_b_contract": { "$ref": "#/$defs/repositoryArtifact" },
+    "checkpoint_set_sha256": { "$ref": "#/$defs/sha256" },
+    "catalog_sha256": { "$ref": "#/$defs/sha256" },
+    "tensor_map_sha256": { "$ref": "#/$defs/sha256" },
+    "prior_evidence": { "type": "object" },
+    "tensor": { "type": "object" },
+    "oracle": { "$ref": "#/$defs/packageArtifact" },
+    "activation_sha256": { "$ref": "#/$defs/sha256" },
+    "one_attempt": { "const": true }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "repositoryArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "path_kind", "symbolic_path", "content_sha256", "logical_role"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "path_kind": { "const": "repository_relative" },
+        "symbolic_path": { "type": "string", "minLength": 1 },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "logical_role": { "type": "string", "minLength": 1 }
+      }
+    },
+    "packageArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_kind", "symbolic_path", "content_sha256", "logical_role", "package_artifact_id"],
+      "properties": {
+        "path_kind": { "const": "package_relative" },
+        "symbolic_path": { "type": "string", "minLength": 1 },
+        "content_sha256": { "$ref": "#/$defs/sha256" },
+        "logical_role": { "type": "string", "minLength": 1 },
+        "package_artifact_id": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
