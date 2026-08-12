@@ -21,7 +21,7 @@
     "identity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source_sha", "source_clean", "runner_version", "environment_kind", "environment_manifest_sha256", "platform", "toolchain", "loaded_libraries", "checkpoint"],
+      "required": ["source_sha", "source_clean", "runner_version", "environment_kind", "environment_manifest_sha256", "platform", "toolchain", "loaded_libraries", "checkpoint", "prior_evidence"],
       "properties": {
         "source_sha": { "$ref": "#/$defs/sha256OrGit" },
         "source_clean": { "type": "boolean" },
@@ -31,7 +31,8 @@
         "platform": { "type": "object" },
         "toolchain": { "type": "object" },
         "loaded_libraries": { "type": "array", "items": { "$ref": "#/$defs/loadedLibrary" } },
-        "checkpoint": { "$ref": "#/$defs/checkpointIdentity" }
+        "checkpoint": { "$ref": "#/$defs/checkpointIdentity" },
+        "prior_evidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } }
       }
     },
     "admission": {
@@ -179,8 +180,7 @@
             "validated_tensor_count": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
-        "shards": { "type": "array", "items": { "type": "object" } },
-        "prior_evidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } }
+        "shards": { "type": "array", "items": { "type": "object" } }
       }
     },
     "execution": {
@@ -206,7 +206,7 @@
         "numerical": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["greedy_applicability", "greedy_identity", "oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "frozen_contract_versions", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence"],
+          "required": ["greedy_applicability", "greedy_identity", "oracle_generator_sha", "scaffold_version", "production_backend_version", "frozen_contract_version", "frozen_contract_versions", "bit_mismatch_count", "max_abs_error", "relative_error", "rmse", "cosine_similarity", "deterministic_repeat_count", "first_divergence", "repeat_integrity", "oracle_ordering"],
           "properties": {
             "greedy_applicability": { "enum": ["not_applicable", "applicable", null] },
             "greedy_identity": {

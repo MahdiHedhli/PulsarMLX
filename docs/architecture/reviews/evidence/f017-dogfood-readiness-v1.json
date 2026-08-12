@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_checkpoint_free_admission_package",
+  "updated_after": "m1_d_repeat_integrity_and_oracle_ordering_remediation",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -68,11 +68,14 @@
   "m1_d_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
     "fresh_authorization": "docs/architecture/reviews/f017-m1-d-fresh-authorization.md",
-    "runtime_source_sha": "291295665896c8a489c1f4e5741b199cf5515b2f",
+    "runtime_source_sha": "d68cb10758693dc61d3af7cf76b8019f6b3b235d",
     "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
     "tier_b_contract": "f017-production-m1d-projection-tier-b-v1",
     "authorized": false,
     "attempts": 0,
+    "repeat_count_required": 10,
+    "per_repeat_hash_required": true,
+    "finalized_oracle_order_required": true,
     "checkpoint_payload_accessed_during_remediation": false
   },
   "next_gate": "review qualification package and issue a fresh explicit authorization for exactly one M1-D real projection"

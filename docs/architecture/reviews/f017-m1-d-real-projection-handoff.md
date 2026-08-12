@@ -8,7 +8,7 @@ M1-D attempts remain `0`. This package authorizes nothing by itself.
 
 ## Frozen bindings
 
-- runtime source: `291295665896c8a489c1f4e5741b199cf5515b2f`;
+- runtime source: `d68cb10758693dc61d3af7cf76b8019f6b3b235d`;
 - M1-A: `aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805`;
 - M1-B: `9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770`;
 - M1-C: `343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e`;
@@ -35,14 +35,29 @@ It was generated independently with Python 3.13.13, NumPy 2.4.5, PCG64 seed
 [`generate_f017_m1d_projection_oracle.py`](../../../scripts/research/generate_f017_m1d_projection_oracle.py).
 The committed real-shaped checkpoint-free oracle is
 [`f017-m1d-projection-oracle-v1.json`](../../../specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-oracle-v1.json),
-SHA-256 `edcc216b046ade881ea7529dd6d39cbbca522fc5891fb628416d6fa17aac5c32`.
+SHA-256 `1727e63a5daee0ffbb0bf6dea11ea5ecf1b559850632785d5c8864c2bbaf503a`.
 
 For the later real attempt,
 [`prepare_f017_m1d_real_reference.py`](../../../scripts/research/prepare_f017_m1d_real_reference.py)
 must run first. It exclusively creates the local oracle and package after one
-bounded matrix read, then records the real packed, decoded, and expected-output
-hashes. The runner consumes those immutable files afterward. This ordering is
-validated; candidate output cannot define or alter the oracle or bounds.
+bounded matrix read, makes the finalized oracle read-only, then records the
+real packed, decoded, expected-output, bound-vector, generator, and finalized
+oracle hashes. The runner validates and re-hashes that exact oracle before
+recording `candidate_started_sequence_1`, and re-hashes it again after native
+execution. The oracle's `oracle_finalized_sequence_0` marker and completion
+timestamp must strictly precede candidate start. A producer boolean is not
+accepted as ordering proof.
+
+## Repeat integrity
+
+The single admitted experiment requires ten native repeats. Each repeat is
+synchronized, fully read back, shape-checked, serialized as canonical
+little-endian f32, and SHA-256 hashed before its output buffer may be reused.
+Evidence must contain ordinals `0..9`, ten hashes, `repeat_count_required = 10`,
+`repeat_count_observed = 10`, `all_repeat_hashes_equal = true`, and a selected
+output hash equal to recorded repeat 9. Native dispatch count must be ten.
+Missing, extra, malformed, or divergent repeats fail; no automatic rerun is
+permitted.
 
 ## Decoder, scaffold, and Tier B
 
@@ -81,6 +96,7 @@ f017-glm52-runner \
 
 The four variables are reviewed machine-local paths. Output acquisition is
 exclusive. Any missing/stale binding, second projection, fallback, backend
-error, lifecycle mismatch, numerical failure, or non-greedy classification
-mismatch fails closed. M1-E, expert/layer/logits, P1/P2/golden-eight,
+error, repeat mismatch, oracle-order mismatch, lifecycle mismatch, numerical
+failure, or non-greedy classification mismatch fails closed. M1-E,
+expert/layer/logits, P1/P2/golden-eight,
 Feature 018, and output-head residency remain blocked.
