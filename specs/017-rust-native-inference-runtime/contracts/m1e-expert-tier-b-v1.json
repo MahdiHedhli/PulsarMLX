@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.m1e-expert-tier-b-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-production-m1e-expert-tier-b-v1",
+  "threshold_fit_to_observed_candidate": false,
+  "immutable_after_candidate_observation": true,
+  "constants": {
+    "f32_unit_roundoff": 5.960464477539063e-8,
+    "f32_smallest_positive_subnormal": 1.401298464324817e-45,
+    "silu_global_derivative_bound": 1.1
+  },
+  "matvec_bound": "B=2*gamma(2*n)*sum(abs(f64(w)*f64(x)))+4*n*2^-149",
+  "activation_bound": "H=abs(up)*1.1*B_gate + abs(silu(gate))*B_up + 1.1*B_gate*B_up + 4*u*(abs(silu(gate)*up)+preceding_terms)+4*eta",
+  "final_bound": "F=2*gamma(2*n_down)*sum(abs(w_down*hidden)) + sum(abs(w_down)*H) + gamma(2*n_down)*sum(abs(w_down)*H) + 4*n_down*eta",
+  "rmse_bound": "sqrt(mean(F^2))",
+  "cosine_minimum": "(||expected||2-||F||2)/(||expected||2+||F||2) when expected norm exceeds bound norm",
+  "gate_and_up_bounds_required": true,
+  "activated_hidden_bounds_required": true,
+  "final_row_bounds_required": true,
+  "signed_zero": "exact_when_expected_and_candidate_are_zero",
+  "non_finite_allowed": false,
+  "deterministic_repeat_minimum": 10,
+  "greedy_applicability": "not_applicable",
+  "success_classification": "numerically_qualified_greedy_not_applicable",
+  "retuning_policy": "preserve_v1_failure_and_publish_reviewed_v2"
+}

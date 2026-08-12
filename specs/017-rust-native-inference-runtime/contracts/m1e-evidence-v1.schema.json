@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1e-evidence-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","schema_version","attempt","identity","boundary","oracle","production","numerics","lifecycle","isolation","timings","result"],
+  "properties": {
+    "schema": {"const":"pulsarmlx.f017.m1e-evidence"},
+    "schema_version": {"const":"1.0.0"},
+    "attempt": {"type":"object","required":["number","state","consumed"],"properties":{"number":{"const":1},"state":{"enum":["authorized_not_executed","execution_started","completed"]},"consumed":{"type":"boolean"}}},
+    "identity": {"type":"object","required":["runtime_sha","tooling_sha","execution_config_sha256","prior_evidence","checkpoint_set_sha256","catalog_sha256","tensor_map_sha256"]},
+    "boundary": {"type":"object","required":["layer","expert","tensors","compressed_byte_budget"]},
+    "oracle": {"type":"object","required":["package_sha256","generator_sha256","completed_at","validated_before_candidate","stage_reference_sha256","matrix_payload_sha256","decoded_matrix_sha256"]},
+    "production": {"type":"object","required":["conceptual_expert_count","native_dispatch_count","repeat_count","stage_hashes","fallback","errors"]},
+    "numerics": {"type":"object","required":["contract_sha256","stage_metrics","classification","greedy_applicability"]},
+    "lifecycle": {"type":"object","required":["reconciled"]},
+    "isolation": {"type":"object","required":["payload_count","projection_count","expert_count","layer_count","logits_count","p1","p2","golden_eight","feature_018"]},
+    "timings": {"type":"object","minProperties":15,"additionalProperties":{"type":"number","minimum":0}},
+    "result": {"type":"object","required":["classification","first_failure","pass_persisted_after_validation"]}
+  }
+}

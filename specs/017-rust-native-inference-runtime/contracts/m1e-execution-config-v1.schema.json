@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1e-execution-config-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","schema_version","status","attempt","attempt_consumed","runtime_sha","tooling_sha","repository_root","package_root","activation_fixture","activation_payload_sha256","repository_artifacts","local_artifacts","prior_evidence","checkpoint_bindings","expert","tensors","runner","execution"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1e-execution-config"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "READY_TO_EXECUTE_M1_E"},
+    "attempt": {"const": 1},
+    "attempt_consumed": {"const": false},
+    "runtime_sha": {"$ref": "#/$defs/gitSha"},
+    "tooling_sha": {"$ref": "#/$defs/gitSha"},
+    "repository_root": {"$ref": "#/$defs/root"},
+    "package_root": {"$ref": "#/$defs/root"},
+    "activation_fixture": {"$ref": "#/$defs/repositoryArtifact"},
+    "activation_payload_sha256": {"$ref": "#/$defs/sha256"},
+    "repository_artifacts": {"type": "object", "minProperties": 14, "maxProperties": 14, "additionalProperties": {"$ref": "#/$defs/repositoryArtifact"}},
+    "local_artifacts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["environment_manifest","checkpoint_manifest","target_shard","oracle_output","package_output","evidence_output"],
+      "properties": {
+        "environment_manifest": {"$ref": "#/$defs/localFile"},
+        "checkpoint_manifest": {"$ref": "#/$defs/localFile"},
+        "target_shard": {"$ref": "#/$defs/targetShard"},
+        "oracle_output": {"type": "string", "minLength": 1},
+        "package_output": {"type": "string", "minLength": 1},
+        "evidence_output": {"type": "string", "minLength": 1}
+      }
+    },
+    "prior_evidence": {"type": "object", "minProperties": 4, "maxProperties": 4, "additionalProperties": {"$ref": "#/$defs/sha256"}},
+    "checkpoint_bindings": {"type": "object", "minProperties": 3, "maxProperties": 3, "additionalProperties": {"$ref": "#/$defs/sha256"}},
+    "expert": {
+      "type": "object", "additionalProperties": false,
+      "required": ["layer","expert","symbolic_id"],
+      "properties": {"layer":{"const":3},"expert":{"const":15},"symbolic_id":{"const":"blk.3.expert.15"}}
+    },
+    "tensors": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/tensor"}},
+    "runner": {
+      "type":"object","additionalProperties":false,"required":["mode","memory_floor_bytes"],
+      "properties":{"mode":{"enum":["fixture_expert","real_expert"]},"memory_floor_bytes":{"type":"integer","minimum":1}}
+    },
+    "execution": {
+      "type":"object","additionalProperties":false,
+      "required":["conceptual_expert_count","repeat_count","native_dispatch_count","maximum_payload_count","maximum_positional_reads","maximum_shard_opens","compressed_byte_budget","auto_retry","stop_before_m1_f"],
+      "properties":{"conceptual_expert_count":{"const":1},"repeat_count":{"const":10},"native_dispatch_count":{"const":30},"maximum_payload_count":{"const":3},"maximum_positional_reads":{"const":3},"maximum_shard_opens":{"const":1},"compressed_byte_budget":{"const":11304960},"auto_retry":{"const":false},"stop_before_m1_f":{"const":true}}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "root": {"type":"object","additionalProperties":false,"required":["path_kind","path","identity"],"properties":{"path_kind":{"const":"absolute_private_local"},"path":{"type":"string","minLength":1},"identity":{"type":"string","minLength":1}}},
+    "repositoryArtifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path_kind","symbolic_path","content_sha256","logical_role"],
+      "properties": {"path_kind":{"const":"repository_relative"},"symbolic_path":{"type":"string","minLength":1},"content_sha256":{"$ref":"#/$defs/sha256"},"logical_role":{"type":"string","minLength":1}}
+    },
+    "localFile": {"type":"object","additionalProperties":false,"required":["path_kind","path","content_sha256"],"properties":{"path_kind":{"const":"absolute_private_local"},"path":{"type":"string","minLength":1},"content_sha256":{"$ref":"#/$defs/sha256"}}},
+    "targetShard": {"type":"object","additionalProperties":false,"required":["path_kind","path","ordinal","basename","byte_size","content_sha256"],"properties":{"path_kind":{"const":"absolute_private_local"},"path":{"type":"string","minLength":1},"ordinal":{"const":2},"basename":{"type":"string","minLength":1},"byte_size":{"type":"integer","minimum":1},"content_sha256":{"$ref":"#/$defs/sha256"}}},
+    "tensor": {
+      "type":"object","additionalProperties":false,
+      "required":["role","name","layer","expert","quantization","gguf_shape","logical_matrix_shape","shard_ordinal","offset","packed_length","packed_row_width","catalog_entry_sha256","decoder_contract_sha256","path_kind","allowed_read_count"],
+      "properties":{"role":{"enum":["gate","up","down"]},"name":{"type":"string","minLength":1},"layer":{"const":3},"expert":{"const":15},"quantization":{"enum":["IQ2_XXS","IQ3_XXS"]},"gguf_shape":{"type":"array","minItems":3,"maxItems":3,"items":{"type":"integer","minimum":1}},"logical_matrix_shape":{"type":"array","minItems":2,"maxItems":2,"items":{"type":"integer","minimum":1}},"shard_ordinal":{"const":2},"offset":{"type":"integer","minimum":0},"packed_length":{"type":"integer","minimum":1},"packed_row_width":{"type":"integer","minimum":1},"catalog_entry_sha256":{"$ref":"#/$defs/sha256"},"decoder_contract_sha256":{"$ref":"#/$defs/sha256"},"path_kind":{"const":"bounded_checkpoint_range"},"allowed_read_count":{"const":1}}
+    }
+  }
+}

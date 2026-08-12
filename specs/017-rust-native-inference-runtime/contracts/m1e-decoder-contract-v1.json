@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.m1e-decoder-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-m1e-iq2-iq3-decoder-v1",
+  "decoders": [
+    {
+      "quantization": "IQ2_XXS",
+      "values_per_block": 256,
+      "packed_bytes_per_block": 66,
+      "row_width_6144": 1584,
+      "candidate": "quant::decode_iq2_xxs_matrix",
+      "independent_oracle": "scripts/research/iq2_xxs_dequant.py",
+      "independent_source_sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761"
+    },
+    {
+      "quantization": "IQ3_XXS",
+      "values_per_block": 256,
+      "packed_bytes_per_block": 98,
+      "row_width_2048": 784,
+      "candidate": "quant::decode_iq3_xxs_matrix",
+      "independent_oracle": "scripts/research/iq3_xxs_dequant.py",
+      "independent_source_sha256": "316ab363b6a78681a8e3b1960ef86e77983e46654099a2e8aff4f5c81417bec8"
+    }
+  ],
+  "malformed_or_truncated": "fail_without_partial_output",
+  "non_finite_scale": "fail",
+  "signed_zero": "preserve_ieee754_bits",
+  "candidate_and_oracle_implementations_independent": true
+}

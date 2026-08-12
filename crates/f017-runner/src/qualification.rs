@@ -9,6 +9,8 @@ pub const EXACT_SCAFFOLD_VERSION: &str = "f017-exact-f32-sequential-v1";
 pub const TIER_B_CONTRACT_VERSION: &str = "f017-production-expert-tier-b-v1";
 pub const M1D_EXACT_SCAFFOLD_VERSION: &str = "f017-m1d-q8-0-sequential-f32-v1";
 pub const M1D_TIER_B_CONTRACT_VERSION: &str = "f017-production-m1d-projection-tier-b-v1";
+pub const M1E_EXACT_SCAFFOLD_VERSION: &str = "f017-m1e-real-expert-sequential-f32-v1";
+pub const M1E_TIER_B_CONTRACT_VERSION: &str = "f017-production-m1e-expert-tier-b-v1";
 const F32_UNIT_ROUNDOFF: f64 = 5.960_464_477_539_063e-8;
 const F32_SMALLEST_SUBNORMAL: f64 = 1.401_298_464_324_817e-45;
 
@@ -52,6 +54,20 @@ pub struct TierBQualification {
     pub rows: Vec<TierBRowQualification>,
     pub rmse_bound: f64,
     pub cosine_minimum: Option<f64>,
+    pub passes: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct M1eExpertQualification {
+    pub contract_version: &'static str,
+    pub gate: TierBQualification,
+    pub up: TierBQualification,
+    pub activated_hidden: NumericalMetrics,
+    pub hidden_absolute_bounds: Vec<f64>,
+    pub final_output: NumericalMetrics,
+    pub final_absolute_bounds: Vec<f64>,
+    pub final_rmse_bound: f64,
+    pub final_cosine_minimum: Option<f64>,
     pub passes: bool,
 }
 
@@ -264,6 +280,159 @@ pub fn qualify_m1d_projection_tier_b(
         expected,
         actual,
     )
+}
+
+/// Qualify a complete M1-E expert using an immutable, candidate-independent
+/// forward-error composition across gate, up, SwiGLU, and down boundaries.
+#[allow(clippy::too_many_arguments)]
+pub fn qualify_m1e_expert_tier_b(
+    gate_matrix: &[f32],
+    up_matrix: &[f32],
+    down_matrix: &[f32],
+    input: &[f32],
+    reference_gate: &[f32],
+    candidate_gate: &[f32],
+    reference_up: &[f32],
+    candidate_up: &[f32],
+    reference_hidden: &[f32],
+    candidate_hidden: &[f32],
+    reference_output: &[f32],
+    candidate_output: &[f32],
+) -> Result<M1eExpertQualification, QualificationError> {
+    let gate_rows = reference_gate.len();
+    let input_width = input.len();
+    let output_rows = reference_output.len();
+    if gate_rows == 0
+        || output_rows == 0
+        || reference_up.len() != gate_rows
+        || candidate_gate.len() != gate_rows
+        || candidate_up.len() != gate_rows
+        || reference_hidden.len() != gate_rows
+        || candidate_hidden.len() != gate_rows
+        || candidate_output.len() != output_rows
+        || gate_matrix.len() != gate_rows * input_width
+        || up_matrix.len() != gate_rows * input_width
+        || down_matrix.len() != output_rows * gate_rows
+    {
+        return Err(QualificationError::OutputLength);
+    }
+    let gate = qualify_tier_b_with_contract(
+        M1E_TIER_B_CONTRACT_VERSION,
+        gate_matrix,
+        gate_rows,
+        input_width,
+        input,
+        reference_gate,
+        candidate_gate,
+    )?;
+    let up = qualify_tier_b_with_contract(
+        M1E_TIER_B_CONTRACT_VERSION,
+        up_matrix,
+        gate_rows,
+        input_width,
+        input,
+        reference_up,
+        candidate_up,
+    )?;
+    let activated_hidden = measure_f32(reference_hidden, candidate_hidden)?;
+    let mut hidden_absolute_bounds = Vec::with_capacity(gate_rows);
+    for index in 0..gate_rows {
+        let gate_bound = gate.rows[index].absolute_bound;
+        let up_bound = up.rows[index].absolute_bound;
+        let gate_value = f64::from(reference_gate[index]);
+        let up_value = f64::from(reference_up[index]);
+        let silu = if up_value == 0.0 {
+            let e = (-gate_value).exp();
+            gate_value / (1.0 + e)
+        } else {
+            f64::from(reference_hidden[index]) / up_value
+        };
+        let preceding =
+            up_value.abs() * 1.1 * gate_bound + silu.abs() * up_bound + 1.1 * gate_bound * up_bound;
+        hidden_absolute_bounds.push(
+            preceding
+                + 4.0 * F32_UNIT_ROUNDOFF * (f64::from(reference_hidden[index]).abs() + preceding)
+                + 4.0 * F32_SMALLEST_SUBNORMAL,
+        );
+    }
+    let final_output = measure_f32(reference_output, candidate_output)?;
+    let reduction = qualify_tier_b_with_contract(
+        M1E_TIER_B_CONTRACT_VERSION,
+        down_matrix,
+        output_rows,
+        gate_rows,
+        reference_hidden,
+        reference_output,
+        candidate_output,
+    )?;
+    let ku = 2.0 * gate_rows as f64 * F32_UNIT_ROUNDOFF;
+    if ku >= 1.0 {
+        return Err(QualificationError::ShapeOverflow);
+    }
+    let reduction_gamma = ku / (1.0 - ku);
+    let mut final_absolute_bounds = Vec::with_capacity(output_rows);
+    for row in 0..output_rows {
+        let propagation = (0..gate_rows)
+            .map(|column| {
+                f64::from(down_matrix[row * gate_rows + column]).abs()
+                    * hidden_absolute_bounds[column]
+            })
+            .sum::<f64>();
+        final_absolute_bounds.push(
+            reduction.rows[row].absolute_bound
+                + propagation * (1.0 + reduction_gamma)
+                + 4.0 * gate_rows as f64 * F32_SMALLEST_SUBNORMAL,
+        );
+    }
+    let final_rmse_bound =
+        (final_absolute_bounds.iter().map(|v| v * v).sum::<f64>() / output_rows as f64).sqrt();
+    let expected_norm = reference_output
+        .iter()
+        .map(|v| f64::from(*v).powi(2))
+        .sum::<f64>()
+        .sqrt();
+    let bound_norm = final_absolute_bounds
+        .iter()
+        .map(|v| v * v)
+        .sum::<f64>()
+        .sqrt();
+    let final_cosine_minimum = (expected_norm > bound_norm)
+        .then_some((expected_norm - bound_norm) / (expected_norm + bound_norm));
+    let stage_passes = gate.passes
+        && up.passes
+        && activated_hidden.non_finite_count == 0
+        && activated_hidden.signed_zero_mismatch_count == 0
+        && activated_hidden.max_abs_error
+            <= hidden_absolute_bounds.iter().copied().fold(0.0, f64::max)
+        && final_output.non_finite_count == 0
+        && final_output.signed_zero_mismatch_count == 0
+        && reference_output
+            .iter()
+            .zip(candidate_output)
+            .zip(&final_absolute_bounds)
+            .all(|((&expected, &actual), &bound)| {
+                expected.is_finite()
+                    && actual.is_finite()
+                    && (f64::from(actual) - f64::from(expected)).abs() <= bound
+            })
+        && final_output.rmse <= final_rmse_bound
+        && final_cosine_minimum.is_none_or(|minimum| {
+            final_output
+                .cosine_similarity
+                .is_some_and(|actual| actual >= minimum)
+        });
+    Ok(M1eExpertQualification {
+        contract_version: M1E_TIER_B_CONTRACT_VERSION,
+        gate,
+        up,
+        activated_hidden,
+        hidden_absolute_bounds,
+        final_output,
+        final_absolute_bounds,
+        final_rmse_bound,
+        final_cosine_minimum,
+        passes: stage_passes,
+    })
 }
 
 fn qualify_tier_b_with_contract(

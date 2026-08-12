@@ -136,6 +136,10 @@ pub struct ExecutionEvidence {
     pub numerical: NumericalEvidence,
     pub progress_state: String,
     #[serde(default)]
+    pub attempt_state: String,
+    #[serde(default)]
+    pub attempt_consumed: bool,
+    #[serde(default)]
     pub projection_count: u64,
     #[serde(default)]
     pub quant_decode_count: u64,
@@ -147,6 +151,12 @@ pub struct ExecutionEvidence {
     pub logits_count: u64,
     #[serde(default)]
     pub p1: bool,
+    #[serde(default)]
+    pub p2: bool,
+    #[serde(default)]
+    pub golden_eight: bool,
+    #[serde(default)]
+    pub feature_018: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
@@ -169,6 +179,26 @@ pub struct NumericalEvidence {
     pub repeat_integrity: RepeatIntegrityEvidence,
     #[serde(default)]
     pub oracle_ordering: OracleOrderingEvidence,
+    #[serde(default)]
+    pub expert_repeat_integrity: ExpertRepeatIntegrityEvidence,
+    #[serde(default)]
+    pub expert_payload_sha256: BTreeMap<String, String>,
+    #[serde(default)]
+    pub expert_decoded_sha256: BTreeMap<String, String>,
+    #[serde(default)]
+    pub expert_reference_sha256: BTreeMap<String, String>,
+    #[serde(default)]
+    pub expert_stage_metrics: BTreeMap<String, ExpertStageMetricsEvidence>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct ExpertStageMetricsEvidence {
+    pub bit_mismatch_count: u64,
+    pub signed_zero_mismatch_count: u64,
+    pub max_abs_error: f64,
+    pub rmse: f64,
+    pub cosine_similarity: Option<f64>,
+    pub passed: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -195,6 +225,28 @@ pub struct OracleOrderingEvidence {
     pub candidate_started_at: Option<String>,
     pub candidate_start_marker: Option<String>,
     pub structural_order_valid: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ExpertRepeatIntegrityEvidence {
+    pub repeat_count_required: u64,
+    pub repeat_count_observed: u64,
+    pub native_dispatch_count_expected: u64,
+    pub conceptual_expert_count: u64,
+    pub outputs: Vec<ExpertRepeatOutputEvidence>,
+    pub gate_all_equal: bool,
+    pub up_all_equal: bool,
+    pub activated_hidden_all_equal: bool,
+    pub final_output_all_equal: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ExpertRepeatOutputEvidence {
+    pub ordinal: u64,
+    pub gate_sha256: String,
+    pub up_sha256: String,
+    pub activated_hidden_sha256: String,
+    pub final_output_sha256: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -454,12 +506,17 @@ impl Evidence {
                 numerical_classification: None,
                 numerical: NumericalEvidence::default(),
                 progress_state: "initialized".to_owned(),
+                attempt_state: "not_applicable".to_owned(),
+                attempt_consumed: false,
                 projection_count: 0,
                 quant_decode_count: 0,
                 expert_execution_count: 0,
                 layer_execution_count: 0,
                 logits_count: 0,
                 p1: false,
+                p2: false,
+                golden_eight: false,
+                feature_018: false,
             },
             residency: ResidencyEvidence::default(),
             lifecycle: LifecycleEvidence::default(),
@@ -608,6 +665,67 @@ impl Evidence {
                 ));
             }
         }
+        if matches!(self.input.mode.as_str(), "fixture_expert" | "real_expert")
+            && self.execution.progress_state == "m1e_one_expert_complete"
+            && (self.identity.prior_evidence
+                != BTreeMap::from([
+                    (
+                        "m1_a".into(),
+                        "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805".into(),
+                    ),
+                    (
+                        "m1_b".into(),
+                        "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770".into(),
+                    ),
+                    (
+                        "m1_c".into(),
+                        "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e".into(),
+                    ),
+                    (
+                        "m1_d".into(),
+                        "dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c".into(),
+                    ),
+                ])
+                || !valid_m1e_artifact_paths(
+                    &self.identity.artifact_paths,
+                    &self.identity.source_sha,
+                )
+                || self.execution.projection_count != 3
+                || self.execution.quant_decode_count != 3
+                || self.execution.expert_execution_count != 1
+                || self.execution.layer_execution_count != 0
+                || self.execution.logits_count != 0
+                || self.execution.p1
+                || self.execution.p2
+                || self.execution.golden_eight
+                || self.execution.feature_018
+                || self.execution.dispatch.native != 30
+                || !self.execution.attempt_consumed
+                || self.execution.attempt_state != "execution_started"
+                || self.execution.numerical.expert_payload_sha256.len() != 3
+                || self.execution.numerical.expert_decoded_sha256.len() != 3
+                || self.execution.numerical.expert_reference_sha256.len() != 4
+                || self.execution.numerical.expert_stage_metrics.len() != 4
+                || self
+                    .execution
+                    .numerical
+                    .expert_stage_metrics
+                    .values()
+                    .any(|metrics| !metrics.passed)
+                || !valid_m1e_timings(&self.execution.timings)
+                || self.execution.numerical.greedy_applicability
+                    != Some(GreedyApplicability::NotApplicable)
+                || self.execution.numerical_classification
+                    != Some(NumericalClassification::NumericallyQualifiedGreedyNotApplicable)
+                || validate_m1e_repeat_integrity(&self.execution.numerical.expert_repeat_integrity)
+                    .is_err()
+                || validate_m1e_oracle_ordering(&self.execution.numerical.oracle_ordering).is_err())
+        {
+            return Err(evidence_error(
+                "m1e_isolation",
+                "M1-E PASS requires one expert, three bounded tensors, thirty native dispatches, ten equal stage hashes, and no layer/logits/P1",
+            ));
+        }
         Ok(())
     }
 
@@ -661,6 +779,8 @@ impl Evidence {
             || self.input.mode == "p1"
             || self.input.mode == "real_projection"
             || self.input.mode == "fixture_projection"
+            || self.input.mode == "real_expert"
+            || self.input.mode == "fixture_expert"
             || (self.input.mode == "fixture"
                 && self.input.numerical_mode.as_deref() == Some("production_mlx_tier_b"));
         if production_execution
@@ -716,6 +836,65 @@ impl Evidence {
         }
         Ok(())
     }
+}
+
+fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) -> bool {
+    let expected = BTreeMap::from([
+        ("activation_fixture", "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),
+        ("activation_generator", "scripts/research/generate_f017_m1e_activation.py"),
+        ("execution_config_preparer", "scripts/research/prepare_f017_m1e_execution.py"),
+        ("boundary_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json"),
+        ("decoder_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json"),
+        ("evidence_schema", "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json"),
+        ("execution_config_schema", "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json"),
+        ("independent_iq2_decoder", "scripts/research/iq2_xxs_dequant.py"),
+        ("independent_iq3_decoder", "scripts/research/iq3_xxs_dequant.py"),
+        ("path_resolution_contract", "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),
+        ("real_reference_preparer", "scripts/research/prepare_f017_m1e_real_reference.py"),
+        ("repeat_integrity_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json"),
+        ("scaffold_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json"),
+        ("tier_b_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json"),
+        ("timing_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json"),
+    ]);
+    if paths.len() != expected.len() {
+        return false;
+    }
+    paths.iter().all(|path| {
+        expected.get(path.logical_role.as_str()).copied() == Some(path.symbolic_path.as_str())
+            && path.path_kind == "repository_relative"
+            && path.repository_identity.as_deref() == Some(source_sha)
+            && path.package_artifact_id.is_none()
+            && path.content_sha256.len() == 64
+            && path
+                .content_sha256
+                .bytes()
+                .all(|byte| byte.is_ascii_hexdigit())
+    })
+}
+
+fn valid_m1e_timings(timings: &BTreeMap<String, f64>) -> bool {
+    let required = [
+        "storage_seconds",
+        "decoder_gate_seconds",
+        "decoder_up_seconds",
+        "decoder_down_seconds",
+        "oracle_gate_seconds",
+        "oracle_up_seconds",
+        "oracle_activation_seconds",
+        "oracle_down_seconds",
+        "production_import_seconds",
+        "production_gate_compute_sync_readback_seconds",
+        "production_up_compute_sync_readback_seconds",
+        "production_activation_orchestration_seconds",
+        "production_down_compute_sync_readback_seconds",
+        "teardown_seconds",
+        "total_wall_seconds",
+    ];
+    required.iter().all(|name| {
+        timings
+            .get(*name)
+            .is_some_and(|value| value.is_finite() && *value >= 0.0)
+    })
 }
 
 fn valid_m1d_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) -> bool {
@@ -821,6 +1000,77 @@ fn validate_m1d_oracle_ordering(ordering: &OracleOrderingEvidence) -> Result<(),
         return Err(evidence_error(
             "m1d_oracle_ordering",
             "M1-D PASS requires a finalized oracle package structurally validated before candidate start",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_m1e_oracle_ordering(ordering: &OracleOrderingEvidence) -> Result<(), RunnerError> {
+    let completed = ordering
+        .oracle_completed_at
+        .as_deref()
+        .and_then(|v| v.parse::<u128>().ok());
+    let started = ordering
+        .candidate_started_at
+        .as_deref()
+        .and_then(|v| v.parse::<u128>().ok());
+    if !ordering
+        .oracle_package_sha256
+        .as_deref()
+        .is_some_and(valid_sha256)
+        || ordering.oracle_completion_marker.as_deref() != Some("oracle_finalized_sequence_0")
+        || ordering.candidate_start_marker.as_deref() != Some("candidate_started_sequence_1")
+        || !ordering.oracle_validated_before_candidate
+        || !ordering.structural_order_valid
+        || !matches!((completed, started), (Some(a), Some(b)) if a < b)
+    {
+        return Err(evidence_error(
+            "m1e_oracle_ordering",
+            "M1-E oracle must be finalized and structurally validated before candidate start",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_m1e_repeat_integrity(value: &ExpertRepeatIntegrityEvidence) -> Result<(), RunnerError> {
+    let first = value.outputs.first();
+    let hashes_valid = value.outputs.iter().enumerate().all(|(ordinal, entry)| {
+        entry.ordinal == ordinal as u64
+            && [
+                &entry.gate_sha256,
+                &entry.up_sha256,
+                &entry.activated_hidden_sha256,
+                &entry.final_output_sha256,
+            ]
+            .iter()
+            .all(|hash| valid_sha256(hash))
+    });
+    let equal = |select: fn(&ExpertRepeatOutputEvidence) -> &str| {
+        first.is_some_and(|first| {
+            value
+                .outputs
+                .iter()
+                .all(|entry| select(entry) == select(first))
+        })
+    };
+    if value.repeat_count_required != 10
+        || value.repeat_count_observed != 10
+        || value.native_dispatch_count_expected != 30
+        || value.conceptual_expert_count != 1
+        || value.outputs.len() != 10
+        || !hashes_valid
+        || !value.gate_all_equal
+        || !value.up_all_equal
+        || !value.activated_hidden_all_equal
+        || !value.final_output_all_equal
+        || !equal(|entry| &entry.gate_sha256)
+        || !equal(|entry| &entry.up_sha256)
+        || !equal(|entry| &entry.activated_hidden_sha256)
+        || !equal(|entry| &entry.final_output_sha256)
+    {
+        return Err(evidence_error(
+            "m1e_repeat_integrity",
+            "M1-E requires ten bit-identical hashes at every expert stage",
         ));
     }
     Ok(())

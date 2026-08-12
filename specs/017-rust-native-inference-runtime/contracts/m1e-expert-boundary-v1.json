@@ -1,0 +1,70 @@
+{
+  "schema": "pulsarmlx.f017.m1e-expert-boundary",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-m1e-real-expert-boundary-v1",
+  "selection": {
+    "layer": 3,
+    "expert": 15,
+    "symbolic_id": "blk.3.expert.15",
+    "selection_basis": "pre-existing Feature 016 routed-expert metadata; no M1-E candidate output observed",
+    "router_required": false,
+    "shared_expert_required": false
+  },
+  "dimensions": {
+    "input_width": 6144,
+    "intermediate_width": 2048,
+    "output_width": 6144
+  },
+  "tensors": [
+    {
+      "role": "gate",
+      "name": "blk.3.ffn_gate_exps.weight",
+      "quantization": "IQ2_XXS",
+      "gguf_shape": [6144, 2048, 256],
+      "logical_matrix_shape": [2048, 6144],
+      "shard_ordinal": 2,
+      "offset": 3423197024,
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "catalog_entry_sha256": "42e379023728565d323fff8b120f2c6dff6fa50f10d9ad1cceb3e3597af36354",
+      "allowed_read_count": 1
+    },
+    {
+      "role": "up",
+      "name": "blk.3.ffn_up_exps.weight",
+      "quantization": "IQ2_XXS",
+      "gguf_shape": [6144, 2048, 256],
+      "logical_matrix_shape": [2048, 6144],
+      "shard_ordinal": 2,
+      "offset": 4268636000,
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "catalog_entry_sha256": "011ccab7ca2293da5b0d1112172b2dccd4b2cdb2482672dd217f996280223119",
+      "allowed_read_count": 1
+    },
+    {
+      "role": "down",
+      "name": "blk.3.ffn_down_exps.weight",
+      "quantization": "IQ3_XXS",
+      "gguf_shape": [2048, 6144, 256],
+      "logical_matrix_shape": [6144, 2048],
+      "shard_ordinal": 2,
+      "offset": 2203342688,
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "catalog_entry_sha256": "1c7a04eb897d242a621a09c6dfb78c3e92b407dff44ddf8cf67187dae50081e1",
+      "allowed_read_count": 1
+    }
+  ],
+  "checkpoint_access_budget": {
+    "payload_count": 3,
+    "maximum_shard_opens": 1,
+    "maximum_positional_reads": 3,
+    "compressed_bytes": 11304960,
+    "router": false,
+    "second_expert": false,
+    "shared_expert": false,
+    "neighbor_layer": false,
+    "output_head": false
+  }
+}

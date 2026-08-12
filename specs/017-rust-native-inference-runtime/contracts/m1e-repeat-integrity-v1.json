@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.m1e-repeat-integrity",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-m1e-repeat-integrity-v1",
+  "conceptual_experts": 1,
+  "required_repeats": 10,
+  "repeat_ordinals": [0,1,2,3,4,5,6,7,8,9],
+  "stage_hashes": ["gate", "up", "activated_hidden", "final_output"],
+  "all_stage_hashes_equal_required": true,
+  "native_matvec_dispatches_per_repeat": 3,
+  "native_matvec_dispatches_total": 30,
+  "fallback": 0,
+  "backend_errors": 0,
+  "qualification_scaffold_production_dispatches": 0,
+  "explicit_reference_production_dispatches": 0
+}

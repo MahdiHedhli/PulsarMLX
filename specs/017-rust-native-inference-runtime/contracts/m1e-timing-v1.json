@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.m1e-timing-contract",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-m1e-boundary-timing-v1",
+  "buckets": [
+    "storage_seconds",
+    "decoder_gate_seconds",
+    "decoder_up_seconds",
+    "decoder_down_seconds",
+    "oracle_gate_seconds",
+    "oracle_up_seconds",
+    "oracle_activation_seconds",
+    "oracle_down_seconds",
+    "production_import_seconds",
+    "production_gate_compute_sync_readback_seconds",
+    "production_up_compute_sync_readback_seconds",
+    "production_activation_orchestration_seconds",
+    "production_down_compute_sync_readback_seconds",
+    "teardown_seconds",
+    "total_wall_seconds"
+  ],
+  "interpretation": "boundary_timings_not_model_performance_claims",
+  "all_buckets_required": true,
+  "non_negative_finite": true
+}

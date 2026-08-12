@@ -19,6 +19,10 @@ fn main() {
 
     match f017_runner::execute(config) {
         Ok(evidence) => {
+            if evidence.execution.progress_state == "READY_TO_EXECUTE_M1_E" {
+                println!("READY_TO_EXECUTE_M1_E");
+                return;
+            }
             println!(
                 "f017-glm52-runner completed: mode={} result={:?} progress={}",
                 evidence.input.mode,

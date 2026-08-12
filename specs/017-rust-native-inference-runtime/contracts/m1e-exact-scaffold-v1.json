@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.m1e-exact-scaffold",
+  "schema_version": "1.0.0",
+  "contract_version": "f017-m1e-real-expert-sequential-f32-v1",
+  "order": [
+    "gate_matvec_strict_increasing_column_f32_mul_then_add",
+    "up_matvec_strict_increasing_column_f32_mul_then_add",
+    "silu_gate_f32_exp_divide",
+    "elementwise_silu_gate_times_up_f32",
+    "down_matvec_strict_increasing_column_f32_mul_then_add"
+  ],
+  "input_dtype": "little_endian_f32",
+  "output_dtype": "little_endian_f32",
+  "fast_math": false,
+  "reassociation": false,
+  "f16_conversion": "not_applicable_after_independent_decode",
+  "production_reference_dispatch": false,
+  "deterministic_scaffold_repeats": 10
+}

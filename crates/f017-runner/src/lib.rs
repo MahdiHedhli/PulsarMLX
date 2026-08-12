@@ -4,6 +4,7 @@ pub mod checkpoint;
 pub mod cli;
 pub mod contract_bindings;
 pub mod evidence;
+pub mod expert_boundary;
 pub mod final_output_qualification;
 pub mod fixture;
 pub mod glm52_map;
@@ -11,6 +12,7 @@ pub mod json;
 pub mod layer_qualification;
 pub mod local_boundary;
 pub mod m1d_execution_config;
+pub mod m1e_execution_config;
 pub mod numerical_classification;
 pub mod projection_boundary;
 pub mod qualification;
@@ -85,7 +87,18 @@ impl std::error::Error for RunnerError {}
 
 pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
     if let Some(binding) = &config.execution_config {
-        m1d_execution_config::verify_unchanged(binding)?;
+        if binding.attempt == 1
+            && matches!(
+                config.mode,
+                RunnerMode::M1ePreflight
+                    | RunnerMode::FixtureExpert { .. }
+                    | RunnerMode::RealExpert { .. }
+            )
+        {
+            m1e_execution_config::verify_unchanged(binding)?;
+        } else {
+            m1d_execution_config::verify_unchanged(binding)?;
+        }
     }
     let environment = ValidatedEnvironment::load(&config.environment_manifest)?;
     environment.validate_for_mode(&config.mode)?;
@@ -123,7 +136,9 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
                 config.mode,
                 RunnerMode::AdapterPreflight
                     | RunnerMode::CheckpointIdentity
+                    | RunnerMode::M1ePreflight
                     | RunnerMode::RealProjection { .. }
+                    | RunnerMode::RealExpert { .. }
                     | RunnerMode::P1
             )
         {
@@ -138,6 +153,11 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
                 evidence.execution.progress_state = "dry_run_complete".to_owned();
                 Ok(())
             }
+            RunnerMode::M1ePreflight => {
+                evidence.lifecycle.reconciled = true;
+                evidence.execution.progress_state = "READY_TO_EXECUTE_M1_E".to_owned();
+                Ok(())
+            }
             RunnerMode::CheckpointIdentity | RunnerMode::FixtureCheckpointIdentity => {
                 verify_checkpoint_mode(&config, &mut evidence)
             }
@@ -148,6 +168,9 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
             RunnerMode::FixtureProjection { ref package }
             | RunnerMode::RealProjection { ref package } => {
                 projection_boundary::run(package, &config, &mut evidence)
+            }
+            RunnerMode::FixtureExpert { ref package } | RunnerMode::RealExpert { ref package } => {
+                expert_boundary::run(package, &config, &mut evidence)
             }
             RunnerMode::P1 => Err(RunnerError::new(
                 FailureClass::InfrastructureEvidence,
@@ -160,7 +183,18 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
     let result = result
         .and_then(|()| {
             if let Some(binding) = &config.execution_config {
-                m1d_execution_config::verify_unchanged(binding)?;
+                if binding.attempt == 1
+                    && matches!(
+                        config.mode,
+                        RunnerMode::M1ePreflight
+                            | RunnerMode::FixtureExpert { .. }
+                            | RunnerMode::RealExpert { .. }
+                    )
+                {
+                    m1e_execution_config::verify_unchanged(binding)?;
+                } else {
+                    m1d_execution_config::verify_unchanged(binding)?;
+                }
             }
             Ok(())
         })

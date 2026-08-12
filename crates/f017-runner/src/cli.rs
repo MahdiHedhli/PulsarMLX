@@ -6,6 +6,8 @@ use std::path::PathBuf;
 pub const USAGE: &str = "usage: f017-glm52-runner \
   --m1d-execution-config JSON --execution-config-sha256 SHA256\n\
 or: f017-glm52-runner \
+  --m1e-preflight-only|--m1e-execution-config JSON --execution-config-sha256 SHA256\n\
+or: f017-glm52-runner \
   --out FRESH_JSON \
   --validation-mode golden-strict \
   --stream-mode default-gpu|owned-device \
@@ -70,6 +72,9 @@ pub enum RunnerMode {
     Fixture { manifest: PathBuf },
     FixtureProjection { package: PathBuf },
     RealProjection { package: PathBuf },
+    M1ePreflight,
+    FixtureExpert { package: PathBuf },
+    RealExpert { package: PathBuf },
     P1,
 }
 
@@ -82,10 +87,13 @@ pub enum EnvironmentPolicy {
 
 pub fn mode_environment_policy(mode: &str) -> Option<EnvironmentPolicy> {
     match mode {
-        "adapter_preflight" | "checkpoint_identity" | "real_projection" | "p1" => {
-            Some(EnvironmentPolicy::ProductionReviewed)
-        }
-        "fixture_checkpoint_identity" | "fixture_projection" => {
+        "adapter_preflight"
+        | "checkpoint_identity"
+        | "real_projection"
+        | "m1e_preflight"
+        | "real_expert"
+        | "p1" => Some(EnvironmentPolicy::ProductionReviewed),
+        "fixture_checkpoint_identity" | "fixture_projection" | "fixture_expert" => {
             Some(EnvironmentPolicy::CheckpointFreeFixture)
         }
         "dry_run" | "fixture" => Some(EnvironmentPolicy::AnyValidated),
@@ -103,6 +111,9 @@ impl RunnerMode {
             Self::Fixture { .. } => "fixture",
             Self::FixtureProjection { .. } => "fixture_projection",
             Self::RealProjection { .. } => "real_projection",
+            Self::M1ePreflight => "m1e_preflight",
+            Self::FixtureExpert { .. } => "fixture_expert",
+            Self::RealExpert { .. } => "real_expert",
             Self::P1 => "p1",
         }
     }
@@ -154,9 +165,10 @@ where
     if args.len() == 1 && args[0] == "--version" {
         return Ok(ParseOutcome::Version);
     }
-    if args.iter().any(|argument| {
-        argument == "--m1d-execution-config" || argument == "--execution-config-sha256"
-    }) {
+    if args
+        .iter()
+        .any(|argument| argument == "--m1d-execution-config")
+    {
         if args.len() != 4
             || args[0] != "--m1d-execution-config"
             || args[2] != "--execution-config-sha256"
@@ -171,6 +183,29 @@ where
             .to_str()
             .ok_or_else(|| cli_error("m1d_config_sha", "execution config SHA-256 must be UTF-8"))?;
         return crate::m1d_execution_config::load(&path, expected)
+            .map(|loaded| ParseOutcome::Run(loaded.config));
+    }
+    if args
+        .iter()
+        .any(|argument| argument == "--m1e-preflight-only" || argument == "--m1e-execution-config")
+    {
+        let preflight = args
+            .first()
+            .is_some_and(|value| value == "--m1e-preflight-only");
+        if args.len() != 4
+            || (!preflight && args[0] != "--m1e-execution-config")
+            || args[2] != "--execution-config-sha256"
+        {
+            return Err(cli_error(
+                "m1e_config_only",
+                "M1-E accepts only one immutable config path and its SHA-256",
+            ));
+        }
+        let path = PathBuf::from(&args[1]);
+        let expected = args[3]
+            .to_str()
+            .ok_or_else(|| cli_error("m1e_config_sha", "execution config SHA-256 must be UTF-8"))?;
+        return crate::m1e_execution_config::load(&path, expected, preflight)
             .map(|loaded| ParseOutcome::Run(loaded.config));
     }
 
@@ -339,7 +374,7 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
     let has_execution =
         !config.tokens.is_empty() || config.n_new != 0 || config.expected_token.is_some();
     match &config.mode {
-        RunnerMode::DryRun | RunnerMode::AdapterPreflight => {
+        RunnerMode::DryRun | RunnerMode::AdapterPreflight | RunnerMode::M1ePreflight => {
             if config.checkpoint_manifest.is_some()
                 || has_execution
                 || config.numerical_mode.is_some()
@@ -378,7 +413,10 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                 ));
             }
         }
-        RunnerMode::FixtureProjection { .. } | RunnerMode::RealProjection { .. } => {
+        RunnerMode::FixtureProjection { .. }
+        | RunnerMode::RealProjection { .. }
+        | RunnerMode::FixtureExpert { .. }
+        | RunnerMode::RealExpert { .. } => {
             if config.repository_root.is_none() {
                 return Err(cli_error(
                     "missing_option",
@@ -431,7 +469,11 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
     }
     if !matches!(
         config.mode,
-        RunnerMode::FixtureProjection { .. } | RunnerMode::RealProjection { .. }
+        RunnerMode::FixtureProjection { .. }
+            | RunnerMode::RealProjection { .. }
+            | RunnerMode::FixtureExpert { .. }
+            | RunnerMode::RealExpert { .. }
+            | RunnerMode::M1ePreflight
     ) && config.repository_root.is_some()
     {
         return Err(cli_error(
