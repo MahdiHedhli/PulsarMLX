@@ -156,7 +156,7 @@
 - [x] T017-168 Execute the separately authorized M1-D attempt 2, preserve the
   fail-closed `m1d_activation_fixture_read` pre-candidate rejection, and stop
   without checkpoint access, candidate execution, retry, or M1-E promotion.
-- [ ] T017-169 Replace manual M1-D command assembly with one hash-bound typed
+- [x] T017-169 Replace manual M1-D command assembly with one hash-bound typed
   execution config, add non-consuming preflight and wrong-path/override
   regressions, and prepare a distinct unconsumed attempt-3 authorization.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.
