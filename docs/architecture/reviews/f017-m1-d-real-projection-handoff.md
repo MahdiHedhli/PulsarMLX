@@ -8,7 +8,7 @@ M1-D attempts remain `0`. This package authorizes nothing by itself.
 
 ## Frozen bindings
 
-- runtime source: `1fa0f17f2b15a685fba979b004714d11fed75559`;
+- runtime source: `63079d449beef43715fd0e565edee1559c401526`;
 - M1-A: `aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805`;
 - M1-B: `9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770`;
 - M1-C: `343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e`;
@@ -24,7 +24,7 @@ admitted tensor. Its GGUF shape is `[6144, 576]`, its logical matvec shape is
 `1,077,266,272`, with exactly `3,760,128` packed bytes and `6,528` bytes per
 row. The versioned identity is
 [`m1d-projection-boundary-v1.json`](../../../specs/017-rust-native-inference-runtime/contracts/m1d-projection-boundary-v1.json),
-SHA-256 `386ce07689257f34c1bb353c7e5d86ddbbeaf49dfd6dd3416ee26278e1b9ab5e`.
+SHA-256 `ab2c370fa750026f6772c60d19353265e93bada6778adc6e118dd9e2f5d41040`.
 
 ## Frozen activation and oracle
 

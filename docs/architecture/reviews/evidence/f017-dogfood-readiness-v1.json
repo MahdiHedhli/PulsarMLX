@@ -68,7 +68,7 @@
   "m1_d_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
     "fresh_authorization": "docs/architecture/reviews/f017-m1-d-fresh-authorization.md",
-    "runtime_source_sha": "1fa0f17f2b15a685fba979b004714d11fed75559",
+    "runtime_source_sha": "63079d449beef43715fd0e565edee1559c401526",
     "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
     "tier_b_contract": "f017-production-m1d-projection-tier-b-v1",
     "authorized": false,
