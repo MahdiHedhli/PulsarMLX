@@ -72,4 +72,3 @@ The payload and absolute local paths must remain outside Git.
 M1-C is not authorized here. M1-D through M1-G, T017-141, P1, P2,
 golden-eight, Feature 018 integration, and output-head residency remain
 blocked.
-

@@ -115,4 +115,3 @@ M1-B is accepted. A single bounded M1-C local-only tensor boundary is now
 meaningful to review, but it is **not authorized** by this result. T017-140
 remains open until that separately authorized real fixture is generated and
 validated. T017-141 and P1 remain blocked.
-
