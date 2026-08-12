@@ -474,8 +474,11 @@ fn validate_oracle(oracle: &Oracle, package: &ProjectionPackage) -> Result<(), R
         || oracle.boundary.output_shape != [ROWS]
         || oracle.activation.element_count != COLUMNS
         || oracle.activation.sha256 != ACTIVATION_SHA256
+        || oracle.activation.bytes_hex.len() != COLUMNS * 8
         || oracle.oracle.scaffold_version != M1D_EXACT_SCAFFOLD_VERSION
         || oracle.oracle.decoder_contract_version != DECODER_VERSION
+        || oracle.oracle.output_f32_hex.len() != ROWS * 8
+        || oracle.oracle.output_sha256.len() != 64
         || oracle.tier_b.contract_version != M1D_TIER_B_CONTRACT_VERSION
         || oracle.tier_b.threshold_fit_to_observed_candidate
         || !oracle.oracle.generated_before_candidate
@@ -620,6 +623,16 @@ mod tests {
         )
         .is_err());
         let (mut value, _) = package();
+        value.tensor.matrix_shape = [575, 6144];
+        assert!(validate_package(
+            &value,
+            &root,
+            &RunnerMode::FixtureProjection {
+                package: PathBuf::new()
+            }
+        )
+        .is_err());
+        let (mut value, _) = package();
         value.decoder_contract.version = "stale".to_owned();
         assert!(validate_package(
             &value,
@@ -650,6 +663,9 @@ mod tests {
         assert!(validate_oracle(&oracle, &package).is_err());
         let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
         oracle.policies.greedy_applicability = "applicable".to_owned();
+        assert!(validate_oracle(&oracle, &package).is_err());
+        let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
+        oracle.oracle.output_f32_hex.clear();
         assert!(validate_oracle(&oracle, &package).is_err());
     }
 }

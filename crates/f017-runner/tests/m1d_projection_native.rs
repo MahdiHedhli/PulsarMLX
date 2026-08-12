@@ -62,4 +62,22 @@ fn canonical_binary_executes_one_real_shaped_checkpoint_free_projection() {
     assert_eq!(evidence.execution.logits_count, 0);
     assert!(!evidence.execution.p1);
     assert!(evidence.lifecycle.reconciled);
+
+    let mut invalid = evidence.clone();
+    invalid.execution.dispatch.fallback = 1;
+    assert!(invalid.validate_success_ready().is_err());
+    let mut invalid = evidence.clone();
+    invalid.execution.dispatch.qualification_scaffold = 1;
+    assert!(invalid.validate_success_ready().is_err());
+    let mut invalid = evidence.clone();
+    invalid.lifecycle.reconciled = false;
+    assert!(invalid.validate_success_ready().is_err());
+    let mut invalid = evidence.clone();
+    invalid.execution.projection_count = 2;
+    assert!(invalid.validate_success_ready().is_err());
+    let mut invalid = evidence;
+    invalid.execution.numerical_classification = Some(
+        f017_runner::numerical_classification::NumericalClassification::NumericallyQualifiedGreedyIdentical,
+    );
+    assert!(invalid.validate_success_ready().is_err());
 }
