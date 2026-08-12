@@ -320,7 +320,7 @@ def capture_boundary(args: argparse.Namespace) -> dict[str, Any]:
         evidence = {
             "schema": "pulsarmlx.f017.m1-c-real-tensor-evidence",
             "schema_version": 1,
-            "result": "M1-C ACCEPTED",
+            "result": "CAPTURE_COMPLETE_PENDING_RUST_VALIDATION",
             "runtime_source_sha": RUNTIME_SOURCE_SHA,
             "tooling_source_sha": args.tooling_source_sha,
             "bindings": {
