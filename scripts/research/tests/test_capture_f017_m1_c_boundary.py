@@ -1,17 +1,17 @@
-import argparse
 import hashlib
+import importlib.util
 import json
-import os
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "scripts/research"))
-
-import capture_f017_m1_c_boundary as subject  # noqa: E402
+MODULE_PATH = ROOT / "scripts/research/capture_f017_m1_c_boundary.py"
+SPEC = importlib.util.spec_from_file_location("f017_m1_c_capture", MODULE_PATH)
+assert SPEC and SPEC.loader
+subject = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(subject)
 
 
 def digest(value: bytes) -> str:
