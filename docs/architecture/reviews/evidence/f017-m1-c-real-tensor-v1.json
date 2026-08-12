@@ -1,0 +1,93 @@
+{
+  "schema": "pulsarmlx.f017.m1-c-real-tensor-evidence",
+  "schema_version": 1,
+  "result": "M1-C ACCEPTED",
+  "attempt": 1,
+  "runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
+  "capture_tooling_source_sha": "23e0bcfe6ca033b1bb0fa988cc759d8720cb1252",
+  "bindings": {
+    "m1_a_evidence_sha256": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+    "m1_b_evidence_sha256": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+    "checkpoint_manifest_sha256": "208969118007ec0ae6e6b49f45f3d253b3bac7824b7f8f495a1fef1bcea844d4",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map_contract_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "capture_evidence_sha256": "b0decdfad6577e978c6547545be62b9237f5f4f557651ed0f405626692178036",
+    "local_manifest_sha256": "66ddf19f161b5a45fbea41916563a48daa5538eac990e6c896c70486f85767e7"
+  },
+  "admission": {
+    "environment_kind": "production_reviewed",
+    "telemetry_source": "measured_host",
+    "architecture": "arm64",
+    "physical_memory_bytes": 137438953472,
+    "available_memory_bytes": 79417966592,
+    "memory_floor_bytes": 17179869184,
+    "memory_pressure": "normal",
+    "swap_used_bytes": 125829,
+    "checkpoint_volume_free_bytes": 387079340032,
+    "evidence_volume_free_bytes": 387079340032,
+    "competing_inference_clear": true,
+    "port_1234_listener": false,
+    "thermal_state": "normal",
+    "performance_warning": false,
+    "mlx_native_version": "0.31.2",
+    "mlx_native_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+    "mlx_c_version": "0.6.0",
+    "mlx_c_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62"
+  },
+  "tensor": {
+    "name": "output_norm.weight",
+    "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "offset": 535291744,
+    "byte_length": 24576,
+    "dimensions": [6144],
+    "gguf_type": "F32",
+    "endianness": "little",
+    "payload_sha256": "5ed2cdb29cd2c920a2b2b0d3fc5a0f0912593924ce7e2fd7ff8ca994803b8e77"
+  },
+  "f32_validation": {
+    "element_count": 6144,
+    "finite_count": 6144,
+    "non_finite_count": 0,
+    "minimum": -0.01519775390625,
+    "maximum": 1.515625,
+    "mean": 1.205369383096695,
+    "signed_zero_count": 0,
+    "independent_python_ieee754_reparse_identical": true,
+    "rust_quant_row_to_f32_bits_identical": true,
+    "decoded_output_sha256": "5ed2cdb29cd2c920a2b2b0d3fc5a0f0912593924ce7e2fd7ff8ca994803b8e77"
+  },
+  "isolation": {
+    "checkpoint_accessed": true,
+    "real_tensor_payload_accessed": true,
+    "shard_open_count": 1,
+    "positional_read_count": 1,
+    "bytes_read": 24576,
+    "tensor_payload_count": 1,
+    "tensor_execution_count": 0,
+    "quant_decode_count": 0,
+    "mlx_compute_count": 0,
+    "model_compute_dispatch_count": 0,
+    "projection_count": 0,
+    "expert_execution_count": 0,
+    "layer_execution_count": 0,
+    "logits_execution_count": 0
+  },
+  "validation": {
+    "exclusive_targets_acquired_before_payload_read": true,
+    "short_read_fails_closed": true,
+    "fixture_replay_exact": true,
+    "local_manifest_validated": true,
+    "independent_reader_validated": true,
+    "duplicate_key_safe": true,
+    "pass_persisted_after_final_fixture_validation": true,
+    "no_retry": true
+  },
+  "privacy": {
+    "classification": "local_only_private_checkpoint_derived",
+    "payload_committed": false,
+    "absolute_paths_in_public_evidence": false,
+    "redistributable": false
+  }
+}

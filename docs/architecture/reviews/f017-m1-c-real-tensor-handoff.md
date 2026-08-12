@@ -2,11 +2,11 @@
 
 ## Status
 
-**PREPARED / NOT AUTHORIZED / NOT EXECUTED**
+**EXECUTED ONCE / ACCEPTED / STOPPED**
 
-This document prepares one bounded local-only real tensor fixture. It does not
-authorize checkpoint payload extraction, decode, projection, adapter compute,
-M1-C execution, or P1.
+This document originally prepared one bounded local-only real tensor fixture.
+The separately authorized M1-C attempt has now executed once, passed, and
+stopped. It does not authorize projection, adapter compute, M1-D, or P1.
 
 ## Prior gate bindings
 
@@ -41,8 +41,8 @@ state:
 | Catalog provenance | `docs/research/glm52/raw/f016-c01-catalog-0001.json` |
 | Catalog artifact SHA-256 | `135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19` |
 
-The decoder contract is the exact F32 lane of
-`quant::decode_source_row` at the frozen runtime source. Its source artifact
+The decoder contract is the exact F32 lane reached through
+`quant::row_to_f32` at the frozen runtime source. Its source artifact
 `crates/quant/src/lib.rs` has SHA-256
 `b9d0c302ec9761432f55433d8b2b8208d4a366adc875370b7d7493d6cfc3b402`.
 Before authorization, the M1-C packet must freeze an independent Python
@@ -67,8 +67,16 @@ and validate the local-only R13 manifest. It must record:
 One attempt only. Preserve the first failure and stop. No automatic retry.
 The payload and absolute local paths must remain outside Git.
 
+## Executed boundary
+
+The one authorized positional read produced payload SHA-256
+`5ed2cdb29cd2c920a2b2b0d3fc5a0f0912593924ce7e2fd7ff8ca994803b8e77`.
+The independent Python little-endian reader and the Rust F32 lane reproduced
+all 6,144 IEEE-754 values exactly. Public-safe evidence is banked in
+[`evidence/f017-m1-c-real-tensor-v1.json`](evidence/f017-m1-c-real-tensor-v1.json).
+
 ## Mandatory stop
 
-M1-C is not authorized here. M1-D through M1-G, T017-141, P1, P2,
+M1-C is complete and stopped. M1-D through M1-G, T017-141, P1, P2,
 golden-eight, Feature 018 integration, and output-head residency remain
 blocked.

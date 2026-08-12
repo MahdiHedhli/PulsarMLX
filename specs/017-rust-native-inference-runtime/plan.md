@@ -136,9 +136,10 @@ Exactly one M1-A production adapter preflight passed and its public-safe
 evidence is banked. Exactly one separately authorized M1-B production identity
 run also passed: all six shards, checkpoint/catalog/tokenizer identities, and
 the 79-layer / 1,809-tensor production map validated with zero tensor decode or
-compute dispatch. M1-C is prepared but not authorized. T017-140 remains open
-until a real local-only R13 fixture is generated and validated; T017-141 and P1
-remain blocked.
+compute dispatch. Exactly one separately authorized M1-C read then captured
+and independently validated the local-only `output_norm.weight` F32 boundary
+with zero tensor execution or compute. T017-140 is complete. M1-D is prepared
+but not authorized; T017-141 and P1 remain blocked.
 
 ## Final phase
 

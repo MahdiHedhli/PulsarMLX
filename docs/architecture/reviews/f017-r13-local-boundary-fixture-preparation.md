@@ -2,11 +2,11 @@
 
 ## Status
 
-Checkpoint-free validator infrastructure is implemented and the reviewed real
-checkpoint identity is now bound in
+Checkpoint-free validator infrastructure is implemented, the reviewed real
+checkpoint identity is bound in
 [`evidence/f017-r13-checkpoint-identity-binding-v1.json`](evidence/f017-r13-checkpoint-identity-binding-v1.json).
-T017-140 remains open because no real checkpoint-derived boundary fixture has
-been generated or validated.
+The separately authorized M1-C attempt generated and validated one local-only
+real checkpoint boundary for `output_norm.weight`. T017-140 is complete.
 
 ## Contract
 
@@ -50,12 +50,14 @@ tokenizer, and production tensor-map identities. M1-B accepted exactly 79
 layers and 1,809 tensor contracts with zero tensor decode or compute dispatch.
 Neither pass generated a tensor payload fixture.
 
-## Remaining T017-140 gate
+## T017-140 closeout
 
-T017-140 may close only after a separately authorized local extraction creates
-at least one real-boundary manifest and the validator proves its checkpoint,
-tensor, decoder, fixture, reference, and privacy identities. That later step is
-part of the M1-C admission ladder and is not authorized here.
+The one-attempt M1-C extraction read exactly 24,576 bytes at offset 535,291,744
+from the reviewed shard. Its local fixture SHA-256 is
+`5ed2cdb29cd2c920a2b2b0d3fc5a0f0912593924ce7e2fd7ff8ca994803b8e77`.
+The validator proved its checkpoint, tensor, decoder, fixture, independent
+reference, and local-only privacy identities. The private payload remains
+outside Git and is non-redistributable.
 
-The prepared, non-authorizing M1-C boundary is documented in
+The accepted M1-C boundary is documented in
 [`f017-m1-c-real-tensor-handoff.md`](f017-m1-c-real-tensor-handoff.md).

@@ -1,17 +1,18 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_b_accepted",
+  "updated_after": "m1_c_accepted",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
     "r7_r12": "complete",
     "m1_a": "accepted",
     "m1_b": "accepted",
-    "t017_140": "validator_and_checkpoint_identity_ready_real_fixture_missing",
+    "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
-    "m1_c": "prepared_not_authorized",
-    "m1_d_m1_g": "blocked",
+    "m1_c": "accepted_stopped",
+    "m1_d": "prepared_not_authorized",
+    "m1_e_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -45,13 +46,28 @@
   "checkpoint_access": {
     "manifest_provisioning_hash_and_header_catalog": true,
     "m1_b_identity_mode_executed": true,
+    "m1_c_single_tensor_payload_accessed": true,
+    "m1_c_tensor_payload_count": 1,
     "tensor_execution_count": 0,
     "quant_decode_count": 0,
     "model_compute_dispatch_count": 0
   },
   "m1_c_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-c-real-tensor-handoff.md",
+    "authorized": true,
+    "attempts": 1,
+    "stopped": true
+  },
+  "m1_c_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-m1-c-real-tensor-v1.json",
+    "sha256": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e",
+    "verdict": "accepted",
+    "tensor": "output_norm.weight",
+    "payload_sha256": "5ed2cdb29cd2c920a2b2b0d3fc5a0f0912593924ce7e2fd7ff8ca994803b8e77"
+  },
+  "m1_d_packet": {
+    "handoff": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
     "authorized": false
   },
-  "next_gate": "review M1-B evidence and separately authorize exactly one M1-C real-tensor boundary"
+  "next_gate": "review M1-C evidence and separately authorize exactly one M1-D real projection"
 }

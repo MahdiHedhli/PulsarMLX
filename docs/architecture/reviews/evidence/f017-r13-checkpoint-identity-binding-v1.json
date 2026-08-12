@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.r13-checkpoint-identity-binding",
   "schema_version": 1,
-  "status": "identity_bound_real_fixture_missing",
+  "status": "complete_real_fixture_validated",
   "runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "checkpoint_revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23",
   "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
@@ -22,9 +22,13 @@
     "checkpoint_bytes_committed": false
   },
   "real_boundary_fixture": {
-    "generated": false,
-    "validated": false,
-    "required_before_t017_140_completion": true
+    "generated": true,
+    "validated": true,
+    "required_before_t017_140_completion": true,
+    "tensor": "output_norm.weight",
+    "payload_sha256": "5ed2cdb29cd2c920a2b2b0d3fc5a0f0912593924ce7e2fd7ff8ca994803b8e77",
+    "public_evidence": "docs/architecture/reviews/evidence/f017-m1-c-real-tensor-v1.json",
+    "public_evidence_sha256": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e"
   },
   "m1_b_evidence": {
     "path": "docs/architecture/reviews/evidence/f017-m1-b-checkpoint-identity-v1.json",
@@ -36,7 +40,8 @@
   },
   "m1_c": {
     "handoff": "docs/architecture/reviews/f017-m1-c-real-tensor-handoff.md",
-    "status": "prepared_not_authorized",
-    "authorized": false
+    "status": "accepted_stopped",
+    "authorized": true,
+    "attempts": 1
   }
 }
