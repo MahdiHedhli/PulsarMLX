@@ -168,11 +168,13 @@ def validate_document(document: dict, repo: Path, *, validate_git: bool = True) 
     require(isinstance(provenance, dict) and set(provenance) == set(PROVENANCE), "provenance roles ambiguous")
     for role, expected in PROVENANCE.items():
         require(provenance.get(role) == expected, f"{role} mismatch")
-        if role == "activation_generation_source":
-            historical = git_bytes(repo, "show", f"{expected['git_commit']}:{expected['path']}")
-            require(sha256(historical) == expected["sha256"], "historical activation generator mismatch")
-        else:
-            require(sha256((repo / expected["path"]).read_bytes()) == expected["sha256"], f"{role} file mismatch")
+        # This validator protects the consumed attempt-1 authorization.  Every
+        # provenance record is bound to its stated commit, so later remediation
+        # may legitimately change the file at the same worktree path.  Validate
+        # the immutable Git object rather than silently rebinding history to
+        # current HEAD.
+        historical = git_bytes(repo, "show", f"{expected['git_commit']}:{expected['path']}")
+        require(sha256(historical) == expected["sha256"], f"historical {role} mismatch")
 
     activation = document.get("activation")
     require(
