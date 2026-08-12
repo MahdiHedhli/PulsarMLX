@@ -145,7 +145,8 @@
             "validated_tensor_count": { "type": ["integer", "null"], "minimum": 0 }
           }
         },
-        "shards": { "type": "array", "items": { "type": "object" } }
+        "shards": { "type": "array", "items": { "type": "object" } },
+        "prior_evidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } }
       }
     },
     "execution": {

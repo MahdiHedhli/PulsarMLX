@@ -39,6 +39,8 @@ pub struct IdentityEvidence {
     pub toolchain: BTreeMap<String, String>,
     pub loaded_libraries: Vec<LoadedLibraryEvidence>,
     pub checkpoint: CheckpointEvidence,
+    #[serde(default)]
+    pub prior_evidence: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -365,6 +367,7 @@ impl Evidence {
                     tensor_map: TensorMapEvidence::default(),
                     shards: Vec::new(),
                 },
+                prior_evidence: BTreeMap::new(),
             },
             admission: AdmissionEvidence {
                 telemetry_source: "unavailable".to_owned(),
@@ -512,8 +515,23 @@ impl Evidence {
             self.input.mode.as_str(),
             "fixture_projection" | "real_projection"
         ) {
+            let expected_prior = BTreeMap::from([
+                (
+                    "m1_a".to_owned(),
+                    "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805".to_owned(),
+                ),
+                (
+                    "m1_b".to_owned(),
+                    "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770".to_owned(),
+                ),
+                (
+                    "m1_c".to_owned(),
+                    "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e".to_owned(),
+                ),
+            ]);
             if self.execution.progress_state == "m1d_one_projection_complete"
-                && (self.execution.projection_count != 1
+                && (self.identity.prior_evidence != expected_prior
+                    || self.execution.projection_count != 1
                     || self.execution.quant_decode_count != 1
                     || self.execution.expert_execution_count != 0
                     || self.execution.layer_execution_count != 0

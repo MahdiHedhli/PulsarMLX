@@ -41,11 +41,20 @@ struct ProjectionPackage {
     checkpoint_set_sha256: String,
     catalog_sha256: String,
     tensor_map_sha256: String,
+    prior_evidence: PriorEvidence,
     tensor: TensorRange,
     oracle_path: PathBuf,
     oracle_sha256: String,
     activation_sha256: String,
     one_attempt: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PriorEvidence {
+    m1_a_sha256: String,
+    m1_b_sha256: String,
+    m1_c_sha256: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -160,6 +169,18 @@ fn run_impl(
     let package: ProjectionPackage =
         parse_json_no_duplicates(&package_bytes).map_err(|e| error("m1d_package_json", e))?;
     validate_package(&package, root, &config.mode)?;
+    evidence.identity.prior_evidence.insert(
+        "m1_a".to_owned(),
+        package.prior_evidence.m1_a_sha256.clone(),
+    );
+    evidence.identity.prior_evidence.insert(
+        "m1_b".to_owned(),
+        package.prior_evidence.m1_b_sha256.clone(),
+    );
+    evidence.identity.prior_evidence.insert(
+        "m1_c".to_owned(),
+        package.prior_evidence.m1_c_sha256.clone(),
+    );
     let oracle_bytes = fs::read(root.join(&package.oracle_path))
         .map_err(|e| error("m1d_oracle_read", e.to_string()))?;
     require_hash("m1d_oracle_hash", &oracle_bytes, &package.oracle_sha256)?;
@@ -446,6 +467,12 @@ fn validate_package(
         || package.activation_sha256 != ACTIVATION_SHA256
         || package.tensor_map_sha256
             != "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+        || package.prior_evidence.m1_a_sha256
+            != "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805"
+        || package.prior_evidence.m1_b_sha256
+            != "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770"
+        || package.prior_evidence.m1_c_sha256
+            != "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e"
     {
         return Err(error(
             "m1d_package_contract",
@@ -644,6 +671,16 @@ mod tests {
         .is_err());
         let (mut value, _) = package();
         value.tier_b_contract.version = "stale".to_owned();
+        assert!(validate_package(
+            &value,
+            &root,
+            &RunnerMode::FixtureProjection {
+                package: PathBuf::new()
+            }
+        )
+        .is_err());
+        let (mut value, _) = package();
+        value.prior_evidence.m1_c_sha256 = "0".repeat(64);
         assert!(validate_package(
             &value,
             &root,

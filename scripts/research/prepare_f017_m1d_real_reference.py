@@ -107,6 +107,11 @@ def main() -> int:
         "checkpoint_set_sha256": checkpoint["checkpoint_set_sha256"],
         "catalog_sha256": checkpoint["catalog_sha256"],
         "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+        "prior_evidence": {
+            "m1_a_sha256": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+            "m1_b_sha256": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+            "m1_c_sha256": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e",
+        },
         "tensor": {
             "name": "blk.0.attn_kv_a_mqa.weight", "layer": 0,
             "role": "mla_kv_latent_projection", "shard_ordinal": 2,
