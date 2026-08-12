@@ -131,9 +131,11 @@ longer invokes the qualification scaffold. Production stage modes now require
 the `production_reviewed` environment before telemetry, adapter, or checkpoint
 work, while an explicit fixture identity mode preserves checkpoint-free CI.
 Apple-native CI explicitly executes both loaded-library match/mismatch tests.
-T017-161 is closed by the independent adversarial GO. T017-140, T017-141, and
-T017-160 remain open; M1-A remains blocked pending final-head CI and internal
-re-review, and M1-B, M1-C, and P1 remain separately blocked.
+T017-160 and T017-161 are closed by the internal and independent review GOs.
+Exactly one M1-A production adapter preflight passed and its public-safe
+evidence is banked. M1-B is prepared but remains unexecuted pending separate
+authorization. T017-140 remains open until a real local-only R13 fixture is
+generated and validated; T017-141, M1-C, and P1 remain blocked.
 
 ## Final phase
 

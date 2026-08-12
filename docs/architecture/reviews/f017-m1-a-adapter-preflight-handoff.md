@@ -2,10 +2,11 @@
 
 ## Status
 
-Prepared, not authorized. Use only after the internal implementation review
-returns GO on the exact final head containing the environment-isolation fix and
-that head has green Apple-native CI. A fresh operator prompt must authorize
-exactly one execution.
+Consumed. The internal implementation review returned GO and exactly one M1-A
+execution completed at
+`42506d75b6b10d6fe3c1d804175f5dc5c9c69f45`. The accepted result is recorded
+in [`f017-m1-a-evidence-review.md`](f017-m1-a-evidence-review.md). This handoff
+must not be reused.
 
 ## Exact stage boundary
 
