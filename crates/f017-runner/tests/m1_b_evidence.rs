@@ -27,7 +27,11 @@ fn banked_m1_b_evidence_passes_the_frozen_identity_and_isolation_gate() {
     assert_eq!(evidence.admission.telemetry_source, "measured_host");
     assert!(evidence.identity.checkpoint.accessed);
     assert_eq!(
-        evidence.identity.checkpoint.checkpoint_set_sha256.as_deref(),
+        evidence
+            .identity
+            .checkpoint
+            .checkpoint_set_sha256
+            .as_deref(),
         Some(EXPECTED_CHECKPOINT_SET_SHA256)
     );
     assert_eq!(

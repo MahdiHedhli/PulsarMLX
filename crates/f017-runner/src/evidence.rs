@@ -119,6 +119,18 @@ pub struct ExecutionEvidence {
     pub numerical_classification: Option<NumericalClassification>,
     pub numerical: NumericalEvidence,
     pub progress_state: String,
+    #[serde(default)]
+    pub projection_count: u64,
+    #[serde(default)]
+    pub quant_decode_count: u64,
+    #[serde(default)]
+    pub expert_execution_count: u64,
+    #[serde(default)]
+    pub layer_execution_count: u64,
+    #[serde(default)]
+    pub logits_count: u64,
+    #[serde(default)]
+    pub p1: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
@@ -390,6 +402,12 @@ impl Evidence {
                 numerical_classification: None,
                 numerical: NumericalEvidence::default(),
                 progress_state: "initialized".to_owned(),
+                projection_count: 0,
+                quant_decode_count: 0,
+                expert_execution_count: 0,
+                layer_execution_count: 0,
+                logits_count: 0,
+                p1: false,
             },
             residency: ResidencyEvidence::default(),
             lifecycle: LifecycleEvidence::default(),
@@ -490,6 +508,28 @@ impl Evidence {
                 ));
             }
         }
+        if matches!(
+            self.input.mode.as_str(),
+            "fixture_projection" | "real_projection"
+        ) {
+            if self.execution.progress_state == "m1d_one_projection_complete"
+                && (self.execution.projection_count != 1
+                    || self.execution.quant_decode_count != 1
+                    || self.execution.expert_execution_count != 0
+                    || self.execution.layer_execution_count != 0
+                    || self.execution.logits_count != 0
+                    || self.execution.p1
+                    || self.execution.numerical.greedy_applicability
+                        != Some(GreedyApplicability::NotApplicable)
+                    || self.execution.numerical_classification
+                        != Some(NumericalClassification::NumericallyQualifiedGreedyNotApplicable))
+            {
+                return Err(evidence_error(
+                    "m1d_isolation",
+                    "M1-D PASS requires exactly one projection/decode and no expert/layer/logits/P1 execution",
+                ));
+            }
+        }
         Ok(())
     }
 
@@ -541,6 +581,8 @@ impl Evidence {
         }
         let production_execution = self.input.mode == "adapter_preflight"
             || self.input.mode == "p1"
+            || self.input.mode == "real_projection"
+            || self.input.mode == "fixture_projection"
             || (self.input.mode == "fixture"
                 && self.input.numerical_mode.as_deref() == Some("production_mlx_tier_b"));
         if production_execution

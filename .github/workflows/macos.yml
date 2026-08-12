@@ -113,6 +113,16 @@ jobs:
       - name: Execute canonical F017 runner projection gate
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Execute checkpoint-free M1-D real-shaped projection qualification
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          .venv/bin/python scripts/research/generate_f017_m1d_projection_oracle.py \
+            --output specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-oracle-v1.json \
+            --packed-output specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-q8-0-v1.bin \
+            --check
+          cargo test -p f017-runner --test m1d_contract -- --nocapture
+          cargo test -p f017-runner --test m1d_projection_native -- --nocapture
+          test -z "$PULSARMLX_MODEL_GGUF"
           cargo test -p f017-runner --test checkpoint_runner \
             actual_binary_passes_independent_projection_through_production_adapter \
             -- --exact --nocapture

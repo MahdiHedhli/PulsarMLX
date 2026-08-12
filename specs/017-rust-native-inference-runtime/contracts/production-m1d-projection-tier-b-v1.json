@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.production-m1d-projection-tier-b-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-production-m1d-projection-tier-b-v1",
+  "boundary": "one Q8_0 matrix-vector projection with 6144 columns and 576 outputs",
+  "derivation": {
+    "unit_roundoff": 5.960464477539063e-8,
+    "operation_count": 12288,
+    "gamma_formula": "gamma_(2n) = (2n*u)/(1-2n*u)",
+    "absolute_formula": "B_i = 2*gamma_(2n)*sum_j(abs(w_ij*x_j)) + 4*n*2^-149",
+    "rmse_formula": "sqrt(mean(B_i^2))",
+    "cosine_formula": "(||y||_2-||B||_2)/(||y||_2+||B||_2) when ||y||_2>||B||_2",
+    "operands": "independent decoded matrix and frozen activation; never candidate output"
+  },
+  "requirements": {
+    "per_row_absolute_error": "actual_i <= independently derived B_i",
+    "rmse": "actual <= independently derived RMS bound",
+    "cosine": "actual >= independently derived minimum when defined",
+    "signed_zero": "exact",
+    "nan_inf": "forbidden",
+    "deterministic_repeat_minimum": 10,
+    "unexpected_fallback": 0,
+    "backend_errors": 0,
+    "greedy_applicability": "not_applicable",
+    "success_classification": "numerically_qualified_greedy_not_applicable"
+  },
+  "threshold_fit_to_observed_candidate": false,
+  "retuning_policy": "never mutate this version after observation; preserve failure and publish a separately reviewed v2"
+}

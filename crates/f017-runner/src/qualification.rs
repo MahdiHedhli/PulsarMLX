@@ -7,6 +7,8 @@
 
 pub const EXACT_SCAFFOLD_VERSION: &str = "f017-exact-f32-sequential-v1";
 pub const TIER_B_CONTRACT_VERSION: &str = "f017-production-expert-tier-b-v1";
+pub const M1D_EXACT_SCAFFOLD_VERSION: &str = "f017-m1d-q8-0-sequential-f32-v1";
+pub const M1D_TIER_B_CONTRACT_VERSION: &str = "f017-production-m1d-projection-tier-b-v1";
 const F32_UNIT_ROUNDOFF: f64 = 5.960_464_477_539_063e-8;
 const F32_SMALLEST_SUBNORMAL: f64 = 1.401_298_464_324_817e-45;
 
@@ -232,6 +234,47 @@ pub fn qualify_tier_b_down(
     expected: &[f32],
     actual: &[f32],
 ) -> Result<TierBQualification, QualificationError> {
+    qualify_tier_b_with_contract(
+        TIER_B_CONTRACT_VERSION,
+        matrix,
+        rows,
+        columns,
+        vector,
+        expected,
+        actual,
+    )
+}
+
+/// Apply the immutable M1-D projection Tier-B contract. Its arithmetic bound
+/// is derived exclusively from the frozen operands, never candidate output.
+pub fn qualify_m1d_projection_tier_b(
+    matrix: &[f32],
+    rows: usize,
+    columns: usize,
+    vector: &[f32],
+    expected: &[f32],
+    actual: &[f32],
+) -> Result<TierBQualification, QualificationError> {
+    qualify_tier_b_with_contract(
+        M1D_TIER_B_CONTRACT_VERSION,
+        matrix,
+        rows,
+        columns,
+        vector,
+        expected,
+        actual,
+    )
+}
+
+fn qualify_tier_b_with_contract(
+    contract_version: &'static str,
+    matrix: &[f32],
+    rows: usize,
+    columns: usize,
+    vector: &[f32],
+    expected: &[f32],
+    actual: &[f32],
+) -> Result<TierBQualification, QualificationError> {
     if rows == 0 || columns == 0 {
         return Err(QualificationError::EmptyShape);
     }
@@ -319,7 +362,7 @@ pub fn qualify_tier_b_down(
         && cosine_passes;
 
     Ok(TierBQualification {
-        contract_version: TIER_B_CONTRACT_VERSION,
+        contract_version,
         metrics,
         rows: qualifications,
         rmse_bound,

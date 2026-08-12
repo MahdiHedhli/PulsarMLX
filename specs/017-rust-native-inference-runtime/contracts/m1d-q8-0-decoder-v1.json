@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.q8-0-decoder-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-q8-0-decoder-v1",
+  "implementation": "quant::decode_q8_0_matrix",
+  "block_elements": 32,
+  "block_bytes": 34,
+  "layout": "little-endian IEEE-754 binary16 scale followed by 32 signed int8 quants",
+  "reconstruction": "f32(scale) * f32(i8)",
+  "row_rules": {
+    "nonzero": true,
+    "multiple_of": 32,
+    "partial_block_tail": "forbidden"
+  },
+  "failure_policy": {
+    "malformed": "reject",
+    "truncated": "reject",
+    "non_finite_scale": "reject_before_write",
+    "destination": "no_partial_write_on_failure"
+  },
+  "signed_zero": "preserve IEEE-754 reconstruction",
+  "nan_inf": "forbidden",
+  "qualification": "golden_identical_to_independent_numpy_decoder"
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.m1d-projection-package",
+  "schema_version": "1.0.0",
+  "package_kind": "checkpoint_free_fixture",
+  "boundary_contract": {
+    "version": "f017-m1d-projection-boundary-v1",
+    "sha256": "4b6405cf98b52aea267c35a70929c2352fd86cc8668a2de41dbb4b158bfacba4",
+    "path": "../contracts/m1d-projection-boundary-v1.json"
+  },
+  "decoder_contract": {
+    "version": "f017-q8-0-decoder-v1",
+    "sha256": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
+    "path": "../contracts/m1d-q8-0-decoder-v1.json"
+  },
+  "scaffold_contract": {
+    "version": "f017-m1d-q8-0-sequential-f32-v1",
+    "sha256": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+    "path": "../contracts/m1d-exact-scaffold-v1.json"
+  },
+  "tier_b_contract": {
+    "version": "f017-production-m1d-projection-tier-b-v1",
+    "sha256": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
+    "path": "../contracts/production-m1d-projection-tier-b-v1.json"
+  },
+  "checkpoint_set_sha256": "b3537817d252533685482107feb1f894461f3ed1c92831ae0e7abbd9a91dd27f",
+  "catalog_sha256": "da14173bb8d278785b927de902b2bb804339ac7c0de9a07eb250c78791ab58fc",
+  "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+  "tensor": {
+    "name": "blk.0.attn_kv_a_mqa.weight",
+    "layer": 0,
+    "role": "mla_kv_latent_projection",
+    "shard_ordinal": 1,
+    "offset": 0,
+    "packed_length": 3760128,
+    "quantization": "Q8_0",
+    "gguf_shape": [6144, 576],
+    "matrix_shape": [576, 6144],
+    "output_shape": [576],
+    "packed_sha256": "51df0b949537848c0a875fe26867494ae82a03ad71952fda7733448fb286de3e"
+  },
+  "oracle_path": "f017-m1d-projection-oracle-v1.json",
+  "oracle_sha256": "edcc216b046ade881ea7529dd6d39cbbca522fc5891fb628416d6fa17aac5c32",
+  "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+  "one_attempt": true
+}

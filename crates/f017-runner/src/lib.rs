@@ -10,6 +10,7 @@ pub mod json;
 pub mod layer_qualification;
 pub mod local_boundary;
 pub mod numerical_classification;
+pub mod projection_boundary;
 pub mod qualification;
 pub mod store;
 pub mod tiny_model;
@@ -115,7 +116,10 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
         if environment.production
             && matches!(
                 config.mode,
-                RunnerMode::AdapterPreflight | RunnerMode::CheckpointIdentity | RunnerMode::P1
+                RunnerMode::AdapterPreflight
+                    | RunnerMode::CheckpointIdentity
+                    | RunnerMode::RealProjection { .. }
+                    | RunnerMode::P1
             )
         {
             evidence.identity.loaded_libraries = environment.verify_loaded_libraries()?;
@@ -135,6 +139,10 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
             RunnerMode::AdapterPreflight => run_adapter_preflight(&config, &mut evidence),
             RunnerMode::Fixture { ref manifest } => {
                 fixture::run_projection_fixture(manifest, &config, &mut evidence)
+            }
+            RunnerMode::FixtureProjection { ref package }
+            | RunnerMode::RealProjection { ref package } => {
+                projection_boundary::run(package, &config, &mut evidence)
             }
             RunnerMode::P1 => Err(RunnerError::new(
                 FailureClass::InfrastructureEvidence,

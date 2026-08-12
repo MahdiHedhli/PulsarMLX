@@ -10,7 +10,7 @@ pub const USAGE: &str = "usage: f017-glm52-runner \
   --memory-floor-bytes BYTES \
   --environment-manifest JSON \
   [--numerical-mode exact-qualification-scaffold|production-mlx-tier-b] \
-  [--dry-run | --adapter-preflight-only | --checkpoint-identity-only | --fixture-checkpoint-identity-only | --fixture-mode MANIFEST] \
+  [--dry-run | --adapter-preflight-only | --checkpoint-identity-only | --fixture-checkpoint-identity-only | --fixture-mode MANIFEST | --fixture-projection-boundary PACKAGE | --real-projection-boundary PACKAGE] \
   [--checkpoint-manifest JSON --tokens IDS --n-new N --expected-token ID]";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -65,6 +65,8 @@ pub enum RunnerMode {
     CheckpointIdentity,
     FixtureCheckpointIdentity,
     Fixture { manifest: PathBuf },
+    FixtureProjection { package: PathBuf },
+    RealProjection { package: PathBuf },
     P1,
 }
 
@@ -77,10 +79,12 @@ pub enum EnvironmentPolicy {
 
 pub fn mode_environment_policy(mode: &str) -> Option<EnvironmentPolicy> {
     match mode {
-        "adapter_preflight" | "checkpoint_identity" | "p1" => {
+        "adapter_preflight" | "checkpoint_identity" | "real_projection" | "p1" => {
             Some(EnvironmentPolicy::ProductionReviewed)
         }
-        "fixture_checkpoint_identity" => Some(EnvironmentPolicy::CheckpointFreeFixture),
+        "fixture_checkpoint_identity" | "fixture_projection" => {
+            Some(EnvironmentPolicy::CheckpointFreeFixture)
+        }
         "dry_run" | "fixture" => Some(EnvironmentPolicy::AnyValidated),
         _ => None,
     }
@@ -94,6 +98,8 @@ impl RunnerMode {
             Self::CheckpointIdentity => "checkpoint_identity",
             Self::FixtureCheckpointIdentity => "fixture_checkpoint_identity",
             Self::Fixture { .. } => "fixture",
+            Self::FixtureProjection { .. } => "fixture_projection",
+            Self::RealProjection { .. } => "real_projection",
             Self::P1 => "p1",
         }
     }
@@ -249,6 +255,17 @@ where
                 let manifest = path_value(&args, &mut index, flag)?;
                 select_mode(&mut selected_mode, RunnerMode::Fixture { manifest })?;
             }
+            "--fixture-projection-boundary" => {
+                let package = path_value(&args, &mut index, flag)?;
+                select_mode(
+                    &mut selected_mode,
+                    RunnerMode::FixtureProjection { package },
+                )?;
+            }
+            "--real-projection-boundary" => {
+                let package = path_value(&args, &mut index, flag)?;
+                select_mode(&mut selected_mode, RunnerMode::RealProjection { package })?;
+            }
             "--help" | "--version" => {
                 return Err(cli_error(
                     "mixed_meta_option",
@@ -323,6 +340,20 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                 return Err(cli_error(
                     "missing_option",
                     "fixture mode requires explicit --numerical-mode",
+                ));
+            }
+        }
+        RunnerMode::FixtureProjection { .. } | RunnerMode::RealProjection { .. } => {
+            if config.checkpoint_manifest.is_none() {
+                return Err(cli_error(
+                    "missing_option",
+                    "projection boundary mode requires --checkpoint-manifest",
+                ));
+            }
+            if has_execution || config.numerical_mode != Some(NumericalMode::ProductionMlxTierB) {
+                return Err(cli_error(
+                    "incompatible_options",
+                    "projection boundary mode requires production-mlx-tier-b and forbids token execution options",
                 ));
             }
         }

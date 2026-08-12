@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.checkpoint-manifest",
+  "schema_version": "1.0.0",
+  "kind": "fixture",
+  "immutable_revision": "f017-m1d-synthetic-q8-0-v1",
+  "architecture": "glm-dsa",
+  "tokenizer_identity": "checkpoint-free-exact-token-ids",
+  "checkpoint_set_sha256": "b3537817d252533685482107feb1f894461f3ed1c92831ae0e7abbd9a91dd27f",
+  "catalog_sha256": "da14173bb8d278785b927de902b2bb804339ac7c0de9a07eb250c78791ab58fc",
+  "tensor_count": 1,
+  "shards": [
+    {
+      "filename": "f017-m1d-projection-q8-0-v1.bin",
+      "size_bytes": 3760128,
+      "sha256": "51df0b949537848c0a875fe26867494ae82a03ad71952fda7733448fb286de3e"
+    }
+  ]
+}

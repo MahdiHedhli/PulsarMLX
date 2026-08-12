@@ -202,7 +202,13 @@
             "first_divergence": { "type": ["object", "null"] }
           }
         },
-        "progress_state": { "type": "string" }
+        "progress_state": { "type": "string" },
+        "projection_count": { "type": "integer", "minimum": 0 },
+        "quant_decode_count": { "type": "integer", "minimum": 0 },
+        "expert_execution_count": { "type": "integer", "minimum": 0 },
+        "layer_execution_count": { "type": "integer", "minimum": 0 },
+        "logits_count": { "type": "integer", "minimum": 0 },
+        "p1": { "type": "boolean" }
       },
       "allOf": [
         {
