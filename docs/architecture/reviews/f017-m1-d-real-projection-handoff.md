@@ -4,68 +4,83 @@
 
 **PREPARED / NOT AUTHORIZED / NOT EXECUTED**
 
-This packet freezes the next one-boundary proposal. It does not authorize
-checkpoint payload access, projection execution, MLX compute, M1-D, or P1.
+M1-D attempts remain `0`. This package authorizes nothing by itself.
 
-## Prior-gate bindings
+## Frozen bindings
 
-- runtime source SHA:
-  `b29202171a279cd3bb2ac2cf4dc6b3be7486019e`;
-- accepted M1-A evidence SHA-256:
-  `aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805`;
-- accepted M1-B evidence SHA-256:
-  `9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770`;
-- accepted M1-C evidence SHA-256:
-  `343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e`;
-- checkpoint-set SHA-256:
-  `d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee`;
-- catalog SHA-256:
-  `0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0`;
-- production tensor-map contract SHA-256:
-  `ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223`.
+- runtime source: `1fa0f17f2b15a685fba979b004714d11fed75559`;
+- M1-A: `aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805`;
+- M1-B: `9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770`;
+- M1-C: `343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e`;
+- checkpoint set: `d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee`;
+- catalog: `0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0`;
+- tensor map: `ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223`.
 
-## Proposed single projection
+## One boundary
 
-The proposed first production-adapter projection is a material Q8_0 MLA
-boundary already represented by the checkpoint-free R5 contract:
+`blk.0.attn_kv_a_mqa.weight`, layer 0 MLA KV latent projection, is the only
+admitted tensor. Its GGUF shape is `[6144, 576]`, its logical matvec shape is
+`576 x 6144`, and its output is `[576]`. It is Q8_0 in shard 2 at offset
+`1,077,266,272`, with exactly `3,760,128` packed bytes and `6,528` bytes per
+row. The versioned identity is
+[`m1d-projection-boundary-v1.json`](../../../specs/017-rust-native-inference-runtime/contracts/m1d-projection-boundary-v1.json),
+SHA-256 `386ce07689257f34c1bb353c7e5d86ddbbeaf49dfd6dd3416ee26278e1b9ab5e`.
 
-| Field | Frozen metadata-only value |
-| --- | --- |
-| Tensor | `blk.0.attn_kv_a_mqa.weight` |
-| Role | layer-0 MLA KV latent projection |
-| Shard | `GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf` |
-| Absolute offset | 1,077,266,272 |
-| Packed length | 3,760,128 bytes |
-| GGUF type | `Q8_0` |
-| GGUF dimensions | `[6144, 576]` |
-| Production boundary | packed read -> reviewed Q8_0 decode -> contiguous f32 -> production MLX matvec -> synchronized f32 output |
+## Frozen activation and oracle
 
-The packed length is derived from the frozen Q8_0 block contract and the next
-catalog offset; M1-D admission must independently revalidate it before access.
-No payload was read while preparing this packet.
+The canonical activation has 6,144 little-endian f32 values and SHA-256
+`dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2`.
+It was generated independently with Python 3.13.13, NumPy 2.4.5, PCG64 seed
+`17017004`, by
+[`generate_f017_m1d_projection_oracle.py`](../../../scripts/research/generate_f017_m1d_projection_oracle.py).
+The committed real-shaped checkpoint-free oracle is
+[`f017-m1d-projection-oracle-v1.json`](../../../specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-oracle-v1.json),
+SHA-256 `edcc216b046ade881ea7529dd6d39cbbca522fc5891fb628416d6fa17aac5c32`.
 
-## Required activation and numerical contract
+For the later real attempt,
+[`prepare_f017_m1d_real_reference.py`](../../../scripts/research/prepare_f017_m1d_real_reference.py)
+must run first. It exclusively creates the local oracle and package after one
+bounded matrix read, then records the real packed, decoded, and expected-output
+hashes. The runner consumes those immutable files afterward. This ordering is
+validated; candidate output cannot define or alter the oracle or bounds.
 
-Before a future authorization, freeze one independent local-only activation of
-length 6,144 with source/provenance and IEEE-754 hash. The deterministic exact
-scaffold must remain the bit-level semantic oracle. The production MLX result
-must use the already-reviewed R5/Tier-B separation and fail closed on numerical
-or dispatch divergence; thresholds may not be invented after candidate output.
+## Decoder, scaffold, and Tier B
 
-## Future one-attempt constraints
+- Q8_0 decoder: `f017-q8-0-decoder-v1`, SHA-256
+  `aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd`;
+- exact scaffold: `f017-m1d-q8-0-sequential-f32-v1`, SHA-256
+  `3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5`;
+- Tier B: `f017-production-m1d-projection-tier-b-v1`, SHA-256
+  `f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b`.
 
-A separate M1-D authorization must permit exactly one matrix boundary and
-require:
+The scaffold uses separately rounded f32 multiply/add in strict increasing
+column order. Ten exact repeats are required. The Tier-B row bound is
+`B_i = 2*gamma_(2n)*sum(abs(w_ij*x_j)) + 4*n*2^-149`, with `n=6144`,
+`u=2^-24`, and `gamma_(2n)=(2n*u)/(1-2n*u)`. RMSE and cosine bounds derive
+deterministically from the row bounds. Candidate output is never an input to
+threshold derivation. Signed zero must match exactly; NaN/Inf is forbidden.
+Greedy applicability is `not_applicable`; success is
+`numerically_qualified_greedy_not_applicable`. The v1 contract is immutable.
 
-- exact shard/tensor/range and checkpoint identities;
-- bounded short-read-safe packed access;
-- Q8_0 oracle parity before production execution;
-- one production `MlxContext`, explicit synchronization, teardown, and full
-  lifecycle reconciliation;
-- exact activation/output provenance;
-- zero fallback, reference, or qualification-scaffold dispatch in production;
-- local-only payload policy and public-safe evidence;
-- one attempt and mandatory stop.
+## Canonical command
 
-M1-E through M1-G, T017-141, P1, P2, golden-eight, Feature 018 integration,
-and output-head residency remain blocked.
+After a separate authorization creates the local-only oracle/package, execute
+exactly once from the runtime SHA worktree:
+
+```bash
+f017-glm52-runner \
+  --out "$PULSAR_F017_M1D_EVIDENCE" \
+  --validation-mode golden-strict \
+  --stream-mode owned-device \
+  --memory-floor-bytes 17179869184 \
+  --environment-manifest "$PULSAR_F017_ENV_MANIFEST" \
+  --checkpoint-manifest "$PULSAR_F017_CHECKPOINT_MANIFEST" \
+  --real-projection-boundary "$PULSAR_F017_M1D_PACKAGE" \
+  --numerical-mode production-mlx-tier-b
+```
+
+The four variables are reviewed machine-local paths. Output acquisition is
+exclusive. Any missing/stale binding, second projection, fallback, backend
+error, lifecycle mismatch, numerical failure, or non-greedy classification
+mismatch fails closed. M1-E, expert/layer/logits, P1/P2/golden-eight,
+Feature 018, and output-head residency remain blocked.

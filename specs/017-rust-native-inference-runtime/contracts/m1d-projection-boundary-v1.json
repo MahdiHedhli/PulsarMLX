@@ -2,7 +2,7 @@
   "schema": "pulsarmlx.f017.m1d-projection-boundary",
   "schema_version": "1.0.0",
   "contract_id": "f017-m1d-projection-boundary-v1",
-  "runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
+  "runtime_source_sha": "1fa0f17f2b15a685fba979b004714d11fed75559",
   "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
   "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
   "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",

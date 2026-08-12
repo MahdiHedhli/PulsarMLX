@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_c_accepted",
+  "updated_after": "m1_d_checkpoint_free_admission_package",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -11,7 +11,7 @@
     "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
-    "m1_d": "prepared_not_authorized",
+    "m1_d": "qualification_package_ready_not_authorized_attempts_0",
     "m1_e_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
@@ -67,7 +67,13 @@
   },
   "m1_d_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
-    "authorized": false
+    "fresh_authorization": "docs/architecture/reviews/f017-m1-d-fresh-authorization.md",
+    "runtime_source_sha": "1fa0f17f2b15a685fba979b004714d11fed75559",
+    "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+    "tier_b_contract": "f017-production-m1d-projection-tier-b-v1",
+    "authorized": false,
+    "attempts": 0,
+    "checkpoint_payload_accessed_during_remediation": false
   },
-  "next_gate": "review M1-C evidence and separately authorize exactly one M1-D real projection"
+  "next_gate": "review qualification package and issue a fresh explicit authorization for exactly one M1-D real projection"
 }
