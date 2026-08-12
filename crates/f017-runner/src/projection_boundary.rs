@@ -801,6 +801,7 @@ mod tests {
                 mode: RunnerMode::FixtureProjection {
                     package: "package.json".into(),
                 },
+                execution_config: None,
             },
             "0".repeat(64),
         )

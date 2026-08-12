@@ -43,6 +43,8 @@ pub struct IdentityEvidence {
     pub prior_evidence: BTreeMap<String, String>,
     #[serde(default)]
     pub artifact_paths: Vec<ArtifactPathEvidence>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub execution_config_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -411,6 +413,10 @@ impl Evidence {
                 },
                 prior_evidence: BTreeMap::new(),
                 artifact_paths: Vec::new(),
+                execution_config_sha256: config
+                    .execution_config
+                    .as_ref()
+                    .map(|binding| binding.sha256.clone()),
             },
             admission: AdmissionEvidence {
                 telemetry_source: "unavailable".to_owned(),
@@ -977,6 +983,7 @@ mod tests {
             expected_token: None,
             numerical_mode: None,
             mode: RunnerMode::DryRun,
+            execution_config: None,
         }
     }
 

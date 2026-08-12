@@ -4,6 +4,8 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 pub const USAGE: &str = "usage: f017-glm52-runner \
+  --m1d-execution-config JSON --execution-config-sha256 SHA256\n\
+or: f017-glm52-runner \
   --out FRESH_JSON \
   --validation-mode golden-strict \
   --stream-mode default-gpu|owned-device \
@@ -124,6 +126,14 @@ pub struct Config {
     pub expected_token: Option<u32>,
     pub numerical_mode: Option<NumericalMode>,
     pub mode: RunnerMode,
+    pub execution_config: Option<ExecutionConfigBinding>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExecutionConfigBinding {
+    pub path: PathBuf,
+    pub sha256: String,
+    pub attempt: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -143,6 +153,25 @@ where
     }
     if args.len() == 1 && args[0] == "--version" {
         return Ok(ParseOutcome::Version);
+    }
+    if args.iter().any(|argument| {
+        argument == "--m1d-execution-config" || argument == "--execution-config-sha256"
+    }) {
+        if args.len() != 4
+            || args[0] != "--m1d-execution-config"
+            || args[2] != "--execution-config-sha256"
+        {
+            return Err(cli_error(
+                "m1d_config_only",
+                "M1-D execution accepts exactly one config path and one config SHA-256 in canonical order",
+            ));
+        }
+        let path = PathBuf::from(&args[1]);
+        let expected = args[3]
+            .to_str()
+            .ok_or_else(|| cli_error("m1d_config_sha", "execution config SHA-256 must be UTF-8"))?;
+        return crate::m1d_execution_config::load(&path, expected)
+            .map(|loaded| ParseOutcome::Run(loaded.config));
     }
 
     let mut seen = HashSet::new();
@@ -300,6 +329,7 @@ where
         expected_token,
         numerical_mode,
         mode,
+        execution_config: None,
     };
     validate_combination(&config)?;
     Ok(ParseOutcome::Run(config))
@@ -658,5 +688,36 @@ mod tests {
             panic!("run")
         };
         assert_eq!(config.mode, RunnerMode::FixtureCheckpointIdentity);
+    }
+
+    #[test]
+    fn m1d_config_only_entry_rejects_duplicate_conflicting_or_manual_options() {
+        let cases = [
+            vec!["--m1d-execution-config", "config.json"],
+            vec![
+                "--m1d-execution-config",
+                "config.json",
+                "--execution-config-sha256",
+                "0",
+                "--activation-fixture",
+                "wrong.json",
+            ],
+            vec![
+                "--m1d-execution-config",
+                "config.json",
+                "--m1d-execution-config",
+                "other.json",
+            ],
+            vec![
+                "--execution-config-sha256",
+                "0",
+                "--m1d-execution-config",
+                "config.json",
+            ],
+        ];
+        for case in cases {
+            let error = parse_args(case.into_iter().map(OsString::from)).unwrap_err();
+            assert_eq!(error.code, "m1d_config_only");
+        }
     }
 }

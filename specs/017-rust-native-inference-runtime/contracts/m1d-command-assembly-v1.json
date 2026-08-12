@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.m1d-command-assembly-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1d-command-assembly-v1",
+  "source_of_truth": "machine_readable_authorization_binding",
+  "pipeline": [
+    "authorization_binding",
+    "validated_typed_execution_config",
+    "config_only_preparer_and_runner"
+  ],
+  "activation_fixture": {
+    "path_kind": "repository_relative",
+    "symbolic_path": "specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-oracle-v1.json",
+    "artifact_sha256": "1727e63a5daee0ffbb0bf6dea11ea5ecf1b559850632785d5c8864c2bbaf503a",
+    "payload_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+    "symbolic_path_is_identity": true
+  },
+  "preflight": {
+    "result": "READY_TO_EXECUTE_ATTEMPT_3",
+    "consumes_attempt": false,
+    "exclusive_create": true,
+    "execution_config_sha256_required": true
+  },
+  "production_invocation": {
+    "accepted_options": [
+      "--m1d-execution-config",
+      "--execution-config-sha256"
+    ],
+    "duplicate_or_extra_options": "reject",
+    "environment_overrides": "reject",
+    "cwd_resolution": "forbidden"
+  },
+  "attempt_consumption": {
+    "preflight_failure": "unconsumed",
+    "production_execution_transition": "consumed",
+    "attempts_1_and_2": "immutable_rejected"
+  },
+  "retuning_policy": "never mutate this version after attempt-3 authorization"
+}

@@ -10,6 +10,7 @@ pub mod glm52_map;
 pub mod json;
 pub mod layer_qualification;
 pub mod local_boundary;
+pub mod m1d_execution_config;
 pub mod numerical_classification;
 pub mod projection_boundary;
 pub mod qualification;
@@ -83,6 +84,9 @@ impl std::fmt::Display for RunnerError {
 impl std::error::Error for RunnerError {}
 
 pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
+    if let Some(binding) = &config.execution_config {
+        m1d_execution_config::verify_unchanged(binding)?;
+    }
     let environment = ValidatedEnvironment::load(&config.environment_manifest)?;
     environment.validate_for_mode(&config.mode)?;
     let mut evidence = Evidence::initial_with_environment(&config, &environment);
@@ -153,7 +157,14 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
         }
     })();
 
-    let result = result.and_then(|()| evidence.validate_success_ready());
+    let result = result
+        .and_then(|()| {
+            if let Some(binding) = &config.execution_config {
+                m1d_execution_config::verify_unchanged(binding)?;
+            }
+            Ok(())
+        })
+        .and_then(|()| evidence.validate_success_ready());
 
     match result {
         Ok(()) => {
