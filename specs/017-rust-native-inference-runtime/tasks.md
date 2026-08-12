@@ -160,3 +160,6 @@
   execution config, add non-consuming preflight and wrong-path/override
   regressions, and prepare a distinct unconsumed attempt-3 authorization.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.
+- [x] T017-171 Execute exactly one separately authorized M1-D attempt 3 from
+  the immutable execution config, bank its accepted real-projection evidence,
+  and stop before M1-E execution.

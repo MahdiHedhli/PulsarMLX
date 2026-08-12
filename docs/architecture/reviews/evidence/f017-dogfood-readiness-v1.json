@@ -1,8 +1,8 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_attempt_3_command_assembly_authorized_not_executed",
-  "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
+  "updated_after": "m1_d_attempt_3_accepted_stopped",
+  "executed_source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
     "r7_r12": "complete",
@@ -11,8 +11,8 @@
     "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
-    "m1_d": "attempt_1_rejected_attempt_2_rejected_attempt_3_authorized_not_executed",
-    "m1_e_m1_g": "blocked",
+    "m1_d": "attempt_1_rejected_attempt_2_rejected_attempt_3_accepted_stopped",
+    "m1_e_m1_g": "m1_e_prepared_not_authorized_m1_f_m1_g_blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -49,12 +49,14 @@
     "m1_c_single_tensor_payload_accessed": true,
     "m1_c_tensor_payload_count": 1,
     "m1_d_oracle_matrix_payload_accessed": true,
-    "m1_d_oracle_matrix_payload_count": 1,
+    "m1_d_oracle_matrix_payload_count": 2,
+    "m1_d_attempt_1_oracle_matrix_payload_count": 1,
     "m1_d_attempt_2_matrix_payload_count": 0,
-    "m1_d_candidate_checkpoint_read_count": 0,
-    "tensor_execution_count": 0,
-    "quant_decode_count": 0,
-    "model_compute_dispatch_count": 0
+    "m1_d_attempt_3_oracle_matrix_payload_count": 1,
+    "m1_d_attempt_3_candidate_checkpoint_read_count": 1,
+    "tensor_execution_count": 1,
+    "quant_decode_count": 1,
+    "model_compute_dispatch_count": 10
   },
   "m1_c_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-c-real-tensor-handoff.md",
@@ -117,12 +119,25 @@
       "runtime_source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
       "tooling_source_sha": "2e84a4e0899cea333deadb2c7f4a5022766e0784",
       "execution_config_sha256": "42fb54d08c2c8ee8c7b06360e04743e8c8a976df649e1a0b8ef505c94c01a9fa",
-      "authorized": true,
-      "authorization_consumed": false,
-      "executed": false,
-      "checkpoint_accessed": false,
-      "preflight_status": "READY_TO_EXECUTE_ATTEMPT_3"
+      "authorized": false,
+      "authorization_consumed": true,
+      "executed": true,
+      "checkpoint_accessed": true,
+      "preflight_status": "READY_TO_EXECUTE_ATTEMPT_3",
+      "candidate_started": true,
+      "verdict": "accepted",
+      "classification": "numerically_qualified_greedy_not_applicable",
+      "real_matrix_payload_sha256": "ff2b6a0e14f3e180ba6a8a8522ef4569c9cb82a0f10708f66da794305e3ee4cc",
+      "repeat_count": 10,
+      "native_dispatch_count": 10,
+      "all_repeat_hashes_equal": true,
+      "evidence": {
+        "path": "docs/architecture/reviews/evidence/f017-m1-d-real-projection-attempt-3-v1.json",
+        "sha256": "dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c"
+      },
+      "m1_e_handoff": "docs/architecture/reviews/f017-m1-e-real-expert-handoff.md",
+      "m1_e_authorized": false
     }
   },
-  "next_gate": "execute exactly one separately authorized M1-D attempt 3, then stop; M1-E remains blocked"
+  "next_gate": "review and freeze the M1-E real-expert admission package; M1-E remains not authorized"
 }

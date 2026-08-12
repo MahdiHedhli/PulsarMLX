@@ -1,0 +1,352 @@
+{
+  "schema": "pulsarmlx.f017.canonical-runner-evidence",
+  "schema_version": "1.3.0",
+  "identity": {
+    "source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+    "source_clean": true,
+    "runner_version": "0.1.0",
+    "environment_kind": "production_reviewed",
+    "environment_manifest_sha256": "33f57e945762e1b805ede4663e6ae19ee94240936c5e87940aba5e6e5face251",
+    "platform": {
+      "architecture": "arm64",
+      "macos_build": "25A354",
+      "macos_version": "26.0",
+      "metal_compiler": "Apple metal 32023.864 (metalfe-32023.864)",
+      "sdk_version": "26.2",
+      "xcode_version": "26.3"
+    },
+    "toolchain": {
+      "cargo": "1.97.1 (c980f4866 2026-06-30)",
+      "compiler": "Apple clang 17.0.0 (clang-1700.6.4.2)",
+      "mlx_c_source_sha": "0726ca922fc902c4c61ef9c27d94132be418e945",
+      "mlx_c_version": "0.6.0",
+      "mlx_native_source_sha": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+      "mlx_native_version": "0.31.2",
+      "rust_package": "0.1.0",
+      "rustc": "1.97.1 (8bab26f4f 2026-07-14)"
+    },
+    "loaded_libraries": [
+      {
+        "artifact": "mlx_native",
+        "resolved_basename": "libmlx.dylib",
+        "actual_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+        "expected_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+        "architecture": "arm64"
+      },
+      {
+        "artifact": "mlx_c",
+        "resolved_basename": "libmlxc.dylib",
+        "actual_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+        "expected_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+        "architecture": "arm64"
+      }
+    ],
+    "checkpoint": {
+      "accessed": true,
+      "revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23",
+      "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+      "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+      "architecture": "glm-dsa",
+      "tokenizer_identity": "glm52-gguf-tokenizer-v1:149e907384517d91d236a819835aa0dc97e6d4a3c512e6d5806d6b162ced1c6d",
+      "tensor_count": 1809,
+      "tensor_map": {
+        "status": "unavailable",
+        "version": null,
+        "contract_sha256": null,
+        "validated_tensor_count": null
+      },
+      "shards": []
+    },
+    "prior_evidence": {
+      "m1_a": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+      "m1_b": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+      "m1_c": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e"
+    },
+    "artifact_paths": [
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        "content_sha256": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+        "logical_role": "path_resolution_contract",
+        "repository_identity": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-projection-boundary-v1.json",
+        "content_sha256": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
+        "logical_role": "boundary_contract",
+        "repository_identity": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-q8-0-decoder-v1.json",
+        "content_sha256": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
+        "logical_role": "decoder_contract",
+        "repository_identity": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-exact-scaffold-v1.json",
+        "content_sha256": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+        "logical_role": "scaffold_contract",
+        "repository_identity": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/production-m1d-projection-tier-b-v1.json",
+        "content_sha256": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
+        "logical_role": "tier_b_contract",
+        "repository_identity": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "package_relative",
+        "symbolic_path": "oracle.json",
+        "content_sha256": "330522cecbf088a32ce2f54ed932dd34a5db14daa6c880272c61b2eaec3d4fe4",
+        "logical_role": "independent_oracle",
+        "repository_identity": null,
+        "package_artifact_id": "f017-m1d-independent-real-oracle-v1"
+      }
+    ],
+    "execution_config_sha256": "42fb54d08c2c8ee8c7b06360e04743e8c8a976df649e1a0b8ef505c94c01a9fa"
+  },
+  "admission": {
+    "telemetry_source": "measured_host",
+    "physical_memory_bytes": 137438953472,
+    "memory_floor_bytes": 17179869184,
+    "available_memory_bytes": 86504816640,
+    "compressed_memory_bytes": 2608857088,
+    "memory_pressure": "normal",
+    "swap_used_bytes": 125829,
+    "checkpoint_volume_free_bytes": 352055169024,
+    "evidence_volume_free_bytes": 352055169024,
+    "load_averages": [
+      12.3779296875,
+      7.48583984375,
+      5.759765625
+    ],
+    "competing_processes_clear": true,
+    "competing_processes": [],
+    "port_1234_listener": false,
+    "thermal_state": "normal",
+    "performance_warning": false,
+    "stream_mode": "owned_device",
+    "singleton_initially_unclaimed": true
+  },
+  "input": {
+    "tokens": [],
+    "n_new": 0,
+    "expected_token": null,
+    "validation_mode": "golden_strict",
+    "mode": "real_projection",
+    "numerical_mode": "production_mlx_tier_b"
+  },
+  "execution": {
+    "layers": [],
+    "timings": {
+      "backend_compute_sync_readback_seconds": 0.018405625,
+      "backend_import_seconds": 0.00022375,
+      "decode_seconds": 0.031327458,
+      "qualification_scaffold_seconds": 0.361281042,
+      "storage_read_seconds": 0.000764083
+    },
+    "storage": {
+      "read_bytes": 3760128,
+      "read_count": 1
+    },
+    "dispatch": {
+      "native": 10,
+      "direct": 0,
+      "qualification_scaffold": 0,
+      "explicit_reference": 0,
+      "fallback": 0,
+      "errors": 0
+    },
+    "generated_token": null,
+    "numerical_classification": "numerically_qualified_greedy_not_applicable",
+    "numerical": {
+      "greedy_applicability": "not_applicable",
+      "greedy_identity": null,
+      "oracle_generator_sha": "a9474c8f9c5e76fd17beab3f84ab037105f0610dfe8f8972e4f92f52356ebb99",
+      "scaffold_version": "f017-m1d-q8-0-sequential-f32-v1",
+      "production_backend_version": "mlx-c-matmul; mlx-native-0.31.2; mlx-c-0.6.0",
+      "frozen_contract_version": "f017-production-m1d-projection-tier-b-v1",
+      "frozen_contract_versions": {
+        "f017-m1d-projection-boundary-v1": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
+        "f017-m1d-q8-0-sequential-f32-v1": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+        "f017-production-m1d-projection-tier-b-v1": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
+        "f017-q8-0-decoder-v1": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd"
+      },
+      "bit_mismatch_count": 566,
+      "max_abs_error": 0.00002574920654296875,
+      "relative_error": 0.0001645609506457357,
+      "rmse": 3.380988257581472e-6,
+      "cosine_similarity": 0.9999999999987387,
+      "deterministic_repeat_count": 10,
+      "first_divergence": {
+        "actual": 1.8095147609710693,
+        "actual_bits_hex": "0x3fe79e2e",
+        "expected": 1.8095120191574097,
+        "expected_bits_hex": "0x3fe79e17",
+        "index": 0
+      },
+      "repeat_integrity": {
+        "repeat_count_required": 10,
+        "repeat_count_observed": 10,
+        "outputs": [
+          {
+            "ordinal": 0,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 1,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 2,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 3,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 4,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 5,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 6,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 7,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 8,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          },
+          {
+            "ordinal": 9,
+            "output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+          }
+        ],
+        "all_repeat_hashes_equal": true,
+        "selected_output_sha256": "709789007d3dfca01a9265220fc68cbf79f3583614ce595262f082e2adaee8eb"
+      },
+      "oracle_ordering": {
+        "oracle_package_sha256": "330522cecbf088a32ce2f54ed932dd34a5db14daa6c880272c61b2eaec3d4fe4",
+        "oracle_completed_at": "1786572710986781000",
+        "oracle_completion_marker": "oracle_finalized_sequence_0",
+        "oracle_validated_before_candidate": true,
+        "candidate_started_at": "1786572760500622000",
+        "candidate_start_marker": "candidate_started_sequence_1",
+        "structural_order_valid": true
+      }
+    },
+    "progress_state": "m1d_one_projection_complete",
+    "projection_count": 1,
+    "quant_decode_count": 1,
+    "expert_execution_count": 0,
+    "layer_execution_count": 0,
+    "logits_count": 0,
+    "p1": false
+  },
+  "residency": {
+    "compressed": 0,
+    "decoded_hot": 0,
+    "native_ready_hot": 0,
+    "transient": 0,
+    "protected_shared": 0,
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0
+  },
+  "lifecycle": {
+    "pre": {
+      "managed_created": 0,
+      "managed_destroyed": 0,
+      "derived_created": 0,
+      "derived_destroyed": 0,
+      "callback_count": 0,
+      "default_cpu_stream_created": 0,
+      "default_cpu_stream_freed": 0,
+      "default_gpu_stream_created": 0,
+      "default_gpu_stream_freed": 0,
+      "owned_stream_created": 0,
+      "owned_stream_freed": 0,
+      "active_contexts": 0,
+      "singleton_claimed": false,
+      "active_registrations": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "pending_registration_destructions": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "in_flight_work": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "live_owner_tokens": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "stale_generations": {
+        "status": "not_applicable",
+        "value": null
+      }
+    },
+    "post": {
+      "managed_created": 2,
+      "managed_destroyed": 2,
+      "derived_created": 10,
+      "derived_destroyed": 10,
+      "callback_count": 2,
+      "default_cpu_stream_created": 1,
+      "default_cpu_stream_freed": 1,
+      "default_gpu_stream_created": 0,
+      "default_gpu_stream_freed": 0,
+      "owned_stream_created": 1,
+      "owned_stream_freed": 1,
+      "active_contexts": 0,
+      "singleton_claimed": false,
+      "active_registrations": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "pending_registration_destructions": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "in_flight_work": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "live_owner_tokens": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "stale_generations": {
+        "status": "not_applicable",
+        "value": null
+      }
+    },
+    "reconciled": true
+  },
+  "result": {
+    "classification": "PASS",
+    "first_failure": null,
+    "stop_reason": null,
+    "completed": true
+  }
+}
