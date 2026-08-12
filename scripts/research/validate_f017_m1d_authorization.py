@@ -60,6 +60,7 @@ ALLOWED_POST_TOOLING_PATHS = {
     "docs/architecture/reviews/f017-m1-d-packet-provenance-closure.md",
     "docs/architecture/reviews/evidence/f017-dogfood-readiness-v1.json",
 }
+PACKET_PATH = "docs/architecture/reviews/f017-m1-d-fresh-authorization.md"
 
 
 class ValidationError(ValueError):
@@ -156,6 +157,12 @@ def validate_document(document: dict, repo: Path, *, validate_git: bool = True) 
         },
         "execution scope mismatch",
     )
+    packet = (repo / PACKET_PATH).read_text()
+    require("AUTHORIZED FOR EXACTLY ONE M1-D ATTEMPT / NOT EXECUTED" in packet, "packet status mismatch")
+    packet_values = [RUNTIME_SHA, tooling_sha, handoff["sha256"], *direct.values()]
+    packet_values.extend(role["sha256"] for role in provenance.values())
+    for value in packet_values:
+        require(value in packet, f"packet omits direct binding {value}")
 
     if validate_git:
         head = git(repo, "rev-parse", "HEAD")
