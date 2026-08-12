@@ -430,15 +430,21 @@ fn admission(code: &'static str, message: impl std::fmt::Display) -> RunnerError
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    static TEMP_FILE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
     fn temp_file(name: &str, bytes: &[u8]) -> PathBuf {
         let suffix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("f017-env-{}-{suffix}-{name}", std::process::id()));
+        let sequence = TEMP_FILE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "f017-env-{}-{suffix}-{sequence}-{name}",
+            std::process::id()
+        ));
         fs::write(&path, bytes).unwrap();
         path
     }
