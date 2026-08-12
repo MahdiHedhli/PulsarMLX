@@ -9,6 +9,7 @@ pub const USAGE: &str = "usage: f017-glm52-runner \
   --stream-mode default-gpu|owned-device \
   --memory-floor-bytes BYTES \
   --environment-manifest JSON \
+  [--repository-root DIR] \
   [--numerical-mode exact-qualification-scaffold|production-mlx-tier-b] \
   [--dry-run | --adapter-preflight-only | --checkpoint-identity-only | --fixture-checkpoint-identity-only | --fixture-mode MANIFEST | --fixture-projection-boundary PACKAGE | --real-projection-boundary PACKAGE] \
   [--checkpoint-manifest JSON --tokens IDS --n-new N --expected-token ID]";
@@ -116,6 +117,7 @@ pub struct Config {
     pub stream_mode: StreamMode,
     pub memory_floor_bytes: u64,
     pub environment_manifest: PathBuf,
+    pub repository_root: Option<PathBuf>,
     pub checkpoint_manifest: Option<PathBuf>,
     pub tokens: Vec<u32>,
     pub n_new: u32,
@@ -149,6 +151,7 @@ where
     let mut stream_mode = None;
     let mut memory_floor_bytes = None;
     let mut environment_manifest = None;
+    let mut repository_root = None;
     let mut checkpoint_manifest = None;
     let mut tokens = None;
     let mut n_new = None;
@@ -212,6 +215,7 @@ where
             "--environment-manifest" => {
                 environment_manifest = Some(path_value(&args, &mut index, flag)?)
             }
+            "--repository-root" => repository_root = Some(path_value(&args, &mut index, flag)?),
             "--checkpoint-manifest" => {
                 checkpoint_manifest = Some(path_value(&args, &mut index, flag)?)
             }
@@ -289,6 +293,7 @@ where
         stream_mode: required(stream_mode, "--stream-mode")?,
         memory_floor_bytes: required(memory_floor_bytes, "--memory-floor-bytes")?,
         environment_manifest: required(environment_manifest, "--environment-manifest")?,
+        repository_root,
         checkpoint_manifest,
         tokens: tokens.unwrap_or_default(),
         n_new: n_new.unwrap_or(0),
@@ -344,6 +349,12 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
             }
         }
         RunnerMode::FixtureProjection { .. } | RunnerMode::RealProjection { .. } => {
+            if config.repository_root.is_none() {
+                return Err(cli_error(
+                    "missing_option",
+                    "projection boundary mode requires --repository-root",
+                ));
+            }
             if config.checkpoint_manifest.is_none() {
                 return Err(cli_error(
                     "missing_option",
@@ -387,6 +398,16 @@ fn validate_combination(config: &Config) -> Result<(), RunnerError> {
                 ));
             }
         }
+    }
+    if !matches!(
+        config.mode,
+        RunnerMode::FixtureProjection { .. } | RunnerMode::RealProjection { .. }
+    ) && config.repository_root.is_some()
+    {
+        return Err(cli_error(
+            "incompatible_options",
+            "--repository-root is only valid for projection boundary modes",
+        ));
     }
     Ok(())
 }
@@ -551,6 +572,42 @@ mod tests {
             .map(OsString::from),
         );
         assert_eq!(parse_args(p1).unwrap_err().code, "p1_token_bound");
+    }
+
+    #[test]
+    fn projection_requires_explicit_repository_root_and_other_modes_reject_it() {
+        let projection = || {
+            let mut args = common();
+            args.extend(
+                [
+                    "--checkpoint-manifest",
+                    "checkpoint.json",
+                    "--fixture-projection-boundary",
+                    "package.json",
+                    "--numerical-mode",
+                    "production-mlx-tier-b",
+                ]
+                .into_iter()
+                .map(OsString::from),
+            );
+            args
+        };
+        assert_eq!(parse_args(projection()).unwrap_err().code, "missing_option");
+        let mut admitted = projection();
+        admitted.extend(
+            ["--repository-root", "/reviewed/repository"]
+                .into_iter()
+                .map(OsString::from),
+        );
+        assert!(matches!(parse_args(admitted), Ok(ParseOutcome::Run(_))));
+
+        let mut dry = common();
+        dry.extend(
+            ["--dry-run", "--repository-root", "/wrong"]
+                .into_iter()
+                .map(OsString::from),
+        );
+        assert_eq!(parse_args(dry).unwrap_err().code, "incompatible_options");
     }
 
     #[test]

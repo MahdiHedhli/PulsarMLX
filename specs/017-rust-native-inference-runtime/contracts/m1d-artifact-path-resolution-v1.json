@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.m1d-artifact-path-resolution-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1d-artifact-path-resolution-v1",
+  "purpose": "Separate immutable repository artifacts from private package artifacts for M1-D qualification.",
+  "path_namespaces": {
+    "repository_relative": {
+      "root_source": "explicit_trusted_repository_root",
+      "root_identity": "compiled_runtime_git_sha",
+      "allowed_components": "normal_components_only",
+      "symlinks": "forbidden",
+      "containment": "canonical_target_must_remain_beneath_canonical_repository_root",
+      "content_authority": "sha256_must_match_before_parse_or_use"
+    },
+    "package_relative": {
+      "root_source": "canonical_parent_of_exclusively_selected_package",
+      "root_identity": "package_content_sha256",
+      "allowed_components": "normal_components_only",
+      "symlinks": "forbidden",
+      "containment": "canonical_target_must_remain_beneath_canonical_package_root",
+      "content_authority": "sha256_must_match_before_parse_or_use"
+    }
+  },
+  "repository_root": {
+    "binding": "explicit_cli_argument",
+    "canonicalization": "required_before_resolution",
+    "git_identity": "must_equal_compiled_runtime_git_sha",
+    "fallback_to_cwd": false,
+    "fallback_to_package_parent": false,
+    "fallback_to_environment_guess": false,
+    "public_evidence": "record_git_identity_only"
+  },
+  "typed_reference": {
+    "required_fields": [
+      "path_kind",
+      "symbolic_path",
+      "content_sha256",
+      "logical_role"
+    ],
+    "repository_fields": ["repository_identity"],
+    "package_fields": ["package_artifact_id"]
+  },
+  "fail_closed": [
+    "untyped_or_ambiguous_reference",
+    "absolute_repository_reference",
+    "absolute_package_reference",
+    "parent_or_current_directory_component",
+    "symlink_root_or_component",
+    "canonical_containment_escape",
+    "missing_artifact",
+    "content_hash_mismatch",
+    "repository_git_identity_mismatch"
+  ],
+  "relocation_invariants": {
+    "moving_private_package_changes_repository_resolution": false,
+    "changing_current_working_directory_changes_resolution": false,
+    "copying_an_unchanged_private_package_is_allowed": true
+  },
+  "retuning_policy": "immutable; publish a reviewed successor contract rather than mutating this version"
+}

@@ -1,26 +1,41 @@
 {
   "schema": "pulsarmlx.f017.m1d-projection-package",
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "package_kind": "checkpoint_free_fixture",
+  "path_resolution_contract": {
+    "version": "f017-m1d-artifact-path-resolution-v1",
+    "path_kind": "repository_relative",
+    "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+    "content_sha256": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+    "logical_role": "path_resolution_contract"
+  },
   "boundary_contract": {
     "version": "f017-m1d-projection-boundary-v1",
-    "sha256": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
-    "path": "../contracts/m1d-projection-boundary-v1.json"
+    "path_kind": "repository_relative",
+    "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-projection-boundary-v1.json",
+    "content_sha256": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
+    "logical_role": "boundary_contract"
   },
   "decoder_contract": {
     "version": "f017-q8-0-decoder-v1",
-    "sha256": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
-    "path": "../contracts/m1d-q8-0-decoder-v1.json"
+    "path_kind": "repository_relative",
+    "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-q8-0-decoder-v1.json",
+    "content_sha256": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
+    "logical_role": "decoder_contract"
   },
   "scaffold_contract": {
     "version": "f017-m1d-q8-0-sequential-f32-v1",
-    "sha256": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
-    "path": "../contracts/m1d-exact-scaffold-v1.json"
+    "path_kind": "repository_relative",
+    "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-exact-scaffold-v1.json",
+    "content_sha256": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+    "logical_role": "scaffold_contract"
   },
   "tier_b_contract": {
     "version": "f017-production-m1d-projection-tier-b-v1",
-    "sha256": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
-    "path": "../contracts/production-m1d-projection-tier-b-v1.json"
+    "path_kind": "repository_relative",
+    "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/production-m1d-projection-tier-b-v1.json",
+    "content_sha256": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
+    "logical_role": "tier_b_contract"
   },
   "checkpoint_set_sha256": "b3537817d252533685482107feb1f894461f3ed1c92831ae0e7abbd9a91dd27f",
   "catalog_sha256": "da14173bb8d278785b927de902b2bb804339ac7c0de9a07eb250c78791ab58fc",
@@ -43,8 +58,13 @@
     "output_shape": [576],
     "packed_sha256": "51df0b949537848c0a875fe26867494ae82a03ad71952fda7733448fb286de3e"
   },
-  "oracle_path": "f017-m1d-projection-oracle-v1.json",
-  "oracle_sha256": "1727e63a5daee0ffbb0bf6dea11ea5ecf1b559850632785d5c8864c2bbaf503a",
+  "oracle": {
+    "path_kind": "package_relative",
+    "symbolic_path": "f017-m1d-projection-oracle-v1.json",
+    "content_sha256": "1727e63a5daee0ffbb0bf6dea11ea5ecf1b559850632785d5c8864c2bbaf503a",
+    "logical_role": "independent_oracle",
+    "package_artifact_id": "f017-m1d-projection-oracle-v1"
+  },
   "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
   "one_attempt": true
 }

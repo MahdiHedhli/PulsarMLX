@@ -1,4 +1,5 @@
 pub mod admission;
+pub mod artifact_paths;
 pub mod checkpoint;
 pub mod cli;
 pub mod contract_bindings;

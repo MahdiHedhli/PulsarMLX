@@ -32,7 +32,23 @@
         "toolchain": { "type": "object" },
         "loaded_libraries": { "type": "array", "items": { "$ref": "#/$defs/loadedLibrary" } },
         "checkpoint": { "$ref": "#/$defs/checkpointIdentity" },
-        "prior_evidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } }
+        "prior_evidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha256" } },
+        "artifact_paths": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path_kind", "symbolic_path", "content_sha256", "logical_role", "repository_identity", "package_artifact_id"],
+            "properties": {
+              "path_kind": { "enum": ["repository_relative", "package_relative"] },
+              "symbolic_path": { "type": "string", "minLength": 1 },
+              "content_sha256": { "$ref": "#/$defs/sha256" },
+              "logical_role": { "type": "string", "minLength": 1 },
+              "repository_identity": { "type": ["string", "null"] },
+              "package_artifact_id": { "type": ["string", "null"] }
+            }
+          }
+        }
       }
     },
     "admission": {

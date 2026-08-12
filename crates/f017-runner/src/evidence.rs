@@ -41,6 +41,18 @@ pub struct IdentityEvidence {
     pub checkpoint: CheckpointEvidence,
     #[serde(default)]
     pub prior_evidence: BTreeMap<String, String>,
+    #[serde(default)]
+    pub artifact_paths: Vec<ArtifactPathEvidence>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ArtifactPathEvidence {
+    pub path_kind: String,
+    pub symbolic_path: String,
+    pub content_sha256: String,
+    pub logical_role: String,
+    pub repository_identity: Option<String>,
+    pub package_artifact_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -398,6 +410,7 @@ impl Evidence {
                     shards: Vec::new(),
                 },
                 prior_evidence: BTreeMap::new(),
+                artifact_paths: Vec::new(),
             },
             admission: AdmissionEvidence {
                 telemetry_source: "unavailable".to_owned(),
@@ -561,6 +574,10 @@ impl Evidence {
             ]);
             if self.execution.progress_state == "m1d_one_projection_complete"
                 && (self.identity.prior_evidence != expected_prior
+                    || !valid_m1d_artifact_paths(
+                        &self.identity.artifact_paths,
+                        &self.identity.source_sha,
+                    )
                     || self.execution.projection_count != 1
                     || self.execution.quant_decode_count != 1
                     || self.execution.expert_execution_count != 0
@@ -693,6 +710,51 @@ impl Evidence {
         }
         Ok(())
     }
+}
+
+fn valid_m1d_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) -> bool {
+    let repository_roles = [
+        "path_resolution_contract",
+        "boundary_contract",
+        "decoder_contract",
+        "scaffold_contract",
+        "tier_b_contract",
+    ];
+    let repositories_ok = repository_roles.iter().all(|role| {
+        paths.iter().any(|entry| {
+            entry.logical_role == *role
+                && entry.path_kind == "repository_relative"
+                && entry.repository_identity.as_deref() == Some(source_sha)
+                && entry.package_artifact_id.is_none()
+                && is_sha256(&entry.content_sha256)
+                && safe_symbolic_path(&entry.symbolic_path)
+        })
+    });
+    let package_ok = paths.iter().any(|entry| {
+        entry.logical_role == "independent_oracle"
+            && entry.path_kind == "package_relative"
+            && entry.repository_identity.is_none()
+            && entry
+                .package_artifact_id
+                .as_deref()
+                .is_some_and(|id| !id.is_empty())
+            && is_sha256(&entry.content_sha256)
+            && safe_symbolic_path(&entry.symbolic_path)
+    });
+    repositories_ok && package_ok && paths.len() == repository_roles.len() + 1
+}
+
+fn safe_symbolic_path(path: &str) -> bool {
+    let path = std::path::Path::new(path);
+    !path.as_os_str().is_empty()
+        && !path.is_absolute()
+        && path
+            .components()
+            .all(|component| matches!(component, std::path::Component::Normal(_)))
+}
+
+fn is_sha256(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn valid_sha256(value: &str) -> bool {
@@ -908,6 +970,7 @@ mod tests {
             stream_mode: StreamMode::OwnedDevice,
             memory_floor_bytes: 1,
             environment_manifest: PathBuf::from("environment.json"),
+            repository_root: None,
             checkpoint_manifest: None,
             tokens: Vec::new(),
             n_new: 0,

@@ -10,8 +10,8 @@ static NEXT: AtomicU64 = AtomicU64::new(0);
 
 #[test]
 fn canonical_binary_executes_one_real_shaped_checkpoint_free_projection() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../specs/017-rust-native-inference-runtime/fixtures");
+    let repository_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = repository_root.join("specs/017-rust-native-inference-runtime/fixtures");
     let temp = std::env::temp_dir().join(format!(
         "f017-m1d-native-{}-{}",
         std::process::id(),
@@ -27,8 +27,21 @@ fn canonical_binary_executes_one_real_shaped_checkpoint_free_projection() {
         ),
     )
     .unwrap();
+    let relocated_package = temp.join("package.json");
+    let relocated_oracle = temp.join("f017-m1d-projection-oracle-v1.json");
+    fs::copy(
+        root.join("f017-m1d-projection-package-v1.json"),
+        &relocated_package,
+    )
+    .unwrap();
+    fs::copy(
+        root.join("f017-m1d-projection-oracle-v1.json"),
+        &relocated_oracle,
+    )
+    .unwrap();
     let out = temp.join("evidence.json");
     let status = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))
+        .current_dir(std::env::temp_dir())
         .args(["--out"])
         .arg(&out)
         .args([
@@ -41,10 +54,12 @@ fn canonical_binary_executes_one_real_shaped_checkpoint_free_projection() {
             "--environment-manifest",
         ])
         .arg(&environment)
+        .args(["--repository-root"])
+        .arg(&repository_root)
         .args(["--checkpoint-manifest"])
         .arg(root.join("f017-m1d-projection-checkpoint-v1.json"))
         .args(["--fixture-projection-boundary"])
-        .arg(root.join("f017-m1d-projection-package-v1.json"))
+        .arg(&relocated_package)
         .args(["--numerical-mode", "production-mlx-tier-b"])
         .status()
         .unwrap();
@@ -110,8 +125,8 @@ fn canonical_binary_executes_one_real_shaped_checkpoint_free_projection() {
 
 #[test]
 fn one_bit_repeat_divergence_fails_even_when_selected_repeat_is_clean() {
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../specs/017-rust-native-inference-runtime/fixtures");
+    let repository_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = repository_root.join("specs/017-rust-native-inference-runtime/fixtures");
     let temp = std::env::temp_dir().join(format!(
         "f017-m1d-divergence-{}-{}",
         std::process::id(),
@@ -142,6 +157,8 @@ fn one_bit_repeat_divergence_fails_even_when_selected_repeat_is_clean() {
             "--environment-manifest",
         ])
         .arg(&environment)
+        .args(["--repository-root"])
+        .arg(&repository_root)
         .args(["--checkpoint-manifest"])
         .arg(root.join("f017-m1d-projection-checkpoint-v1.json"))
         .args(["--fixture-projection-boundary"])

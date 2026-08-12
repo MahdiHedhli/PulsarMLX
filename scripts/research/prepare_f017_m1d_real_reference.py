@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import stat
+import subprocess
 import time
 from pathlib import Path
 
@@ -40,10 +41,23 @@ def main() -> int:
     parser.add_argument("--target-shard", type=Path, required=True)
     parser.add_argument("--checkpoint-manifest", type=Path, required=True)
     parser.add_argument("--activation-oracle", type=Path, required=True)
-    parser.add_argument("--contracts-root", type=Path, required=True)
+    parser.add_argument("--repository-root", type=Path, required=True)
+    parser.add_argument("--runtime-source-sha", required=True)
     parser.add_argument("--output-oracle", type=Path, required=True)
     parser.add_argument("--output-package", type=Path, required=True)
     args = parser.parse_args()
+
+    repository_root = args.repository_root.resolve(strict=True)
+    repository_identity = subprocess.run(
+        ["git", "-C", str(repository_root), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if repository_identity != args.runtime_source_sha:
+        raise SystemExit("repository root differs from the authorized runtime source")
+    if args.output_oracle.parent.resolve(strict=True) != args.output_package.parent.resolve(strict=True):
+        raise SystemExit("oracle and package must share one private package root")
 
     activation_doc = json.loads(args.activation_oracle.read_text())
     activation_bytes = bytes.fromhex(activation_doc["activation"]["bytes_hex"])
@@ -101,18 +115,32 @@ def main() -> int:
     }
     oracle_bytes = (json.dumps(oracle, indent=2, sort_keys=True) + "\n").encode()
 
-    def binding(filename: str, version: str) -> dict:
-        path = args.contracts_root / filename
-        return {"version": version, "sha256": frozen.sha256(path.read_bytes()), "path": str(path)}
+    contracts_relative = Path("specs/017-rust-native-inference-runtime/contracts")
+
+    def binding(filename: str, version: str, role: str) -> dict:
+        symbolic_path = contracts_relative / filename
+        path = repository_root / symbolic_path
+        return {
+            "version": version,
+            "path_kind": "repository_relative",
+            "symbolic_path": symbolic_path.as_posix(),
+            "content_sha256": frozen.sha256(path.read_bytes()),
+            "logical_role": role,
+        }
 
     package = {
         "schema": "pulsarmlx.f017.m1d-projection-package",
-        "schema_version": "1.0.0",
+        "schema_version": "2.0.0",
         "package_kind": "production_reviewed",
-        "boundary_contract": binding("m1d-projection-boundary-v1.json", "f017-m1d-projection-boundary-v1"),
-        "decoder_contract": binding("m1d-q8-0-decoder-v1.json", frozen.DECODER_VERSION),
-        "scaffold_contract": binding("m1d-exact-scaffold-v1.json", frozen.SCAFFOLD_VERSION),
-        "tier_b_contract": binding("production-m1d-projection-tier-b-v1.json", frozen.TIER_B_VERSION),
+        "path_resolution_contract": binding(
+            "m1d-artifact-path-resolution-v1.json",
+            "f017-m1d-artifact-path-resolution-v1",
+            "path_resolution_contract",
+        ),
+        "boundary_contract": binding("m1d-projection-boundary-v1.json", "f017-m1d-projection-boundary-v1", "boundary_contract"),
+        "decoder_contract": binding("m1d-q8-0-decoder-v1.json", frozen.DECODER_VERSION, "decoder_contract"),
+        "scaffold_contract": binding("m1d-exact-scaffold-v1.json", frozen.SCAFFOLD_VERSION, "scaffold_contract"),
+        "tier_b_contract": binding("production-m1d-projection-tier-b-v1.json", frozen.TIER_B_VERSION, "tier_b_contract"),
         "checkpoint_set_sha256": checkpoint["checkpoint_set_sha256"],
         "catalog_sha256": checkpoint["catalog_sha256"],
         "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
@@ -128,8 +156,13 @@ def main() -> int:
             "gguf_shape": [6144, 576], "matrix_shape": [576, 6144],
             "output_shape": [576], "packed_sha256": matrix_sha,
         },
-        "oracle_path": str(args.output_oracle),
-        "oracle_sha256": frozen.sha256(oracle_bytes),
+        "oracle": {
+            "path_kind": "package_relative",
+            "symbolic_path": args.output_oracle.name,
+            "content_sha256": frozen.sha256(oracle_bytes),
+            "logical_role": "independent_oracle",
+            "package_artifact_id": "f017-m1d-independent-real-oracle-v1",
+        },
         "activation_sha256": activation_doc["activation"]["sha256"],
         "one_attempt": True,
     }

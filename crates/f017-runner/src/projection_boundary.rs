@@ -5,10 +5,14 @@
 //! checkpoint-free and later production-reviewed packages. Package kind is
 //! the only admitted data-identity distinction.
 
+use crate::artifact_paths::{
+    ArtifactReference, PathKind, PrivatePackageRoot, TrustedRepositoryRoot,
+};
 use crate::checkpoint::{CheckpointKind, CheckpointManifest};
 use crate::cli::{Config, RunnerMode};
 use crate::evidence::{
-    Evidence, OracleOrderingEvidence, RepeatIntegrityEvidence, RepeatOutputEvidence,
+    ArtifactPathEvidence, Evidence, OracleOrderingEvidence, RepeatIntegrityEvidence,
+    RepeatOutputEvidence,
 };
 use crate::json::{parse_json_no_duplicates, sha256_bytes};
 use crate::numerical_classification::{GreedyApplicability, NumericalClassification};
@@ -19,7 +23,7 @@ use crate::qualification::{
 use crate::{FailureClass, RunnerError};
 use serde::Deserialize;
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 pub const BOUNDARY_VERSION: &str = "f017-m1d-projection-boundary-v1";
@@ -36,6 +40,7 @@ struct ProjectionPackage {
     schema: String,
     schema_version: String,
     package_kind: String,
+    path_resolution_contract: ContractBinding,
     boundary_contract: ContractBinding,
     decoder_contract: ContractBinding,
     scaffold_contract: ContractBinding,
@@ -45,8 +50,7 @@ struct ProjectionPackage {
     tensor_map_sha256: String,
     prior_evidence: PriorEvidence,
     tensor: TensorRange,
-    oracle_path: PathBuf,
-    oracle_sha256: String,
+    oracle: ArtifactReference,
     activation_sha256: String,
     one_attempt: bool,
 }
@@ -63,8 +67,8 @@ struct PriorEvidence {
 #[serde(deny_unknown_fields)]
 struct ContractBinding {
     version: String,
-    sha256: String,
-    path: PathBuf,
+    #[serde(flatten)]
+    artifact: ArtifactReference,
 }
 
 #[derive(Debug, Deserialize)]
@@ -172,15 +176,19 @@ fn run_impl(
 ) -> Result<(), RunnerError> {
     use stream::{MlxContext, MlxDevice, MlxStreamMode};
 
-    let root = package_path
-        .parent()
-        .ok_or_else(|| error("m1d_package_path", "package has no parent"))?;
+    let package_root = PrivatePackageRoot::from_package(package_path)?;
+    let repository_root = TrustedRepositoryRoot::open(
+        config
+            .repository_root
+            .as_deref()
+            .expect("CLI requires repository root for projection modes"),
+    )?;
     let package_bytes =
         fs::read(package_path).map_err(|e| error("m1d_package_read", e.to_string()))?;
     let package_sha256 = sha256_bytes(&package_bytes);
     let package: ProjectionPackage =
         parse_json_no_duplicates(&package_bytes).map_err(|e| error("m1d_package_json", e))?;
-    validate_package(&package, root, &config.mode)?;
+    validate_package(&package, &repository_root, &config.mode, evidence)?;
     evidence.identity.prior_evidence.insert(
         "m1_a".to_owned(),
         package.prior_evidence.m1_a_sha256.clone(),
@@ -193,9 +201,13 @@ fn run_impl(
         "m1_c".to_owned(),
         package.prior_evidence.m1_c_sha256.clone(),
     );
-    let oracle_bytes = fs::read(root.join(&package.oracle_path))
-        .map_err(|e| error("m1d_oracle_read", e.to_string()))?;
-    require_hash("m1d_oracle_hash", &oracle_bytes, &package.oracle_sha256)?;
+    let resolved_oracle = package_root.resolve(&package.oracle)?;
+    let oracle_bytes = resolved_oracle.bytes;
+    let oracle_path = resolved_oracle.canonical_path;
+    evidence
+        .identity
+        .artifact_paths
+        .push(artifact_evidence(&package.oracle, None));
     let oracle: Oracle =
         parse_json_no_duplicates(&oracle_bytes).map_err(|e| error("m1d_oracle_json", e))?;
     validate_oracle(&oracle, &package)?;
@@ -322,8 +334,8 @@ fn run_impl(
     require_unchanged("m1d_package_changed", package_path, &package_sha256)?;
     require_unchanged(
         "m1d_oracle_changed",
-        &root.join(&package.oracle_path),
-        &package.oracle_sha256,
+        &oracle_path,
+        &package.oracle.content_sha256,
     )?;
     let candidate_started_at = unix_time_ns()?;
     let oracle_completed_at = oracle
@@ -338,7 +350,7 @@ fn run_impl(
         ));
     }
     evidence.execution.numerical.oracle_ordering = OracleOrderingEvidence {
-        oracle_package_sha256: Some(package.oracle_sha256.clone()),
+        oracle_package_sha256: Some(package.oracle.content_sha256.clone()),
         oracle_completed_at: Some(oracle.finalization.oracle_completed_at.clone()),
         oracle_completion_marker: Some(oracle.finalization.completion_marker.clone()),
         oracle_validated_before_candidate: true,
@@ -430,8 +442,8 @@ fn run_impl(
     require_unchanged("m1d_package_changed", package_path, &package_sha256)?;
     require_unchanged(
         "m1d_oracle_changed",
-        &root.join(&package.oracle_path),
-        &package.oracle_sha256,
+        &oracle_path,
+        &package.oracle.content_sha256,
     )?;
 
     evidence.execution.dispatch.native = 10;
@@ -452,7 +464,7 @@ fn run_impl(
         .frozen_contract_versions
         .insert(
             package.boundary_contract.version,
-            package.boundary_contract.sha256,
+            package.boundary_contract.artifact.content_sha256,
         );
     evidence
         .execution
@@ -460,7 +472,7 @@ fn run_impl(
         .frozen_contract_versions
         .insert(
             package.decoder_contract.version,
-            package.decoder_contract.sha256,
+            package.decoder_contract.artifact.content_sha256,
         );
     evidence
         .execution
@@ -468,7 +480,7 @@ fn run_impl(
         .frozen_contract_versions
         .insert(
             package.scaffold_contract.version,
-            package.scaffold_contract.sha256,
+            package.scaffold_contract.artifact.content_sha256,
         );
     evidence
         .execution
@@ -476,7 +488,7 @@ fn run_impl(
         .frozen_contract_versions
         .insert(
             package.tier_b_contract.version,
-            package.tier_b_contract.sha256,
+            package.tier_b_contract.artifact.content_sha256,
         );
     evidence.execution.numerical.bit_mismatch_count =
         Some(qualification.metrics.bit_mismatch_count as u64);
@@ -520,8 +532,9 @@ fn run_impl(
 
 fn validate_package(
     package: &ProjectionPackage,
-    root: &Path,
+    repository_root: &TrustedRepositoryRoot,
     mode: &RunnerMode,
+    evidence: &mut Evidence,
 ) -> Result<(), RunnerError> {
     let expected_kind = if matches!(mode, RunnerMode::RealProjection { .. }) {
         "production_reviewed"
@@ -529,7 +542,7 @@ fn validate_package(
         "checkpoint_free_fixture"
     };
     if package.schema != "pulsarmlx.f017.m1d-projection-package"
-        || package.schema_version != "1.0.0"
+        || package.schema_version != "2.0.0"
         || package.package_kind != expected_kind
         || !package.one_attempt
         || package.boundary_contract.version != BOUNDARY_VERSION
@@ -559,17 +572,49 @@ fn validate_package(
             "projection package differs from the one admitted M1-D boundary",
         ));
     }
-    for binding in [
-        &package.boundary_contract,
-        &package.decoder_contract,
-        &package.scaffold_contract,
-        &package.tier_b_contract,
+    for (binding, role) in [
+        (
+            &package.path_resolution_contract,
+            "path_resolution_contract",
+        ),
+        (&package.boundary_contract, "boundary_contract"),
+        (&package.decoder_contract, "decoder_contract"),
+        (&package.scaffold_contract, "scaffold_contract"),
+        (&package.tier_b_contract, "tier_b_contract"),
     ] {
-        let bytes = fs::read(root.join(&binding.path))
-            .map_err(|e| error("m1d_contract_read", e.to_string()))?;
-        require_hash("m1d_contract_hash", &bytes, &binding.sha256)?;
+        if binding.artifact.path_kind != PathKind::RepositoryRelative
+            || binding.artifact.logical_role != role
+        {
+            return Err(error(
+                "m1d_path_namespace",
+                "contract binding does not use its typed repository namespace",
+            ));
+        }
+        repository_root.resolve(&binding.artifact)?;
+        evidence.identity.artifact_paths.push(artifact_evidence(
+            &binding.artifact,
+            Some(repository_root.identity()),
+        ));
     }
     Ok(())
+}
+
+fn artifact_evidence(
+    artifact: &ArtifactReference,
+    repository_identity: Option<&str>,
+) -> ArtifactPathEvidence {
+    ArtifactPathEvidence {
+        path_kind: match artifact.path_kind {
+            PathKind::RepositoryRelative => "repository_relative",
+            PathKind::PackageRelative => "package_relative",
+        }
+        .to_owned(),
+        symbolic_path: artifact.symbolic_path.to_string_lossy().into_owned(),
+        content_sha256: artifact.content_sha256.clone(),
+        logical_role: artifact.logical_role.clone(),
+        repository_identity: repository_identity.map(ToOwned::to_owned),
+        package_artifact_id: artifact.package_artifact_id.clone(),
+    }
 }
 
 fn validate_oracle(oracle: &Oracle, package: &ProjectionPackage) -> Result<(), RunnerError> {
@@ -725,95 +770,157 @@ fn lifecycle(code: &'static str, message: impl Into<String>) -> RunnerError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::{NumericalMode, StreamMode, ValidationMode};
+    use std::path::PathBuf;
 
-    fn package() -> (ProjectionPackage, PathBuf) {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../specs/017-rust-native-inference-runtime/fixtures");
-        let bytes = fs::read(root.join("f017-m1d-projection-package-v1.json")).unwrap();
-        (parse_json_no_duplicates(&bytes).unwrap(), root)
+    fn package() -> (ProjectionPackage, PathBuf, TrustedRepositoryRoot) {
+        let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let fixture_root = repository.join("specs/017-rust-native-inference-runtime/fixtures");
+        let bytes = fs::read(fixture_root.join("f017-m1d-projection-package-v1.json")).unwrap();
+        (
+            parse_json_no_duplicates(&bytes).unwrap(),
+            fixture_root,
+            TrustedRepositoryRoot::open(&repository).unwrap(),
+        )
+    }
+
+    fn new_evidence() -> Evidence {
+        Evidence::initial(
+            &Config {
+                out: "evidence.json".into(),
+                validation_mode: ValidationMode::GoldenStrict,
+                stream_mode: StreamMode::OwnedDevice,
+                memory_floor_bytes: 1,
+                environment_manifest: "environment.json".into(),
+                repository_root: None,
+                checkpoint_manifest: Some("checkpoint.json".into()),
+                tokens: vec![],
+                n_new: 0,
+                expected_token: None,
+                numerical_mode: Some(NumericalMode::ProductionMlxTierB),
+                mode: RunnerMode::FixtureProjection {
+                    package: "package.json".into(),
+                },
+            },
+            "0".repeat(64),
+        )
     }
 
     #[test]
     fn frozen_package_accepts_only_the_one_projection_contract() {
-        let (value, root) = package();
+        let (value, _, repository) = package();
+        let mut evidence = new_evidence();
         validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new(),
             },
+            &mut evidence,
         )
         .unwrap();
+        assert_eq!(evidence.identity.artifact_paths.len(), 5);
     }
 
     #[test]
     fn wrong_activation_tensor_decoder_and_contract_fail_closed() {
-        let (mut value, root) = package();
+        let (mut value, _, repository) = package();
         value.activation_sha256 = "0".repeat(64);
+        let mut evidence = new_evidence();
         assert!(validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new()
-            }
+            },
+            &mut evidence,
         )
         .is_err());
-        let (mut value, _) = package();
+        let (mut value, _, _) = package();
         value.tensor.name = "blk.0.attn_q_a.weight".to_owned();
+        let mut evidence = new_evidence();
         assert!(validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new()
-            }
+            },
+            &mut evidence,
         )
         .is_err());
-        let (mut value, _) = package();
+        let (mut value, _, _) = package();
         value.tensor.matrix_shape = [575, 6144];
+        let mut evidence = new_evidence();
         assert!(validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new()
-            }
+            },
+            &mut evidence,
         )
         .is_err());
-        let (mut value, _) = package();
+        let (mut value, _, _) = package();
         value.decoder_contract.version = "stale".to_owned();
+        let mut evidence = new_evidence();
         assert!(validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new()
-            }
+            },
+            &mut evidence,
         )
         .is_err());
-        let (mut value, _) = package();
+        let (mut value, _, _) = package();
         value.tier_b_contract.version = "stale".to_owned();
+        let mut evidence = new_evidence();
         assert!(validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new()
-            }
+            },
+            &mut evidence,
         )
         .is_err());
-        let (mut value, _) = package();
+        let (mut value, _, _) = package();
         value.prior_evidence.m1_c_sha256 = "0".repeat(64);
+        let mut evidence = new_evidence();
         assert!(validate_package(
             &value,
-            &root,
+            &repository,
             &RunnerMode::FixtureProjection {
                 package: PathBuf::new()
-            }
+            },
+            &mut evidence,
         )
         .is_err());
+        let (mut value, _, _) = package();
+        value.boundary_contract.artifact.content_sha256 = "0".repeat(64);
+        let mut evidence = new_evidence();
+        assert_eq!(
+            validate_package(
+                &value,
+                &repository,
+                &RunnerMode::FixtureProjection {
+                    package: PathBuf::new()
+                },
+                &mut evidence,
+            )
+            .unwrap_err()
+            .code,
+            "m1d_artifact_hash"
+        );
     }
 
     #[test]
     fn oracle_order_and_greedy_semantics_fail_closed() {
-        let (package, root) = package();
-        let bytes = fs::read(root.join(&package.oracle_path)).unwrap();
+        let (package, root, _) = package();
+        let package_root =
+            PrivatePackageRoot::from_package(&root.join("f017-m1d-projection-package-v1.json"))
+                .unwrap();
+        let bytes = package_root.resolve(&package.oracle).unwrap().bytes;
         let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
         oracle.finalization.completion_marker = "boolean_only_claim".to_owned();
         assert!(validate_oracle(&oracle, &package).is_err());
