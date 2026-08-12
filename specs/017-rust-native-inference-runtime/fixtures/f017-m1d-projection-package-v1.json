@@ -4,7 +4,7 @@
   "package_kind": "checkpoint_free_fixture",
   "boundary_contract": {
     "version": "f017-m1d-projection-boundary-v1",
-    "sha256": "ab2c370fa750026f6772c60d19353265e93bada6778adc6e118dd9e2f5d41040",
+    "sha256": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
     "path": "../contracts/m1d-projection-boundary-v1.json"
   },
   "decoder_contract": {
