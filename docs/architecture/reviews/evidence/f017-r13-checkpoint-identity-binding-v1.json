@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.r13-checkpoint-identity-binding",
+  "schema_version": 1,
+  "status": "identity_bound_real_fixture_missing",
+  "runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
+  "checkpoint_revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23",
+  "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+  "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+  "tensor_map_version": "f017-glm52-tensor-map-v1",
+  "tensor_map_contract_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+  "shards": [
+    {"basename":"GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf","sha256":"7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18"},
+    {"basename":"GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf","sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
+    {"basename":"GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf","sha256":"1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b"},
+    {"basename":"GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf","sha256":"10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e"},
+    {"basename":"GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf","sha256":"40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d"},
+    {"basename":"GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf","sha256":"eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d"}
+  ],
+  "privacy": {
+    "classification": "local_only_private_checkpoint_derived",
+    "absolute_paths_public": false,
+    "checkpoint_bytes_committed": false
+  },
+  "real_boundary_fixture": {
+    "generated": false,
+    "validated": false,
+    "required_before_t017_140_completion": true
+  },
+  "m1_c_authorized": false
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.m1-b-admission-binding",
+  "schema_version": 1,
+  "status": "prepared_not_executed",
+  "required_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
+  "stale_runtime_source_sha_rejected": "91359dd59265de71fd25848142af23823e41e160",
+  "runtime_delta_from_stale_pin_contains_compiled_code": true,
+  "accepted_m1_a_evidence_sha256": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+  "environment_manifest_sha256": "33f57e945762e1b805ede4663e6ae19ee94240936c5e87940aba5e6e5face251",
+  "checkpoint_manifest_sha256": "208969118007ec0ae6e6b49f45f3d253b3bac7824b7f8f495a1fef1bcea844d4",
+  "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+  "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+  "handoff_document": "docs/architecture/reviews/f017-m1-b-checkpoint-identity-handoff.md",
+  "handoff_document_sha256": "6aab5c42804a40e897cb22656cc3e1eeac391900b4ad74509593c4ac97d68a9a",
+  "fresh_execution_packet": "docs/architecture/reviews/f017-m1-b-fresh-authorization.md",
+  "fresh_execution_packet_sha256": "efeb99246ceaaaedd48d5f280945432e511e063594b132723718a38f22aee67e",
+  "handoff_descendant_policy": "documentation_provisioning_tests_only_runtime_must_execute_exact_required_sha",
+  "m1_b_attempts": 0,
+  "checkpoint_access": {
+    "provisioning_hash_and_header_catalog": true,
+    "canonical_identity_mode_executed": false,
+    "tensor_execution_count": 0,
+    "quant_decode_count": 0,
+    "model_compute_dispatch_count": 0
+  },
+  "m1_c_authorized": false,
+  "p1_authorized": false
+}

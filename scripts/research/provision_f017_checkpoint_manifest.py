@@ -446,7 +446,7 @@ def validate_admission_binding(repo: Path, binding: dict[str, Any]) -> None:
         raise ProvisioningError("M1-B binding execution boundary differs")
     for path_key, hash_key in (
         ("handoff_document", "handoff_document_sha256"),
-        ("fresh_authorization_document", "fresh_authorization_document_sha256"),
+        ("fresh_execution_packet", "fresh_execution_packet_sha256"),
     ):
         relative = binding.get(path_key)
         expected_hash = binding.get(hash_key)

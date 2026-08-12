@@ -127,6 +127,8 @@
 - [x] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
 - [ ] T017-140 Add local-only real boundary fixture manifest/validator for R13.
   - [x] T017-140A Add the checkpoint-free manifest schema and fake-shard validator.
+  - [x] T017-140I Bind the reviewed immutable six-shard checkpoint, catalog,
+    tensor-map, and privacy identities without capturing tensor payload bytes.
   - [ ] T017-140B Generate and validate a separately authorized real local boundary fixture.
 - [ ] T017-141 Add literal canonical P1 command only after M1-A through M1-G review gates pass.
 - [x] T017-150 Add checkpoint-free CI for CLI/schema/store/tensor-map/runner/cancellation/privacy gates.
@@ -135,4 +137,7 @@
 - [x] T017-161 Obtain independent adversarial review of P1 meaningfulness and fail-closed behavior.
 - [x] T017-162 Execute and bank exactly one accepted M1-A production adapter preflight.
 - [ ] T017-163 Execute M1-B only after separate review and explicit authorization.
+  - [x] T017-163A Repair the stale runtime pin, provision the reviewed local-only
+    production checkpoint manifest, and prepare a fresh authorization packet.
+  - [ ] T017-163B Execute exactly one separately authorized M1-B identity run.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

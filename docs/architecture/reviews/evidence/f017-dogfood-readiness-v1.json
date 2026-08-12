@@ -1,13 +1,14 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_a",
+  "updated_after": "m1_b_admission_repair",
   "executed_source_sha": "42506d75b6b10d6fe3c1d804175f5dc5c9c69f45",
+  "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
     "r7_r12": "complete",
     "m1_a": "accepted",
-    "m1_b": "prepared_not_run",
-    "t017_140": "validator_ready_real_fixture_missing",
+    "m1_b": "fresh_authorization_prepared_not_run",
+    "t017_140": "validator_and_checkpoint_identity_ready_real_fixture_missing",
     "t017_141": "blocked",
     "m1_c_m1_g": "blocked",
     "p1": "blocked",
@@ -23,9 +24,22 @@
   },
   "m1_b_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-b-checkpoint-identity-handoff.md",
+    "fresh_execution_packet": "docs/architecture/reviews/f017-m1-b-fresh-authorization.md",
     "review_checklist": "docs/architecture/reviews/f017-m1-b-evidence-review-checklist.md",
     "authorized": false
   },
-  "checkpoint_accessed": false,
-  "next_authorization": "exactly one M1-B checkpoint-identity-only run after packet review"
+  "checkpoint_manifest": {
+    "public_review": "docs/architecture/reviews/f017-production-checkpoint-manifest-review.md",
+    "private_manifest_sha256": "208969118007ec0ae6e6b49f45f3d253b3bac7824b7f8f495a1fef1bcea844d4",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0"
+  },
+  "checkpoint_access": {
+    "manifest_provisioning_hash_and_header_catalog": true,
+    "m1_b_identity_mode_executed": false,
+    "tensor_execution_count": 0,
+    "quant_decode_count": 0,
+    "model_compute_dispatch_count": 0
+  },
+  "next_gate": "fresh explicit authorization for exactly one M1-B checkpoint-identity-only run"
 }

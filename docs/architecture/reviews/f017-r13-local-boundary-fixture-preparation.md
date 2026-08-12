@@ -2,9 +2,11 @@
 
 ## Status
 
-Checkpoint-free validator infrastructure is implemented. T017-140 remains
-open because no real checkpoint-derived boundary fixture has been generated or
-validated.
+Checkpoint-free validator infrastructure is implemented and the reviewed real
+checkpoint identity is now bound in
+[`evidence/f017-r13-checkpoint-identity-binding-v1.json`](evidence/f017-r13-checkpoint-identity-binding-v1.json).
+T017-140 remains open because no real checkpoint-derived boundary fixture has
+been generated or validated.
 
 ## Contract
 
@@ -29,7 +31,7 @@ empty or overflowing tensor ranges, zero dimensions, relative fixture paths,
 symlinks, non-files, length/hash mismatch, redistributable private fixtures,
 and non-independent provenance.
 
-## Checkpoint-free proof
+## Validator proof
 
 Unit tests construct temporary public-safe fake shard bytes and cover:
 
@@ -40,8 +42,12 @@ Unit tests construct temporary public-safe fake shard bytes and cover:
 - offset overflow;
 - non-independent reference provenance.
 
-No real shard was searched, opened, statted, hashed, or copied while preparing
-this infrastructure.
+The original validator work was checkpoint-free. A later explicitly authorized
+manifest-provisioning pass streamed all six real shard hashes and parsed only
+GGUF headers/catalogs. That pass bound the immutable revision, checkpoint-set
+hash, shard identities, catalog hash, tensor-map version/hash, and local-only
+privacy policy without generating a tensor payload fixture. It recorded zero
+tensor execution, quant decode, and model compute.
 
 ## Remaining T017-140 gate
 
