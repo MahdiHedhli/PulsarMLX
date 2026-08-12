@@ -4,9 +4,9 @@
 
 This is the checkpoint-free internal re-review packet for the final two
 pre-M1-A findings. The implementation baseline is
-`153ad293` (descended from reviewed head
-`49a35c225500e5808d595b282e67542d8ac1d5b3`). The final reviewer must bind the
-full exact commit and final-head CI before returning GO.
+`153ad293d48c712a084428fc1696bce64e505d53` (descended from reviewed head
+`49a35c225500e5808d595b282e67542d8ac1d5b3`). The pushed review-packet head is
+`f21c6cc2eeec78e3889c00967e9e5469aaff44e5`.
 
 No real checkpoint was accessed. No M1-A or M1-B stage ran. Numerical
 contracts, fixtures, thresholds, checkpoint/tensor execution semantics, and
@@ -102,6 +102,24 @@ Before this packet was prepared:
 
 The complete workspace, native adapter, R7-R12, evidence/schema, privacy,
 generated-artifact, and Spec Kit gates must pass before the final review.
+
+## Final implementation-head CI
+
+[CI run 31548169244](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/31548169244)
+passed at exact head `f21c6cc2eeec78e3889c00967e9e5469aaff44e5`:
+
+- Apple Silicon workspace baseline: passed in 2m21s;
+- Apple MLX small-fixture validation: passed in 8m07s;
+- the native step announced `PULSAR_REQUIRE_NATIVE_MLX=1` and no-skip
+  execution;
+- `environment::tests::loaded_library_mismatch_is_rejected ... ok`;
+- `environment::tests::loaded_library_match_is_accepted ... ok`;
+- native identity summary: 2 passed, 0 failed, 0 ignored.
+
+The Apple-native job also passed the canonical projection gate, full R7-R12
+numerical ladder, and downstream fixture/privacy/evidence checks. The
+documentation-only attestation containing this section must receive its own
+green final-head CI before handoff.
 
 ## Task and admission state
 
