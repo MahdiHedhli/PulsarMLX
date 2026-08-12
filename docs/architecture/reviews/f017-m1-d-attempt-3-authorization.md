@@ -9,11 +9,11 @@ checkpoint access and rendered one immutable execution config.
 ## Execution identities
 
 - runtime SHA: `1c7705c130d5909bb4523d70bc7ec45e974e1b24`
-- tooling/validator SHA: `1c7705c130d5909bb4523d70bc7ec45e974e1b24`
+- tooling/validator SHA: `2e84a4e0899cea333deadb2c7f4a5022766e0784`
 - handoff: `docs/architecture/reviews/f017-m1-d-attempt-3-handoff.md`
-- handoff SHA-256: `466c77344b301d9da68d8f31aac7252efe1c3e18ad59453c6373fd95dea6b85c`
+- handoff SHA-256: `2eff11d216cec80ccf66b41e1783c8a8b60e02f3efba5cb8cd9efaa54d11a3d8`
 - machine binding: `docs/architecture/reviews/evidence/f017-m1-d-attempt-3-authorization-v1.json`
-- execution-config SHA-256: `d978a37d0a66067b14515cd617fbc7576617e0eafb1265e081969fd56311a7aa`
+- execution-config SHA-256: `42fb54d08c2c8ee8c7b06360e04743e8c8a976df649e1a0b8ef505c94c01a9fa`
 - command-assembly contract SHA-256: `8fde317e9da50a8f106149eac4e327c43946bf9c795a657984750cf08e4f59c5`
 - execution-config schema SHA-256: `c617d0a539ff38a39168577425d7becfb141eca05647028f637b10d8022e0ae4`
 - path contract SHA-256: `40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d`
@@ -43,7 +43,7 @@ identity.
 ## Canonical config-only invocation
 
 ```text
-f017-glm52-runner --m1d-execution-config execution-config.json --execution-config-sha256 d978a37d0a66067b14515cd617fbc7576617e0eafb1265e081969fd56311a7aa
+f017-glm52-runner --m1d-execution-config execution-config.json --execution-config-sha256 42fb54d08c2c8ee8c7b06360e04743e8c8a976df649e1a0b8ef505c94c01a9fa
 ```
 
 The two options must appear exactly once, in this order. The runner rejects a

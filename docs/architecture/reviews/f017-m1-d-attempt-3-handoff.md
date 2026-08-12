@@ -10,10 +10,10 @@ preflight.
 ## Runtime and command source
 
 - runtime SHA: `1c7705c130d5909bb4523d70bc7ec45e974e1b24`
-- tooling/validator SHA: `1c7705c130d5909bb4523d70bc7ec45e974e1b24`
+- tooling/validator SHA: `2e84a4e0899cea333deadb2c7f4a5022766e0784`
 - attempt: `3`
 - source of truth: `docs/architecture/reviews/evidence/f017-m1-d-attempt-3-authorization-v1.json`
-- execution-config SHA-256: `d978a37d0a66067b14515cd617fbc7576617e0eafb1265e081969fd56311a7aa`
+- execution-config SHA-256: `42fb54d08c2c8ee8c7b06360e04743e8c8a976df649e1a0b8ef505c94c01a9fa`
 - command contract: `f017-m1d-command-assembly-v1`
 - execution-config schema: `pulsarmlx.f017.m1d-execution-config` version `1.0.0`
 

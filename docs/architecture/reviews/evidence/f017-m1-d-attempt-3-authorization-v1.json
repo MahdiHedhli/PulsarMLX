@@ -21,10 +21,10 @@
     "preflight_consumes_attempt": false,
     "production_repeat_count": 10
   },
-  "execution_config_sha256": "d978a37d0a66067b14515cd617fbc7576617e0eafb1265e081969fd56311a7aa",
+  "execution_config_sha256": "42fb54d08c2c8ee8c7b06360e04743e8c8a976df649e1a0b8ef505c94c01a9fa",
   "handoff": {
     "path": "docs/architecture/reviews/f017-m1-d-attempt-3-handoff.md",
-    "sha256": "466c77344b301d9da68d8f31aac7252efe1c3e18ad59453c6373fd95dea6b85c"
+    "sha256": "2eff11d216cec80ccf66b41e1783c8a8b60e02f3efba5cb8cd9efaa54d11a3d8"
   },
   "package_schema": {
     "sha256": "eec3ae97ac8c2ecb04ac982abe8b1bcec313a57888fa5bb66370e31485fc2e2a",
@@ -75,5 +75,5 @@
     "mandatory_stop_before_m1_e": true,
     "no_auto_retry": true
   },
-  "tooling_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24"
+  "tooling_sha": "2e84a4e0899cea333deadb2c7f4a5022766e0784"
 }
