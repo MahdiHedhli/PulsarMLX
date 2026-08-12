@@ -119,6 +119,79 @@ fn tier_b_is_operand_derived_and_rejects_contract_violations() {
 }
 
 #[test]
+fn frozen_projection_stress_suite_passes_exact_scaffold_and_tier_b() {
+    let bytes = fs::read(root().join("f017-m1d-projection-oracle-v1.json")).unwrap();
+    let oracle: Value = parse_json_no_duplicates(&bytes).unwrap();
+    let cases = oracle["stress_cases"].as_array().unwrap();
+    assert_eq!(
+        cases
+            .iter()
+            .map(|case| case["name"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        [
+            "cancellation",
+            "high_dynamic_range",
+            "near_zero",
+            "subnormal",
+            "signed_zero",
+            "near_overflow_finite",
+        ]
+    );
+
+    let columns = 32;
+    let rows = 2;
+    let matrix = (0..rows * columns)
+        .map(|index| {
+            let magnitude = if index % 3 == 0 {
+                2.0_f32.powi(-30)
+            } else {
+                2.0_f32.powi(-31)
+            };
+            if (index / columns + index) % 2 == 0 {
+                magnitude
+            } else {
+                -magnitude
+            }
+        })
+        .collect::<Vec<_>>();
+
+    for case in cases {
+        let activation = case["activation"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|value| value.as_f64().unwrap() as f32)
+            .collect::<Vec<_>>();
+        assert_eq!(activation.len(), columns, "{}", case["name"]);
+        let mut expected = vec![0.0_f32; rows];
+        exact_matvec_f32(&matrix, rows, columns, &activation, &mut expected).unwrap();
+        assert!(expected.iter().all(|value| value.is_finite()));
+        let expected_bytes = f32_bytes(&expected);
+        let mut candidate = vec![0.0_f32; rows];
+        for _ in 0..10 {
+            exact_matvec_f32(&matrix, rows, columns, &activation, &mut candidate).unwrap();
+            assert_eq!(f32_bytes(&candidate), expected_bytes, "{}", case["name"]);
+        }
+        let result = qualify_m1d_projection_tier_b(
+            &matrix,
+            rows,
+            columns,
+            &activation,
+            &expected,
+            &candidate,
+        )
+        .unwrap();
+        assert!(result.passes, "{}", case["name"]);
+        assert_eq!(
+            result.metrics.signed_zero_mismatch_count,
+            0,
+            "{}",
+            case["name"]
+        );
+    }
+}
+
+#[test]
 fn q8_decoder_rejects_malformed_input_without_partial_write() {
     let packed = fs::read(root().join("f017-m1d-projection-q8-0-v1.bin")).unwrap();
     let mut output = vec![123.0_f32; 576 * 6144];
