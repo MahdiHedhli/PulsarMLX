@@ -73,6 +73,16 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def historical_sha256(repo: Path, commit: str, path: str) -> str:
+    result = subprocess.run(
+        ["git", "show", f"{commit}:{path}"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    return hashlib.sha256(result.stdout).hexdigest()
+
+
 def git(repo: Path, *args: str) -> str:
     return subprocess.run(
         ["git", *args], cwd=repo, check=True, capture_output=True, text=True
@@ -133,7 +143,15 @@ def validate(document: dict, repo: Path, *, validate_git: bool = True, validate_
     for name, path in CONTENT_PATHS.items():
         require(sha256(repo / path) == DIRECT_BINDINGS[name], f"{name} content mismatch")
     require(document["provenance"] == PROVENANCE, "provenance mismatch")
-    require(sha256(repo / "scripts/research/prepare_f017_m1d_real_reference.py") == PROVENANCE["real_reference_preparer_source"], "preparer content mismatch")
+    require(
+        historical_sha256(
+            repo,
+            RUNTIME_SHA,
+            "scripts/research/prepare_f017_m1d_real_reference.py",
+        )
+        == PROVENANCE["real_reference_preparer_source"],
+        "historical attempt-2 preparer content mismatch",
+    )
     require(document["execution"] == {
         "conceptual_projection_count": 1,
         "production_repeat_count": 10,

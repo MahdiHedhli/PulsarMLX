@@ -52,6 +52,20 @@ def valid() -> dict:
 
 
 class Attempt2AuthorizationTests(unittest.TestCase):
+    def test_historical_preparer_is_resolved_from_attempt_runtime(self) -> None:
+        self.assertEqual(
+            validator.historical_sha256(
+                ROOT,
+                validator.RUNTIME_SHA,
+                "scripts/research/prepare_f017_m1d_real_reference.py",
+            ),
+            validator.PROVENANCE["real_reference_preparer_source"],
+        )
+        self.assertNotEqual(
+            validator.sha256(ROOT / "scripts/research/prepare_f017_m1d_real_reference.py"),
+            validator.PROVENANCE["real_reference_preparer_source"],
+        )
+
     def test_complete_document_is_eligible(self) -> None:
         validator.validate(valid(), ROOT, validate_git=False, validate_packet=False)
 
