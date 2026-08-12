@@ -8,6 +8,7 @@ pub mod fixture;
 pub mod glm52_map;
 pub mod json;
 pub mod layer_qualification;
+pub mod local_boundary;
 pub mod numerical_classification;
 pub mod qualification;
 pub mod store;

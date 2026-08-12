@@ -40,3 +40,13 @@
 - Must reject missing `trunk_inventory_reference` and hash.
 - Public-safe fixtures are synthetic/tiny unless explicitly documented for local-only use.
 - Do not embed full checkpoint bytes in the repository.
+
+## R13 local-only specialization
+
+The generic R13 checkpoint-derived boundary contract is defined by
+`local-real-boundary-fixture-v1.schema.json` and implemented by
+`f017_runner::local_boundary`. It adds an exact shard hash, decoder-contract
+identity, independent input/output provenance, and a mandatory
+`local_only_private_checkpoint_derived` privacy classification. Its manifest
+may be public only after local paths and checkpoint-derived payload bytes are
+excluded; the actual fixture stays local and non-redistributable.

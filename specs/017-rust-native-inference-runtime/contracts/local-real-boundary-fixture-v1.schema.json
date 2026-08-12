@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/local-real-boundary-fixture-v1.schema.json",
+  "title": "PulsarMLX F017 local-only real boundary fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "source_sha",
+    "checkpoint_set_sha256",
+    "checkpoint_revision",
+    "tensor",
+    "decoder_contract",
+    "fixture",
+    "reference",
+    "privacy_classification",
+    "redistributable"
+  ],
+  "properties": {
+    "schema": { "const": "pulsarmlx.f017.local-real-boundary-fixture" },
+    "schema_version": { "const": 1 },
+    "source_sha": { "$ref": "#/$defs/gitSha" },
+    "checkpoint_set_sha256": { "$ref": "#/$defs/sha256" },
+    "checkpoint_revision": { "type": "string", "minLength": 1 },
+    "tensor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "shard_id", "shard_sha256", "offset", "length", "quantization", "dimensions"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "shard_id": { "type": "string", "minLength": 1 },
+        "shard_sha256": { "$ref": "#/$defs/sha256" },
+        "offset": { "type": "integer", "minimum": 0 },
+        "length": { "type": "integer", "minimum": 1 },
+        "quantization": { "type": "string", "minLength": 1 },
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "decoder_contract": { "$ref": "#/$defs/contractIdentity" },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "byte_length", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "byte_length": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator", "generator_source_sha", "independent", "input_sha256", "expected_output_sha256"],
+      "properties": {
+        "generator": { "type": "string", "minLength": 1 },
+        "generator_source_sha": { "$ref": "#/$defs/gitSha" },
+        "independent": { "const": true },
+        "input_sha256": { "$ref": "#/$defs/sha256" },
+        "expected_output_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "privacy_classification": { "const": "local_only_private_checkpoint_derived" },
+    "redistributable": { "const": false }
+  },
+  "$defs": {
+    "gitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "contractIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

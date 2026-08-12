@@ -126,6 +126,8 @@
 - [x] T017-133 Compose final norm/logits/top-k runtime boundary R11.
 - [x] T017-134 Run a tiny synthetic multi-layer model end to end through the actual runner binary at R12.
 - [ ] T017-140 Add local-only real boundary fixture manifest/validator for R13.
+  - [x] T017-140A Add the checkpoint-free manifest schema and fake-shard validator.
+  - [ ] T017-140B Generate and validate a separately authorized real local boundary fixture.
 - [ ] T017-141 Add literal canonical P1 command only after M1-A through M1-G review gates pass.
 - [x] T017-150 Add checkpoint-free CI for CLI/schema/store/tensor-map/runner/cancellation/privacy gates.
 - [x] T017-151 Require native Apple CI to execute adapter and projection tests without skips.
