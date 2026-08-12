@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.m1d-repeat-integrity-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1d-repeat-integrity-v1",
+  "conceptual_projection_count": 1,
+  "native_dispatch_count": 10,
+  "repeat_count_required": 10,
+  "required_ordinals": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+  "capture_order": [
+    "execute",
+    "synchronize",
+    "readback_complete_output",
+    "validate_shape",
+    "serialize_little_endian_f32",
+    "sha256",
+    "append_evidence",
+    "compare_with_repeat_0",
+    "permit_buffer_reuse"
+  ],
+  "pass_requires": {
+    "all_repeat_hashes_equal": true,
+    "selected_output_is_recorded_repeat_9": true,
+    "native_dispatch_matches_repeat_count": true
+  },
+  "failure_policy": "fail_closed_no_retry"
+}

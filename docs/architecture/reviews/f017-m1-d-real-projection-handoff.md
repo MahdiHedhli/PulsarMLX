@@ -31,8 +31,19 @@ SHA-256 `d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613`.
 The canonical activation has 6,144 little-endian f32 values and SHA-256
 `dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2`.
 It was generated independently with Python 3.13.13, NumPy 2.4.5, PCG64 seed
-`17017004`, by
-[`generate_f017_m1d_projection_oracle.py`](../../../scripts/research/generate_f017_m1d_projection_oracle.py).
+`17017004`. Its provenance uses three deliberately separate roles:
+
+| Role | Repository source | Git commit | File SHA-256 | Controls | Activation bytes? | Real oracle? |
+| --- | --- | --- | --- | --- | --- | --- |
+| `activation_generation_source` | `scripts/research/generate_f017_m1d_projection_oracle.py` | `992081315073d8eb4eb31a2bb2f1b7b77b9c0ccd` | `29c5c51a8f440e06d6584a71e0b79283d2bd6f806a2435c15ff93f3a0cae7984` | Original canonical activation, synthetic matrix, and checkpoint-free oracle | Yes; this is the source that created the frozen bytes | No |
+| `fixture_finalization_source` | `scripts/research/generate_f017_m1d_projection_oracle.py` | `d68cb10758693dc61d3af7cf76b8019f6b3b235d` | `0299066d46211d1921ded772ab907fcd9e9f1c8e3d2c497d979914a30c3dbd92` | Current checkpoint-free finalization envelope and oracle-order metadata | Capable in general, but the reviewed delta did not change them | No |
+| `real_reference_preparer_source` | `scripts/research/prepare_f017_m1d_real_reference.py` | `d68cb10758693dc61d3af7cf76b8019f6b3b235d` | `bdcf8b999de5426872cb31f971b455028746959b30fb2bdf4c2f750f335b7fea` | Bounded real Q8_0 read, independent decode/reference, Tier-B bounds, and finalized package | No; it consumes the frozen activation | Yes |
+
+The activation bytes in the pre-remediation and remediated fixtures compare
+identically. The remediation removed the producer boolean and added structural
+finalization metadata only. It did not change the activation payload, shape,
+dtype, seed, PRNG, Python version, or NumPy version.
+
 The committed real-shaped checkpoint-free oracle is
 [`f017-m1d-projection-oracle-v1.json`](../../../specs/017-rust-native-inference-runtime/fixtures/f017-m1d-projection-oracle-v1.json),
 SHA-256 `1727e63a5daee0ffbb0bf6dea11ea5ecf1b559850632785d5c8864c2bbaf503a`.
@@ -50,6 +61,8 @@ accepted as ordering proof.
 
 ## Repeat integrity
 
+The immutable repeat contract is `f017-m1d-repeat-integrity-v1`, SHA-256
+`1e8ceff5bca49d8c22c38342c3e938af189b819333c075558e1e242869a6685f`.
 The single admitted experiment requires ten native repeats. Each repeat is
 synchronized, fully read back, shape-checked, serialized as canonical
 little-endian f32, and SHA-256 hashed before its output buffer may be reused.
@@ -58,6 +71,13 @@ Evidence must contain ordinals `0..9`, ten hashes, `repeat_count_required = 10`,
 output hash equal to recorded repeat 9. Native dispatch count must be ten.
 Missing, extra, malformed, or divergent repeats fail; no automatic rerun is
 permitted.
+
+The immutable oracle-ordering contract is `f017-m1d-oracle-ordering-v1`,
+SHA-256
+`f8b2d48d4a3ff4ef502c33c4b29c4f2390f80ff4d03a2964c988a189ea341528`.
+It requires exclusive finalization, package-hash validation, structural
+sequence markers, strict completion-before-candidate ordering, and post-
+teardown rehashing. A producer boolean cannot satisfy it.
 
 ## Decoder, scaffold, and Tier B
 

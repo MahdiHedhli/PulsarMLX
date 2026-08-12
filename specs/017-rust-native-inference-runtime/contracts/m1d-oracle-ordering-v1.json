@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.m1d-oracle-ordering-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1d-oracle-ordering-v1",
+  "required_sequence": [
+    "exclusive_oracle_create",
+    "oracle_finalized_sequence_0",
+    "oracle_package_sha256_validated",
+    "oracle_rehashed_before_candidate",
+    "candidate_started_sequence_1",
+    "production_execution",
+    "oracle_rehashed_after_teardown"
+  ],
+  "completion_before_candidate": "strict",
+  "immutable_after_finalization": true,
+  "producer_boolean_is_sufficient": false,
+  "mutation_or_order_ambiguity": "fail_closed_no_retry"
+}
