@@ -44,7 +44,7 @@
     "packed_sha256": "51df0b949537848c0a875fe26867494ae82a03ad71952fda7733448fb286de3e"
   },
   "oracle_path": "f017-m1d-projection-oracle-v1.json",
-  "oracle_sha256": "edcc216b046ade881ea7529dd6d39cbbca522fc5891fb628416d6fa17aac5c32",
+  "oracle_sha256": "1727e63a5daee0ffbb0bf6dea11ea5ecf1b559850632785d5c8864c2bbaf503a",
   "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
   "one_attempt": true
 }

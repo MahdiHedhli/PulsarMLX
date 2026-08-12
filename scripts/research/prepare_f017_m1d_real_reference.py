@@ -13,6 +13,8 @@ import argparse
 import hashlib
 import json
 import os
+import stat
+import time
 from pathlib import Path
 
 import numpy as np
@@ -29,9 +31,11 @@ def exclusive_write(path: Path, data: bytes) -> None:
         handle.write(data)
         handle.flush()
         os.fsync(handle.fileno())
+    path.chmod(stat.S_IRUSR)
 
 
 def main() -> int:
+    preparation_started_at = time.time_ns()
     parser = argparse.ArgumentParser()
     parser.add_argument("--target-shard", type=Path, required=True)
     parser.add_argument("--checkpoint-manifest", type=Path, required=True)
@@ -79,7 +83,6 @@ def main() -> int:
             "decoded_f32_sha256": frozen.sha256(frozen.f32_bytes(decoded)),
         },
         "oracle": {
-            "generated_before_candidate": True,
             "scaffold_version": frozen.SCAFFOLD_VERSION,
             "decoder_contract_version": frozen.DECODER_VERSION,
             "output_f32_hex": output_bytes.hex(),
@@ -89,6 +92,12 @@ def main() -> int:
         "policies": activation_doc["policies"],
         "stress_cases": activation_doc["stress_cases"],
         "checkpoint_accessed": True,
+        "finalization": {
+            "preparation_started_at": str(preparation_started_at),
+            "oracle_completed_at": str(time.time_ns()),
+            "completion_marker": "oracle_finalized_sequence_0",
+            "immutable_after_finalization": True,
+        },
     }
     oracle_bytes = (json.dumps(oracle, indent=2, sort_keys=True) + "\n").encode()
 

@@ -140,4 +140,6 @@
   - [x] T017-163A Repair the stale runtime pin, provision the reviewed local-only
     production checkpoint manifest, and prepare a fresh authorization packet.
   - [x] T017-163B Execute exactly one separately authorized M1-B identity run.
+- [x] T017-164 Capture all ten M1-D production outputs before buffer reuse and
+  require finalized-oracle structural ordering before PASS.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

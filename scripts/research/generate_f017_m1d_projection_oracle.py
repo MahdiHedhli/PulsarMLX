@@ -173,7 +173,6 @@ def build() -> tuple[dict, bytes]:
             "decoded_f32_sha256": sha256(f32_bytes(decoded)),
         },
         "oracle": {
-            "generated_before_candidate": True,
             "scaffold_version": SCAFFOLD_VERSION,
             "decoder_contract_version": DECODER_VERSION,
             "output_f32_hex": f32_bytes(output).hex(),
@@ -189,6 +188,12 @@ def build() -> tuple[dict, bytes]:
         },
         "stress_cases": stress_cases(),
         "checkpoint_accessed": False,
+        "finalization": {
+            "preparation_started_at": "1",
+            "oracle_completed_at": "2",
+            "completion_marker": "oracle_finalized_sequence_0",
+            "immutable_after_finalization": True,
+        },
     }
     return document, packed
 

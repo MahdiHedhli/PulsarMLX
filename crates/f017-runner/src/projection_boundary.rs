@@ -7,7 +7,9 @@
 
 use crate::checkpoint::{CheckpointKind, CheckpointManifest};
 use crate::cli::{Config, RunnerMode};
-use crate::evidence::Evidence;
+use crate::evidence::{
+    Evidence, OracleOrderingEvidence, RepeatIntegrityEvidence, RepeatOutputEvidence,
+};
 use crate::json::{parse_json_no_duplicates, sha256_bytes};
 use crate::numerical_classification::{GreedyApplicability, NumericalClassification};
 use crate::qualification::{
@@ -18,7 +20,7 @@ use crate::{FailureClass, RunnerError};
 use serde::Deserialize;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 pub const BOUNDARY_VERSION: &str = "f017-m1d-projection-boundary-v1";
 pub const DECODER_VERSION: &str = "f017-q8-0-decoder-v1";
@@ -92,6 +94,16 @@ struct Oracle {
     tier_b: OracleTierB,
     policies: OraclePolicies,
     checkpoint_accessed: bool,
+    finalization: OracleFinalization,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct OracleFinalization {
+    preparation_started_at: String,
+    oracle_completed_at: String,
+    completion_marker: String,
+    immutable_after_finalization: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -123,7 +135,6 @@ struct OracleMatrix {
 
 #[derive(Debug, Deserialize)]
 struct OracleOutput {
-    generated_before_candidate: bool,
     scaffold_version: String,
     decoder_contract_version: String,
     output_f32_hex: String,
@@ -166,6 +177,7 @@ fn run_impl(
         .ok_or_else(|| error("m1d_package_path", "package has no parent"))?;
     let package_bytes =
         fs::read(package_path).map_err(|e| error("m1d_package_read", e.to_string()))?;
+    let package_sha256 = sha256_bytes(&package_bytes);
     let package: ProjectionPackage =
         parse_json_no_duplicates(&package_bytes).map_err(|e| error("m1d_package_json", e))?;
     validate_package(&package, root, &config.mode)?;
@@ -304,11 +316,55 @@ fn run_impl(
     );
     let compute_started = Instant::now();
     let mut candidate = vec![0.0_f32; ROWS];
-    for _ in 0..10 {
+    // Re-read both immutable inputs immediately before candidate start. This
+    // closes the validation/use window and makes the control-flow ordering
+    // structural rather than trusting a producer-supplied boolean.
+    require_unchanged("m1d_package_changed", package_path, &package_sha256)?;
+    require_unchanged(
+        "m1d_oracle_changed",
+        &root.join(&package.oracle_path),
+        &package.oracle_sha256,
+    )?;
+    let candidate_started_at = unix_time_ns()?;
+    let oracle_completed_at = oracle
+        .finalization
+        .oracle_completed_at
+        .parse::<u128>()
+        .map_err(|_| error("m1d_oracle_completion", "invalid completion timestamp"))?;
+    if oracle_completed_at >= candidate_started_at {
+        return Err(error(
+            "m1d_oracle_order",
+            "oracle completion must strictly precede candidate start",
+        ));
+    }
+    evidence.execution.numerical.oracle_ordering = OracleOrderingEvidence {
+        oracle_package_sha256: Some(package.oracle_sha256.clone()),
+        oracle_completed_at: Some(oracle.finalization.oracle_completed_at.clone()),
+        oracle_completion_marker: Some(oracle.finalization.completion_marker.clone()),
+        oracle_validated_before_candidate: true,
+        candidate_started_at: Some(candidate_started_at.to_string()),
+        candidate_start_marker: Some("candidate_started_sequence_1".to_owned()),
+        structural_order_valid: true,
+    };
+
+    let mut repeat_outputs = Vec::with_capacity(10);
+    let divergence_repeat = fixture_divergence_repeat(&package)?;
+    for ordinal in 0..10 {
         let result = matrix.matvec(&vector).map_err(adapter_error)?;
         result.evaluate_sync().map_err(adapter_error)?;
         result.copy_f32(&mut candidate).map_err(adapter_error)?;
         result.destroy().map_err(adapter_error)?;
+        if divergence_repeat == Some(ordinal) {
+            candidate[0] = f32::from_bits(candidate[0].to_bits() ^ 1);
+        }
+        let output_bytes = f32_bytes(&candidate);
+        if output_bytes.len() != ROWS * 4 {
+            return Err(numerical("m1d_repeat_shape", "repeat output shape differs"));
+        }
+        repeat_outputs.push(RepeatOutputEvidence {
+            ordinal: ordinal as u64,
+            output_sha256: sha256_bytes(&output_bytes),
+        });
     }
     evidence.execution.timings.insert(
         "backend_compute_sync_readback_seconds".to_owned(),
@@ -323,12 +379,18 @@ fn run_impl(
         &candidate,
     )
     .map_err(|e| numerical("m1d_tier_b", e.to_string()))?;
-    if !qualification.passes {
-        return Err(numerical(
-            "m1d_tier_b_failed",
-            "production output violates the frozen M1-D Tier-B contract",
-        ));
-    }
+    let all_repeat_hashes_equal = repeat_outputs
+        .iter()
+        .all(|entry| entry.output_sha256 == repeat_outputs[0].output_sha256);
+    evidence.execution.numerical.repeat_integrity = RepeatIntegrityEvidence {
+        repeat_count_required: 10,
+        repeat_count_observed: repeat_outputs.len() as u64,
+        selected_output_sha256: repeat_outputs
+            .last()
+            .map(|entry| entry.output_sha256.clone()),
+        outputs: repeat_outputs,
+        all_repeat_hashes_equal,
+    };
 
     vector.destroy().map_err(adapter_error)?;
     matrix.destroy().map_err(adapter_error)?;
@@ -365,6 +427,12 @@ fn run_impl(
             "projection lifecycle did not reconcile",
         ));
     }
+    require_unchanged("m1d_package_changed", package_path, &package_sha256)?;
+    require_unchanged(
+        "m1d_oracle_changed",
+        &root.join(&package.oracle_path),
+        &package.oracle_sha256,
+    )?;
 
     evidence.execution.dispatch.native = 10;
     evidence.execution.projection_count = 1;
@@ -421,6 +489,18 @@ fn run_impl(
         .metrics
         .first_divergence
         .map(|v| serde_json::to_value(v).expect("serializable"));
+    if !all_repeat_hashes_equal {
+        return Err(numerical(
+            "m1d_repeat_divergence",
+            "production repeat output hashes diverged",
+        ));
+    }
+    if !qualification.passes {
+        return Err(numerical(
+            "m1d_tier_b_failed",
+            "production output violates the frozen M1-D Tier-B contract",
+        ));
+    }
     evidence.execution.progress_state = "m1d_one_projection_complete".to_owned();
     Ok(())
 }
@@ -493,6 +573,12 @@ fn validate_package(
 }
 
 fn validate_oracle(oracle: &Oracle, package: &ProjectionPackage) -> Result<(), RunnerError> {
+    let started = oracle
+        .finalization
+        .preparation_started_at
+        .parse::<u128>()
+        .ok();
+    let completed = oracle.finalization.oracle_completed_at.parse::<u128>().ok();
     if oracle.schema != "pulsarmlx.f017.m1d-projection-oracle"
         || oracle.boundary.contract_version != BOUNDARY_VERSION
         || oracle.boundary.matrix_rows != ROWS
@@ -508,7 +594,9 @@ fn validate_oracle(oracle: &Oracle, package: &ProjectionPackage) -> Result<(), R
         || oracle.oracle.output_sha256.len() != 64
         || oracle.tier_b.contract_version != M1D_TIER_B_CONTRACT_VERSION
         || oracle.tier_b.threshold_fit_to_observed_candidate
-        || !oracle.oracle.generated_before_candidate
+        || oracle.finalization.completion_marker != "oracle_finalized_sequence_0"
+        || !oracle.finalization.immutable_after_finalization
+        || !matches!((started, completed), (Some(a), Some(b)) if a < b)
         || oracle.policies.signed_zero != "exact"
         || oracle.policies.nan_inf != "forbidden"
         || oracle.policies.deterministic_repeat_minimum != 10
@@ -524,6 +612,37 @@ fn validate_oracle(oracle: &Oracle, package: &ProjectionPackage) -> Result<(), R
         ));
     }
     Ok(())
+}
+
+fn unix_time_ns() -> Result<u128, RunnerError> {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .map_err(|clock_error| error("m1d_clock", clock_error.to_string()))
+}
+
+fn require_unchanged(code: &'static str, path: &Path, expected: &str) -> Result<(), RunnerError> {
+    let bytes = fs::read(path).map_err(|read_error| error(code, read_error.to_string()))?;
+    require_hash(code, &bytes, expected)
+}
+
+fn fixture_divergence_repeat(package: &ProjectionPackage) -> Result<Option<usize>, RunnerError> {
+    let value = std::env::var("PULSAR_F017_TEST_DIVERGE_REPEAT").ok();
+    if value.is_some() && package.package_kind != "checkpoint_free_fixture" {
+        return Err(error(
+            "m1d_test_injection",
+            "repeat-divergence injection is forbidden for production packages",
+        ));
+    }
+    value
+        .map(|value| {
+            value
+                .parse::<usize>()
+                .ok()
+                .filter(|ordinal| *ordinal < 10)
+                .ok_or_else(|| error("m1d_test_injection", "invalid repeat ordinal"))
+        })
+        .transpose()
 }
 
 fn validate_manifest(
@@ -696,7 +815,11 @@ mod tests {
         let (package, root) = package();
         let bytes = fs::read(root.join(&package.oracle_path)).unwrap();
         let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
-        oracle.oracle.generated_before_candidate = false;
+        oracle.finalization.completion_marker = "boolean_only_claim".to_owned();
+        assert!(validate_oracle(&oracle, &package).is_err());
+        let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
+        oracle.finalization.oracle_completed_at =
+            oracle.finalization.preparation_started_at.clone();
         assert!(validate_oracle(&oracle, &package).is_err());
         let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
         oracle.policies.greedy_applicability = "applicable".to_owned();
@@ -704,5 +827,20 @@ mod tests {
         let mut oracle: Oracle = parse_json_no_duplicates(&bytes).unwrap();
         oracle.oracle.output_f32_hex.clear();
         assert!(validate_oracle(&oracle, &package).is_err());
+    }
+
+    #[test]
+    fn oracle_or_package_change_after_validation_fails_closed() {
+        let path = std::env::temp_dir().join(format!(
+            "f017-m1d-immutable-{}-{}.json",
+            std::process::id(),
+            unix_time_ns().unwrap()
+        ));
+        fs::write(&path, b"finalized").unwrap();
+        let expected = sha256_bytes(b"finalized");
+        require_unchanged("changed", &path, &expected).unwrap();
+        fs::write(&path, b"changed").unwrap();
+        assert!(require_unchanged("changed", &path, &expected).is_err());
+        fs::remove_file(path).unwrap();
     }
 }

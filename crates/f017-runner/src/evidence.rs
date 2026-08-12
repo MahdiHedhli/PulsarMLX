@@ -151,6 +151,36 @@ pub struct NumericalEvidence {
     pub cosine_similarity: Option<f64>,
     pub deterministic_repeat_count: Option<u64>,
     pub first_divergence: Option<serde_json::Value>,
+    #[serde(default)]
+    pub repeat_integrity: RepeatIntegrityEvidence,
+    #[serde(default)]
+    pub oracle_ordering: OracleOrderingEvidence,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepeatIntegrityEvidence {
+    pub repeat_count_required: u64,
+    pub repeat_count_observed: u64,
+    pub outputs: Vec<RepeatOutputEvidence>,
+    pub all_repeat_hashes_equal: bool,
+    pub selected_output_sha256: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepeatOutputEvidence {
+    pub ordinal: u64,
+    pub output_sha256: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OracleOrderingEvidence {
+    pub oracle_package_sha256: Option<String>,
+    pub oracle_completed_at: Option<String>,
+    pub oracle_completion_marker: Option<String>,
+    pub oracle_validated_before_candidate: bool,
+    pub candidate_started_at: Option<String>,
+    pub candidate_start_marker: Option<String>,
+    pub structural_order_valid: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -540,7 +570,14 @@ impl Evidence {
                     || self.execution.numerical.greedy_applicability
                         != Some(GreedyApplicability::NotApplicable)
                     || self.execution.numerical_classification
-                        != Some(NumericalClassification::NumericallyQualifiedGreedyNotApplicable))
+                        != Some(NumericalClassification::NumericallyQualifiedGreedyNotApplicable)
+                    || validate_m1d_repeat_integrity(
+                        &self.execution.numerical.repeat_integrity,
+                        self.execution.dispatch.native,
+                    )
+                    .is_err()
+                    || validate_m1d_oracle_ordering(&self.execution.numerical.oracle_ordering)
+                        .is_err())
             {
                 return Err(evidence_error(
                     "m1d_isolation",
@@ -656,6 +693,69 @@ impl Evidence {
         }
         Ok(())
     }
+}
+
+fn valid_sha256(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn validate_m1d_repeat_integrity(
+    repeats: &RepeatIntegrityEvidence,
+    native_dispatches: u64,
+) -> Result<(), RunnerError> {
+    let expected_ordinals = 0_u64..10;
+    let hashes = repeats
+        .outputs
+        .iter()
+        .map(|entry| entry.output_sha256.as_str())
+        .collect::<Vec<_>>();
+    if repeats.repeat_count_required != 10
+        || repeats.repeat_count_observed != 10
+        || native_dispatches != 10
+        || repeats.outputs.len() != 10
+        || !repeats
+            .outputs
+            .iter()
+            .zip(expected_ordinals)
+            .all(|(entry, ordinal)| entry.ordinal == ordinal && valid_sha256(&entry.output_sha256))
+        || !repeats.all_repeat_hashes_equal
+        || hashes.first().is_none()
+        || !hashes.iter().all(|hash| Some(hash) == hashes.first())
+        || repeats.selected_output_sha256.as_deref() != hashes.last().copied()
+    {
+        return Err(evidence_error(
+            "m1d_repeat_integrity",
+            "M1-D PASS requires exactly ten ordinal native outputs with identical hashes",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_m1d_oracle_ordering(ordering: &OracleOrderingEvidence) -> Result<(), RunnerError> {
+    let oracle_completed = ordering
+        .oracle_completed_at
+        .as_deref()
+        .and_then(|value| value.parse::<u128>().ok());
+    let candidate_started = ordering
+        .candidate_started_at
+        .as_deref()
+        .and_then(|value| value.parse::<u128>().ok());
+    if !ordering
+        .oracle_package_sha256
+        .as_deref()
+        .is_some_and(valid_sha256)
+        || ordering.oracle_completion_marker.as_deref() != Some("oracle_finalized_sequence_0")
+        || ordering.candidate_start_marker.as_deref() != Some("candidate_started_sequence_1")
+        || !ordering.oracle_validated_before_candidate
+        || !ordering.structural_order_valid
+        || !matches!((oracle_completed, candidate_started), (Some(a), Some(b)) if a < b)
+    {
+        return Err(evidence_error(
+            "m1d_oracle_ordering",
+            "M1-D PASS requires a finalized oracle package structurally validated before candidate start",
+        ));
+    }
+    Ok(())
 }
 
 fn loaded_libraries_verified(libraries: &[LoadedLibraryEvidence]) -> bool {
@@ -1189,5 +1289,92 @@ mod tests {
         assert!(valid.validate_success_ready().is_ok());
         valid.identity.environment_kind = "production_reviewed".to_owned();
         assert!(valid.validate_success_ready().is_err());
+    }
+
+    fn valid_repeats() -> RepeatIntegrityEvidence {
+        RepeatIntegrityEvidence {
+            repeat_count_required: 10,
+            repeat_count_observed: 10,
+            outputs: (0..10)
+                .map(|ordinal| RepeatOutputEvidence {
+                    ordinal,
+                    output_sha256: "a".repeat(64),
+                })
+                .collect(),
+            all_repeat_hashes_equal: true,
+            selected_output_sha256: Some("a".repeat(64)),
+        }
+    }
+
+    fn valid_oracle_ordering() -> OracleOrderingEvidence {
+        OracleOrderingEvidence {
+            oracle_package_sha256: Some("b".repeat(64)),
+            oracle_completed_at: Some("100".to_owned()),
+            oracle_completion_marker: Some("oracle_finalized_sequence_0".to_owned()),
+            oracle_validated_before_candidate: true,
+            candidate_started_at: Some("101".to_owned()),
+            candidate_start_marker: Some("candidate_started_sequence_1".to_owned()),
+            structural_order_valid: true,
+        }
+    }
+
+    #[test]
+    fn m1d_repeat_integrity_rejects_missing_extra_divergent_and_dispatch_mismatch() {
+        let baseline = valid_repeats();
+        assert!(validate_m1d_repeat_integrity(&baseline, 10).is_ok());
+        let mut cases = Vec::new();
+        let mut value = baseline.clone();
+        value.outputs.pop();
+        value.repeat_count_observed = 9;
+        cases.push((value, 10));
+        let mut value = baseline.clone();
+        value.outputs.push(RepeatOutputEvidence {
+            ordinal: 10,
+            output_sha256: "a".repeat(64),
+        });
+        value.repeat_count_observed = 11;
+        cases.push((value, 10));
+        let mut value = baseline.clone();
+        value.outputs[5].output_sha256 = "c".repeat(64);
+        cases.push((value, 10));
+        cases.push((baseline.clone(), 9));
+        let mut value = baseline.clone();
+        value.all_repeat_hashes_equal = false;
+        cases.push((value, 10));
+        let mut value = baseline;
+        value.outputs[9].output_sha256 = "d".repeat(64);
+        value.selected_output_sha256 = Some("a".repeat(64));
+        cases.push((value, 10));
+        for (value, dispatches) in cases {
+            assert!(validate_m1d_repeat_integrity(&value, dispatches).is_err());
+        }
+    }
+
+    #[test]
+    fn m1d_oracle_ordering_rejects_boolean_only_equal_late_changed_and_stale_proof() {
+        let baseline = valid_oracle_ordering();
+        assert!(validate_m1d_oracle_ordering(&baseline).is_ok());
+        let mut cases = Vec::new();
+        let mut value = baseline.clone();
+        value.oracle_completion_marker = None;
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.oracle_completed_at = Some("101".to_owned());
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.oracle_completed_at = Some("102".to_owned());
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.oracle_package_sha256 = Some("stale".to_owned());
+        cases.push(value);
+        let mut value = baseline.clone();
+        value.candidate_started_at = None;
+        cases.push(value);
+        let mut value = baseline;
+        value.structural_order_valid = false;
+        cases.push(value);
+        for value in cases {
+            assert!(validate_m1d_oracle_ordering(&value).is_err());
+        }
     }
 }
