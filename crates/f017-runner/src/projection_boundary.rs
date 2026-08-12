@@ -484,7 +484,8 @@ fn validate_oracle(oracle: &Oracle, package: &ProjectionPackage) -> Result<(), R
         || oracle.policies.deterministic_repeat_minimum != 10
         || oracle.policies.greedy_applicability != "not_applicable"
         || oracle.policies.success_classification != "numerically_qualified_greedy_not_applicable"
-        || oracle.checkpoint_accessed
+        || (package.package_kind == "checkpoint_free_fixture" && oracle.checkpoint_accessed)
+        || (package.package_kind == "production_reviewed" && !oracle.checkpoint_accessed)
         || oracle.synthetic_matrix.packed_sha256 != package.tensor.packed_sha256
     {
         return Err(error(
