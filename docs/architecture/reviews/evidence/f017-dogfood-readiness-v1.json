@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_repeat_integrity_and_oracle_ordering_remediation",
+  "updated_after": "m1_d_packet_and_provenance_closure",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -11,7 +11,7 @@
     "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
-    "m1_d": "qualification_package_ready_not_authorized_attempts_0",
+    "m1_d": "authorized_exactly_one_not_executed_attempts_0",
     "m1_e_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
@@ -69,14 +69,17 @@
     "handoff": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
     "fresh_authorization": "docs/architecture/reviews/f017-m1-d-fresh-authorization.md",
     "runtime_source_sha": "d68cb10758693dc61d3af7cf76b8019f6b3b235d",
+    "tooling_source_sha": "15c0de64c342cb5541e643f5e212d2cf5d73da67",
+    "handoff_sha256": "eff56978ed066527dd9e42689b23c4f7a033b4f0dd5ed1815ee001d95bc5d789",
+    "authorization_binding": "docs/architecture/reviews/evidence/f017-m1-d-authorization-binding-v1.json",
     "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
     "tier_b_contract": "f017-production-m1d-projection-tier-b-v1",
-    "authorized": false,
+    "authorized": true,
     "attempts": 0,
     "repeat_count_required": 10,
     "per_repeat_hash_required": true,
     "finalized_oracle_order_required": true,
     "checkpoint_payload_accessed_during_remediation": false
   },
-  "next_gate": "review qualification package and issue a fresh explicit authorization for exactly one M1-D real projection"
+  "next_gate": "execute exactly one authorized M1-D real projection and stop before M1-E"
 }

@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.m1d-authorization-binding",
+  "schema_version": "1.0.0",
+  "status": "authorized_exactly_one_not_executed",
+  "runtime_sha": "d68cb10758693dc61d3af7cf76b8019f6b3b235d",
+  "previous_tooling_sha": "9d355cc3e1da55696a47b02170b40bd7bb5aeea7",
+  "tooling_sha": "15c0de64c342cb5541e643f5e212d2cf5d73da67",
+  "handoff": {
+    "path": "docs/architecture/reviews/f017-m1-d-real-projection-handoff.md",
+    "sha256": "eff56978ed066527dd9e42689b23c4f7a033b4f0dd5ed1815ee001d95bc5d789"
+  },
+  "direct_bindings": {
+    "m1_a_evidence": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+    "m1_b_evidence": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+    "m1_c_evidence": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e",
+    "checkpoint_set": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "boundary": "d4333ab9a6cd8638434f61c4c78f729869c5690305cc6de7ba86add611443613",
+    "activation_payload": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+    "decoder": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd",
+    "scaffold": "3948039430cf48509a63757d97a21099b6e08ea46fcf6f022df06493a5f8a6b5",
+    "tier_b": "f93e7a90684c93e78c03e054f62be932b3e16a120e63f41ba1d64f6d6e26a28b",
+    "repeat_integrity": "1e8ceff5bca49d8c22c38342c3e938af189b819333c075558e1e242869a6685f",
+    "oracle_ordering": "f8b2d48d4a3ff4ef502c33c4b29c4f2390f80ff4d03a2964c988a189ea341528"
+  },
+  "contract_versions": {
+    "boundary": "f017-m1d-projection-boundary-v1",
+    "decoder": "f017-q8-0-decoder-v1",
+    "scaffold": "f017-m1d-q8-0-sequential-f32-v1",
+    "tier_b": "f017-production-m1d-projection-tier-b-v1",
+    "repeat_integrity": "f017-m1d-repeat-integrity-v1",
+    "oracle_ordering": "f017-m1d-oracle-ordering-v1"
+  },
+  "provenance": {
+    "activation_generation_source": {
+      "path": "scripts/research/generate_f017_m1d_projection_oracle.py",
+      "git_commit": "992081315073d8eb4eb31a2bb2f1b7b77b9c0ccd",
+      "sha256": "29c5c51a8f440e06d6584a71e0b79283d2bd6f806a2435c15ff93f3a0cae7984"
+    },
+    "fixture_finalization_source": {
+      "path": "scripts/research/generate_f017_m1d_projection_oracle.py",
+      "git_commit": "d68cb10758693dc61d3af7cf76b8019f6b3b235d",
+      "sha256": "0299066d46211d1921ded772ab907fcd9e9f1c8e3d2c497d979914a30c3dbd92"
+    },
+    "real_reference_preparer_source": {
+      "path": "scripts/research/prepare_f017_m1d_real_reference.py",
+      "git_commit": "d68cb10758693dc61d3af7cf76b8019f6b3b235d",
+      "sha256": "bdcf8b999de5426872cb31f971b455028746959b30fb2bdf4c2f750f335b7fea"
+    }
+  },
+  "activation": {
+    "payload_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
+    "element_count": 6144,
+    "dtype": "little_endian_f32",
+    "seed": 17017004,
+    "prng": "PCG64",
+    "python": "3.13.13",
+    "numpy": "2.4.5",
+    "bytes_changed_by_finalization_remediation": false
+  },
+  "execution": {
+    "conceptual_projection_count": 1,
+    "production_repeat_count": 10,
+    "all_repeat_hashes_equal_required": true,
+    "oracle_finalized_before_candidate_required": true,
+    "mandatory_stop_before_m1_e": true
+  }
+}
