@@ -136,8 +136,8 @@
 - [x] T017-160 Obtain internal implementation review of the runner composition.
 - [x] T017-161 Obtain independent adversarial review of P1 meaningfulness and fail-closed behavior.
 - [x] T017-162 Execute and bank exactly one accepted M1-A production adapter preflight.
-- [ ] T017-163 Execute M1-B only after separate review and explicit authorization.
+- [x] T017-163 Execute M1-B only after separate review and explicit authorization.
   - [x] T017-163A Repair the stale runtime pin, provision the reviewed local-only
     production checkpoint manifest, and prepare a fresh authorization packet.
-  - [ ] T017-163B Execute exactly one separately authorized M1-B identity run.
+  - [x] T017-163B Execute exactly one separately authorized M1-B identity run.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.

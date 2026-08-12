@@ -133,9 +133,12 @@ work, while an explicit fixture identity mode preserves checkpoint-free CI.
 Apple-native CI explicitly executes both loaded-library match/mismatch tests.
 T017-160 and T017-161 are closed by the internal and independent review GOs.
 Exactly one M1-A production adapter preflight passed and its public-safe
-evidence is banked. M1-B is prepared but remains unexecuted pending separate
-authorization. T017-140 remains open until a real local-only R13 fixture is
-generated and validated; T017-141, M1-C, and P1 remain blocked.
+evidence is banked. Exactly one separately authorized M1-B production identity
+run also passed: all six shards, checkpoint/catalog/tokenizer identities, and
+the 79-layer / 1,809-tensor production map validated with zero tensor decode or
+compute dispatch. M1-C is prepared but not authorized. T017-140 remains open
+until a real local-only R13 fixture is generated and validated; T017-141 and P1
+remain blocked.
 
 ## Final phase
 

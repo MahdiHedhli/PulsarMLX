@@ -44,10 +44,11 @@ Unit tests construct temporary public-safe fake shard bytes and cover:
 
 The original validator work was checkpoint-free. A later explicitly authorized
 manifest-provisioning pass streamed all six real shard hashes and parsed only
-GGUF headers/catalogs. That pass bound the immutable revision, checkpoint-set
-hash, shard identities, catalog hash, tensor-map version/hash, and local-only
-privacy policy without generating a tensor payload fixture. It recorded zero
-tensor execution, quant decode, and model compute.
+GGUF headers/catalogs. The separately authorized M1-B canonical identity run
+then revalidated those six shards plus revision, checkpoint-set, catalog,
+tokenizer, and production tensor-map identities. M1-B accepted exactly 79
+layers and 1,809 tensor contracts with zero tensor decode or compute dispatch.
+Neither pass generated a tensor payload fixture.
 
 ## Remaining T017-140 gate
 
@@ -55,3 +56,6 @@ T017-140 may close only after a separately authorized local extraction creates
 at least one real-boundary manifest and the validator proves its checkpoint,
 tensor, decoder, fixture, reference, and privacy identities. That later step is
 part of the M1-C admission ladder and is not authorized here.
+
+The prepared, non-authorizing M1-C boundary is documented in
+[`f017-m1-c-real-tensor-handoff.md`](f017-m1-c-real-tensor-handoff.md).

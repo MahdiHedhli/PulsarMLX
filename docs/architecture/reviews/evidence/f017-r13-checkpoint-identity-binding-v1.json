@@ -26,5 +26,17 @@
     "validated": false,
     "required_before_t017_140_completion": true
   },
-  "m1_c_authorized": false
+  "m1_b_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-m1-b-checkpoint-identity-v1.json",
+    "sha256": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+    "accepted": true,
+    "tensor_execution_count": 0,
+    "quant_decode_count": 0,
+    "model_compute_dispatch_count": 0
+  },
+  "m1_c": {
+    "handoff": "docs/architecture/reviews/f017-m1-c-real-tensor-handoff.md",
+    "status": "prepared_not_authorized",
+    "authorized": false
+  }
 }

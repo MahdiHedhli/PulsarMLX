@@ -1,16 +1,17 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_b_admission_repair",
-  "executed_source_sha": "42506d75b6b10d6fe3c1d804175f5dc5c9c69f45",
+  "updated_after": "m1_b_accepted",
+  "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
     "r7_r12": "complete",
     "m1_a": "accepted",
-    "m1_b": "fresh_authorization_prepared_not_run",
+    "m1_b": "accepted",
     "t017_140": "validator_and_checkpoint_identity_ready_real_fixture_missing",
     "t017_141": "blocked",
-    "m1_c_m1_g": "blocked",
+    "m1_c": "prepared_not_authorized",
+    "m1_d_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -26,7 +27,14 @@
     "handoff": "docs/architecture/reviews/f017-m1-b-checkpoint-identity-handoff.md",
     "fresh_execution_packet": "docs/architecture/reviews/f017-m1-b-fresh-authorization.md",
     "review_checklist": "docs/architecture/reviews/f017-m1-b-evidence-review-checklist.md",
-    "authorized": false
+    "authorized": true,
+    "attempts": 1,
+    "stopped": true
+  },
+  "m1_b_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-m1-b-checkpoint-identity-v1.json",
+    "sha256": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+    "verdict": "accepted"
   },
   "checkpoint_manifest": {
     "public_review": "docs/architecture/reviews/f017-production-checkpoint-manifest-review.md",
@@ -36,10 +44,14 @@
   },
   "checkpoint_access": {
     "manifest_provisioning_hash_and_header_catalog": true,
-    "m1_b_identity_mode_executed": false,
+    "m1_b_identity_mode_executed": true,
     "tensor_execution_count": 0,
     "quant_decode_count": 0,
     "model_compute_dispatch_count": 0
   },
-  "next_gate": "fresh explicit authorization for exactly one M1-B checkpoint-identity-only run"
+  "m1_c_packet": {
+    "handoff": "docs/architecture/reviews/f017-m1-c-real-tensor-handoff.md",
+    "authorized": false
+  },
+  "next_gate": "review M1-B evidence and separately authorize exactly one M1-C real-tensor boundary"
 }
