@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_packet_and_provenance_closure",
+  "updated_after": "m1_d_first_attempt_rejected_contract_path_resolution",
   "executed_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -11,7 +11,7 @@
     "t017_140": "complete_real_local_boundary_validated",
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
-    "m1_d": "authorized_exactly_one_not_executed_attempts_0",
+    "m1_d": "rejected_first_attempt_fail_infrastructure_evidence",
     "m1_e_m1_g": "blocked",
     "p1": "blocked",
     "p2": "blocked",
@@ -48,6 +48,9 @@
     "m1_b_identity_mode_executed": true,
     "m1_c_single_tensor_payload_accessed": true,
     "m1_c_tensor_payload_count": 1,
+    "m1_d_oracle_matrix_payload_accessed": true,
+    "m1_d_oracle_matrix_payload_count": 1,
+    "m1_d_candidate_checkpoint_read_count": 0,
     "tensor_execution_count": 0,
     "quant_decode_count": 0,
     "model_compute_dispatch_count": 0
@@ -74,12 +77,21 @@
     "authorization_binding": "docs/architecture/reviews/evidence/f017-m1-d-authorization-binding-v1.json",
     "activation_sha256": "dfc1df6cc6efa38c5c0f5bf086757ed78baf4cfc6f721da1e0ae7f73560193c2",
     "tier_b_contract": "f017-production-m1d-projection-tier-b-v1",
-    "authorized": true,
-    "attempts": 0,
+    "authorized": false,
+    "authorization_consumed": true,
+    "attempts": 1,
     "repeat_count_required": 10,
     "per_repeat_hash_required": true,
     "finalized_oracle_order_required": true,
-    "checkpoint_payload_accessed_during_remediation": false
+    "checkpoint_payload_accessed_during_remediation": false,
+    "checkpoint_payload_accessed_during_attempt": true,
+    "verdict": "rejected",
+    "failure_classification": "FAIL_INFRASTRUCTURE_EVIDENCE",
+    "failure_code": "m1d_contract_read",
+    "evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-m1-d-real-projection-v1.json",
+      "sha256": "a5aefaaf59583dad87765303e159986c895017c20ea80eb874cd447ad80f9a62"
+    }
   },
-  "next_gate": "execute exactly one authorized M1-D real projection and stop before M1-E"
+  "next_gate": "review M1-D contract-path composition failure; M1-E remains blocked"
 }

@@ -145,4 +145,7 @@
 - [x] T017-165 Separate M1-D activation/finalization/reference provenance,
   bind the handoff and execution contracts immutably, and reject stale or
   ambiguous authorization packets before real payload access.
+- [x] T017-166 Execute the exactly-once authorized M1-D attempt, bank the
+  fail-closed `m1d_contract_read` infrastructure rejection, and stop without
+  retry or M1-E promotion.
 - [x] T017-170 Publish final runner sprint report and exact M1-A through M1-H blockers.
