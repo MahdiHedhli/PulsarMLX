@@ -38,6 +38,7 @@ def valid_document() -> dict:
             "repeat_integrity": file_sha(validator.CONTRACT_PATHS["repeat_integrity"]),
             "oracle_ordering": file_sha(validator.CONTRACT_PATHS["oracle_ordering"]),
         },
+        "contract_versions": copy.deepcopy(validator.CONTRACT_VERSIONS),
         "provenance": copy.deepcopy(validator.PROVENANCE),
         "activation": {
             "payload_sha256": validator.ACTIVATION_SHA,
@@ -84,6 +85,10 @@ class AuthorizationValidatorTests(unittest.TestCase):
             value = copy.deepcopy(base)
             value["provenance"][role]["sha256"] = "0" * 64
             mutations.append(value)
+        for contract in base["contract_versions"]:
+            value = copy.deepcopy(base)
+            value["contract_versions"][contract] = "stale"
+            mutations.append(value)
         value = copy.deepcopy(base)
         value["activation"]["payload_sha256"] = "0" * 64
         mutations.append(value)
@@ -96,6 +101,15 @@ class AuthorizationValidatorTests(unittest.TestCase):
         value["provenance"] = {"generator_sha256": "29c5c51a" + "0" * 56}
         with self.assertRaisesRegex(validator.ValidationError, "ambiguous"):
             validator.validate_document(value, ROOT, validate_git=False)
+
+    def test_duplicate_keys_are_rejected(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "duplicate.json"
+            path.write_text('{"schema":"a","schema":"b"}')
+            with self.assertRaisesRegex(validator.ValidationError, "duplicate key"):
+                validator.load_json_no_duplicates(path)
 
     def test_activation_bytes_are_identical_before_and_after_finalization_change(self) -> None:
         old = subprocess.run(

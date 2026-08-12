@@ -54,6 +54,15 @@ CONTRACT_PATHS = {
     "oracle_ordering": "specs/017-rust-native-inference-runtime/contracts/m1d-oracle-ordering-v1.json",
 }
 
+CONTRACT_VERSIONS = {
+    "boundary": "f017-m1d-projection-boundary-v1",
+    "decoder": "f017-q8-0-decoder-v1",
+    "scaffold": "f017-m1d-q8-0-sequential-f32-v1",
+    "tier_b": "f017-production-m1d-projection-tier-b-v1",
+    "repeat_integrity": "f017-m1d-repeat-integrity-v1",
+    "oracle_ordering": "f017-m1d-oracle-ordering-v1",
+}
+
 ALLOWED_POST_TOOLING_PATHS = {
     "docs/architecture/reviews/f017-m1-d-fresh-authorization.md",
     "docs/architecture/reviews/evidence/f017-m1-d-authorization-binding-v1.json",
@@ -89,7 +98,39 @@ def require(condition: bool, message: str) -> None:
         raise ValidationError(message)
 
 
+def load_json_no_duplicates(path: Path) -> dict:
+    def reject_duplicates(pairs: list[tuple[str, object]]) -> dict:
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValidationError(f"duplicate key: {key}")
+            result[key] = value
+        return result
+
+    value = json.loads(path.read_text(), object_pairs_hook=reject_duplicates)
+    require(isinstance(value, dict), "authorization binding must be an object")
+    return value
+
+
 def validate_document(document: dict, repo: Path, *, validate_git: bool = True) -> None:
+    require(
+        set(document)
+        == {
+            "schema",
+            "schema_version",
+            "status",
+            "runtime_sha",
+            "previous_tooling_sha",
+            "tooling_sha",
+            "handoff",
+            "direct_bindings",
+            "contract_versions",
+            "provenance",
+            "activation",
+            "execution",
+        },
+        "authorization fields mismatch",
+    )
     require(document.get("schema") == "pulsarmlx.f017.m1d-authorization-binding", "schema mismatch")
     require(document.get("schema_version") == "1.0.0", "schema version mismatch")
     require(document.get("status") == "authorized_exactly_one_not_executed", "status mismatch")
@@ -121,6 +162,7 @@ def validate_document(document: dict, repo: Path, *, validate_git: bool = True) 
         require(sha256((repo / CONTRACT_PATHS[name]).read_bytes()) == direct[name], f"{name} file mismatch")
     for name in ("boundary", "decoder", "scaffold", "tier_b"):
         require(sha256((repo / CONTRACT_PATHS[name]).read_bytes()) == direct[name], f"{name} file mismatch")
+    require(document.get("contract_versions") == CONTRACT_VERSIONS, "contract version mismatch")
 
     provenance = document.get("provenance")
     require(isinstance(provenance, dict) and set(provenance) == set(PROVENANCE), "provenance roles ambiguous")
@@ -176,7 +218,7 @@ def main() -> int:
     parser.add_argument("binding", type=Path)
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[2])
     args = parser.parse_args()
-    document = json.loads(args.binding.read_text())
+    document = load_json_no_duplicates(args.binding)
     validate_document(document, args.repo.resolve())
     print("F017 M1-D authorization binding: valid")
     return 0
