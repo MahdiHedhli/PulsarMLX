@@ -52,6 +52,11 @@ def scan_privacy(value: Any) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repository-root", type=Path, required=True)
+    parser.add_argument(
+        "--execution-config",
+        type=Path,
+        default=Path("docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-execution-config-v1.json"),
+    )
     args = parser.parse_args()
     root = args.repository_root.resolve(strict=True)
     admission = load_module("m1f0_admission", root / "scripts/research/f017_m1f0_admission.py")
@@ -62,7 +67,12 @@ def main() -> int:
     if fixture != generator.document():
         raise ValueError("input generated artifact differs")
 
-    config_path = root / "docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json"
+    config_path = args.execution_config
+    if not config_path.is_absolute():
+        config_path = root / config_path
+    config_path = config_path.resolve(strict=True)
+    if not config_path.is_relative_to(root):
+        raise ValueError("execution config escapes repository root")
     config = load_json(config_path)
     admission.validate_config(root, config)
 

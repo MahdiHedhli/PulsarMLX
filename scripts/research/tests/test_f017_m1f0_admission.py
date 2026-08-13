@@ -6,6 +6,7 @@ import importlib.util
 import json
 import struct
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -209,6 +210,24 @@ class M1F0AdmissionTests(unittest.TestCase):
         wrong_metadata["input_state"]["regeneration_attestation"]["python"] = "3.12.0"
         with self.assertRaises(ValueError):
             M1F0.validate_config(ROOT, wrong_metadata)
+
+    def test_package_validator_uses_the_active_attempt_two_config(self):
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/research/validate_f017_m1f0_package.py"),
+                "--repository-root",
+                str(ROOT),
+                "--execution-config",
+                "docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-execution-config-v1.json",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("M1-F0 package validation: PASS", result.stdout)
 
     def test_q5_real_qualification_is_exact_hash_bound_and_scope_limited(self):
         evidence = json.loads((ROOT / M1F0.Q5_QUALIFICATION_PATH).read_text())

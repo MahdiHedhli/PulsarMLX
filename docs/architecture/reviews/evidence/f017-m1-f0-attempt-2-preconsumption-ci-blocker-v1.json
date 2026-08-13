@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-preconsumption-blocker.v1",
+  "attempt": 2,
+  "attempt_consumed": false,
+  "checkpoint_payload_reads": 0,
+  "classification": "EVIDENCE_VALIDATION",
+  "first_failure": "package_validator_selected_historical_attempt_1_config",
+  "failing_ci_run": 31753025028,
+  "failing_head": "7ba6416f18b454377837a58297931c31d9184d2f",
+  "failed_step": "Execute checkpoint-free M1-F0 attention/router admission",
+  "historical_config": "docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json",
+  "authorized_config": "docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-execution-config-v1.json",
+  "root_cause": "The generated-package validator retained a hard-coded attempt-1 path while the workflow's canonical preflight correctly selected attempt 2.",
+  "remediation": "The validator now accepts an explicit repository-contained execution-config path, defaults to attempt 2, and CI supplies that same immutable path. A regression invokes the validator through the canonical attempt-2 selection.",
+  "real_route_discovery": false,
+  "expert_access": 0,
+  "mlx_dispatches": 0
+}
