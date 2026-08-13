@@ -8,7 +8,7 @@
     "schema": {"const":"pulsarmlx.f017.m1e-execution-config"},
     "schema_version": {"const":"3.0.0"},
     "status": {"const":"READY_TO_EXECUTE_M1_E"},
-    "attempt": {"const":2},
+    "attempt": {"const":3},
     "attempt_consumed": {"const":false},
     "compiled_runtime_sha": {"$ref":"#/$defs/gitSha"},
     "tooling_sha": {"$ref":"#/$defs/gitSha"},
@@ -39,7 +39,7 @@
     "package_root":{"$ref":"#/$defs/root"},
     "activation_fixture":{"$ref":"#/$defs/repositoryArtifact"},
     "activation_payload_sha256":{"$ref":"#/$defs/sha256"},
-    "repository_artifacts":{"type":"object","minProperties":19,"maxProperties":19,"additionalProperties":{"$ref":"#/$defs/repositoryArtifact"}},
+    "repository_artifacts":{"type":"object","minProperties":20,"maxProperties":20,"additionalProperties":{"$ref":"#/$defs/repositoryArtifact"}},
     "local_artifacts": {
       "type":"object","additionalProperties":false,
       "required":["environment_manifest","checkpoint_manifest","runner_binary","oracle_launcher","target_shard","oracle_output","package_output","attempt_state_output","preflight_evidence_output","evidence_output"],
@@ -48,7 +48,7 @@
         "oracle_output":{"type":"string","minLength":1},"package_output":{"type":"string","minLength":1},"attempt_state_output":{"type":"string","minLength":1},"preflight_evidence_output":{"type":"string","minLength":1},"evidence_output":{"type":"string","minLength":1}
       }
     },
-    "prior_evidence":{"type":"object","minProperties":5,"maxProperties":5,"additionalProperties":{"$ref":"#/$defs/sha256"}},
+    "prior_evidence":{"type":"object","minProperties":6,"maxProperties":6,"additionalProperties":{"$ref":"#/$defs/sha256"}},
     "checkpoint_bindings":{"type":"object","minProperties":3,"maxProperties":3,"additionalProperties":{"$ref":"#/$defs/sha256"}},
     "expert":{"type":"object","additionalProperties":false,"required":["layer","expert","symbolic_id"],"properties":{"layer":{"const":3},"expert":{"const":15},"symbolic_id":{"const":"blk.3.expert.15"}}},
     "tensors":{"type":"array","minItems":3,"maxItems":3,"items":{"$ref":"#/$defs/tensor"}},

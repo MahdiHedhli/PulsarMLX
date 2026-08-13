@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 
 pub const SCHEMA: &str = "pulsarmlx.f017.m1e-execution-config";
 pub const VERSION: &str = "3.0.0";
-pub const ATTEMPT: u64 = 2;
+pub const ATTEMPT: u64 = 3;
 pub const DECODER_CONTRACT_SHA256: &str =
     "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84";
 pub const READY: &str = "READY_TO_EXECUTE_M1_E";
@@ -279,7 +279,7 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
     if document.repository_root.path_kind != "absolute_private_local"
         || document.repository_root.identity != document.authorization_head_sha
         || document.package_root.path_kind != "absolute_private_local"
-        || document.package_root.identity != "m1e_attempt_2_private_package_root"
+        || document.package_root.identity != "m1e_attempt_3_private_package_root"
     {
         return Err(message("m1e_config_roots", "typed root binding mismatch"));
     }
@@ -341,8 +341,8 @@ fn validate_artifacts(
 ) -> Result<(), RunnerError> {
     let expected = [
         (
-            "attempt_2_handoff",
-            "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
+            "attempt_3_handoff",
+            "docs/architecture/reviews/f017-m1-e-attempt-3-handoff.md",
         ),
         (
             "boundary_contract",
@@ -375,6 +375,10 @@ fn validate_artifacts(
         (
             "execution_config_schema",
             "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v3.schema.json",
+        ),
+        (
+            "preparer_input_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-real-reference-preparer-input-v3.json",
         ),
         (
             "path_resolution_contract",
@@ -460,6 +464,10 @@ fn validate_prior(document: &Document) -> Result<(), RunnerError> {
             "m1_e_attempt_1",
             "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
         ),
+        (
+            "m1_e_attempt_2",
+            "8912e523963cfa8822fe6472ec30be31a78c4c3648fba34caf6c41055efd7e00",
+        ),
     ];
     let checkpoint = [
         (
@@ -475,7 +483,7 @@ fn validate_prior(document: &Document) -> Result<(), RunnerError> {
             "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
         ),
     ];
-    if document.prior_evidence.len() != 5
+    if document.prior_evidence.len() != 6
         || prior
             .iter()
             .any(|(k, v)| document.prior_evidence.get(*k).map(String::as_str) != Some(*v))

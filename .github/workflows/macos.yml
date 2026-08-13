@@ -138,8 +138,10 @@ jobs:
           echo "M1-E native gate: one expert; 3 matvecs/repeat; 10 repeats; 30 native dispatches; no skip"
           .venv/bin/python -m unittest \
             scripts.research.tests.test_f017_m1e_package \
+            scripts.research.tests.test_f017_m1e_preparer_v3 \
             scripts.research.tests.test_f017_iq3_decoder_identity \
             scripts.research.tests.test_iq3_xxs_numpy -v
+          echo "M1-E preparer schema-v3 gate: v2/future/mixed/stale inputs rejected before payload access"
           cargo test -p quant --test iq_reference -- --nocapture
           echo "IQ3_XXS v2 identity gate: minimized order regression; scalar/vector/spec exact; no skip"
           .venv/bin/python scripts/research/generate_f017_m1e_activation.py \
@@ -148,6 +150,7 @@ jobs:
           cargo test -p f017-runner --test m1e_contract -- --nocapture
           cargo test -p f017-runner --test m1e_numerical -- --nocapture
           cargo test -p f017-runner --test m1e_expert_native -- --nocapture
+          echo "M1-E canonical v3 integration: updated independent preparer; 10 repeats; 30 native dispatches; no skip"
           echo "M1-E isolation negative: wrong expert/tensor/fixture and one-repeat intermediate divergence rejected"
           echo "M1-D regression remains load-bearing"
           cargo test -p f017-runner --test m1d_contract -- --nocapture

@@ -1,0 +1,80 @@
+{
+  "schema": "pulsarmlx.f017.m1e-real-reference-preparer-input-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1e-real-reference-preparer-input-v3",
+  "supported_execution_config": {
+    "schema": "pulsarmlx.f017.m1e-execution-config",
+    "schema_version": "3.0.0",
+    "attempt": 3,
+    "status": "READY_TO_EXECUTE_M1_E",
+    "unknown_field_policy": "reject",
+    "future_version_policy": "reject",
+    "downgrade_policy": "reject"
+  },
+  "oracle_semantic_inputs": [
+    "expert",
+    "tensors",
+    "activation_fixture",
+    "activation_payload_sha256",
+    "checkpoint_bindings",
+    "repository_artifacts.boundary_contract",
+    "repository_artifacts.decoder_contract",
+    "repository_artifacts.scaffold_contract",
+    "repository_artifacts.tier_b_contract",
+    "repository_artifacts.independent_iq2_decoder",
+    "repository_artifacts.independent_iq3_decoder",
+    "repository_artifacts.third_iq3_decoder"
+  ],
+  "execution_identity_inputs": [
+    "compiled_runtime_sha",
+    "tooling_sha",
+    "authorization_head_sha",
+    "trusted_repository_identity",
+    "executable_identity",
+    "attempt",
+    "prior_evidence"
+  ],
+  "identity_fields_numerically_inert": true,
+  "allowed_path_kinds": {
+    "repository_artifact": "repository_relative",
+    "local_artifact": "absolute_private_local",
+    "tensor_payload": "bounded_checkpoint_range"
+  },
+  "required_artifact_roles": [
+    "attempt_3_handoff",
+    "boundary_contract",
+    "decoder_contract",
+    "scaffold_contract",
+    "tier_b_contract",
+    "repeat_integrity_contract",
+    "timing_contract",
+    "evidence_schema",
+    "execution_config_schema",
+    "preparer_input_contract",
+    "path_resolution_contract",
+    "trusted_repository_identity_contract",
+    "activation_generator",
+    "execution_config_preparer",
+    "authorized_launcher",
+    "real_reference_preparer",
+    "independent_iq2_decoder",
+    "independent_iq3_decoder",
+    "third_iq3_decoder",
+    "iq3_order_regression"
+  ],
+  "attempt_consumption": {
+    "validation_failure_before_payload_read": "does_not_consume",
+    "production_launcher_execution_started": "consumes"
+  },
+  "oracle_independence": {
+    "forbidden_dependencies": [
+      "Rust FFI",
+      "MLX",
+      "candidate stage outputs",
+      "candidate decoded matrices",
+      "Rust reference_*",
+      "candidate metrics",
+      "candidate subprocess execution"
+    ]
+  }
+}

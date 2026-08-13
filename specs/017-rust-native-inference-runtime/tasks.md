@@ -179,3 +179,7 @@
 - [x] T017-176 Execute exactly one identity-v2-authorized M1-E attempt 2,
   preserve the fail-closed pre-checkpoint execution-config schema rejection,
   bank public-safe evidence, and stop without retry or M1-F preparation.
+- [ ] T017-177 Make the independent M1-E preparer consume execution-config
+  schema 3.0.0 natively, reject downgrade/confusion inputs before payload
+  access, preserve decoder/numerical identities, and prepare an unconsumed
+  attempt-3 authorization after internal and adversarial GO reviews.

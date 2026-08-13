@@ -33,7 +33,7 @@ def load(path: Path, expected: str) -> dict[str, object]:
     if (
         document.get("schema") != "pulsarmlx.f017.m1e-execution-config"
         or document.get("schema_version") != "3.0.0"
-        or document.get("attempt") != 2
+        or document.get("attempt") != 3
         or document.get("attempt_consumed") is not False
     ):
         raise ValueError("wrong M1-E execution config schema")
@@ -77,7 +77,7 @@ def write_state(path: Path, config_sha: str) -> None:
         {
             "schema": "pulsarmlx.f017.m1e-attempt-state",
             "schema_version": "1.0.0",
-            "attempt": 2,
+            "attempt": 3,
             "state": "EXECUTION_STARTED",
             "execution_config_sha256": config_sha,
         },
@@ -115,7 +115,8 @@ def main() -> int:
 
     state_path = Path(document["local_artifacts"]["attempt_state_output"])
     write_state(state_path, args.execution_config_sha256)
-    if document["runner"]["mode"] == "real_expert":
+    package_output = Path(document["local_artifacts"]["package_output"])
+    if document["runner"]["mode"] == "real_expert" or not package_output.exists():
         launcher = checked_local(document, "oracle_launcher")
         preparer = checked_repository(document, "real_reference_preparer")
         prepared = subprocess.run(
