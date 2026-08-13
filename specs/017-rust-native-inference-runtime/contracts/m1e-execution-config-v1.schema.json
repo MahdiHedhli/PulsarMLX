@@ -19,13 +19,14 @@
     "repository_artifacts": {"type": "object", "minProperties": 14, "maxProperties": 14, "additionalProperties": {"$ref": "#/$defs/repositoryArtifact"}},
     "local_artifacts": {
       "type": "object", "additionalProperties": false,
-      "required": ["environment_manifest","checkpoint_manifest","target_shard","oracle_output","package_output","evidence_output"],
+      "required": ["environment_manifest","checkpoint_manifest","target_shard","oracle_output","package_output","preflight_evidence_output","evidence_output"],
       "properties": {
         "environment_manifest": {"$ref": "#/$defs/localFile"},
         "checkpoint_manifest": {"$ref": "#/$defs/localFile"},
         "target_shard": {"$ref": "#/$defs/targetShard"},
         "oracle_output": {"type": "string", "minLength": 1},
         "package_output": {"type": "string", "minLength": 1},
+        "preflight_evidence_output": {"type": "string", "minLength": 1},
         "evidence_output": {"type": "string", "minLength": 1}
       }
     },

@@ -108,7 +108,7 @@ def main() -> int:
             "environment_manifest":{"path_kind":"absolute_private_local","path":str(args.environment_manifest.resolve(strict=True)),"content_sha256":sha(args.environment_manifest)},
             "checkpoint_manifest":{"path_kind":"absolute_private_local","path":str(args.checkpoint_manifest.resolve(strict=True)),"content_sha256":sha(args.checkpoint_manifest)},
             "target_shard":{"path_kind":"absolute_private_local","path":str(target),"ordinal":2,"basename":target.name,"byte_size":target.stat().st_size,"content_sha256":shard["sha256"]},
-            "oracle_output":str(package_root / "m1e-oracle-v1.json"),"package_output":str(package_root / "m1e-package-v1.json"),"evidence_output":str(package_root / "m1e-evidence-v1.json")},
+            "oracle_output":str(package_root / "m1e-oracle-v1.json"),"package_output":str(package_root / "m1e-package-v1.json"),"preflight_evidence_output":str(package_root / "m1e-preflight-evidence-v1.json"),"evidence_output":str(package_root / "m1e-evidence-v1.json")},
         "prior_evidence":M1,"checkpoint_bindings":CHECKPOINT,
         "expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},"tensors":tensors,
         "runner":{"mode":args.mode,"memory_floor_bytes":17179869184 if args.mode == "real_expert" else 1},

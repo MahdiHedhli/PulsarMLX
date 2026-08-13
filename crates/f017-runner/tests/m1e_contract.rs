@@ -69,7 +69,7 @@ fn base(temp: &Path) -> (Value, PathBuf) {
                 "environment_manifest":{"path_kind":"absolute_private_local","path":env,"content_sha256":sha256_file(&env).unwrap()},
                 "checkpoint_manifest":{"path_kind":"absolute_private_local","path":checkpoint,"content_sha256":sha256_file(&checkpoint).unwrap()},
                 "target_shard":{"path_kind":"absolute_private_local","path":shard,"ordinal":2,"basename":"fake-shard.gguf","byte_size":fs::metadata(&shard).unwrap().len(),"content_sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
-                "oracle_output":private.join("oracle.json"),"package_output":private.join("package.json"),"evidence_output":temp.join("evidence.json")},
+                "oracle_output":private.join("oracle.json"),"package_output":private.join("package.json"),"preflight_evidence_output":temp.join("preflight-evidence.json"),"evidence_output":temp.join("evidence.json")},
             "prior_evidence":{"m1_a":"aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805","m1_b":"9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770","m1_c":"343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e","m1_d":"dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c"},
             "checkpoint_bindings":{"checkpoint_set_sha256":"d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee","catalog_sha256":"0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0","tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"},
             "expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},
@@ -98,6 +98,7 @@ fn preflight_accepts_only_the_immutable_one_expert_config() {
     let (value, path) = base(&temp);
     let loaded = load(&value, &path).unwrap();
     assert_eq!(loaded.config.mode, RunnerMode::M1ePreflight);
+    assert_eq!(loaded.config.out, temp.join("preflight-evidence.json"));
     assert!(!loaded.document.attempt_consumed);
     let _ = fs::remove_dir_all(temp);
 }
@@ -149,6 +150,13 @@ fn wrong_expert_tensor_fixture_attempt_and_dispatch_fail_closed() {
         (
             "dispatch",
             Box::new(|v| v["execution"]["native_dispatch_count"] = json!(29)),
+        ),
+        (
+            "preflight_reuses_production_evidence",
+            Box::new(|v| {
+                v["local_artifacts"]["preflight_evidence_output"] =
+                    v["local_artifacts"]["evidence_output"].clone()
+            }),
         ),
         (
             "second",

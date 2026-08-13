@@ -61,6 +61,7 @@ pub struct LocalArtifacts {
     pub target_shard: TargetShard,
     pub oracle_output: PathBuf,
     pub package_output: PathBuf,
+    pub preflight_evidence_output: PathBuf,
     pub evidence_output: PathBuf,
 }
 
@@ -162,7 +163,11 @@ pub fn load(
         RunnerMode::RealExpert { package }
     };
     let config = Config {
-        out: document.local_artifacts.evidence_output.clone(),
+        out: if preflight_only {
+            document.local_artifacts.preflight_evidence_output.clone()
+        } else {
+            document.local_artifacts.evidence_output.clone()
+        },
         validation_mode: ValidationMode::GoldenStrict,
         stream_mode: StreamMode::OwnedDevice,
         memory_floor_bytes: document.runner.memory_floor_bytes,
@@ -489,10 +494,17 @@ fn validate_local(document: &Document) -> Result<(), RunnerError> {
             ));
         }
     }
-    if !document.local_artifacts.evidence_output.is_absolute() {
+    if !document
+        .local_artifacts
+        .preflight_evidence_output
+        .is_absolute()
+        || !document.local_artifacts.evidence_output.is_absolute()
+        || document.local_artifacts.preflight_evidence_output
+            == document.local_artifacts.evidence_output
+    {
         return Err(message(
             "m1e_evidence_output",
-            "evidence output must be absolute",
+            "preflight and production evidence outputs must be distinct absolute paths",
         ));
     }
     Ok(())
