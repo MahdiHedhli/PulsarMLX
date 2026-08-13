@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import struct
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -187,6 +188,38 @@ class M1F0AdmissionTests(unittest.TestCase):
             with self.subTest(keys=list(value)):
                 with self.assertRaises(ValueError):
                     M1F0.validate_config(ROOT, value)
+
+    def test_tooling_identity_rejects_parent_descendant_unrelated_and_stale_provenance(self):
+        config = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json").read_text())
+        M1F0.validate_config(ROOT, config)
+        declared = config["source_identities"]["tooling_config_sha"]
+        parent = subprocess.check_output(["git", "rev-parse", f"{declared}^"], cwd=ROOT, text=True).strip()
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        candidates = [parent, "de25a5327cffbd30c8e4898df8f019ec9f084c94"]
+        if head != declared:
+            candidates.append(head)
+        for candidate in candidates:
+            mutated = copy.deepcopy(config)
+            mutated["source_identities"]["tooling_config_sha"] = candidate
+            with self.subTest(candidate=candidate), self.assertRaises(ValueError):
+                M1F0.validate_config(ROOT, mutated)
+        wrong_metadata = copy.deepcopy(config)
+        wrong_metadata["input_state"]["regeneration_attestation"]["python"] = "3.12.0"
+        with self.assertRaises(ValueError):
+            M1F0.validate_config(ROOT, wrong_metadata)
+
+    def test_q5_real_qualification_is_exact_hash_bound_and_scope_limited(self):
+        evidence = json.loads((ROOT / M1F0.Q5_QUALIFICATION_PATH).read_text())
+        self.assertEqual(evidence["tensor"]["symbolic_name"], "blk.3.attn_output.weight")
+        self.assertEqual(evidence["tensor"]["packed_sha256"], "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084")
+        self.assertEqual(evidence["comparison"]["decoder_a"]["decoded_sha256"], "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8")
+        self.assertEqual(evidence["comparison"]["decoder_a"]["decoded_sha256"], evidence["comparison"]["decoder_b"]["decoded_sha256"])
+        self.assertTrue(evidence["comparison"]["exact_bitwise_equal"])
+        self.assertEqual(evidence["scope"]["tensor_payloads"], 1)
+        self.assertFalse(evidence["scope"]["m1f0_route_discovery"])
+        self.assertEqual(evidence["scope"]["attention_computation"], 0)
+        self.assertEqual(evidence["scope"]["router_computation"], 0)
+        self.assertEqual(evidence["scope"]["expert_computation"], 0)
 
     def test_route_artifact_contract_rejects_stale_input_and_expert_evidence(self):
         fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
