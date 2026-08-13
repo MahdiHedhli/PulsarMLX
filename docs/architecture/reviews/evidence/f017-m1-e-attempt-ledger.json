@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.m1e-attempt-ledger",
+  "schema_version": "1.0.0",
+  "append_only": true,
+  "attempts": [
+    {
+      "attempt": 1,
+      "authorization_sha256": "1f4c7a0207d49ad31578ecf31b70ad9cbc0359f69a61ca1f0022e1d2efb55db4",
+      "runtime_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
+      "tooling_sha": "3387bb6d4508eb04e672dc6194da2855ba72f072",
+      "config_sha256": "7f69550bfd7ccd5e820f23d2bcce7f0e287d2c2bfc5f1ae2adb59ec5467b0a1b",
+      "evidence_sha256": "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
+      "verdict": "REJECTED",
+      "consumed": true,
+      "checkpoint_access": true,
+      "failure_class": "DECODER_IDENTITY",
+      "first_failure": "m1e_down_decoded",
+      "tensor_payload_count": 3,
+      "native_dispatches": 0,
+      "numerical_classification": "not_reached",
+      "lifecycle_status": "not_reconciled",
+      "next_remediation_sha": "942f23505e5829e55bc9b6611bd08d3c93481672"
+    },
+    {
+      "attempt": 2,
+      "authorization_sha256": "9537dbce3b2089a530bd112ac075848fb898b8b5ae6dd92044409f59b02e0acd",
+      "runtime_sha": "5c7694d6ba48640279e4725ea96104bc179a62cb",
+      "tooling_sha": "5c7694d6ba48640279e4725ea96104bc179a62cb",
+      "config_sha256": "a8905b8709aadf8d36bf94c2cb54c14a9ce5bcd31e7a1b184da33127af300f4e",
+      "evidence_sha256": "8912e523963cfa8822fe6472ec30be31a78c4c3648fba34caf6c41055efd7e00",
+      "verdict": "REJECTED",
+      "consumed": true,
+      "checkpoint_access": false,
+      "failure_class": "CONFIG_SCHEMA",
+      "first_failure": "m1e_oracle_execution_config_identity",
+      "tensor_payload_count": 0,
+      "native_dispatches": 0,
+      "numerical_classification": "not_reached",
+      "lifecycle_status": "not_applicable",
+      "next_remediation_sha": "71476f0d469214c96d803ce4917c43c4562a7183"
+    }
+  ],
+  "pre_consumption_blockers": [
+    {
+      "attempt": 3,
+      "config_sha256": "ce451e77215b3d3f99e69e96e50af1a2f0d9b3d9b7bbe3435fcd64cbec53d9d5",
+      "failure_class": "INFRASTRUCTURE",
+      "first_failure": "m1e_native_library_load",
+      "attempt_consumed": false,
+      "checkpoint_access": false,
+      "tensor_payload_count": 0,
+      "native_dispatches": 0,
+      "remediation_runtime_sha": "1da693665e5635ad404d472f395a4a407dd348fc"
+    }
+  ]
+}

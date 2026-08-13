@@ -1,13 +1,13 @@
 # F017 M1-E Attempt 3 Handoff
 
-**Status: PREPARED / NOT AUTHORIZED / NOT EXECUTED**
+**Status: PREPARED AFTER LOADER REMEDIATION / NOT AUTHORIZED / NOT EXECUTED**
 
 ## Published source and preparer identities
 
 - compiled runtime/tooling SHA:
-  `71476f0d469214c96d803ce4917c43c4562a7183`
+  `1da693665e5635ad404d472f395a4a407dd348fc`
 - arm64 release executable SHA-256:
-  `9dc126e7391e1d0e2a87883c269792eeff41b72827fb6848066b128e963c350b`
+  `720a4c61bdc61b5f5fdd1ba479b0a3543a5bcded1d7d10d2e146b9c7eea08919`
 - trusted repository identity contract:
   `f017-trusted-repository-identity-v2` /
   `88faaf375d871a60462cbbddd5b27c186353d168eae2611b14cf485a24a78eaf`
@@ -21,6 +21,10 @@
 The immutable config must bind an exact later authorization head that is a
 reviewed docs/reviews/evidence-only descendant of the compiled runtime. All
 execution-controlling artifacts remain directly content-hash bound.
+
+The canonical launcher must also derive its dyld library directory only from
+the bound production environment manifest and verify both reviewed dylib
+hashes before launching either preflight or candidate execution.
 
 ## Immutable scope
 
