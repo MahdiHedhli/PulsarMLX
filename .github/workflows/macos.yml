@@ -186,6 +186,10 @@ jobs:
             --execution-config-sha256 "$M1F0_CONFIG_SHA" \
             --authorization "$M1F0_AUTH" \
             --authorization-sha256 "$M1F0_AUTH_SHA"
+          if test -f docs/architecture/reviews/evidence/f017-m1-f0-layer3-route-v1.json; then
+            .venv/bin/python scripts/research/validate_f017_m1f0_accepted_evidence.py \
+              --repository-root .
+          fi
           echo "M1-F0 synthetic attention/router: 10 deterministic discoveries; exact top-8 and routing bytes"
           .venv/bin/python scripts/research/f017_m1f0_admission.py \
             --repository-root . \

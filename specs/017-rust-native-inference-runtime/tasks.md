@@ -188,10 +188,10 @@
   rebuild authorization, execute at most attempts 3-5, and bank acceptance or
   the terminal blocker without entering M1-F.
 - [ ] T017-179 Prepare and checkpoint-free qualify the complete layer-3 M1-F
-  admission package. **Blocked pending M1-F0:** the reviewed two-stage protocol
-  now freezes a new input and admits a separately authorized oracle-only
-  attention/router discovery before the eight-expert M1-F allowlist is built.
-  No M1-F preparation may resume until accepted M1-F0 route evidence exists.
+  admission package. **Resumed from accepted M1-F0 metadata only:** the frozen
+  route is `[166, 78, 26, 186, 163, 199, 233, 177]`; Q6_K real-byte decoder
+  qualification and the complete-layer oracle/contracts remain required before
+  any M1-F authorization.
 - [x] T017-180 Prepare and checkpoint-free qualify the bounded layer-3 M1-F0
   oracle-only attention/router discovery package, freeze its 12-tensor
   expert-free access budget and exact route-selection contract, pass internal
@@ -200,3 +200,7 @@
   Q5_K decoder findings, prove pinned input regeneration, strengthen route
   and first-real-quantization admission, rebuild the immutable config, pass
   internal review, and stop for a narrow external adversarial delta review.
+- [x] T017-182 Execute the bounded M1-F0 closed loop, preserve rejected attempt
+  1, remediate its evidence-wrapper failure, accept attempt 2 with exactly 12
+  attention/router payloads and ten deterministic oracle repeats, bank the
+  real route, and stop with M1-F prepared but unauthorized.

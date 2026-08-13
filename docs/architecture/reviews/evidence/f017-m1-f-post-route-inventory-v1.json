@@ -1,0 +1,65 @@
+{
+  "schema": "pulsarmlx.f017.m1f-post-route-inventory",
+  "schema_version": "1.0.0",
+  "status": "PREPARED / NOT AUTHORIZED",
+  "layer": 3,
+  "m1f0_route_artifact_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+  "m1f0_accepted_evidence_sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+  "top8_ids": [166, 78, 26, 186, 163, 199, 233, 177],
+  "input_context": {
+    "input_package_sha256": "eb5693c99f73c2a95d71aec947b8a18a6c07c71dbbb460490af82b617dba9283",
+    "attention_residual_sha256": "1f5e2e469f5d118f8cf7fee7f4199b2912530823eb2d0a65cea53e9e77de0fc7",
+    "router_normalized_input_sha256": "98275027e2427276822b84fc0c7747014b0f4d79b40c07e6d8267060db7762e1",
+    "router_score_sha256": "3b4ff6cac287f53004c7cc6ceedb13f2403a6ce4426e30155005158e0e004dc4",
+    "top8_ids_sha256": "44eb8597e56fe57ef3c045dfa979e80f76e85afd053c89b48653244525cf41ca",
+    "routing_weights_sha256": "e1e419537136ffb660775732aa2bfb17a6b16a941b2fbacb775aff0d77d9fd18"
+  },
+  "parent_tensor_catalog_entries": {
+    "blk.3.ffn_gate_exps.weight": "4f87d640cfd490b16bb9fd92044506b709af1b9130f58e19ab8529818b234bda",
+    "blk.3.ffn_up_exps.weight": "dfaf25bfa5347dac460ffd80fad812883e3b6ea5e94a5e86a004426801fbae14",
+    "blk.3.ffn_down_exps.weight": "801c024f03f0a8be8ab8b453f58c7cf4608a140471811f275e015b82e41fb607",
+    "blk.3.ffn_gate_shexp.weight": "1d5229215e4fa1b53b6ae4898bdd27a434e4b0ed32876a243081c67881e17c4a",
+    "blk.3.ffn_up_shexp.weight": "7cfd5bb7477977f6c9da6d24098767a5e377ca3a5d8271996e7b90b577560546",
+    "blk.3.ffn_down_shexp.weight": "c2464f715ca553fd59e1d8c703501d4c799d5f3b80b0830ad28ac30e448c240e"
+  },
+  "routed_experts": [
+    {"expert_id": 166, "gate": {"name": "blk.3.ffn_gate_exps.weight#166", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 3913045856, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#166", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4758484832, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#166", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 2930693984, "packed_length": 4816896}},
+    {"expert_id": 78, "gate": {"name": "blk.3.ffn_gate_exps.weight#78", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 3627571040, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#78", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4473010016, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#78", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 2506807136, "packed_length": 4816896}},
+    {"expert_id": 26, "gate": {"name": "blk.3.ffn_gate_exps.weight#26", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 3458881376, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#26", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4304320352, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#26", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 2256328544, "packed_length": 4816896}},
+    {"expert_id": 186, "gate": {"name": "blk.3.ffn_gate_exps.weight#186", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 3977926496, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#186", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4823365472, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#186", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 3027031904, "packed_length": 4816896}},
+    {"expert_id": 163, "gate": {"name": "blk.3.ffn_gate_exps.weight#163", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 3903313760, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#163", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4748752736, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#163", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 2916243296, "packed_length": 4816896}},
+    {"expert_id": 199, "gate": {"name": "blk.3.ffn_gate_exps.weight#199", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4020098912, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#199", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4865537888, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#199", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 3089651552, "packed_length": 4816896}},
+    {"expert_id": 233, "gate": {"name": "blk.3.ffn_gate_exps.weight#233", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4130396000, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#233", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4975834976, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#233", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 3253426016, "packed_length": 4816896}},
+    {"expert_id": 177, "gate": {"name": "blk.3.ffn_gate_exps.weight#177", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 3948730208, "packed_length": 3244032}, "up": {"name": "blk.3.ffn_up_exps.weight#177", "quantization": "IQ2_XXS", "logical_shape": [2048, 6144], "shard": 2, "offset": 4794169184, "packed_length": 3244032}, "down": {"name": "blk.3.ffn_down_exps.weight#177", "quantization": "IQ3_XXS", "logical_shape": [6144, 2048], "shard": 2, "offset": 2983679840, "packed_length": 4816896}}
+  ],
+  "shared_expert": [
+    {"role": "gate", "name": "blk.3.ffn_gate_shexp.weight", "quantization": "Q5_K", "logical_shape": [2048, 6144], "shard": 2, "offset": 4211300192, "packed_length": 8650752},
+    {"role": "up", "name": "blk.3.ffn_up_shexp.weight", "quantization": "Q5_K", "logical_shape": [2048, 6144], "shard": 2, "offset": 5050447712, "packed_length": 8650752},
+    {"role": "down", "name": "blk.3.ffn_down_shexp.weight", "quantization": "Q6_K", "logical_shape": [6144, 2048], "shard": 2, "offset": 3364214624, "packed_length": 10321920}
+  ],
+  "future_m1f_budget": {
+    "tensor_payloads": 39,
+    "positional_reads": 39,
+    "shard_opens": 1,
+    "compressed_bytes": 257281024,
+    "decoded_bytes": 2025384960,
+    "routed_experts": 8,
+    "shared_experts": 1
+  },
+  "predicted_native_dispatches": {
+    "per_repeat": 34,
+    "ten_repeats": 340,
+    "attention_projections": 6,
+    "router_projections": 1,
+    "routed_expert_matvecs": 24,
+    "shared_expert_matvecs": 3,
+    "status": "PREDICTED_PENDING_M1F_CONTRACT_REVIEW"
+  },
+  "quantization_admission": {
+    "qualified": ["F32", "Q8_0", "Q5_K", "IQ2_XXS", "IQ3_XXS"],
+    "newly_required": ["Q6_K"],
+    "policy": "Any first-use real F017 quantization family requires independent exact real-byte decoder qualification before freezing downstream evidence."
+  },
+  "real_m1f_execution": false,
+  "m1f_authorized": false
+}
