@@ -196,3 +196,7 @@
   oracle-only attention/router discovery package, freeze its 12-tensor
   expert-free access budget and exact route-selection contract, pass internal
   review, and stop with the adversarial packet pending external review.
+- [x] T017-181 Close the M1-F0 adversarial tooling-provenance and real-byte
+  Q5_K decoder findings, prove pinned input regeneration, strengthen route
+  and first-real-quantization admission, rebuild the immutable config, pass
+  internal review, and stop for a narrow external adversarial delta review.
