@@ -1,0 +1,123 @@
+{
+  "schema": "pulsarmlx.f017.m1e-iq3-decoder-remediation",
+  "schema_version": "1.0.0",
+  "status": "passed",
+  "source": {
+    "starting_sha": "b777dac61c050fac74e39ecb3dd4ecb179bccca0",
+    "remediated_runtime_sha": "942f23505e5829e55bc9b6611bd08d3c93481672"
+  },
+  "attempt_1": {
+    "evidence_sha256": "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
+    "failure_code": "m1e_down_decoded",
+    "verdict": "M1-E REJECTED",
+    "candidate_compute_count": 0,
+    "immutable": true
+  },
+  "authorized_boundary": {
+    "tensor": "blk.3.ffn_down_exps.weight",
+    "quantization": "IQ3_XXS",
+    "shape": [6144, 2048],
+    "packed_sha256": "442acf3cf5210ade4faa0b38ef0f94aaca7b15571a180804ace52b94cccdf59d"
+  },
+  "source_identities": {
+    "python_decoder": {
+      "path": "scripts/research/iq3_xxs_dequant.py",
+      "old_sha256": "316ab363b6a78681a8e3b1960ef86e77983e46654099a2e8aff4f5c81417bec8",
+      "corrected_sha256": "5faff93b578028065854d1f3717951126404e1a5ccbe9b16f7f5dc8d5343ab68"
+    },
+    "rust_decoder": {
+      "path": "crates/quant/src/iq_ref.rs",
+      "sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161",
+      "changed": false
+    },
+    "third_decoder": {
+      "path": "scripts/research/iq3_xxs_spec_decoder.py",
+      "sha256": "10b2c1eeda4d2955fbc61df659d28a4b2c1b72eb2d730145e74bbad86b347621"
+    },
+    "candidate_tables": {
+      "path": "crates/quant/src/cpu_dot_tables.rs",
+      "sha256": "8dc16e47d422a5bf52ba6efb3d754e70af6ae43c88179d59bf6977711003f85b"
+    },
+    "authoritative_reference": {
+      "project": "llama.cpp",
+      "commit": "8e7f22b67ef4667b4ddd50230771287f328cfb3f",
+      "path": "ggml/src/ggml-quants.c",
+      "file_sha256": "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d"
+    }
+  },
+  "reproduction": {
+    "old_python_decoded_sha256": "c252537660deb00330ec289338daaf89d550ce8a3553d7e34ac59353156f756d",
+    "candidate_decoded_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae",
+    "third_decoder_decoded_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae",
+    "element_count": 12582912,
+    "mismatch_count": 8269400,
+    "mismatch_fraction": 0.6571928660074869,
+    "rows_with_mismatch": 6144,
+    "blocks_with_mismatch": 49152,
+    "first_mismatch": {
+      "element_index": 1,
+      "row": 0,
+      "column": 1,
+      "compressed_block_index": 0,
+      "packed_byte_offset": 0,
+      "python_bits": "bd182e48",
+      "rust_and_spec_bits": "3c445cc0",
+      "python_value": -0.03715351223945618,
+      "rust_and_spec_value": 0.01198500394821167,
+      "absolute_difference": 0.04913851618766785,
+      "ulp_diagnostic": 2036108041
+    }
+  },
+  "root_cause": {
+    "classification": "PYTHON_DECODER_DEFECT",
+    "detail": "The Python scalar and NumPy paths interleaved grid-1 and grid-2 lanes; GGML and Rust emit grid-1 lanes 0..3 followed by grid-2 lanes 0..3.",
+    "serialization_only": false
+  },
+  "exactness_after_fix": {
+    "python_decoded_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae",
+    "rust_decoded_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae",
+    "third_decoder_decoded_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae",
+    "python_vs_rust_bit_mismatches": 0,
+    "python_vs_third_bit_mismatches": 0,
+    "rust_vs_third_bit_mismatches": 0
+  },
+  "regression_fixture": {
+    "path": "specs/017-rust-native-inference-runtime/fixtures/f017-iq3-xxs-order-regression-v1.json",
+    "artifact_sha256": "8d60b88d44d812036131beba384d886131f1234f852f95c67f9821283fd4fa48",
+    "packed_sha256": "412e7b8e5b0100e0ddee63aba7859fa140b7d3d9fa906475b9345e37a2534574",
+    "decoded_sha256": "f247b81ca959124092a6eca58e177e8b179894ee804569d1f98840682f4a4c3e",
+    "values": 256
+  },
+  "decoder_contract": {
+    "version": "f017-m1e-iq2-iq3-decoder-v2",
+    "path": "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
+    "sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84"
+  },
+  "corrected_oracle": {
+    "decode_only": true,
+    "package_sha256": "083ca3ca4966ee245e06d5401f499015afd76119459ff7ba178549fbf17be9f2",
+    "gate_decoded_sha256": "849081eda002797cdf0aacee5dfddaeb4b7f9f08d18f51a2343ef079317a01db",
+    "up_decoded_sha256": "4ceb3ddd33a2efa3b64857a44b92e1dfc3fe202c0eb26e18b2d18f4ac80a2d10",
+    "down_decoded_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae",
+    "gate_output_sha256": "c81dda8c2127ab694981b447df4dd7f15eb23ca2257af021fbb8776342215ec9",
+    "up_output_sha256": "808988d579fd1e77fd8c45c2fbb5cc79a58260de5f79f7e867833b5a156782ed",
+    "activated_hidden_sha256": "8f4414e53c027b18f704ef41b9b08b5c9272e31e5877371608baeb78d79f9fbd",
+    "final_output_sha256": "ae1fa8e468418c8f0103a772ba4cf1380ed587435ace37d527642f8f0cda5213",
+    "final_bound_vector_sha256": "05273dc57a7c8822f0cbf988d465debf1f4010004cd10299ff6e607f9ac6a3d4",
+    "global_max_absolute_bound": 10.127650654970777,
+    "global_rmse_bound": 7.522679095561131
+  },
+  "impact": {
+    "tier_b_contract_changed": false,
+    "m1_d_accepted_evidence_affected": false,
+    "m1_e_attempt_1_numerically_qualified": false,
+    "historical_python_iq3_dependent_claims": "superseded_pending_rebank",
+    "m1_f_authorized": false
+  },
+  "isolation": {
+    "new_checkpoint_tensor_reads": 0,
+    "real_m1_e_candidate_compute": 0,
+    "mlx_contexts_created": 0,
+    "expert_executions": 0
+  }
+}
