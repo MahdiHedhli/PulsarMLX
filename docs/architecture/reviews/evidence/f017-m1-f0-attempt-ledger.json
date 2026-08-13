@@ -23,7 +23,7 @@
       "route_produced": false,
       "route_artifact_sha256": null,
       "evidence_sha256": "72deffb9d1baffa2378aca18662209a9a49f5da1709c1125f6d662c3af202244",
-      "next_remediation_sha": null
+      "next_remediation_sha": "84caee788a5fcf8fab90dd172baa10bdfc3732f9"
     }
   ],
   "cumulative_checkpoint_access": {

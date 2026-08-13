@@ -33,7 +33,7 @@ EXEC = load("execute_f017_m1f0", "scripts/research/execute_f017_m1f0_real_route.
 
 
 def tooling_sha() -> str:
-    config = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json").read_text())
+    config = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-execution-config-v1.json").read_text())
     return config["source_identities"]["tooling_config_sha"]
 
 
@@ -192,7 +192,7 @@ class M1F0AdmissionTests(unittest.TestCase):
                     M1F0.validate_config(ROOT, value)
 
     def test_tooling_identity_rejects_parent_descendant_unrelated_and_stale_provenance(self):
-        config = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json").read_text())
+        config = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-execution-config-v1.json").read_text())
         M1F0.validate_config(ROOT, config)
         declared = config["source_identities"]["tooling_config_sha"]
         parent = subprocess.check_output(["git", "rev-parse", f"{declared}^"], cwd=ROOT, text=True).strip()

@@ -174,9 +174,9 @@ jobs:
             --check
           .venv/bin/python scripts/research/validate_f017_m1f0_package.py \
             --repository-root .
-          M1F0_CONFIG=docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json
+          M1F0_CONFIG=docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-execution-config-v1.json
           M1F0_CONFIG_SHA=$(shasum -a 256 "$M1F0_CONFIG" | awk '{print $1}')
-          M1F0_AUTH=docs/architecture/reviews/evidence/f017-m1-f0-attempt-1-authorization-v1.json
+          M1F0_AUTH=docs/architecture/reviews/evidence/f017-m1-f0-attempt-2-authorization-v1.json
           M1F0_AUTH_SHA=$(shasum -a 256 "$M1F0_AUTH" | awk '{print $1}')
           .venv/bin/python scripts/research/f017_m1f0_admission.py \
             --repository-root . \
