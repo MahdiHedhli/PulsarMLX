@@ -183,7 +183,7 @@
   schema 3.0.0 natively, reject downgrade/confusion inputs before payload
   access, preserve decoder/numerical identities, and prepare an unconsumed
   attempt-3 authorization after internal and adversarial GO reviews.
-- [ ] T017-178 Execute the M1-E closed loop: preserve the unconsumed attempt-3
+- [x] T017-178 Execute the M1-E closed loop: preserve the unconsumed attempt-3
   native-loader preflight blocker, bind the reviewed MLX loader environment,
   rebuild authorization, execute at most attempts 3-5, and bank acceptance or
   the terminal blocker without entering M1-F.

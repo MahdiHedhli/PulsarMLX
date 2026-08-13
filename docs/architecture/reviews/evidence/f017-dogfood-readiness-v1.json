@@ -1,8 +1,8 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_e_attempt_1_rejected_stopped",
-  "executed_source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
+  "updated_after": "m1_e_attempt_3_accepted_stopped",
+  "executed_source_sha": "7e4c3f37049444443164964aea2fc630752d17ce",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
     "r7_r12": "complete",
@@ -12,7 +12,7 @@
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
     "m1_d": "attempt_1_rejected_attempt_2_rejected_attempt_3_accepted_stopped",
-    "m1_e_m1_g": "m1_e_attempt_1_rejected_no_retry_authorized_m1_f_m1_g_blocked",
+    "m1_e_m1_g": "m1_e_attempt_3_accepted_m1_f_prepared_not_authorized_m1_g_blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -54,9 +54,13 @@
     "m1_d_attempt_2_matrix_payload_count": 0,
     "m1_d_attempt_3_oracle_matrix_payload_count": 1,
     "m1_d_attempt_3_candidate_checkpoint_read_count": 1,
-    "tensor_execution_count": 1,
-    "quant_decode_count": 1,
-    "model_compute_dispatch_count": 10
+    "m1_e_attempt_1_tensor_payload_count": 3,
+    "m1_e_attempt_2_tensor_payload_count": 0,
+    "m1_e_attempt_3_tensor_payload_count": 3,
+    "m1_e_total_tensor_payload_count": 6,
+    "tensor_execution_count": 2,
+    "quant_decode_count": 4,
+    "model_compute_dispatch_count": 40
   },
   "m1_c_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-c-real-tensor-handoff.md",
@@ -147,12 +151,12 @@
     "independent_review": "docs/architecture/reviews/f017-m1-e-independent-adversarial-review.md",
     "independent_review_verdict": "GO FOR ONE M1-E REAL EXPERT",
     "fresh_authorization": "docs/architecture/reviews/f017-m1-e-fresh-authorization.md",
-    "runtime_source_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
-    "tooling_source_sha": "3387bb6d4508eb04e672dc6194da2855ba72f072",
-    "reviewed_package_head": "f3a7ba8f3a7eb52dbf48c6929e23835e5c18eeea",
-    "handoff_sha256": "2325f9b2964b5c1120864fbaa4d3fda875f8d263154d783bf02b6ad47e78e531",
-    "execution_config_sha256": "7f69550bfd7ccd5e820f23d2bcce7f0e287d2c2bfc5f1ae2adb59ec5467b0a1b",
-    "qualification_ci_run": 31656082515,
+    "runtime_source_sha": "7e4c3f37049444443164964aea2fc630752d17ce",
+    "tooling_source_sha": "7e4c3f37049444443164964aea2fc630752d17ce",
+    "reviewed_package_head": "541da1abdbb1767fba9917894adb07c9c93d0ab1",
+    "handoff_sha256": "1dbe3c411528f8bb677fd26df662b54c378830c27407b05349292a995b33adf1",
+    "execution_config_sha256": "8213c5fa1c59900a0590977079d0d88f5b55d0faa30e2fa262430271bc3cef2a",
+    "qualification_ci_run": 31720986490,
     "expert": {
       "layer": 3,
       "expert": 15,
@@ -172,20 +176,42 @@
     "real_payload_accessed_during_attempt": true,
     "real_payload_count": 3,
     "attempt_executed": true,
-    "candidate_started": false,
-    "real_execution_performed": false,
+    "candidate_started": true,
+    "real_execution_performed": true,
     "authorized": false,
     "attempt_consumed": true,
-    "verdict": "rejected",
-    "failure_classification": "FAIL_INFRASTRUCTURE_EVIDENCE",
-    "failure_code": "m1e_down_decoded",
-    "native_dispatch_count": 0,
-    "production_repeat_count": 0,
+    "verdict": "accepted",
+    "failure_classification": null,
+    "failure_code": null,
+    "native_dispatch_count": 30,
+    "production_repeat_count": 10,
+    "all_stage_hashes_equal": true,
+    "numerical_classification": "numerically_qualified_greedy_not_applicable",
+    "attempt_history": [
+      {
+        "attempt": 1,
+        "verdict": "rejected",
+        "evidence_sha256": "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
+        "failure_class": "DECODER_IDENTITY"
+      },
+      {
+        "attempt": 2,
+        "verdict": "rejected",
+        "evidence_sha256": "8912e523963cfa8822fe6472ec30be31a78c4c3648fba34caf6c41055efd7e00",
+        "failure_class": "CONFIG_SCHEMA"
+      },
+      {
+        "attempt": 3,
+        "verdict": "accepted",
+        "evidence_sha256": "0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9",
+        "failure_class": null
+      }
+    ],
     "evidence": {
-      "path": "docs/architecture/reviews/evidence/f017-m1-e-real-expert-attempt-1-v1.json",
-      "sha256": "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119"
+      "path": "docs/architecture/reviews/evidence/f017-m1-e-real-expert-attempt-3-v1.json",
+      "sha256": "0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9"
     },
-    "m1_f": "blocked"
+    "m1_f": "prepared_not_authorized"
   },
-  "next_gate": "review the preserved M1-E down-decoder identity mismatch and require a new remediation plus fresh authorization before any later M1-E attempt; M1-F remains blocked"
+  "next_gate": "prepare and independently review a separately scoped M1-F complete-real-layer admission package; M1-F execution and T017-141/P1 remain unauthorized"
 }

@@ -1,6 +1,12 @@
 # F017 M1-E Attempt 3 Authorization
 
-**Status: AUTHORIZED FOR EXACTLY ONE M1-E ATTEMPT 3 / NOT EXECUTED**
+**Status: CONSUMED — M1-E ATTEMPT 3 ACCEPTED / NO FURTHER M1-E ATTEMPT AUTHORIZED**
+
+The issued status was `AUTHORIZED FOR EXACTLY ONE M1-E ATTEMPT 3 / NOT
+EXECUTED`. The canonical immutable-config execution consumed that authorization
+exactly once and banked accepted evidence under SHA-256
+`0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9`.
+This status transition does not authorize another expert attempt or M1-F.
 
 Attempts 1 and 2 remain consumed and rejected. The original attempt-3 package
 was not consumed: its preflight exposed `m1e_native_library_load` before any

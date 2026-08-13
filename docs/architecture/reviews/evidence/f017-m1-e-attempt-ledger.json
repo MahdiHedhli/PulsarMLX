@@ -38,6 +38,24 @@
       "numerical_classification": "not_reached",
       "lifecycle_status": "not_applicable",
       "next_remediation_sha": "71476f0d469214c96d803ce4917c43c4562a7183"
+    },
+    {
+      "attempt": 3,
+      "authorization_sha256": "36c0ced9e673e5ab996b82235fc0c77d1565a5c65c49402df870967c5aaa3177",
+      "runtime_sha": "7e4c3f37049444443164964aea2fc630752d17ce",
+      "tooling_sha": "7e4c3f37049444443164964aea2fc630752d17ce",
+      "config_sha256": "8213c5fa1c59900a0590977079d0d88f5b55d0faa30e2fa262430271bc3cef2a",
+      "evidence_sha256": "0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9",
+      "verdict": "ACCEPTED",
+      "consumed": true,
+      "checkpoint_access": true,
+      "failure_class": null,
+      "first_failure": null,
+      "tensor_payload_count": 3,
+      "native_dispatches": 30,
+      "numerical_classification": "numerically_qualified_greedy_not_applicable",
+      "lifecycle_status": "reconciled",
+      "next_remediation_sha": null
     }
   ],
   "pre_consumption_blockers": [
