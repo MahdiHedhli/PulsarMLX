@@ -5,10 +5,13 @@
 This handoff freezes one complete-expert boundary. It does not authorize the
 three real payload reads or production execution.
 
-Runtime/tooling implementation: `466770362e3066fa5fd9827ec1f454e03afe3006`.
+Runtime implementation: `466770362e3066fa5fd9827ec1f454e03afe3006`.
+Tooling/test qualification: `953f1c2d19bc596e6338eaecda7390ffc2854bf7`.
+The trusted execution repository root is a clean detached checkout at the
+runtime SHA; later tooling/review descendants are never substituted for it.
 The private, machine-local execution configuration prepared from that exact
 implementation has SHA-256
-`00ef0a08a033b0652ca521004f8b459a40169d1a43dc5c9cd5dae33a0d80cd90`.
+`bb8fba034aa1bc13b8dd7adda7df0fbe895ab4b0a880be909ce3b83b25986a7a`.
 Its canonical non-consuming production preflight returned exactly
 `READY_TO_EXECUTE_M1_E`; it created no attempt state, evidence, oracle, or
 payload artifact.

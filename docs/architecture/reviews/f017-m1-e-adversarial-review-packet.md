@@ -6,12 +6,18 @@ not been read and M1-E has not executed.
 
 ## Accepted chain and implementation
 
-- runtime/tooling implementation: `466770362e3066fa5fd9827ec1f454e03afe3006`
+- runtime implementation: `466770362e3066fa5fd9827ec1f454e03afe3006`
+- tooling/test qualification: `953f1c2d19bc596e6338eaecda7390ffc2854bf7`
 - accepted M1-D evidence: `dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c`
 - M1-A/B/C: `aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805` / `9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770` / `343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e`
 - checkpoint/catalog/map: `d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee` / `0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0` / `ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223`
-- private immutable execution config: `00ef0a08a033b0652ca521004f8b459a40169d1a43dc5c9cd5dae33a0d80cd90`
+- private immutable execution config: `bb8fba034aa1bc13b8dd7adda7df0fbe895ab4b0a880be909ce3b83b25986a7a`
 - production preflight: `READY_TO_EXECUTE_M1_E`, non-consuming, no payload access
+
+The trusted execution repository root is a separate clean detached checkout
+at the runtime SHA. Its identity is validated independently of the current
+tooling/review branch head, preventing a docs/test descendant from silently
+becoming the executable source boundary.
 
 Commits after the M1-D evidence head `d70090d0` are deliberately classified:
 
