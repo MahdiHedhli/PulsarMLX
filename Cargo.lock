@@ -771,6 +771,7 @@ name = "quant"
 version = "0.1.0"
 dependencies = [
  "gguf",
+ "sha2",
 ]
 
 [[package]]

@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-attention-router-boundary",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-layer3-position0-attention-router-v1",
+  "layer": 3,
+  "position": 0,
+  "dsa_mode": "range_fill",
+  "tensor_names": [
+    "blk.3.attn_norm.weight",
+    "blk.3.attn_q_a.weight",
+    "blk.3.attn_q_a_norm.weight",
+    "blk.3.attn_q_b.weight",
+    "blk.3.attn_kv_a_mqa.weight",
+    "blk.3.attn_kv_a_norm.weight",
+    "blk.3.attn_k_b.weight",
+    "blk.3.attn_v_b.weight",
+    "blk.3.attn_output.weight",
+    "blk.3.ffn_norm.weight",
+    "blk.3.ffn_gate_inp.weight",
+    "blk.3.exp_probs_b.bias"
+  ],
+  "access_budget": {
+    "tensor_payloads": 12,
+    "shard_opens": 1,
+    "positional_reads": 12,
+    "compressed_bytes": 139217920,
+    "decoded_bytes": 666430464,
+    "expert_tensor_payloads": 0
+  },
+  "forbidden": [
+    "expert_gate",
+    "expert_up",
+    "expert_down",
+    "shared_expert",
+    "moe_aggregation",
+    "final_layer_residual",
+    "next_layer",
+    "output_norm",
+    "output_head",
+    "logits"
+  ]
+}

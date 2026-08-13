@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1f0-evidence.v1",
+  "type": "object",
+  "required": ["schema", "schema_version", "attempt", "attempt_state", "execution_config_sha256", "input_state", "tensor_payloads", "decoded_tensors", "oracle", "selection", "access", "timings", "first_failure", "verdict"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f0-evidence"},
+    "schema_version": {"const": "1.0.0"},
+    "attempt": {"type": "integer", "minimum": 1},
+    "attempt_state": {"enum": ["EXECUTION_STARTED", "COMPLETED"]},
+    "execution_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "input_state": {"type": "object"},
+    "tensor_payloads": {"type": "array", "minItems": 12, "maxItems": 12},
+    "decoded_tensors": {"type": "array", "minItems": 12, "maxItems": 12},
+    "oracle": {"type": "object"},
+    "selection": {"type": "object"},
+    "access": {"type": "object"},
+    "timings": {"type": "object"},
+    "first_failure": {"type": ["object", "null"]},
+    "verdict": {"enum": ["M1-F0 ACCEPTED", "M1-F0 REJECTED"]}
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.production-m1f0-tier-b",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-attention-router-tier-b-v1",
+  "frozen_before_real_observation": true,
+  "method": "operand_conditioned_forward_error_composition",
+  "unit_roundoff_f32": 5.960464477539063e-8,
+  "smallest_subnormal_f32": 1.401298464324817e-45,
+  "dot_bound": "2*gamma(2*n)*sum_abs_products + 4*n*smallest_subnormal_f32",
+  "rms_norm_bound": "compose_dot_bound_with_sqrt_and_reciprocal_rounding",
+  "position0_attention": "single_visible_value_softmax_weight_exactly_one",
+  "residual_bound": "branch_bound + one_f32_add_rounding",
+  "sigmoid_lipschitz": 0.25,
+  "router_score_bound": "sigmoid_input_bound*0.25 + bias_add_rounding",
+  "selection": {
+    "top8_ids": "exact",
+    "required_margin": "eighth_score_lower_bound_strictly_greater_than_ninth_score_upper_bound",
+    "ties": "lower_expert_id_first"
+  },
+  "routing_weight_bound": "compose_selected_probability_bounds_through_fsum_division_and_scale_2.5",
+  "global_guards": {
+    "non_finite": "reject",
+    "signed_zero": "exact_at_exact_boundaries",
+    "repeat_count": 10,
+    "deterministic_bytes": true,
+    "post_observation_retuning": "forbidden"
+  },
+  "classification_on_pass": "numerically_qualified_greedy_not_applicable",
+  "greedy_applicability": "not_applicable"
+}

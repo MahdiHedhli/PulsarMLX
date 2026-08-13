@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1f0-execution-config.v1",
+  "type": "object",
+  "required": ["schema", "schema_version", "status", "attempt", "attempt_state", "source_identities", "prior_evidence", "checkpoint_bindings", "layer", "input_state", "tensor_allowlist", "access_budget", "contracts", "execution", "authorization", "forbidden_historical_route"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f0-execution-config"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "PREPARED_FOR_EXTERNAL_ADVERSARIAL_REVIEW_NOT_AUTHORIZED"},
+    "attempt": {"const": 1},
+    "attempt_state": {"const": "NOT_AUTHORIZED_NOT_EXECUTED"},
+    "source_identities": {"type": "object"},
+    "prior_evidence": {"type": "object"},
+    "checkpoint_bindings": {"type": "object"},
+    "layer": {"type": "object"},
+    "input_state": {"type": "object"},
+    "tensor_allowlist": {"type": "array", "minItems": 12, "maxItems": 12},
+    "access_budget": {"type": "object"},
+    "contracts": {"type": "object"},
+    "execution": {"type": "object"},
+    "authorization": {"type": "object"},
+    "forbidden_historical_route": {"type": "array", "minItems": 8, "maxItems": 8}
+  }
+}

@@ -935,6 +935,31 @@ mod tests {
     fn q5_k_roundtrip() {
         check(gguf::TensorType::Q5K, 0.041);
     }
+
+    #[test]
+    fn m1f0_q5_k_and_q8_0_match_independent_specification_bytes() {
+        use sha2::{Digest, Sha256};
+
+        let mut q5: Vec<u8> = (0..176).map(|i| ((i * 73 + 19) & 255) as u8).collect();
+        q5[..4].copy_from_slice(&[0x00, 0x30, 0x00, 0x2c]);
+        let mut q5_decoded = Vec::new();
+        dequant_q5_k(&q5, &mut q5_decoded);
+        let q5_bytes: Vec<u8> = q5_decoded.iter().flat_map(|v| v.to_le_bytes()).collect();
+        assert_eq!(
+            format!("{:x}", Sha256::digest(&q5_bytes)),
+            "6168658f2e27a4650816dd5c3a31a85ac2908045ac7725f2cf79b662e3c478e7"
+        );
+
+        let mut q8: Vec<u8> = (0..34).map(|i| ((i * 41 + 7) & 255) as u8).collect();
+        q8[..2].copy_from_slice(&[0x00, 0x30]);
+        let mut q8_decoded = Vec::new();
+        dequant_q8_0(&q8, &mut q8_decoded);
+        let q8_bytes: Vec<u8> = q8_decoded.iter().flat_map(|v| v.to_le_bytes()).collect();
+        assert_eq!(
+            format!("{:x}", Sha256::digest(&q8_bytes)),
+            "05ff099941e33b46c92c19002bd1431b3587ce83476f8f1ae364318d89a76c79"
+        );
+    }
     #[test]
     fn q6_k_roundtrip() {
         check(gguf::TensorType::Q6K, 0.02);

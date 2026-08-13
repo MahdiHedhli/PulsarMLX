@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-selection-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-router-top8-v1",
+  "expert_count": 256,
+  "top_k": 8,
+  "operations": [
+    "stable_branch_sigmoid_f64_from_f32_logit",
+    "add_f32_bias_promoted_to_f64",
+    "sort_score_descending_then_expert_id_ascending",
+    "select_first_8",
+    "sum_selected_pre_bias_sigmoid_probabilities_with_math_fsum",
+    "clamp_denominator_minimum_2^-14",
+    "multiply_normalized_weight_by_2.5"
+  ],
+  "top8_id_encoding": "eight_little_endian_u16",
+  "routing_weight_encoding": "eight_little_endian_ieee754_f64",
+  "non_finite_policy": "reject",
+  "signed_zero_policy": "bit_preserving_for_serialized_weights",
+  "selection_policy": "exact_no_tolerance",
+  "historical_route_policy": "not_a_valid_input_or_fallback"
+}

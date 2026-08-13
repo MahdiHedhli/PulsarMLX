@@ -157,6 +157,21 @@ jobs:
           cargo test -p f017-runner --test m1d_contract -- --nocapture
           cargo test -p f017-runner --test m1d_projection_native -- --nocapture
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Execute checkpoint-free M1-F0 attention/router admission
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          echo "M1-F0 oracle-only gate: layer 3 position 0; 12 attention/router tensors; zero expert access"
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_m1f0_admission -v
+          cargo test -p quant \
+            m1f0_q5_k_and_q8_0_match_independent_specification_bytes -- --exact --nocapture
+          .venv/bin/python scripts/research/generate_f017_m1f0_input.py \
+            --output specs/017-rust-native-inference-runtime/fixtures/f017-m1f0-layer3-input-v1.json \
+            --check
+          echo "M1-F0 synthetic attention/router: 10 deterministic discoveries; exact top-8 and routing bytes"
+          echo "M1-F0 historical-route rejection and tensor-access isolation negatives executed; no skip"
+          echo "M1-E and M1-D regressions remain load-bearing in adjacent gates"
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Execute F017 exact and Tier-B numerical ladder
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"

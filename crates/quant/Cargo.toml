@@ -8,6 +8,9 @@ repository.workspace = true
 [dependencies]
 gguf = { path = "../gguf" }
 
+[dev-dependencies]
+sha2 = "0.10"
+
 [[bin]]
 name = "pulsar-quant"
 path = "src/bin/pulsar-quant.rs"

@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-decoder-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-f32-q8-0-q5-k-exact-v1",
+  "identity_policy": "bitwise_equal_canonical_little_endian_f32",
+  "families": {
+    "F32": {
+      "block_elements": 1,
+      "block_bytes": 4,
+      "decoder": "ieee754_binary32_little_endian"
+    },
+    "Q8_0": {
+      "block_elements": 32,
+      "block_bytes": 34,
+      "decoder": "f16_scale_then_signed_i8_lanes",
+      "inherited_contract_sha256": "aac49f628446cc41c295e690114632673aefc4e3f08663bd11216db9fd9cfbdd"
+    },
+    "Q5_K": {
+      "block_elements": 256,
+      "block_bytes": 176,
+      "decoder": "ggml_q5_k_superblock_scalar_reference",
+      "scale_min_layout": "ggml_get_scale_min_k4",
+      "high_bit_layout": "qh_lane_bits_2g_and_2g_plus_1"
+    }
+  },
+  "requirements": {
+    "python_rust_spec_identity": true,
+    "row_major_logical_order": true,
+    "padding_in_hash": false,
+    "decoder_tolerance": 0
+  }
+}
