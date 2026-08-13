@@ -424,7 +424,7 @@ def _tooling_manifest(artifacts: dict[str, dict[str, str]], fixture_sha256: str)
 
 
 def build_preparation_config(
-    root: Path, fixture: dict[str, object], tooling_config_sha: str
+    root: Path, fixture: dict[str, object], tooling_config_sha: str, *, authorized: bool = False
 ) -> dict[str, object]:
     allowlist = build_allowlist(root / CATALOG_PATH)
     artifacts = {
@@ -455,6 +455,11 @@ def build_preparation_config(
         "symbolic_path": "scripts/research/qualify_f017_m1f0_q5_k_real.py",
         "content_sha256": file_sha256(root / "scripts/research/qualify_f017_m1f0_q5_k_real.py"),
     }
+    artifacts["route_banker"] = {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/bank_f017_m1f0_real_route.py",
+        "content_sha256": file_sha256(root / "scripts/research/bank_f017_m1f0_real_route.py"),
+    }
     artifacts["input_regeneration_evidence"] = {
         "path_kind": "repository_relative",
         "symbolic_path": INPUT_REGENERATION_PATH,
@@ -470,9 +475,12 @@ def build_preparation_config(
     return {
         "schema": SCHEMA,
         "schema_version": SCHEMA_VERSION,
-        "status": "PREPARED_FOR_EXTERNAL_ADVERSARIAL_REVIEW_NOT_AUTHORIZED",
+        "status": (
+            "AUTHORIZED_FOR_EXACTLY_ONE_M1_F0_ATTEMPT_NOT_EXECUTED"
+            if authorized else "PREPARED_FOR_EXTERNAL_ADVERSARIAL_REVIEW_NOT_AUTHORIZED"
+        ),
         "attempt": ATTEMPT,
-        "attempt_state": "NOT_AUTHORIZED_NOT_EXECUTED",
+        "attempt_state": "AUTHORIZED_NOT_EXECUTED" if authorized else "NOT_AUTHORIZED_NOT_EXECUTED",
         "source_identities": {
             "preparation_base_head": "de25a5327cffbd30c8e4898df8f019ec9f084c94",
             "runtime_semantic_boundary_sha": RUNTIME_SEMANTIC_BOUNDARY_SHA,
@@ -546,7 +554,7 @@ def build_preparation_config(
         "authorization": {
             "required_before_payload_access": True,
             "artifact_schema": "pulsarmlx.f017.m1f0-authorization",
-            "issued_in_this_phase": False,
+            "issued_in_this_phase": authorized,
             "external_adversarial_review_required": True,
         },
         "forbidden_historical_route": HISTORICAL_ROUTE,
@@ -564,8 +572,16 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
         raise ValueError("M1-F0 config field set differs")
     if value["schema"] != SCHEMA or value["schema_version"] != SCHEMA_VERSION or value["attempt"] != 1:
         raise ValueError("M1-F0 config identity differs")
-    if value["attempt_state"] != "NOT_AUTHORIZED_NOT_EXECUTED":
+    authorization = value["authorization"]
+    authorized = value["status"] == "AUTHORIZED_FOR_EXACTLY_ONE_M1_F0_ATTEMPT_NOT_EXECUTED"
+    expected_state = "AUTHORIZED_NOT_EXECUTED" if authorized else "NOT_AUTHORIZED_NOT_EXECUTED"
+    if value["attempt_state"] != expected_state:
         raise ValueError("M1-F0 attempt already consumed")
+    if value["status"] not in {
+        "PREPARED_FOR_EXTERNAL_ADVERSARIAL_REVIEW_NOT_AUTHORIZED",
+        "AUTHORIZED_FOR_EXACTLY_ONE_M1_F0_ATTEMPT_NOT_EXECUTED",
+    }:
+        raise ValueError("M1-F0 config status differs")
     if value["forbidden_historical_route"] != HISTORICAL_ROUTE:
         raise ValueError("historical route prohibition differs")
     if value["prior_evidence"] != {"m1_e": M1_E_EVIDENCE_SHA256, "m1_f_blocker": M1_F_BLOCKER_SHA256}:
@@ -631,7 +647,7 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
     contracts = value["contracts"]
     if not isinstance(contracts, dict) or set(contracts) != set(CONTRACT_PATHS) | {
         "input_generator", "oracle_preparer", "admission_tool", "q5_k_qualifier",
-        "input_regeneration_evidence", "q5_k_qualification_evidence",
+        "route_banker", "input_regeneration_evidence", "q5_k_qualification_evidence",
     }:
         raise ValueError("M1-F0 contract inventory differs")
     for reference in contracts.values():
@@ -671,26 +687,85 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
         record = q5_evidence["comparison"][decoder]
         if record.get("source_sha256") != file_sha256(root / record["path"]):
             raise ValueError("M1-F0 Q5_K decoder source identity differs")
-    authorization = value["authorization"]
     if authorization != {
         "required_before_payload_access": True,
         "artifact_schema": "pulsarmlx.f017.m1f0-authorization",
-        "issued_in_this_phase": False,
+        "issued_in_this_phase": authorized,
         "external_adversarial_review_required": True,
     }:
         raise ValueError("M1-F0 preparation authorization state differs")
 
 
-def preflight(root: Path, config_path: Path, expected_sha256: str) -> dict[str, object]:
+def validate_authorization(
+    root: Path,
+    config: dict[str, object],
+    config_sha256: str,
+    authorization_path: Path,
+    expected_authorization_sha256: str,
+) -> dict[str, object]:
+    raw = authorization_path.read_bytes()
+    if sha256(raw) != expected_authorization_sha256:
+        raise ValueError("M1-F0 authorization identity")
+    authorization = json.loads(raw, object_pairs_hook=_reject_duplicates)
+    required = {
+        "schema", "schema_version", "status", "attempt", "execution_config_sha256",
+        "reviewed_head_sha", "tooling_config_sha", "tooling_tree_oid", "adversarial_verdict",
+        "access_budget", "official_repeats", "scope", "auto_retry", "stop_before_m1_f",
+    }
+    if set(authorization) != required:
+        raise ValueError("M1-F0 authorization field set")
+    identities = config["source_identities"]
+    if (
+        authorization["schema"] != "pulsarmlx.f017.m1f0-authorization"
+        or authorization["schema_version"] != "1.0.0"
+        or authorization["status"] != "AUTHORIZED FOR EXACTLY ONE M1-F0 ATTEMPT / NOT EXECUTED"
+        or authorization["attempt"] != config["attempt"]
+        or authorization["execution_config_sha256"] != config_sha256
+        or authorization["reviewed_head_sha"] != "d639232c778e44ad41b3a29ba58f71142b1e2279"
+        or authorization["tooling_config_sha"] != identities["tooling_config_sha"]
+        or authorization["tooling_tree_oid"] != identities["tooling_tree_oid"]
+        or authorization["adversarial_verdict"] != "GO FOR ONE M1-F0 REAL ROUTE DISCOVERY"
+        or authorization["access_budget"] != config["access_budget"]
+        or authorization["official_repeats"] != 10
+        or authorization["scope"] != "layer3_attention_router_oracle_only"
+        or authorization["auto_retry"] is not False
+        or authorization["stop_before_m1_f"] is not True
+    ):
+        raise ValueError("M1-F0 authorization binding")
+    if subprocess.run(
+        ["git", "merge-base", "--is-ancestor", authorization["reviewed_head_sha"], "HEAD"],
+        cwd=root,
+        check=False,
+    ).returncode != 0:
+        raise ValueError("M1-F0 reviewed head is not an ancestor")
+    return authorization
+
+
+def preflight(
+    root: Path,
+    config_path: Path,
+    expected_sha256: str,
+    authorization_path: Path | None = None,
+    expected_authorization_sha256: str | None = None,
+) -> dict[str, object]:
     raw = config_path.read_bytes()
     if sha256(raw) != expected_sha256:
         raise ValueError("M1-F0 immutable execution-config hash mismatch")
     value = json.loads(raw, object_pairs_hook=_reject_duplicates)
     validate_config(root, value)
+    authorized = value["attempt_state"] == "AUTHORIZED_NOT_EXECUTED"
+    if authorized:
+        if authorization_path is None or expected_authorization_sha256 is None:
+            raise ValueError("M1-F0 authorization required")
+        validate_authorization(
+            root, value, expected_sha256, authorization_path, expected_authorization_sha256
+        )
+    elif authorization_path is not None or expected_authorization_sha256 is not None:
+        raise ValueError("M1-F0 authorization/config state disagreement")
     return {
         "result": READY,
-        "preparation_only": True,
-        "authorization_issued": False,
+        "preparation_only": not authorized,
+        "authorization_issued": authorized,
         "checkpoint_payload_reads": 0,
         "tensor_decodes": 0,
         "oracle_created": False,
@@ -717,10 +792,16 @@ def route_artifact_from_synthetic(root: Path, fixture: dict[str, object], result
         "schema": "pulsarmlx.f017.m1f0-layer3-route",
         "schema_version": "1.0.0",
         "evidence_kind": "checkpoint_free_synthetic",
+        "accepted_attempt": 0,
+        "execution_config_sha256": "0" * 64,
+        "authorization_sha256": "0" * 64,
+        "oracle_package_sha256": "0" * 64,
         "layer": 3,
         "input_fixture_sha256": file_sha256(root / INPUT_PATH),
         "input_package_sha256": fixture["package_sha256"],
         "checkpoint_bindings": CHECKPOINT_BINDINGS,
+        "tensor_payload_sha256": {},
+        "decoded_tensor_sha256": {},
         "attention_normalized_input_sha256": stages["attention_normalized"],
         "attention_output_sha256": stages["attention_output"],
         "attention_residual_sha256": stages["attention_residual"],
@@ -730,6 +811,8 @@ def route_artifact_from_synthetic(root: Path, fixture: dict[str, object], result
         "top8_ids_sha256": selection["selected_ids_sha256"],
         "routing_weights": selection["routing_weights"],
         "routing_weights_sha256": selection["routing_weights_sha256"],
+        "repeat_integrity": result["repeat_integrity"],
+        "access": {"shard_opens": 0, "positional_reads": 0, "tensor_payloads": 0, "expert_payloads": 0},
         "oracle_preparer_sha256": file_sha256(root / "scripts/research/prepare_f017_m1f0_real_reference.py"),
         "decoder_contract_sha256s": {
             "set": file_sha256(root / CONTRACT_PATHS["decoder"]),
@@ -757,6 +840,38 @@ def validate_route_artifact(root: Path, value: dict[str, object], input_package_
         or value.get("expert_computation") is not False
     ):
         raise ValueError("route artifact scope differs")
+    evidence_kind = value.get("evidence_kind")
+    if evidence_kind not in {"checkpoint_free_synthetic", "real_checkpoint_oracle"}:
+        raise ValueError("route artifact evidence kind differs")
+    if evidence_kind == "real_checkpoint_oracle":
+        if (
+            value.get("accepted_attempt") != 1
+            or not isinstance(value.get("tensor_payload_sha256"), dict)
+            or set(value["tensor_payload_sha256"]) != {name for _, name, _, _ in EXPECTED}
+            or not isinstance(value.get("decoded_tensor_sha256"), dict)
+            or set(value["decoded_tensor_sha256"]) != {name for _, name, _, _ in EXPECTED}
+            or value.get("access") != {
+                "shard_opens": 1,
+                "positional_reads": 12,
+                "tensor_payloads": 12,
+                "compressed_bytes": 139_217_920,
+                "decoded_bytes": 666_430_464,
+                "expert_payloads": 0,
+            }
+        ):
+            raise ValueError("real route artifact access/tensor identity differs")
+        repeat = value.get("repeat_integrity")
+        if (
+            not isinstance(repeat, dict)
+            or repeat.get("required") != 10
+            or repeat.get("observed") != 10
+            or repeat.get("all_equal") is not True
+            or len(repeat.get("records", [])) != 10
+        ):
+            raise ValueError("real route artifact repeat integrity differs")
+    for identity_field in ("execution_config_sha256", "authorization_sha256", "oracle_package_sha256"):
+        if not isinstance(value.get(identity_field), str) or len(value[identity_field]) != 64:
+            raise ValueError("route artifact execution identity missing")
     for field in (
         "attention_normalized_input_sha256", "attention_output_sha256", "attention_residual_sha256",
         "router_normalized_input_sha256", "router_score_sha256", "oracle_preparer_sha256",
@@ -796,19 +911,28 @@ def main() -> int:
     parser.add_argument("--m1f0-preflight-only", action="store_true")
     parser.add_argument("--execution-config", type=Path)
     parser.add_argument("--execution-config-sha256")
+    parser.add_argument("--authorization", type=Path)
+    parser.add_argument("--authorization-sha256")
     parser.add_argument("--synthetic-qualification", action="store_true")
     parser.add_argument("--synthetic-soak-seconds", type=float)
     parser.add_argument("--synthetic-stress", action="store_true")
     parser.add_argument("--build-preparation-config", action="store_true")
     parser.add_argument("--input-fixture", type=Path)
     parser.add_argument("--tooling-config-sha")
+    parser.add_argument("--authorized", action="store_true")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     root = args.repository_root.resolve(strict=True)
     if args.m1f0_preflight_only:
         if args.execution_config is None or args.execution_config_sha256 is None:
             parser.error("preflight requires config and SHA-256")
-        result = preflight(root, args.execution_config, args.execution_config_sha256)
+        result = preflight(
+            root,
+            args.execution_config,
+            args.execution_config_sha256,
+            args.authorization,
+            args.authorization_sha256,
+        )
     elif args.synthetic_qualification:
         if args.input_fixture is None:
             parser.error("synthetic qualification requires input fixture")
@@ -825,7 +949,10 @@ def main() -> int:
         if args.input_fixture is None or args.tooling_config_sha is None:
             parser.error("config generation requires input fixture and tooling/config SHA")
         result = build_preparation_config(
-            root, json.loads(args.input_fixture.read_text()), args.tooling_config_sha
+            root,
+            json.loads(args.input_fixture.read_text()),
+            args.tooling_config_sha,
+            authorized=args.authorized,
         )
     else:
         parser.error("select exactly one M1-F0 preparation mode")

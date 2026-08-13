@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-preconsumption-blocker",
+  "schema_version": "1.0.0",
+  "reviewed_head_sha": "d639232c778e44ad41b3a29ba58f71142b1e2279",
+  "execution_config_sha256": "444ab5d0c0c763ee6af52d8b3a8859e1edcfa17dd8609e03551a554f6cfd8a3f",
+  "classification": "EVIDENCE_VALIDATION",
+  "first_failure": "real preparer emitted one oracle pass and no immutable execution-start marker or ten-repeat integrity record",
+  "checkpoint_payload_reads": 0,
+  "attempt_consumed": false,
+  "remediation_required": [
+    "authorization-aware preflight",
+    "immutable execution-start marker",
+    "ten complete oracle repeats",
+    "public evidence, route, and append-only ledger banking"
+  ],
+  "status": "BANKED_BEFORE_REMEDIATION"
+}

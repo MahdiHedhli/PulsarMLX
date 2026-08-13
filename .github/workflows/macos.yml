@@ -176,11 +176,15 @@ jobs:
             --repository-root .
           M1F0_CONFIG=docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json
           M1F0_CONFIG_SHA=$(shasum -a 256 "$M1F0_CONFIG" | awk '{print $1}')
+          M1F0_AUTH=docs/architecture/reviews/evidence/f017-m1-f0-attempt-1-authorization-v1.json
+          M1F0_AUTH_SHA=$(shasum -a 256 "$M1F0_AUTH" | awk '{print $1}')
           .venv/bin/python scripts/research/f017_m1f0_admission.py \
             --repository-root . \
             --m1f0-preflight-only \
             --execution-config "$M1F0_CONFIG" \
-            --execution-config-sha256 "$M1F0_CONFIG_SHA"
+            --execution-config-sha256 "$M1F0_CONFIG_SHA" \
+            --authorization "$M1F0_AUTH" \
+            --authorization-sha256 "$M1F0_AUTH_SHA"
           echo "M1-F0 synthetic attention/router: 10 deterministic discoveries; exact top-8 and routing bytes"
           .venv/bin/python scripts/research/f017_m1f0_admission.py \
             --repository-root . \

@@ -28,6 +28,7 @@ INPUT = load("f017_m1f0_input", "scripts/research/generate_f017_m1f0_input.py")
 M1F0 = load("f017_m1f0_admission", "scripts/research/f017_m1f0_admission.py")
 SPEC = load("prepare_f017_m1f0", "scripts/research/prepare_f017_m1f0_real_reference.py")
 Q5_REAL = load("qualify_f017_m1f0_q5_k_real", "scripts/research/qualify_f017_m1f0_q5_k_real.py")
+BANK = load("bank_f017_m1f0", "scripts/research/bank_f017_m1f0_real_route.py")
 
 
 def tooling_sha() -> str:
@@ -266,6 +267,78 @@ class M1F0AdmissionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "not authorized"):
                 SPEC.prepare(ROOT, config_path, digest, None, None, temporary, temporary / "oracle.json")
             self.assertFalse((temporary / "oracle.json").exists())
+
+    def test_authorized_preflight_binds_exact_authorization_without_consuming(self):
+        fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        config = M1F0.build_preparation_config(ROOT, fixture, head, authorized=True)
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            config_path = temporary / "config.json"
+            config_path.write_bytes(M1F0.canonical_json(config))
+            config_sha = hashlib.sha256(config_path.read_bytes()).hexdigest()
+            authorization = {
+                "schema": "pulsarmlx.f017.m1f0-authorization",
+                "schema_version": "1.0.0",
+                "status": "AUTHORIZED FOR EXACTLY ONE M1-F0 ATTEMPT / NOT EXECUTED",
+                "attempt": 1,
+                "execution_config_sha256": config_sha,
+                "reviewed_head_sha": "d639232c778e44ad41b3a29ba58f71142b1e2279",
+                "tooling_config_sha": config["source_identities"]["tooling_config_sha"],
+                "tooling_tree_oid": config["source_identities"]["tooling_tree_oid"],
+                "adversarial_verdict": "GO FOR ONE M1-F0 REAL ROUTE DISCOVERY",
+                "access_budget": config["access_budget"],
+                "official_repeats": 10,
+                "scope": "layer3_attention_router_oracle_only",
+                "auto_retry": False,
+                "stop_before_m1_f": True,
+            }
+            authorization_path = temporary / "authorization.json"
+            authorization_path.write_bytes(M1F0.canonical_json(authorization))
+            authorization_sha = hashlib.sha256(authorization_path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, "authorization required"):
+                M1F0.preflight(ROOT, config_path, config_sha)
+            result = M1F0.preflight(
+                ROOT, config_path, config_sha, authorization_path, authorization_sha
+            )
+            self.assertEqual(result["result"], "READY_TO_EXECUTE_M1_F0")
+            self.assertTrue(result["authorization_issued"])
+            self.assertFalse(result["attempt_consumed"])
+            authorization["official_repeats"] = 9
+            authorization_path.write_bytes(M1F0.canonical_json(authorization))
+            with self.assertRaises(ValueError):
+                M1F0.preflight(
+                    ROOT,
+                    config_path,
+                    config_sha,
+                    authorization_path,
+                    hashlib.sha256(authorization_path.read_bytes()).hexdigest(),
+                )
+
+    def test_execution_marker_is_exclusive_and_repeat_record_is_complete(self):
+        result = {
+            "stage_hashes": {
+                "attention_output": "1" * 64,
+                "attention_residual": "2" * 64,
+                "router_normalized": "3" * 64,
+                "router_logits": "4" * 64,
+            },
+            "router_scores_sha256": "5" * 64,
+            "ranking_sha256": "6" * 64,
+            "top8_ids": list(range(8)),
+            "top8_ids_sha256": "7" * 64,
+            "routing_weights": [0.125] * 8,
+            "routing_weights_sha256": "8" * 64,
+        }
+        record = SPEC._repeat_record(0, result)
+        self.assertEqual(record["ordinal"], 0)
+        self.assertEqual(record["attention_residual_sha256"], "2" * 64)
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / "started.json"
+            SPEC._write_execution_start_marker(marker, "a" * 64, "b" * 64, 1)
+            self.assertEqual(json.loads(marker.read_text())["state"], "EXECUTION_STARTED")
+            with self.assertRaises(FileExistsError):
+                SPEC._write_execution_start_marker(marker, "a" * 64, "b" * 64, 1)
 
     def test_private_package_traversal_and_symlink_escape_fail(self):
         with tempfile.TemporaryDirectory() as directory:
