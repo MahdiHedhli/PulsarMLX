@@ -44,24 +44,55 @@ class M1EPackageTests(unittest.TestCase):
                 PREPARER.exclusive_finalize(path, {"changed": True})
 
     def test_stress_shapes_and_composed_bounds_are_candidate_independent(self):
-        fixtures = [
-            np.array([1.0, -1.0, 1e-30, -1e-30], dtype=np.float32),
-            np.array([127.0, -127.0, 0.0, -0.0], dtype=np.float32),
-            np.array([np.finfo(np.float32).tiny, -np.finfo(np.float32).tiny, 4.0, -4.0], dtype=np.float32),
-        ]
+        subnormal = np.nextafter(np.float32(0.0), np.float32(1.0))
+        fixtures = {
+            "gate_up_cancellation": np.array([1.0, -1.0, 1.0, -1.0], dtype=np.float32),
+            "high_dynamic_range": np.array([127.0, -127.0, 1e-10, -1e-10], dtype=np.float32),
+            "near_zero_activation": np.array([1e-30, -1e-30, 0.0, -0.0], dtype=np.float32),
+            "subnormal_and_signed_zero": np.array([subnormal, -subnormal, 0.0, -0.0], dtype=np.float32),
+            "simultaneous_upstream_error_directions": np.array([4.0, -4.0, 0.25, -0.25], dtype=np.float32),
+        }
         matrices = [
             np.array([[1.0, 1.0, -1.0, -1.0], [1e10, -1e10, 1e-10, -1e-10]], dtype=np.float32),
             np.array([[-1.0, 1.0, 1.0, -1.0], [0.25, -0.25, 8.0, -8.0]], dtype=np.float32),
         ]
         down = np.array([[1.0, -1.0], [-1e-5, 1e-5], [64.0, -64.0], [1e-20, 1e-20]], dtype=np.float32)
-        for activation in fixtures:
+        for label, activation in fixtures.items():
             gate = PREPARER.strict_matvec(matrices[0], activation)
             up = PREPARER.strict_matvec(matrices[1], activation)
             hidden = PREPARER.strict_swiglu(gate, up)
             output = PREPARER.strict_matvec(down, hidden)
             bounds = PREPARER.composed_bounds(matrices[0], matrices[1], down, activation, gate, up, hidden)
-            self.assertTrue(all(np.isfinite(value).all() and (value >= 0).all() for value in bounds))
-            self.assertTrue(np.isfinite(output).all())
+            self.assertTrue(all(np.isfinite(value).all() and (value >= 0).all() for value in bounds), label)
+            self.assertTrue(np.isfinite(output).all(), label)
+
+        edge_gate = np.array([-80.0, -0.0, 0.0, 80.0], dtype=np.float32)
+        edge_up = np.array([1.0, -1.0, 1.0, 1.0], dtype=np.float32)
+        edge_hidden = PREPARER.strict_swiglu(edge_gate, edge_up)
+        self.assertTrue(np.isfinite(edge_hidden).all(), "silu_edge_behavior")
+
+        # Exercise a final result close to the useful f32 exponent limit while
+        # staying finite. This is an admission stress case, not a threshold-
+        # fitting observation.
+        near_overflow_input = np.array([1.0], dtype=np.float32)
+        near_overflow_gate_matrix = np.array([[1e17]], dtype=np.float32)
+        near_overflow_up_matrix = np.array([[1.0]], dtype=np.float32)
+        near_overflow_down_matrix = np.array([[1e20]], dtype=np.float32)
+        near_overflow_gate = PREPARER.strict_matvec(near_overflow_gate_matrix, near_overflow_input)
+        near_overflow_up = PREPARER.strict_matvec(near_overflow_up_matrix, near_overflow_input)
+        near_overflow_hidden = PREPARER.strict_swiglu(near_overflow_gate, near_overflow_up)
+        near_overflow_output = PREPARER.strict_matvec(near_overflow_down_matrix, near_overflow_hidden)
+        near_overflow_bounds = PREPARER.composed_bounds(
+            near_overflow_gate_matrix,
+            near_overflow_up_matrix,
+            near_overflow_down_matrix,
+            near_overflow_input,
+            near_overflow_gate,
+            near_overflow_up,
+            near_overflow_hidden,
+        )
+        self.assertTrue(np.isfinite(near_overflow_output).all(), "near_overflow_finite")
+        self.assertTrue(all(np.isfinite(value).all() for value in near_overflow_bounds), "near_overflow_bounds")
 
     def test_zero_up_lane_retains_silu_bound_contribution(self):
         gate_matrix = np.array([[2.0]], dtype=np.float32)
