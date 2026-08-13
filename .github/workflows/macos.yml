@@ -139,9 +139,10 @@ jobs:
           .venv/bin/python -m unittest \
             scripts.research.tests.test_f017_m1e_package \
             scripts.research.tests.test_f017_m1e_preparer_v3 \
+            scripts.research.tests.test_f017_m1e_authorized_launcher \
             scripts.research.tests.test_f017_iq3_decoder_identity \
             scripts.research.tests.test_iq3_xxs_numpy -v
-          echo "M1-E preparer schema-v3 gate: v2/future/mixed/stale inputs rejected before payload access"
+          echo "M1-E preparer/launcher gate: schema v2/future/mixed/stale inputs and unreviewed native loader paths rejected before payload access"
           cargo test -p quant --test iq_reference -- --nocapture
           echo "IQ3_XXS v2 identity gate: minimized order regression; scalar/vector/spec exact; no skip"
           .venv/bin/python scripts/research/generate_f017_m1e_activation.py \

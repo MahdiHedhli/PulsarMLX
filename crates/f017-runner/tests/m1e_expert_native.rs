@@ -93,7 +93,29 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
     let package = temp.join("package.json");
     fs::write(&package, serde_json::to_vec(&package_doc).unwrap()).unwrap();
     let environment = temp.join("environment.json");
-    fs::write(&environment,format!("{{\"schema\":\"pulsarmlx.f017.fixture-environment\",\"schema_version\":1,\"architecture\":\"{}\",\"purpose\":\"checkpoint_free_ci\"}}\n",std::env::consts::ARCH)).unwrap();
+    let native_prefix = PathBuf::from(
+        std::env::var("MLX_PREFIX")
+            .or_else(|_| std::env::var("MLX_C_PREFIX"))
+            .expect("native MLX prefix is required"),
+    );
+    let mlx_library = native_prefix.join("lib/libmlx.dylib");
+    let mlxc_library = native_prefix.join("lib/libmlxc.dylib");
+    fs::write(
+        &environment,
+        serde_json::to_vec(&json!({
+            "schema":"pulsarmlx.f017.fixture-environment",
+            "schema_version":1,
+            "architecture":std::env::consts::ARCH,
+            "purpose":"checkpoint_free_ci",
+            "pinned_installation":{
+                "prefix":native_prefix,
+                "mlx":{"library_sha256":sha256_file(&mlx_library).unwrap()},
+                "mlx_c":{"library_sha256":sha256_file(&mlxc_library).unwrap()}
+            }
+        }))
+        .unwrap(),
+    )
+    .unwrap();
     let roles = [
         (
             "attempt_3_handoff",

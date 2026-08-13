@@ -72,6 +72,43 @@ def checked_repository(document: dict[str, object], role: str) -> Path:
     return path
 
 
+def native_loader_environment(document: dict[str, object]) -> dict[str, str]:
+    """Construct the sole reviewed dyld environment from the bound manifest."""
+    manifest_path = checked_local(document, "environment_manifest")
+    manifest = json.loads(manifest_path.read_bytes(), object_pairs_hook=_no_duplicates)
+    install = manifest.get("pinned_installation")
+    if not isinstance(install, dict):
+        raise ValueError("environment manifest has no pinned native installation")
+    prefix_value = install.get("prefix")
+    if not isinstance(prefix_value, str):
+        raise ValueError("environment manifest has no native prefix")
+    prefix = Path(prefix_value)
+    if not prefix.is_absolute() or prefix.is_symlink():
+        raise ValueError("native MLX prefix is not an absolute non-symlink path")
+    library_root = prefix / "lib"
+    if library_root.is_symlink() or not library_root.is_dir():
+        raise ValueError("native MLX library directory is invalid")
+    expected = {
+        "libmlx.dylib": install.get("mlx", {}).get("library_sha256"),
+        "libmlxc.dylib": install.get("mlx_c", {}).get("library_sha256"),
+    }
+    for basename, expected_sha in expected.items():
+        library = library_root / basename
+        if (
+            not isinstance(expected_sha, str)
+            or len(expected_sha) != 64
+            or library.is_symlink()
+            or not library.is_file()
+            or sha(library) != expected_sha
+        ):
+            raise ValueError(f"native MLX library identity mismatch: {basename}")
+    environment = dict(os.environ)
+    for name in ("DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES"):
+        environment.pop(name, None)
+    environment["DYLD_LIBRARY_PATH"] = str(library_root)
+    return environment
+
+
 def write_state(path: Path, config_sha: str) -> None:
     payload = json.dumps(
         {
@@ -100,9 +137,11 @@ def main() -> int:
     args = parser.parse_args()
     document = load(args.execution_config, args.execution_config_sha256)
     runner = checked_local(document, "runner_binary")
+    loader_environment = native_loader_environment(document)
     preflight = subprocess.run(
         [str(runner), "--m1e-preflight-only", str(args.execution_config), "--execution-config-sha256", args.execution_config_sha256],
         cwd="/private/tmp",
+        env=loader_environment,
         text=True,
         capture_output=True,
         check=False,
@@ -129,6 +168,7 @@ def main() -> int:
     candidate = subprocess.run(
         [str(runner), "--m1e-execution-config", str(args.execution_config), "--execution-config-sha256", args.execution_config_sha256],
         cwd="/private/tmp",
+        env=loader_environment,
         check=False,
     )
     return candidate.returncode
