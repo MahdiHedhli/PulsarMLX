@@ -47,3 +47,8 @@ SHA-256 is
 
 Frozen expert, decoder, activation, scaffold, Tier-B, and oracle numerical
 semantics are unchanged.
+
+The rebuilt attempt-3 execution config is
+`8213c5fa1c59900a0590977079d0d88f5b55d0faa30e2fa262430271bc3cef2a`.
+Its non-consuming production preflight returned exactly
+`READY_TO_EXECUTE_M1_E` with zero checkpoint access or dispatch.
