@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_e_admission_package_prepared_not_executed",
+  "updated_after": "m1_e_admission_package_reviewed_authorized_not_executed",
   "executed_source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -12,7 +12,7 @@
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
     "m1_d": "attempt_1_rejected_attempt_2_rejected_attempt_3_accepted_stopped",
-    "m1_e_m1_g": "m1_e_qualified_prepared_not_executed_m1_f_m1_g_blocked",
+    "m1_e_m1_g": "m1_e_authorized_not_executed_m1_f_m1_g_blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -142,9 +142,17 @@
   "m1_e_packet": {
     "handoff": "docs/architecture/reviews/f017-m1-e-real-expert-handoff.md",
     "review_packet": "docs/architecture/reviews/f017-m1-e-adversarial-review-packet.md",
+    "internal_review": "docs/architecture/reviews/f017-m1-e-internal-implementation-review.md",
+    "internal_review_verdict": "GO FOR ONE M1-E REAL EXPERT",
+    "independent_review": "docs/architecture/reviews/f017-m1-e-independent-adversarial-review.md",
+    "independent_review_verdict": "GO FOR ONE M1-E REAL EXPERT",
+    "fresh_authorization": "docs/architecture/reviews/f017-m1-e-fresh-authorization.md",
     "runtime_source_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
     "tooling_source_sha": "3387bb6d4508eb04e672dc6194da2855ba72f072",
+    "reviewed_package_head": "f3a7ba8f3a7eb52dbf48c6929e23835e5c18eeea",
+    "handoff_sha256": "2325f9b2964b5c1120864fbaa4d3fda875f8d263154d783bf02b6ad47e78e531",
     "execution_config_sha256": "7f69550bfd7ccd5e820f23d2bcce7f0e287d2c2bfc5f1ae2adb59ec5467b0a1b",
+    "qualification_ci_run": 31656082515,
     "expert": {
       "layer": 3,
       "expert": 15,
@@ -162,9 +170,9 @@
     "preflight_consumed_attempt": false,
     "real_payload_accessed_during_preparation": false,
     "real_execution_performed": false,
-    "authorized": false,
+    "authorized": true,
     "attempt_consumed": false,
     "m1_f": "blocked"
   },
-  "next_gate": "complete final-head CI and both M1-E reviews, then publish one-attempt authorization; do not execute M1-E"
+  "next_gate": "execute exactly one separately authorized M1-E attempt from the immutable config, then stop and review evidence; M1-F remains blocked"
 }
