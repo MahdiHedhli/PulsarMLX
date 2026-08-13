@@ -13,14 +13,14 @@ This packet does not authorize M1-F0 or M1-F.
 ## Frozen review boundary
 
 - preparation base: `de25a5327cffbd30c8e4898df8f019ec9f084c94`
-- tooling/runtime admission head: `bf11011badb0fef90abd3d8fcfd4850db536a35e`
+- tooling/runtime admission head: `3192b31e4fe3008f0182548a45f7117948d83afd`
 - accepted M1-E evidence: `0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9`
 - M1-F blocker: `f7f6d7bc387481f99386a19f13a5f561d3ee4bff18f5e197ffcfe9a42a18b4b6`
 - layer/position: `blk.3` / `0`
 - immutable config: `docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json`
-- config SHA-256: `f97e2efe62b1718047f6ae7b6fca3bc4aa12714bf25bb77848641d15dd5aee76`
+- config SHA-256: `b1adab3dc981b3baca82279d96deb9cc8dbf79176d3ee248ee354d6e9ab4366d`
 - input package identity: `eb5693c99f73c2a95d71aec947b8a18a6c07c71dbbb460490af82b617dba9283`
-- input artifact SHA-256: `ea18e9ce6e96a0e6f2324733ee432af5b1c8cdcf80e3e28ca4d7e57c7fcd3d18`
+- input artifact SHA-256: `33be5f7ed93a29621b39034246a8bf088111fa4138b0966179aad94a138e63c4`
 - input generator SHA-256: `8dd7e9b8a4e4a6bfdb5a71535dabd28b4495209df326a88650b6831efc26d32d`
 - oracle preparer SHA-256: `ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d`
 - boundary contract: `43bfe807858d233a3cb96f11b6dd55379651b50be04d8791af979b80935f7dbd`
@@ -31,7 +31,7 @@ This packet does not authorize M1-F0 or M1-F.
 - route schema: `1832abb9c925a5884ec26c915abf87b8bd36d28aa5f8ca2eaa9cb579d834e780`
 - synthetic qualification: `5b63c0a6be3e5a1f60f78c4b0a492051ad3217c0cc6d7e1e0c083c5ffad16c7b`
 - stress qualification: `8bdf041909cda62b0640f35de3faa5ec31b5f379bb1fe0bced993f5b356a74e7`
-- soak evidence: `2b7568201684c27f22af28ec4de584b53501b536a5b5dc120beadfea5e746711`
+- soak evidence: `b92b5511397510b7288f15d7c76cdcc2b1616054b5ef1cd5b7ec0903871b54bf`
 
 ## Access and isolation
 

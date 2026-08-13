@@ -10,7 +10,7 @@ M1-F remains not authorized.
 ## Source and evidence reconciliation
 
 - starting SHA: `de25a5327cffbd30c8e4898df8f019ec9f084c94`
-- runtime/tooling identity: `bf11011badb0fef90abd3d8fcfd4850db536a35e`
+- runtime/tooling identity: `3192b31e4fe3008f0182548a45f7117948d83afd`
 - accepted M1-E evidence: `0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9`
 - M1-F ordering blocker: `f7f6d7bc387481f99386a19f13a5f561d3ee4bff18f5e197ffcfe9a42a18b4b6`
 - checkpoint/catalog/map: `d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee` / `0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0` / `ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223`
@@ -24,7 +24,7 @@ architecture now uses separate M1-F0 discovery and M1-F qualification stages.
 
 - generator Git SHA: `0a175b68c969fafddd02e907d4487ae1343f9be0`
 - generator file SHA-256: `8dd7e9b8a4e4a6bfdb5a71535dabd28b4495209df326a88650b6831efc26d32d`
-- fixture artifact SHA-256: `ea18e9ce6e96a0e6f2324733ee432af5b1c8cdcf80e3e28ca4d7e57c7fcd3d18`
+- fixture artifact SHA-256: `33be5f7ed93a29621b39034246a8bf088111fa4138b0966179aad94a138e63c4`
 - package SHA-256: `eb5693c99f73c2a95d71aec947b8a18a6c07c71dbbb460490af82b617dba9283`
 - hidden: `decc4ef42e1cf5d6cbee2fe6d46f3cd29b6dd39b9bb997d1083e7a7228ed86cf`
 - position: `af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc`
@@ -77,7 +77,7 @@ little-endian f64 values. No post-observation retuning is permitted.
 
 ## Immutable config and preflight
 
-- execution-config SHA-256: `f97e2efe62b1718047f6ae7b6fca3bc4aa12714bf25bb77848641d15dd5aee76`
+- execution-config SHA-256: `b1adab3dc981b3baca82279d96deb9cc8dbf79176d3ee248ee354d6e9ab4366d`
 - preflight result: `READY_TO_EXECUTE_M1_F0`
 - checkpoint reads / decodes / oracle / MLX / attempt consumption: `0 / 0 / false / 0 / false`
 
@@ -95,8 +95,8 @@ package.
 - zero expert access/dispatch, fallback, backend error, complete-layer output,
   or logits;
 - six real-shaped stress families passed without contract changes;
-- time-bounded soak: 45 cycles / 450 discoveries, no mismatch, peak RSS
-  41,200 KiB; soak SHA-256 `2b7568201684c27f22af28ec4de584b53501b536a5b5dc120beadfea5e746711`.
+- time-bounded soak: 43 cycles / 430 discoveries, no mismatch, peak RSS
+  38,640 KiB; soak SHA-256 `b92b5511397510b7288f15d7c76cdcc2b1616054b5ef1cd5b7ec0903871b54bf`.
 
 ## Failure injection and attempt semantics
 

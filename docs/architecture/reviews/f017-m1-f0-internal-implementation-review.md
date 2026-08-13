@@ -7,7 +7,7 @@
 ## Scope reviewed
 
 This review covers only the checkpoint-free M1-F0 admission delta at tooling
-head `bf11011badb0fef90abd3d8fcfd4850db536a35e`. It does not review or
+head `3192b31e4fe3008f0182548a45f7117948d83afd`. It does not review or
 authorize a real payload read.
 
 ## Findings
