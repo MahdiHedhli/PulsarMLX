@@ -28,9 +28,10 @@ candidate runner. No path is accepted from the CLI, current working directory,
 or ambient environment.
 
 The final reviewed tree is published as compiled runtime
-`7e4c3f37049444443164964aea2fc630752d17ce`; execution-tooling remains the
-code-bearing commit `1da693665e5635ad404d472f395a4a407dd348fc`. The arm64
-release executable remains intentionally valid without an embedded `LC_RPATH`,
+`7e4c3f37049444443164964aea2fc630752d17ce`; execution-tooling is bound to
+the same published identity so trusted-repository identity v2 preserves the
+required runtime-to-tooling-to-authorization ancestry. The arm64 release
+executable remains intentionally valid without an embedded `LC_RPATH`,
 proving that the repaired config-driven launcher closes the exact failure. Its
 SHA-256 is
 `05e0e590eda9ea54d95d3bb7b59bdc9dbec9b3ea15e0cf4626ea13f46a7afa9a`.

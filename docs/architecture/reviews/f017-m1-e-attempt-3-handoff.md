@@ -7,7 +7,7 @@
 - compiled runtime SHA:
   `7e4c3f37049444443164964aea2fc630752d17ce`
 - execution-tooling SHA:
-  `1da693665e5635ad404d472f395a4a407dd348fc`
+  `7e4c3f37049444443164964aea2fc630752d17ce`
 - arm64 release executable SHA-256:
   `05e0e590eda9ea54d95d3bb7b59bdc9dbec9b3ea15e0cf4626ea13f46a7afa9a`
 - trusted repository identity contract:

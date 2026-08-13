@@ -51,6 +51,17 @@
       "tensor_payload_count": 0,
       "native_dispatches": 0,
       "remediation_runtime_sha": "1da693665e5635ad404d472f395a4a407dd348fc"
+    },
+    {
+      "attempt": 3,
+      "config_sha256": "b950ff6489c2e1955cbca56d1752d946cc54416af683ea0043bc78a67e3413d0",
+      "failure_class": "IDENTITY_BINDING",
+      "first_failure": "m1e_repository_ancestry",
+      "attempt_consumed": false,
+      "checkpoint_access": false,
+      "tensor_payload_count": 0,
+      "native_dispatches": 0,
+      "remediation_runtime_sha": "7e4c3f37049444443164964aea2fc630752d17ce"
     }
   ]
 }
