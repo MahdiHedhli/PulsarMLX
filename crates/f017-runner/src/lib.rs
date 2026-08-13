@@ -100,6 +100,13 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
             m1d_execution_config::verify_unchanged(binding)?;
         }
     }
+    // M1-E preflight is deliberately non-consuming and non-persisting. It
+    // validates the exact immutable config, production admission, and loaded
+    // libraries, but leaves every exclusive evidence/attempt target fresh for
+    // the later separately authorized execution.
+    if matches!(config.mode, RunnerMode::M1ePreflight) {
+        return execute_m1e_preflight(&config);
+    }
     let environment = ValidatedEnvironment::load(&config.environment_manifest)?;
     environment.validate_for_mode(&config.mode)?;
     let mut evidence = Evidence::initial_with_environment(&config, &environment);
@@ -221,6 +228,62 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
             Err(error)
         }
     }
+}
+
+fn execute_m1e_preflight(config: &Config) -> Result<Evidence, RunnerError> {
+    let environment = ValidatedEnvironment::load(&config.environment_manifest)?;
+    // The production packet must prove the reviewed host and libraries. The
+    // checkpoint-free qualification packet intentionally uses the fixture
+    // environment while exercising the identical config/runner composition.
+    let fixture_preflight = !environment.production;
+    let admission_mode = if fixture_preflight {
+        RunnerMode::FixtureExpert {
+            package: std::path::PathBuf::new(),
+        }
+    } else {
+        RunnerMode::M1ePreflight
+    };
+    environment.validate_for_mode(&admission_mode)?;
+    let mut evidence = Evidence::initial_with_environment(config, &environment);
+    let admission = HostAdmission::collect(
+        &admission_mode,
+        environment.production,
+        config.checkpoint_manifest.as_deref(),
+        &config.out,
+    )?;
+    admission.validate(
+        &admission_mode,
+        environment.production,
+        config.memory_floor_bytes,
+    )?;
+    evidence.admission.telemetry_source = admission.telemetry_source;
+    evidence.admission.physical_memory_bytes = admission.physical_memory_bytes;
+    evidence.admission.available_memory_bytes = admission.available_memory_bytes;
+    evidence.admission.compressed_memory_bytes = admission.compressed_memory_bytes;
+    evidence.admission.memory_pressure = admission.memory_pressure;
+    evidence.admission.swap_used_bytes = admission.swap_used_bytes;
+    evidence.admission.checkpoint_volume_free_bytes = admission.checkpoint_volume_free_bytes;
+    evidence.admission.evidence_volume_free_bytes = admission.evidence_volume_free_bytes;
+    evidence.admission.load_averages = admission.load_averages;
+    evidence.admission.competing_processes_clear = admission.competing_processes_clear;
+    evidence.admission.competing_processes = admission.competing_processes;
+    evidence.admission.port_1234_listener = admission.port_1234_listener;
+    evidence.admission.thermal_state = admission.thermal_state;
+    evidence.admission.performance_warning = admission.performance_warning;
+    if environment.production {
+        evidence.identity.loaded_libraries = environment.verify_loaded_libraries()?;
+    }
+    mark_non_registration_domains_not_applicable(&mut evidence);
+    evidence.lifecycle.reconciled = true;
+    evidence.execution.progress_state = "READY_TO_EXECUTE_M1_E".to_owned();
+    evidence.result.classification = ResultClassification::Pass;
+    evidence.result.completed = true;
+    if fixture_preflight {
+        evidence.validate()?;
+    } else {
+        evidence.validate_success_ready()?;
+    }
+    Ok(evidence)
 }
 
 fn run_adapter_preflight(config: &Config, evidence: &mut Evidence) -> Result<(), RunnerError> {

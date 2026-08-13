@@ -164,14 +164,133 @@ def exclusive_finalize(path: Path, document: dict[str, object]) -> str:
     return sha(raw)
 
 
+def exclusive_bytes(path: Path, payload: bytes) -> str:
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
+    try:
+        os.write(descriptor, payload)
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    path.chmod(stat.S_IRUSR)
+    return sha(payload)
+
+
+def no_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def read_exact_at(descriptor: int, offset: int, length: int) -> bytes:
+    chunks: list[bytes] = []
+    observed = 0
+    while observed < length:
+        chunk = os.pread(descriptor, length - observed, offset + observed)
+        if not chunk:
+            raise ValueError("short bounded checkpoint read")
+        chunks.append(chunk)
+        observed += len(chunk)
+    return b"".join(chunks)
+
+
+def prepare_from_config(config_path: Path, expected_sha256: str) -> str:
+    raw = config_path.read_bytes()
+    if sha(raw) != expected_sha256:
+        raise ValueError("immutable M1-E execution config hash mismatch")
+    config = json.loads(raw, object_pairs_hook=no_duplicates)
+    if config.get("schema") != "pulsarmlx.f017.m1e-execution-config" or config.get("attempt") != 1:
+        raise ValueError("M1-E execution config identity mismatch")
+    root = Path(config["repository_root"]["path"]).resolve(strict=True)
+    package_root = Path(config["package_root"]["path"]).resolve(strict=True)
+    local = config["local_artifacts"]
+    shard = Path(local["target_shard"]["path"])
+    if shard.is_symlink() or not shard.is_file():
+        raise ValueError("bound target shard is not a regular non-symlink file")
+    source_binding = config["repository_artifacts"]["real_reference_preparer"]
+    source_path = root / source_binding["symbolic_path"]
+    if source_path.resolve(strict=True) != Path(__file__).resolve(strict=True) or sha(source_path.read_bytes()) != source_binding["content_sha256"]:
+        raise ValueError("real-reference preparer source binding mismatch")
+    activation_binding = config["activation_fixture"]
+    activation_path = root / activation_binding["symbolic_path"]
+    if sha(activation_path.read_bytes()) != activation_binding["content_sha256"]:
+        raise ValueError("activation artifact hash mismatch")
+    activation_doc = json.loads(activation_path.read_text(), object_pairs_hook=no_duplicates)
+    activation = np.frombuffer(bytes.fromhex(activation_doc["activation"]["bytes_hex"]), dtype="<f4").copy()
+    if sha(f32_bytes(activation)) != config["activation_payload_sha256"]:
+        raise ValueError("activation payload hash mismatch")
+
+    packed: dict[str, bytes] = {}
+    descriptor = os.open(shard, os.O_RDONLY)
+    try:
+        for tensor in config["tensors"]:
+            role = tensor["role"]
+            if role in packed or role not in {"gate", "up", "down"} or tensor["allowed_read_count"] != 1:
+                raise ValueError("one-expert tensor access set mismatch")
+            packed[role] = read_exact_at(descriptor, tensor["offset"], tensor["packed_length"])
+    finally:
+        os.close(descriptor)
+    if set(packed) != {"gate", "up", "down"}:
+        raise ValueError("exactly three expert payloads are required")
+    payload_references: dict[str, dict[str, object]] = {}
+    for role in ("gate", "up", "down"):
+        name = f"m1e-{role}-packed-v1.bin"
+        digest = exclusive_bytes(package_root / name, packed[role])
+        payload_references[role] = {
+            "path_kind": "package_relative",
+            "symbolic_path": name,
+            "content_sha256": digest,
+            "logical_role": f"{role}_packed_payload",
+            "package_artifact_id": f"m1e-attempt-1-{role}-packed-v1",
+        }
+
+    oracle = prepare(packed["gate"], packed["up"], packed["down"], activation)
+    oracle["generator"]["source_sha256"] = source_binding["content_sha256"]
+    oracle_path = Path(local["oracle_output"])
+    oracle_sha = exclusive_finalize(oracle_path, oracle)
+    tensor_documents = []
+    for tensor in config["tensors"]:
+        tensor_documents.append({
+            "role": tensor["role"], "name": tensor["name"], "shard_ordinal": tensor["shard_ordinal"],
+            "offset": tensor["offset"], "packed_length": tensor["packed_length"],
+            "quantization": tensor["quantization"], "matrix_shape": tensor["logical_matrix_shape"],
+            "packed_sha256": payload_references[tensor["role"]]["content_sha256"],
+            "payload": payload_references[tensor["role"]],
+        })
+    package = {
+        "schema": "pulsarmlx.f017.m1e-package", "schema_version": "1.0.0",
+        "package_kind": "production_reviewed" if config["runner"]["mode"] == "real_expert" else "checkpoint_free_fixture",
+        "checkpoint_set_sha256": config["checkpoint_bindings"]["checkpoint_set_sha256"],
+        "catalog_sha256": config["checkpoint_bindings"]["catalog_sha256"],
+        "tensor_map_sha256": config["checkpoint_bindings"]["tensor_map_sha256"],
+        "source_checkpoint_read_count": 3, "tensors": tensor_documents,
+        "oracle": {"path_kind":"package_relative","symbolic_path":oracle_path.name,"content_sha256":oracle_sha,"logical_role":"independent_oracle","package_artifact_id":"m1e-attempt-1-real-oracle-v1"},
+        "one_attempt": True,
+    }
+    return exclusive_finalize(Path(local["package_output"]), package)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gate", type=Path, required=True)
-    parser.add_argument("--up", type=Path, required=True)
-    parser.add_argument("--down", type=Path, required=True)
-    parser.add_argument("--activation", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--gate", type=Path)
+    parser.add_argument("--up", type=Path)
+    parser.add_argument("--down", type=Path)
+    parser.add_argument("--activation", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--execution-config", type=Path)
+    parser.add_argument("--execution-config-sha256")
     args = parser.parse_args()
+    if args.execution_config is not None or args.execution_config_sha256 is not None:
+        if args.execution_config is None or args.execution_config_sha256 is None or any(
+            value is not None for value in (args.gate, args.up, args.down, args.activation, args.output)
+        ):
+            parser.error("config-only preparation requires exactly config path and hash")
+        print(prepare_from_config(args.execution_config, args.execution_config_sha256))
+        return 0
+    if any(value is None for value in (args.gate, args.up, args.down, args.activation, args.output)):
+        parser.error("legacy fixture preparation requires gate/up/down/activation/output")
     activation_doc = json.loads(args.activation.read_text())
     activation = np.frombuffer(bytes.fromhex(activation_doc["activation"]["bytes_hex"]), dtype="<f4").copy()
     digest = exclusive_finalize(args.output, prepare(args.gate.read_bytes(), args.up.read_bytes(), args.down.read_bytes(), activation))

@@ -72,12 +72,19 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
     let gate_packed = zeros_hash(GATE_LEN);
     let up_packed = zeros_hash(UP_LEN);
     let down_packed = zeros_hash(DOWN_LEN);
+    let gate_payload = temp.join("gate-packed.bin");
+    let up_payload = temp.join("up-packed.bin");
+    let down_payload = temp.join("down-packed.bin");
+    fs::write(&gate_payload, vec![0_u8; GATE_LEN]).unwrap();
+    fs::write(&up_payload, vec![0_u8; UP_LEN]).unwrap();
+    fs::write(&down_payload, vec![0_u8; DOWN_LEN]).unwrap();
     let preparer =
         sha256_file(&root.join("scripts/research/prepare_f017_m1e_real_reference.py")).unwrap();
     let oracle_doc = json!({"schema":"pulsarmlx.f017.m1e-oracle-package","schema_version":"1.0.0","generator":{"source_sha256":preparer},"matrices":{"gate":{"packed_sha256":gate_packed,"decoded_sha256":zeros_hash(2048*6144*4)},"up":{"packed_sha256":up_packed,"decoded_sha256":zeros_hash(2048*6144*4)},"down":{"packed_sha256":down_packed,"decoded_sha256":zeros_hash(6144*2048*4)}},"activation":{"sha256":activation_doc["activation"]["payload_sha256"],"bytes_hex":activation_doc["activation"]["bytes_hex"],"element_count":6144},"stages":{"gate":stage(2048),"up":stage(2048),"activated_hidden":stage(2048),"final_output":stage(6144)},"timings":{"decoder_gate_seconds":0.0,"decoder_up_seconds":0.0,"decoder_down_seconds":0.0,"oracle_gate_seconds":0.0,"oracle_up_seconds":0.0,"oracle_activation_seconds":0.0,"oracle_down_seconds":0.0},"finalization":{"preparation_started_at":"1","oracle_completed_at":"2","completion_marker":"m1e_oracle_finalized_sequence_0","immutable_after_finalization":true}});
     let oracle = temp.join("oracle.json");
     fs::write(&oracle, serde_json::to_vec(&oracle_doc).unwrap()).unwrap();
-    let package_doc = json!({"schema":"pulsarmlx.f017.m1e-package","schema_version":"1.0.0","package_kind":"checkpoint_free_fixture","checkpoint_set_sha256":set,"catalog_sha256":catalog,"tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223","tensors":[{"role":"gate","name":"blk.3.ffn_gate_exps.weight","shard_ordinal":2,"offset":GATE_OFFSET,"packed_length":GATE_LEN,"quantization":"IQ2_XXS","matrix_shape":[2048,6144],"packed_sha256":gate_packed},{"role":"up","name":"blk.3.ffn_up_exps.weight","shard_ordinal":2,"offset":UP_OFFSET,"packed_length":UP_LEN,"quantization":"IQ2_XXS","matrix_shape":[2048,6144],"packed_sha256":up_packed},{"role":"down","name":"blk.3.ffn_down_exps.weight","shard_ordinal":2,"offset":DOWN_OFFSET,"packed_length":DOWN_LEN,"quantization":"IQ3_XXS","matrix_shape":[6144,2048],"packed_sha256":down_packed}],"oracle":{"path_kind":"package_relative","symbolic_path":"oracle.json","content_sha256":sha256_file(&oracle).unwrap(),"logical_role":"independent_oracle","package_artifact_id":"m1e-synthetic-oracle-v1"},"one_attempt":true});
+    let payload = |role: &str, name: &str, digest: &str| json!({"path_kind":"package_relative","symbolic_path":name,"content_sha256":digest,"logical_role":format!("{role}_packed_payload"),"package_artifact_id":format!("m1e-synthetic-{role}-packed-v1")});
+    let package_doc = json!({"schema":"pulsarmlx.f017.m1e-package","schema_version":"1.0.0","package_kind":"checkpoint_free_fixture","checkpoint_set_sha256":set,"catalog_sha256":catalog,"tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223","source_checkpoint_read_count":3,"tensors":[{"role":"gate","name":"blk.3.ffn_gate_exps.weight","shard_ordinal":2,"offset":GATE_OFFSET,"packed_length":GATE_LEN,"quantization":"IQ2_XXS","matrix_shape":[2048,6144],"packed_sha256":gate_packed,"payload":payload("gate","gate-packed.bin",&gate_packed)},{"role":"up","name":"blk.3.ffn_up_exps.weight","shard_ordinal":2,"offset":UP_OFFSET,"packed_length":UP_LEN,"quantization":"IQ2_XXS","matrix_shape":[2048,6144],"packed_sha256":up_packed,"payload":payload("up","up-packed.bin",&up_packed)},{"role":"down","name":"blk.3.ffn_down_exps.weight","shard_ordinal":2,"offset":DOWN_OFFSET,"packed_length":DOWN_LEN,"quantization":"IQ3_XXS","matrix_shape":[6144,2048],"packed_sha256":down_packed,"payload":payload("down","down-packed.bin",&down_packed)}],"oracle":{"path_kind":"package_relative","symbolic_path":"oracle.json","content_sha256":sha256_file(&oracle).unwrap(),"logical_role":"independent_oracle","package_artifact_id":"m1e-synthetic-oracle-v1"},"one_attempt":true});
     let package = temp.join("package.json");
     fs::write(&package, serde_json::to_vec(&package_doc).unwrap()).unwrap();
     let environment = temp.join("environment.json");
@@ -87,6 +94,15 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
         .into_iter()
         .map(|(r, p)| (r.to_owned(), artifact(&root, r, p)))
         .collect::<serde_json::Map<_, _>>();
+    let mut artifacts = artifacts;
+    artifacts.insert(
+        "authorized_launcher".into(),
+        artifact(
+            &root,
+            "authorized_launcher",
+            "scripts/research/run_f017_m1e_authorized.py",
+        ),
+    );
     let tensor = |role: &str,
                   name: &str,
                   q: &str,
@@ -104,6 +120,17 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
     let output = temp.join("evidence.json");
     let config_doc = json!({"schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"1.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":1,"attempt_consumed":false,"runtime_sha":env!("PULSARMLX_SOURCE_SHA"),"tooling_sha":env!("PULSARMLX_SOURCE_SHA"),"repository_root":{"path_kind":"absolute_private_local","path":root,"identity":env!("PULSARMLX_SOURCE_SHA")},"package_root":{"path_kind":"absolute_private_local","path":temp,"identity":"m1e_attempt_1_private_package_root"},"activation_fixture":artifact(Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").as_path(),"activation_fixture","specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),"activation_payload_sha256":"732ed2b9a6d3df0d185c1e35628a0b6b2cf30717cb697200d45b0e8a74008149","repository_artifacts":artifacts,"local_artifacts":{"environment_manifest":{"path_kind":"absolute_private_local","path":environment,"content_sha256":sha256_file(&environment).unwrap()},"checkpoint_manifest":{"path_kind":"absolute_private_local","path":checkpoint,"content_sha256":sha256_file(&checkpoint).unwrap()},"target_shard":{"path_kind":"absolute_private_local","path":shard,"ordinal":2,"basename":"fixture-shard-2.gguf","byte_size":fs::metadata(&shard).unwrap().len(),"content_sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},"oracle_output":oracle,"package_output":package,"evidence_output":output},"prior_evidence":{"m1_a":"aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805","m1_b":"9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770","m1_c":"343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e","m1_d":"dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c"},"checkpoint_bindings":{"checkpoint_set_sha256":set,"catalog_sha256":catalog,"tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"},"expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},"tensors":[tensor("gate","blk.3.ffn_gate_exps.weight","IQ2_XXS",GATE_OFFSET,GATE_LEN as u64,1584,"42e379023728565d323fff8b120f2c6dff6fa50f10d9ad1cceb3e3597af36354"),tensor("up","blk.3.ffn_up_exps.weight","IQ2_XXS",UP_OFFSET,UP_LEN as u64,1584,"011ccab7ca2293da5b0d1112172b2dccd4b2cdb2482672dd217f996280223119"),tensor("down","blk.3.ffn_down_exps.weight","IQ3_XXS",DOWN_OFFSET,DOWN_LEN as u64,784,"1c7a04eb897d242a621a09c6dfb78c3e92b407dff44ddf8cf67187dae50081e1")],"runner":{"mode":"fixture_expert","memory_floor_bytes":1},"execution":{"conceptual_expert_count":1,"repeat_count":10,"native_dispatch_count":30,"maximum_payload_count":3,"maximum_positional_reads":3,"maximum_shard_opens":1,"compressed_byte_budget":11304960,"auto_retry":false,"stop_before_m1_f":true}});
     let mut config_doc = config_doc;
+    config_doc["local_artifacts"]["runner_binary"] = json!({
+        "path_kind":"absolute_private_local",
+        "path":env!("CARGO_BIN_EXE_f017-glm52-runner"),
+        "content_sha256":sha256_file(Path::new(env!("CARGO_BIN_EXE_f017-glm52-runner"))).unwrap()
+    });
+    config_doc["local_artifacts"]["oracle_launcher"] = json!({
+        "path_kind":"absolute_private_local",
+        "path":"/usr/bin/true",
+        "content_sha256":sha256_file(Path::new("/usr/bin/true")).unwrap()
+    });
+    config_doc["local_artifacts"]["attempt_state_output"] = json!(temp.join("attempt-state.json"));
     config_doc["local_artifacts"]["preflight_evidence_output"] =
         json!(temp.join("preflight-evidence.json"));
     let bytes = serde_json::to_vec(&config_doc).unwrap();
@@ -115,9 +142,14 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
 
 fn run(diverge: bool) -> (std::process::ExitStatus, Evidence, PathBuf) {
     let (config, digest, output, temp) = setup();
-    let mut c = Command::new(env!("CARGO_BIN_EXE_f017-glm52-runner"));
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap();
+    let mut c = Command::new(root.join(".venv/bin/python"));
     c.current_dir(std::env::temp_dir())
-        .args(["--m1e-execution-config"])
+        .arg(root.join("scripts/research/run_f017_m1e_authorized.py"))
+        .args(["--execution-config"])
         .arg(config)
         .args(["--execution-config-sha256", &digest]);
     if diverge {
@@ -126,6 +158,31 @@ fn run(diverge: bool) -> (std::process::ExitStatus, Evidence, PathBuf) {
     let status = c.status().unwrap();
     let evidence = parse_json_no_duplicates(&fs::read(output).unwrap()).unwrap();
     (status, evidence, temp)
+}
+
+#[test]
+fn exact_config_preflight_is_repeatable_and_non_consuming() {
+    let (config, digest, output, temp) = setup();
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap();
+    for _ in 0..2 {
+        let result = Command::new(root.join(".venv/bin/python"))
+            .current_dir(std::env::temp_dir())
+            .arg(root.join("scripts/research/run_f017_m1e_authorized.py"))
+            .args(["--execution-config"])
+            .arg(&config)
+            .args(["--execution-config-sha256", &digest, "--preflight-only"])
+            .output()
+            .unwrap();
+        assert!(result.status.success());
+        assert_eq!(result.stdout, b"READY_TO_EXECUTE_M1_E\n");
+    }
+    assert!(!temp.join("attempt-state.json").exists());
+    assert!(!temp.join("preflight-evidence.json").exists());
+    assert!(!output.exists());
+    fs::remove_dir_all(temp).unwrap();
 }
 
 #[test]

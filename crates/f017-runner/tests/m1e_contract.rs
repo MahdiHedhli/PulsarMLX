@@ -34,6 +34,7 @@ fn base(temp: &Path) -> (Value, PathBuf) {
         ("path_resolution_contract","specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),
         ("activation_generator","scripts/research/generate_f017_m1e_activation.py"),
         ("execution_config_preparer","scripts/research/prepare_f017_m1e_execution.py"),
+        ("authorized_launcher","scripts/research/run_f017_m1e_authorized.py"),
         ("real_reference_preparer","scripts/research/prepare_f017_m1e_real_reference.py"),
         ("independent_iq2_decoder","scripts/research/iq2_xxs_dequant.py"),
         ("independent_iq3_decoder","scripts/research/iq3_xxs_dequant.py"),
@@ -68,8 +69,10 @@ fn base(temp: &Path) -> (Value, PathBuf) {
             "local_artifacts":{
                 "environment_manifest":{"path_kind":"absolute_private_local","path":env,"content_sha256":sha256_file(&env).unwrap()},
                 "checkpoint_manifest":{"path_kind":"absolute_private_local","path":checkpoint,"content_sha256":sha256_file(&checkpoint).unwrap()},
+                "runner_binary":{"path_kind":"absolute_private_local","path":std::env::current_exe().unwrap(),"content_sha256":sha256_file(&std::env::current_exe().unwrap()).unwrap()},
+                "oracle_launcher":{"path_kind":"absolute_private_local","path":"/usr/bin/true","content_sha256":sha256_file(Path::new("/usr/bin/true")).unwrap()},
                 "target_shard":{"path_kind":"absolute_private_local","path":shard,"ordinal":2,"basename":"fake-shard.gguf","byte_size":fs::metadata(&shard).unwrap().len(),"content_sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
-                "oracle_output":private.join("oracle.json"),"package_output":private.join("package.json"),"preflight_evidence_output":temp.join("preflight-evidence.json"),"evidence_output":temp.join("evidence.json")},
+                "oracle_output":private.join("oracle.json"),"package_output":private.join("package.json"),"attempt_state_output":private.join("attempt-state.json"),"preflight_evidence_output":temp.join("preflight-evidence.json"),"evidence_output":temp.join("evidence.json")},
             "prior_evidence":{"m1_a":"aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805","m1_b":"9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770","m1_c":"343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e","m1_d":"dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c"},
             "checkpoint_bindings":{"checkpoint_set_sha256":"d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee","catalog_sha256":"0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0","tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"},
             "expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},
@@ -189,6 +192,32 @@ fn execution_config_mutation_after_preflight_is_rejected() {
         loaded.config.execution_config.as_ref().unwrap()
     )
     .is_err());
+    let _ = fs::remove_dir_all(temp);
+}
+
+#[test]
+fn candidate_requires_the_hash_bound_execution_started_marker() {
+    let temp = std::env::temp_dir().join(format!("f017-m1e-state-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&temp);
+    fs::create_dir(&temp).unwrap();
+    let (value, path) = base(&temp);
+    let bytes = serde_json::to_vec(&value).unwrap();
+    fs::write(&path, &bytes).unwrap();
+    let digest = sha256_bytes(&bytes);
+    assert!(f017_runner::m1e_execution_config::load(&path, &digest, false).is_err());
+    fs::write(
+        temp.join("private/attempt-state.json"),
+        serde_json::to_vec(&json!({
+            "schema":"pulsarmlx.f017.m1e-attempt-state",
+            "schema_version":"1.0.0",
+            "attempt":1,
+            "state":"EXECUTION_STARTED",
+            "execution_config_sha256":digest.clone()
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(f017_runner::m1e_execution_config::load(&path, &digest, false).is_ok());
     let _ = fs::remove_dir_all(temp);
 }
 

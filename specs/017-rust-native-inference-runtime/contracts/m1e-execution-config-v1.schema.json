@@ -16,16 +16,19 @@
     "package_root": {"$ref": "#/$defs/root"},
     "activation_fixture": {"$ref": "#/$defs/repositoryArtifact"},
     "activation_payload_sha256": {"$ref": "#/$defs/sha256"},
-    "repository_artifacts": {"type": "object", "minProperties": 14, "maxProperties": 14, "additionalProperties": {"$ref": "#/$defs/repositoryArtifact"}},
+    "repository_artifacts": {"type": "object", "minProperties": 15, "maxProperties": 15, "additionalProperties": {"$ref": "#/$defs/repositoryArtifact"}},
     "local_artifacts": {
       "type": "object", "additionalProperties": false,
-      "required": ["environment_manifest","checkpoint_manifest","target_shard","oracle_output","package_output","preflight_evidence_output","evidence_output"],
+      "required": ["environment_manifest","checkpoint_manifest","runner_binary","oracle_launcher","target_shard","oracle_output","package_output","attempt_state_output","preflight_evidence_output","evidence_output"],
       "properties": {
         "environment_manifest": {"$ref": "#/$defs/localFile"},
         "checkpoint_manifest": {"$ref": "#/$defs/localFile"},
+        "runner_binary": {"$ref": "#/$defs/localFile"},
+        "oracle_launcher": {"$ref": "#/$defs/localFile"},
         "target_shard": {"$ref": "#/$defs/targetShard"},
         "oracle_output": {"type": "string", "minLength": 1},
         "package_output": {"type": "string", "minLength": 1},
+        "attempt_state_output": {"type": "string", "minLength": 1},
         "preflight_evidence_output": {"type": "string", "minLength": 1},
         "evidence_output": {"type": "string", "minLength": 1}
       }

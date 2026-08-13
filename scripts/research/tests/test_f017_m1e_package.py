@@ -80,7 +80,7 @@ class M1EPackageTests(unittest.TestCase):
             checkpoint = temporary / "checkpoint.json"
             checkpoint.write_text(json.dumps({"shards":[{"filename":shard.name,"size_bytes":shard.stat().st_size,"sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"}]}))
             output = temporary / "config.json"
-            command = [sys.executable, str(RESEARCH / "prepare_f017_m1e_execution.py"), "--repository-root", str(ROOT), "--package-root", str(package), "--environment-manifest", str(environment), "--checkpoint-manifest", str(checkpoint), "--target-shard", str(shard), "--runtime-sha", "1" * 40, "--tooling-sha", "2" * 40, "--output", str(output), "--mode", "fixture_expert"]
+            command = [sys.executable, str(RESEARCH / "prepare_f017_m1e_execution.py"), "--repository-root", str(ROOT), "--package-root", str(package), "--environment-manifest", str(environment), "--checkpoint-manifest", str(checkpoint), "--target-shard", str(shard), "--runner-binary", sys.executable, "--oracle-launcher", sys.executable, "--runtime-sha", "1" * 40, "--tooling-sha", "2" * 40, "--output", str(output), "--mode", "fixture_expert"]
             first = subprocess.run(command, check=True, capture_output=True, text=True)
             self.assertEqual(len(first.stdout.strip()), 64)
             document = json.loads(output.read_text())

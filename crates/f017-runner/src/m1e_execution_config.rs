@@ -58,9 +58,12 @@ pub struct Root {
 pub struct LocalArtifacts {
     pub environment_manifest: LocalFile,
     pub checkpoint_manifest: LocalFile,
+    pub runner_binary: LocalFile,
+    pub oracle_launcher: LocalFile,
     pub target_shard: TargetShard,
     pub oracle_output: PathBuf,
     pub package_output: PathBuf,
+    pub attempt_state_output: PathBuf,
     pub preflight_evidence_output: PathBuf,
     pub evidence_output: PathBuf,
 }
@@ -138,6 +141,16 @@ pub struct Loaded {
     pub document: Document,
 }
 
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct AttemptState {
+    schema: String,
+    schema_version: String,
+    attempt: u64,
+    state: String,
+    execution_config_sha256: String,
+}
+
 pub fn load(
     path: &Path,
     expected_sha256: &str,
@@ -154,6 +167,19 @@ pub fn load(
     let document: Document =
         parse_json_no_duplicates(&bytes).map_err(|e| message("m1e_config_schema", e))?;
     validate(&document)?;
+    if preflight_only {
+        if document.local_artifacts.attempt_state_output.exists() {
+            return Err(message(
+                "m1e_attempt_consumed",
+                "M1-E execution-state marker already exists",
+            ));
+        }
+    } else {
+        validate_attempt_state(
+            &document.local_artifacts.attempt_state_output,
+            expected_sha256,
+        )?;
+    }
     let package = document.local_artifacts.package_output.clone();
     let mode = if preflight_only {
         RunnerMode::M1ePreflight
@@ -194,6 +220,24 @@ pub fn verify_unchanged(binding: &ExecutionConfigBinding) -> Result<(), RunnerEr
         return Err(message(
             "m1e_config_mutated",
             "execution config changed after preflight",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_attempt_state(path: &Path, config_sha256: &str) -> Result<(), RunnerError> {
+    let bytes = fs::read(path).map_err(|e| error("m1e_attempt_state_read", e))?;
+    let state: AttemptState =
+        parse_json_no_duplicates(&bytes).map_err(|e| message("m1e_attempt_state_schema", e))?;
+    if state.schema != "pulsarmlx.f017.m1e-attempt-state"
+        || state.schema_version != "1.0.0"
+        || state.attempt != 1
+        || state.state != "EXECUTION_STARTED"
+        || state.execution_config_sha256 != config_sha256
+    {
+        return Err(message(
+            "m1e_attempt_state",
+            "M1-E execution-state marker binding mismatch",
         ));
     }
     Ok(())
@@ -257,6 +301,7 @@ fn validate_artifacts(
         ("path_resolution_contract", "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),
         ("activation_generator", "scripts/research/generate_f017_m1e_activation.py"),
         ("execution_config_preparer", "scripts/research/prepare_f017_m1e_execution.py"),
+        ("authorized_launcher", "scripts/research/run_f017_m1e_authorized.py"),
         ("real_reference_preparer", "scripts/research/prepare_f017_m1e_real_reference.py"),
         ("independent_iq2_decoder", "scripts/research/iq2_xxs_dequant.py"),
         ("independent_iq3_decoder", "scripts/research/iq3_xxs_dequant.py"),
@@ -447,6 +492,8 @@ fn validate_local(document: &Document) -> Result<(), RunnerError> {
     for file in [
         &document.local_artifacts.environment_manifest,
         &document.local_artifacts.checkpoint_manifest,
+        &document.local_artifacts.runner_binary,
+        &document.local_artifacts.oracle_launcher,
     ] {
         if file.path_kind != "absolute_private_local" || !file.path.is_absolute() {
             return Err(message("m1e_local_path", "local path binding mismatch"));
@@ -480,6 +527,7 @@ fn validate_local(document: &Document) -> Result<(), RunnerError> {
     for path in [
         &document.local_artifacts.oracle_output,
         &document.local_artifacts.package_output,
+        &document.local_artifacts.attempt_state_output,
     ] {
         if !path.is_absolute()
             || path
@@ -505,6 +553,21 @@ fn validate_local(document: &Document) -> Result<(), RunnerError> {
         return Err(message(
             "m1e_evidence_output",
             "preflight and production evidence outputs must be distinct absolute paths",
+        ));
+    }
+    let unique_outputs = [
+        &document.local_artifacts.oracle_output,
+        &document.local_artifacts.package_output,
+        &document.local_artifacts.attempt_state_output,
+        &document.local_artifacts.preflight_evidence_output,
+        &document.local_artifacts.evidence_output,
+    ]
+    .into_iter()
+    .collect::<BTreeSet<_>>();
+    if unique_outputs.len() != 5 {
+        return Err(message(
+            "m1e_output_alias",
+            "all M1-E output targets must be distinct",
         ));
     }
     Ok(())

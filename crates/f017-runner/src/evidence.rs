@@ -842,6 +842,7 @@ fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) ->
     let expected = BTreeMap::from([
         ("activation_fixture", "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),
         ("activation_generator", "scripts/research/generate_f017_m1e_activation.py"),
+        ("authorized_launcher", "scripts/research/run_f017_m1e_authorized.py"),
         ("execution_config_preparer", "scripts/research/prepare_f017_m1e_execution.py"),
         ("boundary_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json"),
         ("decoder_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json"),

@@ -33,6 +33,8 @@ struct Package {
     checkpoint_set_sha256: String,
     catalog_sha256: String,
     tensor_map_sha256: String,
+    #[serde(default)]
+    source_checkpoint_read_count: u64,
     tensors: Vec<Tensor>,
     oracle: ArtifactReference,
     one_attempt: bool,
@@ -49,6 +51,8 @@ struct Tensor {
     quantization: String,
     matrix_shape: [usize; 2],
     packed_sha256: String,
+    #[serde(default)]
+    payload: Option<ArtifactReference>,
 }
 
 #[derive(Deserialize)]
@@ -203,10 +207,15 @@ fn run_impl(
     evidence.identity.checkpoint.catalog_sha256 = Some(manifest.catalog_sha256.clone());
 
     let storage_started = Instant::now();
-    let gate_packed = read_tensor(&shard_path, tensor(&package, "gate")?)?;
-    let up_packed = read_tensor(&shard_path, tensor(&package, "up")?)?;
-    let down_packed = read_tensor(&shard_path, tensor(&package, "down")?)?;
-    evidence.execution.storage.read_count = 3;
+    let gate_packed = read_tensor(&package_root, &shard_path, tensor(&package, "gate")?)?;
+    let up_packed = read_tensor(&package_root, &shard_path, tensor(&package, "up")?)?;
+    let down_packed = read_tensor(&package_root, &shard_path, tensor(&package, "down")?)?;
+    evidence.execution.storage.read_count = if matches!(config.mode, RunnerMode::RealExpert { .. })
+    {
+        package.source_checkpoint_read_count
+    } else {
+        3
+    };
     evidence.execution.storage.read_bytes =
         (gate_packed.len() + up_packed.len() + down_packed.len()) as u64;
     evidence.execution.timings.insert(
@@ -693,6 +702,8 @@ fn validate_package(package: &Package, mode: &RunnerMode) -> Result<(), RunnerEr
         || package.schema_version != "1.0.0"
         || package.package_kind != kind
         || !package.one_attempt
+        || matches!(mode, RunnerMode::RealExpert { .. })
+            && package.source_checkpoint_read_count != 3
         || package.tensor_map_sha256
             != "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
         || package.tensors.len() != 3
@@ -735,6 +746,7 @@ fn validate_package(package: &Package, mode: &RunnerMode) -> Result<(), RunnerEr
             || t.offset != offset
             || t.packed_length != length
             || t.matrix_shape != shape
+            || matches!(mode, RunnerMode::RealExpert { .. }) && t.payload.is_none()
         {
             return Err(infra(
                 "m1e_tensor_contract",
@@ -809,7 +821,22 @@ fn tensor<'a>(package: &'a Package, role: &str) -> Result<&'a Tensor, RunnerErro
         .find(|t| t.role == role)
         .ok_or_else(|| infra("m1e_tensor", format!("missing {role}")))
 }
-fn read_tensor(path: &Path, tensor: &Tensor) -> Result<Vec<u8>, RunnerError> {
+fn read_tensor(
+    package_root: &PrivatePackageRoot,
+    path: &Path,
+    tensor: &Tensor,
+) -> Result<Vec<u8>, RunnerError> {
+    if let Some(payload) = &tensor.payload {
+        let resolved = package_root.resolve(payload)?;
+        if resolved.bytes.len() != tensor.packed_length {
+            return Err(infra(
+                "m1e_short_read",
+                "private bounded payload length mismatch",
+            ));
+        }
+        require_hash(&resolved.bytes, &tensor.packed_sha256, "m1e_packed_hash")?;
+        return Ok(resolved.bytes);
+    }
     use std::os::unix::fs::FileExt;
     let file = File::open(path).map_err(|e| infra("m1e_shard_open", e))?;
     let mut b = vec![0; tensor.packed_length];

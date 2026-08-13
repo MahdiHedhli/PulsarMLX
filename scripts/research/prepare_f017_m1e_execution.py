@@ -34,6 +34,7 @@ ARTIFACTS = {
     "path_resolution_contract": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
     "activation_generator": "scripts/research/generate_f017_m1e_activation.py",
     "execution_config_preparer": "scripts/research/prepare_f017_m1e_execution.py",
+    "authorized_launcher": "scripts/research/run_f017_m1e_authorized.py",
     "real_reference_preparer": "scripts/research/prepare_f017_m1e_real_reference.py",
     "independent_iq2_decoder": "scripts/research/iq2_xxs_dequant.py",
     "independent_iq3_decoder": "scripts/research/iq3_xxs_dequant.py",
@@ -76,6 +77,8 @@ def main() -> int:
     parser.add_argument("--environment-manifest", type=Path, required=True)
     parser.add_argument("--checkpoint-manifest", type=Path, required=True)
     parser.add_argument("--target-shard", type=Path, required=True)
+    parser.add_argument("--runner-binary", type=Path, required=True)
+    parser.add_argument("--oracle-launcher", type=Path, required=True)
     parser.add_argument("--runtime-sha", required=True)
     parser.add_argument("--tooling-sha", required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -91,6 +94,8 @@ def main() -> int:
     if args.target_shard.is_symlink():
         raise ValueError("target shard symlink is forbidden")
     target = args.target_shard.resolve(strict=True)
+    runner = args.runner_binary.resolve(strict=True)
+    launcher = args.oracle_launcher.resolve(strict=True)
     if target.name != shard["filename"] or target.stat().st_size != shard["size_bytes"]:
         raise ValueError("target shard metadata differs from reviewed manifest")
     tensors = [
@@ -107,8 +112,10 @@ def main() -> int:
         "local_artifacts":{
             "environment_manifest":{"path_kind":"absolute_private_local","path":str(args.environment_manifest.resolve(strict=True)),"content_sha256":sha(args.environment_manifest)},
             "checkpoint_manifest":{"path_kind":"absolute_private_local","path":str(args.checkpoint_manifest.resolve(strict=True)),"content_sha256":sha(args.checkpoint_manifest)},
+            "runner_binary":{"path_kind":"absolute_private_local","path":str(runner),"content_sha256":sha(runner)},
+            "oracle_launcher":{"path_kind":"absolute_private_local","path":str(launcher),"content_sha256":sha(launcher)},
             "target_shard":{"path_kind":"absolute_private_local","path":str(target),"ordinal":2,"basename":target.name,"byte_size":target.stat().st_size,"content_sha256":shard["sha256"]},
-            "oracle_output":str(package_root / "m1e-oracle-v1.json"),"package_output":str(package_root / "m1e-package-v1.json"),"preflight_evidence_output":str(package_root / "m1e-preflight-evidence-v1.json"),"evidence_output":str(package_root / "m1e-evidence-v1.json")},
+            "oracle_output":str(package_root / "m1e-oracle-v1.json"),"package_output":str(package_root / "m1e-package-v1.json"),"attempt_state_output":str(package_root / "m1e-attempt-state-v1.json"),"preflight_evidence_output":str(package_root / "m1e-preflight-evidence-v1.json"),"evidence_output":str(package_root / "m1e-evidence-v1.json")},
         "prior_evidence":M1,"checkpoint_bindings":CHECKPOINT,
         "expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},"tensors":tensors,
         "runner":{"mode":args.mode,"memory_floor_bytes":17179869184 if args.mode == "real_expert" else 1},
