@@ -5,6 +5,14 @@
 This handoff freezes one complete-expert boundary. It does not authorize the
 three real payload reads or production execution.
 
+Runtime/tooling implementation: `466770362e3066fa5fd9827ec1f454e03afe3006`.
+The private, machine-local execution configuration prepared from that exact
+implementation has SHA-256
+`00ef0a08a033b0652ca521004f8b459a40169d1a43dc5c9cd5dae33a0d80cd90`.
+Its canonical non-consuming production preflight returned exactly
+`READY_TO_EXECUTE_M1_E`; it created no attempt state, evidence, oracle, or
+payload artifact.
+
 ## Accepted chain
 
 - M1-A: `aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805`
@@ -41,10 +49,14 @@ expert, layer, output-head, or logits read is admitted.
 - repeat integrity: `26e956628006ba86980f106344531586a0437cc0cdf289333144319e3e6c10a4`
 - boundary: `0b28cc94522c52cc21df3bce72084d07bdd22f92bd21f5f0dd9775066e675a1a`
 - timing contract: `1449b2a8253c35627274fc54d722f12e6365a8fb35544c6af2275737764a2ccc`
-- evidence schema: `42f7dd0d3a257448dbc6bb46541968dcf99d5d0bb3504f99572c49957cc2f07f`
-- execution-config schema: `64bed9c904efc4049f23de85035cf20b98d98039e10e239718d82e5be6d66504`
-- execution-config preparer: `3d8a983166ed3ff644170208840477138b6c97314b0e4a1d8a66cdd2c75f37d5`
-- real-reference preparer: `b116baba71366004f8c1ee1fd402bffaa2fb573423d4b9c8f7e66efe6c5de927`
+- evidence schema: `8779b966080c21f6a287e096363b141158e54e7022df96b3786cb1a1a774b264`
+- execution-config schema: `e7d7b79617adffd35236b2401920d0b9cbb66f52dd2b84ca887ccdcb634cbcab`
+- execution-config preparer: `695e62302605f75c07de23382507beb58fb0c439f3fe83af2b6b1887ad948c40`
+- config-only authorized launcher: `c23a1b9f40acca8214594a226bcec8596e3e2ee40877aa61198365f21bdfd211`
+- real-reference preparer: `1276a2818b9dceaa9e2029461df82d81776d6d8f76f3b3c6033cd903e7b318b6`
+- independent IQ2_XXS decoder: `9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761`
+- independent IQ3_XXS decoder: `316ab363b6a78681a8e3b1960ef86e77983e46654099a2e8aff4f5c81417bec8`
+- path-resolution contract: `40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d`
 
 The activation has 6,144 little-endian f32 elements, Python 3.13.13, NumPy
 2.4.5, PCG64 seed 17017005, finite mixed-sign values, signed zero,
@@ -52,7 +64,7 @@ subnormal-adjacent, cancellation, and moderate-large values.
 
 The independent Python/NumPy preparer decodes only the three authorized
 ranges, produces gate/up/SwiGLU/down stage bytes and hashes, derives the
-immutable v1 bound vector, atomically finalizes its read-only package, and
+immutable v1 gate/up/activated-hidden/final bound vectors and hashes, atomically finalizes its read-only package, and
 completes before candidate start. It imports no Rust, MLX, FFI, or candidate
 output. Real stage hashes deliberately do not exist until the separately
 authorized attempt reads the real payloads.
@@ -89,6 +101,12 @@ Preflight performs metadata/content-hash/root checks without tensor payload
 access and does not consume the attempt. Consumption begins only after
 preflight, production admission, immutable-config revalidation, and the
 `EXECUTION_STARTED` transition.
+
+The future authorized launcher consumes only the config path and its hash.
+The config itself binds the runner binary, oracle launcher, private roots,
+three tensor ranges, activation, every contract/source hash, all prior
+evidence, the 30-dispatch budget, and all private output targets. Loose tensor,
+fixture, expert, contract, or evidence-output arguments do not exist.
 
 After consumption there is no retry. PASS is persisted only after oracle
 ordering, ten-repeat integrity, Tier-B qualification, teardown, lifecycle,

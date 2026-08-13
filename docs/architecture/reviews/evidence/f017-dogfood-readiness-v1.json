@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_d_attempt_3_accepted_stopped",
+  "updated_after": "m1_e_admission_package_prepared_not_executed",
   "executed_source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -12,7 +12,7 @@
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
     "m1_d": "attempt_1_rejected_attempt_2_rejected_attempt_3_accepted_stopped",
-    "m1_e_m1_g": "m1_e_prepared_not_authorized_m1_f_m1_g_blocked",
+    "m1_e_m1_g": "m1_e_qualified_prepared_not_executed_m1_f_m1_g_blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -139,5 +139,32 @@
       "m1_e_authorized": false
     }
   },
-  "next_gate": "review and freeze the M1-E real-expert admission package; M1-E remains not authorized"
+  "m1_e_packet": {
+    "handoff": "docs/architecture/reviews/f017-m1-e-real-expert-handoff.md",
+    "review_packet": "docs/architecture/reviews/f017-m1-e-adversarial-review-packet.md",
+    "runtime_source_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
+    "tooling_source_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
+    "execution_config_sha256": "00ef0a08a033b0652ca521004f8b459a40169d1a43dc5c9cd5dae33a0d80cd90",
+    "expert": {
+      "layer": 3,
+      "expert": 15,
+      "symbolic_id": "blk.3.expert.15"
+    },
+    "payload_budget": {
+      "count": 3,
+      "shard_opens": 1,
+      "positional_reads": 3,
+      "compressed_bytes": 11304960
+    },
+    "repeat_count_required": 10,
+    "native_dispatch_count_required": 30,
+    "preflight_status": "READY_TO_EXECUTE_M1_E",
+    "preflight_consumed_attempt": false,
+    "real_payload_accessed_during_preparation": false,
+    "real_execution_performed": false,
+    "authorized": false,
+    "attempt_consumed": false,
+    "m1_f": "blocked"
+  },
+  "next_gate": "complete final-head CI and both M1-E reviews, then publish one-attempt authorization; do not execute M1-E"
 }
