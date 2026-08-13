@@ -1,0 +1,413 @@
+{
+  "schema": "pulsarmlx.f017.canonical-runner-evidence",
+  "schema_version": "1.3.0",
+  "identity": {
+    "source_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
+    "source_clean": true,
+    "runner_version": "0.1.0",
+    "environment_kind": "production_reviewed",
+    "environment_manifest_sha256": "33f57e945762e1b805ede4663e6ae19ee94240936c5e87940aba5e6e5face251",
+    "platform": {
+      "architecture": "arm64",
+      "macos_build": "25A354",
+      "macos_version": "26.0",
+      "metal_compiler": "Apple metal 32023.864 (metalfe-32023.864)",
+      "sdk_version": "26.2",
+      "xcode_version": "26.3"
+    },
+    "toolchain": {
+      "cargo": "1.97.1 (c980f4866 2026-06-30)",
+      "compiler": "Apple clang 17.0.0 (clang-1700.6.4.2)",
+      "mlx_c_source_sha": "0726ca922fc902c4c61ef9c27d94132be418e945",
+      "mlx_c_version": "0.6.0",
+      "mlx_native_source_sha": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+      "mlx_native_version": "0.31.2",
+      "rust_package": "0.1.0",
+      "rustc": "1.97.1 (8bab26f4f 2026-07-14)"
+    },
+    "loaded_libraries": [
+      {
+        "artifact": "mlx_native",
+        "resolved_basename": "libmlx.dylib",
+        "actual_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+        "expected_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+        "architecture": "arm64"
+      },
+      {
+        "artifact": "mlx_c",
+        "resolved_basename": "libmlxc.dylib",
+        "actual_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+        "expected_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+        "architecture": "arm64"
+      }
+    ],
+    "checkpoint": {
+      "accessed": true,
+      "revision": null,
+      "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+      "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+      "architecture": null,
+      "tokenizer_identity": null,
+      "tensor_count": null,
+      "tensor_map": {
+        "status": "unavailable",
+        "version": null,
+        "contract_sha256": null,
+        "validated_tensor_count": null
+      },
+      "shards": []
+    },
+    "prior_evidence": {
+      "m1_a": "aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805",
+      "m1_b": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
+      "m1_c": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e",
+      "m1_d": "dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c"
+    },
+    "artifact_paths": [
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json",
+        "content_sha256": "a5946ba6f07d4be7c13da28549a0585b90a4ca8fa3824f52d2afd0f0b582f5c8",
+        "logical_role": "activation_fixture",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/generate_f017_m1e_activation.py",
+        "content_sha256": "c797e5200bd126a42b1303c2c06d7ef5bbad11738241cbd9f54e014a49a0a77e",
+        "logical_role": "activation_generator",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/run_f017_m1e_authorized.py",
+        "content_sha256": "c23a1b9f40acca8214594a226bcec8596e3e2ee40877aa61198365f21bdfd211",
+        "logical_role": "authorized_launcher",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
+        "content_sha256": "0b28cc94522c52cc21df3bce72084d07bdd22f92bd21f5f0dd9775066e675a1a",
+        "logical_role": "boundary_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json",
+        "content_sha256": "357a1989174b0ec86684549f8519bb7a47fdb8b8194fa985c8126d89d6339a00",
+        "logical_role": "decoder_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
+        "content_sha256": "8779b966080c21f6a287e096363b141158e54e7022df96b3786cb1a1a774b264",
+        "logical_role": "evidence_schema",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/prepare_f017_m1e_execution.py",
+        "content_sha256": "695e62302605f75c07de23382507beb58fb0c439f3fe83af2b6b1887ad948c40",
+        "logical_role": "execution_config_preparer",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json",
+        "content_sha256": "e7d7b79617adffd35236b2401920d0b9cbb66f52dd2b84ca887ccdcb634cbcab",
+        "logical_role": "execution_config_schema",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/iq2_xxs_dequant.py",
+        "content_sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761",
+        "logical_role": "independent_iq2_decoder",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/iq3_xxs_dequant.py",
+        "content_sha256": "316ab363b6a78681a8e3b1960ef86e77983e46654099a2e8aff4f5c81417bec8",
+        "logical_role": "independent_iq3_decoder",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        "content_sha256": "40c66a00ea9dcc2b58dc01c7f336cdb5a9098c0ea59920c384727e6ef9cc360d",
+        "logical_role": "path_resolution_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/prepare_f017_m1e_real_reference.py",
+        "content_sha256": "1276a2818b9dceaa9e2029461df82d81776d6d8f76f3b3c6033cd903e7b318b6",
+        "logical_role": "real_reference_preparer",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
+        "content_sha256": "26e956628006ba86980f106344531586a0437cc0cdf289333144319e3e6c10a4",
+        "logical_role": "repeat_integrity_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
+        "content_sha256": "52472419faec0f88a5e8c3e289fc106aee76cffe3feee13631a56d23f8ad4e38",
+        "logical_role": "scaffold_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json",
+        "content_sha256": "44168eb92df8c3da81feeb024e7f5d57cd501ce43e2271294f41c25489a087e2",
+        "logical_role": "tier_b_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      },
+      {
+        "path_kind": "repository_relative",
+        "symbolic_path": "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
+        "content_sha256": "1449b2a8253c35627274fc54d722f12e6365a8fb35544c6af2275737764a2ccc",
+        "logical_role": "timing_contract",
+        "repository_identity": "466770362e3066fa5fd9827ec1f454e03afe3006",
+        "package_artifact_id": null
+      }
+    ],
+    "execution_config_sha256": "7f69550bfd7ccd5e820f23d2bcce7f0e287d2c2bfc5f1ae2adb59ec5467b0a1b"
+  },
+  "admission": {
+    "telemetry_source": "measured_host",
+    "physical_memory_bytes": 137438953472,
+    "memory_floor_bytes": 17179869184,
+    "available_memory_bytes": 82530926592,
+    "compressed_memory_bytes": 2592358400,
+    "memory_pressure": "normal",
+    "swap_used_bytes": 125829,
+    "checkpoint_volume_free_bytes": 348257501184,
+    "evidence_volume_free_bytes": 348257497088,
+    "load_averages": [
+      3.12744140625,
+      2.369140625,
+      2.5751953125
+    ],
+    "competing_processes_clear": true,
+    "competing_processes": [],
+    "port_1234_listener": false,
+    "thermal_state": "normal",
+    "performance_warning": false,
+    "stream_mode": "owned_device",
+    "singleton_initially_unclaimed": false
+  },
+  "input": {
+    "tokens": [],
+    "n_new": 0,
+    "expected_token": null,
+    "validation_mode": "golden_strict",
+    "mode": "real_expert",
+    "numerical_mode": "production_mlx_tier_b"
+  },
+  "execution": {
+    "layers": [],
+    "timings": {
+      "decoder_down_seconds": 0.013238083,
+      "decoder_gate_seconds": 0.017399917,
+      "decoder_up_seconds": 0.013309833,
+      "storage_seconds": 0.067751792
+    },
+    "storage": {
+      "read_bytes": 11304960,
+      "read_count": 3
+    },
+    "dispatch": {
+      "native": 0,
+      "direct": 0,
+      "qualification_scaffold": 0,
+      "explicit_reference": 0,
+      "fallback": 0,
+      "errors": 0
+    },
+    "generated_token": null,
+    "numerical_classification": null,
+    "numerical": {
+      "greedy_applicability": null,
+      "greedy_identity": null,
+      "oracle_generator_sha": null,
+      "scaffold_version": null,
+      "production_backend_version": null,
+      "frozen_contract_version": null,
+      "frozen_contract_versions": {},
+      "bit_mismatch_count": null,
+      "max_abs_error": null,
+      "relative_error": null,
+      "rmse": null,
+      "cosine_similarity": null,
+      "deterministic_repeat_count": null,
+      "first_divergence": null,
+      "repeat_integrity": {
+        "repeat_count_required": 0,
+        "repeat_count_observed": 0,
+        "outputs": [],
+        "all_repeat_hashes_equal": false,
+        "selected_output_sha256": null
+      },
+      "oracle_ordering": {
+        "oracle_package_sha256": null,
+        "oracle_completed_at": null,
+        "oracle_completion_marker": null,
+        "oracle_validated_before_candidate": false,
+        "candidate_started_at": null,
+        "candidate_start_marker": null,
+        "structural_order_valid": false
+      },
+      "expert_repeat_integrity": {
+        "repeat_count_required": 0,
+        "repeat_count_observed": 0,
+        "native_dispatch_count_expected": 0,
+        "conceptual_expert_count": 0,
+        "outputs": [],
+        "gate_all_equal": false,
+        "up_all_equal": false,
+        "activated_hidden_all_equal": false,
+        "final_output_all_equal": false
+      },
+      "expert_payload_sha256": {
+        "down": "442acf3cf5210ade4faa0b38ef0f94aaca7b15571a180804ace52b94cccdf59d",
+        "gate": "3822822b98505bb0c0447174b1f53d984ca3b78e95e9e118d61e5de84fa2fdc3",
+        "up": "261011f1f3f084b6db48583711c14f20a9ae4e4e588b877b99db1aee0c2117af"
+      },
+      "expert_decoded_sha256": {},
+      "expert_reference_sha256": {},
+      "expert_bound_sha256": {
+        "activated_hidden": "c1f0cb57293ae83456a14c9f60735dc4bb121edafe4f3ebbc6dc7819ba55204d",
+        "final_output": "b67a9dca795ae68db49f4201ce05461796b5ac6e74058fec490b923c4eae8fd4",
+        "gate": "7da8cb86e1c594eb96dfb3d701e4796901000fa218c69e316e6b43849bd756c7",
+        "up": "eec11d311a3063298f41377a6de97dc02fd52b2c46939af7cef2df237352a60a"
+      },
+      "expert_stage_metrics": {}
+    },
+    "progress_state": "initialized",
+    "attempt_state": "execution_started",
+    "attempt_consumed": true,
+    "projection_count": 0,
+    "quant_decode_count": 0,
+    "expert_execution_count": 0,
+    "layer_execution_count": 0,
+    "logits_count": 0,
+    "p1": false,
+    "p2": false,
+    "golden_eight": false,
+    "feature_018": false
+  },
+  "residency": {
+    "compressed": 0,
+    "decoded_hot": 0,
+    "native_ready_hot": 0,
+    "transient": 0,
+    "protected_shared": 0,
+    "hits": 0,
+    "misses": 0,
+    "evictions": 0
+  },
+  "lifecycle": {
+    "pre": {
+      "managed_created": 0,
+      "managed_destroyed": 0,
+      "derived_created": 0,
+      "derived_destroyed": 0,
+      "callback_count": 0,
+      "default_cpu_stream_created": 0,
+      "default_cpu_stream_freed": 0,
+      "default_gpu_stream_created": 0,
+      "default_gpu_stream_freed": 0,
+      "owned_stream_created": 0,
+      "owned_stream_freed": 0,
+      "active_contexts": 0,
+      "singleton_claimed": false,
+      "active_registrations": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "pending_registration_destructions": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "in_flight_work": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "live_owner_tokens": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "stale_generations": {
+        "status": "not_applicable",
+        "value": null
+      }
+    },
+    "post": {
+      "managed_created": 0,
+      "managed_destroyed": 0,
+      "derived_created": 0,
+      "derived_destroyed": 0,
+      "callback_count": 0,
+      "default_cpu_stream_created": 0,
+      "default_cpu_stream_freed": 0,
+      "default_gpu_stream_created": 0,
+      "default_gpu_stream_freed": 0,
+      "owned_stream_created": 0,
+      "owned_stream_freed": 0,
+      "active_contexts": 0,
+      "singleton_claimed": false,
+      "active_registrations": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "pending_registration_destructions": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "in_flight_work": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "live_owner_tokens": {
+        "status": "not_applicable",
+        "value": null
+      },
+      "stale_generations": {
+        "status": "not_applicable",
+        "value": null
+      }
+    },
+    "reconciled": false
+  },
+  "result": {
+    "classification": "FAIL_INFRASTRUCTURE_EVIDENCE",
+    "first_failure": {
+      "code": "m1e_down_decoded",
+      "message": "SHA-256 mismatch"
+    },
+    "stop_reason": "SHA-256 mismatch",
+    "completed": true
+  }
+}

@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.dogfood-readiness",
   "schema_version": 1,
-  "updated_after": "m1_e_admission_package_reviewed_authorized_not_executed",
+  "updated_after": "m1_e_attempt_1_rejected_stopped",
   "executed_source_sha": "1c7705c130d5909bb4523d70bc7ec45e974e1b24",
   "required_m1_b_runtime_source_sha": "b29202171a279cd3bb2ac2cf4dc6b3be7486019e",
   "gates": {
@@ -12,7 +12,7 @@
     "t017_141": "blocked",
     "m1_c": "accepted_stopped",
     "m1_d": "attempt_1_rejected_attempt_2_rejected_attempt_3_accepted_stopped",
-    "m1_e_m1_g": "m1_e_authorized_not_executed_m1_f_m1_g_blocked",
+    "m1_e_m1_g": "m1_e_attempt_1_rejected_no_retry_authorized_m1_f_m1_g_blocked",
     "p1": "blocked",
     "p2": "blocked",
     "golden_eight": "blocked",
@@ -169,10 +169,23 @@
     "preflight_status": "READY_TO_EXECUTE_M1_E",
     "preflight_consumed_attempt": false,
     "real_payload_accessed_during_preparation": false,
+    "real_payload_accessed_during_attempt": true,
+    "real_payload_count": 3,
+    "attempt_executed": true,
+    "candidate_started": false,
     "real_execution_performed": false,
-    "authorized": true,
-    "attempt_consumed": false,
+    "authorized": false,
+    "attempt_consumed": true,
+    "verdict": "rejected",
+    "failure_classification": "FAIL_INFRASTRUCTURE_EVIDENCE",
+    "failure_code": "m1e_down_decoded",
+    "native_dispatch_count": 0,
+    "production_repeat_count": 0,
+    "evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-m1-e-real-expert-attempt-1-v1.json",
+      "sha256": "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119"
+    },
     "m1_f": "blocked"
   },
-  "next_gate": "execute exactly one separately authorized M1-E attempt from the immutable config, then stop and review evidence; M1-F remains blocked"
+  "next_gate": "review the preserved M1-E down-decoder identity mismatch and require a new remediation plus fresh authorization before any later M1-E attempt; M1-F remains blocked"
 }

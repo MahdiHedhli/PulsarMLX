@@ -1,6 +1,10 @@
 # F017 Fresh M1-E Authorization
 
-**Status: AUTHORIZED FOR EXACTLY ONE M1-E ATTEMPT / NOT EXECUTED**
+**Current status: CONSUMED — M1-E ATTEMPT 1 REJECTED / NO RETRY AUTHORIZED**
+
+Issued status was `AUTHORIZED FOR EXACTLY ONE M1-E ATTEMPT / NOT EXECUTED`.
+The attempt was consumed once and failed closed at `m1e_down_decoded` before
+candidate start. See `f017-m1-e-attempt-1-evidence-review.md`.
 
 This packet authorizes one complete layer-3/expert-15 experiment. It does not
 authorize M1-F, a second expert, router/top-8/shared-expert aggregation, a

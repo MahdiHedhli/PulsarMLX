@@ -165,5 +165,5 @@
   and stop before M1-E execution.
 - [x] T017-172 Prepare, freeze, checkpoint-free qualify, and independently
   review the complete layer-3/expert-15 M1-E admission package.
-- [ ] T017-173 Execute exactly one separately authorized M1-E real-expert
+- [x] T017-173 Execute exactly one separately authorized M1-E real-expert
   attempt from the immutable execution config, then stop before M1-F.
