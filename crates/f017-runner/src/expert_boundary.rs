@@ -63,6 +63,8 @@ struct Oracle {
     matrices: OracleMatrices,
     activation: BytesArtifact,
     stages: OracleStages,
+    bounds: OracleBounds,
+    derived_global: DerivedGlobal,
     timings: OracleTimings,
     finalization: Finalization,
 }
@@ -98,6 +100,24 @@ struct OracleStages {
 struct Stage {
     sha256: String,
     bytes_hex: String,
+}
+#[derive(Deserialize)]
+struct OracleBounds {
+    gate: BoundStage,
+    up: BoundStage,
+    activated_hidden: BoundStage,
+    final_output: BoundStage,
+}
+#[derive(Deserialize)]
+struct BoundStage {
+    sha256: String,
+    f64_hex: String,
+}
+#[derive(Deserialize)]
+struct DerivedGlobal {
+    max_absolute_bound: f64,
+    rmse_bound: f64,
+    cosine_minimum: Option<f64>,
 }
 #[derive(Deserialize)]
 struct OracleTimings {
@@ -168,6 +188,19 @@ fn run_impl(
         .ok_or_else(|| infra("m1e_preparer_binding", "preparer binding missing"))?
         .content_sha256;
     validate_oracle(&oracle, &package, preparer_sha)?;
+    for (role, bound, count) in [
+        ("gate", &oracle.bounds.gate, HIDDEN),
+        ("up", &oracle.bounds.up, HIDDEN),
+        ("activated_hidden", &oracle.bounds.activated_hidden, HIDDEN),
+        ("final_output", &oracle.bounds.final_output, OUTPUT),
+    ] {
+        validate_bound_stage(bound, count, role)?;
+        evidence
+            .execution
+            .numerical
+            .expert_bound_sha256
+            .insert(role.into(), bound.sha256.clone());
+    }
 
     let manifest_path = config
         .checkpoint_manifest
@@ -775,6 +808,14 @@ fn validate_oracle(
         || oracle.stages.up.bytes_hex.len() != HIDDEN * 8
         || oracle.stages.activated_hidden.bytes_hex.len() != HIDDEN * 8
         || oracle.stages.final_output.bytes_hex.len() != OUTPUT * 8
+        || !oracle.derived_global.max_absolute_bound.is_finite()
+        || oracle.derived_global.max_absolute_bound < 0.0
+        || !oracle.derived_global.rmse_bound.is_finite()
+        || oracle.derived_global.rmse_bound < 0.0
+        || oracle
+            .derived_global
+            .cosine_minimum
+            .is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value))
         || oracle.finalization.completion_marker != "m1e_oracle_finalized_sequence_0"
         || !oracle.finalization.immutable_after_finalization
         || !matches!((started,completed),(Some(a),Some(b)) if a < b)
@@ -793,6 +834,29 @@ fn validate_oracle(
         return Err(infra(
             "m1e_oracle_contract",
             "M1-E oracle contract mismatch",
+        ));
+    }
+    Ok(())
+}
+fn validate_bound_stage(
+    stage: &BoundStage,
+    expected_count: usize,
+    role: &str,
+) -> Result<(), RunnerError> {
+    let bytes = decode_hex(&stage.f64_hex)?;
+    if bytes.len() != expected_count * 8 || sha256_bytes(&bytes) != stage.sha256 {
+        return Err(infra(
+            "m1e_oracle_bound_hash",
+            format!("{role} oracle bound vector identity mismatch"),
+        ));
+    }
+    if bytes.chunks_exact(8).any(|chunk| {
+        let value = f64::from_le_bytes(chunk.try_into().unwrap());
+        !value.is_finite() || value < 0.0
+    }) {
+        return Err(infra(
+            "m1e_oracle_bound_value",
+            format!("{role} oracle bound vector contains an invalid value"),
         ));
     }
     Ok(())

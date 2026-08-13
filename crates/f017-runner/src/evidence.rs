@@ -188,6 +188,8 @@ pub struct NumericalEvidence {
     #[serde(default)]
     pub expert_reference_sha256: BTreeMap<String, String>,
     #[serde(default)]
+    pub expert_bound_sha256: BTreeMap<String, String>,
+    #[serde(default)]
     pub expert_stage_metrics: BTreeMap<String, ExpertStageMetricsEvidence>,
 }
 
@@ -705,6 +707,7 @@ impl Evidence {
                 || self.execution.numerical.expert_payload_sha256.len() != 3
                 || self.execution.numerical.expert_decoded_sha256.len() != 3
                 || self.execution.numerical.expert_reference_sha256.len() != 4
+                || self.execution.numerical.expert_bound_sha256.len() != 4
                 || self.execution.numerical.expert_stage_metrics.len() != 4
                 || self
                     .execution

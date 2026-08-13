@@ -63,6 +63,19 @@ class M1EPackageTests(unittest.TestCase):
             self.assertTrue(all(np.isfinite(value).all() and (value >= 0).all() for value in bounds))
             self.assertTrue(np.isfinite(output).all())
 
+    def test_zero_up_lane_retains_silu_bound_contribution(self):
+        gate_matrix = np.array([[2.0]], dtype=np.float32)
+        up_matrix = np.array([[0.0]], dtype=np.float32)
+        down_matrix = np.array([[1.0]], dtype=np.float32)
+        activation = np.array([1.0], dtype=np.float32)
+        gate = PREPARER.strict_matvec(gate_matrix, activation)
+        up = PREPARER.strict_matvec(up_matrix, activation)
+        hidden = PREPARER.strict_swiglu(gate, up)
+        bounds = PREPARER.composed_bounds(
+            gate_matrix, up_matrix, down_matrix, activation, gate, up, hidden
+        )
+        self.assertGreater(bounds[2][0], 0.0)
+
     def test_preparer_has_no_candidate_or_ffi_dependency(self):
         source = (RESEARCH / "prepare_f017_m1e_real_reference.py").read_text()
         for forbidden in ("import ctypes", "import cffi", "import mlx", "from mlx"):

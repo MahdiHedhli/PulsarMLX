@@ -27,6 +27,10 @@ fn stage(count: usize) -> Value {
     let raw = vec![0_u8; count * 4];
     json!({"sha256":sha256_bytes(&raw),"bytes_hex":hex(&raw)})
 }
+fn bound(count: usize) -> Value {
+    let raw = vec![0_u8; count * 8];
+    json!({"sha256":sha256_bytes(&raw),"f64_hex":hex(&raw)})
+}
 fn hex(bytes: &[u8]) -> String {
     const H: &[u8; 16] = b"0123456789abcdef";
     let mut s = String::with_capacity(bytes.len() * 2);
@@ -80,7 +84,7 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
     fs::write(&down_payload, vec![0_u8; DOWN_LEN]).unwrap();
     let preparer =
         sha256_file(&root.join("scripts/research/prepare_f017_m1e_real_reference.py")).unwrap();
-    let oracle_doc = json!({"schema":"pulsarmlx.f017.m1e-oracle-package","schema_version":"1.0.0","generator":{"source_sha256":preparer},"matrices":{"gate":{"packed_sha256":gate_packed,"decoded_sha256":zeros_hash(2048*6144*4)},"up":{"packed_sha256":up_packed,"decoded_sha256":zeros_hash(2048*6144*4)},"down":{"packed_sha256":down_packed,"decoded_sha256":zeros_hash(6144*2048*4)}},"activation":{"sha256":activation_doc["activation"]["payload_sha256"],"bytes_hex":activation_doc["activation"]["bytes_hex"],"element_count":6144},"stages":{"gate":stage(2048),"up":stage(2048),"activated_hidden":stage(2048),"final_output":stage(6144)},"timings":{"decoder_gate_seconds":0.0,"decoder_up_seconds":0.0,"decoder_down_seconds":0.0,"oracle_gate_seconds":0.0,"oracle_up_seconds":0.0,"oracle_activation_seconds":0.0,"oracle_down_seconds":0.0},"finalization":{"preparation_started_at":"1","oracle_completed_at":"2","completion_marker":"m1e_oracle_finalized_sequence_0","immutable_after_finalization":true}});
+    let oracle_doc = json!({"schema":"pulsarmlx.f017.m1e-oracle-package","schema_version":"1.0.0","generator":{"source_sha256":preparer},"matrices":{"gate":{"packed_sha256":gate_packed,"decoded_sha256":zeros_hash(2048*6144*4)},"up":{"packed_sha256":up_packed,"decoded_sha256":zeros_hash(2048*6144*4)},"down":{"packed_sha256":down_packed,"decoded_sha256":zeros_hash(6144*2048*4)}},"activation":{"sha256":activation_doc["activation"]["payload_sha256"],"bytes_hex":activation_doc["activation"]["bytes_hex"],"element_count":6144},"stages":{"gate":stage(2048),"up":stage(2048),"activated_hidden":stage(2048),"final_output":stage(6144)},"bounds":{"gate":bound(2048),"up":bound(2048),"activated_hidden":bound(2048),"final_output":bound(6144)},"derived_global":{"max_absolute_bound":0.0,"rmse_bound":0.0,"cosine_minimum":null},"timings":{"decoder_gate_seconds":0.0,"decoder_up_seconds":0.0,"decoder_down_seconds":0.0,"oracle_gate_seconds":0.0,"oracle_up_seconds":0.0,"oracle_activation_seconds":0.0,"oracle_down_seconds":0.0},"finalization":{"preparation_started_at":"1","oracle_completed_at":"2","completion_marker":"m1e_oracle_finalized_sequence_0","immutable_after_finalization":true}});
     let oracle = temp.join("oracle.json");
     fs::write(&oracle, serde_json::to_vec(&oracle_doc).unwrap()).unwrap();
     let payload = |role: &str, name: &str, digest: &str| json!({"path_kind":"package_relative","symbolic_path":name,"content_sha256":digest,"logical_role":format!("{role}_packed_payload"),"package_artifact_id":format!("m1e-synthetic-{role}-packed-v1")});

@@ -46,12 +46,15 @@ def strict_matvec(matrix: np.ndarray, vector: np.ndarray) -> np.ndarray:
     return total
 
 
-def strict_swiglu(gate: np.ndarray, up: np.ndarray) -> np.ndarray:
+def strict_silu(gate: np.ndarray) -> np.ndarray:
     negative = np.negative(gate, dtype=np.float32)
     exponential = np.exp(negative, dtype=np.float32)
     denominator = np.add(np.float32(1.0), exponential, dtype=np.float32)
-    silu = np.divide(gate, denominator, dtype=np.float32)
-    return np.multiply(silu, up, dtype=np.float32)
+    return np.divide(gate, denominator, dtype=np.float32)
+
+
+def strict_swiglu(gate: np.ndarray, up: np.ndarray) -> np.ndarray:
+    return np.multiply(strict_silu(gate), up, dtype=np.float32)
 
 
 def gamma(operations: int) -> float:
@@ -75,7 +78,7 @@ def composed_bounds(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     gate_bound = matvec_bounds(gate_matrix, activation)
     up_bound = matvec_bounds(up_matrix, activation)
-    silu = hidden.astype(np.float64) / np.where(up != 0.0, up.astype(np.float64), 1.0)
+    silu = strict_silu(gate).astype(np.float64)
     preceding = (
         np.abs(up.astype(np.float64)) * SILU_DERIVATIVE_BOUND * gate_bound
         + np.abs(silu) * up_bound

@@ -339,14 +339,14 @@ pub fn qualify_m1e_expert_tier_b(
     for index in 0..gate_rows {
         let gate_bound = gate.rows[index].absolute_bound;
         let up_bound = up.rows[index].absolute_bound;
-        let gate_value = f64::from(reference_gate[index]);
         let up_value = f64::from(reference_up[index]);
-        let silu = if up_value == 0.0 {
-            let e = (-gate_value).exp();
-            gate_value / (1.0 + e)
-        } else {
-            f64::from(reference_hidden[index]) / up_value
-        };
+        // Reproduce the frozen f32 scaffold's SiLU directly. Recovering it
+        // from hidden / up is undefined at zero and introduces a needless
+        // division-rounding dependency elsewhere.
+        let silu = f64::from(rounded_div(
+            reference_gate[index],
+            rounded_add(1.0, rounded_exp(rounded_neg(reference_gate[index]))),
+        ));
         let preceding =
             up_value.abs() * 1.1 * gate_bound + silu.abs() * up_bound + 1.1 * gate_bound * up_bound;
         hidden_absolute_bounds.push(

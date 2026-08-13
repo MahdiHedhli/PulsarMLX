@@ -55,3 +55,32 @@ fn non_finite_and_large_final_divergence_fail_closed() {
             .passes
     );
 }
+
+#[test]
+fn zero_up_lane_keeps_the_frozen_silu_error_term() {
+    let input = vec![1.0_f32];
+    let gate_matrix = vec![2.0_f32];
+    let up_matrix = vec![0.0_f32];
+    let down_matrix = vec![1.0_f32];
+    let gate = vec![2.0_f32];
+    let up = vec![0.0_f32];
+    let hidden = vec![0.0_f32];
+    let output = vec![0.0_f32];
+    let qualification = qualify_m1e_expert_tier_b(
+        &gate_matrix,
+        &up_matrix,
+        &down_matrix,
+        &input,
+        &gate,
+        &gate,
+        &up,
+        &up,
+        &hidden,
+        &hidden,
+        &output,
+        &output,
+    )
+    .unwrap();
+    assert!(qualification.hidden_absolute_bounds[0] > 0.0);
+    assert!(qualification.passes);
+}
