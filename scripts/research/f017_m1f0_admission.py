@@ -559,6 +559,7 @@ def main() -> int:
     parser.add_argument("--execution-config-sha256")
     parser.add_argument("--synthetic-qualification", action="store_true")
     parser.add_argument("--synthetic-soak-seconds", type=float)
+    parser.add_argument("--build-preparation-config", action="store_true")
     parser.add_argument("--input-fixture", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
@@ -575,6 +576,10 @@ def main() -> int:
         if args.input_fixture is None:
             parser.error("synthetic soak requires input fixture")
         result = synthetic_soak(json.loads(args.input_fixture.read_text()), args.synthetic_soak_seconds)
+    elif args.build_preparation_config:
+        if args.input_fixture is None:
+            parser.error("config generation requires input fixture")
+        result = build_preparation_config(root, json.loads(args.input_fixture.read_text()))
     else:
         parser.error("select exactly one M1-F0 preparation mode")
     raw = canonical_json(result)
