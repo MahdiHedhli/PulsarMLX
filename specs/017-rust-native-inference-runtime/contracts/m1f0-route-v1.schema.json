@@ -2,22 +2,47 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "pulsarmlx.f017.m1f0-route.v1",
   "type": "object",
-  "required": ["schema", "schema_version", "layer", "input_package_sha256", "checkpoint_bindings", "attention_residual_sha256", "router_score_sha256", "top8_ids", "top8_ids_sha256", "routing_weights", "routing_weights_sha256", "oracle_preparer_sha256", "selection_contract_sha256", "expert_computation"],
+  "required": ["schema", "schema_version", "layer", "input_fixture_sha256", "input_package_sha256", "checkpoint_bindings", "attention_normalized_input_sha256", "attention_output_sha256", "attention_residual_sha256", "router_normalized_input_sha256", "router_score_sha256", "top8_ids", "top8_ids_sha256", "routing_weights", "routing_weights_sha256", "oracle_preparer_sha256", "decoder_contract_sha256s", "selection_contract_sha256", "numerical_contract_sha256", "m1f_recomputation_contract", "expert_computation"],
   "additionalProperties": false,
   "properties": {
     "schema": {"const": "pulsarmlx.f017.m1f0-layer3-route"},
     "schema_version": {"const": "1.0.0"},
     "layer": {"const": 3},
+    "input_fixture_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "input_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "checkpoint_bindings": {"type": "object"},
+    "attention_normalized_input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "attention_output_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "attention_residual_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "router_normalized_input_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "router_score_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "top8_ids": {"type": "array", "minItems": 8, "maxItems": 8},
     "top8_ids_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "routing_weights": {"type": "array", "minItems": 8, "maxItems": 8},
     "routing_weights_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "oracle_preparer_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decoder_contract_sha256s": {
+      "type": "object",
+      "required": ["set", "q5_k_real_byte"],
+      "additionalProperties": false,
+      "properties": {
+        "set": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "q5_k_real_byte": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
     "selection_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "numerical_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "m1f_recomputation_contract": {
+      "type": "object",
+      "required": ["exact_m1f0_attention_residual_is_input", "recomputed_attention_must_qualify_against_m1f0", "route_ids_remain_frozen", "route_divergence_fails"],
+      "additionalProperties": false,
+      "properties": {
+        "exact_m1f0_attention_residual_is_input": {"const": true},
+        "recomputed_attention_must_qualify_against_m1f0": {"const": true},
+        "route_ids_remain_frozen": {"const": true},
+        "route_divergence_fails": {"const": true}
+      }
+    },
     "expert_computation": {"const": false}
   }
 }

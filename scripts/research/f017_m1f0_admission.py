@@ -51,7 +51,12 @@ CONTRACT_PATHS = {
     "evidence_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-evidence-v1.schema.json",
     "route_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-route-v1.schema.json",
     "private_package_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-private-package-v1.schema.json",
+    "q5_k_real_byte": "specs/017-rust-native-inference-runtime/contracts/m1f0-q5-k-real-byte-exact-v1.json",
+    "first_real_quantization_policy": "specs/017-rust-native-inference-runtime/contracts/f017-first-real-quantization-admission-v1.json",
 }
+INPUT_REGENERATION_PATH = "docs/architecture/reviews/evidence/f017-m1-f0-input-regeneration-v1.json"
+Q5_QUALIFICATION_PATH = "docs/architecture/reviews/evidence/f017-m1-f0-q5-k-real-byte-qualification-v1.json"
+RUNTIME_SEMANTIC_BOUNDARY_SHA = "7e4c3f37049444443164964aea2fc630752d17ce"
 
 EXPECTED = [
     ("attention_norm", "blk.3.attn_norm.weight", "F32", [6144]),
@@ -400,7 +405,27 @@ def _git_head(root: Path) -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
 
 
-def build_preparation_config(root: Path, fixture: dict[str, object]) -> dict[str, object]:
+def _git(root: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
+
+
+def _git_file_sha256(root: Path, commit: str, path: str) -> str:
+    return sha256(subprocess.check_output(["git", "show", f"{commit}:{path}"], cwd=root))
+
+
+def _tooling_manifest(artifacts: dict[str, dict[str, str]], fixture_sha256: str) -> dict[str, object]:
+    return {
+        "execution_controlling_artifacts": {
+            role: {"path": reference["symbolic_path"], "sha256": reference["content_sha256"]}
+            for role, reference in sorted(artifacts.items())
+        },
+        "input_fixture": {"path": INPUT_PATH, "sha256": fixture_sha256},
+    }
+
+
+def build_preparation_config(
+    root: Path, fixture: dict[str, object], tooling_config_sha: str
+) -> dict[str, object]:
     allowlist = build_allowlist(root / CATALOG_PATH)
     artifacts = {
         role: {
@@ -420,6 +445,28 @@ def build_preparation_config(root: Path, fixture: dict[str, object]) -> dict[str
         "symbolic_path": "scripts/research/prepare_f017_m1f0_real_reference.py",
         "content_sha256": file_sha256(root / "scripts/research/prepare_f017_m1f0_real_reference.py"),
     }
+    artifacts["admission_tool"] = {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/f017_m1f0_admission.py",
+        "content_sha256": file_sha256(root / "scripts/research/f017_m1f0_admission.py"),
+    }
+    artifacts["q5_k_qualifier"] = {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/qualify_f017_m1f0_q5_k_real.py",
+        "content_sha256": file_sha256(root / "scripts/research/qualify_f017_m1f0_q5_k_real.py"),
+    }
+    artifacts["input_regeneration_evidence"] = {
+        "path_kind": "repository_relative",
+        "symbolic_path": INPUT_REGENERATION_PATH,
+        "content_sha256": file_sha256(root / INPUT_REGENERATION_PATH),
+    }
+    artifacts["q5_k_qualification_evidence"] = {
+        "path_kind": "repository_relative",
+        "symbolic_path": Q5_QUALIFICATION_PATH,
+        "content_sha256": file_sha256(root / Q5_QUALIFICATION_PATH),
+    }
+    fixture_sha256 = file_sha256(root / INPUT_PATH)
+    tooling_manifest = _tooling_manifest(artifacts, fixture_sha256)
     return {
         "schema": SCHEMA,
         "schema_version": SCHEMA_VERSION,
@@ -428,9 +475,14 @@ def build_preparation_config(root: Path, fixture: dict[str, object]) -> dict[str
         "attempt_state": "NOT_AUTHORIZED_NOT_EXECUTED",
         "source_identities": {
             "preparation_base_head": "de25a5327cffbd30c8e4898df8f019ec9f084c94",
-            "tooling_head": _git_head(root),
-            "authorization_head": None,
+            "runtime_semantic_boundary_sha": RUNTIME_SEMANTIC_BOUNDARY_SHA,
+            "tooling_config_sha": tooling_config_sha,
+            "tooling_tree_oid": _git(root, "rev-parse", f"{tooling_config_sha}^{{tree}}"),
+            "tooling_content_manifest_sha256": sha256(canonical_json(tooling_manifest)),
+            "authorization_head_sha": None,
+            "final_documentation_head_sha": None,
             "trusted_repository_identity_contract": "f017-trusted-repository-identity-v2",
+            "freeze_pattern": "tooling_commit_then_generated_config_then_docs_evidence_descendants",
         },
         "prior_evidence": {"m1_e": M1_E_EVIDENCE_SHA256, "m1_f_blocker": M1_F_BLOCKER_SHA256},
         "checkpoint_bindings": CHECKPOINT_BINDINGS,
@@ -445,6 +497,25 @@ def build_preparation_config(root: Path, fixture: dict[str, object]) -> dict[str
                 name: record["sha256"]  # type: ignore[index]
                 for name, record in fixture["state"].items()  # type: ignore[union-attr]
             },
+            "regeneration_attestation": {
+                "path_kind": "repository_relative",
+                "symbolic_path": INPUT_REGENERATION_PATH,
+                "content_sha256": file_sha256(root / INPUT_REGENERATION_PATH),
+                "python": "3.13.13",
+                "numpy": "2.4.5",
+                "prng": "PCG64",
+                "seed": 17017006,
+                "byte_equal": True,
+            },
+        },
+        "q5_k_real_byte_qualification": {
+            "path_kind": "repository_relative",
+            "symbolic_path": Q5_QUALIFICATION_PATH,
+            "content_sha256": file_sha256(root / Q5_QUALIFICATION_PATH),
+            "contract_sha256": file_sha256(root / CONTRACT_PATHS["q5_k_real_byte"]),
+            "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084",
+            "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8",
+            "exact_bitwise_equal": True,
         },
         "tensor_allowlist": allowlist,
         "access_budget": {
@@ -487,7 +558,7 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
         "schema", "schema_version", "status", "attempt", "attempt_state",
         "source_identities", "prior_evidence", "checkpoint_bindings", "layer",
         "input_state", "tensor_allowlist", "access_budget", "contracts", "execution",
-        "authorization", "forbidden_historical_route",
+        "authorization", "forbidden_historical_route", "q5_k_real_byte_qualification",
     }
     if set(value) != required:
         raise ValueError("M1-F0 config field set differs")
@@ -501,6 +572,30 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
         raise ValueError("M1-F0 evidence lineage differs")
     if value["checkpoint_bindings"] != CHECKPOINT_BINDINGS:
         raise ValueError("M1-F0 checkpoint binding differs")
+    identities = value["source_identities"]
+    if not isinstance(identities, dict) or set(identities) != {
+        "preparation_base_head", "runtime_semantic_boundary_sha", "tooling_config_sha",
+        "tooling_tree_oid", "tooling_content_manifest_sha256", "authorization_head_sha", "final_documentation_head_sha",
+        "trusted_repository_identity_contract", "freeze_pattern",
+    }:
+        raise ValueError("M1-F0 source identity fields differ")
+    tooling_sha = identities.get("tooling_config_sha")
+    if not isinstance(tooling_sha, str) or len(tooling_sha) != 40:
+        raise ValueError("M1-F0 tooling/config SHA missing")
+    try:
+        _git(root, "cat-file", "-e", f"{tooling_sha}^{{commit}}")
+        if subprocess.run(
+            ["git", "merge-base", "--is-ancestor", tooling_sha, "HEAD"], cwd=root, check=False
+        ).returncode != 0:
+            raise ValueError("M1-F0 tooling/config SHA is not an ancestor")
+    except subprocess.CalledProcessError as error:
+        raise ValueError("M1-F0 tooling/config commit missing") from error
+    if identities.get("tooling_tree_oid") != _git(root, "rev-parse", f"{tooling_sha}^{{tree}}"):
+        raise ValueError("M1-F0 tooling/config tree identity differs")
+    if identities.get("runtime_semantic_boundary_sha") != RUNTIME_SEMANTIC_BOUNDARY_SHA:
+        raise ValueError("M1-F0 runtime semantic boundary differs")
+    if identities.get("authorization_head_sha") is not None or identities.get("final_documentation_head_sha") is not None:
+        raise ValueError("M1-F0 later phase identity unexpectedly issued")
     layer = value["layer"]
     if layer != {"id": 3, "prefix": "blk.3", "position": 0, "dsa_mode": "range_fill"}:
         raise ValueError("M1-F0 layer identity differs")
@@ -524,8 +619,20 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
     expected_components = {name: record["sha256"] for name, record in fixture["state"].items()}
     if input_state.get("component_sha256") != expected_components:
         raise ValueError("M1-F0 input component identity differs")
+    regeneration = input_state.get("regeneration_attestation")
+    if regeneration != {
+        "path_kind": "repository_relative",
+        "symbolic_path": INPUT_REGENERATION_PATH,
+        "content_sha256": file_sha256(root / INPUT_REGENERATION_PATH),
+        "python": "3.13.13", "numpy": "2.4.5", "prng": "PCG64", "seed": 17017006,
+        "byte_equal": True,
+    }:
+        raise ValueError("M1-F0 input regeneration provenance differs")
     contracts = value["contracts"]
-    if not isinstance(contracts, dict) or set(contracts) != set(CONTRACT_PATHS) | {"input_generator", "oracle_preparer"}:
+    if not isinstance(contracts, dict) or set(contracts) != set(CONTRACT_PATHS) | {
+        "input_generator", "oracle_preparer", "admission_tool", "q5_k_qualifier",
+        "input_regeneration_evidence", "q5_k_qualification_evidence",
+    }:
         raise ValueError("M1-F0 contract inventory differs")
     for reference in contracts.values():
         if not isinstance(reference, dict) or reference.get("path_kind") != "repository_relative":
@@ -535,6 +642,35 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
             raise ValueError("M1-F0 artifact path differs")
         if reference.get("content_sha256") != file_sha256(root / symbolic):
             raise ValueError("M1-F0 artifact content differs")
+        if _git_file_sha256(root, tooling_sha, symbolic) != reference.get("content_sha256"):
+            raise ValueError("M1-F0 tooling/config commit does not contain reviewed artifact")
+    if _git_file_sha256(root, tooling_sha, INPUT_PATH) != input_state.get("artifact_sha256"):
+        raise ValueError("M1-F0 tooling/config commit has stale input fixture")
+    tooling_manifest = _tooling_manifest(contracts, str(input_state["artifact_sha256"]))
+    if identities.get("tooling_content_manifest_sha256") != sha256(canonical_json(tooling_manifest)):
+        raise ValueError("M1-F0 tooling content manifest differs")
+    q5 = value["q5_k_real_byte_qualification"]
+    q5_evidence = json.loads((root / Q5_QUALIFICATION_PATH).read_text())
+    if q5 != {
+        "path_kind": "repository_relative", "symbolic_path": Q5_QUALIFICATION_PATH,
+        "content_sha256": file_sha256(root / Q5_QUALIFICATION_PATH),
+        "contract_sha256": file_sha256(root / CONTRACT_PATHS["q5_k_real_byte"]),
+        "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084",
+        "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8",
+        "exact_bitwise_equal": True,
+    }:
+        raise ValueError("M1-F0 Q5_K qualification binding differs")
+    if (
+        q5_evidence.get("status") != "exact_real_byte_identity_passed"
+        or q5_evidence.get("comparison", {}).get("exact_bitwise_equal") is not True
+        or q5_evidence.get("scope", {}).get("tensor_payloads") != 1
+        or q5_evidence.get("scope", {}).get("m1f0_route_discovery") is not False
+    ):
+        raise ValueError("M1-F0 Q5_K qualification evidence invalid")
+    for decoder in ("decoder_a", "decoder_b"):
+        record = q5_evidence["comparison"][decoder]
+        if record.get("source_sha256") != file_sha256(root / record["path"]):
+            raise ValueError("M1-F0 Q5_K decoder source identity differs")
     authorization = value["authorization"]
     if authorization != {
         "required_before_payload_access": True,
@@ -574,29 +710,78 @@ def _reject_duplicates(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def route_artifact_from_synthetic(fixture: dict[str, object], result: dict[str, object]) -> dict[str, object]:
+def route_artifact_from_synthetic(root: Path, fixture: dict[str, object], result: dict[str, object]) -> dict[str, object]:
     selection = result["selection"]
+    stages = result["stage_hashes"]
     return {
         "schema": "pulsarmlx.f017.m1f0-layer3-route",
         "schema_version": "1.0.0",
         "evidence_kind": "checkpoint_free_synthetic",
         "layer": 3,
+        "input_fixture_sha256": file_sha256(root / INPUT_PATH),
         "input_package_sha256": fixture["package_sha256"],
-        "attention_residual_sha256": result["stage_hashes"]["attention_residual"],
-        "router_score_sha256": result["stage_hashes"]["router_scores"],
+        "checkpoint_bindings": CHECKPOINT_BINDINGS,
+        "attention_normalized_input_sha256": stages["attention_normalized"],
+        "attention_output_sha256": stages["attention_output"],
+        "attention_residual_sha256": stages["attention_residual"],
+        "router_normalized_input_sha256": stages["router_normalized"],
+        "router_score_sha256": stages["router_scores"],
         "top8_ids": selection["selected_ids"],
         "top8_ids_sha256": selection["selected_ids_sha256"],
         "routing_weights": selection["routing_weights"],
         "routing_weights_sha256": selection["routing_weights_sha256"],
+        "oracle_preparer_sha256": file_sha256(root / "scripts/research/prepare_f017_m1f0_real_reference.py"),
+        "decoder_contract_sha256s": {
+            "set": file_sha256(root / CONTRACT_PATHS["decoder"]),
+            "q5_k_real_byte": file_sha256(root / CONTRACT_PATHS["q5_k_real_byte"]),
+        },
+        "selection_contract_sha256": file_sha256(root / CONTRACT_PATHS["selection"]),
+        "numerical_contract_sha256": file_sha256(root / CONTRACT_PATHS["numerical"]),
+        "m1f_recomputation_contract": {
+            "exact_m1f0_attention_residual_is_input": True,
+            "recomputed_attention_must_qualify_against_m1f0": True,
+            "route_ids_remain_frozen": True,
+            "route_divergence_fails": True,
+        },
         "expert_computation": False,
     }
 
 
-def validate_route_artifact(value: dict[str, object], input_package_sha256: str) -> None:
+def validate_route_artifact(root: Path, value: dict[str, object], input_package_sha256: str) -> None:
     if value.get("schema") != "pulsarmlx.f017.m1f0-layer3-route" or value.get("layer") != 3:
         raise ValueError("route artifact identity differs")
-    if value.get("input_package_sha256") != input_package_sha256 or value.get("expert_computation") is not False:
+    if (
+        value.get("input_fixture_sha256") != file_sha256(root / INPUT_PATH)
+        or value.get("input_package_sha256") != input_package_sha256
+        or value.get("checkpoint_bindings") != CHECKPOINT_BINDINGS
+        or value.get("expert_computation") is not False
+    ):
         raise ValueError("route artifact scope differs")
+    for field in (
+        "attention_normalized_input_sha256", "attention_output_sha256", "attention_residual_sha256",
+        "router_normalized_input_sha256", "router_score_sha256", "oracle_preparer_sha256",
+        "selection_contract_sha256", "numerical_contract_sha256",
+    ):
+        if not isinstance(value.get(field), str) or len(str(value[field])) != 64:
+            raise ValueError("route artifact contextual identity missing")
+    if (
+        value.get("oracle_preparer_sha256") != file_sha256(root / "scripts/research/prepare_f017_m1f0_real_reference.py")
+        or value.get("selection_contract_sha256") != file_sha256(root / CONTRACT_PATHS["selection"])
+        or value.get("numerical_contract_sha256") != file_sha256(root / CONTRACT_PATHS["numerical"])
+    ):
+        raise ValueError("route artifact oracle/selection/numerical binding differs")
+    if value.get("decoder_contract_sha256s") != {
+        "set": file_sha256(root / CONTRACT_PATHS["decoder"]),
+        "q5_k_real_byte": file_sha256(root / CONTRACT_PATHS["q5_k_real_byte"]),
+    }:
+        raise ValueError("route artifact decoder contract differs")
+    if value.get("m1f_recomputation_contract") != {
+        "exact_m1f0_attention_residual_is_input": True,
+        "recomputed_attention_must_qualify_against_m1f0": True,
+        "route_ids_remain_frozen": True,
+        "route_divergence_fails": True,
+    }:
+        raise ValueError("route artifact M1-F residual binding differs")
     selected = value.get("top8_ids")
     weights = value.get("routing_weights")
     if not isinstance(selected, list) or not isinstance(weights, list):
@@ -616,6 +801,7 @@ def main() -> int:
     parser.add_argument("--synthetic-stress", action="store_true")
     parser.add_argument("--build-preparation-config", action="store_true")
     parser.add_argument("--input-fixture", type=Path)
+    parser.add_argument("--tooling-config-sha")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     root = args.repository_root.resolve(strict=True)
@@ -636,9 +822,11 @@ def main() -> int:
             parser.error("synthetic stress requires input fixture")
         result = synthetic_stress(json.loads(args.input_fixture.read_text()))
     elif args.build_preparation_config:
-        if args.input_fixture is None:
-            parser.error("config generation requires input fixture")
-        result = build_preparation_config(root, json.loads(args.input_fixture.read_text()))
+        if args.input_fixture is None or args.tooling_config_sha is None:
+            parser.error("config generation requires input fixture and tooling/config SHA")
+        result = build_preparation_config(
+            root, json.loads(args.input_fixture.read_text()), args.tooling_config_sha
+        )
     else:
         parser.error("select exactly one M1-F0 preparation mode")
     raw = canonical_json(result)

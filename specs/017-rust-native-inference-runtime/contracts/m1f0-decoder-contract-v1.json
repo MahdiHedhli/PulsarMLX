@@ -20,7 +20,10 @@
       "block_bytes": 176,
       "decoder": "ggml_q5_k_superblock_scalar_reference",
       "scale_min_layout": "ggml_get_scale_min_k4",
-      "high_bit_layout": "qh_lane_bits_2g_and_2g_plus_1"
+      "high_bit_layout": "qh_lane_bits_2g_and_2g_plus_1",
+      "real_byte_contract": "m1f0-q5-k-exact-v1",
+      "real_byte_contract_path": "specs/017-rust-native-inference-runtime/contracts/m1f0-q5-k-real-byte-exact-v1.json",
+      "exact_real_decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8"
     }
   },
   "requirements": {

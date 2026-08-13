@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.first-real-quantization-admission-policy",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-first-real-quantization-admission-v1",
+  "rule": "A quantization family appearing for the first time in a real F017 gate must receive exact real-byte independent decoder cross-qualification before that gate freezes downstream numerical evidence.",
+  "synthetic_evidence_is_not_real_byte_qualification": true,
+  "known_status": {
+    "F32": {"status": "real_byte_qualified", "gate": "M1-C"},
+    "Q8_0": {"status": "real_byte_qualified", "gate": "M1-D"},
+    "IQ2_XXS": {"status": "real_byte_qualified", "gate": "M1-E"},
+    "IQ3_XXS": {"status": "real_byte_qualified_decoder_v2", "gate": "M1-E remediation"},
+    "Q5_K": {
+      "status": "real_byte_qualified",
+      "gate": "M1-F0 remediation",
+      "contract": "m1f0-q5-k-exact-v1"
+    },
+    "Q4_K": {"status": "not_real_byte_qualified"},
+    "Q6_K": {"status": "not_real_byte_qualified"}
+  },
+  "m1f_resumption": {
+    "inspect_all_discovered_routed_expert_triplets": true,
+    "inspect_shared_expert_if_required": true,
+    "fail_on_unqualified_family": true,
+    "qualification_must_precede_layer_oracle_freeze": true
+  },
+  "fail_closed": true
+}

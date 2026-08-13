@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-input-regeneration",
+  "schema_version": "1.0.0",
+  "command": "uv run --project scripts/research --python 3.13.13 python scripts/research/generate_f017_m1f0_input.py --output <fresh-temporary-file>",
+  "environment": {
+    "python": "3.13.13",
+    "numpy": "2.4.5",
+    "prng": "PCG64",
+    "seed": 17017006
+  },
+  "generator": {
+    "path": "scripts/research/generate_f017_m1f0_input.py",
+    "source_sha256": "8dd7e9b8a4e4a6bfdb5a71535dabd28b4495209df326a88650b6831efc26d32d"
+  },
+  "result": {
+    "byte_equal_to_committed_fixture": true,
+    "fixture_artifact_sha256": "33be5f7ed93a29621b39034246a8bf088111fa4138b0966179aad94a138e63c4",
+    "package_sha256": "eb5693c99f73c2a95d71aec947b8a18a6c07c71dbbb460490af82b617dba9283",
+    "component_sha256": {
+      "hidden": "decc4ef42e1cf5d6cbee2fe6d46f3cd29b6dd39b9bb997d1083e7a7228ed86cf",
+      "query_position": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "mla_cache": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "dsa": "2bb5d053425b308fbef711827f82a50aa05a6cc2ae11952f3f90447ff0d27764",
+      "mask": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+    }
+  },
+  "checkpoint_accessed": false,
+  "metadata_hand_edited": false,
+  "status": "exact_regeneration_passed"
+}

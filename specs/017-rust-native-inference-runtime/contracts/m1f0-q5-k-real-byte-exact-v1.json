@@ -1,0 +1,55 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-q5-k-real-byte-exact-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "m1f0-q5-k-exact-v1",
+  "format": {
+    "name": "Q5_K",
+    "block_elements": 256,
+    "block_bytes": 176,
+    "canonical_output": "row_major_logical_little_endian_f32_no_padding_no_transpose",
+    "tolerance": 0
+  },
+  "authoritative_reference": {
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "commit": "a94d563ed801d1da1b8c2432946de07d0231bb3d",
+    "path": "gguf-py/gguf/quants.py",
+    "source_sha256": "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b",
+    "symbol": "Q5_K.dequantize_blocks"
+  },
+  "implementations": [
+    {
+      "role": "decoder_a_scalar_oracle",
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "source_sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d"
+    },
+    {
+      "role": "decoder_b_independent_upstream_vector_transcription",
+      "path": "scripts/research/qualify_f017_m1f0_q5_k_real.py",
+      "source_sha256": "57d5de26453b52ac569fd72bc84512f65bd73c5aff5c59280c42ae145bff1e30"
+    }
+  ],
+  "real_tensor": {
+    "symbolic_name": "blk.3.attn_output.weight",
+    "shard_ordinal": 2,
+    "offset": 2008658784,
+    "packed_length": 69206016,
+    "logical_shape": [6144, 16384],
+    "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084",
+    "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8"
+  },
+  "qualification_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-m1-f0-q5-k-real-byte-qualification-v1.json",
+    "decoder_implementations": 2,
+    "exact_bitwise_equal": true,
+    "tensor_payloads_read": 1,
+    "route_discovery": false
+  },
+  "synthetic_regressions": {
+    "fixture_count": 3,
+    "distinct_scale_and_quant_patterns": true,
+    "first_divergence_recording_required": true
+  },
+  "independence_statement": "Decoder B is a direct vector-layout transcription of the pinned upstream gguf-py reference and neither imports nor calls decoder A.",
+  "required_for_all_m1f0_q5_k_tensors": true,
+  "status": "qualified_exact_real_bytes"
+}

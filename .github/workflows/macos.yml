@@ -165,11 +165,22 @@ jobs:
             scripts.research.tests.test_f017_m1f0_admission -v
           cargo test -p quant \
             tests::m1f0_q5_k_and_q8_0_match_independent_specification_bytes -- --exact --nocapture
+          .venv/bin/python scripts/research/qualify_f017_m1f0_q5_k_real.py \
+            --repository-root . \
+            --synthetic-only
+          echo "M1-F0 Q5_K gate: three independent scale/quant fixtures exact; public real-byte qualification evidence hash-bound"
           .venv/bin/python scripts/research/generate_f017_m1f0_input.py \
             --output specs/017-rust-native-inference-runtime/fixtures/f017-m1f0-layer3-input-v1.json \
             --check
           .venv/bin/python scripts/research/validate_f017_m1f0_package.py \
             --repository-root .
+          M1F0_CONFIG=docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json
+          M1F0_CONFIG_SHA=$(shasum -a 256 "$M1F0_CONFIG" | awk '{print $1}')
+          .venv/bin/python scripts/research/f017_m1f0_admission.py \
+            --repository-root . \
+            --m1f0-preflight-only \
+            --execution-config "$M1F0_CONFIG" \
+            --execution-config-sha256 "$M1F0_CONFIG_SHA"
           echo "M1-F0 synthetic attention/router: 10 deterministic discoveries; exact top-8 and routing bytes"
           .venv/bin/python scripts/research/f017_m1f0_admission.py \
             --repository-root . \

@@ -1,0 +1,78 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-q5-k-real-byte-qualification",
+  "schema_version": "1.0.0",
+  "scope": {
+    "decoder_qualification_only": true,
+    "tensor_payloads": 1,
+    "shard_opens": 1,
+    "positional_reads": 1,
+    "attention_computation": 0,
+    "router_computation": 0,
+    "expert_computation": 0,
+    "mlx_candidate_computation": 0,
+    "m1f0_route_discovery": false
+  },
+  "checkpoint_bindings": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+  },
+  "tensor": {
+    "symbolic_name": "blk.3.attn_output.weight",
+    "role": "attention_output",
+    "shard_ordinal": 2,
+    "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "offset": 2008658784,
+    "packed_length": 69206016,
+    "packed_row_width": 11264,
+    "quantization": "Q5_K",
+    "gguf_shape": [16384, 6144],
+    "logical_shape": [6144, 16384],
+    "element_count": 100663296,
+    "catalog_entry_sha256": "eb3f2e1d6f3f5238a84a9778aef2e07bf6a4d77e9a3aa9f2e9aad6df37e89ad7",
+    "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084"
+  },
+  "canonical_decoded_representation": "row_major_logical_little_endian_f32_no_padding_no_transpose",
+  "authoritative_reference": {
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "commit": "a94d563ed801d1da1b8c2432946de07d0231bb3d",
+    "path": "gguf-py/gguf/quants.py",
+    "source_sha256": "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b",
+    "symbol": "Q5_K.dequantize_blocks"
+  },
+  "comparison": {
+    "decoder_a": {
+      "role": "existing_m1f0_scalar_oracle",
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "source_sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d",
+      "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8",
+      "min": -0.25618743896484375,
+      "max": 0.2162635326385498,
+      "non_finite_count": 0,
+      "signed_zero_count": 0
+    },
+    "decoder_b": {
+      "role": "independent_pinned_upstream_vector_transcription",
+      "path": "scripts/research/qualify_f017_m1f0_q5_k_real.py",
+      "source_sha256": "57d5de26453b52ac569fd72bc84512f65bd73c5aff5c59280c42ae145bff1e30",
+      "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8",
+      "min": -0.25618743896484375,
+      "max": 0.2162635326385498,
+      "non_finite_count": 0,
+      "signed_zero_count": 0
+    },
+    "element_count": 100663296,
+    "exact_bitwise_equal": true,
+    "first_divergence": null
+  },
+  "independence": {
+    "decoder_b_calls_decoder_a": false,
+    "decoder_b_imports_decoder_a": false,
+    "decoder_b_algorithm_source": "pinned_upstream_vector_layout",
+    "shared_candidate_or_mlx_dependency": false
+  },
+  "private_paths_persisted": false,
+  "packed_or_decoded_bytes_persisted": false,
+  "status": "exact_real_byte_identity_passed"
+}

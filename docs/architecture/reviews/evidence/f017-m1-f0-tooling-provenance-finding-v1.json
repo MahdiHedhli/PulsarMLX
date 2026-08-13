@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-tooling-provenance-finding",
+  "schema_version": "1.0.0",
+  "reviewed_head": "1c80f6419112f3410cdb26e3294a8610c31a9c22",
+  "history": [
+    {
+      "commit": "3192b31e4fe3008f0182548a45f7117948d83afd",
+      "declared_tooling_head": "bf11011badb0fef90abd3d8fcfd4850db536a35e",
+      "fixture_artifact_sha256": "ea18e9ce6e96a0e6f2324733ee432af5b1c8cdcf80e3e28ca4d7e57c7fcd3d18",
+      "config_blob": "c5ca4580820283beae3e051b634c6ce4d0d3798e",
+      "fixture_blob": "2eda7288904c1c893d4691591979666bd0fea1a7",
+      "declared_commit_contains_config": false
+    },
+    {
+      "commit": "1c80f6419112f3410cdb26e3294a8610c31a9c22",
+      "declared_tooling_head": "3192b31e4fe3008f0182548a45f7117948d83afd",
+      "fixture_artifact_sha256": "33be5f7ed93a29621b39034246a8bf088111fa4138b0966179aad94a138e63c4",
+      "config_blob": "76ad4a59bf893a5d08fdad578618d052c4ce608c",
+      "fixture_blob": "e515190b58424960e180b6e1c2606dd2400f59ee",
+      "declared_commit_contains_current_fixture_and_config_pair": false
+    }
+  ],
+  "all_historical_config_revisions_self_consistent": false,
+  "any_historical_config_revision_self_consistent": false,
+  "classification": "STALE_TOOLING_CONFIG_IDENTITY",
+  "banked_before_remediation": true
+}

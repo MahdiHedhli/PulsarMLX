@@ -26,6 +26,12 @@ def load(name: str, relative: str):
 INPUT = load("f017_m1f0_input", "scripts/research/generate_f017_m1f0_input.py")
 M1F0 = load("f017_m1f0_admission", "scripts/research/f017_m1f0_admission.py")
 SPEC = load("prepare_f017_m1f0", "scripts/research/prepare_f017_m1f0_real_reference.py")
+Q5_REAL = load("qualify_f017_m1f0_q5_k_real", "scripts/research/qualify_f017_m1f0_q5_k_real.py")
+
+
+def tooling_sha() -> str:
+    config = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-execution-config-v1.json").read_text())
+    return config["source_identities"]["tooling_config_sha"]
 
 
 class M1F0AdmissionTests(unittest.TestCase):
@@ -42,6 +48,11 @@ class M1F0AdmissionTests(unittest.TestCase):
         project_q5 = np.asarray(dequantize_row_q5_k(bytes(q5)), dtype="<f4")
         self.assertEqual(spec_q5.tobytes(), project_q5.tobytes())
         self.assertEqual(hashlib.sha256(spec_q5.tobytes()).hexdigest(), "6168658f2e27a4650816dd5c3a31a85ac2908045ac7725f2cf79b662e3c478e7")
+
+        for block in Q5_REAL.synthetic_blocks():
+            scalar = np.asarray(SPEC.decode_q5_k_spec(block), dtype="<f4")
+            upstream = np.asarray(Q5_REAL.decode_q5_k_upstream_spec(block), dtype="<f4")
+            self.assertEqual(scalar.tobytes(), upstream.tobytes())
 
         q8 = bytearray(((index * 41 + 7) & 255) for index in range(34))
         q8[:2] = bytes.fromhex("0030")
@@ -131,7 +142,7 @@ class M1F0AdmissionTests(unittest.TestCase):
 
     def test_preflight_is_non_consuming_hash_bound_and_fail_closed(self):
         fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
-        config = M1F0.build_preparation_config(ROOT, fixture)
+        config = M1F0.build_preparation_config(ROOT, fixture, tooling_sha())
         with tempfile.TemporaryDirectory() as directory:
             config_path = Path(directory) / "config.json"
             config_path.write_bytes(M1F0.canonical_json(config))
@@ -149,7 +160,7 @@ class M1F0AdmissionTests(unittest.TestCase):
 
     def test_historical_route_config_mutation_and_attempt_reuse_fail(self):
         fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
-        config = M1F0.build_preparation_config(ROOT, fixture)
+        config = M1F0.build_preparation_config(ROOT, fixture, tooling_sha())
         cases = []
         historical = copy.deepcopy(config)
         historical["forbidden_historical_route"] = [0] * 8
@@ -180,32 +191,40 @@ class M1F0AdmissionTests(unittest.TestCase):
     def test_route_artifact_contract_rejects_stale_input_and_expert_evidence(self):
         fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
         synthetic = M1F0.synthetic_qualification(fixture, repeats=10)
-        route = M1F0.route_artifact_from_synthetic(fixture, synthetic)
-        M1F0.validate_route_artifact(route, fixture["package_sha256"])
+        route = M1F0.route_artifact_from_synthetic(ROOT, fixture, synthetic)
+        M1F0.validate_route_artifact(ROOT, route, fixture["package_sha256"])
         stale = copy.deepcopy(route)
         stale["input_package_sha256"] = "0" * 64
         with self.assertRaises(ValueError):
-            M1F0.validate_route_artifact(stale, fixture["package_sha256"])
+            M1F0.validate_route_artifact(ROOT, stale, fixture["package_sha256"])
         widened = copy.deepcopy(route)
         widened["expert_computation"] = True
         with self.assertRaises(ValueError):
-            M1F0.validate_route_artifact(widened, fixture["package_sha256"])
+            M1F0.validate_route_artifact(ROOT, widened, fixture["package_sha256"])
         substituted = copy.deepcopy(route)
         substituted["top8_ids"] = M1F0.HISTORICAL_ROUTE
         with self.assertRaises(ValueError):
-            M1F0.validate_route_artifact(substituted, fixture["package_sha256"])
+            M1F0.validate_route_artifact(ROOT, substituted, fixture["package_sha256"])
         inverted = copy.deepcopy(route)
         inverted["top8_ids"] = list(reversed(inverted["top8_ids"]))
         with self.assertRaises(ValueError):
-            M1F0.validate_route_artifact(inverted, fixture["package_sha256"])
+            M1F0.validate_route_artifact(ROOT, inverted, fixture["package_sha256"])
         weight_drift = copy.deepcopy(route)
         weight_drift["routing_weights"][0] += 1e-15
         with self.assertRaises(ValueError):
-            M1F0.validate_route_artifact(weight_drift, fixture["package_sha256"])
+            M1F0.validate_route_artifact(ROOT, weight_drift, fixture["package_sha256"])
+
+        residual_drift = copy.deepcopy(route)
+        residual_drift["attention_residual_sha256"] = "0" * 64
+        self.assertNotEqual(residual_drift, route)
+        context_drift = copy.deepcopy(route)
+        context_drift["m1f_recomputation_contract"]["route_divergence_fails"] = False
+        with self.assertRaises(ValueError):
+            M1F0.validate_route_artifact(ROOT, context_drift, fixture["package_sha256"])
 
     def test_real_preparer_rejects_unissued_authorization_before_private_access(self):
         fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
-        config = M1F0.build_preparation_config(ROOT, fixture)
+        config = M1F0.build_preparation_config(ROOT, fixture, tooling_sha())
         with tempfile.TemporaryDirectory() as directory:
             temporary = Path(directory)
             config_path = temporary / "config.json"
