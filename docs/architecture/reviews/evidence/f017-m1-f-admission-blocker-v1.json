@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.m1f-admission-blocker",
+  "schema_version": "1.0.0",
+  "status": "BLOCKED_OPERATOR_DECISION_REQUIRED",
+  "starting_head": "283ba594cca002a003f43ec172a3af2af9e59295",
+  "accepted_m1e_evidence_sha256": "0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9",
+  "selected_layer": 3,
+  "selected_layer_prefix": "blk.3",
+  "real_m1f_execution_performed": false,
+  "real_checkpoint_payload_accessed": false,
+  "m1f_authorization_issued": false,
+  "m1f_preflight_implemented": false,
+  "known_historical_route": {
+    "source": "docs/research/glm52/raw/f016-layer3-iq3-0001.json",
+    "input_identity": "token_embedding[9703]",
+    "input_residual_sha256": "5c3e4ebc2d5909c5e6f556bdc00f50130b705a3fb3fe7150f4f24bf7c81bbb80",
+    "attention_residual_sha256": "7a19b425ae8bdf0009c84daa61c80fb054bffdf5fa0f3f2291d5af87cc7832aa",
+    "selected_expert_ids": [15, 177, 233, 41, 166, 26, 10, 152],
+    "independence_limitation": "the historical route is bound to a checkpoint-derived token embedding, not to the newly required independent input fixture"
+  },
+  "conflicting_requirements": [
+    "the M1-F input state must be independently generated and frozen before real candidate observation",
+    "the exact eight routed experts and their tensor byte ranges must be present in the immutable pre-execution allowlist",
+    "no unrelated expert or wildcard expert prefix may be authorized",
+    "this preparation sprint may not execute the real attention/router/layer boundary"
+  ],
+  "proof": {
+    "router_function": "top8(sigmoid(router_matrix * rms_norm(attention_residual(input))) + router_bias)",
+    "catalog_metadata_sufficient": false,
+    "new_input_route_known_without_real_weight_values": false,
+    "historical_route_transfer_to_new_input_valid": false,
+    "all_256_experts_allowlist_valid": false,
+    "real_attention_router_oracle_required_to_freeze_new_route": true
+  },
+  "hard_stop_reason": "real checkpoint execution is required to determine the exact top-8 for the independently generated input before a non-wildcard expert allowlist can be frozen",
+  "operator_choices": [
+    {
+      "id": "A",
+      "description": "authorize a separately bounded oracle-only layer-3 attention/router admission stage that reads only the frozen attention, normalization, router, and bias payloads; performs no MLX candidate compute; banks exact top-8; then resumes package preparation"
+    },
+    {
+      "id": "B",
+      "description": "authorize recovery and direct hash-binding of the exact historical token_embedding[9703] input bytes so the already banked top-8 can be independently revalidated; waive the newly generated-input requirement for M1-F"
+    },
+    {
+      "id": "C",
+      "description": "review and authorize a two-stage M1-F contract in which a router-only stage freezes an immutable derived eight-expert allowlist before a separately authorized layer candidate stage"
+    }
+  ],
+  "prohibited_shortcuts": [
+    "reuse historical expert IDs with different input bytes",
+    "authorize all 256 experts",
+    "use a wildcard expert prefix",
+    "select experts from candidate output",
+    "execute a real layer under the preparation prompt"
+  ]
+}

@@ -187,3 +187,11 @@
   native-loader preflight blocker, bind the reviewed MLX loader environment,
   rebuild authorization, execute at most attempts 3-5, and bank acceptance or
   the terminal blocker without entering M1-F.
+- [ ] T017-179 Prepare and checkpoint-free qualify the complete layer-3 M1-F
+  admission package. **Blocked before implementation:** an independently
+  generated input has no pre-existing real router result, while an exact
+  eight-expert tensor allowlist must be frozen before the separately reviewed
+  real boundary. Resolving that ordering requires operator authorization for
+  a bounded real attention/router oracle-admission stage, reuse of an exact
+  previously captured input payload, or a reviewed two-stage allowlist
+  contract. See `f017-m1-f-admission-blocker.md`.

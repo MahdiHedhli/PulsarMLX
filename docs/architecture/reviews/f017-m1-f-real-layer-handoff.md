@@ -1,6 +1,6 @@
 # F017 M1-F Real Layer Handoff
 
-**Status: PREPARED / NOT AUTHORIZED**
+**Status: BLOCKED IN ADMISSION PREPARATION / NOT AUTHORIZED**
 
 ## Accepted prerequisite
 
@@ -41,3 +41,10 @@ preflight, and Apple-native CI qualification.
 
 M1-F execution, a complete layer, logits, P1/P2, golden-eight, and Feature 018
 integration remain prohibited. No authorization is implied by this handoff.
+
+The admission sprint selected layer 3 but found a hard ordering conflict before
+creating any execution-controlling M1-F artifact: an independently generated
+input does not inherit the old Feature 016 top-8, and exact routed-expert ranges
+cannot be frozen without a real attention/router oracle-admission read. The
+banked blocker and permitted operator choices are documented in
+`docs/architecture/reviews/f017-m1-f-admission-blocker.md`.
