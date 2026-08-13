@@ -69,3 +69,27 @@ failure is unaffected. Attempt 2 remains unconsumed.
 
 No real checkpoint payload, oracle, tensor decode, or MLX expert compute was
 performed during this remediation.
+
+## Rebuilt config and preflight
+
+- authorization execution head:
+  `f8a9910ca1c9242c2638556b0daee6a11949a090`
+- permitted-delta classification SHA-256:
+  `400ff607be3e4eb28b1d246c701abaf2140970bb4fdc269bcc1485f113a485d3`
+- superseded config SHA-256:
+  `4778a2694fd4a80feb5789ee3641dcd13fea3b2ba1d144dc150dde8af7d14cd7`
+- rebuilt v3 config SHA-256:
+  `a8905b8709aadf8d36bf94c2cb54c14a9ce5bcd31e7a1b184da33127af300f4e`
+- canonical non-consuming result: `READY_TO_EXECUTE_M1_E`
+
+The config points at a dedicated clean detached worktree at the exact
+authorization execution head. Subsequent status-only authorization banking
+therefore cannot silently move the execution root. Output targets for attempt
+state, preflight evidence, oracle/package, and attempt evidence remained
+absent after preflight.
+
+The native synthetic expert integration passed with one conceptual expert,
+10 deterministic repeats, and 30 native dispatches. M1-D native regression,
+oracle-order failure injection, repeat-divergence injection, path/root tests,
+and immutable-config tests passed. Internal and independent reviews both
+returned `GO FOR M1-E ATTEMPT 2`.
