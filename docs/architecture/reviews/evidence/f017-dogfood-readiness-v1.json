@@ -143,8 +143,8 @@
     "handoff": "docs/architecture/reviews/f017-m1-e-real-expert-handoff.md",
     "review_packet": "docs/architecture/reviews/f017-m1-e-adversarial-review-packet.md",
     "runtime_source_sha": "466770362e3066fa5fd9827ec1f454e03afe3006",
-    "tooling_source_sha": "3387bb6d11e4c84e87e323b243142242366bdc5a",
-    "execution_config_sha256": "758bb3092356954ee496743074d61a0dbb792d3b77a9de7651d73383745488c0",
+    "tooling_source_sha": "3387bb6d4508eb04e672dc6194da2855ba72f072",
+    "execution_config_sha256": "7f69550bfd7ccd5e820f23d2bcce7f0e287d2c2bfc5f1ae2adb59ec5467b0a1b",
     "expert": {
       "layer": 3,
       "expert": 15,
