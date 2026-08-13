@@ -4,10 +4,12 @@
 
 ## Published source and preparer identities
 
-- compiled runtime/tooling SHA:
+- compiled runtime SHA:
+  `7e4c3f37049444443164964aea2fc630752d17ce`
+- execution-tooling SHA:
   `1da693665e5635ad404d472f395a4a407dd348fc`
 - arm64 release executable SHA-256:
-  `720a4c61bdc61b5f5fdd1ba479b0a3543a5bcded1d7d10d2e146b9c7eea08919`
+  `05e0e590eda9ea54d95d3bb7b59bdc9dbec9b3ea15e0cf4626ea13f46a7afa9a`
 - trusted repository identity contract:
   `f017-trusted-repository-identity-v2` /
   `88faaf375d871a60462cbbddd5b27c186353d168eae2611b14cf485a24a78eaf`
