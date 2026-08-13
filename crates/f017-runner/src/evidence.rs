@@ -708,6 +708,10 @@ impl Evidence {
                         "m1_e_attempt_1".into(),
                         "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119".into(),
                     ),
+                    (
+                        "m1_e_attempt_2".into(),
+                        "8912e523963cfa8822fe6472ec30be31a78c4c3648fba34caf6c41055efd7e00".into(),
+                    ),
                 ])
                 || self.identity.compiled_runtime_sha.as_deref()
                     != Some(self.identity.source_sha.as_str())
