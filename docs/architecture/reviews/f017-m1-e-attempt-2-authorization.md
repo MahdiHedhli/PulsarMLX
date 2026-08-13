@@ -1,11 +1,14 @@
 # F017 M1-E Attempt 2 Authorization
 
-**Status: AUTHORIZED FOR EXACTLY ONE M1-E ATTEMPT 2 / NOT EXECUTED**
+**Status: CONSUMED — M1-E ATTEMPT 2 REJECTED / NO RETRY AUTHORIZED**
 
-This repaired authorization supersedes the earlier unexecuted packet. Attempt
-1 remains consumed and rejected. Attempt 2 never crossed `EXECUTION_STARTED`
-and remains unconsumed: real checkpoint access, oracle creation, tensor decode,
-candidate MLX context/dispatch, and attempt-2 evidence are absent.
+This repaired authorization superseded the earlier unexecuted packet. Attempt
+1 remains consumed and rejected. Attempt 2 subsequently crossed
+`EXECUTION_STARTED` exactly once and is consumed. Its independent preparer
+rejected execution-config schema `3.0.0` because it still accepted only schema
+`2.0.0`; this occurred before checkpoint access, oracle creation, tensor
+decode, candidate MLX context/dispatch, or numerical qualification. The
+banked attempt-2 rejection evidence is authoritative. No retry is authorized.
 
 ## Distinct repository identities
 

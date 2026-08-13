@@ -176,3 +176,6 @@
   authorization-checkout identities; fail closed on non-ancestry, dirty
   state, stale binaries, or execution-relevant descendant drift; rebuild the
   still-unconsumed M1-E attempt-2 config under trusted-repository identity v2.
+- [x] T017-176 Execute exactly one identity-v2-authorized M1-E attempt 2,
+  preserve the fail-closed pre-checkpoint execution-config schema rejection,
+  bank public-safe evidence, and stop without retry or M1-F preparation.
