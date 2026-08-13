@@ -80,3 +80,18 @@ No option authorizes M1-F execution by itself.
 M1-F remains not authorized. No complete layer, second layer, logits, P1/P2,
 golden-eight, or Feature 018 work was executed. M1-E and M1-D evidence remains
 unchanged.
+
+## Resolution amendment: M1-F0 protocol
+
+The operator selected the separately reviewed two-stage path. The ordering
+question is therefore closed at the architecture level:
+
+1. M1-F0 freezes a new independent layer-3 input and performs only a bounded
+   real attention/router oracle discovery.
+2. Its accepted route artifact becomes the sole source of the exact eight
+   routed experts.
+3. M1-F admission then derives its expert tensor, access, and dispatch budgets
+   from that immutable route.
+
+This amendment does not supply a route, authorize M1-F0, or authorize M1-F.
+T017-179 remains open until accepted M1-F0 evidence exists.

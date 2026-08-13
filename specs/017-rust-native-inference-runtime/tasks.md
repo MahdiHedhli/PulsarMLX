@@ -188,10 +188,11 @@
   rebuild authorization, execute at most attempts 3-5, and bank acceptance or
   the terminal blocker without entering M1-F.
 - [ ] T017-179 Prepare and checkpoint-free qualify the complete layer-3 M1-F
-  admission package. **Blocked before implementation:** an independently
-  generated input has no pre-existing real router result, while an exact
-  eight-expert tensor allowlist must be frozen before the separately reviewed
-  real boundary. Resolving that ordering requires operator authorization for
-  a bounded real attention/router oracle-admission stage, reuse of an exact
-  previously captured input payload, or a reviewed two-stage allowlist
-  contract. See `f017-m1-f-admission-blocker.md`.
+  admission package. **Blocked pending M1-F0:** the reviewed two-stage protocol
+  now freezes a new input and admits a separately authorized oracle-only
+  attention/router discovery before the eight-expert M1-F allowlist is built.
+  No M1-F preparation may resume until accepted M1-F0 route evidence exists.
+- [x] T017-180 Prepare and checkpoint-free qualify the bounded layer-3 M1-F0
+  oracle-only attention/router discovery package, freeze its 12-tensor
+  expert-free access budget and exact route-selection contract, pass internal
+  review, and stop with the adversarial packet pending external review.

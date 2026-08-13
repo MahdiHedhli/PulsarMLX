@@ -168,6 +168,8 @@ jobs:
           .venv/bin/python scripts/research/generate_f017_m1f0_input.py \
             --output specs/017-rust-native-inference-runtime/fixtures/f017-m1f0-layer3-input-v1.json \
             --check
+          .venv/bin/python scripts/research/validate_f017_m1f0_package.py \
+            --repository-root .
           echo "M1-F0 synthetic attention/router: 10 deterministic discoveries; exact top-8 and routing bytes"
           .venv/bin/python scripts/research/f017_m1f0_admission.py \
             --repository-root . \
