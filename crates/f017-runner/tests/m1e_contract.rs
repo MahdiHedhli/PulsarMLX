@@ -184,8 +184,16 @@ fn wrong_expert_tensor_fixture_attempt_and_dispatch_fail_closed() {
             Box::new(|v| v["tensors"][0]["decoder_contract_sha256"] = json!("0".repeat(64))),
         ),
         (
-            "truncated",
+            "truncated_gate",
             Box::new(|v| v["tensors"][0]["packed_length"] = json!(3_244_031)),
+        ),
+        (
+            "truncated_up",
+            Box::new(|v| v["tensors"][1]["packed_length"] = json!(3_244_031)),
+        ),
+        (
+            "truncated_down",
+            Box::new(|v| v["tensors"][2]["packed_length"] = json!(4_816_895)),
         ),
         (
             "router",
