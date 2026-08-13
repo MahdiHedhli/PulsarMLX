@@ -169,11 +169,27 @@ def compose_oracle(
     kv_raw = matvec("blk.3.attn_kv_a_mqa.weight", attention_normalized)
     kv_normalized = rms_norm(kv_raw[:512], vector("blk.3.attn_kv_a_norm.weight"))
     key_nope = np.empty((64, 512), dtype=np.float32)
+    attention_scores = np.empty(64, dtype=np.float32)
+    attention_weights = np.ones(64, dtype=np.float32)
     value_heads = np.empty((64, 256), dtype=np.float32)
     for head in range(64):
         key_nope[head] = head_matvec(
             "blk.3.attn_k_b.weight", head, q_heads[head * 256 : head * 256 + 192]
         )
+        score = np.float32(0)
+        for lane in range(512):
+            score = np.add(
+                score,
+                np.multiply(key_nope[head, lane], kv_normalized[lane], dtype=np.float32),
+                dtype=np.float32,
+            )
+        for lane in range(64):
+            score = np.add(
+                score,
+                np.multiply(q_heads[head * 256 + 192 + lane], kv_raw[512 + lane], dtype=np.float32),
+                dtype=np.float32,
+            )
+        attention_scores[head] = np.multiply(score, np.float32(1.0 / 16.0), dtype=np.float32)
         # At position zero, range-fill exposes one value and softmax is exactly one.
         value_heads[head] = head_matvec("blk.3.attn_v_b.weight", head, kv_normalized)
     attention_output = matvec("blk.3.attn_output.weight", value_heads.reshape(-1))
@@ -190,6 +206,8 @@ def compose_oracle(
         "kv_raw": kv_raw,
         "kv_normalized": kv_normalized,
         "key_nope": key_nope,
+        "attention_scores": attention_scores,
+        "attention_weights": attention_weights,
         "value_heads": value_heads,
         "attention_output": attention_output,
         "attention_residual": attention_residual,
@@ -267,6 +285,8 @@ def prepare(
     repository_root: Path,
     config_path: Path,
     expected_config_sha: str,
+    authorization_path: Path | None,
+    expected_authorization_sha: str | None,
     package_root: Path,
     output: Path,
 ) -> dict[str, Any]:
@@ -274,11 +294,34 @@ def prepare(
     if sha256(config_raw) != expected_config_sha:
         raise ValueError("execution config identity")
     config = json.loads(config_raw)
-    if config["authorization"]["issued"] is not True:
+    if authorization_path is None or expected_authorization_sha is None:
         raise ValueError("M1-F0 real execution is not authorized")
+    authorization_raw = authorization_path.read_bytes()
+    if sha256(authorization_raw) != expected_authorization_sha:
+        raise ValueError("M1-F0 authorization identity")
+    authorization = json.loads(authorization_raw)
+    if (
+        authorization.get("schema") != "pulsarmlx.f017.m1f0-authorization"
+        or authorization.get("status") != "AUTHORIZED FOR EXACTLY ONE M1-F0 ATTEMPT / NOT EXECUTED"
+        or authorization.get("attempt") != config["attempt"]
+        or authorization.get("execution_config_sha256") != expected_config_sha
+    ):
+        raise ValueError("M1-F0 authorization binding")
     manifest_path = _safe_package_file(package_root, "checkpoint-manifest.json")
     manifest = json.loads(manifest_path.read_text())
+    if set(manifest) != {"schema", "schema_version", "checkpoint_set_sha256", "shard_2"}:
+        raise ValueError("private package manifest fields")
+    if (
+        manifest["schema"] != "pulsarmlx.f017.m1f0-private-package"
+        or manifest["schema_version"] != "1.0.0"
+        or manifest["checkpoint_set_sha256"] != config["checkpoint_bindings"]["checkpoint_set_sha256"]
+        or set(manifest["shard_2"]) != {"path_kind", "path", "size_bytes", "sha256"}
+        or manifest["shard_2"]["path_kind"] != "package_relative"
+    ):
+        raise ValueError("private package identity")
     shard_path = _safe_package_file(package_root, manifest["shard_2"]["path"])
+    if shard_path.stat().st_size != manifest["shard_2"]["size_bytes"]:
+        raise ValueError("private shard size identity")
     hidden_path = (repository_root / config["input_state"]["symbolic_path"]).resolve(strict=True)
     if repository_root not in (hidden_path, *hidden_path.parents):
         raise ValueError("repository artifact path escape")
@@ -327,6 +370,8 @@ def main() -> int:
     parser.add_argument("--repository-root", type=Path, required=True)
     parser.add_argument("--execution-config", type=Path, required=True)
     parser.add_argument("--execution-config-sha256", required=True)
+    parser.add_argument("--authorization", type=Path, required=True)
+    parser.add_argument("--authorization-sha256", required=True)
     parser.add_argument("--private-package-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -334,6 +379,8 @@ def main() -> int:
         args.repository_root.resolve(strict=True),
         args.execution_config,
         args.execution_config_sha256,
+        args.authorization,
+        args.authorization_sha256,
         args.private_package_root.resolve(strict=True),
         args.output,
     )

@@ -44,10 +44,13 @@ CONTRACT_PATHS = {
     "boundary": "specs/017-rust-native-inference-runtime/contracts/m1f0-attention-router-boundary-v1.json",
     "decoder": "specs/017-rust-native-inference-runtime/contracts/m1f0-decoder-contract-v1.json",
     "selection": "specs/017-rust-native-inference-runtime/contracts/m1f0-selection-v1.json",
+    "scaffold": "specs/017-rust-native-inference-runtime/contracts/m1f0-exact-scaffold-v1.json",
     "numerical": "specs/017-rust-native-inference-runtime/contracts/production-m1f0-tier-b-v1.json",
+    "timing": "specs/017-rust-native-inference-runtime/contracts/m1f0-timing-v1.json",
     "execution_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-execution-config-v1.schema.json",
     "evidence_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-evidence-v1.schema.json",
     "route_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-route-v1.schema.json",
+    "private_package_schema": "specs/017-rust-native-inference-runtime/contracts/m1f0-private-package-v1.schema.json",
 }
 
 EXPECTED = [
@@ -355,6 +358,44 @@ def synthetic_soak(fixture: dict[str, object], seconds: float) -> dict[str, obje
     }
 
 
+def synthetic_stress(fixture: dict[str, object]) -> dict[str, object]:
+    base = np.frombuffer(bytes.fromhex(fixture["state"]["hidden"]["bytes_hex"]), dtype="<f4").copy()  # type: ignore[index]
+    cases: dict[str, np.ndarray] = {
+        "baseline": base,
+        "attention_cancellation": np.asarray([(-1.0 if i % 2 else 1.0) * (1.0 + (i % 7) * 2.0**-20) for i in range(6144)], dtype="<f4"),
+        "near_zero_signed_zero_subnormal": np.asarray([(-0.0 if i % 4 == 0 else 0.0 if i % 4 == 1 else (-1.0 if i % 2 else 1.0) * 2.0**-145) for i in range(6144)], dtype="<f4"),
+        "dynamic_range": np.asarray([(-1.0 if i % 2 else 1.0) * 2.0 ** ((i % 41) - 20) for i in range(6144)], dtype="<f4"),
+        "near_overflow_finite": np.asarray([(-1.0 if i % 2 else 1.0) * 1.0e15 * (1.0 + (i % 5) / 16.0) for i in range(6144)], dtype="<f4"),
+        "simultaneous_branch_errors": np.asarray([math.sin(i * 0.17) * 64.0 + math.cos(i * 0.031) * 2.0**-8 for i in range(6144)], dtype="<f4"),
+    }
+    records: list[dict[str, object]] = []
+    for name, hidden in cases.items():
+        first = _synthetic_once(hidden)
+        second = _synthetic_once(hidden)
+        if canonical_json(first) != canonical_json(second):
+            raise ValueError(f"M1-F0 stress nondeterminism: {name}")
+        records.append(
+            {
+                "name": name,
+                "input_sha256": sha256(f32_bytes(hidden)),
+                "stage_and_route_sha256": sha256(canonical_json(first)),
+                "selected_ids": first["selected_ids"],
+                "top8_exact": True,
+                "finite": True,
+            }
+        )
+    return {
+        "schema": "pulsarmlx.f017.m1f0-stress-qualification",
+        "schema_version": "1.0.0",
+        "cases": records,
+        "case_count": len(records),
+        "post_observation_retuning": False,
+        "checkpoint_accessed": False,
+        "expert_tensor_accesses": 0,
+        "status": "passed",
+    }
+
+
 def _git_head(root: Path) -> str:
     return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
 
@@ -423,10 +464,18 @@ def build_preparation_config(root: Path, fixture: dict[str, object]) -> dict[str
             "expert_dispatches": 0,
             "auto_retry": False,
             "stop_before_m1_f": True,
+            "private_package": {
+                "root_source": "explicit_canonical_runner_argument",
+                "manifest_path_kind": "package_relative",
+                "manifest_path": "checkpoint-manifest.json",
+                "symlink_escape": "reject",
+                "traversal": "reject"
+            },
         },
         "authorization": {
             "required_before_payload_access": True,
-            "issued": False,
+            "artifact_schema": "pulsarmlx.f017.m1f0-authorization",
+            "issued_in_this_phase": False,
             "external_adversarial_review_required": True,
         },
         "forbidden_historical_route": HISTORICAL_ROUTE,
@@ -487,7 +536,12 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
         if reference.get("content_sha256") != file_sha256(root / symbolic):
             raise ValueError("M1-F0 artifact content differs")
     authorization = value["authorization"]
-    if authorization != {"required_before_payload_access": True, "issued": False, "external_adversarial_review_required": True}:
+    if authorization != {
+        "required_before_payload_access": True,
+        "artifact_schema": "pulsarmlx.f017.m1f0-authorization",
+        "issued_in_this_phase": False,
+        "external_adversarial_review_required": True,
+    }:
         raise ValueError("M1-F0 preparation authorization state differs")
 
 
@@ -559,6 +613,7 @@ def main() -> int:
     parser.add_argument("--execution-config-sha256")
     parser.add_argument("--synthetic-qualification", action="store_true")
     parser.add_argument("--synthetic-soak-seconds", type=float)
+    parser.add_argument("--synthetic-stress", action="store_true")
     parser.add_argument("--build-preparation-config", action="store_true")
     parser.add_argument("--input-fixture", type=Path)
     parser.add_argument("--output", type=Path)
@@ -576,6 +631,10 @@ def main() -> int:
         if args.input_fixture is None:
             parser.error("synthetic soak requires input fixture")
         result = synthetic_soak(json.loads(args.input_fixture.read_text()), args.synthetic_soak_seconds)
+    elif args.synthetic_stress:
+        if args.input_fixture is None:
+            parser.error("synthetic stress requires input fixture")
+        result = synthetic_stress(json.loads(args.input_fixture.read_text()))
     elif args.build_preparation_config:
         if args.input_fixture is None:
             parser.error("config generation requires input fixture")

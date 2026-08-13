@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-exact-scaffold",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-layer3-position0-sequential-f32-v1",
+  "position": 0,
+  "dsa": {
+    "mode": "range_fill",
+    "visible_positions": [0],
+    "indexer_weights_accessed": false
+  },
+  "rms_norm": "strict increasing-index f32 square/add, f32 divide, f32 sqrt, f32 reciprocal, f32 multiply by input then weight",
+  "matvec": "strict increasing-column f32 multiply then f32 add for every row",
+  "rope": "position_zero_identity",
+  "attention_score": "strict increasing latent columns then rope columns, scale f32 by 1/16",
+  "softmax": "single visible element has exact f32 weight 1",
+  "attention_residual": "one f32 addition in ascending element order",
+  "router": "strict sequential f32 matvec followed by selection contract",
+  "fast_math": false,
+  "reassociation": false,
+  "rust_ffi": false,
+  "mlx": false,
+  "candidate_output_input": false,
+  "expert_computation": false
+}

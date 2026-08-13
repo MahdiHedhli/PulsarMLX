@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1f0-private-package.v1",
+  "type": "object",
+  "required": ["schema", "schema_version", "checkpoint_set_sha256", "shard_2"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f0-private-package"},
+    "schema_version": {"const": "1.0.0"},
+    "checkpoint_set_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "shard_2": {
+      "type": "object",
+      "required": ["path_kind", "path", "size_bytes", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "path_kind": {"const": "package_relative"},
+        "path": {"type": "string"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-timing",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-boundary-timing-v1",
+  "clock": "monotonic_ns",
+  "buckets": [
+    "storage",
+    "decode_f32",
+    "decode_q8_0",
+    "decode_q5_k",
+    "attention_norm",
+    "query_projection",
+    "kv_projection",
+    "attention_score",
+    "attention_value",
+    "attention_output_projection",
+    "attention_residual",
+    "router_norm",
+    "router_projection",
+    "sigmoid_and_bias",
+    "top8_selection",
+    "routing_weight_reconstruction",
+    "package_finalization",
+    "total_boundary_wall"
+  ],
+  "claim_scope": "M1-F0 boundary measurements only; not model performance"
+}

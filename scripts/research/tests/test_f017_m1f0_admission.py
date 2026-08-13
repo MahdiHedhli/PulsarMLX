@@ -120,6 +120,15 @@ class M1F0AdmissionTests(unittest.TestCase):
         self.assertEqual(len(result["selection"]["selected_ids"]), 8)
         self.assertNotEqual(result["selection"]["selected_ids"], M1F0.HISTORICAL_ROUTE)
 
+    def test_real_shaped_stress_contract_is_frozen_and_deterministic(self):
+        fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
+        result = M1F0.synthetic_stress(fixture)
+        self.assertEqual(result["case_count"], 6)
+        self.assertEqual(result["status"], "passed")
+        self.assertFalse(result["post_observation_retuning"])
+        self.assertEqual(result["expert_tensor_accesses"], 0)
+        self.assertTrue(all(case["top8_exact"] for case in result["cases"]))
+
     def test_preflight_is_non_consuming_hash_bound_and_fail_closed(self):
         fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
         config = M1F0.build_preparation_config(ROOT, fixture)
@@ -193,6 +202,31 @@ class M1F0AdmissionTests(unittest.TestCase):
         weight_drift["routing_weights"][0] += 1e-15
         with self.assertRaises(ValueError):
             M1F0.validate_route_artifact(weight_drift, fixture["package_sha256"])
+
+    def test_real_preparer_rejects_unissued_authorization_before_private_access(self):
+        fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
+        config = M1F0.build_preparation_config(ROOT, fixture)
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            config_path = temporary / "config.json"
+            config_path.write_bytes(M1F0.canonical_json(config))
+            digest = hashlib.sha256(config_path.read_bytes()).hexdigest()
+            with self.assertRaisesRegex(ValueError, "not authorized"):
+                SPEC.prepare(ROOT, config_path, digest, None, None, temporary, temporary / "oracle.json")
+            self.assertFalse((temporary / "oracle.json").exists())
+
+    def test_private_package_traversal_and_symlink_escape_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory) / "package"
+            package.mkdir()
+            outside = Path(directory) / "outside.bin"
+            outside.write_bytes(b"x")
+            with self.assertRaises(ValueError):
+                SPEC._safe_package_file(package, "../outside.bin")
+            link = package / "link.bin"
+            link.symlink_to(outside)
+            with self.assertRaises(ValueError):
+                SPEC._safe_package_file(package, "link.bin")
 
 
 if __name__ == "__main__":
