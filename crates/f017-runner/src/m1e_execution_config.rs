@@ -1,6 +1,9 @@
 //! Immutable, config-only command assembly and non-consuming preflight for M1-E.
 
-use crate::artifact_paths::{ArtifactReference, TrustedRepositoryRoot};
+use crate::artifact_paths::{
+    ArtifactReference, TrustedRepositoryIdentity, TrustedRepositoryRoot,
+    TRUSTED_REPOSITORY_IDENTITY_VERSION,
+};
 use crate::cli::{
     Config, ExecutionConfigBinding, NumericalMode, RunnerMode, StreamMode, ValidationMode,
 };
@@ -12,7 +15,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const SCHEMA: &str = "pulsarmlx.f017.m1e-execution-config";
-pub const VERSION: &str = "2.0.0";
+pub const VERSION: &str = "3.0.0";
 pub const ATTEMPT: u64 = 2;
 pub const DECODER_CONTRACT_SHA256: &str =
     "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84";
@@ -32,8 +35,11 @@ pub struct Document {
     pub status: String,
     pub attempt: u64,
     pub attempt_consumed: bool,
-    pub runtime_sha: String,
+    pub compiled_runtime_sha: String,
     pub tooling_sha: String,
+    pub authorization_head_sha: String,
+    pub trusted_repository_identity: TrustedRepositoryIdentity,
+    pub executable_identity: ExecutableIdentity,
     pub repository_root: Root,
     pub package_root: Root,
     pub activation_fixture: ArtifactReference,
@@ -46,6 +52,15 @@ pub struct Document {
     pub tensors: Vec<TensorBinding>,
     pub runner: RunnerBinding,
     pub execution: ExecutionBinding,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ExecutableIdentity {
+    pub sha256: String,
+    pub build_profile: String,
+    pub architecture: String,
+    pub feature_flags: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
@@ -252,8 +267,9 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
         || document.status != READY
         || document.attempt != ATTEMPT
         || document.attempt_consumed
-        || document.runtime_sha != env!("PULSARMLX_SOURCE_SHA")
+        || document.compiled_runtime_sha != env!("PULSARMLX_SOURCE_SHA")
         || document.tooling_sha.len() != 40
+        || document.authorization_head_sha.len() != 40
     {
         return Err(message(
             "m1e_config_identity",
@@ -261,7 +277,7 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
         ));
     }
     if document.repository_root.path_kind != "absolute_private_local"
-        || document.repository_root.identity != document.runtime_sha
+        || document.repository_root.identity != document.authorization_head_sha
         || document.package_root.path_kind != "absolute_private_local"
         || document.package_root.identity != "m1e_attempt_2_private_package_root"
     {
@@ -269,7 +285,22 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
     }
     reject_symlink(&document.repository_root.path)?;
     reject_symlink(&document.package_root.path)?;
-    let repository = TrustedRepositoryRoot::open(&document.repository_root.path)?;
+    if document.trusted_repository_identity.contract_version != TRUSTED_REPOSITORY_IDENTITY_VERSION
+        || document.trusted_repository_identity.compiled_runtime_sha
+            != document.compiled_runtime_sha
+        || document.trusted_repository_identity.tooling_sha != document.tooling_sha
+        || document.trusted_repository_identity.authorization_head_sha
+            != document.authorization_head_sha
+    {
+        return Err(message(
+            "m1e_repository_identity_binding",
+            "trusted repository identity does not match execution identities",
+        ));
+    }
+    let (repository, _) = TrustedRepositoryRoot::open_v2(
+        &document.repository_root.path,
+        &document.trusted_repository_identity,
+    )?;
     if document.activation_fixture.symbolic_path != Path::new(ACTIVATION_PATH)
         || document.activation_fixture.content_sha256 != ACTIVATION_ARTIFACT_SHA256
         || document.activation_fixture.logical_role != "activation_fixture"
@@ -282,6 +313,22 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
     }
     repository.resolve(&document.activation_fixture)?;
     validate_artifacts(&repository, &document.repository_artifacts)?;
+    if document
+        .repository_artifacts
+        .get("trusted_repository_identity_contract")
+        .map(|artifact| artifact.content_sha256.as_str())
+        != Some(
+            document
+                .trusted_repository_identity
+                .contract_sha256
+                .as_str(),
+        )
+    {
+        return Err(message(
+            "m1e_repository_identity_contract",
+            "trusted repository contract hash is not directly bound",
+        ));
+    }
     validate_prior(document)?;
     validate_expert(document)?;
     validate_local(document)?;
@@ -293,6 +340,10 @@ fn validate_artifacts(
     artifacts: &BTreeMap<String, ArtifactReference>,
 ) -> Result<(), RunnerError> {
     let expected = [
+        (
+            "attempt_2_handoff",
+            "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
+        ),
         (
             "boundary_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
@@ -323,11 +374,15 @@ fn validate_artifacts(
         ),
         (
             "execution_config_schema",
-            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v3.schema.json",
         ),
         (
             "path_resolution_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "trusted_repository_identity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json",
         ),
         (
             "activation_generator",
@@ -561,6 +616,16 @@ fn validate_local(document: &Document) -> Result<(), RunnerError> {
         if sha256_file(&file.path).map_err(|e| error("m1e_local_hash", e))? != file.content_sha256 {
             return Err(message("m1e_local_hash", "local artifact hash mismatch"));
         }
+    }
+    if document.local_artifacts.runner_binary.content_sha256 != document.executable_identity.sha256
+        || document.executable_identity.build_profile != "release"
+        || document.executable_identity.architecture != std::env::consts::ARCH
+        || document.executable_identity.feature_flags != vec!["pulsar_native_mlx".to_owned()]
+    {
+        return Err(message(
+            "m1e_executable_identity",
+            "compiled executable attestation mismatch",
+        ));
     }
     let shard = &document.local_artifacts.target_shard;
     if shard.path_kind != "absolute_private_local" || !shard.path.is_absolute() {

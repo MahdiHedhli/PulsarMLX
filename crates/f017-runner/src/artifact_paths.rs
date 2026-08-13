@@ -3,12 +3,14 @@
 use crate::json::sha256_bytes;
 use crate::{FailureClass, RunnerError};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
 pub const PATH_RESOLUTION_CONTRACT_VERSION: &str = "f017-m1d-artifact-path-resolution-v1";
+pub const TRUSTED_REPOSITORY_IDENTITY_VERSION: &str = "f017-trusted-repository-identity-v2";
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -38,6 +40,35 @@ pub struct ResolvedArtifact {
 pub struct TrustedRepositoryRoot {
     canonical: PathBuf,
     git_identity: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct TrustedRepositoryIdentity {
+    pub contract_version: String,
+    pub contract_sha256: String,
+    pub compiled_runtime_sha: String,
+    pub tooling_sha: String,
+    pub authorization_head_sha: String,
+    pub runtime_drift_classification_sha256: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RuntimeDriftEntry {
+    pub status: String,
+    pub category: String,
+    pub path: String,
+    pub permitted: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RuntimeDriftClassification {
+    pub contract_version: String,
+    pub compiled_runtime_sha: String,
+    pub authorization_head_sha: String,
+    pub entries: Vec<RuntimeDriftEntry>,
+    pub category_counts: BTreeMap<String, u64>,
+    pub runtime_semantics_unchanged: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -87,6 +118,99 @@ impl TrustedRepositoryRoot {
         })
     }
 
+    /// Opens a repository under the staged-gate identity model. The binary's
+    /// embedded source SHA proves the compiled runtime separately; this method
+    /// proves the exact authorization checkout, ancestry, a clean worktree,
+    /// and a deterministic no-runtime-drift classification.
+    pub fn open_v2(
+        path: &Path,
+        identity: &TrustedRepositoryIdentity,
+    ) -> Result<(Self, RuntimeDriftClassification), RunnerError> {
+        reject_root_symlink(path, "m1e_repository_root_symlink")?;
+        let canonical =
+            fs::canonicalize(path).map_err(|error| path_error("m1e_repository_root", error))?;
+        if !canonical.is_dir() {
+            return Err(path_message(
+                "m1e_repository_root",
+                "repository root is not a directory",
+            ));
+        }
+        if identity.contract_version != TRUSTED_REPOSITORY_IDENTITY_VERSION
+            || !is_sha256(&identity.contract_sha256)
+            || !is_git_sha(&identity.compiled_runtime_sha)
+            || !is_git_sha(&identity.tooling_sha)
+            || !is_git_sha(&identity.authorization_head_sha)
+            || !is_sha256(&identity.runtime_drift_classification_sha256)
+        {
+            return Err(path_message(
+                "m1e_repository_identity_contract",
+                "trusted repository identity v2 binding is malformed",
+            ));
+        }
+        let head = git_stdout(&canonical, &["rev-parse", "HEAD"])?;
+        if head != identity.authorization_head_sha {
+            return Err(path_message(
+                "m1e_authorization_head",
+                format!(
+                    "repository HEAD {head} differs from authorized head {}",
+                    identity.authorization_head_sha
+                ),
+            ));
+        }
+        let runtime_to_tooling = git_is_ancestor(
+            &canonical,
+            &identity.compiled_runtime_sha,
+            &identity.tooling_sha,
+        )?;
+        let tooling_to_authorization = git_is_ancestor(
+            &canonical,
+            &identity.tooling_sha,
+            &identity.authorization_head_sha,
+        )?;
+        if !runtime_to_tooling || !tooling_to_authorization {
+            return Err(path_message(
+                "m1e_repository_ancestry",
+                "compiled runtime -> tooling -> authorization ancestry is invalid",
+            ));
+        }
+        let dirty = git_stdout(
+            &canonical,
+            &["status", "--porcelain=v1", "--untracked-files=all"],
+        )?;
+        if !dirty.is_empty() {
+            return Err(path_message(
+                "m1e_repository_dirty",
+                "trusted repository worktree is not clean",
+            ));
+        }
+        let classification = classify_runtime_drift(
+            &canonical,
+            &identity.compiled_runtime_sha,
+            &identity.authorization_head_sha,
+        )?;
+        let classification_bytes = serde_json::to_vec(&classification)
+            .map_err(|error| path_error("m1e_runtime_drift_json", error))?;
+        if sha256_bytes(&classification_bytes) != identity.runtime_drift_classification_sha256 {
+            return Err(path_message(
+                "m1e_runtime_drift_hash",
+                "runtime-drift classification hash mismatch",
+            ));
+        }
+        if !classification.runtime_semantics_unchanged {
+            return Err(path_message(
+                "m1e_runtime_drift",
+                "authorization descendant contains execution-relevant drift",
+            ));
+        }
+        Ok((
+            Self {
+                canonical,
+                git_identity: head,
+            },
+            classification,
+        ))
+    }
+
     pub fn identity(&self) -> &str {
         &self.git_identity
     }
@@ -102,6 +226,120 @@ impl TrustedRepositoryRoot {
         }
         resolve_beneath(&self.canonical, reference)
     }
+}
+
+pub fn classify_runtime_drift(
+    repository: &Path,
+    compiled_runtime_sha: &str,
+    authorization_head_sha: &str,
+) -> Result<RuntimeDriftClassification, RunnerError> {
+    let range = format!("{compiled_runtime_sha}..{authorization_head_sha}");
+    let output = git_stdout(
+        repository,
+        &["diff", "--name-status", "--no-renames", &range],
+    )?;
+    let mut entries = Vec::new();
+    let mut category_counts = BTreeMap::new();
+    for line in output.lines().filter(|line| !line.trim().is_empty()) {
+        let mut fields = line.splitn(2, '\t');
+        let status = fields.next().unwrap_or("").to_owned();
+        let path = fields.next().unwrap_or("").to_owned();
+        if status.is_empty() || path.is_empty() {
+            return Err(path_message(
+                "m1e_runtime_drift_parse",
+                "malformed Git name-status output",
+            ));
+        }
+        let (category, permitted) = classify_path(&path);
+        *category_counts.entry(category.to_owned()).or_insert(0) += 1;
+        entries.push(RuntimeDriftEntry {
+            status,
+            category: category.to_owned(),
+            path,
+            permitted,
+        });
+    }
+    let runtime_semantics_unchanged = entries.iter().all(|entry| entry.permitted);
+    Ok(RuntimeDriftClassification {
+        contract_version: TRUSTED_REPOSITORY_IDENTITY_VERSION.to_owned(),
+        compiled_runtime_sha: compiled_runtime_sha.to_owned(),
+        authorization_head_sha: authorization_head_sha.to_owned(),
+        entries,
+        category_counts,
+        runtime_semantics_unchanged,
+    })
+}
+
+fn classify_path(path: &str) -> (&'static str, bool) {
+    if path.starts_with("docs/architecture/reviews/evidence/") {
+        ("evidence", true)
+    } else if path.starts_with("docs/architecture/reviews/") {
+        ("docs_reviews", true)
+    } else if path.starts_with("docs/") {
+        ("docs", true)
+    } else if path.starts_with("crates/quant/") {
+        ("decoder", false)
+    } else if path.starts_with("crates/stream/") || path.ends_with(".mm") {
+        ("mlx_bridge", false)
+    } else if path.starts_with("crates/f017-runner/src/artifact_paths.rs") {
+        ("path_resolver", false)
+    } else if path.starts_with("crates/f017-runner/src/") {
+        ("execution_runner", false)
+    } else if path.starts_with("crates/") {
+        ("runtime_compute", false)
+    } else if path.starts_with("scripts/research/tests/") || path.contains("/tests/") {
+        ("tests", false)
+    } else if path.starts_with("scripts/research/validate_") {
+        ("evidence_validator", false)
+    } else if path.starts_with("scripts/") {
+        ("execution_tooling", false)
+    } else if path.starts_with("specs/") {
+        ("schema_contracts", false)
+    } else if path.starts_with(".github/") {
+        ("ci", false)
+    } else {
+        ("unclassified", false)
+    }
+}
+
+fn git_stdout(repository: &Path, arguments: &[&str]) -> Result<String, RunnerError> {
+    let output = Command::new("git")
+        .args(["-C"])
+        .arg(repository)
+        .args(arguments)
+        .output()
+        .map_err(|error| path_error("m1e_repository_git", error))?;
+    if !output.status.success() {
+        return Err(path_message(
+            "m1e_repository_git",
+            String::from_utf8_lossy(&output.stderr).trim().to_owned(),
+        ));
+    }
+    String::from_utf8(output.stdout)
+        .map(|value| value.trim().to_owned())
+        .map_err(|error| path_error("m1e_repository_git", error))
+}
+
+fn git_is_ancestor(
+    repository: &Path,
+    ancestor: &str,
+    descendant: &str,
+) -> Result<bool, RunnerError> {
+    let status = Command::new("git")
+        .args(["-C"])
+        .arg(repository)
+        .args(["merge-base", "--is-ancestor", ancestor, descendant])
+        .status()
+        .map_err(|error| path_error("m1e_repository_ancestry", error))?;
+    Ok(status.success())
+}
+
+fn is_git_sha(value: &str) -> bool {
+    value.len() == 40 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+fn is_sha256(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 impl PrivatePackageRoot {
@@ -271,6 +509,49 @@ mod tests {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
     }
 
+    fn git(path: &Path, arguments: &[&str]) -> String {
+        let output = Command::new("git")
+            .args(["-C"])
+            .arg(path)
+            .args(arguments)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "git failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        String::from_utf8(output.stdout).unwrap().trim().to_owned()
+    }
+
+    fn synthetic_repository() -> (PathBuf, String) {
+        let root = temp();
+        git(&root, &["init", "-q"]);
+        git(&root, &["config", "user.email", "f017@example.invalid"]);
+        git(&root, &["config", "user.name", "F017 test"]);
+        fs::create_dir_all(root.join("crates/f017-runner/src")).unwrap();
+        fs::create_dir_all(root.join("docs/architecture/reviews")).unwrap();
+        fs::write(root.join("crates/f017-runner/src/lib.rs"), b"runtime-v1\n").unwrap();
+        git(&root, &["add", "."]);
+        git(&root, &["commit", "-q", "-m", "runtime"]);
+        let runtime = git(&root, &["rev-parse", "HEAD"]);
+        (root, runtime)
+    }
+
+    fn identity(root: &Path, runtime: &str, authorization: &str) -> TrustedRepositoryIdentity {
+        let classification = classify_runtime_drift(root, runtime, authorization).unwrap();
+        TrustedRepositoryIdentity {
+            contract_version: TRUSTED_REPOSITORY_IDENTITY_VERSION.to_owned(),
+            contract_sha256: "1".repeat(64),
+            compiled_runtime_sha: runtime.to_owned(),
+            tooling_sha: runtime.to_owned(),
+            authorization_head_sha: authorization.to_owned(),
+            runtime_drift_classification_sha256: sha256_bytes(
+                &serde_json::to_vec(&classification).unwrap(),
+            ),
+        }
+    }
+
     #[test]
     fn repository_reference_requires_exact_git_root_and_content() {
         let root = TrustedRepositoryRoot::open(&repository_root()).unwrap();
@@ -325,6 +606,112 @@ mod tests {
             );
             fs::remove_dir_all(parent).unwrap();
         }
+    }
+
+    #[test]
+    fn identity_v2_accepts_exact_runtime_and_review_only_descendants() {
+        let (root, runtime) = synthetic_repository();
+        let exact = identity(&root, &runtime, &runtime);
+        let (_, report) = TrustedRepositoryRoot::open_v2(&root, &exact).unwrap();
+        assert!(report.entries.is_empty());
+
+        fs::write(
+            root.join("docs/architecture/reviews/authorization.md"),
+            b"review only\n",
+        )
+        .unwrap();
+        git(&root, &["add", "."]);
+        git(&root, &["commit", "-q", "-m", "authorize"]);
+        let authorization = git(&root, &["rev-parse", "HEAD"]);
+        let descendant = identity(&root, &runtime, &authorization);
+        let (_, report) = TrustedRepositoryRoot::open_v2(&root, &descendant).unwrap();
+        assert!(report.runtime_semantics_unchanged);
+        assert_eq!(report.category_counts.get("docs_reviews"), Some(&1));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn identity_v2_rejects_runtime_drift_wrong_head_non_ancestry_and_dirty_tree() {
+        let (root, runtime) = synthetic_repository();
+        fs::write(root.join("crates/f017-runner/src/lib.rs"), b"runtime-v2\n").unwrap();
+        git(&root, &["add", "."]);
+        git(&root, &["commit", "-q", "-m", "drift"]);
+        let authorization = git(&root, &["rev-parse", "HEAD"]);
+        let drift = identity(&root, &runtime, &authorization);
+        assert_eq!(
+            TrustedRepositoryRoot::open_v2(&root, &drift)
+                .unwrap_err()
+                .code,
+            "m1e_runtime_drift"
+        );
+
+        let mut wrong_head = drift.clone();
+        wrong_head.authorization_head_sha = runtime.clone();
+        wrong_head.runtime_drift_classification_sha256 = sha256_bytes(
+            &serde_json::to_vec(&classify_runtime_drift(&root, &runtime, &runtime).unwrap())
+                .unwrap(),
+        );
+        assert_eq!(
+            TrustedRepositoryRoot::open_v2(&root, &wrong_head)
+                .unwrap_err()
+                .code,
+            "m1e_authorization_head"
+        );
+
+        fs::write(root.join("docs/dirty.md"), b"dirty\n").unwrap();
+        let clean_identity = identity(&root, &runtime, &authorization);
+        assert_eq!(
+            TrustedRepositoryRoot::open_v2(&root, &clean_identity)
+                .unwrap_err()
+                .code,
+            "m1e_repository_dirty"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn identity_v2_rejects_stale_binary_attestation_and_unrelated_history() {
+        let (root, runtime) = synthetic_repository();
+        let authorization = git(&root, &["rev-parse", "HEAD"]);
+        let mut stale = identity(&root, &runtime, &authorization);
+        stale.runtime_drift_classification_sha256 = "0".repeat(64);
+        assert_eq!(
+            TrustedRepositoryRoot::open_v2(&root, &stale)
+                .unwrap_err()
+                .code,
+            "m1e_runtime_drift_hash"
+        );
+
+        git(&root, &["checkout", "-q", "--orphan", "unrelated"]);
+        for entry in fs::read_dir(&root).unwrap().flatten() {
+            if entry.file_name() != ".git" {
+                let path = entry.path();
+                if path.is_dir() {
+                    fs::remove_dir_all(path).unwrap();
+                } else {
+                    fs::remove_file(path).unwrap();
+                }
+            }
+        }
+        fs::write(root.join("unrelated.txt"), b"unrelated\n").unwrap();
+        git(&root, &["add", "."]);
+        git(&root, &["commit", "-q", "-m", "unrelated"]);
+        let unrelated = git(&root, &["rev-parse", "HEAD"]);
+        let fake = TrustedRepositoryIdentity {
+            contract_version: TRUSTED_REPOSITORY_IDENTITY_VERSION.to_owned(),
+            contract_sha256: "1".repeat(64),
+            compiled_runtime_sha: runtime,
+            tooling_sha: authorization,
+            authorization_head_sha: unrelated,
+            runtime_drift_classification_sha256: "1".repeat(64),
+        };
+        assert_eq!(
+            TrustedRepositoryRoot::open_v2(&root, &fake)
+                .unwrap_err()
+                .code,
+            "m1e_repository_ancestry"
+        );
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

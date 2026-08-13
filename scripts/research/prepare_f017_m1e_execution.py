@@ -7,7 +7,10 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
+
+import classify_f017_repository_identity as repository_identity
 
 ACTIVATION = "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"
 ACTIVATION_PAYLOAD = "732ed2b9a6d3df0d185c1e35628a0b6b2cf30717cb697200d45b0e8a74008149"
@@ -24,6 +27,7 @@ CHECKPOINT = {
     "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
 }
 ARTIFACTS = {
+    "attempt_2_handoff": "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
     "boundary_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
     "decoder_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
     "scaffold_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
@@ -31,8 +35,9 @@ ARTIFACTS = {
     "repeat_integrity_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
     "timing_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
     "evidence_schema": "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
-    "execution_config_schema": "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+    "execution_config_schema": "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v3.schema.json",
     "path_resolution_contract": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+    "trusted_repository_identity_contract": "specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json",
     "activation_generator": "scripts/research/generate_f017_m1e_activation.py",
     "execution_config_preparer": "scripts/research/prepare_f017_m1e_execution.py",
     "authorized_launcher": "scripts/research/run_f017_m1e_authorized.py",
@@ -84,14 +89,37 @@ def main() -> int:
     parser.add_argument("--oracle-launcher", type=Path, required=True)
     parser.add_argument("--runtime-sha", required=True)
     parser.add_argument("--tooling-sha", required=True)
+    parser.add_argument("--authorization-head-sha", required=True)
+    parser.add_argument("--architecture", default="aarch64")
+    parser.add_argument("--build-profile", default="release")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mode", choices=("fixture_expert", "real_expert"), default="real_expert")
     args = parser.parse_args()
     root = args.repository_root.resolve(strict=True)
     package_root = args.package_root.resolve(strict=True)
-    for value in (args.runtime_sha, args.tooling_sha):
+    for value in (args.runtime_sha, args.tooling_sha, args.authorization_head_sha):
         if len(value) != 40 or any(c not in "0123456789abcdef" for c in value):
             raise ValueError("runtime/tooling SHA must be canonical lowercase Git SHA")
+    head = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    if head != args.authorization_head_sha:
+        raise ValueError("repository HEAD differs from authorization head")
+    dirty = subprocess.run(
+        ["git", "-C", str(root), "status", "--porcelain=v1", "--untracked-files=all"],
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    if dirty:
+        raise ValueError("repository worktree must be clean")
+    drift = repository_identity.document(root, args.runtime_sha, args.authorization_head_sha)
+    drift_raw = repository_identity.canonical(drift)
+    if not drift["runtime_semantics_unchanged"]:
+        raise ValueError("authorization descendant contains runtime drift")
     checkpoint = json.loads(args.checkpoint_manifest.read_text())
     shard = next(item for item in checkpoint["shards"] if item["filename"].endswith("00002-of-00006.gguf"))
     if args.target_shard.is_symlink():
@@ -106,9 +134,11 @@ def main() -> int:
         for role, name, quant, gguf, logical, offset, length, row, catalog in TENSORS
     ]
     document = {
-        "schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"2.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":False,
-        "runtime_sha":args.runtime_sha,"tooling_sha":args.tooling_sha,
-        "repository_root":{"path_kind":"absolute_private_local","path":str(root),"identity":args.runtime_sha},
+        "schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"3.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":False,
+        "compiled_runtime_sha":args.runtime_sha,"tooling_sha":args.tooling_sha,"authorization_head_sha":args.authorization_head_sha,
+        "trusted_repository_identity":{"contract_version":repository_identity.VERSION,"contract_sha256":sha(root / ARTIFACTS["trusted_repository_identity_contract"]),"compiled_runtime_sha":args.runtime_sha,"tooling_sha":args.tooling_sha,"authorization_head_sha":args.authorization_head_sha,"runtime_drift_classification_sha256":hashlib.sha256(drift_raw).hexdigest()},
+        "executable_identity":{"sha256":sha(runner),"build_profile":args.build_profile,"architecture":args.architecture,"feature_flags":["pulsar_native_mlx"]},
+        "repository_root":{"path_kind":"absolute_private_local","path":str(root),"identity":args.authorization_head_sha},
         "package_root":{"path_kind":"absolute_private_local","path":str(package_root),"identity":"m1e_attempt_2_private_package_root"},
         "activation_fixture":artifact(root,"activation_fixture",ACTIVATION),"activation_payload_sha256":ACTIVATION_PAYLOAD,
         "repository_artifacts":{role:artifact(root,role,path) for role,path in ARTIFACTS.items()},

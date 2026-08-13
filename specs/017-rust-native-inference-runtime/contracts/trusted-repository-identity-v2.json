@@ -1,0 +1,47 @@
+{
+  "schema": "pulsarmlx.f017.trusted-repository-identity",
+  "schema_version": "2.0.0",
+  "contract_version": "f017-trusted-repository-identity-v2",
+  "identities": {
+    "compiled_runtime_sha": "embedded_in_executable_and_equal_to_execution_config",
+    "tooling_sha": "exact_reviewed_execution_tooling_commit",
+    "authorization_head_sha": "exact_clean_repository_checkout_used_for_artifact_resolution"
+  },
+  "authorization_head_rules": {
+    "compiled_runtime_must_be_ancestor": true,
+    "head_must_equal_authorization_head_sha": true,
+    "worktree_must_be_clean": true,
+    "allowed_descendant_categories": [
+      "docs_reviews",
+      "evidence",
+      "docs"
+    ],
+    "all_unclassified_paths_fail": true
+  },
+  "new_runtime_required_categories": [
+    "runtime_compute",
+    "runtime_lifecycle",
+    "decoder",
+    "mlx_bridge",
+    "execution_runner",
+    "path_resolver",
+    "execution_tooling",
+    "evidence_validator",
+    "schema_contracts",
+    "tests",
+    "ci",
+    "unclassified"
+  ],
+  "runtime_attestation": {
+    "embedded_compiled_runtime_sha": true,
+    "executable_sha256": true,
+    "build_profile": true,
+    "architecture": true,
+    "feature_flags": true,
+    "loaded_mlx_identities": true
+  },
+  "content_hashes_remain_authoritative": true,
+  "git_head_never_substitutes_for_artifact_hashes": true,
+  "dirty_worktree_policy": "reject_all_changes_including_docs_and_untracked_files",
+  "shallow_history_policy": "fail_closed_when_ancestry_or_diff_cannot_be_proven"
+}

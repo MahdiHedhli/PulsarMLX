@@ -1,6 +1,7 @@
+use f017_runner::artifact_paths::classify_runtime_drift;
 use f017_runner::cli::RunnerMode;
 use f017_runner::json::{sha256_bytes, sha256_file};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -23,6 +24,10 @@ fn base(temp: &Path) -> (Value, PathBuf) {
     fs::write(&checkpoint, b"{}").unwrap();
     fs::write(&shard, b"metadata-only").unwrap();
     let roles = [
+        (
+            "attempt_2_handoff",
+            "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
+        ),
         (
             "boundary_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
@@ -53,11 +58,15 @@ fn base(temp: &Path) -> (Value, PathBuf) {
         ),
         (
             "execution_config_schema",
-            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v3.schema.json",
         ),
         (
             "path_resolution_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "trusted_repository_identity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json",
         ),
         (
             "activation_generator",
@@ -110,11 +119,17 @@ fn base(temp: &Path) -> (Value, PathBuf) {
         };
         json!({"role":role,"name":name,"layer":3,"expert":15,"quantization":q,"gguf_shape":gguf,"logical_matrix_shape":logical,"shard_ordinal":2,"offset":offset,"packed_length":len,"packed_row_width":row,"catalog_entry_sha256":catalog,"decoder_contract_sha256":"9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84","path_kind":"bounded_checkpoint_range","allowed_read_count":1})
     };
+    let runtime = env!("PULSARMLX_SOURCE_SHA");
+    let drift = classify_runtime_drift(&root, runtime, runtime).unwrap();
+    let drift_sha = sha256_bytes(&serde_json::to_vec(&drift).unwrap());
+    let executable = std::env::current_exe().unwrap();
     (
         json!({
-            "schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"2.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":false,
-            "runtime_sha":env!("PULSARMLX_SOURCE_SHA"),"tooling_sha":env!("PULSARMLX_SOURCE_SHA"),
-            "repository_root":{"path_kind":"absolute_private_local","path":root,"identity":env!("PULSARMLX_SOURCE_SHA")},
+            "schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"3.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":false,
+            "compiled_runtime_sha":runtime,"tooling_sha":runtime,"authorization_head_sha":runtime,
+            "trusted_repository_identity":{"contract_version":"f017-trusted-repository-identity-v2","contract_sha256":sha256_file(&root.join("specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json")).unwrap(),"compiled_runtime_sha":runtime,"tooling_sha":runtime,"authorization_head_sha":runtime,"runtime_drift_classification_sha256":drift_sha},
+            "executable_identity":{"sha256":sha256_file(&executable).unwrap(),"build_profile":"release","architecture":std::env::consts::ARCH,"feature_flags":["pulsar_native_mlx"]},
+            "repository_root":{"path_kind":"absolute_private_local","path":root,"identity":runtime},
             "package_root":{"path_kind":"absolute_private_local","path":private,"identity":"m1e_attempt_2_private_package_root"},
             "activation_fixture":artifact(Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").as_path(),"activation_fixture","specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),
             "activation_payload_sha256":"732ed2b9a6d3df0d185c1e35628a0b6b2cf30717cb697200d45b0e8a74008149",
@@ -122,7 +137,7 @@ fn base(temp: &Path) -> (Value, PathBuf) {
             "local_artifacts":{
                 "environment_manifest":{"path_kind":"absolute_private_local","path":env,"content_sha256":sha256_file(&env).unwrap()},
                 "checkpoint_manifest":{"path_kind":"absolute_private_local","path":checkpoint,"content_sha256":sha256_file(&checkpoint).unwrap()},
-                "runner_binary":{"path_kind":"absolute_private_local","path":std::env::current_exe().unwrap(),"content_sha256":sha256_file(&std::env::current_exe().unwrap()).unwrap()},
+                "runner_binary":{"path_kind":"absolute_private_local","path":executable,"content_sha256":sha256_file(&std::env::current_exe().unwrap()).unwrap()},
                 "oracle_launcher":{"path_kind":"absolute_private_local","path":"/usr/bin/true","content_sha256":sha256_file(Path::new("/usr/bin/true")).unwrap()},
                 "target_shard":{"path_kind":"absolute_private_local","path":shard,"ordinal":2,"basename":"fake-shard.gguf","byte_size":fs::metadata(&shard).unwrap().len(),"content_sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
                 "oracle_output":private.join("oracle.json"),"package_output":private.join("package.json"),"attempt_state_output":private.join("attempt-state.json"),"preflight_evidence_output":temp.join("preflight-evidence.json"),"evidence_output":temp.join("evidence.json")},
@@ -190,6 +205,31 @@ fn wrong_expert_tensor_fixture_attempt_and_dispatch_fail_closed() {
         (
             "decoder",
             Box::new(|v| v["tensors"][0]["decoder_contract_sha256"] = json!("0".repeat(64))),
+        ),
+        (
+            "compiled_runtime",
+            Box::new(|v| v["compiled_runtime_sha"] = json!("0".repeat(40))),
+        ),
+        (
+            "authorization_head",
+            Box::new(|v| v["authorization_head_sha"] = json!("0".repeat(40))),
+        ),
+        (
+            "identity_contract",
+            Box::new(|v| {
+                v["trusted_repository_identity"]["contract_sha256"] = json!("0".repeat(64))
+            }),
+        ),
+        (
+            "drift_attestation",
+            Box::new(|v| {
+                v["trusted_repository_identity"]["runtime_drift_classification_sha256"] =
+                    json!("0".repeat(64))
+            }),
+        ),
+        (
+            "stale_binary",
+            Box::new(|v| v["executable_identity"]["sha256"] = json!("0".repeat(64))),
         ),
         (
             "decoder_v1_artifact",
@@ -278,12 +318,10 @@ fn execution_config_mutation_after_preflight_is_rejected() {
     let (value, path) = base(&temp);
     let loaded = load(&value, &path).unwrap();
     fs::write(&path, b"{}").unwrap();
-    assert!(
-        f017_runner::m1e_execution_config::verify_unchanged(
-            loaded.config.execution_config.as_ref().unwrap()
-        )
-        .is_err()
-    );
+    assert!(f017_runner::m1e_execution_config::verify_unchanged(
+        loaded.config.execution_config.as_ref().unwrap()
+    )
+    .is_err());
     let _ = fs::remove_dir_all(temp);
 }
 

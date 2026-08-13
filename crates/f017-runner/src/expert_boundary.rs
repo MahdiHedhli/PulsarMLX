@@ -154,6 +154,9 @@ fn run_impl(
         .as_ref()
         .ok_or_else(|| infra("m1e_execution_config", "missing immutable execution config"))?;
     let loaded = crate::m1e_execution_config::load(&binding.path, &binding.sha256, false)?;
+    evidence.identity.compiled_runtime_sha = Some(loaded.document.compiled_runtime_sha.clone());
+    evidence.identity.tooling_sha = Some(loaded.document.tooling_sha.clone());
+    evidence.identity.authorization_head_sha = Some(loaded.document.authorization_head_sha.clone());
     evidence.identity.prior_evidence = loaded.document.prior_evidence.clone();
     let mut artifacts = loaded
         .document
@@ -165,7 +168,7 @@ fn run_impl(
             symbolic_path: artifact.symbolic_path.display().to_string(),
             content_sha256: artifact.content_sha256.clone(),
             logical_role: artifact.logical_role.clone(),
-            repository_identity: Some(loaded.document.runtime_sha.clone()),
+            repository_identity: Some(loaded.document.authorization_head_sha.clone()),
             package_artifact_id: None,
         })
         .collect::<Vec<_>>();

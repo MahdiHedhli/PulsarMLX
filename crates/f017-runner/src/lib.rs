@@ -87,14 +87,12 @@ impl std::error::Error for RunnerError {}
 
 pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
     if let Some(binding) = &config.execution_config {
-        if binding.attempt == 1
-            && matches!(
-                config.mode,
-                RunnerMode::M1ePreflight
-                    | RunnerMode::FixtureExpert { .. }
-                    | RunnerMode::RealExpert { .. }
-            )
-        {
+        if matches!(
+            config.mode,
+            RunnerMode::M1ePreflight
+                | RunnerMode::FixtureExpert { .. }
+                | RunnerMode::RealExpert { .. }
+        ) {
             m1e_execution_config::verify_unchanged(binding)?;
         } else {
             m1d_execution_config::verify_unchanged(binding)?;
@@ -190,14 +188,12 @@ pub fn execute(config: Config) -> Result<Evidence, RunnerError> {
     let result = result
         .and_then(|()| {
             if let Some(binding) = &config.execution_config {
-                if binding.attempt == 1
-                    && matches!(
-                        config.mode,
-                        RunnerMode::M1ePreflight
-                            | RunnerMode::FixtureExpert { .. }
-                            | RunnerMode::RealExpert { .. }
-                    )
-                {
+                if matches!(
+                    config.mode,
+                    RunnerMode::M1ePreflight
+                        | RunnerMode::FixtureExpert { .. }
+                        | RunnerMode::RealExpert { .. }
+                ) {
                     m1e_execution_config::verify_unchanged(binding)?;
                 } else {
                     m1d_execution_config::verify_unchanged(binding)?;

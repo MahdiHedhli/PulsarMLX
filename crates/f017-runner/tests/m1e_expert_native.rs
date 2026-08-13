@@ -1,8 +1,9 @@
 #![cfg(all(target_os = "macos", pulsar_native_mlx))]
 
+use f017_runner::artifact_paths::classify_runtime_drift;
 use f017_runner::evidence::Evidence;
 use f017_runner::json::{parse_json_no_duplicates, sha256_bytes, sha256_file};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::fs::{self, File};
 use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
@@ -95,6 +96,10 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
     fs::write(&environment,format!("{{\"schema\":\"pulsarmlx.f017.fixture-environment\",\"schema_version\":1,\"architecture\":\"{}\",\"purpose\":\"checkpoint_free_ci\"}}\n",std::env::consts::ARCH)).unwrap();
     let roles = [
         (
+            "attempt_2_handoff",
+            "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
+        ),
+        (
             "boundary_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
         ),
@@ -124,11 +129,15 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
         ),
         (
             "execution_config_schema",
-            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v3.schema.json",
         ),
         (
             "path_resolution_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "trusted_repository_identity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json",
         ),
         (
             "activation_generator",
@@ -187,7 +196,11 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
         json!({"role":role,"name":name,"layer":3,"expert":15,"quantization":q,"gguf_shape":gguf,"logical_matrix_shape":logical,"shard_ordinal":2,"offset":offset,"packed_length":len,"packed_row_width":row,"catalog_entry_sha256":catalog,"decoder_contract_sha256":"9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84","path_kind":"bounded_checkpoint_range","allowed_read_count":1})
     };
     let output = temp.join("evidence.json");
-    let config_doc = json!({"schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"2.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":false,"runtime_sha":env!("PULSARMLX_SOURCE_SHA"),"tooling_sha":env!("PULSARMLX_SOURCE_SHA"),"repository_root":{"path_kind":"absolute_private_local","path":root,"identity":env!("PULSARMLX_SOURCE_SHA")},"package_root":{"path_kind":"absolute_private_local","path":temp,"identity":"m1e_attempt_2_private_package_root"},"activation_fixture":artifact(Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").as_path(),"activation_fixture","specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),"activation_payload_sha256":"732ed2b9a6d3df0d185c1e35628a0b6b2cf30717cb697200d45b0e8a74008149","repository_artifacts":artifacts,"local_artifacts":{"environment_manifest":{"path_kind":"absolute_private_local","path":environment,"content_sha256":sha256_file(&environment).unwrap()},"checkpoint_manifest":{"path_kind":"absolute_private_local","path":checkpoint,"content_sha256":sha256_file(&checkpoint).unwrap()},"target_shard":{"path_kind":"absolute_private_local","path":shard,"ordinal":2,"basename":"fixture-shard-2.gguf","byte_size":fs::metadata(&shard).unwrap().len(),"content_sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},"oracle_output":oracle,"package_output":package,"evidence_output":output},"prior_evidence":{"m1_a":"aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805","m1_b":"9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770","m1_c":"343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e","m1_d":"dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c","m1_e_attempt_1":"346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119"},"checkpoint_bindings":{"checkpoint_set_sha256":set,"catalog_sha256":catalog,"tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"},"expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},"tensors":[tensor("gate","blk.3.ffn_gate_exps.weight","IQ2_XXS",GATE_OFFSET,GATE_LEN as u64,1584,"42e379023728565d323fff8b120f2c6dff6fa50f10d9ad1cceb3e3597af36354"),tensor("up","blk.3.ffn_up_exps.weight","IQ2_XXS",UP_OFFSET,UP_LEN as u64,1584,"011ccab7ca2293da5b0d1112172b2dccd4b2cdb2482672dd217f996280223119"),tensor("down","blk.3.ffn_down_exps.weight","IQ3_XXS",DOWN_OFFSET,DOWN_LEN as u64,784,"1c7a04eb897d242a621a09c6dfb78c3e92b407dff44ddf8cf67187dae50081e1")],"runner":{"mode":"fixture_expert","memory_floor_bytes":1},"execution":{"conceptual_expert_count":1,"repeat_count":10,"native_dispatch_count":30,"maximum_payload_count":3,"maximum_positional_reads":3,"maximum_shard_opens":1,"compressed_byte_budget":11304960,"auto_retry":false,"stop_before_m1_f":true}});
+    let runtime = env!("PULSARMLX_SOURCE_SHA");
+    let drift = classify_runtime_drift(&root, runtime, runtime).unwrap();
+    let drift_sha = sha256_bytes(&serde_json::to_vec(&drift).unwrap());
+    let runner_path = Path::new(env!("CARGO_BIN_EXE_f017-glm52-runner"));
+    let config_doc = json!({"schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"3.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":false,"compiled_runtime_sha":runtime,"tooling_sha":runtime,"authorization_head_sha":runtime,"trusted_repository_identity":{"contract_version":"f017-trusted-repository-identity-v2","contract_sha256":sha256_file(&root.join("specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json")).unwrap(),"compiled_runtime_sha":runtime,"tooling_sha":runtime,"authorization_head_sha":runtime,"runtime_drift_classification_sha256":drift_sha},"executable_identity":{"sha256":sha256_file(runner_path).unwrap(),"build_profile":"release","architecture":std::env::consts::ARCH,"feature_flags":["pulsar_native_mlx"]},"repository_root":{"path_kind":"absolute_private_local","path":root,"identity":runtime},"package_root":{"path_kind":"absolute_private_local","path":temp,"identity":"m1e_attempt_2_private_package_root"},"activation_fixture":artifact(Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").as_path(),"activation_fixture","specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),"activation_payload_sha256":"732ed2b9a6d3df0d185c1e35628a0b6b2cf30717cb697200d45b0e8a74008149","repository_artifacts":artifacts,"local_artifacts":{"environment_manifest":{"path_kind":"absolute_private_local","path":environment,"content_sha256":sha256_file(&environment).unwrap()},"checkpoint_manifest":{"path_kind":"absolute_private_local","path":checkpoint,"content_sha256":sha256_file(&checkpoint).unwrap()},"target_shard":{"path_kind":"absolute_private_local","path":shard,"ordinal":2,"basename":"fixture-shard-2.gguf","byte_size":fs::metadata(&shard).unwrap().len(),"content_sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},"oracle_output":oracle,"package_output":package,"evidence_output":output},"prior_evidence":{"m1_a":"aa0e480261db437eaa788f0dfcba10eba9c32b6e1448c566e5c426df62e5a805","m1_b":"9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770","m1_c":"343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e","m1_d":"dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c","m1_e_attempt_1":"346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119"},"checkpoint_bindings":{"checkpoint_set_sha256":set,"catalog_sha256":catalog,"tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"},"expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},"tensors":[tensor("gate","blk.3.ffn_gate_exps.weight","IQ2_XXS",GATE_OFFSET,GATE_LEN as u64,1584,"42e379023728565d323fff8b120f2c6dff6fa50f10d9ad1cceb3e3597af36354"),tensor("up","blk.3.ffn_up_exps.weight","IQ2_XXS",UP_OFFSET,UP_LEN as u64,1584,"011ccab7ca2293da5b0d1112172b2dccd4b2cdb2482672dd217f996280223119"),tensor("down","blk.3.ffn_down_exps.weight","IQ3_XXS",DOWN_OFFSET,DOWN_LEN as u64,784,"1c7a04eb897d242a621a09c6dfb78c3e92b407dff44ddf8cf67187dae50081e1")],"runner":{"mode":"fixture_expert","memory_floor_bytes":1},"execution":{"conceptual_expert_count":1,"repeat_count":10,"native_dispatch_count":30,"maximum_payload_count":3,"maximum_positional_reads":3,"maximum_shard_opens":1,"compressed_byte_budget":11304960,"auto_retry":false,"stop_before_m1_f":true}});
     let mut config_doc = config_doc;
     config_doc["local_artifacts"]["runner_binary"] = json!({
         "path_kind":"absolute_private_local",

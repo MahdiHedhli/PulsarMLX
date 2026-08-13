@@ -172,3 +172,7 @@
   contract and regression fixture, preserve dependent historical evidence,
   and prepare a separately authorized M1-E attempt 2 without candidate
   compute.
+- [x] T017-175 Separate embedded compiled-runtime, execution-tooling, and
+  authorization-checkout identities; fail closed on non-ancestry, dirty
+  state, stale binaries, or execution-relevant descendant drift; rebuild the
+  still-unconsumed M1-E attempt-2 config under trusted-repository identity v2.

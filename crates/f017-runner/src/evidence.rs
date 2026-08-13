@@ -1,9 +1,9 @@
-use crate::cli::{Config, EnvironmentPolicy, mode_environment_policy};
+use crate::cli::{mode_environment_policy, Config, EnvironmentPolicy};
 use crate::contract_bindings::r12_contract_bindings;
 use crate::environment::{LoadedLibraryEvidence, ValidatedEnvironment};
 use crate::numerical_classification::{
-    GreedyApplicability, GreedyIdentityEvidence, NumericalClassification,
-    validate_classification_applicability,
+    validate_classification_applicability, GreedyApplicability, GreedyIdentityEvidence,
+    NumericalClassification,
 };
 use crate::{FailureClass, RunnerError};
 use serde::{Deserialize, Serialize};
@@ -31,6 +31,12 @@ pub struct Evidence {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct IdentityEvidence {
     pub source_sha: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compiled_runtime_sha: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tooling_sha: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_head_sha: Option<String>,
     pub source_clean: bool,
     pub runner_version: String,
     pub environment_kind: String,
@@ -453,6 +459,9 @@ impl Evidence {
             schema_version: EVIDENCE_SCHEMA_VERSION.to_owned(),
             identity: IdentityEvidence {
                 source_sha: env!("PULSARMLX_SOURCE_SHA").to_owned(),
+                compiled_runtime_sha: None,
+                tooling_sha: None,
+                authorization_head_sha: None,
                 source_clean: source_worktree_clean(),
                 runner_version: env!("CARGO_PKG_VERSION").to_owned(),
                 environment_kind: environment_kind.to_owned(),
@@ -700,9 +709,16 @@ impl Evidence {
                         "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119".into(),
                     ),
                 ])
+                || self.identity.compiled_runtime_sha.as_deref()
+                    != Some(self.identity.source_sha.as_str())
+                || self.identity.tooling_sha.as_deref().is_none()
+                || self.identity.authorization_head_sha.as_deref().is_none()
                 || !valid_m1e_artifact_paths(
                     &self.identity.artifact_paths,
-                    &self.identity.source_sha,
+                    self.identity
+                        .authorization_head_sha
+                        .as_deref()
+                        .unwrap_or(""),
                 )
                 || self.execution.projection_count != 3
                 || self.execution.quant_decode_count != 3
@@ -856,6 +872,10 @@ impl Evidence {
 fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) -> bool {
     let expected = BTreeMap::from([
         (
+            "attempt_2_handoff",
+            "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
+        ),
+        (
             "activation_fixture",
             "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json",
         ),
@@ -885,7 +905,7 @@ fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) ->
         ),
         (
             "execution_config_schema",
-            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v3.schema.json",
         ),
         (
             "independent_iq2_decoder",
@@ -906,6 +926,10 @@ fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) ->
         (
             "path_resolution_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "trusted_repository_identity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/trusted-repository-identity-v2.json",
         ),
         (
             "real_reference_preparer",

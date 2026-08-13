@@ -32,7 +32,7 @@ def load(path: Path, expected: str) -> dict[str, object]:
     document = json.loads(raw, object_pairs_hook=_no_duplicates)
     if (
         document.get("schema") != "pulsarmlx.f017.m1e-execution-config"
-        or document.get("schema_version") != "2.0.0"
+        or document.get("schema_version") != "3.0.0"
         or document.get("attempt") != 2
         or document.get("attempt_consumed") is not False
     ):
