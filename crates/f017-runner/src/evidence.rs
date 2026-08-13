@@ -390,6 +390,12 @@ pub enum ResultClassification {
     Incomplete,
 }
 
+impl ResultClassification {
+    fn requires_success_invariants(self) -> bool {
+        matches!(self, Self::Pass | Self::Incomplete)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FailureRecord {
     pub code: String,
@@ -638,6 +644,7 @@ impl Evidence {
                 ),
             ]);
             if self.execution.progress_state == "m1d_one_projection_complete"
+                && self.result.classification.requires_success_invariants()
                 && (self.identity.prior_evidence != expected_prior
                     || !valid_m1d_artifact_paths(
                         &self.identity.artifact_paths,
@@ -669,6 +676,7 @@ impl Evidence {
         }
         if matches!(self.input.mode.as_str(), "fixture_expert" | "real_expert")
             && self.execution.progress_state == "m1e_one_expert_complete"
+            && self.result.classification.requires_success_invariants()
             && (self.identity.prior_evidence
                 != BTreeMap::from([
                     (
@@ -1217,6 +1225,22 @@ fn lifecycle_error(code: &'static str, message: impl Into<String>) -> RunnerErro
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn terminal_failures_can_be_banked_without_reapplying_pass_invariants() {
+        assert!(ResultClassification::Pass.requires_success_invariants());
+        assert!(ResultClassification::Incomplete.requires_success_invariants());
+        for classification in [
+            ResultClassification::FailAdmissionEnvironment,
+            ResultClassification::FailCheckpointIdentity,
+            ResultClassification::FailLifecycleOwnership,
+            ResultClassification::FailNumericalBehavioral,
+            ResultClassification::FailInfrastructureEvidence,
+            ResultClassification::Cancelled,
+        ] {
+            assert!(!classification.requires_success_invariants());
+        }
+    }
     use crate::cli::{Config, RunnerMode, StreamMode, ValidationMode};
     use crate::json::parse_json_no_duplicates;
     use std::sync::{Arc, Barrier};
