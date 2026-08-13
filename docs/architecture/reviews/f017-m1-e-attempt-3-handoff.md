@@ -1,12 +1,26 @@
 # F017 M1-E Attempt 3 Handoff
 
-**Status: PREPARED FOR CHECKPOINT-FREE VALIDATION / NOT AUTHORIZED / NOT EXECUTED**
+**Status: PREPARED / NOT AUTHORIZED / NOT EXECUTED**
 
-This handoff exists so the attempt-3 immutable-config path can be exercised
-before authorization. The final authorization commit must replace this
-checkpoint-free status with the exact published runtime, tooling,
-authorization-head, executable, preparer, preparer-input-contract, and
-execution-config identities.
+## Published source and preparer identities
+
+- compiled runtime/tooling SHA:
+  `a09e2d261808c07f6850d29ccd8787bd1a61f7b3`
+- arm64 release executable SHA-256:
+  `ea8940ee9889c7b378c35946c3b617955b6920aadc25b4392e9e4df223ec0c7f`
+- trusted repository identity contract:
+  `f017-trusted-repository-identity-v2` /
+  `88faaf375d871a60462cbbddd5b27c186353d168eae2611b14cf485a24a78eaf`
+- updated independent preparer SHA-256:
+  `f8e6f20d364d0c569875f841ec6edfc1e8e9f9997baa416b7eb8f1e409fe34e7`
+- preparer input contract SHA-256:
+  `ad5768d026e5f6377e8243f4d01b50b416e50307d3bd1efd38ab437ba86709a5`
+- execution-config schema 3.0.0 SHA-256:
+  `e940bd33d1c772b4ad88d869ea90464095f7d6c729a2dd53fc5171b5fbd3a0f7`
+
+The immutable config must bind an exact later authorization head that is a
+reviewed docs/reviews/evidence-only descendant of the compiled runtime. All
+execution-controlling artifacts remain directly content-hash bound.
 
 ## Immutable scope
 
