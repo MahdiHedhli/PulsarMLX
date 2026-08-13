@@ -460,6 +460,11 @@ def build_preparation_config(
         "symbolic_path": "scripts/research/bank_f017_m1f0_real_route.py",
         "content_sha256": file_sha256(root / "scripts/research/bank_f017_m1f0_real_route.py"),
     }
+    artifacts["real_route_executor"] = {
+        "path_kind": "repository_relative",
+        "symbolic_path": "scripts/research/execute_f017_m1f0_real_route.py",
+        "content_sha256": file_sha256(root / "scripts/research/execute_f017_m1f0_real_route.py"),
+    }
     artifacts["input_regeneration_evidence"] = {
         "path_kind": "repository_relative",
         "symbolic_path": INPUT_REGENERATION_PATH,
@@ -647,7 +652,8 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
     contracts = value["contracts"]
     if not isinstance(contracts, dict) or set(contracts) != set(CONTRACT_PATHS) | {
         "input_generator", "oracle_preparer", "admission_tool", "q5_k_qualifier",
-        "route_banker", "input_regeneration_evidence", "q5_k_qualification_evidence",
+        "route_banker", "real_route_executor", "input_regeneration_evidence",
+        "q5_k_qualification_evidence",
     }:
         raise ValueError("M1-F0 contract inventory differs")
     for reference in contracts.values():

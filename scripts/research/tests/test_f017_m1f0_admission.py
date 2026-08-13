@@ -29,6 +29,7 @@ M1F0 = load("f017_m1f0_admission", "scripts/research/f017_m1f0_admission.py")
 SPEC = load("prepare_f017_m1f0", "scripts/research/prepare_f017_m1f0_real_reference.py")
 Q5_REAL = load("qualify_f017_m1f0_q5_k_real", "scripts/research/qualify_f017_m1f0_q5_k_real.py")
 BANK = load("bank_f017_m1f0", "scripts/research/bank_f017_m1f0_real_route.py")
+EXEC = load("execute_f017_m1f0", "scripts/research/execute_f017_m1f0_real_route.py")
 
 
 def tooling_sha() -> str:
@@ -330,15 +331,15 @@ class M1F0AdmissionTests(unittest.TestCase):
             "routing_weights": [0.125] * 8,
             "routing_weights_sha256": "8" * 64,
         }
-        record = SPEC._repeat_record(0, result)
+        record = EXEC.repeat_record(0, result)
         self.assertEqual(record["ordinal"], 0)
         self.assertEqual(record["attention_residual_sha256"], "2" * 64)
         with tempfile.TemporaryDirectory() as directory:
             marker = Path(directory) / "started.json"
-            SPEC._write_execution_start_marker(marker, "a" * 64, "b" * 64, 1)
+            EXEC.write_execution_start_marker(marker, "a" * 64, "b" * 64, 1)
             self.assertEqual(json.loads(marker.read_text())["state"], "EXECUTION_STARTED")
             with self.assertRaises(FileExistsError):
-                SPEC._write_execution_start_marker(marker, "a" * 64, "b" * 64, 1)
+                EXEC.write_execution_start_marker(marker, "a" * 64, "b" * 64, 1)
 
     def test_private_package_traversal_and_symlink_escape_fail(self):
         with tempfile.TemporaryDirectory() as directory:
