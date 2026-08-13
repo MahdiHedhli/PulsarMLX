@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.m1e-decoder-contract",
+  "schema_version": "2.0.0",
+  "contract_version": "f017-m1e-iq2-iq3-decoder-v2",
+  "supersedes": {
+    "contract_version": "f017-m1e-iq2-iq3-decoder-v1",
+    "reason": "The v1 independent Python IQ3_XXS oracle interleaved two four-lane grids; v2 restores canonical GGML logical ordering."
+  },
+  "decoders": [
+    {
+      "quantization": "IQ2_XXS",
+      "values_per_block": 256,
+      "packed_bytes_per_block": 66,
+      "row_width_6144": 1584,
+      "candidate": "quant::decode_iq2_xxs_matrix",
+      "independent_oracle": "scripts/research/iq2_xxs_dequant.py",
+      "independent_source_sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761"
+    },
+    {
+      "quantization": "IQ3_XXS",
+      "values_per_block": 256,
+      "packed_bytes_per_block": 98,
+      "row_width_2048": 784,
+      "logical_subgroup_order": "grid_1_lanes_0_to_3_then_grid_2_lanes_0_to_3",
+      "candidate": "quant::decode_iq3_xxs_matrix",
+      "candidate_source": "crates/quant/src/iq_ref.rs",
+      "candidate_source_sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161",
+      "independent_oracle": "scripts/research/iq3_xxs_dequant.py",
+      "independent_source_sha256": "5faff93b578028065854d1f3717951126404e1a5ccbe9b16f7f5dc8d5343ab68",
+      "third_specification_decoder": "scripts/research/iq3_xxs_spec_decoder.py",
+      "third_specification_decoder_sha256": "10b2c1eeda4d2955fbc61df659d28a4b2c1b72eb2d730145e74bbad86b347621",
+      "regression_fixture": "specs/017-rust-native-inference-runtime/fixtures/f017-iq3-xxs-order-regression-v1.json",
+      "regression_fixture_sha256": "8d60b88d44d812036131beba384d886131f1234f852f95c67f9821283fd4fa48",
+      "authorized_real_down_packed_sha256": "442acf3cf5210ade4faa0b38ef0f94aaca7b15571a180804ace52b94cccdf59d",
+      "authorized_real_down_decoded_f32le_sha256": "f91987106198943c8a225b52dcf0099ba8f8b89d1ecad92c4a7c5c4964e20eae"
+    }
+  ],
+  "authoritative_reference": {
+    "project": "llama.cpp",
+    "commit": "8e7f22b67ef4667b4ddd50230771287f328cfb3f",
+    "path": "ggml/src/ggml-quants.c",
+    "file_sha256": "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d",
+    "function": "dequantize_row_iq3_xxs"
+  },
+  "canonical_output_identity": {
+    "shape_order": "row_major",
+    "element_serialization": "ieee754_binary32_little_endian",
+    "padding_bytes": 0,
+    "nan_canonicalization": false,
+    "host_endian_dependent": false
+  },
+  "malformed_or_truncated": "fail_without_partial_output",
+  "non_finite_scale": "fail",
+  "signed_zero": "preserve_ieee754_bits",
+  "candidate_and_oracle_implementations_independent": true,
+  "decoder_identity_requires_bitwise_equality": true
+}

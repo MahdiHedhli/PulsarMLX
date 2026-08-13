@@ -137,7 +137,11 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
           echo "M1-E native gate: one expert; 3 matvecs/repeat; 10 repeats; 30 native dispatches; no skip"
           .venv/bin/python -m unittest \
-            scripts.research.tests.test_f017_m1e_package -v
+            scripts.research.tests.test_f017_m1e_package \
+            scripts.research.tests.test_f017_iq3_decoder_identity \
+            scripts.research.tests.test_iq3_xxs_numpy -v
+          cargo test -p quant --test iq_reference -- --nocapture
+          echo "IQ3_XXS v2 identity gate: minimized order regression; scalar/vector/spec exact; no skip"
           .venv/bin/python scripts/research/generate_f017_m1e_activation.py \
             --output specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json \
             --check

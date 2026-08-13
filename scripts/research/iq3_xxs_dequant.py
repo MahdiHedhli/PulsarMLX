@@ -40,8 +40,9 @@ def dequantize_row_iq3_xxs(encoded: bytes, n: int | None = None) -> list[float]:
                 b2 = g2.to_bytes(4, "little")
                 for j in range(4):
                     s0 = -1.0 if (signs & KMASK_IQ2XS[j + 0]) else 1.0
-                    s1 = -1.0 if (signs & KMASK_IQ2XS[j + 4]) else 1.0
                     out.append(db * b1[j] * s0)
+                for j in range(4):
+                    s1 = -1.0 if (signs & KMASK_IQ2XS[j + 4]) else 1.0
                     out.append(db * b2[j] * s1)
             qoff += 8
     return out
@@ -101,12 +102,14 @@ def dequantize_blocks_iq3_xxs_numpy(encoded: bytes):
     ) * 0.5
 
     grid_lookup, sign_lookup = _numpy_lookup_tables()
+    # GGML writes each eight-value subgroup as grid-1 lanes 0..3 followed by
+    # grid-2 lanes 0..3. Keep the [grid, lane] axes in that order so the final
+    # row-major reshape preserves the canonical logical element ordering.
     magnitudes = grid_lookup[grid_indices].astype(np.float64)
     signs = sign_lookup[sign_indices].reshape(-1, QK_K // 32, 4, 2, 4)
-    signs = signs.transpose(0, 1, 2, 4, 3)
     decoded = (
         block_scales[:, :, None, None, None]
-        * magnitudes.transpose(0, 1, 2, 4, 3)
+        * magnitudes
         * signs
     ).astype(np.float32)
     return np.ascontiguousarray(decoded.reshape(-1))

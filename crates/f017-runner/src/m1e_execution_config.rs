@@ -12,7 +12,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const SCHEMA: &str = "pulsarmlx.f017.m1e-execution-config";
-pub const VERSION: &str = "1.0.0";
+pub const VERSION: &str = "2.0.0";
+pub const ATTEMPT: u64 = 2;
+pub const DECODER_CONTRACT_SHA256: &str =
+    "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84";
 pub const READY: &str = "READY_TO_EXECUTE_M1_E";
 pub const ACTIVATION_PATH: &str =
     "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json";
@@ -208,7 +211,7 @@ pub fn load(
         execution_config: Some(ExecutionConfigBinding {
             path: path.to_owned(),
             sha256: expected_sha256.to_owned(),
-            attempt: 1,
+            attempt: ATTEMPT,
         }),
     };
     Ok(Loaded { config, document })
@@ -231,7 +234,7 @@ fn validate_attempt_state(path: &Path, config_sha256: &str) -> Result<(), Runner
         parse_json_no_duplicates(&bytes).map_err(|e| message("m1e_attempt_state_schema", e))?;
     if state.schema != "pulsarmlx.f017.m1e-attempt-state"
         || state.schema_version != "1.0.0"
-        || state.attempt != 1
+        || state.attempt != ATTEMPT
         || state.state != "EXECUTION_STARTED"
         || state.execution_config_sha256 != config_sha256
     {
@@ -247,7 +250,7 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
     if document.schema != SCHEMA
         || document.schema_version != VERSION
         || document.status != READY
-        || document.attempt != 1
+        || document.attempt != ATTEMPT
         || document.attempt_consumed
         || document.runtime_sha != env!("PULSARMLX_SOURCE_SHA")
         || document.tooling_sha.len() != 40
@@ -260,7 +263,7 @@ fn validate(document: &Document) -> Result<(), RunnerError> {
     if document.repository_root.path_kind != "absolute_private_local"
         || document.repository_root.identity != document.runtime_sha
         || document.package_root.path_kind != "absolute_private_local"
-        || document.package_root.identity != "m1e_attempt_1_private_package_root"
+        || document.package_root.identity != "m1e_attempt_2_private_package_root"
     {
         return Err(message("m1e_config_roots", "typed root binding mismatch"));
     }
@@ -290,21 +293,74 @@ fn validate_artifacts(
     artifacts: &BTreeMap<String, ArtifactReference>,
 ) -> Result<(), RunnerError> {
     let expected = [
-        ("boundary_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json"),
-        ("decoder_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json"),
-        ("scaffold_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json"),
-        ("tier_b_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json"),
-        ("repeat_integrity_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json"),
-        ("timing_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json"),
-        ("evidence_schema", "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json"),
-        ("execution_config_schema", "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json"),
-        ("path_resolution_contract", "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),
-        ("activation_generator", "scripts/research/generate_f017_m1e_activation.py"),
-        ("execution_config_preparer", "scripts/research/prepare_f017_m1e_execution.py"),
-        ("authorized_launcher", "scripts/research/run_f017_m1e_authorized.py"),
-        ("real_reference_preparer", "scripts/research/prepare_f017_m1e_real_reference.py"),
-        ("independent_iq2_decoder", "scripts/research/iq2_xxs_dequant.py"),
-        ("independent_iq3_decoder", "scripts/research/iq3_xxs_dequant.py"),
+        (
+            "boundary_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
+        ),
+        (
+            "decoder_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
+        ),
+        (
+            "scaffold_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
+        ),
+        (
+            "tier_b_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json",
+        ),
+        (
+            "repeat_integrity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
+        ),
+        (
+            "timing_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
+        ),
+        (
+            "evidence_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
+        ),
+        (
+            "execution_config_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+        ),
+        (
+            "path_resolution_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "activation_generator",
+            "scripts/research/generate_f017_m1e_activation.py",
+        ),
+        (
+            "execution_config_preparer",
+            "scripts/research/prepare_f017_m1e_execution.py",
+        ),
+        (
+            "authorized_launcher",
+            "scripts/research/run_f017_m1e_authorized.py",
+        ),
+        (
+            "real_reference_preparer",
+            "scripts/research/prepare_f017_m1e_real_reference.py",
+        ),
+        (
+            "independent_iq2_decoder",
+            "scripts/research/iq2_xxs_dequant.py",
+        ),
+        (
+            "independent_iq3_decoder",
+            "scripts/research/iq3_xxs_dequant.py",
+        ),
+        (
+            "third_iq3_decoder",
+            "scripts/research/iq3_xxs_spec_decoder.py",
+        ),
+        (
+            "iq3_order_regression",
+            "specs/017-rust-native-inference-runtime/fixtures/f017-iq3-xxs-order-regression-v1.json",
+        ),
     ];
     if artifacts.len() != expected.len() {
         return Err(message(
@@ -345,6 +401,10 @@ fn validate_prior(document: &Document) -> Result<(), RunnerError> {
             "m1_d",
             "dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c",
         ),
+        (
+            "m1_e_attempt_1",
+            "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
+        ),
     ];
     let checkpoint = [
         (
@@ -360,7 +420,7 @@ fn validate_prior(document: &Document) -> Result<(), RunnerError> {
             "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
         ),
     ];
-    if document.prior_evidence.len() != 4
+    if document.prior_evidence.len() != 5
         || prior
             .iter()
             .any(|(k, v)| document.prior_evidence.get(*k).map(String::as_str) != Some(*v))
@@ -460,8 +520,7 @@ fn validate_expert(document: &Document) -> Result<(), RunnerError> {
             || t.packed_length != length
             || t.packed_row_width != row
             || t.catalog_entry_sha256 != catalog
-            || t.decoder_contract_sha256
-                != "357a1989174b0ec86684549f8519bb7a47fdb8b8194fa985c8126d89d6339a00"
+            || t.decoder_contract_sha256 != DECODER_CONTRACT_SHA256
             || t.path_kind != "bounded_checkpoint_range"
             || t.allowed_read_count != 1
         {

@@ -128,10 +128,20 @@ class M1EPackageTests(unittest.TestCase):
             first = subprocess.run(command, check=True, capture_output=True, text=True)
             self.assertEqual(len(first.stdout.strip()), 64)
             document = json.loads(output.read_text())
+            self.assertEqual(document["schema_version"], "2.0.0")
+            self.assertEqual(document["attempt"], 2)
             self.assertEqual(document["expert"], {"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"})
             self.assertEqual([tensor["role"] for tensor in document["tensors"]], ["gate", "up", "down"])
             self.assertEqual(document["execution"]["native_dispatch_count"], 30)
             self.assertEqual(document["activation_fixture"]["symbolic_path"], "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json")
+            self.assertEqual(
+                document["repository_artifacts"]["decoder_contract"]["symbolic_path"],
+                "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
+            )
+            self.assertEqual(
+                document["prior_evidence"]["m1_e_attempt_1"],
+                "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
+            )
             second = subprocess.run(command, capture_output=True, text=True)
             self.assertNotEqual(second.returncode, 0)
 

@@ -167,3 +167,8 @@
   review the complete layer-3/expert-15 M1-E admission package.
 - [x] T017-173 Execute exactly one separately authorized M1-E real-expert
   attempt from the immutable execution config, then stop before M1-F.
+- [x] T017-174 Reproduce and independently resolve the M1-E attempt-1
+  `m1e_down_decoded` IQ3_XXS identity failure, publish the exact v2 decoder
+  contract and regression fixture, preserve dependent historical evidence,
+  and prepare a separately authorized M1-E attempt 2 without candidate
+  compute.

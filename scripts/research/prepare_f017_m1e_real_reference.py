@@ -204,7 +204,11 @@ def prepare_from_config(config_path: Path, expected_sha256: str) -> str:
     if sha(raw) != expected_sha256:
         raise ValueError("immutable M1-E execution config hash mismatch")
     config = json.loads(raw, object_pairs_hook=no_duplicates)
-    if config.get("schema") != "pulsarmlx.f017.m1e-execution-config" or config.get("attempt") != 1:
+    if (
+        config.get("schema") != "pulsarmlx.f017.m1e-execution-config"
+        or config.get("schema_version") != "2.0.0"
+        or config.get("attempt") != 2
+    ):
         raise ValueError("M1-E execution config identity mismatch")
     root = Path(config["repository_root"]["path"]).resolve(strict=True)
     package_root = Path(config["package_root"]["path"]).resolve(strict=True)
@@ -239,14 +243,14 @@ def prepare_from_config(config_path: Path, expected_sha256: str) -> str:
         raise ValueError("exactly three expert payloads are required")
     payload_references: dict[str, dict[str, object]] = {}
     for role in ("gate", "up", "down"):
-        name = f"m1e-{role}-packed-v1.bin"
+        name = f"m1e-attempt-2-{role}-packed-v1.bin"
         digest = exclusive_bytes(package_root / name, packed[role])
         payload_references[role] = {
             "path_kind": "package_relative",
             "symbolic_path": name,
             "content_sha256": digest,
             "logical_role": f"{role}_packed_payload",
-            "package_artifact_id": f"m1e-attempt-1-{role}-packed-v1",
+            "package_artifact_id": f"m1e-attempt-2-{role}-packed-v1",
         }
 
     oracle = prepare(packed["gate"], packed["up"], packed["down"], activation)
@@ -269,7 +273,7 @@ def prepare_from_config(config_path: Path, expected_sha256: str) -> str:
         "catalog_sha256": config["checkpoint_bindings"]["catalog_sha256"],
         "tensor_map_sha256": config["checkpoint_bindings"]["tensor_map_sha256"],
         "source_checkpoint_read_count": 3, "tensors": tensor_documents,
-        "oracle": {"path_kind":"package_relative","symbolic_path":oracle_path.name,"content_sha256":oracle_sha,"logical_role":"independent_oracle","package_artifact_id":"m1e-attempt-1-real-oracle-v1"},
+        "oracle": {"path_kind":"package_relative","symbolic_path":oracle_path.name,"content_sha256":oracle_sha,"logical_role":"independent_oracle","package_artifact_id":"m1e-attempt-2-real-oracle-v1"},
         "one_attempt": True,
     }
     return exclusive_finalize(Path(local["package_output"]), package)

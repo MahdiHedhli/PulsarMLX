@@ -30,7 +30,12 @@ def load(path: Path, expected: str) -> dict[str, object]:
     if hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError("immutable M1-E execution config hash mismatch")
     document = json.loads(raw, object_pairs_hook=_no_duplicates)
-    if document.get("schema") != "pulsarmlx.f017.m1e-execution-config":
+    if (
+        document.get("schema") != "pulsarmlx.f017.m1e-execution-config"
+        or document.get("schema_version") != "2.0.0"
+        or document.get("attempt") != 2
+        or document.get("attempt_consumed") is not False
+    ):
         raise ValueError("wrong M1-E execution config schema")
     return document
 
@@ -72,7 +77,7 @@ def write_state(path: Path, config_sha: str) -> None:
         {
             "schema": "pulsarmlx.f017.m1e-attempt-state",
             "schema_version": "1.0.0",
-            "attempt": 1,
+            "attempt": 2,
             "state": "EXECUTION_STARTED",
             "execution_config_sha256": config_sha,
         },

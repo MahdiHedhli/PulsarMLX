@@ -1,9 +1,9 @@
-use crate::cli::{mode_environment_policy, Config, EnvironmentPolicy};
+use crate::cli::{Config, EnvironmentPolicy, mode_environment_policy};
 use crate::contract_bindings::r12_contract_bindings;
 use crate::environment::{LoadedLibraryEvidence, ValidatedEnvironment};
 use crate::numerical_classification::{
-    validate_classification_applicability, GreedyApplicability, GreedyIdentityEvidence,
-    NumericalClassification,
+    GreedyApplicability, GreedyIdentityEvidence, NumericalClassification,
+    validate_classification_applicability,
 };
 use crate::{FailureClass, RunnerError};
 use serde::{Deserialize, Serialize};
@@ -695,6 +695,10 @@ impl Evidence {
                         "m1_d".into(),
                         "dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c".into(),
                     ),
+                    (
+                        "m1_e_attempt_1".into(),
+                        "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119".into(),
+                    ),
                 ])
                 || !valid_m1e_artifact_paths(
                     &self.identity.artifact_paths,
@@ -851,22 +855,78 @@ impl Evidence {
 
 fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) -> bool {
     let expected = BTreeMap::from([
-        ("activation_fixture", "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json"),
-        ("activation_generator", "scripts/research/generate_f017_m1e_activation.py"),
-        ("authorized_launcher", "scripts/research/run_f017_m1e_authorized.py"),
-        ("execution_config_preparer", "scripts/research/prepare_f017_m1e_execution.py"),
-        ("boundary_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json"),
-        ("decoder_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json"),
-        ("evidence_schema", "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json"),
-        ("execution_config_schema", "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json"),
-        ("independent_iq2_decoder", "scripts/research/iq2_xxs_dequant.py"),
-        ("independent_iq3_decoder", "scripts/research/iq3_xxs_dequant.py"),
-        ("path_resolution_contract", "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),
-        ("real_reference_preparer", "scripts/research/prepare_f017_m1e_real_reference.py"),
-        ("repeat_integrity_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json"),
-        ("scaffold_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json"),
-        ("tier_b_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json"),
-        ("timing_contract", "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json"),
+        (
+            "activation_fixture",
+            "specs/017-rust-native-inference-runtime/fixtures/f017-m1e-activation-v1.json",
+        ),
+        (
+            "activation_generator",
+            "scripts/research/generate_f017_m1e_activation.py",
+        ),
+        (
+            "authorized_launcher",
+            "scripts/research/run_f017_m1e_authorized.py",
+        ),
+        (
+            "execution_config_preparer",
+            "scripts/research/prepare_f017_m1e_execution.py",
+        ),
+        (
+            "boundary_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
+        ),
+        (
+            "decoder_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
+        ),
+        (
+            "evidence_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
+        ),
+        (
+            "execution_config_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
+        ),
+        (
+            "independent_iq2_decoder",
+            "scripts/research/iq2_xxs_dequant.py",
+        ),
+        (
+            "independent_iq3_decoder",
+            "scripts/research/iq3_xxs_dequant.py",
+        ),
+        (
+            "third_iq3_decoder",
+            "scripts/research/iq3_xxs_spec_decoder.py",
+        ),
+        (
+            "iq3_order_regression",
+            "specs/017-rust-native-inference-runtime/fixtures/f017-iq3-xxs-order-regression-v1.json",
+        ),
+        (
+            "path_resolution_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "real_reference_preparer",
+            "scripts/research/prepare_f017_m1e_real_reference.py",
+        ),
+        (
+            "repeat_integrity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
+        ),
+        (
+            "scaffold_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
+        ),
+        (
+            "tier_b_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json",
+        ),
+        (
+            "timing_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
+        ),
     ]);
     if paths.len() != expected.len() {
         return false;

@@ -16,6 +16,7 @@ M1 = {
     "m1_b": "9f9bd444e0fcc2dce3c6bcc119c6113e1c7885eb863459bf73cacce1ff285770",
     "m1_c": "343548afefd4edbe844f0645c63cf0b9cb53edfcdbfc3b3d8e4b15f7c6c3041e",
     "m1_d": "dc5c4900da0cb0c2d293108a4abbdeccccd3c23899db265a84f73fda24ada53c",
+    "m1_e_attempt_1": "346d6302648d463738b0ee0f7fc04a34f664675cccb60a181e3393b88b02b119",
 }
 CHECKPOINT = {
     "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
@@ -24,13 +25,13 @@ CHECKPOINT = {
 }
 ARTIFACTS = {
     "boundary_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
-    "decoder_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json",
+    "decoder_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
     "scaffold_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
     "tier_b_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json",
     "repeat_integrity_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
     "timing_contract": "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
     "evidence_schema": "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
-    "execution_config_schema": "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json",
+    "execution_config_schema": "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v2.schema.json",
     "path_resolution_contract": "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
     "activation_generator": "scripts/research/generate_f017_m1e_activation.py",
     "execution_config_preparer": "scripts/research/prepare_f017_m1e_execution.py",
@@ -38,8 +39,10 @@ ARTIFACTS = {
     "real_reference_preparer": "scripts/research/prepare_f017_m1e_real_reference.py",
     "independent_iq2_decoder": "scripts/research/iq2_xxs_dequant.py",
     "independent_iq3_decoder": "scripts/research/iq3_xxs_dequant.py",
+    "third_iq3_decoder": "scripts/research/iq3_xxs_spec_decoder.py",
+    "iq3_order_regression": "specs/017-rust-native-inference-runtime/fixtures/f017-iq3-xxs-order-regression-v1.json",
 }
-DECODER = "357a1989174b0ec86684549f8519bb7a47fdb8b8194fa985c8126d89d6339a00"
+DECODER = "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84"
 TENSORS = [
     ("gate", "blk.3.ffn_gate_exps.weight", "IQ2_XXS", [6144, 2048, 256], [2048, 6144], 3423197024, 3244032, 1584, "42e379023728565d323fff8b120f2c6dff6fa50f10d9ad1cceb3e3597af36354"),
     ("up", "blk.3.ffn_up_exps.weight", "IQ2_XXS", [6144, 2048, 256], [2048, 6144], 4268636000, 3244032, 1584, "011ccab7ca2293da5b0d1112172b2dccd4b2cdb2482672dd217f996280223119"),
@@ -103,10 +106,10 @@ def main() -> int:
         for role, name, quant, gguf, logical, offset, length, row, catalog in TENSORS
     ]
     document = {
-        "schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"1.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":1,"attempt_consumed":False,
+        "schema":"pulsarmlx.f017.m1e-execution-config","schema_version":"2.0.0","status":"READY_TO_EXECUTE_M1_E","attempt":2,"attempt_consumed":False,
         "runtime_sha":args.runtime_sha,"tooling_sha":args.tooling_sha,
         "repository_root":{"path_kind":"absolute_private_local","path":str(root),"identity":args.runtime_sha},
-        "package_root":{"path_kind":"absolute_private_local","path":str(package_root),"identity":"m1e_attempt_1_private_package_root"},
+        "package_root":{"path_kind":"absolute_private_local","path":str(package_root),"identity":"m1e_attempt_2_private_package_root"},
         "activation_fixture":artifact(root,"activation_fixture",ACTIVATION),"activation_payload_sha256":ACTIVATION_PAYLOAD,
         "repository_artifacts":{role:artifact(root,role,path) for role,path in ARTIFACTS.items()},
         "local_artifacts":{
@@ -115,7 +118,7 @@ def main() -> int:
             "runner_binary":{"path_kind":"absolute_private_local","path":str(runner),"content_sha256":sha(runner)},
             "oracle_launcher":{"path_kind":"absolute_private_local","path":str(launcher),"content_sha256":sha(launcher)},
             "target_shard":{"path_kind":"absolute_private_local","path":str(target),"ordinal":2,"basename":target.name,"byte_size":target.stat().st_size,"content_sha256":shard["sha256"]},
-            "oracle_output":str(package_root / "m1e-oracle-v1.json"),"package_output":str(package_root / "m1e-package-v1.json"),"attempt_state_output":str(package_root / "m1e-attempt-state-v1.json"),"preflight_evidence_output":str(package_root / "m1e-preflight-evidence-v1.json"),"evidence_output":str(package_root / "m1e-evidence-v1.json")},
+            "oracle_output":str(package_root / "m1e-oracle-attempt-2-v1.json"),"package_output":str(package_root / "m1e-package-attempt-2-v1.json"),"attempt_state_output":str(package_root / "m1e-attempt-2-state-v1.json"),"preflight_evidence_output":str(package_root / "m1e-attempt-2-preflight-evidence-v1.json"),"evidence_output":str(package_root / "m1e-attempt-2-evidence-v1.json")},
         "prior_evidence":M1,"checkpoint_bindings":CHECKPOINT,
         "expert":{"layer":3,"expert":15,"symbolic_id":"blk.3.expert.15"},"tensors":tensors,
         "runner":{"mode":args.mode,"memory_floor_bytes":17179869184 if args.mode == "real_expert" else 1},
