@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-attempt-ledger",
+  "schema_version": "1.0.0",
+  "decoder_qualification_access": {
+    "tensor_payloads": 1,
+    "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084",
+    "counted_as_route_discovery": false
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "authorization_sha256": "2acfce931d341cbe35bbc8cdcee8b55066ddb0509d7b5b1e718ecc0bb8bf849e",
+      "execution_config_sha256": "965b3ebb792e267f4d754ec5bb89253576e673814f2b85fcc0257769d13b0dd4",
+      "tooling_config_sha": "dbfa76c7f2d23e6ac9ce576e2eebdcc7b5e8b8b6",
+      "tooling_tree_oid": "37fbb85f956523ed5d4056095aa5d585f5db5074",
+      "final_head_at_execution": "540d959f9c292ddcf3da7bd0538b37c8a763b189",
+      "verdict": "M1-F0 ATTEMPT 1 REJECTED",
+      "consumed": true,
+      "checkpoint_accesses": 12,
+      "payload_count": 12,
+      "failure_class": "EVIDENCE_VALIDATION",
+      "first_failure": "nonexistent synthetic-route constant in evidence wrapper",
+      "route_produced": false,
+      "route_artifact_sha256": null,
+      "evidence_sha256": "72deffb9d1baffa2378aca18662209a9a49f5da1709c1125f6d662c3af202244",
+      "next_remediation_sha": null
+    }
+  ],
+  "cumulative_checkpoint_access": {
+    "decoder_qualification_payloads": 1,
+    "route_discovery_payloads": 12,
+    "total_payloads": 13
+  }
+}

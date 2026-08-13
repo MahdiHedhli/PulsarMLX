@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-rejected-attempt",
+  "schema_version": "1.0.0",
+  "attempt": 1,
+  "verdict": "M1-F0 ATTEMPT 1 REJECTED",
+  "consumed": true,
+  "failure_class": "EVIDENCE_VALIDATION",
+  "first_failure": "execution wrapper referenced nonexistent admission.SYNTHETIC_ROUTE after ten oracle computations and before immutable oracle-package persistence",
+  "execution_config_sha256": "965b3ebb792e267f4d754ec5bb89253576e673814f2b85fcc0257769d13b0dd4",
+  "authorization_sha256": "2acfce931d341cbe35bbc8cdcee8b55066ddb0509d7b5b1e718ecc0bb8bf849e",
+  "tooling_config_sha": "dbfa76c7f2d23e6ac9ce576e2eebdcc7b5e8b8b6",
+  "tooling_tree_oid": "37fbb85f956523ed5d4056095aa5d585f5db5074",
+  "execution_head_sha": "540d959f9c292ddcf3da7bd0538b37c8a763b189",
+  "execution_start_marker_sha256": "5749701f3df2154a60844f64a11f419720fc218007f40ebce3eedee4dec87a8c",
+  "checkpoint_access": {
+    "shard_opens": 1,
+    "positional_reads": 12,
+    "tensor_payloads": 12,
+    "compressed_bytes": 139217920,
+    "expert_payloads": 0
+  },
+  "oracle_computations_completed": 10,
+  "route_artifact_persisted": false,
+  "expert_computation": false,
+  "mlx_candidate_dispatches": 0,
+  "m1_f_executions": 0,
+  "retry_under_same_attempt": false,
+  "next_attempt_permitted_after_remediation": 2
+}

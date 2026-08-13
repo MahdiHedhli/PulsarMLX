@@ -28,6 +28,8 @@ EXPECTED_DECODED_BYTES = 666_430_464
 Q5_NAME = "blk.3.attn_output.weight"
 Q5_PACKED_SHA256 = "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084"
 Q5_DECODED_SHA256 = "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8"
+HISTORICAL_ROUTE = [15, 177, 233, 41, 166, 26, 10, 152]
+SYNTHETIC_ROUTE = [188, 57, 158, 117, 87, 16, 218, 46]
 
 
 def sha256(data: bytes) -> str:
@@ -204,7 +206,7 @@ def execute(
     if any(_repeat_identity(record) != _repeat_identity(records[0]) for record in records[1:]):
         raise ValueError("M1-F0 repeat nondeterminism")
     selected = results[0]["top8_ids"]
-    if selected in (admission.HISTORICAL_ROUTE, admission.SYNTHETIC_ROUTE):
+    if selected in (HISTORICAL_ROUTE, SYNTHETIC_ROUTE):
         raise ValueError("forbidden route substitution")
     evidence = {
         "schema": "pulsarmlx.f017.m1f0-oracle-package",

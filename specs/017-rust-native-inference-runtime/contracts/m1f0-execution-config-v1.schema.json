@@ -8,7 +8,7 @@
     "schema": {"const": "pulsarmlx.f017.m1f0-execution-config"},
     "schema_version": {"const": "1.0.0"},
     "status": {"enum": ["PREPARED_FOR_EXTERNAL_ADVERSARIAL_REVIEW_NOT_AUTHORIZED", "AUTHORIZED_FOR_EXACTLY_ONE_M1_F0_ATTEMPT_NOT_EXECUTED"]},
-    "attempt": {"const": 1},
+    "attempt": {"enum": [1, 2]},
     "attempt_state": {"enum": ["NOT_AUTHORIZED_NOT_EXECUTED", "AUTHORIZED_NOT_EXECUTED"]},
     "source_identities": {"type": "object"},
     "prior_evidence": {"type": "object"},

@@ -316,7 +316,26 @@ class M1F0AdmissionTests(unittest.TestCase):
                     hashlib.sha256(authorization_path.read_bytes()).hexdigest(),
                 )
 
+    def test_attempt_two_is_distinct_and_binds_rejected_attempt_one(self):
+        fixture = json.loads((ROOT / INPUT.OUTPUT_PATH).read_text())
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        config = M1F0.build_preparation_config(
+            ROOT, fixture, head, authorized=True, attempt=2
+        )
+        self.assertEqual(config["attempt"], 2)
+        self.assertEqual(
+            config["prior_evidence"]["m1_f0_attempt_1_rejected"],
+            "72deffb9d1baffa2378aca18662209a9a49f5da1709c1125f6d662c3af202244",
+        )
+        M1F0.validate_config(ROOT, config)
+        reused = copy.deepcopy(config)
+        reused["attempt"] = 1
+        with self.assertRaises(ValueError):
+            M1F0.validate_config(ROOT, reused)
+
     def test_execution_marker_is_exclusive_and_repeat_record_is_complete(self):
+        self.assertEqual(EXEC.HISTORICAL_ROUTE, M1F0.HISTORICAL_ROUTE)
+        self.assertEqual(EXEC.SYNTHETIC_ROUTE, [188, 57, 158, 117, 87, 16, 218, 46])
         result = {
             "stage_hashes": {
                 "attention_output": "1" * 64,

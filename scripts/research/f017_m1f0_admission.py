@@ -29,6 +29,7 @@ SCHEMA = "pulsarmlx.f017.m1f0-execution-config"
 SCHEMA_VERSION = "1.0.0"
 READY = "READY_TO_EXECUTE_M1_F0"
 ATTEMPT = 1
+M1F0_ATTEMPT_1_REJECTED_SHA256 = "72deffb9d1baffa2378aca18662209a9a49f5da1709c1125f6d662c3af202244"
 LAYER = 3
 HISTORICAL_ROUTE = [15, 177, 233, 41, 166, 26, 10, 152]
 M1_E_EVIDENCE_SHA256 = "0f85ee81205836a492a9dd44d71e56dc6ce46b22a5064f51c5f37dd561f292a9"
@@ -424,8 +425,15 @@ def _tooling_manifest(artifacts: dict[str, dict[str, str]], fixture_sha256: str)
 
 
 def build_preparation_config(
-    root: Path, fixture: dict[str, object], tooling_config_sha: str, *, authorized: bool = False
+    root: Path,
+    fixture: dict[str, object],
+    tooling_config_sha: str,
+    *,
+    authorized: bool = False,
+    attempt: int = ATTEMPT,
 ) -> dict[str, object]:
+    if attempt not in {1, 2}:
+        raise ValueError("M1-F0 attempt number outside closed-loop budget")
     allowlist = build_allowlist(root / CATALOG_PATH)
     artifacts = {
         role: {
@@ -484,7 +492,7 @@ def build_preparation_config(
             "AUTHORIZED_FOR_EXACTLY_ONE_M1_F0_ATTEMPT_NOT_EXECUTED"
             if authorized else "PREPARED_FOR_EXTERNAL_ADVERSARIAL_REVIEW_NOT_AUTHORIZED"
         ),
-        "attempt": ATTEMPT,
+        "attempt": attempt,
         "attempt_state": "AUTHORIZED_NOT_EXECUTED" if authorized else "NOT_AUTHORIZED_NOT_EXECUTED",
         "source_identities": {
             "preparation_base_head": "de25a5327cffbd30c8e4898df8f019ec9f084c94",
@@ -497,7 +505,14 @@ def build_preparation_config(
             "trusted_repository_identity_contract": "f017-trusted-repository-identity-v2",
             "freeze_pattern": "tooling_commit_then_generated_config_then_docs_evidence_descendants",
         },
-        "prior_evidence": {"m1_e": M1_E_EVIDENCE_SHA256, "m1_f_blocker": M1_F_BLOCKER_SHA256},
+        "prior_evidence": {
+            "m1_e": M1_E_EVIDENCE_SHA256,
+            "m1_f_blocker": M1_F_BLOCKER_SHA256,
+            **(
+                {"m1_f0_attempt_1_rejected": M1F0_ATTEMPT_1_REJECTED_SHA256}
+                if attempt == 2 else {}
+            ),
+        },
         "checkpoint_bindings": CHECKPOINT_BINDINGS,
         "layer": {"id": 3, "prefix": "blk.3", "position": 0, "dsa_mode": "range_fill"},
         "input_state": {
@@ -575,7 +590,7 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
     }
     if set(value) != required:
         raise ValueError("M1-F0 config field set differs")
-    if value["schema"] != SCHEMA or value["schema_version"] != SCHEMA_VERSION or value["attempt"] != 1:
+    if value["schema"] != SCHEMA or value["schema_version"] != SCHEMA_VERSION or value["attempt"] not in {1, 2}:
         raise ValueError("M1-F0 config identity differs")
     authorization = value["authorization"]
     authorized = value["status"] == "AUTHORIZED_FOR_EXACTLY_ONE_M1_F0_ATTEMPT_NOT_EXECUTED"
@@ -589,7 +604,10 @@ def validate_config(root: Path, value: dict[str, object]) -> None:
         raise ValueError("M1-F0 config status differs")
     if value["forbidden_historical_route"] != HISTORICAL_ROUTE:
         raise ValueError("historical route prohibition differs")
-    if value["prior_evidence"] != {"m1_e": M1_E_EVIDENCE_SHA256, "m1_f_blocker": M1_F_BLOCKER_SHA256}:
+    expected_prior = {"m1_e": M1_E_EVIDENCE_SHA256, "m1_f_blocker": M1_F_BLOCKER_SHA256}
+    if value["attempt"] == 2:
+        expected_prior["m1_f0_attempt_1_rejected"] = M1F0_ATTEMPT_1_REJECTED_SHA256
+    if value["prior_evidence"] != expected_prior:
         raise ValueError("M1-F0 evidence lineage differs")
     if value["checkpoint_bindings"] != CHECKPOINT_BINDINGS:
         raise ValueError("M1-F0 checkpoint binding differs")
@@ -851,7 +869,7 @@ def validate_route_artifact(root: Path, value: dict[str, object], input_package_
         raise ValueError("route artifact evidence kind differs")
     if evidence_kind == "real_checkpoint_oracle":
         if (
-            value.get("accepted_attempt") != 1
+            value.get("accepted_attempt") not in {1, 2}
             or not isinstance(value.get("tensor_payload_sha256"), dict)
             or set(value["tensor_payload_sha256"]) != {name for _, name, _, _ in EXPECTED}
             or not isinstance(value.get("decoded_tensor_sha256"), dict)
@@ -926,6 +944,7 @@ def main() -> int:
     parser.add_argument("--input-fixture", type=Path)
     parser.add_argument("--tooling-config-sha")
     parser.add_argument("--authorized", action="store_true")
+    parser.add_argument("--attempt", type=int, default=ATTEMPT)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     root = args.repository_root.resolve(strict=True)
@@ -959,6 +978,7 @@ def main() -> int:
             json.loads(args.input_fixture.read_text()),
             args.tooling_config_sha,
             authorized=args.authorized,
+            attempt=args.attempt,
         )
     else:
         parser.error("select exactly one M1-F0 preparation mode")

@@ -91,7 +91,7 @@ def bank(
     oracle = json.loads(oracle_raw, object_pairs_hook=reject_duplicates)
     if (
         oracle.get("schema") != "pulsarmlx.f017.m1f0-oracle-package"
-        or oracle.get("attempt") != 1
+        or oracle.get("attempt") != config["attempt"]
         or oracle.get("attempt_state") != "COMPLETED"
         or oracle.get("execution_config_sha256") != config_sha
         or oracle.get("authorization_sha256") != authorization_sha
@@ -145,7 +145,7 @@ def bank(
         "schema": "pulsarmlx.f017.m1f0-layer3-route",
         "schema_version": "1.0.0",
         "evidence_kind": "real_checkpoint_oracle",
-        "accepted_attempt": 1,
+        "accepted_attempt": config["attempt"],
         "execution_config_sha256": config_sha,
         "authorization_sha256": authorization_sha,
         "oracle_package_sha256": oracle_sha,
@@ -205,7 +205,7 @@ def bank(
     evidence = {
         "schema": "pulsarmlx.f017.m1f0-evidence",
         "schema_version": "1.0.0",
-        "attempt": 1,
+        "attempt": config["attempt"],
         "attempt_state": "COMPLETED",
         "execution_config_sha256": config_sha,
         "authorization_sha256": authorization_sha,
@@ -235,7 +235,7 @@ def bank(
         ledger = load(ledger_path)
         if ledger.get("schema") != "pulsarmlx.f017.m1f0-attempt-ledger":
             raise ValueError("attempt ledger identity")
-        if any(record.get("attempt") == 1 for record in ledger.get("attempts", [])):
+        if any(record.get("attempt") == config["attempt"] for record in ledger.get("attempts", [])):
             raise ValueError("attempt ledger reuse")
     else:
         ledger = {
@@ -250,7 +250,7 @@ def bank(
         }
     ledger["attempts"].append(
         {
-            "attempt": 1,
+            "attempt": config["attempt"],
             "authorization_sha256": authorization_sha,
             "execution_config_sha256": config_sha,
             "tooling_config_sha": config["source_identities"]["tooling_config_sha"],
@@ -268,10 +268,11 @@ def bank(
             "next_remediation_sha": None,
         }
     )
+    route_payloads = sum(record["payload_count"] for record in ledger["attempts"])
     ledger["cumulative_checkpoint_access"] = {
         "decoder_qualification_payloads": 1,
-        "route_discovery_payloads": 12,
-        "total_payloads": 13,
+        "route_discovery_payloads": route_payloads,
+        "total_payloads": 1 + route_payloads,
     }
 
     write_atomic(route_path, route, exclusive=True)
