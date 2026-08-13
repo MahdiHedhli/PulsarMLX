@@ -876,8 +876,8 @@ impl Evidence {
 fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) -> bool {
     let expected = BTreeMap::from([
         (
-            "attempt_2_handoff",
-            "docs/architecture/reviews/f017-m1-e-attempt-2-handoff.md",
+            "attempt_3_handoff",
+            "docs/architecture/reviews/f017-m1-e-attempt-3-handoff.md",
         ),
         (
             "activation_fixture",
@@ -930,6 +930,10 @@ fn valid_m1e_artifact_paths(paths: &[ArtifactPathEvidence], source_sha: &str) ->
         (
             "path_resolution_contract",
             "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "preparer_input_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-real-reference-preparer-input-v3.json",
         ),
         (
             "trusted_repository_identity_contract",
