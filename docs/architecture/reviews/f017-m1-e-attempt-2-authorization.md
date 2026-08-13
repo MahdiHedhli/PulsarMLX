@@ -1,9 +1,14 @@
 # F017 M1-E Attempt 2 Authorization
 
-**Status: PREPARED / NOT AUTHORIZED / NOT EXECUTED**
+**Status: AUTHORIZED FOR EXACTLY ONE M1-E ATTEMPT 2 / NOT EXECUTED**
 
 This is a fresh authorization. Attempt 1 remains consumed and rejected; this
 packet does not relabel it or permit a retry under its authorization.
+
+The complete remediation and review packet at
+`243ebcc286c8b2d19281e641ea274a3c84569442` passed final-head Apple-native CI
+run `31661840703` before this authorization was issued. The authorization
+commit changes this status only; runtime/tooling remains frozen below.
 
 ## Direct immutable bindings
 
