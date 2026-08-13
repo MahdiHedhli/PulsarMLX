@@ -1,6 +1,6 @@
 use f017_runner::cli::RunnerMode;
 use f017_runner::json::{sha256_bytes, sha256_file};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -23,21 +23,66 @@ fn base(temp: &Path) -> (Value, PathBuf) {
     fs::write(&checkpoint, b"{}").unwrap();
     fs::write(&shard, b"metadata-only").unwrap();
     let roles = [
-        ("boundary_contract","specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json"),
-        ("decoder_contract","specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json"),
-        ("scaffold_contract","specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json"),
-        ("tier_b_contract","specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json"),
-        ("repeat_integrity_contract","specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json"),
-        ("timing_contract","specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json"),
-        ("evidence_schema","specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json"),
-        ("execution_config_schema","specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json"),
-        ("path_resolution_contract","specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),
-        ("activation_generator","scripts/research/generate_f017_m1e_activation.py"),
-        ("execution_config_preparer","scripts/research/prepare_f017_m1e_execution.py"),
-        ("authorized_launcher","scripts/research/run_f017_m1e_authorized.py"),
-        ("real_reference_preparer","scripts/research/prepare_f017_m1e_real_reference.py"),
-        ("independent_iq2_decoder","scripts/research/iq2_xxs_dequant.py"),
-        ("independent_iq3_decoder","scripts/research/iq3_xxs_dequant.py"),
+        (
+            "boundary_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
+        ),
+        (
+            "decoder_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json",
+        ),
+        (
+            "scaffold_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
+        ),
+        (
+            "tier_b_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json",
+        ),
+        (
+            "repeat_integrity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
+        ),
+        (
+            "timing_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
+        ),
+        (
+            "evidence_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
+        ),
+        (
+            "execution_config_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json",
+        ),
+        (
+            "path_resolution_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "activation_generator",
+            "scripts/research/generate_f017_m1e_activation.py",
+        ),
+        (
+            "execution_config_preparer",
+            "scripts/research/prepare_f017_m1e_execution.py",
+        ),
+        (
+            "authorized_launcher",
+            "scripts/research/run_f017_m1e_authorized.py",
+        ),
+        (
+            "real_reference_preparer",
+            "scripts/research/prepare_f017_m1e_real_reference.py",
+        ),
+        (
+            "independent_iq2_decoder",
+            "scripts/research/iq2_xxs_dequant.py",
+        ),
+        (
+            "independent_iq3_decoder",
+            "scripts/research/iq3_xxs_dequant.py",
+        ),
     ];
     let artifacts = roles
         .into_iter()
@@ -115,6 +160,18 @@ fn wrong_expert_tensor_fixture_attempt_and_dispatch_fail_closed() {
             Box::new(|v| v["tensors"][0]["name"] = json!("blk.3.ffn_gate_exps.other")),
         ),
         (
+            "gate_from_adjacent_expert",
+            Box::new(|v| v["tensors"][0]["offset"] = json!(3423197024_u64 + 3244032)),
+        ),
+        (
+            "up_from_adjacent_expert",
+            Box::new(|v| v["tensors"][1]["offset"] = json!(4268636000_u64 + 3244032)),
+        ),
+        (
+            "down_from_adjacent_expert",
+            Box::new(|v| v["tensors"][2]["offset"] = json!(2203342688_u64 + 4816896)),
+        ),
+        (
             "quantization",
             Box::new(|v| v["tensors"][0]["quantization"] = json!("Q8_0")),
         ),
@@ -188,10 +245,12 @@ fn execution_config_mutation_after_preflight_is_rejected() {
     let (value, path) = base(&temp);
     let loaded = load(&value, &path).unwrap();
     fs::write(&path, b"{}").unwrap();
-    assert!(f017_runner::m1e_execution_config::verify_unchanged(
-        loaded.config.execution_config.as_ref().unwrap()
-    )
-    .is_err());
+    assert!(
+        f017_runner::m1e_execution_config::verify_unchanged(
+            loaded.config.execution_config.as_ref().unwrap()
+        )
+        .is_err()
+    );
     let _ = fs::remove_dir_all(temp);
 }
 

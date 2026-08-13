@@ -2,7 +2,7 @@
 
 use f017_runner::evidence::Evidence;
 use f017_runner::json::{parse_json_no_duplicates, sha256_bytes, sha256_file};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::fs::{self, File};
 use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
@@ -93,7 +93,64 @@ fn setup() -> (PathBuf, String, PathBuf, PathBuf) {
     fs::write(&package, serde_json::to_vec(&package_doc).unwrap()).unwrap();
     let environment = temp.join("environment.json");
     fs::write(&environment,format!("{{\"schema\":\"pulsarmlx.f017.fixture-environment\",\"schema_version\":1,\"architecture\":\"{}\",\"purpose\":\"checkpoint_free_ci\"}}\n",std::env::consts::ARCH)).unwrap();
-    let roles=[("boundary_contract","specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json"),("decoder_contract","specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json"),("scaffold_contract","specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json"),("tier_b_contract","specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json"),("repeat_integrity_contract","specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json"),("timing_contract","specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json"),("evidence_schema","specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json"),("execution_config_schema","specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json"),("path_resolution_contract","specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json"),("activation_generator","scripts/research/generate_f017_m1e_activation.py"),("execution_config_preparer","scripts/research/prepare_f017_m1e_execution.py"),("real_reference_preparer","scripts/research/prepare_f017_m1e_real_reference.py"),("independent_iq2_decoder","scripts/research/iq2_xxs_dequant.py"),("independent_iq3_decoder","scripts/research/iq3_xxs_dequant.py")];
+    let roles = [
+        (
+            "boundary_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-boundary-v1.json",
+        ),
+        (
+            "decoder_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v1.json",
+        ),
+        (
+            "scaffold_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-exact-scaffold-v1.json",
+        ),
+        (
+            "tier_b_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-expert-tier-b-v1.json",
+        ),
+        (
+            "repeat_integrity_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-repeat-integrity-v1.json",
+        ),
+        (
+            "timing_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-timing-v1.json",
+        ),
+        (
+            "evidence_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-evidence-v1.schema.json",
+        ),
+        (
+            "execution_config_schema",
+            "specs/017-rust-native-inference-runtime/contracts/m1e-execution-config-v1.schema.json",
+        ),
+        (
+            "path_resolution_contract",
+            "specs/017-rust-native-inference-runtime/contracts/m1d-artifact-path-resolution-v1.json",
+        ),
+        (
+            "activation_generator",
+            "scripts/research/generate_f017_m1e_activation.py",
+        ),
+        (
+            "execution_config_preparer",
+            "scripts/research/prepare_f017_m1e_execution.py",
+        ),
+        (
+            "real_reference_preparer",
+            "scripts/research/prepare_f017_m1e_real_reference.py",
+        ),
+        (
+            "independent_iq2_decoder",
+            "scripts/research/iq2_xxs_dequant.py",
+        ),
+        (
+            "independent_iq3_decoder",
+            "scripts/research/iq3_xxs_dequant.py",
+        ),
+    ];
     let artifacts = roles
         .into_iter()
         .map(|(r, p)| (r.to_owned(), artifact(&root, r, p)))
@@ -164,6 +221,50 @@ fn run(diverge: bool) -> (std::process::ExitStatus, Evidence, PathBuf) {
     (status, evidence, temp)
 }
 
+fn run_with_oracle_mutation(
+    rebind_package_hash: bool,
+    mutate: impl FnOnce(&mut serde_json::Value),
+) -> (std::process::ExitStatus, Evidence, PathBuf) {
+    let (config, digest, output, temp) = setup();
+    let config_doc: serde_json::Value =
+        serde_json::from_slice(&fs::read(&config).unwrap()).unwrap();
+    let oracle = PathBuf::from(
+        config_doc["local_artifacts"]["oracle_output"]
+            .as_str()
+            .unwrap(),
+    );
+    let package = PathBuf::from(
+        config_doc["local_artifacts"]["package_output"]
+            .as_str()
+            .unwrap(),
+    );
+    let mut oracle_doc: serde_json::Value =
+        serde_json::from_slice(&fs::read(&oracle).unwrap()).unwrap();
+    mutate(&mut oracle_doc);
+    fs::write(&oracle, serde_json::to_vec(&oracle_doc).unwrap()).unwrap();
+    if rebind_package_hash {
+        let mut package_doc: serde_json::Value =
+            serde_json::from_slice(&fs::read(&package).unwrap()).unwrap();
+        package_doc["oracle"]["content_sha256"] = json!(sha256_file(&oracle).unwrap());
+        fs::write(&package, serde_json::to_vec(&package_doc).unwrap()).unwrap();
+    }
+
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap();
+    let status = Command::new(root.join(".venv/bin/python"))
+        .current_dir(std::env::temp_dir())
+        .arg(root.join("scripts/research/run_f017_m1e_authorized.py"))
+        .args(["--execution-config"])
+        .arg(config)
+        .args(["--execution-config-sha256", &digest])
+        .status()
+        .unwrap();
+    let evidence = parse_json_no_duplicates(&fs::read(output).unwrap()).unwrap();
+    (status, evidence, temp)
+}
+
 #[test]
 fn exact_config_preflight_is_repeatable_and_non_consuming() {
     let (config, digest, output, temp) = setup();
@@ -213,6 +314,15 @@ fn canonical_real_shaped_synthetic_expert_uses_one_config_and_thirty_native_disp
             .final_output_all_equal
     );
     assert!(evidence.lifecycle.reconciled);
+    let mut fallback = evidence.clone();
+    fallback.execution.dispatch.fallback = 1;
+    assert!(fallback.validate_success_ready().is_err());
+    let mut dispatch = evidence.clone();
+    dispatch.execution.dispatch.native = 29;
+    assert!(dispatch.validate_success_ready().is_err());
+    let mut lifecycle = evidence.clone();
+    lifecycle.lifecycle.post.in_flight_work.value = Some(1);
+    assert!(lifecycle.validate_success_ready().is_err());
     fs::remove_dir_all(temp).unwrap();
 }
 
@@ -237,6 +347,29 @@ fn changed_intermediate_rejects_even_when_final_hashes_stay_equal() {
             .numerical
             .expert_repeat_integrity
             .gate_all_equal
+    );
+    fs::remove_dir_all(temp).unwrap();
+}
+
+#[test]
+fn stale_oracle_content_and_candidate_before_completion_fail_closed() {
+    let (status, evidence, temp) = run_with_oracle_mutation(false, |oracle| {
+        oracle["stale_unbound_field"] = json!(true);
+    });
+    assert!(!status.success());
+    assert_eq!(
+        evidence.result.first_failure.as_ref().unwrap().code,
+        "m1d_artifact_hash"
+    );
+    fs::remove_dir_all(temp).unwrap();
+
+    let (status, evidence, temp) = run_with_oracle_mutation(true, |oracle| {
+        oracle["finalization"]["oracle_completed_at"] = json!(u128::MAX.to_string());
+    });
+    assert!(!status.success());
+    assert_eq!(
+        evidence.result.first_failure.as_ref().unwrap().code,
+        "m1e_oracle_order"
     );
     fs::remove_dir_all(temp).unwrap();
 }
