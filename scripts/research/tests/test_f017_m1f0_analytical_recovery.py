@@ -26,9 +26,20 @@ def load(name: str, relative: str):
 
 RECOVERY = load("f017_m1f0_recovery", "scripts/research/recover_f017_m1f0_analytics.py")
 BANK = load("f017_m1f0_recovery_bank", "scripts/research/bank_f017_m1f0_analytical_recovery.py")
+PREPARE = load("f017_m1f0_recovery_prepare", "scripts/research/prepare_f017_m1f0_analytical_recovery.py")
 
 
 class M1F0AnalyticalRecoveryTests(unittest.TestCase):
+    def test_recovery_config_maps_ordered_public_tensor_records(self):
+        import subprocess
+
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        config = PREPARE.build_config(ROOT, head)
+        names = [item["name"] for item in config["tensor_allowlist"]]
+        self.assertEqual(list(config["expected_identities"]["tensor_payload_sha256"]), names)
+        self.assertEqual(list(config["expected_identities"]["decoded_tensor_sha256"]), names)
+        self.assertEqual(len(names), 12)
+
     def test_route_stability_contract_is_frozen_before_values_and_requires_headroom(self):
         contract = json.loads(
             (

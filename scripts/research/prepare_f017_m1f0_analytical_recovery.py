@@ -53,6 +53,15 @@ def build_config(root: Path, tooling_commit: str) -> dict[str, Any]:
     ).strip()
     oracle = evidence["oracle"]
     stages = oracle["stage_hashes"]
+    payload_hashes = {
+        item["symbolic_name"]: item["packed_sha256"] for item in evidence["tensor_payloads"]
+    }
+    decoded_hashes = {
+        item["symbolic_name"]: item["decoded_sha256"] for item in evidence["decoded_tensors"]
+    }
+    expected_names = [item["name"] for item in accepted_config["tensor_allowlist"]]
+    if list(payload_hashes) != expected_names or list(decoded_hashes) != expected_names:
+        raise ValueError("accepted evidence tensor ordering")
     return {
         "schema": "pulsarmlx.f017.m1f0-analytical-recovery-config",
         "schema_version": "1.0.0",
@@ -82,8 +91,8 @@ def build_config(root: Path, tooling_commit: str) -> dict[str, Any]:
             "expert_payloads": 0,
         },
         "expected_identities": {
-            "tensor_payload_sha256": evidence["tensor_payload_sha256"],
-            "decoded_tensor_sha256": evidence["decoded_tensor_sha256"],
+            "tensor_payload_sha256": payload_hashes,
+            "decoded_tensor_sha256": decoded_hashes,
             "router_scores_sha256": oracle["router_scores_sha256"],
             "ranking_sha256": oracle["ranking_sha256"],
             "top8_ids_sha256": oracle["top8_ids_sha256"],
