@@ -26,7 +26,7 @@ The routing weights cannot be substituted for scores. The frozen selection imple
 
 ## Required margin fields
 
-- Rank-8 expert: not recoverable from banked ranking values
+- Rank-8 expert: `177`, recovered from the ordered accepted top-8 IDs
 - Rank-8 score: not banked
 - Rank-9 expert: not banked
 - Rank-9 score: not banked
