@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-decoded-tensor-reuse",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-decoded-tensor-reuse-v1",
+  "design": "one exact 12-payload read/decode package reused read-only for every precommitted fixture",
+  "future_access_budget": {
+    "shard_opens": 1,
+    "positional_reads": 12,
+    "tensor_payloads": 12,
+    "compressed_bytes": 139217920,
+    "decoded_bytes": 666430464
+  },
+  "immutability": {
+    "all_12_packed_identities_exact": true,
+    "all_12_decoded_identities_exact": true,
+    "manifest_and_canonical_package_hash_before_ladder": true,
+    "rehash_before_and_after_each_fixture": true,
+    "final_package_hash_equals_initial": true,
+    "read_only_arrays": true,
+    "candidate_mutation": "reject"
+  },
+  "fixture_independence": "each fixture binds its own immutable package and cannot alter decoded tensors",
+  "official_repeats_per_fixture": 10,
+  "real_access_during_preparation": 0,
+  "fallback_budget_if_reuse_validation_fails": "fail closed; do not silently reread per fixture"
+}

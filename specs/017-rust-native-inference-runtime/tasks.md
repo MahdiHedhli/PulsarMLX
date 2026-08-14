@@ -188,10 +188,10 @@
   rebuild authorization, execute at most attempts 3-5, and bank acceptance or
   the terminal blocker without entering M1-F.
 - [ ] T017-179 Prepare and checkpoint-free qualify the complete layer-3 M1-F
-  admission package. **Resumed from accepted M1-F0 metadata only:** the frozen
-  route is `[166, 78, 26, 186, 163, 199, 233, 177]`; Q6_K real-byte decoder
-  qualification and the complete-layer oracle/contracts remain required before
-  any M1-F authorization.
+  admission package. **Blocked pending a new route-stable fixture:** the first
+  accepted oracle route remains valid evidence but has safety factor
+  `0.5609105150995247`, below the frozen production-freeze requirement `4.0`.
+  Expert-specific inventory and Q6_K qualification remain paused.
 - [x] T017-180 Prepare and checkpoint-free qualify the bounded layer-3 M1-F0
   oracle-only attention/router discovery package, freeze its 12-tensor
   expert-free access budget and exact route-selection contract, pass internal
@@ -204,3 +204,11 @@
   1, remediate its evidence-wrapper failure, accept attempt 2 with exactly 12
   attention/router payloads and ten deterministic oracle repeats, bank the
   real route, and stop with M1-F prepared but unauthorized.
+- [x] T017-183 Recover the accepted M1-F0 analytical values without changing
+  route semantics, retain full score/ranking objects, and prove the first
+  fixture is unsuitable for production route freezing under the pre-frozen
+  stability contract.
+- [x] T017-184 Reconstruct the complete real-payload ledger, precommit the
+  eight-fixture checkpoint-free input family, extend analytical retention, and
+  bank a one-million-sample planning estimate showing the proposed family is
+  underpowered without performing new checkpoint access.

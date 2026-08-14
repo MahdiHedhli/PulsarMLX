@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.analytical-evidence-retention",
+  "schema_version": "2.0.0",
+  "contract_id": "f017-analytical-evidence-retention-v2",
+  "supersedes_sha256": "3a218e0d32f30f61ab3850d6b5b8d6114b998729a1735486e27d8e352e9d2d63",
+  "scope": "all selection-bearing or next-phase-load-bearing F017 evidence",
+  "execution_config_extension": {
+    "field": "required_analytical_retention",
+    "type": "non-empty array of declarations",
+    "declaration_fields": ["name", "value_path", "hash_path"],
+    "extensible_by_phase": true,
+    "hard_coded_quantity_enumeration": false
+  },
+  "pass_requirements": {
+    "every_declared_value_present": true,
+    "every_declared_value_hash_present": true,
+    "hash_only_small_analytical_objects": "forbidden",
+    "validation_before_pass_persistence": true
+  },
+  "small_objects": "canonical values or canonical bytes plus SHA-256",
+  "large_objects": "private canonical artifact plus identity, SHA-256, shape, count, dtype, serialization, provenance, and public-safe summary",
+  "historical_evidence_policy": "append-only amendment or recovery; never rewrite accepted evidence",
+  "future_examples_non_normative": {
+    "M1-F0": ["full router scores", "ranking", "cutoff and first-unselected scores", "margin"],
+    "M1-G": ["retained logits/top-N window", "top-1/top-2 margin", "token ranking", "tie-sensitive decode state"],
+    "P1": ["token-choice margin", "gate confidence", "failure-localization summaries"]
+  }
+}

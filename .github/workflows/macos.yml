@@ -197,6 +197,17 @@ jobs:
             --input-fixture specs/017-rust-native-inference-runtime/fixtures/f017-m1f0-layer3-input-v1.json \
             --output "$RUNNER_TEMP/f017-m1-f0-stress-v1.json"
           echo "M1-F0 historical-route rejection and tensor-access isolation negatives executed; no skip"
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_m1f0_new_input_selection -v
+          .venv/bin/python scripts/research/validate_f017_real_payload_ledger.py \
+            --check docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json
+          for seed in 17017007 17017008 17017009 17017010 17017011 17017012 17017013 17017014; do
+            .venv/bin/python scripts/research/generate_f017_m1f0_ladder_input.py \
+              --seed "$seed" \
+              --output "specs/017-rust-native-inference-runtime/fixtures/f017-m1f0-layer3-input-seed-${seed}-v1.json" \
+              --check
+          done
+          echo "M1-F0 new-input planning: deterministic ladder, complete access ledger, extensible retention, unchanged S>=4 gate; no checkpoint access"
           echo "M1-E and M1-D regressions remain load-bearing in adjacent gates"
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Execute F017 exact and Tier-B numerical ladder

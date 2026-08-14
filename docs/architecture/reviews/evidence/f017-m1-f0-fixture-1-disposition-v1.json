@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-fixture-disposition",
+  "schema_version": "1.0.0",
+  "fixture_ordinal": 1,
+  "fixture_artifact_sha256": "33be5f7ed93a29621b39034246a8bf088111fa4138b0966179aad94a138e63c4",
+  "accepted_route_artifact_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+  "analytical_recovery_evidence_sha256": "1496b8a3ca26448145acbd107387aadbc11322fd93b71fcc5abd659d6e8e7686",
+  "oracle_route_valid": true,
+  "production_route_freeze_qualified": false,
+  "route_stability_safety_factor": 0.5609105150995247,
+  "stability_contract_sha256": "da05364470f7fc5fbdc930441be1ea269af01b6a87173df34e467bcc0b0df9d7",
+  "stability_contract_retained": true,
+  "m1f_expert_inventory_frozen": false,
+  "m1f_authorized": false,
+  "q6_k_qualification_paused": true
+}

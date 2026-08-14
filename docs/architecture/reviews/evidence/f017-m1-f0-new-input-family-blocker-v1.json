@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-new-input-family-disposition",
+  "schema_version": "1.0.0",
+  "status": "BLOCKED_M1_F_FIXTURE_FAMILY_UNSUITABLE",
+  "starting_head": "1fe04c22a00f1a36ec73ee4d8c9f7a65ee909ce2",
+  "remote_head_at_start": "1fe04c22a00f1a36ec73ee4d8c9f7a65ee909ce2",
+  "docs_only_descendants_at_start": [],
+  "accepted_route_evidence_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+  "analytical_recovery_evidence_sha256": "1496b8a3ca26448145acbd107387aadbc11322fd93b71fcc5abd659d6e8e7686",
+  "old_fixture": {
+    "oracle_route_valid": true,
+    "production_route_freeze_qualified": false,
+    "safety_factor": 0.5609105150995247
+  },
+  "stability_contract_sha256": "da05364470f7fc5fbdc930441be1ea269af01b6a87173df34e467bcc0b0df9d7",
+  "minimum_safety_factor": 4.0,
+  "stability_contract_changed": false,
+  "payload_ledger": {
+    "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+    "sha256": "4c18419f4fdffce931ddf8bfab6a15164cce65578ad830290ed0c1d636f152a5",
+    "corrected_cumulative_tensor_payloads": 45,
+    "prior_m1f0_scoped_total": 37,
+    "scope_omissions": 8
+  },
+  "fixture_family": {
+    "seeds": [17017007, 17017008, 17017009, 17017010, 17017011, 17017012, 17017013, 17017014],
+    "ladder_sha256": "59c55a26d12ff9e0fdbe488608c4cb7ffb1a2082d322dec85ee5ef37719c3ed2",
+    "selection_rule": "first_qualifying_fixture_in_ordinal_order",
+    "execution_stopping_rule": "evaluate_and_bank_all_precommitted_fixtures"
+  },
+  "planning_estimate": {
+    "contract_sha256": "440b5dd26d20753275db36159755e06b1fc20e740d1689d774fe90b1289e7954",
+    "evidence_sha256": "91a80f4634e6fedf6d3a26a91d7576e0f411e110b13dd282b6633d873c6f517d",
+    "samples": 1000000,
+    "qualifying_samples": 0,
+    "predicted_rate": 0.0,
+    "wilson_95_upper": 0.000003841444063944942,
+    "p_at_least_one_wilson_upper": 0.00003073113932738902,
+    "s_99_percentile": 1.0438002749662738,
+    "maximum_observed_s": 3.129417274314236,
+    "planning_threshold_p_at_least_one": 0.9,
+    "adequate": false
+  },
+  "decoded_tensor_reuse_contract_sha256": "e061bb16af5bda05c39fd439c76c17447e2af0093369bb00fb14062425cead16",
+  "future_reuse_budget_if_a_family_is_approved": {
+    "shard_opens": 1,
+    "positional_reads": 12,
+    "tensor_payloads": 12,
+    "compressed_bytes": 139217920,
+    "decoded_bytes": 666430464
+  },
+  "real_checkpoint_access_this_phase": 0,
+  "new_route_discovery": false,
+  "q6_k_qualification": false,
+  "m1_f_execution": false,
+  "next_action": "independent review of the negative estimator and checkpoint-independent fixture-family redesign"
+}

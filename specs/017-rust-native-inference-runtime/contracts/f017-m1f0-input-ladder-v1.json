@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-input-ladder-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-input-ladder-v1",
+  "fixture_family": "normal_f32_with_layer_stress_prefix_v1",
+  "ordered_seeds": [17017007, 17017008, 17017009, 17017010, 17017011, 17017012, 17017013, 17017014],
+  "selection_rule": "first qualifying fixture in precommitted ordinal order",
+  "execution_stopping_rule": "evaluate and bank every precommitted fixture",
+  "qualification": {
+    "route_stability_contract_sha256": "da05364470f7fc5fbdc930441be1ea269af01b6a87173df34e467bcc0b0df9d7",
+    "margin_rule": "margin > B8+B9",
+    "minimum_safety_factor": 4.0,
+    "selected_ids": "exact"
+  },
+  "outcome_retention": "bank every success and failure; omission rejects the ladder",
+  "post_real_access_seed_mutation": "forbidden",
+  "post_real_access_fixture_mutation": "forbidden"
+}
