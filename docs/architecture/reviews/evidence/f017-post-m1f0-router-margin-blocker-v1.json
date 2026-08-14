@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.post-m1f0-router-margin-blocker",
+  "schema_version": "1.0.0",
+  "classification": "M1-F0_ROUTER_MARGIN_NOT_BANKED",
+  "verdict": "BLOCKED",
+  "starting_head": "df0f3a91244d944f0fe5a0f569b709ccfe631cc0",
+  "accepted_route_artifact": {
+    "path": "docs/architecture/reviews/evidence/f017-m1-f0-layer3-route-v1.json",
+    "sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e"
+  },
+  "accepted_attempt_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+    "sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9"
+  },
+  "accepted_oracle_package": {
+    "sha256": "ad4ab9d8f1c40e5bf8886ed404f1e07115560c10c53226dcc5497d8b6785388f",
+    "router_scores_sha256": "3b4ff6cac287f53004c7cc6ceedb13f2403a6ce4426e30155005158e0e004dc4",
+    "ranking_sha256": "6a878c1db20997b16cff8efdb8659543c07974dcddd718957243c889d78a2ede",
+    "retained_router_score_values": false,
+    "retained_ranking_values": false,
+    "retained_rank_9_score": false
+  },
+  "accepted_route": [166, 78, 26, 186, 163, 199, 233, 177],
+  "retained_routing_weights_are_router_scores": false,
+  "routing_weight_reason": "The frozen selection contract derives weights from selected pre-bias sigmoid probabilities, while ranking uses post-sigmoid-plus-bias scores; routing weights cannot recover rank-8 or rank-9 scores.",
+  "required_but_unrecoverable_without_new_real_computation": [
+    "canonical 256-element post-sigmoid-plus-bias score vector",
+    "stable complete ranking values",
+    "rank-8 score",
+    "rank-9 expert and score",
+    "rank-8/rank-9 separation margin"
+  ],
+  "search_scope": [
+    "accepted public route artifact",
+    "accepted attempt-2 public evidence",
+    "surviving hash-matched private oracle package",
+    "workspace and local temporary artifacts referencing the accepted router-score or ranking hashes",
+    "repository history paths associated with M1-F0 score and ranking evidence"
+  ],
+  "forbidden_actions_not_performed": {
+    "real_checkpoint_payload_reads": 0,
+    "oracle_recomputation": false,
+    "route_recomputation": false,
+    "m1_f_execution": false,
+    "q6_k_qualification": false
+  },
+  "downstream_gates_not_evaluated": [
+    "route-stability margin",
+    "39-payload quant-family table",
+    "expert-166 slice verification",
+    "all-eight slice validation",
+    "dispatch derivation",
+    "decoder qualification handoff"
+  ],
+  "required_next_action": "Operator review and a separately scoped authorization to recover and bank the complete score vector from an independently bound real computation, or to freeze a new input and repeat M1-F0 discovery; this sprint cannot infer rank 9 from hashes or normalized routing weights."
+}
