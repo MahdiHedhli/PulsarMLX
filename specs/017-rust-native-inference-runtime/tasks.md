@@ -231,3 +231,9 @@
   detail surface, separate route-set from route-order status, reject summary
   mutations fail-closed, preserve immutable raw evidence, and audit adjacent
   F017 summarizers for historical false-PASS risk.
+- [x] T017-189 Research and freeze the checkpoint-free M1-F routing-contract v3:
+  trace production/reference rank semantics, make expert ID and weight atomic,
+  qualify ID-keyed routing weights and f32 accumulation-order effects, preserve
+  v1/v2 history, retrospectively falsify fixture 1 from retained antecedents,
+  characterize representative/stress policy and the dense-prefix fallback, and
+  stop for independent adversarial review with the real-payload ledger at 57.

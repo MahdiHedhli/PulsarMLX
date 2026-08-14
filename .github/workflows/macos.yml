@@ -280,6 +280,28 @@ jobs:
             -p test_iq2_xxs_numpy.py \
             -v
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify checkpoint-free F017 routing contract v3
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          uv run --frozen python -m unittest discover \
+            -s scripts/research/tests \
+            -p 'test_f017_routing_contract_v3*.py' \
+            -v
+          uv run --frozen python -m scripts.research.f017_routing_contract_v3 \
+            --source-trace \
+            --output "$RUNNER_TEMP/f017-routing-v3-source-trace.json"
+          cmp \
+            "$RUNNER_TEMP/f017-routing-v3-source-trace.json" \
+            docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json
+          test "$(shasum -a 256 specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3.json | awk '{print $1}')" = \
+            "befbf30f85e12b779e7d5c778f337a5f7d6019a15805e04805a24e4903ea3969"
+          echo 'F017_ROUTING_V3_SEMANTICS=ORDER_IS_NUMERICALLY_OBSERVABLE_NOT_MODEL_SEMANTIC'
+          echo 'F017_ROUTING_V3_ATOMIC_PAIRS=PASS'
+          echo 'F017_ROUTING_V3_WEIGHT_QUALIFICATION=PASS'
+          echo 'F017_ROUTING_V3_ACCUMULATION_ORDER=PASS'
+          echo 'F017_ROUTING_V3_FALSE_PASS_NEGATIVES=PASS'
+          echo 'F017_ROUTING_V3_FIXTURE1_ZERO_READ_RETROSPECTIVE=PASS'
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \
