@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.v2-antecedent-recovery-preflight-evidence",
+  "schema_version": "1.0.0",
+  "execution_config_sha256": "649a53630be246af11270f1cad19bdb8a7ccabf06e928febfe6cbc282dd4c7e2",
+  "result": "READY_TO_EXECUTE_V2_ANTECEDENT_RECOVERY",
+  "checkpoint_reads": 0,
+  "evidence_target_consumed": false,
+  "route_attempt_consumed": false,
+  "oracle_package_created": false,
+  "mlx_contexts": 0,
+  "expert_access": 0,
+  "authorization_issued": false,
+  "recovery_executed": false
+}

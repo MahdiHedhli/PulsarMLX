@@ -217,3 +217,8 @@
   stress independent implementations without under-bounds, and fail closed
   because accepted M1-F0 evidence omitted the RMSNorm/router-row antecedents
   required to instantiate v2 without new real checkpoint access.
+- [x] T017-186 Finalize route-stability v2 with explicit score-addition rounding
+  and normative ordered-top-8 stability, qualify the final mathematics through
+  independent implementations and directed/randomized stress, and prepare a
+  non-consuming, identity-gated 12-payload antecedent-recovery package without
+  checkpoint access or route reclassification.
