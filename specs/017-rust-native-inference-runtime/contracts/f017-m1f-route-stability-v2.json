@@ -1,0 +1,90 @@
+{
+  "schema": "pulsarmlx.f017.m1f-route-stability",
+  "schema_version": "2.0.0",
+  "contract_id": "f017-m1f-route-stability-v2",
+  "status": "FROZEN_PENDING_RECOVERY_PACKAGE_ADVERSARIAL_REVIEW",
+  "checkpoint_access": 0,
+  "predecessor_candidate_sha256": "fd300f061307442c56af9ca3183f7485544ecb11752755074a330bb7b5f5f68c",
+  "independent_adversarial_packet_sha256": "cd16683a35bfcaa388840b139e3dac1b265476991f98c4f9e3343b43aaf4dc9e",
+  "review_disposition": "GO_FOR_BOUNDED_V2_ANTECEDENT_RECOVERY_PREPARATION",
+  "v1_compatibility": {
+    "v1_sha256": "da05364470f7fc5fbdc930441be1ea269af01b6a87173df34e467bcc0b0df9d7",
+    "historical_v1_evidence_immutable": true,
+    "historical_fixture_1_reclassification": "forbidden",
+    "fallback_without_pairwise_antecedents": "B_pair(i,j)=B_i+B_j"
+  },
+  "clarifications": {
+    "bias_addition_rounding": "The bias operand has zero oracle/candidate perturbation, but each separately evaluated fl(sigmoid(logit)+bias) addition has a nonzero rounding guard.",
+    "ordered_selected_stability": "Normative rank-ordered top-8 bytes require all seven adjacent selected-pair proofs in addition to all 1984 selected/unselected membership proofs.",
+    "unrelated_mathematical_changes": false
+  },
+  "pairwise_quantity": "d_ij=fl(sigmoid(logit_i)+bias_i)-fl(sigmoid(logit_j)+bias_j)",
+  "bias": {
+    "candidate_and_oracle_operand": "same exactly decoded f32 bytes materialized identically as binary64",
+    "operand_pairwise_numerical_perturbation": 0,
+    "final_addition_rounding": {
+      "one_operation_guard": "nextafter(max(ulp(sigmoid(logit-E)+bias),ulp(sigmoid(logit+E)+bias),minimum_binary64_subnormal),+infinity)",
+      "candidate_oracle_row_guard": "2*one_operation_guard",
+      "pair_guard": "2*guard_i+2*guard_j, accumulated outward",
+      "rationale": "Each of oracle-i, candidate-i, oracle-j, and candidate-j performs a distinct correctly rounded binary64 addition. One full ULP per addition conservatively exceeds the half-ULP round-to-nearest error, including cancellation and subnormal results."
+    }
+  },
+  "rmsnorm_decomposition": {
+    "form": "delta_y=lambda*y+r",
+    "lambda": "shared scalar reciprocal-RMS perturbation, outward bounded before candidate execution",
+    "residual": "componentwise non-radial input propagation plus f32 materialization/rounding",
+    "radial_pairwise_logit_term": "lambda*(logit_i-logit_j), not lambda*(abs(logit_i)+abs(logit_j))"
+  },
+  "pairwise_bound": {
+    "derivative_intervals": "for each row k, enclose all perturbed logits and derive [min sigmoid', max sigmoid'] on that interval",
+    "radial": "Lambda*max_{a in D_i,b in D_j}|a*logit_i-b*logit_j|",
+    "non_radial": "sum_m R_m*max_{a in D_i,b in D_j}|a*w_i[m]-b*w_j[m]|",
+    "router_reduction": "L_i*R_i+L_j*R_j; no reduction-error cancellation assumed",
+    "import_materialization": "L_i*I_i+L_j*I_j",
+    "bias_operand": 0,
+    "final_addition_rounding": "explicit four-addition outward guard defined above",
+    "bound_accumulation_rounding": "candidate-v2 aggregate outward-rounded binary64 calculation guard, unchanged except for the separately added final-addition term",
+    "fallback": "the v1 independent-score sum when any pairwise antecedent is absent"
+  },
+  "sigmoid_interval_rule": {
+    "contains_zero": "maximum derivative is 0.25",
+    "entirely_positive": "maximum derivative is at the endpoint closest to zero",
+    "entirely_negative": "maximum derivative is at the endpoint closest to zero",
+    "interval_construction": "logit error endpoints and derivative extrema are rounded outward"
+  },
+  "exact_top8_theorem": {
+    "membership": "for every oracle-selected i and every oracle-unselected j, oracle_score_i-oracle_score_j > B_pair(i,j)",
+    "membership_pair_count": 1984,
+    "ordered_selected": "for every adjacent pair (s_k,s_{k+1}) in normative oracle rank order, oracle_score_s_k-oracle_score_s_k+1 > B_pair(s_k,s_k+1)",
+    "ordered_selected_pair_count": 7,
+    "transitivity": "Preserving every strict adjacent relation preserves the complete selected chain; any non-adjacent inversion would require at least one adjacent crossing.",
+    "tie_semantics": "descending score; exact ties use lower expert ID, but a zero-margin tie does not satisfy the strict perturbation proof",
+    "normative_output": "rank-ordered little-endian u16 top-8 bytes",
+    "pass_requires": "membership and ordered_selected"
+  },
+  "classification": {
+    "MATHEMATICALLY_STABLE": "minimum of all 1991 required pairwise safety factors is strictly greater than 1 under outward rounding",
+    "ENGINEERING_HEADROOM": "minimum of all 1991 required pairwise safety factors is at least 2",
+    "M1F_admission_requires": "ENGINEERING_HEADROOM",
+    "headroom_H": 2,
+    "headroom_rationale": "H=2 reserves one additional complete modeled error envelope for implementation/library drift. It is an engineering policy, not mathematically necessary for swap prevention."
+  },
+  "guards": {
+    "non_finite": "reject",
+    "signed_zero": "canonical binary64 serialization; no comparison-order distinction",
+    "outward_rounding": "every positive bound accumulation rounds toward +infinity",
+    "candidate_observed_inputs": "forbidden",
+    "post_observation_retuning": "forbidden",
+    "required_analytical_retention": [
+      "oracle pre-sigmoid logits, probabilities, bias, and post-bias scores",
+      "ordered selected and all unselected IDs",
+      "lambda bound and its inputs",
+      "residual component bounds",
+      "router rows and row-pair antecedent identities",
+      "per-row reduction and import bounds",
+      "all 1984 selected-vs-unselected B_pair values",
+      "all 7 adjacent-selected B_pair values",
+      "minimum mathematical and engineering safety pairs and factors"
+    ]
+  }
+}

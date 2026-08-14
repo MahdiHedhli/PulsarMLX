@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.v2-antecedent-recovery-synthetic-evidence",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "synthetic_full_artifact_sha256": "9dad2b614581c4aba95cf0587bf9508c154fa702ff7d65354730c03ad1001810",
+  "synthetic_payloads": 12,
+  "payload_identity_before_after": "MATCH",
+  "attention_residual_reproduction": "PASS",
+  "router_normalized_input_retained": true,
+  "private_antecedent_artifacts": 8,
+  "selected_unselected_pair_bounds": 1984,
+  "adjacent_selected_pair_bounds": 7,
+  "mathematical_classification": "MATHEMATICALLY_STABLE",
+  "engineering_classification": "ENGINEERING_HEADROOM",
+  "minimum_mathematical_safety_factor": 1525759.4877508748,
+  "private_artifact_before_after_hashes": "MATCH",
+  "mlx_candidate_dispatches": 0,
+  "expert_computation": 0,
+  "route_attempt_consumed": false,
+  "new_route_discovery": false,
+  "result": "PASS"
+}

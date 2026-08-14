@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.route-stability-v2-final-stress",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "contract_sha256": "36adbdcffeeb361638ec80258b912711b17a671276d68cf0129826e1ae042ac7",
+  "primary_implementation_sha256": "113d6bcd530ea41b9af6f00df31c9efa8498c6f76775b9087a161275d971b848",
+  "independent_scalar_implementation_sha256": "ae121252714c6f082a9d084b7323013136ebfe18978bc75ed9e3e860e5f0c220",
+  "randomized": {
+    "sample_count": 100000,
+    "seed": 170185001,
+    "under_bound_count": 0,
+    "independent_implementation_mismatches": 0,
+    "maximum_observed_actual_to_bound_ratio": 0.9563522005807091,
+    "maximum_final_addition_rounding": 5.684341886080804e-14,
+    "maximum_final_addition_fraction_of_bound": 5.204970970788562e-06
+  },
+  "directed_cases": [
+    "exact route tie",
+    "one-ULP route separation",
+    "near tie",
+    "large shared radial RMSNorm perturbation",
+    "pure non-radial perturbation",
+    "identical router rows",
+    "opposite-sign router rows",
+    "no row cancellation",
+    "high dynamic range",
+    "sigmoid saturation positive and negative",
+    "sigmoid maximum-derivative interval",
+    "subnormal and signed-zero final addition",
+    "positive, negative, large-bias, cancellation, and exact final additions",
+    "non-finite rejection",
+    "selected-set crossing below rank 9",
+    "rank-2/rank-3 and rank-7/rank-8 order-only crossing"
+  ],
+  "directed_result": "PASS",
+  "high_precision": {
+    "method": "Decimal precision 100 comparison of exact sigmoid-plus-bias sum against binary64 result and one-ULP outward guard",
+    "spot_check_count": 6,
+    "result": "PASS"
+  },
+  "candidate_to_final_delta": {
+    "bias_operand_perturbation": 0,
+    "new_nonzero_term": "four separately rounded final score additions",
+    "largest_new_term_in_stress": 5.684341886080804e-14,
+    "largest_fraction_of_total_bound": 5.204970970788562e-06,
+    "other_bound_terms_changed": false,
+    "ordered_selected_proof_promoted_to_required": true
+  },
+  "result": "PASS"
+}

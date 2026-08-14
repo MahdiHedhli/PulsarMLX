@@ -3,21 +3,41 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
-def aggregate_metadata(_root: Path) -> dict[str, object]:
-    # Bases are independently recovered from the reviewed expert-15 boundary:
-    # aggregate_base = expert_15_offset - 15 * per_expert_stride.
+CATALOG = "docs/research/glm52/raw/f016-c01-catalog-0001.json"
+BLOCK_LAYOUT = {"IQ2_XXS": (256, 66), "IQ3_XXS": (256, 98)}
+
+
+def aggregate_metadata(root: Path) -> dict[str, object]:
+    catalog = json.loads((root / CATALOG).read_text())
+    by_name = {item["name"]: item for item in catalog["tensors"]}
+    projections = {}
+    for role in ("gate", "up", "down"):
+        name = f"blk.3.ffn_{role}_exps.weight"
+        item = by_name[name]
+        block_elements, block_bytes = BLOCK_LAYOUT[item["type"]]
+        elements_per_expert = int(item["dims"][0]) * int(item["dims"][1])
+        if elements_per_expert % block_elements:
+            raise ValueError("quant block alignment")
+        projections[role] = {
+            "name": name,
+            "base": int(item["data_offset_abs"]),
+            "stride": elements_per_expert // block_elements * block_bytes,
+            "quantization": item["type"],
+            "dims": item["dims"],
+            "shard": item["file"],
+            "quant_block_elements": block_elements,
+            "quant_block_bytes": block_bytes,
+        }
     return {
         "expert_count": 256,
         "indexing": "zero_based",
         "layout": "projection_major_then_expert_major",
-        "projections": {
-            "gate": {"base": 3374536544, "stride": 3244032, "quantization": "IQ2_XXS"},
-            "up": {"base": 4219975520, "stride": 3244032, "quantization": "IQ2_XXS"},
-            "down": {"base": 2131089248, "stride": 4816896, "quantization": "IQ3_XXS"},
-        },
+        "catalog": CATALOG,
+        "projections": projections,
     }
 
 
@@ -36,5 +56,7 @@ def derive_triplet(metadata: dict[str, object], expert_id: int) -> dict[str, dic
         if start < base or end <= start:
             raise ValueError("expert slice arithmetic overflow")
         result[str(role)] = {"start": start, "end": end, "packed_length": stride,
-                             "quantization": raw["quantization"], "expert_id": expert_id}
+                             "quantization": raw["quantization"], "expert_id": expert_id,
+                             "aggregate_name": raw["name"], "shard": raw["shard"],
+                             "quant_block_aligned": stride % int(raw["quant_block_bytes"]) == 0}
     return result

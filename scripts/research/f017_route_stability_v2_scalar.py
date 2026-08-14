@@ -41,9 +41,10 @@ def calculate(data: Mapping[str, object]) -> float:
     lam = float(data["lambda_bound"])
     ri, rj = float(data["reduction_i"]), float(data["reduction_j"])
     ii, ij = float(data.get("import_i", 0.0)), float(data.get("import_j", 0.0))
+    bi, bj = float(data.get("bias_i", 0.0)), float(data.get("bias_j", 0.0))
     if len(wi) != len(wj) or len(wi) != len(rb):
         raise ValueError("shape")
-    if not all(math.isfinite(x) for x in (li, lj, lam, ri, rj, ii, ij, *wi, *wj, *rb)):
+    if not all(math.isfinite(x) for x in (li, lj, lam, ri, rj, ii, ij, bi, bj, *wi, *wj, *rb)):
         raise ValueError("finite")
     if any(x < 0.0 for x in (lam, ri, rj, ii, ij, *rb)):
         raise ValueError("negative")
@@ -57,8 +58,18 @@ def calculate(data: Mapping[str, object]) -> float:
         nonradial = _up(nonradial + rb[k] * coefficient)
     reduction = _up(di[1] * ri + dj[1] * rj)
     imported = _up(di[1] * ii + dj[1] * ij)
-    rounding = _up(8.0 * U64 * (abs(_sigmoid(li)) + abs(_sigmoid(lj)) + radial + nonradial + reduction + imported))
+    def addition_guard(center: float, radius: float, bias: float) -> float:
+        low_score = _sigmoid(center - radius) + bias
+        high_score = _sigmoid(center + radius) + bias
+        if not math.isfinite(low_score) or not math.isfinite(high_score):
+            raise ValueError("score interval")
+        return _up(max(math.ulp(low_score), math.ulp(high_score), math.ulp(0.0)))
+    addition_rounding = _up(2.0 * addition_guard(li, ei, bi) + 2.0 * addition_guard(lj, ej, bj))
+    accumulation_rounding = _up(8.0 * U64 * (
+        abs(_sigmoid(li)) + abs(_sigmoid(lj))
+        + radial + nonradial + reduction + imported
+    ))
     total = 0.0
-    for term in (radial, nonradial, reduction, imported, rounding):
+    for term in (radial, nonradial, reduction, imported, addition_rounding, accumulation_rounding):
         total = _up(total + term)
     return total

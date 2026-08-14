@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-random-normal-support-analysis",
+  "schema_version": "2.0.0",
+  "checkpoint_access": 0,
+  "classification": "SEMI_ANALYTIC_EFFECTIVE_CEILING",
+  "not_a_proven_support_theorem": true,
+  "planning_only": true,
+  "bindings": {
+    "ladder_generator_sha256": "0097e78a55cf5d8911a2715cebf7e024606a69713d08d7f3bc07ac04864d60f0",
+    "ladder_artifact_sha256": "59c55a26d12ff9e0fdbe488608c4cb7ffb1a2082d322dec85ee5ef37719c3ed2",
+    "estimator_implementation_sha256": "028a43bf1515620a706deb9688a8f40d3da151457f6e5e1d34321ffaceabe46b",
+    "estimator_v2_implementation_sha256": "8d144b18d0e6c235f3e20c6f9d263c32e8dae125eb9b5af02f682b11f9c53abd",
+    "estimator_contract_sha256": "440b5dd26d20753275db36159755e06b1fc20e740d1689d774fe90b1289e7954",
+    "bias_parent_artifact_sha256": "1496b8a3ca26448145acbd107387aadbc11322fd93b71fcc5abd659d6e8e7686",
+    "bias_bytes_sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491",
+    "route_stability_v2_final_sha256": "36adbdcffeeb361638ec80258b912711b17a671276d68cf0129826e1ae042ac7"
+  },
+  "semi_analytic_structure": {
+    "score_model": "s_i=b_i+sigmoid(l_i)",
+    "bias_minimum": 33.985321044921875,
+    "bias_maximum": 34.62297058105469,
+    "bias_range": 0.6376495361328125,
+    "bias_rank8_rank9_gap": 0.0019989013671875,
+    "banked_sigmoid_minimum": 0.3738245189658591,
+    "banked_sigmoid_maximum": 0.5588870752993328,
+    "banked_sigmoid_range": 0.18506255633347368,
+    "dense_boundary_observation": "The rank-8 boundary lies in a bias-dense region whose local gap is two orders of magnitude below the available sigmoid span; qualification therefore depends on an unusually favorable joint logit assignment rather than bias separation alone.",
+    "rigorous_raw_margin_upper_bound": 0.8227120924662862,
+    "rigorous_raw_s_upper_bound": 239.1396446328954,
+    "rigorous_bound_disposition": "valid but non-informative; it does not prove family impossibility"
+  },
+  "effective_ceiling_evidence": {
+    "v1_sample_count": 1000000,
+    "v1_qualifiers_at_S_ge_4": 0,
+    "v1_observed_maximum_s": 3.129417274314236,
+    "v1_wilson_95_upper_qualifier_rate": 0.000003841444063944942,
+    "v1_upper_probability_any_of_eight": 0.00003073113932738902,
+    "v2_fallback_sample_count": 1000000,
+    "v2_fallback_observed_maximum_s": 3.465878680226494,
+    "v2_fallback_limitation": "Pairwise antecedents are absent, so this is the reviewed fail-closed v1-sum fallback, not a direct final-v2 family estimate."
+  },
+  "effective_ceiling_statement": "Within the frozen bootstrap model, one million deterministic samples plus the bias-dense boundary calculation support an effective v1 ceiling below S=4 for practical eight-fixture planning. This is not a mathematical support ceiling; nonzero extreme assignments remain in the model support.",
+  "relation_to_observed_max_s": 3.129417274314236,
+  "ladder_execution": false,
+  "family_disposition": "PAUSED_NUMERICAL_STRESS_ONLY_PENDING_ANTECEDENT_RECOVERY_AND_REPRESENTATIVE_FIXTURE_REVIEW"
+}

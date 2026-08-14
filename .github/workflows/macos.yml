@@ -204,6 +204,14 @@ jobs:
           .venv/bin/python scripts/research/validate_f017_estimator_ladder_binding.py
           .venv/bin/python -m unittest \
             scripts.research.tests.test_f017_route_stability_v2 -v
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_v2_antecedent_recovery -v
+          .venv/bin/python scripts/research/f017_v2_antecedent_recovery.py \
+            --repository-root . \
+            --synthetic \
+            --output "$RUNNER_TEMP/f017-v2-antecedent-recovery-synthetic.json"
+          echo "F017 v2 final: ordered top-8, bias-addition rounding, sigmoid endpoints, independent parity, support ceiling, slice catalog cross-check"
+          echo "F017 v2 recovery: 12 synthetic payloads, 1984 membership bounds, 7 adjacent-order bounds, no route and no attempt consumption"
           cargo test -p f017-runner dispatch_accounting -- --nocapture
           echo "M1-F0 route-stability research: v1 regression retained; v2 pairwise/RMSNorm/sigmoid/full-set/parity gates; no checkpoint access"
           for seed in 17017007 17017008 17017009 17017010 17017011 17017012 17017013 17017014; do

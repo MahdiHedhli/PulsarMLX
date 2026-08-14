@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.v2-antecedent-recovery-result-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "identity_reproduction", "antecedent_retention", "retrospective_v2", "historical_status", "access", "scope"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.v2-antecedent-recovery-result"},
+    "schema_version": {"const": "1.0.0"},
+    "identity_reproduction": {
+      "type": "object",
+      "required": ["accepted_computation_reproduced_exactly", "all_gates", "failure"],
+      "properties": {
+        "accepted_computation_reproduced_exactly": {"type": "boolean"},
+        "all_gates": {"type": "object"},
+        "failure": {"type": ["null", "string"]}
+      }
+    },
+    "antecedent_retention": {
+      "type": "object",
+      "required": ["manifest_sha256", "complete", "membership_pair_count", "adjacent_selected_pair_count", "private_artifacts_immutable"],
+      "properties": {
+        "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "complete": {"type": "boolean"},
+        "membership_pair_count": {"const": 1984},
+        "adjacent_selected_pair_count": {"const": 7},
+        "private_artifacts_immutable": {"type": "boolean"}
+      }
+    },
+    "retrospective_v2": {
+      "type": "object",
+      "required": ["mathematical_status", "engineering_status", "minimum_mathematical_safety_factor", "minimum_engineering_safety_factor", "route_set_stable", "route_order_stable"]
+    },
+    "historical_status": {
+      "type": "object",
+      "required": ["historical_v1_status_unchanged", "accepted_route_reclassified"],
+      "properties": {
+        "historical_v1_status_unchanged": {"const": true},
+        "accepted_route_reclassified": {"const": false}
+      }
+    },
+    "access": {"type": "object"},
+    "scope": {"type": "object"}
+  }
+}

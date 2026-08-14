@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.v2-antecedent-retention-manifest",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-v2-antecedent-retention-v1",
+  "status": "FROZEN_BEFORE_RECOVERY",
+  "route_stability_v2_sha256": "36adbdcffeeb361638ec80258b912711b17a671276d68cf0129826e1ae042ac7",
+  "direct_pre_sigmoid_retention": true,
+  "public_analytical_objects": {
+    "router_logits": {"count": 256, "dtype": "little-endian-f64", "values_and_sha256_required": true},
+    "router_probabilities": {"count": 256, "dtype": "little-endian-f64", "values_and_sha256_required": true},
+    "router_bias": {"count": 256, "dtype": "little-endian-f32", "values_and_sha256_required": true},
+    "router_scores": {"count": 256, "dtype": "little-endian-f64", "values_and_sha256_required": true},
+    "ranking": {"count": 256, "dtype": "little-endian-u16", "values_and_sha256_required": true},
+    "selected_ids_ordered": {"count": 8, "dtype": "little-endian-u16", "values_and_sha256_required": true},
+    "unselected_ids": {"count": 248, "dtype": "little-endian-u16", "values_and_sha256_required": true},
+    "selected_unselected_pair_bounds": {"count": 1984, "canonical_order": "selected rank order then unselected ranking order", "values_and_sha256_required": true},
+    "adjacent_selected_pair_bounds": {"count": 7, "canonical_order": "selected ranks 1-2 through 7-8", "values_and_sha256_required": true},
+    "stability_summary": {"required": ["minimum_mathematical_safety_factor", "minimum_engineering_safety_factor", "worst_challenger_per_selected", "global_worst_selected_unselected_pair", "ordered_selected_worst_adjacent_pair", "mathematical_classification", "engineering_classification"]}
+  },
+  "private_antecedent_artifacts": {
+    "attention_residual": {"dtype": "little-endian-f32", "shape": [6144]},
+    "router_normalized_input": {"dtype": "little-endian-f32", "shape": [6144]},
+    "router_matrix": {"dtype": "little-endian-f32", "shape": [256, 6144]},
+    "ffn_norm_weight": {"dtype": "little-endian-f32", "shape": [6144]},
+    "rmsnorm_decomposition_inputs": {"dtype": "canonical-json", "required_fields": ["oracle_rms_squared_plus_epsilon", "oracle_inverse_rms", "inverse_rms_error_bound", "lambda_bound"]},
+    "non_radial_component_bounds": {"dtype": "little-endian-f64", "shape": [6144]},
+    "router_reduction_bounds": {"dtype": "little-endian-f64", "shape": [256]},
+    "router_import_materialization_bounds": {"dtype": "little-endian-f64", "shape": [256]}
+  },
+  "every_private_descriptor_requires": ["artifact_id", "path_kind=private_package_relative", "sha256", "dtype", "shape", "element_count", "canonical_serialization", "provenance", "source_tensor_identities", "creation_ordinal", "immutable", "read_only"],
+  "public_path_policy": "machine-local and absolute private paths are forbidden",
+  "completeness_rule": "PASS is invalid if any declared public value/hash, any of 1984 membership bounds, any of 7 adjacent-order bounds, or any private antecedent descriptor is missing",
+  "third_recovery_prevention": "This manifest retains every currently identified input needed to recompute or audit v2 without another checkpoint read."
+}

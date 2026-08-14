@@ -133,6 +133,14 @@ class M1F0NewInputSelectionTests(unittest.TestCase):
             triplet = SLICES.derive_triplet(metadata, expert)
             self.assertEqual(set(triplet), {"gate", "up", "down"})
             self.assertTrue(all(item["end"] > item["start"] for item in triplet.values()))
+            self.assertTrue(all(item["quant_block_aligned"] for item in triplet.values()))
+        expert166 = SLICES.derive_triplet(metadata, 166)
+        proof = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-expert-166-catalog-slice-crosscheck-v2.json").read_text())
+        for role in ("gate", "up", "down"):
+            self.assertEqual(expert166[role]["start"], proof["projections"][role]["catalog_inventory_start"])
+            self.assertEqual(expert166[role]["packed_length"], proof["projections"][role]["catalog_inventory_length"])
+        with self.assertRaisesRegex(ValueError, "expert id"):
+            SLICES.derive_triplet(metadata, -1)
         with self.assertRaisesRegex(ValueError, "expert id"):
             SLICES.derive_triplet(metadata, 256)
 

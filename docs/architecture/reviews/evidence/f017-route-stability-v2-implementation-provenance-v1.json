@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.route-stability-v2-implementation-provenance",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "implementation_a": {
+    "symbolic_path": "scripts/research/f017_route_stability_v2.py",
+    "sha256": "113d6bcd530ea41b9af6f00df31c9efa8498c6f76775b9087a161275d971b848",
+    "language_runtime": "CPython scalar math plus NumPy only for randomized input generation",
+    "expression_path": "structured PairwiseInputs; named radial/non-radial/reduction/import/addition components"
+  },
+  "implementation_b": {
+    "symbolic_path": "scripts/research/f017_route_stability_v2_scalar.py",
+    "sha256": "ae121252714c6f082a9d084b7323013136ebfe18978bc75ed9e3e860e5f0c220",
+    "language_runtime": "CPython scalar math",
+    "expression_path": "flat mapping parser and separately transcribed scalar accumulation"
+  },
+  "shared_dependencies": ["Python math binary64 primitives", "the input mapping supplied by the parity harness"],
+  "shared_generated_expected_output_constants": false,
+  "implementation_b_imports_implementation_a": false,
+  "contract_parser_shared": false,
+  "parity_is_tautological": false,
+  "parity_representation": "exact binary64 equality for every randomized and directed fixture",
+  "result": "INDEPENDENT_IMPLEMENTATION_PARITY_ACCEPTED"
+}
