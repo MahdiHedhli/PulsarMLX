@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-executed-validator-amendment",
+  "schema_version": "1.0.0",
+  "immutability": {
+    "accepted_route_values_modified": false,
+    "accepted_attempt_evidence_modified": false,
+    "amendment_only": true
+  },
+  "accepted_execution_chain": {
+    "frozen_tooling_config_commit": "84caee788a5fcf8fab90dd172baa10bdfc3732f9",
+    "frozen_tooling_tree_oid": "d3a5b10124446203849f14e8590ede7f85fb2c37",
+    "attempt_2_authorization_commit": "7ba6416f18b454377837a58297931c31d9184d2f",
+    "attempt_2_authorization_sha256": "e34765796dbb8e9dc938ca78f3a3b9da30e02e2c3406963ef91bba102a097217",
+    "attempt_2_execution_config_sha256": "f485a7ee8253cd37721a7c11979829ea487e5dc80b2f4b0a7b2f01ead506eb35",
+    "executed_package_validator_commit": "7ea94595f9003ed79ecdd188ad3cf643f530e089",
+    "executed_package_validator_tree_oid": "f38b98731ca2e6540a06e6c2e7d017b3f68dda19",
+    "executed_package_validator_path": "scripts/research/validate_f017_m1f0_package.py",
+    "executed_package_validator_sha256": "18757731da53b0e2dc8ec425ab02fdbcad8e108cc9d64f3b493b741ad4aeb9bf",
+    "accepted_attempt_2_evidence_sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+    "accepted_route_artifact_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+    "accepted_evidence_banking_head": "df0f3a91244d944f0fe5a0f569b709ccfe631cc0"
+  },
+  "interpretation": "The tooling/config freeze, authorization, package-validator alignment, accepted execution, and evidence-banking head are separate identities. This amendment records the validator that actually gated attempt 2 without changing any accepted numerical or route value."
+}

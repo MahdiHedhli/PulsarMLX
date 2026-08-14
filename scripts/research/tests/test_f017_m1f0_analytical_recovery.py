@@ -174,6 +174,29 @@ class M1F0AnalyticalRecoveryTests(unittest.TestCase):
             self.assertEqual(ledger["payload_count_after_recovery"], 37)
             self.assertEqual(audit["boundaries"][-1]["classification"], "SUFFICIENT")
 
+    def test_executed_validator_amendment_binds_actual_attempt2_validator(self):
+        amendment = json.loads(
+            (
+                ROOT
+                / "docs/architecture/reviews/evidence/f017-m1-f0-executed-validator-amendment-v1.json"
+            ).read_text()
+        )
+        chain = amendment["accepted_execution_chain"]
+        self.assertTrue(amendment["immutability"]["amendment_only"])
+        self.assertFalse(amendment["immutability"]["accepted_route_values_modified"])
+        self.assertEqual(
+            chain["executed_package_validator_commit"],
+            "7ea94595f9003ed79ecdd188ad3cf643f530e089",
+        )
+        self.assertEqual(
+            chain["executed_package_validator_tree_oid"],
+            "f38b98731ca2e6540a06e6c2e7d017b3f68dda19",
+        )
+        self.assertEqual(
+            chain["executed_package_validator_sha256"],
+            "18757731da53b0e2dc8ec425ab02fdbcad8e108cc9d64f3b493b741ad4aeb9bf",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
