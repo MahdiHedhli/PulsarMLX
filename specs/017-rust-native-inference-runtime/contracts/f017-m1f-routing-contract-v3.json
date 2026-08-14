@@ -3,6 +3,8 @@
   "schema_version": "3.0.0",
   "status": "CANDIDATE_FROZEN_FOR_INDEPENDENT_ADVERSARIAL_REVIEW",
   "predecessor_v2_sha256": "36adbdcffeeb361638ec80258b912711b17a671276d68cf0129826e1ae042ac7",
+  "pre_observation_formula_freeze_sha256": "a1434ffd32fc71aa70aa439436742d70cc1d21148a654a4c31e07972274d56bc",
+  "post_freeze_portability_amendment": "test-only fallback validates the publicly banked ID-keyed intervals when private antecedents are unavailable; formulas, thresholds, and classifications are unchanged",
   "historical_v1_v2_immutable": true,
   "semantic_classification": "ORDER_IS_NUMERICALLY_OBSERVABLE_NOT_MODEL_SEMANTIC",
   "semantic_object": {
@@ -111,7 +113,7 @@
     "reference_path": "scripts/research/f017_routing_contract_v3.py",
     "reference_sha256": "9391cf9416693a3f6b364cf65f6a1d18128b801f2bff067e16d7bdab55deed7d",
     "test_path": "scripts/research/tests/test_f017_routing_contract_v3.py",
-    "test_sha256": "67fbd5ea50a74f08af3e065cc93fd0ab2323c264ce526ebcd331dd7b068f5492",
+    "test_sha256": "19fdaa047dd7a4cf986f0c7983abff17065994905a5205e28092488a0d5ba3bf",
     "source_trace_sha256": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832"
   },
   "checkpoint_access": 0,

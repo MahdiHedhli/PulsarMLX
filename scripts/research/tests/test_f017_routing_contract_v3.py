@@ -101,8 +101,24 @@ class WeightQualificationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.oracle = route_pairs()
-        cls.probability = v3.individual_probability_intervals(ROOT)
-        cls.weights = v3.normalized_weight_intervals(cls.probability, cls.oracle)
+        retained = ROOT / "docs/architecture/reviews/evidence/f017-routing-v3-fixture1-retrospective-v1.json"
+        private = ROOT / "target/f017-v2-antecedent-recovery-event-1/recovery-package/antecedents"
+        if private.is_dir():
+            probability = v3.individual_probability_intervals(ROOT)
+            cls.weights = v3.normalized_weight_intervals(probability, cls.oracle)
+            if retained.is_file():
+                banked = json.loads(retained.read_text())["per_expert_weight_contract"]["by_expert_id"]
+                if {str(key): value for key, value in sorted(cls.weights.items())} != banked:
+                    raise AssertionError("banked and private-derived weight contracts differ")
+        else:
+            if not retained.is_file():
+                raise AssertionError("public retained ID-keyed v3 weight contract is missing")
+            cls.weights = {
+                int(key): value
+                for key, value in json.loads(retained.read_text())[
+                    "per_expert_weight_contract"
+                ]["by_expert_id"].items()
+            }
 
     def test_retained_antecedents_produce_all_eight_id_keyed_intervals(self) -> None:
         self.assertEqual(set(self.weights), {item.expert_id for item in self.oracle})
