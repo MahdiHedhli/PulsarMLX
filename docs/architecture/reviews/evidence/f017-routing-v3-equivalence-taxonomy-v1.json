@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.routing-v3-equivalence-taxonomy",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "routing_object": "eight unique atomic (expert_id, routing_weight) records",
+  "classification": "ORDER_IS_NUMERICALLY_OBSERVABLE_NOT_MODEL_SEMANTIC",
+  "levels": [
+    {
+      "level": "MATHEMATICAL_EQUIVALENCE",
+      "joint_pair_permutation": "EQUIVALENT",
+      "independent_id_or_weight_permutation": "NOT_EQUIVALENT",
+      "proof_obligation": "commutativity and associativity of the exact finite sum over weight_i * expert_i(x)"
+    },
+    {
+      "level": "REFERENCE_MODEL_SEMANTIC_EQUIVALENCE",
+      "joint_pair_permutation": "EQUIVALENT",
+      "conditions": [
+        "each weight remains associated with its expert ID",
+        "selected weights are normalized over the same selected membership",
+        "no rank-indexed scale, capacity, cache, or expert behavior",
+        "shared expert and residual are independent of selected rank"
+      ]
+    },
+    {
+      "level": "BINARY32_NUMERICAL_EQUIVALENCE",
+      "joint_pair_permutation": "BOUNDED_NOT_BITWISE",
+      "reason": "current runtime serially reduces selected slots in rank order",
+      "required_contract": "outward accumulation-order bound plus inherited complete-layer Tier-B qualification"
+    },
+    {
+      "level": "BITWISE_EQUIVALENCE",
+      "joint_pair_permutation": "NOT_GUARANTEED",
+      "required_by_f017_lineage": false,
+      "reason": "R7-R12 and the accepted real-gate lineage use reviewed numerical contracts at reduction boundaries"
+    }
+  ],
+  "m1f_required_level": "REFERENCE_MODEL_SEMANTIC_EQUIVALENCE plus bounded binary32 numerical qualification",
+  "rank_diagnostic_retention": "REQUIRED",
+  "rank_equality_as_semantic_gate": false,
+  "historical_v1_v2_status_changed": false
+}

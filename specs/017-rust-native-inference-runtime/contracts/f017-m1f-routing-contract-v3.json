@@ -1,0 +1,119 @@
+{
+  "schema": "pulsarmlx.f017.m1f-routing-contract",
+  "schema_version": "3.0.0",
+  "status": "CANDIDATE_FROZEN_FOR_INDEPENDENT_ADVERSARIAL_REVIEW",
+  "predecessor_v2_sha256": "36adbdcffeeb361638ec80258b912711b17a671276d68cf0129826e1ae042ac7",
+  "historical_v1_v2_immutable": true,
+  "semantic_classification": "ORDER_IS_NUMERICALLY_OBSERVABLE_NOT_MODEL_SEMANTIC",
+  "semantic_object": {
+    "type": "atomic_routing_pairs",
+    "cardinality": 8,
+    "record": {
+      "expert_id": "u16",
+      "routing_weight": "ieee754_binary64"
+    },
+    "expert_id_domain": [0, 255],
+    "duplicate_expert_ids": "REJECT",
+    "missing_or_extra_pairs": "REJECT",
+    "independent_id_weight_permutation": "REJECT",
+    "joint_pair_permutation": "MODEL_SEMANTICALLY_EQUIVALENT"
+  },
+  "canonical_semantic_serialization": {
+    "record_order": "expert_id_ascending",
+    "record_bytes": "little_endian_u16_expert_id_then_little_endian_f64_weight",
+    "record_size_bytes": 10,
+    "total_bytes": 80,
+    "hash": "sha256_over_exact_80_bytes",
+    "does_not_define_runtime_reduction_order": true
+  },
+  "rank_diagnostics": {
+    "oracle_rank_order_retained": true,
+    "candidate_rank_order_retained": true,
+    "exact_tie_rule": "lower_expert_id_first",
+    "rank_mismatch_alone": "DIAGNOSTIC_NOT_SEMANTIC_FAILURE",
+    "rank_ordered_bytes_are_not_v3_semantic_authority": true
+  },
+  "selected_membership": {
+    "mathematical_rule": "candidate expert-ID set equals oracle expert-ID set exactly",
+    "pre_admission_proof": "all selected_vs_unselected pairwise mathematical bounds pass under final v2",
+    "engineering_headroom": 2.0,
+    "engineering_rule": "all selected_vs_unselected safety factors are at least 2.0",
+    "candidate_route_divergence": "FAIL"
+  },
+  "per_expert_weight": {
+    "key": "expert_id",
+    "oracle_source": "retained accepted M1-F0 pre-sigmoid logits, probabilities, and v2 numerical antecedents",
+    "probability_interval": "local_sigmoid_derivative times outward logit-error interval plus four binary64 ULPs",
+    "normalization": "weight_i = 2.5 * probability_i / sum_selected_probabilities",
+    "normalization_interval": "monotone quotient: numerator low with all other highs; numerator high with all other lows",
+    "transport_guard": "one full binary32 ULP beyond each normalized-weight endpoint",
+    "mathematical_rule": "candidate weight keyed by expert ID lies in its propagated interval and has max_abs_error <= 1e-5",
+    "engineering_headroom": 2.0,
+    "engineering_rule": "candidate weight lies in the oracle-centered half-width propagated interval and has max_abs_error <= 5e-6",
+    "non_finite": "REJECT",
+    "positive_zero": "REJECT",
+    "negative_zero": "REJECT",
+    "post_observation_fit": "FORBIDDEN"
+  },
+  "model_expression": "sum_over_atomic_pairs(weight * expert_output(input)) + shared_expert(input) + residual",
+  "accumulation": {
+    "production_runtime_policy": "selected_slot_rank_order_serial_binary32_reduction",
+    "reference_policy": "rank_ordered_atomic_terms_with_independent numerical qualification",
+    "v3_runtime_change": false,
+    "completion_order_may_control_reduction": false,
+    "canonical_semantic_pair_order_controls_reduction": false,
+    "mathematical_equivalence": "all joint permutations of distinct atomic pairs have the same exact real sum",
+    "bitwise_equivalence_required": false,
+    "order_difference_bound_per_element": "2*gamma_7*sum_k(abs(binary32(weight_k*expert_k))) + 14*minimum_binary32_subnormal",
+    "gamma_7": "(7*2^-24)/(1-7*2^-24)",
+    "required_checks": [
+      "candidate runtime reports its actual reduction order",
+      "candidate and oracle pair membership and association pass",
+      "observed order difference does not exceed the outward analytical bound",
+      "bound does not exceed inherited R10 intermediate Tier-B atol 0.015625",
+      "complete-layer R10 numerical contract passes"
+    ],
+    "different_runtime_policy_without_bound_evidence": "REJECT"
+  },
+  "qualification": {
+    "mathematical_pass": [
+      "exact selected expert membership",
+      "all ID-keyed weights pass mathematical intervals and inherited R10 tolerance",
+      "atomic association valid and unique",
+      "accumulation policy disclosed and order error qualified",
+      "complete-layer numerical contract passes",
+      "all values finite"
+    ],
+    "engineering_pass": [
+      "mathematical_pass",
+      "membership H=2",
+      "every ID-keyed weight H=2",
+      "inherited complete-layer engineering gates"
+    ],
+    "rank_equal": "diagnostic",
+    "rank_order_hash_equal": "diagnostic",
+    "semantic_pair_hash_equal": "diagnostic exact oracle self-identity; candidate qualification uses intervals"
+  },
+  "equivalence_levels": {
+    "mathematical": "joint pair permutations are identical",
+    "reference_model_semantic": "joint pair permutations preserve the selected mapping and exact weighted expert sum",
+    "binary32_numerical": "may differ by reduction order and must satisfy the accumulation and complete-layer bounds",
+    "bitwise": "not generally invariant and not required by the R7-R12/M1-D/M1-E numerical lineage"
+  },
+  "freeze": {
+    "post_observation_retuning": "FORBIDDEN",
+    "fixture_1_values_used_to_choose_coefficients_or_thresholds": false,
+    "fixture_1_retrospective_evaluation_permitted_only_after_this_contract_is_committed": true,
+    "engineering_headroom": 2.0,
+    "engineering_rationale": "one additional complete modeled error envelope for implementation or library drift; not mathematically required for equivalence"
+  },
+  "implementation": {
+    "reference_path": "scripts/research/f017_routing_contract_v3.py",
+    "reference_sha256": "9391cf9416693a3f6b364cf65f6a1d18128b801f2bff067e16d7bdab55deed7d",
+    "test_path": "scripts/research/tests/test_f017_routing_contract_v3.py",
+    "test_sha256": "67fbd5ea50a74f08af3e065cc93fd0ab2323c264ce526ebcd331dd7b068f5492",
+    "source_trace_sha256": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832"
+  },
+  "checkpoint_access": 0,
+  "real_payload_ledger": 57
+}
