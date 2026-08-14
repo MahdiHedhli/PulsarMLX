@@ -166,17 +166,29 @@ class WeightQualificationTests(unittest.TestCase):
         self.assertFalse(result["semantic_pass"])
         self.assertEqual(result["failed_weight_experts"], [target.expert_id])
 
+    def test_inherited_r10_cap_rejects_value_inside_wider_propagated_interval(self) -> None:
+        intervals = {
+            expert_id: (value["routing_weight_low"], value["routing_weight_high"])
+            for expert_id, value in self.weights.items()
+        }
+        target = self.oracle[0]
+        candidate = list(self.oracle)
+        candidate[0] = v3.RoutingPair(target.expert_id, target.routing_weight + 2.0e-5)
+        self.assertLess(candidate[0].routing_weight, intervals[target.expert_id][1])
+        result = v3.qualify_candidate_pairs(self.oracle, candidate, intervals)
+        self.assertFalse(result["semantic_pass"])
+        self.assertEqual(result["failed_weight_experts"], [target.expert_id])
+
     def test_mathematical_pass_can_lack_engineering_headroom(self) -> None:
         intervals = {
             expert_id: (value["routing_weight_low"], value["routing_weight_high"])
             for expert_id, value in self.weights.items()
         }
         target = self.oracle[0]
-        low, _ = intervals[target.expert_id]
         candidate = list(self.oracle)
         candidate[0] = v3.RoutingPair(
             target.expert_id,
-            target.routing_weight - 0.75 * (target.routing_weight - low),
+            target.routing_weight - 7.5e-6,
         )
         result = v3.qualify_candidate_pairs(self.oracle, candidate, intervals)
         self.assertTrue(result["semantic_pass"])

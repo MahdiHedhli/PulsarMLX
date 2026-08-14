@@ -271,16 +271,20 @@ def qualify_candidate_pairs(
         low, high = permitted_intervals[item.expert_id]
         if not (math.isfinite(low) and math.isfinite(high) and 0.0 < low <= high):
             raise ValueError("invalid ID-keyed weight interval")
-        if not low <= item.routing_weight <= high:
-            failures.append(item.expert_id)
         oracle_weight = next(
             oracle_item.routing_weight
             for oracle_item in oracle_atomic
             if oracle_item.expert_id == item.expert_id
         )
+        absolute_error = abs(item.routing_weight - oracle_weight)
+        if not low <= item.routing_weight <= high or absolute_error > R10_ROUTING_WEIGHT_ATOL:
+            failures.append(item.expert_id)
         engineering_low = oracle_weight - (oracle_weight - low) / ENGINEERING_HEADROOM
         engineering_high = oracle_weight + (high - oracle_weight) / ENGINEERING_HEADROOM
-        if not engineering_low <= item.routing_weight <= engineering_high:
+        if (
+            not engineering_low <= item.routing_weight <= engineering_high
+            or absolute_error > R10_ROUTING_WEIGHT_ATOL / ENGINEERING_HEADROOM
+        ):
             engineering_failures.append(item.expert_id)
     return {
         "semantic_pass": not failures,
