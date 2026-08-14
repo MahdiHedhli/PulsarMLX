@@ -59,6 +59,6 @@ Because stability failed, the 39-payload table, decoder disposition, expert-slic
 
 Internal verdict: `GO FOR ANALYTICAL-RECOVERY ADVERSARIAL REVIEW`.
 
-Adversarial packet: `docs/architecture/reviews/f017-m1-f0-analytical-recovery-adversarial-packet.md`.
+Adversarial packet: `docs/architecture/reviews/f017-m1-f0-analytical-recovery-adversarial-packet.md`, SHA-256 `b5cc4a0327ed627e9906d7a0c80fc568776f19a75ad6dcff21ef0097e38b09d0`.
 
 Exact next action: independent adversarial review of recovery and failed-stability disposition. Any later progression requires a separately reviewed new frozen input and fresh M1-F0 discovery; it must not weaken the contract or reuse this unstable route for M1-F.
