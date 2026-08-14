@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.m1f-route-stability",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f-route-stability-v1",
+  "frozen_before_recovered_margin_observation": true,
+  "scope": "production M1-F recomputation of the accepted layer-3 M1-F0 route",
+  "inherited_contracts": {
+    "m1f0_numerical_sha256": "e380416041b750535f6339da25710ab8633f6fe1561c4494919b010d392dbb01",
+    "m1f0_scaffold_sha256": "6f6278715159c24e21c60ded97b993fd575393de9b4b16b3fc4dbfb16d1416cb",
+    "m1f0_selection_sha256": "4207845cd22f89a42c42a5ab8ef240cf1af5db3434c2cabac0ecfe9d1beddd0a"
+  },
+  "rounding_model": {
+    "unit_roundoff_f32": 5.960464477539063e-8,
+    "smallest_subnormal_f32": 1.401298464324817e-45,
+    "unit_roundoff_f64": 1.1102230246251565e-16,
+    "gamma": "gamma(k)=k*u32/(1-k*u32)",
+    "native_matvec_same_input": "2*gamma(2*n)*sum(abs(w*x))+4*n*eta32",
+    "native_matvec_perturbed_input": "same_input_bound + (1+gamma(2*n))*sum(abs(w)*input_abs_error)",
+    "rms_norm": "componentwise input propagation through square/sum/mean/epsilon/sqrt/reciprocal/two multiplies, using the positive lower endpoint of mean_square+epsilon and outward f64 evaluation",
+    "position_zero_attention": "single visible value makes attention weight exactly one; Q/K score error does not propagate into the value branch",
+    "residual": "attention_output_abs_error plus one outward-rounded f32 addition",
+    "sigmoid": "global Lipschitz constant 0.25",
+    "bias": "input-independent exact f32 operand promoted to f64; include one outward f64 addition rounding"
+  },
+  "propagation_path": [
+    "attention_rms_norm",
+    "kv_a_projection",
+    "kv_a_rms_norm",
+    "per_head_value_projection",
+    "attention_output_projection",
+    "attention_residual_add",
+    "router_rms_norm",
+    "router_projection",
+    "sigmoid",
+    "router_bias_add"
+  ],
+  "rank_bounds": {
+    "B8": "componentwise absolute post-bias score-error bound for accepted rank-8 expert",
+    "B9": "componentwise absolute post-bias score-error bound for accepted rank-9 expert",
+    "margin": "accepted_rank8_score-accepted_rank9_score",
+    "stability_condition": "margin > B8+B9",
+    "safety_factor": "margin/(B8+B9)"
+  },
+  "interpretation_bands": [
+    {"minimum_inclusive": 0.0, "maximum_inclusive": 1.0, "result": "ROUTE_STABILITY_NOT_QUALIFIED"},
+    {"minimum_exclusive": 1.0, "maximum_exclusive": 4.0, "result": "ROUTE_STABILITY_NOT_QUALIFIED_INSUFFICIENT_HEADROOM"},
+    {"minimum_inclusive": 4.0, "maximum": null, "result": "ROUTE_STABILITY_QUALIFIED"}
+  ],
+  "selection": {
+    "selected_ids": "exact",
+    "tie_break": "descending score then lower expert ID",
+    "different_selected_set": "numerically_failed"
+  },
+  "guards": {
+    "non_finite": "reject",
+    "signed_zero": "canonical serialization required",
+    "post_observation_retuning": "forbidden",
+    "contract_mutation_after_recovery": "forbidden"
+  }
+}

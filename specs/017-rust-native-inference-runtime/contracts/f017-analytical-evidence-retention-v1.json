@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.analytical-evidence-retention",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-analytical-evidence-retention-v1",
+  "scope": "selection-bearing F017 evidence",
+  "pass_requirements": {
+    "canonical_values_or_bytes": true,
+    "canonical_bytes_sha256": true,
+    "hash_only_small_selection_objects": "forbidden"
+  },
+  "mandatory_small_objects": [
+    "complete_score_vector",
+    "complete_ranking_vector",
+    "selected_ids",
+    "first_unselected_id",
+    "selected_cutoff_score",
+    "first_unselected_score",
+    "selection_margin",
+    "routing_probabilities",
+    "routing_weights",
+    "serialization_metadata"
+  ],
+  "large_object_minimum_binding": [
+    "path_kind_or_private_artifact_identity",
+    "sha256",
+    "shape",
+    "element_count",
+    "dtype",
+    "canonical_serialization",
+    "provenance",
+    "public_safe_summary"
+  ],
+  "historical_evidence_policy": "append_only_amendment_or_recovery; never rewrite accepted evidence",
+  "future_selection_pass_policy": "PASS cannot persist when a downstream gate depends on a hash-only analytical object"
+}

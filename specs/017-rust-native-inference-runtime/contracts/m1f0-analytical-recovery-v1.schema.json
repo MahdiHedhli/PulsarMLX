@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1f0-analytical-recovery.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "accepted_bindings",
+    "reproduced_identities",
+    "canonical_analytics",
+    "route_stability",
+    "access",
+    "scope"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f0-analytical-recovery"},
+    "schema_version": {"const": "1.0.0"},
+    "accepted_bindings": {"type": "object"},
+    "reproduced_identities": {"type": "object"},
+    "canonical_analytics": {"type": "object"},
+    "route_stability": {"type": "object"},
+    "access": {"type": "object"},
+    "scope": {"type": "object"}
+  }
+}
