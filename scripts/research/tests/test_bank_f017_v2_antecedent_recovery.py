@@ -45,6 +45,17 @@ class V2RecoveryBankerTests(unittest.TestCase):
         self.assertFalse(summary["exact_ordered_top8_mathematically_stable"])
         self.assertEqual(summary["minimum_mathematical_safety_factor"], 0.25)
         self.assertEqual(summary["minimum_engineering_safety_factor"], 0.125)
+        self.assertEqual(summary["authoritative_summary"], "derived_detail_summary")
+
+        duplicated = list(membership)
+        duplicated[1] = dict(duplicated[0])
+        with self.assertRaisesRegex(ValueError, "canonical relation"):
+            MODULE.summarize_surface({
+                "selected_ids_ordered": selected,
+                "unselected_ids": unselected,
+                "selected_unselected_pair_bounds": duplicated,
+                "adjacent_selected_pair_bounds": ordered,
+            })
 
     def test_nonfinite_and_incomplete_surfaces_fail_closed(self):
         with self.assertRaises(ValueError):

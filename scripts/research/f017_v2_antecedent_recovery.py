@@ -322,7 +322,6 @@ def pairwise_surface(
     selected = list(ranking[:8])
     unselected = list(ranking[8:])
     pairs: list[dict[str, Any]] = []
-    bounds: dict[tuple[int, int], float] = {}
     common = tuple(float(item) for item in residual_bounds)
     for relation, iterable in (
         ("membership", ((i, j) for i in selected for j in unselected)),
@@ -343,24 +342,172 @@ def pairwise_surface(
             margin = float(scores[i] - scores[j])
             factor = margin / bound if bound > 0.0 else math.inf
             pairs.append({"relation": relation, "selected": i, "challenger": j, "margin": margin, "B_pair": bound, "safety_factor": factor})
-            bounds[(i, j)] = bound
-    stable, worst_pair, minimum_factor, relation = math_impl.ordered_topk_stable(scores, selected, bounds)
     membership = [item for item in pairs if item["relation"] == "membership"]
     adjacent = [item for item in pairs if item["relation"] == "ordered_selected"]
-    return {
+    surface = {
         "selected_ids_ordered": selected,
         "unselected_ids": unselected,
         "selected_unselected_pair_bounds": membership,
         "adjacent_selected_pair_bounds": adjacent,
         "membership_pair_count": len(membership),
         "adjacent_selected_pair_count": len(adjacent),
-        "minimum_mathematical_safety_factor": minimum_factor,
-        "minimum_engineering_safety_factor": minimum_factor / 2.0,
-        "global_worst_pair": list(worst_pair) if worst_pair is not None else None,
-        "worst_relation": relation,
-        "mathematical_classification": "MATHEMATICALLY_STABLE" if stable else "NOT_MATHEMATICALLY_STABLE",
-        "engineering_classification": "ENGINEERING_HEADROOM" if stable and minimum_factor >= 2.0 else "NO_ENGINEERING_HEADROOM",
     }
+    derived = derive_pairwise_summary(surface)
+    surface.update({
+        "summary_authority": "derived_detail_summary",
+        "derived_detail_summary": derived,
+        "minimum_mathematical_safety_factor": derived["minimum_mathematical_safety_factor"],
+        "minimum_engineering_safety_factor": derived["minimum_engineering_safety_factor"],
+        "global_worst_pair": [
+            derived["global_minimum_pair"]["selected"],
+            derived["global_minimum_pair"]["challenger"],
+        ],
+        "worst_relation": derived["global_minimum_pair"]["relation"],
+        "mathematical_classification": derived["overall_mathematical_classification"],
+        "engineering_classification": derived["overall_engineering_classification"],
+    })
+    return surface
+
+
+def _validate_pair_records(
+    records: Sequence[dict[str, Any]],
+    expected_pairs: Sequence[tuple[int, int]],
+    relation: str,
+) -> None:
+    if len(records) != len(expected_pairs):
+        raise ValueError(f"{relation} pair surface cardinality")
+    seen: set[tuple[int, int]] = set()
+    for ordinal, (record, expected_pair) in enumerate(zip(records, expected_pairs)):
+        if set(record) != {"relation", "selected", "challenger", "margin", "B_pair", "safety_factor"}:
+            raise ValueError(f"{relation} pair record fields")
+        pair = (record["selected"], record["challenger"])
+        if record["relation"] != relation or pair != expected_pair:
+            raise ValueError(f"{relation} pair canonical order at {ordinal}")
+        if pair in seen:
+            raise ValueError(f"duplicate {relation} pair")
+        seen.add(pair)
+        margin = float(record["margin"])
+        bound = float(record["B_pair"])
+        factor = float(record["safety_factor"])
+        if not all(math.isfinite(value) for value in (margin, bound, factor)):
+            raise ValueError(f"non-finite {relation} pair")
+        if bound <= 0.0:
+            raise ValueError(f"non-positive {relation} pair bound")
+        if factor != margin / bound:
+            raise ValueError(f"stale {relation} safety factor")
+
+
+def _surface_summary(records: Sequence[dict[str, Any]], relation: str) -> dict[str, Any]:
+    minimum_pair = min(records, key=lambda record: float(record["safety_factor"]))
+    mathematical = all(float(record["margin"]) > float(record["B_pair"]) for record in records)
+    engineering = all(float(record["margin"]) >= 2.0 * float(record["B_pair"]) for record in records)
+    minimum = float(minimum_pair["safety_factor"])
+    return {
+        "relation": relation,
+        "pair_count": len(records),
+        "minimum_pair": minimum_pair,
+        "minimum_mathematical_safety_factor": minimum,
+        "minimum_engineering_safety_factor": minimum / 2.0,
+        "mathematically_stable": mathematical,
+        "engineering_headroom": engineering,
+        "mathematical_classification": "MATHEMATICALLY_STABLE" if mathematical else "NOT_MATHEMATICALLY_STABLE",
+        "engineering_classification": "ENGINEERING_HEADROOM" if engineering else "NO_ENGINEERING_HEADROOM",
+    }
+
+
+def derive_pairwise_summary(surface: dict[str, Any]) -> dict[str, Any]:
+    """Derive every summary field from the complete retained detail surface."""
+    selected = surface.get("selected_ids_ordered")
+    unselected = surface.get("unselected_ids")
+    if not isinstance(selected, list) or not isinstance(unselected, list):
+        raise ValueError("route surface identity")
+    if len(selected) != 8 or len(unselected) != 248:
+        raise ValueError("route surface cardinality")
+    if len(set(selected + unselected)) != 256 or set(selected + unselected) != set(range(256)):
+        raise ValueError("route surface partition")
+    membership = surface.get("selected_unselected_pair_bounds")
+    ordered = surface.get("adjacent_selected_pair_bounds")
+    if not isinstance(membership, list) or not isinstance(ordered, list):
+        raise ValueError("pair surface type")
+    expected_membership = [(i, j) for i in selected for j in unselected]
+    expected_ordered = list(zip(selected, selected[1:]))
+    _validate_pair_records(membership, expected_membership, "membership")
+    _validate_pair_records(ordered, expected_ordered, "ordered_selected")
+    if surface.get("membership_pair_count") != 1984 or surface.get("adjacent_selected_pair_count") != 7:
+        raise ValueError("stale pair record count")
+
+    membership_summary = _surface_summary(membership, "membership")
+    ordered_summary = _surface_summary(ordered, "ordered_selected")
+    global_minimum = min(
+        (membership_summary["minimum_pair"], ordered_summary["minimum_pair"]),
+        key=lambda record: float(record["safety_factor"]),
+    )
+    route_set_stable = membership_summary["mathematically_stable"]
+    route_order_stable = ordered_summary["mathematically_stable"]
+    overall_mathematical = route_set_stable and route_order_stable
+    overall_engineering = (
+        membership_summary["engineering_headroom"] and ordered_summary["engineering_headroom"]
+    )
+    minimum = float(global_minimum["safety_factor"])
+    return {
+        "authoritative_summary": "derived_detail_summary",
+        "membership": membership_summary,
+        "ordered": ordered_summary,
+        "global_minimum_pair": global_minimum,
+        "minimum_mathematical_safety_factor": minimum,
+        "minimum_engineering_safety_factor": minimum / 2.0,
+        "route_set_stable": route_set_stable,
+        "route_order_stable": route_order_stable,
+        "overall_mathematical_classification": (
+            "MATHEMATICALLY_STABLE" if overall_mathematical else "NOT_MATHEMATICALLY_STABLE"
+        ),
+        "overall_engineering_classification": (
+            "ENGINEERING_HEADROOM" if overall_engineering else "NO_ENGINEERING_HEADROOM"
+        ),
+    }
+
+
+def retrospective_summary(derived: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "summary_authority": "derived_detail_summary",
+        "derived_detail_summary": derived,
+        "mathematical_status": derived["overall_mathematical_classification"],
+        "engineering_status": derived["overall_engineering_classification"],
+        "minimum_mathematical_safety_factor": derived["minimum_mathematical_safety_factor"],
+        "minimum_engineering_safety_factor": derived["minimum_engineering_safety_factor"],
+        "route_set_stable": derived["route_set_stable"],
+        "route_order_stable": derived["route_order_stable"],
+    }
+
+
+def validate_summary_matches_detail(surface: dict[str, Any], stored: dict[str, Any]) -> None:
+    expected = retrospective_summary(derive_pairwise_summary(surface))
+    if canonical_json(stored) != canonical_json(expected):
+        raise ValueError("summary/detail mismatch")
+
+
+def validate_surface_summary(surface: dict[str, Any]) -> dict[str, Any]:
+    """Fail closed unless every retained summary is exactly detail-derived."""
+    derived = derive_pairwise_summary(surface)
+    if surface.get("summary_authority") != "derived_detail_summary":
+        raise ValueError("summary authority")
+    if canonical_json(surface.get("derived_detail_summary")) != canonical_json(derived):
+        raise ValueError("summary/detail mismatch")
+    legacy = {
+        "minimum_mathematical_safety_factor": derived["minimum_mathematical_safety_factor"],
+        "minimum_engineering_safety_factor": derived["minimum_engineering_safety_factor"],
+        "global_worst_pair": [
+            derived["global_minimum_pair"]["selected"],
+            derived["global_minimum_pair"]["challenger"],
+        ],
+        "worst_relation": derived["global_minimum_pair"]["relation"],
+        "mathematical_classification": derived["overall_mathematical_classification"],
+        "engineering_classification": derived["overall_engineering_classification"],
+    }
+    for field, expected in legacy.items():
+        if canonical_json(surface.get(field)) != canonical_json(expected):
+            raise ValueError(f"summary/detail mismatch: {field}")
+    return derived
 
 
 def validate_synthetic_result(result: dict[str, Any]) -> None:
@@ -377,6 +524,8 @@ def validate_synthetic_result(result: dict[str, Any]) -> None:
         raise ValueError("missing pairwise bound")
     if surface.get("adjacent_selected_pair_count") != 7 or len(surface.get("adjacent_selected_pair_bounds", [])) != 7:
         raise ValueError("missing ordered-selected bound")
+    derived = validate_surface_summary(surface)
+    validate_summary_matches_detail(surface, result.get("retrospective_v2", {}))
     required_private = {
         "attention_residual", "router_normalized_input", "router_matrix", "ffn_norm_weight",
         "rmsnorm_decomposition_inputs", "non_radial_component_bounds",
@@ -566,14 +715,7 @@ def execute_authorized_recovery(
             "router_probabilities": captured["probabilities"], "router_bias": [float(x) for x in captured["bias"]],
             "router_scores": captured["scores"], "ranking": captured["ranking"], "pairwise_surface": surface,
         },
-        "retrospective_v2": {
-            "mathematical_status": surface["mathematical_classification"],
-            "engineering_status": surface["engineering_classification"],
-            "minimum_mathematical_safety_factor": surface["minimum_mathematical_safety_factor"],
-            "minimum_engineering_safety_factor": surface["minimum_engineering_safety_factor"],
-            "route_set_stable": surface["mathematical_classification"] == "MATHEMATICALLY_STABLE",
-            "route_order_stable": surface["mathematical_classification"] == "MATHEMATICALLY_STABLE",
-        },
+        "retrospective_v2": retrospective_summary(surface["derived_detail_summary"]),
         "historical_status": {"historical_v1_status_unchanged": True, "accepted_route_reclassified": False},
         "access": config["access_budget"],
         "scope": config["semantics"],
@@ -642,6 +784,7 @@ def synthetic_recovery(root: Path) -> dict[str, Any]:
         "private_hashes_before": private_hashes_before,
         "private_hashes_after": private_hashes_after,
         "pairwise_surface": surface,
+        "retrospective_v2": retrospective_summary(surface["derived_detail_summary"]),
         "zero_mlx_candidate_dispatches": True,
         "zero_expert_computation": True,
         "checkpoint_access": 0,

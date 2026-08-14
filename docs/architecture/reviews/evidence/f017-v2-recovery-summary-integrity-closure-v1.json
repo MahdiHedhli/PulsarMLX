@@ -1,0 +1,67 @@
+{
+  "schema": "pulsarmlx.f017.v2-recovery-summary-integrity-closure",
+  "schema_version": "1.0.0",
+  "starting_head": "7fa00341754a98ad10926c97695ec40070130a28",
+  "raw_recovery_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-result-v1.json",
+    "sha256": "f9422287cb98322d1412a6dd2397bb0f4a0d6538778aa587dddff7c5154acf2a",
+    "immutable": true
+  },
+  "accepted_evidence_review": {
+    "path": "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-review-v1.json",
+    "sha256": "dd235d3e006e8721cf2f3decb1ea822c76cbce65a1660941661e7f68816f76ea"
+  },
+  "summary_integrity_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-v2-derived-summary-integrity-v1.json",
+    "sha256": "3de1845380e71ea7ce267ed9737ee14c75fe33325669ad3891a9c1aff4caa862"
+  },
+  "reproduction": {
+    "first_failing_ordered_pair": [166, 78],
+    "first_failing_ordered_safety_factor": 0.6435667308079595,
+    "global_ordered_minimum_pair": [233, 177],
+    "global_ordered_minimum_safety_factor": 0.22551544432236478,
+    "raw_route_set_stable": false,
+    "detail_derived_route_set_stable": true,
+    "result": "REPRODUCED"
+  },
+  "authoritative_derived_summary": {
+    "authority": "derived_detail_summary",
+    "membership": {
+      "minimum_pair": [177, 98],
+      "minimum_mathematical_safety_factor": 1.2497550469932908,
+      "minimum_engineering_safety_factor": 0.6248775234966454,
+      "mathematically_stable": true,
+      "engineering_headroom": false
+    },
+    "ordered": {
+      "minimum_pair": [233, 177],
+      "minimum_mathematical_safety_factor": 0.22551544432236478,
+      "minimum_engineering_safety_factor": 0.11275772216118239,
+      "mathematically_stable": false,
+      "engineering_headroom": false
+    },
+    "route_set_stable": true,
+    "route_order_stable": false,
+    "overall_mathematical_classification": "NOT_MATHEMATICALLY_STABLE",
+    "overall_engineering_classification": "NO_ENGINEERING_HEADROOM"
+  },
+  "validation": {
+    "membership_records": 1984,
+    "ordered_records": 7,
+    "full_scan_required": true,
+    "summary_detail_exact_assertion": true,
+    "required_mutation_fields": 6,
+    "additional_mutation_cases": 8,
+    "all_mutations_rejected": true,
+    "raw_hash_immutability_check": true,
+    "ledger_validation": true
+  },
+  "historical_false_pass": false,
+  "numerical_contract_changed": false,
+  "real_checkpoint_access": 0,
+  "ledger": 57,
+  "q6_k": "blocked",
+  "m1_f": "blocked",
+  "p1": "blocked",
+  "result": "SUMMARY_INTEGRITY_CLOSED"
+}

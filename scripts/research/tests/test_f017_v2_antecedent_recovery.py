@@ -26,6 +26,10 @@ def load(name: str, relative: str):
 
 RECOVERY = load("f017_v2_recovery", "scripts/research/f017_v2_antecedent_recovery.py")
 PREPARE = load("f017_v2_recovery_prepare", "scripts/research/prepare_f017_v2_antecedent_recovery.py")
+SUMMARY_VALIDATOR = load(
+    "f017_v2_summary_integrity",
+    "scripts/research/validate_f017_v2_summary_integrity.py",
+)
 
 
 class V2AntecedentRecoveryTests(unittest.TestCase):
@@ -41,6 +45,75 @@ class V2AntecedentRecoveryTests(unittest.TestCase):
         # field under test; the reviewed config artifact itself is unchanged.
         ledger = ROOT / cls.config["accepted_bindings"]["real_payload_ledger"]["symbolic_path"]
         cls.config["accepted_bindings"]["real_payload_ledger"]["sha256"] = hashlib.sha256(ledger.read_bytes()).hexdigest()
+        validator = ROOT / cls.config["contracts"]["recovery_validator"]["symbolic_path"]
+        cls.config["contracts"]["recovery_validator"]["sha256"] = hashlib.sha256(validator.read_bytes()).hexdigest()
+        cls.raw_result_path = (
+            ROOT / "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-result-v1.json"
+        )
+        cls.raw_result = json.loads(cls.raw_result_path.read_text())
+        cls.banked_surface = cls.raw_result["antecedent_retention"]["pairwise_surface"]
+
+    def test_banked_surface_reproduces_first_failure_instead_of_global_minimum(self):
+        raw_summary = self.raw_result["retrospective_v2"]
+        self.assertEqual(
+            self.banked_surface["adjacent_selected_pair_bounds"][0]["selected"], 166
+        )
+        self.assertEqual(
+            self.banked_surface["adjacent_selected_pair_bounds"][0]["challenger"], 78
+        )
+        self.assertAlmostEqual(raw_summary["minimum_mathematical_safety_factor"], 0.6435667308079595)
+
+        derived = RECOVERY.derive_pairwise_summary(self.banked_surface)
+        self.assertEqual(derived["ordered"]["minimum_pair"]["selected"], 233)
+        self.assertEqual(derived["ordered"]["minimum_pair"]["challenger"], 177)
+        self.assertEqual(
+            derived["ordered"]["minimum_mathematical_safety_factor"],
+            0.22551544432236478,
+        )
+
+    def test_banked_surface_separates_route_set_from_ordered_route(self):
+        self.assertFalse(self.raw_result["retrospective_v2"]["route_set_stable"])
+        derived = RECOVERY.derive_pairwise_summary(self.banked_surface)
+        self.assertTrue(derived["route_set_stable"])
+        self.assertFalse(derived["route_order_stable"])
+        self.assertEqual(derived["overall_mathematical_classification"], "NOT_MATHEMATICALLY_STABLE")
+
+    def test_banked_recovery_detail_derives_authoritative_expected_summary(self):
+        derived = RECOVERY.derive_pairwise_summary(self.banked_surface)
+        membership = derived["membership"]
+        ordered = derived["ordered"]
+        self.assertEqual(
+            (membership["minimum_pair"]["selected"], membership["minimum_pair"]["challenger"]),
+            (177, 98),
+        )
+        self.assertEqual(membership["minimum_mathematical_safety_factor"], 1.2497550469932908)
+        self.assertTrue(membership["mathematically_stable"])
+        self.assertFalse(membership["engineering_headroom"])
+        self.assertEqual(
+            (ordered["minimum_pair"]["selected"], ordered["minimum_pair"]["challenger"]),
+            (233, 177),
+        )
+        self.assertEqual(ordered["minimum_mathematical_safety_factor"], 0.22551544432236478)
+        self.assertEqual(ordered["minimum_engineering_safety_factor"], 0.11275772216118239)
+        self.assertFalse(ordered["mathematically_stable"])
+        self.assertTrue(derived["route_set_stable"])
+        self.assertFalse(derived["route_order_stable"])
+        self.assertEqual(derived["overall_mathematical_classification"], "NOT_MATHEMATICALLY_STABLE")
+        self.assertEqual(derived["overall_engineering_classification"], "NO_ENGINEERING_HEADROOM")
+
+    def test_historical_raw_recovery_artifact_is_byte_immutable(self):
+        self.assertEqual(
+            hashlib.sha256(self.raw_result_path.read_bytes()).hexdigest(),
+            "f9422287cb98322d1412a6dd2397bb0f4a0d6538778aa587dddff7c5154acf2a",
+        )
+
+    def test_checkpoint_free_validator_accepts_authoritative_banked_summary(self):
+        result = SUMMARY_VALIDATOR.validate(ROOT)
+        self.assertEqual(result["result"], "PASS")
+        self.assertEqual(result["detail_records_validated"], 1991)
+        self.assertTrue(result["route_set_stable"])
+        self.assertFalse(result["route_order_stable"])
+        self.assertEqual(result["checkpoint_access"], 0)
 
     def test_preparation_refuses_post_execution_ledger(self):
         with self.assertRaisesRegex(ValueError, "current ledger is not 45"):
@@ -172,6 +245,72 @@ class V2AntecedentRecoveryTests(unittest.TestCase):
         mutated["private_antecedents"]["router_matrix"]["sha256"] = "0" * 64
         with self.assertRaisesRegex(ValueError, "corrupted private"):
             RECOVERY.validate_synthetic_result(mutated)
+
+    def test_six_field_summary_mutation_matrix_fails_closed(self):
+        mutations = (
+            ("claimed minimum pair", lambda item: item["pairwise_surface"]["derived_detail_summary"].__setitem__("global_minimum_pair", item["pairwise_surface"]["adjacent_selected_pair_bounds"][0])),
+            ("minimum mathematical factor", lambda item: item["retrospective_v2"].__setitem__("minimum_mathematical_safety_factor", -1.0)),
+            ("minimum engineering factor", lambda item: item["retrospective_v2"].__setitem__("minimum_engineering_safety_factor", -1.0)),
+            ("route-set stable", lambda item: item["retrospective_v2"].__setitem__("route_set_stable", not item["retrospective_v2"]["route_set_stable"])),
+            ("route-order stable", lambda item: item["retrospective_v2"].__setitem__("route_order_stable", not item["retrospective_v2"]["route_order_stable"])),
+            ("overall classification", lambda item: item["pairwise_surface"]["derived_detail_summary"].__setitem__("overall_mathematical_classification", "MUTATED")),
+        )
+        for label, mutate in mutations:
+            with self.subTest(label=label):
+                result = RECOVERY.synthetic_recovery(ROOT)
+                mutate(result)
+                with self.assertRaisesRegex(ValueError, "summary/detail mismatch"):
+                    RECOVERY.validate_synthetic_result(result)
+
+    def test_additional_summary_and_surface_mutations_fail_closed(self):
+        def validate_mutation(mutate, pattern: str = "pair|summary|count"):
+            result = RECOVERY.synthetic_recovery(ROOT)
+            mutate(result)
+            with self.assertRaisesRegex(ValueError, pattern):
+                RECOVERY.validate_synthetic_result(result)
+
+        validate_mutation(
+            lambda item: item["pairwise_surface"]["derived_detail_summary"]["ordered"].__setitem__(
+                "minimum_pair", item["pairwise_surface"]["adjacent_selected_pair_bounds"][0]
+            ),
+            "summary/detail mismatch",
+        )
+        validate_mutation(
+            lambda item: item["retrospective_v2"].__setitem__("engineering_status", "MUTATED"),
+            "summary/detail mismatch",
+        )
+        validate_mutation(
+            lambda item: item["pairwise_surface"]["derived_detail_summary"]["membership"].__setitem__(
+                "mathematical_classification", "MUTATED"
+            ),
+            "summary/detail mismatch",
+        )
+        validate_mutation(
+            lambda item: item["pairwise_surface"].__setitem__("membership_pair_count", 1983),
+            "missing pairwise|count",
+        )
+        validate_mutation(
+            lambda item: item["pairwise_surface"]["selected_unselected_pair_bounds"].__setitem__(
+                1, copy.deepcopy(item["pairwise_surface"]["selected_unselected_pair_bounds"][0])
+            )
+        )
+        validate_mutation(
+            lambda item: item["pairwise_surface"]["selected_unselected_pair_bounds"].pop(),
+            "missing pairwise",
+        )
+        validate_mutation(
+            lambda item: item["pairwise_surface"].update({
+                "selected_unselected_pair_bounds": copy.deepcopy(item["pairwise_surface"]["adjacent_selected_pair_bounds"]),
+                "adjacent_selected_pair_bounds": copy.deepcopy(item["pairwise_surface"]["selected_unselected_pair_bounds"]),
+            }),
+            "missing pairwise|ordered|cardinality",
+        )
+        validate_mutation(
+            lambda item: item["pairwise_surface"]["derived_detail_summary"].__setitem__(
+                "global_minimum_pair", item["pairwise_surface"]["adjacent_selected_pair_bounds"][0]
+            ),
+            "summary/detail mismatch",
+        )
 
     def test_duplicate_key_and_symlink_escape_rejected(self):
         with tempfile.TemporaryDirectory() as directory:

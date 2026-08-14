@@ -221,6 +221,17 @@ class RouteStabilityV2Tests(unittest.TestCase):
         self.assertEqual(pair, (1, 2))
         self.assertEqual(relation, "ordered_selected")
 
+    def test_ordered_topk_reports_global_minimum_not_first_failure(self):
+        scores = [1.0, 0.9, 0.8, 0.7, 0.1]
+        selected = [0, 1, 2, 3]
+        bounds = {(i, 4): 0.01 for i in selected}
+        bounds.update({(0, 1): 0.2, (1, 2): 1.0, (2, 3): 0.15})
+        stable, pair, factor, relation = V2.ordered_topk_stable(scores, selected, bounds)
+        self.assertFalse(stable)
+        self.assertEqual(pair, (1, 2))
+        self.assertAlmostEqual(factor, 0.1)
+        self.assertEqual(relation, "ordered_selected")
+
     def test_ordered_topk_rejects_rank_seven_eight_tie_and_one_ulp(self):
         scores = [10.0 - x for x in range(10)]
         selected = list(range(8))

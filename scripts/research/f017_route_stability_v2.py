@@ -191,11 +191,13 @@ def exact_pair_delta(value: PairwiseInputs, lam: float, residual: Sequence[float
 
 
 def full_set_stable(scores: Sequence[float], selected: Iterable[int], pair_bounds: dict[tuple[int, int], float]) -> tuple[bool, tuple[int, int] | None, float]:
-    selected_set = set(selected)
-    unselected = set(range(len(scores))) - selected_set
+    selected_order = list(selected)
+    selected_set = set(selected_order)
+    unselected = [item for item in range(len(scores)) if item not in selected_set]
     minimum_factor = math.inf
     minimum_pair = None
-    for i in selected_set:
+    stable = True
+    for i in selected_order:
         for j in unselected:
             bound = pair_bounds[(i, j)]
             margin = scores[i] - scores[j]
@@ -203,8 +205,8 @@ def full_set_stable(scores: Sequence[float], selected: Iterable[int], pair_bound
             if factor < minimum_factor:
                 minimum_factor, minimum_pair = factor, (i, j)
             if not margin > bound:
-                return False, (i, j), minimum_factor
-    return True, minimum_pair, minimum_factor
+                stable = False
+    return stable, minimum_pair, minimum_factor
 
 
 def ordered_topk_stable(
@@ -225,9 +227,11 @@ def ordered_topk_stable(
     if list(ordered_selected) != expected:
         raise ValueError("selected order is not canonical")
     selected_set = set(ordered_selected)
-    unselected = set(range(len(scores))) - selected_set
+    unselected = [item for item in range(len(scores)) if item not in selected_set]
     minimum_factor = math.inf
     minimum_pair = None
+    minimum_relation = "complete"
+    stable = True
     for relation, pairs in (
         ("membership", ((i, j) for i in ordered_selected for j in unselected)),
         ("ordered_selected", zip(ordered_selected, ordered_selected[1:])),
@@ -241,10 +245,10 @@ def ordered_topk_stable(
             margin = scores[i] - scores[j]
             factor = margin / bound if bound > 0.0 else (math.inf if margin > 0.0 else 0.0)
             if factor < minimum_factor:
-                minimum_factor, minimum_pair = factor, (i, j)
+                minimum_factor, minimum_pair, minimum_relation = factor, (i, j), relation
             if not margin > bound:
-                return False, (i, j), minimum_factor, relation
-    return True, minimum_pair, minimum_factor, "complete"
+                stable = False
+    return stable, minimum_pair, minimum_factor, minimum_relation
 
 
 def high_precision_sigmoid(value: float) -> Decimal:

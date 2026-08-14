@@ -1,0 +1,58 @@
+{
+  "schema": "pulsarmlx.f017.v2-derived-summary-integrity-contract",
+  "schema_version": "1.0.0",
+  "scope": "future_selection_bearing_f017_pairwise_evidence",
+  "historical_raw_recovery": {
+    "immutable": true,
+    "sha256": "f9422287cb98322d1412a6dd2397bb0f4a0d6538778aa587dddff7c5154acf2a",
+    "known_summary_defect": true,
+    "detail_surface_trustworthy": true
+  },
+  "authority": {
+    "authoritative_summary": "derived_detail_summary",
+    "stored_summary_is_non_authoritative_until_asserted": true,
+    "derive_then_exactly_assert": true,
+    "canonical_serialization": "sorted-key compact JSON with one trailing LF"
+  },
+  "required_surfaces": {
+    "membership": {
+      "record_count": 1984,
+      "canonical_relation": "each ordered selected expert crossed with every canonical unselected expert"
+    },
+    "ordered_selected": {
+      "record_count": 7,
+      "canonical_relation": "every adjacent pair in canonical selected order"
+    }
+  },
+  "required_derived_fields": [
+    "membership.minimum_pair",
+    "membership.minimum_mathematical_safety_factor",
+    "membership.minimum_engineering_safety_factor",
+    "membership.mathematically_stable",
+    "membership.engineering_headroom",
+    "ordered.minimum_pair",
+    "ordered.minimum_mathematical_safety_factor",
+    "ordered.minimum_engineering_safety_factor",
+    "ordered.mathematically_stable",
+    "ordered.engineering_headroom",
+    "route_set_stable",
+    "route_order_stable",
+    "overall_mathematical_classification",
+    "overall_engineering_classification"
+  ],
+  "derivation": {
+    "route_set_stable_source": "membership surface only",
+    "route_order_stable_source": "ordered-selected surface only",
+    "overall_mathematical": "route_set_stable AND route_order_stable",
+    "overall_engineering": "membership engineering headroom AND ordered engineering headroom",
+    "global_extrema": "full scan; early return forbidden"
+  },
+  "failure_policy": {
+    "summary_detail_mismatch": "FAIL_CLOSED",
+    "missing_pair": "FAIL_CLOSED",
+    "duplicate_pair": "FAIL_CLOSED",
+    "noncanonical_pair_order": "FAIL_CLOSED",
+    "stale_record_count": "FAIL_CLOSED",
+    "precomputed_boolean_trusted": false
+  }
+}

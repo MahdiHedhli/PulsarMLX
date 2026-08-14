@@ -1,0 +1,77 @@
+{
+  "schema": "pulsarmlx.f017.v2-recovery-summary-integrity-audit",
+  "schema_version": "1.0.0",
+  "starting_head": "7fa00341754a98ad10926c97695ec40070130a28",
+  "scope": "checkpoint_free_active_and_future_f017_summary_paths",
+  "historical_raw_recovery": {
+    "path": "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-result-v1.json",
+    "sha256": "f9422287cb98322d1412a6dd2397bb0f4a0d6538778aa587dddff7c5154acf2a",
+    "immutable": true,
+    "known_summary_defect": true,
+    "pairwise_detail_surface_trustworthy": true
+  },
+  "audit_targets": [
+    {
+      "boundary": "M1-D",
+      "source": "crates/f017-runner/src/projection_boundary.rs",
+      "summary_kind": "ten-repeat hash equality and Tier-B qualification",
+      "finding": "all repeats are scanned with Iterator::all and PASS separately requires qualification.passes",
+      "false_pass_risk": false,
+      "action": "none"
+    },
+    {
+      "boundary": "M1-E",
+      "source": "crates/f017-runner/src/expert_boundary.rs",
+      "summary_kind": "four-stage ten-repeat equality and Tier-B composition",
+      "finding": "all stage hashes are scanned and every equality plus qualification PASS is required",
+      "false_pass_risk": false,
+      "action": "none"
+    },
+    {
+      "boundary": "M1-F0",
+      "source": "scripts/research/f017_m1f0_admission.py",
+      "summary_kind": "complete stage-and-selection repeat hashes",
+      "finding": "all ten complete records are hashed and divergence rejects before accepted evidence",
+      "false_pass_risk": false,
+      "action": "none"
+    },
+    {
+      "boundary": "M1-F0 route banking",
+      "source": "scripts/research/bank_f017_m1f0_real_route.py",
+      "summary_kind": "accepted route identity and repeat/access evidence",
+      "finding": "PASS binds direct oracle identities and complete repeat evidence; no extrema summary controls PASS",
+      "false_pass_risk": false,
+      "action": "none"
+    },
+    {
+      "boundary": "route-stability v2 research helper",
+      "source": "scripts/research/f017_route_stability_v2.py",
+      "summary_kind": "selected/unselected and ordered pair stability",
+      "finding": "boolean failure was conservative but helper returned the first failure as the minimum pair",
+      "false_pass_risk": false,
+      "action": "fixed active helper to scan the full surface before returning the global minimum"
+    },
+    {
+      "boundary": "v2 antecedent recovery executor",
+      "source": "scripts/research/f017_v2_antecedent_recovery.py",
+      "summary_kind": "1984 membership plus 7 ordered-selected pair records",
+      "finding": "raw executor summary used first failing ordered pair and coupled route-set status to overall ordered status",
+      "false_pass_risk": false,
+      "action": "full-scan derived summary and exact derive-and-assert validation added for active/future outputs"
+    },
+    {
+      "boundary": "v2 recovery evidence banker",
+      "source": "scripts/research/bank_f017_v2_antecedent_recovery.py",
+      "summary_kind": "independent corrected summary",
+      "finding": "already scanned all records; canonical relation, duplicate, and stale-factor validation was incomplete",
+      "false_pass_risk": false,
+      "action": "strengthened canonical detail validation"
+    }
+  ],
+  "historical_false_pass_found": false,
+  "historical_disposition": "No accepted PASS depended on the defective extrema. The raw v2 result was already overall NOT_MATHEMATICALLY_STABLE; its correction changes the minimum and membership subclassification, not the overall failure.",
+  "numerical_contract_changed": false,
+  "checkpoint_access": 0,
+  "ledger": 57,
+  "result": "PASS"
+}

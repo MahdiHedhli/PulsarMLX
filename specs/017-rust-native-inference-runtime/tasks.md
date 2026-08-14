@@ -226,3 +226,8 @@
   the accepted M1-F0 identities with the frozen 12-payload boundary, retain the
   complete pairwise surface and immutable private antecedents, append the
   45-to-57 real-payload ledger event, and stop for independent evidence review.
+- [x] T017-188 Close the checkpoint-free v2 recovery summary-integrity findings:
+  derive global membership and ordered extrema from the complete retained
+  detail surface, separate route-set from route-order status, reject summary
+  mutations fail-closed, preserve immutable raw evidence, and audit adjacent
+  F017 summarizers for historical false-PASS risk.

@@ -67,13 +67,28 @@ def summarize_surface(surface: dict[str, Any]) -> dict[str, Any]:
     ordered = surface["adjacent_selected_pair_bounds"]
     if len(membership) != 1984 or len(ordered) != 7:
         raise ValueError("pair surface cardinality")
-    if surface["selected_ids_ordered"] != EXPECTED_ROUTE or len(surface["unselected_ids"]) != 248:
+    unselected = surface["unselected_ids"]
+    if (
+        surface["selected_ids_ordered"] != EXPECTED_ROUTE
+        or len(unselected) != 248
+        or len(set(EXPECTED_ROUTE + unselected)) != 256
+        or set(EXPECTED_ROUTE + unselected) != set(range(256))
+    ):
         raise ValueError("route surface identity")
-    for item in (*membership, *ordered):
+    expected = [
+        ("membership", i, j) for i in EXPECTED_ROUTE for j in unselected
+    ] + [
+        ("ordered_selected", i, j) for i, j in zip(EXPECTED_ROUTE, EXPECTED_ROUTE[1:])
+    ]
+    for item, relation in zip((*membership, *ordered), expected, strict=True):
+        if (item.get("relation"), item.get("selected"), item.get("challenger")) != relation:
+            raise ValueError("pair surface canonical relation")
         if not all(math.isfinite(float(item[key])) for key in ("margin", "B_pair", "safety_factor")):
             raise ValueError("non-finite pair surface")
-        if item["B_pair"] < 0.0:
-            raise ValueError("negative pair bound")
+        if item["B_pair"] <= 0.0:
+            raise ValueError("non-positive pair bound")
+        if item["safety_factor"] != item["margin"] / item["B_pair"]:
+            raise ValueError("stale pair safety factor")
     worst_membership = min(membership, key=lambda item: item["safety_factor"])
     worst_ordered = min(ordered, key=lambda item: item["safety_factor"])
     global_worst = min((worst_membership, worst_ordered), key=lambda item: item["safety_factor"])
@@ -90,6 +105,7 @@ def summarize_surface(surface: dict[str, Any]) -> dict[str, Any]:
         worst_per_selected.append(item)
     minimum = float(global_worst["safety_factor"])
     return {
+        "authoritative_summary": "derived_detail_summary",
         "membership_pair_count": 1984,
         "ordered_selected_pair_count": 7,
         "membership_stable": membership_stable,
