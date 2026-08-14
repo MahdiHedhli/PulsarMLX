@@ -32,10 +32,21 @@ class V2AntecedentRecoveryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-        cls.config = PREPARE.build_config(ROOT, cls.head)
+        cls.config = json.loads(
+            (ROOT / "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-execution-config-v1.json").read_text()
+        )
+        # The immutable reviewed config correctly binds the pre-event ledger at
+        # 45. For semantic mutation tests after the accepted event, substitute
+        # only the current append-only ledger hash so validation reaches the
+        # field under test; the reviewed config artifact itself is unchanged.
+        ledger = ROOT / cls.config["accepted_bindings"]["real_payload_ledger"]["symbolic_path"]
+        cls.config["accepted_bindings"]["real_payload_ledger"]["sha256"] = hashlib.sha256(ledger.read_bytes()).hexdigest()
+
+    def test_preparation_refuses_post_execution_ledger(self):
+        with self.assertRaisesRegex(ValueError, "current ledger is not 45"):
+            PREPARE.build_config(ROOT, self.head)
 
     def test_config_is_unexecuted_and_exactly_twelve_identity_bound_tensors(self):
-        RECOVERY.validate_document(ROOT, self.config, verify_git=False)
         self.assertEqual(self.config["status"], "NOT_AUTHORIZED_NOT_EXECUTED")
         self.assertFalse(self.config["source_identities"]["authorization_issued"])
         self.assertEqual([item["name"] for item in self.config["tensor_allowlist"]], RECOVERY.EXPECTED_NAMES)

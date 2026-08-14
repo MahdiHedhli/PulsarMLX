@@ -222,3 +222,7 @@
   independent implementations and directed/randomized stress, and prepare a
   non-consuming, identity-gated 12-payload antecedent-recovery package without
   checkpoint access or route reclassification.
+- [x] T017-187 Execute exactly one authorized v2 antecedent recovery, reproduce
+  the accepted M1-F0 identities with the frozen 12-payload boundary, retain the
+  complete pairwise surface and immutable private antecedents, append the
+  45-to-57 real-payload ledger event, and stop for independent evidence review.

@@ -66,6 +66,10 @@ def build_ledger(root: Path) -> dict[str, object]:
         "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json", M1F0, True, "execution"))
     e.append(event(root, "M1-F0", "analytical-recovery-1", "accepted-boundary evidence recovery",
         "docs/architecture/reviews/evidence/f017-m1-f0-router-analytical-recovery-v1.json", M1F0, False, "evidence_recovery"))
+    e.append(event(root, "M1-F0-V2-ANTECEDENT-RECOVERY", "analytical-antecedent-recovery-1",
+        "identity-gated analytical antecedent recovery for retrospective route-stability v2",
+        "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-review-v1.json",
+        M1F0, False, "evidence_recovery"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:

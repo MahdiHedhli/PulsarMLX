@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.v2-antecedent-recovery-authorization",
+  "schema_version": "1.0.0",
+  "status": "AUTHORIZED_FOR_EXACTLY_ONE_V2_ANTECEDENT_RECOVERY_NOT_EXECUTED",
+  "execution_config_sha256": "649a53630be246af11270f1cad19bdb8a7ccabf06e928febfe6cbc282dd4c7e2",
+  "tooling_commit_sha": "6b56dc88f89b92ebaeb525a35e48b3c2c1bc8fec",
+  "tooling_tree_oid": "61eda4e19c57b0ddeea92a73468cbb5edff6019e",
+  "accepted_route_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+  "retention_manifest_sha256": "bd3cc6c10faee0d8c8072000403bbef68354286515482a6b78869ab02be81e13",
+  "payload_budget": {
+    "shard_opens": 1,
+    "positional_reads": 12,
+    "tensor_payloads": 12,
+    "compressed_bytes": 139217920,
+    "decoded_bytes": 666430464,
+    "expert_payloads": 0,
+    "expert_computation": 0,
+    "mlx_candidate_dispatches": 0,
+    "m1_f_execution": 0
+  },
+  "new_route_discovery": false,
+  "route_attempt_consumed": false,
+  "m1_f_authorized": false,
+  "q6_k_qualification_authorized": false
+}
