@@ -16,6 +16,7 @@ from scripts.research import f017_routing_contract_v3 as v3
 ROOT = Path(__file__).resolve().parents[3]
 RAW = ROOT / "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-result-v1.json"
 ROUTE = ROOT / "docs/architecture/reviews/evidence/f017-m1-f0-layer3-route-v1.json"
+CLARIFIED = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json"
 
 
 def route_pairs() -> tuple[v3.RoutingPair, ...]:
@@ -128,6 +129,32 @@ class WeightQualificationTests(unittest.TestCase):
             self.assertGreater(value["positivity_safety_factor"], 1.0)
             self.assertTrue(value["oracle_self_consistent"])
             self.assertEqual(value["inherited_r10_candidate_atol"], 1.0e-5)
+
+    def test_binary64_denominator_order_is_enclosed_by_existing_probability_guards(self) -> None:
+        probabilities = [
+            float(self.weights[item.expert_id]["oracle_probability"])
+            for item in self.oracle
+        ]
+        result = v3.denominator_rounding_enclosure(probabilities)
+        self.assertTrue(result["enclosed_without_formula_change"])
+        self.assertLessEqual(
+            result["maximum_order_displacement"],
+            result["preexisting_probability_endpoint_budget"],
+        )
+
+    def test_denominator_rounding_clarification_covers_dynamic_range(self) -> None:
+        probabilities = [
+            math.nextafter(0.5, 0.0),
+            math.nextafter(0.5, 1.0),
+            2.0**-20,
+            2.0**-30,
+            2.0**-40,
+            2.0**-50,
+            2.0**-60,
+            2.0**-70,
+        ]
+        result = v3.denominator_rounding_enclosure(probabilities)
+        self.assertTrue(result["enclosed_without_formula_change"])
 
     def test_same_pairs_different_rank_semantically_pass(self) -> None:
         candidate = tuple(reversed(self.oracle))
@@ -272,8 +299,36 @@ class AccumulationPolicyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             v3.f32_atomic_terms(pairs, outputs)
 
+    def test_accumulation_bound_permutation_scope_is_exactly_eight_routed_terms(self) -> None:
+        routed = {index: (float(index + 1),) for index in range(8)}
+        self.assertEqual(len(v3.accumulation_order_bound(routed)), 1)
+        with self.assertRaisesRegex(ValueError, "exactly eight atomic term vectors"):
+            v3.accumulation_order_bound(
+                {
+                    **routed,
+                    8: (123.0,),  # shared expert is fixed outside the permuted term set
+                    9: (-456.0,),  # residual is fixed outside the permuted term set
+                }
+            )
+
 
 class HistoricalImmutabilityTests(unittest.TestCase):
+    def test_clarified_contract_changes_no_formula_or_threshold(self) -> None:
+        contract = v3.parse_json_no_duplicates(CLARIFIED)
+        self.assertEqual(
+            contract["predecessor_v3_sha256"],
+            "befbf30f85e12b779e7d5c778f337a5f7d6019a15805e04805a24e4903ea3969",
+        )
+        self.assertFalse(contract["mathematical_semantics_changed_from_predecessor_v3"])
+        self.assertTrue(all(not item["formula_changed"] for item in contract["clarifications"]))
+        self.assertEqual(
+            contract["accumulation"]["permutation_controlled_terms"]["count"], 8
+        )
+        self.assertIn(
+            "four outward binary64 ULPs",
+            contract["per_expert_weight"]["binary64_denominator_reduction"]["endpoint_guard"],
+        )
+
     def test_raw_v2_recovery_remains_immutable(self) -> None:
         self.assertEqual(v3.sha256_path(RAW), v3.RAW_RECOVERY_SHA256)
 

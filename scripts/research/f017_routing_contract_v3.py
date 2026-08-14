@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import itertools
 import json
 import math
 import os
@@ -35,6 +36,7 @@ F32_MIN_SUBNORMAL = float(np.nextafter(np.float32(0.0), np.float32(1.0)))
 R10_ROUTING_WEIGHT_ATOL = 1.0e-5
 R10_INTERMEDIATE_ATOL = 0.015625
 ENGINEERING_HEADROOM = 2.0
+PROBABILITY_ENDPOINT_ULP_GUARD = 4.0
 
 
 def canonical_json_bytes(value: object) -> bytes:
@@ -192,6 +194,53 @@ def gamma(count: int, unit_roundoff: float = F32_UNIT_ROUNDOFF) -> float:
     if count < 0 or product >= 1.0:
         raise ValueError("invalid gamma")
     return product / (1.0 - product)
+
+
+def serial_f64_sum(values: Sequence[float], order: Sequence[int]) -> float:
+    """Apply the production-style binary64 reduction in a declared order."""
+    if len(values) != TOP_K or len(order) != TOP_K or set(order) != set(range(TOP_K)):
+        raise ValueError("binary64 denominator reduction requires one permutation of eight terms")
+    total = 0.0
+    for index in order:
+        value = float(values[index])
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError("denominator terms must be finite and positive")
+        total += value
+    if not math.isfinite(total) or total <= 0.0:
+        raise ValueError("invalid denominator sum")
+    return total
+
+
+def denominator_rounding_enclosure(values: Sequence[float]) -> dict[str, float | bool]:
+    """Diagnose binary64 selected-probability reduction rounding.
+
+    Every v3 probability endpoint already carries four outward binary64 ULPs.
+    This helper proves that the largest order-dependent serial-sum displacement
+    is enclosed by that pre-existing endpoint budget; it does not widen an
+    endpoint or change the normalized-weight formula.
+    """
+    checked = tuple(float(value) for value in values)
+    if len(checked) != TOP_K:
+        raise ValueError("exactly eight selected probabilities required")
+    exact_reference = math.fsum(checked)
+    endpoint_budget = math.fsum(
+        PROBABILITY_ENDPOINT_ULP_GUARD * math.ulp(value) for value in checked
+    )
+    minimum = math.inf
+    maximum = -math.inf
+    for order in itertools.permutations(range(TOP_K)):
+        observed = serial_f64_sum(checked, order)
+        minimum = min(minimum, observed)
+        maximum = max(maximum, observed)
+    maximum_displacement = max(abs(minimum - exact_reference), abs(maximum - exact_reference))
+    return {
+        "exact_reference": exact_reference,
+        "minimum_serial_sum": minimum,
+        "maximum_serial_sum": maximum,
+        "maximum_order_displacement": maximum_displacement,
+        "preexisting_probability_endpoint_budget": endpoint_budget,
+        "enclosed_without_formula_change": maximum_displacement <= endpoint_budget,
+    }
 
 
 def accumulation_order_bound(terms: Mapping[int, Sequence[float]]) -> tuple[float, ...]:
@@ -365,7 +414,10 @@ def individual_probability_intervals(root: Path) -> dict[int, dict[str, float]]:
             math.nextafter(logits[expert_id] - logit_error, -math.inf),
             math.nextafter(logits[expert_id] + logit_error, math.inf),
         )
-        probability_error = outward(derivative[1] * logit_error + 4.0 * math.ulp(probabilities[expert_id]))
+        probability_error = outward(
+            derivative[1] * logit_error
+            + PROBABILITY_ENDPOINT_ULP_GUARD * math.ulp(probabilities[expert_id])
+        )
         low = max(math.nextafter(probabilities[expert_id] - probability_error, -math.inf), math.ulp(0.0))
         high = min(math.nextafter(probabilities[expert_id] + probability_error, math.inf), 1.0)
         if not 0.0 < low <= probabilities[expert_id] <= high < 1.0:
