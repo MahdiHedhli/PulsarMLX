@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.expert-slice-catalog-crosscheck",
+  "schema_version": "1.0.0",
+  "checkpoint_payload_access": 0,
+  "expert_id": 166,
+  "expert_indexing": "zero_based",
+  "layout": "projection_major_then_expert_major",
+  "formula": "start=aggregate_base+expert_id*per_expert_stride; end=start+stride",
+  "projections": {
+    "gate": {"aggregate_base": 3374536544, "stride": 3244032, "derived_start": 3913045856, "derived_end": 3916289888, "catalog_start": 3913045856, "catalog_length": 3244032, "quantization": "IQ2_XXS", "equal": true},
+    "up": {"aggregate_base": 4219975520, "stride": 3244032, "derived_start": 4758484832, "derived_end": 4761728864, "catalog_start": 4758484832, "catalog_length": 3244032, "quantization": "IQ2_XXS", "equal": true},
+    "down": {"aggregate_base": 2131089248, "stride": 4816896, "derived_start": 2930693984, "derived_end": 2935510880, "catalog_start": 2930693984, "catalog_length": 4816896, "quantization": "IQ3_XXS", "equal": true}
+  },
+  "route_binding": false,
+  "result": "PASS"
+}

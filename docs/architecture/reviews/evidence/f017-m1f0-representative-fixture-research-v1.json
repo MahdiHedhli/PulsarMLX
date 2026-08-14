@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-representative-fixture-research",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "generator": {
+    "path": "scripts/research/generate_f017_m1f0_representative_fixture.py",
+    "sha256": "bfa53fd884871550ed3a3218f582d812d9f280d60ce10c96578ce83185fae594"
+  },
+  "recommended": {
+    "family": "correlated_low_rank_spectral_v1",
+    "sha256": "d3c756f1d8c2b068ead3e91da2cf66927a6a86e08a6fa9b19d55e9618a0df1aa",
+    "shape": [6144],
+    "rationale": "fixed low-frequency correlations plus a small independent residual are more layer-state-like than iid Gaussian while remaining checkpoint independent",
+    "qualification": "RESEARCH_ONLY_NOT_PROVEN_REPRESENTATIVE"
+  },
+  "alternative": {
+    "family": "block_ar1_rho_0_85_v1",
+    "sha256": "48ccb5347c1de21c7542d46cf76a6a90ed3fb533a27a618c48a4081505f2d631",
+    "shape": [6144],
+    "rationale": "simple local correlation model with deterministic regeneration",
+    "qualification": "RESEARCH_ONLY_NOT_PROVEN_REPRESENTATIVE"
+  },
+  "existing_assets": {
+    "R9_R10": "reduced width 32; not dimensionally sufficient",
+    "R12": "tiny-model state; not dimensionally or architecturally sufficient",
+    "real_hidden_capture": "forbidden without separate future review"
+  },
+  "selection_by_real_route_outcome": false,
+  "real_access_authorized": false
+}

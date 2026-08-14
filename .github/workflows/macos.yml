@@ -201,6 +201,11 @@ jobs:
             scripts.research.tests.test_f017_m1f0_new_input_selection -v
           .venv/bin/python scripts/research/validate_f017_real_payload_ledger.py \
             --check docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json
+          .venv/bin/python scripts/research/validate_f017_estimator_ladder_binding.py
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_route_stability_v2 -v
+          cargo test -p f017-runner dispatch_accounting -- --nocapture
+          echo "M1-F0 route-stability research: v1 regression retained; v2 pairwise/RMSNorm/sigmoid/full-set/parity gates; no checkpoint access"
           for seed in 17017007 17017008 17017009 17017010 17017011 17017012 17017013 17017014; do
             .venv/bin/python scripts/research/generate_f017_m1f0_ladder_input.py \
               --seed "$seed" \

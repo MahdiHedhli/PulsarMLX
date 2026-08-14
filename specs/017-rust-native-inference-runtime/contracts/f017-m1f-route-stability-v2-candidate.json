@@ -1,0 +1,61 @@
+{
+  "schema": "pulsarmlx.f017.m1f-route-stability",
+  "schema_version": "2.0.0-candidate",
+  "contract_id": "f017-m1f-route-stability-v2-candidate",
+  "status": "DRAFT_PENDING_INDEPENDENT_ADVERSARIAL_REVIEW",
+  "checkpoint_access": 0,
+  "supersedes": null,
+  "v1_compatibility": {
+    "v1_sha256": "da05364470f7fc5fbdc930441be1ea269af01b6a87173df34e467bcc0b0df9d7",
+    "historical_v1_evidence_immutable": true,
+    "fallback_without_pairwise_antecedents": "B_pair(i,j)=B_i+B_j"
+  },
+  "pairwise_quantity": "d_ij=(bias_i+sigmoid(logit_i))-(bias_j+sigmoid(logit_j))",
+  "bias": {
+    "candidate_and_oracle_operand": "same exactly decoded f32 bytes",
+    "pairwise_numerical_perturbation": 0
+  },
+  "rmsnorm_decomposition": {
+    "form": "delta_y=lambda*y+r",
+    "lambda": "shared scalar reciprocal-RMS perturbation, outward bounded before candidate execution",
+    "residual": "componentwise non-radial input propagation plus f32 materialization/rounding",
+    "radial_pairwise_logit_term": "lambda*(logit_i-logit_j), not lambda*(abs(logit_i)+abs(logit_j))"
+  },
+  "pairwise_bound": {
+    "derivative_intervals": "for each row k, enclose all perturbed logits and derive [min sigmoid', max sigmoid'] on that interval",
+    "radial": "Lambda*max_{a in D_i,b in D_j}|a*logit_i-b*logit_j|",
+    "non_radial": "sum_m R_m*max_{a in D_i,b in D_j}|a*w_i[m]-b*w_j[m]|",
+    "router_reduction": "L_i*R_i+L_j*R_j; no reduction-error cancellation assumed",
+    "import_materialization": "L_i*I_i+L_j*I_j",
+    "serialization": "outward-rounded f64 addition guard",
+    "fallback": "the v1 independent-score sum when any pairwise antecedent is absent"
+  },
+  "full_set_theorem": {
+    "selected_set_stable_iff_sufficient": "for every oracle-selected i and every oracle-unselected j, oracle_score_i-oracle_score_j > B_pair(i,j)",
+    "why_rank8_rank9_alone_is_not_general": "row-specific perturbation bounds can make a lower-ranked unselected expert the worst challenger",
+    "internal_selected_order": "not required for set identity; if ordered route transport is normative, apply the same theorem to adjacent selected pairs"
+  },
+  "classification": {
+    "MATHEMATICALLY_STABLE": "minimum pairwise safety factor is strictly greater than 1 under outward rounding",
+    "ENGINEERING_HEADROOM": "minimum pairwise safety factor is at least 2",
+    "M1F_admission_requires": "ENGINEERING_HEADROOM",
+    "headroom_rationale": "H=2 reserves one additional complete modeled error envelope for implementation/library drift; it is a candidate policy frozen before retrospective fixture evaluation and requires independent review"
+  },
+  "guards": {
+    "non_finite": "reject",
+    "signed_zero": "canonical serialization; no comparison-order distinction",
+    "outward_rounding": "every positive bound accumulation rounds toward +infinity",
+    "candidate_observed_inputs": "forbidden",
+    "post_observation_retuning": "forbidden",
+    "required_analytical_retention": [
+      "oracle logits and scores",
+      "selected and unselected IDs",
+      "lambda bound",
+      "residual component bounds",
+      "router row-pair antecedent identities",
+      "reduction/import bounds",
+      "every selected-vs-unselected B_pair",
+      "minimum safety pair and factor"
+    ]
+  }
+}

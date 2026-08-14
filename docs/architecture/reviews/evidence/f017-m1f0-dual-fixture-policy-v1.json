@@ -1,0 +1,11 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-dual-fixture-policy",
+  "schema_version": "1.0.0",
+  "representative_qualification": "a checkpoint-independent, precommitted fixture used for production parity; it must satisfy the reviewed pre-admission stability contract before M1-F",
+  "adversarial_stress": "fixture 1 remains the canonical tight-margin sensitivity case and is not required to qualify a production route freeze",
+  "fixture_1_status": "ACCEPTED_ORACLE_ROUTE_AND_ADVERSARIAL_STRESS_ONLY",
+  "outcome_conditioning": "forbidden",
+  "route_stability_gate_role": "COST_AND_MEANINGFULNESS_GATE",
+  "final_semantic_contract": "M1-F still executes the production router, requires the exact oracle selected set, and fails on route divergence",
+  "authorization": "policy research only"
+}

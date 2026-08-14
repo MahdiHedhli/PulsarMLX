@@ -3,6 +3,7 @@ pub mod artifact_paths;
 pub mod checkpoint;
 pub mod cli;
 pub mod contract_bindings;
+pub mod dispatch_accounting;
 pub mod evidence;
 pub mod expert_boundary;
 pub mod final_output_qualification;

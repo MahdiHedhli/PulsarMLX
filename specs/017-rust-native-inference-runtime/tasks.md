@@ -212,3 +212,8 @@
   eight-fixture checkpoint-free input family, extend analytical retention, and
   bank a one-million-sample planning estimate showing the proposed family is
   underpowered without performing new checkpoint access.
+- [x] T017-185 Research and freeze a checkpoint-free pairwise route-stability
+  v2 candidate, repair estimator/ladder and analytical-retention bindings,
+  stress independent implementations without under-bounds, and fail closed
+  because accepted M1-F0 evidence omitted the RMSNorm/router-row antecedents
+  required to instantiate v2 without new real checkpoint access.

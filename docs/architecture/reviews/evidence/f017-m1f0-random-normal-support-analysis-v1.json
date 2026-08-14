@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-random-normal-support-analysis",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "classification": "MONTE_CARLO_ONLY",
+  "model": "the frozen bootstrap estimator: independently resampled banked sigmoid probabilities plus fixed banked bias",
+  "banked_bias": {
+    "minimum": 33.985321044921875,
+    "maximum": 34.62297058105469,
+    "rank8_rank9_gap_in_bias_order": 0.0019989013671875
+  },
+  "banked_sigmoid_support": {
+    "minimum": 0.3738245189658591,
+    "maximum": 0.5588870752993328,
+    "range": 0.18506255633347368
+  },
+  "rigorous_but_noninformative_raw_margin_upper_bound": 0.8227120924662862,
+  "rigorous_but_noninformative_s_upper_bound": 239.1396446328954,
+  "reason_no_support_ceiling_is_claimed": "independent bootstrap support permits extreme per-expert assignments with nonzero probability; banked marginal support alone cannot prove S below either v1 or v2 threshold",
+  "empirical_support": {
+    "v1_samples": 1000000,
+    "v1_maximum_s": 3.129417274314236,
+    "v2_fallback_samples": 1000000,
+    "v2_fallback_maximum_s": 3.465878680226494
+  },
+  "conclusion": "the family remains planning-poor, but Monte Carlo—not a strict support theorem—is the available evidence"
+}

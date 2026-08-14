@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.route-stability-v1-budget-decomposition",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "rank8": {
+    "expert": 177,
+    "B_score": 0.0033056307117125656,
+    "inferred_router_logit_error": 0.013222522846819074,
+    "sigmoid_global_quarter_term": 0.0033056307117047684,
+    "f64_bias_add_and_serialization_term": 7.797148343646754e-15
+  },
+  "rank9": {
+    "expert": 41,
+    "B_score": 0.0033937161438668565,
+    "inferred_router_logit_error": 0.013574864575436241,
+    "sigmoid_global_quarter_term": 0.0033937161438590603,
+    "f64_bias_add_and_serialization_term": 7.796280981908765e-15
+  },
+  "source_term_retention": {
+    "attention_residual_perturbation": null,
+    "rmsnorm_denominator_radial_scaling": null,
+    "rmsnorm_componentwise_residual": null,
+    "router_matvec_reduction": null,
+    "f32_import_materialization": null,
+    "reason": "the accepted recovery banked only the final per-row score bounds; these upstream numerical terms and row-pair antecedents were not retained"
+  },
+  "bias_numerical_perturbation": 0,
+  "complete_numeric_decomposition_available": false,
+  "disposition": "BLOCKING_PAIRWISE_ANTECEDENT_GAP"
+}

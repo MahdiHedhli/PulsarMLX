@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.route-stability-v2-stress",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "candidate_contract_sha256": "fd300f061307442c56af9ca3183f7485544ecb11752755074a330bb7b5f5f68c",
+  "primary_implementation": {
+    "path": "scripts/research/f017_route_stability_v2.py",
+    "sha256": "ab19c2a7f67a255d7489cc0526f0a2b2de56978c741ccf8651e69410a3f28a7c",
+    "function": "pairwise_bound_primary"
+  },
+  "independent_implementation": {
+    "path": "scripts/research/f017_route_stability_v2_scalar.py",
+    "sha256": "b6af1097d3def7bc238f6cb6c89466fd0eb49df68742a108b74c931a102eb850",
+    "function": "calculate",
+    "independence": "separate source, scalar control flow, elementary sigmoid implementation, interval construction, and accumulation"
+  },
+  "randomized_cases": 100000,
+  "seed": 170185001,
+  "under_bound_count": 0,
+  "independent_implementation_mismatches": 0,
+  "maximum_observed_actual_to_bound_ratio": 0.9286201064709434,
+  "deterministic_edge_cases": [
+    "exact tie",
+    "one-ULP separation",
+    "near tie",
+    "common radial perturbation",
+    "non-radial perturbation",
+    "identical rows",
+    "opposite-sign rows",
+    "sigmoid saturation",
+    "maximum sigmoid derivative",
+    "selected-vs-rank10 crossing",
+    "signed zero",
+    "non-finite rejection"
+  ],
+  "high_precision": {
+    "method": "Python decimal, 80 digits, sampled sigmoid checks",
+    "failures": 0
+  },
+  "result": "CONSERVATIVE_ON_EXECUTED_CHECKPOINT_FREE_STRESS"
+}

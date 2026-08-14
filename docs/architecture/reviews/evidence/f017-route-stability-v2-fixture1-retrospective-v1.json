@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.route-stability-v2-fixture1-retrospective",
+  "schema_version": "1.0.0",
+  "checkpoint_access": 0,
+  "historical_v1_disposition": "UNSUITABLE_UNDER_V1_IMMUTABLE",
+  "pair": [177, 41],
+  "margin": 0.0037577340955934346,
+  "v1_B8_plus_B9": 0.006699346855579422,
+  "v1_safety_factor": 0.5609105150995247,
+  "v2_instantiation": "FALLBACK_REQUIRED_PAIRWISE_ANTECEDENTS_NOT_RETAINED",
+  "v2_B_pair": 0.006699346855579422,
+  "tightening_factor": 1.0,
+  "v2_mathematical_safety_factor": 0.5609105150995247,
+  "v2_mathematically_stable": false,
+  "v2_engineering_headroom": false,
+  "historical_evidence_rewritten": false,
+  "conclusion": "fixture 1 cannot be reclassified and the candidate's promised radial/row-difference tightening cannot be measured without antecedents omitted by the accepted recovery"
+}

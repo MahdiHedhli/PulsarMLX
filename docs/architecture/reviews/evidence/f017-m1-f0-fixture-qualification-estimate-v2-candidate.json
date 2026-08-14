@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-fixture-qualification-estimate-v2-candidate",
+  "planning_only": true,
+  "checkpoint_access": 0,
+  "v2_contract_sha256": "fd300f061307442c56af9ca3183f7485544ecb11752755074a330bb7b5f5f68c",
+  "estimator_implementation_sha256": "8d144b18d0e6c235f3e20c6f9d263c32e8dae125eb9b5af02f682b11f9c53abd",
+  "ladder_sha256": "59c55a26d12ff9e0fdbe488608c4cb7ffb1a2082d322dec85ee5ef37719c3ed2",
+  "generator_sha256": "0097e78a55cf5d8911a2715cebf7e024606a69713d08d7f3bc07ac04864d60f0",
+  "seed": 170185002,
+  "sample_count": 1000000,
+  "methodology": "PAIRWISE_ANTECEDENTS_UNAVAILABLE_FALLBACK_V1",
+  "missing_antecedents": [
+    "router rows or exact row-pair summaries",
+    "RMSNorm lambda bound",
+    "RMSNorm non-radial residual component bounds",
+    "independent router reduction/import terms"
+  ],
+  "mathematical": {
+    "threshold": "S_pair>1",
+    "qualifiers": 12091,
+    "rate": 0.012091,
+    "wilson_95": [0.011878657507313808, 0.012307091042949784],
+    "p_any_8": 0.09273212067172087
+  },
+  "engineering": {
+    "threshold": "S_pair>=2",
+    "qualifiers": 148,
+    "rate": 0.000148,
+    "wilson_95": [0.0001260007770864396, 0.00017383952991006246],
+    "p_any_8": 0.0011833868695070304
+  },
+  "s_pair_quantiles": {
+    "0.01": 0.001661892549383065,
+    "0.1": 0.023998531008633868,
+    "0.5": 0.15906717904159257,
+    "0.9": 0.5234907082843077,
+    "0.99": 1.042689744718181
+  },
+  "maximum_s_pair": 3.465878680226494,
+  "family_disposition": "REQUIRES_REVIEW",
+  "real_ladder_execution_authorized": false
+}

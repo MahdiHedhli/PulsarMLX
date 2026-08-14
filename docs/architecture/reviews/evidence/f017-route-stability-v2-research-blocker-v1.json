@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.route-stability-v2-research-blocker",
+  "schema_version": "1.0.0",
+  "starting_repository_sha": "f70763efeabb38bfb9c1551d5a99470bc16a3466",
+  "checkpoint_access": 0,
+  "accepted_m1f0_route_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+  "accepted_analytical_recovery_sha256": "1496b8a3ca26448145acbd107387aadbc11322fd93b71fcc5abd659d6e8e7686",
+  "v1_contract_sha256": "da05364470f7fc5fbdc930441be1ea269af01b6a87173df34e467bcc0b0df9d7",
+  "v2_candidate_contract_sha256": "fd300f061307442c56af9ca3183f7485544ecb11752755074a330bb7b5f5f68c",
+  "primary_failure": "PAIRWISE_ANTECEDENTS_NOT_RETAINED",
+  "missing_antecedents": [
+    "router rows or exact selected/unselected row-difference summaries",
+    "RMSNorm shared radial lambda bound",
+    "RMSNorm non-radial residual component bounds",
+    "independent per-row router reduction and f32 materialization bounds"
+  ],
+  "proof": {
+    "v1_retained": [
+      "per-row final score perturbation bounds B8 and B9",
+      "inferred aggregate router-logit perturbation bounds",
+      "oracle scores, ranking, selected IDs, and routing weights"
+    ],
+    "v1_omitted": [
+      "the decomposition needed to prove radial cancellation",
+      "the router row data needed to evaluate (w_i-w_j) dot r",
+      "the separate reduction terms that may not cancel"
+    ],
+    "why_not_reconstructible_checkpoint_free": "No banked public or private artifact in the reviewed repository contains the omitted router-row/RMSNorm antecedents. Reconstructing them for the accepted real fixture would require reading the accepted real tensor boundary again, which this sprint forbids.",
+    "fallback": "The v2 implementation fails closed to B_pair = B_i + B_j when the tighter antecedents are absent."
+  },
+  "candidate_research": {
+    "randomized_cases": 100000,
+    "under_bound_count": 0,
+    "independent_implementation_mismatches": 0,
+    "maximum_observed_actual_to_bound_ratio": 0.9286201064709434,
+    "status": "CONSERVATIVE_ON_EXECUTED_CHECKPOINT_FREE_STRESS"
+  },
+  "disposition": "BLOCKED_ROUTE_STABILITY_V2_RESEARCH",
+  "authoritative_replacement_of_v1": false,
+  "fixture_1_reclassified": false,
+  "real_ladder_execution_authorized": false,
+  "q6k_qualification_authorized": false,
+  "m1f_authorized": false,
+  "exact_next_action": "Independent adversarial review must decide whether the v2 derivation is suitable for a future package that retains the missing antecedents; no historical fixture reclassification is permitted."
+}

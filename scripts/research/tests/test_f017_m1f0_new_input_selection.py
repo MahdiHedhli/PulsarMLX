@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import copy
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,6 +27,7 @@ LADDER = load("f017_m1f0_ladder", "scripts/research/prepare_f017_m1f0_input_ladd
 ESTIMATOR = load("f017_m1f0_estimator", "scripts/research/estimate_f017_m1f0_qualification_rate.py")
 RETENTION = load("f017_retention", "scripts/research/validate_f017_analytical_retention.py")
 SLICES = load("f017_expert_slices", "scripts/research/validate_f017_expert_slices.py")
+BINDING = load("f017_estimator_binding", "scripts/research/validate_f017_estimator_ladder_binding.py")
 
 
 class M1F0NewInputSelectionTests(unittest.TestCase):
@@ -74,6 +76,39 @@ class M1F0NewInputSelectionTests(unittest.TestCase):
             RETENTION.validate_declared_retention(config, evidence)
         evidence["analytics"].update({"margin": 0.5, "margin_sha256": "b" * 64})
         RETENTION.validate_declared_retention(config, evidence)
+
+    def test_extensible_retention_rejects_arbitrary_future_fields(self):
+        for field in (
+            "rank_boundary_pairwise_bound",
+            "top1_top2_margin",
+            "runner_up_token_margin",
+        ):
+            config = {"required_analytical_retention": [{
+                "name": field,
+                "value_path": f"/analytics/{field}",
+                "hash_path": f"/analytics/{field}_sha256",
+            }]}
+            with self.assertRaisesRegex(ValueError, field):
+                RETENTION.validate_declared_retention(config, {"analytics": {}})
+            evidence = {"analytics": {field: 1.0, f"{field}_sha256": "c" * 64}}
+            RETENTION.validate_declared_retention(config, evidence)
+
+    def test_estimator_ladder_binding_rejects_stale_or_mixed_inputs(self):
+        document = json.loads((ROOT / BINDING.BINDING).read_text())
+        BINDING.validate(ROOT, document)
+        for binding_name in ("fixture_generator", "ladder_artifact", "estimator_implementation"):
+            mutated = copy.deepcopy(document)
+            mutated["bindings"][binding_name]["sha256"] = "0" * 64
+            with self.assertRaisesRegex(ValueError, "stale estimator binding"):
+                BINDING.validate(ROOT, mutated)
+        mixed = copy.deepcopy(document)
+        mixed["environment"]["seeds"][-1] += 1
+        with self.assertRaisesRegex(ValueError, "mixed ladder version"):
+            BINDING.validate(ROOT, mixed)
+        wrong_environment = copy.deepcopy(document)
+        wrong_environment["environment"]["numpy"] = "2.4.4"
+        with self.assertRaisesRegex(ValueError, "mixed ladder environment"):
+            BINDING.validate(ROOT, wrong_environment)
 
     def test_estimator_is_deterministic_and_preserves_frozen_threshold(self):
         contract = ESTIMATOR.load_contract(ROOT)
