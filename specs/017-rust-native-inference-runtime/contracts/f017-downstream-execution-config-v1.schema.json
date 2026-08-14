@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/f017-downstream-execution-config-v1.schema.json",
+  "title": "F017 route-independent M1-G/P1 execution config scaffold",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "status", "phase", "runtime", "tooling",
+    "executable", "authorization", "checkpoint", "prior_evidence", "input",
+    "tensor_allowlist", "decoder_contracts", "numerical_contracts",
+    "required_analytical_retention", "access_budget", "attempt", "evidence_destination"
+  ],
+  "properties": {
+    "schema": { "const": "pulsarmlx.f017.downstream-execution-config" },
+    "schema_version": { "const": "1.0.0" },
+    "status": { "enum": ["PREPARED_NOT_AUTHORIZED", "AUTHORIZED_NOT_EXECUTED"] },
+    "phase": { "enum": ["M1_G_FINAL_OUTPUT", "P1_ONE_TOKEN"] },
+    "runtime": { "$ref": "#/$defs/identity" },
+    "tooling": { "$ref": "#/$defs/identity" },
+    "executable": { "$ref": "#/$defs/identity" },
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["head", "authorized"],
+      "properties": { "head": { "type": ["string", "null"] }, "authorized": { "type": "boolean" } }
+    },
+    "checkpoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["checkpoint_set_sha256", "catalog_sha256", "tensor_map_sha256", "manifest_symbolic_path"],
+      "properties": {
+        "checkpoint_set_sha256": { "$ref": "#/$defs/nullableSha" },
+        "catalog_sha256": { "$ref": "#/$defs/nullableSha" },
+        "tensor_map_sha256": { "$ref": "#/$defs/nullableSha" },
+        "manifest_symbolic_path": { "type": ["string", "null"] }
+      }
+    },
+    "prior_evidence": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" } },
+    "input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tokens", "n_new", "expected_token", "fixture_sha256"],
+      "properties": {
+        "tokens": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "maxItems": 1 },
+        "n_new": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "expected_token": { "type": ["integer", "null"], "minimum": 0 },
+        "fixture_sha256": { "$ref": "#/$defs/nullableSha" }
+      }
+    },
+    "tensor_allowlist": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "decoder_contracts": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" } },
+    "numerical_contracts": { "type": "object", "additionalProperties": { "$ref": "#/$defs/sha" } },
+    "required_analytical_retention": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "access_budget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["shard_opens", "positional_reads", "payloads", "compressed_bytes", "decoded_bytes"],
+      "properties": {
+        "shard_opens": { "type": ["integer", "null"], "minimum": 0 },
+        "positional_reads": { "type": ["integer", "null"], "minimum": 0 },
+        "payloads": { "type": ["integer", "null"], "minimum": 0 },
+        "compressed_bytes": { "type": ["integer", "null"], "minimum": 0 },
+        "decoded_bytes": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "attempt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["number", "consumed"],
+      "properties": { "number": { "type": ["integer", "null"], "minimum": 1 }, "consumed": { "const": false } }
+    },
+    "evidence_destination": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path_kind", "symbolic_path", "fresh_required"],
+      "properties": {
+        "path_kind": { "const": "repository_relative_or_package_relative" },
+        "symbolic_path": { "type": ["string", "null"] },
+        "fresh_required": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "nullableSha": { "anyOf": [{ "$ref": "#/$defs/sha" }, { "type": "null" }] },
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["git_sha", "tree_oid", "content_sha256"],
+      "properties": {
+        "git_sha": { "type": ["string", "null"] },
+        "tree_oid": { "type": ["string", "null"] },
+        "content_sha256": { "$ref": "#/$defs/nullableSha" }
+      }
+    }
+  }
+}

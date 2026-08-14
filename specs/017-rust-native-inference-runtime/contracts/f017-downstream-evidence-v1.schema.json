@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/f017-downstream-evidence-v1.schema.json",
+  "title": "F017 route-independent M1-G/P1 evidence scaffold",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "phase", "status", "identity", "admission", "attempt", "repeat_integrity", "lifecycle", "numerical", "analytical_retention", "privacy", "result"],
+  "properties": {
+    "schema": { "const": "pulsarmlx.f017.downstream-admission-evidence-template" },
+    "schema_version": { "const": "1.0.0" },
+    "phase": { "enum": ["M1_G_FINAL_OUTPUT", "P1_ONE_TOKEN"] },
+    "status": { "enum": ["PREPARED_NOT_AUTHORIZED", "PASS", "FAIL"] },
+    "identity": { "type": "object" },
+    "admission": { "type": "object" },
+    "attempt": { "type": "object" },
+    "repeat_integrity": { "type": "object" },
+    "lifecycle": { "type": "object" },
+    "numerical": { "type": "object" },
+    "analytical_retention": { "type": "object" },
+    "privacy": { "type": "object" },
+    "result": { "type": "object" }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.m1f-route-independent-preparation",
+  "schema_version": "1.0.0",
+  "status": "ROUTE_INDEPENDENT_M1F_SCAFFOLD_READY",
+  "scope": {
+    "checkpoint_payload_reads": 0,
+    "route_selected": false,
+    "expert_set_frozen": false,
+    "q6_k_target_selected": false,
+    "q6_k_real_qualification_executed": false,
+    "m1_f_executed": false
+  },
+  "source_trace": {
+    "production_layer": {"path": "crates/engine/src/lib.rs", "sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406"},
+    "independent_layer_oracle": {"path": "scripts/research/glm52_layer.py", "sha256": "7ead143029da3bc519afc853c40a7ad7e9a64066d46cbb5ed779dcac4825226a"},
+    "independent_expert_oracle": {"path": "scripts/research/glm52_expert.py", "sha256": "2e30da83c72ddebc705ea0d8fab5eae952de60ec0b9508529bafc3419b118804"},
+    "catalog": {"path": "docs/research/glm52/raw/f016-c01-catalog-0001.json", "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"}
+  },
+  "implementation": {
+    "path": "scripts/research/f017_m1f_route_independent_prep.py",
+    "sha256": "3e299acc0d7ddcbacb884f0ba8a9348d69d84cd6161a0a1cc4f9bb34a34ae378",
+    "production_dispatch_instrumentation": {
+      "path": "crates/f017-runner/src/dispatch_accounting.rs",
+      "sha256": "77553cc677b3ec7df814fb674d622665c4ac70c497e29299b34d91972bae87e7"
+    }
+  },
+  "components": {
+    "expert_slice_validator": {
+      "status": "READY",
+      "expert_ids_tested": [0, 1, 15, 166, 255],
+      "negative_coverage": ["one_based_indexing", "layout_inversion", "overflow", "overlap_or_gap", "truncation", "quant_block_misalignment"],
+      "all_256_contiguous": true
+    },
+    "dispatch_instrumentation": {
+      "status": "RECONCILIATION_FORMULA_READY",
+      "contract": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-dispatch-reconciliation-v1.json",
+      "contract_sha256": "7f25172685a499773d65bbaded190e0b02204243abd9f5665bad1d91fd80b26d",
+      "route_specific_total": null,
+      "freeze_from_arithmetic_alone": false
+    },
+    "evidence_schema": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-evidence-v1.schema.json", "sha256": "407979b6f4a6a6a34193968108d0b630c01505b57e68ac3c073c170817e0d3e9"},
+    "execution_config_schema": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-execution-config-v1.schema.json", "sha256": "e657cec4f843adfb7b9bf4542e732c4c249284f44d6f1f2da364c6e759af06d3", "status": "TYPED_CLOSED_NO_LOOSE_OVERRIDES_EXACT_TOP8_ATOMIC_ROUTE"},
+    "decoder_harness": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-generic-decoder-qualification-v1.schema.json", "status": "A_B_REQUIRED_C_SUPPORTED_EXACT_LE_F32"},
+    "q6_k_template": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-qualification-handoff-template-v1.json", "status": "PREPARED_NOT_AUTHORIZED_TARGET_UNRESOLVED"},
+    "numerical_scaffold": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-complete-layer-tier-b-scaffold-v1.json", "status": "STRUCTURE_READY_ROUTE_OBSERVED_THRESHOLDS_FORBIDDEN"},
+    "repeat_lifecycle": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-repeat-lifecycle-v1.json", "status": "TEN_REPEAT_AND_TEARDOWN_FAIL_CLOSED"}
+  },
+  "remaining_route_dependent_inputs": [
+    "representative fixture",
+    "accepted semantic route artifact",
+    "selected expert IDs and weights",
+    "complete tensor allowlist and budgets",
+    "first-real decoder qualification set",
+    "route-specific dispatch total",
+    "frozen complete-layer numerical thresholds"
+  ]
+}

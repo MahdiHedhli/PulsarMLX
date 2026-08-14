@@ -295,7 +295,38 @@ jobs:
             docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json
           test "$(shasum -a 256 specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3.json | awk '{print $1}')" = \
             "befbf30f85e12b779e7d5c778f337a5f7d6019a15805e04805a24e4903ea3969"
+          test "$(shasum -a 256 specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json | awk '{print $1}')" = \
+            "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85"
+          uv run --frozen python -m unittest -v \
+            scripts.research.tests.test_f017_post_v3_estimator \
+            scripts.research.tests.test_f017_post_v3_estimator_evidence \
+            scripts.research.tests.test_f017_post_v3_fixture_descriptors \
+            scripts.research.tests.test_f017_post_v3_correlated_family \
+            scripts.research.tests.test_f017_m1f_route_independent_prep \
+            scripts.research.tests.test_f017_post_m1f_downstream
+          uv run --frozen python scripts/research/f017_post_v3_estimator.py \
+            --family frozen_random_normal \
+            --sample-count 1000000 \
+            --contract specs/017-rust-native-inference-runtime/contracts/f017-m1f0-v3-membership-estimator-v1.json \
+            --output "$RUNNER_TEMP/f017-m1f0-v3-frozen-ladder-estimate-v1.json"
+          cmp \
+            "$RUNNER_TEMP/f017-m1f0-v3-frozen-ladder-estimate-v1.json" \
+            docs/architecture/reviews/evidence/f017-m1f0-v3-frozen-ladder-estimate-v1.json
+          uv run --frozen python scripts/research/bank_f017_post_v3_correlated_estimate.py \
+            --planning-contract specs/017-rust-native-inference-runtime/contracts/f017-m1f0-v3-correlated-family-planning-v1.json \
+            --sample-count 1000000 \
+            --output "$RUNNER_TEMP/f017-m1f0-v3-correlated-family-estimate-v1.json"
+          cmp \
+            "$RUNNER_TEMP/f017-m1f0-v3-correlated-family-estimate-v1.json" \
+            docs/architecture/reviews/evidence/f017-m1f0-v3-correlated-family-estimate-v1.json
+          cargo test -p f017-runner dispatch_accounting -- --nocapture
           echo 'F017_ROUTING_V3_SEMANTICS=ORDER_IS_NUMERICALLY_OBSERVABLE_NOT_MODEL_SEMANTIC'
+          echo 'F017_ROUTING_V3_DENOMINATOR_ROUNDING=ENCLOSED'
+          echo 'F017_ROUTING_V3_ACCUMULATION_SCOPE=EIGHT_ROUTED_TERMS_ONLY'
+          echo 'F017_POST_V3_FROZEN_LADDER=NOT_VIABLE'
+          echo 'F017_POST_V3_CORRELATED_FAMILY=NOT_VIABLE'
+          echo 'F017_M1F_ROUTE_INDEPENDENT_PREP=PASS'
+          echo 'F017_POST_M1F_DOWNSTREAM_PREP=PASS'
           echo 'F017_ROUTING_V3_ATOMIC_PAIRS=PASS'
           echo 'F017_ROUTING_V3_WEIGHT_QUALIFICATION=PASS'
           echo 'F017_ROUTING_V3_ACCUMULATION_ORDER=PASS'

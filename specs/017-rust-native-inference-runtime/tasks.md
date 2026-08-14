@@ -188,10 +188,14 @@
   rebuild authorization, execute at most attempts 3-5, and bank acceptance or
   the terminal blocker without entering M1-F.
 - [ ] T017-179 Prepare and checkpoint-free qualify the complete layer-3 M1-F
-  admission package. **Blocked pending a new route-stable fixture:** the first
-  accepted oracle route remains valid evidence but has safety factor
-  `0.5609105150995247`, below the frozen production-freeze requirement `4.0`.
-  Expert-specific inventory and Q6_K qualification remain paused.
+  admission package. **Blocked pending a representative v3/H=2 fixture:** the
+  first accepted oracle route remains valid adversarial stress evidence and is
+  semantically stable under v3, but its membership factor
+  `1.2497550469932908` is below H=2. Both the original frozen random-normal
+  ladder and a separately frozen correlated synthetic family are now
+  checkpoint-free planning rejects; the next real-access decision is the
+  separately reviewed dense-prefix layer-3 entry-state boundary. Expert-specific
+  inventory and real Q6_K qualification remain paused.
 - [x] T017-180 Prepare and checkpoint-free qualify the bounded layer-3 M1-F0
   oracle-only attention/router discovery package, freeze its 12-tensor
   expert-free access budget and exact route-selection contract, pass internal
@@ -237,3 +241,9 @@
   v1/v2 history, retrospectively falsify fixture 1 from retained antecedents,
   characterize representative/stress policy and the dense-prefix fallback, and
   stop for independent adversarial review with the real-payload ledger at 57.
+- [x] T017-190 Adopt the independently reviewed routing-contract v3 semantics,
+  land clarification-only denominator and routed-accumulation scope regressions,
+  reject two underpowered synthetic representative families through pre-frozen
+  million-sample H=2 planning, complete route-independent M1-F and downstream
+  M1-G/P1 scaffolding, derive the exact metadata-only dense-prefix boundary,
+  and stop before any new real access with the ledger at 57.

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1f-evidence-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "identity", "prior_evidence", "input_state", "routing", "tensor_inventory", "decoder_qualification", "oracle", "production", "numerics", "repeats", "timings", "dispatch", "lifecycle", "isolation", "retention", "result"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f-evidence"},
+    "schema_version": {"const": "1.0.0"},
+    "identity": {"type": "object", "additionalProperties": false, "required": ["runtime_sha", "tooling_sha", "executable_sha256", "authorization_head_sha", "execution_config_sha256", "environment_sha256"], "properties": {"runtime_sha": {"$ref": "#/$defs/gitSha"}, "tooling_sha": {"$ref": "#/$defs/gitSha"}, "executable_sha256": {"$ref": "#/$defs/sha256"}, "authorization_head_sha": {"$ref": "#/$defs/gitSha"}, "execution_config_sha256": {"$ref": "#/$defs/sha256"}, "environment_sha256": {"$ref": "#/$defs/sha256"}}},
+    "prior_evidence": {"type": "object", "required": ["m1_a", "m1_b", "m1_c", "m1_d", "m1_e", "m1_f0", "routing_v3"]},
+    "input_state": {"type": "object", "required": ["fixture_sha256", "package_sha256", "attention_residual_sha256"]},
+    "routing": {"type": "object", "additionalProperties": false, "required": ["contract_sha256", "atomic_pairs", "semantic_pair_sha256", "selected_set_qualified", "per_expert_weights_qualified", "oracle_rank_diagnostic", "candidate_rank_diagnostic"], "properties": {"contract_sha256": {"$ref": "#/$defs/sha256"}, "atomic_pairs": {"type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": {"$ref": "#/$defs/routingPair"}}, "semantic_pair_sha256": {"$ref": "#/$defs/sha256"}, "selected_set_qualified": {"type": "boolean"}, "per_expert_weights_qualified": {"type": "boolean"}, "oracle_rank_diagnostic": {"type": "array", "minItems": 8, "maxItems": 8}, "candidate_rank_diagnostic": {"type": "array", "minItems": 8, "maxItems": 8}}},
+    "tensor_inventory": {"type": "object", "required": ["allowlist", "payload_count", "compressed_bytes", "decoded_bytes", "access_counts"]},
+    "decoder_qualification": {"type": "object", "required": ["contracts", "all_first_real_families_qualified"]},
+    "oracle": {"type": "object", "required": ["generator_sha256", "package_sha256", "completed_before_candidate", "stage_hashes"]},
+    "production": {"type": "object", "required": ["stage_hashes", "final_output_sha256"]},
+    "numerics": {"type": "object", "required": ["contract_sha256", "stage_metrics", "complete_layer_classification", "routing_classification"]},
+    "repeats": {"type": "array", "minItems": 10, "maxItems": 10},
+    "timings": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number", "minimum": 0}},
+    "dispatch": {"type": "object", "required": ["conceptual_operations", "native_dispatches", "reconciliation_formula", "fallback", "reference", "scaffold", "backend_errors"]},
+    "lifecycle": {"type": "object", "required": ["teardown_complete", "in_flight_work", "stale_generations"]},
+    "isolation": {"type": "object", "required": ["m1f_layer_executions", "next_layer", "logits", "p1", "p2", "golden_eight", "feature_018"]},
+    "retention": {"type": "object", "required": ["required_analytical_retention", "validation_passed"]},
+    "result": {"type": "object", "required": ["classification", "first_failure", "pass_derived_after_validation"]}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "routingPair": {"type": "object", "additionalProperties": false, "required": ["expert_id", "routing_weight", "weight_interval", "qualified"], "properties": {"expert_id": {"type": "integer", "minimum": 0, "maximum": 255}, "routing_weight": {"type": "number", "exclusiveMinimum": 0}, "weight_interval": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}}, "qualified": {"type": "boolean"}}}
+}
+}

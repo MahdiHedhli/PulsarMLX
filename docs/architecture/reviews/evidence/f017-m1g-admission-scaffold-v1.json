@@ -1,0 +1,18 @@
+{
+  "admission": {"authorized": false, "checkpoint_access_budget": null, "environment": null, "memory": null},
+  "analytical_retention": {
+    "required": ["full_logits_or_private_artifact", "top_n_window", "top1_top2_margin", "token_ranking", "tie_sensitive_state"],
+    "retained": []
+  },
+  "attempt": {"consumed": false, "ledger": [], "number": null},
+  "identity": {"authorization": null, "prior_evidence": {}, "runtime": null, "tooling": null},
+  "lifecycle": {"backend_errors": 0, "fallbacks": 0, "in_flight": 0, "stale_generations": 0, "teardown_complete": false},
+  "numerical": {"classification": null, "contract": null, "greedy_identity": null},
+  "phase": "M1_G_FINAL_OUTPUT",
+  "privacy": {"absolute_paths_present": false, "symbolic_paths_only": true},
+  "repeat_integrity": {"all_repeat_hashes_equal": false, "hashes": [], "observed": 0, "required": 10},
+  "result": {"classification": "NOT_EXECUTED", "completed": false, "first_failure": null},
+  "schema": "pulsarmlx.f017.downstream-admission-evidence-template",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED"
+}

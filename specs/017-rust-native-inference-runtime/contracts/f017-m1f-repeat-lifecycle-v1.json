@@ -1,0 +1,10 @@
+{
+  "schema": "pulsarmlx.f017.m1f-repeat-lifecycle",
+  "schema_version": "1.0.0",
+  "repeat_count": 10,
+  "required_stage_hashes": ["attention_residual", "semantic_routing_pairs", "routed_weighted_outputs", "shared_expert_output", "complete_layer_output"],
+  "self_determinism": "all_ten_hash_sets_identical",
+  "dispatch_reconciliation": "per_repeat_conceptual_and_native_counts_equal_mechanical_formula",
+  "required_zero_counts": ["fallback", "reference", "scaffold", "backend_errors"],
+  "lifecycle_before_pass": {"teardown_complete": true, "in_flight_work": 0, "stale_generations": 0}
+}

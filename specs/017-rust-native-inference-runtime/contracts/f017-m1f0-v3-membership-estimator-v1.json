@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-v3-membership-estimator",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-v3-membership-estimator-v1",
+  "status": "FROZEN_BEFORE_OFFICIAL_SIMULATION",
+  "planning_only": true,
+  "checkpoint_access": 0,
+  "real_payload_ledger": 57,
+  "bindings": {
+    "routing_contract_v3_clarified_sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85",
+    "frozen_ladder_sha256": "59c55a26d12ff9e0fdbe488608c4cb7ffb1a2082d322dec85ee5ef37719c3ed2",
+    "frozen_ladder_generator_sha256": "0097e78a55cf5d8911a2715cebf7e024606a69713d08d7f3bc07ac04864d60f0",
+    "raw_v2_antecedent_recovery_sha256": "f9422287cb98322d1412a6dd2397bb0f4a0d6538778aa587dddff7c5154acf2a",
+    "accepted_analytical_recovery_sha256": "1496b8a3ca26448145acbd107387aadbc11322fd93b71fcc5abd659d6e8e7686",
+    "estimator_implementation_path": "scripts/research/f017_post_v3_estimator.py",
+    "estimator_implementation_sha256": "95be42fea51e1f11b5dcf357e955d2bc244839cade71deec3590ff1c0998a20c"
+  },
+  "semantic_target": {
+    "surface": "all selected experts versus every unselected expert",
+    "membership_only": true,
+    "rank_order_used_for_qualification": false,
+    "mathematical_threshold": "minimum selected/unselected safety factor > 1",
+    "engineering_threshold": "minimum selected/unselected safety factor >= 2",
+    "per_expert_weight_rate": "NOT_ESTIMABLE_CHECKPOINT_FREE_WITHOUT_CANDIDATE_OUTPUTS"
+  },
+  "random_normal_model": {
+    "probability_sampling": "sample 256 retained accepted sigmoid probabilities independently with replacement",
+    "bias": "fixed retained 256-element accepted router-bias vector",
+    "selection": "stable score-descending top-8 with lower expert ID winning exact ties",
+    "independent_bound": "retained per-expert v1 absolute score-error bounds summed for every selected/unselected pair",
+    "sample_count": 1000000,
+    "prng": "NumPy PCG64",
+    "seed": 1701900031
+  },
+  "arbitrary_route_pairwise_antecedent_policy": {
+    "status": "UNAVAILABLE_FOR_UNSEEN_SELECTED_ROWS",
+    "retained_surface_count": 1984,
+    "invent_arbitrary_pairwise_bounds": false,
+    "conservative_scenario": "independent bound multiplier 1.0",
+    "central_scenario": "multiply independent bounds by median B_pair/(B_i+B_j) over retained 1984 pairs",
+    "optimistic_scenario": "multiply every independent bound by the minimum observed retained ratio",
+    "interpretation": "central and optimistic scenarios are planning sensitivities, never real qualification bounds"
+  },
+  "statistics": {
+    "confidence_interval": "Wilson 95 percent",
+    "safety_factor_quantiles": [0.01, 0.1, 0.5, 0.9, 0.95, 0.99, 0.999],
+    "report_maximum": true,
+    "ladder_size": 8,
+    "p_any_independence_approximation": "1-(1-p)^8"
+  },
+  "planning_decision": {
+    "minimum_probability_at_least_one": 0.9,
+    "threshold_basis": "retain the pre-existing 0.90 planning standard before spending the naive 96-payload eight-fixture budget; decoded-tensor reuse needs separate review",
+    "viable": "conservative H2 Wilson-lower P(any of 8) >= 0.90",
+    "not_viable": "optimistic H2 Wilson-upper P(any of 8) < 0.90",
+    "otherwise": "ESTIMATOR_INCONCLUSIVE"
+  },
+  "correlated_family_surrogate_if_required": {
+    "model": "fixed 16-factor expert-logit loading matrix calibrated only to retained logit mean/std plus fixed retained bias",
+    "loading_seed": 1701900033,
+    "simulation_seed": 1701900032,
+    "sample_count": 1000000,
+    "checkpoint_router_rows_used": false,
+    "planning_only": true
+  },
+  "post_observation_retuning": "FORBIDDEN",
+  "frozen_ladder_execution": false,
+  "real_access_authorized": false
+}

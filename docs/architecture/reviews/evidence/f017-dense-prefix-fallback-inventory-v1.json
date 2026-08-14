@@ -1,0 +1,75 @@
+{
+  "access_budget": {
+    "decoded_f32_bytes_upper_bound": 8504653824,
+    "largest_single_decoded_tensor_bytes": 3806330880,
+    "packed_bytes": 1431263232,
+    "positional_reads": 40,
+    "shard_count": 1,
+    "shards": ["GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf"],
+    "tensor_payloads": 40
+  },
+  "boundary": {
+    "captured_state": "exact layer-3 entry hidden state",
+    "dense_layers_executed": [0, 1, 2],
+    "embedding_executed": true,
+    "not_fixture_generation": true
+  },
+  "checkpoint_access": 0,
+  "dispatch_structure": {
+    "embedding_lookup": 1,
+    "mechanically_countable_native_projection_calls": 28,
+    "per_layer_native_matrix_projections": {
+      "attn_k_b": 1,
+      "attn_kv_a_mqa": 1,
+      "attn_output": 1,
+      "attn_q_a": 1,
+      "attn_q_b": 1,
+      "attn_v_b": 1,
+      "ffn_down": 1,
+      "ffn_gate": 1,
+      "ffn_up": 1
+    },
+    "status": "PLANNING_COUNT_NOT_FROZEN_NATIVE_BUDGET"
+  },
+  "future_gate_name": "F017 M1-FPREP REAL DENSE-PREFIX LAYER-3 ENTRY-STATE BOUNDARY",
+  "input": {
+    "dsa": "range_fill([0])",
+    "positions": [0],
+    "prompt_id": "P-MIN",
+    "prompt_text_public": "Hello",
+    "selection_basis": "pre-existing F016 P-MIN; independent of M1-F0 route outcomes",
+    "token_ids": [9703]
+  },
+  "inventory_derivation": {
+    "catalog_path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+    "catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+    "generator_path": "scripts/research/f017_post_m1f_downstream.py",
+    "generator_sha256": "4d29bc65c6e8b9775a08938f61731acdf5e38b657f5c4bbdbdc9d516605dbc58",
+    "selection": "token_embd.weight plus all non-indexer blk.0/1/2 tensors",
+    "packed_formulas": {
+      "F32": "4 bytes per element",
+      "Q4_K": "144 bytes per 256 elements",
+      "Q5_K": "176 bytes per 256 elements",
+      "Q6_K": "210 bytes per 256 elements",
+      "Q8_0": "34 bytes per 32 elements"
+    },
+    "full_exact_tensor_table": "deterministically emitted by dense_prefix_inventory(); no checkpoint shard is opened"
+  },
+  "memory": {
+    "decoded_all_upper_bound_bytes": 8504653824,
+    "packed_package_bytes": 1431263232,
+    "streaming_peak": "UNRESOLVED_UNTIL_RESIDENCY_PLAN_AND_NATIVE_PATH"
+  },
+  "new_real_decoder_gates": ["Q4_K", "Q6_K"],
+  "oracle_feasibility": "FEASIBLE_BUT_MATERIAL_NEW_GATE",
+  "quantization_inventory": {
+    "F32": {"decoded_f32_bytes": 178176, "evidence": "M1-C accepted output_norm.weight evidence", "packed_bytes": 178176, "real_byte_qualification": "REAL_BYTE_QUALIFIED", "tensor_count": 12},
+    "Q4_K": {"decoded_f32_bytes": 3806330880, "evidence": "R11/R12 are synthetic-only", "packed_bytes": 535265280, "real_byte_qualification": "UNQUALIFIED_REAL_GATE", "tensor_count": 1},
+    "Q5_K": {"decoded_f32_bytes": 3170893824, "evidence": "f017-m1-f0-q5-k-real-byte-qualification-v1.json", "packed_bytes": 544997376, "real_byte_qualification": "REAL_BYTE_QUALIFIED", "tensor_count": 12},
+    "Q6_K": {"decoded_f32_bytes": 905969664, "evidence": "no exact independent real-byte gate", "packed_bytes": 185794560, "real_byte_qualification": "UNQUALIFIED_REAL_GATE", "tensor_count": 3},
+    "Q8_0": {"decoded_f32_bytes": 621281280, "evidence": "M1-D accepted projection evidence", "packed_bytes": 165027840, "real_byte_qualification": "REAL_BYTE_QUALIFIED", "tensor_count": 12}
+  },
+  "schema": "pulsarmlx.f017.dense-prefix-layer3-entry-state-inventory",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED"
+}

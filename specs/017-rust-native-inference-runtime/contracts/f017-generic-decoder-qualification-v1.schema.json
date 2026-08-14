@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.generic-decoder-qualification-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "format", "packed_identity", "implementations", "independence", "canonical_output", "comparison", "negative_tests", "privacy", "result"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.generic-decoder-qualification"},
+    "schema_version": {"const": "1.0.0"},
+    "format": {"type": "string", "minLength": 1},
+    "packed_identity": {"type": "object", "required": ["tensor_name", "packed_sha256", "packed_length", "shard", "offset"]},
+    "implementations": {"type": "array", "minItems": 2, "items": {"type": "object", "required": ["name", "source_sha256", "dependency_fingerprint", "upstream_reference"]}},
+    "independence": {"type": "object", "required": ["no_shared_decoder_path", "reviewed"]},
+    "canonical_output": {"type": "object", "required": ["dtype", "byte_order", "layout", "element_count", "decoded_sha256"]},
+    "comparison": {"type": "object", "required": ["bitwise_equal", "first_divergence", "non_finite_count", "signed_zero_count"]},
+    "negative_tests": {"type": "object", "required": ["malformed", "truncated", "length_mismatch", "decoder_mismatch"]},
+    "privacy": {"type": "object", "required": ["payload_committed", "absolute_paths_published"]},
+    "result": {"enum": ["EXACT_REAL_BYTE_QUALIFIED", "REJECTED"]}
+  }
+}

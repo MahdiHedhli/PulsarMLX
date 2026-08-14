@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.m1f-dispatch-reconciliation",
+  "schema_version": "1.0.0",
+  "status": "ROUTE_INDEPENDENT_FORMULA_FROZEN_ROUTE_TOTAL_UNRESOLVED",
+  "production_source": {
+    "path": "crates/engine/src/lib.rs",
+    "sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406",
+    "semantic_region": "attention residual through Ffn::Moe routed/shared accumulation"
+  },
+  "production_instrumentation": {
+    "path": "crates/f017-runner/src/dispatch_accounting.rs",
+    "sha256": "77553cc677b3ec7df814fb674d622665c4ac70c497e29299b34d91972bae87e7",
+    "conceptual_and_native_surfaces_separate": true,
+    "duplicate_native_event": "REJECT",
+    "overflow": "REJECT"
+  },
+  "source_observations": {
+    "router": "router_select follows the router projection",
+    "shared_expert": "three shared projections launch before streamed expert resolution",
+    "routed_single_token": "moe_pair_swiglu fuses gate/up across selected slots; moe_down consumes all selected slots",
+    "routed_grouped": "grouped gate/up, down, and slot-sum events replace per-expert launches",
+    "final_composition": "routed output plus fixed shared output, then fixed residual placement",
+    "exact_path_mode_required": true
+  },
+  "conceptual_stages": [
+    "attention_projection",
+    "attention_output",
+    "router_projection",
+    "routed_expert_gate",
+    "routed_expert_up",
+    "routed_expert_down",
+    "shared_expert_gate",
+    "shared_expert_up",
+    "shared_expert_down",
+    "normalization",
+    "non_mlx"
+  ],
+  "surfaces": {
+    "conceptual": "one record per conceptual stage; routed gate/up/down multiplicity equals selected expert count",
+    "native": "unique launch events; fused/batched launches remain constant_per_repeat and are never expanded into fictitious per-expert dispatches"
+  },
+  "required_conceptual_fields": ["stage", "multiplicity"],
+  "required_native_fields": ["event", "backend", "dispatches_per_unit", "scaling", "fallback", "reference", "scaffold", "backend_error"],
+  "native_scaling": ["constant_per_repeat", "per_selected_expert"],
+  "formula": "sum(constant_per_repeat launches) + selected_expert_count * sum(per_selected_expert launches)",
+  "routed_multiplicity_source": "validated selected expert count from immutable route artifact",
+  "route_specific_total": null,
+  "route_specific_total_must_be_derived": true,
+  "required_zero_counts": ["fallback", "reference", "scaffold", "backend_error"]
+}

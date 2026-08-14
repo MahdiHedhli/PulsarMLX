@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.m1f-execution-config-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "identities", "checkpoint_bindings", "contracts", "input_fixture", "route_artifact", "selected_experts", "routing_pairs", "tensor_allowlist", "decoder_contracts", "oracle", "numerical_contract", "execution", "attempt_state", "evidence_destination"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f-execution-config"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "PREPARED_NOT_AUTHORIZED"},
+    "identities": {"type": "object", "additionalProperties": false, "required": ["runtime_sha", "tooling_sha", "tooling_tree_oid", "executable_sha256", "authorization_head_sha"], "properties": {"runtime_sha": {"$ref": "#/$defs/gitSha"}, "tooling_sha": {"$ref": "#/$defs/gitSha"}, "tooling_tree_oid": {"$ref": "#/$defs/gitSha"}, "executable_sha256": {"$ref": "#/$defs/sha256"}, "authorization_head_sha": {"$ref": "#/$defs/gitSha"}}},
+    "checkpoint_bindings": {"type": "object", "additionalProperties": false, "required": ["checkpoint_set_sha256", "catalog_sha256", "tensor_map_sha256"], "properties": {"checkpoint_set_sha256": {"$ref": "#/$defs/sha256"}, "catalog_sha256": {"$ref": "#/$defs/sha256"}, "tensor_map_sha256": {"$ref": "#/$defs/sha256"}}},
+    "contracts": {"type": "object", "additionalProperties": false, "required": ["routing_v3", "evidence_schema", "execution_schema", "repeat_lifecycle"], "properties": {"routing_v3": {"$ref": "#/$defs/artifact"}, "evidence_schema": {"$ref": "#/$defs/artifact"}, "execution_schema": {"$ref": "#/$defs/artifact"}, "repeat_lifecycle": {"$ref": "#/$defs/artifact"}}},
+    "input_fixture": {"$ref": "#/$defs/artifact"},
+    "route_artifact": {"$ref": "#/$defs/artifact"},
+    "selected_experts": {"type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+    "routing_pairs": {"type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["expert_id", "routing_weight"], "properties": {"expert_id": {"type": "integer", "minimum": 0, "maximum": 255}, "routing_weight": {"type": "number", "exclusiveMinimum": 0}}}},
+    "tensor_allowlist": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["name", "role", "shard", "offset", "packed_length", "packed_sha256", "decoded_sha256", "decoder_contract_sha256", "allowed_read_count"], "properties": {"name": {"type": "string", "minLength": 1}, "role": {"type": "string", "minLength": 1}, "shard": {"type": "integer", "minimum": 0}, "offset": {"type": "integer", "minimum": 0}, "packed_length": {"type": "integer", "minimum": 1}, "packed_sha256": {"$ref": "#/$defs/sha256"}, "decoded_sha256": {"$ref": "#/$defs/sha256"}, "decoder_contract_sha256": {"$ref": "#/$defs/sha256"}, "allowed_read_count": {"const": 1}}}},
+    "decoder_contracts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}},
+    "oracle": {"type": "object", "additionalProperties": false, "required": ["preparer", "package", "completed_before_candidate"], "properties": {"preparer": {"$ref": "#/$defs/artifact"}, "package": {"$ref": "#/$defs/artifact"}, "completed_before_candidate": {"const": true}}},
+    "numerical_contract": {"$ref": "#/$defs/artifact"},
+    "execution": {"type": "object", "additionalProperties": false, "required": ["repeat_count", "auto_retry", "allow_loose_cli_overrides", "stop_before_m1_g"], "properties": {"repeat_count": {"const": 10}, "auto_retry": {"const": false}, "allow_loose_cli_overrides": {"const": false}, "stop_before_m1_g": {"const": true}}},
+    "attempt_state": {"type": "object", "additionalProperties": false, "required": ["number", "consumed"], "properties": {"number": {"type": "integer", "minimum": 1}, "consumed": {"const": false}}},
+    "evidence_destination": {"type": "object", "additionalProperties": false, "required": ["path_kind", "symbolic_path"], "properties": {"path_kind": {"const": "repository_relative"}, "symbolic_path": {"type": "string", "minLength": 1}}}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gitSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "artifact": {"type": "object", "additionalProperties": false, "required": ["path_kind", "symbolic_path", "content_sha256"], "properties": {"path_kind": {"const": "repository_relative"}, "symbolic_path": {"type": "string", "minLength": 1}, "content_sha256": {"$ref": "#/$defs/sha256"}}}
+  }
+}

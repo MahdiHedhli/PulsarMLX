@@ -1,0 +1,12 @@
+{
+  "schema": "pulsarmlx.f017.m1f-complete-layer-tier-b-scaffold",
+  "schema_version": "1.0.0",
+  "status": "CHECKPOINT_FREE_SCAFFOLD_THRESHOLDS_UNFROZEN",
+  "route_observed_thresholds_forbidden": true,
+  "routing_contract": "f017-m1f-routing-contract-v3",
+  "stages": ["attention", "attention_residual", "router", "routed_expert_weighted_outputs", "shared_expert", "routed_accumulation", "final_residual", "complete_layer_output"],
+  "required_metrics": ["max_abs", "rmse", "cosine", "non_finite_count", "signed_zero_status"],
+  "accumulation": {"policy_bound_by_routing_v3": true, "f32_reduction_order_explicit": true, "shared_expert_fixed": true, "residual_placement_fixed": true},
+  "stress_families": ["cancellation", "large_dynamic_range", "near_zero", "signed_zero", "subnormal", "near_overflow_finite"],
+  "pass_derivation": {"all_stage_contracts_required": true, "semantic_routing_required": true, "post_observation_retuning": "forbidden"}
+}

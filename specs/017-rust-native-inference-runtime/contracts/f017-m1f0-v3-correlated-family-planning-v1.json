@@ -1,0 +1,44 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-v3-correlated-family-planning",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-m1f0-v3-correlated-family-planning-v1",
+  "status": "FROZEN_BEFORE_CORRELATED_FAMILY_SIMULATION",
+  "planning_only": true,
+  "checkpoint_access": 0,
+  "real_payload_ledger": 57,
+  "bindings": {
+    "routing_contract_v3_clarified_sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85",
+    "membership_estimator_contract_sha256": "5d54d1532df4c7b3ce442295f76f43f4ff6fade6c94c531d01d374aa9ae869b7",
+    "membership_estimator_implementation_sha256": "95be42fea51e1f11b5dcf357e955d2bc244839cade71deec3590ff1c0998a20c",
+    "banking_implementation_sha256": "9c8e81e9a3b39a33073c56b9d93aa4d0ee98927fbe1577a02cba16ef77370ed0",
+    "family_artifact_sha256": "a5c248e52ac576e2a9a332f748bc26be0aa068688d82af743bab814d1bbbfe03",
+    "family_generator_sha256": "559b351256db68d348712ec7bb0e0b26092c3e2b5c88263376e6a31e12a34ac1"
+  },
+  "family": {
+    "algorithm": "spectral16_plus_ar1_rho085_mix025_rms1125_v1",
+    "seed_order": [17017201, 17017202, 17017203, 17017204, 17017205, 17017206, 17017207, 17017208],
+    "size": 8,
+    "selection_rule": "first qualifying fixture in precommitted ordinal order",
+    "execution_stopping_rule": "evaluate and bank all eight fixtures if separately authorized",
+    "banking_policy": "bank every route and failure; no result omission",
+    "best_of_n": "FORBIDDEN"
+  },
+  "planning_surrogate": {
+    "model": "fixed 16-factor expert-logit loadings calibrated only to retained logit mean/std plus fixed retained bias",
+    "loading_seed": 1701900033,
+    "simulation_seed": 1701900032,
+    "sample_count": 1000000,
+    "maps_hidden_bytes_to_real_router": false,
+    "actual_route_prediction": false,
+    "decision_scenarios": [
+      "conservative independent envelope",
+      "central retained-ratio median",
+      "optimistic strongest retained tightening"
+    ]
+  },
+  "planning_threshold_probability_at_least_one": 0.9,
+  "engineering_headroom": 2.0,
+  "post_observation_retuning": "FORBIDDEN",
+  "real_route_execution": false,
+  "authorization": "NOT_AUTHORIZED"
+}

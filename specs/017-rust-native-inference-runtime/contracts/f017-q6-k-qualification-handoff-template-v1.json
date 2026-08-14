@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.q6-k-qualification-handoff-template",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "format": "Q6_K",
+  "target_tensor": null,
+  "target_selection_deferred_until_representative_route": true,
+  "real_payload_reads": 0,
+  "qualification_contract": {
+    "payload_count": 1,
+    "packed_identity_required": true,
+    "decoder_a": "independent_existing_decoder",
+    "decoder_b": "independently_transcribed_or_pinned_upstream",
+    "decoder_c": "preferred_pinned_upstream_spec_harness",
+    "canonical_serialization": "little_endian_f32_no_padding",
+    "comparison": "exact_bitwise",
+    "tolerance": null,
+    "candidate_layer_compute": 0
+  },
+  "upstream_pin": {"repository": null, "commit": null, "source_sha256": null},
+  "evidence_schema": "specs/017-rust-native-inference-runtime/contracts/f017-generic-decoder-qualification-v1.schema.json",
+  "stop_conditions": ["decoder_truth_unresolved", "more_than_one_payload_required", "candidate_compute_required"]
+}
