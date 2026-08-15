@@ -1,0 +1,28 @@
+{
+  "append_only": true,
+  "backfill_policy": "Only append a prior binding when authoritative run and exact head identities are both available; no guessed pairs.",
+  "bindings": [
+    {
+      "conclusion": "success",
+      "head_sha": "45f27650a019d8d10aa48032fe7a78b81e767ab4",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95013318666,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95013318667,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "Q4K-REAL-1-EVIDENCE",
+      "run_id": 31885171838,
+      "source": "GitHub Actions run 31885171838 queried after the evidence push",
+      "workflow": "macOS baseline"
+    }
+  ],
+  "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",
+  "schema_version": "1.0.0"
+}

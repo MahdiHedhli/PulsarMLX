@@ -1,0 +1,31 @@
+{
+  "attempt_ledger": {
+    "path": "docs/architecture/reviews/evidence/f017-q4-k-attempt-ledger-v3.json",
+    "sha256": "2cb30295db2daf06f41cb13ad59ddb26e860728e27ce8ce6f1d6695b947c5141"
+  },
+  "derived_state": {
+    "attempt_id": "Q4K-REAL-1",
+    "authorized": true,
+    "checkpoint_accessed": true,
+    "consumed": true,
+    "executed": true,
+    "ledger_after": 58,
+    "ledger_before": 57,
+    "payloads": 1,
+    "terminal_classification": "EXACT_REAL_BYTE_QUALIFIED"
+  },
+  "real_checkpoint_access_this_phase": 0,
+  "real_payload_ledger": {
+    "cumulative_payloads": 58,
+    "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+    "sha256": "a3df2d97759568c01f980e9f6394dfaef3026b31445efa0427357dc0937b7968"
+  },
+  "result": "Q4_K STATE TRIAD RECONCILED",
+  "schema": "pulsarmlx.f017.q4-k-state-triad-reconciliation",
+  "schema_version": "1.0.0",
+  "terminal_evidence": {
+    "commit": "45f27650a019d8d10aa48032fe7a78b81e767ab4",
+    "path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json",
+    "sha256": "035ad4351406c24c65667a5322f1ffae71589f046a5ba3f591b8a4e3f6140994"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "authority": "COMMITTED_REPOSITORY_EVIDENCE",
+  "conflict_precedence": [
+    "git",
+    "terminal_evidence",
+    "attempt_ledger",
+    "real_payload_ledger",
+    "packet_prose"
+  ],
+  "contradiction_disposition": "PACKET CLAIMS REJECTED — BANKED EVIDENCE CONTRADICTS PACKET",
+  "generation_rule": "Real-event packets are generated from committed repository evidence and may not invent execution claims independently.",
+  "real_event_claims_requiring_provenance": [
+    "real_checkpoint_access",
+    "attempt_consumption",
+    "ledger_transition",
+    "real_payload_sha256",
+    "decoded_sha256",
+    "terminal_pass_or_fail"
+  ],
+  "required_bindings": [
+    "committed_evidence_artifact_sha256",
+    "git_commit_containing_evidence"
+  ],
+  "schema": "pulsarmlx.f017.real-event-packet-provenance",
+  "schema_version": "1.0.0",
+  "validator": "scripts/research/f017_q4_state_q6_authorization.py::validate_real_event_claim"
+}

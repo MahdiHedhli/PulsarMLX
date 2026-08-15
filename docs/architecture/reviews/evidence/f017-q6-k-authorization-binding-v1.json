@@ -1,0 +1,49 @@
+{
+  "access_budget": {
+    "packed_bytes": 61931520,
+    "positional_reads": 1,
+    "shard_opens": 1,
+    "tensor_payloads": 1
+  },
+  "attempt_id": "Q6K-REAL-1",
+  "automatic_dense_prefix_continuation": false,
+  "automatic_other_gate_continuation": false,
+  "automatic_retry": false,
+  "corrected_decoder_source_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+  "defect_evidence_sha256": "b6bf1f3f1ea751250bdeedd79beacfebd5da09e98a1540b3e866de283286e8ba",
+  "execution_authorized": true,
+  "execution_config_sha256": "215af50497a097f4738df8d75a45ebab86450dc2dbe0fcc5e034fe06b1436dd0",
+  "format_contract_sha256": "9e5d15d87b88b9754a5f4b546a110dc1c0659e2c6f62683e12401b8bffb6ff95",
+  "handoff_v3_sha256": "6430e70980dceeff48515a2f212fddcee495d2fabfc1ecb5c5ad578a64a5d6c2",
+  "ledger": {
+    "after_real_payload_read": 59,
+    "before": 58
+  },
+  "real_checkpoint_access_this_preparation": 0,
+  "schema": "pulsarmlx.f017.q6-k-authorization-binding",
+  "schema_version": "1.0.0",
+  "separate_operator_execution_instruction_required": true,
+  "status": "AUTHORIZED_FOR_EXACTLY_ONE_ATTEMPT_NOT_EXECUTED",
+  "target": {
+    "blocks": 294912,
+    "catalog_entry_sha256": "cf149dbb546c312948bf77c4064d9f48ef8021d5ad4d0a3e9a9f414d9678bc54",
+    "decoded_f32_bytes": 301989888,
+    "elements": 75497472,
+    "elements_per_block": 256,
+    "gguf_shape": [
+      12288,
+      6144
+    ],
+    "logical_shape": [
+      6144,
+      12288
+    ],
+    "offset": 1203482464,
+    "packed_bytes_per_block": 210,
+    "packed_length": 61931520,
+    "packed_row_width": 10080,
+    "quantization": "Q6_K",
+    "shard_ordinal": 2,
+    "tensor_name": "blk.0.ffn_down.weight"
+  }
+}

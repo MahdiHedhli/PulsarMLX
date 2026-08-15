@@ -1,0 +1,88 @@
+{
+  "append_only_reconciliation": {
+    "evidence_commit": "45f27650a019d8d10aa48032fe7a78b81e767ab4",
+    "evidence_path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json",
+    "evidence_sha256": "035ad4351406c24c65667a5322f1ffae71589f046a5ba3f591b8a4e3f6140994",
+    "kind": "CROSS_ARTIFACT_STATE_RECONCILIATION",
+    "real_payload_ledger_path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+    "real_payload_ledger_sha256": "a3df2d97759568c01f980e9f6394dfaef3026b31445efa0427357dc0937b7968",
+    "result": "Q4_K STATE TRIAD RECONCILED"
+  },
+  "attempts": [
+    {
+      "attempt_id": "Q4K-REAL-1",
+      "authorized": true,
+      "automatic_dense_prefix_continuation": false,
+      "automatic_q6_continuation": false,
+      "automatic_retry": false,
+      "checkpoint_accessed": true,
+      "consumed": true,
+      "control_artifact_sha256": "62bb1f429fc7c1b0acc2ed7cc88391491758a9e09f62d5745fc991c67e0e502c",
+      "control_binding_sha256": "0a58ca7b1ba3b16c29e7f657b29f48cb9a6ffb4d65377d108a0b20df98dfb865",
+      "evidence_artifact_sha256": "035ad4351406c24c65667a5322f1ffae71589f046a5ba3f591b8a4e3f6140994",
+      "executed": true,
+      "execution_config_sha256": "fddffb9359b2cac545afe969d90211f77ca5ef2547057949f75db118522d22da",
+      "execution_head": "a84e9179dc0ad4b82a695cdbc07373a4311e4589",
+      "gate": "Q4_K_REAL_BYTE_QUALIFICATION",
+      "handoff_sha256": "d4c069b4afba82715d3351b87a459345dd89e25566cba73f42c1fc75c6118e51",
+      "ledger_after": 58,
+      "ledger_before": 57,
+      "packed_sha256": "3e4c34141f918333883442b8ff44c78c9927295ae16378047a8a36edeb7ed5ef",
+      "reviewed_control_head": "aaf84218b51f9174590c2842c6b76f57cc02158e",
+      "terminal_classification": "EXACT_REAL_BYTE_QUALIFIED"
+    }
+  ],
+  "automatic_retry": false,
+  "dense_prefix_status": "BLOCKED_NOT_EXECUTED",
+  "historical_events": [
+    {
+      "attempt_consumed": false,
+      "checkpoint_accessed": false,
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-not-executed-v1.json",
+      "evidence_sha256": "c29feb1479771bd8353d8382429dca656657f9cb18b51a53a4c1ad4eab9b678b",
+      "kind": "NON_EXECUTING_PREFLIGHT_FAILURE",
+      "ledger_after": 57,
+      "ledger_before": 57
+    },
+    {
+      "attempt_consumed": false,
+      "checkpoint_accessed": false,
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q4-k-authorization-state-amendment-v1.json",
+      "evidence_sha256": "62bb1f429fc7c1b0acc2ed7cc88391491758a9e09f62d5745fc991c67e0e502c",
+      "kind": "AUTHORIZATION_STATE_AMENDMENT",
+      "ledger_after": 57,
+      "ledger_before": 57
+    },
+    {
+      "attempt_consumed": true,
+      "checkpoint_accessed": false,
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-execution-start-v1.json",
+      "evidence_sha256": "c00db98325044cef8dc69a6dacd8f7e35bcf251e2ddaff46f1a2da4ed7345bfc",
+      "kind": "EXECUTION_START",
+      "ledger_before": 57
+    },
+    {
+      "attempt_consumed": true,
+      "checkpoint_accessed": true,
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json",
+      "evidence_sha256": "035ad4351406c24c65667a5322f1ffae71589f046a5ba3f591b8a4e3f6140994",
+      "kind": "TERMINAL_RESULT",
+      "ledger_after": 58,
+      "ledger_before": 57,
+      "packed_sha256": "3e4c34141f918333883442b8ff44c78c9927295ae16378047a8a36edeb7ed5ef",
+      "terminal_classification": "EXACT_REAL_BYTE_QUALIFIED"
+    }
+  ],
+  "next_attempt_id": null,
+  "predecessor": {
+    "path": "docs/architecture/reviews/evidence/f017-q4-k-attempt-ledger-v2.json",
+    "sha256": "8863db1663d2e52b6857c892a22d0b19686c567620fccd213965107aa8bbb223",
+    "status": "CONSUMED_EXECUTED_EXACT_REAL_BYTE_QUALIFIED"
+  },
+  "q6_k_status": "AUTHORIZED_UNCONSUMED_NOT_EXECUTED_PENDING_INDEPENDENT_REVIEW",
+  "real_checkpoint_access": 1,
+  "real_payload_ledger": 58,
+  "schema": "pulsarmlx.f017.q4-k-attempt-ledger",
+  "schema_version": "3.0.0",
+  "status": "CONSUMED_EXECUTED_EXACT_REAL_BYTE_QUALIFIED"
+}

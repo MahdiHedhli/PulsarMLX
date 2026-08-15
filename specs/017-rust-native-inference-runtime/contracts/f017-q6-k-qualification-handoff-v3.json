@@ -1,0 +1,193 @@
+{
+  "acceptance": "EXACT_CANONICAL_LE_F32_A_EQ_B_EQ_C_NO_TOLERANCE_NO_MAJORITY_VOTE",
+  "access_budget": {
+    "mlx_candidate_dispatches": 0,
+    "model_compute": 0,
+    "packed_bytes": 61931520,
+    "positional_reads": 1,
+    "shard_opens": 1,
+    "tensor_payloads": 1
+  },
+  "automatic_dense_prefix_continuation": false,
+  "automatic_retry": false,
+  "candidates": [
+    {
+      "block_layout": "256 elements / 210 packed bytes / ql[128]+qh[64]+scales_i8[16]+d_f16",
+      "catalog_entry_sha256": "cf149dbb546c312948bf77c4064d9f48ef8021d5ad4d0a3e9a9f414d9678bc54",
+      "decoded_f32_bytes": 301989888,
+      "gguf_shape": [
+        12288,
+        6144
+      ],
+      "layer": 0,
+      "offset": 1203482464,
+      "packed_length": 61931520,
+      "packed_row_width": 10080,
+      "role": "dense_ffn_down",
+      "shard_ordinal": 2,
+      "tensor_name": "blk.0.ffn_down.weight"
+    },
+    {
+      "block_layout": "256 elements / 210 packed bytes / ql[128]+qh[64]+scales_i8[16]+d_f16",
+      "catalog_entry_sha256": "2e13490d2adbea6b68877479144d2a3ab16f1eb6d9508b3b0421bfc975bc8d7c",
+      "decoded_f32_bytes": 301989888,
+      "gguf_shape": [
+        12288,
+        6144
+      ],
+      "layer": 1,
+      "offset": 1512684384,
+      "packed_length": 61931520,
+      "packed_row_width": 10080,
+      "role": "dense_ffn_down",
+      "shard_ordinal": 2,
+      "tensor_name": "blk.1.ffn_down.weight"
+    },
+    {
+      "block_layout": "256 elements / 210 packed bytes / ql[128]+qh[64]+scales_i8[16]+d_f16",
+      "catalog_entry_sha256": "5810b792efbaf6fced06c3da33d294f21b62651f200c3456b11026db93857476",
+      "decoded_f32_bytes": 301989888,
+      "gguf_shape": [
+        12288,
+        6144
+      ],
+      "layer": 2,
+      "offset": 1821886304,
+      "packed_length": 61931520,
+      "packed_row_width": 10080,
+      "role": "dense_ffn_down",
+      "shard_ordinal": 2,
+      "tensor_name": "blk.2.ffn_down.weight"
+    }
+  ],
+  "checkpoint_bindings": {
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+  },
+  "decoder_truth_chain": [
+    {
+      "generated_real_expected_output": false,
+      "imports_another_decoder": false,
+      "language": "Python",
+      "name": "A_corrected_python_grouped",
+      "path": "scripts/research/ggml_kquants.py",
+      "provenance": "corrected independent grouped implementation",
+      "source_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+      "symbol": "dequantize_row_q6_k"
+    },
+    {
+      "generated_real_expected_output": false,
+      "implementation_sha256": "999f228465cc2c805da456413872f327d1437e8651f772a555b94f06363f1b76",
+      "imports_another_decoder": false,
+      "language": "Python",
+      "name": "B_python_index_driven_spec",
+      "path": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py",
+      "provenance": "index-driven specification derivation",
+      "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501",
+      "symbol": "decode_q6_k_independent"
+    },
+    {
+      "generated_real_expected_output": false,
+      "imports_another_decoder": false,
+      "language": "Rust",
+      "name": "C_rust_reference",
+      "path": "crates/quant/src/q6_k_ref.rs",
+      "provenance": "independent Rust row/matrix reference",
+      "source_sha256": "a4d308ef1aa874865e668002a8911d8247247dd490e301018f730aeb06ab35fd",
+      "symbol": "decode_q6_k_matrix"
+    }
+  ],
+  "defect_closure": {
+    "corrected_decoder_source_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+    "defect_id": "F017-Q6K-LANE-ORDER-001",
+    "disagreement_classification": "Q6_K_DECODER_TRUTH_UNRESOLVED",
+    "evidence_path": "docs/architecture/reviews/evidence/f017-q6-k-decoder-defect-v1.json",
+    "evidence_sha256": "b6bf1f3f1ea751250bdeedd79beacfebd5da09e98a1540b3e866de283286e8ba",
+    "future_real_result_must_close_defect": true,
+    "upstream": {
+      "commit": "a94d563ed801d1da1b8c2432946de07d0231bb3d",
+      "file_sha256": "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d",
+      "function": "dequantize_row_q6_K",
+      "license": "MIT",
+      "line_descriptor": "1939-1966 at pinned commit",
+      "path": "ggml/src/ggml-quants.c",
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "tree": "df5ef3120316710a104d702115d446ac30d385f2"
+    }
+  },
+  "execution_authorized": true,
+  "format_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-format-contract-v1.json",
+    "sha256": "9e5d15d87b88b9754a5f4b546a110dc1c0659e2c6f62683e12401b8bffb6ff95"
+  },
+  "ledger": {
+    "after_real_payload_read": 59,
+    "before": 58
+  },
+  "one_payload_sufficiency": {
+    "all_lane_groups_visited_per_block": true,
+    "block_elements": 256,
+    "blocks_per_row": 48,
+    "packed_block_bytes": 210,
+    "row_elements": 12288,
+    "row_packed_bytes": 10080,
+    "rows": 6144,
+    "scale_and_high_bit_paths_visited_per_block": true,
+    "synthetic_branch_coverage_bound_by_defect_evidence": true,
+    "tail_path": false,
+    "tensor_role_changes_decoder_semantics": false,
+    "verdict": "ONE Q6_K PAYLOAD SUFFICIENT"
+  },
+  "pairwise_independence": [
+    {
+      "classification": "INDEPENDENT",
+      "left": "A_corrected_python_grouped",
+      "reason": "separate files and grouped versus index-driven control structures; neither imports the other",
+      "right": "B_python_index_driven_spec"
+    },
+    {
+      "classification": "INDEPENDENT",
+      "left": "A_corrected_python_grouped",
+      "reason": "different languages, files, control structures, and serialization paths",
+      "right": "C_rust_reference"
+    },
+    {
+      "classification": "INDEPENDENT",
+      "left": "B_python_index_driven_spec",
+      "reason": "different languages, files, control structures, and serialization paths",
+      "right": "C_rust_reference"
+    }
+  ],
+  "predecessor": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-qualification-handoff-v2.json",
+    "sha256": "72c548d631ad163143661e8b5addb6b0b7f332c44d8f102053d08186105152ee"
+  },
+  "real_checkpoint_access_this_preparation": 0,
+  "schema": "pulsarmlx.f017.q6-k-qualification-handoff",
+  "schema_version": "3.0.0",
+  "selection_rule": "largest decoded footprint; then largest packed footprint; then lexicographically lowest tensor name",
+  "status": "AUTHORIZED_UNCONSUMED_NOT_EXECUTED_PENDING_INDEPENDENT_REVIEW",
+  "target": {
+    "blocks": 294912,
+    "catalog_entry_sha256": "cf149dbb546c312948bf77c4064d9f48ef8021d5ad4d0a3e9a9f414d9678bc54",
+    "decoded_f32_bytes": 301989888,
+    "elements": 75497472,
+    "elements_per_block": 256,
+    "gguf_shape": [
+      12288,
+      6144
+    ],
+    "logical_shape": [
+      6144,
+      12288
+    ],
+    "offset": 1203482464,
+    "packed_bytes_per_block": 210,
+    "packed_length": 61931520,
+    "packed_row_width": 10080,
+    "quantization": "Q6_K",
+    "shard_ordinal": 2,
+    "tensor_name": "blk.0.ffn_down.weight"
+  }
+}

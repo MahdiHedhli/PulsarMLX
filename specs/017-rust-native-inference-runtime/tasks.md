@@ -280,3 +280,8 @@
   first-observation packed identity, require exact canonical f32 equality across
   three independent decoders, bank fail-closed evidence and append-only attempt
   plus real-payload ledger transitions, and stop before Q6_K with ledger 58.
+- [x] T017-197 Reconcile the committed Q4K-REAL-1 terminal evidence, attempt
+  ledger, and real-payload ledger through a fail-closed triad validator; bank
+  real-event packet and CI provenance rules; prepare Q6K-REAL-1 born authorized
+  and unconsumed with direct corrected-decoder binding, one-payload isolation,
+  and zero checkpoint access; stop for independent adversarial review at ledger 58.

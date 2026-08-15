@@ -1,0 +1,115 @@
+{
+  "access_budget": {
+    "mlx_candidate_dispatches": 0,
+    "model_compute": 0,
+    "packed_bytes": 61931520,
+    "positional_reads": 1,
+    "shard_opens": 1,
+    "tensor_payloads": 1
+  },
+  "allow_cli_target_override": false,
+  "allow_environment_target_override": false,
+  "attempt": {
+    "attempt_id": "Q6K-REAL-1",
+    "authorized": true,
+    "automatic_retry": false,
+    "checkpoint_accessed": false,
+    "consumed": false,
+    "executed": false
+  },
+  "checkpoint_bindings": {
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+  },
+  "continuation": {
+    "dense_prefix": false,
+    "m1_f": false,
+    "m1_g": false,
+    "p1": false,
+    "q6_second_payload": false
+  },
+  "corrected_decoder_source_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+  "decoders": [
+    {
+      "generated_real_expected_output": false,
+      "imports_another_decoder": false,
+      "language": "Python",
+      "name": "A_corrected_python_grouped",
+      "path": "scripts/research/ggml_kquants.py",
+      "provenance": "corrected independent grouped implementation",
+      "source_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+      "symbol": "dequantize_row_q6_k"
+    },
+    {
+      "generated_real_expected_output": false,
+      "implementation_sha256": "999f228465cc2c805da456413872f327d1437e8651f772a555b94f06363f1b76",
+      "imports_another_decoder": false,
+      "language": "Python",
+      "name": "B_python_index_driven_spec",
+      "path": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py",
+      "provenance": "index-driven specification derivation",
+      "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501",
+      "symbol": "decode_q6_k_independent"
+    },
+    {
+      "generated_real_expected_output": false,
+      "imports_another_decoder": false,
+      "language": "Rust",
+      "name": "C_rust_reference",
+      "path": "crates/quant/src/q6_k_ref.rs",
+      "provenance": "independent Rust row/matrix reference",
+      "source_sha256": "a4d308ef1aa874865e668002a8911d8247247dd490e301018f730aeb06ab35fd",
+      "symbol": "decode_q6_k_matrix"
+    }
+  ],
+  "defect_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-q6-k-decoder-defect-v1.json",
+    "sha256": "b6bf1f3f1ea751250bdeedd79beacfebd5da09e98a1540b3e866de283286e8ba"
+  },
+  "evidence_destination": "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json",
+  "evidence_schema": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-evidence-v1.schema.json",
+    "sha256": "2bec8820e9b978ae61baab44d844cbb753648b1c287322ce4887555beff3c417"
+  },
+  "execution_authorized": true,
+  "format_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-format-contract-v1.json",
+    "sha256": "9e5d15d87b88b9754a5f4b546a110dc1c0659e2c6f62683e12401b8bffb6ff95"
+  },
+  "handoff": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-qualification-handoff-v3.json",
+    "sha256": "6430e70980dceeff48515a2f212fddcee495d2fabfc1ecb5c5ad578a64a5d6c2"
+  },
+  "head_policy": "execution head must equal the authoritative remote head and descend from reviewed_base_head; every execution-controlling artifact hash must match",
+  "ledger": {
+    "after_real_payload_read": 59,
+    "before": 58
+  },
+  "reviewed_base_head": "45f27650a019d8d10aa48032fe7a78b81e767ab4",
+  "schema": "pulsarmlx.f017.q6-k-execution-config",
+  "schema_version": "1.0.0",
+  "status": "AUTHORIZED_UNCONSUMED_NOT_EXECUTED",
+  "target": {
+    "blocks": 294912,
+    "catalog_entry_sha256": "cf149dbb546c312948bf77c4064d9f48ef8021d5ad4d0a3e9a9f414d9678bc54",
+    "decoded_f32_bytes": 301989888,
+    "elements": 75497472,
+    "elements_per_block": 256,
+    "gguf_shape": [
+      12288,
+      6144
+    ],
+    "logical_shape": [
+      6144,
+      12288
+    ],
+    "offset": 1203482464,
+    "packed_bytes_per_block": 210,
+    "packed_length": 61931520,
+    "packed_row_width": 10080,
+    "quantization": "Q6_K",
+    "shard_ordinal": 2,
+    "tensor_name": "blk.0.ffn_down.weight"
+  }
+}

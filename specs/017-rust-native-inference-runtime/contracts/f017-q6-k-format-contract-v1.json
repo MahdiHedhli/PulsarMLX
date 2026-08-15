@@ -1,0 +1,48 @@
+{
+  "canonical_output": "row_major_logical_little_endian_ieee754_binary32_no_padding",
+  "comparison": "EXACT_A_EQ_B_EQ_C_NO_TOLERANCE_NO_MAJORITY_VOTE",
+  "contract_id": "GGUF_Q6_K_256x210_F32LE_V1",
+  "defect_id": "F017-Q6K-LANE-ORDER-001",
+  "elements_per_block": 256,
+  "lane_map": {
+    "q0": "(ql[64*n+l] low4) | ((qh[32*n+l] bits0..1)<<4)",
+    "q1": "(ql[64*n+32+l] low4) | ((qh[32*n+l] bits2..3)<<4)",
+    "q2": "(ql[64*n+l] high4) | ((qh[32*n+l] bits4..5)<<4)",
+    "q3": "(ql[64*n+32+l] high4) | ((qh[32*n+l] bits6..7)<<4)"
+  },
+  "layout": {
+    "d_f16_le": [
+      208,
+      210
+    ],
+    "qh": [
+      128,
+      192
+    ],
+    "ql": [
+      0,
+      128
+    ],
+    "scales_i8": [
+      192,
+      208
+    ]
+  },
+  "non_finite_policy": "REJECT",
+  "packed_bytes_per_block": 210,
+  "quantization": "Q6_K",
+  "row_policy": "row element count must be divisible by 256; no tail path",
+  "schema": "pulsarmlx.f017.q6-k-format-contract",
+  "schema_version": "1.0.0",
+  "signed_zero_policy": "PRESERVE_AND_COUNT_EXACT_F32_BITS",
+  "upstream": {
+    "commit": "a94d563ed801d1da1b8c2432946de07d0231bb3d",
+    "file_sha256": "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d",
+    "function": "dequantize_row_q6_K",
+    "license": "MIT",
+    "line_descriptor": "1939-1966 at pinned commit",
+    "path": "ggml/src/ggml-quants.c",
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "tree": "df5ef3120316710a104d702115d446ac30d385f2"
+  }
+}

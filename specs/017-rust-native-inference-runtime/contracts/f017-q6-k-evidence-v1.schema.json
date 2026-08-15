@@ -1,0 +1,91 @@
+{
+  "$id": "pulsarmlx.f017.q6-k-real-byte-evidence.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "access": {
+      "required": [
+        "shard_opens",
+        "positional_reads",
+        "tensor_payloads",
+        "packed_bytes"
+      ],
+      "type": "object"
+    },
+    "attempt": {
+      "required": [
+        "attempt_id",
+        "authorized",
+        "consumed",
+        "executed",
+        "checkpoint_accessed",
+        "terminal_class"
+      ],
+      "type": "object"
+    },
+    "comparison": {
+      "required": [
+        "bitwise_equal",
+        "first_divergence"
+      ],
+      "type": "object"
+    },
+    "decoder_outputs": {
+      "maxItems": 3,
+      "minItems": 3,
+      "type": "array"
+    },
+    "identity": {
+      "required": [
+        "checkpoint_set_sha256",
+        "tensor_name",
+        "shard_ordinal",
+        "offset",
+        "packed_length",
+        "packed_sha256",
+        "format_contract_sha256",
+        "corrected_decoder_source_sha256",
+        "defect_evidence_sha256"
+      ],
+      "type": "object"
+    },
+    "isolation": {
+      "required": [
+        "model_compute",
+        "mlx_candidate_dispatches",
+        "dense_prefix_executed"
+      ],
+      "type": "object"
+    },
+    "ledger": {
+      "required": [
+        "before",
+        "actual_payloads",
+        "after"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "pulsarmlx.f017.q6-k-real-byte-qualification-evidence"
+    },
+    "verdict": {
+      "enum": [
+        "EXACT_REAL_BYTE_QUALIFIED",
+        "Q6_K_DECODER_TRUTH_UNRESOLVED",
+        "REJECTED"
+      ]
+    }
+  },
+  "required": [
+    "schema",
+    "attempt",
+    "identity",
+    "access",
+    "decoder_outputs",
+    "comparison",
+    "isolation",
+    "ledger",
+    "verdict"
+  ],
+  "type": "object"
+}
