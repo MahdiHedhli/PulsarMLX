@@ -338,6 +338,7 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
           uv run --frozen python -m unittest -v \
             scripts.research.tests.test_f017_decoded_tensor_reuse_v2 \
+            scripts.research.tests.test_f017_colibri_comparative_audit \
             scripts.research.tests.test_f017_m1f_minus1_dense_prefix_prep \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
@@ -351,6 +352,8 @@ jobs:
           echo 'F017_DENSE_PREFIX=PREPARED_NOT_AUTHORIZED'
           echo 'F017_Q4_K=PACKAGE_READY_REAL_BYTE_UNQUALIFIED'
           echo 'F017_Q6_K=PACKAGE_READY_REAL_BYTE_UNQUALIFIED'
+          echo 'F017_COLIBRI_AUDIT=PINNED_ACTIONABLE_NO_SOURCE_COPY'
+          echo 'F017_DECODED_REUSE_USE_CASES=SEPARATE_PACKAGES_REQUIRED'
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |

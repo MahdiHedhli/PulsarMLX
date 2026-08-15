@@ -254,3 +254,9 @@
   real-byte gates, bound conservative double-residency admission, qualify the
   independent synthetic/oracle/config/evidence/retention scaffolds, and stop for
   adversarial review with zero real access and the ledger unchanged at 57.
+- [x] T017-192 Complete the checkpoint-free dense-prefix/decoded-reuse/Colibrì
+  comparative audit: freeze the seven-use-case separate-package reuse policy,
+  pin and hash-audit Colibrì without copying source or adopting a dependency,
+  land independent near-tie/dispatch/lifetime regressions, preserve the exact
+  40-tensor dense-prefix and Q4_K/Q6_K packages, and stop for adversarial review
+  with zero real access and the ledger unchanged at 57.
