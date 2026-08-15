@@ -21,6 +21,26 @@
       "run_id": 31885171838,
       "source": "GitHub Actions run 31885171838 queried after the evidence push",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "1648a9387cee51fd5bde433931e3f2a4d6a32c3e",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95029309520,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95029309386,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "Q6K-REAL-1-EVIDENCE",
+      "run_id": 31891899424,
+      "source": "GitHub Actions run 31891899424 queried after the evidence push",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",
