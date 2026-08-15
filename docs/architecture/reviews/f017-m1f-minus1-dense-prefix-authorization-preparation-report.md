@@ -79,3 +79,12 @@ Independent review of the qualified-reuse blocker, followed by a separately
 authorized decision between recreating reviewed immutable Q4/Q6 reuse packages
 or revising the future dense-prefix event to an explicitly reviewed 40-read
 budget. Neither action is authorized here.
+
+## Validation and final-head CI
+
+- Preparation commit: `0d956229dd7566a19192ae2e73edc1b9daf99527`.
+- Local clean-tree validation: `cargo check --workspace --all-targets`, full Rust workspace tests, 702 Python research/evidence tests, focused blocker mutations, JSON/duplicate-key/privacy checks, ledger validation, and `git diff --check` passed.
+- Apple-native CI: run `31910532571` passed against exact preparation commit `0d956229dd7566a19192ae2e73edc1b9daf99527`.
+- Apple Silicon workspace baseline job `95074785193`: passed.
+- Apple MLX small-fixture validation job `95074785054`: passed, including the checkpoint-free dense-prefix authorization blocker regression.
+- Real checkpoint access: `0`; ledger remains `59`.
