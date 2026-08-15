@@ -297,3 +297,9 @@
   authorization binding, or attempt when the accepted Q4_K/Q6_K evidence
   exposes only hash/byte-count descriptors rather than resolvable immutable
   private-package artifacts; leave the real-payload ledger at 59.
+- [x] T017-200 Supersede only the blocked 38-read reuse strategy with the
+  independently adjudicated 40-fresh-read preparation-contract v2; make the
+  accepted Q4_K/Q6_K observations hard identity-confirmation gates, enforce
+  retention at creation, authorize DPREFIX-REAL-1 born unconsumed with exact
+  partial-read ledger accounting and no downstream chain, and stop for
+  adversarial review without checkpoint access at ledger 59.
