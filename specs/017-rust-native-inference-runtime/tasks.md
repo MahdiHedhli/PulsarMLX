@@ -266,3 +266,8 @@
   revalidate the staged Q6_K package, prepare the fail-closed one-payload Q4_K
   authorization handoff, preserve dense-prefix numerical semantics, and stop
   before real access with the ledger unchanged at 57.
+- [x] T017-194 Reconcile the Q4K-REAL-1 execution instruction fail-closed,
+  bank a checkpoint-free NOT_EXECUTED result after the reviewed attempt ledger
+  remained empty and both control artifacts remained unauthorized, regress that
+  operator text cannot bypass machine authorization, preserve the unconsumed
+  attempt, and leave the real-payload ledger unchanged at 57.

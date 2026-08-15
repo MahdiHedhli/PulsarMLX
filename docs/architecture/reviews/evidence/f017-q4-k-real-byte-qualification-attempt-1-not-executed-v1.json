@@ -1,0 +1,79 @@
+{
+  "schema": "pulsarmlx.f017.q4-k-real-byte-qualification-not-executed",
+  "schema_version": "1.0.0",
+  "verdict": "Q4_K_NOT_EXECUTED",
+  "attempt_id": "Q4K-REAL-1",
+  "reviewed_head": "c4e89bd3c4886a402f954014053d83a7a5e05673",
+  "verified_bindings": {
+    "local_head_equal_reviewed_head": true,
+    "remote_branch_equal_local_head": true,
+    "worktree_clean_before_preflight": true,
+    "execution_config_sha256": "bcb3bc2b7fca752d17555fd1c1efe8d77691102f742e66483b8f42a81a35b27b",
+    "authorization_binding_sha256": "c3eea6693831c7821ae5973890754543b1be8e8f79a85674d3439c176c41ebb9",
+    "handoff_sha256": "d4c069b4afba82715d3351b87a459345dd89e25566cba73f42c1fc75c6118e51",
+    "format_contract_sha256": "bbdb296744910dbec5e95496d73df62b1e1b5cae4a9438b41de9962385399305",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "real_payload_ledger_sha256": "1dc884c4a9c328bef518a3989e671ff33467f38b48d61405fdc25c160b7a6401",
+    "target": {
+      "tensor_name": "token_embd.weight",
+      "shard_ordinal": 2,
+      "offset": 535316320,
+      "packed_length": 535265280,
+      "logical_shape": [6144, 154880],
+      "quantization": "Q4_K",
+      "element_count": 951582720,
+      "elements_per_block": 256,
+      "block_count": 3717120,
+      "packed_bytes_per_block": 144,
+      "block_arithmetic_reconciled": true
+    }
+  },
+  "failed_preflight": {
+    "condition": 12,
+    "classification": "AUTHORIZATION_BINDING",
+    "expected": {
+      "attempt_id": "Q4K-REAL-1",
+      "authorized": true,
+      "consumed": false
+    },
+    "observed": {
+      "attempt_ledger_status": "EMPTY_PREPARED_LEDGER",
+      "attempts": [],
+      "next_attempt_id": "Q4K-REAL-1",
+      "execution_config_authorized": false,
+      "execution_config_status": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTED",
+      "authorization_binding_authorized": false,
+      "authorization_binding_status": "PREPARED_FOR_EXACTLY_ONE_ATTEMPT_NOT_AUTHORIZED_NOT_EXECUTED"
+    }
+  },
+  "execution_accounting": {
+    "checkpoint_paths_resolved": false,
+    "shard_opens": 0,
+    "positional_reads": 0,
+    "tensor_payloads": 0,
+    "packed_bytes": 0,
+    "model_compute": 0,
+    "mlx_candidate_dispatches": 0
+  },
+  "attempt_state": {
+    "consumed": false,
+    "execution_start_boundary_crossed": false,
+    "automatic_retry": false
+  },
+  "ledger": {
+    "before": 57,
+    "after": 57,
+    "event_appended": false
+  },
+  "prohibited_events": {
+    "q6_k_executed": false,
+    "dense_prefix_executed": false,
+    "m1_f0_executed": false,
+    "m1_f_executed": false,
+    "m1_g_executed": false,
+    "p1_executed": false
+  },
+  "next_action": "Publish and independently review a machine-readable authorization amendment and attempt-ledger entry that bind Q4K-REAL-1 as authorized=true and consumed=false at one exact head; then issue a fresh explicit execution instruction."
+}

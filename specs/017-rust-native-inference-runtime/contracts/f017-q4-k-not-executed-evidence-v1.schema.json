@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.q4-k-not-executed-evidence-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "verdict", "attempt_id", "reviewed_head",
+    "verified_bindings", "failed_preflight", "execution_accounting",
+    "attempt_state", "ledger", "prohibited_events", "next_action"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.q4-k-real-byte-qualification-not-executed"},
+    "schema_version": {"const": "1.0.0"},
+    "verdict": {"const": "Q4_K_NOT_EXECUTED"},
+    "attempt_id": {"const": "Q4K-REAL-1"},
+    "reviewed_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "verified_bindings": {"type": "object"},
+    "failed_preflight": {
+      "type": "object",
+      "required": ["condition", "classification", "expected", "observed"],
+      "properties": {
+        "condition": {"const": 12},
+        "classification": {"const": "AUTHORIZATION_BINDING"},
+        "expected": {"type": "object"},
+        "observed": {"type": "object"}
+      }
+    },
+    "execution_accounting": {
+      "type": "object",
+      "required": ["checkpoint_paths_resolved", "shard_opens", "positional_reads", "tensor_payloads", "packed_bytes", "model_compute", "mlx_candidate_dispatches"],
+      "properties": {
+        "checkpoint_paths_resolved": {"const": false},
+        "shard_opens": {"const": 0},
+        "positional_reads": {"const": 0},
+        "tensor_payloads": {"const": 0},
+        "packed_bytes": {"const": 0},
+        "model_compute": {"const": 0},
+        "mlx_candidate_dispatches": {"const": 0}
+      }
+    },
+    "attempt_state": {
+      "type": "object",
+      "required": ["consumed", "execution_start_boundary_crossed", "automatic_retry"],
+      "properties": {
+        "consumed": {"const": false},
+        "execution_start_boundary_crossed": {"const": false},
+        "automatic_retry": {"const": false}
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "required": ["before", "after", "event_appended"],
+      "properties": {
+        "before": {"const": 57},
+        "after": {"const": 57},
+        "event_appended": {"const": false}
+      }
+    },
+    "prohibited_events": {"type": "object"},
+    "next_action": {"type": "string", "minLength": 1}
+  }
+}
