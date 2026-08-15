@@ -131,15 +131,22 @@ Canonical checkpoint-free preflight:
 The package includes direct regressions for all 20 required negative mutations,
 exact 40-entry regeneration, packed-byte arithmetic, identity gates,
 retention-at-creation, partial-read accounting, born-authorized attempt state,
-and generated-artifact equality. Broad workspace, research/evidence, Spec Kit,
-privacy/path, duplicate-key, historical-immutability, and generated-artifact
-validation are recorded in the final handoff after the preparation commit.
+and generated-artifact equality. The clean preparation head passed
+`cargo check --workspace --all-targets`, the complete Rust workspace test
+surface, and all 711 Python research/evidence tests. A 432-file duplicate-key
+parse, privacy/path scan, real-payload ledger validation, Spec Kit prerequisite
+check, generated-artifact regeneration, historical immutability checks, and
+`git diff --check` also passed.
 
 Internal verdict:
 
 `GO FOR DENSE-PREFIX 40-READ AUTHORIZATION ADVERSARIAL REVIEW`
 
-Final preparation and CI bindings: `PENDING_FINAL_HEAD_CI`.
+Preparation commit: `724632259db66ac3f6ea613d42779372651481ff`.
+Apple-native CI run `31913132268` passed against that exact head: workspace job
+`95081071689` and MLX small-fixture job `95081071700` both succeeded, including
+the 40-read package regression and canonical zero-read preflight with no
+relevant skip.
 
 ## Exact next action
 

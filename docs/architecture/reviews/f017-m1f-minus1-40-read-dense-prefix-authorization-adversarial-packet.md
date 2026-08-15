@@ -96,4 +96,7 @@ The v2 contract does not infer reuse from hashes; it reads all 40 tensors fresh.
 - Current cumulative real-payload ledger: 59.
 - Dense-prefix execution: false.
 - Representative M1-F0: blocked.
-- Final-head Apple CI binding: `PENDING_FINAL_HEAD_CI`.
+- Apple-native CI: run `31913132268` passed against exact preparation head
+  `724632259db66ac3f6ea613d42779372651481ff`; jobs `95081071689` and
+  `95081071700` both succeeded, including the 40-read package regression and
+  canonical zero-read preflight.
