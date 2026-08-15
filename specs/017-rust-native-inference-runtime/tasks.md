@@ -276,3 +276,7 @@
   record; preserve the prior NOT_EXECUTED evidence and all numerical semantics,
   prove the canonical preflight READY plus ten fail-closed mutations, and stop
   for narrow adversarial review with zero real access and ledger 57.
+- [x] T017-196 Execute the single authorized Q4K-REAL-1 payload event, retain the
+  first-observation packed identity, require exact canonical f32 equality across
+  three independent decoders, bank fail-closed evidence and append-only attempt
+  plus real-payload ledger transitions, and stop before Q6_K with ledger 58.

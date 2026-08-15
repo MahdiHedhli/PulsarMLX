@@ -31,12 +31,12 @@ BINDING = load("f017_estimator_binding", "scripts/research/validate_f017_estimat
 
 
 class M1F0NewInputSelectionTests(unittest.TestCase):
-    def test_complete_real_payload_ledger_reconciles_to_57(self):
+    def test_complete_real_payload_ledger_reconciles_to_58(self):
         document = LEDGER.build_ledger(ROOT)
-        self.assertEqual(document["cumulative_tensor_payloads"], 57)
+        self.assertEqual(document["cumulative_tensor_payloads"], 58)
         self.assertEqual(document["prior_m1f0_scoped_total"], 37)
         self.assertEqual(document["prior_scope_omissions_total"], 8)
-        self.assertEqual(sum(event["tensor_payload_count"] for event in document["events"]), 57)
+        self.assertEqual(sum(event["tensor_payload_count"] for event in document["events"]), 58)
         self.assertEqual(document["checkpoint_identity_only"]["tensor_payload_count"], 0)
         self.assertEqual(document["checkpoint_identity_only"]["storage_read_count"], 28_444)
 

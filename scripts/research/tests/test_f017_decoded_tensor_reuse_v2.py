@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -19,12 +20,26 @@ SPEC.loader.exec_module(REUSE)
 
 
 class ReuseContractTests(unittest.TestCase):
+    def frozen_contract(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            authority = root / REUSE.AUTHORITY_PATH
+            ledger = root / REUSE.LEDGER_PATH
+            authority.parent.mkdir(parents=True)
+            ledger.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / REUSE.AUTHORITY_PATH, authority)
+            ledger.write_bytes(subprocess.check_output([
+                "git", "-C", str(ROOT), "show",
+                f"a84e9179dc0ad4b82a695cdbc07373a4311e4589:{REUSE.LEDGER_PATH}",
+            ]))
+            return REUSE.contract_value(root)
+
     def test_banked_contract_regenerates_exactly(self) -> None:
         path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-m1f0-decoded-tensor-reuse-v2.json"
-        self.assertEqual(path.read_bytes(), REUSE.canonical_json_bytes(REUSE.contract_value(ROOT)))
+        self.assertEqual(path.read_bytes(), REUSE.canonical_json_bytes(self.frozen_contract()))
 
     def test_real_identity_contract_is_direct_and_economics_are_exact(self) -> None:
-        contract = REUSE.contract_value(ROOT)
+        contract = self.frozen_contract()
         self.assertEqual(contract["checkpoint_bindings"]["checkpoint_set_sha256"], REUSE.CHECKPOINT)
         self.assertEqual(contract["checkpoint_bindings"]["catalog_sha256"], REUSE.CATALOG)
         self.assertEqual(contract["checkpoint_bindings"]["tensor_map_sha256"], REUSE.TENSOR_MAP)

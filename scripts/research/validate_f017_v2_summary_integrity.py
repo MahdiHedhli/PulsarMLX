@@ -68,8 +68,14 @@ def validate(root: Path) -> dict[str, Any]:
         if recovery.canonical_json(actual) != recovery.canonical_json(expected):
             raise ValueError(f"accepted derived summary mismatch: {label}")
     ledger = json.loads((evidence / "f017-real-payload-access-ledger-v1.json").read_text())
-    if ledger["cumulative_tensor_payloads"] != 57:
+    recovery_events = [
+        event for event in ledger["events"]
+        if event.get("attempt") == "analytical-antecedent-recovery-1"
+    ]
+    if len(recovery_events) != 1 or recovery_events[0]["cumulative_tensor_payloads_after_event"] != 57:
         raise ValueError("ledger integrity")
+    if ledger["cumulative_tensor_payloads"] < 57:
+        raise ValueError("ledger regression")
     expected = {
         "membership_worst_pair": [177, 98],
         "membership_minimum_safety_factor": 1.2497550469932908,
@@ -100,7 +106,8 @@ def validate(root: Path) -> dict[str, Any]:
         "raw_immutable": True,
         "summary_authority": "derived_detail_summary",
         "detail_records_validated": 1991,
-        "ledger": 57,
+        "ledger_at_recovery": 57,
+        "current_ledger": ledger["cumulative_tensor_payloads"],
         **actual,
         "checkpoint_access": 0,
     }

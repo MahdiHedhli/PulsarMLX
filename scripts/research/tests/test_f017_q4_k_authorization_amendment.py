@@ -22,6 +22,14 @@ def sha(path: str) -> str:
 class Q4KAuthorizationAmendmentTests(unittest.TestCase):
     def setUp(self):
         self.docs = load_package(ROOT)
+        # The authorization preflight is a frozen historical state machine. The
+        # live repository has since consumed Q4K-REAL-1 and advanced to 58, so
+        # exercise the exact pre-execution ledger snapshot in memory.
+        self.docs["ledger"]["events"] = [
+            event for event in self.docs["ledger"]["events"]
+            if event.get("attempt") != "Q4K-REAL-1"
+        ]
+        self.docs["ledger"]["cumulative_tensor_payloads"] = 57
 
     def assert_rejected(self, mutation):
         docs = copy.deepcopy(self.docs)

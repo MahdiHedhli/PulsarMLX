@@ -70,6 +70,10 @@ def build_ledger(root: Path) -> dict[str, object]:
         "identity-gated analytical antecedent recovery for retrospective route-stability v2",
         "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-review-v1.json",
         M1F0, False, "evidence_recovery"))
+    e.append(event(root, "Q4_K-REAL-BYTE-QUALIFICATION", "Q4K-REAL-1",
+        "exact real-byte Q4_K decoder-format qualification",
+        "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json",
+        ["token_embd.weight"], True, "qualification_only"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:
