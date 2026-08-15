@@ -346,6 +346,7 @@ jobs:
             scripts.research.tests.test_f017_q4_k_real_execution \
             scripts.research.tests.test_f017_q4_state_q6_authorization \
             scripts.research.tests.test_f017_q6_k_real_execution \
+            scripts.research.tests.test_f017_dense_prefix_authorization_preparation \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream
@@ -365,6 +366,7 @@ jobs:
           echo 'F017_Q4_K=EXACT_REAL_BYTE_QUALIFIED'
           echo 'F017_Q6_K=EXACT_REAL_BYTE_QUALIFIED'
           echo 'F017_Q6_K_CONTROL=CONSUMED_EXECUTED_EXACT_REAL_BYTE_QUALIFIED'
+          echo 'F017_DENSE_PREFIX_AUTHORIZATION=BLOCKED_QUALIFIED_REUSE_HASH_ONLY_DESCRIPTOR'
           echo 'F017_Q4_K_ATTEMPT_STATE=CONSUMED_EXECUTED'
           echo 'F017_Q4_K_REAL_1=EXACT_REAL_BYTE_QUALIFIED_LEDGER_58'
           echo 'F017_COLIBRI_AUDIT=PINNED_ACTIONABLE_NO_SOURCE_COPY'

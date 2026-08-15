@@ -1,0 +1,112 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-authorization-preparation-audit",
+  "schema_version": "1.0.0",
+  "status": "BLOCKED_QUALIFIED_REUSE",
+  "authoritative_start_head": "1f494fcd0d890797fadb4ac898d794ac02b7fa99",
+  "boundary": {
+    "attempt_id": "DPREFIX-REAL-1",
+    "honest_name": "F017 M1-F(-1) REAL DENSE-PREFIX LAYER-3 ENTRY-STATE BOUNDARY",
+    "semantic_scope": [
+      "tokenize frozen prompt Hello",
+      "consume token 9703 at position 0",
+      "embedding lookup",
+      "complete dense layer 0",
+      "complete dense layer 1",
+      "complete dense layer 2",
+      "retain layer-3 entry hidden state",
+      "stop"
+    ],
+    "forbidden": ["layer-3 attention", "layer-3 router", "experts", "logits", "output head", "token generation"]
+  },
+  "prompt": {
+    "artifact_path": "docs/architecture/reviews/evidence/f017-m1f-minus1-prompt-token-package-v1.json",
+    "artifact_sha256": "c05ba1cba69535cd17daf9f4326e5e1db25ffafe504c53712aa548f251741dff",
+    "payload_sha256": "eebe836b0aa46dbb271eda573f63dfff05cdd8b0c54e3b3de906e91f708e93ab",
+    "prompt_utf8_sha256": "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969",
+    "token_id": 9703,
+    "position": 0,
+    "dsa": "range_fill([0])"
+  },
+  "inventory": {
+    "source_artifact_sha256": "eaf54506f5bd45ef41f223224096a253f6fa6c5e2ad3bf94971c18eb09f6b21b",
+    "regenerated_tensor_count": 40,
+    "packed_bytes": 1431263232,
+    "aggregate_decoded_f32_bytes": 8504653824,
+    "quantization_counts": {"F32": 12, "Q4_K": 1, "Q5_K": 12, "Q6_K": 3, "Q8_0": 12}
+  },
+  "qualified_components": [
+    {
+      "tensor_name": "token_embd.weight",
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json",
+      "evidence_sha256": "035ad4351406c24c65667a5322f1ffae71589f046a5ba3f591b8a4e3f6140994",
+      "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+      "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+      "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+      "offset": 535316320,
+      "packed_length": 535265280,
+      "packed_sha256": "3e4c34141f918333883442b8ff44c78c9927295ae16378047a8a36edeb7ed5ef",
+      "decoded_sha256": "e2cff562131674156704ca21b2b6e850337c2e5d8948b4dcc9f14676ecf8f2c1",
+      "format_contract_sha256": "bbdb296744910dbec5e95496d73df62b1e1b5cae4a9438b41de9962385399305",
+      "qualification_status": "EXACT_REAL_BYTE_QUALIFIED",
+      "reusable_private_package_status": "UNRESOLVABLE_HASH_ONLY_DESCRIPTOR"
+    },
+    {
+      "tensor_name": "blk.0.ffn_down.weight",
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json",
+      "evidence_sha256": "375e6b852733e8ac885d53c3814a03deb3a80e639bf61d427f1e49f1aae57086",
+      "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+      "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+      "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+      "offset": 1203482464,
+      "packed_length": 61931520,
+      "packed_sha256": "845b4fd6b5d290506e576ca5099336bae7d28f3ebfcec964ed2136c3ea4a8ede",
+      "decoded_sha256": "ff26151a7997379c1713b90852fdbfd8301b36d5d89a1c3bb623b9b8f273483a",
+      "format_contract_sha256": "9e5d15d87b88b9754a5f4b546a110dc1c0659e2c6f62683e12401b8bffb6ff95",
+      "qualification_status": "EXACT_REAL_BYTE_QUALIFIED",
+      "reusable_private_package_status": "UNRESOLVABLE_HASH_ONLY_DESCRIPTOR"
+    }
+  ],
+  "proposed_new_read_allowlist": {
+    "status": "DERIVED_BUT_NOT_EXECUTION_AUTHORIZED",
+    "ordered_entries_sha256": "3adfb54fa9460bbfd0358ae3d1cdcf0e92a86e2feb0e3a8a8f9828a17f9e495b",
+    "shard_opens": 1,
+    "positional_reads": 38,
+    "tensor_payloads": 38,
+    "packed_bytes": 834066432
+  },
+  "reuse_admission": {
+    "policy": "SEPARATE_ORACLE_AND_CANDIDATE_PACKAGES_REQUIRED",
+    "required_private_binding_fields": ["private_package_identity", "private_package_manifest_sha256", "path_kind", "symbolic_name", "creation_ordinal", "immutable", "read_only"],
+    "blocking_gaps_apply_to_both_components": [
+      "private_artifacts.private_package_identity",
+      "private_artifacts.private_package_manifest_sha256",
+      "private_artifacts.packed.path_kind",
+      "private_artifacts.packed.symbolic_name",
+      "private_artifacts.packed.creation_ordinal",
+      "private_artifacts.packed.immutable",
+      "private_artifacts.decoded[accepted].path_kind",
+      "private_artifacts.decoded[accepted].symbolic_name",
+      "private_artifacts.decoded[accepted].creation_ordinal",
+      "private_artifacts.decoded[accepted].immutable"
+    ],
+    "automatic_reread_fallback": false,
+    "contradiction_disposition": "PACKET CLAIMS REJECTED — BANKED EVIDENCE CONTRADICTS PACKET"
+  },
+  "authorization": {
+    "execution_config_created": false,
+    "authorization_binding_created": false,
+    "attempt_ledger_entry_created": false,
+    "preflight_result": "NOT_READY — QUALIFIED_PAYLOAD_REUSE_INVALID",
+    "reason": "accepted Q4_K/Q6_K evidence has content hashes but no resolvable immutable private-package manifest or package-relative artifact descriptors"
+  },
+  "preserved_contracts": {
+    "oracle_package_sha256": "0a54aa957e8b768108e4d8bc8c6e2a84cb48fbb3e0c93414c308112e88b3e816",
+    "tier_b_sha256": "9d1a6cc20ce8325fe8395334416f5ebcf980b72f02c6a0b44dc3240e0810024a",
+    "residency_sha256": "56ab1eae69b45f9ae97f98e1d36dfa124e080a6dc82573013cc57782bce1ac76",
+    "dispatch_sha256": "d430b7dcc23d98d1b339315443f7868d6f8dd7e3e7c389ebae7d24ecae45e267",
+    "retention_sha256": "6610c3396fff1405131c843f8ba43bc06f5fde7f929ead7f2141e52cae07bf8f"
+  },
+  "ledger": {"before": 59, "after_preparation": 59, "hypothetical_after_38_reads": 97},
+  "isolation": {"checkpoint_access": 0, "dense_prefix_executed": false, "representative_m1f0_authorized": false},
+  "internal_review_verdict": "NO-GO"
+}

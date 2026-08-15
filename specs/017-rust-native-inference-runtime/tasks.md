@@ -291,3 +291,9 @@
   Python, and independent Rust decoders, close the real-byte side of
   F017-Q6K-LANE-ORDER-001, reconcile execution-start/attempt/payload/terminal
   evidence, and stop before dense-prefix execution with ledger 59.
+- [x] T017-199 Audit the DPREFIX-REAL-1 authorization package checkpoint-free,
+  independently regenerate its 40-tensor inventory and exact 38-entry proposed
+  read partition, and fail closed without creating an execution config,
+  authorization binding, or attempt when the accepted Q4_K/Q6_K evidence
+  exposes only hash/byte-count descriptors rather than resolvable immutable
+  private-package artifacts; leave the real-payload ledger at 59.
