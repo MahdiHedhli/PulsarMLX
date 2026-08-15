@@ -30,13 +30,8 @@ def sha256(path: Path) -> str:
 class Q4KNotExecutedPreflightTests(unittest.TestCase):
     def test_authority_is_fail_closed_and_evidence_matches(self):
         evidence, attempt, config, auth = map(load, (EVIDENCE, ATTEMPT, CONFIG, AUTH))
-        authorized_attempts = [
-            item for item in attempt["attempts"]
-            if item.get("attempt_id") == "Q4K-REAL-1"
-            and item.get("authorized") is True
-            and item.get("consumed") is False
-        ]
-        self.assertEqual([], authorized_attempts)
+        self.assertEqual([], evidence["failed_preflight"]["observed"]["attempts"])
+        self.assertEqual("EMPTY_PREPARED_LEDGER", evidence["failed_preflight"]["observed"]["attempt_ledger_status"])
         self.assertFalse(config["execution_authorized"])
         self.assertFalse(auth["execution_authorized"])
         self.assertEqual("Q4_K_NOT_EXECUTED", evidence["verdict"])
@@ -51,9 +46,10 @@ class Q4KNotExecutedPreflightTests(unittest.TestCase):
         self.assertEqual(evidence["authorization_binding_sha256"], sha256(AUTH))
 
     def test_operator_text_cannot_bypass_unpopulated_attempt_ledger(self):
-        attempt, config, auth = map(load, (ATTEMPT, CONFIG, AUTH))
+        evidence, config, auth = map(load, (EVIDENCE, CONFIG, AUTH))
         operator_instruction_present = True
-        machine_authorized = bool(attempt["attempts"]) and config["execution_authorized"] and auth["execution_authorized"]
+        historical_attempts = evidence["failed_preflight"]["observed"]["attempts"]
+        machine_authorized = bool(historical_attempts) and config["execution_authorized"] and auth["execution_authorized"]
         self.assertTrue(operator_instruction_present)
         self.assertFalse(machine_authorized)
 

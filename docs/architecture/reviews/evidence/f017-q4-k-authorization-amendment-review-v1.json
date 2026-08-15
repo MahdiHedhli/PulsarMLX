@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.q4-k-authorization-amendment-review",
+  "schema_version": "1.0.0",
+  "reviewed_base_head": "aaf84218b51f9174590c2842c6b76f57cc02158e",
+  "attempt_id": "Q4K-REAL-1",
+  "artifacts": {
+    "authorization_amendment_sha256": "62bb1f429fc7c1b0acc2ed7cc88391491758a9e09f62d5745fc991c67e0e502c",
+    "execution_config_v2_sha256": "fddffb9359b2cac545afe969d90211f77ca5ef2547057949f75db118522d22da",
+    "authorization_binding_v2_sha256": "0a58ca7b1ba3b16c29e7f657b29f48cb9a6ffb4d65377d108a0b20df98dfb865",
+    "attempt_ledger_sha256": "52980da66e96905e479458f153a6d7aa6e677b87304a8bd364b118a1087561ef",
+    "validator_sha256": "fd5be7742050b2e9a018c412e9a772e4e9c1015bd2f55b1ef718a194ab1be80f"
+  },
+  "historical_evidence": {
+    "not_executed_sha256": "c29feb1479771bd8353d8382429dca656657f9cb18b51a53a4c1ad4eab9b678b",
+    "review_sha256": "087b1a2fa652fadaa8e35c802030293bb00c7bd1d79c7d365a89cb2149260f59",
+    "unchanged": true
+  },
+  "state": {
+    "authorized": true,
+    "consumed": false,
+    "executed": false,
+    "checkpoint_accessed": false,
+    "automatic_retry": false,
+    "automatic_q6_continuation": false,
+    "automatic_dense_prefix_continuation": false,
+    "ledger": 57
+  },
+  "semantic_drift": {
+    "target": false,
+    "format_contract": false,
+    "decoder_a": false,
+    "decoder_b": false,
+    "decoder_c": false,
+    "access_budget": false,
+    "evidence_schema": false,
+    "dense_prefix": false,
+    "q6_k": false,
+    "routing_v3": false
+  },
+  "canonical_preflight": "READY_TO_EXECUTE_Q4_K_REAL_BYTE_QUALIFICATION",
+  "real_checkpoint_access": 0,
+  "internal_review_verdict": "GO FOR Q4_K AUTHORIZATION AMENDMENT ADVERSARIAL REVIEW"
+}

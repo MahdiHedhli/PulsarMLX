@@ -1,0 +1,67 @@
+{
+  "schema": "pulsarmlx.f017.q4-k-authorization-state-amendment",
+  "schema_version": "1.0.0",
+  "status": "AUTHORIZED_UNCONSUMED_NOT_EXECUTED",
+  "authorization_head": "aaf84218b51f9174590c2842c6b76f57cc02158e",
+  "attempt_id": "Q4K-REAL-1",
+  "state_transition": {
+    "from": "PREPARED_UNAUTHORIZED_UNCONSUMED",
+    "to": "AUTHORIZED_UNCONSUMED",
+    "attempt_consumed": false,
+    "executed": false,
+    "checkpoint_accessed": false
+  },
+  "predecessor_controls": {
+    "execution_config_path": "docs/architecture/reviews/evidence/f017-q4-k-execution-config-v1.json",
+    "execution_config_sha256": "bcb3bc2b7fca752d17555fd1c1efe8d77691102f742e66483b8f42a81a35b27b",
+    "authorization_binding_path": "docs/architecture/reviews/evidence/f017-q4-k-authorization-binding-v1.json",
+    "authorization_binding_sha256": "c3eea6693831c7821ae5973890754543b1be8e8f79a85674d3439c176c41ebb9",
+    "handoff_path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-handoff-v1.json",
+    "handoff_sha256": "d4c069b4afba82715d3351b87a459345dd89e25566cba73f42c1fc75c6118e51",
+    "format_contract_sha256": "bbdb296744910dbec5e95496d73df62b1e1b5cae4a9438b41de9962385399305",
+    "evidence_schema_sha256": "c78736cba193e82fb5110cad4e636f909d0ef4c0ece70726d601c6c033835034"
+  },
+  "historical_not_executed_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-not-executed-v1.json",
+    "sha256": "c29feb1479771bd8353d8382429dca656657f9cb18b51a53a4c1ad4eab9b678b",
+    "review_path": "docs/architecture/reviews/f017-q4-k-real-byte-qualification-not-executed-review.md",
+    "review_sha256": "087b1a2fa652fadaa8e35c802030293bb00c7bd1d79c7d365a89cb2149260f59",
+    "preserved": true
+  },
+  "target": {
+    "tensor_name": "token_embd.weight",
+    "shard_ordinal": 2,
+    "offset": 535316320,
+    "packed_length": 535265280,
+    "gguf_shape": [6144, 154880],
+    "quantization": "Q4_K",
+    "catalog_entry_sha256": "5603f0b4638dca0c56a96a58e0e4967cff08bab131dde459529e19f76001b2f0"
+  },
+  "access_budget": {
+    "shard_opens": 1,
+    "positional_reads": 1,
+    "tensor_payloads": 1,
+    "packed_bytes": 535265280,
+    "additional_payloads": 0,
+    "model_compute": 0,
+    "mlx_candidate_dispatches": 0
+  },
+  "ledger": {
+    "before": 57,
+    "expected_after_success": 58,
+    "changed_by_amendment": false
+  },
+  "controls": {
+    "execution_authorized": true,
+    "automatic_retry": false,
+    "automatic_q6_continuation": false,
+    "automatic_dense_prefix_continuation": false,
+    "wildcard_authorization": false,
+    "authorized_gate": "Q4_K_REAL_BYTE_QUALIFICATION",
+    "authorized_attempt": "Q4K-REAL-1",
+    "all_other_real_gates_authorized": false
+  },
+  "preflight_ready_status": "READY_TO_EXECUTE_Q4_K_REAL_BYTE_QUALIFICATION",
+  "real_checkpoint_access": 0,
+  "real_payload_ledger": 57
+}

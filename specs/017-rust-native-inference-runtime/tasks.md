@@ -271,3 +271,8 @@
   remained empty and both control artifacts remained unauthorized, regress that
   operator text cannot bypass machine authorization, preserve the unconsumed
   attempt, and leave the real-payload ledger unchanged at 57.
+- [x] T017-195 Amend only the Q4K-REAL-1 authorization state with versioned,
+  hash-bound execution controls and one append-only authorized/unconsumed attempt
+  record; preserve the prior NOT_EXECUTED evidence and all numerical semantics,
+  prove the canonical preflight READY plus ten fail-closed mutations, and stop
+  for narrow adversarial review with zero real access and ledger 57.

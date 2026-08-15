@@ -1,0 +1,93 @@
+{
+  "schema": "pulsarmlx.f017.q4-k-execution-config",
+  "schema_version": "2.0.0",
+  "status": "AUTHORIZED_UNCONSUMED_NOT_EXECUTED",
+  "execution_authorized": true,
+  "authorization_head": "aaf84218b51f9174590c2842c6b76f57cc02158e",
+  "authorization_amendment_sha256": "62bb1f429fc7c1b0acc2ed7cc88391491758a9e09f62d5745fc991c67e0e502c",
+  "predecessor_execution_config_sha256": "bcb3bc2b7fca752d17555fd1c1efe8d77691102f742e66483b8f42a81a35b27b",
+  "attempt": {
+    "attempt_id": "Q4K-REAL-1",
+    "authorized": true,
+    "consumed": false,
+    "executed": false,
+    "automatic_retry": false,
+    "consumption_boundary": "EXECUTION_STARTED immediately before first positional checkpoint payload read"
+  },
+  "continuation": {
+    "automatic_q6_continuation": false,
+    "automatic_dense_prefix_continuation": false
+  },
+  "access_budget": {
+    "shard_opens": 1,
+    "positional_reads": 1,
+    "tensor_payloads": 1,
+    "packed_bytes": 535265280,
+    "candidate_model_compute": 0,
+    "mlx_candidate_dispatches": 0
+  },
+  "checkpoint_bindings": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "public_catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+  },
+  "target": {
+    "tensor_name": "token_embd.weight",
+    "shard_ordinal": 2,
+    "offset": 535316320,
+    "packed_length": 535265280,
+    "gguf_shape": [6144, 154880],
+    "quantization": "Q4_K",
+    "catalog_entry_sha256": "5603f0b4638dca0c56a96a58e0e4967cff08bab131dde459529e19f76001b2f0"
+  },
+  "decoder_contract": {
+    "contract_id": "GGUF_Q4_K_256x144_F32LE_V1",
+    "format_contract_sha256": "bbdb296744910dbec5e95496d73df62b1e1b5cae4a9438b41de9962385399305",
+    "comparison": "EXACT_LE_F32_A_EQ_B_EQ_C",
+    "format": {
+      "name": "GGUF_Q4_K_256x144_F32LE_V1",
+      "elements_per_block": 256,
+      "bytes_per_block": 144,
+      "canonical_output": "row_major_little_endian_f32_no_padding",
+      "tail_policy": "logical row width must be block aligned",
+      "upstream": {
+        "repository": "https://github.com/ggml-org/llama.cpp",
+        "commit": "a94d563ed801d1da1b8c2432946de07d0231bb3d",
+        "path": "gguf-py/gguf/quants.py",
+        "sha256": "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b",
+        "symbol": "Q4_K.dequantize_blocks"
+      }
+    },
+    "implementations": [
+      {
+        "name": "A_scalar_reference",
+        "language": "Python",
+        "source_file": "scripts/research/ggml_kquants.py",
+        "source_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+        "symbol": "dequantize_row_q4_k",
+        "implementation_sha256": "c7bc01a68d273285f3100ab63d08c77b1afb1f90da2833a123f2f783203605d1",
+        "classification": "INDEPENDENT"
+      },
+      {
+        "name": "B_spec_transcription",
+        "language": "Python",
+        "source_file": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py",
+        "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501",
+        "symbol": "decode_q4_k_spec",
+        "implementation_sha256": "493cc6489a0de4ab931f45060bdd8c41f93541224dca0317b3db15394c91bc02",
+        "classification": "INDEPENDENT"
+      },
+      {
+        "name": "C_rust_matrix_reference",
+        "language": "Rust",
+        "source_file": "crates/f017-runner/src/final_output_qualification.rs",
+        "source_sha256": "c5a3114037a91dee63b5e0c2b7d1d1f2f3b045cb4441c2d5fc6e52b8677ed859",
+        "symbol": "decode_q4_k_matrix",
+        "implementation_sha256": null,
+        "classification": "INDEPENDENT"
+      }
+    ]
+  },
+  "evidence_destination": "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json"
+}

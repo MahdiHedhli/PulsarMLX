@@ -99,7 +99,7 @@ class Q6DefectAndQ4GatePreparationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Q4_K decoder independence"):
             M.validate_q4_authorization_package(mutation)
 
-    def test_q4_config_and_attempt_ledger_remain_non_executable(self):
+    def test_q4_v1_controls_remain_historical_and_amended_ledger_is_unconsumed(self):
         config = M.q4_execution_config()
         binding = M.q4_authorization_binding()
         ledger = M.q4_attempt_ledger()
@@ -109,7 +109,9 @@ class Q6DefectAndQ4GatePreparationTests(unittest.TestCase):
         self.assertEqual(config["access_budget"]["candidate_model_compute"], 0)
         self.assertEqual(binding["review_required"], "GO FOR ONE Q4_K REAL-BYTE QUALIFICATION")
         self.assertTrue(binding["separate_operator_execution_instruction_required"])
-        self.assertEqual(ledger["attempts"], [])
+        self.assertEqual(len(ledger["attempts"]), 1)
+        self.assertTrue(ledger["attempts"][0]["authorized"])
+        self.assertFalse(ledger["attempts"][0]["consumed"])
         self.assertEqual(ledger["real_payload_ledger"], 57)
 
     def test_banked_artifacts_regenerate_and_ledger_remains_57(self):
