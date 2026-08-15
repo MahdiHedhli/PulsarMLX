@@ -15,10 +15,6 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class Q4StateTriadTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        M.generate()
-
     def baseline(self):
         return (
             M.load_json(M.Q4_LEDGER_V3),
@@ -69,17 +65,21 @@ class Q4StateTriadTests(unittest.TestCase):
 
 
 class Q6AuthorizationTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.hashes = M.generate()
-
-    def test_banked_artifacts_regenerate_exactly(self):
-        self.assertEqual(self.hashes, M.generate())
+    def test_banked_pre_execution_package_remains_immutable(self):
+        expected = {
+            M.Q6_HANDOFF: "6430e70980dceeff48515a2f212fddcee495d2fabfc1ecb5c5ad578a64a5d6c2",
+            M.Q6_FORMAT: "9e5d15d87b88b9754a5f4b546a110dc1c0659e2c6f62683e12401b8bffb6ff95",
+            M.Q6_CONFIG: "215af50497a097f4738df8d75a45ebab86450dc2dbe0fcc5e034fe06b1436dd0",
+            M.Q6_BINDING: "8160be060db46ab9c0e74480d9ad5450a4ac8dd28d26397a1d1b7911aea5cd91",
+            M.Q6_ATTEMPT: "cc3bb30b0de8480294ab0e5565f80a36e5533a348f954f8a9e1fc985a7521f07",
+        }
+        for path, digest in expected.items():
+            self.assertEqual(digest, M.file_sha256(path), path)
         M.validate_q6_package()
-        self.assertEqual(
-            "READY_TO_EXECUTE_Q6_K_REAL_BYTE_QUALIFICATION",
-            M.canonical_preflight(check_git=False),
-        )
+
+    def test_consumed_event_cannot_preflight_again(self):
+        with self.assertRaises(M.ContractError):
+            M.canonical_preflight(check_git=False)
 
     def test_target_and_one_payload_sufficiency(self):
         handoff = M.load_json(M.Q6_HANDOFF)

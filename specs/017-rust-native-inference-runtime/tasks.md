@@ -285,3 +285,9 @@
   real-event packet and CI provenance rules; prepare Q6K-REAL-1 born authorized
   and unconsumed with direct corrected-decoder binding, one-payload isolation,
   and zero checkpoint access; stop for independent adversarial review at ledger 58.
+- [x] T017-198 Execute exactly one independently released Q6K-REAL-1 payload,
+  retain the first-observation packed identity, require exact canonical f32
+  equality across the corrected grouped Python, independent index-driven
+  Python, and independent Rust decoders, close the real-byte side of
+  F017-Q6K-LANE-ORDER-001, reconcile execution-start/attempt/payload/terminal
+  evidence, and stop before dense-prefix execution with ledger 59.

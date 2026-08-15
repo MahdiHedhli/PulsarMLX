@@ -164,7 +164,9 @@ def validate_q4_triad_objects(
     require(raw_ledger.get("actual_payloads") == 1, "raw payload count")
     require(event.get("tensor_payload_count") == 1, "payload event count")
     require(event.get("cumulative_tensor_payloads_after_event") == 58, "payload event cumulative count")
-    require(real_ledger.get("cumulative_tensor_payloads") == 58, "real-payload ledger cumulative count")
+    # The Q4 event is immutable at cumulative count 58, while later independently
+    # authorized events may advance the repository-wide cumulative ledger.
+    require(real_ledger.get("cumulative_tensor_payloads", 0) >= 58, "real-payload ledger cumulative count")
     require(event.get("consumed_attempt") is True, "payload event consumed state")
     require(event.get("tensor_symbolic_names") == ["token_embd.weight"], "payload event target")
     require(attempt.get("automatic_retry") is False, "automatic retry")
@@ -523,12 +525,14 @@ def validate_q6_package(root: Path = ROOT) -> None:
     require(attempt["handoff_v3_sha256"] == file_sha256(root / Q6_HANDOFF.relative_to(ROOT)), "Q6 attempt handoff")
     require(attempt["ledger_before"] == 58 and attempt["expected_real_payload_ledger_after"] == 59, "Q6 attempt ledger transition")
     require(attempt["automatic_retry"] is False and attempt["automatic_dense_prefix_continuation"] is False and attempt["automatic_other_gate_continuation"] is False, "Q6 automatic continuation")
-    require(load_json(root / REAL_LEDGER.relative_to(ROOT))["cumulative_tensor_payloads"] == 58, "Q6 preflight real ledger")
+    # Package validation is historical and remains valid after execution.  The
+    # canonical preflight below owns the live, exact-before-value assertion.
 
 
 def canonical_preflight(root: Path = ROOT, check_git: bool = True) -> str:
     require(validate_q4_triad(root) == "Q4_K STATE TRIAD RECONCILED", "Q4 state triad")
     validate_q6_package(root)
+    require(load_json(root / REAL_LEDGER.relative_to(ROOT))["cumulative_tensor_payloads"] == 58, "Q6 preflight real ledger")
     if check_git:
         local = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
         remote = subprocess.check_output(["git", "rev-parse", "origin/feat/017-real-checkpoint-runner"], cwd=root, text=True).strip()

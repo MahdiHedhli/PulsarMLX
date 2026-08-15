@@ -68,6 +68,31 @@
     "schema": {
       "const": "pulsarmlx.f017.q6-k-real-byte-qualification-evidence"
     },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "target": {
+      "required": [
+        "tensor_name",
+        "shard_ordinal",
+        "offset",
+        "packed_length",
+        "logical_shape",
+        "gguf_shape",
+        "quantization",
+        "block_arithmetic"
+      ],
+      "type": "object"
+    },
+    "defect_closure": {
+      "required": [
+        "defect_id",
+        "real_byte_side_closed",
+        "defect_evidence_sha256",
+        "corrected_decoder_sha256"
+      ],
+      "type": "object"
+    },
     "verdict": {
       "enum": [
         "EXACT_REAL_BYTE_QUALIFIED",
@@ -78,11 +103,14 @@
   },
   "required": [
     "schema",
+    "schema_version",
     "attempt",
     "identity",
+    "target",
     "access",
     "decoder_outputs",
     "comparison",
+    "defect_closure",
     "isolation",
     "ledger",
     "verdict"

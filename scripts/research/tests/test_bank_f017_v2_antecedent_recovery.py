@@ -87,8 +87,8 @@ class V2RecoveryBankerTests(unittest.TestCase):
         self.assertEqual(private["artifact_count"], 8)
         self.assertFalse(private["machine_local_paths_published"])
         self.assertTrue(all(not Path(item["symbolic_name"]).is_absolute() for item in private["artifacts"]))
-        self.assertEqual(ledger["cumulative_tensor_payloads"], 58)
-        self.assertEqual(sum(item["tensor_payload_count"] for item in ledger["events"]), 58)
+        self.assertEqual(ledger["cumulative_tensor_payloads"], 59)
+        self.assertEqual(sum(item["tensor_payload_count"] for item in ledger["events"]), 59)
         recovery = [item for item in ledger["events"] if item["attempt"] == "analytical-antecedent-recovery-1"]
         self.assertEqual(len(recovery), 1)
         self.assertEqual(recovery[0]["cumulative_tensor_payloads_after_event"], 57)

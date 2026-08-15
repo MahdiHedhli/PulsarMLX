@@ -1,0 +1,38 @@
+{
+  "schema": "pulsarmlx.f017.q6-k-attempt-ledger",
+  "schema_version": "2.0.0",
+  "append_only": true,
+  "predecessor": {
+    "path": "docs/architecture/reviews/evidence/f017-q6-k-attempt-ledger-v1.json",
+    "sha256": "cc3bb30b0de8480294ab0e5565f80a36e5533a348f954f8a9e1fc985a7521f07"
+  },
+  "attempts": [
+    {
+      "attempt_id": "Q6K-REAL-1",
+      "gate": "Q6_K_REAL_BYTE_QUALIFICATION",
+      "authorized": true,
+      "consumed": true,
+      "executed": true,
+      "checkpoint_accessed": true,
+      "terminal_class": "EXACT_REAL_BYTE_QUALIFIED",
+      "evidence_path": "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json",
+      "evidence_sha256": "375e6b852733e8ac885d53c3814a03deb3a80e639bf61d427f1e49f1aae57086",
+      "packed_sha256": "845b4fd6b5d290506e576ca5099336bae7d28f3ebfcec964ed2136c3ea4a8ede",
+      "execution_start_path": "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-execution-start-v1.json",
+      "execution_start_sha256": "5798bfeede1a9b53946f7d33d1fe4ebb636a51cf42b9aea41333278889c42db5",
+      "execution_config_sha256": "215af50497a097f4738df8d75a45ebab86450dc2dbe0fcc5e034fe06b1436dd0",
+      "authorization_binding_sha256": "8160be060db46ab9c0e74480d9ad5450a4ac8dd28d26397a1d1b7911aea5cd91",
+      "handoff_v3_sha256": "6430e70980dceeff48515a2f212fddcee495d2fabfc1ecb5c5ad578a64a5d6c2",
+      "ledger_before": 58,
+      "ledger_after": 59,
+      "payload_count": 1,
+      "automatic_retry": false,
+      "automatic_dense_prefix_continuation": false,
+      "automatic_other_gate_continuation": false
+    }
+  ],
+  "status": "CONSUMED_EXECUTED_EXACT_REAL_BYTE_QUALIFIED",
+  "next_attempt_id": null,
+  "real_checkpoint_access": 1,
+  "real_payload_ledger": 59
+}

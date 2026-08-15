@@ -74,6 +74,10 @@ def build_ledger(root: Path) -> dict[str, object]:
         "exact real-byte Q4_K decoder-format qualification",
         "docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json",
         ["token_embd.weight"], True, "qualification_only"))
+    e.append(event(root, "Q6_K-REAL-BYTE-QUALIFICATION", "Q6K-REAL-1",
+        "exact real-byte Q6_K decoder-format qualification and F017-Q6K-LANE-ORDER-001 closure",
+        "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json",
+        ["blk.0.ffn_down.weight"], True, "qualification_only"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:

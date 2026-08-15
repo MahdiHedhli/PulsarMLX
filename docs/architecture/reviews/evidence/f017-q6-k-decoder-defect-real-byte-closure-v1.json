@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.q6-k-decoder-defect-real-byte-closure",
+  "schema_version": "1.0.0",
+  "defect_id": "F017-Q6K-LANE-ORDER-001",
+  "status": "REAL_BYTE_SIDE_CLOSED",
+  "historical_defect_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-q6-k-decoder-defect-v1.json",
+    "sha256": "b6bf1f3f1ea751250bdeedd79beacfebd5da09e98a1540b3e866de283286e8ba"
+  },
+  "terminal_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json",
+    "sha256": "375e6b852733e8ac885d53c3814a03deb3a80e639bf61d427f1e49f1aae57086"
+  },
+  "corrected_decoder_sha256": "1d285e58d5b5c55368191cccb881a56dc78560d7e2541e8d94b5217cd382548d",
+  "packed_sha256": "845b4fd6b5d290506e576ca5099336bae7d28f3ebfcec964ed2136c3ea4a8ede",
+  "decoded_sha256_a": "ff26151a7997379c1713b90852fdbfd8301b36d5d89a1c3bb623b9b8f273483a",
+  "decoded_sha256_b": "ff26151a7997379c1713b90852fdbfd8301b36d5d89a1c3bb623b9b8f273483a",
+  "decoded_sha256_c": "ff26151a7997379c1713b90852fdbfd8301b36d5d89a1c3bb623b9b8f273483a",
+  "exact_bitwise_equality": true,
+  "upstream": {
+    "repository": "https://github.com/ggml-org/llama.cpp",
+    "commit": "a94d563ed801d1da1b8c2432946de07d0231bb3d",
+    "tree": "df5ef3120316710a104d702115d446ac30d385f2",
+    "path": "ggml/src/ggml-quants.c",
+    "file_sha256": "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d",
+    "function": "dequantize_row_q6_K"
+  },
+  "historical_defect_artifact_rewritten": false,
+  "automatic_dense_prefix_continuation": false
+}

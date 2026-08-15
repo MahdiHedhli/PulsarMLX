@@ -345,6 +345,7 @@ jobs:
             scripts.research.tests.test_f017_q4_k_authorization_amendment \
             scripts.research.tests.test_f017_q4_k_real_execution \
             scripts.research.tests.test_f017_q4_state_q6_authorization \
+            scripts.research.tests.test_f017_q6_k_real_execution \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream
@@ -355,14 +356,15 @@ jobs:
           .venv/bin/python -m scripts.research.validate_f017_q4_k_repository_evidence \
             --repository-root . \
             --evidence docs/architecture/reviews/evidence/f017-q4-k-real-byte-qualification-attempt-1-v1.json
-          .venv/bin/python -m scripts.research.f017_q4_state_q6_authorization \
-            --preflight --skip-git-state
-          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json"))["cumulative_tensor_payloads"])')" = 58
+          .venv/bin/python -m scripts.research.validate_f017_q6_k_repository_evidence \
+            --repository-root . \
+            --evidence docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json"))["cumulative_tensor_payloads"])')" = 59
           echo 'F017_DECODED_REUSE=MIXED_POLICY_READY_FOR_FUTURE_AUTHORIZATION'
           echo 'F017_DENSE_PREFIX=PREPARED_NOT_AUTHORIZED'
           echo 'F017_Q4_K=EXACT_REAL_BYTE_QUALIFIED'
-          echo 'F017_Q6_K=LINEAGE_CLOSED_PACKAGE_REVALIDATED_REAL_BYTE_UNQUALIFIED'
-          echo 'F017_Q6_K_CONTROL=AUTHORIZED_UNCONSUMED_NOT_EXECUTED'
+          echo 'F017_Q6_K=EXACT_REAL_BYTE_QUALIFIED'
+          echo 'F017_Q6_K_CONTROL=CONSUMED_EXECUTED_EXACT_REAL_BYTE_QUALIFIED'
           echo 'F017_Q4_K_ATTEMPT_STATE=CONSUMED_EXECUTED'
           echo 'F017_Q4_K_REAL_1=EXACT_REAL_BYTE_QUALIFIED_LEDGER_58'
           echo 'F017_COLIBRI_AUDIT=PINNED_ACTIONABLE_NO_SOURCE_COPY'

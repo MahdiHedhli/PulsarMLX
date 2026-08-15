@@ -39,7 +39,7 @@ def validate_repository_evidence(root: Path, evidence_path: Path) -> str:
     require(record["automatic_q6_continuation"] is False, "attempt ledger Q6 continuation")
     require(record["automatic_dense_prefix_continuation"] is False, "attempt ledger dense continuation")
 
-    require(real_ledger["cumulative_tensor_payloads"] == 58, "real ledger cumulative count")
+    require(real_ledger["cumulative_tensor_payloads"] >= 58, "real ledger cumulative count")
     events = [event for event in real_ledger["events"] if event.get("attempt") == EXPECTED["attempt_id"]]
     require(len(events) == 1, "real ledger event count")
     event = events[0]
