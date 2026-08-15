@@ -24,6 +24,7 @@ F016_QUICKSTART = ROOT / "specs/016-glm52-full-execution/quickstart.md"
 GATE_NAME = "F017 M1-F(-1) REAL DENSE-PREFIX LAYER-3 ENTRY-STATE BOUNDARY"
 UPSTREAM_COMMIT = "a94d563ed801d1da1b8c2432946de07d0231bb3d"
 UPSTREAM_SOURCE_SHA256 = "2c927a1b3d9f0920dcf4007fb686e1b0999333e9f65ce43dcc689900c0beae8b"
+UPSTREAM_Q6_C_SOURCE_SHA256 = "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d"
 
 BLOCKS = {"F32": (1, 4), "Q8_0": (32, 34), "Q4_K": (256, 144), "Q5_K": (256, 176), "Q6_K": (256, 210)}
 LAYER_SUFFIXES: dict[str, tuple[tuple[int, ...], tuple[str, ...], str]] = {
@@ -348,8 +349,9 @@ def synthetic_decoder_scaffold() -> dict[str, Any]:
             "decoder_b": {"path": decoder_b_path, "symbol": decoder_b.__name__, "implementation_sha256": implementation_sha256(decoder_b)},
             "decoder_c": {"path": decoder_c, "sha256": file_sha256(ROOT / decoder_c), "status": "SOURCE_BOUND_RUST_REGRESSION"},
             "authoritative_reference": {"repository": "https://github.com/ggml-org/llama.cpp", "commit": UPSTREAM_COMMIT,
-                "path": "gguf-py/gguf/quants.py", "source_sha256": UPSTREAM_SOURCE_SHA256,
-                "symbol": f"{family}.dequantize_blocks"},
+                "path": "ggml/src/ggml-quants.c" if family == "Q6_K" else "gguf-py/gguf/quants.py",
+                "source_sha256": UPSTREAM_Q6_C_SOURCE_SHA256 if family == "Q6_K" else UPSTREAM_SOURCE_SHA256,
+                "symbol": "dequantize_row_q6_K" if family == "Q6_K" else f"{family}.dequantize_blocks"},
             "real_byte_status": "UNQUALIFIED_REAL_GATE",
         }
         if family == "Q6_K":
@@ -452,5 +454,22 @@ def package() -> dict[str, Any]:
             "boundary": boundary_contract(inventory, prompt, decoder, residency, reuse)}
 
 
+def write_banked_artifacts() -> None:
+    """Regenerate the seven canonical checkpoint-free planning artifacts."""
+    generated = package()
+    mapping = {
+        "f017-m1f-minus1-prompt-token-package-v1.json": "prompt",
+        "f017-m1f-minus1-exact-inventory-v1.json": "inventory",
+        "f017-m1f-minus1-decoder-scaffold-v1.json": "decoder",
+        "f017-m1f-minus1-residency-admission-v1.json": "residency",
+        "f017-m1f-minus1-decoder-targets-v1.json": "targets",
+        "f017-m1f-minus1-boundary-v1.json": "boundary",
+        "f017-m1f-minus1-qualification-reuse-plan-v1.json": "reuse",
+    }
+    evidence = ROOT / "docs/architecture/reviews/evidence"
+    for name, key in mapping.items():
+        (evidence / name).write_bytes(canonical_bytes(generated[key]))
+
+
 if __name__ == "__main__":
-    print(json.dumps(package(), sort_keys=True, separators=(",", ":")))
+    write_banked_artifacts()

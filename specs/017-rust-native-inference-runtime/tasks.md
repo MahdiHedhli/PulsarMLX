@@ -260,3 +260,9 @@
   land independent near-tie/dispatch/lifetime regressions, preserve the exact
   40-tensor dense-prefix and Q4_K/Q6_K packages, and stop for adversarial review
   with zero real access and the ledger unchanged at 57.
+- [x] T017-193 Close the checkpoint-free Q6_K decoder-lineage defect with a
+  minimized auditable fixture, pinned upstream provenance, three independent
+  exact-byte implementations, historical-impact evidence and regressions;
+  revalidate the staged Q6_K package, prepare the fail-closed one-payload Q4_K
+  authorization handoff, preserve dense-prefix numerical semantics, and stop
+  before real access with the ledger unchanged at 57.

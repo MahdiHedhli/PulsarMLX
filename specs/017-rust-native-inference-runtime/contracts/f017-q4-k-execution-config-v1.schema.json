@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.q4-k-execution-config-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "execution_authorized", "target", "checkpoint_bindings", "decoder_contract", "access_budget", "attempt", "evidence_destination"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.q4-k-execution-config"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTED"},
+    "execution_authorized": {"const": false},
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tensor_name", "shard_ordinal", "offset", "packed_length", "gguf_shape", "quantization", "catalog_entry_sha256"],
+      "properties": {
+        "tensor_name": {"const": "token_embd.weight"},
+        "shard_ordinal": {"const": 2},
+        "offset": {"const": 535316320},
+        "packed_length": {"const": 535265280},
+        "gguf_shape": {"const": [6144, 154880]},
+        "quantization": {"const": "Q4_K"},
+        "catalog_entry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "checkpoint_bindings": {"type": "object", "required": ["checkpoint_set_sha256", "catalog_sha256", "tensor_map_sha256"]},
+    "decoder_contract": {"type": "object", "required": ["contract_id", "implementations", "comparison"]},
+    "access_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shard_opens", "positional_reads", "tensor_payloads", "candidate_model_compute", "mlx_candidate_dispatches"],
+      "properties": {
+        "shard_opens": {"const": 1},
+        "positional_reads": {"const": 1},
+        "tensor_payloads": {"const": 1},
+        "candidate_model_compute": {"const": 0},
+        "mlx_candidate_dispatches": {"const": 0}
+      }
+    },
+    "attempt": {"type": "object", "required": ["attempt_id", "consumed", "automatic_retry", "consumption_boundary"]},
+    "evidence_destination": {"type": "string", "pattern": "^docs/architecture/reviews/evidence/"}
+  }
+}

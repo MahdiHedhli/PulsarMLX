@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.q6-k-qualification-handoff",
+  "schema_version": "2.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTED",
+  "predecessor": "specs/017-rust-native-inference-runtime/contracts/f017-q6-k-qualification-handoff-template-v1.json",
+  "defect_evidence": "docs/architecture/reviews/evidence/f017-q6-k-decoder-defect-v1.json",
+  "target": {
+    "tensor_name": "blk.0.ffn_down.weight",
+    "shard_ordinal": 2,
+    "offset": 1203482464,
+    "packed_length": 61931520,
+    "gguf_shape": [12288, 6144],
+    "quantization": "Q6_K"
+  },
+  "selection_rule": "largest decoded footprint; then largest packed footprint; then lexicographically lowest tensor name",
+  "future_budget": {"shard_opens": 1, "positional_reads": 1, "tensor_payloads": 1, "candidate_model_compute": 0, "mlx_candidate_dispatches": 0},
+  "future_ledger": {"before": 58, "after_success": 59},
+  "acceptance": "exact canonical little-endian f32 A=B=C; no tolerance; no majority vote",
+  "automatic_chaining": false,
+  "execution_authorized": false,
+  "real_checkpoint_access": 0,
+  "real_payload_ledger": 57
+}

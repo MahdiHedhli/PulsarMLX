@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.q4-k-evidence-v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "attempt", "identity", "access", "decoder_outputs", "comparison", "isolation", "ledger", "verdict"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.q4-k-real-byte-qualification-evidence"},
+    "schema_version": {"const": "1.0.0"},
+    "attempt": {"type": "object", "required": ["attempt_id", "consumed", "terminal_class"]},
+    "identity": {"type": "object", "required": ["checkpoint_set_sha256", "tensor_name", "shard_ordinal", "offset", "packed_length", "packed_sha256", "gguf_shape", "format_contract_sha256"]},
+    "access": {"type": "object", "required": ["shard_opens", "positional_reads", "tensor_payloads"]},
+    "decoder_outputs": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "required": ["name", "source_sha256", "decoded_sha256", "element_count", "non_finite_count"]}},
+    "comparison": {"type": "object", "required": ["bitwise_equal", "first_divergence", "signed_zero_policy"]},
+    "isolation": {"type": "object", "required": ["model_compute", "mlx_candidate_dispatches", "additional_payloads"]},
+    "ledger": {"type": "object", "required": ["before", "actual_payloads", "after"]},
+    "verdict": {"enum": ["EXACT_REAL_BYTE_QUALIFIED", "DECODER_TRUTH_UNRESOLVED", "REJECTED"]}
+  }
+}

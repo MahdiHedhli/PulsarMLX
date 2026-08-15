@@ -340,6 +340,7 @@ jobs:
             scripts.research.tests.test_f017_decoded_tensor_reuse_v2 \
             scripts.research.tests.test_f017_colibri_comparative_audit \
             scripts.research.tests.test_f017_m1f_minus1_dense_prefix_prep \
+            scripts.research.tests.test_f017_q6_q4_gate_preparation \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream
@@ -351,7 +352,8 @@ jobs:
           echo 'F017_DECODED_REUSE=MIXED_POLICY_READY_FOR_FUTURE_AUTHORIZATION'
           echo 'F017_DENSE_PREFIX=PREPARED_NOT_AUTHORIZED'
           echo 'F017_Q4_K=PACKAGE_READY_REAL_BYTE_UNQUALIFIED'
-          echo 'F017_Q6_K=PACKAGE_READY_REAL_BYTE_UNQUALIFIED'
+          echo 'F017_Q6_K=LINEAGE_CLOSED_PACKAGE_REVALIDATED_REAL_BYTE_UNQUALIFIED'
+          echo 'F017_Q4_K_AUTHORIZATION=PREPARED_NOT_AUTHORIZED_NOT_EXECUTED'
           echo 'F017_COLIBRI_AUDIT=PINNED_ACTIONABLE_NO_SOURCE_COPY'
           echo 'F017_DECODED_REUSE_USE_CASES=SEPARATE_PACKAGES_REQUIRED'
           test -z "$PULSARMLX_MODEL_GGUF"
