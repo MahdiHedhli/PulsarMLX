@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-synthetic-qualification",
+  "schema_version": "1.0.0",
+  "status": "PASS_CHECKPOINT_FREE_SCAFFOLD_ONLY",
+  "checkpoint_access": 0,
+  "operator_kind": "deterministic_structured_matrix_free_checkpoint_independent",
+  "oracle": "independent_binary64_scalar_denominator_and_axis_reduction",
+  "candidate": "binary32_numpy",
+  "logical_dimensions": {"hidden": 6144, "q_lora": 2048, "q_output": 16384, "kv_lora": 512, "kv_rope": 64, "k_output": 12288, "v_output": 16384, "ffn": 12288, "dense_layers": 3},
+  "input": {"prompt_id": "P-MIN", "token_ids": [9703], "positions": [0], "dsa": "range_fill([0])"},
+  "thresholds_frozen_pre_execution": {"max_abs_error": 0.0009765625, "rmse": 0.000244140625, "cosine_min": 0.9999961853027344},
+  "metrics": {"max_abs_error": 4.7288928151090204e-7, "rmse": 8.430780681223996e-8, "cosine": 0.9999999999999966},
+  "repeat_count": 10,
+  "repeat_hash": "1055fe877f8c2f5be9855e96744e24036835b78822f6c185c4df389eca5d3b48",
+  "repeat_hashes_equal": true,
+  "dispatch": {"synthetic_observed_native_per_repeat": 28, "synthetic_observed_native_total": 280, "future_real_count_frozen": false, "fallback": 0, "reference": 0, "scaffold": 0, "backend_errors": 0},
+  "claim_limits": ["no real decoder qualification", "no real numerical threshold qualification", "no real dispatch budget freeze", "no model execution authorization"]
+}

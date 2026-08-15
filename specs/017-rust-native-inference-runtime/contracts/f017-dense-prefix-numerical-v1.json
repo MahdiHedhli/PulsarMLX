@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-numerical-contract",
+  "schema_version": "1.0.0",
+  "status": "CHECKPOINT_FREE_SYNTHETIC_SCAFFOLD_ONLY",
+  "scope": "P-MIN token 9703, position 0, embedding plus dense layers 0-2 to layer-3 entry",
+  "oracle": "independent Python/NumPy binary64 structured real-shaped path",
+  "candidate": "Python/NumPy binary32 structured real-shaped path",
+  "logical_dimensions": {
+    "hidden": 6144,
+    "q_lora": 2048,
+    "q_output": 16384,
+    "kv_lora": 512,
+    "kv_rope": 64,
+    "k_output": 12288,
+    "v_output": 16384,
+    "ffn": 12288,
+    "dense_layers": 3
+  },
+  "thresholds": {
+    "max_abs_error": 0.0009765625,
+    "rmse": 0.000244140625,
+    "cosine_min": 0.9999961853027344
+  },
+  "threshold_origin": "power-of-two checkpoint-independent scaffold envelopes frozen before the synthetic candidate evaluation",
+  "real_gate_rule": "these scaffold thresholds never qualify real execution; the future real gate must use frozen f017-dense-prefix-real-tier-b-v1 plus independently qualified real-byte decoders",
+  "future_real_contract": "f017-dense-prefix-real-tier-b-v1",
+  "repeat_count": 10,
+  "non_finite": "REJECT",
+  "signed_zero": "RETAIN_DIAGNOSTICALLY",
+  "post_observation_retuning": "FORBIDDEN",
+  "checkpoint_access": 0
+}

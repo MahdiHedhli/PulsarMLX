@@ -247,3 +247,10 @@
   million-sample H=2 planning, complete route-independent M1-F and downstream
   M1-G/P1 scaffolding, derive the exact metadata-only dense-prefix boundary,
   and stop before any new real access with the ledger at 57.
+- [x] T017-191 Prepare the checkpoint-free M1-F(-1) real dense-prefix boundary:
+  reconcile reviewed provenance, freeze the P-MIN/token-9703 input, independently
+  derive the exact 40-tensor inventory and budgets, freeze mixed-policy decoded
+  reuse, repair and regress the Q6_K decoder group ordering, prepare Q4_K/Q6_K
+  real-byte gates, bound conservative double-residency admission, qualify the
+  independent synthetic/oracle/config/evidence/retention scaffolds, and stop for
+  adversarial review with zero real access and the ledger unchanged at 57.

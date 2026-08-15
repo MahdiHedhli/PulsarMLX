@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-oracle-package-contract",
+  "schema_version": "1.0.0",
+  "status": "SOURCE_SURFACE_FROZEN_PACKAGE_NOT_CREATED",
+  "implementation": "independent Python/NumPy real decoded-tensor oracle",
+  "source_surface": [
+    {"path": "scripts/research/glm52_dense_primitives.py", "sha256": "7cc93aba3c0b70f64746f08f6da31d961f9cbe7ff3eeff3837dd821aba2a79ae", "role": "embedding/RMSNorm/dense decoded matvec primitives"},
+    {"path": "scripts/research/glm52_mla.py", "sha256": "763136b5f0c62406ed3900f5d526b17dafd9b05bf23ad5c39823e860412f7cb5", "role": "glm52_mla and dense_ffn semantics"},
+    {"path": "scripts/research/glm52_layer.py", "sha256": "7ead143029da3bc519afc853c40a7ad7e9a64066d46cbb5ed779dcac4825226a", "role": "complete dense-layer composition"},
+    {"path": "scripts/research/glm52_tensor_store.py", "sha256": "ff36e169a823d861ba7cf7369a39b5176279acd552866e1fd78c318a1fb91e87", "role": "authorized decoded-tensor binding"}
+  ],
+  "future_package_required": ["source_surface_sha256", "decoded_tensor_set_sha256", "embedding row hash", "per-layer intermediate hashes", "layer-3 entry bytes/hash", "created before candidate context", "read-only private artifact descriptor"],
+  "forbidden": ["Rust FFI", "MLX", "candidate output", "candidate metric", "alternate prompt", "alternate hidden input"],
+  "checkpoint_access": 0
+}

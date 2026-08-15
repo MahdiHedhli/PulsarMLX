@@ -1,0 +1,12 @@
+{
+  "schema": "pulsarmlx.f017.m1g-p1-prior-gate-binding",
+  "schema_version": "1.0.0",
+  "status": "CHECKPOINT_FREE_SCAFFOLD_READY_NOT_AUTHORIZED",
+  "checkpoint_access": 0,
+  "ledger": 57,
+  "m1_g": {"requires": ["accepted M1-F complete-layer evidence", "immutable final-hidden input", "qualified final-norm decoder", "qualified output-head decoder", "exact output-head residency and payload budget", "R11-derived logits/top-k numerical contract", "typed authorization and fresh attempt"], "executes": "final norm plus output head plus logits/top-k boundary", "feature_018_required": false},
+  "t017_141": {"requires": ["M1-A through M1-G accepted", "canonical command fields frozen", "fresh review evidence"], "canonical_command_published": false, "known_fields": {"token_ids": [9703], "n_new": 1, "expected_token_id": 21615, "mode": "production-mlx-tier-b", "policy": "golden-strict"}},
+  "m1_h": {"requires": ["T017-141 closed", "fresh independent review", "one-P1 authorization"], "executes_model": false},
+  "p1": {"authorized": false, "executed": false, "blocked_by": ["representative route", "M1-F", "M1-G", "T017-141", "M1-H"]},
+  "retention": {"m1_g": ["full logits or retained top-N window", "top1/top2 margin", "token ranking", "tie-sensitive decode state"], "p1": ["token-choice margin", "runner-up token margin", "stage summaries for failure localization"]}
+}

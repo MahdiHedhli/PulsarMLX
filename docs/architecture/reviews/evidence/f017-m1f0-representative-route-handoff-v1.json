@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-representative-route-handoff",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "checkpoint_access": 0,
+  "ledger_before_future_access": 57,
+  "source_boundary": "accepted dense-prefix layer-3 entry hidden state",
+  "input_binding": {"prompt_id": "P-MIN", "token_ids": [9703], "positions": [0], "dsa": "range_fill([0])", "accepted_hidden_retention_manifest_required": true, "alternate_prompt_or_hidden_substitution": "FAIL_CLOSED"},
+  "m1f0_scope": "accepted 12-payload attention/router-only route discovery",
+  "routing_contract": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85",
+  "qualification": {"exact_membership": true, "membership_h2_required": true, "id_keyed_weight_qualification_required": true, "rank_order_diagnostic_only": true, "full_analytical_retention_required": true},
+  "phase_separation": {"dense_prefix_and_route_share_authorization": false, "route_and_m1_f_share_authorization": false, "m1_f_authorized": false},
+  "next_real_access": "separately reviewed representative M1-F0 authorization only"
+}

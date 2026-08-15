@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-real-tier-b-contract",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_CHECKPOINT_FREE_PREOBSERVATION_NOT_AUTHORIZED",
+  "scope": "P-MIN token 9703 embedding plus complete dense layers 0-2 to retained layer-3 entry state",
+  "inherited_contracts": ["f017-production-r9-tier-b-v2", "f017-production-r10-tier-b-v2"],
+  "derivation": "three sequential R10 complete-layer final envelopes composed by triangle inequality; thresholds are independent of future candidate output",
+  "per_layer": {"max_absolute_error": 0.0625, "rmse": 0.03125, "cosine_similarity_minimum": 0.999},
+  "layer_entry_cumulative": [
+    {"after_layer": 0, "max_absolute_error": 0.0625, "rmse": 0.03125, "cosine_similarity_minimum": 0.999},
+    {"after_layer": 1, "max_absolute_error": 0.125, "rmse": 0.0625, "cosine_similarity_minimum": 0.998},
+    {"after_layer": 2, "max_absolute_error": 0.1875, "rmse": 0.09375, "cosine_similarity_minimum": 0.997}
+  ],
+  "intermediate_attention_each_layer": {"max_absolute_error": 0.0078125, "rmse": 0.00390625, "cosine_similarity_minimum": 0.99999},
+  "exact_requirements": {"token_ids": [9703], "positions": [0], "dsa": "range_fill([0])", "deterministic_candidate_bits": true, "repeat_count": 10, "unexpected_fallback_count": 0, "backend_error_count": 0, "explicit_reference_dispatch_count": 0, "in_flight_after_teardown": 0},
+  "oracle_requirement": "source-hashed independent Python/NumPy embedding + glm52_mla + dense_ffn oracle package completed from the frozen decoded tensor set before candidate creation; no Rust, MLX, or candidate metrics",
+  "classification": {"pass": "NUMERICALLY_QUALIFIED_LAYER3_ENTRY", "failure": "NUMERICALLY_FAILED"},
+  "post_observation_retuning": "FORBIDDEN",
+  "synthetic_scaffold_contract_is_separate": true,
+  "checkpoint_access": 0
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "pulsarmlx.f017.accelerated-post-v3-provenance-amendment",
+  "schema_version": "1.0.0",
+  "status": "IMMUTABLE_PROVENANCE_AMENDMENT",
+  "checkpoint_access": 0,
+  "real_payload_ledger": 57,
+  "reviewed_package": {
+    "actual_reviewed_head": "8031020f2e9480712ff185a53b2e565d25dc6a24",
+    "actual_reviewed_tree_oid": "51cfe061eb18a71cc2668a0e7d6eb8f3d7d37b88",
+    "remote_branch": "origin/feat/017-real-checkpoint-runner",
+    "remote_contains_exact_head": true,
+    "report_path": "docs/architecture/reviews/f017-accelerated-post-v3-checkpoint-free-report.md",
+    "report_sha256": "3fb9b4a8e63953f2c5f53c732056d99de14a70271178b0cc572cf2ce2ab2e75d"
+  },
+  "stale_unpublished_identity": {
+    "copied_abbreviation": "dd52d38",
+    "full_commit_resolved": false,
+    "git_object_present": false,
+    "published_on_reviewed_remote": false,
+    "authority": "NONE",
+    "disposition": "STALE_UNPUBLISHED_REFERENCE_REJECTED; do not use for source, evidence, or CI binding"
+  },
+  "ci_binding": {
+    "run": 31851111967,
+    "head_sha": "8031020f2e9480712ff185a53b2e565d25dc6a24",
+    "conclusion": "success",
+    "apple_jobs_success": 2,
+    "binding_source": "independent reviewer accepted run-to-head record and root verification with explicit repository selection",
+    "local_gh_verification": "VERIFIED_BY_ROOT_WITH_EXPLICIT_REPOSITORY_SELECTION: run success at exact head; both Apple jobs success",
+    "replacement_binding_inferred": false
+  },
+  "reviewer_heuristic_disposition": {
+    "central_percent_range_intuition": "CONFIRMED",
+    "eight_fixture_viability_conclusion": "REFUTED",
+    "frozen_decision_rule_result": "EXISTING_FROZEN_LADDER_NOT_VIABLE",
+    "retained_pair_ratio_transfer": "PLANNING_SENSITIVITY_ONLY",
+    "conservative_independent_envelope": "ONLY_RIGOROUS_ARBITRARY_PAIR_SCENARIO",
+    "negative_family_decision": "robust in the planning model because even the deliberately optimistic Wilson upper P(any of 8) remains below the pre-frozen 0.90 threshold",
+    "real_route_qualification": false,
+    "real_access_authorization": false,
+    "correlated_hidden_to_router_mapping_claimed": false
+  },
+  "numerical_immutability": {
+    "frozen_ladder_estimate_sha256": "b6263ceff064e0a6f7cd16c6ada8178813501361610e862e0704935441a2e727",
+    "correlated_family_estimate_sha256": "390f256b2bd610c1487fe95230ba3c10dfb182ee56b706f1e5ba68497b1d1851",
+    "estimator_numerics_changed": false,
+    "thresholds_changed": false,
+    "historical_evidence_rewritten": false
+  },
+  "purpose": "repair reviewed-head/CI provenance and explicitly constrain the reviewer heuristic without altering any estimator result",
+  "real_execution_authorized": false
+}

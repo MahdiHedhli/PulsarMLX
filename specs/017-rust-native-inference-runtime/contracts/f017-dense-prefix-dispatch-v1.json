@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-dispatch-contract",
+  "schema_version": "1.0.0",
+  "status": "CHECKPOINT_FREE_RECONCILIATION_FORMULA_READY",
+  "per_repeat": {
+    "embedding": 1,
+    "layers": 3,
+    "native_projection_stages_per_layer": [
+      "attn_q_a", "attn_q_b", "attn_kv_a_mqa", "attn_k_b", "attn_v_b",
+      "attn_output", "ffn_gate", "ffn_up", "ffn_down"
+    ],
+    "synthetic_observed_native_projection_dispatches": 28,
+    "cpu_semantics_per_layer": ["normalization", "range_fill", "softmax", "silu", "residual"]
+  },
+  "qualification_repeats": 10,
+  "synthetic_backend_label": "SYNTHETIC_NATIVE_EVENT",
+  "synthetic_observed_native_dispatches": 280,
+  "future_real_dispatch_count_frozen": false,
+  "future_real_rule": "derive from the authorized execution event manifest and require exact conceptual/native reconciliation",
+  "required_zero": ["fallback", "reference", "scaffold", "backend_errors"],
+  "warning": "28/280 are synthetic scaffold observations, not a frozen future real dispatch budget or authorization",
+  "checkpoint_access": 0
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/f017-layer3-entry-hidden-retention-v1.schema.json",
+  "title": "F017 layer-3 entry hidden-state retention manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "source", "hidden", "state", "immutability", "checkpoint_access"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.layer3-entry-hidden-retention"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"enum": ["SYNTHETIC", "REAL_ACCEPTED"]},
+    "source": {"type": "object"},
+    "hidden": {"type": "object", "additionalProperties": false, "required": ["dtype", "shape", "element_count", "sha256"], "properties": {"dtype": {"const": "little_endian_f32"}, "shape": {"const": [6144]}, "element_count": {"const": 6144}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}},
+    "state": {"type": "object"},
+    "immutability": {"type": "object", "additionalProperties": false, "required": ["read_only", "absolute_path_public"], "properties": {"read_only": {"const": true}, "absolute_path_public": {"const": false}}},
+    "checkpoint_access": {"type": "integer", "minimum": 0}
+  }
+}

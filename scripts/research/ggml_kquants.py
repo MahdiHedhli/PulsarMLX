@@ -227,8 +227,8 @@ def _q6_from_ggml_source(ql: bytes, qh: bytes, scales: tuple, d: float) -> list[
         for l in range(32):
             is_ = l // 16
             q1 = ((ql[ql_off + l] & 0xF) | (((qh[qh_off + l] >> 0) & 3) << 4)) - 32
-            q2 = ((ql[ql_off + l] >> 4) | (((qh[qh_off + l] >> 2) & 3) << 4)) - 32
-            q3 = ((ql[ql_off + 32 + l] & 0xF) | (((qh[qh_off + l] >> 4) & 3) << 4)) - 32
+            q2 = ((ql[ql_off + 32 + l] & 0xF) | (((qh[qh_off + l] >> 2) & 3) << 4)) - 32
+            q3 = ((ql[ql_off + l] >> 4) | (((qh[qh_off + l] >> 4) & 3) << 4)) - 32
             q4 = ((ql[ql_off + 32 + l] >> 4) | (((qh[qh_off + l] >> 6) & 3) << 4)) - 32
             out[128 * n + l + 0] = d * sc[sc_off + is_ + 0] * q1
             out[128 * n + l + 32] = d * sc[sc_off + is_ + 2] * q2

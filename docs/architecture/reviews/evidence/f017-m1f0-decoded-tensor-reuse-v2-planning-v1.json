@@ -1,0 +1,99 @@
+{
+  "schema": "pulsarmlx.f017.m1f0-decoded-tensor-reuse-planning",
+  "schema_version": "1.0.0",
+  "status": "CHECKPOINT_FREE_DESIGN_COMPLETE_NOT_AUTHORIZED",
+  "checkpoint_access": 0,
+  "real_payload_ledger": 57,
+  "contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f0-decoded-tensor-reuse-v2.json",
+    "sha256": "3a947427cfc285119fe9b8bcc910e26fdde4cdd6599711fe3f6b5df14d95c71c"
+  },
+  "implementation": {
+    "path": "scripts/research/f017_decoded_tensor_reuse_v2.py",
+    "sha256": "bf5a3286cb5eb6d990443890046e00523d38bba25b6c1c2d28e50887b17ef2cb",
+    "test_path": "scripts/research/tests/test_f017_decoded_tensor_reuse_v2.py",
+    "test_sha256": "bd3e348036b0e63b8f7db3a3aa5826c89a44531d7741cecfb56a5cd7f49838b7"
+  },
+  "identity_surface": {
+    "accepted_config_sha256": "649a53630be246af11270f1cad19bdb8a7ccabf06e928febfe6cbc282dd4c7e2",
+    "ledger_sha256": "1dc884c4a9c328bef518a3989e671ff33467f38b48d61405fdc25c160b7a6401",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "tensor_count": 12,
+    "ordered_tensor_identities_directly_bound": true,
+    "decoder_contracts_directly_bound": true
+  },
+  "economics": {
+    "naive_eight_fixture_payload_reads": 96,
+    "reuse_payload_reads": 12,
+    "payload_reads_avoided": 84,
+    "naive_compressed_bytes": 1113743360,
+    "reuse_compressed_bytes": 139217920,
+    "compressed_bytes_avoided": 974525440,
+    "naive_decoded_bytes": 5331443712,
+    "reuse_decoded_bytes": 666430464,
+    "decode_bytes_avoided": 4665013248,
+    "fraction_avoided": 0.875,
+    "qualification": "planning economics only; no real ladder is authorized"
+  },
+  "threat_model_disposition": {
+    "payload_or_manifest_mutation": "FAIL_CLOSED",
+    "checkpoint_catalog_map_substitution": "FAIL_CLOSED",
+    "tensor_reorder_omission_duplicate": "FAIL_CLOSED",
+    "decoder_drift": "FAIL_CLOSED",
+    "symlink_or_path_escape": "FAIL_CLOSED",
+    "relocation_before_execution": "CONTENT_IDENTITY_PRESERVED_ONLY_AFTER_COMPLETE_REVALIDATION",
+    "relocation_after_execution_start": "FAIL_CLOSED",
+    "cross_authorization_reuse": "REQUIRES_NEW_REVIEW",
+    "silent_reread": "FORBIDDEN"
+  },
+  "candidate_oracle_separation": {
+    "review_enum_A4": "MIXED_POLICY",
+    "m1f0_oracle_ladder": "DESIGN_ELIGIBLE_AFTER_SEPARATE_AUTHORIZATION",
+    "production_candidate_shared_alias": "FORBIDDEN",
+    "future_m1f_candidate": "SEPARATE_COPY_OR_IMPORT_IDENTITY_REQUIRED",
+    "dense_prefix_future_consumer": "SOURCE_CANONICAL_BYTES_MAY_BE_COPIED_OR_IMPORTED_UNDER_A_SEPARATE_HASH_AND_LIFECYCLE; SHARED_WRITABLE_ALIAS_FORBIDDEN",
+    "current_disposition": "ORACLE_ONLY_REUSE_DESIGN_GO; CANDIDATE_REUSE_NO_GO"
+  },
+  "conditional_dense_prefix_ledger_planning": {
+    "status": "HYPOTHETICAL_NOT_AUTHORIZED",
+    "ledger_before": 57,
+    "baseline_new_payload_reads": 42,
+    "baseline_ledger_after": 99,
+    "reuse_precondition": "Track2 Q4_K and Q6_K qualification outputs are retained as immutable canonical components with accepted hashes and compatible checkpoint/catalog/map/decoder identities",
+    "reuse_new_payload_reads": 40,
+    "reuse_ledger_after": 97,
+    "consumer_transfer": "SEPARATELY_HASHED_COPY_OR_IMPORT_WITH_INDEPENDENT_LIFECYCLE",
+    "shared_writable_alias": "FORBIDDEN",
+    "disposition": "57_TO_97_CONDITIONAL_IF_PRECONDITION_ACCEPTED; OTHERWISE_57_TO_99",
+    "authorization_issued": false
+  },
+  "review_dispositions": {
+    "A4": "MIXED_POLICY",
+    "A4_definition": "oracle-only family shares immutable canonical source; candidate uses separately hashed copy/import; qualification decoders never reuse decoded truth",
+    "A7": "DECODED_REUSE_READY_FOR_FUTURE_AUTHORIZATION"
+  },
+  "use_case_matrix_complete": true,
+  "synthetic_tests": {
+    "count": 9,
+    "passed": 9,
+    "relocation": "PASS",
+    "mutation": "PASS_REJECTED",
+    "symlink": "PASS_REJECTED",
+    "path_escape": "PASS_REJECTED",
+    "candidate_alias": "PASS_REJECTED",
+    "authority_mutation": "PASS_REJECTED",
+    "real_payloads_used": 0
+  },
+  "future_real_access_budget_if_separately_authorized": {
+    "shard_opens": 1,
+    "positional_reads": 12,
+    "tensor_payloads": 12,
+    "compressed_bytes": 139217920,
+    "decoded_bytes": 666430464,
+    "automatic_fallback_reads": 0
+  },
+  "real_execution_authorized": false,
+  "frozen_ladder_executed": false
+}

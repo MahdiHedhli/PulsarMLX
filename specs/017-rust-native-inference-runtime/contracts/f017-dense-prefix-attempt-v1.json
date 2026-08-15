@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-attempt-semantics",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_PREPARATION_SEMANTICS",
+  "preflight_failure": "UNCONSUMED",
+  "admission_failure": "UNCONSUMED",
+  "consumption_boundary": "EXECUTION_STARTED_AFTER_AUTHORIZATION_CONFIG_PREFLIGHT_AND_HOST_ADMISSION",
+  "after_consumption": "NO_RETRY_UNDER_SAME_ATTEMPT",
+  "dense_prefix_and_m1f0_share_attempt": false,
+  "dense_prefix_and_m1f_share_attempt": false,
+  "current_attempt": null,
+  "authorized": false,
+  "consumed": false,
+  "checkpoint_access": 0
+}

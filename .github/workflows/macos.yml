@@ -333,6 +333,25 @@ jobs:
           echo 'F017_ROUTING_V3_FALSE_PASS_NEGATIVES=PASS'
           echo 'F017_ROUTING_V3_FIXTURE1_ZERO_READ_RETROSPECTIVE=PASS'
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify checkpoint-free F017 dense-prefix and decoded-reuse preparation
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          uv run --frozen python -m unittest -v \
+            scripts.research.tests.test_f017_decoded_tensor_reuse_v2 \
+            scripts.research.tests.test_f017_m1f_minus1_dense_prefix_prep \
+            scripts.research.tests.test_f017_dense_prefix_preparation \
+            scripts.research.tests.test_f017_m1f_route_independent_prep \
+            scripts.research.tests.test_f017_post_m1f_downstream
+          cargo test -p quant --test q6_k_reference -- --nocapture
+          cargo test -p f017-runner q4_k_decoder -- --nocapture
+          .venv/bin/python scripts/research/validate_f017_real_payload_ledger.py \
+            --check docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json"))["cumulative_tensor_payloads"])')" = 57
+          echo 'F017_DECODED_REUSE=MIXED_POLICY_READY_FOR_FUTURE_AUTHORIZATION'
+          echo 'F017_DENSE_PREFIX=PREPARED_NOT_AUTHORIZED'
+          echo 'F017_Q4_K=PACKAGE_READY_REAL_BYTE_UNQUALIFIED'
+          echo 'F017_Q6_K=PACKAGE_READY_REAL_BYTE_UNQUALIFIED'
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \

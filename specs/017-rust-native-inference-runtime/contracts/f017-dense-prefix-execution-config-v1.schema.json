@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/f017-dense-prefix-execution-config-v1.schema.json",
+  "title": "F017 dense-prefix layer-3 entry-state execution config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "scope", "identity", "prior_evidence", "input", "tensor_inventory", "decoder_contracts", "numerical_contract", "dispatch_contract", "hidden_retention", "access_budget", "attempt", "oracle_package", "evidence_destination"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.dense-prefix-execution-config"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"enum": ["PREPARED_NOT_AUTHORIZED", "AUTHORIZED_NOT_EXECUTED"]},
+    "scope": {"const": "EMBEDDING_PLUS_DENSE_LAYERS_0_2_TO_LAYER3_ENTRY"},
+    "identity": {"type": "object", "additionalProperties": false, "required": ["tooling_sha", "tooling_tree", "authorization_head", "environment_sha256"], "properties": {"tooling_sha": {"type": ["string", "null"]}, "tooling_tree": {"type": ["string", "null"]}, "authorization_head": {"type": ["string", "null"]}, "environment_sha256": {"$ref": "#/$defs/nullableSha"}}},
+    "prior_evidence": {"type": "object", "additionalProperties": {"$ref": "#/$defs/sha"}},
+    "input": {"type": "object", "additionalProperties": false, "required": ["prompt_id", "token_ids", "positions", "dsa"], "properties": {"prompt_id": {"const": "P-MIN"}, "token_ids": {"const": [9703]}, "positions": {"const": [0]}, "dsa": {"const": "range_fill([0])"}}},
+    "tensor_inventory": {"type": "object", "additionalProperties": false, "required": ["sha256", "tensor_count"], "properties": {"sha256": {"$ref": "#/$defs/nullableSha"}, "tensor_count": {"const": 40}}},
+    "decoder_contracts": {"type": "object", "additionalProperties": {"$ref": "#/$defs/sha"}},
+    "numerical_contract": {"$ref": "#/$defs/nullableSha"},
+    "dispatch_contract": {"$ref": "#/$defs/nullableSha"},
+    "hidden_retention": {"$ref": "#/$defs/nullableSha"},
+    "access_budget": {"type": "object", "additionalProperties": false, "required": ["shard_opens", "positional_reads", "payloads", "compressed_bytes", "decoded_bytes"], "properties": {"shard_opens": {"type": ["integer", "null"], "minimum": 0}, "positional_reads": {"type": ["integer", "null"], "minimum": 0}, "payloads": {"type": ["integer", "null"], "minimum": 0}, "compressed_bytes": {"type": ["integer", "null"], "minimum": 0}, "decoded_bytes": {"type": ["integer", "null"], "minimum": 0}}},
+    "attempt": {"type": "object", "additionalProperties": false, "required": ["number", "authorized", "consumed", "consumption_boundary"], "properties": {"number": {"type": ["integer", "null"], "minimum": 1}, "authorized": {"type": "boolean"}, "consumed": {"const": false}, "consumption_boundary": {"const": "EXECUTION_STARTED"}}},
+    "oracle_package": {"type": "object", "additionalProperties": false, "required": ["package_sha256", "source_surface_sha256", "decoded_tensor_set_sha256", "completed_before_candidate", "rust_or_mlx", "candidate_metrics"], "properties": {"package_sha256": {"$ref": "#/$defs/nullableSha"}, "source_surface_sha256": {"$ref": "#/$defs/nullableSha"}, "decoded_tensor_set_sha256": {"$ref": "#/$defs/nullableSha"}, "completed_before_candidate": {"type": "boolean"}, "rust_or_mlx": {"const": false}, "candidate_metrics": {"const": false}}},
+    "evidence_destination": {"type": "object", "additionalProperties": false, "required": ["symbolic_path", "fresh_required"], "properties": {"symbolic_path": {"type": ["string", "null"]}, "fresh_required": {"const": true}}}
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"const": "AUTHORIZED_NOT_EXECUTED"}}},
+    "then": {
+      "properties": {
+        "identity": {"properties": {"tooling_sha": {"type": "string", "minLength": 40}, "tooling_tree": {"type": "string", "minLength": 40}, "authorization_head": {"type": "string", "minLength": 40}, "environment_sha256": {"$ref": "#/$defs/sha"}}},
+        "tensor_inventory": {"properties": {"sha256": {"$ref": "#/$defs/sha"}}},
+        "decoder_contracts": {"required": ["F32", "Q8_0", "Q5_K", "Q6_K", "Q4_K"], "properties": {"F32": {"$ref": "#/$defs/sha"}, "Q8_0": {"$ref": "#/$defs/sha"}, "Q5_K": {"$ref": "#/$defs/sha"}, "Q6_K": {"$ref": "#/$defs/sha"}, "Q4_K": {"$ref": "#/$defs/sha"}}},
+        "numerical_contract": {"$ref": "#/$defs/sha"},
+        "dispatch_contract": {"$ref": "#/$defs/sha"},
+        "hidden_retention": {"$ref": "#/$defs/sha"},
+        "access_budget": {"properties": {"shard_opens": {"const": 1}, "positional_reads": {"const": 40}, "payloads": {"const": 40}, "compressed_bytes": {"const": 1431263232}, "decoded_bytes": {"const": 8504653824}}},
+        "attempt": {"properties": {"number": {"type": "integer", "minimum": 1}, "authorized": {"const": true}}},
+        "oracle_package": {"properties": {"package_sha256": {"$ref": "#/$defs/sha"}, "source_surface_sha256": {"$ref": "#/$defs/sha"}, "decoded_tensor_set_sha256": {"$ref": "#/$defs/sha"}, "completed_before_candidate": {"const": true}}},
+        "evidence_destination": {"properties": {"symbolic_path": {"type": "string", "pattern": "^docs/architecture/reviews/evidence/"}}}
+      }
+    }
+  }],
+  "$defs": {"sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "nullableSha": {"anyOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]}}
+}

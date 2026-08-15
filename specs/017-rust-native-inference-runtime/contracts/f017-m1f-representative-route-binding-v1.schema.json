@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/f017-m1f-representative-route-binding-v1.schema.json",
+  "title": "F017 representative M1-F route binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "dense_prefix_evidence_sha256", "layer3_entry_sha256", "m1f0_route_artifact_sha256", "routing_v3_sha256", "membership_h2_pass", "atomic_pairs_sha256", "analytical_retention_complete", "m1_f_authorized"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.m1f-representative-route-binding"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"enum": ["PREPARED_NOT_AUTHORIZED", "ACCEPTED_REPRESENTATIVE_ROUTE"]},
+    "dense_prefix_evidence_sha256": {"$ref": "#/$defs/nullableSha"},
+    "layer3_entry_sha256": {"$ref": "#/$defs/nullableSha"},
+    "m1f0_route_artifact_sha256": {"$ref": "#/$defs/nullableSha"},
+    "routing_v3_sha256": {"const": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85"},
+    "membership_h2_pass": {"type": "boolean"},
+    "atomic_pairs_sha256": {"$ref": "#/$defs/nullableSha"},
+    "analytical_retention_complete": {"type": "boolean"},
+    "m1_f_authorized": {"const": false}
+  },
+  "$defs": {"sha": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "nullableSha": {"anyOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]}}
+}

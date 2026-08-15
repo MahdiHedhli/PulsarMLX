@@ -1,0 +1,11 @@
+{
+  "schema": "pulsarmlx.f017.m1f-representative-route-integration",
+  "schema_version": "1.0.0",
+  "status": "ROUTE_INDEPENDENT_BINDING_READY_NOT_AUTHORIZED",
+  "checkpoint_access": 0,
+  "ledger": 57,
+  "mandatory_future_bindings": ["accepted dense-prefix evidence SHA-256", "accepted layer-3 hidden-retention manifest SHA-256", "accepted representative M1-F0 route artifact SHA-256", "routing-contract v3 SHA-256", "ID-sorted atomic routing-pair SHA-256", "membership H=2 PASS", "ID-keyed routing-weight qualification PASS", "complete analytical retention PASS"],
+  "fail_closed": ["alternate prompt", "alternate hidden state", "route recomputation during M1-F preparation", "parallel ID/weight arrays without atomic association", "missing decoder contract", "unqualified new real-gate quantization", "loose command-line override"],
+  "phase_state": {"representative_route_resolved": false, "m1_f_prepared": false, "m1_f_authorized": false, "m1_f_executed": false},
+  "schema_binding": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-representative-route-binding-v1.schema.json"
+}

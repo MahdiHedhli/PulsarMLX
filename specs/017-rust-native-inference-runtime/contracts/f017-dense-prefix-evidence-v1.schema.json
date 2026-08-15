@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MahdiHedhli/PulsarMLX/specs/017-rust-native-inference-runtime/contracts/f017-dense-prefix-evidence-v1.schema.json",
+  "title": "F017 dense-prefix layer-3 entry-state evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "identity", "input", "payload_accounting", "decoder_identities", "stage_hashes", "layer3_entry", "numerical", "repeat_integrity", "dispatch", "lifecycle", "attempt", "result"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.dense-prefix-evidence"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"enum": ["PASS", "FAIL", "INCOMPLETE"]},
+    "identity": {"type": "object"},
+    "input": {"type": "object"},
+    "payload_accounting": {"type": "object"},
+    "decoder_identities": {"type": "object"},
+    "stage_hashes": {"type": "array", "minItems": 3, "maxItems": 3},
+    "layer3_entry": {"type": "object"},
+    "numerical": {"type": "object"},
+    "repeat_integrity": {"type": "object"},
+    "dispatch": {"type": "object"},
+    "lifecycle": {"type": "object"},
+    "attempt": {"type": "object"},
+    "result": {"type": "object"}
+  }
+}
