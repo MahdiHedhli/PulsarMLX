@@ -414,6 +414,19 @@ jobs:
           test "$(jq -r .dispatch.fallback "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 0
           test "$(jq -r .dispatch.backend_errors "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 0
           test "$(jq -r .retained_state.count "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 6144
+          mkdir -p .pulsarmlx-local/oracle-build
+          cp "$CI_CANDIDATE" .pulsarmlx-local/oracle-build/f017-dense-prefix-candidate-v2
+          .venv/bin/python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          from scripts.research import f017_dprefix_real_event_orchestrator as orchestrator
+          with tempfile.TemporaryDirectory() as raw:
+              result = orchestrator.run_checkpoint_free_rehearsal(Path(raw))
+          assert result["result"] == "FULL_REAL_EVENT_ORCHESTRATION_INSTANTIABLE_CHECKPOINT_FREE"
+          assert result["checkpoint_access"] == 0
+          assert result["real_payload_ledger"] == 59
+          assert result["candidate"]["repeats"] == 10
+          PY
           DPREFIX_SYNTHETIC="$RUNNER_TEMP/f017-dprefix-synthetic.json" .venv/bin/python - <<'PY'
           import ast
           import json
