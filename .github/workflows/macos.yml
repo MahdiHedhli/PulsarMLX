@@ -350,6 +350,7 @@ jobs:
             scripts.research.tests.test_f017_dense_prefix_40_read_authorization \
             scripts.research.tests.test_f017_dprefix_infrastructure_closure \
             scripts.research.tests.test_f017_dprefix_real_numerical_surface \
+            scripts.research.tests.test_f017_dprefix_numerical_surface_closure \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream
@@ -368,6 +369,8 @@ jobs:
           .venv/bin/python -m scripts.research.f017_dense_prefix_40_read_authorization \
             --preflight --skip-git
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-infrastructure-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-numerical-surface-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-full-tier-b-synthetic-rehearsal-v1.json"))["result"])')" = FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE
           echo 'F017_DENSE_PREFIX=AUTHORIZED_UNCONSUMED_NOT_EXECUTED_PENDING_INDEPENDENT_REVIEW'
           echo 'F017_Q4_K=EXACT_REAL_BYTE_QUALIFIED'
           echo 'F017_Q6_K=EXACT_REAL_BYTE_QUALIFIED'
@@ -389,15 +392,38 @@ jobs:
           test "$(jq -r .dispatch.fallback "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 0
           test "$(jq -r .dispatch.backend_errors "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 0
           test "$(jq -r .retained_state.count "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 6144
-          .venv/bin/python - <<'PY'
+          DPREFIX_SYNTHETIC="$RUNNER_TEMP/f017-dprefix-synthetic.json" .venv/bin/python - <<'PY'
           import ast
+          import json
+          import os
           from pathlib import Path
+          from scripts.research.f017_dprefix_numerical_surface_closure import (
+              compare_surface_packages,
+              numerical_surface_manifest,
+              validate_terminal_numerical_surfaces,
+          )
+          from scripts.research.f017_dprefix_oracle_runtime import (
+              canonical_f32,
+              synthetic_actual_binary_oracle_surfaces,
+          )
           tree = ast.parse(Path("scripts/research/f017_dprefix_oracle_runtime.py").read_text())
           imports = []
           for node in ast.walk(tree):
               if isinstance(node, ast.Import): imports.extend(alias.name for alias in node.names)
               elif isinstance(node, ast.ImportFrom): imports.append(node.module or "")
           assert not any(name.startswith(("mlx", "ctypes", "cffi", "f017_runner")) for name in imports)
+          evidence_path = Path(os.environ["DPREFIX_SYNTHETIC"])
+          evidence = json.loads(evidence_path.read_text())
+          candidate = {}
+          for descriptor in evidence["numerical_surface_package"]:
+              payload = (evidence_path.parent / descriptor["symbolic_relative_path"]).read_bytes()
+              candidate[descriptor["semantic_id"]] = payload
+          oracle_values = synthetic_actual_binary_oracle_surfaces()
+          oracle = {name: canonical_f32(oracle_values[name]) for name in candidate}
+          result = compare_surface_packages(candidate, oracle, numerical_surface_manifest())
+          validate_terminal_numerical_surfaces(result["surfaces"])
+          assert result["overall_pass"]
+          assert len(result["surfaces"]) == 8
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

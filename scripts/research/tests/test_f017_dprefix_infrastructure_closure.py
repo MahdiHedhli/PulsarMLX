@@ -16,9 +16,17 @@ class InfrastructureClosureTests(unittest.TestCase):
         cls.values = M.committed_artifacts()
         M.validate(cls.values)
 
-    def test_source_manifests_bind_current_sources_exactly(self) -> None:
+    def test_predecessor_source_manifests_remain_immutable(self) -> None:
         for suffix in ("candidate-source-manifest-v1.json", "oracle-source-manifest-v1.json"):
             manifest = next(v for p, v in self.values.items() if p.name.endswith(suffix))
+            banked = next(p for p in self.values if p.name.endswith(suffix))
+            self.assertEqual(M.canonical_sha(manifest), M.sha(banked))
+
+    def test_successor_source_manifests_bind_current_sources_exactly(self) -> None:
+        evidence = M.EVIDENCE
+        for suffix in ("candidate-source-manifest-v2.json", "oracle-source-manifest-v2.json"):
+            path = next(evidence.glob(f"*{suffix}"))
+            manifest = json.loads(path.read_text())
             for entry in manifest["files"]:
                 self.assertEqual(M.sha(M.ROOT / entry["path"]), entry["sha256"], entry["path"])
 

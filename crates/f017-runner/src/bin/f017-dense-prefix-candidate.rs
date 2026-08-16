@@ -75,10 +75,25 @@ struct SyntheticEvidence {
     deterministic: bool,
     hidden_width: usize,
     stage_hashes: Vec<BTreeMap<String, String>>,
+    numerical_surface_package: Vec<SurfaceArtifact>,
     dispatch: DispatchEvidence,
     quantization_family_decoded_sha256: BTreeMap<String, String>,
     lifecycle_reconciled: bool,
     retained_state: RetainedState,
+}
+
+#[derive(Serialize)]
+struct SurfaceArtifact {
+    semantic_id: String,
+    dtype: &'static str,
+    shape: [usize; 1],
+    serialization: &'static str,
+    sha256: String,
+    canonical_bytes: usize,
+    symbolic_relative_path: String,
+    retention_class: &'static str,
+    immutable: bool,
+    read_only: bool,
 }
 
 fn exercise_decoder_families() -> Result<BTreeMap<String, String>, String> {
@@ -178,8 +193,15 @@ struct RealCandidateEvidence {
     repeats: usize,
     deterministic: bool,
     stage_hashes: Vec<BTreeMap<String, String>>,
+    numerical_surface_package: Vec<SurfaceArtifact>,
     dispatch: DispatchEvidence,
     retained_state: RetainedState,
+}
+
+struct LayerResult {
+    output: Vec<f32>,
+    hashes: BTreeMap<String, String>,
+    numerical_values: BTreeMap<String, Vec<f32>>,
 }
 
 fn sha_bytes(bytes: &[u8]) -> String {
@@ -201,6 +223,56 @@ fn canonical_f32(values: &[f32]) -> Vec<u8> {
 
 fn hash_f32(values: &[f32]) -> String {
     sha_bytes(&canonical_f32(values))
+}
+
+fn write_surface_package(
+    output: &Path,
+    values: &BTreeMap<String, Vec<f32>>,
+) -> Result<Vec<SurfaceArtifact>, String> {
+    let package_name = format!(
+        "{}.surfaces",
+        output
+            .file_name()
+            .ok_or("NUMERICAL_SURFACE_MISSING: evidence filename")?
+            .to_string_lossy()
+    );
+    let package = output
+        .parent()
+        .unwrap_or(Path::new("."))
+        .join(&package_name);
+    fs::create_dir_all(&package).map_err(|error| error.to_string())?;
+    let mut artifacts = Vec::new();
+    for (semantic_id, surface) in values {
+        if surface.len() != 6144 || surface.iter().any(|value| !value.is_finite()) {
+            return Err(format!("NUMERICAL_SURFACE_MISSING: {semantic_id}"));
+        }
+        let bytes = canonical_f32(surface);
+        let filename = format!("{semantic_id}.f32le");
+        let path = package.join(&filename);
+        fs::write(&path, &bytes).map_err(|error| error.to_string())?;
+        let mut permissions = fs::metadata(&path)
+            .map_err(|error| error.to_string())?
+            .permissions();
+        permissions.set_readonly(true);
+        fs::set_permissions(&path, permissions).map_err(|error| error.to_string())?;
+        artifacts.push(SurfaceArtifact {
+            semantic_id: semantic_id.clone(),
+            dtype: "f32",
+            shape: [6144],
+            serialization: "canonical_little_endian_ieee754_binary32_c_order",
+            sha256: sha_bytes(&bytes),
+            canonical_bytes: bytes.len(),
+            symbolic_relative_path: format!("{package_name}/{filename}"),
+            retention_class: if semantic_id == "layer_3_entry" || semantic_id == "layer_2_output" {
+                "A"
+            } else {
+                "B"
+            },
+            immutable: true,
+            read_only: true,
+        });
+    }
+    Ok(artifacts)
 }
 
 fn self_verify(binding_path: &Path) -> Result<SelfVerification, String> {
@@ -326,7 +398,7 @@ fn run_layer(
     dimensions: &Dimensions,
     layer: usize,
     dispatch: &mut DispatchEvidence,
-) -> Result<(Vec<f32>, BTreeMap<String, String>), String> {
+) -> Result<LayerResult, String> {
     let d = dimensions;
     let ones = vec![1.0_f32; d.hidden];
     let x_norm = rms_norm(residual, &ones, 1e-5)?;
@@ -401,7 +473,15 @@ fn run_layer(
         (format!("layer_{layer}_ffn"), hash_f32(&down)),
         (format!("layer_{layer}_output"), hash_f32(&output)),
     ]);
-    Ok((output, stages))
+    let numerical_values = BTreeMap::from([
+        (format!("layer_{layer}_attention"), attention),
+        (format!("layer_{layer}_output"), output.clone()),
+    ]);
+    Ok(LayerResult {
+        output,
+        hashes: stages,
+        numerical_values,
+    })
 }
 
 fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
@@ -419,15 +499,21 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
         .map(|index| (index as f32 - 3071.5) / 4096.0)
         .collect::<Vec<_>>();
     let mut repeat_hashes = Vec::new();
+    let mut numerical_values = BTreeMap::new();
     let mut dispatch = DispatchEvidence::default();
     let mut final_state = Vec::new();
     for _ in 0..10 {
         let mut stages = BTreeMap::from([("embedding".to_owned(), hash_f32(&embedding))]);
         let mut hidden = embedding.clone();
         for layer in 0..3 {
-            let (next, layer_stages) = run_layer(&hidden, &dimensions, layer, &mut dispatch)?;
-            stages.extend(layer_stages);
-            hidden = next;
+            let result = run_layer(&hidden, &dimensions, layer, &mut dispatch)?;
+            stages.extend(result.hashes);
+            if numerical_values.is_empty()
+                || !numerical_values.contains_key(&format!("layer_{layer}_output"))
+            {
+                numerical_values.extend(result.numerical_values);
+            }
+            hidden = result.output;
         }
         stages.insert("layer_3_entry".to_owned(), hash_f32(&hidden));
         final_state = hidden;
@@ -440,6 +526,9 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
     if final_state.len() != 6144 {
         return Err("RETENTION_FAILURE: synthetic hidden width".to_owned());
     }
+    numerical_values.insert("embedding".to_owned(), embedding.clone());
+    numerical_values.insert("layer_3_entry".to_owned(), final_state.clone());
+    let numerical_surface_package = write_surface_package(output, &numerical_values)?;
     let retained_bytes = canonical_f32(&final_state);
     let retained_path = output.with_extension("layer3-entry.f32le");
     fs::write(&retained_path, &retained_bytes).map_err(|error| error.to_string())?;
@@ -458,6 +547,7 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
         deterministic,
         hidden_width: dimensions.hidden,
         stage_hashes: repeat_hashes,
+        numerical_surface_package,
         dispatch,
         quantization_family_decoded_sha256: exercise_decoder_families()?,
         lifecycle_reconciled: true,
@@ -611,7 +701,7 @@ fn run_real_layer(
     residual: &[f32],
     layer: usize,
     dispatch: &mut DispatchEvidence,
-) -> Result<(Vec<f32>, BTreeMap<String, String>), String> {
+) -> Result<LayerResult, String> {
     const HIDDEN: usize = 6144;
     const Q_LORA: usize = 2048;
     const HEADS: usize = 64;
@@ -732,20 +822,26 @@ fn run_real_layer(
         .zip(&down)
         .map(|(a, b)| a + b)
         .collect::<Vec<_>>();
-    Ok((
-        output.clone(),
-        BTreeMap::from([
-            (format!("layer_{layer}_q"), hash_f32(&q)),
-            (format!("layer_{layer}_keys"), hash_f32(&keys)),
-            (format!("layer_{layer}_attention"), hash_f32(&attention)),
-            (
-                format!("layer_{layer}_attention_residual"),
-                hash_f32(&attention_residual),
-            ),
-            (format!("layer_{layer}_ffn"), hash_f32(&down)),
-            (format!("layer_{layer}_output"), hash_f32(&output)),
-        ]),
-    ))
+    let hashes = BTreeMap::from([
+        (format!("layer_{layer}_q"), hash_f32(&q)),
+        (format!("layer_{layer}_keys"), hash_f32(&keys)),
+        (format!("layer_{layer}_attention"), hash_f32(&attention)),
+        (
+            format!("layer_{layer}_attention_residual"),
+            hash_f32(&attention_residual),
+        ),
+        (format!("layer_{layer}_ffn"), hash_f32(&down)),
+        (format!("layer_{layer}_output"), hash_f32(&output)),
+    ]);
+    let numerical_values = BTreeMap::from([
+        (format!("layer_{layer}_attention"), attention),
+        (format!("layer_{layer}_output"), output.clone()),
+    ]);
+    Ok(LayerResult {
+        output,
+        hashes,
+        numerical_values,
+    })
 }
 
 fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), String> {
@@ -837,14 +933,20 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
     let embedding = embedding_tensor.values[9703 * 6144..9704 * 6144].to_vec();
     let mut dispatch = DispatchEvidence::default();
     let mut stage_hashes = Vec::new();
+    let mut numerical_values = BTreeMap::new();
     let mut final_state = Vec::new();
     for _ in 0..10 {
         let mut stages = BTreeMap::from([("embedding".to_owned(), hash_f32(&embedding))]);
         let mut hidden = embedding.clone();
         for layer in 0..3 {
-            let (next, layer_stages) = run_real_layer(&mut tensors, &hidden, layer, &mut dispatch)?;
-            stages.extend(layer_stages);
-            hidden = next;
+            let result = run_real_layer(&mut tensors, &hidden, layer, &mut dispatch)?;
+            stages.extend(result.hashes);
+            if numerical_values.is_empty()
+                || !numerical_values.contains_key(&format!("layer_{layer}_output"))
+            {
+                numerical_values.extend(result.numerical_values);
+            }
+            hidden = result.output;
         }
         stages.insert("layer_3_entry".to_owned(), hash_f32(&hidden));
         final_state = hidden;
@@ -855,6 +957,9 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
         return Err("REPEAT_DETERMINISM".to_owned());
     }
     let retained = canonical_f32(&final_state);
+    numerical_values.insert("embedding".to_owned(), embedding.clone());
+    numerical_values.insert("layer_3_entry".to_owned(), final_state.clone());
+    let numerical_surface_package = write_surface_package(output, &numerical_values)?;
     let retained_path = output.with_extension("layer3-entry.f32le");
     fs::write(&retained_path, &retained).map_err(|error| format!("RETENTION_FAILURE: {error}"))?;
     let mut permissions = fs::metadata(&retained_path)
@@ -874,6 +979,7 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
         repeats: 10,
         deterministic,
         stage_hashes,
+        numerical_surface_package,
         dispatch,
         retained_state: RetainedState {
             dtype: "little_endian_f32",

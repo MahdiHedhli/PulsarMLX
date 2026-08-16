@@ -74,9 +74,9 @@ def _tensor(tensors: Mapping[str, np.ndarray], name: str) -> np.ndarray:
         raise ValueError(f"oracle tensor absent: {name}") from error
 
 
-def layer_position_zero(
+def layer_position_zero_surfaces(
     tensors: Mapping[str, np.ndarray], layer: int, residual: np.ndarray
-) -> tuple[np.ndarray, dict[str, str]]:
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     prefix = f"blk.{layer}"
     x_norm = rms_norm(residual, _tensor(tensors, f"{prefix}.attn_norm.weight"))
     q_rank = matvec(_tensor(tensors, f"{prefix}.attn_q_a.weight"), x_norm)
@@ -111,30 +111,44 @@ def layer_position_zero(
     down = matvec(_tensor(tensors, f"{prefix}.ffn_down.weight"), activated)
     output = np.asarray(attention_residual + down, dtype=np.float32)
     return output, {
-        f"layer_{layer}_q": sha_f32(query),
-        f"layer_{layer}_keys": sha_f32(keys),
-        f"layer_{layer}_attention": sha_f32(attention),
-        f"layer_{layer}_attention_residual": sha_f32(attention_residual),
-        f"layer_{layer}_ffn": sha_f32(down),
-        f"layer_{layer}_output": sha_f32(output),
+        f"layer_{layer}_q": query.copy(),
+        f"layer_{layer}_keys": keys.reshape(-1).copy(),
+        f"layer_{layer}_attention": attention.copy(),
+        f"layer_{layer}_attention_residual": attention_residual.copy(),
+        f"layer_{layer}_ffn": down.copy(),
+        f"layer_{layer}_output": output.copy(),
     }
 
 
-def dense_prefix(
-    tensors: Mapping[str, np.ndarray], token: int = 9703
+def layer_position_zero(
+    tensors: Mapping[str, np.ndarray], layer: int, residual: np.ndarray
 ) -> tuple[np.ndarray, dict[str, str]]:
+    output, surfaces = layer_position_zero_surfaces(tensors, layer, residual)
+    return output, {name: sha_f32(values) for name, values in surfaces.items()}
+
+
+def dense_prefix_surfaces(
+    tensors: Mapping[str, np.ndarray], token: int = 9703
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     if token != 9703:
         raise ValueError("oracle input substitution")
     embedding = _tensor(tensors, "token_embd.weight")
     if embedding.shape != (154880, HIDDEN):
         raise ValueError("oracle embedding shape")
     hidden = np.asarray(embedding[token], dtype=np.float32).copy()
-    stages = {"embedding": sha_f32(hidden)}
+    stages = {"embedding": hidden.copy()}
     for layer in range(3):
-        hidden, layer_stages = layer_position_zero(tensors, layer, hidden)
+        hidden, layer_stages = layer_position_zero_surfaces(tensors, layer, hidden)
         stages.update(layer_stages)
-    stages["layer_3_entry"] = sha_f32(hidden)
+    stages["layer_3_entry"] = hidden.copy()
     return hidden, stages
+
+
+def dense_prefix(
+    tensors: Mapping[str, np.ndarray], token: int = 9703
+) -> tuple[np.ndarray, dict[str, str]]:
+    hidden, surfaces = dense_prefix_surfaces(tensors, token)
+    return hidden, {name: sha_f32(values) for name, values in surfaces.items()}
 
 
 def synthetic_dimensions() -> dict[str, int]:
@@ -157,7 +171,7 @@ def _deterministic_matrix(rows: int, columns: int, salt: int) -> np.ndarray:
     return ((values - np.float32(128.0)) / np.float32(4096.0)).reshape(rows, columns)
 
 
-def synthetic_actual_binary_oracle() -> np.ndarray:
+def synthetic_actual_binary_oracle_surfaces() -> dict[str, np.ndarray]:
     """Independent NumPy oracle for the bounded actual-binary rehearsal.
 
     The dimensions and deterministic matrix rule are frozen public fixture
@@ -166,6 +180,7 @@ def synthetic_actual_binary_oracle() -> np.ndarray:
     hidden, q_lora, heads = 6144, 32, 4
     qk_nope, qk_rope, kv_lora, value, ffn = 8, 8, 16, 16, 96
     residual = (np.arange(hidden, dtype=np.float32) - np.float32(3071.5)) / np.float32(4096.0)
+    surfaces = {"embedding": residual.copy()}
     ones_hidden = np.ones(hidden, dtype=np.float32)
     for layer in range(3):
         x_norm = rms_norm(residual, ones_hidden)
@@ -182,12 +197,19 @@ def synthetic_actual_binary_oracle() -> np.ndarray:
         if query.size == 0 or sum(item.size for item in keys) == 0:
             raise ValueError("oracle analytical surfaces absent")
         attention = matvec(_deterministic_matrix(hidden, heads * value, 600 + layer), np.concatenate(values))
+        surfaces[f"layer_{layer}_attention"] = attention.copy()
         attention_residual = np.asarray(residual + attention, dtype=np.float32)
         ffn_input = rms_norm(attention_residual, ones_hidden)
         gate = matvec(_deterministic_matrix(ffn, hidden, 700 + layer), ffn_input)
         up = matvec(_deterministic_matrix(ffn, hidden, 800 + layer), ffn_input)
         down = matvec(_deterministic_matrix(hidden, ffn, 900 + layer), swiglu(gate, up))
         residual = np.asarray(attention_residual + down, dtype=np.float32)
+        surfaces[f"layer_{layer}_output"] = residual.copy()
     if residual.shape != (HIDDEN,):
         raise ValueError("oracle synthetic hidden width")
-    return residual.astype(np.float32)
+    surfaces["layer_3_entry"] = residual.copy()
+    return surfaces
+
+
+def synthetic_actual_binary_oracle() -> np.ndarray:
+    return synthetic_actual_binary_oracle_surfaces()["layer_3_entry"].copy()

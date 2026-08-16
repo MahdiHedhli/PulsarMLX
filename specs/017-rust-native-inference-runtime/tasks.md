@@ -319,3 +319,10 @@
   oracle retain only intermediate hashes while the frozen real Tier-B contract
   requires per-layer and attention error metrics, bank a second non-consuming
   infrastructure result, and stop before payload access with ledger 59.
+- [x] T017-204 Close the DPREFIX-REAL-1 Tier-B instantiability blocker
+  checkpoint-free by deriving the exact eight-surface producer map from the
+  frozen contract, adding numerically neutral paired-value candidate/oracle
+  instrumentation, freezing an independent deterministic metric engine and
+  strict evidence schema, qualifying the actual successor binary for ten
+  production-width repeats, and publishing config/authorization successors for
+  the same unconsumed attempt with zero checkpoint access and ledger 59.
