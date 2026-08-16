@@ -13,6 +13,8 @@ unconsumed, unexecuted, and checkpoint-unaccessed.
 ## Lineage and prior event
 
 - Starting/authorization lineage: `6120be0c279c6b8e8cd3a44ec52790a5fbe7811b`.
+- Final preparation evidence head:
+  `80b600928b7bddb6b3275daa876a7ee1cba81350`.
 - Immutable prior non-execution evidence SHA-256:
   `b8495bd1a4129efc7e24c687289bcb3be7af7f153e24d45ccffdccb79e79d60a`.
 - The historical fact remains `DPREFIX-REAL-1 / NOT_EXECUTED /
@@ -109,6 +111,19 @@ false.
 Concrete candidate and oracle package overhead fits within the existing
 pre-observation reserve. The 27 GiB free-memory floor is unchanged and was not
 lowered. Real checkpoint access is 0; the real-payload ledger is 59.
+
+## Validation and CI
+
+- Rust: `cargo check --workspace --all-targets` and
+  `cargo test --workspace --no-fail-fast` passed from the clean preparation
+  head.
+- Python: all 729 research/evidence tests passed.
+- Focused closure: all 13 candidate/oracle identity, independence, ordering,
+  mutation, retention, memory, and ledger tests passed.
+- Apple-native CI run `31922410121` passed at exact head
+  `80b600928b7bddb6b3275daa876a7ee1cba81350`.
+- Apple jobs `95104326196` and `95104326249` both concluded `success`, including
+  the concrete candidate/oracle rehearsal with no relevant skip.
 
 ## Exact next action
 
