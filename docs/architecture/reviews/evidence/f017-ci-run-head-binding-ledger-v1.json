@@ -161,6 +161,26 @@
       "run_id": 31926125092,
       "source": "GitHub Actions run 31926125092 queried after the non-execution evidence and numerical-surface CI-regression pushes; the concrete dense-prefix candidate/oracle rehearsal, including the fail-closed numerical-surface guard, completed without relevant skips",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "3f635806b11631cc9c54d0f34ce733501b712f03",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95159395408,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95159395396,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "DPREFIX-REAL-1-NUMERICAL-SURFACE-CLOSURE-PREPARATION",
+      "run_id": 31944939942,
+      "source": "GitHub Actions run 31944939942 queried after the numerical-surface closure preparation push; both Apple jobs passed, including the exact successor binary rehearsal and complete eight-surface Tier-B instantiation, with no relevant skips",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",

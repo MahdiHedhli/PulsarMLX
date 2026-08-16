@@ -73,6 +73,8 @@ Paired-value overhead does not change the 27 GiB floor. The additional candidate
 
 The config preserves prompt `Hello`, token 9703, position 0, 40 payloads, 1,431,263,232 packed bytes, ledger plan 59 to 99, Q4/Q6 hard identity gates, ten repeats, frozen Tier-B, no retry, and no automatic M1-F0.
 
+Final-head Apple CI run `31944939942` passed both `Apple Silicon workspace baseline` and `Apple MLX small-fixture validation` at exact preparation head `3f635806b11631cc9c54d0f34ce733501b712f03`, including the built successor-binary rehearsal and complete eight-surface Tier-B instantiation with no relevant skips. The append-only binding is recorded in `docs/architecture/reviews/evidence/f017-ci-run-head-binding-ledger-v1.json`.
+
 ## Exact next action
 
 Independent adversarial review of the numerical-surface delta packet. Only `GO FOR ONE DENSE-PREFIX M1-F(-1) REAL CAPTURE` releases the still-unconsumed attempt for one real 40-read execution.
