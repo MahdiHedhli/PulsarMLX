@@ -348,6 +348,7 @@ jobs:
             scripts.research.tests.test_f017_q6_k_real_execution \
             scripts.research.tests.test_f017_dense_prefix_authorization_preparation \
             scripts.research.tests.test_f017_dense_prefix_40_read_authorization \
+            scripts.research.tests.test_f017_dprefix_infrastructure_closure \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream
@@ -365,6 +366,7 @@ jobs:
           echo 'F017_DECODED_REUSE=MIXED_POLICY_READY_FOR_FUTURE_AUTHORIZATION'
           .venv/bin/python -m scripts.research.f017_dense_prefix_40_read_authorization \
             --preflight --skip-git
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-infrastructure-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
           echo 'F017_DENSE_PREFIX=AUTHORIZED_UNCONSUMED_NOT_EXECUTED_PENDING_INDEPENDENT_REVIEW'
           echo 'F017_Q4_K=EXACT_REAL_BYTE_QUALIFIED'
           echo 'F017_Q6_K=EXACT_REAL_BYTE_QUALIFIED'
@@ -374,6 +376,28 @@ jobs:
           echo 'F017_Q4_K_REAL_1=EXACT_REAL_BYTE_QUALIFIED_LEDGER_58'
           echo 'F017_COLIBRI_AUDIT=PINNED_ACTIONABLE_NO_SOURCE_COPY'
           echo 'F017_DECODED_REUSE_USE_CASES=SEPARATE_PACKAGES_REQUIRED'
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Rehearse concrete F017 dense-prefix candidate and oracle surfaces
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          cargo build --release -p f017-runner --bin f017-dense-prefix-candidate
+          target/release/f017-dense-prefix-candidate \
+            --synthetic-rehearsal "$RUNNER_TEMP/f017-dprefix-synthetic.json"
+          test "$(jq -r .result "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = SYNTHETIC_ACTUAL_BINARY_10_REPEAT_PASS
+          test "$(jq -r .repeats "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 10
+          test "$(jq -r .dispatch.fallback "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 0
+          test "$(jq -r .dispatch.backend_errors "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 0
+          test "$(jq -r .retained_state.count "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = 6144
+          .venv/bin/python - <<'PY'
+          import ast
+          from pathlib import Path
+          tree = ast.parse(Path("scripts/research/f017_dprefix_oracle_runtime.py").read_text())
+          imports = []
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import): imports.extend(alias.name for alias in node.names)
+              elif isinstance(node, ast.ImportFrom): imports.append(node.module or "")
+          assert not any(name.startswith(("mlx", "ctypes", "cffi", "f017_runner")) for name in imports)
+          PY
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |

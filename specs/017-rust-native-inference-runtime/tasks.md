@@ -308,3 +308,9 @@
   candidate executable/source surface nor an instantiated independent-oracle
   package, bank a non-consuming INFRASTRUCTURE result, and stop with zero
   payload reads and ledger 59 rather than create an unreviewed execution path.
+- [x] T017-202 Preserve the non-consuming DPREFIX-REAL-1 infrastructure event,
+  bind a narrow arm64 native-MLX candidate by complete source surface and exact
+  executable identity, instantiate the independent NumPy oracle package,
+  qualify their actual-binary ten-repeat/dispatch/lifecycle/retention behavior
+  checkpoint-free, publish config/authorization successors for the same
+  unconsumed attempt, and stop for adversarial review with ledger 59.
