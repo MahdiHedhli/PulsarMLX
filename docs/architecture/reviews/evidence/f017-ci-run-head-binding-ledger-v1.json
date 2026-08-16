@@ -181,6 +181,26 @@
       "run_id": 31944939942,
       "source": "GitHub Actions run 31944939942 queried after the numerical-surface closure preparation push; both Apple jobs passed, including the exact successor binary rehearsal and complete eight-surface Tier-B instantiation, with no relevant skips",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "32ce0c0d56e739c6e9fee789607628938f36823d",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95176573597,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95176573634,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "DPREFIX-REAL-1-NOT-EXECUTED-EXECUTION-SURFACE-DRIFT",
+      "run_id": 31951909730,
+      "source": "GitHub Actions run 31951909730 queried after the non-execution evidence push; both Apple jobs passed, including the fail-closed real-event orchestrator surface regression, with no relevant skips",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",
