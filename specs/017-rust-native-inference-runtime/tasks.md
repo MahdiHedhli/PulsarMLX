@@ -303,3 +303,8 @@
   retention at creation, authorize DPREFIX-REAL-1 born unconsumed with exact
   partial-read ledger accounting and no downstream chain, and stop for
   adversarial review without checkpoint access at ledger 59.
+- [x] T017-201 Run the independently released DPREFIX-REAL-1 preflight and host
+  admission checkpoint-free, detect that the reviewed package binds neither a
+  candidate executable/source surface nor an instantiated independent-oracle
+  package, bank a non-consuming INFRASTRUCTURE result, and stop with zero
+  payload reads and ledger 59 rather than create an unreviewed execution path.

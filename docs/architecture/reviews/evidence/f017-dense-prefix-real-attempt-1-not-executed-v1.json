@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-real-not-executed-evidence",
+  "schema_version": "1.0.0",
+  "attempt_id": "DPREFIX-REAL-1",
+  "authorization_release_head": "7a929c2c524a8d8a3397dd6d52344dfc805065d8",
+  "canonical_package_preflight": "READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE",
+  "terminal_class": "INFRASTRUCTURE",
+  "verdict": "NOT_EXECUTED",
+  "reason": "reviewed package binds authorization and execution contracts but no candidate executable/source surface; independent oracle remains SOURCE_SURFACE_FROZEN_PACKAGE_NOT_CREATED with no instantiated package identity",
+  "infrastructure_findings": [
+    {
+      "code": "CANDIDATE_EXECUTABLE_UNBOUND",
+      "artifact": "docs/architecture/reviews/evidence/f017-dense-prefix-execution-config-v2.json",
+      "artifact_sha256": "1335ebb3e617ad1ca9e2c39cf10f3286c9be8acfc99c2aa834c0a8bbbe0878e7"
+    },
+    {
+      "code": "CANDIDATE_SOURCE_SURFACE_UNBOUND",
+      "artifact": "docs/architecture/reviews/evidence/f017-dense-prefix-execution-config-v2.json",
+      "artifact_sha256": "1335ebb3e617ad1ca9e2c39cf10f3286c9be8acfc99c2aa834c0a8bbbe0878e7"
+    },
+    {
+      "code": "ORACLE_PACKAGE_NOT_INSTANTIATED",
+      "artifact": "specs/017-rust-native-inference-runtime/contracts/f017-dense-prefix-oracle-package-v1.json",
+      "artifact_sha256": "0a54aa957e8b768108e4d8bc8c6e2a84cb48fbb3e0c93414c308112e88b3e816",
+      "observed_status": "SOURCE_SURFACE_FROZEN_PACKAGE_NOT_CREATED"
+    },
+    {
+      "code": "ORACLE_PACKAGE_IDENTITY_ABSENT",
+      "artifact": "specs/017-rust-native-inference-runtime/contracts/f017-dense-prefix-oracle-package-v1.json",
+      "artifact_sha256": "0a54aa957e8b768108e4d8bc8c6e2a84cb48fbb3e0c93414c308112e88b3e816"
+    }
+  ],
+  "host_observation": {
+    "architecture": "arm64",
+    "memory_floor_gib": 27,
+    "memory_admission_passed": true,
+    "reviewed_native_libraries_present": true,
+    "python_mlx_version_observed": "0.32.0",
+    "python_mlx_is_not_the_bound_candidate_executable": true
+  },
+  "state": {
+    "authorized": true,
+    "consumed": false,
+    "executed": false,
+    "checkpoint_accessed": false,
+    "payloads_read": 0,
+    "packed_bytes_read": 0,
+    "ledger_before": 59,
+    "ledger_after": 59,
+    "automatic_retry": false,
+    "automatic_m1f0_continuation": false
+  },
+  "preserved_bindings": {
+    "preparation_contract_v2_sha256": "32eeb9e7a90dd45abcedc0014d4c6bb533f8caec4613e962817b1e2b44303ac4",
+    "allowlist_sha256": "c9c1540ea1cc9e69344ed9f3dcc4eb8ba1e5c15e3d55c1bccdec00eeb1db36aa",
+    "execution_config_sha256": "1335ebb3e617ad1ca9e2c39cf10f3286c9be8acfc99c2aa834c0a8bbbe0878e7",
+    "authorization_binding_sha256": "47efe5f2ac4d4c31443077a7cc8ffdc6618926a6c0e656d6aee7a74a5ea69956",
+    "attempt_ledger_sha256_before": "6f436cb859a80807afa261413f1f467e6492fd2744efbfda96a03901235a71ca",
+    "real_payload_ledger_sha256_before": "a0edafdcd0279fb28e08c69a86a9c95ddd19e013b73a1e92f7620734456a9339"
+  },
+  "isolation": {
+    "real_checkpoint_payload_reads": 0,
+    "dense_prefix_executed": false,
+    "representative_m1f0_executed": false,
+    "m1f_executed": false,
+    "m1g_executed": false,
+    "p1_executed": false
+  }
+}
