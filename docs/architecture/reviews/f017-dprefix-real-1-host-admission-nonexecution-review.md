@@ -21,6 +21,10 @@ Raw evidence:
 with SHA-256
 `b7abb1999f6e018cf9a41279b161d7ac84a300984f7f8960776bc5f461065c08`.
 
-The commit containing this evidence and the final Apple CI binding are added
-append-only during closeout; until then, repository provenance forbids an
-authoritative execution claim.
+The raw evidence is committed at
+`f24078198606388fc9086b4e37586fe0cbd92106` and pushed to the authoritative
+F017 branch. Apple-native CI run `31967521933` is bound to that exact evidence
+commit; both `Apple Silicon workspace baseline` and `Apple MLX small-fixture
+validation` completed successfully with no failed or skipped steps. This
+closeout makes only the non-execution claim authoritative; it does not claim
+that a real checkpoint event occurred.

@@ -2,6 +2,7 @@
 
 - Verdict: `DENSE-PREFIX M1-F(-1) NOT EXECUTED`
 - Release and execution head: `39b6a3edd3306c46f7601c7d9cc371db11511e61`
+- Real-evidence commit: `f24078198606388fc9086b4e37586fe0cbd92106`
 - Attempt: `DPREFIX-REAL-1`
 - Terminal class: `HOST_ADMISSION`
 - Reason: `REVIEWED_CHECKPOINT_MOUNT_ABSENT`
@@ -20,9 +21,9 @@
 - Oracle/candidate/repeats/Tier-B/dispatch/lifecycle/retention: not reached
 - Representative M1-F0: `BLOCKED / NOT AUTHORIZED / NOT EXECUTED`
 - Raw evidence: `docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-1-not-executed-host-admission-v1.json`, SHA-256 `b7abb1999f6e018cf9a41279b161d7ac84a300984f7f8960776bc5f461065c08`
-- Attempt ledger successor: `docs/architecture/reviews/evidence/f017-dense-prefix-attempt-ledger-v7.json`
+- Attempt ledger successor: `docs/architecture/reviews/evidence/f017-dense-prefix-attempt-ledger-v7.json`, SHA-256 `7091413c8d839050166daaf1a3ed114f107c6373c73ea7dcffb06d9893a8e8e2`
 - Real-payload ledger: unchanged, SHA-256 `a0edafdcd0279fb28e08c69a86a9c95ddd19e013b73a1e92f7620734456a9339`
-- Evidence commit and final CI: pending append-only closeout
+- Final CI: run `31967521933` → evidence commit `f24078198606388fc9086b4e37586fe0cbd92106`; both Apple-native jobs passed with no failed or skipped steps
 
 Exact next action: independently review the committed non-execution evidence,
 restore the exact reviewed checkpoint object at the bound private mount, and

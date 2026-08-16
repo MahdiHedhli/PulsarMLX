@@ -221,6 +221,26 @@
       "run_id": 31961703625,
       "source": "GitHub Actions run 31961703625 queried after the orchestrator closure and public-CI private-package fix were pushed; both Apple jobs passed, including the banked-artifact validation and concrete end-to-end orchestrator rehearsal against the CI-built candidate, with no failed or skipped steps",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "f24078198606388fc9086b4e37586fe0cbd92106",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95214851373,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95214851400,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "DPREFIX-REAL-1-NOT-EXECUTED-HOST-ADMISSION",
+      "run_id": 31967521933,
+      "source": "GitHub Actions run 31967521933 queried after the host-admission non-execution evidence push; both Apple jobs passed with no failed or skipped steps, and the workflow performed no real-checkpoint access",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",
