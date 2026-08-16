@@ -1,5 +1,15 @@
 # PulsarMLX F017 DPREFIX Numerical-Surface Closure Report
 
+## Provenance
+
+- authoritative starting SHA: `2e110d6ba8466ba84a880abdf0408d6c226977e6`
+- final preparation SHA validated by Apple CI: `3f635806b11631cc9c54d0f34ce733501b712f03`
+- prior numerical-surface stop evidence SHA-256: `a730fb123fd86319b199579c79bdcbff1b282b7f7ec4003daa694f9e37a176b6`
+- attempt: `DPREFIX-REAL-1`
+- checkpoint access: `0`
+- real-payload ledger: `59`
+- adversarial packet SHA-256: `0d8a42ab3222b27f11cb8c2f5d308a2f9e505570f5f02f80fae1d085098311f1`
+
 ## Disposition
 
 `GO FOR DPREFIX NUMERICAL-SURFACE CLOSURE ADVERSARIAL REVIEW`
