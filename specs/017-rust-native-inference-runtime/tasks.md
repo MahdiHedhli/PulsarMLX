@@ -338,3 +338,8 @@
   coordination, retention and terminal evidence banking; rehearse failure and
   attack paths and publish successor authorization without consuming the
   attempt or changing ledger 59.
+- [x] T017-207 Run the independently released DPREFIX-REAL-1 identity and host
+  admission preflight, preserve the exact reviewed execution surfaces, stop
+  before consumption when the bound repository-private checkpoint object is
+  absent, and bank `NOT_EXECUTED / HOST_ADMISSION` with zero payload reads and
+  the real-payload ledger unchanged at 59.

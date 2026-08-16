@@ -1,0 +1,72 @@
+{
+  "append_only_predecessor": {
+    "path": "docs/architecture/reviews/evidence/f017-dense-prefix-attempt-ledger-v6.json",
+    "sha256": "09478ffdf4180655006cc4ce9d634c62af020f2a7fb3c4ce02f3220f509ba948"
+  },
+  "checkpoint_access": 0,
+  "current_state": {
+    "attempt_id": "DPREFIX-REAL-1",
+    "authorized": true,
+    "automatic_m1f0_continuation": false,
+    "automatic_retry": false,
+    "checkpoint_accessed": false,
+    "consumed": false,
+    "executed": false,
+    "ledger": 59
+  },
+  "history": [
+    {
+      "event": "FIRST_RELEASE_NONCONSUMING_INFRASTRUCTURE_STOP",
+      "evidence_sha256": "b8495bd1a4129efc7e24c687289bcb3be7af7f153e24d45ccffdccb79e79d60a"
+    },
+    {
+      "attempt_ledger_sha256": "b18be3ab1f5589942a232d5d04fcd57888eb7bde14b363ca62368a387a1242fe",
+      "event": "INFRASTRUCTURE_CLOSURE_SUCCESSOR_AUTHORIZATION"
+    },
+    {
+      "event": "SECOND_RELEASE_NUMERICAL_SURFACE_STOP",
+      "evidence_sha256": "a730fb123fd86319b199579c79bdcbff1b282b7f7ec4003daa694f9e37a176b6"
+    },
+    {
+      "authorization_binding_sha256": "86fbf397b462f23fd6bb9d911afcc332b348bf60426d80790dec3b691ff6ee6c",
+      "candidate_executable_sha256": "1a73dd4026592e21df05a82df806e52ebcb8dd0248aaffc0d8fd91c6f9e1387a",
+      "event": "NUMERICAL_SURFACE_CLOSURE_SUCCESSOR_AUTHORIZATION",
+      "execution_config_sha256": "042a1fac64813849ae1569fee05d60be6a86fba0f7ef874dbdaeb85c29252266",
+      "oracle_package_sha256": "9b00ed225acc9b299c5bd789f1b082f6a2fd90b7893913bc9f353f99ee83c89b",
+      "rehearsal_sha256": "b6fb821a364f05c607e069f914b67a3b4c09fe2cf405e1282b0c0701792ab69f"
+    },
+    {
+      "checkpoint_accessed": false,
+      "consumed": false,
+      "event": "THIRD_RELEASE_EXECUTION_SURFACE_DRIFT_STOP",
+      "evidence_sha256": "54eb2ef149d9cbd8c2e1159477ddab7ed1fec5780531fee59d46df1faac891bc",
+      "ledger_after": 59,
+      "ledger_before": 59,
+      "payloads_read": 0,
+      "reason_code": "REAL_EVENT_ORCHESTRATOR_UNBOUND",
+      "terminal_class": "EXECUTION_SURFACE_DRIFT"
+    },
+    {
+      "authorization_binding_sha256": "fc286651d4fa11ff43e0db926a801d24e30152509465d2d7f0510d79599e1e47",
+      "event": "REAL_EVENT_ORCHESTRATOR_CLOSURE_SUCCESSOR_AUTHORIZATION",
+      "execution_config_sha256": "27774a11d933750cb9703a9889b5f83b88711ee27827c9d34eb585649545aadd",
+      "orchestrator_package_sha256": "4b69d8fcca3edf6edbe78e75d62d5b9558d58ac90f7d70fbae79484e017f18df",
+      "orchestrator_source_manifest_sha256": "6444db4def93cee97d82fd04ed41eb3ce2a3ec60c4a7f780b0a4bd46e41d5afe"
+    },
+    {
+      "checkpoint_accessed": false,
+      "consumed": false,
+      "event": "FOURTH_RELEASE_HOST_ADMISSION_STOP",
+      "evidence_path": "docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-1-not-executed-host-admission-v1.json",
+      "evidence_sha256": "b7abb1999f6e018cf9a41279b161d7ac84a300984f7f8960776bc5f461065c08",
+      "ledger_after": 59,
+      "ledger_before": 59,
+      "payloads_read": 0,
+      "reason_code": "REVIEWED_CHECKPOINT_MOUNT_ABSENT",
+      "terminal_class": "HOST_ADMISSION"
+    }
+  ],
+  "ledger": 59,
+  "schema": "pulsarmlx.f017.dense-prefix-attempt-ledger",
+  "schema_version": "7.0.0"
+}

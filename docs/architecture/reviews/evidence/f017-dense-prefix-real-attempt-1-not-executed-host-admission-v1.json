@@ -1,0 +1,93 @@
+{
+  "access": {
+    "checkpoint_path_resolved": false,
+    "checkpoint_reads": 0,
+    "packed_bytes": 0,
+    "payloads": 0,
+    "positional_reads": 0,
+    "shard_opens": 0
+  },
+  "attempt_id": "DPREFIX-REAL-1",
+  "bindings": {
+    "attempt_ledger_before_sha256": "09478ffdf4180655006cc4ce9d634c62af020f2a7fb3c4ce02f3220f509ba948",
+    "authorization_binding_sha256": "fc286651d4fa11ff43e0db926a801d24e30152509465d2d7f0510d79599e1e47",
+    "candidate_binary_sha256": "1a73dd4026592e21df05a82df806e52ebcb8dd0248aaffc0d8fd91c6f9e1387a",
+    "candidate_source_manifest_sha256": "1df94bc11a550dc589666fdbdac6fd3cd0c7bdc17ab76f2fd8a74f705dfed35d",
+    "execution_config_sha256": "27774a11d933750cb9703a9889b5f83b88711ee27827c9d34eb585649545aadd",
+    "inventory_sha256": "c9c1540ea1cc9e69344ed9f3dcc4eb8ba1e5c15e3d55c1bccdec00eeb1db36aa",
+    "metric_engine_sha256": "cd7ca4eee855b60b6695b8ac6671d59eae2f446231f437168df0985f984ad738",
+    "numerical_surface_manifest_sha256": "ecbc47bf1af97db99308a24e9303f2f6ef75d2f78d31d4853d8106afe0b271ec",
+    "oracle_package_sha256": "9b00ed225acc9b299c5bd789f1b082f6a2fd90b7893913bc9f353f99ee83c89b",
+    "oracle_source_manifest_sha256": "a3900bb70a0255c1484d19b5f9988135f63ff9e8176276361be6c499cc73aea8",
+    "orchestrator_package_sha256": "4b69d8fcca3edf6edbe78e75d62d5b9558d58ac90f7d70fbae79484e017f18df",
+    "orchestrator_source_manifest_sha256": "6444db4def93cee97d82fd04ed41eb3ce2a3ec60c4a7f780b0a4bd46e41d5afe",
+    "payload_ledger_before_sha256": "a0edafdcd0279fb28e08c69a86a9c95ddd19e013b73a1e92f7620734456a9339",
+    "prompt_package_sha256": "c05ba1cba69535cd17daf9f4326e5e1db25ffafe504c53712aa548f251741dff",
+    "tier_b_sha256": "9d1a6cc20ce8325fe8395334416f5ebcf980b72f02c6a0b44dc3240e0810024a"
+  },
+  "continuation": {
+    "attempt_remains_unconsumed": true,
+    "new_attempt_created": false,
+    "new_execution_instruction_required_after_mount_remediation_and_review": true,
+    "retry_performed": false
+  },
+  "execution_head": "39b6a3edd3306c46f7601c7d9cc371db11511e61",
+  "host_admission": {
+    "architecture": "arm64",
+    "candidate_rpath": "reviewed_native_mlx_prefix/lib",
+    "free_memory_gib": 62.34046936035156,
+    "libmlx_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+    "libmlxc_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+    "macos_build": "25A354",
+    "macos_version": "26.0",
+    "memory_floor_gib": 27,
+    "memory_pressure_free_percent": 91,
+    "performance_warning_recorded": false,
+    "reviewed_checkpoint_object": {
+      "exists": false,
+      "symbolic_repository_private_path": ".pulsarmlx-local/checkpoints/accepted/GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf"
+    },
+    "sdk_version": "26.2",
+    "thermal_warning_recorded": false,
+    "xcode_version": "26.3"
+  },
+  "isolation": {
+    "dense_prefix_executed": false,
+    "m1f_executed": false,
+    "m1g_executed": false,
+    "p1_executed": false,
+    "real_checkpoint_payload_reads": 0,
+    "representative_m1f0_executed": false,
+    "retained_real_layer3_state_created": false
+  },
+  "preflight": {
+    "canonical_identity_result": "REAL_EVENT_ORCHESTRATOR_IDENTITY_VERIFIED",
+    "clean_worktree": true,
+    "host_admission_result": "NOT_READY",
+    "local_remote_parity": true,
+    "reviewed_head_ancestry": true
+  },
+  "reason": "the exact checkpoint object bound by config v5 was absent at its reviewed repository-private mount; path substitution and runtime override are forbidden",
+  "reason_code": "REVIEWED_CHECKPOINT_MOUNT_ABSENT",
+  "release": {
+    "adversarial_verdict": "GO — EXECUTE DPREFIX-REAL-1",
+    "reviewed_head": "39b6a3edd3306c46f7601c7d9cc371db11511e61"
+  },
+  "repository_authority": "PACKET CLAIMS REJECTED — BANKED EVIDENCE CONTRADICTS PACKET",
+  "schema": "pulsarmlx.f017.dense-prefix-real-nonexecution",
+  "schema_version": "4.0.0",
+  "state": {
+    "authorized": true,
+    "automatic_m1f0_continuation": false,
+    "automatic_retry": false,
+    "checkpoint_accessed": false,
+    "consumed": false,
+    "executed": false,
+    "ledger_after": 59,
+    "ledger_before": 59,
+    "packed_bytes_read": 0,
+    "payloads_read": 0
+  },
+  "terminal_class": "HOST_ADMISSION",
+  "verdict": "NOT_EXECUTED"
+}
