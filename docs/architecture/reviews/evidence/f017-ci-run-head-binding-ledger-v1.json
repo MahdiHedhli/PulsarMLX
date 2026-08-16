@@ -241,6 +241,26 @@
       "run_id": 31967521933,
       "source": "GitHub Actions run 31967521933 queried after the host-admission non-execution evidence push; both Apple jobs passed with no failed or skipped steps, and the workflow performed no real-checkpoint access",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "6bcc721885b33df1fe3b4ca274ec58c2b42cd72c",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95224607511,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95224607588,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "DPREFIX-REAL-1-REJECTED-NATIVE-RUNTIME-EVIDENCE",
+      "run_id": 31971520387,
+      "source": "GitHub Actions run 31971520387 queried after the immutable real-evidence commit and checkpoint-free terminal-state CI correction were pushed; both Apple jobs passed, including the 40-read ledger reconstruction, terminal rejection evidence validation, historical preparation regressions, and concrete dense-prefix rehearsal, with no failed or skipped steps",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",

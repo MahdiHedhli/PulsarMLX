@@ -28,7 +28,10 @@
 - Representative M1-F0: `NOT_AUTHORIZED / NOT_EXECUTED`
 - Raw evidence: `docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-1-rejected-native-runtime-v1.json`, SHA-256 `a21af1ed489382bfed211682f4cc471744235d13acd97e8a4866089532eaef34`
 - Attempt ledger: `docs/architecture/reviews/evidence/f017-dense-prefix-attempt-ledger-v8.json`
-- Final evidence commit and CI binding: pending append-only closeout
+- Real-evidence commit: `594021194c8e70d92965e344780879ed53003f84`
+- Checkpoint-free CI correction head: `6bcc721885b33df1fe3b4ca274ec58c2b42cd72c`
+- Final Apple-native CI: run `31971520387` → `6bcc721885b33df1fe3b4ca274ec58c2b42cd72c`; both required jobs passed
+- The first evidence-head CI run `31970941752` failed only because its workflow still asserted the historical live ledger value 59. The correction changed CI validation only; it did not reread the checkpoint, rerun the candidate or oracle, or rewrite execution evidence.
 
 Exact next action: independent adversarial review of the failure evidence. No
 retry is authorized.

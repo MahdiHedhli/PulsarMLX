@@ -31,3 +31,9 @@ with SHA-256
 Representative M1-F0 remains not authorized and not executed. The exact next
 action is independent adversarial review of this failure evidence; the consumed
 attempt may not be retried.
+
+Final Apple-native CI run `31971520387` passed both required jobs at exact head
+`6bcc721885b33df1fe3b4ca274ec58c2b42cd72c`. That head is the immutable real
+evidence commit `594021194c8e70d92965e344780879ed53003f84` plus a checkpoint-free
+workflow correction that replaced its stale pre-event ledger assertion with
+the banked terminal state. No real computation or access was repeated.
