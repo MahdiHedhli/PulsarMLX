@@ -53,6 +53,7 @@ class InfrastructureClosureTests(unittest.TestCase):
     def test_actual_binary_rehearsal_is_ten_repeat_and_retains_6144(self) -> None:
         result = next(v for p, v in self.values.items() if p.name.endswith("synthetic-rehearsal-v1.json"))
         self.assertEqual(result["result"], "SYNTHETIC_ACTUAL_BINARY_10_REPEAT_PASS")
+        self.assertEqual(result["hidden_width"], 6144)
         self.assertEqual(result["repeats"], 10)
         self.assertTrue(result["deterministic"] and result["lifecycle_reconciled"])
         self.assertEqual(result["retained_state"]["shape"], [6144])

@@ -163,9 +163,9 @@ def synthetic_actual_binary_oracle() -> np.ndarray:
     The dimensions and deterministic matrix rule are frozen public fixture
     facts.  This function shares no candidate arithmetic implementation.
     """
-    hidden, q_lora, heads = 64, 32, 4
+    hidden, q_lora, heads = 6144, 32, 4
     qk_nope, qk_rope, kv_lora, value, ffn = 8, 8, 16, 16, 96
-    residual = (np.arange(hidden, dtype=np.float32) - np.float32(31.5)) / np.float32(128.0)
+    residual = (np.arange(hidden, dtype=np.float32) - np.float32(3071.5)) / np.float32(4096.0)
     ones_hidden = np.ones(hidden, dtype=np.float32)
     for layer in range(3):
         x_norm = rms_norm(residual, ones_hidden)
@@ -188,4 +188,6 @@ def synthetic_actual_binary_oracle() -> np.ndarray:
         up = matvec(_deterministic_matrix(ffn, hidden, 800 + layer), ffn_input)
         down = matvec(_deterministic_matrix(hidden, ffn, 900 + layer), swiglu(gate, up))
         residual = np.asarray(attention_residual + down, dtype=np.float32)
-    return np.resize(residual, 6144).astype(np.float32)
+    if residual.shape != (HIDDEN,):
+        raise ValueError("oracle synthetic hidden width")
+    return residual.astype(np.float32)

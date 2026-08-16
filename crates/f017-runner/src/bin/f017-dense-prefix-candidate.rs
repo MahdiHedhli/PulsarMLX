@@ -406,7 +406,7 @@ fn run_layer(
 
 fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
     let dimensions = Dimensions {
-        hidden: 64,
+        hidden: 6144,
         q_lora: 32,
         heads: 4,
         qk_nope: 8,
@@ -416,7 +416,7 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
         ffn: 96,
     };
     let embedding = (0..dimensions.hidden)
-        .map(|index| (index as f32 - 31.5) / 128.0)
+        .map(|index| (index as f32 - 3071.5) / 4096.0)
         .collect::<Vec<_>>();
     let mut repeat_hashes = Vec::new();
     let mut dispatch = DispatchEvidence::default();
@@ -437,14 +437,10 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
     if !deterministic {
         return Err("REPEAT_DETERMINISM".to_owned());
     }
-    // The native rehearsal keeps projection matrices bounded while exercising
-    // the production-width retention path required downstream.  Values are a
-    // deterministic expansion of the actual synthetic layer-3 result; real
-    // evidence never uses this rehearsal artifact as numerical truth.
-    let retained_values = (0..6144)
-        .map(|index| final_state[index % final_state.len()])
-        .collect::<Vec<_>>();
-    let retained_bytes = canonical_f32(&retained_values);
+    if final_state.len() != 6144 {
+        return Err("RETENTION_FAILURE: synthetic hidden width".to_owned());
+    }
+    let retained_bytes = canonical_f32(&final_state);
     let retained_path = output.with_extension("layer3-entry.f32le");
     fs::write(&retained_path, &retained_bytes).map_err(|error| error.to_string())?;
     let mut permissions = fs::metadata(&retained_path)
