@@ -349,3 +349,9 @@
   exact Q4_K/Q6_K identity confirmations, bank the terminal `NATIVE_RUNTIME /
   NATIVE_CANDIDATE_MATVEC_SHAPE` rejection, and stop without retry, retention,
   representative M1-F0, or downstream execution.
+- [x] T017-209 Preserve DPREFIX-REAL-1 as terminal and checkpoint-free close its
+  native `attn_k_b` real-shape orientation defect; freeze all 40 real geometry
+  and packed identities, persist oracle primary products before candidate
+  launch, retain all packed payloads at creation, harden native-failure banking
+  and cleanup, qualify the exact-shape successor for ten repeats, and prepare
+  the fresh authorized/unconsumed DPREFIX-REAL-2 package at ledger 99.

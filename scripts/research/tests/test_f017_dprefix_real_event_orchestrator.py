@@ -22,7 +22,13 @@ class RealEventOrchestratorTests(unittest.TestCase):
         self.entries = O.validate_inventory(self.inventory)
 
     def _reviewed_candidate_is_installed(self) -> bool:
-        return O.CANDIDATE.is_file() and O.digest_path(O.CANDIDATE) == O.CANDIDATE_SHA
+        historical = O.load(O.EVIDENCE / "f017-dprefix-real-event-orchestrator-source-manifest-v1.json")
+        candidate = next(item for item in historical["components"] if item["role"] == "candidate")
+        return (
+            O.CANDIDATE.is_file()
+            and O.digest_path(O.CANDIDATE) == O.CANDIDATE_SHA
+            and O.digest_path(O.ROOT / candidate["path"]) == candidate["sha256"]
+        )
 
     def _rehearsal(self, directory: Path) -> dict:
         if self._reviewed_candidate_is_installed():
@@ -265,6 +271,12 @@ class RealEventOrchestratorTests(unittest.TestCase):
         else:
             source = values[O.EVIDENCE / "f017-dprefix-real-event-orchestrator-source-manifest-v1.json"]
             for entry in source["components"]:
+                # The REAL-1 candidate remains hash-bound by this immutable
+                # historical manifest, but the repository path now contains
+                # the append-only REAL-2 successor source.  Current-path
+                # equality is therefore intentionally inapplicable here.
+                if entry["role"] == "candidate":
+                    continue
                 self.assertEqual(O.digest_path(O.ROOT / entry["path"]), entry["sha256"], entry["path"])
             build = values[O.EVIDENCE / "f017-dprefix-real-event-orchestrator-build-manifest-v1.json"]
             self.assertEqual(build["package_sha256"], O.digest_path(Path(O.__file__)))

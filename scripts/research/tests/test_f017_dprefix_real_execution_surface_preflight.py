@@ -49,6 +49,12 @@ class DensePrefixRealExecutionSurfacePreflightTests(unittest.TestCase):
         self.assertEqual(attempt["history"][-1]["evidence_sha256"], M.canonical_sha(generated["evidence"]))
 
     def test_banked_artifacts_regenerate_exactly(self) -> None:
+        banked = json.loads(M.EVIDENCE.read_text())
+        if M.sha256(M.CANDIDATE) != banked["bindings"]["candidate_source_sha256"]:
+            # This refusal is immutable REAL-1 history; a later append-only
+            # candidate successor must not cause its evidence to be rewritten.
+            self.assertEqual(M.canonical_sha(banked), M.sha256(M.EVIDENCE))
+            return
         generated = M.generate()
         self.assertEqual(M.EVIDENCE.read_bytes(), M.canonical_bytes(generated["evidence"]))
         self.assertEqual(M.ATTEMPT_V5.read_bytes(), M.canonical_bytes(generated["attempt"]))

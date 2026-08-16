@@ -94,7 +94,13 @@ class SurfaceClosureTests(unittest.TestCase):
             self.assertIn("CANDIDATE_IDENTITY", refused.stderr)
 
     def test_banked_successor_artifacts_regenerate_exactly(self) -> None:
-        if not C.CANDIDATE_V2.is_file():
+        manifest = json.loads((C.EVIDENCE / "f017-dprefix-candidate-source-manifest-v2.json").read_text())
+        candidate_entry = next(
+            entry for entry in manifest["files"]
+            if entry["path"].endswith("f017-dense-prefix-candidate.rs")
+        )
+        candidate_source_is_historical = C.sha(C.ROOT / candidate_entry["path"]) != candidate_entry["sha256"]
+        if not C.CANDIDATE_V2.is_file() or candidate_source_is_historical:
             rehearsal = json.loads((C.EVIDENCE / "f017-dprefix-full-tier-b-synthetic-rehearsal-v1.json").read_text())
             C.validate_terminal_numerical_surfaces(rehearsal["surfaces"])
             self.assertEqual(rehearsal["result"], "FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE")

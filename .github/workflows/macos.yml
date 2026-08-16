@@ -460,6 +460,26 @@ jobs:
           assert len(result["surfaces"]) == 8
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Validate F017 DPREFIX-REAL-2 exact-shape preparation
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          .venv/bin/python -m unittest -v \
+            scripts.research.tests.test_f017_dprefix_real2_preparation \
+            scripts.research.tests.test_f017_dprefix_real_event_orchestrator \
+            scripts.research.tests.test_f017_dprefix_real_terminal_failure
+          target/release/f017-dense-prefix-candidate \
+            --exact-real-shape-reproducer "$RUNNER_TEMP/f017-dprefix-real2-exact-shape.json"
+          target/release/f017-dense-prefix-candidate \
+            --full-exact-real-shape-rehearsal "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json"
+          test "$(jq -r .predecessor_result "$RUNNER_TEMP/f017-dprefix-real2-exact-shape.json")" = NATIVE_CANDIDATE_MATVEC_SHAPE
+          test "$(jq -r .successor_result "$RUNNER_TEMP/f017-dprefix-real2-exact-shape.json")" = PASS
+          test "$(jq -r .oracle_parity "$RUNNER_TEMP/f017-dprefix-real2-exact-shape.json")" = EXACT_CANONICAL_F32_PASS
+          test "$(jq -r .result "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json")" = 'FULL EXACT-REAL-SHAPE DPREFIX REHEARSAL PASS'
+          test "$(jq -r .repeats "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json")" = 10
+          test "$(jq -r .dispatch.fallback "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json")" = 0
+          test "$(jq -r .dispatch.backend_errors "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json")" = 0
+          test "$(jq -r .result docs/architecture/reviews/evidence/f017-dprefix-real2-preflight-v1.json)" = READY_TO_EXECUTE_DPREFIX_REAL_2_PENDING_INDEPENDENT_REVIEW
+          test "$(jq -r .cumulative_tensor_payloads docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json)" = 99
       - name: Test bounded worker contract
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \

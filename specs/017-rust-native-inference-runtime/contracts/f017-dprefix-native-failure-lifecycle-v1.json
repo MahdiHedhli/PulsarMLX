@@ -1,0 +1,1 @@
+{"attempt_id":"DPREFIX-REAL-2","automatic_retry":false,"checkpoint_access":0,"finally_cleanup":["child_process","MLX_context","arrays","streams","native_allocations","in_flight_work","stale_generations"],"schema":"pulsarmlx.f017.dprefix-native-failure-lifecycle","schema_version":"1.0.0","terminal_requirement":"NATIVE FAILURE LIFECYCLE RECONCILED"}

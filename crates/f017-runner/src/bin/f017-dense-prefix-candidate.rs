@@ -9,7 +9,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const ATTEMPT: &str = "DPREFIX-REAL-1";
+const ATTEMPT: &str = "DPREFIX-REAL-2";
+const LEDGER_BEFORE: u64 = 99;
 const PROMPT_PACKAGE: &str = "c05ba1cba69535cd17daf9f4326e5e1db25ffafe504c53712aa548f251741dff";
 const INVENTORY: &str = "c9c1540ea1cc9e69344ed9f3dcc4eb8ba1e5c15e3d55c1bccdec00eeb1db36aa";
 
@@ -283,7 +284,7 @@ fn self_verify(binding_path: &Path) -> Result<SelfVerification, String> {
     if binding.attempt_id != ATTEMPT
         || binding.inventory_sha256 != INVENTORY
         || binding.prompt_package_sha256 != PROMPT_PACKAGE
-        || binding.ledger_before != 59
+        || binding.ledger_before != LEDGER_BEFORE
     {
         return Err("CANDIDATE_IDENTITY: frozen identity mismatch".to_owned());
     }
@@ -310,7 +311,7 @@ fn self_verify(binding_path: &Path) -> Result<SelfVerification, String> {
         authorization_binding_sha256: binding.authorization_binding_sha256,
         inventory_sha256: INVENTORY,
         prompt_package_sha256: PROMPT_PACKAGE,
-        ledger_before: 59,
+        ledger_before: LEDGER_BEFORE,
         checkpoint_reads: 0,
     })
 }
@@ -374,6 +375,199 @@ fn native_matvec(
         return Err("candidate MLX lifecycle mismatch".to_owned());
     }
     Ok(result)
+}
+
+fn validate_named_matvec_shape(
+    stage: &str,
+    tensor: &str,
+    matrix_elements: usize,
+    rows: usize,
+    columns: usize,
+    vector_width: usize,
+) -> Result<(), String> {
+    let expected_matrix_elements = rows
+        .checked_mul(columns)
+        .ok_or_else(|| format!(
+            "NATIVE_CANDIDATE_MATVEC_SHAPE stage={stage} tensor={tensor} matrix=[{rows},{columns}] vector=[{vector_width}] expected_contraction={columns} observed_contraction={vector_width} imported_layout=gguf_dim0_columns matrix_elements={matrix_elements} expected_matrix_elements=overflow"
+        ))?;
+    if matrix_elements != expected_matrix_elements || vector_width != columns {
+        return Err(format!(
+            "NATIVE_CANDIDATE_MATVEC_SHAPE stage={stage} tensor={tensor} matrix=[{rows},{columns}] vector=[{vector_width}] expected_contraction={columns} observed_contraction={vector_width} imported_layout=gguf_dim0_columns matrix_elements={matrix_elements} expected_matrix_elements={expected_matrix_elements}"
+        ));
+    }
+    Ok(())
+}
+
+fn transpose_k_head(source: &[f32], rows: usize, columns: usize) -> Result<Vec<f32>, String> {
+    if source.len() != rows.checked_mul(columns).ok_or("k-head shape overflow")? {
+        return Err("NATIVE_CANDIDATE_MATVEC_SHAPE stage=attention.k_head tensor=attn_k_b.weight imported_layout=gguf_dim0_rows source_length_mismatch".to_owned());
+    }
+    let mut matrix = vec![0.0_f32; source.len()];
+    for source_row in 0..columns {
+        for source_column in 0..rows {
+            matrix[source_column * columns + source_row] =
+                source[source_row * rows + source_column];
+        }
+    }
+    Ok(matrix)
+}
+
+fn exact_real_shape_reproducer(output: &Path) -> Result<(), String> {
+    const ROWS: usize = 192;
+    const COLUMNS: usize = 512;
+    let mut stored = vec![0.0_f32; ROWS * COLUMNS];
+    for row in 0..ROWS {
+        let column = (row * 17) % COLUMNS;
+        // Stored GGUF head view is [columns, rows].
+        stored[column * ROWS + row] = ((row % 13) as f32 - 6.0) / 8.0;
+    }
+    let vector = (0..COLUMNS)
+        .map(|column| ((column % 11) as f32 - 5.0) / 16.0)
+        .collect::<Vec<_>>();
+    let predecessor = validate_named_matvec_shape(
+        "layer_0.attention.k_head_0",
+        "blk.0.attn_k_b.weight",
+        stored.len(),
+        COLUMNS,
+        ROWS,
+        vector.len(),
+    )
+    .expect_err("predecessor orientation must fail exact real geometry");
+    let mut successor_matrix = transpose_k_head(&stored, ROWS, COLUMNS)?;
+    let oracle = successor_matrix
+        .chunks_exact(COLUMNS)
+        .map(|row| row.iter().zip(&vector).map(|(a, b)| a * b).sum::<f32>())
+        .collect::<Vec<_>>();
+    let mut dispatch = DispatchEvidence::default();
+    let successor = native_matvec(&mut successor_matrix, ROWS, COLUMNS, &vector, &mut dispatch)?;
+    if hash_f32(&successor) != hash_f32(&oracle) {
+        return Err("exact-real-shape successor/oracle parity".to_owned());
+    }
+    let evidence = serde_json::json!({
+        "schema": "pulsarmlx.f017.dprefix-exact-real-shape-reproducer",
+        "schema_version": "1.0.0",
+        "checkpoint_access": 0,
+        "ledger": 99,
+        "stage": "layer_0.attention.k_head_0",
+        "tensor": "blk.0.attn_k_b.weight",
+        "gguf_shape": [192, 512, 64],
+        "vector_shape": [512],
+        "expected_matrix_shape": [192, 512],
+        "predecessor_matrix_shape": [512, 192],
+        "predecessor_result": "NATIVE_CANDIDATE_MATVEC_SHAPE",
+        "predecessor_diagnostic": predecessor,
+        "successor_result": "PASS",
+        "oracle_parity": "EXACT_CANONICAL_F32_PASS",
+        "successor_sha256": hash_f32(&successor),
+        "oracle_sha256": hash_f32(&oracle),
+        "native_dispatches": dispatch.native_matvecs,
+    });
+    fs::write(
+        output,
+        serde_json::to_vec_pretty(&evidence).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())
+}
+
+fn exact_real_shape_tensor(dimensions: &[usize], fill: f32) -> DecodedTensor {
+    DecodedTensor {
+        dimensions: dimensions.to_vec(),
+        values: vec![fill; dimensions.iter().product()],
+    }
+}
+
+fn exact_real_shape_tensors() -> BTreeMap<String, DecodedTensor> {
+    let mut tensors = BTreeMap::new();
+    for layer in 0..3 {
+        let prefix = format!("blk.{layer}");
+        for (suffix, dimensions, fill) in [
+            ("attn_k_b.weight", vec![192, 512, 64], 0.0),
+            ("attn_kv_a_mqa.weight", vec![6144, 576], 0.0),
+            ("attn_kv_a_norm.weight", vec![512], 1.0),
+            ("attn_norm.weight", vec![6144], 1.0),
+            ("attn_output.weight", vec![16384, 6144], 0.0),
+            ("attn_q_a.weight", vec![6144, 2048], 0.0),
+            ("attn_q_a_norm.weight", vec![2048], 1.0),
+            ("attn_q_b.weight", vec![2048, 16384], 0.0),
+            ("attn_v_b.weight", vec![512, 256, 64], 0.0),
+            ("ffn_down.weight", vec![12288, 6144], 0.0),
+            ("ffn_gate.weight", vec![6144, 12288], 0.0),
+            ("ffn_norm.weight", vec![6144], 1.0),
+            ("ffn_up.weight", vec![6144, 12288], 0.0),
+        ] {
+            tensors.insert(
+                format!("{prefix}.{suffix}"),
+                exact_real_shape_tensor(&dimensions, fill),
+            );
+        }
+    }
+    tensors
+}
+
+fn exact_real_shape_full_rehearsal(output: &Path) -> Result<(), String> {
+    let mut tensors = exact_real_shape_tensors();
+    let embedding = (0..6144)
+        .map(|index| ((index % 31) as f32 - 15.0) / 64.0)
+        .collect::<Vec<_>>();
+    let mut dispatch = DispatchEvidence::default();
+    let mut repeat_hashes = Vec::new();
+    let mut numerical_values = BTreeMap::new();
+    for _ in 0..10 {
+        let mut hidden = embedding.clone();
+        let mut stages = BTreeMap::from([("embedding".to_owned(), hash_f32(&embedding))]);
+        for layer in 0..3 {
+            let result = run_real_layer(&mut tensors, &hidden, layer, &mut dispatch)?;
+            stages.extend(result.hashes);
+            if !numerical_values.contains_key(&format!("layer_{layer}_output")) {
+                numerical_values.extend(result.numerical_values);
+            }
+            hidden = result.output;
+        }
+        stages.insert("layer_3_entry".to_owned(), hash_f32(&hidden));
+        repeat_hashes.push(stages);
+    }
+    let deterministic = repeat_hashes.windows(2).all(|pair| pair[0] == pair[1]);
+    if !deterministic {
+        return Err("REPEAT_DETERMINISM".to_owned());
+    }
+    numerical_values.insert("embedding".to_owned(), embedding.clone());
+    numerical_values.insert("layer_3_entry".to_owned(), embedding.clone());
+    let numerical_surface_package = write_surface_package(output, &numerical_values)?;
+    let surfaces_exact = numerical_surface_package.iter().all(|surface| {
+        if surface.semantic_id.ends_with("attention") {
+            surface.sha256 == hash_f32(&vec![0.0_f32; 6144])
+        } else {
+            surface.sha256 == hash_f32(&embedding)
+        }
+    });
+    if !surfaces_exact || dispatch.fallback != 0 || dispatch.backend_errors != 0 {
+        return Err("NUMERICAL_QUALIFICATION".to_owned());
+    }
+    let evidence = serde_json::json!({
+        "schema": "pulsarmlx.f017.dprefix-full-exact-real-shape-rehearsal",
+        "schema_version": "1.0.0",
+        "result": "FULL EXACT-REAL-SHAPE DPREFIX REHEARSAL PASS",
+        "checkpoint_access": 0,
+        "ledger": 99,
+        "attempt_id": ATTEMPT,
+        "exact_geometry": {
+            "hidden": 6144, "q_lora": 2048, "heads": 64,
+            "qk_nope": 192, "qk_rope": 64, "kv_lora": 512,
+            "value": 256, "ffn": 12288, "layers": 3
+        },
+        "material_tensor_shapes": tensors.iter().map(|(name, tensor)| serde_json::json!({"name": name, "gguf_shape": tensor.dimensions})).collect::<Vec<_>>(),
+        "repeats": 10,
+        "deterministic": deterministic,
+        "tier_b": "EXACT_SYNTHETIC_PARITY_PASS",
+        "surface_package": numerical_surface_package,
+        "dispatch": dispatch,
+        "lifecycle_reconciled": true,
+    });
+    fs::write(
+        output,
+        serde_json::to_vec_pretty(&evidence).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())
 }
 
 #[cfg(not(all(target_os = "macos", pulsar_native_mlx)))]
@@ -542,7 +736,7 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
         result: "SYNTHETIC_ACTUAL_BINARY_10_REPEAT_PASS",
         actual_binary_path: true,
         real_checkpoint_access: 0,
-        ledger: 59,
+        ledger: LEDGER_BEFORE,
         repeats: 10,
         deterministic,
         hidden_width: dimensions.hidden,
@@ -644,6 +838,7 @@ fn decode_material(tensor: &MaterialTensor, package_root: &Path) -> Result<Decod
 
 fn take_matvec(
     tensors: &mut BTreeMap<String, DecodedTensor>,
+    stage: &str,
     name: &str,
     vector: &[f32],
     dispatch: &mut DispatchEvidence,
@@ -653,11 +848,20 @@ fn take_matvec(
         .ok_or_else(|| format!("candidate tensor absent: {name}"))?;
     let rows = tensor.rows();
     let columns = tensor.columns();
+    validate_named_matvec_shape(
+        stage,
+        name,
+        tensor.values.len(),
+        rows,
+        columns,
+        vector.len(),
+    )?;
     native_matvec(&mut tensor.values, rows, columns, vector, dispatch)
 }
 
 fn take_head_matvec(
     tensors: &mut BTreeMap<String, DecodedTensor>,
+    stage: &str,
     name: &str,
     head: usize,
     vector: &[f32],
@@ -669,16 +873,24 @@ fn take_head_matvec(
     if tensor.dimensions.len() != 3 || head >= tensor.dimensions[2] {
         return Err(format!("candidate head tensor shape: {name}"));
     }
-    let columns = tensor.dimensions[0];
-    let rows = tensor.dimensions[1];
-    let head_elements = columns * rows;
-    native_matvec(
-        &mut tensor.values[head * head_elements..(head + 1) * head_elements],
-        rows,
-        columns,
-        vector,
-        dispatch,
-    )
+    let gguf_dim0 = tensor.dimensions[0];
+    let gguf_dim1 = tensor.dimensions[1];
+    let head_elements = gguf_dim0 * gguf_dim1;
+    let source = &tensor.values[head * head_elements..(head + 1) * head_elements];
+    // GLM's `attn_k_b` stores each head as GGUF [semantic_rows,
+    // semantic_columns]. Since dim0 varies fastest, the native row-major
+    // [rows, columns] import needs one explicit transpose. `attn_v_b` is
+    // already stored as [semantic_columns, semantic_rows].
+    let (rows, columns, mut matrix) = if name.ends_with("attn_k_b.weight") {
+        let rows = gguf_dim0;
+        let columns = gguf_dim1;
+        let matrix = transpose_k_head(source, rows, columns)?;
+        (rows, columns, matrix)
+    } else {
+        (gguf_dim1, gguf_dim0, source.to_vec())
+    };
+    validate_named_matvec_shape(stage, name, matrix.len(), rows, columns, vector.len())?;
+    native_matvec(&mut matrix, rows, columns, vector, dispatch)
 }
 
 fn vector(
@@ -719,6 +931,7 @@ fn run_real_layer(
     dispatch.cpu_rms_norm += 1;
     let q_rank = take_matvec(
         tensors,
+        &format!("layer_{layer}.attention.q_a"),
         &format!("{prefix}.attn_q_a.weight"),
         &x_norm,
         dispatch,
@@ -734,6 +947,7 @@ fn run_real_layer(
     dispatch.cpu_rms_norm += 1;
     let q = take_matvec(
         tensors,
+        &format!("layer_{layer}.attention.q_b"),
         &format!("{prefix}.attn_q_b.weight"),
         &q_rank_norm,
         dispatch,
@@ -745,6 +959,7 @@ fn run_real_layer(
     // and retained even though one-visible-token softmax is exactly one.
     let kv = take_matvec(
         tensors,
+        &format!("layer_{layer}.attention.kv_a"),
         &format!("{prefix}.attn_kv_a_mqa.weight"),
         &x_norm,
         dispatch,
@@ -763,6 +978,7 @@ fn run_real_layer(
     for head in 0..HEADS {
         keys.extend(take_head_matvec(
             tensors,
+            &format!("layer_{layer}.attention.k_head_{head}"),
             &format!("{prefix}.attn_k_b.weight"),
             head,
             &kv_norm,
@@ -770,6 +986,7 @@ fn run_real_layer(
         )?);
         values.extend(take_head_matvec(
             tensors,
+            &format!("layer_{layer}.attention.v_head_{head}"),
             &format!("{prefix}.attn_v_b.weight"),
             head,
             &kv_norm,
@@ -779,6 +996,7 @@ fn run_real_layer(
     dispatch.cpu_attention += 1;
     let attention = take_matvec(
         tensors,
+        &format!("layer_{layer}.attention.output"),
         &format!("{prefix}.attn_output.weight"),
         &values,
         dispatch,
@@ -796,12 +1014,14 @@ fn run_real_layer(
     dispatch.cpu_rms_norm += 1;
     let gate = take_matvec(
         tensors,
+        &format!("layer_{layer}.ffn.gate"),
         &format!("{prefix}.ffn_gate.weight"),
         &ffn_input,
         dispatch,
     )?;
     let up = take_matvec(
         tensors,
+        &format!("layer_{layer}.ffn.up"),
         &format!("{prefix}.ffn_up.weight"),
         &ffn_input,
         dispatch,
@@ -813,6 +1033,7 @@ fn run_real_layer(
     dispatch.cpu_activation += 1;
     let down = take_matvec(
         tensors,
+        &format!("layer_{layer}.ffn.down"),
         &format!("{prefix}.ffn_down.weight"),
         &activated,
         dispatch,
@@ -999,7 +1220,7 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
 }
 
 fn usage() -> &'static str {
-    "usage: f017-dense-prefix-candidate --self-verify <identity.json> | --synthetic-rehearsal <evidence.json> | --execute-material-package <manifest.json> <evidence.json>"
+    "usage: f017-dense-prefix-candidate --self-verify <identity.json> | --synthetic-rehearsal <evidence.json> | --exact-real-shape-reproducer <evidence.json> | --full-exact-real-shape-rehearsal <evidence.json> | --execute-material-package <manifest.json> <evidence.json>"
 }
 
 fn run() -> Result<(), String> {
@@ -1022,7 +1243,43 @@ fn run() -> Result<(), String> {
             Ok(())
         }
         "--synthetic-rehearsal" => synthetic_rehearsal(&path),
+        "--exact-real-shape-reproducer" => exact_real_shape_reproducer(&path),
+        "--full-exact-real-shape-rehearsal" => exact_real_shape_full_rehearsal(&path),
         _ => Err(format!("scope refusal: {}; {mode}", usage())),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{transpose_k_head, validate_named_matvec_shape};
+
+    #[test]
+    fn predecessor_k_head_orientation_fails_exact_real_shape() {
+        let error = validate_named_matvec_shape(
+            "layer_0.attention.k_head_0",
+            "blk.0.attn_k_b.weight",
+            192 * 512,
+            512,
+            192,
+            512,
+        )
+        .unwrap_err();
+        assert!(error.contains("expected_contraction=192 observed_contraction=512"));
+    }
+
+    #[test]
+    fn successor_k_head_transpose_preserves_semantic_coordinates() {
+        let mut stored = vec![0.0_f32; 3 * 4];
+        for column in 0..4 {
+            for row in 0..3 {
+                stored[column * 3 + row] = (10 * row + column) as f32;
+            }
+        }
+        let semantic = transpose_k_head(&stored, 3, 4).unwrap();
+        assert_eq!(
+            semantic,
+            vec![0., 1., 2., 3., 10., 11., 12., 13., 20., 21., 22., 23.]
+        );
     }
 }
 
