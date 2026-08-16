@@ -13,9 +13,8 @@ unconsumed, unexecuted, and checkpoint-unaccessed.
 ## Lineage and prior event
 
 - Starting/authorization lineage: `6120be0c279c6b8e8cd3a44ec52790a5fbe7811b`.
-- Final preparation evidence head: the commit containing this report and the
-  production-width rehearsal artifacts; the exact run binding is appended
-  after its Apple-native CI completes.
+- Final preparation evidence head:
+  `544f371151bc04a43d337d6765c818ce9d6e38ef`.
 - Immutable prior non-execution evidence SHA-256:
   `b8495bd1a4129efc7e24c687289bcb3be7af7f153e24d45ccffdccb79e79d60a`.
 - The historical fact remains `DPREFIX-REAL-1 / NOT_EXECUTED /
@@ -116,10 +115,16 @@ lowered. Real checkpoint access is 0; the real-payload ledger is 59.
 
 ## Validation and CI
 
-The focused closure suite passes the production-width candidate/oracle
-identity, independence, ordering, mutation, retention, memory, and ledger
-surface. Broad clean-tree validation and the exact Apple-native run binding are
-recorded after the production-width preparation commit is pushed.
+- Rust: `cargo check --workspace --all-targets` and
+  `cargo test --workspace --no-fail-fast` passed from the clean production-width
+  preparation head.
+- Python: all 729 research/evidence tests passed.
+- Focused closure: all 13 candidate/oracle identity, independence, ordering,
+  mutation, retention, memory, and ledger tests passed.
+- Apple-native CI run `31923275566` passed at exact head
+  `544f371151bc04a43d337d6765c818ce9d6e38ef`.
+- Apple jobs `95106636671` and `95106636692` both concluded `success`, including
+  the concrete 6,144-wide candidate/oracle rehearsal with no relevant skip.
 
 ## Exact next action
 
