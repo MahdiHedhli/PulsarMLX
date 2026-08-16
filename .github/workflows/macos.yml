@@ -395,7 +395,10 @@ jobs:
           import json
           import os
           from pathlib import Path
-          identity = json.loads(Path("docs/architecture/reviews/evidence/f017-dprefix-candidate-identity-binding-v2.json").read_text())
+          # The source tree now builds the append-only REAL-2 successor.  Its
+          # self-verification must therefore use the successor identity rather
+          # than the immutable REAL-1 predecessor binding.
+          identity = json.loads(Path("docs/architecture/reviews/evidence/f017-dprefix-candidate-identity-binding-v3.json").read_text())
           identity["binary_sha256"] = hashlib.sha256(Path(os.environ["CI_CANDIDATE"]).read_bytes()).hexdigest()
           Path(os.environ["CI_IDENTITY"]).write_text(json.dumps(identity, sort_keys=True, separators=(",", ":")))
           PY
