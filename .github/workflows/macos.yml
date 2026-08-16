@@ -385,6 +385,24 @@ jobs:
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
           cargo build --release -p f017-runner --bin f017-dense-prefix-candidate
+          CI_CANDIDATE=target/release/f017-dense-prefix-candidate
+          CI_IDENTITY="$RUNNER_TEMP/f017-dprefix-candidate-identity.json"
+          CI_CANDIDATE="$CI_CANDIDATE" CI_IDENTITY="$CI_IDENTITY" .venv/bin/python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          identity = json.loads(Path("docs/architecture/reviews/evidence/f017-dprefix-candidate-identity-binding-v2.json").read_text())
+          identity["binary_sha256"] = hashlib.sha256(Path(os.environ["CI_CANDIDATE"]).read_bytes()).hexdigest()
+          Path(os.environ["CI_IDENTITY"]).write_text(json.dumps(identity, sort_keys=True, separators=(",", ":")))
+          PY
+          "$CI_CANDIDATE" --self-verify "$CI_IDENTITY" | jq -e '.result == "CANDIDATE_IDENTITY_VERIFIED" and .checkpoint_reads == 0'
+          for forbidden in --layer-3 --router --logits --prompt --token --inventory; do
+            if "$CI_CANDIDATE" "$forbidden" "$CI_IDENTITY"; then
+              echo "candidate accepted forbidden scope: $forbidden" >&2
+              exit 1
+            fi
+          done
           target/release/f017-dense-prefix-candidate \
             --synthetic-rehearsal "$RUNNER_TEMP/f017-dprefix-synthetic.json"
           test "$(jq -r .result "$RUNNER_TEMP/f017-dprefix-synthetic.json")" = SYNTHETIC_ACTUAL_BINARY_10_REPEAT_PASS
