@@ -351,6 +351,7 @@ jobs:
             scripts.research.tests.test_f017_dprefix_infrastructure_closure \
             scripts.research.tests.test_f017_dprefix_real_numerical_surface \
             scripts.research.tests.test_f017_dprefix_numerical_surface_closure \
+            scripts.research.tests.test_f017_dprefix_real_execution_surface_preflight \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream

@@ -326,3 +326,9 @@
   strict evidence schema, qualifying the actual successor binary for ten
   production-width repeats, and publishing config/authorization successors for
   the same unconsumed attempt with zero checkpoint access and ledger 59.
+- [x] T017-205 Run the independently released DPREFIX-REAL-1 preflight
+  checkpoint-free, preserve the exact candidate/oracle/numerical successors,
+  detect that no reviewed real-event launcher or material-package builder binds
+  the 40 positional reads to oracle-first execution and terminal evidence,
+  bank `NOT_EXECUTED / EXECUTION_SURFACE_DRIFT` without resolving a checkpoint
+  path, and preserve the same unconsumed attempt with ledger 59.
