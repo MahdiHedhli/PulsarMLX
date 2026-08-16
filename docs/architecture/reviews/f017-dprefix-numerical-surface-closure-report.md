@@ -53,7 +53,7 @@ The standalone metric engine consumes paired canonical LE-f32 bytes, rejects sha
 
 ## Rehearsal, schema, and admission
 
-The production-width rehearsal artifact is `docs/architecture/reviews/evidence/f017-dprefix-full-tier-b-synthetic-rehearsal-v1.json` (SHA-256 `a250ed784305e48d2056d6f1896ecebbc59a59a597ea7f743bf9dd082a4c466e`). It records `FULL TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE`, all eight populated surfaces, ten deterministic repeats, clean lifecycle, and operational retention.
+The production-width rehearsal artifact is `docs/architecture/reviews/evidence/f017-dprefix-full-tier-b-synthetic-rehearsal-v1.json` (SHA-256 `b6fb821a364f05c607e069f914b67a3b4c09fe2cf405e1282b0c0701792ab69f`). It records `FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE`, all eight populated surfaces, ten deterministic repeats, clean lifecycle, and operational retention.
 
 The earlier final max-abs and RMSE reproduce exactly. Cosine changes by `7.771561172376096e-16` because the new deterministic scalar `math.fsum` accumulation differs from the old NumPy reduction; candidate and oracle canonical f32 bytes are unchanged.
 
@@ -63,9 +63,9 @@ Paired-value overhead does not change the 27 GiB floor. The additional candidate
 
 ## Successor authorization state
 
-- config v4 artifact SHA-256: `4220744713f864680d270b5793ae00a79bd0804f9159d1b4022acf23eba2cbd3`
-- authorization binding v3 artifact SHA-256: `2b99cc6228dff0967cabc8cab8f041a800176361ff20d481e7eac2f94762b88b`
-- attempt ledger v4 artifact SHA-256: `0f6f596af9e9e87e33813154f0448abdbfdfe6e822ee680b0c1b346c9eb58cea`
+- config v4 artifact SHA-256: `042a1fac64813849ae1569fee05d60be6a86fba0f7ef874dbdaeb85c29252266`
+- authorization binding v3 artifact SHA-256: `86fbf397b462f23fd6bb9d911afcc332b348bf60426d80790dec3b691ff6ee6c`
+- attempt ledger v4 artifact SHA-256: `dd6ad01a2a38235dfd84a25269d0513c813ba7c87171ed3a898c7566ef63001e`
 - canonical preflight: `READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE`
 - state: `AUTHORIZED_UNCONSUMED_NOT_EXECUTED_PENDING_INDEPENDENT_REVIEW`
 - real checkpoint access: 0

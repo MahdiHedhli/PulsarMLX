@@ -577,7 +577,7 @@ def rehearsal_artifact(manifest: dict[str, Any], build: dict[str, Any], oracle_p
     return {
         "schema": "pulsarmlx.f017.dprefix-full-tier-b-synthetic-rehearsal",
         "schema_version": "1.0.0",
-        "result": "FULL TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE",
+        "result": "FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE",
         "tier_b_sha256": TIER_B_SHA,
         "candidate_executable_sha256": build["binary"]["sha256"],
         "oracle_package_sha256": oracle_package["package_sha256"],
@@ -776,7 +776,7 @@ def validate_artifacts(values: dict[Path, Any]) -> dict[str, Any]:
         raise ValueError("attempt authorization mismatch")
     if attempt["current_state"] != {"attempt_id": ATTEMPT, "authorized": True, "consumed": False, "executed": False, "checkpoint_accessed": False, "ledger": 59, "automatic_retry": False, "automatic_m1f0_continuation": False}:
         raise ValueError("attempt state")
-    if rehearsal["result"] != "FULL TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE" or not rehearsal["overall_pass"] or len(rehearsal["surfaces"]) != 8:
+    if rehearsal["result"] != "FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE" or not rehearsal["overall_pass"] or len(rehearsal["surfaces"]) != 8:
         raise ValueError("Tier-B instantiability")
     if preflight["result"] != "READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE" or preflight["checkpoint_reads"] != 0:
         raise ValueError("preflight")
