@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-attempt-ledger",
+  "schema_version": "3.0.0",
+  "append_only_predecessor": {
+    "path": "docs/architecture/reviews/evidence/f017-dense-prefix-attempt-ledger-v2.json",
+    "sha256": "b18be3ab1f5589942a232d5d04fcd57888eb7bde14b363ca62368a387a1242fe"
+  },
+  "events": [
+    {
+      "event": "REAL_EXECUTION_RELEASE_NONCONSUMING_INFRASTRUCTURE_STOP",
+      "attempt_id": "DPREFIX-REAL-1",
+      "authorized": true,
+      "consumed": false,
+      "executed": false,
+      "checkpoint_accessed": false,
+      "status": "AUTHORIZED_UNCONSUMED_NOT_EXECUTED_INFRASTRUCTURE_BLOCKED",
+      "terminal_nonexecution_class": "INFRASTRUCTURE",
+      "reason_code": "TIER_B_NUMERICAL_SURFACE_UNINSTANTIABLE",
+      "evidence_path": "docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-1-not-executed-numerical-surface-v1.json",
+      "evidence_sha256": "a730fb123fd86319b199579c79bdcbff1b282b7f7ec4003daa694f9e37a176b6",
+      "execution_config_sha256": "1ec301f23735dbebd7360ef58f38ba78cfc89dad878f3b6c63686ac63952a806",
+      "authorization_binding_sha256": "68e37070e50c96cd57d2e0dd79199f1a63952163adfd614f7200907ca3b3d248",
+      "candidate_executable_sha256": "69b8cda5e3a6e600d29c899cb75ac4cdcf98ef301f50d506240c3499c918ae4f",
+      "oracle_package_sha256": "4f8344057c962c96f969aeb8dc60b833939dc64dd59ab5addec4b4c2249c486f",
+      "actual_payload_reads": 0,
+      "actual_packed_bytes_read": 0,
+      "ledger_before": 59,
+      "ledger_after": 59,
+      "automatic_retry": false,
+      "automatic_m1f0_continuation": false
+    }
+  ],
+  "checkpoint_access": 0,
+  "ledger": 59
+}

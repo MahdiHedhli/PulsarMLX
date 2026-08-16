@@ -1,0 +1,95 @@
+{
+  "schema": "pulsarmlx.f017.dense-prefix-real-not-executed-evidence",
+  "schema_version": "2.0.0",
+  "attempt_id": "DPREFIX-REAL-1",
+  "authorization_release_head": "51483a5d199e2b1c02c73d05ce0011578664aa7f",
+  "historical_package_preflight": "READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE",
+  "extended_execution_surface_preflight": "NOT_READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE",
+  "terminal_class": "INFRASTRUCTURE",
+  "verdict": "NOT_EXECUTED",
+  "reason_code": "TIER_B_NUMERICAL_SURFACE_UNINSTANTIABLE",
+  "reason": "the exact reviewed candidate and instantiated oracle retain hashes but not the paired intermediate numerical values required to derive frozen Tier-B per-layer and per-attention max-absolute-error, RMSE, and cosine metrics",
+  "infrastructure_findings": [
+    {
+      "code": "CANDIDATE_INTERMEDIATE_VALUES_UNAVAILABLE",
+      "artifact": "crates/f017-runner/src/bin/f017-dense-prefix-candidate.rs",
+      "artifact_sha256": "b0609ccafd382335bd41e5ecc3fe52dba3dd874fed2eb244aa192ffb2b2507da",
+      "observed_surface": "RealCandidateEvidence exposes repeat stage_hashes and final retained_state only",
+      "required_surface": "paired candidate intermediate values or independently derived numerical metrics for every frozen Tier-B boundary"
+    },
+    {
+      "code": "ORACLE_INTERMEDIATE_VALUES_UNAVAILABLE",
+      "artifact": "scripts/research/f017_dprefix_oracle_runtime.py",
+      "artifact_sha256": "1033042bd92db5d041498733d193bddb990e4c8ef2fdacd90507a16413b79466",
+      "observed_surface": "dense_prefix and layer_position_zero return final values plus intermediate hashes",
+      "required_surface": "paired oracle intermediate values for every frozen Tier-B boundary"
+    },
+    {
+      "code": "EVIDENCE_CONTRACT_CANNOT_BE_INSTANTIATED",
+      "artifact": "specs/017-rust-native-inference-runtime/contracts/f017-dense-prefix-evidence-v2.schema.json",
+      "artifact_sha256": "68345be6a83b0c92371c36f3150f5442e036fe8c993c6a5097c9aefb4951d737",
+      "observed_surface": "candidate.numerical_surfaces requires at least five entries",
+      "required_surface": "frozen real Tier-B per-layer and intermediate-attention metrics"
+    }
+  ],
+  "frozen_numerical_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-dense-prefix-real-tier-b-v1.json",
+    "sha256": "9d1a6cc20ce8325fe8395334416f5ebcf980b72f02c6a0b44dc3240e0810024a",
+    "requires_per_layer_metrics": true,
+    "requires_intermediate_attention_metrics": true,
+    "post_observation_retuning": "FORBIDDEN",
+    "changed": false
+  },
+  "host_observation": {
+    "architecture": "arm64",
+    "macos_version": "26.0",
+    "macos_build": "25A354",
+    "sdk_version": "26.2",
+    "xcode_version": "26.3",
+    "memory_floor_gib": 27,
+    "system_memory_bytes": 137438953472,
+    "memory_free_percentage": 90,
+    "memory_admission_passed": true,
+    "thermal_warning_recorded": false,
+    "performance_warning_recorded": false,
+    "candidate_identity_verified": true,
+    "reviewed_native_libraries_match": true
+  },
+  "state": {
+    "authorized": true,
+    "consumed": false,
+    "executed": false,
+    "checkpoint_accessed": false,
+    "payloads_read": 0,
+    "packed_bytes_read": 0,
+    "ledger_before": 59,
+    "ledger_after": 59,
+    "automatic_retry": false,
+    "automatic_m1f0_continuation": false
+  },
+  "preserved_bindings": {
+    "candidate_executable_sha256": "69b8cda5e3a6e600d29c899cb75ac4cdcf98ef301f50d506240c3499c918ae4f",
+    "candidate_source_manifest_sha256": "fe53a89ab8619675650346faae314a6219312a5be67e2a85a2c5a64fa5a4abc4",
+    "oracle_package_sha256": "4f8344057c962c96f969aeb8dc60b833939dc64dd59ab5addec4b4c2249c486f",
+    "oracle_source_manifest_sha256": "9e7d233e2816401d95ddd009c239cf78f05b080afe9c3cecc3ad8f60bf8f53ae",
+    "execution_config_sha256": "1ec301f23735dbebd7360ef58f38ba78cfc89dad878f3b6c63686ac63952a806",
+    "authorization_binding_sha256": "68e37070e50c96cd57d2e0dd79199f1a63952163adfd614f7200907ca3b3d248",
+    "attempt_ledger_sha256_before": "b18be3ab1f5589942a232d5d04fcd57888eb7bde14b363ca62368a387a1242fe",
+    "real_payload_ledger_sha256_before": "a0edafdcd0279fb28e08c69a86a9c95ddd19e013b73a1e92f7620734456a9339"
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_dprefix_real_numerical_surface.py",
+    "sha256": "800a4b79c89a6a9e4c138938b61768def1ec229a757756ce68d386fd96f9e2fd",
+    "focused_tests": 3,
+    "focused_result": "PASS"
+  },
+  "isolation": {
+    "real_checkpoint_payload_reads": 0,
+    "dense_prefix_executed": false,
+    "retained_real_layer3_state_created": false,
+    "representative_m1f0_executed": false,
+    "m1f_executed": false,
+    "m1g_executed": false,
+    "p1_executed": false
+  }
+}

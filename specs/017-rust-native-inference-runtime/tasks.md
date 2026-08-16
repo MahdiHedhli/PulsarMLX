@@ -314,3 +314,8 @@
   qualify their actual-binary ten-repeat/dispatch/lifecycle/retention behavior
   checkpoint-free, publish config/authorization successors for the same
   unconsumed attempt, and stop for adversarial review with ledger 59.
+- [x] T017-203 Reconcile the released DPREFIX-REAL-1 numerical evidence surface
+  checkpoint-free, prove that the exact reviewed candidate and instantiated
+  oracle retain only intermediate hashes while the frozen real Tier-B contract
+  requires per-layer and attention error metrics, bank a second non-consuming
+  infrastructure result, and stop before payload access with ledger 59.
