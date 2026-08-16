@@ -1,0 +1,775 @@
+{
+  "schema": "pulsarmlx.f017.dprefix-terminal-failure-evidence",
+  "schema_version": "4.0.0",
+  "verdict": "REJECTED",
+  "terminal_class": "NATIVE_RUNTIME",
+  "reason_code": "NATIVE_CANDIDATE_MATVEC_SHAPE",
+  "reason": "the exact reviewed candidate exited nonzero with native candidate matvec shape after all 40 authorized payloads were read and materialized",
+  "attempt_id": "DPREFIX-REAL-1",
+  "release": {
+    "adjudication_head": "87492cc670bcb46348cda0a72b6481690b907dd3",
+    "execution_head": "87492cc670bcb46348cda0a72b6481690b907dd3",
+    "adversarial_verdict": "GO — EXECUTE DPREFIX-REAL-1"
+  },
+  "checkpoint": {
+    "immutable_revision": "abc55e72527792c6e77069c99b4cb7de16fa9f23",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "shard_count": 6,
+    "execution_shard": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "mount_admission": "PASSED_SAME_REVIEWED_REGULAR_FILE_OBJECTS_NO_SYMLINK"
+  },
+  "bindings": {
+    "orchestrator_package_sha256": "4b69d8fcca3edf6edbe78e75d62d5b9558d58ac90f7d70fbae79484e017f18df",
+    "orchestrator_source_manifest_sha256": "6444db4def93cee97d82fd04ed41eb3ce2a3ec60c4a7f780b0a4bd46e41d5afe",
+    "execution_config_sha256": "27774a11d933750cb9703a9889b5f83b88711ee27827c9d34eb585649545aadd",
+    "authorization_binding_sha256": "fc286651d4fa11ff43e0db926a801d24e30152509465d2d7f0510d79599e1e47",
+    "candidate_binary_sha256": "1a73dd4026592e21df05a82df806e52ebcb8dd0248aaffc0d8fd91c6f9e1387a",
+    "candidate_source_manifest_sha256": "1df94bc11a550dc589666fdbdac6fd3cd0c7bdc17ab76f2fd8a74f705dfed35d",
+    "oracle_package_sha256": "9b00ed225acc9b299c5bd789f1b082f6a2fd90b7893913bc9f353f99ee83c89b",
+    "oracle_source_manifest_sha256": "a3900bb70a0255c1484d19b5f9988135f63ff9e8176276361be6c499cc73aea8",
+    "metric_engine_sha256": "cd7ca4eee855b60b6695b8ac6671d59eae2f446231f437168df0985f984ad738",
+    "numerical_surface_manifest_sha256": "ecbc47bf1af97db99308a24e9303f2f6ef75d2f78d31d4853d8106afe0b271ec",
+    "tier_b_sha256": "9d1a6cc20ce8325fe8395334416f5ebcf980b72f02c6a0b44dc3240e0810024a",
+    "inventory_sha256": "c9c1540ea1cc9e69344ed9f3dcc4eb8ba1e5c15e3d55c1bccdec00eeb1db36aa",
+    "prompt_package_sha256": "c05ba1cba69535cd17daf9f4326e5e1db25ffafe504c53712aa548f251741dff"
+  },
+  "immutable_runtime_sources": {
+    "execution_start_and_read_journal": {
+      "symbolic_private_path": ".pulsarmlx-local/dprefix-real-1/execution-start-and-read-journal.json",
+      "sha256": "24dc4da273a67125af59a8c0a342471cf2365109f42633c674ecd9e71e1c54eb"
+    },
+    "material_manifest": {
+      "symbolic_private_path": ".pulsarmlx-local/dprefix-real-1/material/manifest.json",
+      "sha256": "d614ff1128377b8d4e78ddc465e7906cdbb765e682515a27078595c0b2ae19d6"
+    },
+    "command_stderr": {
+      "symbolic_private_path": ".pulsarmlx-local/dprefix-real-1-command.stderr.log",
+      "sha256": "1fe6f54347bab8acbfa746bae1d1f5a64455499f7a597fcbfb697bcdfabaac27"
+    }
+  },
+  "access": {
+    "shard_opens": 1,
+    "positional_reads": 40,
+    "payloads": 40,
+    "packed_bytes": 1431263232,
+    "read_records": [
+      {
+        "ordinal": 0,
+        "tensor_name": "token_embd.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 535316320,
+        "requested_length": 535265280,
+        "actual_length": 535265280,
+        "packed_sha256": "3e4c34141f918333883442b8ff44c78c9927295ae16378047a8a36edeb7ed5ef"
+      },
+      {
+        "ordinal": 1,
+        "tensor_name": "blk.0.attn_k_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1070581600,
+        "requested_length": 6684672,
+        "actual_length": 6684672,
+        "packed_sha256": "fd5eed125816597f0e476bacd30259762b4a540f3acdfaf657d90ed15dacec35"
+      },
+      {
+        "ordinal": 2,
+        "tensor_name": "blk.0.attn_kv_a_mqa.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1077266272,
+        "requested_length": 3760128,
+        "actual_length": 3760128,
+        "packed_sha256": "ff2b6a0e14f3e180ba6a8a8522ef4569c9cb82a0f10708f66da794305e3ee4cc"
+      },
+      {
+        "ordinal": 3,
+        "tensor_name": "blk.0.attn_kv_a_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1081026400,
+        "requested_length": 2048,
+        "actual_length": 2048,
+        "packed_sha256": "e1632832ba620c6334ea72cfa13d30f6f17b4de588784b31f1c15b3ba2ab852a"
+      },
+      {
+        "ordinal": 4,
+        "tensor_name": "blk.0.attn_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1081028448,
+        "requested_length": 24576,
+        "actual_length": 24576,
+        "packed_sha256": "a9d39b435f5fad585202bc66a3d19410422296078a19ca62818d43bb624411e0"
+      },
+      {
+        "ordinal": 5,
+        "tensor_name": "blk.0.attn_output.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1081053024,
+        "requested_length": 69206016,
+        "actual_length": 69206016,
+        "packed_sha256": "cd77d3657dffbbe6beb0782d3ec62366c385935a31fb84e53b238b57544ce9cf"
+      },
+      {
+        "ordinal": 6,
+        "tensor_name": "blk.0.attn_q_a.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1150259040,
+        "requested_length": 8650752,
+        "actual_length": 8650752,
+        "packed_sha256": "d34e9690bc95249ae2f4d1afe94e32acc211e6d211bb47a3f26a5390269d89ce"
+      },
+      {
+        "ordinal": 7,
+        "tensor_name": "blk.0.attn_q_a_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1158909792,
+        "requested_length": 8192,
+        "actual_length": 8192,
+        "packed_sha256": "4c746867410713eb1fcdf4a401d956872a6668b5ede36df0cf447d344a08bde0"
+      },
+      {
+        "ordinal": 8,
+        "tensor_name": "blk.0.attn_q_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1158917984,
+        "requested_length": 35651584,
+        "actual_length": 35651584,
+        "packed_sha256": "e8775246abd9a32e53c26fdda2ec01ef8f2cfc63d23b13180a5166f425c04ae7"
+      },
+      {
+        "ordinal": 9,
+        "tensor_name": "blk.0.attn_v_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1194569568,
+        "requested_length": 8912896,
+        "actual_length": 8912896,
+        "packed_sha256": "8a70b179ba21902838af248e8da28ca1108860e4f83e49ead485be910f258f19"
+      },
+      {
+        "ordinal": 10,
+        "tensor_name": "blk.0.ffn_down.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1203482464,
+        "requested_length": 61931520,
+        "actual_length": 61931520,
+        "packed_sha256": "845b4fd6b5d290506e576ca5099336bae7d28f3ebfcec964ed2136c3ea4a8ede"
+      },
+      {
+        "ordinal": 11,
+        "tensor_name": "blk.0.ffn_gate.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1265413984,
+        "requested_length": 51904512,
+        "actual_length": 51904512,
+        "packed_sha256": "aea02f9623490288501233c5af0fe2aa0cf0f1d479c544711236473946497ef1"
+      },
+      {
+        "ordinal": 12,
+        "tensor_name": "blk.0.ffn_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1317318496,
+        "requested_length": 24576,
+        "actual_length": 24576,
+        "packed_sha256": "ddb62916757ed641a8c0b24c707661494150fffffd4fbb3e2bf06ceb899a7200"
+      },
+      {
+        "ordinal": 13,
+        "tensor_name": "blk.0.ffn_up.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1317343072,
+        "requested_length": 51904512,
+        "actual_length": 51904512,
+        "packed_sha256": "08b64302e6e5bdb09107cb4b1fffbbb131520cd80f924705831d4bc58b85b371"
+      },
+      {
+        "ordinal": 14,
+        "tensor_name": "blk.1.attn_k_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1379783520,
+        "requested_length": 6684672,
+        "actual_length": 6684672,
+        "packed_sha256": "f0f16c1fb7b4da7d3905172c42653321122fe4f9e903ed32ac4b6c60935c1e74"
+      },
+      {
+        "ordinal": 15,
+        "tensor_name": "blk.1.attn_kv_a_mqa.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1386468192,
+        "requested_length": 3760128,
+        "actual_length": 3760128,
+        "packed_sha256": "03f0643eac2db639de3bcad4fac8cb84d714203272fed942d3fc2e25e8a7ceaf"
+      },
+      {
+        "ordinal": 16,
+        "tensor_name": "blk.1.attn_kv_a_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1390228320,
+        "requested_length": 2048,
+        "actual_length": 2048,
+        "packed_sha256": "11898a53f8cf3f56907641c30c07830e1229387603047eaffc36eb76cb666ac1"
+      },
+      {
+        "ordinal": 17,
+        "tensor_name": "blk.1.attn_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1390230368,
+        "requested_length": 24576,
+        "actual_length": 24576,
+        "packed_sha256": "88bc46f95e776372b1d078f4ec5c5c5c832f34db600c8ab6cbb16b879403a349"
+      },
+      {
+        "ordinal": 18,
+        "tensor_name": "blk.1.attn_output.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1390254944,
+        "requested_length": 69206016,
+        "actual_length": 69206016,
+        "packed_sha256": "737a4ee512cabbc69bec1f87a0bcbf6d6c1acfafe5bc773fd7bdeca77afbda1b"
+      },
+      {
+        "ordinal": 19,
+        "tensor_name": "blk.1.attn_q_a.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1459460960,
+        "requested_length": 8650752,
+        "actual_length": 8650752,
+        "packed_sha256": "76d459bd51c5b28239dc43d24aa3de79d84fff2edecc264fee5f661b7ccea176"
+      },
+      {
+        "ordinal": 20,
+        "tensor_name": "blk.1.attn_q_a_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1468111712,
+        "requested_length": 8192,
+        "actual_length": 8192,
+        "packed_sha256": "0e96a7190fd2967a19fe386fecec107dc7456ee072c9d84fc15c4ceec2417299"
+      },
+      {
+        "ordinal": 21,
+        "tensor_name": "blk.1.attn_q_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1468119904,
+        "requested_length": 35651584,
+        "actual_length": 35651584,
+        "packed_sha256": "b2f8020e3c446a43da465abfd08afafb124fd1e18924aeb6b432109d9e9a0c9b"
+      },
+      {
+        "ordinal": 22,
+        "tensor_name": "blk.1.attn_v_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1503771488,
+        "requested_length": 8912896,
+        "actual_length": 8912896,
+        "packed_sha256": "5f1b6f1aa7a6a67a1a42ec0e2dbc4983851e4bd4d1d16c2f89c6af44c3957cf5"
+      },
+      {
+        "ordinal": 23,
+        "tensor_name": "blk.1.ffn_down.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1512684384,
+        "requested_length": 61931520,
+        "actual_length": 61931520,
+        "packed_sha256": "eeda0a4a769485b316f66d18a9ef0081ad0d06ab89da33e5074a10585fbd8f63"
+      },
+      {
+        "ordinal": 24,
+        "tensor_name": "blk.1.ffn_gate.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1574615904,
+        "requested_length": 51904512,
+        "actual_length": 51904512,
+        "packed_sha256": "7d2ad0af95f57d69339a6e8d15ee1f9fbe7a99abcb0a1b6da2b864a01a192fe4"
+      },
+      {
+        "ordinal": 25,
+        "tensor_name": "blk.1.ffn_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1626520416,
+        "requested_length": 24576,
+        "actual_length": 24576,
+        "packed_sha256": "8b1b8573a991fc769b551f676f924d9365a6000ddea8d0c6762de06c154d316d"
+      },
+      {
+        "ordinal": 26,
+        "tensor_name": "blk.1.ffn_up.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1626544992,
+        "requested_length": 51904512,
+        "actual_length": 51904512,
+        "packed_sha256": "3fa0e66b5789603b27475f47845da7e149c1ed33d9aadd0fed7ddf206fa5a6c8"
+      },
+      {
+        "ordinal": 27,
+        "tensor_name": "blk.2.attn_k_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1688985440,
+        "requested_length": 6684672,
+        "actual_length": 6684672,
+        "packed_sha256": "4c0c251fb62c273ffef9dda993a2b961059155458620065102a4725a86c2e0fb"
+      },
+      {
+        "ordinal": 28,
+        "tensor_name": "blk.2.attn_kv_a_mqa.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1695670112,
+        "requested_length": 3760128,
+        "actual_length": 3760128,
+        "packed_sha256": "9a8a750f15902e9f5b15f570a51f41c5042af0821e8421259494697aaa30efdf"
+      },
+      {
+        "ordinal": 29,
+        "tensor_name": "blk.2.attn_kv_a_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1699430240,
+        "requested_length": 2048,
+        "actual_length": 2048,
+        "packed_sha256": "5927094eae1324cac612f36ec1103767aec55c7e3877f01bf35bb30f02140954"
+      },
+      {
+        "ordinal": 30,
+        "tensor_name": "blk.2.attn_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1699432288,
+        "requested_length": 24576,
+        "actual_length": 24576,
+        "packed_sha256": "8a358985cc7144587631670543c487ada27adc25bb84e442c3c50ee98bb4ad7c"
+      },
+      {
+        "ordinal": 31,
+        "tensor_name": "blk.2.attn_output.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1699456864,
+        "requested_length": 69206016,
+        "actual_length": 69206016,
+        "packed_sha256": "f66d092bdb01e6338d2c8bd77a98ea17ea61625116edee5e1b1367e35db06c22"
+      },
+      {
+        "ordinal": 32,
+        "tensor_name": "blk.2.attn_q_a.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1768662880,
+        "requested_length": 8650752,
+        "actual_length": 8650752,
+        "packed_sha256": "e05a06e15b8b13a55dc16690a7d8540143d921b272192f698d043690b017c4c2"
+      },
+      {
+        "ordinal": 33,
+        "tensor_name": "blk.2.attn_q_a_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1777313632,
+        "requested_length": 8192,
+        "actual_length": 8192,
+        "packed_sha256": "f61d1d3768abfffdd1fbe7eb76c9890be78c9e9ff0f69f12e68e03778b4709e1"
+      },
+      {
+        "ordinal": 34,
+        "tensor_name": "blk.2.attn_q_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1777321824,
+        "requested_length": 35651584,
+        "actual_length": 35651584,
+        "packed_sha256": "5c697b75e896a9b169efa59b357d6e6b042286f4c32c51f561971f4785831b85"
+      },
+      {
+        "ordinal": 35,
+        "tensor_name": "blk.2.attn_v_b.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1812973408,
+        "requested_length": 8912896,
+        "actual_length": 8912896,
+        "packed_sha256": "409d7f1a463cab820698e3b093be6cd1b2600216d036cb31ae3113cdd1f20128"
+      },
+      {
+        "ordinal": 36,
+        "tensor_name": "blk.2.ffn_down.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1821886304,
+        "requested_length": 61931520,
+        "actual_length": 61931520,
+        "packed_sha256": "47246e2a3199e67380eef547e7adc719104f7f8071a3af5ac553bc15ff9527d3"
+      },
+      {
+        "ordinal": 37,
+        "tensor_name": "blk.2.ffn_gate.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1883817824,
+        "requested_length": 51904512,
+        "actual_length": 51904512,
+        "packed_sha256": "9f7503436049ea1948804d4fd688df66124e7328c1d039af9e3fa4d0c2cb5cb9"
+      },
+      {
+        "ordinal": 38,
+        "tensor_name": "blk.2.ffn_norm.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1935722336,
+        "requested_length": 24576,
+        "actual_length": 24576,
+        "packed_sha256": "23d857cf62426473e47655a11d32093899aa2074c59e085ff8e74733ce4c4444"
+      },
+      {
+        "ordinal": 39,
+        "tensor_name": "blk.2.ffn_up.weight",
+        "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "offset": 1935746912,
+        "requested_length": 51904512,
+        "actual_length": 51904512,
+        "packed_sha256": "b75abc7103963e5d8ddde94c6b68c7aa6f3ad4af55fd94bc8df7bef46c1626c1"
+      }
+    ]
+  },
+  "identity_confirmations": {
+    "Q4_K": {
+      "tensor_name": "token_embd.weight",
+      "expected_packed_sha256": "3e4c34141f918333883442b8ff44c78c9927295ae16378047a8a36edeb7ed5ef",
+      "actual_packed_sha256": "3e4c34141f918333883442b8ff44c78c9927295ae16378047a8a36edeb7ed5ef",
+      "expected_decoded_sha256": "e2cff562131674156704ca21b2b6e850337c2e5d8948b4dcc9f14676ecf8f2c1",
+      "actual_decoded_sha256": "e2cff562131674156704ca21b2b6e850337c2e5d8948b4dcc9f14676ecf8f2c1",
+      "exact_match": true,
+      "derivation": "the bound material builder reached the complete 40-entry manifest; its reviewed control flow raises Q4_IDENTITY_CONFIRMATION before descriptor creation on any packed or decoded mismatch"
+    },
+    "Q6_K": {
+      "tensor_name": "blk.0.ffn_down.weight",
+      "expected_packed_sha256": "845b4fd6b5d290506e576ca5099336bae7d28f3ebfcec964ed2136c3ea4a8ede",
+      "actual_packed_sha256": "845b4fd6b5d290506e576ca5099336bae7d28f3ebfcec964ed2136c3ea4a8ede",
+      "expected_decoded_sha256": "ff26151a7997379c1713b90852fdbfd8301b36d5d89a1c3bb623b9b8f273483a",
+      "actual_decoded_sha256": "ff26151a7997379c1713b90852fdbfd8301b36d5d89a1c3bb623b9b8f273483a",
+      "exact_match": true,
+      "derivation": "the bound material builder reached the complete 40-entry manifest; its reviewed control flow raises Q6_IDENTITY_CONFIRMATION before descriptor creation on any packed or decoded mismatch"
+    }
+  },
+  "first_observation_tensors": [
+    {
+      "ordinal": 1,
+      "tensor_name": "blk.0.attn_k_b.weight",
+      "packed_sha256": "fd5eed125816597f0e476bacd30259762b4a540f3acdfaf657d90ed15dacec35",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 2,
+      "tensor_name": "blk.0.attn_kv_a_mqa.weight",
+      "packed_sha256": "ff2b6a0e14f3e180ba6a8a8522ef4569c9cb82a0f10708f66da794305e3ee4cc",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 3,
+      "tensor_name": "blk.0.attn_kv_a_norm.weight",
+      "packed_sha256": "e1632832ba620c6334ea72cfa13d30f6f17b4de588784b31f1c15b3ba2ab852a",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 4,
+      "tensor_name": "blk.0.attn_norm.weight",
+      "packed_sha256": "a9d39b435f5fad585202bc66a3d19410422296078a19ca62818d43bb624411e0",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 5,
+      "tensor_name": "blk.0.attn_output.weight",
+      "packed_sha256": "cd77d3657dffbbe6beb0782d3ec62366c385935a31fb84e53b238b57544ce9cf",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 6,
+      "tensor_name": "blk.0.attn_q_a.weight",
+      "packed_sha256": "d34e9690bc95249ae2f4d1afe94e32acc211e6d211bb47a3f26a5390269d89ce",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 7,
+      "tensor_name": "blk.0.attn_q_a_norm.weight",
+      "packed_sha256": "4c746867410713eb1fcdf4a401d956872a6668b5ede36df0cf447d344a08bde0",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 8,
+      "tensor_name": "blk.0.attn_q_b.weight",
+      "packed_sha256": "e8775246abd9a32e53c26fdda2ec01ef8f2cfc63d23b13180a5166f425c04ae7",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 9,
+      "tensor_name": "blk.0.attn_v_b.weight",
+      "packed_sha256": "8a70b179ba21902838af248e8da28ca1108860e4f83e49ead485be910f258f19",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 11,
+      "tensor_name": "blk.0.ffn_gate.weight",
+      "packed_sha256": "aea02f9623490288501233c5af0fe2aa0cf0f1d479c544711236473946497ef1",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 12,
+      "tensor_name": "blk.0.ffn_norm.weight",
+      "packed_sha256": "ddb62916757ed641a8c0b24c707661494150fffffd4fbb3e2bf06ceb899a7200",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 13,
+      "tensor_name": "blk.0.ffn_up.weight",
+      "packed_sha256": "08b64302e6e5bdb09107cb4b1fffbbb131520cd80f924705831d4bc58b85b371",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 14,
+      "tensor_name": "blk.1.attn_k_b.weight",
+      "packed_sha256": "f0f16c1fb7b4da7d3905172c42653321122fe4f9e903ed32ac4b6c60935c1e74",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 15,
+      "tensor_name": "blk.1.attn_kv_a_mqa.weight",
+      "packed_sha256": "03f0643eac2db639de3bcad4fac8cb84d714203272fed942d3fc2e25e8a7ceaf",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 16,
+      "tensor_name": "blk.1.attn_kv_a_norm.weight",
+      "packed_sha256": "11898a53f8cf3f56907641c30c07830e1229387603047eaffc36eb76cb666ac1",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 17,
+      "tensor_name": "blk.1.attn_norm.weight",
+      "packed_sha256": "88bc46f95e776372b1d078f4ec5c5c5c832f34db600c8ab6cbb16b879403a349",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 18,
+      "tensor_name": "blk.1.attn_output.weight",
+      "packed_sha256": "737a4ee512cabbc69bec1f87a0bcbf6d6c1acfafe5bc773fd7bdeca77afbda1b",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 19,
+      "tensor_name": "blk.1.attn_q_a.weight",
+      "packed_sha256": "76d459bd51c5b28239dc43d24aa3de79d84fff2edecc264fee5f661b7ccea176",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 20,
+      "tensor_name": "blk.1.attn_q_a_norm.weight",
+      "packed_sha256": "0e96a7190fd2967a19fe386fecec107dc7456ee072c9d84fc15c4ceec2417299",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 21,
+      "tensor_name": "blk.1.attn_q_b.weight",
+      "packed_sha256": "b2f8020e3c446a43da465abfd08afafb124fd1e18924aeb6b432109d9e9a0c9b",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 22,
+      "tensor_name": "blk.1.attn_v_b.weight",
+      "packed_sha256": "5f1b6f1aa7a6a67a1a42ec0e2dbc4983851e4bd4d1d16c2f89c6af44c3957cf5",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 23,
+      "tensor_name": "blk.1.ffn_down.weight",
+      "packed_sha256": "eeda0a4a769485b316f66d18a9ef0081ad0d06ab89da33e5074a10585fbd8f63",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 24,
+      "tensor_name": "blk.1.ffn_gate.weight",
+      "packed_sha256": "7d2ad0af95f57d69339a6e8d15ee1f9fbe7a99abcb0a1b6da2b864a01a192fe4",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 25,
+      "tensor_name": "blk.1.ffn_norm.weight",
+      "packed_sha256": "8b1b8573a991fc769b551f676f924d9365a6000ddea8d0c6762de06c154d316d",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 26,
+      "tensor_name": "blk.1.ffn_up.weight",
+      "packed_sha256": "3fa0e66b5789603b27475f47845da7e149c1ed33d9aadd0fed7ddf206fa5a6c8",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 27,
+      "tensor_name": "blk.2.attn_k_b.weight",
+      "packed_sha256": "4c0c251fb62c273ffef9dda993a2b961059155458620065102a4725a86c2e0fb",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 28,
+      "tensor_name": "blk.2.attn_kv_a_mqa.weight",
+      "packed_sha256": "9a8a750f15902e9f5b15f570a51f41c5042af0821e8421259494697aaa30efdf",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 29,
+      "tensor_name": "blk.2.attn_kv_a_norm.weight",
+      "packed_sha256": "5927094eae1324cac612f36ec1103767aec55c7e3877f01bf35bb30f02140954",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 30,
+      "tensor_name": "blk.2.attn_norm.weight",
+      "packed_sha256": "8a358985cc7144587631670543c487ada27adc25bb84e442c3c50ee98bb4ad7c",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 31,
+      "tensor_name": "blk.2.attn_output.weight",
+      "packed_sha256": "f66d092bdb01e6338d2c8bd77a98ea17ea61625116edee5e1b1367e35db06c22",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 32,
+      "tensor_name": "blk.2.attn_q_a.weight",
+      "packed_sha256": "e05a06e15b8b13a55dc16690a7d8540143d921b272192f698d043690b017c4c2",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 33,
+      "tensor_name": "blk.2.attn_q_a_norm.weight",
+      "packed_sha256": "f61d1d3768abfffdd1fbe7eb76c9890be78c9e9ff0f69f12e68e03778b4709e1",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 34,
+      "tensor_name": "blk.2.attn_q_b.weight",
+      "packed_sha256": "5c697b75e896a9b169efa59b357d6e6b042286f4c32c51f561971f4785831b85",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 35,
+      "tensor_name": "blk.2.attn_v_b.weight",
+      "packed_sha256": "409d7f1a463cab820698e3b093be6cd1b2600216d036cb31ae3113cdd1f20128",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 36,
+      "tensor_name": "blk.2.ffn_down.weight",
+      "packed_sha256": "47246e2a3199e67380eef547e7adc719104f7f8071a3af5ac553bc15ff9527d3",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 37,
+      "tensor_name": "blk.2.ffn_gate.weight",
+      "packed_sha256": "9f7503436049ea1948804d4fd688df66124e7328c1d039af9e3fa4d0c2cb5cb9",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 38,
+      "tensor_name": "blk.2.ffn_norm.weight",
+      "packed_sha256": "23d857cf62426473e47655a11d32093899aa2074c59e085ff8e74733ce4c4444",
+      "decoded_sha256_persisted": false
+    },
+    {
+      "ordinal": 39,
+      "tensor_name": "blk.2.ffn_up.weight",
+      "packed_sha256": "b75abc7103963e5d8ddde94c6b68c7aa6f3ad4af55fd94bc8df7bef46c1626c1",
+      "decoded_sha256_persisted": false
+    }
+  ],
+  "oracle": {
+    "finalized_before_candidate": true,
+    "derivation": "candidate launch is reachable only after all eight oracle values are computed in the bound orchestrator",
+    "identity_before_persisted": false,
+    "post_candidate_rehash": "NOT_REACHED_AFTER_NATIVE_RUNTIME_FAILURE"
+  },
+  "candidate": {
+    "launched": true,
+    "exited_nonzero": true,
+    "error": "native candidate matvec shape",
+    "evidence_artifact_created": false,
+    "repeat_evidence_persisted": false
+  },
+  "numerical_surfaces": [
+    {
+      "semantic_id": "embedding",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_0_attention",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_0_output",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_1_attention",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_1_output",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_2_attention",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_2_output",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    },
+    {
+      "semantic_id": "layer_3_entry",
+      "status": "NOT_PRODUCED_DUE_NATIVE_RUNTIME",
+      "paired_values_persisted": false,
+      "metrics_persisted": false
+    }
+  ],
+  "numerical_result": "NOT_EVALUATED",
+  "dispatch": {
+    "evidence_persisted": false,
+    "fallback_count": "UNAVAILABLE",
+    "backend_error_count": "UNAVAILABLE",
+    "sync_count": "UNAVAILABLE",
+    "readback_count": "UNAVAILABLE",
+    "host_copy_count": "UNAVAILABLE"
+  },
+  "lifecycle": {
+    "result": "NOT_RECONCILED_AFTER_NATIVE_RUNTIME_FAILURE",
+    "evidence_persisted": false
+  },
+  "retention": {
+    "layer_2_output_created": false,
+    "layer_3_entry_created": false,
+    "representative_m1f0_descriptor_created": false
+  },
+  "state": {
+    "authorized": true,
+    "consumed": true,
+    "executed": true,
+    "checkpoint_accessed": true,
+    "payloads_read": 40,
+    "packed_bytes_read": 1431263232,
+    "ledger_before": 59,
+    "ledger_after": 99,
+    "automatic_retry": false,
+    "automatic_m1f0_continuation": false
+  },
+  "isolation": {
+    "representative_m1f0_executed": false,
+    "m1f_executed": false,
+    "m1g_executed": false,
+    "p1_executed": false
+  },
+  "evidence_limitations": [
+    "the material manifest persisted packed identities but omitted the 38 first-observation decoded hashes computed transiently before candidate launch",
+    "the candidate produced no evidence artifact, so repeat, dispatch, lifecycle, and paired Tier-B fields are unavailable",
+    "no checkpoint reread, candidate recomputation, oracle recomputation, or retry was performed to fill unavailable fields"
+  ],
+  "repository_authority": "PACKET CLAIMS REJECTED — BANKED EVIDENCE CONTRADICTS PACKET"
+}

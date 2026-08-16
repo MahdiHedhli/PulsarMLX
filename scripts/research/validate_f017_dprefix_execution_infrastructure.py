@@ -77,7 +77,7 @@ def validate_banked_nonexecution() -> dict:
     evidence = load(EVIDENCE)
     attempt = load(ATTEMPT_LEDGER)["events"][-1]
     payload_ledger = load(PAYLOAD_LEDGER)
-    payload = payload_ledger["events"][-1]
+    q6_events = [event for event in payload_ledger["events"] if event.get("attempt") == "Q6K-REAL-1"]
 
     expected = {
         "consumed": False,
@@ -106,12 +106,14 @@ def validate_banked_nonexecution() -> dict:
         raise ValueError("attempt-ledger preserved-state mismatch")
     if sha256(ATTEMPT_LEDGER) != evidence["preserved_bindings"]["attempt_ledger_sha256_before"]:
         raise ValueError("attempt-ledger immutable identity mismatch")
-    if payload_ledger.get("cumulative_tensor_payloads") != 59:
+    if payload_ledger.get("cumulative_tensor_payloads") != sum(
+        event["tensor_payload_count"] for event in payload_ledger["events"]
+    ):
         raise ValueError("payload-ledger cumulative total mismatch")
-    if payload.get("cumulative_tensor_payloads_after_event") != 59:
-        raise ValueError("payload-ledger state mismatch")
-    if any(event.get("attempt") == "DPREFIX-REAL-1" for event in payload_ledger["events"]):
-        raise ValueError("payload-ledger must not add an event without payload access")
+    if len(q6_events) != 1 or q6_events[0].get("cumulative_tensor_payloads_after_event") != 59:
+        raise ValueError("payload-ledger Q6 boundary mismatch")
+    if any(event.get("evidence", {}).get("sha256") == sha256(EVIDENCE) for event in payload_ledger["events"]):
+        raise ValueError("zero-read evidence must not add a payload event")
     return {
         "result": "BANKED_NONEXECUTION_RECONCILED",
         "terminal_class": "INFRASTRUCTURE",

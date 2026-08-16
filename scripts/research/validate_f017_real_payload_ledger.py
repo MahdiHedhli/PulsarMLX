@@ -78,6 +78,14 @@ def build_ledger(root: Path) -> dict[str, object]:
         "exact real-byte Q6_K decoder-format qualification and F017-Q6K-LANE-ORDER-001 closure",
         "docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json",
         ["blk.0.ffn_down.weight"], True, "qualification_only"))
+    allowlist = json.loads((root / "docs/architecture/reviews/evidence/f017-dense-prefix-40-read-allowlist-v1.json").read_text())
+    dense_prefix = [item["name"] for item in allowlist["entries"]]
+    if len(dense_prefix) != 40:
+        raise ValueError("dense-prefix allowlist must contain exactly 40 tensors")
+    e.append(event(root, "M1-F(-1)-DENSE-PREFIX", "DPREFIX-REAL-1",
+        "rejected real dense-prefix capture after all 40 authorized payload reads; exact candidate terminated NATIVE_RUNTIME / NATIVE_CANDIDATE_MATVEC_SHAPE before numerical evidence",
+        "docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-1-rejected-native-runtime-v1.json",
+        dense_prefix, True, "execution"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:

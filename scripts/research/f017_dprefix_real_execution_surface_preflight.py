@@ -56,6 +56,13 @@ def canonical_sha(value: Any) -> str:
     return hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
+def released_payload_ledger_bytes() -> bytes:
+    """Read the ledger exactly as it existed at this historical release."""
+    return subprocess.check_output(
+        ["git", "-C", str(ROOT), "show", f"{RELEASE_HEAD}:{PAYLOAD_LEDGER.relative_to(ROOT).as_posix()}"],
+    )
+
+
 def committed_material_package_invocations() -> list[str]:
     """Return launchers present in the immutable reviewed release tree.
 
@@ -75,9 +82,11 @@ def committed_material_package_invocations() -> list[str]:
 def validate_released_surface() -> dict[str, Any]:
     if sha256(CONFIG) != CONFIG_SHA or sha256(AUTH) != AUTH_SHA:
         raise ValueError("released config/authorization drift")
-    if sha256(ATTEMPT_V4) != ATTEMPT_V4_SHA or sha256(PAYLOAD_LEDGER) != PAYLOAD_LEDGER_SHA:
+    released_payload_bytes = released_payload_ledger_bytes()
+    if sha256(ATTEMPT_V4) != ATTEMPT_V4_SHA or hashlib.sha256(released_payload_bytes).hexdigest() != PAYLOAD_LEDGER_SHA:
         raise ValueError("released attempt/payload state drift")
-    config, auth, attempt, payload, preflight = map(load, (CONFIG, AUTH, ATTEMPT_V4, PAYLOAD_LEDGER, PREFLIGHT))
+    config, auth, attempt, preflight = map(load, (CONFIG, AUTH, ATTEMPT_V4, PREFLIGHT))
+    payload = json.loads(released_payload_bytes)
     state = attempt["current_state"]
     expected = {
         "attempt_id": "DPREFIX-REAL-1",

@@ -59,6 +59,16 @@ class RealEventOrchestratorTests(unittest.TestCase):
         ]
         return {O.EVIDENCE / name: O.load(O.EVIDENCE / name) for name in names}
 
+    def _validate_preparation_artifacts(self, values: dict[Path, dict]) -> None:
+        # The frozen preparation validator correctly requires its pre-event
+        # ledger value. Validate that historical surface against an isolated
+        # snapshot after the live append-only ledger has advanced.
+        with tempfile.TemporaryDirectory() as raw:
+            snapshot = Path(raw) / "payload-ledger-at-release.json"
+            snapshot.write_text(json.dumps({"cumulative_tensor_payloads": 59}))
+            with mock.patch.object(O, "PAYLOAD_LEDGER_PATH", snapshot):
+                O.validate_artifacts(values)
+
     def test_blocker_is_real_and_same_attempt_continues(self) -> None:
         stop = O.load(O.STOP_EVIDENCE_PATH)
         self.assertEqual(stop["terminal_class"], "EXECUTION_SURFACE_DRIFT")
@@ -237,7 +247,7 @@ class RealEventOrchestratorTests(unittest.TestCase):
 
     def test_source_and_package_substitution_fail_bindings(self) -> None:
         values = O.generate_artifacts() if self._reviewed_candidate_is_installed() else self._banked_artifacts()
-        O.validate_artifacts(values)
+        self._validate_preparation_artifacts(values)
         config = next(value for path, value in values.items() if path.name.endswith("execution-config-v5.json"))
         authorization = next(value for path, value in values.items() if path.name.endswith("authorization-binding-v4.json"))
         self.assertEqual(config["orchestrator"]["package_sha256"], O.digest_path(Path(O.__file__)))
@@ -248,7 +258,7 @@ class RealEventOrchestratorTests(unittest.TestCase):
 
     def test_banked_artifacts_regenerate_and_preserve_history(self) -> None:
         values = O.generate_artifacts() if self._reviewed_candidate_is_installed() else self._banked_artifacts()
-        O.validate_artifacts(values)
+        self._validate_preparation_artifacts(values)
         if self._reviewed_candidate_is_installed():
             for path, expected in values.items():
                 self.assertEqual(json.loads(path.read_text()), expected, path.name)
@@ -264,12 +274,15 @@ class RealEventOrchestratorTests(unittest.TestCase):
         self.assertEqual(attempt["history"][-1]["event"], "REAL_EVENT_ORCHESTRATOR_CLOSURE_SUCCESSOR_AUTHORIZATION")
         self.assertFalse(attempt["current_state"]["consumed"])
 
-    def test_public_artifacts_have_no_machine_local_path_and_ledger_stays_59(self) -> None:
+    def test_public_artifacts_have_no_machine_local_path_and_live_ledger_is_append_only(self) -> None:
         values = O.generate_artifacts() if self._reviewed_candidate_is_installed() else self._banked_artifacts()
         for path in values:
             text = path.read_text()
             self.assertNotIn("/Users/", text, path.name)
-        self.assertEqual(O.load(O.PAYLOAD_LEDGER_PATH)["cumulative_tensor_payloads"], 59)
+        ledger = O.load(O.PAYLOAD_LEDGER_PATH)
+        self.assertEqual(ledger["events"][-2]["cumulative_tensor_payloads_after_event"], 59)
+        self.assertEqual(ledger["events"][-1]["attempt"], "DPREFIX-REAL-1")
+        self.assertEqual(ledger["cumulative_tensor_payloads"], 99)
 
 
 if __name__ == "__main__":

@@ -54,8 +54,9 @@ def validate_checkpoint_free() -> dict:
         raise ValueError("attempt authorization")
     if attempt["consumed"] or attempt["executed"] or attempt["checkpoint_accessed"]:
         raise ValueError("attempt already consumed")
-    if payload_ledger["cumulative_tensor_payloads"] != 59:
-        raise ValueError("real payload ledger")
+    q6_events = [event for event in payload_ledger["events"] if event.get("attempt") == "Q6K-REAL-1"]
+    if len(q6_events) != 1 or q6_events[0]["cumulative_tensor_payloads_after_event"] != 59:
+        raise ValueError("real payload Q6 boundary")
 
     candidate_struct = candidate.split("struct RealCandidateEvidence", 1)[1].split(
         "fn sha_bytes", 1
@@ -152,10 +153,15 @@ def validate_banked_nonexecution() -> dict:
             raise ValueError(f"attempt state: {key}")
     if event["actual_payload_reads"] != 0 or event["ledger_before"] != 59 or event["ledger_after"] != 59:
         raise ValueError("attempt access accounting")
-    if payload_ledger["cumulative_tensor_payloads"] != 59:
-        raise ValueError("payload ledger changed")
-    if any(item.get("attempt") == "DPREFIX-REAL-1" for item in payload_ledger["events"]):
-        raise ValueError("zero-read attempt added to payload ledger")
+    if payload_ledger["cumulative_tensor_payloads"] != sum(
+        item["tensor_payload_count"] for item in payload_ledger["events"]
+    ):
+        raise ValueError("payload ledger cumulative mismatch")
+    q6_events = [item for item in payload_ledger["events"] if item.get("attempt") == "Q6K-REAL-1"]
+    if len(q6_events) != 1 or q6_events[0]["cumulative_tensor_payloads_after_event"] != 59:
+        raise ValueError("payload ledger Q6 boundary changed")
+    if any(item.get("evidence", {}).get("sha256") == sha256(BANKED) for item in payload_ledger["events"]):
+        raise ValueError("zero-read evidence added to payload ledger")
     return {
         "result": "BANKED_NONEXECUTION_RECONCILED",
         "terminal_class": "INFRASTRUCTURE",

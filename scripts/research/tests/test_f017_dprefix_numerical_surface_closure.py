@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.research import f017_dprefix_numerical_surface_closure as C
 from scripts.research.f017_dprefix_metric_engine import compare_f32le
@@ -100,7 +101,19 @@ class SurfaceClosureTests(unittest.TestCase):
             self.assertTrue(rehearsal["overall_pass"])
             return
         values = C._successor_artifacts()
-        C.validate_artifacts(values)
+        original_load = C.load
+        historical_ledger = json.loads(subprocess.check_output([
+            "git", "-C", str(C.ROOT), "show",
+            "87492cc670bcb46348cda0a72b6481690b907dd3:docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+        ]))
+
+        def historical_load(path):
+            if Path(path).name == "f017-real-payload-access-ledger-v1.json":
+                return copy.deepcopy(historical_ledger)
+            return original_load(path)
+
+        with patch.object(C, "load", side_effect=historical_load):
+            C.validate_artifacts(values)
         for path, expected in values.items():
             self.assertEqual(json.loads(path.read_text()), expected, path.name)
 

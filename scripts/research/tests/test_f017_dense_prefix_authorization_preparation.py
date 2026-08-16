@@ -3,12 +3,30 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 
 from scripts.research import f017_dense_prefix_authorization_preparation as M
 
 
 class DensePrefixAuthorizationPreparationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._temporary = tempfile.TemporaryDirectory()
+        cls._original_ledger = M.LEDGER_PATH
+        M.LEDGER_PATH = Path(cls._temporary.name) / "ledger.json"
+        M.LEDGER_PATH.write_bytes(subprocess.check_output([
+            "git", "-C", str(M.ROOT), "show",
+            "87492cc670bcb46348cda0a72b6481690b907dd3:docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+        ]))
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        M.LEDGER_PATH = cls._original_ledger
+        cls._temporary.cleanup()
+
     def test_repository_audit_fails_closed_on_hash_only_reuse_descriptors(self):
         value = M.audit()
         M.validate(value)

@@ -58,10 +58,13 @@ class DensePrefixRealExecutionSurfacePreflightTests(unittest.TestCase):
         self.assertEqual(M.sha256(M.CONFIG), M.CONFIG_SHA)
         self.assertEqual(M.sha256(M.AUTH), M.AUTH_SHA)
         self.assertEqual(M.sha256(M.ATTEMPT_V4), M.ATTEMPT_V4_SHA)
-        self.assertEqual(M.sha256(M.PAYLOAD_LEDGER), M.PAYLOAD_LEDGER_SHA)
+        self.assertEqual(hashlib.sha256(M.released_payload_ledger_bytes()).hexdigest(), M.PAYLOAD_LEDGER_SHA)
         ledger = json.loads(M.PAYLOAD_LEDGER.read_text(encoding="utf-8"))
-        self.assertEqual(ledger["cumulative_tensor_payloads"], 59)
-        self.assertFalse(any(event.get("attempt") == "DPREFIX-REAL-1" for event in ledger["events"]))
+        self.assertEqual(ledger["cumulative_tensor_payloads"], 99)
+        self.assertEqual(
+            sum(event["tensor_payload_count"] for event in ledger["events"]),
+            99,
+        )
 
     def test_prior_nonexecution_evidence_immutable(self) -> None:
         prior = M.EVIDENCE_DIR / "f017-dense-prefix-real-attempt-1-not-executed-numerical-surface-v1.json"

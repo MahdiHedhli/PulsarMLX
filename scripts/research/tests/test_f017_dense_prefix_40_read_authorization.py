@@ -2,12 +2,30 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 
 from scripts.research import f017_dense_prefix_40_read_authorization as M
 
 
 class DensePrefix40ReadAuthorizationTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._temporary = tempfile.TemporaryDirectory()
+        cls._original_ledger = M.LEDGER
+        M.LEDGER = Path(cls._temporary.name) / "ledger.json"
+        M.LEDGER.write_bytes(subprocess.check_output([
+            "git", "-C", str(M.ROOT), "show",
+            "87492cc670bcb46348cda0a72b6481690b907dd3:docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+        ]))
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        M.LEDGER = cls._original_ledger
+        cls._temporary.cleanup()
+
     def setUp(self) -> None:
         self.package = M.build_package()
 

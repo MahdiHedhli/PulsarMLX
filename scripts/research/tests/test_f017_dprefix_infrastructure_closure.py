@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from copy import deepcopy
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.research import f017_dprefix_infrastructure_closure as M
 
@@ -13,8 +14,25 @@ from scripts.research import f017_dprefix_infrastructure_closure as M
 class InfrastructureClosureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls._original_load = M.load
+        historical_ledger = json.loads(__import__("subprocess").check_output([
+            "git", "-C", str(M.ROOT), "show",
+            "87492cc670bcb46348cda0a72b6481690b907dd3:docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+        ]))
+
+        def historical_load(path):
+            if Path(path).name == "f017-real-payload-access-ledger-v1.json":
+                return deepcopy(historical_ledger)
+            return cls._original_load(path)
+
+        cls._load_patcher = patch.object(M, "load", side_effect=historical_load)
+        cls._load_patcher.start()
         cls.values = M.committed_artifacts()
         M.validate(cls.values)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._load_patcher.stop()
 
     def test_predecessor_source_manifests_remain_immutable(self) -> None:
         for suffix in ("candidate-source-manifest-v1.json", "oracle-source-manifest-v1.json"):

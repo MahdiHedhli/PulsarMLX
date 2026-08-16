@@ -343,3 +343,9 @@
   before consumption when the bound repository-private checkpoint object is
   absent, and bank `NOT_EXECUTED / HOST_ADMISSION` with zero payload reads and
   the real-payload ledger unchanged at 59.
+- [x] T017-208 Restore the reviewed checkpoint as the same regular-file objects
+  at the bound private mount, execute the still-unconsumed DPREFIX-REAL-1 once,
+  record all 40 authorized reads and the 59-to-99 ledger transition, preserve
+  exact Q4_K/Q6_K identity confirmations, bank the terminal `NATIVE_RUNTIME /
+  NATIVE_CANDIDATE_MATVEC_SHAPE` rejection, and stop without retry, retention,
+  representative M1-F0, or downstream execution.

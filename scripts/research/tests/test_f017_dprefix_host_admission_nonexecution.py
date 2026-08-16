@@ -58,7 +58,9 @@ def validate(raw: dict, attempt: dict, payload: dict) -> None:
     assert attempt["current_state"]["checkpoint_accessed"] is False
     assert attempt["current_state"]["ledger"] == 59
     assert attempt["history"][-1]["evidence_sha256"] == sha256(RAW)
-    assert payload["cumulative_tensor_payloads"] == 59
+    q6 = next(item for item in payload["events"] if item["attempt"] == "Q6K-REAL-1")
+    assert q6["cumulative_tensor_payloads_after_event"] == 59
+    assert payload["cumulative_tensor_payloads"] >= 59
 
 
 class HostAdmissionNonExecutionTests(unittest.TestCase):

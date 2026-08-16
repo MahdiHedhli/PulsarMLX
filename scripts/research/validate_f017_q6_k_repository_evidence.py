@@ -61,7 +61,12 @@ def validate_objects(
     require(record["automatic_dense_prefix_continuation"] is False, "attempt dense continuation")
     require(record["automatic_other_gate_continuation"] is False, "attempt other continuation")
 
-    require(real_ledger["cumulative_tensor_payloads"] == 59, "real ledger cumulative count")
+    require(real_ledger["cumulative_tensor_payloads"] >= 59, "real ledger cumulative count")
+    require(
+        real_ledger["cumulative_tensor_payloads"]
+        == sum(row["tensor_payload_count"] for row in real_ledger["events"]),
+        "real ledger cumulative reconciliation",
+    )
     events = [row for row in real_ledger["events"] if row.get("attempt") == "Q6K-REAL-1"]
     require(len(events) == 1, "real ledger event count")
     event = events[0]
