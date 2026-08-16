@@ -1,6 +1,7 @@
 # PulsarMLX F017 DPREFIX Real-Event Orchestrator Closure Report
 
 - Starting SHA: `9ff5e8fef912972a0521932fbc3ec54660d70cf1`
+- Final preparation SHA: `5b9be714dcf5606cd3bce86d0592d021d1329f9d`
 - Prior stop evidence SHA: `54eb2ef149d9cbd8c2e1159477ddab7ed1fec5780531fee59d46df1faac891bc`
 - Attempt: `DPREFIX-REAL-1`; `SAME UNCONSUMED DPREFIX ATTEMPT MAY CONTINUE`
 - Current ledger: `59`; checkpoint access: `0`
@@ -26,6 +27,7 @@
 - Extra-read attacks: `29e12447be857c0a47c832d74b6eb8fd13381ca4675e90a574d7891d7e8e8ca4` / `PASS`
 - Memory floor: `27 GiB` remains the non-consuming minimum; compact journal/package overhead is bounded below the existing reserve
 - Internal verdict: `GO FOR DPREFIX REAL-EVENT ORCHESTRATOR ADVERSARIAL REVIEW`
-- Final CI: pending final-head Apple-native binding
+- Adversarial packet SHA: `bd06c10bd5b7d2fe8d03269d15db99f8a8f59c6b1735ce94f750d64456d2ae13`
+- Final CI: run `31961703625` → `5b9be714dcf5606cd3bce86d0592d021d1329f9d`; Apple workspace job `95200543005` and Apple MLX job `95200543016` both passed with no failed or skipped steps
 
 Exact next action: independent adversarial review. No checkpoint access before a `GO FOR ONE DENSE-PREFIX M1-F(-1) REAL CAPTURE` verdict.
