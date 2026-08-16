@@ -332,3 +332,9 @@
   the 40 positional reads to oracle-first execution and terminal evidence,
   bank `NOT_EXECUTED / EXECUTION_SURFACE_DRIFT` without resolving a checkpoint
   path, and preserve the same unconsumed attempt with ledger 59.
+- [x] T017-206 Bind the checkpoint-free DPREFIX-REAL-1 real-event orchestrator,
+  exact 40-read bounded reader, durable partial-ledger journal, event-local
+  material builder, fixed decoder dispatch, oracle-first/candidate/metric
+  coordination, retention and terminal evidence banking; rehearse failure and
+  attack paths and publish successor authorization without consuming the
+  attempt or changing ledger 59.

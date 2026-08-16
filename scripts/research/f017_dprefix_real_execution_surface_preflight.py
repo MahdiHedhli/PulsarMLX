@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -56,14 +57,19 @@ def canonical_sha(value: Any) -> str:
 
 
 def committed_material_package_invocations() -> list[str]:
-    """Return reviewed Python launchers that invoke the candidate real mode."""
-    matches: list[str] = []
-    for path in sorted((ROOT / "scripts/research").glob("*.py")):
-        if path == Path(__file__).resolve():
-            continue
-        if "--execute-material-package" in path.read_text(encoding="utf-8"):
-            matches.append(path.relative_to(ROOT).as_posix())
-    return matches
+    """Return launchers present in the immutable reviewed release tree.
+
+    This historical non-execution validator must not reinterpret its result
+    after an append-only successor later supplies the missing orchestrator.
+    """
+    completed = subprocess.run(
+        ["git", "-C", str(ROOT), "grep", "-l", "--fixed-strings", "-e", "--execute-material-package", RELEASE_HEAD, "--", "scripts/research/*.py"],
+        text=True,
+        capture_output=True,
+    )
+    if completed.returncode not in (0, 1):
+        raise ValueError("cannot inspect immutable release tree")
+    return sorted(line.split(":", 1)[1] for line in completed.stdout.splitlines() if ":" in line)
 
 
 def validate_released_surface() -> dict[str, Any]:

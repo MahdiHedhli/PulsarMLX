@@ -352,6 +352,7 @@ jobs:
             scripts.research.tests.test_f017_dprefix_real_numerical_surface \
             scripts.research.tests.test_f017_dprefix_numerical_surface_closure \
             scripts.research.tests.test_f017_dprefix_real_execution_surface_preflight \
+            scripts.research.tests.test_f017_dprefix_real_event_orchestrator \
             scripts.research.tests.test_f017_dense_prefix_preparation \
             scripts.research.tests.test_f017_m1f_route_independent_prep \
             scripts.research.tests.test_f017_post_m1f_downstream
@@ -372,6 +373,8 @@ jobs:
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-infrastructure-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-numerical-surface-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-full-tier-b-synthetic-rehearsal-v1.json"))["result"])')" = FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-real-event-orchestrator-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-full-real-event-orchestration-rehearsal-v1.json"))["result"])')" = FULL_REAL_EVENT_ORCHESTRATION_INSTANTIABLE_CHECKPOINT_FREE
           echo 'F017_DENSE_PREFIX=AUTHORIZED_UNCONSUMED_NOT_EXECUTED_PENDING_INDEPENDENT_REVIEW'
           echo 'F017_Q4_K=EXACT_REAL_BYTE_QUALIFIED'
           echo 'F017_Q6_K=EXACT_REAL_BYTE_QUALIFIED'
