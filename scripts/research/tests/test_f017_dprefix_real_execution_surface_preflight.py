@@ -66,10 +66,10 @@ class DensePrefixRealExecutionSurfacePreflightTests(unittest.TestCase):
         self.assertEqual(M.sha256(M.ATTEMPT_V4), M.ATTEMPT_V4_SHA)
         self.assertEqual(hashlib.sha256(M.released_payload_ledger_bytes()).hexdigest(), M.PAYLOAD_LEDGER_SHA)
         ledger = json.loads(M.PAYLOAD_LEDGER.read_text(encoding="utf-8"))
-        self.assertEqual(ledger["cumulative_tensor_payloads"], 99)
+        self.assertEqual(ledger["cumulative_tensor_payloads"], 139)
         self.assertEqual(
             sum(event["tensor_payload_count"] for event in ledger["events"]),
-            99,
+            139,
         )
 
     def test_prior_nonexecution_evidence_immutable(self) -> None:

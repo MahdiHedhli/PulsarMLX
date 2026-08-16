@@ -355,3 +355,10 @@
   launch, retain all packed payloads at creation, harden native-failure banking
   and cleanup, qualify the exact-shape successor for ten repeats, and prepare
   the fresh authorized/unconsumed DPREFIX-REAL-2 package at ledger 99.
+- [x] T017-210 Execute the independently released DPREFIX-REAL-2 exactly once,
+  identity-confirm and durably retain all 40 packed payloads, persist oracle
+  Class-A products before the corrected candidate, complete ten deterministic
+  repeats and all eight Tier-B comparisons, then fail closed as
+  `EVIDENCE_VALIDATION` because the bound success path omitted required
+  lifecycle and host-copy accounting; reconcile the consumed terminal attempt
+  and real-payload ledger at 139 with no retry or M1-F0 continuation.

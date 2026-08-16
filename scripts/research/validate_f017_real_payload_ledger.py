@@ -86,6 +86,10 @@ def build_ledger(root: Path) -> dict[str, object]:
         "rejected real dense-prefix capture after all 40 authorized payload reads; exact candidate terminated NATIVE_RUNTIME / NATIVE_CANDIDATE_MATVEC_SHAPE before numerical evidence",
         "docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-1-rejected-native-runtime-v1.json",
         dense_prefix, True, "execution"))
+    e.append(event(root, "M1-F(-1)-DENSE-PREFIX", "DPREFIX-REAL-2",
+        "rejected terminal evidence validation after all 40 identity-gated payload reads; all eight real Tier-B surfaces qualified but the bound success path omitted required lifecycle and host-copy accounting",
+        "docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-2-rejected-evidence-validation-v1.json",
+        dense_prefix, True, "execution"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:

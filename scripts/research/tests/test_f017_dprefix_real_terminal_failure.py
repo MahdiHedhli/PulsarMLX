@@ -34,7 +34,7 @@ def validate(raw: dict, attempt: dict, payload: dict) -> None:
     state = raw["state"]
     access = raw["access"]
     current = attempt["current_state"]
-    event = payload["events"][-1]
+    event = next(item for item in payload["events"] if item["attempt"] == "DPREFIX-REAL-1")
     assert raw["verdict"] == "REJECTED"
     assert raw["terminal_class"] == "NATIVE_RUNTIME"
     assert raw["reason_code"] == "NATIVE_CANDIDATE_MATVEC_SHAPE"
@@ -49,7 +49,8 @@ def validate(raw: dict, attempt: dict, payload: dict) -> None:
     assert current["payloads_read"] == event["tensor_payload_count"] == 40
     assert current["ledger_before"] == 59 and current["ledger_after"] == 99
     assert event["evidence"]["sha256"] == sha256(RAW)
-    assert event["cumulative_tensor_payloads_after_event"] == payload["cumulative_tensor_payloads"] == 99
+    assert event["cumulative_tensor_payloads_after_event"] == 99
+    assert payload["cumulative_tensor_payloads"] == 139
     assert raw["identity_confirmations"]["Q4_K"]["exact_match"] is True
     assert raw["identity_confirmations"]["Q6_K"]["exact_match"] is True
     assert raw["candidate"]["evidence_artifact_created"] is False
