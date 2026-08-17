@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.selected-routing-weight-qualification-v1.schema.json",
+  "title": "F017 selected-routing-weight qualification evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "starting_head", "authority", "selected_expert_ids",
+    "membership", "qualification", "final_route_disposition", "historical_immutability",
+    "isolation", "artifacts", "validation", "next_action"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.selected-routing-weight-qualification"},
+    "schema_version": {"const": "1.0.0"},
+    "starting_head": {"const": "62ca1ef7e64cdea839cf2a2517ec684a1b960104"},
+    "authority": {"type": "object"},
+    "selected_expert_ids": {
+      "const": [250, 10, 237, 73, 62, 177, 218, 28]
+    },
+    "membership": {"type": "object"},
+    "qualification": {"type": "object"},
+    "final_route_disposition": {"const": "ROUTE NOT PROVEN INVARIANT"},
+    "historical_immutability": {"type": "object"},
+    "isolation": {"type": "object"},
+    "artifacts": {"type": "array"},
+    "validation": {"type": "object"},
+    "next_action": {"type": "string"}
+  }
+}

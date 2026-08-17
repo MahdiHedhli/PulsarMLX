@@ -1,0 +1,90 @@
+{
+  "schema": "pulsarmlx.f017.selected-routing-weight-qualification",
+  "schema_version": "1.0.0",
+  "starting_head": "62ca1ef7e64cdea839cf2a2517ec684a1b960104",
+  "authority": {
+    "route_evaluation_evidence_sha256": "a4f3e1afe84be2cade1ed6c1728b2f82cd0ff2d22e8a964779f3216baf124eb4",
+    "weight_acceptance_contract_sha256": "ebf7c89543e95acecc067b1ee10883f7e9d564fc37be347480e40b02d3a8d7ca",
+    "weight_acceptance_specification_sha256": "9e4d5d9baa37137947379445e39642fa342d982c91b607ff420df150335646fc",
+    "weight_acceptance_implementation_sha256": "8af70f24bfdfd79dbfe87b4d30d932bd923c0e2d4b0ca45039528afcf4177196",
+    "weight_acceptance_freeze_evidence_sha256": "2b5611b9f8852ddfbaae48b9185b7d7349eed8654827ba8fd17b52a8d34399b1",
+    "DPREFIX_EXACT_1_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+  },
+  "selected_expert_ids": [250, 10, 237, 73, 62, 177, 218, 28],
+  "membership": {
+    "required": 1984,
+    "evaluated": 1984,
+    "mathematical_pass_count": 1984,
+    "mathematical_fail_count": 0,
+    "minimum_mathematical_safety_factor": 1.180434247555598,
+    "worst_pair": [28, 26],
+    "engineering_h2_pass_count": 1982,
+    "engineering_h2_fail_count": 2
+  },
+  "qualification": {
+    "by_expert_id": {
+      "10": {"expert_id": 10, "nominal_weight": 0.33388900454625836, "interval": {"lower": 0.33370308453737385, "upper": 0.33407501710712767}, "outward_absolute_radius": 0.00018601256086930865, "relative_radius_diagnostic": 0.0005571089743494016, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "177": {"expert_id": 177, "nominal_weight": 0.22908580610874482, "interval": {"lower": 0.22891770890020613, "upper": 0.22925401161129322}, "outward_absolute_radius": 0.00016820550254839642, "relative_radius_diagnostic": 0.0007342467235554128, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "218": {"expert_id": 218, "nominal_weight": 0.2278059796218531, "interval": {"lower": 0.22764642295229706, "upper": 0.22796563781448106}, "outward_absolute_radius": 0.00015965819262797612, "relative_radius_diagnostic": 0.0007008516321345078, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "237": {"expert_id": 237, "nominal_weight": 0.2381000267990243, "interval": {"lower": 0.23793439239366712, "upper": 0.23826576412678122}, "outward_absolute_radius": 0.0001657373277569041, "relative_radius_diagnostic": 0.0006960827765752411, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "250": {"expert_id": 250, "nominal_weight": 0.7570252480971346, "interval": {"lower": 0.7567526619630631, "upper": 0.7572978364515132}, "outward_absolute_radius": 0.0002725883543786001, "relative_radius_diagnostic": 0.00036007828677283975, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "28": {"expert_id": 28, "nominal_weight": 0.22857510748807883, "interval": {"lower": 0.22840924200510843, "upper": 0.22874107955126508}, "outward_absolute_radius": 0.00016597206318624827, "relative_radius_diagnostic": 0.0007261160894123367, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "62": {"expert_id": 62, "nominal_weight": 0.23526932127871814, "interval": {"lower": 0.23509878775869708, "upper": 0.23543996270744846}, "outward_absolute_radius": 0.0001706414287303282, "relative_radius_diagnostic": 0.0007253025077934971, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005},
+      "73": {"expert_id": 73, "nominal_weight": 0.2502495060601881, "interval": {"lower": 0.25009153392372924, "upper": 0.25040757191520446}, "outward_absolute_radius": 0.00015806585501637607, "relative_radius_diagnostic": 0.000631633034985329, "mathematically_qualified": false, "engineering_h2": false, "mathematical_threshold": 0.00001, "engineering_h2_threshold": 0.000005}
+    },
+    "probability_sum_interval": {"lower": 3.179151391364734, "upper": 3.1812309528851666},
+    "nominal_probability_sum": 3.180191141266754,
+    "joint_weight_sum_interval": {"lower": 2.4999999999999996, "upper": 2.5000000000000004},
+    "nominal_weight_sum": 2.5,
+    "denominator_floor_status": "INACTIVE_FOR_ENTIRE_BOX",
+    "joint_normalization_valid": true,
+    "mathematically_qualified": false,
+    "engineering_h2": false,
+    "failed_mathematical_ids": [10, 28, 62, 73, 177, 218, 237, 250],
+    "failed_engineering_ids": [10, 28, 62, 73, 177, 218, 237, 250],
+    "mathematical_pass_count": 0,
+    "mathematical_fail_count": 8,
+    "engineering_h2_pass_count": 0,
+    "engineering_h2_fail_count": 8,
+    "maximum_rho": 0.0002725883543786001,
+    "maximum_rho_expert_id": 250
+  },
+  "final_route_disposition": "ROUTE NOT PROVEN INVARIANT",
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_2": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "selected_top8": [250, 10, 237, 73, 62, 177, 218, 28],
+    "membership_mathematical_pass": "1984/1984_UNCHANGED",
+    "membership_minimum_safety_factor": 1.180434247555598,
+    "membership_worst_pair": [28, 26],
+    "membership_engineering_h2_pass": "1982/1984_UNCHANGED"
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "candidate_or_model_dispatches": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139,
+    "ledger_mutated": false
+  },
+  "artifacts": [
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-selected-routing-weight-qualification-v1.schema.json", "sha256": "1f48d2eb01d37fc5d59aabbb5f0dcddbdc5a187ce7d2fa536cd9d915779fc32a"},
+    {"path": "scripts/research/f017_selected_weight_qualification_evaluation.py", "sha256": "9ef00b0e6ed13588990e4bda9b5c5e555a94f19402f675237b30d5d21ab801a0"},
+    {"path": "scripts/research/tests/test_f017_selected_weight_qualification_evaluation.py", "sha256": "f446cbe20dc61f98a373bfcf8e5ddc3a6ec6cb704da7869f2f2c3700c3f96e39"},
+    {"path": "scripts/research/validate_f017_selected_weight_qualification.py", "sha256": "ae21fd2bbb0620d52e35cd761b5965eed83dfaf1077de21bb26242a7852d7239"},
+    {"path": "scripts/research/tests/test_validate_f017_selected_weight_qualification.py", "sha256": "7d9d93bf13e9145d5411082d8feb6060ebd2c464839346c38a99e23ecf7727bd"},
+    {"path": "docs/architecture/reviews/f017-selected-routing-weight-qualification-report.md", "sha256": "37076dd06e4851a611047598ebd46bde4a5c04d6f21889aa2c70e503bc61fa66"}
+  ],
+  "validation": {
+    "deterministic_replay": true,
+    "joint_normalization": "PASS",
+    "frozen_contract_tests": "PASS",
+    "production_evaluation_tests": "PASS",
+    "mutation_fail_closed": true,
+    "thresholds_modified": false,
+    "route_recomputed": false
+  },
+  "next_action": "Independent review of the frozen-contract qualification failure; do not modify the contract or proceed to representative M1-F0."
+}
