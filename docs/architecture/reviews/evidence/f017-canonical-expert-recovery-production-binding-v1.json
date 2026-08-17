@@ -1,0 +1,70 @@
+{
+  "schema": "pulsarmlx.f017.canonical-expert-recovery-production-binding-evidence",
+  "schema_version": "1.0.0",
+  "status": "PRODUCTION RECOVERY EXECUTION SURFACE READY FOR INDEPENDENT REVIEW",
+  "source_head": "06a4bafe7b4c1c6685c533e0e773eeb7bccde9c3",
+  "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+  "attempt_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+  "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-production-binding-v1.json",
+  "contract_sha256": "c921bca7f4d42a6e42ae1b4b337bf3baea7e7088d5e442d271ec9838665e19d8",
+  "preflight": {
+    "result": "PRODUCTION_BINDINGS_RESOLVED",
+    "surface_count": 14,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "ledger": 139,
+    "attempt_record_created": false,
+    "execution_start_created": false,
+    "canonical_input_verified": true,
+    "ffn_norm_verified": true,
+    "fresh_process_reproduction_runner_resolved": true,
+    "rust_decoder_binary_identity_verified": true,
+    "shard_path_was_opened": false,
+    "shard_path_was_stat_read": false
+  },
+  "synthetic_integration": {
+    "result": "PASS",
+    "cases_passed": 8,
+    "cases_total": 8,
+    "cases": [
+      "successful_24_entry_event",
+      "decoder_disagreement",
+      "retain_failure",
+      "output_stage_failure",
+      "reproduction_failure",
+      "journal_failure",
+      "terminal_banker_failure",
+      "attempted_second_invocation"
+    ],
+    "real_ledger_touched": false
+  },
+  "decoder_independence": {
+    "result": "PASS",
+    "iq2_shared_kernel": false,
+    "iq3_shared_kernel": false,
+    "same_retained_bytes": true
+  },
+  "real_path_call_graph_audit": {
+    "result": "PASS",
+    "capability_boundaries": [
+      "ProductionShardProvider.open_shard",
+      "ProductionShardHandle.read_at"
+    ],
+    "checkpoint_syscalls": [
+      "ProductionShardProvider.open_shard:os.open",
+      "ProductionShardHandle.read_at:os.pread"
+    ],
+    "checkpoint_access_outside_boundary": false
+  },
+  "validation": {
+    "production_surface_tests": "13 PASS",
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger": 139,
+    "historical_dispositions_changed": false
+  },
+  "machine_local_private_paths_published": false,
+  "private_bytes_committed": false,
+  "authority_change": "EXECUTION_SURFACE_BINDING_ONLY / REAL EVENT NOT EXECUTED",
+  "next_action": "independent adversarial review of the complete production binding package"
+}

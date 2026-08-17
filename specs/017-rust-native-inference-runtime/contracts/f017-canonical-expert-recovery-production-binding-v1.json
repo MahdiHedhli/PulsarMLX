@@ -1,0 +1,126 @@
+{
+  "schema": "pulsarmlx.f017.canonical-expert-recovery-production-binding",
+  "schema_version": "1.0.0",
+  "status": "PRODUCTION RECOVERY EXECUTION SURFACE READY FOR INDEPENDENT REVIEW",
+  "source_head": "06a4bafe7b4c1c6685c533e0e773eeb7bccde9c3",
+  "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+  "attempt_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+  "authorization_sha256": "58ad56f008a27ea4b69215c39404edbccf4008ef0620a3f46bb4ff7adb2a95ae",
+  "execution_substrate_contract_sha256": "53d124277546dccdf99e5d9b0a2de0585826616e9e9cbb2d9c38187729bbb285",
+  "released_executor_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe",
+  "dual_decoder_lineage_sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84",
+  "inventory_sha256": "67d8650dfe6ce5ea0f524196e2247e527153488540e3275a726d6e838a573f34",
+  "canonical_input_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+  "ffn_norm_weight_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+  "shard": {
+    "symbolic_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "maximum_opens": 1,
+    "only_checkpoint_capability": "ProductionShardProvider.open_shard/ProductionShardHandle.read_at"
+  },
+  "budget": {
+    "reads": 24,
+    "packed_bytes": 90439680,
+    "ledger_before": 139,
+    "ledger_after_success": 163,
+    "automatic_retry": false,
+    "second_attempt": false
+  },
+  "source_files": {
+    "production_bindings": {
+      "path": "scripts/research/f017_canonical_expert_output_production.py",
+      "sha256": "a48b9353dc40019d909a6906683a364eeb2b65248a2c60f1a8d31fe5f23a631f"
+    },
+    "production_entrypoint": {
+      "path": "scripts/research/run_f017_canonical_expert_output_recovery.py",
+      "sha256": "91e56d956d895908e3af2b3edc0c7b72b33871ec8c359f2774162207c929b063"
+    },
+    "rust_decoder_kernel": {
+      "path": "crates/quant/src/iq_ref.rs",
+      "sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"
+    },
+    "rust_byte_bridge": {
+      "path": "crates/quant/src/bin/f017-canonical-decode.rs",
+      "sha256": "31fb0afa26054c1d2dcaef6a284979b2fb148f13754e2a3a4e09e3847a64301d"
+    },
+    "iq2_independent_spec": {
+      "path": "scripts/research/iq2_xxs_dequant.py",
+      "sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761"
+    },
+    "iq3_independent_spec": {
+      "path": "scripts/research/iq3_xxs_spec_decoder.py",
+      "sha256": "10b2c1eeda4d2955fbc61df659d28a4b2c1b72eb2d730145e74bbad86b347621"
+    }
+  },
+  "production_surfaces": {
+    "production_shard_provider": "4463fc978ce2124e6916ee217b2be93e1e3055b73b0c1ed6380ac5e5efd2ea7a",
+    "iq2_decoder_a": "04049edb580842ca57d1052a219653fa0139d656b31e196ec72b690580c42a67",
+    "iq2_decoder_b": "2bf64a0fd5e2e72b00cb052b5943e7605b8cfcc73b3766c17700a8df6a885d85",
+    "iq3_decoder_a": "9b725a9d68db840b893581d07711275c3d114aabda8fefd87bd6769dd7b489a8",
+    "iq3_decoder_b": "92f34515d08072163b500adc7b1753bce2ad6b7531f3810eb3ae6431b4828dc7",
+    "decoder_pair_adapters": "50368bebf92e7afa962a3ff7eac0b25773d684774d64c00d923c862f4180b5bc",
+    "canonical_input_resolver": "651530be954a65313864116a571a0bfe50e5634cd0692ee6a3019a8e5cafacb3",
+    "strict_f32_rmsnorm": "2b4df960ff21f8c4986e7e7a04aab73e566b0c79788b4c0ab2460bfa1a46519c",
+    "strict_f32_output_stage": "e850e48715c59022b9f14e5b63f3fc08d420999289d4d78cc821e815e8774a2b",
+    "retained_packed_private_writer": "8cf99ac59590e78d7244046ec868b8b88a17eb576044ce0bfb82e8b93433481d",
+    "canonical_expert_output_writer": "37b8e48d302f82475e16259e3e584654e9b5729b9248072e2c698e31cd7ba632",
+    "public_evidence_writer": "b22899a4b3ad45f3b424f15c153f39085e6265895a0e45d859ae587ac52ffd45",
+    "real_execution_entrypoint": "91e56d956d895908e3af2b3edc0c7b72b33871ec8c359f2774162207c929b063",
+    "preconsumption_dry_run": "f0ee406c6d55e0cdccd8b7a28d36ee91ba50bdc0abfb9e5794c4c274e0c4d54a"
+  },
+  "supporting_production_bindings": {
+    "fresh_process_reproduction_runner": "877f35cb504b7aaaa5c3d58e8d66d9caa7795db229e4eb9d355cabdb7c6dfd3e",
+    "rust_decoder_binary_sha256": "680a6f67ca6efd571edc5081e8557034f327e71a3e0f4674e21686b703ca6d25",
+    "rust_decoder_build": "cargo build -p quant --bin f017-canonical-decode"
+  },
+  "decoder_independence": {
+    "iq2": "Rust corrected-kquants kernel versus independent Python specification transcription",
+    "iq3": "Rust M1-E corrected-kquants kernel versus independent Python specification transcription",
+    "shared_decode_kernel": false,
+    "checkpoint_path_capability": false
+  },
+  "strict_f32": {
+    "rmsnorm": "strict increasing-index binary32 square/add/mean/epsilon/sqrt/inverse/gamma",
+    "projection": "row-major [out,in], increasing-column binary32 multiply/add",
+    "activation": "binary32 negate/exp/add/divide then binary32 multiply",
+    "blas": false,
+    "accelerate": false,
+    "openblas": false,
+    "metal": false
+  },
+  "preflight": {
+    "complete_graph_required": true,
+    "creates_attempt": false,
+    "creates_execution_start": false,
+    "opens_shard": false,
+    "reads_checkpoint": false,
+    "mutates_ledger": false
+  },
+  "reproduction": {
+    "fresh_processes": 2,
+    "input": "retained packed bytes plus immutable canonical input",
+    "checkpoint_capability": false,
+    "exact_all_eight_sha_required": true
+  },
+  "private_retention": {
+    "packed_before_decode": true,
+    "atomic_write": true,
+    "fsync": true,
+    "read_only": true,
+    "single_link": true,
+    "private_bytes_git_staged": false
+  },
+  "public_evidence": {
+    "private_absolute_paths": false,
+    "private_payload_contents": false
+  },
+  "loop_effects": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger": 139,
+    "attempt_record_created": false,
+    "execution_start_created": false,
+    "real_outputs_generated": false
+  },
+  "next_action": "submit complete production binding package for independent adversarial review; do not execute the real event"
+}

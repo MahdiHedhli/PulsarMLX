@@ -412,3 +412,12 @@
   terminalization; validate the complete crash/failure matrix with compact
   synthetic fixtures only while keeping checkpoint reads and shard opens zero
   and the real-payload ledger unchanged at 139.
+- [x] T017-218 Bind the complete canonical expert-output production recovery
+  surface: isolate the sole shard-open/pread capability, connect independent
+  Rust and specification-transcription IQ2_XXS/IQ3_XXS decoders, resolve the
+  immutable DPREFIX-EXACT-1 input and FFN norm antecedent, implement strict-f32
+  RMSNorm/SwiGLU/projection and byte-only fresh-process reproduction, bind
+  private retention and public evidence writers, and prove the fixed entrypoint
+  resolves all fourteen dependencies in a zero-open/zero-read preflight plus a
+  full synthetic integration matrix while leaving ledger 139 and creating no
+  real attempt or execution-start record.
