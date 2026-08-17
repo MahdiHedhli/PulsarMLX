@@ -321,6 +321,26 @@
       "run_id": 31980507219,
       "source": "GitHub Actions run 31980507219 queried after the checkpoint-free CI ledger correction and evidence review were pushed; both Apple jobs passed, including REAL-2 terminal-evidence validation, exact-shape preparation, full workspace tests, and the current ledger value 139, with no checkpoint access or model recomputation",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "586dd64fc6cd7360614e4f79458752cbd464a488",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95278061563,
+          "name": "Apple MLX small-fixture validation"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95278061626,
+          "name": "Apple Silicon workspace baseline"
+        }
+      ],
+      "phase": "DPREFIX-REAL-3-CHECKPOINT-FREE-REPLAY-PREPARATION",
+      "run_id": 31992366576,
+      "source": "GitHub Actions run 31992366576 queried after the checkpoint-free DPREFIX-REAL-3 replay preparation, public-CI private-package boundary correction, and successor candidate identity binding were pushed; both Apple jobs passed, including the full Python methodology suite, workspace tests, native MLX fixture matrix, and concrete dense-prefix candidate/oracle rehearsal, with zero checkpoint access and real-payload ledger 139 unchanged",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",

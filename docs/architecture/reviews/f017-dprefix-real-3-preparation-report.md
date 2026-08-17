@@ -1,7 +1,7 @@
 # PulsarMLX F017 DPREFIX-REAL-3 Preparation Report
 
 - Starting SHA: `ea362ced6b39915c4d42bf044f1779f55b60995e`
-- Final preparation SHA: `PENDING_COMMIT`
+- Final preparation SHA: `586dd64fc6cd7360614e4f79458752cbd464a488`
 - REAL-2 evidence SHA: `a9708c84ebe08e9c3717cd3abbaec37c15fa06cb99d2f97d5a7dc87871e79039`
 - Real-payload ledger: `139`
 - REAL-2 historical classification: `NUMERICALLY_QUALIFIED / EVENT_REJECTED_FOR_EVIDENCE_COMPLETENESS`
@@ -33,7 +33,7 @@
 - Checkpoint access: `0`
 - Internal verdict: `GO FOR CHECKPOINT-FREE DPREFIX-REAL-3 ADVERSARIAL REVIEW`
 - Adversarial packet SHA: `fa238febd8990a489c764c5a935ceae733f318559327d858bfc2aa0fbc4f6a3e`
-- Final CI run/head: `PENDING_FINAL_HEAD_CI`
+- Final CI run/head: `31992366576 → 586dd64fc6cd7360614e4f79458752cbd464a488` (`success`; Apple jobs `95278061563`, `95278061626`)
 
 ## Exact next action
 
