@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.dprefix-route-ambiguity-v3.1-evaluation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "schema_contract",
+    "starting_authoritative_head",
+    "consumer_id",
+    "scope",
+    "authority",
+    "private_reuse",
+    "evaluation",
+    "deterministic_replay",
+    "expectation_check",
+    "historical_immutability",
+    "isolation",
+    "result"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.dprefix-route-ambiguity-v3.1-evaluation"},
+    "schema_version": {"const": "1.0.0"},
+    "schema_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"const": "specs/017-rust-native-inference-runtime/contracts/f017-dprefix-route-ambiguity-v31-evaluation-v1.schema.json"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "starting_authoritative_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "consumer_id": {"const": "F017-DPREFIX-ROUTE-AMBIGUITY-PROPAGATION-ANALYTICAL-1"},
+    "scope": {"const": "ANALYTICAL_ROUTE_PLANNING_ONLY"},
+    "authority": {"type": "object"},
+    "private_reuse": {"type": "object"},
+    "evaluation": {"type": "object"},
+    "deterministic_replay": {"type": "object"},
+    "expectation_check": {"type": "object"},
+    "historical_immutability": {"type": "object"},
+    "isolation": {"type": "object"},
+    "result": {
+      "enum": [
+        "ROUTE INVARIANT OVER DPREFIX ORACLE AMBIGUITY",
+        "ROUTE SET INVARIANT / WEIGHTS REQUIRE QUALIFICATION",
+        "ROUTE NOT PROVEN INVARIANT"
+      ]
+    }
+  }
+}
