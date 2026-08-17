@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.dprefix-oracle-ambiguity-route-proof-contract",
+  "schema_version": "1.0.0",
+  "status": "FAIL_CLOSED_UNTIL_LOAD_BEARING_RETAINED_BYTES_EXIST",
+  "ambiguity_set": "outward componentwise box centered on DPREFIX-EXACT-1 and enclosing REAL-2 and REAL-3",
+  "required_propagation": [
+    "layer-3 attention mapping or reviewed global Lipschitz bound",
+    "layer-3 FFN RMSNorm mapping",
+    "router matrix componentwise or certified norm mapping",
+    "bias-invariant sigmoid score intervals",
+    "all 1,984 selected/unselected membership inequalities",
+    "expert-ID keyed routing-weight intervals"
+  ],
+  "forbidden_shortcuts": [
+    "treat observed maximum state delta as a router theorem",
+    "reuse old-input router-normalized values for a new layer-3 state",
+    "infer router rows from hashes",
+    "open the checkpoint",
+    "claim invariant with fewer than 1,984 membership inequalities"
+  ],
+  "missing_artifact_rule": "ROUTE NOT PROVEN INVARIANT",
+  "checkpoint_access": 0,
+  "real_payload_ledger": 139
+}

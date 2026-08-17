@@ -376,3 +376,11 @@
   REAL-2 oracle-state identity is not reproduced; reconcile the replay attempt
   while leaving the real-payload ledger byte-consistent at 139 and stop without
   retry or representative M1-F0.
+- [x] T017-213 Characterize the REAL-2/REAL-3 BLAS cross-process delta from
+  byte-identical retained inputs, reproduce both historical realizations under
+  their CPython/NumPy BLAS backends, produce DPREFIX-EXACT-1 bit-identically
+  through independent fixed-order C and Rust scaffolds, freeze identity-gate
+  contract v2, and fail closed on route insensitivity because the committed v2
+  descriptors do not provide the retained layer-3 attention/router bytes or a
+  reviewed propagation bound needed for all 1,984 membership inequalities;
+  preserve zero checkpoint access and the real-payload ledger at 139.

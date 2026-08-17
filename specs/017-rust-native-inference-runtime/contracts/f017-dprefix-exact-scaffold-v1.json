@@ -1,0 +1,71 @@
+{
+  "schema": "pulsarmlx.f017.dprefix-exact-scaffold-contract",
+  "schema_version": "1.0.0",
+  "artifact_id": "DPREFIX-EXACT-1",
+  "classification": "EXACT_CLASS",
+  "status": "PRODUCED_PENDING_INDEPENDENT_REVIEW",
+  "input_authority": {
+    "kind": "immutable retained packed package",
+    "package_sha256": "705066830506dbebab9212948059c71e76b4535eaeb41672c9dbd62f6e9ed156",
+    "tensor_count": 40,
+    "packed_bytes": 1431263232,
+    "decoded_hard_gates": 40
+  },
+  "semantic_boundary": {
+    "prompt": "Hello",
+    "token": 9703,
+    "position": 0,
+    "dsa": "range_fill([0])",
+    "layers": [0, 1, 2],
+    "output": "layer-3 entry state",
+    "position_zero_attention_elimination": "one visible token makes softmax weight exactly one; q/k arithmetic is value-independent and is excluded from the exact value path"
+  },
+  "arithmetic_order": {
+    "matvec": "rows ascending; columns ascending; one binary64 accumulator; one final binary32 rounding per row",
+    "rmsnorm": "indices ascending binary64 square sum, binary64 division/sqrt, binary32 inverse and elementwise output",
+    "residual": "index-ascending binary32 addition",
+    "activation": "binary32 gate/up, pinned libSystem expf, binary32 output",
+    "parallel_reduction": false,
+    "blas": false,
+    "fma_contraction": false,
+    "canonical_serialization": "little-endian IEEE-754 binary32 C order"
+  },
+  "implementation_a": {
+    "language": "C17",
+    "source": "scripts/research/f017_dprefix_exact_scaffold.c",
+    "source_sha256": "e1e84fe90f768ec62d8c4b523d89afae94ce9d0d9186f736fe7cb2c476f8b3f2",
+    "compiler": "Apple clang 17.0.0",
+    "flags": "-O2 -fno-fast-math -ffp-contract=off -fno-vectorize -fno-slp-vectorize",
+    "private_binary_sha256": "35b44aef30aa45d6e2528cc434433db7849e4d2934902842cab7cb533abdc262"
+  },
+  "implementation_b": {
+    "language": "Rust",
+    "source": "scripts/research/f017_dprefix_exact_scaffold.rs",
+    "source_sha256": "cb5064916a98c7adb22d780121dd09a32ee9d4acd555b573e5a112a98af17f1d",
+    "compiler": "rustc 1.97.1 aarch64-apple-darwin",
+    "flags": "opt-level=2 target-cpu=generic codegen-units=1 overflow-checks=yes",
+    "private_binary_sha256": "48a35633128d684777ecbc36a9e952cf88d4c68523704e19180451491e6865b9"
+  },
+  "reproduction": {
+    "fresh_processes_per_implementation": 2,
+    "implementations_exactly_equal_at_all_eight_surfaces": true,
+    "fresh_processes_exactly_equal_at_all_eight_surfaces": true,
+    "result": "DPREFIX-EXACT-1 BITWISE SELF-REPRODUCIBLE"
+  },
+  "outputs": {
+    "embedding_sha256": "5c3e4ebc2d5909c5e6f556bdc00f50130b705a3fb3fe7150f4f24bf7c81bbb80",
+    "layer_0_attention_sha256": "06d73c9fee648eecf1e4a666b9be23005553e892b0481982f43aa06356899795",
+    "layer_0_output_sha256": "a1eb4880165471dd3e88505426b43da0a5c9e31682a995d4df7cf31184f58907",
+    "layer_1_attention_sha256": "99e5b8ed5b732d68eab085647b604d2ccff8a3b7929a9d6620d5c0c6c800f3f6",
+    "layer_1_output_sha256": "a7e4ca498d25a572c64c9748dc5a1697def25f747459208b0f0ed7e32f587a2e",
+    "layer_2_attention_sha256": "2e00fcde3645753dc63686133a83c81c69de632b81a322162db724de88236518",
+    "layer_2_output_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "layer_3_entry_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "layer_3_shape": [6144],
+    "layer_3_dtype": "f32",
+    "layer_3_count": 6144
+  },
+  "authority_policy": "canonical only after independent review",
+  "checkpoint_access": 0,
+  "real_payload_ledger": 139
+}

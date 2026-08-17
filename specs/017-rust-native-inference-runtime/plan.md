@@ -200,3 +200,19 @@ complete evidence, cancellation behavior, and zero lifecycle state.
 - M1-H requires a new independent review and a fresh one-P1 authorization.
 
 Gate: do not claim P1 readiness before R0-R14 and M1-A through M1-G are green.
+
+## Phase 17 — DPREFIX oracle reproducibility closure
+
+- Preserve REAL-2 and REAL-3 as distinct BLAS-class persisted authorities.
+- Characterize their byte delta from the immutable retained packed package.
+- Produce DPREFIX-EXACT-1 through independently implemented, fixed-order,
+  non-BLAS scalar scaffolds and require fresh-process bitwise identity.
+- Require every successor identity gate to name an exact, bounded, or
+  persisted-authority reproducibility mechanism.
+- Propagate the exact/BLAS ambiguity through routing only when the retained
+  layer-3 attention and router surface can support all 1,984 v3 membership
+  inequalities and expert-ID keyed weight intervals.
+
+Gate: no route-invariance claim, representative M1-F0 execution, dense-prefix
+replay, or checkpoint access while the load-bearing route-propagation bytes or
+a reviewed global propagation bound are absent.

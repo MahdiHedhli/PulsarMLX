@@ -1,0 +1,123 @@
+{
+  "schema": "pulsarmlx.f017.identity-gate-contract",
+  "schema_version": "2.0.0",
+  "status": "SUCCESSOR_POLICY_PENDING_INDEPENDENT_REVIEW",
+  "classes": {
+    "EXACT_CLASS": "A cited mechanism guarantees byte-identical reproduction within its declared environment; SHA-256 exact equality is permitted.",
+    "BOUNDED_CLASS": "Floating arithmetic may legitimately vary; only a pre-frozen numerical equivalence contract is permitted.",
+    "PERSISTED_AUTHORITY": "The immutable persisted object is authoritative; its persisted SHA is exact, while recomputation is only numerical evidence."
+  },
+  "gate_audit": [
+    {
+      "gate_id": "F017-Q4-PACKED",
+      "artifact": "token_embd.weight packed bytes",
+      "reproducibility_class": "EXACT_CLASS",
+      "mechanism": "canonical immutable positional payload bytes and SHA-256",
+      "scope": "the exact reviewed checkpoint object and tensor range",
+      "environment_requirements": "byte-addressed regular-file semantics",
+      "comparison_rule": "SHA-256 exact equality",
+      "failure_rule": "Q4_IDENTITY_CONFIRMATION"
+    },
+    {
+      "gate_id": "F017-Q4-DECODED",
+      "artifact": "token_embd.weight canonical decoded f32 bytes",
+      "reproducibility_class": "EXACT_CLASS",
+      "mechanism": "fixed Q4_K block decoder with canonical little-endian f32 serialization",
+      "scope": "accepted Q4_K decoder lineage",
+      "environment_requirements": "IEEE-754 binary32 and little-endian canonical serializer",
+      "comparison_rule": "SHA-256 exact equality",
+      "failure_rule": "Q4_IDENTITY_CONFIRMATION"
+    },
+    {
+      "gate_id": "F017-Q6-PACKED",
+      "artifact": "blk.0.ffn_down.weight packed bytes",
+      "reproducibility_class": "EXACT_CLASS",
+      "mechanism": "canonical immutable positional payload bytes and SHA-256",
+      "scope": "the exact reviewed checkpoint object and tensor range",
+      "environment_requirements": "byte-addressed regular-file semantics",
+      "comparison_rule": "SHA-256 exact equality",
+      "failure_rule": "Q6_IDENTITY_CONFIRMATION"
+    },
+    {
+      "gate_id": "F017-Q6-DECODED",
+      "artifact": "blk.0.ffn_down.weight canonical decoded f32 bytes",
+      "reproducibility_class": "EXACT_CLASS",
+      "mechanism": "fixed corrected Q6_K grouped decoder with canonical little-endian f32 serialization",
+      "scope": "accepted corrected Q6_K decoder lineage",
+      "environment_requirements": "IEEE-754 binary32 and little-endian canonical serializer",
+      "comparison_rule": "SHA-256 exact equality",
+      "failure_rule": "Q6_IDENTITY_CONFIRMATION"
+    },
+    {
+      "gate_id": "F017-DPREFIX-PACKED-PACKAGE",
+      "artifact": "immutable retained 40-payload package",
+      "reproducibility_class": "PERSISTED_AUTHORITY",
+      "mechanism": "retention-at-creation with immutable read-only component and manifest hashes",
+      "scope": "private package identity 705066830506dbebab9212948059c71e76b4535eaeb41672c9dbd62f6e9ed156",
+      "environment_requirements": "regular files, no symlinks, read-only components",
+      "comparison_rule": "persisted object SHA exact equality",
+      "failure_rule": "PACKED_PACKAGE_REPLAY"
+    },
+    {
+      "gate_id": "F017-CANDIDATE-BINARIES",
+      "artifact": "reviewed candidate executable bytes",
+      "reproducibility_class": "PERSISTED_AUTHORITY",
+      "mechanism": "reviewed immutable binary is executed directly; rebuild output is not substituted",
+      "scope": "each versioned candidate authorization",
+      "environment_requirements": "bound loader and native library identities",
+      "comparison_rule": "persisted object SHA exact equality",
+      "failure_rule": "CANDIDATE_IDENTITY"
+    },
+    {
+      "gate_id": "F017-V2-RECOVERY-OBJECTS",
+      "artifact": "retained v2 analytical antecedent objects",
+      "reproducibility_class": "PERSISTED_AUTHORITY",
+      "mechanism": "retention manifest binds immutable artifact bytes created by the accepted recovery event",
+      "scope": "the eight v2 antecedent artifacts",
+      "environment_requirements": "private package must remain present, immutable, and hash-verifiable",
+      "comparison_rule": "persisted object SHA exact equality",
+      "failure_rule": "ANTECEDENT_PACKAGE_IDENTITY"
+    },
+    {
+      "gate_id": "F017-RETAINED-LAYER3-STATES",
+      "artifact": "REAL-2, REAL-3, and DPREFIX-EXACT-1 retained layer-3 bytes",
+      "reproducibility_class": "PERSISTED_AUTHORITY",
+      "mechanism": "each producing event retains canonical bytes and immutable manifest; event bytes are historical facts",
+      "scope": "the particular retained artifact, not an arithmetic recomputation",
+      "environment_requirements": "private retained bytes remain immutable and readable",
+      "comparison_rule": "persisted object SHA exact equality",
+      "failure_rule": "RETENTION_FAILURE"
+    },
+    {
+      "gate_id": "F017-BLAS-ORACLE-RECOMPUTATION",
+      "artifact": "NumPy BLAS-backed dense-prefix oracle output",
+      "reproducibility_class": "BOUNDED_CLASS",
+      "mechanism": "BLAS backend and reduction realization may change across CPython platform wheels",
+      "scope": "cross-process recomputation of dense-prefix numerical surfaces",
+      "environment_requirements": "record CPython, NumPy, BLAS backend, wheel binary, architecture, and thread settings",
+      "comparison_rule": "pre-frozen numerical equivalence contract; never cross-process SHA-256 exact equality",
+      "failure_rule": "NUMERICAL_QUALIFICATION"
+    },
+    {
+      "gate_id": "F017-DPREFIX-EXACT-1",
+      "artifact": "fixed-order exact-scaffold dense-prefix state",
+      "reproducibility_class": "EXACT_CLASS",
+      "mechanism": "independent C and Rust scalar implementations use one increasing-index binary64 accumulator, no BLAS, no parallel reduction, contraction disabled, and canonical f32 boundaries",
+      "scope": "the retained 40-payload package, token 9703, position zero, dense layers 0 through 2",
+      "environment_requirements": "IEEE-754 binary32/binary64, reviewed compiler flags, pinned libSystem expf/sqrt realization",
+      "comparison_rule": "SHA-256 exact equality",
+      "failure_rule": "EXACT_SCAFFOLD_IDENTITY"
+    }
+  ],
+  "misclassified_historical_gates": [
+    {
+      "gate": "DPREFIX-REAL-3 expected REAL-2 recomputed oracle SHA",
+      "old_rule": "exact cross-process SHA equality",
+      "correct_v2_class": "BOUNDED_CLASS for recomputation; PERSISTED_AUTHORITY for REAL-2 bytes",
+      "historical_disposition": "REAL-3 remains REJECTED under frozen v1"
+    }
+  ],
+  "historical_real3_rejected_unchanged": true,
+  "checkpoint_access": 0,
+  "real_payload_ledger": 139
+}
