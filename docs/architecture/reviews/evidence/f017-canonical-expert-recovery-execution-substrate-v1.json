@@ -1,0 +1,89 @@
+{
+  "schema": "pulsarmlx.f017.canonical-expert-recovery-execution-substrate-evidence",
+  "schema_version": "1.0.0",
+  "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+  "attempt_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+  "starting_authoritative_head": "88c93fa80c85dcd8edd4d850ea4f5f81d3af8990",
+  "contract_sha256": "53d124277546dccdf99e5d9b0a2de0585826616e9e9cbb2d9c38187729bbb285",
+  "executor_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe",
+  "component_identities": {
+    "attempt_record": "ed53a45fe523a7aca77314eb70496a8b7048c3be4fd87a00a3677f95cba35c45",
+    "dual_decoder_gate": "e1dd27ec8e3175b0ff84e89a741b3e8bbec42ee7d467b933d45e967c7e71f4db",
+    "event_executor": "e14d899fd4ed05a620474f8b94437ce8011dfe0c5b3e1294113f78d2776a4452",
+    "execution_start_writer": "0797b0f7aa499d7164a5acb9c0d924c50965b4c87d48c63f35e27c1d3266e1e6",
+    "journal_writer": "6c7283f7724e8feff81df7256317b5943cd41157ff4096172a2891b056232c17",
+    "ledger_writer_reconciler": "682b278f39156e9fa4bb79707435fe2db3af7b67ce01d40ce1f94fe299f8c87c",
+    "one_shard_open_guard": "1e7203e222ae68f2062116e982c6c5315779d2a9a7ddfd300b8e6f34875ef752",
+    "retained_at_creation_writer": "f4a0be7f2dc63137e4f4cfe0beeded55288555b8521b1e84441135cd72d1cab9",
+    "terminal_banker": "e0b58161477dbbf6da4eb7dd8b17a334a00ef67253a4656c8ea115aa7ae57fb6"
+  },
+  "failure_matrix": {
+    "required_cases": 24,
+    "required_cases_passed": 24,
+    "total_executor_tests": 27,
+    "result": "PASS",
+    "payload_source": "SYNTHETIC_COMPACT_FIXTURES_ONLY"
+  },
+  "restart_semantics": "NONTERMINAL_INTERRUPTED_ATTEMPT_IS_RECONCILED_FROM_DURABLE_RECEIPTS_AND_TERMINALIZED_NEVER_RESUMED",
+  "one_shard_open_enforcement": "PASS_SYNTHETIC_GUARD_SECOND_OPEN_REJECTED",
+  "no_retry_enforcement": "PASS_ATTEMPT_IDENTITY_AND_TERMINAL_STATE_REJECT_REENTRY",
+  "dual_decoder_integration": "PASS_SAME_RETAINED_BYTES_OBJECT_AND_EXACT_IDENTITY_GATE",
+  "real_path_firewall": "PASS_MOCK_ONLY_PROVIDER_REQUIRED_NO_CHECKPOINT_RESOLVER",
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139,
+    "real_expert_outputs_generated": 0,
+    "event_executed": false
+  },
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_2": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "membership_1984_of_1984": "PASS_UNCHANGED",
+    "coefficient_qualification": "FAIL_UNCHANGED_0_OF_8",
+    "route_disposition": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "artifact_bindings": [
+    {
+      "path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_canonical_expert_output_recovery_executor.py",
+      "sha256": "a7382a82fbfb0771f8b690f15af141472c049b61be397708d539250642f46b7d"
+    },
+    {
+      "path": "scripts/research/validate_f017_canonical_expert_output_recovery_substrate.py",
+      "sha256": "a1674f77ba624bc1a9b3ae86d783bedd2af9d1def4f43c040f26c013a27e4b51"
+    },
+    {
+      "path": "scripts/research/tests/test_validate_f017_canonical_expert_output_recovery_substrate.py",
+      "sha256": "fd5ef60b7981a98061d4a6797eb740c0183bf2cc7a38a7a4204b374d9a9ac2a1"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-execution-substrate-v1.json",
+      "sha256": "1326b0aeed86daf7d9c359136c90bd1c5af4a1e906a462907175308239f071df"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-attempt-v1.schema.json",
+      "sha256": "d9f0c656d54f54400a31cb0e5dc03c54da86b4c423acc1b355bff908e036427f"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-execution-start-v1.schema.json",
+      "sha256": "44aa644dcb365aadfd6e204f25ba3769c7215586103afaa1e3350d609fca2e23"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-read-journal-v1.schema.json",
+      "sha256": "8ab189ab058410ce9ef524a45857d22bcc40b8f5f1d3bf17b537e3f13896ffde"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-terminal-v1.schema.json",
+      "sha256": "2308f0dc9c614acbaa1a989ae823641ebfe7c3f7fdf09f5cc8c6ebdebfb1018f"
+    }
+  ],
+  "status": "RECOVERY EXECUTION SUBSTRATE READY FOR INDEPENDENT ADVERSARIAL REVIEW",
+  "next_action": "Submit the bound execution substrate and amended recovery event for independent adversarial review. Do not execute the 24-read event yet."
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.canonical-expert-recovery-attempt.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "event_id", "attempt_id", "automatic_retry", "second_attempt_authorized", "immutable_identity"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.canonical-expert-recovery-attempt"},
+    "schema_version": {"const": "1.0.0"},
+    "event_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"},
+    "attempt_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1"},
+    "automatic_retry": {"const": false},
+    "second_attempt_authorized": {"const": false},
+    "immutable_identity": {"const": true}
+  }
+}

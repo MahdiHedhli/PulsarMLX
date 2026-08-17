@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.canonical-expert-recovery-read-journal-entry.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "event_id", "attempt_id", "sequence", "expert_id", "tensor_role", "shard_identity", "offset", "requested_byte_count", "actual_byte_count", "packed_sha256", "retention_artifact_id", "ledger_after"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.canonical-expert-recovery-read-journal-entry"},
+    "schema_version": {"const": "1.0.0"},
+    "event_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"},
+    "attempt_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1"},
+    "sequence": {"type": "integer", "minimum": 1, "maximum": 24},
+    "expert_id": {"enum": [250, 10, 237, 73, 62, 177, 218, 28]},
+    "tensor_role": {"enum": ["gate", "up", "down"]},
+    "shard_identity": {"const": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
+    "offset": {"type": "integer", "minimum": 0},
+    "requested_byte_count": {"enum": [3244032, 4816896]},
+    "actual_byte_count": {"enum": [3244032, 4816896]},
+    "packed_sha256": {"pattern": "^[0-9a-f]{64}$"},
+    "retention_artifact_id": {"pattern": "^retained-packed/[0-9]{2}-expert-[0-9]+-(gate|up|down)\\.bin$"},
+    "ledger_after": {"type": "integer", "minimum": 140, "maximum": 163}
+  }
+}

@@ -404,3 +404,11 @@
   agreement between independent accepted IQ2_XXS/IQ3_XXS decoders for all 24
   payloads, reverify the complete catalog-slice inventory, and return the
   checkpoint-free amendment for renewed adversarial review at ledger 139.
+- [x] T017-217 Bind the canonical expert-output recovery execution substrate:
+  implement a frozen-inventory one-shot executor, durable execution-start and
+  attempt identities, per-read consumption receipts/journal/ledger updates,
+  retain-before-decode packed artifacts, same-retained-byte dual decoding,
+  one-shard-open and no-retry guards, terminal banking and interrupted-attempt
+  terminalization; validate the complete crash/failure matrix with compact
+  synthetic fixtures only while keeping checkpoint reads and shard opens zero
+  and the real-payload ledger unchanged at 139.

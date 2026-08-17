@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.canonical-expert-recovery-execution-start.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "event_id", "attempt_id", "authoritative_commit", "authorization_contract_sha256", "adversarial_review_authorization", "ledger_before", "expected_reads", "expected_packed_bytes", "maximum_shard_opens", "inventory_sha256", "automatic_retry", "event_sequence"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.canonical-expert-recovery-execution-start"},
+    "schema_version": {"const": "1.0.0"},
+    "event_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"},
+    "attempt_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1"},
+    "authoritative_commit": {"pattern": "^[0-9a-f]{40}$"},
+    "authorization_contract_sha256": {"pattern": "^[0-9a-f]{64}$"},
+    "adversarial_review_authorization": {"const": "GO — EXECUTE F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"},
+    "ledger_before": {"const": 139},
+    "expected_reads": {"const": 24},
+    "expected_packed_bytes": {"const": 90439680},
+    "maximum_shard_opens": {"const": 1},
+    "inventory_sha256": {"pattern": "^[0-9a-f]{64}$"},
+    "automatic_retry": {"const": false},
+    "event_sequence": {"const": 1}
+  }
+}

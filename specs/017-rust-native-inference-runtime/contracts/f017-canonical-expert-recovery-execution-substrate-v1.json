@@ -1,0 +1,107 @@
+{
+  "schema": "pulsarmlx.f017.canonical-expert-recovery-execution-substrate-contract",
+  "schema_version": "1.0.0",
+  "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+  "attempt_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+  "starting_authoritative_head": "88c93fa80c85dcd8edd4d850ea4f5f81d3af8990",
+  "authorization_contract_sha256": "58ad56f008a27ea4b69215c39404edbccf4008ef0620a3f46bb4ff7adb2a95ae",
+  "dual_decoder_lineage_sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84",
+  "inventory_sha256": "67d8650dfe6ce5ea0f524196e2247e527153488540e3275a726d6e838a573f34",
+  "access_contract": {
+    "expected_reads": 24,
+    "expected_packed_bytes": 90439680,
+    "maximum_shard_opens": 1,
+    "ledger_before": 139,
+    "successful_ledger_after": 163,
+    "automatic_retry": false,
+    "second_attempt_authorized": false
+  },
+  "component_bindings": {
+    "event_executor": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor.execute", "InventoryCursor", "validate_binding"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "execution_start_writer": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor._write_start", "atomic_json", "atomic_bytes"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "attempt_record": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor._create_attempt", "RecoveryExecutor.recover_interrupted"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "journal_writer": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor._receipt", "RecoveryExecutor._journal"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "ledger_writer_reconciler": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor._set_ledger", "RecoveryExecutor._repair_ledger", "RecoveryExecutor.reconcile"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "terminal_banker": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor._bank_terminal", "RecoveryExecutor.recover_interrupted"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "one_shard_open_guard": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["OneShardOpenGuard"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "retained_at_creation_writer": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["RecoveryExecutor._retain"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    },
+    "dual_decoder_gate": {
+      "implementation_path": "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "symbols": ["DecoderPair", "RecoveryExecutor._decode"],
+      "source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe"
+    }
+  },
+  "schema_bindings": {
+    "attempt": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-attempt-v1.schema.json",
+      "sha256": "d9f0c656d54f54400a31cb0e5dc03c54da86b4c423acc1b355bff908e036427f"
+    },
+    "execution_start": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-execution-start-v1.schema.json",
+      "sha256": "44aa644dcb365aadfd6e204f25ba3769c7215586103afaa1e3350d609fca2e23"
+    },
+    "journal": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-read-journal-v1.schema.json",
+      "sha256": "8ab189ab058410ce9ef524a45857d22bcc40b8f5f1d3bf17b537e3f13896ffde"
+    },
+    "terminal": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-terminal-v1.schema.json",
+      "sha256": "2308f0dc9c614acbaa1a989ae823641ebfe7c3f7fdf09f5cc8c6ebdebfb1018f"
+    }
+  },
+  "durability_order": [
+    "attempt_identity",
+    "execution_start_fsync",
+    "single_shard_open",
+    "successful_read",
+    "consumption_receipt_fsync",
+    "ledger_fsync",
+    "packed_retention_fsync_read_only_rehash",
+    "journal_entry_fsync",
+    "dual_decoder_same_retained_bytes",
+    "next_read"
+  ],
+  "restart_policy": "NONTERMINAL_INTERRUPTED_ATTEMPT_IS_RECONCILED_FROM_DURABLE_RECEIPTS_AND_TERMINALIZED_NEVER_RESUMED",
+  "test_isolation": {
+    "mock_only_provider_required": true,
+    "checkpoint_path_resolver_present": false,
+    "checkpoint_basename_present_in_executor_source": false,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139
+  },
+  "status": "NO_CHECKPOINT_ACCESS / EXECUTION_SUBSTRATE_ONLY"
+}

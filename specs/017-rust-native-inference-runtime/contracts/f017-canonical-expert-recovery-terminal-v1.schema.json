@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.canonical-expert-recovery-terminal.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "event_id", "attempt_id", "classification", "reason_code", "automatic_retry", "consumed_read_count", "packed_bytes", "ledger_before", "ledger_after", "shard_open_count", "journal_digest", "journal_count", "retained_artifact_count", "retained_package_manifest_identity", "decoder_agreement_count", "output_generation_status", "output_sha256_by_expert", "two_process_reproduction_count", "two_process_exact_reproduction"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.canonical-expert-recovery-terminal"},
+    "schema_version": {"const": "1.0.0"},
+    "event_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"},
+    "attempt_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1"},
+    "classification": {"enum": ["COMPLETE", "TERMINAL_FAILURE"]},
+    "reason_code": {"type": "string", "minLength": 1},
+    "automatic_retry": {"const": false},
+    "consumed_read_count": {"type": "integer", "minimum": 0, "maximum": 24},
+    "packed_bytes": {"type": "integer", "minimum": 0, "maximum": 90439680},
+    "ledger_before": {"const": 139},
+    "ledger_after": {"type": "integer", "minimum": 139, "maximum": 163},
+    "shard_open_count": {"type": "integer", "minimum": 0, "maximum": 1},
+    "journal_digest": {"pattern": "^[0-9a-f]{64}$"},
+    "journal_count": {"type": "integer", "minimum": 0, "maximum": 24},
+    "retained_artifact_count": {"type": "integer", "minimum": 0, "maximum": 24},
+    "retained_package_manifest_identity": {"pattern": "^[0-9a-f]{64}$"},
+    "decoder_agreement_count": {"type": "integer", "minimum": 0, "maximum": 24},
+    "output_generation_status": {"type": "string"},
+    "output_sha256_by_expert": {"type": "object"},
+    "two_process_reproduction_count": {"type": "integer", "minimum": 0, "maximum": 2},
+    "two_process_exact_reproduction": {"type": "boolean"}
+  }
+}
