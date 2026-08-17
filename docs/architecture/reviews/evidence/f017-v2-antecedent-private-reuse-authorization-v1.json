@@ -1,0 +1,175 @@
+{
+  "schema": "pulsarmlx.f017.v2-antecedent-private-reuse-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-DPREFIX-ANTECEDENT-REUSE-1",
+  "status": "AUTHORIZED_NOT_EXECUTED",
+  "authoritative_before_head": "6633362af67e76f25ad06fcdca7f079a48ccacf7",
+  "schema_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-v2-antecedent-private-reuse-authorization-v1.schema.json",
+    "sha256": "ded6762f1f8082180105adaf47ae6d896e22389e757ed30b05270df84f71c9d0"
+  },
+  "source": {
+    "source_event_id": "M1-F0-V2-ANTECEDENT-RECOVERY",
+    "source_event_immutable": true,
+    "source_event_terminal": true,
+    "private_manifest_sha256": "1007112a0642919321d0081e79bba12fe3809c456e79a22b9623d19689b78112",
+    "embedded_retention_manifest_sha256": "bd3cc6c10faee0d8c8072000403bbef68354286515482a6b78869ab02be81e13",
+    "recovery_result_sha256": "f9422287cb98322d1412a6dd2397bb0f4a0d6538778aa587dddff7c5154acf2a",
+    "retained_bytes_classification": "ANTECEDENT_EVIDENCE_NOT_REGENERATED_CHECKPOINT_EVIDENCE"
+  },
+  "consumer": {
+    "consumer_id": "F017-DPREFIX-ROUTE-AMBIGUITY-PROPAGATION-ANALYTICAL-1",
+    "distinct_from_source_event": true,
+    "allowed_purpose": "ROUTE_AMBIGUITY_PROPAGATION_ANALYTICAL_ONLY",
+    "execution_state": "AUTHORIZED_NOT_EXECUTED",
+    "may_read_only_authorized_inventory": true,
+    "may_modify_artifacts_in_place": false,
+    "candidate_or_model_dispatch_permitted": false,
+    "numerical_route_evaluation_performed": false,
+    "prohibited_purposes": [
+      "CHECKPOINT_ACCESS",
+      "CHECKPOINT_RESTORATION",
+      "CANDIDATE_OR_MODEL_EXECUTION",
+      "DPREFIX_REPLAY",
+      "ROUTE_SCORE_COMPUTATION",
+      "RMSNORM_PROPAGATION_EVALUATION",
+      "ROUTER_LOGIT_EVALUATION",
+      "MEMBERSHIP_INEQUALITY_EVALUATION",
+      "ROUTING_WEIGHT_INTERVAL_EVALUATION",
+      "REPRESENTATIVE_M1_F0_EXECUTION",
+      "M1_F_EXECUTION",
+      "M1_G_EXECUTION",
+      "P1_EXECUTION"
+    ]
+  },
+  "package": {
+    "artifact_count": 8,
+    "total_bytes": 6418614,
+    "path_policy": "PRIVATE_PACKAGE_RELATIVE_ONLY_NO_PUBLIC_MACHINE_LOCAL_PATH",
+    "identity_path_independent": true,
+    "active_analytical_output_tree_created": false,
+    "artifacts": [
+      {
+        "symbolic_name": "antecedents/attention_residual.bin",
+        "byte_length": 24576,
+        "expected_sha256": "1f5e2e469f5d118f8cf7fee7f4199b2912530823eb2d0a65cea53e9e77de0fc7",
+        "before_sha256": "1f5e2e469f5d118f8cf7fee7f4199b2912530823eb2d0a65cea53e9e77de0fc7",
+        "after_sha256": "1f5e2e469f5d118f8cf7fee7f4199b2912530823eb2d0a65cea53e9e77de0fc7",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/router_normalized_input.bin",
+        "byte_length": 24576,
+        "expected_sha256": "98275027e2427276822b84fc0c7747014b0f4d79b40c07e6d8267060db7762e1",
+        "before_sha256": "98275027e2427276822b84fc0c7747014b0f4d79b40c07e6d8267060db7762e1",
+        "after_sha256": "98275027e2427276822b84fc0c7747014b0f4d79b40c07e6d8267060db7762e1",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/router_matrix.bin",
+        "byte_length": 6291456,
+        "expected_sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+        "before_sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+        "after_sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/ffn_norm_weight.bin",
+        "byte_length": 24576,
+        "expected_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+        "before_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+        "after_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/rmsnorm_decomposition_inputs.bin",
+        "byte_length": 182,
+        "expected_sha256": "09b6147d093cecdf587e39acae9010b39100f2dcc2868838032ffcba2183a468",
+        "before_sha256": "09b6147d093cecdf587e39acae9010b39100f2dcc2868838032ffcba2183a468",
+        "after_sha256": "09b6147d093cecdf587e39acae9010b39100f2dcc2868838032ffcba2183a468",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/non_radial_component_bounds.bin",
+        "byte_length": 49152,
+        "expected_sha256": "5f049e9d00a658bdc8efeeef4ddd4b07198218db70229b5d7cf164a28b6a5583",
+        "before_sha256": "5f049e9d00a658bdc8efeeef4ddd4b07198218db70229b5d7cf164a28b6a5583",
+        "after_sha256": "5f049e9d00a658bdc8efeeef4ddd4b07198218db70229b5d7cf164a28b6a5583",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/router_reduction_bounds.bin",
+        "byte_length": 2048,
+        "expected_sha256": "eb764badb65d06c63ca267652c06af23b9df00bcebd01a845d95915a1ab7f5cf",
+        "before_sha256": "eb764badb65d06c63ca267652c06af23b9df00bcebd01a845d95915a1ab7f5cf",
+        "after_sha256": "eb764badb65d06c63ca267652c06af23b9df00bcebd01a845d95915a1ab7f5cf",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      },
+      {
+        "symbolic_name": "antecedents/router_import_materialization_bounds.bin",
+        "byte_length": 2048,
+        "expected_sha256": "b5df17d9c7cb737f840825fe8116e6f4cfdb8ce547a18419bb57be083286e937",
+        "before_sha256": "b5df17d9c7cb737f840825fe8116e6f4cfdb8ce547a18419bb57be083286e937",
+        "after_sha256": "b5df17d9c7cb737f840825fe8116e6f4cfdb8ce547a18419bb57be083286e937",
+        "regular_file": true,
+        "read_only": true,
+        "no_symlink_indirection": true,
+        "hard_link_count": 1,
+        "no_writable_hard_link_alias": true,
+        "no_mutable_active_output_copy": true
+      }
+    ]
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139,
+    "real_payload_ledger_entry_created": false,
+    "checkpoint_access_event_created": false,
+    "restoration_event_created": false,
+    "candidate_or_model_dispatches": 0,
+    "route_calculations": 0
+  },
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "UNCHANGED_TERMINAL_REJECTED_NATIVE_RUNTIME",
+    "DPREFIX_REAL_2": "UNCHANGED_TERMINAL_REJECTED_EVIDENCE_VALIDATION",
+    "DPREFIX_REAL_3": "UNCHANGED_TERMINAL_REJECTED_ORACLE_IDENTITY_MISMATCH"
+  },
+  "result": "PRIVATE REUSE AUTHORIZED"
+}

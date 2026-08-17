@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.v2-antecedent-private-reuse-authorization-v1",
+  "title": "F017 v2 antecedent private reuse authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "authorization_id",
+    "status",
+    "authoritative_before_head",
+    "schema_contract",
+    "source",
+    "consumer",
+    "package",
+    "isolation",
+    "historical_immutability",
+    "result"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.v2-antecedent-private-reuse-authorization"},
+    "schema_version": {"const": "1.0.0"},
+    "authorization_id": {"const": "F017-DPREFIX-ANTECEDENT-REUSE-1"},
+    "status": {"const": "AUTHORIZED_NOT_EXECUTED"},
+    "authoritative_before_head": {"const": "6633362af67e76f25ad06fcdca7f079a48ccacf7"},
+    "schema_contract": {"type": "object"},
+    "source": {"type": "object"},
+    "consumer": {"type": "object"},
+    "package": {
+      "type": "object",
+      "required": ["artifact_count", "total_bytes", "path_policy", "identity_path_independent", "artifacts"],
+      "properties": {
+        "artifact_count": {"const": 8},
+        "total_bytes": {"const": 6418614},
+        "path_policy": {"const": "PRIVATE_PACKAGE_RELATIVE_ONLY_NO_PUBLIC_MACHINE_LOCAL_PATH"},
+        "identity_path_independent": {"const": true},
+        "artifacts": {"type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true}
+      }
+    },
+    "isolation": {"type": "object"},
+    "historical_immutability": {"type": "object"},
+    "result": {"const": "PRIVATE REUSE AUTHORIZED"}
+  }
+}
