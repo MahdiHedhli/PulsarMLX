@@ -216,3 +216,22 @@ Gate: do not claim P1 readiness before R0-R14 and M1-A through M1-G are green.
 Gate: no route-invariance claim, representative M1-F0 execution, dense-prefix
 replay, or checkpoint access while the load-bearing route-propagation bytes or
 a reviewed global propagation bound are absent.
+
+## Phase 18 — Routing-contract v3.1 theorem freeze
+
+- Bind the committed GLM-5.2 FFN RMSNorm, sigmoid-plus-correction-bias top-8,
+  selected-probability normalization, scale, and atomic ID/weight semantics.
+- Freeze a binary64 directed-outward componentwise theorem from an arbitrary
+  finite layer-3 entry-state box through RMSNorm, row-specific router logits,
+  selection scores, strict selected/unselected differences, safety factors,
+  and ID-keyed selected-weight intervals.
+- Validate the theorem only with synthetic, adversarial, mutation, and sampled
+  property fixtures; no retained private numerical value is an input to the
+  freeze.
+- Keep ordered top-8 rank diagnostic, mathematical factor threshold 1 distinct
+  from engineering H=2, and require selected-set invariance before weight
+  qualification.
+
+Gate: the public theorem package is hash-bound, its outward enclosures contain
+all synthetic samples, historical DPREFIX evidence remains immutable, and the
+real-payload ledger remains 139 before any real ambiguity-box evaluation.

@@ -1,0 +1,153 @@
+{
+  "schema": "pulsarmlx.f017.routing-state-box-contract",
+  "schema_version": "3.1.0",
+  "contract_id": "f017-routing-contract-v3.1-state-box",
+  "status": "FROZEN_BEFORE_REAL_AMBIGUITY_EVALUATION",
+  "analytical_consumer_id": "F017-DPREFIX-ROUTE-AMBIGUITY-PROPAGATION-ANALYTICAL-1",
+  "scope": "symbolic and synthetic componentwise layer-3 entry-state box propagation only",
+  "routing_semantics": {
+    "architecture": "GLM-5.2",
+    "rmsnorm": "y_j=gamma_j*x_j/sqrt(mean_k(x_k^2)+epsilon)",
+    "epsilon_binary64_exact_value": 9.999999747378752e-06,
+    "epsilon_source_dtype": "IEEE-754 binary32",
+    "router_matrix_shape": [256, 6144],
+    "router_matrix_orientation": "row i is expert i; z_i=sum_j W[i,j]*y_j",
+    "linear_logit_bias": "absent; theorem API accepts explicit zero or a reviewed successor bias",
+    "probability": "p_i=stable_branch_sigmoid(z_i)",
+    "selection_score": "score_i=p_i+correction_bias_i",
+    "top_k": 8,
+    "selection": "score descending; exact ties use lower expert ID",
+    "selected_weight": "q_i=2.5*p_i/max(sum_{k in T}(p_k),2^-14)",
+    "normalization_order": "top-k selection precedes normalization; selection bias is excluded from weight normalization",
+    "shared_expert": "outside router selection",
+    "semantic_object": "atomic (expert_id,routing_weight) pairs",
+    "ordered_top8_requirement": "diagnostic only; selected-set membership is load-bearing"
+  },
+  "state_box": {
+    "form": "x_j in [x0_j-dx_j,x0_j+dx_j]",
+    "preconditions": [
+      "x0, dx, and gamma are finite and shape-aligned",
+      "dx_j >= 0",
+      "epsilon is finite and positive",
+      "all row-specific guards are explicit, finite, non-negative, and row-aligned"
+    ],
+    "proof_arithmetic": "IEEE-754 binary64 interval endpoints with directed outward nextafter guards",
+    "model_input_materialization": "binary32 values promoted exactly to binary64 before proof arithmetic",
+    "subnormal_policy": "preserve finite subnormals; outward nextafter may produce minimum subnormal endpoints",
+    "signed_zero_policy": "accepted as numerical zero; interval ordering does not distinguish signs",
+    "nan_infinity_policy": "reject inputs and fail closed on intermediate overflow"
+  },
+  "rmsnorm_theorem": {
+    "coordinate_interval": "L_j=down(x0_j-dx_j), U_j=up(x0_j+dx_j)",
+    "square_interval": "[0,up(max(L_j^2,U_j^2))] when zero is included; otherwise [down(min(L_j^2,U_j^2)),up(max(...))]",
+    "mean_square": "outward sum of square intervals divided outward by dimension; lower endpoint clamped to algebraic zero",
+    "rms_interval": "sqrt_out(mean_square+[epsilon,epsilon])",
+    "denominator_gate": "r_lower > 0 or fail closed",
+    "normalized_coordinate": "standard signed interval division [L_j,U_j]/[r_lower,r_upper]",
+    "gamma_scale": "interval multiplication by exact promoted gamma_j",
+    "radial_component": "the common denominator interval",
+    "coordinate_non_radial_component": "the per-coordinate numerator interval",
+    "dependency_policy": "conservative interval dependency is accepted; no independence assumption narrows the quotient"
+  },
+  "router_logit_theorem": {
+    "formula": "z_i=sum_j W[i,j]*Y_j+linear_bias_i",
+    "row_interval": "outward signed interval products accumulated outward per row",
+    "row_specific_guards": [
+      "router reduction guard",
+      "router import/materialization guard",
+      "linear-bias representation guard"
+    ],
+    "guard_application": "add a symmetric outward row guard after the interval dot product and bias",
+    "maximum_rows": 256,
+    "global_bound_substitution": "forbidden when row-specific bounds exist"
+  },
+  "score_theorem": {
+    "sigmoid": "monotone stable-branch sigmoid applied to interval endpoints with outward nextafter",
+    "correction_bias": "selection-only binary32 correction bias promoted to binary64 and added after sigmoid with an explicit guard",
+    "difference": "D_ij=[down(score_i.lower-score_j.upper),up(score_i.upper-score_j.lower)]",
+    "membership_condition": "D_ij.lower > 0 for every selected i and unselected j",
+    "required_real_pair_count": 1984,
+    "real_evaluation_in_this_freeze": false
+  },
+  "safety_factor": {
+    "nominal_margin": "m_ij=down(score0_i-score0_j)",
+    "ambiguity_allowance": "a_ij=up(max(0,m_ij-D_ij.lower))",
+    "factor": "m_ij/a_ij rounded down; INFINITE when m_ij>0 and a_ij=0; zero when m_ij<=0",
+    "mathematical_threshold": 1.0,
+    "mathematical_pass": "D_ij.lower>0 and factor>=1",
+    "engineering_threshold": 2.0,
+    "engineering_pass": "mathematical pass and factor>=2",
+    "engineering_is_mathematical_truth": false,
+    "diagnostics": [
+      "minimum factor",
+      "worst selected/challenger pair",
+      "count below 1",
+      "count below 2",
+      "median finite factor"
+    ]
+  },
+  "selected_weight_theorem": {
+    "precondition": "selected-set invariance independently proven",
+    "key": "expert_id",
+    "duplicate_expert_ids": "reject",
+    "lower": "2.5*p_i.lower/max(2^-14,p_i.lower+sum_{k!=i}(p_k.upper)) rounded outward",
+    "upper": "2.5*p_i.upper/max(2^-14,p_i.upper+sum_{k!=i}(p_k.lower)) rounded outward",
+    "dependency": "numerator occurrence in denominator is preserved by the monotone quotient formula",
+    "outcomes": [
+      "selected-set invariance",
+      "weight mathematical qualification",
+      "weight engineering qualification"
+    ],
+    "rank_position_keying": "forbidden"
+  },
+  "outward_rounding": {
+    "mechanism": "math.nextafter toward negative infinity for lower endpoints and positive infinity for upper endpoints",
+    "operations": [
+      "addition",
+      "subtraction",
+      "multiplication",
+      "division",
+      "sqrt",
+      "sigmoid",
+      "reduction",
+      "interval normalization"
+    ],
+    "missing_guard": "fail closed"
+  },
+  "fail_closed_conditions": [
+    "shape mismatch",
+    "negative box radius",
+    "non-finite input",
+    "intermediate overflow",
+    "non-positive RMS lower bound",
+    "division interval crossing zero",
+    "missing or negative row guard",
+    "probability outside [0,1]",
+    "duplicate or out-of-range expert ID",
+    "selected-weight evaluation before fixed-set proof"
+  ],
+  "semantic_sources": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/m1f0-selection-v1.json",
+      "sha256": "4207845cd22f89a42c42a5ab8ef240cf1af5db3434c2cabac0ecfe9d1beddd0a"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json",
+      "sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85"
+    },
+    {
+      "path": "scripts/research/glm52_router.py",
+      "sha256": "0d625fc62d38e603cc7f822d6996c966b77cfe1aec17e6ead98420118e3de607"
+    },
+    {
+      "path": "crates/engine/src/lib.rs",
+      "sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406"
+    }
+  ],
+  "private_reuse_authorization_sha256": "4a6d232366a976892e38fa4da2dbeaf4b77d0c6f6e5195e43672a4537c8f9a07",
+  "private_values_loaded": false,
+  "real_ambiguity_evaluated": false,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "real_payload_ledger": 139
+}

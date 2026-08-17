@@ -384,3 +384,9 @@
   descriptors do not provide the retained layer-3 attention/router bytes or a
   reviewed propagation bound needed for all 1,984 membership inequalities;
   preserve zero checkpoint access and the real-payload ledger at 139.
+- [x] T017-214 Freeze routing-contract v3.1 before real ambiguity evaluation:
+  bind actual GLM-5.2 routing semantics, implement directed-outward state-box
+  propagation through FFN RMSNorm, all router rows, sigmoid/correction-bias
+  scores, strict membership differences, safety factors, and ID-keyed selected
+  weights; validate only synthetic/adversarial/property fixtures while keeping
+  private antecedent values unopened, checkpoint access zero, and ledger 139.

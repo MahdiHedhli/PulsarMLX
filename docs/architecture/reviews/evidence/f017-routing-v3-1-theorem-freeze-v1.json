@@ -1,0 +1,104 @@
+{
+  "schema": "pulsarmlx.f017.routing-v3-1-theorem-freeze",
+  "schema_version": "1.0.0",
+  "result": "ROUTING V3.1 THEOREM FROZEN",
+  "starting_head": "a906e2b500caf3b8a67803e697728c7781c8d3a8",
+  "consumer_id": "F017-DPREFIX-ROUTE-AMBIGUITY-PROPAGATION-ANALYTICAL-1",
+  "bound_routing_semantics": {
+    "rmsnorm": "gamma*x/sqrt(mean(x^2)+binary32(1e-5))",
+    "router": "256 independent [6144] expert rows",
+    "selection": "top8(sigmoid(logit)+correction_bias), score descending then expert ID ascending",
+    "weight": "2.5*pre_bias_probability/max(selected_probability_sum,2^-14)",
+    "semantic_identity": "selected set plus atomic expert-ID-keyed weights",
+    "selected_internal_order": "DIAGNOSTIC_NOT_PASS_REQUIRED"
+  },
+  "formulations": {
+    "rmsnorm": "directed-outward coordinate squares, mean, epsilon, sqrt, signed quotient, and gamma multiplication",
+    "router_logit": "row-wise signed interval dot product plus explicit reduction/import/bias guards",
+    "score_difference": "down(selected_score.lower-challenger_score.upper) with strict positivity",
+    "safety_factor": "down(nominal_positive_margin/up(max(0,nominal_margin-difference_lower)))",
+    "engineering_h2": "factor>=2 after strict mathematical membership; not mathematical truth",
+    "selected_weight": "ID-keyed dependency-aware monotone quotient over a separately proven fixed selected set",
+    "outward_rounding": "binary64 math.nextafter toward -infinity for lower and +infinity for upper endpoints"
+  },
+  "artifacts": [
+    {
+      "role": "frozen_contract",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-routing-contract-v3.1-state-box.json",
+      "sha256": "084e496d44f2e3857e9f6da0c9e0b922fc11b805df8fda85e8aea86d2c22f455"
+    },
+    {
+      "role": "public_mathematical_specification",
+      "path": "docs/architecture/reviews/f017-routing-v3-1-state-box-theorem.md",
+      "sha256": "06f432cc609a927b91e2671bcce8878b2a51ff61c88707aed5a68c6402f383dc"
+    },
+    {
+      "role": "reference_implementation",
+      "path": "scripts/research/f017_routing_contract_v31.py",
+      "sha256": "a4ca7d39c76d5c5359e16bdf3f851f309e89c7e5f662713746bb456531597f38"
+    },
+    {
+      "role": "synthetic_adversarial_property_tests",
+      "path": "scripts/research/tests/test_f017_routing_contract_v31.py",
+      "sha256": "b7901fc5241eb23af4b533621e252c625b4c8c662e843caa6741799b67bf53a8"
+    },
+    {
+      "role": "freeze_validator",
+      "path": "scripts/research/validate_f017_routing_contract_v31.py",
+      "sha256": "12327f5a83f1e2013c7372016ade1f7b5c9b8979d4f4898214b3bc3c989eca1f"
+    },
+    {
+      "role": "validator_mutation_tests",
+      "path": "scripts/research/tests/test_validate_f017_routing_contract_v31.py",
+      "sha256": "de542889a83d644976b41b853940cd9929bc0134c9d9d873503ee5da6c401679"
+    },
+    {
+      "role": "implementation_plan",
+      "path": "specs/017-rust-native-inference-runtime/plan.md",
+      "sha256": "e2a7cb68efdb3a9e2cb46ac0c35c1a9c41c577dc970d694f69d42efc7ec37d96"
+    },
+    {
+      "role": "completed_task_record",
+      "path": "specs/017-rust-native-inference-runtime/tasks.md",
+      "sha256": "26c953b710f24b3326ec6e38f76c7ee0daaa7c5f2c0a86b9a88fad4df88cf9de"
+    }
+  ],
+  "semantic_source_identities": {
+    "selection_contract_sha256": "4207845cd22f89a42c42a5ab8ef240cf1af5db3434c2cabac0ecfe9d1beddd0a",
+    "routing_v3_clarified_sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85",
+    "glm_router_reference_sha256": "0d625fc62d38e603cc7f822d6996c966b77cfe1aec17e6ead98420118e3de607",
+    "engine_source_sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406"
+  },
+  "validation": {
+    "synthetic_test_count": 26,
+    "required_category_count": 23,
+    "property_samples_contained": true,
+    "outward_rounding_strict_expansion_test": "PASS",
+    "missing_guard_mutation": "PASS_FAIL_CLOSED",
+    "duplicate_expert_id_mutation": "PASS_FAIL_CLOSED",
+    "nan_inf_mutation": "PASS_FAIL_CLOSED",
+    "historical_routing_v3_tests": "PASS",
+    "real_values_loaded": false,
+    "candidate_or_model_dispatches": 0
+  },
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "UNCHANGED_TERMINAL_NATIVE_RUNTIME_REJECTION",
+    "DPREFIX_REAL_2": "UNCHANGED_TERMINAL_EVIDENCE_VALIDATION_REJECTION",
+    "DPREFIX_REAL_3": "UNCHANGED_TERMINAL_ORACLE_IDENTITY_REJECTION",
+    "DPREFIX_EXACT_1_SHA256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+  },
+  "real_evaluation": {
+    "performed": false,
+    "real_exact_state_loaded": false,
+    "real_ambiguity_radius_loaded": false,
+    "real_router_values_loaded": false,
+    "membership_inequalities_evaluated": 0,
+    "routing_weight_intervals_evaluated": 0
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139
+  }
+}
