@@ -42,6 +42,10 @@ PRIVATE_REUSE_PATH = Path(
     "docs/architecture/reviews/evidence/"
     "f017-v2-antecedent-private-reuse-authorization-v1.json"
 )
+EXPERT_166_CROSSCHECK_PATH = Path(
+    "docs/architecture/reviews/evidence/"
+    "f017-expert-166-catalog-slice-crosscheck-v2.json"
+)
 REVIEW_PACKET_PATH = Path(
     "docs/architecture/reviews/"
     "f017-canonical-expert-output-recovery-authorization-packet.md"
@@ -60,6 +64,7 @@ SELECTED_IDS = [250, 10, 237, 73, 62, 177, 218, 28]
 CHECKPOINT_SHA = "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee"
 PRODUCTION_CATALOG_SHA = "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0"
 PUBLIC_CATALOG_SHA = "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+EXPERT_166_CROSSCHECK_SHA = "5cc9845291ce57741a406c5d1b2417c6d3dbe93b85c3139ef16faf10053d5cec"
 SHARD_BASENAME = "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf"
 SHARD_SHA = "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"
 SHARD_BYTES = 49_105_028_960
@@ -69,6 +74,10 @@ FFN_NORM_SHA = "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f
 NORMALIZED_F64_DIAGNOSTIC_SHA = "5e9352135d9fb025cbdfd680629534dce98aaebb1fa5b8e42432638de174e5fc"
 DECODER_CONTRACT_SHA = "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84"
 AGGREGATE_CONTRACT_SHA = "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac"
+AMENDMENT_START_HEAD = "609be74d9a8af5bd412b1fd6f7d36025ce4a9b51"
+RUST_DECODER_SHA = "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"
+IQ2_PYTHON_DECODER_SHA = "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761"
+IQ3_SPEC_DECODER_SHA = "10b2c1eeda4d2955fbc61df659d28a4b2c1b72eb2d730145e74bbad86b347621"
 
 
 class AuthorizationValidationError(ValueError):
@@ -152,6 +161,18 @@ def derive_inventory(root: Path) -> list[dict[str, Any]]:
         if item["name"] in {role["parent"] for role in roles.values()}
     }
     require(len(parents) == 3, "catalog parent tensor inventory")
+    crosscheck_path = root / EXPERT_166_CROSSCHECK_PATH
+    require(sha256_path(crosscheck_path) == EXPERT_166_CROSSCHECK_SHA, "expert-166 crosscheck identity")
+    crosscheck = load_json(crosscheck_path)
+    require(crosscheck.get("result") == "PASS" and crosscheck.get("checkpoint_payload_access") == 0, "expert-166 crosscheck result")
+    for role_name, role in roles.items():
+        parent = parents[role["parent"]]
+        projection = crosscheck["projections"][role_name]
+        require(projection["aggregate_name"] == role["parent"], "expert-166 crosscheck parent")
+        require(projection["aggregate_base"] == parent["data_offset_abs"], "expert-166 crosscheck base")
+        require(projection["aggregate_dims"] == parent["dims"], "expert-166 crosscheck shape")
+        require(projection["quantization"] == role["quantization"], "expert-166 crosscheck quantization")
+        require(projection["stride"] == role["packed_length"] and projection["equal"] is True, "expert-166 crosscheck stride")
     inventory: list[dict[str, Any]] = []
     ordinal = 0
     for expert_id in SELECTED_IDS:
@@ -266,6 +287,84 @@ def validate_documents(root: Path, contract: dict[str, Any], evidence: dict[str,
     require(semantics.get("intermediate_dtype") == "f32" and semantics.get("output_dtype") == "f32", "computation dtype")
     require(semantics.get("decoder_contract_sha256") == DECODER_CONTRACT_SHA, "decoder identity")
 
+    expected_implementations = {
+        "IQ2_XXS": {
+            "decoder_a": {
+                "classification": "ACCEPTED_RUST_CORRECTED_KQUANTS_LINEAGE",
+                "source_file": "crates/quant/src/iq_ref.rs",
+                "source_sha256": RUST_DECODER_SHA,
+                "symbol": "decode_iq2_xxs_matrix",
+            },
+            "decoder_b": {
+                "classification": "INDEPENDENT_PYTHON_SPECIFICATION_TRANSCRIPTION",
+                "source_file": "scripts/research/iq2_xxs_dequant.py",
+                "source_sha256": IQ2_PYTHON_DECODER_SHA,
+                "symbol": "dequantize_matrix_iq2_xxs",
+            },
+        },
+        "IQ3_XXS": {
+            "decoder_a": {
+                "classification": "ACCEPTED_RUST_M1E_CORRECTED_KQUANTS_LINEAGE",
+                "source_file": "crates/quant/src/iq_ref.rs",
+                "source_sha256": RUST_DECODER_SHA,
+                "symbol": "decode_iq3_xxs_matrix",
+            },
+            "decoder_b": {
+                "classification": "INDEPENDENT_PYTHON_SPECIFICATION_TRANSCRIPTION",
+                "source_file": "scripts/research/iq3_xxs_spec_decoder.py",
+                "source_sha256": IQ3_SPEC_DECODER_SHA,
+                "symbol": "decode_iq3_xxs_spec",
+            },
+        },
+    }
+    dual = contract.get("dual_decoder_gate", {})
+    require(dual.get("accepted_lineage_contract_sha256") == DECODER_CONTRACT_SHA, "dual decoder lineage")
+    require(dual.get("required_payload_count") == 24, "dual decoder payload count")
+    require(dual.get("same_retained_packed_bytes_required") is True, "dual decoder packed-byte identity")
+    require(dual.get("additional_checkpoint_reads") == 0, "dual decoder checkpoint budget")
+    require(dual.get("comparison_rule") == "canonical_f32le_sha256_exact_equality", "dual decoder comparison")
+    require(dual.get("decoded_dtype") == "f32", "dual decoder dtype")
+    require(dual.get("decoded_serialization") == "row_major_ieee754_binary32_little_endian_no_padding_preserve_signed_zero", "dual decoder serialization")
+    require(dual.get("implementations") == expected_implementations, "dual decoder implementations")
+    require(all(
+        pair["decoder_a"]["source_file"] != pair["decoder_b"]["source_file"]
+        for pair in expected_implementations.values()
+    ), "dual decoder independence")
+    require(dual.get("independence_required") is True, "dual decoder independence")
+    require(dual.get("must_complete_before_next_checkpoint_read") is True, "dual decoder ordering")
+    require(dual.get("must_complete_before_expert_compute") is True, "dual decoder ordering")
+    require(dual.get("disagreement_rule") == "TERMINAL_STOP_NO_SELECTION_NO_FURTHER_READS_NO_OUTPUT_AUTHORITY", "dual decoder disagreement")
+    require(dual.get("bank_per_payload") == [
+        "packed_sha256", "decoder_a_identity", "decoder_b_identity",
+        "decoded_identity_a", "decoded_identity_b", "exact_agreement",
+        "logical_shape", "dtype",
+    ], "dual decoder evidence")
+
+    conditions = contract.get("pre_execution_conditions", {})
+    conditional = conditions.get("conditional_review_go", {})
+    require(conditional == {
+        "amendment_starting_head": AMENDMENT_START_HEAD,
+        "condition_1_dual_decoder_was_previously_load_bearing": False,
+        "disposition": "PRE_EXECUTION_CONDITION_LANDED_REQUIRES_RENEWED_INDEPENDENT_REVIEW",
+        "execution_permitted_in_amendment_loop": False,
+        "review_verdict_received": "GO FOR ONE F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+    }, "conditional review gate")
+    offsets = conditions.get("total_offset_verification", {})
+    require(offsets == {
+        "catalog_slice_formula": "parent_data_offset_abs + expert_id * per_expert_packed_length",
+        "expert_166_crosscheck_sha256": EXPERT_166_CROSSCHECK_SHA,
+        "fields_verified": [
+            "checkpoint_key", "expert_id", "role", "offset", "packed_length",
+            "quantization", "logical_decoded_shape", "shard_ordinal",
+        ],
+        "packed_bytes": 90_439_680,
+        "public_catalog_sha256": PUBLIC_CATALOG_SHA,
+        "result": "PASS",
+        "shard_ordinal": 2,
+        "verified_payloads": 24,
+        "verification_requires_checkpoint_open": False,
+    }, "total offset verification")
+
     ledger = contract.get("ledger", {})
     require(ledger.get("before") == 139 and ledger.get("successful_after") == 163, "ledger transition")
     require(ledger.get("partial_after_formula") == "139 + durable_successful_payload_read_count_N", "partial ledger accounting")
@@ -307,6 +406,21 @@ def validate_documents(root: Path, contract: dict[str, Any], evidence: dict[str,
     }, "authorization state")
     require(evidence.get("contract_sha256") == canonical_sha256(contract), "contract canonical identity")
     require(evidence.get("contract_file_sha256") == sha256_path(root / CONTRACT_PATH), "contract file identity")
+    require(evidence.get("condition_amendment_starting_head") == AMENDMENT_START_HEAD, "condition amendment head")
+    require(evidence.get("pre_execution_condition_disposition") == "LANDED_REQUIRES_RENEWED_INDEPENDENT_REVIEW", "condition amendment disposition")
+    require(evidence.get("dual_decoder_gate") == {
+        "required_payloads": 24,
+        "same_retained_packed_bytes": True,
+        "additional_checkpoint_reads": 0,
+        "comparison_rule": "canonical_f32le_sha256_exact_equality",
+        "disagreement_is_terminal": True,
+    }, "evidence dual decoder gate")
+    require(evidence.get("total_offset_verification") == {
+        "verified_payloads": 24,
+        "packed_bytes": 90_439_680,
+        "shard_ordinal": 2,
+        "result": "PASS",
+    }, "evidence total offset verification")
     require(evidence.get("selected_expert_ids") == SELECTED_IDS, "evidence selected experts")
     require(evidence.get("payload_count") == 24 and evidence.get("packed_bytes") == 90_439_680, "evidence access budget")
     require(evidence.get("ledger_plan") == {"before": 139, "successful_after": 163}, "evidence ledger")

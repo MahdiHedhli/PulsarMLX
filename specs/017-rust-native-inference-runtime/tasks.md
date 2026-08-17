@@ -398,3 +398,9 @@
   packed and eight-output retention, deterministic retained-material replay,
   and fail-closed validators while performing zero checkpoint reads, zero shard
   opens, no expert computation, and no aggregate evaluation.
+- [x] T017-216 Stop the conditionally released canonical expert-output event
+  before checkpoint access because dual-implementation decode agreement was not
+  load-bearing; amend the authorization to require same-retained-byte exact f32
+  agreement between independent accepted IQ2_XXS/IQ3_XXS decoders for all 24
+  payloads, reverify the complete catalog-slice inventory, and return the
+  checkpoint-free amendment for renewed adversarial review at ledger 139.

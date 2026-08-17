@@ -3,6 +3,8 @@
   "schema_version": "1.0.0",
   "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
   "starting_authoritative_head": "81e187a1ce272386041e2d6445786ba14d07f91c",
+  "condition_amendment_starting_head": "609be74d9a8af5bd412b1fd6f7d36025ce4a9b51",
+  "pre_execution_condition_disposition": "LANDED_REQUIRES_RENEWED_INDEPENDENT_REVIEW",
   "authorization_state": {
     "status": "READY_FOR_INDEPENDENT_ADVERSARIAL_REVIEW",
     "execution_authorized": false,
@@ -10,13 +12,26 @@
     "executed": false,
     "checkpoint_accessed": false
   },
-  "contract_sha256": "e3a6ef4911854d4300d151c1dff8472a4ee944d1fc5e501220be262504d20f27",
-  "contract_file_sha256": "8ced4c4cfb26c959c74de061db1c2615f5413c6e8983ac67a7f2f058505eeee2",
+  "contract_sha256": "58ad56f008a27ea4b69215c39404edbccf4008ef0620a3f46bb4ff7adb2a95ae",
+  "contract_file_sha256": "a95449a3ae3a49bd5cec2f3aa8bc37b5ebc4d9604b4249dd6b869c7671967cd8",
   "payload_inventory_sha256": "67d8650dfe6ce5ea0f524196e2247e527153488540e3275a726d6e838a573f34",
   "output_inventory_sha256": "2be6cb0538729d09b670b554711401e1bb9fdbc824cc846279308152e30cd3d9",
   "selected_expert_ids": [250, 10, 237, 73, 62, 177, 218, 28],
   "payload_count": 24,
   "packed_bytes": 90439680,
+  "dual_decoder_gate": {
+    "required_payloads": 24,
+    "same_retained_packed_bytes": true,
+    "additional_checkpoint_reads": 0,
+    "comparison_rule": "canonical_f32le_sha256_exact_equality",
+    "disagreement_is_terminal": true
+  },
+  "total_offset_verification": {
+    "verified_payloads": 24,
+    "packed_bytes": 90439680,
+    "shard_ordinal": 2,
+    "result": "PASS"
+  },
   "shard_access_plan": {
     "shard_ordinal": 2,
     "maximum_opens": 1,
@@ -77,25 +92,25 @@
   "artifact_bindings": [
     {
       "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-output-recovery-v1.json",
-      "sha256": "8ced4c4cfb26c959c74de061db1c2615f5413c6e8983ac67a7f2f058505eeee2"
+      "sha256": "a95449a3ae3a49bd5cec2f3aa8bc37b5ebc4d9604b4249dd6b869c7671967cd8"
     },
     {
       "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-output-recovery-v1.schema.json",
-      "sha256": "4b68791812c7cb9107be53262f36c3e7ccfb7ee09a9c403bf174d018d263bac5"
+      "sha256": "4bfc07dedb75aaea690ecfb6f88cc3586e2fbfa546010400828b5b085e616903"
     },
     {
       "path": "docs/architecture/reviews/f017-canonical-expert-output-recovery-authorization-packet.md",
-      "sha256": "0928747c159bf9072f5688108aee7d17c54fd4f9bd51eadd14e06500f870a7d6"
+      "sha256": "42525ad54f52f03bc39ea784b1c3efd60ddc910833b236a2e8ab88d8d796c4c9"
     },
     {
       "path": "scripts/research/validate_f017_canonical_expert_output_authorization.py",
-      "sha256": "e1a8edd648e263b3db2a64fa1cbce9cd572d4c73755240e579c28734f758c37f"
+      "sha256": "929ff8ca841578aea31b0e9b3e6e3edeb047a9122f17140c483c4c09dc939a3c"
     },
     {
       "path": "scripts/research/tests/test_validate_f017_canonical_expert_output_authorization.py",
-      "sha256": "c0394537e4b23025a735b4b2e903d96e7fbf78497d64a9819978f14aa064ea8f"
+      "sha256": "ac8dcd0d7918de7b695fb36bb5f10db628f9797d55219f0a42c1e1d7b9b7f894"
     }
   ],
-  "review_gate": "INDEPENDENT_ADVERSARIAL_GO_REQUIRED_BEFORE_ANY_CHECKPOINT_OPEN_OR_PAYLOAD_READ",
-  "next_action": "submit the committed authorization package for independent adversarial review; do not execute the 24-payload event"
+  "review_gate": "RENEWED_INDEPENDENT_ADVERSARIAL_GO_REQUIRED_BEFORE_ANY_CHECKPOINT_OPEN_OR_PAYLOAD_READ",
+  "next_action": "submit the committed pre-execution-condition amendment for renewed independent adversarial review; do not execute the 24-payload event"
 }

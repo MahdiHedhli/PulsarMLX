@@ -53,6 +53,59 @@
     "repeat_source": "immutable retained packed weights plus retained canonical input",
     "repeats_add_checkpoint_reads": false
   },
+  "dual_decoder_gate": {
+    "accepted_lineage_contract_sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84",
+    "additional_checkpoint_reads": 0,
+    "bank_per_payload": [
+      "packed_sha256",
+      "decoder_a_identity",
+      "decoder_b_identity",
+      "decoded_identity_a",
+      "decoded_identity_b",
+      "exact_agreement",
+      "logical_shape",
+      "dtype"
+    ],
+    "comparison_rule": "canonical_f32le_sha256_exact_equality",
+    "decoded_dtype": "f32",
+    "decoded_serialization": "row_major_ieee754_binary32_little_endian_no_padding_preserve_signed_zero",
+    "disagreement_rule": "TERMINAL_STOP_NO_SELECTION_NO_FURTHER_READS_NO_OUTPUT_AUTHORITY",
+    "implementations": {
+      "IQ2_XXS": {
+        "decoder_a": {
+          "classification": "ACCEPTED_RUST_CORRECTED_KQUANTS_LINEAGE",
+          "source_file": "crates/quant/src/iq_ref.rs",
+          "source_sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161",
+          "symbol": "decode_iq2_xxs_matrix"
+        },
+        "decoder_b": {
+          "classification": "INDEPENDENT_PYTHON_SPECIFICATION_TRANSCRIPTION",
+          "source_file": "scripts/research/iq2_xxs_dequant.py",
+          "source_sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761",
+          "symbol": "dequantize_matrix_iq2_xxs"
+        }
+      },
+      "IQ3_XXS": {
+        "decoder_a": {
+          "classification": "ACCEPTED_RUST_M1E_CORRECTED_KQUANTS_LINEAGE",
+          "source_file": "crates/quant/src/iq_ref.rs",
+          "source_sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161",
+          "symbol": "decode_iq3_xxs_matrix"
+        },
+        "decoder_b": {
+          "classification": "INDEPENDENT_PYTHON_SPECIFICATION_TRANSCRIPTION",
+          "source_file": "scripts/research/iq3_xxs_spec_decoder.py",
+          "source_sha256": "10b2c1eeda4d2955fbc61df659d28a4b2c1b72eb2d730145e74bbad86b347621",
+          "symbol": "decode_iq3_xxs_spec"
+        }
+      }
+    },
+    "independence_required": true,
+    "must_complete_before_next_checkpoint_read": true,
+    "must_complete_before_expert_compute": true,
+    "required_payload_count": 24,
+    "same_retained_packed_bytes_required": true
+  },
   "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
   "ledger": {
     "authorized_payload_reads_after_release": 24,
@@ -63,7 +116,7 @@
     "second_attempt_authorized": false,
     "successful_after": 163
   },
-  "next_action": "submit committed package for independent adversarial review; no checkpoint access",
+  "next_action": "submit the pre-execution-condition amendment for renewed independent adversarial review; no checkpoint access",
   "output_retention": {
     "artifact_count": 8,
     "before_after_rehash_required": true,
@@ -74,7 +127,9 @@
       "gate_packed_sha256",
       "up_packed_sha256",
       "down_packed_sha256",
-      "decoder_contract_sha256",
+      "decoder_a_identity",
+      "decoder_b_identity",
+      "dual_decoder_exact_agreement",
       "computation_contract_sha256"
     ],
     "immutable": true,
@@ -874,6 +929,35 @@
     }
   ],
   "purpose": "produce eight canonical routed-expert down-output vectors for later aggregate-theorem evaluation",
+  "pre_execution_conditions": {
+    "conditional_review_go": {
+      "amendment_starting_head": "609be74d9a8af5bd412b1fd6f7d36025ce4a9b51",
+      "condition_1_dual_decoder_was_previously_load_bearing": false,
+      "disposition": "PRE_EXECUTION_CONDITION_LANDED_REQUIRES_RENEWED_INDEPENDENT_REVIEW",
+      "execution_permitted_in_amendment_loop": false,
+      "review_verdict_received": "GO FOR ONE F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"
+    },
+    "total_offset_verification": {
+      "catalog_slice_formula": "parent_data_offset_abs + expert_id * per_expert_packed_length",
+      "expert_166_crosscheck_sha256": "5cc9845291ce57741a406c5d1b2417c6d3dbe93b85c3139ef16faf10053d5cec",
+      "fields_verified": [
+        "checkpoint_key",
+        "expert_id",
+        "role",
+        "offset",
+        "packed_length",
+        "quantization",
+        "logical_decoded_shape",
+        "shard_ordinal"
+      ],
+      "packed_bytes": 90439680,
+      "public_catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+      "result": "PASS",
+      "shard_ordinal": 2,
+      "verified_payloads": 24,
+      "verification_requires_checkpoint_open": false
+    }
+  },
   "release_gate": "INDEPENDENT_ADVERSARIAL_GO_REQUIRED_BEFORE_EXECUTION",
   "schema": "pulsarmlx.f017.canonical-expert-output-recovery-contract",
   "schema_version": "1.0.0",
@@ -961,6 +1045,41 @@
       "path": "crates/f017-runner/src/layer_qualification.rs",
       "role": "f32 RMSNorm and expert composition",
       "sha256": "4b70a22816a1a14d990bee15a5e57e1ea1963b1c37a666b89b07fa6633b240e3"
+    },
+    {
+      "path": "crates/quant/src/iq_ref.rs",
+      "role": "dual-decoder A IQ2_XXS and corrected IQ3_XXS implementation",
+      "sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"
+    },
+    {
+      "path": "crates/quant/src/cpu_dot_tables.rs",
+      "role": "dual-decoder A immutable IQ2_XXS and IQ3_XXS grid tables",
+      "sha256": "8dc16e47d422a5bf52ba6efb3d754e70af6ae43c88179d59bf6977711003f85b"
+    },
+    {
+      "path": "crates/quant/src/lib.rs",
+      "role": "dual-decoder A binary16 conversion and public decoder surface",
+      "sha256": "dc79ec3469fddbd40ccc4253e5900fc138d21e29a75051b71719aeb72fd1a984"
+    },
+    {
+      "path": "scripts/research/iq2_xxs_dequant.py",
+      "role": "dual-decoder B independent IQ2_XXS specification transcription",
+      "sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761"
+    },
+    {
+      "path": "scripts/research/iq2_xxs_tables.py",
+      "role": "dual-decoder B immutable IQ2_XXS table surface",
+      "sha256": "050b2ed26afbe6f15abf1dcd3789d6cddd93cee4ce87e8b13e86cf3f503aa756"
+    },
+    {
+      "path": "scripts/research/iq3_xxs_spec_decoder.py",
+      "role": "dual-decoder B independent corrected IQ3_XXS specification transcription",
+      "sha256": "10b2c1eeda4d2955fbc61df659d28a4b2c1b72eb2d730145e74bbad86b347621"
+    },
+    {
+      "path": "scripts/research/iq3_xxs_tables.py",
+      "role": "dual-decoder B immutable IQ3_XXS table surface",
+      "sha256": "87f01f518f954fa095b20e0ea8112a6073a4a88d394046c145052404437c5042"
     }
   ],
   "starting_head": "81e187a1ce272386041e2d6445786ba14d07f91c",
@@ -968,6 +1087,7 @@
   "terminal_banking": {
     "aggregate_theorem_evaluated": false,
     "all_24_decoded_identities": true,
+    "all_24_dual_decoder_results": true,
     "all_24_packed_identities": true,
     "all_eight_output_identities": true,
     "automatic_downstream_continuation": false,
@@ -978,7 +1098,7 @@
   "validation_plan": [
     "exact payload count and packed-byte count",
     "one-shard-open enforcement",
-    "quantization decode identity",
+    "dual-implementation exact decode agreement for all 24 retained packed payloads",
     "tensor shape and expert-ID/key mapping",
     "two fresh-process deterministic exact-scaffold computations",
     "eight output size/SHA/non-finite checks",

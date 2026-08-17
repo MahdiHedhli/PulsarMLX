@@ -252,3 +252,10 @@ real-payload ledger remains 139 before any real ambiguity-box evaluation.
 Gate: the metadata-only authorization package validates and is independently
 reviewed before any checkpoint open or payload read; preparation leaves the
 real-payload ledger at 139.
+
+The execution release additionally requires a pre-execution amendment: every
+retained IQ2_XXS/IQ3_XXS payload must be decoded by two independently bound
+accepted implementations, compared by exact canonical f32 identity, and pass
+before the next checkpoint read. A disagreement terminates without selecting a
+decoder or granting output authority. This amendment itself performs zero
+checkpoint access and requires renewed independent review.

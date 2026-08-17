@@ -99,6 +99,44 @@ class CanonicalExpertOutputAuthorizationTests(unittest.TestCase):
         with self.assertRaisesRegex(validator.AuthorizationValidationError, "isolation"):
             validator.validate_documents(ROOT, self.contract, mutated)
 
+    def test_dual_decoder_gate_is_load_bearing(self) -> None:
+        gate = self.contract["dual_decoder_gate"]
+        self.assertEqual(gate["required_payload_count"], 24)
+        self.assertTrue(gate["same_retained_packed_bytes_required"])
+        self.assertEqual(gate["comparison_rule"], "canonical_f32le_sha256_exact_equality")
+        mutated = copy.deepcopy(self.contract)
+        mutated["dual_decoder_gate"]["same_retained_packed_bytes_required"] = False
+        with self.assertRaisesRegex(validator.AuthorizationValidationError, "dual decoder"):
+            validator.validate_documents(ROOT, mutated, self.evidence)
+
+    def test_dual_decoder_independence_and_terminal_rule_are_load_bearing(self) -> None:
+        mutated = copy.deepcopy(self.contract)
+        mutated["dual_decoder_gate"]["implementations"]["IQ2_XXS"]["decoder_b"] = copy.deepcopy(
+            mutated["dual_decoder_gate"]["implementations"]["IQ2_XXS"]["decoder_a"]
+        )
+        with self.assertRaisesRegex(validator.AuthorizationValidationError, "dual decoder"):
+            validator.validate_documents(ROOT, mutated, self.evidence)
+        mutated = copy.deepcopy(self.contract)
+        mutated["dual_decoder_gate"]["disagreement_rule"] = "CHOOSE_DECODER_A"
+        with self.assertRaisesRegex(validator.AuthorizationValidationError, "dual decoder"):
+            validator.validate_documents(ROOT, mutated, self.evidence)
+
+    def test_total_offset_verification_is_load_bearing(self) -> None:
+        condition = self.contract["pre_execution_conditions"]["total_offset_verification"]
+        self.assertEqual(condition["verified_payloads"], 24)
+        self.assertEqual(condition["result"], "PASS")
+        mutated = copy.deepcopy(self.contract)
+        mutated["pre_execution_conditions"]["total_offset_verification"]["verified_payloads"] = 23
+        with self.assertRaisesRegex(validator.AuthorizationValidationError, "total offset"):
+            validator.validate_documents(ROOT, mutated, self.evidence)
+
+    def test_condition_amendment_does_not_authorize_execution(self) -> None:
+        self.assertFalse(self.evidence["authorization_state"]["execution_authorized"])
+        self.assertEqual(
+            self.evidence["pre_execution_condition_disposition"],
+            "LANDED_REQUIRES_RENEWED_INDEPENDENT_REVIEW",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

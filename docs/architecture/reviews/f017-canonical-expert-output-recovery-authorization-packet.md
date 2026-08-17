@@ -1,13 +1,14 @@
 # F017 Canonical Expert-Output Recovery Authorization Packet
 
-Status: `PREPARED_NOT_AUTHORIZED_NOT_EXECUTED`
+Status: `PRE_EXECUTION_CONDITION_LANDED_REQUIRES_RENEWED_INDEPENDENT_REVIEW`
 
 Independent-review question:
 
 > Does this package safely authorize exactly one future event to read the 24
 > specified expert-weight payloads from shard 2 and produce eight canonical
-> expert down-output vectors, without performing aggregate evaluation or any
-> downstream execution?
+> expert down-output vectors, while requiring exact agreement between two
+> independent accepted decoders for every retained payload and without
+> performing aggregate evaluation or any downstream execution?
 
 ## Fixed authority and scope
 
@@ -25,6 +26,34 @@ Independent-review question:
 
 This preparation performed zero checkpoint reads and zero shard opens. It does
 not authorize execution. A separate independent adversarial `GO` is required.
+
+## Binding pre-execution amendment
+
+The conditional review found that the original package cited the accepted
+decoder lineage but did not make two independent decodes and their exact
+agreement load-bearing for every real payload. The event therefore did not run.
+This amendment requires, before the next checkpoint read and before expert
+compute, both decoders to consume the same immutable retained packed bytes and
+produce exactly equal canonical row-major little-endian f32 SHA-256 identities.
+
+- IQ2_XXS decoder A: accepted Rust `decode_iq2_xxs_matrix` lineage.
+- IQ2_XXS decoder B: independent Python `dequantize_matrix_iq2_xxs`
+  specification transcription.
+- IQ3_XXS decoder A: accepted corrected M1-E Rust
+  `decode_iq3_xxs_matrix` lineage.
+- IQ3_XXS decoder B: independent Python corrected
+  `decode_iq3_xxs_spec` specification transcription.
+
+Any mismatch is terminal: no decoder may be selected as a winner, no further
+checkpoint read is permitted, and no expert-output authority is granted. The
+gate uses the original 24 retained packed artifacts and adds zero checkpoint
+reads.
+
+All 24 keys, expert IDs, roles, offsets, sizes, quantization types, logical
+shapes, and shard assignments were independently re-derived from catalog slice
+formula `parent_data_offset_abs + expert_id * per_expert_packed_length` and the
+accepted expert-166 crosscheck. The result is 24/24 PASS, shard 2 only, and
+90,439,680 packed bytes without opening the checkpoint.
 
 ## Exact payload inventory
 
@@ -83,4 +112,5 @@ three weight identities.
 ## Required review disposition
 
 Only an independent verdict explicitly authorizing one event may release the
-24-read recovery. No real access follows automatically from this package.
+24-read recovery under this amended condition. The prior conditional verdict
+does not release the amended package; no real access follows automatically.
