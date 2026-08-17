@@ -1,0 +1,130 @@
+{
+  "schema": "pulsarmlx.f017.weighted-moe-aggregate-perturbation-freeze",
+  "schema_version": "1.0.0",
+  "starting_head": "7a72bff4bada524a5a57e7b21c31014004cfbc83",
+  "result": "AGGREGATE SAFETY THEOREM FROZEN",
+  "authority": {
+    "DPREFIX_EXACT_1_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "selected_expert_ids": [250, 10, 237, 73, 62, 177, 218, 28],
+    "membership": "1984_OF_1984_MATHEMATICAL_PASS_UNCHANGED",
+    "coefficient_contract_sha256": "ebf7c89543e95acecc067b1ee10883f7e9d564fc37be347480e40b02d3a8d7ca",
+    "coefficient_qualification": "FAIL_UNCHANGED_0_OF_8",
+    "prior_weight_qualification_evidence_sha256": "834eefb7e0f127e12768285097dc3601135c1c1ff8ef0e871d65f59af1bc6b1f",
+    "route_disposition": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "anti_fitting": {
+    "real_f017_expert_output_vectors_loaded": 0,
+    "real_f017_aggregate_vectors_loaded": 0,
+    "synthetic_or_symbolic_inputs_only": true,
+    "real_output_based_threshold_or_reference_choices": 0
+  },
+  "semantics": {
+    "surface": "routed_aggregate",
+    "expression": "M_k=python_fsum_i(q_i*f64(e_i[k]))",
+    "dimension": 6144,
+    "routing_weight_dtype": "f64",
+    "expert_output_dtype": "f32_promoted_to_f64",
+    "aggregate_dtype": "f64",
+    "shared_expert_added_after_surface": true,
+    "residual_added_after_surface": true,
+    "subsequent_normalization_before_surface": false
+  },
+  "accepted_budget": {
+    "surface": "routed_aggregate",
+    "max_absolute_error": 0.015625,
+    "rmse": 0.0078125,
+    "cosine_similarity_minimum": 0.9999,
+    "engineering_headroom": 2.0
+  },
+  "theorem": {
+    "direct_enclosure": "sum_i(Q_i*E_i)-M0",
+    "centered_enclosure": "sum_i(dQ_i*(E_i-c))+sum_i(q0_i*(E_i-e0_i))+c*dQ_sum",
+    "reference": "per-coordinate midpoint of the eight-output interval hull",
+    "joint_sum": "common-denominator selected-weight sum enclosure",
+    "combination": "sound intersection of direct and centered enclosures",
+    "rounding": "binary64 nextafter directed outward",
+    "metrics": ["max_absolute_bound", "rmse_bound", "cosine_lower_bound"],
+    "mathematical_pass": "minimum_budget_to_bound_factor_at_least_1",
+    "engineering_h2": "mathematical_pass_and_minimum_factor_at_least_2"
+  },
+  "future_evidence": {
+    "class_A": [
+      "selected expert IDs and weight evidence",
+      "common-denominator joint weight-sum interval",
+      "R10 intermediate budgets and routed-aggregate semantics"
+    ],
+    "class_B": [],
+    "class_C": [
+      "nominal routed aggregate, output hulls, and norms derivable after e0_i verification"
+    ],
+    "class_D": [
+      "eight ID-keyed canonical real routed-expert down-output vectors",
+      "componentwise expert-output intervals if joint qualification is requested"
+    ],
+    "real_expert_output_availability": "D_UNAVAILABLE_PENDING_SEPARATE_RESOLUTION"
+  },
+  "artifacts": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-weighted-moe-aggregate-perturbation-v1.json",
+      "sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac"
+    },
+    {
+      "path": "docs/architecture/reviews/f017-weighted-moe-aggregate-perturbation-theorem.md",
+      "sha256": "98de780a527e3067cd8d60e8d78feb944317bb9982410f847bbcc0b5f3f2719b"
+    },
+    {
+      "path": "scripts/research/f017_weighted_moe_aggregate_theorem.py",
+      "sha256": "74167ce38cfb60189e57877ddba8b96123d7df54963a200658136497700f7974"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_weighted_moe_aggregate_theorem.py",
+      "sha256": "7edbf7b5d66dbbbbd2a85e89ddedd788543f7ff41890efc8554628a6526f1bed"
+    },
+    {
+      "path": "scripts/research/validate_f017_weighted_moe_aggregate_theorem.py",
+      "sha256": "829d842bcfdfb14c9ac3bf3ef6fffd1a01224c8111b81588abe6993d11d87cf0"
+    },
+    {
+      "path": "scripts/research/tests/test_validate_f017_weighted_moe_aggregate_theorem.py",
+      "sha256": "dc91dd0503ed2c078e199e6e6ff52c1f0264a71be2f7fd8c1d17ceedc0f2c830"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75"
+    }
+  ],
+  "validation": {
+    "synthetic_test_count": 21,
+    "validator_test_count": 9,
+    "property_samples_contained": true,
+    "normalization_centering_tightening": true,
+    "weight_only_and_joint_output_modes": true,
+    "outward_rounding": true,
+    "deterministic_replay": true,
+    "mutation_fail_closed": true,
+    "duplicate_key_fail_closed": true,
+    "real_expert_outputs_evaluated": false,
+    "targeted_suite": "30_PASS",
+    "full_python_suite": "939_RUN_930_PASS_9_PREEXISTING_UNRELATED_ENVIRONMENT_OR_GENERATED_ARTIFACT_FAILURES",
+    "rust_workspace": "NOT_TOUCHED",
+    "spec_kit": "PREREQUISITES_PASS_CHECKLIST_14_OF_14"
+  },
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_2": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "selected_set": [250, 10, 237, 73, 62, 177, 218, 28],
+    "membership_1984_of_1984": "PASS_UNCHANGED",
+    "coefficient_qualification": "FAIL_UNCHANGED_0_OF_8",
+    "route_disposition": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "candidate_or_model_dispatches": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139
+  },
+  "next_action": "Resolve and verify only the real expert-output evidence required by the frozen theorem, preferably from retained artifacts and without checkpoint access; do not evaluate aggregate safety."
+}

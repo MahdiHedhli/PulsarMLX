@@ -1,0 +1,191 @@
+{
+  "schema": "pulsarmlx.f017.weighted-moe-aggregate-perturbation-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-weighted-moe-aggregate-perturbation-v1",
+  "status": "FROZEN_BEFORE_REAL_F017_EXPERT_OUTPUT_EVALUATION",
+  "scope": "synthetic-only directed-outward perturbation theorem for the fixed-set routed MoE aggregate",
+  "anti_fitting": {
+    "real_f017_expert_outputs_loaded": false,
+    "real_f017_expert_outputs_evaluated": false,
+    "real_f017_aggregate_values_loaded": false,
+    "norm_or_reference_selected_from_real_outputs": false,
+    "budget_selected_from_real_results": false,
+    "later_input_resolution_and_evaluation_require_separate_bounded_loops": true
+  },
+  "authority_separation": {
+    "coefficient_contract_sha256": "ebf7c89543e95acecc067b1ee10883f7e9d564fc37be347480e40b02d3a8d7ca",
+    "coefficient_threshold": 1e-05,
+    "coefficient_qualification": "FAIL_UNCHANGED_0_OF_8",
+    "aggregate_question": "distinct downstream numerical-effect proof",
+    "coefficient_pass_substitution": "forbidden",
+    "current_route_disposition": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "semantics": {
+    "selected_set_precondition": "exactly eight unique expert IDs with membership invariance independently proven",
+    "expert_output": "routed expert down-projection vector e_i in IEEE-754 binary32, promoted exactly to binary64 for aggregation",
+    "routing_weight": "ID-keyed IEEE-754 binary64 q_i=2.5*p_i/max(sum_{k in T}(p_k),2^-14)",
+    "protected_expression": "M_k=python_fsum_i(q_i*f64(e_i[k]))",
+    "protected_surface": "routed_aggregate",
+    "dimension": 6144,
+    "accumulation": "fixed Python-math.fsum-equivalent binary64 accumulation",
+    "scaling": "the 2.5 expert scale is already included in q_i; no further routed-aggregate scale",
+    "shared_expert": "added after routed_aggregate into combined_moe and excluded from this perturbation theorem",
+    "residual": "added after combined_moe and excluded from this perturbation theorem",
+    "subsequent_normalization_before_protected_surface": "none",
+    "atomic_key": "expert_id",
+    "rank_position_keying": "forbidden"
+  },
+  "budget_candidates": [
+    {
+      "name": "R10 routing coefficient",
+      "source_path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "source_sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+      "thresholds": {"max_absolute_error": 1e-05},
+      "original_purpose": "per-selected-expert routing coefficient agreement",
+      "directly_applicable": false,
+      "disposition": "preserved separately; cannot govern vector aggregate perturbation"
+    },
+    {
+      "name": "R10 intermediate Tier-B",
+      "source_path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "source_sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+      "thresholds": {
+        "max_absolute_error": 0.015625,
+        "rmse": 0.0078125,
+        "cosine_similarity_minimum": 0.9999
+      },
+      "original_purpose": "intermediate complete-layer surfaces including weighted aggregation",
+      "directly_applicable": true,
+      "disposition": "adopted without retuning for routed_aggregate"
+    },
+    {
+      "name": "R10 final Tier-B",
+      "source_path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "source_sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+      "thresholds": {
+        "max_absolute_error": 0.0625,
+        "rmse": 0.03125,
+        "cosine_similarity_minimum": 0.999
+      },
+      "original_purpose": "post-shared-expert and residual complete-layer output",
+      "directly_applicable": false,
+      "disposition": "not adopted because downstream additions are outside the protected boundary"
+    }
+  ],
+  "perturbation_theorem": {
+    "nominal": "M0_k=sum_i(q0_i*e0_i[k])",
+    "weight_only": "delta_M_k=sum_i((q_i-q0_i)*e0_i[k])",
+    "joint": "delta_M_k=sum_i((q_i-q0_i)*(e_i[k]-c_k))+sum_i(q0_i*(e_i[k]-e0_i[k]))+c_k*sum_i(q_i-q0_i)",
+    "direct_cross_check": "delta_M_k=sum_i(q_i*e_i[k])-M0_k",
+    "reference": "c_k is the deterministic midpoint of the hull of all eight expert-output intervals at coordinate k",
+    "dependency_rule": "intersect the direct and centered sound enclosures; never assume endpoint cancellation",
+    "joint_sum_rule": "sum_i(q_i-q0_i) is supplied by the common-denominator joint weight-sum interval, not by independently summing weight endpoints",
+    "component_bound": "B_k=max(abs(delta_M_k.lower),abs(delta_M_k.upper)) rounded upward",
+    "max_absolute_bound": "B_inf=max_k(B_k) rounded upward",
+    "rmse_bound": "B_rmse=up(sqrt(sum_k(B_k^2)/6144))",
+    "cosine_bound": "outward lower bound on cosine(M0,M) from componentwise M0+delta_M intervals; fail closed if either norm can be zero",
+    "signed_outputs": "full signed interval multiplication; no positivity assumption",
+    "rounding": "every arithmetic lower endpoint rounds toward negative infinity and every upper endpoint toward positive infinity via binary64 nextafter"
+  },
+  "acceptance": {
+    "max_absolute_error": 0.015625,
+    "rmse": 0.0078125,
+    "cosine_similarity_minimum": 0.9999,
+    "mathematical_pass": "all three routed_aggregate intermediate Tier-B bounds pass",
+    "engineering_headroom": 2.0,
+    "engineering_pass": "mathematical pass and the minimum aggregate safety factor is at least 2",
+    "additional_tolerances": [],
+    "zero_perturbation_factor": "positive infinity",
+    "undefined_cosine": "fail closed"
+  },
+  "safety_factor": {
+    "max_absolute": "down(0.015625/B_inf)",
+    "rmse": "down(0.0078125/B_rmse)",
+    "cosine": "down((1-0.9999)/(1-cosine_lower))",
+    "aggregate": "minimum of the applicable three factors",
+    "mathematical_threshold": 1.0,
+    "engineering_h2_threshold": 2.0
+  },
+  "required_future_evidence": [
+    {
+      "input": "selected expert IDs, nominal q0_i, q_i intervals, and common-denominator joint weight-sum interval",
+      "availability_class": "A",
+      "status": "already committed public in route and weight-qualification evidence"
+    },
+    {
+      "input": "R10 intermediate max-absolute, RMSE, and cosine budgets plus routed-aggregate semantics",
+      "availability_class": "A",
+      "status": "already committed public"
+    },
+    {
+      "input": "eight exact nominal real routed-expert down-output vectors e0_i[6144], ID-keyed, canonical f32",
+      "availability_class": "D",
+      "status": "not present in committed/public evidence or currently authorized retained dense-prefix/router packages; resolution requires a separate evidence-presence loop"
+    },
+    {
+      "input": "nominal routed aggregate M0, per-coordinate output hulls, and expert-output norms",
+      "availability_class": "C",
+      "status": "deterministically derivable after the exact nominal expert-output vectors are independently verified"
+    },
+    {
+      "input": "per-expert componentwise output intervals if joint weight/output qualification is requested",
+      "availability_class": "D",
+      "status": "optional for weight-only evaluation; otherwise unavailable without separately authorized evidence"
+    }
+  ],
+  "fail_closed_conditions": [
+    "selected-set invariance absent",
+    "not exactly eight unique ID-keyed experts",
+    "missing or extra routing-weight or expert-output field",
+    "non-finite value or interval",
+    "nominal weight or output outside its interval",
+    "missing common-denominator joint weight-sum interval",
+    "inconsistent vector dimensions",
+    "direct and centered enclosures do not intersect",
+    "nominal or admissible aggregate norm may be zero for cosine qualification",
+    "attempt to infer real expert outputs from aggregate PASS requirements",
+    "attempt to use aggregate qualification as coefficient PASS",
+    "attempt to use final-output tolerance at the routed_aggregate boundary"
+  ],
+  "semantic_sources": [
+    {
+      "path": "crates/f017-runner/src/layer_qualification.rs",
+      "sha256": "4b70a22816a1a14d990bee15a5e57e1ea1963b1c37a666b89b07fa6633b240e3"
+    },
+    {
+      "path": "scripts/research/generate_f017_r10_oracle.py",
+      "sha256": "da5ade945be6c9f0887d98c1d54ffa3d54ce6a6ce727773714f592b75ff6cd22"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-routing-contract-v3.1-state-box.json",
+      "sha256": "084e496d44f2e3857e9f6da0c9e0b922fc11b805df8fda85e8aea86d2c22f455"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-selected-routing-weight-acceptance-v1.json",
+      "sha256": "ebf7c89543e95acecc067b1ee10883f7e9d564fc37be347480e40b02d3a8d7ca"
+    }
+  ],
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_2": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "selected_expert_ids": [250, 10, 237, 73, 62, 177, 218, 28],
+    "membership_1984_of_1984": "PASS_UNCHANGED",
+    "coefficient_qualification": "FAIL_UNCHANGED_0_OF_8",
+    "route_disposition": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "candidate_or_model_dispatches": 0,
+    "real_expert_output_vectors_evaluated": 0,
+    "real_aggregate_vectors_evaluated": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139
+  }
+}
