@@ -1,0 +1,111 @@
+{
+  "schema": "pulsarmlx.f017.selected-routing-weight-acceptance-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-selected-routing-weight-acceptance-v1",
+  "status": "FROZEN_BEFORE_REAL_F017_WEIGHT_INTERVAL_EVALUATION",
+  "scope": "synthetic-only qualification of v3.1 ID-keyed selected-routing-weight enclosures",
+  "anti_fitting": {
+    "real_f017_weight_intervals_loaded": false,
+    "real_f017_weight_intervals_evaluated": false,
+    "thresholds_derived_from_real_f017_weight_widths": false,
+    "later_application_requires_a_separate_bounded_loop": true
+  },
+  "semantics": {
+    "selected_set_precondition": "eight unique expert IDs and selected-set invariance independently proven",
+    "atomic_key": "expert_id",
+    "weight": "q_i=2.5*p_i/max(sum_{k in T}(p_k),2^-14)",
+    "probability_source": "pre-bias sigmoid probability; correction bias is selection-only",
+    "binary_representation": "IEEE-754 binary64",
+    "downstream_expression": "sum_i(q_i*expert_output_i)+shared_expert+residual",
+    "later_normalization": "none",
+    "rank_position_keying": "forbidden"
+  },
+  "protected_properties": {
+    "enclosure_validity": "nominal ID-keyed weight is finite, strictly positive, and contained in a finite strictly-positive outward v3.1 interval",
+    "identity_stability": "selected-set invariance is a prerequisite and is not re-proven by this contract",
+    "coefficient_perturbation": "every admissible routing weight remains within the inherited R10 per-weight maximum-absolute-error budget",
+    "aggregate_output": "not discharged by weight qualification; later M1-F must still satisfy accumulation and complete-layer numerical contracts"
+  },
+  "mathematical_acceptance": {
+    "per_id_radius": "rho_i=up(max(q0_i-lower_i,upper_i-q0_i))",
+    "budget": 1e-05,
+    "budget_origin": "unchanged production R10 routing_weight_max_absolute_error",
+    "per_id_pass": "rho_i<=1e-5",
+    "overall_pass": "all eight per-ID passes and joint shared-denominator normalization validation passes",
+    "pass_label": "WEIGHT_MATHEMATICALLY_QUALIFIED",
+    "relative_width_rule": "none; relative radius is diagnostic only",
+    "candidate_pass_substitution": "forbidden"
+  },
+  "engineering_acceptance": {
+    "headroom": 2.0,
+    "per_id_budget": 5e-06,
+    "per_id_pass": "mathematical pass and rho_i<=5e-6",
+    "overall_pass": "mathematical overall pass and all eight per-ID engineering passes",
+    "pass_label": "WEIGHT_ENGINEERING_H2",
+    "engineering_is_mathematical_truth": false
+  },
+  "joint_normalization": {
+    "probability_sum": "P=sum_{k in T}(p_k) with outward interval reduction",
+    "weight_sum": "sum_i(q_i)=2.5*P/max(P,2^-14)",
+    "dependency_rule": "derive the joint sum from the common P interval; never sum independently extremized q_i endpoints",
+    "floor_inactive": "joint mathematical sum is 2.5 with one outward binary64 transport neighbor",
+    "floor_active": "propagate 2.5*P/2^-14 monotonically",
+    "floor_transition": "propagate the same monotone piecewise expression across the floor",
+    "required_check": "joint sum interval contains the nominal selected-weight sum",
+    "additional_aggregate_width_threshold": "none; no pre-existing expert-output norm budget authorizes one"
+  },
+  "fail_closed_conditions": [
+    "selected-set invariance absent",
+    "not exactly eight unique in-range expert IDs",
+    "missing or extra ID-keyed probability or weight field",
+    "non-finite input or result",
+    "negative probability interval",
+    "probability interval above one",
+    "non-positive selected-weight interval",
+    "nominal value outside its interval",
+    "joint shared-denominator normalization inconsistency",
+    "interval not derived by or identity-bound to frozen routing-contract v3.1",
+    "attempt to use this contract as complete-layer or candidate qualification"
+  ],
+  "threshold_lineage": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+      "field": "router.routing_weight_max_absolute_error",
+      "value": 1e-05
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3.json",
+      "sha256": "befbf30f85e12b779e7d5c778f337a5f7d6019a15805e04805a24e4903ea3969",
+      "fields": [
+        "per_expert_weight.mathematical_rule",
+        "per_expert_weight.engineering_rule"
+      ]
+    }
+  ],
+  "semantic_sources": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-routing-contract-v3.1-state-box.json",
+      "sha256": "084e496d44f2e3857e9f6da0c9e0b922fc11b805df8fda85e8aea86d2c22f455"
+    },
+    {
+      "path": "scripts/research/f017_routing_contract_v31.py",
+      "sha256": "a4ca7d39c76d5c5359e16bdf3f851f309e89c7e5f662713746bb456531597f38"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json",
+      "sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85"
+    },
+    {
+      "path": "crates/f017-runner/src/layer_qualification.rs",
+      "sha256": "4b70a22816a1a14d990bee15a5e57e1ea1963b1c37a666b89b07fa6633b240e3"
+    }
+  ],
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "candidate_or_model_dispatches": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139
+  }
+}
