@@ -43,10 +43,12 @@
 - Oracle descriptor: `docs/architecture/reviews/evidence/f017-dprefix-real2-oracle-retention-descriptor-v1.json`, SHA-256 `95df0d8bce380cf25ac8144f6a825015d0002dff525b35b2ab458093b8ebe336`
 - Candidate descriptor: `docs/architecture/reviews/evidence/f017-dprefix-real2-candidate-retention-descriptor-v1.json`, SHA-256 `ae0c59253bd5cdac6ac4427799e2649880c124b781d65095738fcea084750cb5`
 - Attempt ledger v10: `docs/architecture/reviews/evidence/f017-dense-prefix-attempt-ledger-v10.json`, SHA-256 `c24f80c316a6a45d4e91d6a9dbec288c94c5ab3e987f02d8f19ff73bee27fe98`
-- Real-payload ledger: `docs/architecture/reviews/evidence/f017-real-payload-ledger-v1.json`, SHA-256 `fc32161d30373840126835e8f925179e606c792368131b06647f7cb6f50666b2`
+- Real-payload ledger: `docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json`, SHA-256 `fc32161d30373840126835e8f925179e606c792368131b06647f7cb6f50666b2`
 - Real-evidence commit: `1c072ee99388e49a60392f3cc44c732a2e2a21d6`
-- Evidence review: `docs/architecture/reviews/f017-dprefix-real-2-evidence-validation-rejection-review.md`, SHA-256 `278013dd05c64eba9931a4817cdfcd8471eb188ee4dc38a765fba04581e67c20`
-- Final Apple-native CI: run `31979940586` -> `1c072ee99388e49a60392f3cc44c732a2e2a21d6`; conclusion recorded in the committed CI binding ledger
+- Evidence review: `docs/architecture/reviews/f017-dprefix-real-2-evidence-validation-rejection-review.md`, SHA-256 `d306487eb072f6df4f6276f110266b36457159ab76ca2ace2c9432e5c890693b`
+- CI binding ledger SHA-256: `5a1a8b158dbdea81f3e4d79caf0d8ad79cbd99c79515525ef399528f10f345bf`
+- Initial evidence-head CI: run `31979940586` -> `1c072ee99388e49a60392f3cc44c732a2e2a21d6`; workspace passed, fixture failed on stale predecessor-ledger assertions
+- Final Apple-native CI: run `31980507219` -> `ac16f280856b32933c90737e5f4e1b7f19427f5e`; both required jobs passed
 
 Exact next action: independent adversarial review of the failure evidence. Do
 not reread the checkpoint. Retained packed payloads and retained oracle state

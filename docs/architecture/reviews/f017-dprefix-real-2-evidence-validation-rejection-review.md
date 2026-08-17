@@ -42,6 +42,10 @@ The retained oracle state is restricted to
 and not executed. The exact next action is independent adversarial review of
 the failure evidence. The checkpoint must not be reread.
 
-Final Apple-native CI run `31979940586` is bound to the exact real-evidence
-head `1c072ee99388e49a60392f3cc44c732a2e2a21d6`; its final conclusion is recorded
-in the append-only CI run-to-head binding ledger.
+Initial Apple-native CI run `31979940586` is bound to the exact real-evidence
+head `1c072ee99388e49a60392f3cc44c732a2e2a21d6`. Its workspace job passed; its
+fixture job failed only because two workflow assertions still expected the
+predecessor ledger value 99. The checkpoint-free correction and this review are
+committed at `ac16f280856b32933c90737e5f4e1b7f19427f5e`. Final Apple-native CI run
+`31980507219` passed both required jobs on that exact closeout head. Both bindings
+are preserved in the append-only CI run-to-head ledger.
