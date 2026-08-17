@@ -362,3 +362,10 @@
   `EVIDENCE_VALIDATION` because the bound success path omitted required
   lifecycle and host-copy accounting; reconcile the consumed terminal attempt
   and real-payload ledger at 139 with no retry or M1-F0 continuation.
+- [x] T017-211 Prepare the fresh checkpoint-free DPREFIX-REAL-3 retained-package
+  replay: preserve REAL-2 as terminal, repair actual host-copy and success-path
+  lifecycle emission in a successor candidate, independently verify and decode
+  all 40 immutable packed artifacts, structurally remove checkpoint and payload-
+  ledger authority, rehearse the exact-real-geometry 10-repeat success and
+  failure paths through one terminal finalizer, bind the zero-read 139-to-139
+  config/authorization/attempt package, and stop for adversarial review.

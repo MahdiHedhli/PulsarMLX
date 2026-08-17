@@ -92,9 +92,15 @@ class Real2PreparationTests(unittest.TestCase):
         with self.assertRaises(R.Real2Error):
             R.preflight(config, auth, attempt)
 
-    def test_candidate_source_binds_fresh_attempt_and_key_transpose(self):
+    def test_candidate_history_preserves_real2_and_current_source_is_append_only_real3(self):
         source = (R.ROOT / "crates/f017-runner/src/bin/f017-dense-prefix-candidate.rs").read_text()
-        self.assertIn('const ATTEMPT: &str = "DPREFIX-REAL-2"', source)
+        historical = R.load(R.EVIDENCE / "f017-dprefix-candidate-build-manifest-v3.json")
+        self.assertEqual(historical["attempt_id"], "DPREFIX-REAL-2")
+        self.assertEqual(
+            historical["binary"]["sha256"],
+            "2f6a8885a17c10c7776a0d27ed6eb8e85024b03bc499885eddb905050cad17b1",
+        )
+        self.assertIn('const ATTEMPT: &str = "DPREFIX-REAL-3"', source)
         self.assertIn('name.ends_with("attn_k_b.weight")', source)
         self.assertIn("transpose_k_head", source)
 

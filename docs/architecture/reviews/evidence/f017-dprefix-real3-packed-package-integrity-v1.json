@@ -1,0 +1,1 @@
+{"checkpoint_access":0,"entries":40,"immutable":true,"ledger_after":139,"ledger_before":139,"manifest_sha256":"705066830506dbebab9212948059c71e76b4535eaeb41672c9dbd62f6e9ed156","package_identity":"705066830506dbebab9212948059c71e76b4535eaeb41672c9dbd62f6e9ed156","packed_bytes":1431263232,"read_only":true,"result":"PACKED PACKAGE READY FOR CHECKPOINT-FREE REPLAY"}

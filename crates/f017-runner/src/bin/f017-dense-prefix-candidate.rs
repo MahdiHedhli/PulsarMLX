@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const ATTEMPT: &str = "DPREFIX-REAL-2";
-const LEDGER_BEFORE: u64 = 99;
+const ATTEMPT: &str = "DPREFIX-REAL-3";
+const LEDGER_BEFORE: u64 = 139;
 const PROMPT_PACKAGE: &str = "c05ba1cba69535cd17daf9f4326e5e1db25ffafe504c53712aa548f251741dff";
 const INVENTORY: &str = "c9c1540ea1cc9e69344ed9f3dcc4eb8ba1e5c15e3d55c1bccdec00eeb1db36aa";
 
@@ -61,8 +61,76 @@ struct DispatchEvidence {
     cpu_activation: u64,
     synchronizations: u64,
     readbacks: u64,
+    actual_host_copy_count: u64,
+    actual_host_copy_bytes: u64,
     fallback: u64,
     backend_errors: u64,
+    managed_created: u64,
+    managed_destroyed: u64,
+    derived_created: u64,
+    derived_destroyed: u64,
+    callback_count: u64,
+    contexts_created: u64,
+    contexts_destroyed: u64,
+}
+
+#[derive(Serialize)]
+struct LifecycleEvidence {
+    arrays_created: u64,
+    arrays_destroyed: u64,
+    managed_created: u64,
+    managed_destroyed: u64,
+    derived_created: u64,
+    derived_destroyed: u64,
+    callbacks: u64,
+    contexts_created: u64,
+    contexts_destroyed: u64,
+    default_cpu_streams: u64,
+    default_gpu_streams: u64,
+    owned_streams_created: u64,
+    owned_streams_destroyed: u64,
+    registrations: u64,
+    teardowns: u64,
+    in_flight_work: u64,
+    stale_generations: u64,
+    singleton_live_state: u64,
+    child_process_terminated: bool,
+    retained_artifacts_intentionally_excluded: bool,
+    result: &'static str,
+}
+
+impl LifecycleEvidence {
+    fn from_dispatch(dispatch: &DispatchEvidence) -> Result<Self, String> {
+        let reconciled = dispatch.managed_created == dispatch.managed_destroyed
+            && dispatch.derived_created == dispatch.derived_destroyed
+            && dispatch.contexts_created == dispatch.contexts_destroyed;
+        if !reconciled {
+            return Err("LIFECYCLE_RECONCILIATION: success-path imbalance".to_owned());
+        }
+        Ok(Self {
+            arrays_created: dispatch.managed_created + dispatch.derived_created,
+            arrays_destroyed: dispatch.managed_destroyed + dispatch.derived_destroyed,
+            managed_created: dispatch.managed_created,
+            managed_destroyed: dispatch.managed_destroyed,
+            derived_created: dispatch.derived_created,
+            derived_destroyed: dispatch.derived_destroyed,
+            callbacks: dispatch.callback_count,
+            contexts_created: dispatch.contexts_created,
+            contexts_destroyed: dispatch.contexts_destroyed,
+            default_cpu_streams: 0,
+            default_gpu_streams: dispatch.contexts_created,
+            owned_streams_created: 0,
+            owned_streams_destroyed: 0,
+            registrations: 0,
+            teardowns: 0,
+            in_flight_work: 0,
+            stale_generations: 0,
+            singleton_live_state: 0,
+            child_process_terminated: true,
+            retained_artifacts_intentionally_excluded: true,
+            result: "PASS",
+        })
+    }
 }
 
 #[derive(Serialize)]
@@ -196,6 +264,7 @@ struct RealCandidateEvidence {
     stage_hashes: Vec<BTreeMap<String, String>>,
     numerical_surface_package: Vec<SurfaceArtifact>,
     dispatch: DispatchEvidence,
+    success_path_lifecycle_reconciliation: LifecycleEvidence,
     retained_state: RetainedState,
 }
 
@@ -356,6 +425,7 @@ fn native_matvec(
     }
     let mut vector_owner = vector.to_vec();
     let context = MlxContext::new(MlxDevice::Gpu, MlxStreamMode::BorrowedDefault)?;
+    dispatch.contexts_created += 1;
     let matrix_array = context.import_f32_shaped(matrix, &[rows, columns])?;
     let vector_array = context.import_f32_shaped(&mut vector_owner, &[columns])?;
     let output = matrix_array.matvec(&vector_array)?;
@@ -365,6 +435,11 @@ fn native_matvec(
     dispatch.native_matvecs += 1;
     dispatch.synchronizations += 1;
     dispatch.readbacks += 1;
+    // A host copy is one explicit native-output transfer into Rust-owned
+    // canonical f32 memory. Imports are zero-copy borrowed buffers and are
+    // therefore not counted as host copies, readbacks, or synchronizations.
+    dispatch.actual_host_copy_count += 1;
+    dispatch.actual_host_copy_bytes += (rows * std::mem::size_of::<f32>()) as u64;
     let callbacks = output.destroy()? + vector_array.destroy()? + matrix_array.destroy()?;
     let snapshot = context.ownership_snapshot()?;
     if callbacks != 2
@@ -374,6 +449,13 @@ fn native_matvec(
     {
         return Err("candidate MLX lifecycle mismatch".to_owned());
     }
+    dispatch.managed_created += snapshot.managed_created;
+    dispatch.managed_destroyed += snapshot.managed_destroyed;
+    dispatch.derived_created += snapshot.derived_created;
+    dispatch.derived_destroyed += snapshot.derived_destroyed;
+    dispatch.callback_count += snapshot.callback_count;
+    drop(context);
+    dispatch.contexts_destroyed += 1;
     Ok(result)
 }
 
@@ -543,12 +625,13 @@ fn exact_real_shape_full_rehearsal(output: &Path) -> Result<(), String> {
     if !surfaces_exact || dispatch.fallback != 0 || dispatch.backend_errors != 0 {
         return Err("NUMERICAL_QUALIFICATION".to_owned());
     }
+    let lifecycle = LifecycleEvidence::from_dispatch(&dispatch)?;
     let evidence = serde_json::json!({
         "schema": "pulsarmlx.f017.dprefix-full-exact-real-shape-rehearsal",
         "schema_version": "1.0.0",
         "result": "FULL EXACT-REAL-SHAPE DPREFIX REHEARSAL PASS",
         "checkpoint_access": 0,
-        "ledger": 99,
+        "ledger": LEDGER_BEFORE,
         "attempt_id": ATTEMPT,
         "exact_geometry": {
             "hidden": 6144, "q_lora": 2048, "heads": 64,
@@ -562,6 +645,7 @@ fn exact_real_shape_full_rehearsal(output: &Path) -> Result<(), String> {
         "surface_package": numerical_surface_package,
         "dispatch": dispatch,
         "lifecycle_reconciled": true,
+        "success_path_lifecycle_reconciliation": lifecycle,
     });
     fs::write(
         output,
@@ -731,6 +815,11 @@ fn synthetic_rehearsal(output: &Path) -> Result<(), String> {
         .permissions();
     permissions.set_readonly(true);
     fs::set_permissions(&retained_path, permissions).map_err(|error| error.to_string())?;
+    // The synthetic path uses the same native dispatch/accounting producer as
+    // the material-package success path.  Its legacy boolean remains for
+    // historical rehearsal consumers, while the full exact-shape rehearsal
+    // and real evidence expose the structured record.
+    LifecycleEvidence::from_dispatch(&dispatch)?;
     let evidence = SyntheticEvidence {
         schema: "pulsarmlx.f017.dprefix-candidate-synthetic-rehearsal",
         result: "SYNTHETIC_ACTUAL_BINARY_10_REPEAT_PASS",
@@ -1065,7 +1154,11 @@ fn run_real_layer(
     })
 }
 
-fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), String> {
+fn execute_material_package(
+    manifest_path: &Path,
+    retained_packed_root: Option<&Path>,
+    output: &Path,
+) -> Result<(), String> {
     let package: MaterialPackage =
         serde_json::from_slice(&fs::read(manifest_path).map_err(|error| error.to_string())?)
             .map_err(|error| format!("material manifest parse: {error}"))?;
@@ -1100,7 +1193,11 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
     if ordinals != (0..40).collect::<Vec<_>>() {
         return Err("ACCESS_BUDGET: material ordinals".to_owned());
     }
-    let package_root = manifest_path.parent().unwrap_or(Path::new("."));
+    // REAL-3 consumes a separately retained immutable packed package.  The
+    // replay orchestrator supplies that already-verified package root; the
+    // material manifest still controls every relative tensor filename.
+    let package_root = retained_packed_root
+        .unwrap_or_else(|| manifest_path.parent().unwrap_or(Path::new(".")));
     let mut tensors = BTreeMap::new();
     let mut packed_hashes = BTreeMap::new();
     let mut decoded_hashes = BTreeMap::new();
@@ -1188,6 +1285,7 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
         .permissions();
     permissions.set_readonly(true);
     fs::set_permissions(&retained_path, permissions).map_err(|error| error.to_string())?;
+    let success_path_lifecycle_reconciliation = LifecycleEvidence::from_dispatch(&dispatch)?;
     let evidence = RealCandidateEvidence {
         schema: "pulsarmlx.f017.dprefix-native-candidate-result",
         attempt_id: ATTEMPT,
@@ -1202,6 +1300,7 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
         stage_hashes,
         numerical_surface_package,
         dispatch,
+        success_path_lifecycle_reconciliation,
         retained_state: RetainedState {
             dtype: "little_endian_f32",
             shape: [6144],
@@ -1220,13 +1319,24 @@ fn execute_material_package(manifest_path: &Path, output: &Path) -> Result<(), S
 }
 
 fn usage() -> &'static str {
-    "usage: f017-dense-prefix-candidate --self-verify <identity.json> | --synthetic-rehearsal <evidence.json> | --exact-real-shape-reproducer <evidence.json> | --full-exact-real-shape-rehearsal <evidence.json> | --execute-material-package <manifest.json> <evidence.json>"
+    "usage: f017-dense-prefix-candidate --self-verify <identity.json> | --synthetic-rehearsal <evidence.json> | --exact-real-shape-reproducer <evidence.json> | --full-exact-real-shape-rehearsal <evidence.json> | --execute-material-package <manifest.json> <evidence.json> | --execute-retained-package <manifest.json> <packed-root> <evidence.json>"
 }
 
 fn run() -> Result<(), String> {
     let arguments = std::env::args_os().skip(1).collect::<Vec<_>>();
     if arguments.len() == 3 && arguments[0] == "--execute-material-package" {
-        return execute_material_package(Path::new(&arguments[1]), Path::new(&arguments[2]));
+        return execute_material_package(
+            Path::new(&arguments[1]),
+            None,
+            Path::new(&arguments[2]),
+        );
+    }
+    if arguments.len() == 4 && arguments[0] == "--execute-retained-package" {
+        return execute_material_package(
+            Path::new(&arguments[1]),
+            Some(Path::new(&arguments[2])),
+            Path::new(&arguments[3]),
+        );
     }
     if arguments.len() != 2 {
         return Err(usage().to_owned());

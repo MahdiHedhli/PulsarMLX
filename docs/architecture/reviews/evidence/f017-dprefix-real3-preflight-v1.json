@@ -1,0 +1,1 @@
+{"attempt_id":"DPREFIX-REAL-3","checkpoint_access":0,"decoded_hard_gates":40,"ledger":139,"package_integrity":"PACKED PACKAGE READY FOR CHECKPOINT-FREE REPLAY","result":"READY_TO_EXECUTE_DPREFIX_CHECKPOINT_FREE_REPLAY","schema":"pulsarmlx.f017.dprefix-replay-preflight","schema_version":"1.0.0","zero_read":"REAL-3 ZERO-READ GUARANTEE STRUCTURAL"}

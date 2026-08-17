@@ -1,0 +1,1 @@
+{"checkpoint_access":0,"host_copy_accounting_available":4050,"ledger":139,"lifecycle":"PASS","oracle_persisted_state_survives":true,"oracle_rehash":"PASS","packed_package_intact":"PACKED PACKAGE READY FOR CHECKPOINT-FREE REPLAY","result":"REAL-3 FAILURE PATH COMPLETE","schema":"pulsarmlx.f017.dprefix-real3-failure-rehearsal","schema_version":"1.0.0"}
