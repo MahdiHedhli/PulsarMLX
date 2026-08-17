@@ -361,6 +361,46 @@
       "run_id": 31995851792,
       "source": "GitHub Actions run 31995851792 queried against the immutable DPREFIX-REAL-3 terminal evidence commit; both Apple jobs passed, including full workspace checks/tests and the Apple MLX fixture matrix. The event remains terminally rejected because the fresh replay oracle state did not exactly match the released expected identity; CI does not alter that verdict.",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "failure",
+      "head_sha": "54e0ea92fca38522405b4d52977eb46910d2e739",
+      "jobs": [
+        {
+          "conclusion": "failure",
+          "job_id": 95375011293,
+          "name": "Apple MLX small-fixture validation"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95375011401,
+          "name": "Apple Silicon workspace baseline"
+        }
+      ],
+      "phase": "DPREFIX-ORACLE-REPRODUCIBILITY-CLOSURE-INITIAL-CI",
+      "run_id": 32025859839,
+      "source": "GitHub Actions run 32025859839 queried against the initial oracle-reproducibility preparation commit; the workspace job passed and the fixture job failed because four newly added tests attempted to open deliberately uncommitted private retained artifacts instead of validating their committed public evidence descriptors.",
+      "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "c62908cc420d303070ba699c928ef844c6f9278d",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95377427126,
+          "name": "Apple MLX small-fixture validation"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95377427184,
+          "name": "Apple Silicon workspace baseline"
+        }
+      ],
+      "phase": "DPREFIX-ORACLE-REPRODUCIBILITY-CLOSURE",
+      "run_id": 32026677257,
+      "source": "GitHub Actions run 32026677257 queried after the public/private test-boundary correction was pushed; both Apple jobs passed, including the full 811-test Python methodology suite, full Rust workspace, native MLX fixture matrix, exact-state public evidence checks, identity-gate v2 tests, and immutable real-payload ledger value 139. The route-insensitivity result remains fail-closed because the required retained propagation surface is absent.",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",

@@ -1,7 +1,7 @@
 # PulsarMLX F017 DPREFIX Oracle-Reproducibility Closure Report
 
 - Starting SHA: `6d30b7d26fcc563be85b75909890676efee5096e`
-- Final preparation SHA: `PENDING_FINAL_PREPARATION_COMMIT`
+- Final preparation SHA: `c62908cc420d303070ba699c928ef844c6f9278d`
 - REAL-2 state SHA: `541d8dbcf459b49e9b5c69ae44f919a64c2eaaefa4f6daeb7e0d13443b521aff`
 - REAL-3 state SHA: `ad71c3b10531283f55117b8b72f3f754653dfa74f6fbe96faf520f728432ac1a`
 - Byte-delta statistics: `5080` differing f32 elements; first index `0`; max abs `7.450580596923828e-09`; RMSE `1.68139073109024e-09`; cosine `0.9999999999999876`; no sign or zero changes.
@@ -28,7 +28,7 @@
 - Real-payload ledger: `139`
 - Internal verdict: `BLOCKED — ROUTE INSENSITIVITY`
 - Adversarial packet SHA: `2ca05920ef7505cada043f7a743208ffe0c3c7fa6848cf2986421841cff08f41`
-- Final CI run/head: `PENDING_FINAL_HEAD_CI`
+- Final CI run/head: `32026677257` → `c62908cc420d303070ba699c928ef844c6f9278d` (`success`)
 
 The committed v2 antecedent manifest describes the router matrix and norm artifacts, but the load-bearing private bytes are absent. More importantly, that package retains old-input attention/router antecedents rather than the layer-3 attention tensors or a reviewed global attention propagation bound needed for a new dense-prefix ambiguity set. Reconstructing either from hashes would violate the fail-closed contract; opening the checkpoint is forbidden.
 
