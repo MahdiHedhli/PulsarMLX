@@ -341,6 +341,26 @@
       "run_id": 31992366576,
       "source": "GitHub Actions run 31992366576 queried after the checkpoint-free DPREFIX-REAL-3 replay preparation, public-CI private-package boundary correction, and successor candidate identity binding were pushed; both Apple jobs passed, including the full Python methodology suite, workspace tests, native MLX fixture matrix, and concrete dense-prefix candidate/oracle rehearsal, with zero checkpoint access and real-payload ledger 139 unchanged",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "8acaedb359e61fe35ebed5173d1f65670014bb99",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95287250589,
+          "name": "Apple Silicon workspace baseline"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95287250663,
+          "name": "Apple MLX small-fixture validation"
+        }
+      ],
+      "phase": "DPREFIX-REAL-3-REJECTED-ORACLE-STATE-IDENTITY",
+      "run_id": 31995851792,
+      "source": "GitHub Actions run 31995851792 queried against the immutable DPREFIX-REAL-3 terminal evidence commit; both Apple jobs passed, including full workspace checks/tests and the Apple MLX fixture matrix. The event remains terminally rejected because the fresh replay oracle state did not exactly match the released expected identity; CI does not alter that verdict.",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",
