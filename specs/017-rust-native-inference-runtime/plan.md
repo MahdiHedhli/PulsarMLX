@@ -235,3 +235,20 @@ a reviewed global propagation bound are absent.
 Gate: the public theorem package is hash-bound, its outward enclosures contain
 all synthetic samples, historical DPREFIX evidence remains immutable, and the
 real-payload ledger remains 139 before any real ambiguity-box evaluation.
+
+## Phase 19 — Canonical selected-expert output recovery authorization
+
+- Derive the exact gate/up/down positional slices for the eight invariant
+  selected expert IDs from committed checkpoint metadata.
+- Freeze one future shard-2 open, 24 reads, 90,439,680 packed bytes, durable
+  partial-read accounting, and a 139-to-163 successful ledger transition.
+- Bind the retained DPREFIX-EXACT-1 f32 state and FFN norm to strict f32
+  RMSNorm, IQ2_XXS/IQ3_XXS decode, row-major projections, SwiGLU, and eight
+  canonical f32 `[6144]` down outputs.
+- Require packed retention at creation and two fresh-process fixed-order output
+  reproductions without checkpoint rereads; keep aggregate evaluation and all
+  downstream execution outside this event.
+
+Gate: the metadata-only authorization package validates and is independently
+reviewed before any checkpoint open or payload read; preparation leaves the
+real-payload ledger at 139.

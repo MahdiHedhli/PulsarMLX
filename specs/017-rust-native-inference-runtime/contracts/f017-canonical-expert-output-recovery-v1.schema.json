@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.canonical-expert-output-recovery-contract.v1",
+  "title": "F017 canonical expert-output recovery authorization contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "event_id",
+    "status",
+    "starting_head",
+    "purpose",
+    "selected_expert_ids",
+    "aggregate_theorem_sha256",
+    "source_bindings",
+    "payload_inventory",
+    "access_budget",
+    "shard_access",
+    "canonical_input",
+    "computation_semantics",
+    "scope_restrictions",
+    "ledger",
+    "packed_retention",
+    "output_retention",
+    "determinism",
+    "terminal_banking",
+    "validation_plan",
+    "release_gate",
+    "next_action"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.canonical-expert-output-recovery-contract"},
+    "schema_version": {"const": "1.0.0"},
+    "event_id": {"const": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1"},
+    "status": {"const": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTED"},
+    "starting_head": {"const": "81e187a1ce272386041e2d6445786ba14d07f91c"},
+    "purpose": {"type": "string", "minLength": 1},
+    "selected_expert_ids": {
+      "const": [250, 10, 237, 73, 62, 177, 218, 28]
+    },
+    "aggregate_theorem_sha256": {
+      "const": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac"
+    },
+    "source_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/fileBinding"}
+    },
+    "payload_inventory": {
+      "type": "array",
+      "minItems": 24,
+      "maxItems": 24,
+      "items": {"$ref": "#/$defs/payload"}
+    },
+    "access_budget": {
+      "const": {
+        "tensor_payloads": 24,
+        "positional_reads": 24,
+        "packed_bytes": 90439680,
+        "decoded_f32_bytes": 1207959552,
+        "shard_opens": 1
+      }
+    },
+    "shard_access": {"type": "object"},
+    "canonical_input": {"type": "object"},
+    "computation_semantics": {"type": "object"},
+    "scope_restrictions": {"type": "object"},
+    "ledger": {
+      "type": "object",
+      "required": ["before", "authorized_payload_reads_after_release", "successful_after", "partial_after_formula", "automatic_retry", "second_attempt_authorized"],
+      "properties": {
+        "before": {"const": 139},
+        "authorized_payload_reads_after_release": {"const": 24},
+        "successful_after": {"const": 163},
+        "partial_after_formula": {"const": "139 + durable_successful_payload_read_count_N"},
+        "automatic_retry": {"const": false},
+        "second_attempt_authorized": {"const": false}
+      }
+    },
+    "packed_retention": {"type": "object"},
+    "output_retention": {"type": "object"},
+    "determinism": {"type": "object"},
+    "terminal_banking": {"type": "object"},
+    "validation_plan": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "release_gate": {"type": "object"},
+    "next_action": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fileBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+        "role": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal", "positional_payload_index", "expert_id", "role",
+        "checkpoint_key", "parent_tensor", "shard_ordinal", "shard_basename",
+        "offset", "packed_length", "packed_row_width", "quantization",
+        "gguf_shape", "logical_decoded_shape", "decoded_f32_bytes",
+        "allowed_read_count", "expected_packed_sha256",
+        "packed_identity_policy", "metadata_identity_sha256"
+      ],
+      "properties": {
+        "ordinal": {"type": "integer", "minimum": 0, "maximum": 23},
+        "positional_payload_index": {"type": "integer", "minimum": 0, "maximum": 23},
+        "expert_id": {"enum": [250, 10, 237, 73, 62, 177, 218, 28]},
+        "role": {"enum": ["gate", "up", "down"]},
+        "checkpoint_key": {"type": "string", "minLength": 1},
+        "parent_tensor": {"type": "string", "minLength": 1},
+        "shard_ordinal": {"const": 2},
+        "shard_basename": {"const": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf"},
+        "offset": {"type": "integer", "minimum": 0},
+        "packed_length": {"enum": [3244032, 4816896]},
+        "packed_row_width": {"enum": [1584, 784]},
+        "quantization": {"enum": ["IQ2_XXS", "IQ3_XXS"]},
+        "gguf_shape": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "integer", "minimum": 1}},
+        "logical_decoded_shape": {"enum": [[2048, 6144], [6144, 2048]]},
+        "decoded_f32_bytes": {"const": 50331648},
+        "allowed_read_count": {"const": 1},
+        "expected_packed_sha256": {"type": "null"},
+        "packed_identity_policy": {"const": "FIRST_OBSERVATION_BANK_AND_REHASH"},
+        "metadata_identity_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

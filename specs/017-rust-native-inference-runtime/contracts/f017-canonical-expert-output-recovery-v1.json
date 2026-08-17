@@ -1,0 +1,995 @@
+{
+  "access_budget": {
+    "decoded_f32_bytes": 1207959552,
+    "packed_bytes": 90439680,
+    "positional_reads": 24,
+    "shard_opens": 1,
+    "tensor_payloads": 24
+  },
+  "aggregate_theorem_sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac",
+  "canonical_input": {
+    "byte_length": 24576,
+    "checkpoint_reread_required": false,
+    "content_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "count": 6144,
+    "dtype": "f32",
+    "ffn_norm_weight_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+    "ffn_norm_weight_symbolic_name": "antecedents/ffn_norm_weight.bin",
+    "normalized_f32_identity_policy": "GENERATE_FROM_RETAINED_INPUT_THEN_BANK_BEFORE_EXPERT_COMPUTE",
+    "normalized_f64_is_not_f32_identity_override": true,
+    "normalized_f64_route_diagnostic_sha256": "5e9352135d9fb025cbdfd680629534dce98aaebb1fa5b8e42432638de174e5fc",
+    "private_manifest_sha256": "a68316207957bc8f804c167b627c208f068d086aed85506c89d87569b992bc60",
+    "projection_input_derivation": "apply committed exact f32 FFN RMSNorm to DPREFIX-EXACT-1 before any expert projection",
+    "provenance": "independent fixed-order DPREFIX exact scaffolds from immutable retained packed package",
+    "serialization": "canonical_little_endian_ieee754_binary32",
+    "shape": [
+      6144
+    ],
+    "source_artifact_id": "DPREFIX-EXACT-1"
+  },
+  "computation_semantics": {
+    "IQ2_XXS": "256 values per 66-byte block; exact accepted decoder lineage",
+    "IQ3_XXS": "256 values per 98-byte block; grid_1 lanes 0..3 then grid_2 lanes 0..3",
+    "accumulation": "strict_increasing_column_f32_multiply_then_f32_add",
+    "activation": "SiLU(gate)*up",
+    "activation_order": "negate gate; expf; add 1; divide gate; multiply by up, with binary32 rounding at each operation",
+    "decoder_contract_sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84",
+    "down": "W_down[out,in] x hidden[in]",
+    "gate": "W_gate[out,in] x normalized_f32[in]",
+    "intermediate_dtype": "f32",
+    "materialization": "decoded row-major IEEE-754 binary32; no transpose; no padding in canonical output",
+    "matrix_orientation": "row_major_[out,in]_times_[in]",
+    "non_finite_output": "TERMINAL_FAILURE",
+    "output_dtype": "f32",
+    "rmsnorm": "gamma*x/sqrt(mean(x*x)+epsilon), strict increasing-index binary32 operations",
+    "rmsnorm_epsilon_binary32": 9.999999747378752e-06,
+    "up": "W_up[out,in] x normalized_f32[in]"
+  },
+  "determinism": {
+    "all_eight_output_sha256_must_match_across_repeats": true,
+    "candidate_or_mlx_execution": false,
+    "checkpoint_reads_per_payload": 1,
+    "fresh_process_exact_scaffold_repeats": 2,
+    "repeat_source": "immutable retained packed weights plus retained canonical input",
+    "repeats_add_checkpoint_reads": false
+  },
+  "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+  "ledger": {
+    "authorized_payload_reads_after_release": 24,
+    "automatic_retry": false,
+    "before": 139,
+    "partial_after_formula": "139 + durable_successful_payload_read_count_N",
+    "per_read_durable_journal_required": true,
+    "second_attempt_authorized": false,
+    "successful_after": 163
+  },
+  "next_action": "submit committed package for independent adversarial review; no checkpoint access",
+  "output_retention": {
+    "artifact_count": 8,
+    "before_after_rehash_required": true,
+    "bind_each_output_to": [
+      "expert_id",
+      "canonical_input_sha256",
+      "normalized_input_sha256",
+      "gate_packed_sha256",
+      "up_packed_sha256",
+      "down_packed_sha256",
+      "decoder_contract_sha256",
+      "computation_contract_sha256"
+    ],
+    "immutable": true,
+    "manifest_required": true,
+    "outputs": [
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 250,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_250_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 10,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_10_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 237,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_237_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 73,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_73_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 62,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_62_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 177,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_177_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 218,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_218_down_output.bin"
+      },
+      {
+        "byte_length": 24576,
+        "count": 6144,
+        "dtype": "f32",
+        "expert_id": 28,
+        "serialization": "canonical_little_endian_ieee754_binary32",
+        "sha256_policy": "GENERATE_THEN_BANK_AND_REHASH",
+        "shape": [
+          6144
+        ],
+        "symbolic_path": "expert_outputs/expert_28_down_output.bin"
+      }
+    ],
+    "public_descriptor_symbolic_paths_only": true,
+    "read_only": true,
+    "recovery_result_required": true,
+    "symbolic_private_package": "f017-private/canonical-expert-output-recovery-1/expert-outputs",
+    "total_bytes": 196608,
+    "writable_aliases": false
+  },
+  "packed_retention": {
+    "artifact_count": 24,
+    "authorized": true,
+    "before_after_rehash_required": true,
+    "checkpoint_rereads_for_repeats": 0,
+    "decoded_truth_package": false,
+    "immutable": true,
+    "manifest_required": true,
+    "purpose": "checkpoint-free deterministic recomputation and later independently reviewed reuse",
+    "read_only": true,
+    "retain_at_creation_before_decode": true,
+    "symbolic_private_package": "f017-private/canonical-expert-output-recovery-1/packed-weights",
+    "total_bytes": 90439680,
+    "writable_aliases": false
+  },
+  "payload_inventory": [
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#250",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 250,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "ea41e608307fdf4a1f67021a1cb6a10824a27eaeed6d4d5c96cad52df0346f53",
+      "offset": 4185544544,
+      "ordinal": 0,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 0,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#250",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 250,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "5c5aa812fd9068b3a7855c0e88980786c302eb9368d70bceb258311761361d88",
+      "offset": 5030983520,
+      "ordinal": 1,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 1,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#250",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 250,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "a68c3cae897e47f4351ab92a2a63efee4fe323a07275a5e05fc7f98b6059688e",
+      "offset": 3335313248,
+      "ordinal": 2,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 2,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#10",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 10,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "c463127f653c39f96d65fb134bc7c460fee683f13dec892f6e2537dbf47bec4f",
+      "offset": 3406976864,
+      "ordinal": 3,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 3,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#10",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 10,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "7f432db3e289f5c5dce15347d34e943c3dead82983840b4066afd0043d50aa8a",
+      "offset": 4252415840,
+      "ordinal": 4,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 4,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#10",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 10,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "7035fe34302d8d580621d80e622fc9a3e5fb34b9cb246633499346bebc2bfd53",
+      "offset": 2179258208,
+      "ordinal": 5,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 5,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#237",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 237,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "f584a43d37a6fa19fe35dc3718dfb9058619c8fae030fbc55138e80e0b1bbb74",
+      "offset": 4143372128,
+      "ordinal": 6,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 6,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#237",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 237,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "615ad59c18581dc4e9febf268125059a7da846b8d63c2258f1214d5fadda5185",
+      "offset": 4988811104,
+      "ordinal": 7,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 7,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#237",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 237,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "74adc4dade3006d28168180f170584836c8de4ef300bcccfecfd02fa32914f49",
+      "offset": 3272693600,
+      "ordinal": 8,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 8,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#73",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 73,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "629ba2c5303831c70e4eb25eddfeb33a3aeca130216e79eb86c9f179ac2b4256",
+      "offset": 3611350880,
+      "ordinal": 9,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 9,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#73",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 73,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "6dd9f6d805b1538e0d9a830dcb55e9fca3f21723e55aeebe6d9171e52bd3cbd3",
+      "offset": 4456789856,
+      "ordinal": 10,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 10,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#73",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 73,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "588b8691b7f34c7a7b944a185bce7bb41fec2eaab80534403773e17d8c1401e9",
+      "offset": 2482722656,
+      "ordinal": 11,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 11,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#62",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 62,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "7dac3f8fd4fefa9bb1bfee1a810b5ab4f7d631f50f2f5956c6d0d0c7de2707f6",
+      "offset": 3575666528,
+      "ordinal": 12,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 12,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#62",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 62,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "c0f9eaf88b730590e5d3dcf34898adaf66e2e553564cc3a93f8a1bdab02c433c",
+      "offset": 4421105504,
+      "ordinal": 13,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 13,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#62",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 62,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "24b4bec7cd3743a7ef5a25f1ae2d0af51b7452a971fa68aa1b09c9969be99b49",
+      "offset": 2429736800,
+      "ordinal": 14,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 14,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#177",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 177,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "dc60de4c26861088c802d9594d33ca4322a1134d7622ff6692804245ab92d4f6",
+      "offset": 3948730208,
+      "ordinal": 15,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 15,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#177",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 177,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "6f2eb9333951926f381b3824baca7079d3862ac5dda8d4dc0072a4a1958e149a",
+      "offset": 4794169184,
+      "ordinal": 16,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 16,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#177",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 177,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "53a19c5d73330ece84eb7ff759aa8fac037dd74ad3b026be9e854db8a2039969",
+      "offset": 2983679840,
+      "ordinal": 17,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 17,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#218",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 218,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "b22b74b349cfa3785ad7a5690bfc0fc5b4140abb19ccd575055647f52875c734",
+      "offset": 4081735520,
+      "ordinal": 18,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 18,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#218",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 218,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "6d890939ffaf90276a61116aac970311d61a1965128e35cadf16a35afda7ceb3",
+      "offset": 4927174496,
+      "ordinal": 19,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 19,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#218",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 218,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "1916fdd536c68d26b3d7085234e2e8fe325a432b59da789580f7883cc9f511f4",
+      "offset": 3181172576,
+      "ordinal": 20,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 20,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_gate_exps.weight#28",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 28,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "d7bb21c86c91ee0feb6ef794aed50ad27acc720f240cf8e9f0f42cbbcbba0a03",
+      "offset": 3465369440,
+      "ordinal": 21,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_gate_exps.weight",
+      "positional_payload_index": 21,
+      "quantization": "IQ2_XXS",
+      "role": "gate",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_up_exps.weight#28",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 28,
+      "gguf_shape": [
+        6144,
+        2048,
+        256
+      ],
+      "logical_decoded_shape": [
+        2048,
+        6144
+      ],
+      "metadata_identity_sha256": "f770855c73e6a0812d3f60a0ebf17b454e821b6a4b834edd96bc2610f03b84dd",
+      "offset": 4310808416,
+      "ordinal": 22,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 3244032,
+      "packed_row_width": 1584,
+      "parent_tensor": "blk.3.ffn_up_exps.weight",
+      "positional_payload_index": 22,
+      "quantization": "IQ2_XXS",
+      "role": "up",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    },
+    {
+      "allowed_read_count": 1,
+      "checkpoint_key": "blk.3.ffn_down_exps.weight#28",
+      "decoded_f32_bytes": 50331648,
+      "expected_packed_sha256": null,
+      "expert_id": 28,
+      "gguf_shape": [
+        2048,
+        6144,
+        256
+      ],
+      "logical_decoded_shape": [
+        6144,
+        2048
+      ],
+      "metadata_identity_sha256": "faa4e8b0991f9865d037bfb11289948e00b4ede50edacacc73ab513176a46aec",
+      "offset": 2265962336,
+      "ordinal": 23,
+      "packed_identity_policy": "FIRST_OBSERVATION_BANK_AND_REHASH",
+      "packed_length": 4816896,
+      "packed_row_width": 784,
+      "parent_tensor": "blk.3.ffn_down_exps.weight",
+      "positional_payload_index": 23,
+      "quantization": "IQ3_XXS",
+      "role": "down",
+      "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "shard_ordinal": 2
+    }
+  ],
+  "purpose": "produce eight canonical routed-expert down-output vectors for later aggregate-theorem evaluation",
+  "release_gate": "INDEPENDENT_ADVERSARIAL_GO_REQUIRED_BEFORE_EXECUTION",
+  "schema": "pulsarmlx.f017.canonical-expert-output-recovery-contract",
+  "schema_version": "1.0.0",
+  "scope_restrictions": {
+    "aggregate_evaluation": false,
+    "attention_payload_reads": false,
+    "candidate_execution": false,
+    "dense_prefix_replay": false,
+    "duplicate_read_is_terminal": true,
+    "fallback_reads": false,
+    "representative_m1f0": false,
+    "residual_execution": false,
+    "retry": false,
+    "router_payload_reads": false,
+    "shared_expert_payload_reads": false,
+    "unexpected_key_is_terminal": true
+  },
+  "selected_expert_ids": [
+    250,
+    10,
+    237,
+    73,
+    62,
+    177,
+    218,
+    28
+  ],
+  "shard_access": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "environment_override": false,
+    "maximum_opens": 1,
+    "path_override": false,
+    "production_catalog_sha256": "0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0",
+    "regular_file_required": true,
+    "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "shard_bytes": 49105028960,
+    "shard_ordinal": 2,
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "symbolic_private_path": ".pulsarmlx-local/checkpoints/accepted/GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "symlink_forbidden": true,
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223"
+  },
+  "source_bindings": [
+    {
+      "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+      "role": "public metadata derivation catalog",
+      "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-r13-checkpoint-identity-binding-v1.json",
+      "role": "checkpoint and shard identity",
+      "sha256": "26e2240e3267cc5d308609b98a0c2fdc6b2f7dccca835b9d56f085282cd80ce7"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-expert-166-catalog-slice-crosscheck-v2.json",
+      "role": "expert slice formula crosscheck",
+      "sha256": "5cc9845291ce57741a406c5d1b2417c6d3dbe93b85c3139ef16faf10053d5cec"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json",
+      "role": "canonical input descriptor",
+      "sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-dprefix-route-ambiguity-v31-evaluation-v1.json",
+      "role": "canonical selected route",
+      "sha256": "a4f3e1afe84be2cade1ed6c1728b2f82cd0ff2d22e8a964779f3216baf124eb4"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-v2-antecedent-private-reuse-authorization-v1.json",
+      "role": "ffn norm retained provenance",
+      "sha256": "4a6d232366a976892e38fa4da2dbeaf4b77d0c6f6e5195e43672a4537c8f9a07"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/m1e-decoder-contract-v2.json",
+      "role": "IQ2_XXS and corrected IQ3_XXS decoders",
+      "sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84"
+    },
+    {
+      "path": "crates/f017-runner/src/qualification.rs",
+      "role": "strict f32 matvec and SwiGLU semantics",
+      "sha256": "dfce968f31592ab13bdff00d3e4c79d6e532169854463a677d5d9496ed594f0c"
+    },
+    {
+      "path": "crates/f017-runner/src/layer_qualification.rs",
+      "role": "f32 RMSNorm and expert composition",
+      "sha256": "4b70a22816a1a14d990bee15a5e57e1ea1963b1c37a666b89b07fa6633b240e3"
+    }
+  ],
+  "starting_head": "81e187a1ce272386041e2d6445786ba14d07f91c",
+  "status": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTED",
+  "terminal_banking": {
+    "aggregate_theorem_evaluated": false,
+    "all_24_decoded_identities": true,
+    "all_24_packed_identities": true,
+    "all_eight_output_identities": true,
+    "automatic_downstream_continuation": false,
+    "durable_read_journal": true,
+    "execution_start_before_first_read": true,
+    "partial_failure_evidence": true
+  },
+  "validation_plan": [
+    "exact payload count and packed-byte count",
+    "one-shard-open enforcement",
+    "quantization decode identity",
+    "tensor shape and expert-ID/key mapping",
+    "two fresh-process deterministic exact-scaffold computations",
+    "eight output size/SHA/non-finite checks",
+    "packed/output package immutability and rehash",
+    "duplicate expert-ID and unexpected-read rejection",
+    "privacy/path-leak and generated-artifact validation",
+    "historical disposition immutability",
+    "partial and full ledger reconciliation",
+    "targeted Python tests",
+    "Rust workspace if execution implementation touches Rust",
+    "Spec Kit",
+    "git diff --check"
+  ]
+}

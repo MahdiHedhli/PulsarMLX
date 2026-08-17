@@ -390,3 +390,11 @@
   scores, strict membership differences, safety factors, and ID-keyed selected
   weights; validate only synthetic/adversarial/property fixtures while keeping
   private antecedent values unopened, checkpoint access zero, and ledger 139.
+- [x] T017-215 Prepare the separately reviewable canonical expert-output
+  recovery authorization: derive the exact 24 gate/up/down expert slices for
+  the invariant selected set from committed catalog metadata, freeze one shard
+  open and 90,439,680 packed bytes with durable 139-to-163 partial accounting,
+  bind DPREFIX-EXACT-1 f32 RMSNorm/SwiGLU/down-projection semantics, immutable
+  packed and eight-output retention, deterministic retained-material replay,
+  and fail-closed validators while performing zero checkpoint reads, zero shard
+  opens, no expert computation, and no aggregate evaluation.

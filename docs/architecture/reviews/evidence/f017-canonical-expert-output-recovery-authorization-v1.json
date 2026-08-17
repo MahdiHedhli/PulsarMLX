@@ -1,0 +1,101 @@
+{
+  "schema": "pulsarmlx.f017.canonical-expert-output-recovery-authorization",
+  "schema_version": "1.0.0",
+  "event_id": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1",
+  "starting_authoritative_head": "81e187a1ce272386041e2d6445786ba14d07f91c",
+  "authorization_state": {
+    "status": "READY_FOR_INDEPENDENT_ADVERSARIAL_REVIEW",
+    "execution_authorized": false,
+    "consumed": false,
+    "executed": false,
+    "checkpoint_accessed": false
+  },
+  "contract_sha256": "e3a6ef4911854d4300d151c1dff8472a4ee944d1fc5e501220be262504d20f27",
+  "contract_file_sha256": "8ced4c4cfb26c959c74de061db1c2615f5413c6e8983ac67a7f2f058505eeee2",
+  "payload_inventory_sha256": "67d8650dfe6ce5ea0f524196e2247e527153488540e3275a726d6e838a573f34",
+  "output_inventory_sha256": "2be6cb0538729d09b670b554711401e1bb9fdbc824cc846279308152e30cd3d9",
+  "selected_expert_ids": [250, 10, 237, 73, 62, 177, 218, 28],
+  "payload_count": 24,
+  "packed_bytes": 90439680,
+  "shard_access_plan": {
+    "shard_ordinal": 2,
+    "maximum_opens": 1,
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"
+  },
+  "canonical_input": {
+    "artifact_id": "DPREFIX-EXACT-1",
+    "content_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "private_manifest_sha256": "a68316207957bc8f804c167b627c208f068d086aed85506c89d87569b992bc60",
+    "shape": [6144],
+    "dtype": "f32",
+    "byte_length": 24576,
+    "checkpoint_reread_required": false
+  },
+  "ledger_plan": {
+    "before": 139,
+    "successful_after": 163
+  },
+  "partial_consumption_rule": "ledger_after = 139 + durable_successful_payload_read_count_N; terminal; no retry",
+  "retained_packed_plan": {
+    "artifact_count": 24,
+    "total_bytes": 90439680,
+    "retain_at_creation_before_decode": true,
+    "immutable": true,
+    "read_only": true,
+    "checkpoint_rereads_for_repeats": 0
+  },
+  "retained_output_plan": {
+    "artifact_count": 8,
+    "bytes_each": 24576,
+    "total_bytes": 196608
+  },
+  "deterministic_replay_plan": {
+    "fresh_process_fixed_order_repeats": 2,
+    "all_eight_output_sha256_must_match": true,
+    "input_authority": "retained packed weights plus retained DPREFIX-EXACT-1 input",
+    "candidate_or_model_execution": false
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "decoded_real_weights": 0,
+    "expert_outputs_generated": 0,
+    "candidate_or_model_dispatches": 0,
+    "aggregate_evaluations": 0,
+    "real_payload_ledger_before": 139,
+    "real_payload_ledger_after": 139
+  },
+  "historical_immutability": {
+    "DPREFIX_REAL_1": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_2": "REJECTED_UNCHANGED",
+    "DPREFIX_REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "membership_1984_of_1984": "PASS_UNCHANGED",
+    "coefficient_qualification": "FAIL_UNCHANGED_0_OF_8",
+    "route_disposition": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "artifact_bindings": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-output-recovery-v1.json",
+      "sha256": "8ced4c4cfb26c959c74de061db1c2615f5413c6e8983ac67a7f2f058505eeee2"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-output-recovery-v1.schema.json",
+      "sha256": "4b68791812c7cb9107be53262f36c3e7ccfb7ee09a9c403bf174d018d263bac5"
+    },
+    {
+      "path": "docs/architecture/reviews/f017-canonical-expert-output-recovery-authorization-packet.md",
+      "sha256": "0928747c159bf9072f5688108aee7d17c54fd4f9bd51eadd14e06500f870a7d6"
+    },
+    {
+      "path": "scripts/research/validate_f017_canonical_expert_output_authorization.py",
+      "sha256": "e1a8edd648e263b3db2a64fa1cbce9cd572d4c73755240e579c28734f758c37f"
+    },
+    {
+      "path": "scripts/research/tests/test_validate_f017_canonical_expert_output_authorization.py",
+      "sha256": "c0394537e4b23025a735b4b2e903d96e7fbf78497d64a9819978f14aa064ea8f"
+    }
+  ],
+  "review_gate": "INDEPENDENT_ADVERSARIAL_GO_REQUIRED_BEFORE_ANY_CHECKPOINT_OPEN_OR_PAYLOAD_READ",
+  "next_action": "submit the committed authorization package for independent adversarial review; do not execute the 24-payload event"
+}
