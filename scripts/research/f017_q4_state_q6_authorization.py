@@ -310,7 +310,18 @@ def validate_ci_ledger(value: dict[str, Any]) -> None:
     for row in bindings:
         require(isinstance(row.get("run_id"), int) and row["run_id"] > 0, "CI run ID")
         require(isinstance(row.get("head_sha"), str) and len(row["head_sha"]) == 40, "CI head")
-        require(row.get("conclusion") == "success", "CI conclusion")
+        # This is an append-only run/head ledger, not a success-only index.
+        # Failed final-head runs are immutable evidence and are followed by a
+        # successful correction binding rather than deleted or relabelled.
+        conclusion = row.get("conclusion")
+        require(conclusion in {"success", "failure"}, "CI conclusion")
+        jobs = row.get("jobs", [])
+        require(isinstance(jobs, list) and jobs, "CI jobs")
+        require(all(job.get("conclusion") in {"success", "failure"} for job in jobs), "CI job conclusion")
+        require(
+            conclusion == ("failure" if any(job.get("conclusion") == "failure" for job in jobs) else "success"),
+            "CI aggregate conclusion",
+        )
 
 
 def q6_format_contract() -> dict[str, Any]:
