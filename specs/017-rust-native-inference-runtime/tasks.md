@@ -369,3 +369,10 @@
   ledger authority, rehearse the exact-real-geometry 10-repeat success and
   failure paths through one terminal finalizer, bind the zero-read 139-to-139
   config/authorization/attempt package, and stop for adversarial review.
+- [x] T017-212 Execute the independently released DPREFIX-REAL-3 replay exactly
+  once from the immutable packed package with zero checkpoint authority, bank
+  all 40 decoded gates, ten repeats, eight Tier-B rows, concrete success-path
+  accounting, and retained Class-A states, then fail closed if the precommitted
+  REAL-2 oracle-state identity is not reproduced; reconcile the replay attempt
+  while leaving the real-payload ledger byte-consistent at 139 and stop without
+  retry or representative M1-F0.
