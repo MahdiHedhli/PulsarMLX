@@ -6,6 +6,7 @@ import json
 import os
 import random
 import stat
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -22,6 +23,18 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class ProductionSurfaceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        completed = subprocess.run(
+            ["cargo", "build", "-p", "quant", "--bin", "f017-canonical-decode"],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if completed.returncode:
+            raise RuntimeError(completed.stderr.decode(errors="replace"))
+
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
