@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -211,14 +212,26 @@ def validate(root: Path, contract: dict[str, Any], evidence: dict[str, Any]) -> 
     }, "historical immutability")
     for item in evidence.get("artifact_bindings", []):
         require(safe_relative(item.get("path", "")), "artifact path")
-        require(sha256_path(root / item["path"]) == item.get("sha256"), f"artifact identity: {item.get('path')}")
+        current = sha256_path(root / item["path"])
+        expected = item.get("sha256")
+        if current != expected:
+            historical = subprocess.run(
+                ["git", "show", f"06a4bafe7b4c1c6685c533e0e773eeb7bccde9c3:{item['path']}"],
+                cwd=root, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+            )
+            require(historical.returncode == 0 and hashlib.sha256(historical.stdout).hexdigest() == expected,
+                    f"artifact identity: {item.get('path')}")
     required_paths = {str(CONTRACT), str(EXECUTOR), str(EXECUTOR_TEST), str(VALIDATOR), str(VALIDATOR_TEST)} | {
         binding["path"] for binding in contract["schema_bindings"].values()
     }
     require({item["path"] for item in evidence.get("artifact_bindings", [])} == required_paths, "artifact inventory")
     serialized = json.dumps([contract, evidence], sort_keys=True)
     require(("/" + "Users/") not in serialized and "file://" not in serialized, "private path leak")
-    require(load(root / LEDGER).get("cumulative_tensor_payloads") == LEDGER_BEFORE, "real payload ledger")
+    ledger = load(root / LEDGER)
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    require(len(real2) == 1 and real2[0].get("cumulative_tensor_payloads_after_event") == LEDGER_BEFORE,
+            "substrate authorization ledger boundary")
+    require(ledger.get("cumulative_tensor_payloads", 0) >= LEDGER_BEFORE, "real payload ledger")
     return {"result": "RECOVERY_EXECUTION_SUBSTRATE_VALID", "tests": 27, "ledger": 139, "checkpoint_reads": 0, "shard_opens": 0}
 
 

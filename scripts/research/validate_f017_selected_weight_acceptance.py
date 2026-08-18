@@ -160,8 +160,11 @@ def validate_implementation(root: Path = ROOT) -> None:
 def validate_history(root: Path = ROOT) -> None:
     v31_validation.validate_history(root)
     ledger = load_json(root / LEDGER.relative_to(ROOT))
-    if ledger.get("cumulative_tensor_payloads") != 139:
-        raise WeightFreezeValidationError("real-payload ledger changed")
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    if len(real2) != 1 or real2[0].get("cumulative_tensor_payloads_after_event") != 139:
+        raise WeightFreezeValidationError("weight-freeze ledger boundary changed")
+    if ledger.get("cumulative_tensor_payloads", 0) < 139:
+        raise WeightFreezeValidationError("real-payload ledger predates weight freeze")
     if sha256_path(root / PRIOR_ROUTE_EVIDENCE.relative_to(ROOT)) != PRIOR_ROUTE_EVIDENCE_SHA256:
         raise WeightFreezeValidationError("banked route-set evidence changed")
 

@@ -35,7 +35,7 @@ def sha256(path: Path) -> str:
 
 def validate(raw: dict, attempt: dict, payload: dict) -> None:
     current = attempt["current_state"]
-    event = payload["events"][-1]
+    event = next(item for item in payload["events"] if item["attempt"] == "DPREFIX-REAL-2")
     assert raw["attempt_id"] == current["attempt_id"] == event["attempt"] == "DPREFIX-REAL-2"
     assert raw["verdict"] == "REJECTED"
     assert raw["terminal_class"] == current["terminal_class"] == "EVIDENCE_VALIDATION"
@@ -63,7 +63,8 @@ def validate(raw: dict, attempt: dict, payload: dict) -> None:
     assert current["evidence_sha256"] == event["evidence"]["sha256"] == sha256(RAW)
     assert current["payloads_read"] == event["tensor_payload_count"] == 40
     assert current["ledger_before"] == 99 and current["ledger_after"] == 139
-    assert event["cumulative_tensor_payloads_after_event"] == payload["cumulative_tensor_payloads"] == 139
+    assert event["cumulative_tensor_payloads_after_event"] == 139
+    assert payload["cumulative_tensor_payloads"] >= 139
     assert current["automatic_retry"] is False
     assert current["automatic_m1f0_continuation"] is False
 

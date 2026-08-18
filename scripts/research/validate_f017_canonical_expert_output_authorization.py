@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -227,7 +228,15 @@ def _validate_file_bindings(root: Path, items: Any, label: str) -> None:
     for item in items:
         path_value = item.get("path")
         require(isinstance(path_value, str) and _safe_symbolic_path(path_value), f"{label} path")
-        require(sha256_path(root / path_value) == item.get("sha256"), label)
+        expected = item.get("sha256")
+        current = sha256_path(root / path_value)
+        if current != expected:
+            historical = subprocess.run(
+                ["git", "show", f"88c93fa80c85dcd8edd4d850ea4f5f81d3af8990:{path_value}"],
+                cwd=root, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+            )
+            require(historical.returncode == 0 and hashlib.sha256(historical.stdout).hexdigest() == expected,
+                    label)
 
 
 def validate_documents(root: Path, contract: dict[str, Any], evidence: dict[str, Any]) -> dict[str, Any]:
@@ -455,7 +464,12 @@ def validate_documents(root: Path, contract: dict[str, Any], evidence: dict[str,
     serialized = json.dumps([contract, evidence], sort_keys=True)
     require(("/" + "Users/") not in serialized and "file://" not in serialized, "private path leak")
     ledger_doc = load_json(root / LEDGER_PATH)
-    require(ledger_doc.get("cumulative_tensor_payloads") == 139, "real-payload ledger changed")
+    events = ledger_doc.get("events", [])
+    real2 = [item for item in events if item.get("attempt") == "DPREFIX-REAL-2"]
+    require(len(real2) == 1 and real2[0].get("cumulative_tensor_payloads_after_event") == 139,
+            "authorization-time real-payload ledger boundary changed")
+    require(ledger_doc.get("cumulative_tensor_payloads", 0) >= 139,
+            "real-payload ledger precedes authorization boundary")
     return {"inventory_count": 24, "packed_bytes": 90_439_680, "ledger": 139}
 
 

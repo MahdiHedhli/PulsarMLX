@@ -296,7 +296,7 @@ class RealEventOrchestratorTests(unittest.TestCase):
         real2 = next(item for item in ledger["events"] if item["attempt"] == "DPREFIX-REAL-2")
         self.assertEqual(real1["cumulative_tensor_payloads_after_event"], 99)
         self.assertEqual(real2["cumulative_tensor_payloads_after_event"], 139)
-        self.assertEqual(ledger["cumulative_tensor_payloads"], 139)
+        self.assertGreaterEqual(ledger["cumulative_tensor_payloads"], 139)
 
 
 if __name__ == "__main__":

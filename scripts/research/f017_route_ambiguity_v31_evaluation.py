@@ -368,8 +368,11 @@ def _assert_public_identities() -> None:
         if sha256_path(path) != digest:
             raise EvaluationError(f"public authority identity mismatch: {path.name}")
     ledger = json.loads(LEDGER.read_text())
-    if ledger.get("cumulative_tensor_payloads") != REAL_PAYLOAD_LEDGER:
-        raise EvaluationError("real-payload ledger drift")
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    if len(real2) != 1 or real2[0].get("cumulative_tensor_payloads_after_event") != REAL_PAYLOAD_LEDGER:
+        raise EvaluationError("route-evaluation ledger boundary drift")
+    if ledger.get("cumulative_tensor_payloads", 0) < REAL_PAYLOAD_LEDGER:
+        raise EvaluationError("real-payload ledger predates route evaluation")
 
 
 def evaluate_authorized_package(

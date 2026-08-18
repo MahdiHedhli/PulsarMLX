@@ -125,8 +125,11 @@ def validate_authorization_document(document: dict[str, Any], root: Path = ROOT)
     if manifest.get("retention_manifest_sha256") != RETENTION_MANIFEST_SHA:
         raise ReuseValidationError("embedded retention manifest identity mismatch")
     ledger = load_json(ledger_path)
-    if ledger.get("cumulative_tensor_payloads") != 139:
-        raise ReuseValidationError("real-payload ledger changed")
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    if len(real2) != 1 or real2[0].get("cumulative_tensor_payloads_after_event") != 139:
+        raise ReuseValidationError("reuse-time real-payload ledger boundary changed")
+    if ledger.get("cumulative_tensor_payloads", 0) < 139:
+        raise ReuseValidationError("real-payload ledger predates reuse authorization")
     exact = load_json(exact_path)
     if exact.get("layer3", {}).get("sha256") != EXACT_SHA:
         raise ReuseValidationError("canonical exact state changed")

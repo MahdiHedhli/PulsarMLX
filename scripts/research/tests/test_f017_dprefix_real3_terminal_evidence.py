@@ -70,7 +70,9 @@ class Real3TerminalEvidenceTests(unittest.TestCase):
         self.assertEqual(state["evidence_sha256"], sha(raw_path))
         self.assertEqual(state["ledger_before"], 139)
         self.assertEqual(state["ledger_after"], 139)
-        self.assertEqual(payload["cumulative_tensor_payloads"], 139)
+        real2 = next(item for item in payload["events"] if item["attempt"] == "DPREFIX-REAL-2")
+        self.assertEqual(real2["cumulative_tensor_payloads_after_event"], 139)
+        self.assertGreaterEqual(payload["cumulative_tensor_payloads"], 139)
         self.assertFalse(state["automatic_retry"])
 
     def test_downstream_remains_blocked(self) -> None:

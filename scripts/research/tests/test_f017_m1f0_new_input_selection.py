@@ -31,12 +31,15 @@ BINDING = load("f017_estimator_binding", "scripts/research/validate_f017_estimat
 
 
 class M1F0NewInputSelectionTests(unittest.TestCase):
-    def test_complete_real_payload_ledger_reconciles_to_139(self):
+    def test_complete_real_payload_ledger_reconciles_to_163(self):
         document = LEDGER.build_ledger(ROOT)
-        self.assertEqual(document["cumulative_tensor_payloads"], 139)
+        self.assertEqual(document["cumulative_tensor_payloads"], 163)
         self.assertEqual(document["prior_m1f0_scoped_total"], 37)
         self.assertEqual(document["prior_scope_omissions_total"], 8)
-        self.assertEqual(sum(event["tensor_payload_count"] for event in document["events"]), 139)
+        self.assertEqual(sum(event["tensor_payload_count"] for event in document["events"]), 163)
+        recovery = [event for event in document["events"] if event["attempt"] == "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1"]
+        self.assertEqual(len(recovery), 1)
+        self.assertEqual(recovery[0]["cumulative_tensor_payloads_after_event"], 163)
         self.assertEqual(document["checkpoint_identity_only"]["tensor_payload_count"], 0)
         self.assertEqual(document["checkpoint_identity_only"]["storage_read_count"], 28_444)
 

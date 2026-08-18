@@ -185,8 +185,11 @@ def validate_history(root: Path = ROOT) -> None:
     weight_validation.validate_history(root)
     weight_validation.validate_contract(weight_validation.load_json(root / weight_validation.CONTRACT.relative_to(weight_validation.ROOT)), root)
     ledger = load_json(root / LEDGER.relative_to(ROOT))
-    if ledger.get("cumulative_tensor_payloads") != 139:
-        raise AggregateFreezeValidationError("real-payload ledger changed")
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    if len(real2) != 1 or real2[0].get("cumulative_tensor_payloads_after_event") != 139:
+        raise AggregateFreezeValidationError("aggregate-freeze ledger boundary changed")
+    if ledger.get("cumulative_tensor_payloads", 0) < 139:
+        raise AggregateFreezeValidationError("real-payload ledger predates aggregate freeze")
     if sha256_path(root / PRIOR_QUALIFICATION_EVIDENCE.relative_to(ROOT)) != PRIOR_QUALIFICATION_EVIDENCE_SHA256:
         raise AggregateFreezeValidationError("prior qualification evidence changed")
     qualification = load_json(root / PRIOR_QUALIFICATION_EVIDENCE.relative_to(ROOT))

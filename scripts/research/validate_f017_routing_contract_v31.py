@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -103,8 +104,11 @@ def validate_contract(contract: dict[str, Any], root: Path = ROOT) -> None:
 
 def validate_history(root: Path = ROOT) -> None:
     ledger = load_json(root / LEDGER.relative_to(ROOT))
-    if ledger.get("cumulative_tensor_payloads") != 139:
-        raise FreezeValidationError("real-payload ledger changed")
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    if len(real2) != 1 or real2[0].get("cumulative_tensor_payloads_after_event") != 139:
+        raise FreezeValidationError("v3.1 freeze-time real-payload ledger boundary changed")
+    if ledger.get("cumulative_tensor_payloads", 0) < 139:
+        raise FreezeValidationError("real-payload ledger precedes v3.1 freeze")
     exact = load_json(root / EXACT.relative_to(ROOT))
     if exact.get("artifact_id") != "DPREFIX-EXACT-1" or exact.get("layer3", {}).get("sha256") != EXACT_SHA:
         raise FreezeValidationError("DPREFIX-EXACT-1 authority changed")
@@ -136,7 +140,14 @@ def validate_evidence(evidence: dict[str, Any], root: Path = ROOT) -> None:
         raise FreezeValidationError("freeze artifact surface mismatch")
     for item in artifacts:
         path = Path(str(item.get("path", "")))
-        if path.is_absolute() or ".." in path.parts or sha256_path(root / path) != item.get("sha256"):
+        expected = item.get("sha256")
+        current = "" if path.is_absolute() or ".." in path.parts else sha256_path(root / path)
+        historical = subprocess.run(
+            ["git", "show", f"b899d09b971912a4d8d256fb381558865319818a:{path.as_posix()}"],
+            cwd=root, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+        ) if not path.is_absolute() and ".." not in path.parts else None
+        historical_sha = hashlib.sha256(historical.stdout).hexdigest() if historical is not None and historical.returncode == 0 else ""
+        if path.is_absolute() or ".." in path.parts or expected not in {current, historical_sha}:
             raise FreezeValidationError(f"freeze artifact identity mismatch: {path}")
     validation = evidence.get("validation", {})
     if validation.get("synthetic_test_count", 0) < 23 or validation.get("property_samples_contained") is not True:

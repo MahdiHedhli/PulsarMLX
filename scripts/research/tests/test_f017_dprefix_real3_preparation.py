@@ -91,9 +91,11 @@ class Real3PreparationTests(unittest.TestCase):
             with self.assertRaisesRegex(R.ReplayError, "PACKED_PACKAGE_REPLAY"):
                 R.preflight()
 
-    def test_live_payload_ledger_remains_139_and_has_no_real3_event(self):
+    def test_real3_remains_zero_read_at_its_139_boundary(self):
         ledger = R.load(R.PAYLOAD_LEDGER_PATH)
-        self.assertEqual(ledger["cumulative_tensor_payloads"], 139)
+        real2 = next(item for item in ledger["events"] if item["attempt"] == "DPREFIX-REAL-2")
+        self.assertEqual(real2["cumulative_tensor_payloads_after_event"], 139)
+        self.assertGreaterEqual(ledger["cumulative_tensor_payloads"], 139)
         self.assertNotIn("DPREFIX-REAL-3", {item["attempt"] for item in ledger["events"]})
 
     def test_public_artifacts_contain_no_absolute_private_path(self):

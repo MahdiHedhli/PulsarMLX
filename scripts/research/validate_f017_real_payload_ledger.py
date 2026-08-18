@@ -19,6 +19,14 @@ EXPERT15 = [
     "blk.3.ffn_gate_exps.weight#15", "blk.3.ffn_up_exps.weight#15",
     "blk.3.ffn_down_exps.weight#15",
 ]
+CANONICAL_EXPERT_RECOVERY_CONTRACT = (
+    "specs/017-rust-native-inference-runtime/contracts/"
+    "f017-canonical-expert-output-recovery-v1.json"
+)
+CANONICAL_EXPERT_RECOVERY_EVIDENCE = (
+    "docs/architecture/reviews/evidence/"
+    "f017-canonical-expert-recovery-result-v1.json"
+)
 
 
 def digest(path: Path) -> str:
@@ -90,6 +98,26 @@ def build_ledger(root: Path) -> dict[str, object]:
         "rejected terminal evidence validation after all 40 identity-gated payload reads; all eight real Tier-B surfaces qualified but the bound success path omitted required lifecycle and host-copy accounting",
         "docs/architecture/reviews/evidence/f017-dense-prefix-real-attempt-2-rejected-evidence-validation-v1.json",
         dense_prefix, True, "execution"))
+    recovery_contract = json.loads((root / CANONICAL_EXPERT_RECOVERY_CONTRACT).read_text())
+    recovery_evidence = json.loads((root / CANONICAL_EXPERT_RECOVERY_EVIDENCE).read_text())
+    recovery_inventory = recovery_contract.get("payload_inventory", [])
+    recovery_tensors = [item["checkpoint_key"] for item in recovery_inventory]
+    if len(recovery_tensors) != 24 or len(set(recovery_tensors)) != 24:
+        raise ValueError("canonical expert recovery inventory must contain exactly 24 unique payloads")
+    if sum(int(item["packed_length"]) for item in recovery_inventory) != 90_439_680:
+        raise ValueError("canonical expert recovery packed-byte budget mismatch")
+    if (
+        recovery_evidence.get("classification") != "COMPLETE"
+        or recovery_evidence.get("consumed_read_count") != 24
+        or recovery_evidence.get("packed_bytes") != 90_439_680
+        or recovery_evidence.get("ledger_before") != 139
+        or recovery_evidence.get("ledger_after") != 163
+    ):
+        raise ValueError("canonical expert recovery terminal evidence mismatch")
+    e.append(event(root, "CANONICAL-EXPERT-OUTPUT-RECOVERY",
+        "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+        "complete canonical expert-output recovery with 24 retained payloads, dual-decoder agreement, and exact two-process output reproduction",
+        CANONICAL_EXPERT_RECOVERY_EVIDENCE, recovery_tensors, True, "execution"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:

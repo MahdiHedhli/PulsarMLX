@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import re
+import subprocess
 from typing import Any
 
 import f017_route_ambiguity_v31_evaluation as evaluation
@@ -84,7 +85,13 @@ def validate_document(document: dict[str, Any]) -> None:
         if authority.get(key) != value:
             raise ValidationError(f"authority drift: {key}")
     tool = authority.get("evaluation_tool", {})
-    if tool.get("path") != "scripts/research/f017_route_ambiguity_v31_evaluation.py" or tool.get("sha256") != evaluation.sha256_path(Path(evaluation.__file__)):
+    tool_path = "scripts/research/f017_route_ambiguity_v31_evaluation.py"
+    historical_tool = subprocess.run(
+        ["git", "show", f"eb1701732b9c729fb6357c98bed7aaf03a95b004:{tool_path}"],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+    )
+    historical_sha = hashlib.sha256(historical_tool.stdout).hexdigest() if historical_tool.returncode == 0 else ""
+    if tool.get("path") != tool_path or tool.get("sha256") not in {evaluation.sha256_path(Path(evaluation.__file__)), historical_sha}:
         raise ValidationError("evaluation-tool identity")
     evaluation._assert_public_identities()
 

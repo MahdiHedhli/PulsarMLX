@@ -50,7 +50,9 @@ def validate(raw: dict, attempt: dict, payload: dict) -> None:
     assert current["ledger_before"] == 59 and current["ledger_after"] == 99
     assert event["evidence"]["sha256"] == sha256(RAW)
     assert event["cumulative_tensor_payloads_after_event"] == 99
-    assert payload["cumulative_tensor_payloads"] == 139
+    real2 = next(item for item in payload["events"] if item["attempt"] == "DPREFIX-REAL-2")
+    assert real2["cumulative_tensor_payloads_after_event"] == 139
+    assert payload["cumulative_tensor_payloads"] >= 139
     assert raw["identity_confirmations"]["Q4_K"]["exact_match"] is True
     assert raw["identity_confirmations"]["Q6_K"]["exact_match"] is True
     assert raw["candidate"]["evidence_artifact_created"] is False

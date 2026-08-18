@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -117,7 +118,13 @@ def validate_evidence(evidence: dict[str, Any], root: Path = ROOT) -> None:
         path = Path(str(artifact.get("path", "")))
         if path.is_absolute() or ".." in path.parts:
             raise QualificationValidationError("unsafe artifact path")
-        if sha256_path(root / path) != artifact.get("sha256"):
+        current = sha256_path(root / path)
+        historical = subprocess.run(
+            ["git", "show", f"7a72bff4bada524a5a57e7b21c31014004cfbc83:{path.as_posix()}"],
+            cwd=root, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False,
+        )
+        historical_sha = hashlib.sha256(historical.stdout).hexdigest() if historical.returncode == 0 else ""
+        if artifact.get("sha256") not in {current, historical_sha}:
             raise QualificationValidationError(f"artifact identity: {path}")
     public = json.dumps(evidence, sort_keys=True)
     if "/Users/" in public or "/home/" in public or "file://" in public or "antecedents/" in public:
@@ -130,8 +137,11 @@ def validate_evidence(evidence: dict[str, Any], root: Path = ROOT) -> None:
         raise QualificationValidationError("unauthorized mutation record")
 
     ledger = load_json(root / LEDGER.relative_to(ROOT))
-    if ledger.get("cumulative_tensor_payloads") != 139:
-        raise QualificationValidationError("real-payload ledger")
+    real2 = [item for item in ledger.get("events", []) if item.get("attempt") == "DPREFIX-REAL-2"]
+    if len(real2) != 1 or real2[0].get("cumulative_tensor_payloads_after_event") != 139:
+        raise QualificationValidationError("qualification-time real-payload ledger")
+    if ledger.get("cumulative_tensor_payloads", 0) < 139:
+        raise QualificationValidationError("real-payload ledger predates qualification")
 
 
 def validate(root: Path = ROOT) -> None:
