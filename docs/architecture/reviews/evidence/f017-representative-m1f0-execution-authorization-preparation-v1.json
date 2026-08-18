@@ -1,0 +1,100 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization-preparation",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "starting_authoritative_head": "c5eb3c3efb0ab62f3b34006e769a14bd57ed3e76",
+  "authorization_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json",
+    "sha256": "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc"
+  },
+  "authorization_schema": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.schema.json",
+    "sha256": "39448bf8a284a12c7f66bbdb47551c3f703e2d287540e22323c19a1a4a95206b"
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_representative_m1f0_execution_authorization.py",
+    "sha256": "f9da202353cee926776d10c53fe8b42dc18d21d272a67f82c6f519ff5d665b7d"
+  },
+  "mutation_tests": {
+    "path": "scripts/research/tests/test_f017_representative_m1f0_execution_authorization.py",
+    "sha256": "a05d3bfb4c935bad127a05cdbe706e67296f6d4530336826c5fd963eaec51b8c",
+    "tests": 21,
+    "result": "PASS"
+  },
+  "semantic_bindings": {
+    "representative_boundary_v3_sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3",
+    "semantic_graph_v2_sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558",
+    "epsilon_adjudication_sha256": "fc92b11223ee174b5f206a45a6d2b50540b4c82ba5d2c2333010947d525646e4",
+    "boundary_v3_freeze_sha256": "1f521d3e6a5adcd8cb30dfd013b54ee1f00b81c63d5d027e9128b37bb9f1ca5d",
+    "canonical_input_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+  },
+  "inventory_validation": {
+    "committed_catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+    "method": "CHECKPOINT_FREE_CATALOG_OFFSETS_TYPES_DIMS_AND_QUANT_BLOCK_ARITHMETIC",
+    "entries": 9,
+    "packed_bytes": 132900864,
+    "shard_ordinal": 2,
+    "maximum_shard_opens": 1,
+    "result": "PASS"
+  },
+  "router_reuse": {
+    "status": "PREPARED_REVIEW_REQUIRED",
+    "artifact_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v1.json",
+    "artifact_sha256": "a0f067871c2a764058bc549fdd0739508cd2072e92bf1ce3e346687443012f68",
+    "historical_attempt_sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+    "retention_manifest_sha256": "1007112a0642919321d0081e79bba12fe3809c456e79a22b9623d19689b78112",
+    "embedded_manifest_sha256": "bd3cc6c10faee0d8c8072000403bbef68354286515482a6b78869ab02be81e13",
+    "ffn_norm_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+    "router_matrix_sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+    "correction_bias_sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491",
+    "new_payload_reads": 0,
+    "checkpoint_fallback": false
+  },
+  "event_substrate_lineage": {
+    "contract_sha256": "1326b0aeed86daf7d9c359136c90bd1c5af4a1e906a462907175308239f071df",
+    "executor_source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe",
+    "bound_doctrine": [
+      "DURABLE_ATTEMPT_AND_START_BEFORE_OPEN",
+      "RETAIN_AT_CREATION",
+      "DURABLE_PER_READ_RECEIPT_AND_LEDGER",
+      "ONE_SHARD_OPEN",
+      "NO_RETRY",
+      "INTERRUPTED_ATTEMPT_TERMINALIZATION"
+    ],
+    "production_invocation_created": false,
+    "reason": "AUTHORIZATION_PREPARATION_ONLY; EXECUTION REMAINS REVIEW_GATED"
+  },
+  "ledger": {
+    "preparation_before": 166,
+    "preparation_after": 166,
+    "future_success": 175,
+    "future_partial": "166+N_DURABLY_RECEIPTED_EXACT_SIZE_READS_THEN_TERMINAL_NO_RETRY"
+  },
+  "execution_boundary": {
+    "starts_at": "DPREFIX_EXACT_1_LAYER3_ENTRY_PRE_ATTENTION",
+    "ends_at": "REPRESENTATIVE_ROUTE",
+    "expert_execution": false,
+    "shared_expert_execution": false,
+    "direct_dprefix_outputs_reusable": false
+  },
+  "checkpoint_free_validation": {
+    "validator": "PASS",
+    "catalog_inventory": "PASS",
+    "mutation_regression": "21_OF_21_PASS",
+    "targeted_semantic_and_epsilon_tests": "38_OF_38_PASS",
+    "historical_generated_package": "PASS_PINNED_CPYTHON_3_13_13_NUMPY_2_4_5",
+    "spec_kit_prerequisites": "PASS",
+    "duplicate_key_and_privacy_scan": "PASS",
+    "git_diff_check": "PASS",
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "representative_computations": 0,
+    "real_event_authorized": false
+  },
+  "ntfy": {
+    "topic": "Mahdi-Dev",
+    "progress_update_delivered": true,
+    "private_paths_or_payloads_included": false
+  },
+  "disposition": "READY_FOR_INDEPENDENT_ADVERSARIAL_REVIEW_NOT_EXECUTION"
+}

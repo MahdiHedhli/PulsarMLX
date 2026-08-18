@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.representative-m1f0-execution-authorization-v1.schema.json",
+  "type": "object",
+  "required": [
+    "schema", "schema_version", "authorization_id", "event_id", "attempt_id",
+    "status", "authoritative_repository", "semantic_authority", "checkpoint_binding",
+    "attention_payload_inventory", "read_contract", "ledger_contract", "failure_contract",
+    "execution_semantics", "router_reuse_authorization", "output_contract",
+    "surface_separation", "authorization", "preparation_isolation"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.representative-m1f0-execution-authorization"},
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "PREPARED_REVIEW_REQUIRED"},
+    "attention_payload_inventory": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "required": ["ordinal", "key", "role", "shard", "offset", "packed_bytes", "quantization", "logical_shape", "packed_sha256", "decoded_sha256"]
+      }
+    },
+    "read_contract": {
+      "type": "object",
+      "required": ["ordering", "expected_reads", "expected_packed_bytes", "maximum_shard_opens", "additional_reads"],
+      "properties": {
+        "expected_reads": {"const": 9},
+        "expected_packed_bytes": {"const": 132900864},
+        "maximum_shard_opens": {"const": 1},
+        "additional_reads": {"const": false}
+      }
+    },
+    "ledger_contract": {
+      "type": "object",
+      "required": ["before", "after_success", "partial_failure"],
+      "properties": {"before": {"const": 166}, "after_success": {"const": 175}}
+    },
+    "authorization": {
+      "type": "object",
+      "required": ["real_event_authorized", "checkpoint_access_authorized", "independent_adversarial_review_required", "expert_execution_authorized"],
+      "properties": {
+        "real_event_authorized": {"const": false},
+        "checkpoint_access_authorized": {"const": false},
+        "independent_adversarial_review_required": {"const": true},
+        "expert_execution_authorized": {"const": false}
+      }
+    },
+    "preparation_isolation": {
+      "type": "object",
+      "required": ["checkpoint_reads", "shard_opens", "real_payload_ledger_before", "real_payload_ledger_after"],
+      "properties": {
+        "checkpoint_reads": {"const": 0},
+        "shard_opens": {"const": 0},
+        "real_payload_ledger_before": {"const": 166},
+        "real_payload_ledger_after": {"const": 166}
+      }
+    }
+  },
+  "additionalProperties": true
+}

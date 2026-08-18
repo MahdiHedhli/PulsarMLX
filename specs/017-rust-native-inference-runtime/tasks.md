@@ -469,3 +469,11 @@
   four representative RMSNorm sites; supersede only the erroneous v1/v2
   declarations append-only; and bind regression tests while preserving zero
   execution authority and the real-payload ledger at 166.
+- [x] T017-226 Prepare the representative M1-F0 attention-to-router execution
+  authorization for independent adversarial review: bind boundary v3, semantic
+  graph v2, exact `f32(1e-5)` fixed-order semantics, the catalog-derived ordered
+  nine-read/132,900,864-byte one-open inventory, durable 166-to-175 partial
+  accounting, the three separately scoped retained router authorities, exact
+  output/replay requirements, and the stop-before-experts boundary; add a
+  checkpoint-free validator and mutation suite while leaving execution
+  unauthorized and the real-payload ledger unchanged at 166.

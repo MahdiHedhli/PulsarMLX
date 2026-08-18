@@ -1,0 +1,236 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1-AUTHORIZATION",
+  "event_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1",
+  "attempt_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1-ATTEMPT-1",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "authoritative_repository": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "commit_sha256": "c5eb3c3efb0ab62f3b34006e769a14bd57ed3e76"
+  },
+  "semantic_authority": {
+    "representative_boundary_v3": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v3.json",
+      "sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3"
+    },
+    "semantic_graph_v2": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    },
+    "epsilon_adjudication": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-rmsnorm-epsilon-adjudication-v1.json",
+      "sha256": "fc92b11223ee174b5f206a45a6d2b50540b4c82ba5d2c2333010947d525646e4"
+    },
+    "boundary_v3_freeze": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-boundary-v3-freeze.json",
+      "sha256": "1f521d3e6a5adcd8cb30dfd013b54ee1f00b81c63d5d027e9128b37bb9f1ca5d"
+    },
+    "canonical_input": {
+      "artifact_id": "DPREFIX-EXACT-1",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "semantic_role": "CANONICAL_LAYER3_ENTRY_PRE_ATTENTION",
+      "dtype": "little-endian-f32",
+      "shape": [6144]
+    },
+    "formula": "DPREFIX_EXACT_1(S0)->layer3_attention->f32_post_attention_residual(S1)->strict_f32_FFN_RMSNorm(F_norm)->router->representative_route",
+    "ends_before": [
+      "routed_expert_execution",
+      "shared_expert_execution",
+      "ffn_branch_aggregation",
+      "complete_layer_residual",
+      "M1-F"
+    ]
+  },
+  "checkpoint_binding": {
+    "catalog_metadata": {
+      "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+      "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+    },
+    "decoded_tensor_planning_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f0-decoded-tensor-reuse-v2.json",
+      "sha256": "3a947427cfc285119fe9b8bcc910e26fdde4cdd6599711fe3f6b5df14d95c71c"
+    },
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "shard": {
+      "ordinal": 2,
+      "basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+      "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+      "maximum_opens": 1
+    }
+  },
+  "attention_payload_inventory": [
+    {"ordinal": 0, "key": "blk.3.attn_norm.weight", "role": "attention_norm", "shard": 2, "offset": 2008634208, "packed_bytes": 24576, "quantization": "F32", "logical_shape": [6144], "packed_sha256": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85", "decoded_sha256": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85"},
+    {"ordinal": 1, "key": "blk.3.attn_q_a.weight", "role": "query_rank_a", "shard": 2, "offset": 2077864800, "packed_bytes": 8650752, "quantization": "Q5_K", "logical_shape": [2048, 6144], "packed_sha256": "30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579", "decoded_sha256": "35e4f06b179cee97d791476882e2f1ed7ebbaa4ecd7c7e5a3e108a2c42520c45"},
+    {"ordinal": 2, "key": "blk.3.attn_q_a_norm.weight", "role": "query_rank_norm", "shard": 2, "offset": 2086515552, "packed_bytes": 8192, "quantization": "F32", "logical_shape": [2048], "packed_sha256": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f", "decoded_sha256": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f"},
+    {"ordinal": 3, "key": "blk.3.attn_q_b.weight", "role": "query_heads", "shard": 2, "offset": 2086523744, "packed_bytes": 35651584, "quantization": "Q8_0", "logical_shape": [16384, 2048], "packed_sha256": "c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47", "decoded_sha256": "5cff2689826b4608162dae7932f2187aa31ff5e2063655a62fce0a17ac185623"},
+    {"ordinal": 4, "key": "blk.3.attn_kv_a_mqa.weight", "role": "compressed_kv", "shard": 2, "offset": 2004872032, "packed_bytes": 3760128, "quantization": "Q8_0", "logical_shape": [576, 6144], "packed_sha256": "8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053", "decoded_sha256": "332ce4d35767105dbef7e98c2ddb1093e624188d71a068dbca58579ff5c259ac"},
+    {"ordinal": 5, "key": "blk.3.attn_kv_a_norm.weight", "role": "compressed_kv_norm", "shard": 2, "offset": 2008632160, "packed_bytes": 2048, "quantization": "F32", "logical_shape": [512], "packed_sha256": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4", "decoded_sha256": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4"},
+    {"ordinal": 6, "key": "blk.3.attn_k_b.weight", "role": "key_heads", "shard": 2, "offset": 1998187360, "packed_bytes": 6684672, "quantization": "Q8_0", "logical_shape": [64, 512, 192], "packed_sha256": "9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f", "decoded_sha256": "89c38fc8661405b675c738de4a7ac6115931c492b00231b4e1c4562676f6b7ff"},
+    {"ordinal": 7, "key": "blk.3.attn_v_b.weight", "role": "value_heads", "shard": 2, "offset": 2122175328, "packed_bytes": 8912896, "quantization": "Q8_0", "logical_shape": [64, 256, 512], "packed_sha256": "86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367", "decoded_sha256": "3e4a176c261d7f9e612fc7f7dc7047cb9c7b338cdce71c47527aa7224f92f3a7"},
+    {"ordinal": 8, "key": "blk.3.attn_output.weight", "role": "attention_output", "shard": 2, "offset": 2008658784, "packed_bytes": 69206016, "quantization": "Q5_K", "logical_shape": [6144, 16384], "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084", "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8"}
+  ],
+  "read_contract": {
+    "ordering": "STRICT_ASCENDING_ORDINAL_0_THROUGH_8",
+    "read_primitive": "ONE_EXACT_SIZE_POSITIONAL_READ_PER_ENTRY",
+    "dynamic_key_discovery": false,
+    "fallback_reads": false,
+    "retries": false,
+    "additional_reads": false,
+    "expected_reads": 9,
+    "expected_packed_bytes": 132900864,
+    "maximum_shard_opens": 1,
+    "retain_at_creation_before_decode": true,
+    "durable_receipt_before_next_read": true
+  },
+  "ledger_contract": {
+    "before": 166,
+    "after_success": 175,
+    "increment_unit": "ONE_PER_SUCCESSFUL_EXACT_SIZE_POSITIONAL_PAYLOAD_READ",
+    "after_n_successful_reads": "166+N",
+    "shard_open_increment": 0,
+    "retained_artifact_reread_increment": 0,
+    "decoder_increment": 0,
+    "partial_failure": "BANK_166_PLUS_N_FOR_N_DURABLY_RECEIPTED_EXACT_SIZE_READS_TERMINALIZE_NO_CONTINUATION_NO_RETRY",
+    "short_read": "TERMINAL_FAILURE_WITHOUT_INCREMENT_FOR_THE_INCOMPLETE_ENTRY; PRESERVE_PRIOR_DURABLE_RECEIPTS",
+    "no_partial_success": true
+  },
+  "failure_contract": {
+    "attempt_count": 1,
+    "second_attempt_authorized": false,
+    "automatic_resume": false,
+    "automatic_retry": false,
+    "interrupted_nonterminal_attempt": "RECONCILE_FROM_DURABLE_RECEIPTS_AND_TERMINALIZE_NEVER_RESUME",
+    "unexpected_key_offset_size_shape_type_or_hash": "TERMINAL_FAILURE",
+    "decoder_disagreement": "TERMINAL_FAILURE_NO_DECODER_SELECTION_NO_FURTHER_READS_NO_OUTPUT_AUTHORITY",
+    "unexpected_read_or_open": "TERMINAL_FAILURE",
+    "continue_after_partial_failure": false
+  },
+  "execution_semantics": {
+    "device": "CPU_ONLY",
+    "gpu_dispatches": 0,
+    "blas": false,
+    "backend_dependent_reduction": false,
+    "arithmetic": "STRICT_IEEE754_BINARY32_FIXED_INCREASING_INDEX_PER_OPERATION_ROUNDING",
+    "rmsnorm": {
+      "epsilon_source": "f32(1e-5)",
+      "epsilon_exact_decimal": "9.999999747378752e-6",
+      "epsilon_bits_hex": "0x3727c5ac",
+      "epsilon_dtype": "IEEE-754 binary32",
+      "accumulator_dtype": "IEEE-754 binary32",
+      "reduction_order": "INCREASING_ELEMENT_INDEX",
+      "formula": "f32(f32(x*f32(1/f32(sqrt(f32(f32(sum_f32_in_order(x*x)/f32(n))+epsilon)))))*gamma)",
+      "sites": ["attention_input", "query_rank", "compressed_kv", "post_attention_ffn"]
+    },
+    "attention": {
+      "position": 0,
+      "visible_positions": [0],
+      "rope": "POSITION_ZERO_IDENTITY",
+      "softmax": "ONE_VISIBLE_VALUE_EXACT_WEIGHT_ONE",
+      "matvec": "ROW_MAJOR_OUT_IN_STRICT_F32_INCREASING_COLUMN_ACCUMULATION",
+      "head_dot": "STRICT_F32_INCREASING_LANE_ACCUMULATION_THEN_F32_SCALE_1_OVER_16",
+      "residual": "S1_ELEMENTWISE_F32_ADD_S0_PLUS_ATTENTION_OUTPUT_ONCE"
+    },
+    "ffn_rmsnorm": "S1_TO_F_NORM_USING_RETAINED_FFN_NORM_AND_THE_SAME_F32_1E_MINUS_5_RMSNORM",
+    "router": {
+      "logits": "STRICT_F32_INCREASING_COLUMN_MATVEC_ROUTER_MATRIX_TIMES_F_NORM",
+      "probabilities": "BINARY64_SIGMOID_OF_PROMOTED_F32_LOGITS",
+      "scores": "PROBABILITY_PLUS_BINARY64_PROMOTION_OF_F32_CORRECTION_BIAS",
+      "ranking": "SCORE_DESCENDING_EXPERT_ID_ASCENDING_TIE_BREAK",
+      "selection": "TOP_8_MEMBERSHIP",
+      "weights": "2.5_TIMES_P_I_DIVIDED_BY_MAX(FSUM_SELECTED_P,2^-14)",
+      "atomic_pair": "EXPERT_ID_ROUTING_WEIGHT"
+    },
+    "oracle_source": {
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d"
+    }
+  },
+  "router_reuse_authorization": {
+    "status": "PREPARED_REVIEW_REQUIRED",
+    "artifact": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v1.json",
+      "sha256": "a0f067871c2a764058bc549fdd0739508cd2072e92bf1ce3e346687443012f68"
+    },
+    "consumer_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1",
+    "allowed_purpose": "REPRESENTATIVE_POST_ATTENTION_M1F0_ROUTING_ONLY",
+    "source_historical_attempt": {
+      "path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+      "sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9"
+    },
+    "source_retention_manifest": {
+      "path": "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-private-manifest-v1.json",
+      "sha256": "1007112a0642919321d0081e79bba12fe3809c456e79a22b9623d19689b78112",
+      "embedded_manifest_sha256": "bd3cc6c10faee0d8c8072000403bbef68354286515482a6b78869ab02be81e13"
+    },
+    "artifacts": [
+      {"key": "blk.3.ffn_norm.weight", "role": "post_attention_ffn_norm", "sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "provenance": "RETAINED_ANTECEDENT_AND_ACCEPTED_M1F0_DECODED_AUTHORITY"},
+      {"key": "blk.3.ffn_gate_inp.weight", "role": "router_matrix", "sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a", "dtype": "little-endian-f32", "shape": [256, 6144], "byte_length": 6291456, "provenance": "RETAINED_ANTECEDENT_AND_ACCEPTED_M1F0_DECODED_AUTHORITY"},
+      {"key": "blk.3.exp_probs_b.bias", "role": "correction_bias", "sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491", "dtype": "little-endian-f32", "shape": [256], "byte_length": 1024, "provenance": "ACCEPTED_M1F0_DECODED_AUTHORITY"}
+    ],
+    "execution_preflight_requirements": [
+      "EXPECTED_SHA_EQUALS_BEFORE_SHA_EQUALS_AFTER_SHA",
+      "REGULAR_READ_ONLY_NON_SYMLINK_SINGLE_LINK_NO_WRITABLE_ALIAS",
+      "NO_CHECKPOINT_FALLBACK",
+      "NO_MUTABLE_ALIAS_WITH_CANDIDATE_OR_DIRECT_DPREFIX_OUTPUTS"
+    ],
+    "new_payload_reads": 0
+  },
+  "output_contract": {
+    "canonical_serialization": {
+      "f32_stages": "CANONICAL_LITTLE_ENDIAN_IEEE754_BINARY32_C_ORDER",
+      "router_scores_and_weights": "CANONICAL_LITTLE_ENDIAN_IEEE754_BINARY64",
+      "ranking": "CANONICAL_LITTLE_ENDIAN_UNSIGNED16_FULL_256_ORDER",
+      "selected_ids": "CANONICAL_LITTLE_ENDIAN_UNSIGNED16_EIGHT_IDS"
+    },
+    "required_stage_sha256": [
+      "attention_normalized", "query_rank", "query_rank_normalized", "query_heads",
+      "kv_raw", "kv_normalized", "key_nope", "attention_scores", "attention_weights",
+      "value_heads", "attention_output", "post_attention_residual", "router_normalized", "router_logits",
+      "router_scores", "ranking", "selected_ids", "routing_weights"
+    ],
+    "finite_checks_required": true,
+    "fresh_process_repeats": 10,
+    "minimum_fresh_process_repeats": 2,
+    "checkpoint_rereads_for_reproduction": 0,
+    "exact_class_stage_sha_match": "10_OF_10_REQUIRED",
+    "route_result_identity": "10_OF_10_REQUIRED",
+    "retained_payloads_rehashed_before_and_after": true
+  },
+  "surface_separation": {
+    "historical_direct_dprefix_route_and_outputs": "VALID_BUT_DIFFERENT_SURFACE_PROHIBITED_AS_INPUT",
+    "prohibited_input_identities": [
+      "PRE_ATTENTION_ENTRY_TO_FFN_DIRECT_ANALYTICAL_ROUTE",
+      "DIRECT_DPREFIX_SELECTED_EXPERT_OUTPUTS",
+      "DIRECT_DPREFIX_SHARED_OUTPUT",
+      "DIRECT_DPREFIX_ROUTED_AGGREGATE",
+      "e9427e22ef86f161786cfcf22a74b92c1cca50e3d601c6c119633d1458904594"
+    ],
+    "representative_route_must_be_computed_from_new_S1": true
+  },
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "independent_adversarial_review_required": true,
+    "execution_release_required_after_review": true,
+    "expert_execution_authorized": false,
+    "shared_expert_execution_authorized": false,
+    "candidate_or_model_dispatch_authorized": false,
+    "M1_F_authorized": false,
+    "M1_G_authorized": false,
+    "P1_authorized": false
+  },
+  "preparation_isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "representative_computations": 0,
+    "expert_dispatches": 0,
+    "gpu_dispatches": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166,
+    "attempt_records_created": 0,
+    "execution_start_records_created": 0
+  }
+}

@@ -372,3 +372,26 @@ Gate: the corrected public package reconstructs the authority chain from
 committed bytes, preserves historical accepted execution evidence, grants no
 real-event authority, performs no checkpoint or shard access, and leaves the
 real-payload ledger exactly 166.
+
+## Phase 26 — Representative M1-F0 execution authorization preparation
+
+- Bind the corrected boundary v3, semantic graph v2, epsilon adjudication, and
+  canonical pre-attention DPREFIX input to one review-gated attention-to-router
+  event that stops before all expert and M1-F execution.
+- Re-derive the exact ordered nine-read inventory from committed catalog
+  metadata and quant-block arithmetic, with one shard open, 132,900,864 packed
+  bytes, no fallback reads, and durable partial accounting from ledger 166.
+- Prepare a separate consumer-scoped reuse authority for the retained FFN norm,
+  router matrix, and correction bias, requiring immutable before/after identity
+  checks and forbidding checkpoint fallback or direct-DPREFIX output reuse.
+- Freeze strict binary32 fixed-order attention/residual/FFN-normalization and
+  mixed f32/f64 routing semantics, canonical output serialization, ten retained-
+  material fresh-process repeats, and terminal no-retry behavior.
+- Reject mutations to the head, semantic identities, epsilon or dtype,
+  inventory order/ranges/totals, shard-open/read budget, ledger interval,
+  partial-failure doctrine, router reuse, or stop boundary.
+
+Gate: the authorization remains `PREPARED_REVIEW_REQUIRED`,
+`real_event_authorized=false`, checkpoint reads and shard opens remain zero,
+the ledger remains 166, and independent adversarial review is the only next
+step.
