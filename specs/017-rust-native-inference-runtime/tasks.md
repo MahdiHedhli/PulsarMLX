@@ -435,3 +435,9 @@
   but fail closed on the frozen cosine budget, leaving membership PASS,
   coefficient qualification FAIL, route invariance unproven, checkpoint reads
   and shard opens zero, and the real-payload ledger unchanged at 163.
+- [x] T017-221 Freeze complete-layer aggregate acceptance v2 at the committed
+  final-f32 residual-plus-routed-plus-shared surface: use the unchanged R10
+  final-output limits, reuse the v1 routed interval without tightening, include
+  final-cast transport, freeze the tangent-ball cosine lemma before observing
+  the shared output, derive the exact three-payload shared recovery inventory,
+  and preserve v1 history, zero checkpoint access, and ledger 163.

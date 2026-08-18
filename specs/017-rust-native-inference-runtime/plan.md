@@ -292,3 +292,19 @@ checkpoint reads and shard opens zero and the real-payload ledger fixed at 163.
 Gate: any failed aggregate budget keeps `ROUTE NOT PROVEN INVARIANT`; no theorem
 or tolerance adjustment, checkpoint access, payload-ledger mutation, or M1-F0
 authorization occurs in this phase.
+
+## Phase 22 — Complete-layer aggregate acceptance v2 freeze
+
+- Bind the production complete-layer value as the final binary32 cast of the
+  canonical residual plus the binary64 routed/shared combination.
+- Apply the immutable R10 final-output thresholds (`0.0625`, `0.03125`, and
+  cosine `0.999`) while preserving routed-only v1 and its FAIL unchanged.
+- Reuse the frozen v1 routed interval, include final-f32 transport, and freeze a
+  value-agnostic Euclidean tangent-ball cosine theorem with separate H=2.
+- Treat a future exact-class shared output as a point only within the frozen
+  routing-weight ambiguity proof and derive its exact three-payload recovery
+  inventory from committed catalog metadata.
+
+Gate: synthetic/adversarial/property and public validation pass before any real
+shared output is observed; checkpoint reads and shard opens remain zero and the
+real-payload ledger remains 163 pending a separately reviewed recovery event.

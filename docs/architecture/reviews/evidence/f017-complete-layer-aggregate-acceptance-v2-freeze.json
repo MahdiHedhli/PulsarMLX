@@ -1,0 +1,70 @@
+{
+  "schema": "pulsarmlx.f017.complete-layer-aggregate-acceptance-v2-freeze",
+  "schema_version": "1.0.0",
+  "starting_head": "e16cf8751476b00bd3a7b638b55e0bc5cea8ede8",
+  "result": "COMPLETE-LAYER AGGREGATE V2 FROZEN",
+  "semantic_adjudication": "COMPLETE LAYER USES R10 FINAL-OUTPUT LIMITS",
+  "surface": "L=f32(f64(DPREFIX-EXACT-1)+(routed_aggregate+f64(shared_expert_output)))",
+  "r10_final_output": {
+    "source_sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+    "max_absolute": 0.0625,
+    "rmse": 0.03125,
+    "cosine_minimum": 0.999,
+    "thresholds_unchanged": true
+  },
+  "routed_uncertainty": {
+    "sound_intersection_sha256": "adbbbef090c4d10acc80d0216cc82b5a8dbe299dad4baad1a0d957f661762a50",
+    "maximum_absolute_bound": 1.3373477198218997e-05,
+    "rmse_bound": 2.0649012042555876e-06,
+    "derived_outward_l2_bound": 0.00016185453822991022,
+    "tightened": false
+  },
+  "theorem": {
+    "max_absolute": "outward final-f32 component radius maximum",
+    "rmse": "outward final-f32 L2 radius divided by sqrt(6144)",
+    "cosine": "down(sqrt(1-(epsilon/A_lower)^2)) when epsilon<A_lower",
+    "shared_point_rule": "delta_S=0 only for exact-class persisted canonical shared output within this routing-only proof",
+    "engineering_h2": 2.0
+  },
+  "future_recovery": {
+    "shard_index": 2,
+    "reads": 3,
+    "packed_bytes": 27623424,
+    "ledger_transition": "163 -> 166",
+    "output": "canonical little-endian f32[6144] shared-expert down output"
+  },
+  "validation": {
+    "synthetic_theorem_tests": 18,
+    "validator_tests": 5,
+    "property_samples_contained": true,
+    "final_cast_samples_contained": true,
+    "intermediate_threshold_mutation_rejected": true,
+    "real_shared_output_loaded": false,
+    "deterministic_replay": true
+  },
+  "historical_immutability": {
+    "v1_contract_sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac",
+    "v1_evaluation_sha256": "672884e0c217600f9104d7a4d6fdd27a87e0a73fac686044de86461af98781e7",
+    "v1_result": "FAIL_UNCHANGED",
+    "membership": "PASS_UNCHANGED_1984_OF_1984",
+    "coefficient": "FAIL_UNCHANGED_0_OF_8",
+    "route": "ROUTE NOT PROVEN INVARIANT"
+  },
+  "artifacts": {
+    "contract_sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe",
+    "implementation_sha256": "1e5de4c450ff60a8c5eca0042fdf3d6b328b46c958cc2c72b279d48c1d86bd57",
+    "theorem_tests_sha256": "6ae587289f3b3f8618e0e8ca5d5c806a8fb882025631610b4efdc3af9460f0c9",
+    "specification_sha256": "6f1b47217fc7f4eba45cf0964b436e250661462b700a8743b0823f0db09ccb2f",
+    "validator_sha256": "b184a003422b07a53bc6423db2eee0d7fd7a561341dfd561f9d279f62f3cbd31",
+    "validator_tests_sha256": "88ce2077e5fb2524e2a0bb4d51fd9576c582c5456b5e31e3a20cee524724cdf5"
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "real_payload_ledger": 163,
+    "real_shared_outputs_loaded": 0,
+    "real_complete_layers_evaluated": 0
+  },
+  "next_action": "Prepare a separately reviewed shared-expert recovery authorization for the exact three frozen payloads; do not execute reads."
+}

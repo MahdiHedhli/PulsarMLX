@@ -1,0 +1,144 @@
+{
+  "schema": "pulsarmlx.f017.complete-layer-aggregate-acceptance-contract",
+  "schema_version": "2.0.0",
+  "contract_id": "f017-complete-layer-aggregate-acceptance-v2",
+  "status": "FROZEN_BEFORE_REAL_SHARED_EXPERT_OUTPUT",
+  "scope": "directed-outward acceptance theorem for the complete layer-3 output under the already-frozen routing-weight ambiguity",
+  "semantic_adjudication": "COMPLETE LAYER USES R10 FINAL-OUTPUT LIMITS",
+  "surface": {
+    "formula": "L=f32(f64(R)+(M+f64(S)))",
+    "residual": "R is DPREFIX-EXACT-1 layer_3_entry, canonical f32[6144], added exactly once",
+    "routed_aggregate": "M is the fixed Python-math.fsum-equivalent binary64 sum of ID-keyed routing_weight*f64(expert_down_output)",
+    "shared_output": "S is the strict-f32 shared-expert down output from the same FFN RMSNorm input, with no additional output gate or scale",
+    "addition_order": "M+f64(S), then f64(R), then one round-to-nearest binary32 cast",
+    "shape": [6144]
+  },
+  "r10_final_output_authority": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+    "sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+    "threshold_origin": "power-of-two envelopes frozen for one R9 residual, one router projection, 27 expert projections, nonlinear activation, weighted aggregation, and final residual before production R10 output",
+    "family": "final",
+    "max_absolute_error": 0.0625,
+    "rmse": 0.03125,
+    "cosine_similarity_minimum": 0.999,
+    "thresholds_rederived": false,
+    "thresholds_changed": false
+  },
+  "canonical_authorities": {
+    "residual_artifact": "DPREFIX-EXACT-1",
+    "residual_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "residual_descriptor_path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json",
+    "residual_descriptor_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256",
+    "shared_ffn_norm_weight_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+    "shared_rms_epsilon": "f32(1e-5)"
+  },
+  "routed_uncertainty_reuse": {
+    "v1_contract_sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac",
+    "v1_evaluation_path": "docs/architecture/reviews/evidence/f017-weighted-moe-aggregate-safety-evaluation-v1.json",
+    "v1_evaluation_sha256": "672884e0c217600f9104d7a4d6fdd27a87e0a73fac686044de86461af98781e7",
+    "v1_sound_intersection_sha256": "adbbbef090c4d10acc80d0216cc82b5a8dbe299dad4baad1a0d957f661762a50",
+    "v1_nominal_routed_aggregate_sha256": "5a30a81b6e10b126ac22a3be991e5f5c6486372068888f699625b684eb85fc70",
+    "maximum_absolute_bound": 1.3373477198218997e-05,
+    "rmse_bound": 2.0649012042555876e-06,
+    "derived_outward_l2_bound": 0.00016185453822991022,
+    "routing_weight_lineage": {
+      "route_evaluation_sha256": "a4f3e1afe84be2cade1ed6c1728b2f82cd0ff2d22e8a964779f3216baf124eb4",
+      "expert_output_reuse_authorization_sha256": "b370d3c3dd938eeadd18f34fabab89077319b979b994b97ffa33afddf2bffa28"
+    },
+    "tightening_after_shared_observation": "forbidden"
+  },
+  "shared_expert_ambiguity": {
+    "proof_scope": "routing-weight ambiguity only; routed expert outputs, residual, and shared output are canonical point authorities",
+    "required_future_class": "EXACT_CLASS plus PERSISTED_AUTHORITY",
+    "required_reproduction": "independent fixed-order exact identity before downstream use",
+    "point_rule": "delta_S=0 for this routing-only ambiguity proof after the canonical shared output passes recovery and reuse authorization",
+    "state_box_extension_through_shared_expert": "not part of the accepted v1 routed-uncertainty lineage and not silently introduced by v2",
+    "bounded_class_rule": "if the shared output is not exact-class, supply sound componentwise intervals and include them in delta_L"
+  },
+  "shared_expert_computation": {
+    "input": "strict-f32 RMSNorm(DPREFIX-EXACT-1, blk.3.ffn_norm.weight, f32(1e-5))",
+    "gate": "strict-f32 row-major [out,in] projection",
+    "up": "strict-f32 row-major [out,in] projection",
+    "activation": "strict-f32 SiLU(gate) multiplied by up",
+    "down": "strict-f32 row-major [out,in] projection",
+    "accumulation": "fixed increasing-column binary32 accumulation with per-operation rounding",
+    "output": "canonical little-endian f32[6144]",
+    "hidden_parameters": "none beyond gate/up/down and the already-retained FFN norm gamma/epsilon"
+  },
+  "perturbation_theorem": {
+    "nominal": "L0_k=f32(f64(R_k)+(M0_k+f64(S0_k)))",
+    "admissible": "L_k=f32(f64(R_k)+((M0_k+delta_M_k)+(S0_k+delta_S_k)))",
+    "transport": "propagate intervals through implementation-order binary64 additions, monotone round-to-nearest binary32 materialization, and outward subtraction from L0",
+    "component_radius": "B_k=up(max(abs(delta_L_k.lower),abs(delta_L_k.upper)))",
+    "max_absolute": "B_inf=max_k(B_k)",
+    "rmse": "B_rmse=up(sqrt(sum_k(B_k^2)/6144))",
+    "l2": "epsilon=up(sqrt(sum_k(B_k^2)))",
+    "nominal_norm": "A_lower is a directed-outward lower bound on ||L0||2",
+    "cosine": "if epsilon<A_lower, cosine(L0,L)>=down(sqrt(1-(epsilon/A_lower)^2)); otherwise fail closed",
+    "cosine_derivation": "the radius-epsilon Euclidean ball centered at L0 subtends its maximum angle at the tangent point where sin(theta)=epsilon/||L0||2",
+    "formula_selection": "geometric tangent-ball formula only; no post-observation selection or intersection",
+    "rounding": "binary64 interval endpoints use nextafter outward rounding; final binary32 cast is monotone and outward-enclosed"
+  },
+  "acceptance": {
+    "max_absolute_error": 0.0625,
+    "rmse": 0.03125,
+    "cosine_similarity_minimum": 0.999,
+    "mathematical_pass": "all three complete-layer final-output limits pass",
+    "max_absolute_factor": "down(0.0625/B_inf)",
+    "rmse_factor": "down(0.03125/B_rmse)",
+    "cosine_factor": "down((1-0.999)/(1-cosine_lower))",
+    "aggregate_safety_factor": "minimum of the three applicable downward-rounded factors",
+    "engineering_h2_threshold": 2.0,
+    "engineering_pass": "mathematical pass and aggregate safety factor at least 2"
+  },
+  "future_shared_payload_inventory": {
+    "source_path": "docs/architecture/reviews/evidence/f017-m1-f-post-route-inventory-v1.json",
+    "source_sha256": "9352dcb9486d2c1c1a9ff743453c0a973b0f003ba141f0c85602f7ce243d3799",
+    "shard_index": 2,
+    "shard_name": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "maximum_shard_opens": 1,
+    "reads": 3,
+    "packed_bytes": 27623424,
+    "ledger_before": 163,
+    "ledger_after": 166,
+    "payloads": [
+      {"role":"gate","key":"blk.3.ffn_gate_shexp.weight","offset":4211300192,"packed_bytes":8650752,"quantization":"Q5_K","logical_shape":[2048,6144],"catalog_identity":"1d5229215e4fa1b53b6ae4898bdd27a434e4b0ed32876a243081c67881e17c4a"},
+      {"role":"up","key":"blk.3.ffn_up_shexp.weight","offset":5050447712,"packed_bytes":8650752,"quantization":"Q5_K","logical_shape":[2048,6144],"catalog_identity":"7cfd5bb7477977f6c9da6d24098767a5e377ca3a5d8271996e7b90b577560546"},
+      {"role":"down","key":"blk.3.ffn_down_shexp.weight","offset":3364214624,"packed_bytes":10321920,"quantization":"Q6_K","logical_shape":[6144,2048],"catalog_identity":"c2464f715ca553fd59e1d8c703501d4c799d5f3b80b0830ad28ac30e448c240e"}
+    ]
+  },
+  "implementation_artifacts": [
+    {"path":"scripts/research/f017_complete_layer_aggregate_acceptance_v2.py","sha256":"1e5de4c450ff60a8c5eca0042fdf3d6b328b46c958cc2c72b279d48c1d86bd57"},
+    {"path":"scripts/research/tests/test_f017_complete_layer_aggregate_acceptance_v2.py","sha256":"6ae587289f3b3f8618e0e8ca5d5c806a8fb882025631610b4efdc3af9460f0c9"},
+    {"path":"docs/architecture/reviews/f017-complete-layer-aggregate-acceptance-v2-spec.md","sha256":"6f1b47217fc7f4eba45cf0964b436e250661462b700a8743b0823f0db09ccb2f"}
+  ],
+  "semantic_sources": [
+    {"path":"crates/f017-runner/src/layer_qualification.rs","sha256":"4b70a22816a1a14d990bee15a5e57e1ea1963b1c37a666b89b07fa6633b240e3"},
+    {"path":"scripts/research/generate_f017_r10_oracle.py","sha256":"da5ade945be6c9f0887d98c1d54ffa3d54ce6a6ce727773714f592b75ff6cd22"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json","sha256":"07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75"}
+  ],
+  "historical_immutability": {
+    "REAL_1":"REJECTED_UNCHANGED","REAL_2":"REJECTED_UNCHANGED","REAL_3":"REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1":"CANONICAL_UNCHANGED","membership":"PASS_UNCHANGED_1984_OF_1984",
+    "coefficient_qualification":"FAIL_UNCHANGED_0_OF_8","routed_v1_result":"FAIL_UNCHANGED",
+    "routed_v1_bounds":{"max_absolute":1.3373477198218997e-05,"rmse":2.0649012042555876e-06,"cosine_lower":0.9990571244636769},
+    "route_disposition":"ROUTE NOT PROVEN INVARIANT","real_payload_ledger":163
+  },
+  "anti_fitting": {
+    "real_shared_output_loaded": false,
+    "real_complete_layer_evaluated": false,
+    "routed_interval_tightened": false,
+    "threshold_changed": false,
+    "v1_modified": false,
+    "synthetic_inputs_only": true
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "candidate_or_model_dispatches": 0,
+    "real_payload_ledger_before": 163,
+    "real_payload_ledger_after": 163
+  }
+}
