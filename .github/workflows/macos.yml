@@ -368,7 +368,7 @@ jobs:
           .venv/bin/python -m scripts.research.validate_f017_q6_k_repository_evidence \
             --repository-root . \
             --evidence docs/architecture/reviews/evidence/f017-q6-k-real-byte-qualification-attempt-1-v1.json
-          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json"))["cumulative_tensor_payloads"])')" = 163
+          test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json"))["cumulative_tensor_payloads"])')" = 166
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-infrastructure-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-numerical-surface-closure-preflight-v1.json"))["result"])')" = READY_TO_EXECUTE_DENSE_PREFIX_REAL_CAPTURE
           test "$(.venv/bin/python -c 'import json; print(json.load(open("docs/architecture/reviews/evidence/f017-dprefix-full-tier-b-synthetic-rehearsal-v1.json"))["result"])')" = FULL_TIER_B_SURFACE_INSTANTIABLE_CHECKPOINT_FREE
@@ -484,7 +484,7 @@ jobs:
           test "$(jq -r .dispatch.fallback "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json")" = 0
           test "$(jq -r .dispatch.backend_errors "$RUNNER_TEMP/f017-dprefix-real2-full-exact-shape.json")" = 0
           test "$(jq -r .result docs/architecture/reviews/evidence/f017-dprefix-real2-preflight-v1.json)" = READY_TO_EXECUTE_DPREFIX_REAL_2_PENDING_INDEPENDENT_REVIEW
-          test "$(jq -r .cumulative_tensor_payloads docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json)" = 163
+          test "$(jq -r .cumulative_tensor_payloads docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json)" = 166
       - name: Test bounded worker contract
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \

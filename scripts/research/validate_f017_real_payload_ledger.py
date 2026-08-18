@@ -27,6 +27,14 @@ CANONICAL_EXPERT_RECOVERY_EVIDENCE = (
     "docs/architecture/reviews/evidence/"
     "f017-canonical-expert-recovery-result-v1.json"
 )
+CANONICAL_SHARED_RECOVERY_CONTRACT = (
+    "specs/017-rust-native-inference-runtime/contracts/"
+    "f017-canonical-shared-expert-output-recovery-v1.json"
+)
+CANONICAL_SHARED_RECOVERY_EVIDENCE = (
+    "docs/architecture/reviews/evidence/"
+    "f017-canonical-shared-expert-recovery-result-v1.json"
+)
 
 
 def digest(path: Path) -> str:
@@ -118,6 +126,26 @@ def build_ledger(root: Path) -> dict[str, object]:
         "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
         "complete canonical expert-output recovery with 24 retained payloads, dual-decoder agreement, and exact two-process output reproduction",
         CANONICAL_EXPERT_RECOVERY_EVIDENCE, recovery_tensors, True, "execution"))
+    shared_contract = json.loads((root / CANONICAL_SHARED_RECOVERY_CONTRACT).read_text())
+    shared_evidence = json.loads((root / CANONICAL_SHARED_RECOVERY_EVIDENCE).read_text())
+    shared_inventory = shared_contract.get("payload_inventory", [])
+    shared_tensors = [item["checkpoint_key"] for item in shared_inventory]
+    if len(shared_tensors) != 3 or len(set(shared_tensors)) != 3:
+        raise ValueError("canonical shared recovery inventory must contain exactly 3 unique payloads")
+    if sum(int(item["packed_length"]) for item in shared_inventory) != 27_623_424:
+        raise ValueError("canonical shared recovery packed-byte budget mismatch")
+    if (
+        shared_evidence.get("classification") != "COMPLETE"
+        or shared_evidence.get("consumed_read_count") != 3
+        or shared_evidence.get("packed_bytes") != 27_623_424
+        or shared_evidence.get("ledger_before") != 163
+        or shared_evidence.get("ledger_after") != 166
+    ):
+        raise ValueError("canonical shared recovery terminal evidence mismatch")
+    e.append(event(root, "CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY",
+        "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+        "complete canonical shared-expert output recovery with 3 retained payloads, dual-decoder agreement, and exact two-process output reproduction",
+        CANONICAL_SHARED_RECOVERY_EVIDENCE, shared_tensors, True, "execution"))
     cumulative = 0
     seen: set[str] = set()
     for item in e:

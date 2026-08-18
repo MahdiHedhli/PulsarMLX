@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import copy
+import shutil
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 
 from scripts.research import validate_f017_complete_layer_aggregate_acceptance_v2 as validator
 
@@ -9,7 +13,29 @@ from scripts.research import validate_f017_complete_layer_aggregate_acceptance_v
 class CompleteLayerV2ValidatorTests(unittest.TestCase):
     def test_public_package_validates(self):
         validator.validate_contract()
-        validator.validate_history()
+        # The frozen validator correctly binds the ledger as it stood when the
+        # v2 theorem was frozen.  Reconstruct that historical input instead of
+        # treating later append-only payload events as a theorem mutation.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for source in (
+                validator.V1_CONTRACT,
+                validator.V1_EVIDENCE,
+                validator.ROUTE_EVIDENCE,
+                validator.REUSE_AUTHORIZATION,
+            ):
+                relative = source.relative_to(validator.ROOT)
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+            relative = validator.LEDGER.relative_to(validator.ROOT)
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(subprocess.check_output([
+                "git", "-C", str(validator.ROOT), "show",
+                f"{validator.STARTING_HEAD}:{relative.as_posix()}",
+            ]))
+            validator.validate_history(root)
         validator.validate_evidence()
 
     def test_intermediate_threshold_family_mutation_fails(self):

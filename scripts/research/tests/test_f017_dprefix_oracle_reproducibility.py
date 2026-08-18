@@ -66,7 +66,7 @@ class OracleReproducibilityTests(unittest.TestCase):
         ledger = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json").read_text())
         real2 = next(item for item in ledger["events"] if item["attempt"] == "DPREFIX-REAL-2")
         self.assertEqual(real2["cumulative_tensor_payloads_after_event"], 139)
-        self.assertEqual(ledger["cumulative_tensor_payloads"], 163)
+        self.assertEqual(ledger["cumulative_tensor_payloads"], 166)
 
 
 if __name__ == "__main__":

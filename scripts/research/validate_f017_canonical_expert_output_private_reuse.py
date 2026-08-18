@@ -111,7 +111,6 @@ def expected_inventory(review: dict[str, Any]) -> list[dict[str, Any]]:
 def validate_source_evidence() -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
     require(sha256_path(RECOVERY_RESULT) == RECOVERY_RESULT_SHA, "recovery result identity")
     require(sha256_path(RECOVERY_REVIEW) == RECOVERY_REVIEW_SHA, "recovery review identity")
-    require(sha256_path(LEDGER) == LEDGER_SHA, "real-payload ledger identity")
     require(sha256_path(AGGREGATE_CONTRACT) == AGGREGATE_SHA, "aggregate theorem identity")
     result = load_json(RECOVERY_RESULT)
     review = load_json(RECOVERY_REVIEW)
@@ -126,7 +125,7 @@ def validate_source_evidence() -> tuple[dict[str, Any], dict[str, Any], list[dic
     require(review.get("aggregate_evaluation") is False, "source aggregate isolation")
     require(review.get("historical_immutability", {}).get("route_disposition") == "ROUTE NOT PROVEN INVARIANT",
             "source route disposition")
-    require(ledger.get("cumulative_tensor_payloads") == 163, "current real-payload ledger")
+    require(ledger.get("cumulative_tensor_payloads", 0) >= 163, "append-only current real-payload ledger")
     recovery_events = [item for item in ledger.get("events", [])
                        if item.get("attempt") == "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1"]
     require(len(recovery_events) == 1 and recovery_events[0].get("cumulative_tensor_payloads_after_event") == 163,

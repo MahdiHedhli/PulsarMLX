@@ -73,7 +73,7 @@ def validate() -> str:
     require(review["dual_decoder"] == {"agreement_count": 24, "required_count": 24, "result": "PASS"}, "dual decoder")
     require(review["reproduction"] == {"fresh_processes": 2, "exact_outputs": 8, "required_outputs": 8, "result": "PASS"}, "reproduction")
     require(review["ledger"] == {"before": 139, "after": 163, "delta": 24, "reconciled": True}, "review ledger")
-    require(ledger["cumulative_tensor_payloads"] == 163, "current ledger")
+    require(ledger["cumulative_tensor_payloads"] >= 163, "append-only current ledger")
     events = [item for item in ledger["events"] if item["attempt"] == review["attempt_id"]]
     require(len(events) == 1 and events[0]["tensor_payload_count"] == 24 and events[0]["cumulative_tensor_payloads_after_event"] == 163, "ledger event")
     require(review["aggregate_evaluation"] is False and review["automatic_retry"] is False and review["second_attempt_authorized"] is False, "scope")
