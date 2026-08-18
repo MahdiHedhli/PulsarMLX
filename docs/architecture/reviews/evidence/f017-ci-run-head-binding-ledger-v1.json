@@ -421,6 +421,26 @@
       "run_id": 32085496220,
       "source": "GitHub Actions run 32085496220 queried after the canonical expert-output recovery evidence, clean-checkout decoder prerequisite, and append-only ledger CI corrections were pushed; both Apple jobs passed, including the full 1003-test Python methodology suite, full Rust workspace, native MLX fixture matrix, recovery evidence validation, and authoritative real-payload ledger value 163.",
       "workflow": "macOS baseline"
+    },
+    {
+      "conclusion": "success",
+      "head_sha": "2b85b39a8554fecaa117dd5dde8a0363112cdccb",
+      "jobs": [
+        {
+          "conclusion": "success",
+          "job_id": 95746555839,
+          "name": "Apple MLX small-fixture validation"
+        },
+        {
+          "conclusion": "success",
+          "job_id": 95746555972,
+          "name": "Apple Silicon workspace baseline"
+        }
+      ],
+      "phase": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1-CLOSEOUT",
+      "run_id": 32148033478,
+      "source": "GitHub Actions run 32148033478 queried after the canonical shared-expert recovery evidence and append-only ledger update were pushed; both Apple jobs passed, including the full Python methodology suite, full Rust workspace, native MLX fixture matrix, shared-expert recovery evidence validation, and authoritative real-payload ledger value 166.",
+      "workflow": "macOS baseline"
     }
   ],
   "schema": "pulsarmlx.f017.ci-run-head-binding-ledger",
