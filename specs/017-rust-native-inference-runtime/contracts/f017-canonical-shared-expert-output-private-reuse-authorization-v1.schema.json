@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.canonical-shared-expert-output-private-reuse-authorization-v1",
+  "title": "F017 canonical shared-expert output private reuse authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "authorization_id",
+    "status",
+    "authoritative_before_head",
+    "schema_contract",
+    "source",
+    "artifact",
+    "authority_classification",
+    "consumer",
+    "complete_layer_v2",
+    "routed_dependencies",
+    "isolation",
+    "historical_immutability",
+    "result"
+  ],
+  "properties": {
+    "schema": {
+      "const": "pulsarmlx.f017.canonical-shared-expert-output-private-reuse-authorization"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "authorization_id": {
+      "const": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-REUSE-1"
+    },
+    "status": {
+      "const": "AUTHORIZED_NOT_EVALUATED"
+    },
+    "authoritative_before_head": {
+      "const": "58b3577f0ad8793a981b1345c5012cf2bf6f08e5"
+    },
+    "schema_contract": {
+      "type": "object"
+    },
+    "source": {
+      "type": "object"
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "symbolic_name",
+        "dtype",
+        "shape",
+        "byte_length",
+        "expected_sha256",
+        "before_sha256",
+        "after_sha256",
+        "canonical_input_sha256",
+        "source_weight_packed_sha256",
+        "regular_file",
+        "read_only",
+        "no_symlink_indirection",
+        "hard_link_count",
+        "no_writable_hard_link_alias",
+        "no_mutable_active_output_copy"
+      ],
+      "properties": {
+        "symbolic_name": {
+          "const": "outputs/canonical_shared_expert_output.bin"
+        },
+        "dtype": {
+          "const": "f32"
+        },
+        "shape": {
+          "const": [6144]
+        },
+        "byte_length": {
+          "const": 24576
+        },
+        "expected_sha256": {
+          "const": "01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d"
+        },
+        "before_sha256": {
+          "const": "01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d"
+        },
+        "after_sha256": {
+          "const": "01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d"
+        },
+        "canonical_input_sha256": {
+          "const": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+        },
+        "source_weight_packed_sha256": {
+          "type": "object"
+        },
+        "regular_file": {
+          "const": true
+        },
+        "read_only": {
+          "const": true
+        },
+        "no_symlink_indirection": {
+          "const": true
+        },
+        "hard_link_count": {
+          "const": 1
+        },
+        "no_writable_hard_link_alias": {
+          "const": true
+        },
+        "no_mutable_active_output_copy": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "authority_classification": {
+      "type": "object"
+    },
+    "consumer": {
+      "type": "object"
+    },
+    "complete_layer_v2": {
+      "type": "object"
+    },
+    "routed_dependencies": {
+      "type": "object"
+    },
+    "isolation": {
+      "type": "object"
+    },
+    "historical_immutability": {
+      "type": "object"
+    },
+    "result": {
+      "const": "CANONICAL SHARED EXPERT OUTPUT REUSE AUTHORIZED"
+    }
+  }
+}

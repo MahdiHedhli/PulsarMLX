@@ -441,3 +441,11 @@
   final-cast transport, freeze the tangent-ball cosine lemma before observing
   the shared output, derive the exact three-payload shared recovery inventory,
   and preserve v1 history, zero checkpoint access, and ledger 163.
+- [x] T017-222 Authorize checkpoint-free cross-event reuse of the recovered
+  canonical shared-expert f32 `[6144]` output: bind its terminal recovery,
+  exact two-process reproduction, immutable single-link persisted authority,
+  and three-weight provenance; scope `delta_S=0` only to the frozen routing-
+  weight ambiguity proof; bind the distinct complete-layer-v2 analytical
+  consumer and unchanged routed dependencies without evaluation or
+  recomputation; preserve zero checkpoint reads, zero shard opens, historical
+  dispositions, and the real-payload ledger at 166.

@@ -308,3 +308,23 @@ authorization occurs in this phase.
 Gate: synthetic/adversarial/property and public validation pass before any real
 shared output is observed; checkpoint reads and shard opens remain zero and the
 real-payload ledger remains 163 pending a separately reviewed recovery event.
+
+## Phase 23 — Canonical shared-expert output reuse authorization
+
+- Preserve the completed shared-expert recovery event as terminal immutable
+  history and authorize only its canonical little-endian f32 `[6144]` output
+  for a distinct checkpoint-free complete-layer-v2 analytical consumer.
+- Classify the retained object as `PERSISTED_AUTHORITY` produced by the reviewed
+  exact-class strict-f32, fixed-order, no-BLAS computation and require equal
+  expected/before/after SHA identities plus regular, read-only, single-link,
+  non-symlink storage.
+- Permit `delta_S=0` only for the frozen routing-weight ambiguity proof with
+  this exact canonical point artifact; do not generalize the point rule.
+- Bind the immutable routed-output reuse authorization, exact weights,
+  intervals, routed nominal aggregate, and routed sound enclosure without
+  recomputation or complete-layer metric evaluation.
+
+Gate: the public schema/authorization and private verifier pass provenance,
+identity, mutation, privacy, routed-compatibility, ledger, and historical-
+immutability checks with checkpoint reads and shard opens zero and the real-
+payload ledger fixed at 166.
