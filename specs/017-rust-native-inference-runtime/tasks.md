@@ -462,3 +462,10 @@
   authorities, preserve all historical identities as valid evidence on their
   precise surfaces, and bind the future CPU/no-BLAS, NTFY, one-open,
   166-to-175 event shape without authorizing or executing any read.
+- [x] T017-225 Adjudicate the representative M1-F0 RMSNorm epsilon entirely
+  from committed checkpoint-free evidence: trace GLM-5.2 configuration,
+  production f32 plumbing, accepted historical M1-F0, R9, dense-prefix, and
+  boundary-freeze lineages; establish exact `f32(1e-5)` (`0x3727c5ac`) for all
+  four representative RMSNorm sites; supersede only the erroneous v1/v2
+  declarations append-only; and bind regression tests while preserving zero
+  execution authority and the real-payload ledger at 166.

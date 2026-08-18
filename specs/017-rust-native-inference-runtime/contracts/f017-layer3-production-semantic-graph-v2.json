@@ -1,0 +1,157 @@
+{
+  "schema": "pulsarmlx.f017.layer3-production-semantic-graph",
+  "schema_version": "2.0.0",
+  "contract_id": "f017-layer3-production-semantic-graph-v2",
+  "status": "FROZEN_NO_EXECUTION_AUTHORITY",
+  "supersedes": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json",
+    "sha256": "ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b",
+    "reason": "v1 transcribed 1e-6 for representative RMSNorm sites despite the accepted executable GLM-5.2 lineage using f32(1e-5)"
+  },
+  "shape": [6144],
+  "layer": 3,
+  "rmsnorm_epsilon": {
+    "model_config_key": "glm-dsa.attention.layer_norm_rms_epsilon",
+    "source_decimal": "1e-5",
+    "dtype": "IEEE-754 binary32",
+    "exact_decimal": "9.999999747378752e-6",
+    "bits_hex": "0x3727c5ac",
+    "little_endian_hex": "acc52737",
+    "formula": "epsilon=f32(1e-5)",
+    "applies_to": [
+      "blk.3.attn_norm.weight",
+      "blk.3.attn_q_a_norm.weight",
+      "blk.3.attn_kv_a_norm.weight",
+      "blk.3.ffn_norm.weight"
+    ],
+    "site_specific_override": false
+  },
+  "boundaries": {
+    "S0": {
+      "name": "layer3_entry_pre_attention",
+      "dtype": "f32",
+      "input": "canonical layer-2 output",
+      "formula": "S0=layer2_output",
+      "residual_count": 0,
+      "authority_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+    },
+    "A_norm": {
+      "name": "layer3_attention_normalized_input",
+      "dtype": "f32",
+      "input": "S0",
+      "formula": "A_norm=strict_f32_rmsnorm(S0,blk.3.attn_norm.weight,epsilon=f32(1e-5))",
+      "residual_count": 0
+    },
+    "A": {
+      "name": "layer3_attention_output",
+      "dtype": "f32",
+      "input": "A_norm",
+      "formula": "A=MLA_DSA_position0_single_visible_attention(A_norm); q_a_norm and kv_a_norm use epsilon=f32(1e-5)",
+      "residual_count": 0
+    },
+    "S1": {
+      "name": "layer3_post_attention_residual",
+      "dtype": "f32",
+      "input": "S0,A",
+      "formula": "S1=f32(S0+A)",
+      "residual_count": 1
+    },
+    "F_norm": {
+      "name": "layer3_ffn_normalized_router_and_expert_input",
+      "dtype": "f32",
+      "input": "S1",
+      "formula": "F_norm=strict_f32_rmsnorm(S1,blk.3.ffn_norm.weight,epsilon=f32(1e-5))",
+      "residual_count": 1
+    },
+    "Route": {
+      "name": "layer3_representative_route",
+      "dtype": "mixed_f32_f64",
+      "input": "F_norm",
+      "formula": "logits=strict_f32_matvec(router,F_norm); probabilities=sigmoid_f64(logits); scores=probabilities+f64(f32_bias); top8=score_desc_id_asc; weights=2.5*p_i/max(fsum(selected_p),2^-14)",
+      "residual_count": 1
+    },
+    "Routed": {
+      "name": "layer3_selected_routed_expert_aggregate",
+      "dtype": "f64_accumulation",
+      "input": "F_norm,Route",
+      "formula": "Routed[k]=fsum_i(weight_i*f64(expert_i(F_norm)[k]))",
+      "residual_count": 1
+    },
+    "Shared": {
+      "name": "layer3_shared_expert_output",
+      "dtype": "f32",
+      "input": "F_norm",
+      "formula": "Shared=shared_down(silu(shared_gate(F_norm))*shared_up(F_norm))",
+      "residual_count": 1
+    },
+    "FFN": {
+      "name": "layer3_ffn_moe_branch",
+      "dtype": "f64",
+      "input": "Routed,Shared",
+      "formula": "FFN=Routed+f64(Shared)",
+      "residual_count": 1
+    },
+    "S2": {
+      "name": "layer3_complete_production_output",
+      "dtype": "f32",
+      "input": "S1,FFN",
+      "formula": "S2=f32(f64(S1)+FFN)",
+      "residual_count": 2
+    }
+  },
+  "required_order": ["S0", "A_norm", "A", "S1", "F_norm", "Route", "Routed", "Shared", "FFN", "S2"],
+  "representative_m1f0_boundary": {
+    "starts_at": "S0",
+    "ends_at": "Route",
+    "formula": "S0->A_norm->A->S1->F_norm->Route",
+    "expert_execution": false,
+    "shared_expert_execution": false,
+    "complete_layer_output": false
+  },
+  "direct_dprefix_ffn_only_boundary": {
+    "formula": "S0->direct_F_norm->direct_Route->direct_Routed/direct_Shared->direct_FFN->direct_completion",
+    "omitted_required_production_stage": "layer3 attention and S1",
+    "representative_m1f0_equivalent": false
+  },
+  "semantic_sources": [
+    {
+      "path": "crates/engine/src/lib.rs",
+      "sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406",
+      "role": "production config plumbing and shared layer attention/FFN RMSNorm epsilon"
+    },
+    {
+      "path": "docs/architecture/GLM52_CONTRACT.md",
+      "sha256": "c273b4c8e05b6bed370d670c8f77b8df80e6fdeecfdc60dd84c20e6635fa340e",
+      "role": "committed GLM-5.2 model configuration"
+    },
+    {
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d",
+      "role": "accepted historical representative M1-F0 executable oracle"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+      "sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+      "role": "accepted 10-of-10 deterministic representative M1-F0 result"
+    },
+    {
+      "path": "scripts/research/generate_f017_r9_oracle.py",
+      "sha256": "726c2e496471a9fbccba803df4c7c084b1f86547310564ed8af795dac29adb47",
+      "role": "independent accepted MLA/DSA oracle lineage"
+    },
+    {
+      "path": "scripts/research/f017_dprefix_oracle_runtime.py",
+      "sha256": "b7009479d1ed5a31294877d7a72939b30e70990ab9af97c351c17b9f33ebdf17",
+      "role": "independent dense-prefix attention lineage"
+    }
+  ],
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "candidate_or_model_dispatches": 0,
+    "gpu_dispatches": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166
+  }
+}

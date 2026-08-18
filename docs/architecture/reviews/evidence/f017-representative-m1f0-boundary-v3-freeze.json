@@ -1,0 +1,81 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-boundary-freeze",
+  "schema_version": "2.0.0",
+  "result": "REPRESENTATIVE M1-F0 BOUNDARY V3 FROZEN",
+  "starting_head": "3d9f49e48b68adc62fbdace331d2ef7f018f7610",
+  "supersedes_freeze": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-boundary-v2-freeze.json",
+    "sha256": "9395e66ade867b24f1a64e2217f9d6449a47e7d1b567bdae67cb84e23cbfb93a",
+    "scope": "RMSNorm epsilon declaration only",
+    "historical_identity_preserved": true
+  },
+  "adjudication": {
+    "result": "F32_1E_MINUS_5_AUTHORITATIVE",
+    "exact_decimal": "9.999999747378752e-6",
+    "bits_hex": "0x3727c5ac",
+    "applies_uniformly_to_representative_rmsnorm_sites": 4,
+    "contradiction_resolved": true
+  },
+  "artifacts": {
+    "semantic_graph": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    },
+    "representative_boundary": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v3.json",
+      "sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3"
+    },
+    "epsilon_adjudication": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-rmsnorm-epsilon-adjudication-v1.json",
+      "sha256": "fc92b11223ee174b5f206a45a6d2b50540b4c82ba5d2c2333010947d525646e4"
+    },
+    "rationale": {
+      "path": "docs/architecture/reviews/f017-representative-m1f0-rmsnorm-epsilon-adjudication.md",
+      "sha256": "7002df84661156cbf32ecc71e1ce6f97f828fe5f82d75a073967d1087d3c575d"
+    },
+    "validator": {
+      "path": "scripts/research/validate_f017_m1f0_rms_epsilon_adjudication.py",
+      "sha256": "2eb009704d1d5405c9071d3c48e141041a4bc782372434b38107fca3c573d1b0"
+    },
+    "mutation_tests": {
+      "path": "scripts/research/tests/test_validate_f017_m1f0_rms_epsilon_adjudication.py",
+      "sha256": "863463857572f92d176e5f3ce545fb7407a422f584a3fe27e9e03febc0a2f259"
+    }
+  },
+  "validation": {
+    "epsilon_adjudication_validator": "PASS",
+    "epsilon_mutation_tests": "PASS_10_OF_10",
+    "historical_boundary_v2_validator": "PASS",
+    "historical_boundary_v2_mutation_tests": "PASS_7_OF_7",
+    "dprefix_oracle_reproducibility": "PASS_5_OF_5",
+    "spec_kit_prerequisites": "PASS",
+    "git_diff_check": "PASS",
+    "wider_checkpoint_free_sample": "59_RUN_55_PASS_4_PREEXISTING_BASELINE_GENERATED_FIXTURE_FAILURES",
+    "baseline_failure_reproduction": "PASS_CONFIRMED_ALL_4_AT_UNMODIFIED_3D9F49E",
+    "baseline_failure_relevance": "NON_BLOCKING_NO_CHANGED_FILE_OR_EPSILON_AUTHORITY_OVERLAP"
+  },
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "candidate_or_model_dispatch_authorized": false,
+    "representative_execution_authorization_may_now_be_prepared": true,
+    "separate_independent_adversarial_review_required": true
+  },
+  "historical_immutability": {
+    "historical_m1f0": "ACCEPTED_UNCHANGED",
+    "semantic_graph_v1": "BYTE_IDENTITY_UNCHANGED",
+    "representative_boundary_v2": "BYTE_IDENTITY_UNCHANGED",
+    "boundary_v2_freeze": "BYTE_IDENTITY_UNCHANGED",
+    "dprefix_exact_1": "CANONICAL_UNCHANGED",
+    "real_payload_ledger": 166
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "candidate_or_model_dispatches": 0,
+    "gpu_dispatches": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166
+  }
+}

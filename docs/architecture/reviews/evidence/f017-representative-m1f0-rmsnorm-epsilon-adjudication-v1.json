@@ -1,0 +1,192 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-rmsnorm-epsilon-adjudication",
+  "schema_version": "1.0.0",
+  "result": "F32_1E_MINUS_5_AUTHORITATIVE",
+  "starting_authoritative_head": "3d9f49e48b68adc62fbdace331d2ef7f018f7610",
+  "question": {
+    "option_a_1e_minus_6": false,
+    "option_b_f32_1e_minus_5": true,
+    "option_c_legitimate_site_specific_values": false,
+    "option_d_insufficient_evidence": false
+  },
+  "authoritative_value": {
+    "source_decimal": "1e-5",
+    "dtype": "IEEE-754 binary32",
+    "exact_decimal": "9.999999747378752e-6",
+    "bits_hex": "0x3727c5ac",
+    "little_endian_hex": "acc52737",
+    "semantic_sites": [
+      "blk.3.attn_norm.weight",
+      "blk.3.attn_q_a_norm.weight",
+      "blk.3.attn_kv_a_norm.weight",
+      "blk.3.ffn_norm.weight"
+    ]
+  },
+  "evidence_inventory": [
+    {
+      "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+      "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+      "epsilon": "numeric value not selected into the public kv_selected record",
+      "dtype_semantics": "GGUF metadata key",
+      "surface": "GLM-5.2 model configuration catalog",
+      "kind": "declarative_key_presence",
+      "same_surface_acceptance": "catalog PASS; not independently numeric"
+    },
+    {
+      "path": "docs/architecture/GLM52_CONTRACT.md",
+      "sha256": "c273b4c8e05b6bed370d670c8f77b8df80e6fdeecfdc60dd84c20e6635fa340e",
+      "epsilon": "approximately 1e-5",
+      "dtype_semantics": "model metadata summarized for runtime loading",
+      "surface": "GLM-5.2 architecture contract",
+      "kind": "declarative",
+      "same_surface_acceptance": "frozen GLM-5.2 contract"
+    },
+    {
+      "path": "docs/research/glm52/raw/f016-c06-mla-0001.json",
+      "sha256": "e00d17bbf98804da50ee1b0bf07ede65469289f0833fe5e2a0e075e65bf6b8d5",
+      "epsilon": "1e-5",
+      "dtype_semantics": "JSON number recording the loaded MLA epsilon",
+      "surface": "GLM-5.2 MLA execution",
+      "kind": "derived_execution_evidence",
+      "same_surface_acceptance": "C06 MLA PASS"
+    },
+    {
+      "path": "crates/engine/src/lib.rs",
+      "sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406",
+      "epsilon": "model metadata value",
+      "dtype_semantics": "f32 Shape.rms_eps loaded from attention.layer_norm_rms_epsilon",
+      "surface": "production attention, internal MLA norms, FFN, and output RMSNorm sites",
+      "kind": "executable_configuration_plumbing",
+      "same_surface_acceptance": "production runtime; one scalar is shared and no layer-3 site override exists"
+    },
+    {
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d",
+      "epsilon": "np.float32(9.999999747378752e-6)",
+      "dtype_semantics": "exact binary32 0x3727c5ac used in all four representative RMSNorm calls",
+      "surface": "historical representative layer-3 attention-to-router M1-F0 oracle",
+      "kind": "executable",
+      "same_surface_acceptance": "bound by the accepted attempt-2 evidence"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+      "sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+      "epsilon": "inherited from bound oracle preparer ec9a679b...",
+      "dtype_semantics": "strict fixed-order binary32 RMSNorm",
+      "surface": "same representative layer-3 attention-to-router boundary",
+      "kind": "historical_accepted_result",
+      "same_surface_acceptance": "M1-F0 ACCEPTED; 10 of 10 deterministic"
+    },
+    {
+      "path": "scripts/research/generate_f017_r9_oracle.py",
+      "sha256": "726c2e496471a9fbccba803df4c7c084b1f86547310564ed8af795dac29adb47",
+      "epsilon": "np.float32(1e-5)",
+      "dtype_semantics": "exact binary32 0x3727c5ac",
+      "surface": "independent synthetic MLA/DSA attention oracle",
+      "kind": "executable_independent_oracle",
+      "same_surface_acceptance": "R9 production qualification; same GLM-5.2 attention semantics, synthetic values"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-r9-mla-dsa-production-v1.json",
+      "sha256": "e65e95cc626aff0a6a7cd1471acf498399567eca6e66a2abaf72bd674c658645",
+      "epsilon": "bound fixture input 9.999999747378752e-6",
+      "dtype_semantics": "binary32 oracle input transported into production R9 evaluation",
+      "surface": "independently qualified GLM-5.2 MLA/DSA production boundary",
+      "kind": "independent_acceptance_evidence",
+      "same_surface_acceptance": "numerically qualified; corroborative attention semantics, not the real M1-F0 value set"
+    },
+    {
+      "path": "scripts/research/f017_dprefix_oracle_runtime.py",
+      "sha256": "b7009479d1ed5a31294877d7a72939b30e70990ab9af97c351c17b9f33ebdf17",
+      "epsilon": "np.float32(9.999999747378752e-6)",
+      "dtype_semantics": "exact binary32 0x3727c5ac with independently reduced oracle values",
+      "surface": "dense-prefix layers 0 through 2 attention and FFN norms",
+      "kind": "executable_independent_oracle",
+      "same_surface_acceptance": "DPREFIX exact/canonical lineage; earlier layers but identical model-config RMSNorm semantics"
+    },
+    {
+      "path": "scripts/research/f017_dense_prefix_preparation.py",
+      "sha256": "c1c40514442bc12c49fbfc16def41ff2cfb7fa701e8d73c17e368d95e6ad82ea",
+      "epsilon": "1e-6",
+      "dtype_semantics": "caller-selected synthetic NumPy dtype",
+      "surface": "matrix-free structured synthetic preparation only",
+      "kind": "historical_synthetic_fixture_helper",
+      "same_surface_acceptance": "not a real GLM-5.2 oracle and not numeric authority"
+    },
+    {
+      "path": "scripts/research/layer_moe_residual.py",
+      "sha256": "071225122c03eef14ab8ab859b01e290b137699a38c2b9c0163218534412903b",
+      "epsilon": "1e-6",
+      "dtype_semantics": "legacy Python float constant",
+      "surface": "legacy MoE residual research helper",
+      "kind": "historical_unbound_helper",
+      "same_surface_acceptance": "not bound to accepted representative M1-F0 or production configuration"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json",
+      "sha256": "ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b",
+      "epsilon": "1e-6",
+      "dtype_semantics": "textual strict_f32 declaration",
+      "surface": "representative layer-3 semantic graph",
+      "kind": "declarative_historical",
+      "same_surface_acceptance": "freeze validator checked graph structure but did not cross-check model epsilon"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v2.json",
+      "sha256": "46a065385b110982cb9f5585b57a2f7910d1e12e01232dcae22d60ac4dbb09a1",
+      "epsilon": "1e-6",
+      "dtype_semantics": "textual strict fixed-order binary32 declaration",
+      "surface": "representative layer-3 attention-to-router boundary",
+      "kind": "declarative_historical",
+      "same_surface_acceptance": "frozen, but not independently numeric and contradicted by its own bound executable oracle"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-boundary-v2-freeze.json",
+      "sha256": "9395e66ade867b24f1a64e2217f9d6449a47e7d1b567bdae67cb84e23cbfb93a",
+      "epsilon": "inherits v2 1e-6 declaration",
+      "dtype_semantics": "artifact hash attestation only",
+      "surface": "boundary freeze evidence",
+      "kind": "attestation_historical",
+      "same_surface_acceptance": "did not independently exercise or adjudicate RMSNorm epsilon"
+    }
+  ],
+  "authority_chain": [
+    "The committed GLM-5.2 contract records the model metadata epsilon as approximately 1e-5.",
+    "The production engine loads attention.layer_norm_rms_epsilon into one f32 field and applies that field at attention and FFN RMSNorm sites without a layer-3 override.",
+    "The historical representative M1-F0 executable oracle materializes that scalar as exact f32(1e-5) and uses it at attention input, q_a, kv_a, and FFN normalization sites.",
+    "The accepted attempt-2 M1-F0 evidence binds that oracle and records 10-of-10 deterministic results on the same semantic surface.",
+    "Independent R9 and DPREFIX executable lineages corroborate f32(1e-5); the 1e-6 sources are synthetic, legacy, or later declarations without independent same-surface numerical acceptance."
+  ],
+  "contradiction": {
+    "resolved": true,
+    "root_cause": "unsupported decimal transcription in the v1 semantic graph and v2 boundary",
+    "different_legitimate_site_epsilons": false,
+    "historical_results_recomputed": false,
+    "historical_artifacts_modified": false
+  },
+  "superseding_artifacts": {
+    "semantic_graph": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    },
+    "representative_boundary": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v3.json",
+      "sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3"
+    }
+  },
+  "preparation_disposition": {
+    "representative_execution_authorization_may_be_prepared": true,
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "requires_new_independent_adversarial_review": true
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "candidate_or_model_dispatches": 0,
+    "gpu_dispatches": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166
+  }
+}

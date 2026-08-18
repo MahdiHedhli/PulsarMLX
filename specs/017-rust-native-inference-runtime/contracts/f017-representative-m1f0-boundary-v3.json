@@ -1,0 +1,103 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-boundary",
+  "schema_version": "3.0.0",
+  "contract_id": "f017-representative-m1f0-boundary-v3",
+  "status": "FROZEN_NO_EXECUTION_AUTHORITY",
+  "supersedes": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v2.json",
+    "sha256": "46a065385b110982cb9f5585b57a2f7910d1e12e01232dcae22d60ac4dbb09a1",
+    "scope": "RMSNorm epsilon semantics only",
+    "historical_v2_status": "PRESERVED_AS_FROZEN_BUT_NUMERICALLY_SUPERSEDED_DECLARATION"
+  },
+  "effective_contract_construction": {
+    "base": "the exact committed v2 bytes bound above",
+    "replace_only": [
+      {
+        "json_pointer": "/attention_semantics/normalization",
+        "value": "strict fixed-order binary32 RMSNorm with epsilon=f32(1e-5), exact 9.999999747378752e-6, bits 0x3727c5ac"
+      },
+      {
+        "json_pointer": "/attention_semantics/ffn_normalization",
+        "value": "strict fixed-order binary32 RMSNorm of S1 with retained blk.3.ffn_norm.weight and epsilon=f32(1e-5), exact 9.999999747378752e-6, bits 0x3727c5ac"
+      }
+    ],
+    "all_other_v2_fields": "UNCHANGED_AND_LOAD_BEARING",
+    "semantic_graph": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    }
+  },
+  "rmsnorm_epsilon": {
+    "model_config_key": "glm-dsa.attention.layer_norm_rms_epsilon",
+    "source_decimal": "1e-5",
+    "dtype": "IEEE-754 binary32",
+    "exact_decimal": "9.999999747378752e-6",
+    "bits_hex": "0x3727c5ac",
+    "little_endian_hex": "acc52737",
+    "sites": {
+      "layer3_attention_input": "blk.3.attn_norm.weight",
+      "layer3_query_rank": "blk.3.attn_q_a_norm.weight",
+      "layer3_compressed_kv": "blk.3.attn_kv_a_norm.weight",
+      "layer3_post_attention_ffn": "blk.3.ffn_norm.weight"
+    },
+    "different_site_values_permitted": false,
+    "authority_result": "F32_1E_MINUS_5_AUTHORITATIVE"
+  },
+  "semantic_boundary": {
+    "formula": "DPREFIX_EXACT_1(S0)->rmsnorm_f32_1e-5(A_norm)->layer3_attention(A; q_a_norm=f32_1e-5; kv_a_norm=f32_1e-5)->post_attention_residual(S1)->rmsnorm_f32_1e-5(F_norm)->router(Route)",
+    "ends_before": [
+      "routed_expert_execution",
+      "shared_expert_execution",
+      "ffn_branch_aggregation",
+      "complete_layer_residual"
+    ],
+    "representative_m1f0": true
+  },
+  "future_real_event_shape": {
+    "inventory_source": "v2 /future_real_event_shape/attention_payloads unchanged",
+    "attention_payload_reads": 9,
+    "packed_bytes": 132900864,
+    "shard_index": 2,
+    "maximum_shard_opens": 1,
+    "ledger_before": 166,
+    "ledger_after_success": 175,
+    "router_authority_reuse_count": 3
+  },
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "candidate_or_model_dispatch_authorized": false,
+    "next_event_requires_separate_adversarial_review": true
+  },
+  "authority_chain": [
+    {
+      "path": "docs/architecture/GLM52_CONTRACT.md",
+      "sha256": "c273b4c8e05b6bed370d670c8f77b8df80e6fdeecfdc60dd84c20e6635fa340e",
+      "kind": "declarative_model_configuration"
+    },
+    {
+      "path": "crates/engine/src/lib.rs",
+      "sha256": "20f672f194b0076c2634c79248e00b2c8a3121a1920adfaa9dda01afbf45b406",
+      "kind": "production_runtime_configuration_plumbing"
+    },
+    {
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d",
+      "kind": "executable_same_surface_oracle"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+      "sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+      "kind": "independently_accepted_same_surface_result"
+    }
+  ],
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "candidate_or_model_dispatches": 0,
+    "gpu_dispatches": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166
+  }
+}

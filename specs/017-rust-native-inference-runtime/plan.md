@@ -352,3 +352,23 @@ inventory arithmetic, identity-gate rules, and mutation tests validate with no
 execution authorization, checkpoint reads, shard opens, GPU dispatch, or ledger
 change; the real-payload ledger remains 166 and the future success shape is
 separately reviewed as nine reads, 132,900,864 packed bytes, and ledger 175.
+
+## Phase 25 — Representative M1-F0 RMSNorm epsilon adjudication
+
+- Rank committed model configuration, production runtime plumbing, historical
+  accepted M1-F0 execution, independent R9/dense-prefix oracles, and the later
+  boundary freeze by semantic relevance and executable authority.
+- Bind the single GLM-5.2 RMSNorm epsilon as `f32(1e-5)`, exact decimal
+  `9.999999747378752e-6` and bits `0x3727c5ac`, at layer-3 attention input,
+  query-rank, compressed-KV, and post-attention FFN normalization sites.
+- Preserve the semantic graph v1, representative boundary v2, and their freeze
+  as historical bytes while superseding their unsupported `1e-6` transcription
+  with graph v2 and boundary v3.
+- Reject synthetic and legacy `1e-6` helpers as production numerical authority,
+  and add mutation tests that fail on epsilon, site, dtype, or authorization
+  regression.
+
+Gate: the corrected public package reconstructs the authority chain from
+committed bytes, preserves historical accepted execution evidence, grants no
+real-event authority, performs no checkpoint or shard access, and leaves the
+real-payload ledger exactly 166.
