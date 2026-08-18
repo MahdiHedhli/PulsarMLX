@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.complete-layer-aggregate-v2-evaluation-v1",
+  "title": "F017 Complete-Layer Aggregate v2 Evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "schema_version", "starting_authoritative_head", "consumer_id",
+    "authority", "private_inputs", "routed_reuse", "canonical_complete_layer",
+    "perturbation", "acceptance", "preregistered_expectation", "disposition",
+    "isolation", "historical_immutability", "deterministic_replay",
+    "canonical_layer3_authority"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.complete-layer-aggregate-v2-evaluation"},
+    "schema_version": {"const": "1.0.0"},
+    "starting_authoritative_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "consumer_id": {"const": "F017-COMPLETE-LAYER-AGGREGATE-V2-ANALYTICAL-1"},
+    "authority": {"type": "object"},
+    "private_inputs": {"type": "object"},
+    "routed_reuse": {"type": "object"},
+    "canonical_complete_layer": {"type": "object"},
+    "perturbation": {"type": "object"},
+    "acceptance": {"type": "object"},
+    "preregistered_expectation": {"type": "string"},
+    "disposition": {"type": "object"},
+    "isolation": {"type": "object"},
+    "historical_immutability": {"type": "object"},
+    "deterministic_replay": {"type": "object"},
+    "canonical_layer3_authority": {"type": "object"}
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schema": "pulsarmlx.f017.complete-layer3-canonical-authority",
+  "schema_version": "1.0.0",
+  "artifact_id": "F017-DPREFIX-EXACT-1-COMPLETE-LAYER3-ANALYTICAL-1",
+  "status": "QUALIFIED_PERSISTED_ANALYTICAL_AUTHORITY",
+  "artifact": {
+    "symbolic_name": "outputs/complete_layer3_canonical.f32le",
+    "sha256": "e9427e22ef86f161786cfcf22a74b92c1cca50e3d601c6c119633d1458904594",
+    "dtype": "f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "finite_count": 6144,
+    "read_only": true,
+    "immutable": true,
+    "hard_link_count": 1
+  },
+  "classification": {
+    "reproducibility_class": "PERSISTED_AUTHORITY",
+    "production_mechanism": "EXACT_CLASS_FIXED_ORDER_ANALYTICAL_COMPOSITION",
+    "mechanism": "three fresh processes applied the frozen binary64 addition order and single canonical binary32 materialization to exact/persisted point authorities and reproduced identical bytes",
+    "scope": "qualified canonical complete layer-3 analytical output for downstream authorization planning",
+    "environment_requirements": "CPython with IEEE-754 binary32/binary64 and frozen complete-layer-v2 implementation identities",
+    "comparison_rule": "persisted object SHA-256 exact equality",
+    "failure_rule": "identity, formula-lineage, source-authority, or qualification mismatch fails closed"
+  },
+  "formula_lineage": {
+    "formula": "L0=f32(f64(DPREFIX-EXACT-1)+(routed_nominal_aggregate+f64(canonical_shared_output)))",
+    "complete_layer_v2_contract_sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe",
+    "complete_layer_v2_implementation_sha256": "1e5de4c450ff60a8c5eca0042fdf3d6b328b46c958cc2c72b279d48c1d86bd57",
+    "residual_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "routed_nominal_aggregate_sha256": "5a30a81b6e10b126ac22a3be991e5f5c6486372068888f699625b684eb85fc70",
+    "canonical_shared_output_sha256": "01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d",
+    "final_perturbation_enclosure_sha256": "8e21fd16c1b0d1c449d395d7368c1d317966c272a5b704f29ca0d5f0d0e3223a"
+  },
+  "source": {
+    "evaluation_path": "docs/architecture/reviews/evidence/f017-complete-layer-aggregate-v2-evaluation-v1.json",
+    "evaluation_file_sha256": "aae05b6fed0f8dfe78da24afd38914f603a70b5b7cd3903b4d0a153c9ed2052e",
+    "private_manifest_canonical_sha256": "329805a448549a2d310c19ff8c71a92136a2e88ad8f8f74a00507c97c93e6e23",
+    "fresh_process_count": 3,
+    "byte_identical_reproduction": true
+  },
+  "qualification": {
+    "mathematical": "PASS",
+    "engineering_h2": "PASS",
+    "route_ambiguity_disposition": "ROUTE AMBIGUITY QUALIFIED AT COMPLETE-LAYER OUTPUT",
+    "not_candidate_execution": true,
+    "not_representative_m1_f0": true
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "real_payload_ledger": 166
+  }
+}

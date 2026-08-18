@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.complete-layer-aggregate-v2-evidence-review",
+  "schema_version": "1.0.0",
+  "starting_authoritative_head": "d4ce39f4d47503195e3d47cddc0280890cc0bda3",
+  "result": "COMPLETE-LAYER V2 QUALIFIED",
+  "artifacts": {
+    "evaluation": {
+      "path": "docs/architecture/reviews/evidence/f017-complete-layer-aggregate-v2-evaluation-v1.json",
+      "sha256": "aae05b6fed0f8dfe78da24afd38914f603a70b5b7cd3903b4d0a153c9ed2052e"
+    },
+    "canonical_authority_descriptor": {
+      "path": "docs/architecture/reviews/evidence/f017-complete-layer3-canonical-authority-v1.json",
+      "sha256": "b500214f577941f7c36da69aeba2ee0471c33c15503f536aade5a8d7e0bb6f8e"
+    },
+    "evaluation_schema": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-v2-evaluation-v1.schema.json",
+      "sha256": "8521bf7d47bc130ab0d6e937b7ae06a5255bc6e8cabc1cf468b47c1b0ed8e27d"
+    },
+    "evaluation_implementation": {
+      "path": "scripts/research/evaluate_f017_complete_layer_aggregate_v2.py",
+      "sha256": "cdf3c8c0e4190a8e97c39776d01761f60dfd26d7962eb5c833e03134de96571f"
+    },
+    "validator": {
+      "path": "scripts/research/validate_f017_complete_layer_aggregate_v2_evaluation.py",
+      "sha256": "de94683b2680ba79fcc3a8cb3e2d77a6bc5d812c529e2ca4b9815a257399f0da"
+    },
+    "evaluation_tests_sha256": "bfba6528b8d68be17a87b5e74981c6c32144eb73d50e0b0dffa8e6c8ba435e11",
+    "validator_tests_sha256": "2e6ae599bd5add6921fa43ab960d6f6f43f0dd7e114d9e3a62792ce3aab07861"
+  },
+  "evaluation": {
+    "canonical_complete_layer_sha256": "e9427e22ef86f161786cfcf22a74b92c1cca50e3d601c6c119633d1458904594",
+    "final_perturbation_enclosure_sha256": "8e21fd16c1b0d1c449d395d7368c1d317966c272a5b704f29ca0d5f0d0e3223a",
+    "mathematical_qualification": "PASS",
+    "engineering_h2": "PASS",
+    "global_safety_factor": 4672.99380265998,
+    "route_disposition": "ROUTE AMBIGUITY QUALIFIED AT COMPLETE-LAYER OUTPUT",
+    "deterministic_fresh_processes": 3
+  },
+  "validation": {
+    "production_evaluation_validator": "PASS_WITH_PRIVATE_AUTHORITY",
+    "focused_complete_layer_and_reuse_tests": "52_OF_52_PASS",
+    "dedicated_v2_evaluation_tests": "26_OF_26_PASS",
+    "full_f017_python_methodology_suite": "632_OF_641_PASS; 9 PRE-EXISTING ENVIRONMENT_OR_GENERATED_FIXTURE FAILURES",
+    "full_suite_failure_relevance": "NON_BLOCKING; failures are the previously observed Python 3.14 versus pinned 3.13 oracle guard and historical generated-fixture regeneration drift, with no overlap in v2 evaluation, private reuse, identities, or arithmetic",
+    "frozen_v2_history_validator": "HISTORICAL_FREEZE_RECONSTRUCTION_PASSES_IN_UNIT_TESTS; direct current-head invocation intentionally rejects append-only ledger 166 versus freeze-time 163",
+    "duplicate_key": "PASS",
+    "public_private_path_leak": "PASS",
+    "spec_kit_prerequisites": "PASS",
+    "git_diff_check": "PASS",
+    "rust_workspace": "NOT_RUN_NO_RUST_CODE_OR_CONTRACT_TOUCHED"
+  },
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166
+  },
+  "historical_immutability": {
+    "REAL_1": "REJECTED_UNCHANGED",
+    "REAL_2": "REJECTED_UNCHANGED",
+    "REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "membership": "1984_OF_1984_PASS_UNCHANGED",
+    "coefficient_qualification": "0_OF_8_FAIL_UNCHANGED",
+    "routed_aggregate_v1": "FAIL_UNCHANGED",
+    "real_payload_ledger": 166
+  }
+}

@@ -449,3 +449,9 @@
   consumer and unchanged routed dependencies without evaluation or
   recomputation; preserve zero checkpoint reads, zero shard opens, historical
   dispositions, and the real-payload ledger at 166.
+- [x] T017-223 Evaluate complete-layer aggregate acceptance v2 exactly three
+  fresh times from the authorized residual, routed, and shared point
+  authorities; preserve the frozen routed enclosure and all historical
+  failures, bank the qualified canonical complete layer only on mathematical
+  PASS, and keep checkpoint reads, shard opens, and the real-payload ledger at
+  zero, zero, and 166 respectively.
