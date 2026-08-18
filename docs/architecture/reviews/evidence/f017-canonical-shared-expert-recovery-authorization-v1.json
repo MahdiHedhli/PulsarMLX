@@ -1,0 +1,65 @@
+{
+  "schema": "pulsarmlx.f017.canonical-shared-expert-output-recovery-authorization-evidence",
+  "schema_version": "1.0.0",
+  "status": "PRODUCTION RECOVERY EXECUTION SURFACE READY FOR INDEPENDENT REVIEW",
+  "disposition": "SHARED EXPERT RECOVERY AUTHORIZATION READY",
+  "starting_head": "3562fad576ec29bc8d469438783fab11157f8b72",
+  "event_id": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1",
+  "attempt_id": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+  "execution_authority_granted": false,
+  "complete_layer_v2": {
+    "contract_sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe",
+    "implementation_sha256": "1e5de4c450ff60a8c5eca0042fdf3d6b328b46c958cc2c72b279d48c1d86bd57",
+    "specification_sha256": "6f1b47217fc7f4eba45cf0964b436e250661462b700a8743b0823f0db09ccb2f",
+    "freeze_evidence_sha256": "fd393a13e1c5040a9ec4ad11f3adeb2990b497876e72bcc01336dfcc666aaf0a",
+    "status": "FROZEN_NOT_EVALUATED"
+  },
+  "authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-shared-expert-output-recovery-v1.json",
+    "canonical_sha256": "70a80f1456fd9ff075d02842c43e62522dcd7f57899752f9da9ce5de33a7f2bb",
+    "file_sha256": "848844b54f76df0b22e332d6d7647beee7494a31c37ad34519f9b5672ff151b0",
+    "schema_sha256": "5ed9fc8b97798d7cdcf7d18903e093c1639df96d060e6fa1102e4814ef7db3be"
+  },
+  "inventory": {
+    "sha256": "aed3cf86d733e0a09fbe332e32f466b003900f5fd620151c10e5ad5a841e132c",
+    "reads": 3,
+    "packed_bytes": 27623424,
+    "shard_ordinal": 2,
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "maximum_shard_opens": 1,
+    "entries": [
+      {"role": "gate", "key": "blk.3.ffn_gate_shexp.weight", "offset": 4211300192, "packed_bytes": 8650752, "quantization": "Q5_K", "logical_shape": [2048, 6144]},
+      {"role": "up", "key": "blk.3.ffn_up_shexp.weight", "offset": 5050447712, "packed_bytes": 8650752, "quantization": "Q5_K", "logical_shape": [2048, 6144]},
+      {"role": "down", "key": "blk.3.ffn_down_shexp.weight", "offset": 3364214624, "packed_bytes": 10321920, "quantization": "Q6_K", "logical_shape": [6144, 2048]}
+    ]
+  },
+  "decoder_binding": {
+    "Q5_K": {"decoder_a_identity": "89b02c839392a17485e10f0c1d796de3cf055d39170ca5af48186fb86e9a15e7", "decoder_b_identity": "a9f9d60fffb4d72bcadb637f4bcbe21fc86c76cc34d2bda8d2b8fc722a1b1541", "independence": "PASS", "real_byte_qualification_sha256": "13899cdd1d97c65ca0c6cf0ce24cb9fae26e7c1c0d4036ec7c00529af00bc39c"},
+    "Q6_K": {"decoder_a_identity": "39a153b958b398964966c1041606497eaa23f9e7bee6e15cc406474cc2b20039", "decoder_b_identity": "999f228465cc2c805da456413872f327d1437e8651f772a555b94f06363f1b76", "rust_reference_source_sha256": "a4d308ef1aa874865e668002a8911d8247247dd490e301018f730aeb06ab35fd", "independence": "PASS", "real_byte_qualification_sha256": "375e6b852733e8ac885d53c3814a03deb3a80e639bf61d427f1e49f1aae57086"},
+    "future_gate": "EXACT_CANONICAL_LE_F32_A_EQ_B_OR_TERMINAL_STOP"
+  },
+  "canonical_input": {"state_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11", "ffn_norm_gamma_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f", "epsilon_f32": 0.000009999999747378752, "normalized_input_semantics": "STRICT_F32_RMSNORM"},
+  "computation": {"formula": "RMSNorm -> gate/up strict-f32 projections -> SiLU(gate)*up -> strict-f32 down projection", "matrix_orientation": "row_major_out_in", "accumulation": "increasing_column_strict_f32", "backend_reduction": false, "additional_scale_or_gate": false},
+  "reused_substrate": {"execution_substrate_contract_sha256": "53d124277546dccdf99e5d9b0a2de0585826616e9e9cbb2d9c38187729bbb285", "executor_source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe", "production_binding_contract_sha256": "c921bca7f4d42a6e42ae1b4b337bf3baea7e7088d5e442d271ec9838665e19d8", "production_source_sha256": "a48b9353dc40019d909a6906683a364eeb2b65248a2c60f1a8d31fe5f23a631f"},
+  "shared_specific_binding": {"implementation_sha256": "ff3fea20bfb74058389c0e40393d2fe5257c1d92a244c410a59433ddfde4aaa3", "entrypoint_sha256": "1a709c133c52d18d8d23a8d50e82a39c2a35467128476ada0306dfb4138e0e53", "validator_sha256": "02205efdeff77b850d349229d073e7402c7bd183b03daf33b3b9e1b34becc273", "production_surfaces_resolved": 14, "sole_checkpoint_capability": "ProductionShardProvider"},
+  "dry_run": {"status": "PRODUCTION_BINDINGS_RESOLVED", "descriptor_sha256": "8e10f54bb092c366ee97b859f5692d421eb12da9a5277cab0a1b1d36b067a4ba", "checkpoint_reads": 0, "shard_opens": 0, "ledger": 163, "attempt_records": 0, "execution_start_records": 0},
+  "synthetic_rehearsal": {"status": "PASS", "case_count": 11, "result_sha256": "c02578dcc341a4b6061c7aa1940868053a8ca2aaa1ea58f5cecfbd1dfb8e2d11", "real_checkpoint_reads": 0, "real_shard_opens": 0, "real_ledger_mutation": false},
+  "retention": {"packed_artifacts": 3, "output_artifacts": 1, "output_symbolic_path": "outputs/canonical_shared_expert_output.bin", "output_dtype": "f32", "output_shape": [6144], "output_bytes": 24576, "immutable_read_only_single_link": true, "private_bytes_committed": false, "machine_local_paths_published": false},
+  "determinism": {"checkpoint_access_passes": 1, "fresh_processes_after_close": 2, "reproduction_checkpoint_reads": 0, "output_rule": "2_OF_2_EXACT_SHA"},
+  "ledger": {"before": 163, "after_complete": 166, "partial_failure": "163+N", "decoder_failure_payload_counted": true, "automatic_retry": false, "second_attempt_authorized": false},
+  "validation": {
+    "new_authorization_tests": {"passed": 13, "failed": 0},
+    "focused_lineage_integration_tests": {"passed": 109, "failed": 0},
+    "quant_workspace_tests": {"passed": 45, "failed": 0},
+    "complete_layer_v2_validator": "PASS",
+    "ledger_validator": {"result": "PASS", "evidence_sha256": "5120b94e2f304237fb2dcbe04dd04fa4ed3647a23b5119b12776dd02428a345d"},
+    "spec_kit_prerequisites": "PASS",
+    "duplicate_key": "PASS",
+    "privacy_path_leak": "PASS",
+    "git_diff_check": "PASS",
+    "full_f017_suite": {"tests": 632, "passed": 623, "failures": 6, "errors": 3, "classification": "KNOWN_UNRELATED_ENVIRONMENT_AND_GENERATED_ARTIFACT_FAILURES", "affected_new_authorization_machinery": false}
+  },
+  "historical_immutability": {"REAL_1": "REJECTED_UNCHANGED", "REAL_2": "REJECTED_UNCHANGED", "REAL_3": "REJECTED_UNCHANGED", "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED", "membership": "1984_OF_1984_PASS_UNCHANGED", "coefficient": "0_OF_8_FAIL_UNCHANGED", "routed_aggregate_v1": "FAIL_UNCHANGED", "complete_layer_v2": "FROZEN_NOT_EVALUATED", "route": "ROUTE NOT PROVEN INVARIANT"},
+  "preparation_access": {"checkpoint_reads": 0, "shard_opens": 0, "real_payload_ledger": 163, "attempt_records_created": 0, "execution_start_records_created": 0},
+  "next_action": "submit the committed three-read shared-expert recovery authorization and production binding for independent adversarial review; do not execute the event"
+}

@@ -1,0 +1,94 @@
+{
+  "schema": "pulsarmlx.f017.canonical-shared-expert-output-recovery-authorization",
+  "schema_version": "1.0.0",
+  "status": "AUTHORIZED_PACKAGE_PREPARED_PENDING_INDEPENDENT_REVIEW",
+  "source_head": "3562fad576ec29bc8d469438783fab11157f8b72",
+  "event": {
+    "event_id": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1",
+    "attempt_id": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+    "purpose": "CANONICAL_SHARED_EXPERT_OUTPUT_RECOVERY_ONLY",
+    "execution_authority": false,
+    "automatic_retry": false,
+    "second_attempt_authorized": false
+  },
+  "complete_layer_v2": {
+    "contract_sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe",
+    "implementation_sha256": "1e5de4c450ff60a8c5eca0042fdf3d6b328b46c958cc2c72b279d48c1d86bd57",
+    "specification_sha256": "6f1b47217fc7f4eba45cf0964b436e250661462b700a8743b0823f0db09ccb2f",
+    "freeze_evidence_sha256": "fd393a13e1c5040a9ec4ad11f3adeb2990b497876e72bcc01336dfcc666aaf0a",
+    "evaluation_authorized": false
+  },
+  "checkpoint": {
+    "shard_ordinal": 2,
+    "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "maximum_shard_opens": 1,
+    "expected_reads": 3,
+    "expected_packed_bytes": 27623424,
+    "inventory_sha256": "aed3cf86d733e0a09fbe332e32f466b003900f5fd620151c10e5ad5a841e132c",
+    "catalog_source_sha256": "9352dcb9486d2c1c1a9ff743453c0a973b0f003ba141f0c85602f7ce243d3799"
+  },
+  "payload_inventory": [
+    {"ordinal": 0, "role": "gate", "checkpoint_key": "blk.3.ffn_gate_shexp.weight", "shard_ordinal": 2, "offset": 4211300192, "packed_length": 8650752, "quantization": "Q5_K", "logical_decoded_shape": [2048, 6144], "decoded_f32_bytes": 50331648, "catalog_identity": "1d5229215e4fa1b53b6ae4898bdd27a434e4b0ed32876a243081c67881e17c4a"},
+    {"ordinal": 1, "role": "up", "checkpoint_key": "blk.3.ffn_up_shexp.weight", "shard_ordinal": 2, "offset": 5050447712, "packed_length": 8650752, "quantization": "Q5_K", "logical_decoded_shape": [2048, 6144], "decoded_f32_bytes": 50331648, "catalog_identity": "7cfd5bb7477977f6c9da6d24098767a5e377ca3a5d8271996e7b90b577560546"},
+    {"ordinal": 2, "role": "down", "checkpoint_key": "blk.3.ffn_down_shexp.weight", "shard_ordinal": 2, "offset": 3364214624, "packed_length": 10321920, "quantization": "Q6_K", "logical_decoded_shape": [6144, 2048], "decoded_f32_bytes": 50331648, "catalog_identity": "c2464f715ca553fd59e1d8c703501d4c799d5f3b80b0830ad28ac30e448c240e"}
+  ],
+  "decoder_lineage": {
+    "policy": "SAME_RETAINED_PACKED_BYTES_A_THEN_B_EXACT_CANONICAL_LE_F32_OR_TERMINAL_STOP",
+    "q5_k": {
+      "decoder_a": {"path": "scripts/research/prepare_f017_m1f0_real_reference.py", "source_sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d", "implementation_sha256": "89b02c839392a17485e10f0c1d796de3cf055d39170ca5af48186fb86e9a15e7", "symbol": "decode_q5_k_spec", "lineage": "scalar specification transcription"},
+      "decoder_b": {"path": "scripts/research/qualify_f017_m1f0_q5_k_real.py", "source_sha256": "57d5de26453b52ac569fd72bc84512f65bd73c5aff5c59280c42ae145bff1e30", "implementation_sha256": "a9f9d60fffb4d72bcadb637f4bcbe21fc86c76cc34d2bda8d2b8fc722a1b1541", "symbol": "decode_q5_k_upstream_spec", "lineage": "independent pinned-upstream vector transcription"},
+      "real_byte_qualification_sha256": "13899cdd1d97c65ca0c6cf0ce24cb9fae26e7c1c0d4036ec7c00529af00bc39c",
+      "independence": "INDEPENDENT_EXACT_REAL_BYTE_QUALIFIED"
+    },
+    "q6_k": {
+      "decoder_a": {"path": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py", "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501", "implementation_sha256": "39a153b958b398964966c1041606497eaa23f9e7bee6e15cc406474cc2b20039", "symbol": "decode_q6_k_spec", "lineage": "grouped scalar specification transcription"},
+      "decoder_b": {"path": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py", "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501", "implementation_sha256": "999f228465cc2c805da456413872f327d1437e8651f772a555b94f06363f1b76", "symbol": "decode_q6_k_independent", "lineage": "index-driven independent scalar transcription"},
+      "real_byte_qualification_sha256": "375e6b852733e8ac885d53c3814a03deb3a80e639bf61d427f1e49f1aae57086",
+      "rust_reference_source_sha256": "a4d308ef1aa874865e668002a8911d8247247dd490e301018f730aeb06ab35fd",
+      "independence": "THREE_WAY_INDEPENDENCE_ESTABLISHED_A_B_SELECTED_EXACT_REAL_BYTE_QUALIFIED"
+    },
+    "disagreement": "CONSUMED_PAYLOAD_COUNTED_TERMINAL_NO_SELECTION_NO_NEXT_READ_NO_RETRY"
+  },
+  "canonical_input": {
+    "dprefix_exact_1_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "ffn_norm_gamma_sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+    "epsilon_f32": 0.000009999999747378752,
+    "dtype": "f32",
+    "shape": [6144],
+    "checkpoint_payloads_required": 0
+  },
+  "computation": {
+    "formula": "normalized=RMSNorm(DPREFIX_EXACT_1);gate=W_gate_shared*normalized;up=W_up_shared*normalized;hidden=SiLU(gate)*up;shared_output=W_down_shared*hidden",
+    "matrix_orientation": "row_major_out_in",
+    "arithmetic": "strict_binary32_increasing_column_accumulation_per_operation_rounding",
+    "activation": "SiLU",
+    "additional_scale": false,
+    "shared_output_gate": false,
+    "routing_weight": false,
+    "backend_reduction": false,
+    "output": {"symbolic_path": "outputs/canonical_shared_expert_output.bin", "dtype": "f32", "shape": [6144], "byte_length": 24576, "class": "EXACT_CLASS_PERSISTED_POINT"}
+  },
+  "reused_recovery_substrate": {
+    "execution_substrate_contract_sha256": "53d124277546dccdf99e5d9b0a2de0585826616e9e9cbb2d9c38187729bbb285",
+    "executor_source_sha256": "e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe",
+    "production_binding_contract_sha256": "c921bca7f4d42a6e42ae1b4b337bf3baea7e7088d5e442d271ec9838665e19d8",
+    "production_source_sha256": "a48b9353dc40019d909a6906683a364eeb2b65248a2c60f1a8d31fe5f23a631f",
+    "semantics": ["durable_attempt_and_start", "per-read_receipts_and_journal", "ledger_reconciliation", "terminal_banker", "one_open_guard", "no_retry", "retain_at_creation", "private_package_writer", "public_evidence_privacy", "fresh_process_reproduction"]
+  },
+  "shared_specific_binding": {
+    "implementation_path": "scripts/research/f017_shared_expert_recovery.py",
+    "implementation_source_sha256": "ff3fea20bfb74058389c0e40393d2fe5257c1d92a244c410a59433ddfde4aaa3",
+    "entrypoint_path": "scripts/research/run_f017_shared_expert_recovery.py",
+    "entrypoint_sha256": "1a709c133c52d18d8d23a8d50e82a39c2a35467128476ada0306dfb4138e0e53",
+    "arbitrary_inventory": false,
+    "arbitrary_expert_selection": false,
+    "only_checkpoint_capability": "ProductionShardProvider"
+  },
+  "ledger": {"before": 163, "authorized_reads": 3, "after_complete": 166, "increment_boundary": "successful_exact_size_checkpoint_payload_read", "partial_failure": "ledger=163+N;terminal;no_retry"},
+  "retention": {"packed_artifacts": 3, "output_artifacts": 1, "retain_before_decode": true, "immutable_read_only": true, "single_link_no_writable_alias": true, "private_bytes_committed": false, "machine_local_paths_published": false},
+  "determinism": {"checkpoint_passes": 1, "fresh_process_reproductions": 2, "checkpoint_reads_during_reproduction": 0, "required_output_sha_agreement": "2_OF_2_EXACT"},
+  "preparation_access": {"checkpoint_reads": 0, "shard_opens": 0, "real_payload_ledger": 163, "attempt_records_created": 0, "execution_start_records_created": 0},
+  "prohibited": ["execution_without_independent_release", "fourth_payload_read", "second_shard_open", "retry", "router_or_attention_or_routed_expert_payload", "complete_layer_v2_evaluation", "M1_F0", "candidate_or_model_execution"],
+  "historical_immutability": {"REAL_1": "REJECTED_UNCHANGED", "REAL_2": "REJECTED_UNCHANGED", "REAL_3": "REJECTED_UNCHANGED", "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED", "membership": "1984_OF_1984_PASS_UNCHANGED", "coefficient": "0_OF_8_FAIL_UNCHANGED", "routed_aggregate_v1": "FAIL_UNCHANGED", "complete_layer_v2": "FROZEN_NOT_EVALUATED", "route": "ROUTE NOT PROVEN INVARIANT"}
+}

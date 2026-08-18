@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema", "status", "event", "checkpoint", "payload_inventory", "decoder_lineage", "canonical_input", "computation", "ledger", "preparation_access", "historical_immutability"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.canonical-shared-expert-output-recovery-authorization"},
+    "status": {"const": "AUTHORIZED_PACKAGE_PREPARED_PENDING_INDEPENDENT_REVIEW"},
+    "payload_inventory": {"type": "array", "minItems": 3, "maxItems": 3},
+    "event": {"type": "object", "required": ["execution_authority", "automatic_retry"], "properties": {"execution_authority": {"const": false}, "automatic_retry": {"const": false}}},
+    "preparation_access": {"type": "object", "required": ["checkpoint_reads", "shard_opens", "real_payload_ledger"], "properties": {"checkpoint_reads": {"const": 0}, "shard_opens": {"const": 0}, "real_payload_ledger": {"const": 163}}}
+  },
+  "additionalProperties": true
+}
