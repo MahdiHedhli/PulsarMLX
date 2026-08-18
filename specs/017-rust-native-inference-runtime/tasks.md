@@ -421,3 +421,10 @@
   resolves all fourteen dependencies in a zero-open/zero-read preflight plus a
   full synthetic integration matrix while leaving ledger 139 and creating no
   real attempt or execution-start record.
+- [x] T017-219 Authorize checkpoint-free cross-event reuse of the eight
+  canonical expert down-output vectors: bind their terminal recovery,
+  manifest, canonical-input and three-weight provenance; verify before/after
+  identities plus immutable single-link storage; constrain the distinct
+  analytical consumer to the already-frozen weighted-MoE aggregate theorem;
+  and preserve zero checkpoint reads, zero shard opens, no aggregate
+  evaluation, historical dispositions, and the real-payload ledger at 163.

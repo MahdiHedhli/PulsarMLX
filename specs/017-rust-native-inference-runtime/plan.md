@@ -259,3 +259,21 @@ accepted implementations, compared by exact canonical f32 identity, and pass
 before the next checkpoint read. A disagreement terminates without selecting a
 decoder or granting output authority. This amendment itself performs zero
 checkpoint access and requires renewed independent review.
+
+## Phase 20 — Canonical selected-expert output reuse authorization
+
+- Preserve the completed recovery event as terminal immutable history and
+  authorize only its eight ID-keyed canonical f32 `[6144]` down outputs for a
+  distinct checkpoint-free analytical consumer.
+- Bind every output to its retained-object SHA, canonical DPREFIX-EXACT-1
+  input, and expert-specific gate/up/down packed identities; require regular,
+  read-only, single-link, non-symlink storage with equal before/after hashes.
+- Restrict consumption to the frozen weighted-MoE aggregate perturbation
+  theorem and its unchanged R10 intermediate budgets; aggregate arithmetic
+  remains outside the authorization loop.
+- Publish only package-relative symbolic names and public identities, never
+  private bytes or machine-local paths.
+
+Gate: the public authorization/schema and private verifier pass all identity,
+provenance, mutation, privacy, ledger, and historical-immutability checks with
+checkpoint reads and shard opens zero and the real-payload ledger fixed at 163.
