@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-boundary-freeze",
+  "schema_version": "1.0.0",
+  "result": "REPRESENTATIVE M1-F0 BOUNDARY FROZEN",
+  "starting_head": "c52837b55c3008aaac45488d63b7e2d18e4ecbcc",
+  "artifacts": {
+    "semantic_graph": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json","sha256":"ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b"},
+    "representative_boundary": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v2.json","sha256":"46a065385b110982cb9f5585b57a2f7910d1e12e01232dcae22d60ac4dbb09a1"},
+    "role_correction_index": {"path":"docs/architecture/reviews/evidence/f017-dprefix-semantic-role-correction-index-v1.json","sha256":"fb9c60e5f75ffe4c2100f46bfec179bd02f0872b31e9cd6091f1cd73004e3382"},
+    "validator": {"path":"scripts/research/validate_f017_m1f0_semantic_boundary_v2.py","sha256":"a94e090bc6c7ef9c832ba098c0552c674383d95a616c408b6ec3304ef4eb3cae"},
+    "mutation_tests": {"path":"scripts/research/tests/test_validate_f017_m1f0_semantic_boundary_v2.py","sha256":"abc3cf41f98314d3236906de491aa20a62f2ba0bb34e4fd3fa6fb1ce07e58920"}
+  },
+  "historical_m1f0": {
+    "commit": "df0f3a91244d944f0fe5a0f569b709ccfe631cc0",
+    "evidence_path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+    "evidence_sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9",
+    "route_artifact_sha256": "980b6a78ae04b816e1f9e563790f5a2d123723292dd0432a0218972d0f80593e",
+    "input_hidden_sha256": "decc4ef42e1cf5d6cbee2fe6d46f3cd29b6dd39b9bb997d1083e7a7228ed86cf",
+    "post_attention_residual_sha256": "1f5e2e469f5d118f8cf7fee7f4199b2912530823eb2d0a65cea53e9e77de0fc7",
+    "router_input_sha256": "98275027e2427276822b84fc0c7747014b0f4d79b40c07e6d8267060db7762e1",
+    "selected_ids": [166, 78, 26, 186, 163, 199, 233, 177],
+    "repeat_result": "10_OF_10_DETERMINISTIC",
+    "disposition": "ACCEPTED_UNCHANGED"
+  },
+  "semantic_correction": {
+    "dprefix_exact_1": "CANONICAL_LAYER3_ENTRY_PRE_ATTENTION",
+    "direct_dprefix_v31": "VALID_BUT_DIFFERENT_SURFACE",
+    "direct_dprefix_expert_outputs": "VALID_BUT_DIFFERENT_SURFACE",
+    "direct_dprefix_shared_output": "VALID_BUT_DIFFERENT_SURFACE",
+    "e942": "CANONICAL_DIRECT_DPREFIX_FFN_MOE_COMPLETION_VALID_BUT_DIFFERENT_SURFACE",
+    "representative_route_transfer": "FORBIDDEN"
+  },
+  "future_event": {
+    "purpose": "CANONICAL REPRESENTATIVE M1-F0 ATTENTION_TO_ROUTER RECOVERY",
+    "authorization_issued": false,
+    "fresh_attention_payload_reads": 9,
+    "fresh_packed_bytes": 132900864,
+    "maximum_shard_opens": 1,
+    "persisted_router_authorities": 3,
+    "cross_event_reuse_authorization_required": true,
+    "ledger_before": 166,
+    "ledger_after_success": 175,
+    "expert_payload_reads": 0,
+    "shared_expert_payload_reads": 0,
+    "candidate_dispatches": 0
+  },
+  "operations": {
+    "gpu_required": false,
+    "lm_studio_state_changed": false,
+    "ntfy_topic": "Mahdi-Dev",
+    "future_ntfy_points_bound": true
+  },
+  "validation": {
+    "semantic_role_validator": "PASS",
+    "historical_evidence_immutability": "PASS",
+    "production_layer_graph": "PASS",
+    "representative_boundary": "PASS",
+    "nine_payload_inventory": "PASS_9_READS_132900864_BYTES",
+    "router_reuse_eligibility": "PASS_3_AUTHORITIES_SEPARATE_AUTHORIZATION_REQUIRED",
+    "identity_gate_v2_compatibility": "PASS",
+    "route_acceptance_semantics": "PASS",
+    "privacy_path_leak": "PASS",
+    "duplicate_keys": "PASS",
+    "ledger_immutability": "PASS",
+    "zero_checkpoint_guard": "PASS",
+    "synthetic_mutation_tests": "PASS"
+  },
+  "isolation": {"checkpoint_reads":0,"shard_opens":0,"payload_reads":0,"candidate_or_model_dispatches":0,"gpu_dispatches":0,"real_payload_ledger":166}
+}

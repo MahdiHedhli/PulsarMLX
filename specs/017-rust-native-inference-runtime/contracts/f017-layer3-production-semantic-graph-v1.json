@@ -1,0 +1,122 @@
+{
+  "schema": "pulsarmlx.f017.layer3-production-semantic-graph",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-layer3-production-semantic-graph-v1",
+  "status": "FROZEN_NO_EXECUTION_AUTHORITY",
+  "shape": [6144],
+  "layer": 3,
+  "boundaries": {
+    "S0": {
+      "name": "layer3_entry_pre_attention",
+      "dtype": "f32",
+      "input": "canonical layer-2 output",
+      "formula": "S0=layer2_output",
+      "residual_count": 0,
+      "authority_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+    },
+    "A_norm": {
+      "name": "layer3_attention_normalized_input",
+      "dtype": "f32",
+      "input": "S0",
+      "formula": "A_norm=strict_f32_rmsnorm(S0,blk.3.attn_norm.weight,epsilon=1e-6)",
+      "residual_count": 0
+    },
+    "A": {
+      "name": "layer3_attention_output",
+      "dtype": "f32",
+      "input": "A_norm",
+      "formula": "A=MLA_DSA_position0_single_visible_attention(A_norm)",
+      "residual_count": 0
+    },
+    "S1": {
+      "name": "layer3_post_attention_residual",
+      "dtype": "f32",
+      "input": "S0,A",
+      "formula": "S1=f32(S0+A)",
+      "residual_count": 1
+    },
+    "F_norm": {
+      "name": "layer3_ffn_normalized_router_and_expert_input",
+      "dtype": "f32",
+      "input": "S1",
+      "formula": "F_norm=strict_f32_rmsnorm(S1,blk.3.ffn_norm.weight,epsilon=1e-6)",
+      "residual_count": 1
+    },
+    "Route": {
+      "name": "layer3_representative_route",
+      "dtype": "mixed_f32_f64",
+      "input": "F_norm",
+      "formula": "logits=strict_f32_matvec(router,F_norm); probabilities=sigmoid_f64(logits); scores=probabilities+f64(f32_bias); top8=score_desc_id_asc; weights=2.5*p_i/max(fsum(selected_p),2^-14)",
+      "residual_count": 1
+    },
+    "Routed": {
+      "name": "layer3_selected_routed_expert_aggregate",
+      "dtype": "f64_accumulation",
+      "input": "F_norm,Route",
+      "formula": "Routed[k]=fsum_i(weight_i*f64(expert_i(F_norm)[k]))",
+      "residual_count": 1
+    },
+    "Shared": {
+      "name": "layer3_shared_expert_output",
+      "dtype": "f32",
+      "input": "F_norm",
+      "formula": "Shared=shared_down(silu(shared_gate(F_norm))*shared_up(F_norm))",
+      "residual_count": 1
+    },
+    "FFN": {
+      "name": "layer3_ffn_moe_branch",
+      "dtype": "f64",
+      "input": "Routed,Shared",
+      "formula": "FFN=Routed+f64(Shared)",
+      "residual_count": 1
+    },
+    "S2": {
+      "name": "layer3_complete_production_output",
+      "dtype": "f32",
+      "input": "S1,FFN",
+      "formula": "S2=f32(f64(S1)+FFN)",
+      "residual_count": 2
+    }
+  },
+  "required_order": ["S0", "A_norm", "A", "S1", "F_norm", "Route", "Routed", "Shared", "FFN", "S2"],
+  "representative_m1f0_boundary": {
+    "starts_at": "S0",
+    "ends_at": "Route",
+    "formula": "S0->A_norm->A->S1->F_norm->Route",
+    "expert_execution": false,
+    "shared_expert_execution": false,
+    "complete_layer_output": false
+  },
+  "direct_dprefix_ffn_only_boundary": {
+    "formula": "S0->direct_F_norm->direct_Route->direct_Routed/direct_Shared->direct_FFN->direct_completion",
+    "omitted_required_production_stage": "layer3 attention and S1",
+    "representative_m1f0_equivalent": false
+  },
+  "semantic_sources": [
+    {
+      "path": "crates/f017-runner/src/layer_qualification.rs",
+      "sha256": "4b70a22816a1a14d990bee15a5e57e1ea1963b1c37a666b89b07fa6633b240e3"
+    },
+    {
+      "path": "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/m1f0-exact-scaffold-v1.json",
+      "sha256": "6f6278715159c24e21c60ded97b993fd575393de9b4b16b3fc4dbfb16d1416cb"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/m1f0-selection-v1.json",
+      "sha256": "4207845cd22f89a42c42a5ab8ef240cf1af5db3434c2cabac0ecfe9d1beddd0a"
+    }
+  ],
+  "isolation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "candidate_or_model_dispatches": 0,
+    "gpu_dispatches": 0,
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166
+  }
+}

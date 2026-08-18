@@ -455,3 +455,10 @@
   failures, bank the qualified canonical complete layer only on mathematical
   PASS, and keep checkpoint reads, shard opens, and the real-payload ledger at
   zero, zero, and 166 respectively.
+- [x] T017-224 Correct the DPREFIX/v3.1/expert/e942 semantic roles append-only,
+  freeze the production layer-3 graph and representative M1-F0 v2 boundary at
+  `S0 -> attention -> S1 -> FFN RMSNorm -> router`, derive the exact nine
+  hash-only attention payloads and three separately reusable router
+  authorities, preserve all historical identities as valid evidence on their
+  precise surfaces, and bind the future CPU/no-BLAS, NTFY, one-open,
+  166-to-175 event shape without authorizing or executing any read.

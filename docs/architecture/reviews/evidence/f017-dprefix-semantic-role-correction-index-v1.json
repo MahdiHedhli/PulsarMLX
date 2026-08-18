@@ -1,0 +1,107 @@
+{
+  "schema": "pulsarmlx.f017.semantic-role-correction-index",
+  "schema_version": "1.0.0",
+  "correction_id": "F017-DPREFIX-SEMANTIC-ROLE-CORRECTION-1",
+  "status": "APPEND_ONLY_ROLE_CORRECTION_NO_HISTORICAL_IDENTITY_CHANGE",
+  "starting_head": "c52837b55c3008aaac45488d63b7e2d18e4ecbcc",
+  "semantic_graph": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json",
+    "sha256": "ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b"
+  },
+  "representative_boundary": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v2.json",
+    "sha256": "46a065385b110982cb9f5585b57a2f7910d1e12e01232dcae22d60ac4dbb09a1"
+  },
+  "central_finding": {
+    "historical_m1f0_route": [166, 78, 26, 186, 163, 199, 233, 177],
+    "direct_dprefix_route": [250, 10, 237, 73, 62, 177, 218, 28],
+    "overlap": [177],
+    "equivalent_semantic_inputs": false,
+    "explanation": "historical representative M1-F0 consumes S1 after layer-3 attention; direct-DPREFIX v3.1 applies FFN RMSNorm and routing directly to S0 and therefore bypasses layer-3 attention"
+  },
+  "corrections": {
+    "dprefix_exact_1": {
+      "artifact_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "source_file_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256",
+      "corrected_role": "CANONICAL_LAYER3_ENTRY_PRE_ATTENTION",
+      "validity": "CANONICAL_AUTHORITY_PRESERVED"
+    },
+    "direct_dprefix_v31_route": {
+      "evidence_file_sha256": "a4f3e1afe84be2cade1ed6c1728b2f82cd0ff2d22e8a964779f3216baf124eb4",
+      "normalized_input_sha256": "60bbae2ddd4d0b07f127f83f7051a926fc71d7effe3f16f0f9c741bd3335562e",
+      "selected_ids": [250, 10, 237, 73, 62, 177, 218, 28],
+      "corrected_role": "PRE_ATTENTION_ENTRY_TO_FFN_DIRECT_ANALYTICAL_ROUTE",
+      "validity": "VALID_BUT_DIFFERENT_SURFACE",
+      "representative_m1f0": false
+    },
+    "direct_dprefix_membership_proof": {
+      "pair_count": 1984,
+      "mathematical_pass_count": 1984,
+      "engineering_h2_pass_count": 1982,
+      "corrected_role": "DIRECT_DPREFIX_ROUTE_AMBIGUITY_MEMBERSHIP_ONLY",
+      "validity": "VALID_BUT_DIFFERENT_SURFACE",
+      "transfer_to_post_attention_route": "FORBIDDEN"
+    },
+    "direct_dprefix_selected_experts": {
+      "selected_ids": [250, 10, 237, 73, 62, 177, 218, 28],
+      "output_sha256_by_id": {
+        "250": "6479a8352a355d5f979172bc19038d44b4df992925fab427d2caeaf24445efdc",
+        "10": "bcb5b18366fd0fd42eb2d41a3684c6eb2edc4939f9a5651dc85512618e799813",
+        "237": "5f2f7e1c8552a446ad6b6d4e83010c0e341ac00127d27725eee809ca05961399",
+        "73": "978e5f853c52db51e05f156b121b7c38f8b6dce66792e871ff34da9b2b12b688",
+        "62": "37e52659e79d4cf951e704f0088c37950059c31b4f32c767dcdfb17c763f1c8d",
+        "177": "fb8c36fa74219a178f074f4f78db6268a10930db5249801727d9f4e382460318",
+        "218": "6e611c9bf2131925a3050b0652caeae20aff83a8cbe1ec89dbc7ab678ee5c3e3",
+        "28": "7d2081b86c510dd476a5976ba0669a5198a27b8b87fedcc64d19facfb6303840"
+      },
+      "reuse_authorization_file_sha256": "b370d3c3dd938eeadd18f34fabab89077319b979b994b97ffa33afddf2bffa28",
+      "corrected_role": "DIRECT_DPREFIX_FFN_MOE_ANALYTICAL_EXPERT_OUTPUTS",
+      "validity": "VALID_BUT_DIFFERENT_SURFACE"
+    },
+    "direct_dprefix_shared_output": {
+      "artifact_sha256": "01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d",
+      "reuse_authorization_file_sha256": "19a6890a1bd63f4832e76e3b9cba389eb33eb3e6366ab2cd0bb0aefa8a93f151",
+      "corrected_role": "DIRECT_DPREFIX_FFN_MOE_ANALYTICAL_SHARED_OUTPUT",
+      "validity": "VALID_BUT_DIFFERENT_SURFACE"
+    },
+    "direct_dprefix_routed_aggregate_v1": {
+      "evidence_file_sha256": "672884e0c217600f9104d7a4d6fdd27a87e0a73fac686044de86461af98781e7",
+      "corrected_role": "DIRECT_DPREFIX_FFN_ONLY_ROUTED_AGGREGATE",
+      "historical_result": "FAIL_UNCHANGED",
+      "validity": "VALID_BUT_DIFFERENT_SURFACE"
+    },
+    "e942_complete_layer": {
+      "artifact_sha256": "e9427e22ef86f161786cfcf22a74b92c1cca50e3d601c6c119633d1458904594",
+      "evaluation_file_sha256": "aae05b6fed0f8dfe78da24afd38914f603a70b5b7cd3903b4d0a153c9ed2052e",
+      "authority_descriptor_file_sha256": "b500214f577941f7c36da69aeba2ee0471c33c15503f536aade5a8d7e0bb6f8e",
+      "corrected_role": "CANONICAL_DIRECT_DPREFIX_FFN_MOE_COMPLETION",
+      "validity": "VALID_BUT_DIFFERENT_SURFACE",
+      "mathematical_qualification": "PASS_UNCHANGED",
+      "engineering_h2": "PASS_UNCHANGED",
+      "production_complete_layer3_output": false,
+      "m1f_oracle_authority": false
+    }
+  },
+  "misleading_historical_terms": [
+    {"term":"canonical complete layer-3 analytical output","affected_files":["docs/architecture/reviews/evidence/f017-complete-layer-aggregate-v2-evaluation-v1.json","docs/architecture/reviews/evidence/f017-complete-layer3-canonical-authority-v1.json"],"precise_interpretation":"canonical direct-DPREFIX FFN/MoE completion; layer-3 attention is not included"},
+    {"term":"complete-layer v2","affected_files":["specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-acceptance-v2.json"],"precise_interpretation":"the frozen formula is valid for its direct-DPREFIX residual plus routed/shared FFN composition but is not the production S2 graph because the residual is S0 rather than post-attention S1"},
+    {"term":"route ambiguity qualified at complete-layer output","affected_files":["docs/architecture/reviews/evidence/f017-complete-layer-aggregate-v2-evaluation-v1.json"],"precise_interpretation":"direct-DPREFIX FFN/MoE completion ambiguity qualified; no claim about representative post-attention routing"},
+    {"term":"canonical expert output","affected_files":["docs/architecture/reviews/evidence/f017-canonical-expert-output-private-reuse-authorization-v1.json"],"precise_interpretation":"persisted exact direct-DPREFIX FFN expert output keyed by direct route expert ID"},
+    {"term":"canonical shared expert output","affected_files":["docs/architecture/reviews/evidence/f017-canonical-shared-expert-output-private-reuse-authorization-v1.json"],"precise_interpretation":"persisted exact shared output from direct-DPREFIX FFN-normalized input"}
+  ],
+  "historical_immutability": {
+    "historical_m1f0": "ACCEPTED_UNCHANGED",
+    "REAL_1": "REJECTED_UNCHANGED",
+    "REAL_2": "REJECTED_UNCHANGED",
+    "REAL_3": "REJECTED_UNCHANGED",
+    "DPREFIX_EXACT_1": "CANONICAL_UNCHANGED",
+    "direct_dprefix_v31": "MATHEMATICS_VALID_UNCHANGED",
+    "direct_dprefix_membership": "1984_OF_1984_PASS_UNCHANGED",
+    "coefficient_qualification": "0_OF_8_FAIL_UNCHANGED",
+    "routed_aggregate_v1": "FAIL_UNCHANGED",
+    "complete_layer_v2": "PASS_ON_FROZEN_DIRECT_DPREFIX_FFN_MOE_SURFACE_UNCHANGED",
+    "e942_identity": "UNCHANGED",
+    "real_payload_ledger": 166
+  },
+  "isolation": {"checkpoint_reads":0,"shard_opens":0,"payload_reads":0,"candidate_or_model_dispatches":0,"gpu_dispatches":0,"real_payload_ledger_before":166,"real_payload_ledger_after":166}
+}

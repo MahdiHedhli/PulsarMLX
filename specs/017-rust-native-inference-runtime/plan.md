@@ -328,3 +328,27 @@ Gate: the public schema/authorization and private verifier pass provenance,
 identity, mutation, privacy, routed-compatibility, ledger, and historical-
 immutability checks with checkpoint reads and shard opens zero and the real-
 payload ledger fixed at 166.
+
+## Phase 24 — Representative M1-F0 semantic boundary v2 freeze
+
+- Freeze the exact production layer-3 graph from the canonical pre-attention
+  entry through attention, the post-attention residual, FFN RMSNorm, routing,
+  routed/shared FFN work, and the final residual-added output.
+- Correct the direct-DPREFIX v3.1, recovered expert/shared outputs, routed-v1,
+  and e942 lineage append-only as valid evidence on a direct-DPREFIX FFN/MoE
+  analytical surface, not as representative post-attention M1-F0/M1-F truth.
+- Preserve the historical accepted M1-F0 attempt unchanged while freezing a
+  new representative boundary from DPREFIX-EXACT-1 through layer-3 attention
+  and routing only; expert, shared-expert, complete-layer, and candidate work
+  remain outside M1-F0.
+- Derive the nine hash-only attention payload descriptors and require separate
+  cross-event authorization for the three retained router authorities before a
+  future independently reviewed one-open CPU fixed-order recovery event.
+- Bind future NTFY progress points and prohibit GPU/LM Studio disturbance for
+  the CPU-only execution class.
+
+Gate: the semantic graph, append-only correction index, boundary contract,
+inventory arithmetic, identity-gate rules, and mutation tests validate with no
+execution authorization, checkpoint reads, shard opens, GPU dispatch, or ledger
+change; the real-payload ledger remains 166 and the future success shape is
+separately reviewed as nine reads, 132,900,864 packed bytes, and ledger 175.
