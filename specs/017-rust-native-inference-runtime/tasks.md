@@ -428,3 +428,10 @@
   analytical consumer to the already-frozen weighted-MoE aggregate theorem;
   and preserve zero checkpoint reads, zero shard opens, no aggregate
   evaluation, historical dispositions, and the real-payload ledger at 163.
+- [x] T017-220 Evaluate the frozen weighted-MoE aggregate theorem exactly twice
+  from the eight authorized canonical expert outputs and immutable ID-keyed
+  routing-weight evidence; bank the nominal aggregate plus direct, centered,
+  and intersected enclosure identities; preserve max-absolute and RMSE passes
+  but fail closed on the frozen cosine budget, leaving membership PASS,
+  coefficient qualification FAIL, route invariance unproven, checkpoint reads
+  and shard opens zero, and the real-payload ledger unchanged at 163.

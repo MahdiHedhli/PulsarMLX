@@ -277,3 +277,18 @@ checkpoint access and requires renewed independent review.
 Gate: the public authorization/schema and private verifier pass all identity,
 provenance, mutation, privacy, ledger, and historical-immutability checks with
 checkpoint reads and shard opens zero and the real-payload ledger fixed at 163.
+
+## Phase 21 — Weighted-MoE aggregate safety evaluation
+
+- Consume only the eight reuse-authorized canonical expert down outputs and
+  already-banked ID-keyed routing-weight/joint-normalization evidence.
+- Apply the unchanged frozen direct and normalization-centered enclosures,
+  intersect them componentwise, and compare the resulting max-absolute, RMSE,
+  and cosine bounds only with the unchanged R10 v2 intermediate budgets.
+- Reproduce the complete public evaluation byte-identically twice, rehash the
+  eight persisted-authority outputs before and after, and preserve membership,
+  coefficient, and aggregate conclusions as three separate facts.
+
+Gate: any failed aggregate budget keeps `ROUTE NOT PROVEN INVARIANT`; no theorem
+or tolerance adjustment, checkpoint access, payload-ledger mutation, or M1-F0
+authorization occurs in this phase.
