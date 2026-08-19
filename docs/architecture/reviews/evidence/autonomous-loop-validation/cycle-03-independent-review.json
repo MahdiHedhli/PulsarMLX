@@ -1,0 +1,331 @@
+{
+  "schema": "pulsarmlx.f017.autonomous-loop-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-AUTONOMOUS-LOOP-VALIDATION-CYCLE-03-INDEPENDENT-REVIEW",
+  "cycle": 3,
+  "final_cycle": true,
+  "reviewed_head": "a23477b8931a37e63c54a655bcdb06bb1c497039",
+  "validation_base": "2a657bdf41267817ff03cc5d233ec2507c87dbf2",
+  "branch": "validation/f017-autonomous-adversarial-loop-replay",
+  "reviewed_authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json",
+    "sha256": "b27ccf1a46cd55fb685989e859704b3fcbd9da23d8d02e34df28ee476a59c931",
+    "status": "PREPARED_REVIEW_REQUIRED"
+  },
+  "reviewed_components": {
+    "executor": {
+      "path": "scripts/research/f017_representative_m1f0_validation_executor.py",
+      "sha256": "b9393042a0607f3e05b824c9cbd346f14385368b3008e0335a1633ea8cbca323"
+    },
+    "validator": {
+      "path": "scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py",
+      "sha256": "1a0e83f105cf62094657a9613cc278a1ee3ed73722366f10362d8ee814e240af"
+    },
+    "tests": {
+      "path": "scripts/research/tests/test_f017_representative_m1f0_execution_authorization_v2.py",
+      "sha256": "15555fc546cf3e4aabd04ea901601eb139c5d719dcb0be5abca61d01b5284bf7"
+    },
+    "rehearsal_generator": {
+      "path": "scripts/research/generate_f017_autonomous_cycle1_rehearsal.py",
+      "sha256": "0f463ccebfe357e3293d4b81566467cd177fb5b98c25c88649acd246783ffc56"
+    },
+    "bound_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-02-builder-rehearsal.json",
+      "sha256": "77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9"
+    },
+    "schema": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json",
+      "sha256": "cbcd959aedb3a34c690412511e0ab1fc515725a68f8eef1c0b2a27f19b3a1ea3"
+    }
+  },
+  "prior_review": {
+    "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-02-independent-review.json",
+    "sha256_claimed_by_loop_state": "8f283325f6320c51f14ff20b466b9629be9bb71d2f3f96b08fc9a98339b65392",
+    "sha256_recomputed": "8f283325f6320c51f14ff20b466b9629be9bb71d2f3f96b08fc9a98339b65392",
+    "sha256_match": true,
+    "verdict": "REJECT"
+  },
+  "scope": {
+    "reviewed_commit_range": "2a657bdf41267817ff03cc5d233ec2507c87dbf2..a23477b8931a37e63c54a655bcdb06bb1c497039",
+    "branch_commits_reviewed": [
+      "9a997d61 test(f017): initialize autonomous review loop",
+      "56028ec9 test(f017): bank autonomous cycle 1 review",
+      "b6b7d08f test(f017): repair autonomous authorization replay",
+      "0d455324 test(f017): advance autonomous loop to cycle 2",
+      "ea883b6d docs(f017): bank autonomous loop cycle 2 review",
+      "7ff0a80f fix(f017): close autonomous review cycle 2 blockers",
+      "a23477b8 docs(f017): advance autonomous loop to cycle 3"
+    ],
+    "working_tree_state": "CLEAN_AT_REVIEWED_HEAD",
+    "uncommitted_changes_reviewed": false,
+    "note": "a23477b8 modifies only f017-autonomous-loop-state.json; all reviewed implementation, contract and test bytes were introduced by 7ff0a80f."
+  },
+  "verdict": "ACCEPT",
+  "verdict_statement": "ACCEPT. All three cycle-2 BLOCKING findings (F017-C02-B01 decoded content identity, F017-C02-B02 non-ExecutionError terminalization and interrupted-attempt reconciliation, F017-C02-B03 authorization gate absent from the execution path) are independently confirmed closed by direct execution against the committed head, and no new BLOCKING finding was established. Five NON_BLOCKING_REQUIRED and nine DEFENSE_IN_DEPTH findings remain and must be repaired before any execution release, but none of them permits scope escalation, an unauthorized checkpoint read, a resumed or retried attempt, or a silently non-terminal successful outcome in the committed configuration.",
+  "prior_finding_disposition": {
+    "F017-C02-B01": {
+      "title": "The executor never verifies the nine committed decoded_sha256 identities, so decoded content is unbound at execution time",
+      "prior_classification": "BLOCKING",
+      "disposition": "RESOLVED",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:559-565",
+      "verification": "The execution loop now computes decoded_digest = sha256(left) and, on the production lane (synthetic=False), compares it to entry['decoded_sha256'] taken from the inventory, raising ExecutionError('DECODED_HASH') on mismatch. The inventory carrying those nine identities is pinned byte-exact to the hash-bound v1 contract by validator rule INVENTORY_EXACT (validate_...v2.py:127-129), every row is required to carry a 64-hex decoded_sha256 (INVENTORY_HASHES), and F32 rows are required to satisfy decoded_sha256 == packed_sha256 (F32_PACKED_DECODED). I independently confirmed that this last rule is consistent with the executor's actual decoder serialization: ProductionDecoderPair on random F32 payloads of shape [6144], [2048] and [512] produced decoded bytes whose sha256 equals the packed sha256 in 3 of 3 cases, so the committed decoded_sha256 vocabulary and the decoder's canonical little-endian-f32 serialization are the same vocabulary. The failure path is rehearsed: injecting a one-bit decoded corruption at ordinal 2 terminalizes as DECODED_HASH at ledger 169. Residual: the production comparison itself cannot be executed checkpoint-free, tracked as F017-C03-N05; it fails closed, not open.",
+      "residual_findings": ["F017-C03-N05"]
+    },
+    "F017-C02-B02": {
+      "title": "No terminalization for any fault that is not an ExecutionError, and an interrupted attempt is never reconciled or terminalized",
+      "prior_classification": "BLOCKING",
+      "disposition": "RESOLVED",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:488-511, 583-591",
+      "verification": "execute() now wraps the whole post-start body in 'except BaseException', maps any non-ExecutionError to 'UNEXPECTED_<TYPE>' and returns a durable TERMINAL_FAILURE through _terminal(). I injected six distinct fault classes into the decode lane at ordinal 2 (ValueError, KeyError, MemoryError, KeyboardInterrupt, SystemExit, bare BaseException); all six returned TERMINAL_FAILURE with reason UNEXPECTED_<TYPE>, consumed_reads=3, ledger_after=169, and a durable terminal.json present on disk in 6 of 6 cases. A separate reconcile_interrupted() entrypoint exists, validates receipt sequence/ordinal contiguity and re-hashes each retained payload against its receipt, terminalizes as INTERRUPTED_ATTEMPT without opening the provider (shard_opens=0), and refuses a second terminalization with ATTEMPT_ALREADY_TERMINAL. Residual: the terminalizer and reconciler are not themselves fault-tolerant, tracked as F017-C03-N02; the residual outcome is a wedged non-terminal attempt that can neither resume nor retry, which is fail-closed.",
+      "residual_findings": ["F017-C03-N02", "F017-C03-N03", "F017-C03-D04"]
+    },
+    "F017-C02-B03": {
+      "title": "The repaired gate is not on the execution path: the executor runs a fully escalated authorization",
+      "prior_classification": "BLOCKING",
+      "disposition": "RESOLVED",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:460-486, 513-518",
+      "verification": "execute() now calls _validate() as its first statement, before the attempt directory is created, before retained preflight and before any provider open. _validate() loads the committed validator, raises ExecutionError('AUTHORIZATION_GATE:<first error>') if it returns any error, then enforces executor self-identity (sha_file(__file__) == authorization.executor.sha256) and seven further inline invariants. I exercised the gate directly with 47 mutated authorizations: 23 top-level-key deletions, 10 escalations covering every boolean in the authorization block, and 14 targeted escalations of isolation, read_contract, ledger_contract, failure_contract, status, schema_version, executor.sha256, checkpoint_binding, semantic_authority and execution_semantics. All 47 were rejected by a raised ExecutionError with provider.open_count == 0 and provider.read_count == 0; zero mutations reached a provider open. The five gutting cases the committed suite already covers were reproduced independently.",
+      "residual_findings": ["F017-C03-N01"]
+    }
+  },
+  "prior_nonblocking_disposition": {
+    "F017-C02-N01": "PARTIALLY_RESOLVED. execution_semantics.device/gpu_dispatches/blas/backend_dependent_reduction/arithmetic/rmsnorm/attention/router/environment_scope and output_contract are now all constrained by exact equality in the validator, and the executable schema now pins the load-bearing consts. Residual unbound surface is unknown-key acceptance, tracked as F017-C03-D05.",
+    "F017-C02-N02": "RESOLVED. FileRetainedInputs.from_authorization (executor:295-314) now verifies the manifest path and sha256 against the authorization binding (RETAINED_MANIFEST_IDENTITY), enforces the exact ordered artifact_id set (RETAINED_ARTIFACT_SET), enforces dtype and shape*4 == byte_length (RETAINED_DTYPE_SHAPE), and resolves the package root only through the manifest-declared private environment variable with checkpoint_fallback false (RETAINED_ROOT_RESOLUTION). I confirmed all four rejection codes fire on injected mutations using the environment-injection seam.",
+    "F017-C02-N03": "PARTIALLY_RESOLVED. The rehearsal now really invokes ProductionComputationStage at full real geometry (generate_...py:82) and ProductionDecoderPair on random non-zero fixtures (generate_...py:84-90), and two committed tests exercise ProductionDecoderPair and canonicalize_oracle_output. Residual: the adapter is driven with all-zero buffers and the whole synthetic=False composition is still unexecuted, tracked as F017-C03-D03 and F017-C03-N05.",
+    "F017-C02-N04": "PARTIALLY_RESOLVED. expected_size and basename are now taken from the committed authorization via PositionalFileShardProvider.from_authorization (executor:207-210) and enforced at open() by an O_NOFOLLOW open plus fstat regular-file, size and basename check; I confirmed SHARD_OBJECT_IDENTITY fires on wrong size, wrong basename and the real 49105028960-byte expectation. Residual: checkpoint_binding.shard.sha256 is still never consumed, tracked as F017-C03-D01.",
+    "F017-C02-N05": "NOT_RESOLVED. Carried forward and re-evidenced as F017-C03-N04.",
+    "F017-C02-D01": "PARTIALLY_RESOLVED in the rehearsal generator (random fixtures) but NOT in the committed test, which still uses bytes(32)/bytes(34)/bytes(176). Carried as F017-C03-D03.",
+    "F017-C02-D02": "NOT_RESOLVED. Retained storage-rule violations are now mapped to ExecutionError('RETAINED_STORAGE_RULE') at open (executor:337-339), but package-root resolution still raises a raw FileNotFoundError. Carried as F017-C03-D02.",
+    "F017-C02-D03": "RESOLVED. FileRetainedInputs.close() exists and execute()'s finally block invokes it via getattr on both success and failure paths (executor:589-591); preflight() also closes on its own exception path (executor:356-358).",
+    "F017-C02-D04": "PARTIALLY_RESOLVED. unsupported_schema_keywords() now rejects any keyword outside a six-keyword supported set instead of silently ignoring it, which converts silent under-enforcement into a hard error. The side effect is that additionalProperties can no longer be expressed at all; carried as F017-C03-D05.",
+    "F017-C02-D05": "NOT_RESOLVED. SyntheticShardHandle raises ExecutionError('READ_RANGE')/('READ_ORDER') for faults that PositionalFileShardHandle reports only when an inventory is supplied, and the production handle returns short reads silently (caught downstream as SHORT_READ). Reduced severity; folded into F017-C03-N05.",
+    "F017-C02-D06": "NOT_RESOLVED. Out of scope for the reviewed change set; no new evidence."
+  },
+  "findings": [
+    {
+      "id": "F017-C03-N01",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "The authorization validator is the only load-bearing component bound by no committed identity, and the executor loads it by path from a caller-supplied repository root",
+      "detail": "The authorization hash-binds six files (supersedes/v1, executor, retained_inputs manifest, stage_vocabulary, schema_binding, synthetic_rehearsal) and the validator additionally hash-binds the catalog. The executor verifies its own bytes against authorization.executor.sha256. The one component that is bound by nothing is the validator itself: _validate() computes 'self.repository_root / VALIDATOR_PATH.relative_to(REPOSITORY_ROOT)', loads that path with importlib and calls validator.validate(), with no identity check on the loaded module and no validator binding anywhere in the authorization. This is an asymmetry, not a symmetric limit of trust: modifying the executor alone is caught twice (by the validator's EXECUTOR_IDENTITY check and by the executor's own EXECUTOR_SELF_IDENTITY check), whereas modifying the validator alone defeats both, because EXPECTED_EXECUTOR is a constant inside the validator. repository_root is also a public constructor parameter, so the module actually loaded is caller-selected. The residual inline defences in _validate() are narrow: schema_version, status, event, 'real_event_authorized is not False', ordinal ordering, packed-byte sum, stop_boundary and executor self-identity. Not inline-checked, and therefore delegated entirely to the unbound validator, are checkpoint_access_authorized, expert_execution_authorized, shared_expert_execution_authorized, candidate_or_model_dispatch_authorized, M1_F_authorized, M1_G_authorized, P1_authorized, read_contract, ledger_contract, failure_contract, output_contract, isolation, surface_separation, checkpoint_binding and the retained/vocabulary/schema bindings.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:33-34,460-471; scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py:18,110,117-118; specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json:19-48 (no validator binding)",
+      "independent_test": "Enumerated every authorization key carrying a file identity: ['supersedes','executor','retained_inputs','stage_vocabulary','schema_binding','synthetic_rehearsal']. No entry references validate_f017_representative_m1f0_execution_authorization_v2.py. Confirmed programmatically: binding present for the validator = False.",
+      "required_repair": "Add a validator_binding {path, sha256} section to the authorization v2 contract and to the executable schema's required list, and have RepresentativeExecutor._validate() verify sha_file(resolved validator path) against that binding, raising ExecutionError('VALIDATOR_IDENTITY') before exec_module, exactly as EXECUTOR_SELF_IDENTITY is already enforced. Additionally pin the resolved validator path to REPOSITORY_ROOT, or require that repository_root resolve to the same tree that contains the self-identity-verified executor."
+    },
+    {
+      "id": "F017-C03-N02",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "The terminalizer and the reconciler are not themselves fault-tolerant, so a damaged durable receipt leaves an attempt permanently non-terminal, un-reconcilable and un-re-executable",
+      "detail": "_terminal() reads every receipt with json.loads(path.read_text()) and sums v['actual_bytes'] with no error handling, and reconcile_interrupted() does the same before delegating to _terminal(). Neither is wrapped by the BaseException handler that protects the execute() body, because _terminal() is invoked from inside that handler and reconcile_interrupted() has no handler at all. A malformed or truncated receipt therefore propagates a raw JSONDecodeError or KeyError out of the terminalization path, and terminal.json is never written. The attempt is then permanently stuck: execute() refuses it with ATTEMPT_ALREADY_EXISTS because state_root exists, and reconcile_interrupted() raises the same decode fault again. This is precisely the guarantee failure_contract.interrupted_attempt = 'RECONCILE_DURABLE_RECEIPTS_TERMINALIZE_NEVER_RESUME' promises to provide. The trigger requires damage to a record that durable_publish() writes atomically (mkstemp, fsync, chmod, link, directory fsync), so it is unlikely from a clean interruption, and the outcome is fail-closed rather than fail-open.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:494-511, 583-585",
+      "independent_test": "Probe K: injected a fault at ordinal 2 that first corrupted receipts/01.json to '{broken' and then raised ExecutionError. execute() ESCAPED with JSONDecodeError and terminal.json was NOT written (present=False), despite 2 durably receipted reads. Probe G: reconcile_interrupted() against a corrupt receipt ESCAPED with JSONDecodeError; against a receipt missing actual_bytes it ESCAPED with KeyError. In both cases no terminal record was produced.",
+      "required_repair": "Wrap the receipt scan in _terminal() and in reconcile_interrupted() so that an unreadable or malformed durable record yields a coded ExecutionError, and make terminalization itself total: on a receipt-scan fault, still publish terminal.json with a conservative reason such as RECONCILIATION_RECORD_UNREADABLE and the worst-case read count (the number of receipt files present, or the number of retained payload files, whichever is larger) rather than propagating the raw exception."
+    },
+    {
+      "id": "F017-C03-N03",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Interrupted-attempt reconciliation reconstructs accounting from receipt content that it never cross-checks against the authorized inventory, and never detects a retained payload with no receipt",
+      "detail": "reconcile_interrupted() validates only three things per receipt: that sequence == index, that ordinal == index-1, and that the referenced retained payload re-hashes to receipt['packed_sha256']. It never compares receipt['key'], receipt['offset'], receipt['requested_bytes'] or receipt['actual_bytes'] to the authorized attention_payload_inventory entry for that ordinal, even though the executor holds that inventory. _terminal() then sums the unvalidated actual_bytes fields into ExecutionResult.packed_bytes, which is the durable evidence of how many checkpoint bytes the attempt consumed. Separately, the executor's own write order is read, durable_publish retained payload, verify, write receipt (executor:544-555), so an interruption inside that window leaves a retained payload with no receipt. The reconciler globs only receipts/*.json and never inspects retained-packed/, so that case is silently reported as one fewer consumed read than actually occurred. The reconstructed ledger_after remains contract-correct because ledger_contract.increment_unit is DURABLE_EXACT_SIZE_READ_RECEIPT and after_n_durable_receipts is '166+N', but the byte accounting and the read identity are not bound to the authorization.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:488-502, 504-511, 544-555",
+      "independent_test": "Probe G, four cases against a hand-built interrupted attempt. (a) Receipt with actual_bytes forged to 999999999 and an otherwise valid retained payload: reconciled OK, terminal packed_bytes reported as 999999999. (b) Receipt carrying key='NOT_IN_INVENTORY' and offset=123: reconciled OK with no complaint. (c) Orphan retained-packed/01.bin published with no matching receipt: reconciled OK reporting consumed_reads=1, ledger_after=167, orphan undetected. (d) Honest single receipt: reconciled OK (1, 100, 167) and a second reconciliation correctly refused with ATTEMPT_ALREADY_TERMINAL.",
+      "required_repair": "In reconcile_interrupted(), for each receipt at ordinal i assert receipt['key'], receipt['offset'], receipt['requested_bytes'] and receipt['actual_bytes'] equal the authorized inventory[i] values, raising a coded ExecutionError otherwise; and assert that the set of files under retained-packed/ is exactly the set referenced by the receipts, raising a coded ExecutionError such as RECONCILIATION_ORPHAN_RETAINED_PAYLOAD when a consumed-but-unreceipted read is detected, so the terminal record reports the larger true read count."
+    },
+    {
+      "id": "F017-C03-N04",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Three declared output and environment contract obligations are asserted by the authorization but performed by no executable code, and the pinned environment is demonstrably not the environment the evidence was reproduced in",
+      "detail": "output_contract.finite_checks_required is true, but neither the executor nor either production adapter performs a finiteness check on decoded tensors or on stage outputs; the only finiteness check in the whole chain is incidental, inside decode_canonical_f32, and covers only the second decoder lane. A real run producing non-finite router logits would be hashed into required_stage_sha256 and returned as COMPLETE. output_contract.retained_only_reproduction_runs = 10 and minimum_fresh_processes = 2 and required_stage_identity/route_identity = '10_OF_10_EXACT' describe a reproduction campaign that no committed code performs, schedules or records. execution_semantics.environment_scope pins platform DARWIN_ARM64, cpython 3.13.13, numpy 2.4.5 and a pinned libm; the validator asserts only that the authorization declares those strings, and no executable code compares them to the running interpreter, so the pin is inert.",
+      "committed_evidence": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json:107,109-118; scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py:164,167; scripts/research/f017_representative_m1f0_validation_executor.py:572-582 (no finite check, no reproduction driver, no environment assertion)",
+      "independent_test": "I reproduced the entire bound evidence chain under CPython 3.14.6 with numpy 2.4.5, against a contract pinning CPython 3.13.13. The committed 22-test suite passed, the validator returned PASS with zero errors, and the rehearsal regenerated to the exact bound digest 77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9. Nothing in the chain detected or reported the interpreter mismatch. Separately, ProductionDecoderPair on random Q8_0 [320] payloads raised OrchestratorError from lane 2's isfinite gate in 2 of 8 trials while lane 1 produced non-finite values without complaint, confirming that finiteness is enforced asymmetrically and only as a decoder side effect.",
+      "required_repair": "Add an explicit finiteness assertion over decoded tensors and over every stage output before required_stage_sha256 is published, raising a coded ExecutionError; commit an executable reproduction driver that performs the declared 10 retained-only runs across at least 2 fresh processes and records 10-of-10 stage and route identity; and add an executable environment assertion comparing platform, sys.version, numpy.__version__ and the libm pin to execution_semantics.environment_scope, raising a coded ExecutionError on mismatch."
+    },
+    {
+      "id": "F017-C03-N05",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "The production execution shape is unrehearsed as a composition and is unreachable checkpoint-free, so four production classes have no end-to-end coverage",
+      "detail": "Every committed test and the bound rehearsal drive RepresentativeExecutor with synthetic=True. On that lane the executor compares packed bytes to SyntheticShardProvider.expected_hash(entry) and decoded bytes to the decoder's own expected_decoded_sha256(), so both identity comparisons are self-referential to the synthetic fixtures. The production lane instead compares to entry['packed_sha256'] and entry['decoded_sha256'], which are the real committed checkpoint digests; producing bytes that satisfy them requires the 49 GB shard, and the inventory is pinned byte-exact to the hash-bound v1 contract, so no substitute inventory can be gated through. The production lane is therefore structurally unreachable in any checkpoint-free rehearsal. As a consequence PositionalFileShardProvider, FileRetainedInputs.preflight/verify_after, ProductionComputationStage-as-driven-by-the-executor and the production branch at executor:563 have never been executed as a composition, and none of them is referenced by any committed test. The first real invocation of the executor will be the first execution of that composition, against a one-attempt, no-retry, no-resume authorization. I found no defect in the composition: I verified the geometry independently and it is consistent end to end (attn_q_a [2048,6144] x 6144 -> 2048; attn_q_b [16384,2048] x 2048 -> 16384; attn_kv_a_mqa [576,6144] -> 576; attn_k_b [64,512,192] per-head x 192 -> 512; attn_v_b [64,256,512] per-head x 512 -> 256; attn_output [6144,16384] x 16384 -> 6144; ffn_gate_inp [256,6144] x 6144 -> 256), and the retained artifact byte lengths 24576/24576/6291456/1024 match the reshapes in ProductionComputationStage exactly. The risk is unrehearsed shape, not a located defect, and every identity comparison on that lane fails closed.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:541,560-565,170-223,286-371,393-418; scripts/research/tests/test_f017_representative_m1f0_execution_authorization_v2.py:81-215 (all executions synthetic=True); scripts/research/generate_f017_autonomous_cycle1_rehearsal.py:36-90",
+      "independent_test": "Exercised the untested production classes in isolation against local non-checkpoint fixtures. PositionalFileShardProvider: correct size and basename opened and read successfully; wrong size, wrong basename and the authorization-derived 49105028960-byte expectation each raised SHARD_OBJECT_IDENTITY; from_authorization correctly propagated size 49105028960 and basename GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf. FileRetainedInputs.from_authorization via the environment-injection seam: valid variable resolved; missing variable raised RETAINED_ROOT_RESOLUTION; tampered manifest sha raised RETAINED_MANIFEST_IDENTITY; reordered artifact_ids raised RETAINED_ARTIFACT_SET; removed retained_inputs raised RETAINED_MANIFEST_IDENTITY. No retained payload and no shard was opened. Confirmed the production lane is unreachable: entry['packed_sha256'] for ordinal 0 is 8f642efd9c89ec5c... over 24576 bytes that only the real shard can supply.",
+      "required_repair": "Before execution release, commit a production-shape rehearsal that drives RepresentativeExecutor with synthetic=False end to end over a locally fabricated fixture shard and fixture retained package, using a separately committed fixture inventory whose packed_sha256 and decoded_sha256 are the digests of the fixture bytes, so that PositionalFileShardProvider, FileRetainedInputs, ProductionDecoderPair, ProductionComputationStage and the entry['decoded_sha256'] comparison all execute as one composition at least once before the real attempt."
+    },
+    {
+      "id": "F017-C03-D01",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "checkpoint_binding.shard.sha256 is committed and gate-verified as a declaration but never consumed as an identity check",
+      "detail": "PositionalFileShardProvider binds the shard object by expected_basename and expected_size only. from_authorization reads shard['size_bytes'] and shard['basename'] and discards shard['sha256'] = d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36. Any regular file with the right name and byte length passes SHARD_OBJECT_IDENTITY. Full-file hashing of a 49 GB shard would itself violate read_contract.expected_reads = 9 and maximum_shard_opens = 1, so the omission is defensible, but the identity is currently weaker than the committed evidence implies.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:198-223; specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json:53",
+      "independent_test": "Constructed a 100-byte local file named GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf; PositionalFileShardProvider(path, 100) opened it and served read_at(0,10,0) successfully with no reference to the bound shard sha256.",
+      "required_repair": "Either record explicitly in the contract that shard identity is intentionally bound by basename plus size only because whole-file hashing would breach the read budget, or bind a cheap committed spot-check (for example a digest over a small fixed set of header and inventory-adjacent ranges) that can be verified within the authorized read accounting."
+    },
+    {
+      "id": "F017-C03-D02",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Retained package-root resolution raises a raw FileNotFoundError instead of a coded ExecutionError",
+      "detail": "FileRetainedInputs.__init__ calls package_root.resolve(strict=True). When the environment-declared private root does not exist, the resulting FileNotFoundError escapes from from_authorization uncoded. This is a pre-attempt call made by the caller before the executor is constructed, so nothing is terminalized or mis-accounted, but it breaks the otherwise complete coded-fault vocabulary that the rest of the retained path establishes (RETAINED_MANIFEST_IDENTITY, RETAINED_ARTIFACT_SET, RETAINED_DTYPE_SHAPE, RETAINED_ROOT_RESOLUTION, RETAINED_PATH, RETAINED_STORAGE_RULE, RETAINED_SIZE, RETAINED_BEFORE_HASH, RETAINED_AFTER_HASH).",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:289-290, 312-314",
+      "independent_test": "from_authorization with PULSARMLX_F017_REPRESENTATIVE_RETAINED_ROOT pointing at a nonexistent directory ESCAPED with FileNotFoundError; every other injected mutation returned a coded ExecutionError.",
+      "required_repair": "Catch OSError around the strict resolve and re-raise as ExecutionError('RETAINED_ROOT_RESOLUTION')."
+    },
+    {
+      "id": "F017-C03-D03",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "The real-geometry production adapter case is rehearsed with all-zero buffers, its own distinctness signal is false, and the rehearsal PASS criterion ignores that signal",
+      "detail": "generate_f017_autonomous_cycle1_rehearsal.py:80-83 constructs decoded and retained buffers as bytes(n) and drives ProductionComputationStage over them. The case records all_distinct: false, yet the artifact's result field is computed as PASS from only two conditions, cases['success'].terminal == 'COMPLETE' and stage_count == 18, so a recorded distinctness failure cannot influence the verdict. Degenerate inputs exercise geometry and allocation but cannot detect stage-plumbing errors that a value-carrying run would expose, because several stages collapse to identical all-zero tensors. The committed test test_production_decoder_pair_small_blocks separately still uses bytes(32)/bytes(34)/bytes(176), so the zero-payload weakness cycle 2 raised persists in the test suite even though the generator moved to random fixtures.",
+      "committed_evidence": "scripts/research/generate_f017_autonomous_cycle1_rehearsal.py:80-83,97; docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-02-builder-rehearsal.json (production_adapter_real_geometry.all_distinct = false); scripts/research/tests/test_f017_representative_m1f0_execution_authorization_v2.py:206-215",
+      "independent_test": "canonicalize_oracle_output over synthetic_real_shaped_oracle with an all-zero hidden vector produced 13 distinct hashes out of 18; with the non-degenerate hidden vector it produced 18 of 18. This confirms that 5 of the 18 stage identities are indistinguishable under the buffers the rehearsal actually uses.",
+      "required_repair": "Drive the production_adapter_real_geometry case with deterministic non-degenerate buffers (a seeded generator, as the decoder case already does), make all_distinct == true a condition of the rehearsal result field, and change the committed decoder test to seeded non-zero payloads."
+    },
+    {
+      "id": "F017-C03-D04",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "An interruption between attempt-directory creation and execution-start publication wedges the attempt with no terminalization path",
+      "detail": "execute() creates state_root, fsyncs its parent, then publishes attempt.json and execution-start.json (executor:518-526). An interruption inside that window leaves a directory that execute() refuses with ATTEMPT_ALREADY_EXISTS and that reconcile_interrupted() refuses with NO_STARTED_ATTEMPT, because the latter gates on execution-start.json existing. No path can terminalize the attempt. The window is entirely before the shard open and before any read, so the outcome is fail-closed with zero checkpoint reads and zero ledger delta, but the failure_contract terminalization guarantee does not cover it.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:490-491, 515-526",
+      "independent_test": "Probe G: created state_root containing only attempt.json. reconcile_interrupted() raised NO_STARTED_ATTEMPT; a subsequent execute() raised ATTEMPT_ALREADY_EXISTS. Neither call produced a terminal record.",
+      "required_repair": "Allow reconcile_interrupted() to terminalize a started-but-unstamped attempt, treating the presence of state_root with no execution-start.json as a zero-read interrupted attempt, or publish execution-start.json as the directory-creation step itself so the window does not exist."
+    },
+    {
+      "id": "F017-C03-D05",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Unknown keys are accepted at three levels of the authorization, and the executable schema cannot express additionalProperties because unsupported keywords are rejected",
+      "detail": "unsupported_schema_keywords() restricts the schema to {$schema, $id, type, required, properties, const, minItems, maxItems, items}. additionalProperties is therefore not expressible, and the executable walk does not reject unknown members. Sections defended by whole-dict equality (authorization, isolation, checkpoint_binding, semantic_authority, read_contract, ledger_contract, failure_contract, output_contract, surface_separation) and the inventory (pinned byte-exact to v1) are unaffected, but the document root, execution_semantics and synthetic_rehearsal are each checked field-by-field and accept arbitrary extra members. No consumer reads those members today, so this is a surface concern rather than an exploitable one. Relatedly, the validator's reject_duplicates JSON hook protects only files the validator loads itself; the executor receives the authorization as an already-parsed dict, so duplicate-key rejection never protects the execution path.",
+      "committed_evidence": "scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py:27-37,44-82,158-164,122-125",
+      "independent_test": "Probe I: an extra top-level key, an extra key inside execution_semantics and an extra key inside synthetic_rehearsal were each ACCEPTED with zero validator errors. Extra keys inside authorization, checkpoint_binding, semantic_authority and inventory row 0 were REJECTED with AUTHORIZATION_SCOPE, CHECKPOINT_BINDING, SEMANTIC_AUTHORITY and INVENTORY_EXACT respectively.",
+      "required_repair": "Add additionalProperties to the supported keyword set and implement it in schema_errors(), then set additionalProperties false at the document root, on execution_semantics and on synthetic_rehearsal; and have the executor parse or re-parse the authorization through the validator's duplicate-rejecting loader rather than accepting a pre-parsed dict."
+    },
+    {
+      "id": "F017-C03-D06",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "reconcile_interrupted does not run the authorization gate",
+      "detail": "reconcile_interrupted() never calls _validate(), so it will terminalize an attempt while holding an authorization that the gate would reject. Because the method performs no provider open, no read, no decode and no computation, and can only move an attempt toward terminal, this cannot escalate scope; but it means the executor has one public entrypoint that acts on an unvalidated authorization, and it weakens the invariant that the gate precedes every executor action.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:488-502",
+      "independent_test": "Probe H: reconcile_interrupted() called with authorization.expert_execution_authorized set to true returned INTERRUPTED_ATTEMPT normally; the gate did not run.",
+      "required_repair": "Call _validate() at the head of reconcile_interrupted(), or document explicitly in the failure contract that reconciliation is gate-free by design because it is monotonic toward terminal."
+    },
+    {
+      "id": "F017-C03-D07",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Retained bytes are consumed through a single unchecked os.read whose length is never compared to the manifest byte_length",
+      "detail": "FileRetainedInputs.preflight() verifies the descriptor's fstat size and the full-descriptor digest, then separately obtains the value it hands to computation with values[artifact_id] = os.read(descriptor, info.st_size). os.read is not guaranteed to return the full count, and the returned buffer is never length-checked or re-hashed. A short read would produce a buffer that is not the verified content; it would be caught downstream only incidentally, by a numpy reshape failure inside ProductionComputationStage, which terminalizes as UNEXPECTED_VALUEERROR rather than as a retained-input fault. The largest artifact is router_matrix at 6291456 bytes.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:344-354",
+      "independent_test": "Static confirmation against the committed source; the retained payloads themselves were deliberately not opened, in keeping with the no-payload-access constraint.",
+      "required_repair": "Read to completion in a loop and assert len(value) == entry['byte_length'] and sha256(value) == entry['sha256'], raising ExecutionError('RETAINED_SIZE') or ('RETAINED_BEFORE_HASH') on mismatch, so the bytes handed to computation are the bytes that were verified."
+    },
+    {
+      "id": "F017-C03-D08",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "The two decoder lanes disagree on non-finite handling, and the disagreement is invisible to the DECODER_DISAGREEMENT check",
+      "detail": "decode_canonical_f32 (lane 2) rejects any decode whose output is not finite, raising OrchestratorError. decode_tensor/f32_bytes (lane 1) performs no finiteness check. When lane 2 rejects, the executor never reaches the left != right comparison and terminalizes as UNEXPECTED_ORCHESTRATORERROR instead of a coded decoder fault. The behaviour is fail-closed, but the reported terminal reason misattributes a decoder identity fault to an unexpected fault class, which matters because the reason string is the durable evidence of why the single authorized attempt ended.",
+      "committed_evidence": "scripts/research/f017_representative_m1f0_validation_executor.py:246-260, 583-585; scripts/research/f017_dprefix_real_event_orchestrator.py:408-410",
+      "independent_test": "ProductionDecoderPair.decode_pair over 8 random Q8_0 [320] payloads raised OrchestratorError from the lane-2 finiteness gate in 2 of 8 trials while lane 1 completed; over Q8_0 [32], Q5_K [256] and Q5_K [512] the lanes agreed in 8 of 8 trials each.",
+      "required_repair": "Apply the same finiteness check to both lanes inside ProductionDecoderPair and map a lane rejection to a coded ExecutionError such as DECODER_NONFINITE before the agreement comparison."
+    },
+    {
+      "id": "F017-C03-D09",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "The rehearsal generator is named for cycle 1 while emitting cycle 2 evidence, and no cycle-3 rehearsal was produced",
+      "detail": "scripts/research/generate_f017_autonomous_cycle1_rehearsal.py emits schema_version 1.1.0 with cycle: 2, and the authorization binds docs/.../cycle-02-builder-rehearsal.json as its synthetic_rehearsal. Cycle 3 produced no new rehearsal. This is materially harmless here, because commit a23477b8 changed only f017-autonomous-loop-state.json and the reviewed executor digest b9393042... is identical to the digest recorded inside the bound cycle-2 rehearsal, which I verified; the bound evidence therefore does describe the reviewed bytes. The naming remains a provenance hazard for future cycles.",
+      "committed_evidence": "scripts/research/generate_f017_autonomous_cycle1_rehearsal.py:92; docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-02-builder-rehearsal.json (executor_sha256, cycle)",
+      "independent_test": "sha256 of the committed executor equals b9393042a0607f3e05b824c9cbd346f14385368b3008e0335a1633ea8cbca323, equal to the executor_sha256 recorded inside the bound rehearsal and to the value attested in cycle-02-builder-repair-evidence.json. git show --stat a23477b8 confirms it touches only the loop-state file.",
+      "required_repair": "Rename the generator to a cycle-independent name and derive the cycle field from an argument, so the bound rehearsal's provenance is self-describing."
+    }
+  ],
+  "confirmed_sound": [
+    "The authorization gate is on the execution path and precedes attempt creation, retained preflight and shard open; 47 of 47 mutated authorizations were rejected with 0 provider opens and 0 reads.",
+    "Every fault class, including KeyboardInterrupt, SystemExit and bare BaseException, terminalizes with a durable terminal.json; 6 of 6 injected classes produced TERMINAL_FAILURE with a coded reason.",
+    "Executor self-identity is enforced against the authorization-bound digest, and the validator independently re-verifies the executor file at the bound path.",
+    "The attention payload inventory is pinned byte-exact to the hash-bound v1 contract, so all nine packed_sha256 and decoded_sha256 identities, offsets, packed_bytes and logical shapes are immutable through the gate.",
+    "The validator rule F32_PACKED_DECODED is consistent with the real decoder serialization; verified independently on three F32 shapes.",
+    "Ledger accounting is receipt-based and matches ledger_contract in every rehearsed failure shape: SHORT_READ at ordinal 4 yields 4 receipts and ledger 170 while the provider read count is 5, exactly as short_read_increment = 0 requires.",
+    "Durable records are published atomically: mkstemp, write, fsync, chmod 0o400, link, unlink temp, directory fsync, with an explicit DURABLE_RECORD_ALREADY_EXISTS guard against overwrite.",
+    "Retained inputs are preflighted before attempt start and before shard open, and a retained preflight failure yields 0 provider opens and 0 reads.",
+    "Re-executing a completed or terminalized attempt is refused with ATTEMPT_ALREADY_EXISTS, and re-reconciling is refused with ATTEMPT_ALREADY_TERMINAL; there is no resume and no retry path in the committed code.",
+    "The bound rehearsal artifact is independently reproducible: regenerating it from the committed generator yielded exactly 77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9, matching authorization.synthetic_rehearsal.sha256.",
+    "Every artifact digest attested in cycle-02-builder-repair-evidence.json matches the committed bytes at the reviewed head: authorization_v2, schema_v2, executor, validator, tests, rehearsal_generator and rehearsal, 7 of 7.",
+    "The production computation geometry is internally consistent end to end across all seven matvec shapes and all four retained artifact byte lengths."
+  ],
+  "checkpoint_free_tests": [
+    {"id": "T01", "name": "committed_test_suite", "command": "python3 -m unittest scripts.research.tests.test_f017_representative_m1f0_execution_authorization_v2", "result": "PASS", "detail": "22 tests, 22 passed, 0 failed, in 8.004s under CPython 3.14.6 / numpy 2.4.5"},
+    {"id": "T02", "name": "committed_validator_against_committed_authorization", "command": "python3 scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py", "result": "PASS", "detail": "{\"result\":\"PASS\",\"errors\":[],\"checkpoint_reads\":0,\"shard_opens\":0,\"real_ledger_delta\":0}, exit 0"},
+    {"id": "T03", "name": "gate_vs_gutted_authorization", "result": "PASS", "detail": "Deleted each of the 23 top-level keys in turn and executed. 23 of 23 raised ExecutionError('AUTHORIZATION_GATE:SCHEMA_REQUIRED:$.<key>') with provider.open_count == 0 and provider.read_count == 0."},
+    {"id": "T04", "name": "gate_vs_escalated_authorization_scope", "result": "PASS", "detail": "Flipped each of the 10 booleans in the authorization block. 10 of 10 rejected pre-open: 8 via SCHEMA_CONST (real_event, checkpoint_access, expert_execution, shared_expert_execution, candidate_or_model_dispatch, M1_F, M1_G, P1) and 2 via AUTHORIZATION_SCOPE (independent_adversarial_review_required, execution_release_required_after_review). All with 0 opens."},
+    {"id": "T05", "name": "gate_vs_targeted_escalations", "result": "PASS", "detail": "14 of 14 rejected pre-open with 0 opens: isolation.checkpoint_reads=9, isolation.representative_computations=1, read_contract.retries=true, read_contract.maximum_shard_opens=5, ledger_contract.partial_failure=RESUME, failure_contract.automatic_retry=true, failure_contract.second_attempt_authorized=true, status=RELEASED, schema_version=3.0.0, executor.sha256 zeroed, checkpoint_binding.shard.size_bytes=1, semantic_authority gutted, execution_semantics.device=GPU, environment_scope.cpython=9.9."},
+    {"id": "T06", "name": "non_execution_error_terminalization", "result": "PASS", "detail": "Injected ValueError, KeyError, MemoryError, KeyboardInterrupt, SystemExit and bare BaseException into the decode lane at ordinal 2. 6 of 6 returned TERMINAL_FAILURE with reason UNEXPECTED_<TYPE>, consumed_reads=3, ledger_after=169, and terminal.json present on disk."},
+    {"id": "T07", "name": "terminalizer_own_fault_tolerance", "result": "FAIL", "detail": "Corrupting a durable receipt before the terminalizing fault caused execute() to escape with a raw JSONDecodeError and no terminal.json. Basis of finding F017-C03-N02."},
+    {"id": "T08", "name": "interrupted_attempt_reconciliation_honest_and_repeat", "result": "PASS", "detail": "Honest single-receipt interrupted attempt reconciled to TERMINAL_FAILURE / INTERRUPTED_ATTEMPT with consumed_reads=1, packed_bytes=100, ledger_after=167, shard_opens=0. A second reconciliation was refused with ATTEMPT_ALREADY_TERMINAL."},
+    {"id": "T09", "name": "reconciliation_vs_forged_and_orphaned_records", "result": "FAIL", "detail": "Forged actual_bytes=999999999 accepted into the terminal record; foreign key/offset accepted; orphan retained payload with no receipt undetected; corrupt receipt and receipt missing actual_bytes both escaped uncoded. Basis of findings F017-C03-N03 and F017-C03-N02."},
+    {"id": "T10", "name": "reconciliation_gate_coverage", "result": "FAIL", "detail": "reconcile_interrupted() with expert_execution_authorized=true returned INTERRUPTED_ATTEMPT; the authorization gate did not run. Basis of finding F017-C03-D06."},
+    {"id": "T11", "name": "wedge_window_before_execution_start", "result": "FAIL", "detail": "State root containing only attempt.json: reconcile_interrupted() raised NO_STARTED_ATTEMPT and execute() raised ATTEMPT_ALREADY_EXISTS; no terminalization path exists. Basis of finding F017-C03-D04."},
+    {"id": "T12", "name": "production_shard_provider_identity", "result": "PASS", "detail": "Against a local non-checkpoint fixture file: correct size and basename opened and served read_at; wrong size, wrong basename and the authorization-derived 49105028960-byte expectation each raised SHARD_OBJECT_IDENTITY. from_authorization propagated size 49105028960 and basename GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf. No real shard was opened."},
+    {"id": "T13", "name": "retained_input_binding_chain", "result": "PASS", "detail": "Via the environment-injection seam, 5 of 5 rejection codes fired: missing variable -> RETAINED_ROOT_RESOLUTION, tampered manifest sha -> RETAINED_MANIFEST_IDENTITY, reordered artifact_ids -> RETAINED_ARTIFACT_SET, removed retained_inputs -> RETAINED_MANIFEST_IDENTITY, valid variable -> resolved. One uncoded escape on a nonexistent root (finding F017-C03-D02). No retained payload was opened."},
+    {"id": "T14", "name": "unknown_field_acceptance", "result": "FAIL", "detail": "Extra keys accepted at the document root, in execution_semantics and in synthetic_rehearsal; rejected in authorization, checkpoint_binding, semantic_authority and inventory rows. Basis of finding F017-C03-D05."},
+    {"id": "T15", "name": "f32_decoded_identity_vocabulary_consistency", "result": "PASS", "detail": "ProductionDecoderPair over random F32 payloads of shape [6144], [2048] and [512]: both lanes agreed and sha256(decoded) == sha256(packed) in 3 of 3 cases, confirming the committed decoded_sha256 vocabulary matches the executor's canonical little-endian-f32 serialization."},
+    {"id": "T16", "name": "two_lane_decoder_agreement_nondegenerate", "result": "PASS_WITH_FINDING", "detail": "Q8_0 [32], Q5_K [256] and Q5_K [512] agreed in 8 of 8 random trials each. Q8_0 [320] agreed in 6 of 8 and raised OrchestratorError from the lane-2 finiteness gate in 2 of 8. Basis of finding F017-C03-D08."},
+    {"id": "T17", "name": "degenerate_input_sensitivity_of_rehearsed_adapter", "result": "FAIL", "detail": "canonicalize_oracle_output produced 13 distinct hashes of 18 under an all-zero hidden vector versus 18 of 18 under a non-degenerate one, confirming that the buffers the rehearsal uses cannot distinguish 5 stage identities. Basis of finding F017-C03-D03."},
+    {"id": "T18", "name": "bound_rehearsal_byte_reproduction", "result": "PASS", "detail": "Re-ran the committed generator to a temporary path; output digest 77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9 equals the committed artifact and equals authorization.synthetic_rehearsal.sha256. Real-geometry production adapter executed with 660113408 decoded allocation bytes in 26.4s. checkpoint_reads 0, shard_opens 0, real_ledger_delta 0."},
+    {"id": "T19", "name": "builder_evidence_digest_audit", "result": "PASS", "detail": "All 7 digests attested in cycle-02-builder-repair-evidence.json match committed bytes: authorization_v2 b27ccf1a..., schema_v2 cbcd959a..., executor b9393042..., validator 1a0e83f1..., tests 15555fc5..., rehearsal_generator 0f463cce... (resolved to generate_f017_autonomous_cycle1_rehearsal.py by whole-tree search), rehearsal 77fe1f97...; and the loop state's claimed cycle-2 review digest 8f283325... matches the banked artifact."},
+    {"id": "T20", "name": "validator_identity_binding_audit", "result": "FAIL", "detail": "Enumerated all authorization sections carrying a file identity: supersedes, executor, retained_inputs, stage_vocabulary, schema_binding, synthetic_rehearsal. None binds the validator script. Basis of finding F017-C03-N01."},
+    {"id": "T21", "name": "production_lane_reachability", "result": "FAIL", "detail": "Confirmed the synthetic=False lane is structurally unreachable checkpoint-free: it compares against entry['packed_sha256'] (ordinal 0 = 8f642efd9c89ec5c... over 24576 bytes) and the inventory is pinned byte-exact to hash-bound v1, so no substitute fixture inventory can pass the gate. Basis of finding F017-C03-N05."},
+    {"id": "T22", "name": "environment_pin_enforcement", "result": "FAIL", "detail": "The whole evidence chain reproduced under CPython 3.14.6 against a contract pinning 3.13.13, with numpy 2.4.5 matching. No component detected the mismatch. Basis of finding F017-C03-N04."}
+  ],
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "real_ledger_delta": 0,
+  "real_model_shard_opens": 0,
+  "checkpoint_free_fixture_file_opens": "Local temporary fixture files created by this review under /tmp only; no file under any checkpoint or retained package root was opened.",
+  "implementation_files_modified": [],
+  "contract_files_modified": [],
+  "test_files_modified": [],
+  "files_written_by_this_review": [
+    "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-03-independent-review.json"
+  ],
+  "isolation_attestation": {
+    "repository_bytes_authoritative": true,
+    "reviewed_only_committed_head": true,
+    "reviewed_head": "a23477b8931a37e63c54a655bcdb06bb1c497039",
+    "uncommitted_changes_refused": true,
+    "working_tree_clean_at_review": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_model_shard_opened": false,
+    "checkpoint_path_resolved": false,
+    "payload_accessed": false,
+    "retained_package_root_opened": false,
+    "real_ledger_mutated": false,
+    "real_ledger_delta": 0,
+    "implementation_contracts_or_tests_modified": false,
+    "findings_fixed_by_reviewer": false,
+    "blind_replay": {
+      "solution_authority": "COMMITTED_BYTES_REACHABLE_FROM_BASE_ONLY",
+      "validation_base": "2a657bdf41267817ff03cc5d233ec2507c87dbf2",
+      "later_or_unreachable_commits_inspected": false,
+      "other_branches_inspected": false,
+      "tags_inspected": false,
+      "other_worktrees_inspected": false,
+      "external_artifacts_or_known_solutions_consulted": false,
+      "git_operations_performed": [
+        "git status --porcelain",
+        "git rev-parse HEAD",
+        "git rev-parse --abbrev-ref HEAD",
+        "git log --oneline 2a657bdf..HEAD",
+        "git diff --stat 2a657bdf..HEAD",
+        "git diff --name-only 2a657bdf..HEAD",
+        "git show --stat a23477b8",
+        "git show --stat 7ff0a80f"
+      ],
+      "attestation": "Every git operation performed by this review was confined to the validation branch commits between base 2a657bdf41267817ff03cc5d233ec2507c87dbf2 and the reviewed head a23477b8931a37e63c54a655bcdb06bb1c497039 inclusive. No commit later than or unreachable from the base was inspected, no other branch, tag or worktree was examined, and no artifact or known solution outside the reviewed committed bytes was consulted. All non-git file reads were of files present in the working tree at the reviewed head."
+    },
+    "builder_evidence_treatment": "Builder evidence was treated as a claim to be tested, not as authority. Every digest asserted in cycle-02-builder-repair-evidence.json was independently recomputed from committed bytes, the bound rehearsal artifact was independently regenerated from the committed generator and compared byte-for-byte, and each of the three claimed blocking repairs was re-derived by direct execution rather than accepted from the claim."
+  },
+  "verdict_basis": {
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 5,
+    "defense_in_depth_findings": 9,
+    "prior_cycle_blocking_findings_resolved": 3,
+    "prior_cycle_blocking_findings_outstanding": 0,
+    "accept_rule": "ACCEPT is returned only when no BLOCKING finding remains.",
+    "accept_rule_satisfied": true,
+    "execution_release": false,
+    "execution_release_note": "ACCEPT is a review verdict on the committed head, not an execution release. authorization.real_event_authorized, checkpoint_access_authorized and execution_release_required_after_review remain false, status remains PREPARED_REVIEW_REQUIRED, and the five NON_BLOCKING_REQUIRED findings must be repaired before any real-event release is prepared."
+  },
+  "statement": "I independently reviewed the committed head a23477b8 of validation/f017-autonomous-adversarial-loop-replay against base 2a657bdf, treating repository bytes as authoritative and builder evidence as a claim to test. I re-derived all three cycle-2 BLOCKING findings by direct execution rather than by reading the repair claim, and all three are genuinely closed: the authorization gate now runs before attempt creation, retained preflight and shard open, and rejected 47 of 47 gutted and escalated authorizations with zero provider opens and zero reads; every fault class including KeyboardInterrupt, SystemExit and bare BaseException now terminalizes with a durable terminal record, and a real interrupted-attempt reconciliation entrypoint exists that terminalizes without resuming; and the nine committed decoded_sha256 identities are consumed on the production lane against an inventory pinned byte-exact to the hash-bound v1 contract, with the F32 rule independently confirmed consistent with the executor's actual decoder serialization. I also reproduced the bound rehearsal artifact byte-for-byte and verified all seven builder-attested digests against committed bytes. Fourteen findings remain and none is BLOCKING. The five NON_BLOCKING_REQUIRED findings are: the validator is the sole load-bearing component bound by no committed identity while every other file is cross-checked; the terminalizer and reconciler are not themselves fault-tolerant, so a damaged durable receipt wedges an attempt permanently non-terminal; reconciliation reconstructs byte accounting from receipt content it never cross-checks against the authorized inventory and never detects a consumed-but-unreceipted read; three declared obligations (finite checks, the ten-run reproduction campaign, the pinned environment) are asserted by the contract but performed by no code, which I demonstrated by reproducing the entire chain under CPython 3.14.6 against a contract pinning 3.13.13 with nothing detecting it; and the production execution shape is unrehearsed as a composition and structurally unreachable checkpoint-free, so four production classes will execute together for the first time during the single authorized real attempt. Every one of these degrades evidence quality or leaves a fail-closed wedge; none permits scope escalation, an unauthorized checkpoint read, a resumed or retried attempt, or a silently non-terminal successful outcome in the committed configuration, which is why they are required repairs rather than blockers. I made no repairs and modified no implementation, contract or test file. Zero checkpoint reads, zero real shard opens, zero real ledger delta. Verdict: ACCEPT."
+}
