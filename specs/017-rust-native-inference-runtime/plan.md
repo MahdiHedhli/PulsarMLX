@@ -446,3 +446,24 @@ Gate: authorization v3 is append-only and `PREPARED_REVIEW_REQUIRED`, all
 R1/R2/R3 and N7-N11 validators pass, previous authorizations retain their exact
 identities, real checkpoint reads and shard opens remain zero, the real ledger
 remains 166, and independent adversarial re-review is the only next action.
+
+## Phase 29 — Representative M1-F0 single-use execution release preparation
+
+- Preserve accepted authorization v3 and its independent acceptance byte-for-
+  byte while preparing a narrower one-shot control-plane release.
+- Bind the reviewed execution code head, every accepted implementation and
+  contract identity, canonical S0, exact ordered nine-read inventory, shard,
+  pinned CPU environment, 3 GiB pre-open storage floor, and ledger 166-to-175.
+- Define release consumption at the durable attempt-start boundary and keep it
+  irrevocably consumed after every partial, crash, compute, reproduction, or
+  evidence failure; only a failure before attempt start leaves it unconsumed.
+- Require a separate committed independent approval and a later distinct
+  operator invocation; preparation itself keeps all checkpoint, shard, and
+  real-event gates false.
+- Reject mutations to identities, inventory, head, environment, storage,
+  ledger, stop boundary, one-shot semantics, or approval state.
+
+Gate: the release remains `PREPARED_FOR_INDEPENDENT_APPROVAL`,
+`real_event_authorized=false`, checkpoint reads and shard opens remain zero,
+the real ledger remains 166, and separate independent release approval is the
+only next action.

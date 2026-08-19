@@ -497,3 +497,11 @@
   and publish authorization v3 for independent re-review while leaving real
   execution unauthorized, checkpoint reads and shard opens zero, and ledger
   166.
+- [x] T017-229 Prepare the accepted representative M1-F0 authorization-v3
+  single-use execution release append-only: bind the exact reviewed code head,
+  accepted identities, canonical S0, ordered nine-read inventory, shard,
+  pinned CPU environment, storage floor, ledger 166-to-175, stop-before-
+  experts boundary, and irrevocable attempt-start consumption semantics; add
+  a checkpoint-free semantic validator and mutation suite while leaving the
+  release unapproved, real-event authorization false, checkpoint reads and
+  shard opens zero, and the real ledger unchanged at 166.

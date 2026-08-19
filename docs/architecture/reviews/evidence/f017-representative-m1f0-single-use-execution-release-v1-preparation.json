@@ -1,0 +1,55 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-single-use-execution-release-preparation",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "starting_authoritative_head": "11c4d5d2f3f3e2c08677e0be287ac9d6104b0606",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-single-use-execution-release-v1.json",
+    "sha256": "914e07f12b968df700aa8868ce0888183f83fd77c9c0684302801f8ad09ca1e4",
+    "release_id": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1-RELEASE-1"
+  },
+  "schema_binding": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-single-use-execution-release-v1.schema.json",
+    "sha256": "0371250d2954e775eff70c46567890e1af8b223e084046c9718fe8b866a1c41c"
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_representative_m1f0_single_use_release_v1.py",
+    "sha256": "c15abc709d5411720b88eda3e881bea4b56b3c1451472c5797aa65c18391a630",
+    "result": "PASS"
+  },
+  "mutation_tests": {
+    "path": "scripts/research/tests/test_f017_representative_m1f0_single_use_release_v1.py",
+    "sha256": "909951474a882963e408778b10bb18fea55e6035b76e4ef468e36cb8bdf13279",
+    "test_methods": 2,
+    "semantic_mutations_rejected": 28,
+    "result": "PASS"
+  },
+  "accepted_authority": {
+    "authorization_v3_sha256": "d42c5a948c6e73d5003c80dbef3da9c53fe53aee6cf2261ed0f193058f9631c6",
+    "independent_acceptance_sha256": "fef7bc25e6524283c3754d0f2890a72a61785be60e66b44d952360af2da07fee"
+  },
+  "event_shape": {
+    "checkpoint_payload_reads": 9,
+    "packed_bytes": 132900864,
+    "maximum_shard_opens": 1,
+    "retained_router_authorities": 3,
+    "retained_canonical_s0": 1,
+    "ledger_before": 166,
+    "ledger_after_successful_read_phase": 175
+  },
+  "single_use": {
+    "consumed_at": "DURABLE_ATTEMPT_START_RECORD_BEFORE_SHARD_OPEN",
+    "irreversible_after_start": true,
+    "preopen_failure_before_attempt_start_leaves_unconsumed": true,
+    "retry_resume_or_second_attempt": false
+  },
+  "preparation_invariants": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger": 166,
+    "real_event_authorized": false,
+    "approval_asserted": false,
+    "real_execution_performed": false
+  },
+  "next_action": "SUBMIT_PREPARED_RELEASE_FOR_SEPARATE_INDEPENDENT_APPROVAL_DO_NOT_EXECUTE"
+}
