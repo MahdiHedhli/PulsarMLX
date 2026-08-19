@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.autonomous-loop-post-history-comparison",
+  "schema_version": "1.0.0",
+  "validation_branch": "validation/f017-autonomous-adversarial-loop-replay",
+  "validation_base": "2a657bdf41267817ff03cc5d233ec2507c87dbf2",
+  "termination_condition_before_comparison": "STOP_ACCEPTED",
+  "final_independent_review_sha256": "ea7679e7d62ce0ebe7d8ba43e4ab83640544ab0efb8d0f5f152af7e87aef62f9",
+  "production_history_inspected_only_after_termination": true,
+  "production_history_head_at_comparison": "b83d9ea3e00fa065d2d193a54b59889b86464bec",
+  "historical_commits_compared": {
+    "first_repair": "5894f2b2be61bf42bc5e7cc6e8b8226bd11cd07a",
+    "review_2_banking": "3df768b94b46e1d2881a88d598e8bd7fcb745072",
+    "authorization_v3_repair": "533fc5af6ac849ec1f99d73e4dc7df26060932c6",
+    "ledger_adapter_repair": "3f52388d2e60be23132e53c9cc3386d03a9db389"
+  },
+  "independently_rediscovered": {
+    "F1_no_instantiable_executor": ["F017-C01-B02"],
+    "F2_stage_vocabulary_mismatch": ["F017-C01-N02"],
+    "F3_unbound_retained_inputs": ["F017-C01-B01", "F017-C01-N01", "F017-C02-N02"],
+    "F4_weak_validator_and_unexecuted_schema": ["F017-C01-B03", "F017-C01-B04"],
+    "N7_retain_before_receipt": ["cycle-1 builder implementation and cycle-2 durability verification"],
+    "N8_interrupted_attempt_terminalizer": ["F017-C02-B02", "F017-C03-N02", "F017-C03-N03"],
+    "N9_single_descriptor_and_shard_identity": ["F017-C01-N01", "F017-C02-N04", "cycle-2 builder implementation"],
+    "N11_bank_exact_review_artifacts": ["all three review cycles"],
+    "D1_real_geometry_production_adapter": ["F017-C02-N03", "cycle-2 builder rehearsal"],
+    "D3_decoded_resource_footprint": ["cycle-2 builder rehearsal: 660113408 bytes"]
+  },
+  "new_valid_findings": {
+    "decoded_authority_not_checked_by_executor": "F017-C02-B01",
+    "validator_not_on_execution_path": "F017-C02-B03",
+    "unexpected_faults_not_terminalized": "F017-C02-B02",
+    "validator_itself_unbound": "F017-C03-N01",
+    "reconciliation_accepts_untrusted_receipt_accounting": "F017-C03-N03"
+  },
+  "missed_or_underweighted": {
+    "R1_router_reuse_consumer_mismatch": "MISSED because the validation repair replaced the reuse grant with a manifest binding rather than reconstructing consumer-scoped reuse authority",
+    "R2_real_event_reproduction_contract": "FOUND as F017-C03-N04 but underweighted as NON_BLOCKING_REQUIRED; production history classified it BLOCKING",
+    "R3_full_preopen_gate": "PARTIAL: retained inputs were front-loaded, but authoritative ledger reconstruction, storage capacity and executable environment/decoder gates were not completed; production history classified the combined gap BLOCKING",
+    "N10_exact_failure_rehearsal_count": "MISSED; rehearsal improved but no exact committed case-count contract was enforced",
+    "production_composition": "FOUND as F017-C03-N05 but accepted despite the four production adapters never running end-to-end as one checkpoint-free composition",
+    "ledger_producer_consumer_schema_binding": "MISSED; later production history required an append-only ledger adapter after the release wrapper expected nested ledger.after while the committed producer exposed ledger_after"
+  },
+  "architecture_comparison": "WEAKER_OVERALL_THAN_LATER_PRODUCTION_V3: equivalent or stronger on decoded-hash runtime enforcement, full authorization gate placement and exact automated review-artifact handoff; weaker on consumer-scoped reuse, reproduction, authoritative pre-open ledger/storage/environment checks, terminalizer accounting integrity, release-wrapper binding and exact rehearsal completeness.",
+  "cycles_used": 3,
+  "claude_reviews_used": 3,
+  "human_interventions": 1,
+  "human_intervention_detail": "Operator authorized Claude CLI after the initial authentication boundary; no artifact copy/paste or finding mediation was required.",
+  "exact_artifact_handoff_without_copy_paste": true,
+  "process_adoption_disposition": "ADOPT_WITH_STRICTER_POLICY",
+  "required_policy_changes": [
+    "Treat every NON_BLOCKING_REQUIRED finding as release-blocking until explicitly closed or separately waived by committed independent authority.",
+    "Require reviewer coverage of the complete production composition, pre-open ledger/storage/environment gates, retained-only reproduction and release wrapper, not only the authorization executor.",
+    "Hash-bind the validator/reviewer-facing gate itself and independently test producer-consumer schema compatibility with actual committed evidence bytes.",
+    "Reserve one review cycle for release/runtime integration after authorization-level ACCEPT rather than spending all cycles on the authorization package.",
+    "Keep exact reviewer artifact handoff, committed-head-only review, blind-history isolation, deterministic budgets and zero-irreversible-boundary guards unchanged."
+  ],
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "real_ledger_delta": 0
+}
