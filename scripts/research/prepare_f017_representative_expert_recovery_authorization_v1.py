@@ -120,7 +120,7 @@ def build_base(input_manifest_path: Path) -> tuple[dict[str, Any], dict[str, Any
     computation = {
         "schema": "pulsarmlx.f017.representative-expert-computation-contract",
         "schema_version": "1.0.0",
-        "input": {"semantic_role": "POST_ATTENTION_FFN_RMSNORM_OUTPUT_ROUTER_AND_EXPERT_INPUT",
+        "input": {"semantic_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_EXPERT_INPUT",
                   "dtype": "little-endian-f32", "shape": [6144]},
         "per_expert_formula": "down(strict_f32_silu(gate(input)) * up(input))",
         "gate_up_shape": [2048, 6144],
@@ -133,6 +133,19 @@ def build_base(input_manifest_path: Path) -> tuple[dict[str, Any], dict[str, Any
         "computation_source_sha256": digest(computation_source),
         "symbols": ["strict_f32_matvec", "strict_f32_silu"],
         "decoder_lineage_sha256": "9a92bacda92e999a9062c154acd1b52c86e1d644f0d4d697defb2db40a85ce84",
+        "decoder_source_bindings": [
+            {"path":"crates/quant/src/iq_ref.rs","sha256":digest(ROOT/"crates/quant/src/iq_ref.rs")},
+            {"path":"crates/quant/src/bin/f017-canonical-decode.rs","sha256":digest(ROOT/"crates/quant/src/bin/f017-canonical-decode.rs")},
+            {"path":"scripts/research/iq2_xxs_dequant.py","sha256":digest(ROOT/"scripts/research/iq2_xxs_dequant.py")},
+            {"path":"scripts/research/iq3_xxs_spec_decoder.py","sha256":digest(ROOT/"scripts/research/iq3_xxs_spec_decoder.py")},
+        ],
+        "runtime_decoder_authority": {
+            "decoder_a_identity":"f33641e28695ce6860564e6168564797b35fdac6fbfcffc5d6c758dbde344188",
+            "decoder_b_identity":"76e3d75ecbbd0ad526ba97108c42d41658a45a3b2ab4d272259405afffd524c2",
+            "rust_binary_sha256":"680a6f67ca6efd571edc5081e8557034f327e71a3e0f4674e21686b703ca6d25",
+            "rust_binary_private_path_required":True,
+            "resolve_before_attempt_start":True,
+        },
         "decoder_exact_agreement_required": True,
         "blas_permitted": False,
         "gpu_permitted": False,
@@ -194,6 +207,7 @@ def build_base(input_manifest_path: Path) -> tuple[dict[str, Any], dict[str, Any
             "shape_each": [6144], "canonical_order": SELECTED_IDS,
             "two_fresh_process_reproductions_required": 2,
             "all_eight_output_sha256_exact": True,
+            "consumer_authority_requires_terminal_complete": True,
         },
         "prohibitions": {
             "checkpoint_access": True, "shard_open": True,
@@ -204,6 +218,7 @@ def build_base(input_manifest_path: Path) -> tuple[dict[str, Any], dict[str, Any
         "stop_boundary": "AFTER_EIGHT_INDIVIDUAL_REPRESENTATIVE_EXPERT_OUTPUTS_ARE_BANKED_BEFORE_WEIGHTED_AGGREGATE",
         "future_release_token_requirements": {
             "authorization_sha256_policy": "EXACT_FINAL_AUTHORIZATION_FILE_SHA256",
+            "execution_binding_policy": "HASH_BOUND_LOAD_BEARING_FILES_AND_EXACT_DECODER_BINARY",
             "event_id": "F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1",
             "disposition": "GO_EXECUTE_ONCE_NO_RETRY",
             "real_event_authorized": True,

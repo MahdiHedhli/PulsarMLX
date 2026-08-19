@@ -51,6 +51,8 @@ class AuthorizationTests(unittest.TestCase):
             lambda x: x["prohibitions"].__setitem__("routed_aggregate", False),
             lambda x: x["prohibitions"].__setitem__("shared_expert", False),
             lambda x: x["prohibitions"].__setitem__("ffn_completion", False),
+            lambda x: x["future_release_token_requirements"].__setitem__("execution_binding_policy", "NONE"),
+            lambda x: x["output_contract"].__setitem__("consumer_authority_requires_terminal_complete", False),
             lambda x: x.__setitem__("real_event_authorized", True),
         ]
         for mutation in mutations:

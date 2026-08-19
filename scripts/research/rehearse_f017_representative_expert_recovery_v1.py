@@ -17,7 +17,7 @@ from typing import Any, Callable
 import numpy as np
 
 from f017_representative_expert_recovery_executor_v1 import (
-    OpenOnce, SELECTED_IDS, canonical, compute_outputs, sha_bytes,
+    OpenOnce, SELECTED_IDS, canonical, compute_outputs, resolve_decoder, sha_bytes,
 )
 
 
@@ -108,7 +108,7 @@ def expect_reject(document: dict[str, Any], mutate: Callable[[dict[str, Any]], N
     return False
 
 
-def rehearsal(candidate: Path, output: Path) -> dict[str, Any]:
+def rehearsal(candidate: Path, output: Path, decoder_binary: Path) -> dict[str, Any]:
     document = json.loads(candidate.read_text())
     gate(document)
     with tempfile.TemporaryDirectory(prefix="f017-representative-expert-rehearsal-") as directory:
@@ -117,6 +117,16 @@ def rehearsal(candidate: Path, output: Path) -> dict[str, Any]:
         packed_sha = {}
         for item in document["retained_payload_inventory"]:
             packed_sha[str(item["ordinal"])] = sparse_zero(root / "packed" / f"{item['ordinal']:02d}.bin", item["packed_bytes"])
+        decoder = resolve_decoder(document, decoder_binary)
+        decoder_cases = {}
+        for ordinal in (0, 2):
+            item = document["retained_payload_inventory"][ordinal]
+            raw = (root / "packed" / f"{ordinal:02d}.bin").read_bytes()
+            entry = {**item, "logical_decoded_shape":item["logical_shape"], "packed_length":item["packed_bytes"]}
+            first = decoder.decoder_a(raw, entry); second = decoder.decoder_b(raw, entry)
+            if first != second or len(first) != 50_331_648:
+                raise RuntimeError("REAL_GEOMETRY_DUAL_DECODER")
+            decoder_cases[item["quantization"]] = sha_bytes(first)
         runs = []
         for _ in range(2):
             completed = subprocess.run(
@@ -171,6 +181,9 @@ def rehearsal(candidate: Path, output: Path) -> dict[str, Any]:
             "synthetic_packed_sha256_by_ordinal": packed_sha,
             "fresh_process_runs": 2,
             "fresh_process_exact_output_identity": True,
+            "runtime_decoder_preflight": {"decoder_a_identity":decoder.decoder_a_identity,
+              "decoder_b_identity":decoder.decoder_b_identity,"real_geometry_synthetic_cases":decoder_cases,
+              "result":"2/2 EXACT AGREEMENT BEFORE ATTEMPT START"},
             "success_output_sha256_by_expert": runs[0]["output_sha256_by_expert"],
             "failure_paths": failures,
             "failure_paths_passed": sum(failures.values()),
@@ -187,6 +200,7 @@ def main() -> int:
     parser.add_argument("--candidate", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--fixture-root", type=Path)
+    parser.add_argument("--decoder-binary", type=Path)
     parser.add_argument("--internal-once", action="store_true")
     args = parser.parse_args()
     if args.internal_once:
@@ -194,7 +208,8 @@ def main() -> int:
     else:
         if args.output is None:
             raise ValueError("OUTPUT_REQUIRED")
-        value = rehearsal(args.candidate, args.output)
+        if args.decoder_binary is None: raise ValueError("DECODER_BINARY_REQUIRED")
+        value = rehearsal(args.candidate, args.output, args.decoder_binary)
         print(hashlib.sha256(args.output.read_bytes()).hexdigest(), value["failure_paths_passed"])
     return 0
 
