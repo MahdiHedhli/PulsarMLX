@@ -1,0 +1,98 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-authorization-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-EXPERT-RECOVERY-AUTHORIZATION-CYCLE-01-INDEPENDENT-REVIEW",
+  "reviewed_head": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+  "reviewed_branch": "feat/017-real-checkpoint-runner",
+  "actual_reviewer_model": "claude-fable-5",
+  "verdict": "REJECT",
+  "composition_question": "IS THIS COMMITTED AUTHORIZATION PACKAGE SUFFICIENTLY INSTANTIABLE AND BOUND TO AUTHORIZE A FUTURE REPRESENTATIVE EXPERT-RECOVERY EVENT, WITHOUT AUTHORIZING ITS EXECUTION?",
+  "composition_answer": "NOT YET. The package is correctly BOUND and does not authorize execution: every declarative pin verifies against committed bytes (authorization file sha 2ecc4bf0... matches the preparation evidence; executor 66abd43d..., materializer 3c646eba..., computation contract 2e3c1da8..., reuse contract fb6eb026..., computation source a48b9353..., rehearsal evidence 41e7c856..., route evidence 6035308c..., execution evidence dc53b458..., source evidence review d633f459... all match), the route authority attests the identical eight experts [250,10,237,62,73,177,218,28] at the representative post-attention route with atomic id-weight pairs and the 62/73 rank reversal explicitly separated from the prohibited historical direct-DPREFIX order, the injected input sha 687a692a... is attested as the router_normalized stage hash of the accepted real execution and differs from the prohibited historical direct input 60bbae2d..., the 24 retained packed payloads and 90,439,680 bytes reconcile exactly against the canonical source event inventory and IQ2_XXS/IQ3_XXS block arithmetic, accounting 175->175 with 0 new reads and 0 shard opens reconciles against the ledger chain, the executor accepts the committed document and rejects load-bearing mutations, the go-token gate binds the exact final authorization file sha with strict dict equality, real_event_authorized is false, and the synthetic rehearsal reproduces byte-identically from committed scripts. However the package is NOT yet sufficiently INSTANTIABLE for the one-shot real event it authorizes: the dual-decoder branch, the only execution-shape component never exercised by any committed rehearsal, is resolved only after attempt-start (a missing or stale Rust decoder binary, demonstrated unresolvable at the reviewed HEAD, would terminally consume the singleton event), preflight never touches the decoder binding while reporting PRODUCTION_BINDINGS_RESOLVED, the inventory decoder identity pins are never compared to the runtime pair, and the imported strict-f32 computation kernel is not verified at execution time against the computation contract's computation_source_sha256 pin nor covered by any head-identity policy in the future_release_token_requirements, unlike both previously accepted event shapes. These are required fixes (NON_BLOCKING_REQUIRED); no binding or safety invariant is broken.",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [
+    {
+      "id": "NBR-1",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Decoder-pair binding is unpreflighted, resolved only after attempt-start, and identity pins are never compared",
+      "detail": "f017_representative_expert_recovery_executor_v1.py resolves production_decoder_pair(ROOT) inside compute_outputs, which execute() reaches only after attempt-start.json is written; --preflight-only verifies the 25 input files but never resolves the decoder pair, yet returns disposition PRODUCTION_BINDINGS_RESOLVED, and the preparation evidence repeats that claim. Independent test at the reviewed HEAD: production_decoder_pair raises RUST_DECODER_BINARY_UNRESOLVED (target/debug/f017-canonical-decode absent; sources are committed and buildable, but availability is unverified by any committed preflight). Because failure_semantics forbid retry/resume/second_attempt, a decoder-resolution failure at execute time terminally consumes the one-shot event after attempt state exists. Additionally the executor never compares the runtime pair's decoder_a_identity/decoder_b_identity against the pins carried in every retained_payload_inventory item (f33641e2.../76e3d75e...). This is a regression against the accepted canonical-event execution shape, whose preflight resolved the decoder pair, pinned rust_decoder_binary_sha256, and validated all production surfaces before any attempt state. Correctness remains fail-closed (dual-decoder byte agreement plus exact decoded_sha256 per payload), so this is an instantiability/availability defect, not a safety defect. Required fix: resolve the decoder pair and compare both identities to the inventory pins in --preflight-only and in execute() before attempt-start.",
+      "evidence": "executor lines 215, 257-272, 298-309; canonical precedent f017_canonical_expert_output_production.py build_preflight_descriptor lines 517-595; live test: RUST_DECODER_BINARY_UNRESOLVED at reviewed HEAD; Python decoder side of the exact executor entry construction verified working for IQ2_XXS and IQ3_XXS"
+    },
+    {
+      "id": "NBR-2",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "No execution-time identity enforcement for the imported numerical kernel or computation contract",
+      "detail": "The executor imports strict_f32_matvec, strict_f32_silu, and production_decoder_pair from f017_canonical_expert_output_production but never verifies that module's bytes against the computation contract's computation_source_sha256 pin (a48b9353..., verified matching at this HEAD), and validate_authorization never re-verifies the computation_contract binding at runtime (the executor source contains no reference to it). The transitively imported spec decoders (iq2_xxs_dequant.py, iq3_xxs_spec_decoder.py) are likewise unpinned at execution time. future_release_token_requirements demand only four fields (authorization sha, event id, disposition, real_event_authorized) with no execution-head or source-identity policy. Both accepted precedents enforced this somewhere in committed bytes: the canonical event's preflight enforced PRODUCTION_SOURCE_IDENTITY and repository head/branch/clean-tree identity; the representative route event's release contract pinned an EXACT execution_code_head enforced by a reviewed wrapper. A drifted kernel would produce wrong-but-self-consistent outputs that pass both fresh-process reproductions, because reproductions rerun the same drifted code. Required fix: have the executor verify the computation contract pin and the imported module hashes at startup, or extend future_release_token_requirements to mandate an exact execution-head policy that the release wrapper must enforce.",
+      "evidence": "executor lines 24-32 (unpinned import), 151-188 (validate_authorization omits computation_contract); computation contract computation_source_sha256 a48b9353... matches committed bytes today but nothing enforces it at execute time; precedent: canonical preflight lines 550-576, release-v2 authoritative_repository.execution_code_head EXACT policy"
+    }
+  ],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Rehearsal failure-path evidence exercises the rehearsal's own gate(), not the executor's validator",
+      "detail": "The 20/20 failure_paths in the synthetic rehearsal evidence are rejections by gate() defined inside rehearse_f017_representative_expert_recovery_v1.py. Direct testing shows the executor's validate_authorization rejects the load-bearing mutations (expert order including the exact historical 73/62 route, inventory order, accounting, executor identity, input sha, real_event_authorized flip) but does NOT itself reject retry/resume/second_attempt flips, prohibition flips, or route-pair weight reassignment. Those are enforced by the standalone validator and, at execute time, by the go-token's exact file-sha binding, so the layered system holds, but the rehearsal evidence should not be read as executor-level rejection coverage. Recommend adding the executor's own validate_authorization to the rehearsed mutation matrix."
+    },
+    {
+      "id": "DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "GO token is synthesizable from committed bytes and not consumed; one-shot enforcement is path-relative",
+      "detail": "All four required token fields are derivable from the repository, the token file is not consumed or invalidated after use, and PRIOR_EVENT_STATE only blocks re-execution against the same --state-root/--output-root paths. Per accepted precedent the single-use release cycle (wrapper + release contract + independent approval, as in release v2) is future work; that future release must bind this cycle's acceptance evidence sha, pin state/output roots, and consume the token."
+    },
+    {
+      "id": "DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "A reproduction-stage failure leaves banked outputs and manifest alongside a TERMINAL_FAILURE terminal",
+      "detail": "execute() writes the eight output files and manifest.json before running the two fresh-process reproductions; a reproduction mismatch raises after outputs exist, leaving read-only outputs plus manifest with terminal.json disposition TERMINAL_FAILURE. Downstream consumers (the future weighted-aggregate cycle) must bind to terminal.json COMPLETE, never to manifest presence. Recommend staging outputs until reproductions pass or stating the terminal-COMPLETE requirement in the output contract."
+    },
+    {
+      "id": "DID-4",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "--internal-reproduce performs real expert computation gated only by an environment variable",
+      "detail": "reproduce_once runs the real decode-and-compute path without the go-token, gated by PULSARMLX_F017_REPRESENTATIVE_EXPERT_INTERNAL=1. It produces no durable outputs (stdout hashes only), mutates nothing, and matches the accepted canonical-event pattern (PULSARMLX_F017_INTERNAL_REPRODUCTION). The true capability boundary is possession of the private retained files; noted for the release review."
+    },
+    {
+      "id": "DID-5",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Executor JSON loading accepts duplicate keys",
+      "detail": "The executor's load_json uses plain json.loads (last key wins) while the standalone validator rejects duplicate keys via object_pairs_hook. The go-token pins exact file bytes of the reviewed document, and the reviewed document parses identically both ways, so no divergence exists today; aligning the executor's parser removes a reviewer-vs-executor divergence class."
+    },
+    {
+      "id": "DID-6",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Validator omits three closable cross-checks that this review closed by hand",
+      "detail": "validate_f017_representative_expert_recovery_authorization_v1.py does not (a) compare the rehearsal evidence's embedded candidate_semantic_sha256 to the document's (verified equal: ae978fa6...), (b) verify materializer_sha256 beyond 64-hex format (verified equal to committed materializer: 3c646eba...), or (c) verify the reuse contract's source_evidence_review_sha256 against the source evidence file (verified equal: d633f459...). All three match at this HEAD; adding the checks makes the validator self-sufficient."
+    },
+    {
+      "id": "DID-7",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Input semantic-role vocabulary differs across documents",
+      "detail": "The computation contract names the input POST_ATTENTION_FFN_RMSNORM_OUTPUT_ROUTER_AND_EXPERT_INPUT while the authorization and materializer manifest use CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_EXPERT_INPUT. Both denote the same router_normalized surface, bound by the identical sha 687a692a..., but no validator equates the two vocabularies; recommend a declared equivalence or a single canonical role string."
+    }
+  ],
+  "tests_performed": [
+    "Verified HEAD be26de43596a0854c7ce8b3ccafc45eb1f63fadd on feat/017-real-checkpoint-runner with a clean worktree before creating this artifact",
+    "Recomputed SHA-256 of every package file and matched all pins: authorization file (2ecc4bf0..., matches preparation evidence), executor 66abd43d..., materializer 3c646eba..., computation contract 2e3c1da8..., reuse contract fb6eb026..., computation source a48b9353..., rehearsal evidence 41e7c856..., route evidence 6035308c..., execution evidence dc53b458..., source evidence review d633f459...",
+    "Ran the committed validator: REPRESENTATIVE_EXPERT_RECOVERY_AUTHORIZATION_VALID, exit 0",
+    "Independently recomputed selected_ids_sha256 (uint16-LE), routing_weights_sha256 (binary64-LE), and candidate_semantic_sha256 (canonical JSON minus candidate/rehearsal fields); all match",
+    "Cross-checked route-value evidence: ids [250,10,237,62,73,177,218,28], weights, atomic id-weight pairs with IEEE754 hex, route identity 03dc2dfb..., 10/10 retained-only reproductions, and the explicit 62/73 reversal versus the prohibited historical direct-DPREFIX order",
+    "Confirmed the injected input sha 687a692a... is attested as stage_sha256.router_normalized in the accepted real execution evidence, and differs from the prohibited historical direct-DPREFIX normalized input 60bbae2d...",
+    "Confirmed the canonical source event retained exactly these 24 payloads for the same eight experts; recomputed IQ2_XXS (66 bytes per 256) and IQ3_XXS (98 bytes per 256) block arithmetic reproducing every packed_bytes value and the 90,439,680 total; verified ledger chain 139->163 (canonical, 24 reads) and 166->175 (route event) reconciling starting ledger 175 with delta 0",
+    "Imported the executor module and ran validate_authorization against the committed document (accepted) plus 11 mutation probes: 8 rejected including the exact historical route order, checkpoint-read and ledger mutations, executor-sha swap, inventory reorder, real_event_authorized flip, and wrong input sha; 3 executor-level acceptances (retry flip, prohibition flip, weight reassignment) documented as DID-1",
+    "Tested the execute-mode gate with synthetic tokens: wrong authorization sha, wrong event id, extra key, and real_event_authorized=false all rejected as FUTURE_SINGLE_USE_RELEASE_REQUIRED; an exactly-formed token passes the gate and fails on absent private inputs; PRIOR_EVENT_STATE enforced for existing state roots",
+    "py_compile passed for executor, materializer, rehearsal, validator, and preparation scripts",
+    "Replayed the full synthetic rehearsal from committed scripts against the committed authorization: output byte-identical to the committed evidence (41e7c856...), 20/20 failure paths, 2/2 fresh-process identity",
+    "Exercised the executor's exact decoder entry construction against the Python spec decoders for IQ2_XXS and IQ3_XXS (correct byte counts, zero-payload round trip); production_decoder_pair raised RUST_DECODER_BINARY_UNRESOLVED at the reviewed HEAD, grounding NBR-1",
+    "Verified recover() signature, compose_oracle local capture point, and returned keys match the materializer's consumption; verified all decoder and oracle source files are committed",
+    "Confirmed the route-authority cycle-01 independent review verdict ACCEPT at head b81a18f4..."
+  ],
+  "checkpoint_free_review": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "expert_executions": 0,
+    "synthetic_only_computations": true,
+    "real_retained_private_inputs_opened": 0
+  },
+  "next_action": "Remediate NBR-1 and NBR-2 in a follow-up commit: (1) extend --preflight-only and the pre-attempt-start phase of execute() to resolve production_decoder_pair and compare both decoder identities against the retained_payload_inventory pins, and rehearse that path; (2) enforce computation_source_sha256 (and transitively the spec decoder sources) at executor startup or add an exact execution-head policy to future_release_token_requirements enforced by the future release wrapper. Then re-run preparation and submit for the next independent review cycle. Execution remains unauthorized."
+}
