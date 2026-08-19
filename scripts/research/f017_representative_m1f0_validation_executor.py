@@ -8,6 +8,7 @@ with an exact-geometry synthetic provider and never resolve a checkpoint path.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -29,6 +30,8 @@ CANONICAL_STAGES = (
     "value_heads", "attention_output", "post_attention_residual", "router_normalized",
     "router_logits", "router_scores", "ranking", "selected_ids", "routing_weights",
 )
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+VALIDATOR_PATH = REPOSITORY_ROOT / "scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py"
 
 
 class ExecutionError(RuntimeError):
@@ -108,6 +111,7 @@ class ComputationStage(Protocol):
 class RetainedInputs(Protocol):
     def preflight(self) -> dict[str, bytes]: ...
     def verify_after(self) -> None: ...
+    def evidence(self) -> dict[str, str]: ...
 
 
 class SyntheticShardHandle:
@@ -123,6 +127,8 @@ class SyntheticShardHandle:
         entry = self.provider.inventory[ordinal]
         if offset != entry["offset"] or size != entry["packed_bytes"]:
             raise ExecutionError("READ_RANGE")
+        if self.provider.read_error == ordinal:
+            raise OSError(5, "synthetic read fault")
         if self.provider.short_read == ordinal:
             payload = bytes([ordinal + 1]) * max(0, size - 1)
         else:
@@ -135,9 +141,11 @@ class SyntheticShardHandle:
 
 
 class SyntheticShardProvider:
-    def __init__(self, inventory: list[dict[str, Any]], *, short_read: int | None = None) -> None:
+    def __init__(self, inventory: list[dict[str, Any]], *, short_read: int | None = None,
+                 read_error: int | None = None) -> None:
         self.inventory = inventory
         self.short_read = short_read
+        self.read_error = read_error
         self.open_count = 0
         self.read_count = 0
 
@@ -166,8 +174,14 @@ class PositionalFileShardHandle:
         self.closed = False
 
     def read_at(self, offset: int, size: int, ordinal: int) -> bytes:
-        if self.closed or ordinal != self.provider.read_count:
+        if self.closed:
+            raise ExecutionError("READ_AFTER_CLOSE")
+        if ordinal != self.provider.read_count:
             raise ExecutionError("READ_ORDER")
+        if self.provider.inventory is not None:
+            entry = self.provider.inventory[ordinal]
+            if offset != entry["offset"] or size != entry["packed_bytes"] or entry["shard"] != 2:
+                raise ExecutionError("READ_RANGE")
         payload = os.pread(self.descriptor, size, offset)  # exactly one syscall; no retry
         self.provider.read_count += 1
         return payload
@@ -181,15 +195,25 @@ class PositionalFileShardHandle:
 class PositionalFileShardProvider:
     """Narrow production capability; the caller supplies the prevalidated shard object."""
 
-    def __init__(self, path: Path, expected_size: int) -> None:
+    def __init__(self, path: Path, expected_size: int, expected_basename: str | None = None,
+                 inventory: list[dict[str, Any]] | None = None) -> None:
         self.path = path
         self.expected_size = expected_size
+        self.expected_basename = expected_basename or path.name
+        self.inventory = inventory
         self.open_count = 0
         self.read_count = 0
+
+    @classmethod
+    def from_authorization(cls, path: Path, authorization: dict[str, Any]) -> "PositionalFileShardProvider":
+        shard = authorization["checkpoint_binding"]["shard"]
+        return cls(path, shard["size_bytes"], shard["basename"], authorization["attention_payload_inventory"])
 
     def open(self) -> PositionalFileShardHandle:
         if self.open_count != 0:
             raise ExecutionError("SECOND_SHARD_OPEN")
+        if self.path.name != self.expected_basename:
+            raise ExecutionError("SHARD_OBJECT_IDENTITY")
         descriptor = os.open(self.path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
         info = os.fstat(descriptor)
         if not stat.S_ISREG(info.st_mode) or info.st_size != self.expected_size:
@@ -200,11 +224,21 @@ class PositionalFileShardProvider:
 
 
 class SyntheticDecoderPair:
-    def __init__(self, disagreement_ordinal: int | None = None) -> None:
+    def __init__(self, disagreement_ordinal: int | None = None, decoded_hash_ordinal: int | None = None) -> None:
         self.disagreement_ordinal = disagreement_ordinal
+        self.decoded_hash_ordinal = decoded_hash_ordinal
+
+    @staticmethod
+    def _canonical(entry: dict[str, Any], packed: bytes) -> bytes:
+        return hashlib.sha256(b"canonical-decoded:" + entry["key"].encode() + packed).digest()
+
+    def expected_decoded_sha256(self, entry: dict[str, Any], packed: bytes) -> str:
+        return sha256(self._canonical(entry, packed))
 
     def decode_pair(self, entry: dict[str, Any], packed: bytes) -> tuple[bytes, bytes]:
-        left = hashlib.sha256(b"canonical-decoded:" + entry["key"].encode() + packed).digest()
+        left = self._canonical(entry, packed)
+        if entry["ordinal"] == self.decoded_hash_ordinal:
+            left = bytes((left[0] ^ 1,)) + left[1:]
         right = left if entry["ordinal"] != self.disagreement_ordinal else bytes(reversed(left))
         return left, right
 
@@ -245,6 +279,9 @@ class SyntheticRetainedInputs:
         if {name: sha256(value) for name, value in self.values.items()} != self.before:
             raise ExecutionError("RETAINED_AFTER_HASH")
 
+    def evidence(self) -> dict[str, str]:
+        return dict(self.before)
+
 
 class FileRetainedInputs:
     """Single-descriptor resolver for the four private retained authorities."""
@@ -254,6 +291,27 @@ class FileRetainedInputs:
         self.manifest = manifest
         self.descriptors: dict[str, int] = {}
         self.before: dict[str, str] = {}
+
+    @classmethod
+    def from_authorization(cls, authorization: dict[str, Any], repository_root: Path,
+                           environment: dict[str, str] | None = None) -> "FileRetainedInputs":
+        binding = authorization.get("retained_inputs", {})
+        manifest_path = repository_root / str(binding.get("path", "missing"))
+        if not manifest_path.is_file() or sha_file(manifest_path) != binding.get("sha256"):
+            raise ExecutionError("RETAINED_MANIFEST_IDENTITY")
+        manifest = load_json(manifest_path)
+        artifacts = manifest.get("artifacts", [])
+        if [item.get("artifact_id") for item in artifacts] != binding.get("artifact_ids"):
+            raise ExecutionError("RETAINED_ARTIFACT_SET")
+        for item in artifacts:
+            if item.get("dtype") != "little-endian-f32" or math.prod(item.get("shape", [])) * 4 != item.get("byte_length"):
+                raise ExecutionError("RETAINED_DTYPE_SHAPE")
+        resolution = manifest.get("package_root_resolution", {})
+        variable = resolution.get("environment_variable")
+        values = os.environ if environment is None else environment
+        if resolution.get("kind") != "PRIVATE_ENVIRONMENT_ROOT" or resolution.get("checkpoint_fallback") is not False or not variable or variable not in values:
+            raise ExecutionError("RETAINED_ROOT_RESOLUTION")
+        return cls(Path(values[variable]), manifest)
 
     @staticmethod
     def _hash_descriptor(descriptor: int) -> str:
@@ -275,7 +333,10 @@ class FileRetainedInputs:
                 if relative.is_absolute() or ".." in relative.parts:
                     raise ExecutionError("RETAINED_PATH")
                 path = self.package_root / relative
-                descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                try:
+                    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                except OSError as exc:
+                    raise ExecutionError("RETAINED_STORAGE_RULE") from exc
                 info = os.fstat(descriptor)
                 if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_mode & 0o222:
                     os.close(descriptor)
@@ -306,12 +367,18 @@ class FileRetainedInputs:
             os.close(descriptor)
         self.descriptors.clear()
 
+    def evidence(self) -> dict[str, str]:
+        return dict(self.before)
+
 
 class SyntheticComputationStage:
-    def __init__(self, wrong_vocabulary: bool = False) -> None:
+    def __init__(self, wrong_vocabulary: bool = False, unexpected_error: bool = False) -> None:
         self.wrong_vocabulary = wrong_vocabulary
+        self.unexpected_error = unexpected_error
 
     def compute(self, decoded: dict[str, bytes], retained: dict[str, bytes]) -> dict[str, Any]:
+        if self.unexpected_error:
+            raise ValueError("synthetic computation fault")
         seed = canonical_json({
             "decoded": {key: sha256(value) for key, value in sorted(decoded.items())},
             "retained": {key: sha256(value) for key, value in sorted(retained.items())},
@@ -380,7 +447,7 @@ class ExecutionResult:
 class RepresentativeExecutor:
     def __init__(self, authorization: dict[str, Any], provider: ShardProvider, decoders: DecoderPair,
                  retained: RetainedInputs, computation: ComputationStage, state_root: Path,
-                 *, synthetic: bool) -> None:
+                 *, synthetic: bool, repository_root: Path = REPOSITORY_ROOT) -> None:
         self.authorization = authorization
         self.provider = provider
         self.decoders = decoders
@@ -388,8 +455,20 @@ class RepresentativeExecutor:
         self.computation = computation
         self.state_root = state_root
         self.synthetic = synthetic
+        self.repository_root = repository_root
 
     def _validate(self) -> list[dict[str, Any]]:
+        spec = importlib.util.spec_from_file_location("f017_m1f0_runtime_validator", self.repository_root / VALIDATOR_PATH.relative_to(REPOSITORY_ROOT))
+        if spec is None or spec.loader is None:
+            raise ExecutionError("AUTHORIZATION_VALIDATOR_MISSING")
+        validator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(validator)
+        errors = validator.validate(self.authorization, self.repository_root)
+        if errors:
+            raise ExecutionError("AUTHORIZATION_GATE:" + errors[0])
+        executor_binding = self.authorization.get("executor", {})
+        if sha_file(Path(__file__).resolve()) != executor_binding.get("sha256"):
+            raise ExecutionError("EXECUTOR_SELF_IDENTITY")
         if self.authorization.get("schema_version") != "2.0.0" or self.authorization.get("status") != "PREPARED_REVIEW_REQUIRED":
             raise ExecutionError("AUTHORIZATION_SCHEMA")
         event = self.authorization.get("event", {})
@@ -405,6 +484,22 @@ class RepresentativeExecutor:
         if self.authorization.get("stop_boundary") != "AFTER_REPRESENTATIVE_ROUTE_BEFORE_ANY_EXPERT_EXECUTION":
             raise ExecutionError("STOP_BOUNDARY")
         return inventory
+
+    def reconcile_interrupted(self) -> ExecutionResult:
+        """Terminalize an already-started attempt from durable receipts; never resume it."""
+        if not self.state_root.is_dir() or not (self.state_root / "execution-start.json").is_file():
+            raise ExecutionError("NO_STARTED_ATTEMPT")
+        if (self.state_root / "terminal.json").exists():
+            raise ExecutionError("ATTEMPT_ALREADY_TERMINAL")
+        receipts = sorted((self.state_root / "receipts").glob("*.json")) if (self.state_root / "receipts").exists() else []
+        for index, receipt_path in enumerate(receipts, start=1):
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            if receipt.get("sequence") != index or receipt.get("ordinal") != index - 1:
+                raise ExecutionError("RECONCILIATION_RECEIPT_ORDER")
+            retained_path = self.state_root / str(receipt.get("retained_relative_path", "missing"))
+            if not retained_path.is_file() or sha_file(retained_path) != receipt.get("packed_sha256"):
+                raise ExecutionError("RECONCILIATION_RETAINED_IDENTITY")
+        return self._terminal("INTERRUPTED_ATTEMPT")
 
     def _terminal(self, reason: str, stages: dict[str, str] | None = None) -> ExecutionResult:
         receipts = sorted((self.state_root / "receipts").glob("*.json")) if (self.state_root / "receipts").exists() else []
@@ -427,6 +522,11 @@ class RepresentativeExecutor:
             "event_id": EVENT_ID, "attempt_id": ATTEMPT_ID, "ledger_before": LEDGER_BEFORE,
             "expected_reads": EXPECTED_READS, "expected_packed_bytes": EXPECTED_PACKED_BYTES,
             "maximum_shard_opens": 1, "synthetic": self.synthetic,
+            "shard_identity": self.authorization["checkpoint_binding"]["shard"],
+        })
+        durable_json(self.state_root / "retained-preflight.json", {
+            "manifest_sha256": self.authorization["retained_inputs"]["sha256"],
+            "expected_equals_before": self.retained.evidence(), "checkpoint_fallback": False,
         })
         decoded: dict[str, bytes] = {}
         handle: ShardHandle | None = None
@@ -456,9 +556,16 @@ class RepresentativeExecutor:
                 left, right = self.decoders.decode_pair(entry, packed)
                 if left != right:
                     raise ExecutionError("DECODER_DISAGREEMENT")
+                decoded_digest = sha256(left)
+                if self.synthetic:
+                    expected_decoded = getattr(self.decoders, "expected_decoded_sha256")(entry, packed)
+                else:
+                    expected_decoded = entry["decoded_sha256"]
+                if decoded_digest != expected_decoded:
+                    raise ExecutionError("DECODED_HASH")
                 decoded[entry["key"]] = left
                 durable_json(self.state_root / "journal" / f"{ordinal + 1:02d}.json", {
-                    **receipt, "decoded_sha256": sha256(left), "decoder_agreement": True,
+                    **receipt, "decoded_sha256": decoded_digest, "decoder_agreement": True,
                 })
             if self.provider.read_count != EXPECTED_READS or self.provider.open_count != 1:
                 raise ExecutionError("ACCESS_ACCOUNTING")
@@ -467,14 +574,21 @@ class RepresentativeExecutor:
             if set(stage_hashes) != set(CANONICAL_STAGES):
                 raise ExecutionError("STAGE_VOCABULARY")
             self.retained.verify_after()
+            durable_json(self.state_root / "retained-postuse.json", {
+                "expected_equals_before_equals_after": self.retained.evidence(),
+            })
             terminal = ExecutionResult("COMPLETE", None, EXPECTED_READS, EXPECTED_PACKED_BYTES, 175, 1, stage_hashes)
             durable_json(self.state_root / "terminal.json", terminal.__dict__)
             return terminal
-        except ExecutionError as exc:
-            return self._terminal(exc.code)
+        except BaseException as exc:
+            reason = exc.code if isinstance(exc, ExecutionError) else "UNEXPECTED_" + type(exc).__name__.upper()
+            return self._terminal(reason)
         finally:
             if handle is not None:
                 handle.close()
+            close = getattr(self.retained, "close", None)
+            if close is not None:
+                close()
 
 
 def load_json(path: Path) -> dict[str, Any]:

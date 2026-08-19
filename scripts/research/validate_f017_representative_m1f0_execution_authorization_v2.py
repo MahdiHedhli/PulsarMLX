@@ -15,11 +15,11 @@ CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-repres
 SCHEMA = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json"
 V1 = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json"
 EXPECTED_V1 = "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc"
-EXPECTED_EXECUTOR = "e34eb6a6d552440c3e72e203268ff003d68ec9229ac5227cb7ac30001d21a3ab"
+EXPECTED_EXECUTOR = "b9393042a0607f3e05b824c9cbd346f14385368b3008e0335a1633ea8cbca323"
 EXPECTED_RETAINED = "207a096eec6b02f8a3d95911d890f3e4da5fc53ae9cd9a4372d099e3c0b73824"
 EXPECTED_VOCABULARY = "ac1e86652dd475ef7c8049faa5eccc838b677497dbda77da570c8ee33cab130f"
-EXPECTED_SCHEMA = "15f6273383fc50fcb9d3c1aab0247552b96b1ce8d303b67357b0e743f6453738"
-EXPECTED_REHEARSAL = "9dd6e2129a3df1b5a44240ff96e48f5180046b06879bc881a74ec34ef3c11faa"
+EXPECTED_SCHEMA = "cbcd959aedb3a34c690412511e0ab1fc515725a68f8eef1c0b2a27f19b3a1ea3"
+EXPECTED_REHEARSAL = "77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9"
 EVENT_ID = "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1"
 ATTEMPT_ID = EVENT_ID + "-ATTEMPT-1"
 
@@ -67,6 +67,21 @@ def schema_errors(value: Any, schema: dict[str, Any], location: str = "$") -> li
     return errors
 
 
+def unsupported_schema_keywords(schema: Any, location: str = "$") -> list[str]:
+    supported = {"$schema", "$id", "type", "required", "properties", "const", "minItems", "maxItems", "items"}
+    errors: list[str] = []
+    if isinstance(schema, dict):
+        for key, value in schema.items():
+            if key not in supported:
+                errors.append("SCHEMA_UNSUPPORTED_KEYWORD:" + location + "." + key)
+            if key == "properties" and isinstance(value, dict):
+                for name, child in value.items():
+                    errors.extend(unsupported_schema_keywords(child, location + ".properties." + name))
+            elif key == "items":
+                errors.extend(unsupported_schema_keywords(value, location + ".items"))
+    return errors
+
+
 def validate(document: dict[str, Any], root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     def require(condition: bool, code: str) -> None:
@@ -76,9 +91,16 @@ def validate(document: dict[str, Any], root: Path = ROOT) -> list[str]:
     schema_path = root / SCHEMA.relative_to(ROOT)
     require(schema_path.is_file() and sha_file(schema_path) == EXPECTED_SCHEMA, "SCHEMA_IDENTITY")
     if schema_path.is_file():
-        errors.extend(schema_errors(document, load(schema_path)))
+        loaded_schema = load(schema_path)
+        errors.extend(unsupported_schema_keywords(loaded_schema))
+        errors.extend(schema_errors(document, loaded_schema))
 
+    require(document.get("authorization_id") == "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1-AUTHORIZATION-V2", "AUTHORIZATION_ID")
     require(document.get("event") == {"event_id": EVENT_ID, "attempt_id": ATTEMPT_ID}, "EVENT")
+    require(document.get("semantic_authority") == {
+        "representative_boundary_v3_sha256":"a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3",
+        "semantic_graph_v2_sha256":"1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558",
+        "epsilon_adjudication_sha256":"fc92b11223ee174b5f206a45a6d2b50540b4c82ba5d2c2333010947d525646e4"}, "SEMANTIC_AUTHORITY")
     supersedes = document.get("supersedes", {})
     require(supersedes == {"path": V1.relative_to(ROOT).as_posix(), "sha256": EXPECTED_V1}, "SUPERSEDES")
     v1_path = root / supersedes.get("path", "missing")
@@ -93,6 +115,10 @@ def validate(document: dict[str, Any], root: Path = ROOT) -> list[str]:
     for binding, digest, code in bindings:
         path = root / str(binding.get("path", "missing"))
         require(binding.get("sha256") == digest and path.is_file() and sha_file(path) == digest, code + "_IDENTITY")
+    require(document.get("executor") == {"path":"scripts/research/f017_representative_m1f0_validation_executor.py","sha256":EXPECTED_EXECUTOR,"event_shape":"9_CHECKPOINT_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_1_RETAINED_S0","production_provider_injected_only_after_separate_release":True}, "EXECUTOR_BINDING")
+    require(document.get("retained_inputs") == {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-retained-input-manifest-v1.json","sha256":EXPECTED_RETAINED,"artifact_ids":["canonical_s0","ffn_norm","router_matrix","correction_bias"],"checkpoint_fallback":False}, "RETAINED_BINDING")
+    require(document.get("stage_vocabulary") == {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-stage-vocabulary-v1.json","sha256":EXPECTED_VOCABULARY,"canonical_output_required":True}, "VOCABULARY_BINDING")
+    require(document.get("schema_binding") == {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json","sha256":EXPECTED_SCHEMA,"executable_validation_required":True}, "SCHEMA_BINDING")
     rehearsal = document.get("synthetic_rehearsal", {})
     rehearsal_path = root / str(rehearsal.get("path", "missing"))
     require(rehearsal.get("sha256") == EXPECTED_REHEARSAL and rehearsal_path.is_file() and sha_file(rehearsal_path) == EXPECTED_REHEARSAL, "REHEARSAL_IDENTITY")
@@ -112,7 +138,7 @@ def validate(document: dict[str, Any], root: Path = ROOT) -> list[str]:
         "catalog":{"path":"docs/research/glm52/raw/f016-c01-catalog-0001.json","sha256":"135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"},
         "checkpoint_set_sha256":"d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
         "tensor_map_sha256":"ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
-        "shard":{"ordinal":2,"basename":"GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf","sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
+        "shard":{"ordinal":2,"basename":"GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf","size_bytes":49105028960,"sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
         "planning_contract_catalog_disposition":"RETIRED_AS_NONAUTHORITATIVE_FOR_V2; COMMITTED_CATALOG_ABOVE_IS_SOLE_METADATA_AUTHORITY"}
     require(document.get("checkpoint_binding") == expected_checkpoint, "CHECKPOINT_BINDING")
     catalog_path = root / expected_checkpoint["catalog"]["path"]

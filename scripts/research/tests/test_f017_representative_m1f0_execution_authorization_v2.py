@@ -78,11 +78,12 @@ class ExecutorV2Tests(unittest.TestCase):
     def setUp(self) -> None:
         self.authorization = json.loads(AUTH.read_text())
 
-    def execute(self, root: Path, *, short=None, disagreement=None, retained_fail=False, wrong_vocab=False):
-        provider = E.SyntheticShardProvider(self.authorization["attention_payload_inventory"], short_read=short)
+    def execute(self, root: Path, *, short=None, disagreement=None, decoded_hash=None, read_error=None,
+                retained_fail=False, wrong_vocab=False, computation_error=False):
+        provider = E.SyntheticShardProvider(self.authorization["attention_payload_inventory"], short_read=short, read_error=read_error)
         executor = E.RepresentativeExecutor(
-            self.authorization, provider, E.SyntheticDecoderPair(disagreement),
-            E.SyntheticRetainedInputs(retained_fail), E.SyntheticComputationStage(wrong_vocab), root,
+            self.authorization, provider, E.SyntheticDecoderPair(disagreement, decoded_hash),
+            E.SyntheticRetainedInputs(retained_fail), E.SyntheticComputationStage(wrong_vocab, computation_error), root,
             synthetic=True,
         )
         return executor, provider, executor.execute()
@@ -113,6 +114,41 @@ class ExecutorV2Tests(unittest.TestCase):
             _, _, result = self.execute(Path(directory) / "attempt", disagreement=1)
             self.assertEqual((result.reason, result.consumed_reads, result.ledger_after), ("DECODER_DISAGREEMENT", 2, 168))
 
+    def test_decoded_hash_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            _, _, result = self.execute(Path(directory) / "attempt", decoded_hash=1)
+            self.assertEqual((result.reason, result.consumed_reads, result.ledger_after), ("DECODED_HASH", 2, 168))
+
+    def test_unexpected_read_fault_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "attempt"
+            _, _, result = self.execute(root, read_error=3)
+            self.assertEqual((result.reason, result.consumed_reads, result.ledger_after), ("UNEXPECTED_OSERROR", 3, 169))
+            self.assertTrue((root / "terminal.json").is_file())
+
+    def test_unexpected_compute_fault_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "attempt"
+            _, _, result = self.execute(root, computation_error=True)
+            self.assertEqual((result.reason, result.consumed_reads, result.ledger_after), ("UNEXPECTED_VALUEERROR", 9, 175))
+            self.assertTrue((root / "terminal.json").is_file())
+
+    def test_interrupted_attempt_reconciliation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "attempt"
+            root.mkdir()
+            E.durable_json(root / "execution-start.json", {"event_id": E.EVENT_ID})
+            packed = b"retained-after-crash"
+            retained_path = root / "retained-packed/00.bin"
+            E.durable_publish(retained_path, packed)
+            E.durable_json(root / "receipts/01.json", {
+                "sequence": 1, "ordinal": 0, "actual_bytes": len(packed),
+                "packed_sha256": E.sha256(packed), "retained_relative_path": "retained-packed/00.bin"})
+            provider = E.SyntheticShardProvider(self.authorization["attention_payload_inventory"])
+            executor = E.RepresentativeExecutor(self.authorization, provider, E.SyntheticDecoderPair(), E.SyntheticRetainedInputs(), E.SyntheticComputationStage(), root, synthetic=True)
+            result = executor.reconcile_interrupted()
+            self.assertEqual((result.reason, result.consumed_reads, result.ledger_after, provider.open_count), ("INTERRUPTED_ATTEMPT", 1, 167, 0))
+
     def test_retained_failure_is_preopen(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             provider = E.SyntheticShardProvider(self.authorization["attention_payload_inventory"])
@@ -135,8 +171,30 @@ class ExecutorV2Tests(unittest.TestCase):
             executor = E.RepresentativeExecutor(value, provider, E.SyntheticDecoderPair(), E.SyntheticRetainedInputs(), E.SyntheticComputationStage(), Path(directory) / "attempt", synthetic=True)
             with self.assertRaises(E.ExecutionError) as context:
                 executor.execute()
-            self.assertEqual(context.exception.code, "INVENTORY_ORDER")
+            self.assertEqual(context.exception.code, "AUTHORIZATION_GATE:INVENTORY_EXACT")
             self.assertEqual(provider.open_count, 0)
+
+    def test_execution_path_runs_full_authorization_gate_preopen(self) -> None:
+        for field in ("checkpoint_access_authorized", "expert_execution_authorized", "M1_F_authorized", "M1_G_authorized", "P1_authorized"):
+            value = copy.deepcopy(self.authorization)
+            value["authorization"][field] = True
+            provider = E.SyntheticShardProvider(value["attention_payload_inventory"])
+            with tempfile.TemporaryDirectory() as directory:
+                executor = E.RepresentativeExecutor(value, provider, E.SyntheticDecoderPair(), E.SyntheticRetainedInputs(), E.SyntheticComputationStage(), Path(directory) / "attempt", synthetic=True)
+                with self.assertRaises(E.ExecutionError) as context:
+                    executor.execute()
+                self.assertTrue(context.exception.code.startswith("AUTHORIZATION_GATE:"))
+                self.assertEqual((provider.open_count, provider.read_count), (0, 0))
+        for section in ("read_contract", "ledger_contract", "failure_contract", "output_contract", "surface_separation"):
+            value = copy.deepcopy(self.authorization)
+            value.pop(section)
+            provider = E.SyntheticShardProvider(value["attention_payload_inventory"])
+            with tempfile.TemporaryDirectory() as directory:
+                executor = E.RepresentativeExecutor(value, provider, E.SyntheticDecoderPair(), E.SyntheticRetainedInputs(), E.SyntheticComputationStage(), Path(directory) / "attempt", synthetic=True)
+                with self.assertRaises(E.ExecutionError) as context:
+                    executor.execute()
+                self.assertTrue(context.exception.code.startswith("AUTHORIZATION_GATE:"))
+                self.assertEqual((provider.open_count, provider.read_count), (0, 0))
 
     def test_production_vocabulary_adapter(self) -> None:
         oracle = module(ROOT / "scripts/research/prepare_f017_m1f0_real_reference.py", "m1f0_oracle")

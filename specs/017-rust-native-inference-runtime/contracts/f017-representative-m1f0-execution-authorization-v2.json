@@ -18,7 +18,7 @@
   },
   "executor": {
     "path": "scripts/research/f017_representative_m1f0_validation_executor.py",
-    "sha256": "e34eb6a6d552440c3e72e203268ff003d68ec9229ac5227cb7ac30001d21a3ab",
+    "sha256": "b9393042a0607f3e05b824c9cbd346f14385368b3008e0335a1633ea8cbca323",
     "event_shape": "9_CHECKPOINT_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_1_RETAINED_S0",
     "production_provider_injected_only_after_separate_release": true
   },
@@ -35,12 +35,12 @@
   },
   "schema_binding": {
     "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json",
-    "sha256": "15f6273383fc50fcb9d3c1aab0247552b96b1ce8d303b67357b0e743f6453738",
+    "sha256": "cbcd959aedb3a34c690412511e0ab1fc515725a68f8eef1c0b2a27f19b3a1ea3",
     "executable_validation_required": true
   },
   "synthetic_rehearsal": {
-    "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-01-synthetic-rehearsal.json",
-    "sha256": "9dd6e2129a3df1b5a44240ff96e48f5180046b06879bc881a74ec34ef3c11faa",
+    "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-02-builder-rehearsal.json",
+    "sha256": "77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9",
     "real_geometry": true,
     "checkpoint_reads": 0,
     "shard_opens": 0,
@@ -50,7 +50,7 @@
     "catalog": {"path":"docs/research/glm52/raw/f016-c01-catalog-0001.json","sha256":"135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"},
     "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
     "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
-    "shard": {"ordinal": 2, "basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
+    "shard": {"ordinal": 2, "basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", "size_bytes": 49105028960, "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
     "planning_contract_catalog_disposition": "RETIRED_AS_NONAUTHORITATIVE_FOR_V2; COMMITTED_CATALOG_ABOVE_IS_SOLE_METADATA_AUTHORITY"
   },
   "attention_payload_inventory": [

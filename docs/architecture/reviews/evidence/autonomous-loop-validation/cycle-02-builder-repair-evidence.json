@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.autonomous-loop-builder-repair-evidence",
+  "schema_version": "1.0.0",
+  "cycle": 2,
+  "review_authority": {
+    "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-02-independent-review.json",
+    "sha256": "8f283325f6320c51f14ff20b466b9629be9bb71d2f3f96b08fc9a98339b65392"
+  },
+  "blocking_repairs": {
+    "F017-C02-B01": "PRODUCTION_DECODED_SHA256_CHECK_AND_SYNTHETIC_DECODED_HASH_FAILURE_REHEARSAL",
+    "F017-C02-B02": "ALL_BASEEXCEPTION_TERMINALIZATION_PLUS_DURABLE_RECEIPT_RECONCILIATION_ENTRYPOINT",
+    "F017-C02-B03": "FULL_COMMITTED_VALIDATOR_AND_EXECUTOR_SELF_IDENTITY_GATE_BEFORE_RETAINED_PREFLIGHT_OR_SHARD_OPEN"
+  },
+  "additional_repairs": {
+    "retained_resolution": "AUTHORIZATION_BOUND_MANIFEST_SHA_ARTIFACT_SET_DTYPE_SHAPE_AND_ENVIRONMENT_ROOT_RESOLUTION",
+    "retained_evidence": "DURABLE_PREOPEN_AND_POSTUSE_IDENTITY_RECEIPTS",
+    "shard_identity": "AUTHORIZATION_BOUND_BASENAME_SIZE_AND_INVENTORY_RANGE_GATE",
+    "schema": "LOAD_BEARING_SECTIONS_REQUIRED_AND_UNKNOWN_KEYWORDS_REJECTED",
+    "production_rehearsal": "FULL_REAL_GEOMETRY_PRODUCTION_COMPUTATION_ADAPTER_AND_NONZERO_DUAL_DECODER_FIXTURES"
+  },
+  "artifact_sha256": {
+    "authorization_v2": "b27ccf1a46cd55fb685989e859704b3fcbd9da23d8d02e34df28ee476a59c931",
+    "schema_v2": "cbcd959aedb3a34c690412511e0ab1fc515725a68f8eef1c0b2a27f19b3a1ea3",
+    "executor": "b9393042a0607f3e05b824c9cbd346f14385368b3008e0335a1633ea8cbca323",
+    "validator": "1a0e83f105cf62094657a9613cc278a1ee3ed73722366f10362d8ee814e240af",
+    "tests": "15555fc546cf3e4aabd04ea901601eb139c5d719dcb0be5abca61d01b5284bf7",
+    "rehearsal_generator": "0f463ccebfe357e3293d4b81566467cd177fb5b98c25c88649acd246783ffc56",
+    "rehearsal": "77fe1f9710055a01da5ae3e46d698aaba725bada3745038962084407754a2db9"
+  },
+  "validation": {
+    "validator": "PASS",
+    "focused_tests": "22_TESTS_PASS",
+    "rehearsal": "PASS_BYTE_DETERMINISTIC",
+    "real_geometry_decoded_allocation_bytes": 660113408,
+    "production_stage_count": 18,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_ledger_delta": 0
+  },
+  "execution_release": false
+}

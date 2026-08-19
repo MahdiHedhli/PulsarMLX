@@ -4,9 +4,9 @@
   "type": "object",
   "required": [
     "schema", "schema_version", "authorization_id", "status", "supersedes",
-    "event", "executor", "retained_inputs", "stage_vocabulary", "schema_binding", "synthetic_rehearsal",
+    "event", "semantic_authority", "executor", "retained_inputs", "stage_vocabulary", "schema_binding", "synthetic_rehearsal", "checkpoint_binding",
     "attention_payload_inventory", "read_contract", "ledger_contract", "failure_contract",
-    "execution_semantics", "output_contract", "stop_boundary", "authorization", "isolation"
+    "execution_semantics", "output_contract", "surface_separation", "stop_boundary", "authorization", "isolation"
   ],
   "properties": {
     "schema": {"const": "pulsarmlx.f017.representative-m1f0-execution-authorization-repaired"},
