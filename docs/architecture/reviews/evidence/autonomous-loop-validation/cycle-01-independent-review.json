@@ -1,0 +1,355 @@
+{
+  "schema": "pulsarmlx.f017.autonomous-loop-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-AUTONOMOUS-LOOP-CYCLE-01-INDEPENDENT-REVIEW",
+  "cycle": 1,
+  "reviewed_head": "9a997d61e589dda2a67816096c264d20c6e75fd0",
+  "validation_base": "2a657bdf41267817ff03cc5d233ec2507c87dbf2",
+  "branch": "validation/f017-autonomous-adversarial-loop-replay",
+  "reviewed_authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json",
+    "recomputed_sha256": "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc",
+    "declared_sha256_in_preparation_record": "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc",
+    "sha256_match": true
+  },
+  "scope": {
+    "authority": "COMMITTED_REPOSITORY_BYTES_ONLY",
+    "head_delta_from_base": "SINGLE_LOOP_STATE_FILE docs/architecture/reviews/evidence/autonomous-loop-validation/f017-autonomous-loop-state.json (+24 lines); the reviewed authorization package landed at the validation base",
+    "later_commits_inspected": false,
+    "known_later_f017_solutions_used": false,
+    "reviewed_artifacts": [
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.schema.json",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v1.json",
+      "specs/017-rust-native-inference-runtime/contracts/f017-m1f0-decoded-tensor-reuse-v2.json",
+      "scripts/research/validate_f017_representative_m1f0_execution_authorization.py",
+      "scripts/research/tests/test_f017_representative_m1f0_execution_authorization.py",
+      "scripts/research/prepare_f017_m1f0_real_reference.py",
+      "scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "docs/architecture/reviews/evidence/f017-representative-m1f0-execution-authorization-preparation-v1.json",
+      "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-private-manifest-v1.json",
+      "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json",
+      "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+      "docs/research/glm52/raw/f016-c01-catalog-0001.json"
+    ]
+  },
+  "verdict": "REJECT",
+  "verdict_statement": "REJECT: the representative M1-F0 execution authorization at reviewed head 9a997d61e589dda2a67816096c264d20c6e75fd0 is declaratively coherent in its byte, offset, epsilon and ledger accounting, but it is not executable and not adequately gated: a router input required by its own declared route (blk.3.exp_probs_b.bias) has no committed byte source under the contract's own zero-new-read and no-checkpoint-fallback constraints, the only execution substrate named in its lineage is hard-pinned to a different event and rejects this authorization under synthetic binding, and the sole committed executable gate accepts 51 of 52 adversarial mutations including escalation of M1_F/M1_G/P1 and candidate-dispatch authorization flags while the committed JSON Schema that would catch several of them is never applied by any executable path; four BLOCKING findings remain, so execution release is withheld.",
+  "findings": [
+    {
+      "id": "F017-C01-B01",
+      "classification": "BLOCKING",
+      "title": "Router correction bias blk.3.exp_probs_b.bias is an unbound retained input with no committed byte source",
+      "detail": "execution_semantics.router.scores is defined as 'PROBABILITY_PLUS_BINARY64_PROMOTION_OF_F32_CORRECTION_BIAS', so blk.3.exp_probs_b.bias (sha256 eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491, 1024 bytes) is a mandatory input to the authorized route. It is not in attention_payload_inventory (which is exactly 9 entries, all blk.3.attn_*), and router_reuse_authorization pins new_payload_reads=0 with execution_preflight_requirements containing NO_CHECKPOINT_FALLBACK, so it may not be read from the shard. The only retention artifact bound by the contract, f017-v2-antecedent-recovery-private-manifest-v1.json, declares artifact_count=8 and its eight artifact sha256 values are 1f5e2e46(attention_residual), 98275027(router_normalized_input), da0263ba(router_matrix), 1d922848(ffn_norm_weight), 09b6147d, 5f049e9d, eb764bad, b5df17d9 -- the correction bias digest eb6feeb8... is absent. Its provenance string in the authorization is also weaker than its two siblings: 'ACCEPTED_M1F0_DECODED_AUTHORITY' versus 'RETAINED_ANTECEDENT_AND_ACCEPTED_M1F0_DECODED_AUTHORITY'. A repo-wide search for the digest returns only JSON evidence and validator constants, i.e. identity assertions, never a retained byte artifact. The declared execution therefore cannot obtain a required input from any authorized source.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:139 (router.scores requires correction bias)",
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:170 (provenance ACCEPTED_M1F0_DECODED_AUTHORITY, no retained antecedent)",
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:175,178 (NO_CHECKPOINT_FALLBACK, new_payload_reads 0)",
+        "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-private-manifest-v1.json (artifact_count 8; eb6feeb8 absent)"
+      ],
+      "required_repair": "Bind blk.3.exp_probs_b.bias to a retained immutable byte artifact in a committed retention manifest (hash, byte_length, resolvable location, read-only provenance) on the same footing as blk.3.ffn_norm.weight and blk.3.ffn_gate_inp.weight; or, alternatively, add it as an authorized inventory read with the corresponding ledger increment (166->176) and expected_reads/expected_packed_bytes update. Until one of these is committed, the route cannot be executed as authorized."
+    },
+    {
+      "id": "F017-C01-B02",
+      "classification": "BLOCKING",
+      "title": "The execution substrate named in event_substrate_lineage cannot execute this authorization (unrehearsed execution shape)",
+      "detail": "The preparation record binds event_substrate_lineage.executor_source_sha256 = e4bd9a2e39ebf8e7c56b8851ebbbd93ec4ef05fc957e58803a726e7785a42bbe, which resolves by content hash to scripts/research/f017_canonical_expert_output_recovery_executor.py. That module is hard-pinned to a different event: EVENT_ID='F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1', AUTHORIZED_HEAD='88c93fa80c85dcd8edd4d850ea4f5f81d3af8990', AUTHORIZATION_SHA256='58ad56f0...', EXPECTED_READS=24, EXPECTED_PACKED_BYTES=90439680, SELECTED_IDS=(250,10,237,73,62,177,218,28), ROLES=('gate','up','down'). validate_binding requires review_authorization to equal the literal string 'GO -- EXECUTE F017-CANONICAL-EXPERT-OUTPUT-RECOVERY-1' and requires each inventory entry to carry expert_id, role, packed_length and shard_ordinal. The representative authorization declares event_id F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1, head c5eb3c3e, 9 reads, 132900864 packed bytes, and inventory entries keyed by key/offset/packed_bytes/shard with no expert_id. Synthetic execution confirmed rejection: binding built from the authorization raised RecoveryExecutionError('AUTHORITATIVE_HEAD'), and with head/authorization/review/shard/decoder forced to the executor's own pinned constants it still raised RecoveryExecutionError('INVENTORY_DIGEST'). Independently, a repo-wide search shows no committed executable consumes f017-representative-m1f0-execution-authorization-v1.json at all -- only the preparation record and the mutation test reference it. The bound doctrine list (ONE_SHARD_OPEN, RETAIN_AT_CREATION, DURABLE_PER_READ_RECEIPT_AND_LEDGER, NO_RETRY, INTERRUPTED_ATTEMPT_TERMINALIZATION) is therefore asserted, not rehearsed, for this event shape.",
+      "committed_evidence": [
+        "docs/architecture/reviews/evidence/f017-representative-m1f0-execution-authorization-preparation-v1.json:53-66 (event_substrate_lineage)",
+        "scripts/research/f017_canonical_expert_output_recovery_executor.py:21-33 (pinned event constants)",
+        "scripts/research/f017_canonical_expert_output_recovery_executor.py:251-278 (validate_binding)",
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:5,64-86 (event_id, inventory field names, read contract)"
+      ],
+      "required_repair": "Commit an execution substrate that actually accepts this authorization -- an executor (or a parameterized binding of the existing one) pinned to event F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1, authorization sha256 e46874b0..., head c5eb3c3e, 9 reads, 132900864 packed bytes, and the key/offset/packed_bytes/shard inventory shape -- together with a checkpoint-free mock/synthetic rehearsal exercising one shard open, nine ordered exact-size positional reads, retain-at-creation, per-read durable receipts, and terminalization on short read. Alternatively, correct event_substrate_lineage to name the substrate that will really run and re-derive its doctrine claims."
+    },
+    {
+      "id": "F017-C01-B03",
+      "classification": "BLOCKING",
+      "title": "Committed validator is a weak gate: 51 of 52 adversarial mutations accepted, including authorization-scope escalation",
+      "detail": "validate_document is the only committed executable gate on this authorization. An adversarial mutation sweep run against the real contract with --repository-root pointed at the worktree found that 51 of 52 safety-relevant mutations still validate clean (baseline errors == []). Accepted mutations include: authorization.M1_F_authorized=true, authorization.M1_G_authorized=true, authorization.P1_authorized=true, authorization.candidate_or_model_dispatch_authorized=true, authorization.execution_release_required_after_review=false; preparation_isolation.payload_reads=9, expert_dispatches=3, gpu_dispatches=4; execution_semantics.blas=true and backend_dependent_reduction=true; read_contract.read_primitive='WHOLE_FILE_SLURP', retain_at_creation_before_decode=false, durable_receipt_before_next_read=false; ledger_contract.shard_open_increment=5, no_partial_success=false, short_read='INCREMENT_ANYWAY', increment_unit='ONE_PER_SHARD_OPEN'; failure_contract.automatic_resume=true, attempt_count=99, decoder_disagreement='PICK_MAJORITY_DECODER'; router.selection='TOP_64_MEMBERSHIP', router.weights='RANDOM', router.probabilities='BINARY32_SOFTMAX'; attention.residual applied twice, attention.softmax approximate, attention.rope at position 512; rmsnorm.reduction_order='PAIRWISE_TREE'; checkpoint_binding.checkpoint_set_sha256 and tensor_map_sha256 zeroed; shard.basename pointed at a different shard file; every inventory packed_sha256/decoded_sha256 zeroed; surface_separation.prohibited_input_identities emptied; and deletion of the entire output_contract object. Only the rmsnorm epsilon-identity mutation was rejected. The committed 21-test mutation suite passes 21/21 but exercises only the narrow subset the validator happens to cover, so it does not detect this.",
+      "committed_evidence": [
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:86-215 (validate_document; no checks on output_contract, execution_semantics.attention, execution_semantics.router, surface_separation.prohibited_input_identities, ledger increment_unit/shard_open_increment/short_read/no_partial_success, read_contract.read_primitive/retain_at_creation_before_decode/durable_receipt_before_next_read, authorization.M1_F/M1_G/P1/candidate_or_model_dispatch/execution_release_required_after_review, preparation_isolation.payload_reads/expert_dispatches/gpu_dispatches, checkpoint_set_sha256, tensor_map_sha256, shard.basename, inventory packed_sha256/decoded_sha256)",
+        "scripts/research/tests/test_f017_representative_m1f0_execution_authorization.py:19-91 (21 mutations, none covering the above)"
+      ],
+      "required_repair": "Extend validate_document to constrain every field the authorization relies on for safety -- in particular all authorization.* scope flags (M1_F, M1_G, P1, candidate_or_model_dispatch, execution_release_required_after_review), all preparation_isolation counters, the full read_contract and ledger_contract semantics, execution_semantics.attention/router/rmsnorm invariants, surface_separation.prohibited_input_identities, checkpoint_set/tensor_map/shard basename identity, and the presence and content of output_contract -- and add a mutation test per newly covered field asserting the specific error code fires."
+    },
+    {
+      "id": "F017-C01-B04",
+      "classification": "BLOCKING",
+      "title": "Committed JSON Schema is never applied by any executable path (producer/consumer mismatch)",
+      "detail": "f017-representative-m1f0-execution-authorization-v1.schema.json is committed and hash-bound in the preparation record (39448bf8a284a12c7f66bbdb47551c3f703e2d287540e22323c19a1a4a95206b, verified against disk), and its required list includes output_contract while its properties pin const values for status, expected_reads, expected_packed_bytes, maximum_shard_opens, additional_reads, ledger before/after, the four authorization flags and the four preparation_isolation counters. A repo-wide search finds no file that references this schema filename, and neither the validator nor the test imports jsonschema or any equivalent. The schema is therefore inert documentation. This is the direct cause of several F017-C01-B03 holes: deleting output_contract wholesale is rejected by the schema's required list but accepted by the validator, and the schema's const false on real_event_authorized/checkpoint_access_authorized/expert_execution_authorized is duplicated in the validator while its const constraints on preparation_isolation counters are not. Producer (schema author) and consumer (validator) disagree about which document is the gate.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.schema.json:5-11,50-59 (required list and const constraints)",
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:1-12 (no jsonschema import)",
+        "docs/architecture/reviews/evidence/f017-representative-m1f0-execution-authorization-preparation-v1.json:10-13 (schema bound as part of the package)"
+      ],
+      "required_repair": "Make schema validation an executable step: have the validator (and the mutation test suite) load the committed schema and validate the document against it in addition to the imperative checks, and add a regression test asserting that a document missing output_contract, or with any pinned const violated, is rejected."
+    },
+    {
+      "id": "F017-C01-N01",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Retained router inputs have no resolvable location in committed bytes, making the declared preflight unverifiable at review time",
+      "detail": "router_reuse_authorization.execution_preflight_requirements demands EXPECTED_SHA_EQUALS_BEFORE_SHA_EQUALS_AFTER_SHA and REGULAR_READ_ONLY_NON_SYMLINK_SINGLE_LINK_NO_WRITABLE_ALIAS, but the authorization lists the three retained artifacts by key/sha256/dtype/shape/byte_length with no path. The bound retention manifest records only symbolic_name values of the form 'antecedents/<name>.bin' with path_kind='private_package_relative' and machine_local_paths_published=false, and no committed artifact binds the package root. The historical attempt bound as source authority carries only symbolic_name/ordinal/decoded_sha256 triples, i.e. identity assertions rather than bytes. Consequently a reviewer cannot confirm from committed bytes that the preflight is satisfiable, and the validator performs no existence or hash check on these three artifacts (it only cross-checks their digests against the historical attempt JSON). The privacy intent is legible and the sha256 values do pin identity, so this is not by itself blocking, but it leaves the storage-rule half of the preflight unenforced.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:167-177",
+        "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-private-manifest-v1.json (path_kind private_package_relative; machine_local_paths_published false)",
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:210-213 (digest-only cross-check)"
+      ],
+      "required_repair": "Commit a package-root binding (an indirection artifact naming the retained package by hash with a documented resolution rule) so the symbolic names resolve deterministically without publishing machine-local paths, and make the executor's preflight emit a committed receipt recording, for each of the three artifacts, the before-hash, after-hash, and the storage-rule check outcome."
+    },
+    {
+      "id": "F017-C01-N02",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Evidence vocabulary mismatch: two required output stages are never emitted under those names by the pinned oracle",
+      "detail": "output_contract.required_stage_sha256 lists 18 stages, and execution_semantics.oracle_source pins scripts/research/prepare_f017_m1f0_real_reference.py at sha256 ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d (verified against disk). Sixteen of the eighteen names appear in the oracle directly or with a _sha256 suffix. Two do not appear in any form: 'post_attention_residual' -- the oracle computes and emits the same quantity as 'attention_residual' (line 196, emitted at line 213), a name the retention manifest also uses -- and 'selected_ids', which the oracle emits as 'top8_ids' with digest key 'top8_ids_sha256' over struct.pack('<8H', *selected) (lines 221-222). The underlying quantities and their canonical serializations match the contract, so this is a naming binding gap rather than a semantic one, but as written the required stage set cannot be mechanically matched against the pinned oracle output and the 10-of-10 exact-class comparison is undefined for those two stages.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:187-192,197-198",
+        "scripts/research/prepare_f017_m1f0_real_reference.py:196,213,221-222"
+      ],
+      "required_repair": "Reconcile the vocabulary in one direction -- either rename the contract stages to attention_residual and top8_ids, or have the oracle emit post_attention_residual and selected_ids -- and add a checkpoint-free test asserting that the set of stage names in output_contract.required_stage_sha256 is exactly the set of digest keys the pinned oracle produces."
+    },
+    {
+      "id": "F017-C01-N03",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Routing weight formula is operation-order ambiguous in a contract that demands bit-exact reproduction",
+      "detail": "execution_semantics.router.weights reads '2.5_TIMES_P_I_DIVIDED_BY_MAX(FSUM_SELECTED_P,2^-14)', whose natural reading is (2.5*p_i)/denominator. The pinned oracle computes (p_i/denominator)*2.5 at line 154. These are not equivalent in IEEE-754 binary64: over 2,000,000 random (p,d) pairs the two orderings produced different results in 708,734 cases, differing in the last ulp (example p=0.42451918914251396, d=0.8268521246720381 gives 1.2835402379563787 versus 1.2835402379563785). Because output_contract requires exact_class_stage_sha_match 10_OF_10 and route_result_identity 10_OF_10 over the canonical binary64 serialization of routing_weights, an independent implementation written from the contract prose rather than from the oracle source would produce a different routing_weights digest and fail. The oracle is the pinned authority so actual behavior is determined, but the contract text does not uniquely specify it.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:142,183,197-198",
+        "scripts/research/prepare_f017_m1f0_real_reference.py:153-154"
+      ],
+      "required_repair": "State the routing-weight expression with explicit parenthesization matching the oracle -- '(P_I / MAX(FSUM_SELECTED_P, 2^-14)) * 2.5' -- and add the same explicit ordering to any other multi-operation formula in execution_semantics.router."
+    },
+    {
+      "id": "F017-C01-N04",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Bit-exact reproduction is required but the transcendental used by the router is not pinned",
+      "detail": "execution_semantics.router.probabilities is 'BINARY64_SIGMOID_OF_PROMOTED_F32_LOGITS' and the oracle implements it with math.exp (lines 138-144), which delegates to the platform C library. libm exp is not correctly rounded and is not guaranteed identical across platforms, libc versions, or build flags. The contract nevertheless declares backend_dependent_reduction=false and demands exact_class_stage_sha_match 10_OF_10 on router_scores and routing_weights, both of which depend on the exp result. The preparation record pins only CPython 3.13.13 and NumPy 2.4.5 ('PASS_PINNED_CPYTHON_3_13_13_NUMPY_2_4_5'); neither the authorization nor the preparation record pins libm, platform, or architecture. As an observation on reproducibility, this review executed the committed validator and mutation suite on CPython 3.14.6, outside the pinned interpreter, though nothing in those two checkpoint-free paths depends on the transcendental.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:114,138,197-198",
+        "scripts/research/prepare_f017_m1f0_real_reference.py:138-144",
+        "docs/architecture/reviews/evidence/f017-representative-m1f0-execution-authorization-preparation-v1.json:85"
+      ],
+      "required_repair": "Either pin the exact platform/libm identity in the authorization alongside the interpreter and NumPy versions and record it in every reproduction receipt, or replace the libm-dependent sigmoid with a correctly-rounded or explicitly specified binary64 routine so the exactness claim is portable."
+    },
+    {
+      "id": "F017-C01-N05",
+      "classification": "NON_BLOCKING_REQUIRED",
+      "title": "Inventory packed_sha256 and decoded_sha256 are never validated despite being the only content binding for the nine reads",
+      "detail": "EXPECTED_INVENTORY in the validator carries only (ordinal, key, offset, packed_bytes, quantization, logical_shape); neither packed_sha256 nor decoded_sha256 is compared against anything, and no mutation test covers them. The sweep confirmed that zeroing a single entry's packed_sha256 or decoded_sha256, or zeroing all nine decoded_sha256 values, still validates clean. These digests are what bind the bytes actually read at execution time to the accepted content, and failure_contract.unexpected_key_offset_size_shape_type_or_hash treats a hash mismatch as terminal, so they carry real weight. Corroboration is available and was performed independently: all nine packed_sha256 and decoded_sha256 values in the inventory match the source_tensor_identities recorded in the bound retention manifest, so the values themselves are correct at this head -- the defect is the absence of any committed check that keeps them correct.",
+      "committed_evidence": [
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:28-38,116-122",
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:64-72,105",
+        "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-private-manifest-v1.json (source_tensor_identities)"
+      ],
+      "required_repair": "Extend EXPECTED_INVENTORY (or add a dedicated check) to pin all nine packed_sha256 and decoded_sha256 values, cross-check them against the bound retention manifest's source_tensor_identities, and add mutation tests asserting rejection when either digest is altered."
+    },
+    {
+      "id": "F017-C01-D01",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Mutation tests assert only that some error occurred, not that the intended check fired",
+      "detail": "assert_rejected calls self.assertTrue(MODULE.validate_document(candidate)) with no repository_root, asserting only that the returned error list is non-empty. It does not assert which error code was produced. A future refactor that removes a targeted check while leaving any unrelated failure reachable would keep all 21 tests green. The suite currently passes 21 of 21, matching the count claimed in the preparation record.",
+      "committed_evidence": [
+        "scripts/research/tests/test_f017_representative_m1f0_execution_authorization.py:23-26",
+        "docs/architecture/reviews/evidence/f017-representative-m1f0-execution-authorization-preparation-v1.json:18-23"
+      ],
+      "required_repair": "Have assert_rejected take the expected error code and assert membership in the returned list."
+    },
+    {
+      "id": "F017-C01-D02",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Validator raises an uncaught FileNotFoundError instead of reporting a structured failure when a bound file is missing",
+      "detail": "The bound-file loop appends BOUND_FILE:<path> error codes for missing or mismatched files, but line 210 then calls load_json on reuse['source_historical_attempt']['path'] unguarded. Running validate_document against an empty repository root raised FileNotFoundError rather than returning the accumulated error list. The process still exits non-zero, so it fails closed operationally, but the JSON FAIL report with its error codes is never emitted, which degrades diagnosability in exactly the case the gate is meant to describe. The catalog block immediately above is correctly guarded with if catalog_path.is_file().",
+      "committed_evidence": [
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:192-213",
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:226-228"
+      ],
+      "required_repair": "Guard the historical-attempt load the same way the catalog load is guarded, or wrap the repository-root block so that I/O failures are converted into error codes rather than exceptions."
+    },
+    {
+      "id": "F017-C01-D03",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "output_contract carries an internally inconsistent repeat requirement",
+      "detail": "output_contract sets fresh_process_repeats=10, minimum_fresh_process_repeats=2, exact_class_stage_sha_match='10_OF_10_REQUIRED' and route_result_identity='10_OF_10_REQUIRED'. A minimum of 2 cannot satisfy a 10-of-10 requirement, so the two fields describe different acceptance bars and it is not determinable from committed bytes which one governs a reproduction run. No committed executable reads any of these fields, so the ambiguity is currently unexercised.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:194-198"
+      ],
+      "required_repair": "Remove minimum_fresh_process_repeats or restate it as an explicitly subordinate abort threshold that cannot be mistaken for the acceptance bar, and validate the relationship between the fields."
+    },
+    {
+      "id": "F017-C01-D04",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Catalog identity diverges from the bound decoded-tensor planning contract and that contract's catalog is not committed",
+      "detail": "checkpoint_binding binds catalog_metadata docs/research/glm52/raw/f016-c01-catalog-0001.json at sha256 135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19, and separately binds decoded_tensor_planning_contract f017-m1f0-decoded-tensor-reuse-v2.json at 3a947427.... That planning contract declares checkpoint_bindings.catalog_sha256=0f0425106a240c5062acab9fc41b1b2651680c6ad06fe476214f88a8d2a177f0. checkpoint_set_sha256 (d7d1e6a8...) and tensor_map_sha256 (ea0786f0...) agree between the two documents, but the catalog identities differ and no committed file in the base tree hashes to 0f042510... The validator checks each binding's own hash and never compares the two catalog identities, so the divergence is silent. It may be benign -- two different catalog serializations over the same checkpoint set -- but it is not demonstrable from committed bytes.",
+      "committed_evidence": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json:46-55",
+        "specs/017-rust-native-inference-runtime/contracts/f017-m1f0-decoded-tensor-reuse-v2.json (checkpoint_bindings.catalog_sha256)",
+        "scripts/research/validate_f017_representative_m1f0_execution_authorization.py:180-208"
+      ],
+      "required_repair": "Add a cross-binding check that the authorization's catalog identity is reconcilable with the bound planning contract's catalog identity, and commit or explicitly retire the 0f042510 catalog so the lineage is resolvable from committed bytes."
+    }
+  ],
+  "confirmed_sound": [
+    {
+      "claim": "Packed byte accounting is exact",
+      "method": "Summed the nine attention_payload_inventory packed_bytes values independently: 132900864, equal to read_contract.expected_packed_bytes and to the value the validator asserts."
+    },
+    {
+      "claim": "The nine payload byte ranges are non-overlapping and exactly contiguous",
+      "method": "Computed [offset, offset+packed_bytes) for all nine entries. They tile the half-open interval [1998187360, 2131088224) with no gap and no overlap, in the offset order 6,4,5,0,8,1,2,3,7. Ordinal order is not offset order, which is consistent with ONE_EXACT_SIZE_POSITIONAL_READ_PER_ENTRY under a single shard open."
+    },
+    {
+      "claim": "RMSNorm epsilon identity is exactly as declared",
+      "method": "struct round-trip of 1e-5 through binary32 yields exactly 9.999999747378752e-06 and bit pattern 0x3727c5ac, matching epsilon_exact_decimal and epsilon_bits_hex; the pinned oracle defines RMS_EPS = np.float32(9.999999747378752e-6) at line 31, and its rms_norm implements the declared formula with f32 accumulation in increasing element index."
+    },
+    {
+      "claim": "Ledger baseline 166 is corroborated by the authoritative committed ledger",
+      "method": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json records cumulative_tensor_payloads = 166, with the terminal event closing at cumulative_tensor_payloads_after_event = 166. ledger_contract.before=166 and after_success=175 is +9 for nine reads, consistent with increment_unit and with shard_open/reread/decoder increments of 0."
+    },
+    {
+      "claim": "Router selection semantics are rehearsed in the pinned oracle",
+      "method": "select_route sorts by (-score, index) and takes the first 8, matching SCORE_DESCENDING_EXPERT_ID_ASCENDING_TIE_BREAK and TOP_8_MEMBERSHIP; the denominator is max(math.fsum(selected probabilities), 2.0**-14), matching the declared clamp; scores are probability + float(bias), matching the declared binary64 promotion. The matvec accumulates over increasing column index, matching the declared reduction order."
+    },
+    {
+      "claim": "Attention head scale is self-consistent",
+      "method": "blk.3.attn_q_b.weight logical_shape [16384, 2048] implies 64 heads of dimension 256; the declared head_dot scale 1/16 equals 1/sqrt(256)."
+    },
+    {
+      "claim": "All nine inventory content digests are corroborated by the bound retention manifest",
+      "method": "Compared every packed_sha256 and decoded_sha256 in attention_payload_inventory against source_tensor_identities in f017-v2-antecedent-recovery-private-manifest-v1.json: all 9 pairs match. (The validator itself performs no such check -- see F017-C01-N05.)"
+    },
+    {
+      "claim": "Package hashes declared in the preparation record match disk",
+      "method": "Recomputed sha256 for the authorization contract (e46874b0...), schema (39448bf8...), validator (f9da2023...), mutation tests (a05d3bfb...) and router reuse authorization (a0f06787...); all five match the preparation record."
+    },
+    {
+      "claim": "The prohibited direct-DPREFIX output identity is not reachable through the authorized retained package",
+      "method": "Searched the bound retention manifest and the bound historical attempt for the prohibited digest e9427e22ef86f161786cfcf22a74b92c1cca50e3d601c6c119633d1458904594: absent from both."
+    },
+    {
+      "claim": "The reviewed head introduces no change to the authorization package",
+      "method": "git diff --stat between validation base and reviewed head shows a single added file, the 24-line loop-state record, which declares cycle 1, phase CYCLE_1_READY_FOR_INDEPENDENT_REVIEW, zero checkpoint_reads/shard_opens/real_ledger_delta, and solution_authority COMMITTED_BYTES_REACHABLE_FROM_BASE_ONLY."
+    }
+  ],
+  "checkpoint_free_tests": [
+    {
+      "id": "T01",
+      "command": "git rev-parse HEAD; git status --porcelain; git diff --stat 2a657bdf41267817ff03cc5d233ec2507c87dbf2 9a997d61e589dda2a67816096c264d20c6e75fd0",
+      "result": "PASS -- head is 9a997d61e589dda2a67816096c264d20c6e75fd0, worktree clean, single added loop-state file (+24 lines)."
+    },
+    {
+      "id": "T02",
+      "command": "shasum -a 256 on the authorization contract, schema, validator, mutation tests, router reuse authorization",
+      "result": "PASS -- e46874b0..., 39448bf8..., f9da2023..., a05d3bfb..., a0f06787...; all five match the preparation record."
+    },
+    {
+      "id": "T03",
+      "command": "python3 -c \"sum of the nine attention_payload_inventory packed_bytes\"",
+      "result": "PASS -- 132900864, delta 0 against read_contract.expected_packed_bytes."
+    },
+    {
+      "id": "T04",
+      "command": "python3 scripts/research/validate_f017_representative_m1f0_execution_authorization.py --repository-root . --contract specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json",
+      "result": "PASS, exit 0 -- {\"checkpoint_reads\":0,\"inventory_reads\":9,\"ledger\":[166,175],\"packed_bytes\":132900864,\"real_event_authorized\":false,\"result\":\"PASS\",\"shard_opens\":0}. Includes the validator's own checkpoint-free catalog cross-check of offsets, types, dims and quantization block arithmetic against f016-c01-catalog-0001.json."
+    },
+    {
+      "id": "T05",
+      "command": "python3 -m unittest scripts.research.tests.test_f017_representative_m1f0_execution_authorization -v",
+      "result": "PASS -- Ran 21 tests, OK. Matches the preparation record's claim of 21 tests PASS."
+    },
+    {
+      "id": "T06",
+      "command": "Adversarial mutation sweep: 52 targeted in-memory mutations of the real contract, each re-validated via validate_document(document, repository_root)",
+      "result": "FAIL (finding F017-C01-B03) -- baseline errors []; 51 of 52 mutations ACCEPTED, only the rmsnorm epsilon_bits_hex mutation rejected (RMSNORM_EPSILON_IDENTITY). Accepted mutations enumerated in F017-C01-B03."
+    },
+    {
+      "id": "T07",
+      "command": "Synthetic execution: construct ExecutorBinding from the authorization and call validate_binding in scripts/research/f017_canonical_expert_output_recovery_executor.py",
+      "result": "FAIL (finding F017-C01-B02) -- as-authorized binding raised RecoveryExecutionError('AUTHORITATIVE_HEAD'); with head/authorization/review/shard/decoder forced to the executor's pinned constants it raised RecoveryExecutionError('INVENTORY_DIGEST'). No binding of this authorization is accepted."
+    },
+    {
+      "id": "T08",
+      "command": "grep -rl for the authorization filename and the schema filename across the tree; grep for jsonschema in the validator and tests",
+      "result": "FAIL (finding F017-C01-B04) -- the authorization is referenced only by the preparation record and the mutation test; the schema filename is referenced by nothing; no jsonschema import exists."
+    },
+    {
+      "id": "T09",
+      "command": "Cross-check the three router reuse artifact digests against f017-v2-antecedent-recovery-private-manifest-v1.json artifact list",
+      "result": "FAIL (finding F017-C01-B01) -- ffn_norm 1d922848 present as ffn_norm_weight, router_matrix da0263ba present as router_matrix, correction_bias eb6feeb8 ABSENT from the 8-artifact manifest."
+    },
+    {
+      "id": "T10",
+      "command": "grep -rl for digest eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491 across the tree",
+      "result": "FAIL (supports F017-C01-B01) -- 18 hits, all JSON evidence documents, contracts, reports or validator constants; no retained byte artifact and no path binding."
+    },
+    {
+      "id": "T11",
+      "command": "Byte-range tiling check over the nine inventory entries",
+      "result": "PASS -- ranges tile [1998187360, 2131088224) exactly, no overlap, no gap."
+    },
+    {
+      "id": "T12",
+      "command": "python3 struct round-trip of 1e-5 through binary32; compare against declared epsilon_exact_decimal and epsilon_bits_hex; compare against oracle RMS_EPS",
+      "result": "PASS -- 9.999999747378752e-06 and 0x3727c5ac, both matching; oracle line 31 declares the identical constant."
+    },
+    {
+      "id": "T13",
+      "command": "Stage vocabulary comparison: each of the 18 required_stage_sha256 names searched in the pinned oracle in bare and _sha256 forms",
+      "result": "FAIL (finding F017-C01-N02) -- 'post_attention_residual' and 'selected_ids' NOT FOUND in any form; the oracle emits 'attention_residual' and 'top8_ids'/'top8_ids_sha256'."
+    },
+    {
+      "id": "T14",
+      "command": "python3 differential test of (2.5*p)/d versus (p/d)*2.5 over 2,000,000 random binary64 pairs",
+      "result": "FAIL (finding F017-C01-N03) -- differed in 708,734 of 2,000,000 cases at the last ulp."
+    },
+    {
+      "id": "T15",
+      "command": "Inspect docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json for the authoritative cumulative payload count",
+      "result": "PASS -- cumulative_tensor_payloads = 166, corroborating ledger_contract.before and preparation_isolation.real_payload_ledger_before/after."
+    },
+    {
+      "id": "T16",
+      "command": "validate_document against an empty temporary repository root",
+      "result": "FAIL (finding F017-C01-D02) -- raised uncaught FileNotFoundError on the historical-attempt load instead of returning BOUND_FILE error codes."
+    },
+    {
+      "id": "T17",
+      "command": "Compare all nine inventory packed_sha256/decoded_sha256 pairs against source_tensor_identities in the bound retention manifest",
+      "result": "PASS -- all 9 match, though no committed check enforces this (see F017-C01-N05)."
+    },
+    {
+      "id": "T18",
+      "command": "Search the bound retention manifest and historical attempt for the prohibited identity e9427e22...",
+      "result": "PASS -- absent from both; the prohibited direct-DPREFIX surface is not reachable through the authorized retained package."
+    },
+    {
+      "id": "T19",
+      "command": "Resolve event_substrate_lineage.executor_source_sha256 and contract_sha256 by hashing every committed .py/.json in the base tree",
+      "result": "RESOLVED -- executor e4bd9a2e = scripts/research/f017_canonical_expert_output_recovery_executor.py; substrate 1326b0ae = specs/017-rust-native-inference-runtime/contracts/f017-canonical-expert-recovery-execution-substrate-v1.json."
+    },
+    {
+      "id": "T20",
+      "command": "Compare checkpoint identities between the authorization and the bound decoded-tensor planning contract; hash all committed catalog JSON files",
+      "result": "FAIL (finding F017-C01-D04) -- checkpoint_set and tensor_map agree; catalog identities differ (135500cc vs 0f042510) and no committed file hashes to 0f042510."
+    }
+  ],
+  "isolation_attestation": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "payload_reads": 0,
+    "real_ledger_delta": 0,
+    "representative_computations": 0,
+    "expert_dispatches": 0,
+    "gpu_dispatches": 0,
+    "implementation_contract_or_test_files_modified": 0,
+    "files_written": 1,
+    "method": "Static inspection of committed bytes, in-memory mutation of parsed JSON only, synthetic binding against injected-capability executor entry points with no shard provider, and pure-arithmetic differential tests. No checkpoint, shard or payload was opened or read at any point."
+  },
+  "verdict_basis": {
+    "blocking": 4,
+    "non_blocking_required": 5,
+    "defense_in_depth": 4,
+    "total_findings": 13,
+    "accept_condition": "ACCEPT is returned only when no BLOCKING finding remains; four remain.",
+    "blocking_ids": ["F017-C01-B01", "F017-C01-B02", "F017-C01-B03", "F017-C01-B04"]
+  }
+}
