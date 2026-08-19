@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization-preparation",
+  "schema_version": "2.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "authoritative_base_commit": "2a657bdf41267817ff03cc5d233ec2507c87dbf2",
+  "rejected_v1": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json", "sha256": "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc", "status": "REJECTED_UNCHANGED"},
+  "rebound_v2": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json", "sha256": "459671f5ca4b111f0dc99cbb1958169d2a454321e93d8d156ecd573c3f51da99"},
+  "executor": {"path": "scripts/research/f017_representative_m1f0_executor.py", "sha256": "b270195399ee646258cc54d360fe633c99259ba8df996a811d8b3022e138272a", "event_shape": "9_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_S0", "instantiable": true},
+  "stage_vocabulary": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-stage-vocabulary-v1.json", "sha256": "4accb0a9ed6f31f839aa8e80c6f9b69d93890687a84a4d036af483757d493dd7", "canonical_names": ["post_attention_residual", "router_scores", "ranking", "selected_ids", "routing_weights"]},
+  "s0_binding": {"artifact_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11", "descriptor_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256", "private_manifest_sha256": "a68316207957bc8f804c167b627c208f068d086aed85506c89d87569b992bc60", "identity_rule": "EXPECTED_SHA_EQUALS_BEFORE_SHA_EQUALS_AFTER_SHA"},
+  "synthetic_rehearsal": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-executor-synthetic-rehearsal-v1.json", "sha256": "ae6e602b2943202f723e481bfb84ae6a4134b1dabf178b3dc310dc1ce4dc91a7", "fresh_process_success": "2_OF_2_EXACT", "failure_paths": "17_OF_17_PASS", "real_geometry": true},
+  "validator": {"path": "scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py", "sha256": "68a2282423bf7108a29122045a0e1bce1cc4b7c7be53029ca37252821a1a86e5", "schema_sha256": "db3d1e56de004bc547a660fb13fb33fc24753e41ba5ec0e38156b655a05718e6", "mutation_tests_sha256": "d40134f51c3535475b429675b14d773f1527cfc99647f85c4c4b5379ea7e6994"},
+  "repair_findings": {"F1": "RESOLVED", "F2": "RESOLVED", "F3": "RESOLVED", "F4": "RESOLVED"},
+  "future_event_accounting": {"checkpoint_reads": 9, "packed_bytes": 132900864, "maximum_shard_opens": 1, "ledger_before": 166, "ledger_after_success": 175, "partial_failure": "166_PLUS_DURABLY_RECEIPTED_N_TERMINAL_NO_RETRY"},
+  "preparation_invariants": {"checkpoint_reads": 0, "shard_opens": 0, "real_payload_ledger_before": 166, "real_payload_ledger_after": 166, "real_event_authorized": false, "real_representative_computation": false, "expert_computation": false},
+  "next_action": "SUBMIT_REBOUND_V2_AUTHORIZATION_FOR_INDEPENDENT_ADVERSARIAL_REVIEW_DO_NOT_EXECUTE"
+}

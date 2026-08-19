@@ -477,3 +477,13 @@
   output/replay requirements, and the stop-before-experts boundary; add a
   checkpoint-free validator and mutation suite while leaving execution
   unauthorized and the real-payload ledger unchanged at 166.
+- [x] T017-227 Repair the rejected representative M1-F0 authorization
+  append-only: bind a dedicated nine-read plus three-retained-authority plus
+  canonical-S0 executor with durable attempt/start/receipt/journal/terminal
+  accounting, canonical stage names, exact retained before/after identity
+  checks, independent production decoders, and stop-before-experts semantics;
+  rehearse the complete real geometry in two fresh synthetic processes plus
+  fifteen terminal failure paths; harden the schema/validator against payload,
+  decoder, F32-identity, retention, receipt, executor, rehearsal, S0, banker,
+  vocabulary, ledger, and surface mutations while preserving rejected v1,
+  zero checkpoint access, no real execution authority, and ledger 166.

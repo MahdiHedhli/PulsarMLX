@@ -395,3 +395,28 @@ Gate: the authorization remains `PREPARED_REVIEW_REQUIRED`,
 `real_event_authorized=false`, checkpoint reads and shard opens remain zero,
 the ledger remains 166, and independent adversarial review is the only next
 step.
+
+## Phase 27 — Representative M1-F0 authorization executor repair
+
+- Preserve rejected authorization v1 byte-for-byte and add a v2 review wrapper
+  over a hash-bound full candidate rather than editing historical evidence.
+- Instantiate the authorized shape with one narrow executor: nine allowlisted
+  checkpoint payloads, three retained router authorities, one separately
+  resolved DPREFIX-EXACT-1 S0 authority, and no expert or candidate path.
+- Make exact-size consumption durably recoverable through attempt/start,
+  per-read receipts, journal/ledger reconciliation, retain-before-decode, and
+  terminal no-resume/no-retry banking.
+- Emit a single canonical stage vocabulary directly, including
+  `post_attention_residual`, `router_scores`, `ranking`, `selected_ids`, and
+  `routing_weights`, while retaining only an explicit historical-name map.
+- Rehearse the entire 132,900,864-byte geometry twice in fresh processes and
+  exercise interrupt, short-read, hash, decoder, retained-input, ordering,
+  open-count, retry, epsilon, vocabulary, direct-surface, and expert guards.
+- Anchor packed and decoded identities to accepted attempt-2 evidence and
+  enforce F32 packed/decoded equality, retained S0 manifest identity, exact
+  executor/rehearsal bindings, and non-presence-only semantic validation.
+
+Gate: v2 remains `PREPARED_REVIEW_REQUIRED` with
+`real_event_authorized=false`; real checkpoint reads, shard opens, expert
+computations, and representative real computations remain zero; the ledger
+stays 166 and independent adversarial re-review is the only next action.

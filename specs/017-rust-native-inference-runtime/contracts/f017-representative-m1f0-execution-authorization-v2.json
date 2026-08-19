@@ -1,0 +1,54 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization",
+  "schema_version": "2.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "authoritative_repository": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "base_commit_sha256": "2a657bdf41267817ff03cc5d233ec2507c87dbf2"
+  },
+  "authorization_candidate": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-candidate-v2.json",
+    "sha256": "d0b426842624b8fac150e88c6b4f4890db04aac17597df8a8e1d4b1d456ffbd2"
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_m1f0_executor.py",
+    "sha256": "b270195399ee646258cc54d360fe633c99259ba8df996a811d8b3022e138272a",
+    "event_shape": "9_CHECKPOINT_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_1_RETAINED_S0",
+    "legacy_12_read_executor_prohibited": true
+  },
+  "synthetic_rehearsal": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-executor-synthetic-rehearsal-v1.json",
+    "sha256": "ae6e602b2943202f723e481bfb84ae6a4134b1dabf178b3dc310dc1ce4dc91a7",
+    "real_geometry": true,
+    "fresh_process_successes": 2,
+    "failure_paths_passed": 17
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py",
+    "sha256": "68a2282423bf7108a29122045a0e1bce1cc4b7c7be53029ca37252821a1a86e5",
+    "schema_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json",
+    "schema_sha256": "db3d1e56de004bc547a660fb13fb33fc24753e41ba5ec0e38156b655a05718e6",
+    "semantic_constraints_required": true
+  },
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "separate_execution_release_required": true,
+    "independent_adversarial_review_required": true,
+    "expert_execution_authorized": false,
+    "shared_expert_execution_authorized": false,
+    "candidate_dispatch_authorized": false,
+    "M1_F_authorized": false,
+    "M1_G_authorized": false,
+    "P1_authorized": false
+  },
+  "preparation_invariants": {
+    "real_payload_ledger_before": 166,
+    "real_payload_ledger_after": 166,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "representative_real_computations": 0,
+    "expert_computations": 0,
+    "rejected_v1_unchanged": true
+  }
+}

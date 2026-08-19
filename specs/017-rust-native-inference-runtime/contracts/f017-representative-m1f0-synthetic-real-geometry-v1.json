@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-synthetic-real-geometry",
+  "schema_version": "1.0.0",
+  "classification": "SYNTHETIC_ONLY_NO_CHECKPOINT_ACCESS",
+  "payload_recipe": "exact-length all-zero byte stream",
+  "inventory": [
+    {"ordinal": 0, "key": "blk.3.attn_norm.weight", "offset": 2008634208, "packed_bytes": 24576, "quantization": "F32", "logical_shape": [6144], "synthetic_packed_sha256": "de676bae28a480011d3d012db14bef539324e62a841a9627863c689bea168af3"},
+    {"ordinal": 1, "key": "blk.3.attn_q_a.weight", "offset": 2077864800, "packed_bytes": 8650752, "quantization": "Q5_K", "logical_shape": [2048, 6144], "synthetic_packed_sha256": "6334891ad0b99640af1d1dd5dc8863447ff79bb5b3d9936f8bcfc98a5c41922d"},
+    {"ordinal": 2, "key": "blk.3.attn_q_a_norm.weight", "offset": 2086515552, "packed_bytes": 8192, "quantization": "F32", "logical_shape": [2048], "synthetic_packed_sha256": "9f1dcbc35c350d6027f98be0f5c8b43b42ca52b7604459c0c42be3aa88913d47"},
+    {"ordinal": 3, "key": "blk.3.attn_q_b.weight", "offset": 2086523744, "packed_bytes": 35651584, "quantization": "Q8_0", "logical_shape": [16384, 2048], "synthetic_packed_sha256": "dd34b32ba0522e06e609f351620991e1af517dc3be2475e5875be645c16ba5e0"},
+    {"ordinal": 4, "key": "blk.3.attn_kv_a_mqa.weight", "offset": 2004872032, "packed_bytes": 3760128, "quantization": "Q8_0", "logical_shape": [576, 6144], "synthetic_packed_sha256": "45711be777f998a8edaef591c29197958e675d5fe9a4fb274fbafceadc3d1562"},
+    {"ordinal": 5, "key": "blk.3.attn_kv_a_norm.weight", "offset": 2008632160, "packed_bytes": 2048, "quantization": "F32", "logical_shape": [512], "synthetic_packed_sha256": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad"},
+    {"ordinal": 6, "key": "blk.3.attn_k_b.weight", "offset": 1998187360, "packed_bytes": 6684672, "quantization": "Q8_0", "logical_shape": [64, 512, 192], "synthetic_packed_sha256": "5dd15ed8060d90c40eb5a6fa29506cb877cf332149455934dd4dbab57d4becba"},
+    {"ordinal": 7, "key": "blk.3.attn_v_b.weight", "offset": 2122175328, "packed_bytes": 8912896, "quantization": "Q8_0", "logical_shape": [64, 256, 512], "synthetic_packed_sha256": "aba5081a5f67fef5e25e934d19ff22af66da317bf949a8cb6a32f7c3a8e39b7c"},
+    {"ordinal": 8, "key": "blk.3.attn_output.weight", "offset": 2008658784, "packed_bytes": 69206016, "quantization": "Q5_K", "logical_shape": [6144, 16384], "synthetic_packed_sha256": "b35ac189fa071fd09a069fd8b3164a06a0076e7090484b6a3ba4ffd6f33e4763"}
+  ],
+  "total_reads": 9,
+  "total_packed_bytes": 132900864,
+  "retained_router_authorities": 3,
+  "canonical_retained_s0_inputs": 1,
+  "real_ledger_mutation": false
+}

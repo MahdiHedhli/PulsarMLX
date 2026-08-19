@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.representative-m1f0-execution-authorization-v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "authoritative_repository", "authorization_candidate", "executor", "synthetic_rehearsal", "validator", "authorization", "preparation_invariants"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.representative-m1f0-execution-authorization"},
+    "schema_version": {"const": "2.0.0"},
+    "status": {"const": "PREPARED_REVIEW_REQUIRED"},
+    "authoritative_repository": {
+      "type": "object", "additionalProperties": false,
+      "required": ["branch", "base_commit_sha256"],
+      "properties": {"branch": {"const": "feat/017-real-checkpoint-runner"}, "base_commit_sha256": {"const": "2a657bdf41267817ff03cc5d233ec2507c87dbf2"}}
+    },
+    "authorization_candidate": {"$ref": "#/$defs/binding"},
+    "executor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "event_shape", "legacy_12_read_executor_prohibited"],
+      "properties": {
+        "path": {"const": "scripts/research/f017_representative_m1f0_executor.py"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$"},
+        "event_shape": {"const": "9_CHECKPOINT_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_1_RETAINED_S0"},
+        "legacy_12_read_executor_prohibited": {"const": true}
+      }
+    },
+    "synthetic_rehearsal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "real_geometry", "fresh_process_successes", "failure_paths_passed"],
+      "properties": {
+        "path": {"const": "docs/architecture/reviews/evidence/f017-representative-m1f0-executor-synthetic-rehearsal-v1.json"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$"},
+        "real_geometry": {"const": true}, "fresh_process_successes": {"const": 2}, "failure_paths_passed": {"minimum": 15}
+      }
+    },
+    "validator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "schema_path", "schema_sha256", "semantic_constraints_required"],
+      "properties": {
+        "path": {"const": "scripts/research/validate_f017_representative_m1f0_execution_authorization_v2.py"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$"},
+        "schema_path": {"const": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json"},
+        "schema_sha256": {"pattern": "^[0-9a-f]{64}$"},
+        "semantic_constraints_required": {"const": true}
+      }
+    },
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["real_event_authorized", "checkpoint_access_authorized", "separate_execution_release_required", "independent_adversarial_review_required", "expert_execution_authorized", "shared_expert_execution_authorized", "candidate_dispatch_authorized", "M1_F_authorized", "M1_G_authorized", "P1_authorized"],
+      "properties": {
+        "real_event_authorized": {"const": false}, "checkpoint_access_authorized": {"const": false},
+        "separate_execution_release_required": {"const": true}, "independent_adversarial_review_required": {"const": true},
+        "expert_execution_authorized": {"const": false}, "shared_expert_execution_authorized": {"const": false},
+        "candidate_dispatch_authorized": {"const": false}, "M1_F_authorized": {"const": false},
+        "M1_G_authorized": {"const": false}, "P1_authorized": {"const": false}
+      }
+    },
+    "preparation_invariants": {
+      "type": "object", "additionalProperties": false,
+      "required": ["real_payload_ledger_before", "real_payload_ledger_after", "checkpoint_reads", "shard_opens", "representative_real_computations", "expert_computations", "rejected_v1_unchanged"],
+      "properties": {
+        "real_payload_ledger_before": {"const": 166}, "real_payload_ledger_after": {"const": 166},
+        "checkpoint_reads": {"const": 0}, "shard_opens": {"const": 0},
+        "representative_real_computations": {"const": 0}, "expert_computations": {"const": 0},
+        "rejected_v1_unchanged": {"const": true}
+      }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"pattern": "^[0-9a-f]{64}$"}}
+    }
+  }
+}

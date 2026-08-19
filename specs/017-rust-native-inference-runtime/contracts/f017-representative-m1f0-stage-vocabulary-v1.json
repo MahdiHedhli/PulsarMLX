@@ -1,0 +1,37 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-stage-vocabulary",
+  "schema_version": "1.0.0",
+  "serialization": {
+    "float32": "canonical-little-endian-ieee754-binary32-c-order",
+    "float64": "canonical-little-endian-ieee754-binary64-c-order",
+    "uint16": "canonical-little-endian-unsigned-16-c-order",
+    "hash": "sha256(serialized_bytes)"
+  },
+  "stages": [
+    {"name": "input_hidden", "dtype": "f32", "shape": [6144]},
+    {"name": "attention_normalized", "dtype": "f32", "shape": [6144]},
+    {"name": "query_rank", "dtype": "f32", "shape": [2048]},
+    {"name": "query_rank_normalized", "dtype": "f32", "shape": [2048]},
+    {"name": "query_heads", "dtype": "f32", "shape": [16384]},
+    {"name": "kv_raw", "dtype": "f32", "shape": [576]},
+    {"name": "kv_normalized", "dtype": "f32", "shape": [512]},
+    {"name": "key_nope", "dtype": "f32", "shape": [64, 512]},
+    {"name": "attention_scores", "dtype": "f32", "shape": [64]},
+    {"name": "attention_weights", "dtype": "f32", "shape": [64]},
+    {"name": "value_heads", "dtype": "f32", "shape": [64, 256]},
+    {"name": "attention_output", "dtype": "f32", "shape": [6144]},
+    {"name": "post_attention_residual", "dtype": "f32", "shape": [6144]},
+    {"name": "router_normalized", "dtype": "f32", "shape": [6144]},
+    {"name": "router_logits", "dtype": "f32", "shape": [256]},
+    {"name": "router_scores", "dtype": "f64", "shape": [256]},
+    {"name": "ranking", "dtype": "u16", "shape": [256]},
+    {"name": "selected_ids", "dtype": "u16", "shape": [8]},
+    {"name": "routing_weights", "dtype": "f64", "shape": [8]}
+  ],
+  "legacy_compatibility": {
+    "attention_residual": "post_attention_residual",
+    "top8_ids": "selected_ids"
+  },
+  "canonical_emission_requires_new_names": true,
+  "ad_hoc_grader_mapping_prohibited": true
+}
