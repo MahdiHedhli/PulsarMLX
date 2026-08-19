@@ -1,24 +1,34 @@
 {
   "schema": "pulsarmlx.f017.representative-m1f0-route-authority-autonomous-loop-state",
   "schema_version": "1.0.0",
-  "current_phase": "CYCLE_1_AWAITING_INDEPENDENT_REVIEW",
+  "current_phase": "STOP_ACCEPTED",
   "builder_cycle": 1,
   "maximum_cycles": 4,
   "builder_model": "gpt-5.6-sol",
   "builder_effort": "high",
   "reviewer_required_model": "claude-fable-5",
-  "reviewer_actual_model": null,
+  "reviewer_actual_model": "claude-fable-5",
   "latest_builder_commit": "88fe8ecd96d42f01ec2a1392244aae06a2b99f68",
-  "latest_review_artifact": null,
-  "latest_review_sha256": null,
-  "latest_verdict": null,
+  "latest_review_artifact": "docs/architecture/reviews/evidence/f017-representative-m1f0-route-authority-cycle-01-independent-review.json",
+  "latest_review_sha256": "988af9293a259c7a0f64694e810dd1145fbd4cfc4498c2ba4579c9bc2562b8e4",
+  "latest_review_commit": "27e8ef1fd6121ce3b26bff1c9f2e2844c82ae7eb",
+  "latest_verdict": "ACCEPT",
   "blocking_findings": [],
   "required_findings": [],
-  "defense_in_depth_findings": [],
-  "resolved_findings": [],
+  "defense_in_depth_findings": [
+    "DID-C1-001",
+    "DID-C1-002",
+    "DID-C1-003"
+  ],
+  "resolved_findings": [
+    "HASH_ONLY_SELECTED_IDS",
+    "HASH_ONLY_ROUTING_WEIGHTS",
+    "REPRESENTATIVE_ROUTE_PAIRING_AMBIGUITY",
+    "DIRECT_DPREFIX_SURFACE_SEPARATION"
+  ],
   "current_ledger": 175,
   "checkpoint_reads_during_phase": 0,
   "shard_opens_during_phase": 0,
   "expert_executions": 0,
-  "termination_reason": null
+  "termination_reason": "STOP_ACCEPTED"
 }
