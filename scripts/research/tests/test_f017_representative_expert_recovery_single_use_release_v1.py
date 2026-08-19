@@ -1,7 +1,8 @@
 from __future__ import annotations
-import copy, importlib.util, unittest
+import copy, importlib.util, sys, unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3]; P=ROOT/"scripts/research/validate_f017_representative_expert_recovery_single_use_release_v1.py"
+sys.path.insert(0,str(P.parent))
 s=importlib.util.spec_from_file_location("v",P); V=importlib.util.module_from_spec(s); s.loader.exec_module(V)
 class ReleaseTests(unittest.TestCase):
  @classmethod
