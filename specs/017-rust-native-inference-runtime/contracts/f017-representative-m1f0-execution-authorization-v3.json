@@ -1,0 +1,82 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization",
+  "schema_version": "3.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "authoritative_repository": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "preparation_base_commit": "3df768b94b46e1d2881a88d598e8bd7fcb745072"
+  },
+  "supersedes_without_modifying": {
+    "v1": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json",
+      "sha256": "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc"
+    },
+    "v2": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json",
+      "sha256": "459671f5ca4b111f0dc99cbb1958169d2a454321e93d8d156ecd573c3f51da99"
+    }
+  },
+  "authorization_candidate": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-candidate-v3.json",
+    "sha256": "7c315fc55d09f725960a1f107442024895995ac6166c2dee4e9460c5313de8a8"
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_m1f0_executor_v3.py",
+    "sha256": "9c1e5168a1d385f78cedc9a49d892aad41b1979b496585477286e183992a379e"
+  },
+  "release_wrapper": {
+    "path": "scripts/research/f017_representative_m1f0_release_wrapper_v1.py",
+    "sha256": "0cc047cd6208a463124e6b2e382fb0d95baffd4c5d5afbdb03cf8580029a0b67",
+    "real_release_required": true
+  },
+  "preopen_preflight": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-production-preopen-v1.json",
+    "sha256": "5fee99e6c138d85952279b2a10b104122b00363998e5f8f640af1fd5435cddbb"
+  },
+  "crash_terminalizer": {
+    "path": "scripts/research/f017_representative_m1f0_terminalizer_v1.py",
+    "sha256": "3c3c692889f0ea25228abf89b41c207f2f5a23e4e89ff7805d1a261c852d3830"
+  },
+  "reproduction": {
+    "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-reproduction-v1.json",
+    "path": "scripts/research/f017_representative_m1f0_reproduce_from_retention_v1.py",
+    "contract_sha256": "7e31865232357b29cfc92c423421d6442e4203a5b39520458346a2b1a827dcbf",
+    "sha256": "b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3"
+  },
+  "synthetic_rehearsal": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-executor-synthetic-rehearsal-v2.json",
+    "sha256": "3119023d5432325a6dfcbec2fffce9224834d19f0cb79a89fea332ece3ebfd4a",
+    "failure_paths_exact": 29
+  },
+  "review_authority": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-independent-review-2-consolidated-v1.json",
+    "sha256": "5c6a128bc83541c809d0b049e8aad658cbefaf412d48fc9af28e21e37c5c2cf8",
+    "verdict": "REJECT_REPAIRED_APPEND_ONLY"
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_representative_m1f0_execution_authorization_v3.py",
+    "sha256": "d7d0f4d8218b68cbcdb0b5a693ac8fd9e363967ecdb56934334c86e42d3ce944",
+    "schema_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v3.schema.json",
+    "schema_sha256": "572954b1d4f2839d8d28f50dca6bd539ea26234a7379f63a5999379563852db8"
+  },
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "shard_open_authorized": false,
+    "expert_execution_authorized": false,
+    "shared_expert_execution_authorized": false,
+    "candidate_dispatch_authorized": false,
+    "independent_adversarial_review_required": true
+  },
+  "preparation_invariants": {
+    "real_payload_ledger": 166,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_representative_computation_executed": false,
+    "prior_authorizations_byte_identical": true,
+    "review_verdict_committed_and_hash_bound": true,
+    "append_only_repair": true,
+    "durable_receipt_implies_durable_retained_payload": true,
+    "restart_forbids_resume_reread_retry_or_second_attempt": true
+  }
+}

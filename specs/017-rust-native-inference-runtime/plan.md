@@ -420,3 +420,29 @@ Gate: v2 remains `PREPARED_REVIEW_REQUIRED` with
 `real_event_authorized=false`; real checkpoint reads, shard opens, expert
 computations, and representative real computations remain zero; the ledger
 stays 166 and independent adversarial re-review is the only next action.
+
+## Phase 28 — Representative M1-F0 review-2 repair and v3 rebind
+
+- Preserve authorization v1/v2 and commit the consolidated independent REJECT
+  verdict at the exact operator-supplied SHA before treating it as authority.
+- Scope retained-router reuse to the exact representative event consumer and
+  prohibit aliases, fallback, or implicit inheritance.
+- Restore a ten-run reproduce-from-retention contract with 10/10 stage and
+  route identity, at least two fresh processes, finite checks, before/after
+  hashes, and zero checkpoint rereads or additional opens.
+- Complete all locally checkable ledger, retained-authority, decoder,
+  environment, storage, destination, and shard-object gates before attempt
+  start or shard open; consume each retained object through the descriptor
+  actually validated.
+- Establish the crash invariant that a durable receipt implies a durable
+  recoverable packed payload, and terminalize every interrupted attempt from
+  validated receipts/retention without resume, reread, retry, or second
+  attempt.
+- Rehearse two successful fresh processes, ten retained-only reproductions,
+  the production computation adapter at full real geometry, and exactly 29
+  committed fail-closed mutation/crash paths.
+
+Gate: authorization v3 is append-only and `PREPARED_REVIEW_REQUIRED`, all
+R1/R2/R3 and N7-N11 validators pass, previous authorizations retain their exact
+identities, real checkpoint reads and shard opens remain zero, the real ledger
+remains 166, and independent adversarial re-review is the only next action.

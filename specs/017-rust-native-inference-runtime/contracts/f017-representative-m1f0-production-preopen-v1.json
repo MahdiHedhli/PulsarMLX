@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-production-preopen",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_PREPARED_REVIEW_REQUIRED",
+  "producer": {"path": "scripts/research/f017_representative_m1f0_executor_v3.py", "sha256": "9c1e5168a1d385f78cedc9a49d892aad41b1979b496585477286e183992a379e", "symbol": "PreOpenPreflight"},
+  "ordering": "COMPLETE_BEFORE_ATTEMPT_START_SHARD_OPEN_ORDINAL0_OR_CHECKPOINT_READ",
+  "ledger_authorities": [
+    {"path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json", "sha256": "c68be19f2840dea612e8b20ff2933751800555c80ae66fcfbbff02086bbe18c0", "json_path": ["cumulative_tensor_payloads"], "expected": 166},
+    {"path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-result-v1.json", "sha256": "971c371ce7b1220f612f941c76c0fe359f122c8ff6f3643711fab946d11eff24", "json_path": ["ledger", "after"], "expected": 166}
+  ],
+  "retained_authorities": {"count": 4, "rule": "OPEN_ONCE_LSTAT_FSTAT_EXPECTED_EQUALS_BEFORE_CONSUME_SAME_DESCRIPTOR_BEFORE_EQUALS_AFTER", "private_manifest_required_for_s0": true, "checkpoint_fallback": false},
+  "decoder_gate": {"eager_import_before_shard_open": true, "quantizations": ["F32", "Q5_K", "Q8_0"], "both_lanes_instantiated": true},
+  "environment": {"implementation": "CPython", "python_major_minor": [3,14], "numpy": "2.4.5", "endianness": "little", "threading_contract": "FIXED_ORDER_NO_BLAS_NO_PARALLEL_REDUCTION", "reproduction_scope": "SAME_PINNED_PRODUCTION_ENVIRONMENT", "cross_platform_libm_identity_claimed": false},
+  "storage": {"method": "CONSERVATIVE_FREE_SPACE_PRECONDITION", "required_free_bytes": 3221225472, "packed_retention_bytes": 132900864, "atomic_temporary_duplication_bytes": 132900864, "decoded_allocation_bytes": 660113408, "includes_receipts_journal_outputs_reproduction_and_safety_margin": true},
+  "destinations": {"no_prior_attempt": true, "atomic_rename_probe": true, "parent_directory_fsync_probe": true, "attempt_start_journal_and_receipt_destinations_ready_before_shard_open": true},
+  "shard": {"ordinal": 2, "basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", "expected_sha256_bound_without_reread": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36", "expected_size_bytes": 49105028960, "metadata_preflight": "LSTAT_REGULAR_NON_SYMLINK_SIZE_AND_OBJECT_ID", "opened_descriptor": "FSTAT_MUST_EQUAL_PREFLIGHT_OBJECT_ID", "full_sha_preopen_read": false},
+  "failure": "FAIL_CLOSED_ZERO_SHARD_OPENS_ZERO_CHECKPOINT_READS"
+}

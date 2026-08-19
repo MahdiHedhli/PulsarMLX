@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-router-reuse-authorization",
+  "schema_version": "2.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-M1F0-ROUTER-AUTHORITY-REUSE-2",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "supersedes_without_modifying": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v1.json",
+    "sha256": "a0f067871c2a764058bc549fdd0739508cd2072e92bf1ce3e346687443012f68"
+  },
+  "consumer": {
+    "consumer_id": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1",
+    "allowed_purpose": "REPRESENTATIVE_POST_ATTENTION_M1F0_ROUTING_ONLY",
+    "aliases": [],
+    "implicit_scope_inheritance": false,
+    "direct_dprefix_route_or_output_consumption": false,
+    "checkpoint_fallback": false,
+    "candidate_or_model_dispatch": false
+  },
+  "source": {
+    "historical_accepted_m1f0": {"path": "docs/architecture/reviews/evidence/f017-m1-f0-real-route-attempt-2-v1.json", "sha256": "0eb0030f0345b8b2cabca4b7e690177603ca29e21b0cfade3e0639e356d1b8f9"},
+    "private_retention_manifest": {"path": "docs/architecture/reviews/evidence/f017-v2-antecedent-recovery-private-manifest-v1.json", "sha256": "1007112a0642919321d0081e79bba12fe3809c456e79a22b9623d19689b78112", "embedded_manifest_sha256": "bd3cc6c10faee0d8c8072000403bbef68354286515482a6b78869ab02be81e13"}
+  },
+  "artifacts": [
+    {"key": "blk.3.ffn_norm.weight", "role": "post_attention_ffn_norm", "sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "authority": "PERSISTED_DECODED_AUTHORITY"},
+    {"key": "blk.3.ffn_gate_inp.weight", "role": "router_matrix", "sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a", "dtype": "little-endian-f32", "shape": [256,6144], "byte_length": 6291456, "authority": "PERSISTED_DECODED_AUTHORITY"},
+    {"key": "blk.3.exp_probs_b.bias", "role": "correction_bias", "sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491", "dtype": "little-endian-f32", "shape": [256], "byte_length": 1024, "authority": "PERSISTED_DECODED_AUTHORITY"}
+  ],
+  "execution_preflight": {
+    "consumer_equality_rule": "reuse_authorization.consumer.consumer_id == candidate.event.event_id",
+    "identity_rule": "EXPECTED_SHA_EQUALS_BEFORE_SHA_EQUALS_AFTER_SHA",
+    "descriptor_rule": "OPEN_ONCE_FSTAT_HASH_AND_CONSUME_SAME_DESCRIPTOR_REHASH_AFTER",
+    "storage_rule": "REGULAR_READ_ONLY_NON_SYMLINK_SINGLE_LINK_NO_WRITABLE_ALIAS",
+    "failure": "FAIL_CLOSED_BEFORE_CHECKPOINT_OPEN",
+    "new_payload_reads": 0,
+    "machine_local_paths_in_public_evidence": false
+  },
+  "authorization": {"reuse_active": false, "independent_adversarial_review_required": true, "real_event_authorized": false, "checkpoint_access_authorized": false},
+  "isolation": {"checkpoint_reads": 0, "shard_opens": 0, "real_payload_ledger_before": 166, "real_payload_ledger_after": 166}
+}

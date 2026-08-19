@@ -1,0 +1,67 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization-preparation",
+  "schema_version": "3.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "preparation_base_commit": "3df768b94b46e1d2881a88d598e8bd7fcb745072",
+  "review_authority": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-independent-review-2-consolidated-v1.json", "sha256": "5c6a128bc83541c809d0b049e8aad658cbefaf412d48fc9af28e21e37c5c2cf8"},
+  "authorization_v3": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v3.json", "sha256": "d42c5a948c6e73d5003c80dbef3da9c53fe53aee6cf2261ed0f193058f9631c6"},
+  "repair_results": {
+    "R1_ROUTER_REUSE_GRANT_CONSUMER_MISMATCH": "RESOLVED",
+    "R2_REAL_EVENT_REPRODUCTION_CONTRACT_DROPPED": "RESOLVED",
+    "R3_NO_PRE_OPEN_PREFLIGHT_OF_LOCALLY_CHECKABLE_PREREQUISITES": "RESOLVED",
+    "N7_RETAIN_BEFORE_RECEIPT": "RESOLVED",
+    "N8_BOUND_CRASH_TERMINALIZER": "RESOLVED",
+    "N9_TOCTOU_HARDENING": "RESOLVED",
+    "N10_VALIDATOR_REHEARSAL_TIGHTENING": "RESOLVED",
+    "N11_COMMIT_REVIEW_VERDICTS": "RESOLVED"
+  },
+  "bound_components": {
+    "router_reuse_authorization_v2_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+    "reproduction_contract_sha256": "7e31865232357b29cfc92c423421d6442e4203a5b39520458346a2b1a827dcbf",
+    "preopen_contract_sha256": "5fee99e6c138d85952279b2a10b104122b00363998e5f8f640af1fd5435cddbb",
+    "executor_sha256": "9c1e5168a1d385f78cedc9a49d892aad41b1979b496585477286e183992a379e",
+    "release_wrapper_sha256": "0cc047cd6208a463124e6b2e382fb0d95baffd4c5d5afbdb03cf8580029a0b67",
+    "crash_terminalizer_sha256": "3c3c692889f0ea25228abf89b41c207f2f5a23e4e89ff7805d1a261c852d3830",
+    "reproduce_from_retention_sha256": "b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3",
+    "synthetic_rehearsal_sha256": "3119023d5432325a6dfcbec2fffce9224834d19f0cb79a89fea332ece3ebfd4a",
+    "validator_sha256": "d7d0f4d8218b68cbcdb0b5a693ac8fd9e363967ecdb56934334c86e42d3ce944",
+    "schema_sha256": "572954b1d4f2839d8d28f50dca6bd539ea26234a7379f63a5999379563852db8"
+  },
+  "rehearsal": {
+    "event_shape": "9_CHECKPOINT_READS+3_RETAINED_ROUTER_AUTHORITIES+1_RETAINED_S0",
+    "real_geometry_success_runs": 2,
+    "reproduction_runs": 10,
+    "fresh_processes": 2,
+    "exact_stage_and_route_identity": "10_OF_10",
+    "failure_paths_exact": 29,
+    "failure_paths_passed": 29,
+    "decoded_allocation_bytes": 660113408,
+    "production_adapter_real_geometry": "PASS_19_OF_19_CANONICAL_STAGES"
+  },
+  "durability": {
+    "ordering": "READ_VALIDATE_DURABLY_RETAIN_FSYNC_ATOMIC_PUBLISH_PARENT_FSYNC_THEN_DURABLE_RECEIPT_PARENT_FSYNC_THEN_JOURNAL",
+    "receipt_implication": "DURABLE_RECEIPT_IMPLIES_DURABLE_RECOVERABLE_PACKED_PAYLOAD",
+    "restart": "RECONCILE_AND_TERMINALIZE_NO_RESUME_NO_REREAD_NO_RETRY_NO_SECOND_ATTEMPT"
+  },
+  "preopen": {
+    "authoritative_ledger_reconstructed": 166,
+    "environment": "CPython_3.14_NumPy_2.4.5_little_endian_fixed_order_no_blas_same_pinned_environment",
+    "required_free_bytes": 3221225472,
+    "retained_inputs": "OPEN_ONCE_FSTAT_HASH_CONSUME_SAME_DESCRIPTOR_REHASH_AFTER",
+    "shard": "PREFLIGHT_OBJECT_ID_EQUALS_OPENED_DESCRIPTOR_FSTAT"
+  },
+  "validation": {
+    "authorization_v3_validator": "PASS",
+    "production_preflight_only": "PRODUCTION_BINDINGS_RESOLVED",
+    "focused_representative_tests": "63_OF_63_PASS",
+    "full_f017_tests": "695_OF_704_PASS",
+    "full_f017_known_unrelated_environment_generated_artifact_failures": 9,
+    "reproduction_bundle_validator": "PASS",
+    "semantic_boundary_v2": "PASS",
+    "rmsnorm_epsilon_adjudication": "PASS",
+    "spec_kit_prerequisites": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "real_access": {"checkpoint_reads": 0, "shard_opens": 0, "ledger_before": 166, "ledger_after": 166},
+  "authorization": {"real_event_authorized": false, "expert_execution_authorized": false, "independent_adversarial_review_required": true}
+}

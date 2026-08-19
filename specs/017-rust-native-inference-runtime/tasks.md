@@ -487,3 +487,13 @@
   decoder, F32-identity, retention, receipt, executor, rehearsal, S0, banker,
   vocabulary, ledger, and surface mutations while preserving rejected v1,
   zero checkpoint access, no real execution authority, and ledger 166.
+- [x] T017-228 Bank independent review-2 at its operator-prescribed byte
+  identity, then repair R1/R2/R3 and N7-N11 append-only: grant the three
+  retained router authorities to the exact event consumer, restore ten-run
+  retention-only reproduction, front-load ledger/S0/router/decoder/environment/
+  storage/destination/shard-object gates, durably retain payloads before
+  receipts, bind interrupted-attempt terminalization and single-descriptor
+  consumption, rehearse the full real geometry with 29 exact failure paths,
+  and publish authorization v3 for independent re-review while leaving real
+  execution unauthorized, checkpoint reads and shard opens zero, and ledger
+  166.

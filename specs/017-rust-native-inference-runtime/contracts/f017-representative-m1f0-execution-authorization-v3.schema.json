@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.representative-m1f0-execution-authorization-v3.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","schema_version","status","authoritative_repository","authorization_candidate","executor","release_wrapper","preopen_preflight","crash_terminalizer","reproduction","synthetic_rehearsal","review_authority","validator","authorization","preparation_invariants"],
+  "properties": {
+    "schema": {"const":"pulsarmlx.f017.representative-m1f0-execution-authorization"},
+    "schema_version": {"const":"3.0.0"},
+    "status": {"const":"PREPARED_REVIEW_REQUIRED"},
+    "authoritative_repository": {"type":"object","additionalProperties":false,"required":["branch","preparation_base_commit"],"properties":{"branch":{"const":"feat/017-real-checkpoint-runner"},"preparation_base_commit":{"pattern":"^[0-9a-f]{40}$"}}},
+    "authorization_candidate": {"$ref":"#/$defs/fileBinding"},
+    "executor": {"$ref":"#/$defs/fileBinding"},
+    "release_wrapper": {"allOf":[{"$ref":"#/$defs/fileBinding"},{"type":"object","required":["real_release_required"],"properties":{"real_release_required":{"const":true}}}]},
+    "preopen_preflight": {"$ref":"#/$defs/fileBinding"},
+    "crash_terminalizer": {"$ref":"#/$defs/fileBinding"},
+    "reproduction": {"type":"object","required":["contract_path","path","contract_sha256","sha256"],"properties":{"contract_path":{"type":"string"},"path":{"type":"string"},"contract_sha256":{"$ref":"#/$defs/sha256"},"sha256":{"$ref":"#/$defs/sha256"}}},
+    "synthetic_rehearsal": {"allOf":[{"$ref":"#/$defs/fileBinding"},{"type":"object","required":["failure_paths_exact"],"properties":{"failure_paths_exact":{"const":29}}}]},
+    "review_authority": {"allOf":[{"$ref":"#/$defs/fileBinding"},{"type":"object","required":["verdict"],"properties":{"verdict":{"const":"REJECT_REPAIRED_APPEND_ONLY"}}}]},
+    "validator": {"type":"object","required":["path","sha256","schema_path","schema_sha256"],"properties":{"path":{"type":"string"},"sha256":{"$ref":"#/$defs/sha256"},"schema_path":{"type":"string"},"schema_sha256":{"$ref":"#/$defs/sha256"}}},
+    "authorization": {"type":"object","additionalProperties":false,"required":["real_event_authorized","checkpoint_access_authorized","shard_open_authorized","expert_execution_authorized","shared_expert_execution_authorized","candidate_dispatch_authorized","independent_adversarial_review_required"],"properties":{"real_event_authorized":{"const":false},"checkpoint_access_authorized":{"const":false},"shard_open_authorized":{"const":false},"expert_execution_authorized":{"const":false},"shared_expert_execution_authorized":{"const":false},"candidate_dispatch_authorized":{"const":false},"independent_adversarial_review_required":{"const":true}}},
+    "preparation_invariants": {"type":"object","required":["real_payload_ledger","checkpoint_reads","shard_opens","real_representative_computation_executed","prior_authorizations_byte_identical","review_verdict_committed_and_hash_bound","append_only_repair","durable_receipt_implies_durable_retained_payload","restart_forbids_resume_reread_retry_or_second_attempt"],"properties":{"real_payload_ledger":{"const":166},"checkpoint_reads":{"const":0},"shard_opens":{"const":0},"real_representative_computation_executed":{"const":false},"prior_authorizations_byte_identical":{"const":true},"review_verdict_committed_and_hash_bound":{"const":true},"append_only_repair":{"const":true},"durable_receipt_implies_durable_retained_payload":{"const":true},"restart_forbids_resume_reread_retry_or_second_attempt":{"const":true}}}
+  },
+  "$defs": {
+    "sha256": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "fileBinding": {"type":"object","required":["path","sha256"],"properties":{"path":{"type":"string","minLength":1},"sha256":{"$ref":"#/$defs/sha256"}}}
+  }
+}
