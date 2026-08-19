@@ -489,3 +489,28 @@ v2, malformed authority fails before attempt start, no state root exists,
 checkpoint reads and shard opens remain zero, the ledger remains 166, and a
 fresh independent review and separate approval/token are required before any
 real execution.
+
+## Phase 31 — Representative route, expert authorization, and retained-only release
+
+- Bank the successful representative attention-to-router execution at ledger
+  175, then reconstruct and independently accept the concrete representative
+  route from retained-only evidence without checkpoint rereads.
+- Bind the representative `router_normalized` input, atomic expert ID/weight
+  pairs, and the 24 position-independent retained expert-weight payloads into a
+  checkpoint-free expert-output recovery authorization.
+- Preserve a strict retained-only event class: ledger 175-to-175, zero
+  checkpoint reads, zero shard opens, 90,439,680 retained packed bytes, and a
+  stop after eight concrete individual expert outputs before any aggregate,
+  shared expert, FFN completion, or S2 construction.
+- Prepare a one-shot release wrapper with authoritative ledger reconstruction,
+  pinned runtime checks, consume-what-you-validated inputs, fixed destinations,
+  durable attempt-start, crash terminalization, two fresh-process output
+  reproduction, separate independent approval, and a later operator token.
+- Bank exact cycle-1 REJECT and cycle-2 ACCEPT reviewer artifacts; treat both
+  blocking and non-blocking-required findings as release-blocking.
+
+Gate: the release is independently accepted but remains
+`PREPARED_FOR_INDEPENDENT_APPROVAL`, `real_event_authorized=false`, ledger 175,
+checkpoint reads and shard opens zero, and no real representative expert
+execution has occurred. The only next action is a separate independent release
+approval; do not create a GO token or execute.

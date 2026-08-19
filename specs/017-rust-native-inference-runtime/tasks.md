@@ -513,3 +513,18 @@
   release-v2 control plane that rejects the old token while leaving approval,
   real-event authority, checkpoint reads, shard opens, attempt state, and the
   real ledger unchanged at false, zero, zero, absent, and 166 respectively.
+- [x] T017-231 Bank the successful representative M1-F0 route-only event at
+  ledger 175 and recover concrete selected IDs and routing weights exactly from
+  retained-only reproduction evidence, with zero checkpoint rereads and no
+  expert execution.
+- [x] T017-232 Prepare and independently accept the representative expert-output
+  recovery authorization: bind `router_normalized`, the atomic canonical
+  ID/weight order, 24 retained packed payloads totaling 90,439,680 bytes,
+  decoder/kernel identities, concrete f32 output artifacts, two fresh-process
+  reproduction, and stop-before-aggregate semantics at ledger 175-to-175.
+- [x] T017-233 Prepare and independently accept the retained-only single-use
+  expert-recovery release after repairing the cycle-1 runtime-environment gate
+  and terminalizer output-vocabulary mismatch; bind ledger 175, zero checkpoint
+  and shard budgets, durable one-shot state, crash reconciliation, fixed
+  destinations, separate approval/token gating, and preserve
+  `real_event_authorized=false` with zero real expert executions.
