@@ -505,3 +505,11 @@
   a checkpoint-free semantic validator and mutation suite while leaving the
   release unapproved, real-event authorization false, checkpoint reads and
   shard opens zero, and the real ledger unchanged at 166.
+- [x] T017-230 Preserve the release-v1 pre-attempt fail-closed invocation with
+  zero consumption, identify its nested `ledger.after` lookup as a consumer
+  mismatch against the bound public result's top-level `ledger_after`, bind an
+  exact-schema two-authority ledger adapter and append-only wrapper v2, regress
+  the former KeyError plus malformed/stale/disagreement cases, and prepare a
+  release-v2 control plane that rejects the old token while leaving approval,
+  real-event authority, checkpoint reads, shard opens, attempt state, and the
+  real ledger unchanged at false, zero, zero, absent, and 166 respectively.

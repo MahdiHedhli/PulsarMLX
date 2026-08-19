@@ -1,0 +1,104 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-single-use-execution-release-preparation",
+  "schema_version": "2.0.0",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "starting_authoritative_head": "18a58c1e1353ae4fb9003f9e47a53da369e5ea22",
+  "repaired_execution_code_head": "3f52388d2e60be23132e53c9cc3386d03a9db389",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-single-use-execution-release-v2.json",
+    "sha256": "434c3f3f4882215f9e188fa7a678d00dc00f725fd099ee4eab8200ab77afbce3",
+    "release_id": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1-RELEASE-2"
+  },
+  "schema_binding": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-single-use-execution-release-v2.schema.json",
+    "sha256": "6c95f3c2d95ec018f9e8c842d156d88efbd4c4afc30498773316f07a70d94ba5"
+  },
+  "ledger_adapter": {
+    "path": "scripts/research/f017_representative_m1f0_ledger_adapter_v1.py",
+    "sha256": "ea0e54569499cd7b3fbd3d07ec107ee51c20a86327b9050ec7070b1218c03198",
+    "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-ledger-adapter-v1.json",
+    "contract_sha256": "20a0719fd847254c1c7b9f053b9d9df0d0b380177f4914f62f826149fa91c87f",
+    "normalized_field": "current_ledger",
+    "result": 166
+  },
+  "repaired_wrapper": {
+    "path": "scripts/research/f017_representative_m1f0_release_wrapper_v2.py",
+    "sha256": "29a6c05d1206c5f97bfcbabdb21b1299d9dbb35ffcba7eaffe1ee11526525fa8",
+    "release_v1_token_authorized": false
+  },
+  "failure_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-pre-attempt-ledger-binding-failure-v1.json",
+    "sha256": "7c4f9f683c1e82ac010ebb0f87005e482ea53ce62666a0efabb2b1a4af6f5340",
+    "durable_reads": 0,
+    "shard_opens": 0,
+    "release_v1_consumed": false
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_representative_m1f0_single_use_release_v2.py",
+    "sha256": "ae3bb576472e446b10a16c7e9c8a19c3900c4675c875989da30a80f55c41b38d",
+    "result": "PASS"
+  },
+  "tests": {
+    "ledger_adapter_path": "scripts/research/tests/test_f017_representative_m1f0_ledger_adapter_v1.py",
+    "ledger_adapter_sha256": "71caf8e7aadb49d2db0d98bad9db24b819e9e8634d08760ff30e491689444b2b",
+    "wrapper_v2_path": "scripts/research/tests/test_f017_representative_m1f0_release_wrapper_v2.py",
+    "wrapper_v2_sha256": "aad0e36c4e6403f5240904c907469c577781ee1c8aa055da71e566186e7eb9b6",
+    "release_v2_path": "scripts/research/tests/test_f017_representative_m1f0_single_use_release_v2.py",
+    "release_v2_sha256": "d79390610fbdccc7836caff65169d2461c09103d05c15edb3c8e5e852c092c20",
+    "ledger_semantic_mutations_rejected": 8,
+    "release_semantic_mutations_rejected": 24,
+    "result": "PASS"
+  },
+  "exact_failure_regression": {
+    "former_consumer_field_path": ["ledger", "after"],
+    "actual_producer_field": "ledger_after",
+    "former_keyerror_reproduced": true,
+    "repaired_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "ledger": 166,
+    "ledger_source_count": 2,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "attempt_start_created": false
+  },
+  "validation": {
+    "targeted_representative_m1f0_tests": 82,
+    "targeted_result": "PASS",
+    "release_v2_semantic_validator": "PASS",
+    "ledger_adapter_runtime": "PASS",
+    "duplicate_key_and_privacy_files": 5,
+    "duplicate_key_and_privacy_result": "PASS",
+    "spec_kit_checklist": "14_OF_14_PASS",
+    "git_diff_check": "PASS",
+    "jsonschema_python_package": "UNAVAILABLE_NOT_INSTALLED",
+    "json_schema_coverage": "EXCLUDED; stricter committed semantic validator executed instead"
+  },
+  "old_token": {
+    "sha256_before": "ec4adc38a91951abc80aa7a48d4e3ab7b20c605300129149dd9a6a5e7fe98755",
+    "sha256_after": "ec4adc38a91951abc80aa7a48d4e3ab7b20c605300129149dd9a6a5e7fe98755",
+    "consumed": false,
+    "authorized_for_release_v2": false
+  },
+  "event_shape": {
+    "checkpoint_payload_reads": 9,
+    "packed_bytes": 132900864,
+    "maximum_shard_opens": 1,
+    "retained_router_authorities": 3,
+    "retained_canonical_s0": 1,
+    "ledger_before": 166,
+    "ledger_after_successful_read_phase": 175
+  },
+  "preparation_invariants": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_payload_ledger": 166,
+    "attempt_start_exists": false,
+    "real_event_authorized": false,
+    "real_execution_performed": false,
+    "authorization_v3_byte_identical": true,
+    "release_v1_byte_identical": true,
+    "release_v1_approval_byte_identical": true,
+    "wrapper_v1_byte_identical": true,
+    "append_only_repair": true
+  },
+  "next_action": "SUBMIT_RELEASE_V2_LEDGER_BINDING_REPAIR_FOR_INDEPENDENT_ADVERSARIAL_REVIEW_DO_NOT_CREATE_TOKEN_OR_EXECUTE"
+}

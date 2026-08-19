@@ -1,0 +1,161 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-single-use-execution-release",
+  "schema_version": "2.0.0",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "release_id": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1-RELEASE-2",
+  "event_id": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1",
+  "attempt_id": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1-ATTEMPT-1",
+  "authoritative_repository": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "execution_code_head": "3f52388d2e60be23132e53c9cc3386d03a9db389",
+    "head_policy": "EXACT_REPAIRED_EXECUTION_CODE_HEAD_WITH_APPEND_ONLY_CONTROL_PLANE",
+    "release_control_plane_is_append_only": true
+  },
+  "supersedes_without_modifying": {
+    "release_v1": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-single-use-execution-release-v1.json",
+      "sha256": "914e07f12b968df700aa8868ce0888183f83fd77c9c0684302801f8ad09ca1e4",
+      "consumed": false,
+      "execution_disposition": "SUPERSEDED_DEFECTIVE_WRAPPER_DO_NOT_EXECUTE"
+    },
+    "release_v1_independent_approval": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-single-use-release-v1-independent-approval-v1.json",
+      "sha256": "4ea1d3eb5af5ac590173e911e62e22435852d9fbc1bf30fc0088cec3a664a9bf"
+    },
+    "release_wrapper_v1": {
+      "path": "scripts/research/f017_representative_m1f0_release_wrapper_v1.py",
+      "sha256": "0cc047cd6208a463124e6b2e382fb0d95baffd4c5d5afbdb03cf8580029a0b67"
+    }
+  },
+  "accepted_bindings": {
+    "authorization_v3": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v3.json", "sha256": "d42c5a948c6e73d5003c80dbef3da9c53fe53aee6cf2261ed0f193058f9631c6"},
+    "independent_acceptance": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-execution-authorization-v3-independent-acceptance-v1.json", "sha256": "fef7bc25e6524283c3754d0f2890a72a61785be60e66b44d952360af2da07fee"},
+    "executor": {"path": "scripts/research/f017_representative_m1f0_executor_v3.py", "sha256": "9c1e5168a1d385f78cedc9a49d892aad41b1979b496585477286e183992a379e"},
+    "release_wrapper": {"path": "scripts/research/f017_representative_m1f0_release_wrapper_v2.py", "sha256": "29a6c05d1206c5f97bfcbabdb21b1299d9dbb35ffcba7eaffe1ee11526525fa8"},
+    "ledger_adapter": {"path": "scripts/research/f017_representative_m1f0_ledger_adapter_v1.py", "sha256": "ea0e54569499cd7b3fbd3d07ec107ee51c20a86327b9050ec7070b1218c03198"},
+    "ledger_adapter_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-ledger-adapter-v1.json", "sha256": "20a0719fd847254c1c7b9f053b9d9df0d0b380177f4914f62f826149fa91c87f"},
+    "preopen_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-production-preopen-v1.json", "sha256": "5fee99e6c138d85952279b2a10b104122b00363998e5f8f640af1fd5435cddbb"},
+    "crash_terminalizer": {"path": "scripts/research/f017_representative_m1f0_terminalizer_v1.py", "sha256": "3c3c692889f0ea25228abf89b41c207f2f5a23e4e89ff7805d1a261c852d3830"},
+    "router_reuse_v2": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json", "sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1"},
+    "reproduction_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-reproduction-v1.json", "sha256": "7e31865232357b29cfc92c423421d6442e4203a5b39520458346a2b1a827dcbf"},
+    "reproduction_producer": {"path": "scripts/research/f017_representative_m1f0_reproduce_from_retention_v1.py", "sha256": "b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3"},
+    "synthetic_rehearsal": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-executor-synthetic-rehearsal-v2.json", "sha256": "3119023d5432325a6dfcbec2fffce9224834d19f0cb79a89fea332ece3ebfd4a"},
+    "pre_attempt_failure": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-pre-attempt-ledger-binding-failure-v1.json", "sha256": "7c4f9f683c1e82ac010ebb0f87005e482ea53ce62666a0efabb2b1a4af6f5340"},
+    "ledger_adapter_tests": {"path": "scripts/research/tests/test_f017_representative_m1f0_ledger_adapter_v1.py", "sha256": "71caf8e7aadb49d2db0d98bad9db24b819e9e8634d08760ff30e491689444b2b"},
+    "wrapper_v2_tests": {"path": "scripts/research/tests/test_f017_representative_m1f0_release_wrapper_v2.py", "sha256": "aad0e36c4e6403f5240904c907469c577781ee1c8aa055da71e566186e7eb9b6"}
+  },
+  "canonical_input": {
+    "identity": "DPREFIX-EXACT-1",
+    "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "semantic_role": "CANONICAL_LAYER3_ENTRY_PRE_ATTENTION",
+    "retained_inputs": 1,
+    "checkpoint_fallback": false
+  },
+  "checkpoint": {
+    "catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+    "shard_ordinal": 2,
+    "shard_basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+    "shard_sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    "shard_size_bytes": 49105028960,
+    "maximum_opens": 1,
+    "checkpoint_rereads_for_reproduction": 0
+  },
+  "attention_payload_inventory": [
+    {"ordinal": 0, "key": "blk.3.attn_norm.weight", "offset": 2008634208, "packed_bytes": 24576, "quantization": "F32", "logical_shape": [6144], "packed_sha256": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85", "decoded_sha256": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85"},
+    {"ordinal": 1, "key": "blk.3.attn_q_a.weight", "offset": 2077864800, "packed_bytes": 8650752, "quantization": "Q5_K", "logical_shape": [2048, 6144], "packed_sha256": "30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579", "decoded_sha256": "35e4f06b179cee97d791476882e2f1ed7ebbaa4ecd7c7e5a3e108a2c42520c45"},
+    {"ordinal": 2, "key": "blk.3.attn_q_a_norm.weight", "offset": 2086515552, "packed_bytes": 8192, "quantization": "F32", "logical_shape": [2048], "packed_sha256": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f", "decoded_sha256": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f"},
+    {"ordinal": 3, "key": "blk.3.attn_q_b.weight", "offset": 2086523744, "packed_bytes": 35651584, "quantization": "Q8_0", "logical_shape": [16384, 2048], "packed_sha256": "c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47", "decoded_sha256": "5cff2689826b4608162dae7932f2187aa31ff5e2063655a62fce0a17ac185623"},
+    {"ordinal": 4, "key": "blk.3.attn_kv_a_mqa.weight", "offset": 2004872032, "packed_bytes": 3760128, "quantization": "Q8_0", "logical_shape": [576, 6144], "packed_sha256": "8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053", "decoded_sha256": "332ce4d35767105dbef7e98c2ddb1093e624188d71a068dbca58579ff5c259ac"},
+    {"ordinal": 5, "key": "blk.3.attn_kv_a_norm.weight", "offset": 2008632160, "packed_bytes": 2048, "quantization": "F32", "logical_shape": [512], "packed_sha256": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4", "decoded_sha256": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4"},
+    {"ordinal": 6, "key": "blk.3.attn_k_b.weight", "offset": 1998187360, "packed_bytes": 6684672, "quantization": "Q8_0", "logical_shape": [64, 512, 192], "packed_sha256": "9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f", "decoded_sha256": "89c38fc8661405b675c738de4a7ac6115931c492b00231b4e1c4562676f6b7ff"},
+    {"ordinal": 7, "key": "blk.3.attn_v_b.weight", "offset": 2122175328, "packed_bytes": 8912896, "quantization": "Q8_0", "logical_shape": [64, 256, 512], "packed_sha256": "86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367", "decoded_sha256": "3e4a176c261d7f9e612fc7f7dc7047cb9c7b338cdce71c47527aa7224f92f3a7"},
+    {"ordinal": 8, "key": "blk.3.attn_output.weight", "offset": 2008658784, "packed_bytes": 69206016, "quantization": "Q5_K", "logical_shape": [6144, 16384], "packed_sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084", "decoded_sha256": "2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8"}
+  ],
+  "read_contract": {
+    "ordering": "STRICT_ASCENDING_ORDINAL_0_THROUGH_8",
+    "checkpoint_payload_reads": 9,
+    "total_packed_bytes": 132900864,
+    "retained_router_authorities": 3,
+    "retained_canonical_s0": 1,
+    "fallback": false,
+    "retry": false,
+    "extra_reads": false,
+    "dynamic_discovery": false
+  },
+  "ledger": {
+    "start": 166,
+    "success_after_read_phase": 175,
+    "partial_failure": "166+N_PROVEN_CONSUMPTIONS_THEN_TERMINAL",
+    "authoritative_reconstruction_required": true,
+    "canonical_adapter_required": true,
+    "no_rollback": true
+  },
+  "execution_environment": {
+    "implementation": "CPython",
+    "python_major_minor": [3, 14],
+    "numpy": "2.4.5",
+    "endianness": "little",
+    "threading_contract": "FIXED_ORDER_NO_BLAS_NO_PARALLEL_REDUCTION",
+    "reproduction_scope": "SAME_PINNED_PRODUCTION_ENVIRONMENT",
+    "cross_platform_libm_identity_claimed": false,
+    "device": "CPU_ONLY",
+    "gpu_path": false,
+    "alternate_environment": false
+  },
+  "storage_preflight": {
+    "method": "CONSERVATIVE_FREE_SPACE_PRECONDITION",
+    "required_free_bytes": 3221225472,
+    "must_pass_before_attempt_start_or_shard_open": true
+  },
+  "stop_boundary": "AFTER_REPRESENTATIVE_ROUTE_BEFORE_ANY_ROUTED_OR_SHARED_EXPERT_EXECUTION",
+  "prohibitions": {
+    "routed_expert_execution": true,
+    "shared_expert_execution": true,
+    "m1f_execution": true,
+    "direct_dprefix_route_reuse": true,
+    "alternate_executor": true,
+    "alternate_authorization": true,
+    "checkpoint_reads_outside_inventory": true,
+    "checkpoint_rereads": true,
+    "resume": true,
+    "retry": true,
+    "second_attempt": true
+  },
+  "single_use": {
+    "one_shot": true,
+    "consumed_at": "DURABLE_ATTEMPT_START_RECORD_BEFORE_SHARD_OPEN",
+    "preopen_failure_before_attempt_start_leaves_unconsumed": true,
+    "consumed_remains_irrevocable_after": [
+      "PARTIAL_READ_FAILURE",
+      "CRASH",
+      "TERMINALIZER_RECOVERY",
+      "READ_PHASE_SUCCESS_THEN_COMPUTE_FAILURE",
+      "REPRODUCTION_FAILURE",
+      "FINAL_EVIDENCE_FAILURE"
+    ],
+    "consumed_release_can_be_reused": false,
+    "reset_to_reusable_state": false
+  },
+  "invalidity": {
+    "fail_before_attempt_start_if_any_mismatch": ["EXECUTION_CODE_HEAD", "LEDGER", "LEDGER_ADAPTER", "ACCEPTED_BINDING", "ENVIRONMENT", "STORAGE", "INVENTORY", "SHARD_OBJECT", "PRIOR_ATTEMPT", "INTERRUPTED_ATTEMPT"],
+    "automatic_rebase": false,
+    "automatic_reauthorization": false,
+    "fallback_identity": false
+  },
+  "approval_boundary": {
+    "approval_asserted": false,
+    "separate_committed_independent_release_approval_required": true,
+    "future_wrapper_token_disposition": "GO_EXECUTE_ONCE_NO_RETRY",
+    "future_wrapper_token_must_bind_release_id_and_sha256": true,
+    "future_wrapper_token_must_bind_new_independent_approval": true,
+    "release_v1_token_authorized": false,
+    "future_real_event_authorized_scope": "ONLY_RELEASE_2_EXACT_SHA_AFTER_SEPARATE_INDEPENDENT_APPROVAL",
+    "operator_execution_is_separate_after_approval": true
+  },
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "shard_open_authorized": false,
+    "execution_release_approved": false
+  }
+}

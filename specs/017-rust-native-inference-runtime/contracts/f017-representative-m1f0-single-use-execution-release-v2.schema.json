@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.representative-m1f0-single-use-execution-release-v2.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "schema_version", "status", "release_id", "event_id", "attempt_id", "authoritative_repository", "supersedes_without_modifying", "accepted_bindings", "canonical_input", "checkpoint", "attention_payload_inventory", "read_contract", "ledger", "execution_environment", "storage_preflight", "stop_boundary", "prohibitions", "single_use", "invalidity", "approval_boundary", "authorization"],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.representative-m1f0-single-use-execution-release"},
+    "schema_version": {"const": "2.0.0"},
+    "status": {"const": "PREPARED_FOR_INDEPENDENT_APPROVAL"},
+    "release_id": {"const": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1-RELEASE-2"},
+    "event_id": {"const": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1"},
+    "attempt_id": {"const": "F017-REPRESENTATIVE-M1F0-ATTENTION-ROUTE-RECOVERY-1-ATTEMPT-1"},
+    "authoritative_repository": {"type": "object"},
+    "supersedes_without_modifying": {"type": "object"},
+    "accepted_bindings": {"type": "object"},
+    "canonical_input": {"type": "object"},
+    "checkpoint": {"type": "object"},
+    "attention_payload_inventory": {"type": "array", "minItems": 9, "maxItems": 9},
+    "read_contract": {"type": "object"},
+    "ledger": {
+      "type": "object",
+      "required": ["start", "success_after_read_phase", "partial_failure", "authoritative_reconstruction_required", "canonical_adapter_required", "no_rollback"]
+    },
+    "execution_environment": {"type": "object"},
+    "storage_preflight": {"type": "object"},
+    "stop_boundary": {"const": "AFTER_REPRESENTATIVE_ROUTE_BEFORE_ANY_ROUTED_OR_SHARED_EXPERT_EXECUTION"},
+    "prohibitions": {"type": "object"},
+    "single_use": {"type": "object"},
+    "invalidity": {"type": "object"},
+    "approval_boundary": {"type": "object"},
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["real_event_authorized", "checkpoint_access_authorized", "shard_open_authorized", "execution_release_approved"],
+      "properties": {
+        "real_event_authorized": {"const": false},
+        "checkpoint_access_authorized": {"const": false},
+        "shard_open_authorized": {"const": false},
+        "execution_release_approved": {"const": false}
+      }
+    }
+  }
+}
