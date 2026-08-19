@@ -16,7 +16,7 @@ def reconcile(state: Path, output: Path) -> dict:
     if terminal.is_file(): return json.loads(terminal.read_text())
     artifacts=[]
     if output.exists():
-        for p in sorted(output.glob("expert-*.f32le")):
+        for p in sorted(output.glob("??-expert-*-down.f32le")):
             artifacts.append({"name":p.name,"bytes":p.stat().st_size,"sha256":sha(p),"authority":False})
     result={"status":"TERMINAL_INTERRUPTED","ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"resume":False,"retry":False,"second_attempt":False,"partial_outputs":artifacts,"output_authority":"NONE_UNLESS_PRIOR_COMPLETE_TERMINAL"}
     atomic(terminal,result); return result

@@ -24,8 +24,16 @@ def paths():
         if not os.environ.get(e): raise RuntimeError("UNRESOLVED_ENV:"+e)
         out[k]=Path(os.environ[e])
     return out
+def require_environment():
+    if sys.version_info[:3] != (3,14,6): raise RuntimeError("ENVIRONMENT_CPYTHON")
+    import numpy as np
+    if np.__version__ != "2.4.5": raise RuntimeError("ENVIRONMENT_NUMPY")
+    if sys.byteorder != "little": raise RuntimeError("ENVIRONMENT_ENDIANNESS")
+    for name in ("OPENBLAS_NUM_THREADS","OMP_NUM_THREADS","VECLIB_MAXIMUM_THREADS","MKL_NUM_THREADS","NUMEXPR_NUM_THREADS"):
+        if os.environ.get(name) != "1": raise RuntimeError("ENVIRONMENT_THREADS:"+name)
 def preflight(release: Path):
     if current_ledger()!=175: raise RuntimeError("LEDGER")
+    require_environment()
     subprocess.run([sys.executable,str(VALIDATOR),"--release",str(release)],check=True,capture_output=True,text=True)
     p=paths(); state,output=p["state"],p["output"]
     if state.exists() or output.exists(): raise RuntimeError("PRIOR_ATTEMPT")

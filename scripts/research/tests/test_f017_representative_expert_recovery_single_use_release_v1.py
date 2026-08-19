@@ -1,5 +1,5 @@
 from __future__ import annotations
-import copy, importlib.util, sys, unittest
+import copy, importlib.util, os, sys, tempfile, unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3]; P=ROOT/"scripts/research/validate_f017_representative_expert_recovery_single_use_release_v1.py"
 sys.path.insert(0,str(P.parent))
@@ -18,4 +18,13 @@ class ReleaseTests(unittest.TestCase):
   muts=[lambda x:x["bindings"]["authorization"].__setitem__("sha256","0"*64),lambda x:x["bindings"]["executor"].__setitem__("sha256","0"*64),lambda x:x["bindings"]["independent_review"].__setitem__("sha256","0"*64),lambda x:x["representative_expert_input"].__setitem__("sha256","0"*64),lambda x:x["retained_payload_inventory"][0].__setitem__("packed_sha256","0"*64),lambda x:x["id_weight_pairs"].__setitem__(3,x["id_weight_pairs"][4]),lambda x:x["id_weight_pairs"][3].__setitem__("routing_weight",0.0),lambda x:x["access_accounting"].__setitem__("checkpoint_reads",1),lambda x:x["access_accounting"].__setitem__("shard_opens",1),lambda x:x["access_accounting"].__setitem__("starting_ledger",174),lambda x:x["prohibitions"].__setitem__("routed_aggregate",False),lambda x:x["prohibitions"].__setitem__("shared_expert",False),lambda x:x["prohibitions"].__setitem__("direct_dprefix_outputs",False),lambda x:x["single_use"].__setitem__("retry",True),lambda x:x["single_use"].__setitem__("second_attempt",True),lambda x:x.__setitem__("real_event_authorized",True),lambda x:x.__setitem__("approval_asserted",True),lambda x:x.__setitem__("stop_boundary","AFTER_AGGREGATE"),lambda x:x["output_contract"].__setitem__("two_fresh_process_reproductions_required",1)]
   for m in muts:
    with self.subTest(m=m): self.reject(m)
+ def test_terminalizer_finds_executor_output_names(self):
+  tpath=ROOT/"scripts/research/f017_representative_expert_recovery_terminalizer_v1.py"
+  spec=importlib.util.spec_from_file_location("term",tpath); term=importlib.util.module_from_spec(spec); spec.loader.exec_module(term)
+  with tempfile.TemporaryDirectory() as d:
+   state=Path(d)/"state"; output=Path(d)/"output"; state.mkdir(); output.mkdir()
+   (state/"attempt-start.json").write_text("{}")
+   (output/"00-expert-250-down.f32le").write_bytes(b"x"*24576)
+   result=term.reconcile(state,output)
+   self.assertEqual([x["name"] for x in result["partial_outputs"]],["00-expert-250-down.f32le"])
 if __name__=="__main__": unittest.main()
