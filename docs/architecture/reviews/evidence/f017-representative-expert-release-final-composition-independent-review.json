@@ -1,0 +1,95 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-release-final-composition-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-EXPERT-RELEASE-FINAL-COMPOSITION-INDEPENDENT-REVIEW",
+  "reviewed_head": "90888d9d5c827e09c13dfb36b274382dc33fa626",
+  "prior_review_sha256": "b2bc5038c18fac927f7302a131f8169deb06eb25beb7f2dbc070d07c4b97e772",
+  "actual_reviewer_model": "claude-fable-5",
+  "verdict": "ACCEPT",
+  "composition_question": "IS THIS COMMITTED RELEASE SUFFICIENT TO EXECUTE EXACTLY ONE RETAINED-ONLY REPRESENTATIVE EXPERT RECOVERY WITHOUT CHECKPOINT ACCESS, WITHOUT LEDGER MOVEMENT, AND WITHOUT AUTHORIZING ANY DOWNSTREAM AGGREGATION?",
+  "composition_answer": "YES. The entire committed chain re-verifies independently from repository bytes at 90888d9 with zero BLOCKING and zero NON_BLOCKING_REQUIRED findings. (1) Accepted expert authorization: f017-representative-expert-recovery-authorization-v1.json recomputes to its bound sha abbf12bc..., strict-parses clean under duplicate-key rejection, asserts real_event_authorized=false, and is pinned by the committed cycle-02 authorization ACCEPT review (df9b5192..., verdict ACCEPT at f5dfbe7, preceded by the committed cycle-01 REJECT e01d2ac3... at be26de43) whose exact hash the release binds; the authorization closeout and loop state pin the same shas. (2) Release contract: f017-representative-expert-recovery-single-use-release-v1.json recomputes to ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68, the exact hash bound by the regenerated preparation evidence, the cycle-2 ACCEPT review, and the closeout; all seven bindings (authorization abbf12bc..., executor 7831568f..., independent_review df9b5192..., ledger_adapter 3655b90c..., rehearsal 8d156da2..., release_wrapper 9242bbf2..., terminalizer 7a3da0b6...) plus computation contract cd4c52c2... and materializer 3c646eba... recompute exactly against committed bytes; status PREPARED_FOR_INDEPENDENT_APPROVAL, real_event_authorized=false, approval_asserted=false, release_itself_is_not_a_token=true. (3) Retained-only, no checkpoint access: the 24-payload/90,439,680-byte inventory is byte-identical between release and authorization with 24 unique packed_sha256, per-expert order 250,10,237,62,73,177,218,28 (62 strictly before 73), every record new_checkpoint_read_required=false; the executor contains no shard or checkpoint code path (zero ProductionShardProvider references; all shard/checkpoint occurrences are accounting or prohibition strings); the ledger adapter reconstructs ledger 175 solely from the committed real-execution-result evidence whose sha dc53b458... it pins and which matches committed bytes; access accounting pins checkpoint_reads=0, shard_opens=0, starting_ledger=terminal_ledger=175, so there is no ledger movement by construction. (4) No downstream aggregation authority: stop_boundary AFTER_EIGHT_INDIVIDUAL_REPRESENTATIVE_EXPERT_OUTPUTS_BEFORE_WEIGHTED_AGGREGATE with aggregate_outputs=false and prohibitions routed_aggregate/shared_expert/ffn_completion/s2_construction/direct_dprefix_outputs/gpu all true; routing weights appear in the executor only inside atomic pair-equality validation and never in computation, so the pre-aggregate stop is structural; consumer authority additionally requires a COMPLETE terminal. (5) Cycle-1 REJECT (1cc9f5a0...) and cycle-2 ACCEPT (b2bc5038...) are committed byte-exact and hash-chained (cycle-2 pins cycle-1's sha; loop state and closeout pin cycle-2's sha); both cycle-1 required repairs re-verify in bound bytes at head: require_environment() in the wrapper fail-closes on CPython!=(3,14,6), numpy!='2.4.5', byteorder!='little', or any of the five thread variables !='1', invoked from preflight() on both --preflight-only and --execute before the validator subprocess, executor preflight, any retained-payload open, durable attempt-start, and expert computation, congruent with the release's pinned_environment declaration; the terminalizer glob '??-expert-*-down.f32le' fnmatch-verifies 8/8 against the executor's actual output names with zero false positives on manifest.json/terminal.json/temp names, and the committed reconcile test passes. (6) One-shot semantics: wrapper PRIOR_ATTEMPT plus executor PRIOR_EVENT_STATE fail-closed checks, durable attempt-start before any expert computation, atomic terminal writes, fail-closed crash terminalization with resume/retry/second_attempt=false and output_authority NONE_UNLESS_PRIOR_COMPLETE_TERMINAL, and two fresh-process hash-exact reproductions required for COMPLETE. (7) Corrected loop state (phase STOP_ACCEPTED, latest ACCEPT sha b2bc5038...), closeout (STOP_ACCEPTED, real_event_authorized=false, next action prepare-approval-only), plan Phase 31, and tasks T017-231/232/233 all consistently record this exact chain; commits after the cycle-2 reviewed head 127ed2a are docs-only append (banked review, loop state, closeout, plan, tasks) and load-bearing code at head is byte-identical to authoritative_execution_code_head 6b175d4 per the release's append-only head semantics. (8) No committed approval document or go-token exists, so nothing at head authorizes the real event yet: the release is sufficient, and per its own gates execution proceeds only after a separate committed independent ACCEPT approval bound to release_sha256 ccf33fef... and release_id F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1 plus the byte-exact 8-field go-token, executed solely through the bound wrapper in the pinned environment against fresh fixed roots at ledger 175. That separate-approval requirement is the release's own design, not a gap.",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "FC-DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-1: observed environment is enforced fail-closed in the wrapper but not recorded in attempt-start or terminal records",
+      "detail": "require_environment() fail-closes before the executor launches and before any durable state or payload open, and the executor plus both fresh-process reproductions inherit the verified interpreter and environment, but no environment field is written into attempt-start.json or terminal.json.",
+      "justification": "Re-verified at head: the substantive drift risk is closed on the authoritative path; recording is evidentiary only, and the unrecorded path is the already-adjudicated direct-invocation bypass posture (FC-DID-3) which can mint no committed authority."
+    },
+    {
+      "id": "FC-DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-2: terminalizer inventories the eight f32le outputs but does not record manifest.json presence",
+      "detail": "The fixed glob '??-expert-*-down.f32le' truthfully inventories every executor-produced output after a crash; manifest.json presence is not separately reported.",
+      "justification": "The executor writes manifest.json strictly after all eight atomic output writes, so a manifest cannot exist without outputs the inventory already captures; output_authority remains NONE_UNLESS_PRIOR_COMPLETE_TERMINAL regardless."
+    },
+    {
+      "id": "FC-DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-3: go-token and inner token are synthesizable from committed bytes; one-shot enforcement is path-relative via operator-chosen environment roots; direct executor invocation bypasses the wrapper gates including the environment gate",
+      "detail": "State/output roots come from PULSARMLX_F017_REP_EXPERT_STATE_ROOT/OUTPUT_ROOT; fresh roots re-enable the wrapper; the executor remains directly invokable with a hand-crafted 4-field inner token outside require_environment().",
+      "justification": "Adjudicated by design across the accepted authorization and release cycles: no unforgeable secret can live in a git repository; the threat model is honest-operator process discipline; durable attempt-start plus the committed approval trail makes any bypass or re-run evident; no committed artifact grants consumer authority without a COMPLETE terminal in the reviewed roots."
+    },
+    {
+      "id": "FC-DID-4",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-4: executor transitively imports the module containing the sole checkpoint capability class",
+      "detail": "The executor imports decoder/kernel symbols from f017_canonical_expert_output_production.py, which also defines ProductionShardProvider; the executor references it zero times (re-verified by grep at head).",
+      "justification": "The imported module is hash-bound via the computation contract and verified before compute; the capability is unreachable from any executed path; release prohibitions and accounting pin shard_opens=0 and checkpoint_reads=0."
+    },
+    {
+      "id": "FC-DID-5",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-5: validator binds wrapper/ledger-adapter/terminalizer only to their self-declared hashes, is itself unpinned, and has no pinned_environment mutation coverage",
+      "detail": "The validator hardcodes expected hashes for authorization/executor/independent_review/rehearsal but checks only sha(file)==declared-sha for release_wrapper, ledger_adapter, and terminalizer; no binding pins the validator; the 19 mutation rejections include no pinned_environment mutation.",
+      "justification": "The wrapper's environment constants are hardcoded in wrapper source, not read from the release document; any release-byte mutation changes release_sha256, which the future go-token and committed ACCEPT approval pin byte-exactly at execute time; committed unit tests pin the current repository state."
+    },
+    {
+      "id": "FC-DID-6",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-6: internal-reproduce mode permits real expert computation gated only by an environment variable, outside the wrapper's environment gate when invoked directly",
+      "detail": "Executor --internal-reproduce requires only PULSARMLX_F017_REPRESENTATIVE_EXPERT_INTERNAL=1 and performs full dual-decode plus expert computation against retained payloads without durable attempt state.",
+      "justification": "The mode writes nothing durable, emits only per-expert output sha256 values to stdout, cannot create a state root, terminal, or manifest, and can mint no output authority; on the authoritative path it inherits the wrapper-verified environment, and a drifted-environment reproduction can only cause fail-closed REPRODUCTION_IDENTITY failure, never wrong banked authority."
+    },
+    {
+      "id": "FC-DID-7",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried R2-DID-7: validator JSON parser accepts duplicate keys the wrapper/executor reject; crash between state-root mkdir and durable attempt-start requires manual adjudication; declared device CPU_ONLY has no runtime check",
+      "detail": "The validator uses plain json.loads (last-value-wins) while wrapper load() and executor load_json() reject duplicate keys; a crash after state_root.mkdir but before attempt-start.json yields ACCOUNTING_INTEGRITY_NO_DURABLE_START and a permanent PRIOR_ATTEMPT block; CPU_ONLY is not checked at runtime.",
+      "justification": "Both committed contracts re-parse clean under duplicate-key rejection at head; the byte-exact release_sha256 pin governs at execute time; the crash window fails closed with no computation and no authority; CPU_ONLY is structural in a pure-numpy path with gpu/blas prohibited by the bound computation contract."
+    }
+  ],
+  "tests_performed": [
+    "git rev-parse HEAD == 90888d9d5c827e09c13dfb36b274382dc33fa626 on feat/017-real-checkpoint-runner with clean working tree; reviewed committed bytes only",
+    "Recomputed sha256 of all seven release bindings from head bytes (authorization abbf12bc..., executor 7831568f..., independent_review df9b5192..., ledger_adapter 3655b90c..., rehearsal 8d156da2..., release_wrapper 9242bbf2..., terminalizer 7a3da0b6...): all MATCH; computation contract cd4c52c2... and materializer 3c646eba... MATCH",
+    "Recomputed release self-sha256 = ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68, matching the regenerated preparation evidence, cycle-2 ACCEPT review, and closeout bindings",
+    "Recomputed cycle-1 REJECT artifact sha 1cc9f5a010f2d852d5f5136924e90f37af2b7239450d273b22ef4ad63ece3357 and cycle-2 ACCEPT artifact sha b2bc5038c18fac927f7302a131f8169deb06eb25beb7f2dbc070d07c4b97e772; verified the hash chain: cycle-2 pins cycle-1's sha, and the corrected loop state (phase STOP_ACCEPTED, latest_verdict ACCEPT) and closeout pin cycle-2's sha, the release sha, the authorization sha, and the authorization-acceptance sha",
+    "Recomputed authorization cycle-01 REJECT sha e01d2ac3... (reviewed_head be26de43) and verified authorization cycle-02 ACCEPT df9b5192... (reviewed_head f5dfbe7) is the exact independent_review bound in the release; authorization closeout records both cycles, PREPARED_REVIEW_REQUIRED, real_event_authorized=false, and 175-to-175 checkpoint-free invariants",
+    "Diffed 6b175d4 (authoritative_execution_code_head)..90888d9: within scripts/ and contracts/ only the release JSON itself changed (the cycle-2 hash rebind), so load-bearing code at head is byte-identical to the bound code head; diffed 127ed2a (cycle-2 reviewed head)..90888d9: docs-only append (banked cycle-2 review, corrected loop state, closeout, plan, tasks), consistent with APPEND_ONLY_RELEASE_AND_APPROVAL_COMMITS_PERMITTED",
+    "R1-NBR-1 repair re-verification: read require_environment() line-by-line in the bound wrapper; exact CPython (3,14,6), numpy '2.4.5', little byteorder, five thread variables each exactly '1' with unset failing; call site in preflight() executes on both --preflight-only and --execute before the validator subprocess, executor preflight, PRIOR_ATTEMPT/DESTINATION/STORAGE checks, and executor launch; congruent with the release pinned_environment block",
+    "R1-NBR-2 repair re-verification: fnmatch of terminalizer glob '??-expert-*-down.f32le' against all eight executor output names generated from the executor's own f-string (ordinals 0-7, ids 250,10,237,62,73,177,218,28): 8/8 MATCH; manifest.json, terminal.json, and .terminal-* temp names do not match",
+    "Ran committed release validator at head: REPRESENTATIVE_EXPERT_RELEASE_VALID (exit 0); confirmed it hardcodes authorization/executor/independent_review/rehearsal hashes including executor 7831568f...",
+    "Ran committed ledger adapter at head: PASS current_ledger=175, checkpoint_reads=0, shard_opens=0; recomputed its pinned ledger source evidence sha dc53b458... against committed bytes: MATCH",
+    "Ran committed unittest discovery over the representative-expert suites: 5/5 PASS (release mutations with 19 rejections, release repository pins, terminalizer reconcile against executor-named artifacts, authorization mutations, authorization repository pins)",
+    "py_compile of wrapper, terminalizer, ledger adapter, executor, and validator at head: all compile; working tree remained clean",
+    "Verified pairwise identity release==authorization for id_weight_pairs (all ATOMIC_ID_WEIGHT_PAIR, canonical order 250,10,237,62,73,177,218,28 with 62 before 73) and for the full 24-record retained_payload_inventory (24 unique packed_sha256, sum packed_bytes 90,439,680, every record new_checkpoint_read_required=false); strict duplicate-key parse of both contracts: clean",
+    "Structural no-checkpoint re-verification: grep of the executor shows zero ProductionShardProvider references and all shard/checkpoint occurrences as accounting or prohibition strings; routing_weight appears only inside pair-equality validation, never in computation, so the pre-aggregate stop boundary is structural",
+    "Read the executor execute() path: strict 4-field inner-token equality, PRIOR_EVENT_STATE check, durable attempt-start written before any expert computation, atomic per-output writes then manifest then two fresh-process reproductions compared hash-exact then terminal COMPLETE, with fail-closed TERMINAL_FAILURE on any exception; read wrapper authorize(): byte-exact 8-field go-token matching future_token_exact_fields plus ACCEPT approval bound to release_sha256 and release_id",
+    "Verified rehearsal evidence content: 20/20 failure paths passed, 2 fresh-process runs with exact output identity, 0 checkpoint reads, 0 real expert executions",
+    "Verified no committed approval document or go-token artifact exists at head (tree-wide search), so real_event_authorized remains false everywhere and nothing at head authorizes execution",
+    "Verified plan.md Phase 31 gate text and tasks T017-231/T017-232/T017-233 record exactly this chain: release accepted but PREPARED_FOR_INDEPENDENT_APPROVAL, ledger 175, zero checkpoint reads and shard opens, next action approval-only with no go-token creation or execution"
+  ],
+  "checkpoint_free_review": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_expert_executions": 0,
+    "retained_payload_opens": 0,
+    "private_artifacts_accessed": 0,
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "method": "Committed-bytes-only review at 90888d9 with a verified-clean working tree: sha256 recomputation of every bound artifact, whole-repo diffs against the bound code head 6b175d4 and the cycle-2 reviewed head 127ed2a, line-by-line inspection of wrapper/terminalizer/ledger-adapter/executor, execution of the committed validator, ledger adapter, and unittest suite (JSON and synthetic temp files only), and fnmatch/grep adversarial probes. No checkpoint, shard, retained payload, decoder binary, or private root was opened and no expert computation of any kind was performed."
+  },
+  "next_action": "ACCEPT: the committed release chain at 90888d9 is sufficient for exactly one retained-only representative expert recovery with zero checkpoint access, zero ledger movement, and no downstream aggregation authority. Proceed only per the release's own gates: prepare and bank a separate committed independent approval document with verdict ACCEPT bound to release_sha256 ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68 and release_id F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1, then a byte-exact 8-field go-token, executed solely through the bound wrapper in the pinned environment (CPython 3.14.6, NumPy 2.4.5, little-endian, five thread variables = 1) against fresh fixed state/output roots at ledger 175. No retry, resume, or second attempt exists under any outcome; consumer authority requires a COMPLETE terminal. Do not create the go-token or execute before the approval commit. The seven defense-in-depth findings require no action before the event."
+}
