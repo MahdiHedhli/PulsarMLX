@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pulsarmlx.f017.representative-m1f0-execution-authorization-v2.schema.json",
+  "type": "object",
+  "required": [
+    "schema", "schema_version", "authorization_id", "status", "supersedes",
+    "event", "executor", "retained_inputs", "stage_vocabulary", "schema_binding", "synthetic_rehearsal",
+    "attention_payload_inventory", "read_contract", "ledger_contract", "failure_contract",
+    "execution_semantics", "output_contract", "stop_boundary", "authorization", "isolation"
+  ],
+  "properties": {
+    "schema": {"const": "pulsarmlx.f017.representative-m1f0-execution-authorization-repaired"},
+    "schema_version": {"const": "2.0.0"},
+    "status": {"const": "PREPARED_REVIEW_REQUIRED"},
+    "attention_payload_inventory": {"type": "array", "minItems": 9, "maxItems": 9},
+    "read_contract": {
+      "type": "object",
+      "required": ["expected_reads", "expected_packed_bytes", "maximum_shard_opens", "retain_before_receipt", "additional_reads", "retries"],
+      "properties": {
+        "expected_reads": {"const": 9},
+        "expected_packed_bytes": {"const": 132900864},
+        "maximum_shard_opens": {"const": 1},
+        "retain_before_receipt": {"const": true},
+        "additional_reads": {"const": false},
+        "retries": {"const": false}
+      }
+    },
+    "ledger_contract": {
+      "type": "object",
+      "required": ["before", "after_success", "after_n_durable_receipts"],
+      "properties": {"before": {"const": 166}, "after_success": {"const": 175}, "after_n_durable_receipts": {"const": "166+N"}}
+    },
+    "stop_boundary": {"const": "AFTER_REPRESENTATIVE_ROUTE_BEFORE_ANY_EXPERT_EXECUTION"},
+    "authorization": {
+      "type": "object",
+      "required": ["real_event_authorized", "checkpoint_access_authorized", "expert_execution_authorized", "shared_expert_execution_authorized", "candidate_or_model_dispatch_authorized", "M1_F_authorized", "M1_G_authorized", "P1_authorized"],
+      "properties": {
+        "real_event_authorized": {"const": false},
+        "checkpoint_access_authorized": {"const": false},
+        "expert_execution_authorized": {"const": false},
+        "shared_expert_execution_authorized": {"const": false},
+        "candidate_or_model_dispatch_authorized": {"const": false},
+        "M1_F_authorized": {"const": false},
+        "M1_G_authorized": {"const": false},
+        "P1_authorized": {"const": false}
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "required": ["checkpoint_reads", "shard_opens", "real_ledger_delta", "representative_computations"],
+      "properties": {
+        "checkpoint_reads": {"const": 0},
+        "shard_opens": {"const": 0},
+        "real_ledger_delta": {"const": 0},
+        "representative_computations": {"const": 0}
+      }
+    }
+  }
+}

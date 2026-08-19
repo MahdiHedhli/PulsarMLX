@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.autonomous-loop-builder-repair-evidence",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "source_review": {
+    "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-01-independent-review.json",
+    "sha256": "22b9008c00d2176ec557facc61e40ab9c6d93e5ca9373174dee71e96cf59df42",
+    "verdict": "REJECT"
+  },
+  "repaired_authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.json",
+    "sha256": "dc736e4061e4847c2f847f7c0e63e8d9a5ea92387043d13e4c111de1801b79f9",
+    "status": "PREPARED_REVIEW_REQUIRED",
+    "real_event_authorized": false
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_m1f0_validation_executor.py",
+    "sha256": "e34eb6a6d552440c3e72e203268ff003d68ec9229ac5227cb7ac30001d21a3ab",
+    "production_shape": "9_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_S0",
+    "synthetic_and_production_use_same_state_machine": true
+  },
+  "bindings": {
+    "retained_input_manifest_sha256": "207a096eec6b02f8a3d95911d890f3e4da5fc53ae9cd9a4372d099e3c0b73824",
+    "stage_vocabulary_sha256": "ac1e86652dd475ef7c8049faa5eccc838b677497dbda77da570c8ee33cab130f",
+    "executable_schema_sha256": "15f6273383fc50fcb9d3c1aab0247552b96b1ce8d303b67357b0e743f6453738",
+    "validator_sha256": "172645b54f39123323d450d00c2a74bbab9736df8d1f5bdc645315223ecfb712",
+    "test_sha256": "6ac26f161df751f527edbb04addc2d094ceb7d845d6f1ad75a18bf84f2a7a6bd",
+    "rehearsal_sha256": "9dd6e2129a3df1b5a44240ff96e48f5180046b06879bc881a74ec34ef3c11faa"
+  },
+  "finding_disposition": {
+    "F017-C01-B01": "RESOLVED_BY_COMMITTED_PRIVATE_PACKAGE_RELATIVE_CORRECTION_BIAS_BINDING",
+    "F017-C01-B02": "RESOLVED_BY_EVENT_SHAPED_EXECUTOR_AND_REAL_GEOMETRY_REHEARSAL",
+    "F017-C01-B03": "RESOLVED_BY_EXACT_SEMANTIC_VALIDATOR_AND_TARGETED_MUTATIONS",
+    "F017-C01-B04": "RESOLVED_BY_EXECUTABLE_SCHEMA_WALK",
+    "F017-C01-N01": "RESOLVED_BY_PACKAGE_ROOT_ENV_AND_FIXED_RELATIVE_PATHS",
+    "F017-C01-N02": "RESOLVED_BY_CANONICAL_STAGE_VOCABULARY_AND_PRODUCER_ADAPTER",
+    "F017-C01-N03": "RESOLVED_BY_EXPLICIT_ROUTING_WEIGHT_OPERATION_ORDER",
+    "F017-C01-N04": "RESOLVED_BY_PINNED_SAME_ENVIRONMENT_LIBM_SCOPE",
+    "F017-C01-N05": "RESOLVED_BY_EXACT_INVENTORY_CONTENT_HASH_COMPARISON",
+    "F017-C01-D01": "RESOLVED_BY_EXPECTED_ERROR_CODE_ASSERTIONS",
+    "F017-C01-D02": "RESOLVED_IN_V2_VALIDATOR_BY_STRUCTURED_MISSING_BINDING_ERRORS",
+    "F017-C01-D03": "RESOLVED_BY_TEN_RUN_ACCEPTANCE_AND_SEPARATE_TWO_PROCESS_MINIMUM",
+    "F017-C01-D04": "RESOLVED_BY_SINGLE_COMMITTED_CATALOG_AUTHORITY_AND_EXPLICIT_RETIREMENT"
+  },
+  "validation": {
+    "v2_validator": "PASS",
+    "v2_tests": "17_TESTS_PASS",
+    "v1_regression_tests": "21_TESTS_PASS",
+    "rehearsal": "PASS_REAL_GEOMETRY_9_READS_132900864_BYTES",
+    "production_adapter": "PASS_18_OF_18_CANONICAL_STAGE_NAMES",
+    "production_decoder_smoke": "PASS_F32_Q8_0_Q5_K",
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_ledger_delta": 0
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-stage-vocabulary",
+  "schema_version": "1.0.0",
+  "canonical_stage_sha256_names": [
+    "attention_normalized",
+    "query_rank",
+    "query_rank_normalized",
+    "query_heads",
+    "kv_raw",
+    "kv_normalized",
+    "key_nope",
+    "attention_scores",
+    "attention_weights",
+    "value_heads",
+    "attention_output",
+    "post_attention_residual",
+    "router_normalized",
+    "router_logits",
+    "router_scores",
+    "ranking",
+    "selected_ids",
+    "routing_weights"
+  ],
+  "oracle_compatibility": {
+    "attention_residual": "post_attention_residual",
+    "router_scores_sha256": "router_scores",
+    "ranking_sha256": "ranking",
+    "top8_ids_sha256": "selected_ids",
+    "routing_weights_sha256": "routing_weights"
+  },
+  "canonical_producer_requirement": "EXECUTOR_EMITS_CANONICAL_NAMES_DIRECTLY",
+  "expert_stage_names_authorized": false
+}

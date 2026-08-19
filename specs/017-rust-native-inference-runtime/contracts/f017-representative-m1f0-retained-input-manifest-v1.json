@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-retained-input-manifest",
+  "schema_version": "1.0.0",
+  "package_root_resolution": {
+    "kind": "PRIVATE_ENVIRONMENT_ROOT",
+    "environment_variable": "PULSARMLX_F017_REPRESENTATIVE_RETAINED_ROOT",
+    "checkpoint_fallback": false,
+    "absolute_path_publication": false
+  },
+  "consume_what_was_validated": "OPEN_ONCE_FSTAT_HASH_CONSUME_AND_AFTER_HASH_SAME_DESCRIPTOR",
+  "storage_rule": "REGULAR_READ_ONLY_NON_SYMLINK_SINGLE_LINK_NO_WRITABLE_ALIAS",
+  "artifacts": [
+    {
+      "artifact_id": "canonical_s0",
+      "relative_path": "canonical/layer_3_entry.f32le",
+      "semantic_role": "CANONICAL_LAYER3_ENTRY_PRE_ATTENTION",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "byte_length": 24576,
+      "authority": "DPREFIX_EXACT_1_PERSISTED_AUTHORITY"
+    },
+    {
+      "artifact_id": "ffn_norm",
+      "relative_path": "router/ffn_norm_weight.bin",
+      "semantic_role": "POST_ATTENTION_FFN_RMSNORM_WEIGHT",
+      "sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "byte_length": 24576,
+      "authority": "PERSISTED_DECODED_AUTHORITY"
+    },
+    {
+      "artifact_id": "router_matrix",
+      "relative_path": "router/router_matrix.bin",
+      "semantic_role": "REPRESENTATIVE_ROUTER_MATRIX",
+      "sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+      "dtype": "little-endian-f32",
+      "shape": [256, 6144],
+      "byte_length": 6291456,
+      "authority": "PERSISTED_DECODED_AUTHORITY"
+    },
+    {
+      "artifact_id": "correction_bias",
+      "relative_path": "router/correction_bias.bin",
+      "semantic_role": "REPRESENTATIVE_ROUTER_CORRECTION_BIAS",
+      "sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491",
+      "dtype": "little-endian-f32",
+      "shape": [256],
+      "byte_length": 1024,
+      "authority": "ACCEPTED_M1F0_PERSISTED_DECODED_AUTHORITY"
+    }
+  ],
+  "preopen_rule": "EXPECTED_SHA_EQUALS_BEFORE_SHA_AND_ALL_STORAGE_CHECKS_BEFORE_SHARD_OPEN",
+  "postuse_rule": "EXPECTED_SHA_EQUALS_BEFORE_SHA_EQUALS_AFTER_SHA",
+  "new_checkpoint_reads": 0
+}

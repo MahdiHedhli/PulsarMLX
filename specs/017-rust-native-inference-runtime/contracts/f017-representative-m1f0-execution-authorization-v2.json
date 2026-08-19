@@ -1,0 +1,138 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-execution-authorization-repaired",
+  "schema_version": "2.0.0",
+  "authorization_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1-AUTHORIZATION-V2",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "supersedes": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v1.json",
+    "sha256": "e46874b05d2f5946f5b6c0dc9ac4beeb50628a2ebc28f16d0b8a2fc1284627dc"
+  },
+  "event": {
+    "event_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1",
+    "attempt_id": "F017-CANONICAL-REPRESENTATIVE-M1F0-ATTENTION-ROUTER-RECOVERY-1-ATTEMPT-1"
+  },
+  "semantic_authority": {
+    "representative_boundary_v3_sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3",
+    "semantic_graph_v2_sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558",
+    "epsilon_adjudication_sha256": "fc92b11223ee174b5f206a45a6d2b50540b4c82ba5d2c2333010947d525646e4"
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_m1f0_validation_executor.py",
+    "sha256": "e34eb6a6d552440c3e72e203268ff003d68ec9229ac5227cb7ac30001d21a3ab",
+    "event_shape": "9_CHECKPOINT_READS_PLUS_3_RETAINED_ROUTER_AUTHORITIES_PLUS_1_RETAINED_S0",
+    "production_provider_injected_only_after_separate_release": true
+  },
+  "retained_inputs": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-retained-input-manifest-v1.json",
+    "sha256": "207a096eec6b02f8a3d95911d890f3e4da5fc53ae9cd9a4372d099e3c0b73824",
+    "artifact_ids": ["canonical_s0", "ffn_norm", "router_matrix", "correction_bias"],
+    "checkpoint_fallback": false
+  },
+  "stage_vocabulary": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-stage-vocabulary-v1.json",
+    "sha256": "ac1e86652dd475ef7c8049faa5eccc838b677497dbda77da570c8ee33cab130f",
+    "canonical_output_required": true
+  },
+  "schema_binding": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-authorization-v2.schema.json",
+    "sha256": "15f6273383fc50fcb9d3c1aab0247552b96b1ce8d303b67357b0e743f6453738",
+    "executable_validation_required": true
+  },
+  "synthetic_rehearsal": {
+    "path": "docs/architecture/reviews/evidence/autonomous-loop-validation/cycle-01-synthetic-rehearsal.json",
+    "sha256": "9dd6e2129a3df1b5a44240ff96e48f5180046b06879bc881a74ec34ef3c11faa",
+    "real_geometry": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_ledger_delta": 0
+  },
+  "checkpoint_binding": {
+    "catalog": {"path":"docs/research/glm52/raw/f016-c01-catalog-0001.json","sha256":"135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"},
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "tensor_map_sha256": "ea0786f0e890af01dc111d355ef64aec1ca4898de5432197258bacccfaecc223",
+    "shard": {"ordinal": 2, "basename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"},
+    "planning_contract_catalog_disposition": "RETIRED_AS_NONAUTHORITATIVE_FOR_V2; COMMITTED_CATALOG_ABOVE_IS_SOLE_METADATA_AUTHORITY"
+  },
+  "attention_payload_inventory": [
+    {"ordinal":0,"key":"blk.3.attn_norm.weight","role":"attention_norm","shard":2,"offset":2008634208,"packed_bytes":24576,"quantization":"F32","logical_shape":[6144],"packed_sha256":"8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85","decoded_sha256":"8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85"},
+    {"ordinal":1,"key":"blk.3.attn_q_a.weight","role":"query_rank_a","shard":2,"offset":2077864800,"packed_bytes":8650752,"quantization":"Q5_K","logical_shape":[2048,6144],"packed_sha256":"30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579","decoded_sha256":"35e4f06b179cee97d791476882e2f1ed7ebbaa4ecd7c7e5a3e108a2c42520c45"},
+    {"ordinal":2,"key":"blk.3.attn_q_a_norm.weight","role":"query_rank_norm","shard":2,"offset":2086515552,"packed_bytes":8192,"quantization":"F32","logical_shape":[2048],"packed_sha256":"faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f","decoded_sha256":"faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f"},
+    {"ordinal":3,"key":"blk.3.attn_q_b.weight","role":"query_heads","shard":2,"offset":2086523744,"packed_bytes":35651584,"quantization":"Q8_0","logical_shape":[16384,2048],"packed_sha256":"c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47","decoded_sha256":"5cff2689826b4608162dae7932f2187aa31ff5e2063655a62fce0a17ac185623"},
+    {"ordinal":4,"key":"blk.3.attn_kv_a_mqa.weight","role":"compressed_kv","shard":2,"offset":2004872032,"packed_bytes":3760128,"quantization":"Q8_0","logical_shape":[576,6144],"packed_sha256":"8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053","decoded_sha256":"332ce4d35767105dbef7e98c2ddb1093e624188d71a068dbca58579ff5c259ac"},
+    {"ordinal":5,"key":"blk.3.attn_kv_a_norm.weight","role":"compressed_kv_norm","shard":2,"offset":2008632160,"packed_bytes":2048,"quantization":"F32","logical_shape":[512],"packed_sha256":"ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4","decoded_sha256":"ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4"},
+    {"ordinal":6,"key":"blk.3.attn_k_b.weight","role":"key_heads","shard":2,"offset":1998187360,"packed_bytes":6684672,"quantization":"Q8_0","logical_shape":[64,512,192],"packed_sha256":"9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f","decoded_sha256":"89c38fc8661405b675c738de4a7ac6115931c492b00231b4e1c4562676f6b7ff"},
+    {"ordinal":7,"key":"blk.3.attn_v_b.weight","role":"value_heads","shard":2,"offset":2122175328,"packed_bytes":8912896,"quantization":"Q8_0","logical_shape":[64,256,512],"packed_sha256":"86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367","decoded_sha256":"3e4a176c261d7f9e612fc7f7dc7047cb9c7b338cdce71c47527aa7224f92f3a7"},
+    {"ordinal":8,"key":"blk.3.attn_output.weight","role":"attention_output","shard":2,"offset":2008658784,"packed_bytes":69206016,"quantization":"Q5_K","logical_shape":[6144,16384],"packed_sha256":"30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084","decoded_sha256":"2cd327fb89256c1d4a920fff53a47994f294a67eb17e640785b616d7c9c8e5e8"}
+  ],
+  "read_contract": {
+    "ordering": "STRICT_ASCENDING_ORDINAL_0_THROUGH_8",
+    "read_primitive": "ONE_EXACT_SIZE_POSITIONAL_READ_PER_ENTRY",
+    "expected_reads": 9,
+    "expected_packed_bytes": 132900864,
+    "maximum_shard_opens": 1,
+    "retain_before_receipt": true,
+    "durable_receipt_before_next_read": true,
+    "dynamic_discovery": false,
+    "additional_reads": false,
+    "fallback": false,
+    "retries": false
+  },
+  "ledger_contract": {
+    "before": 166,
+    "after_success": 175,
+    "after_n_durable_receipts": "166+N",
+    "increment_unit": "DURABLE_EXACT_SIZE_READ_RECEIPT",
+    "shard_open_increment": 0,
+    "short_read_increment": 0,
+    "partial_failure": "TERMINAL_NO_RESUME_NO_RETRY"
+  },
+  "failure_contract": {
+    "attempt_count": 1,
+    "automatic_retry": false,
+    "automatic_resume": false,
+    "second_attempt_authorized": false,
+    "continue_after_failure": false,
+    "decoder_disagreement": "TERMINAL_NO_SELECTION_NO_FURTHER_READ",
+    "interrupted_attempt": "RECONCILE_DURABLE_RECEIPTS_TERMINALIZE_NEVER_RESUME"
+  },
+  "execution_semantics": {
+    "device": "CPU_ONLY",
+    "gpu_dispatches": 0,
+    "blas": false,
+    "backend_dependent_reduction": false,
+    "arithmetic": "STRICT_IEEE754_BINARY32_FIXED_INCREASING_INDEX_PER_OPERATION_ROUNDING",
+    "rmsnorm": {"epsilon_source":"f32(1e-5)","epsilon_exact_decimal":"9.999999747378752e-6","epsilon_bits_hex":"0x3727c5ac","epsilon_dtype":"IEEE-754 binary32","accumulator_dtype":"IEEE-754 binary32","reduction_order":"INCREASING_ELEMENT_INDEX"},
+    "attention": {"position":0,"visible_positions":[0],"rope":"POSITION_ZERO_IDENTITY","softmax":"ONE_VISIBLE_VALUE_EXACT_WEIGHT_ONE","residual":"S1_ELEMENTWISE_F32_ADD_S0_PLUS_ATTENTION_OUTPUT_ONCE"},
+    "router": {"probabilities":"BINARY64_SIGMOID_VIA_PINNED_ENVIRONMENT_LIBM_EXP","scores":"P_I + F64(F32_CORRECTION_BIAS_I)","ranking":"SCORE_DESCENDING_EXPERT_ID_ASCENDING_TIE_BREAK","selection":"TOP_8_MEMBERSHIP","weights":"(P_I / MAX(FSUM_SELECTED_P, 2^-14)) * 2.5"},
+    "environment_scope": {"platform":"DARWIN_ARM64","cpython":"3.13.13","numpy":"2.4.5","libm":"SAME_PINNED_PRODUCTION_ENVIRONMENT_FOR_ALL_REPRODUCTIONS"}
+  },
+  "output_contract": {
+    "stage_vocabulary":"EXACT_BOUND_CANONICAL_SET",
+    "finite_checks_required":true,
+    "retained_only_reproduction_runs":10,
+    "minimum_fresh_processes":2,
+    "required_stage_identity":"10_OF_10_EXACT",
+    "route_identity":"10_OF_10_EXACT",
+    "checkpoint_rereads":0,
+    "retained_before_after_rehash":true
+  },
+  "surface_separation": {
+    "direct_dprefix_inputs": false,
+    "representative_route_source": "NEW_POST_ATTENTION_RESIDUAL_ONLY",
+    "prohibited_identities": ["PRE_ATTENTION_ENTRY_TO_FFN_DIRECT_ANALYTICAL_ROUTE","DIRECT_DPREFIX_SELECTED_EXPERT_OUTPUTS","DIRECT_DPREFIX_SHARED_OUTPUT","DIRECT_DPREFIX_ROUTED_AGGREGATE","e9427e22ef86f161786cfcf22a74b92c1cca50e3d601c6c119633d1458904594"]
+  },
+  "stop_boundary": "AFTER_REPRESENTATIVE_ROUTE_BEFORE_ANY_EXPERT_EXECUTION",
+  "authorization": {
+    "real_event_authorized": false,
+    "checkpoint_access_authorized": false,
+    "independent_adversarial_review_required": true,
+    "execution_release_required_after_review": true,
+    "expert_execution_authorized": false,
+    "shared_expert_execution_authorized": false,
+    "candidate_or_model_dispatch_authorized": false,
+    "M1_F_authorized": false,
+    "M1_G_authorized": false,
+    "P1_authorized": false
+  },
+  "isolation": {"checkpoint_reads":0,"shard_opens":0,"real_ledger_delta":0,"representative_computations":0}
+}
