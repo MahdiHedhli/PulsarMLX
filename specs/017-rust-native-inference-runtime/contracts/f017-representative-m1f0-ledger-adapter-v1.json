@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-authoritative-ledger-adapter",
+  "schema_version": "1.0.0",
+  "normalized_field": "current_ledger",
+  "expected_current_ledger": 166,
+  "sources": [
+    {
+      "role": "cumulative_real_payload_ledger",
+      "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+      "sha256": "c68be19f2840dea612e8b20ff2933751800555c80ae66fcfbbff02086bbe18c0",
+      "schema": "pulsarmlx.f017.real-payload-access-ledger",
+      "schema_version": "1.0.0",
+      "field": "cumulative_tensor_payloads",
+      "required_equals": {}
+    },
+    {
+      "role": "canonical_shared_expert_terminal_recovery",
+      "path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-result-v1.json",
+      "sha256": "971c371ce7b1220f612f941c76c0fe359f122c8ff6f3643711fab946d11eff24",
+      "schema": "pulsarmlx.f017.canonical-shared-expert-recovery-public-result",
+      "schema_version": "1.0.0",
+      "field": "ledger_after",
+      "required_equals": {
+        "attempt_id": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+        "classification": "COMPLETE",
+        "consumed_read_count": 3,
+        "event_id": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1",
+        "ledger_before": 163,
+        "reason_code": "COMPLETE",
+        "shard_open_count": 1
+      }
+    }
+  ],
+  "normalization": {
+    "authorized_source_representations": 2,
+    "fallback_field_paths": false,
+    "require_exact_artifact_sha256": true,
+    "require_exact_schema_and_version": true,
+    "require_integer_not_boolean": true,
+    "require_source_agreement": true,
+    "require_expected_value": true
+  },
+  "failure_policy": {
+    "fail_before_attempt_start": true,
+    "fail_before_shard_open": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "ledger_mutation": false
+  }
+}

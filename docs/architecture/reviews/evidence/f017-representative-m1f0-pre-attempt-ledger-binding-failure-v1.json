@@ -1,0 +1,72 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-pre-attempt-ledger-binding-failure",
+  "schema_version": "1.0.0",
+  "classification": "PRE_ATTEMPT_FAIL_CLOSED_ZERO_CONSUMPTION",
+  "invocation": {
+    "repository_head": "18a58c1e1353ae4fb9003f9e47a53da369e5ea22",
+    "process_exit": 1,
+    "failure_phase": "AUTHORITATIVE_LEDGER_PREOPEN_PREFLIGHT",
+    "exception": "KeyError: ledger",
+    "durable_attempt_start": false,
+    "checkpoint_payload_reads": 0,
+    "packed_bytes_consumed": 0,
+    "shard_opens": 0,
+    "durable_receipts": 0,
+    "terminal_record": false,
+    "route_result": false,
+    "required_stage_hashes": 0,
+    "retained_only_reproductions": 0
+  },
+  "ledger": {
+    "before": 166,
+    "after": 166,
+    "evidence_path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+    "evidence_sha256": "c68be19f2840dea612e8b20ff2933751800555c80ae66fcfbbff02086bbe18c0"
+  },
+  "failed_consumer": {
+    "path": "scripts/research/f017_representative_m1f0_release_wrapper_v1.py",
+    "sha256": "0cc047cd6208a463124e6b2e382fb0d95baffd4c5d5afbdb03cf8580029a0b67",
+    "bound_source_path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-result-v1.json",
+    "field_path_expected": ["ledger", "after"]
+  },
+  "authoritative_producer": {
+    "path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-result-v1.json",
+    "sha256": "971c371ce7b1220f612f941c76c0fe359f122c8ff6f3643711fab946d11eff24",
+    "schema": "pulsarmlx.f017.canonical-shared-expert-recovery-public-result",
+    "schema_version": "1.0.0",
+    "canonical_field": "ledger_after",
+    "value": 166
+  },
+  "root_cause": {
+    "classification": "CONSUMER_FIELD_PATH_MISMATCH_NOT_PRODUCER_SCHEMA_DRIFT",
+    "detail": "The wrapper bound the canonical shared-expert public-result artifact but used the nested ledger.after representation belonging to a different evidence-review surface. The bound producer has always declared top-level ledger_after under schema 1.0.0.",
+    "permissive_fallback_allowed": false
+  },
+  "release_v1": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-single-use-execution-release-v1.json",
+    "sha256": "914e07f12b968df700aa8868ce0888183f83fd77c9c0684302801f8ad09ca1e4",
+    "attempt_started": false,
+    "release_consumed": false,
+    "execution_disposition": "SUPERSEDED_FOR_EXECUTION_BY_APPEND_ONLY_WRAPPER_REPAIR_PENDING_INDEPENDENT_REVIEW"
+  },
+  "operator_token": {
+    "sha256": "ec4adc38a91951abc80aa7a48d4e3ab7b20c605300129149dd9a6a5e7fe98755",
+    "consumed": false,
+    "authorized_for_repaired_wrapper": false
+  },
+  "repair": {
+    "ledger_adapter_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-ledger-adapter-v1.json",
+    "ledger_adapter_contract_sha256": "20a0719fd847254c1c7b9f053b9d9df0d0b380177f4914f62f826149fa91c87f",
+    "ledger_adapter_path": "scripts/research/f017_representative_m1f0_ledger_adapter_v1.py",
+    "ledger_adapter_sha256": "ea0e54569499cd7b3fbd3d07ec107ee51c20a86327b9050ec7070b1218c03198",
+    "wrapper_v2_path": "scripts/research/f017_representative_m1f0_release_wrapper_v2.py",
+    "wrapper_v2_sha256": "29a6c05d1206c5f97bfcbabdb21b1299d9dbb35ffcba7eaffe1ee11526525fa8",
+    "execution_authorized": false
+  },
+  "historical_immutability": {
+    "authorization_v3_sha256": "d42c5a948c6e73d5003c80dbef3da9c53fe53aee6cf2261ed0f193058f9631c6",
+    "release_v1_sha256": "914e07f12b968df700aa8868ce0888183f83fd77c9c0684302801f8ad09ca1e4",
+    "release_v1_approval_sha256": "4ea1d3eb5af5ac590173e911e62e22435852d9fbc1bf30fc0088cec3a664a9bf"
+  },
+  "next_action": "INDEPENDENTLY_REVIEW_APPEND_ONLY_LEDGER_ADAPTER_WRAPPER_V2_AND_RELEASE_V2_BEFORE_ANY_NEW_OPERATOR_TOKEN_OR_EXECUTION"
+}

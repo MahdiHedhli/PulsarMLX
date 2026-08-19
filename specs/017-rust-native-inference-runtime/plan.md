@@ -467,3 +467,25 @@ Gate: the release remains `PREPARED_FOR_INDEPENDENT_APPROVAL`,
 `real_event_authorized=false`, checkpoint reads and shard opens remain zero,
 the real ledger remains 166, and separate independent release approval is the
 only next action.
+
+## Phase 30 — Representative M1-F0 pre-attempt ledger-binding repair
+
+- Preserve authorization v3, release v1, its independent approval, and the
+  accepted wrapper v1 byte-for-byte after the one authorized invocation failed
+  before attempt start with zero reads and zero shard opens.
+- Normalize the two exact committed ledger authorities through a versioned
+  adapter that binds artifact hashes, schemas, versions, provenance fields,
+  top-level field names, integer types, cross-source agreement, and ledger 166
+  without legacy-field fallback.
+- Bind an append-only wrapper v2 to that adapter and make preflight-only execute
+  the real ledger reconstruction that wrapper v1 skipped.
+- Regress the exact public-result `ledger_after` shape plus missing, malformed,
+  stale, nested-substitution, schema-drift, wrong-value, and disagreement cases.
+- Prepare release v2 against the repaired execution-code commit while keeping
+  approval and real-event authority false and rejecting the release-v1 token.
+
+Gate: the former `KeyError: ledger` case passes checkpoint-free through wrapper
+v2, malformed authority fails before attempt start, no state root exists,
+checkpoint reads and shard opens remain zero, the ledger remains 166, and a
+fresh independent review and separate approval/token are required before any
+real execution.
