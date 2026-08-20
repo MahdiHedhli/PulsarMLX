@@ -434,7 +434,7 @@ def validate_review_chain(release: dict[str, Any], approval: dict[str, Any]) -> 
     require(committed_review.returncode == 0 and sha256_bytes(committed_review.stdout) == review_sha, "RELEASE_REVIEW_NOT_COMMITTED")
 
 
-def validate_approval_document(release: dict[str, Any], approval: dict[str, Any]) -> None:
+def validate_approval_document(release: dict[str, Any], approval: dict[str, Any], release_sha256: str) -> None:
     expected_approval_keys = {
         "schema", "schema_version", "event_id", "release_id", "attempt_id", "release_sha256",
         "authorization_sha256", "arithmetic_contract_sha256", "execution_code_head", "reviewed_head",
@@ -448,7 +448,7 @@ def validate_approval_document(release: dict[str, Any], approval: dict[str, Any]
     require(approval.get("schema") == "pulsarmlx.f017.representative-ffn-composition-single-use-release-independent-approval", "APPROVAL_SCHEMA")
     require(approval.get("schema_version") == "2.0.0" and approval.get("verdict") == "ACCEPT", "APPROVAL_VERDICT")
     require((approval.get("event_id"), approval.get("release_id"), approval.get("attempt_id")) == (EVENT_ID, RELEASE_ID, ATTEMPT_ID), "APPROVAL_IDENTITIES")
-    require(approval.get("release_sha256") == sha256_path(release_path), "APPROVAL_RELEASE")
+    require(approval.get("release_sha256") == release_sha256, "APPROVAL_RELEASE")
     require(approval.get("authorization_sha256") == AUTHORIZATION_SHA, "APPROVAL_AUTHORIZATION")
     require(approval.get("arithmetic_contract_sha256") == ARITHMETIC_SHA, "APPROVAL_ARITHMETIC")
     require(approval.get("execution_code_head") == release.get("authoritative_execution_code_head"), "APPROVAL_CODE_HEAD")
@@ -464,7 +464,7 @@ def validate_approval_document(release: dict[str, Any], approval: dict[str, Any]
 def authorize(release_path: Path, approval_path: Path, token_path: Path) -> None:
     release = load(release_path)
     approval = load(approval_path)
-    validate_approval_document(release, approval)
+    validate_approval_document(release, approval, sha256_path(release_path))
     validate_review_chain(release, approval)
     expected_token = {
         "approval_sha256": sha256_path(approval_path),

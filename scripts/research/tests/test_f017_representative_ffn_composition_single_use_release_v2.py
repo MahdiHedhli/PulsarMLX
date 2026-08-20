@@ -50,7 +50,7 @@ class FFNReleaseV2Tests(unittest.TestCase):
         candidate = copy.deepcopy(self.release)
         mutation(candidate)
         with self.assertRaises((validator.ValidationError, KeyError, TypeError)):
-            validator.validate(candidate, repo=False)
+            validator.validate(candidate, repo=True)
 
     def approval(self) -> dict:
         return {
@@ -122,7 +122,7 @@ class FFNReleaseV2Tests(unittest.TestCase):
     def test_exact_approval_schema_and_authority_fields(self) -> None:
         approval = self.approval()
         approval["release_sha256"] = wrapper.sha256_path(wrapper.RELEASE)
-        wrapper.validate_approval_document(self.release, approval)
+        wrapper.validate_approval_document(self.release, approval, wrapper.sha256_path(wrapper.RELEASE))
         mutations = [
             lambda d: d.pop("release_review_sha256"),
             lambda d: d.__setitem__("extra", True),
@@ -141,7 +141,7 @@ class FFNReleaseV2Tests(unittest.TestCase):
             candidate = copy.deepcopy(approval)
             mutation(candidate)
             with self.subTest(index=index), self.assertRaises(wrapper.ReleaseError):
-                wrapper.validate_approval_document(self.release, candidate)
+                wrapper.validate_approval_document(self.release, candidate, wrapper.sha256_path(wrapper.RELEASE))
 
     def test_review_sha_head_and_reviewer_are_enforced(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
