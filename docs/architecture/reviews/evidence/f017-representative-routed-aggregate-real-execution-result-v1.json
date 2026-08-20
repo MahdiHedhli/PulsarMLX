@@ -1,0 +1,100 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-real-execution-result",
+  "schema_version": "1.0.0",
+  "result": "SUCCESS",
+  "execution_head": "d54e2e921315d744ecd7ef68ae5173bb7fac7b37",
+  "process_exit": 0,
+  "bindings": {
+    "release_sha256": "978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d",
+    "independent_approval_sha256": "542a434b68b3f92ca6062c5c2fb93f1bae3a775214b78b2848e8bbec22eab334",
+    "go_token_sha256": "9baad538d761d91196eab6c0eddbfe0d5169ed05f1c131bce3e7fe588c517c8c",
+    "authorization_sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590",
+    "arithmetic_contract_sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2",
+    "executor_sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5",
+    "wrapper_sha256": "3e2e72917af2f82abdb8e411ce81b6cc27b794877130d53f8636f5102cd3456c",
+    "expert_output_reuse_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"
+  },
+  "attempt": {
+    "event_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1",
+    "release_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-RELEASE-1",
+    "attempt_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-ATTEMPT-1",
+    "attempt_start_present": true,
+    "attempt_start_sha256": "534b58887b7cb1f9245d64710d89dd575c323cc0d499bb30dc3c77a6c146e0c9",
+    "aggregate_start_present": true,
+    "aggregate_start_sha256": "6bc805c140803fea1b54773d9e50d52d4fe00f3d5bac93887e95754125f93b7b",
+    "terminal_sha256": "c8714129bbd4f20e7fac647576b62d7859d73b33afd50e26a0e2a9d096b30320",
+    "token_consumed": true,
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 1,
+    "production_serial_f32_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "arithmetic_surface": {
+    "classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "input_dtype": "little-endian-f32",
+    "input_shape": [6144],
+    "promotion": "EXACT_BINARY32_TO_BINARY64",
+    "weight_dtype": "binary64",
+    "multiplication": "binary64",
+    "accumulation": "CPYTHON_3_14_6_MATH_FSUM_FIXED_REPRESENTATIVE_ORDER",
+    "canonical_expert_order": [250, 10, 237, 62, 73, 177, 218, 28],
+    "production_serial_f32": "NOT_EXECUTED_UNAUTHORIZED_SURFACE"
+  },
+  "input_identities": [
+    {"ordinal": 0, "expert_id": 250, "routing_weight": 0.7487501576296707, "relative_path": "00-expert-250-down.f32le", "expected_before_sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b", "after_sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 1, "expert_id": 10, "routing_weight": 0.3348627106807668, "relative_path": "01-expert-10-down.f32le", "expected_before_sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3", "after_sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 2, "expert_id": 237, "routing_weight": 0.23863270273063697, "relative_path": "02-expert-237-down.f32le", "expected_before_sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b", "after_sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 3, "expert_id": 62, "routing_weight": 0.23688715675086147, "relative_path": "03-expert-62-down.f32le", "expected_before_sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128", "after_sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 4, "expert_id": 73, "routing_weight": 0.2514906203405492, "relative_path": "04-expert-73-down.f32le", "expected_before_sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3", "after_sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 5, "expert_id": 177, "routing_weight": 0.23059957299763345, "relative_path": "05-expert-177-down.f32le", "expected_before_sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201", "after_sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 6, "expert_id": 218, "routing_weight": 0.22915341148588297, "relative_path": "06-expert-218-down.f32le", "expected_before_sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d", "after_sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1},
+    {"ordinal": 7, "expert_id": 28, "routing_weight": 0.22962366738399842, "relative_path": "07-expert-28-down.f32le", "expected_before_sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0", "after_sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0", "identity_unchanged": true, "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "mode": "0400", "nlink": 1}
+  ],
+  "output": {
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs/routed-aggregate.f64le",
+    "present": true,
+    "authority": true,
+    "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "finite": true,
+    "minimum": -0.02444298162439478,
+    "maximum": 0.028916948888660778,
+    "mode": "0400",
+    "nlink": 1,
+    "publication": "DESCRIPTOR_RELATIVE_EXCLUSIVE_TEMP_FSYNC_LINK_NOREPLACE_PARENT_FSYNC_DESCRIPTOR_READBACK",
+    "complete_terminal_identity_required": true
+  },
+  "terminal": {
+    "disposition": "COMPLETE",
+    "reconstructed_disposition": "COMPLETE_RECONSTRUCTED",
+    "output_sha256_matches": true,
+    "output_authority": true,
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 1,
+    "stop_boundary": "AFTER_ROUTED_AGGREGATE_ONLY"
+  },
+  "historical_and_downstream_prohibitions": {
+    "historical_direct_dprefix_outputs_used": false,
+    "production_serial_f32_used": false,
+    "shared_expert_executed": false,
+    "ffn_completed": false,
+    "s2_constructed": false,
+    "checkpoint_accessed": false
+  }
+}
