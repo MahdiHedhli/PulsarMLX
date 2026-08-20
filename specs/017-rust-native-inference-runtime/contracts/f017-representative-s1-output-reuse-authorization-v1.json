@@ -1,0 +1,148 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-output-reuse-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-S1-OUTPUT-REUSE-1",
+  "consumer_id": "F017-REPRESENTATIVE-S2-PREPARATION-1",
+  "preparation_base_head": "dbcf1dc5cafde118e7904b3e6174389215758182",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "real_event_authorized": false,
+  "source_authority": {
+    "execution_evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-real-execution-result-v1.json",
+      "sha256": "ea924afbc8972c194adc9d8a9759e1fca35ae8c2ab362225477cb4c54229fb55"
+    },
+    "materialization_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-materialization-authorization-v1.json",
+      "sha256": "f2efce04a1047d0e31b16f44e976a8b2b3102b340a6e3adfac32dfdf73f3ce0f"
+    },
+    "single_use_release_v2": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-materialization-single-use-release-v2.json",
+      "sha256": "c441f956122cba6866a6729248d092584c4b1ee7e9d574bd98cffe9d74247424"
+    },
+    "independent_release_approval": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-single-use-release-v2-independent-approval-v1.json",
+      "sha256": "e2729bb1c8aee5ef8cc1b9920bfa832c4eb2ffcb72b782e8df20af1698f36108"
+    },
+    "approval_review": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-release-v2-approval-cycle-01-independent-review.json",
+      "sha256": "f3104e4a0ffdfb4399f56fa4cef57a53e70ce37f9e2274983a986c64550794b1"
+    },
+    "release_review": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-cycle-02-independent-review.json",
+      "sha256": "bd56546e21f8291864afbc0775681d63113f1629178c53ca49e7c8e79ae541d7"
+    },
+    "execution_code_head": "6272f3b846b62d11ba27a6ce5a5bfbdb6fae3fac"
+  },
+  "completed_attempt": {
+    "event_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1",
+    "release_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-RELEASE-2",
+    "attempt_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-ATTEMPT-1",
+    "attempt_start": {"relative_path":"attempt-start.json","sha256":"bf883109e3ffae39e60ccfd689e6fd3ae9703fa3399d3bfb5ec5ab0ad25ff41c","byte_length":363},
+    "materialization_start": {"relative_path":"materialization-start.json","sha256":"d1ff891432e86fda733a870545b8ecdb6601493ce8f3781e266ef765474ac5fe","byte_length":213},
+    "receipt": {"relative_path":"s1-execution-receipt.json","sha256":"fca40fd446d7b4098e60d0f9fdcc55c3181bdfb757d8e6065e671b9c9ab6a0dc","byte_length":1383},
+    "terminal": {"relative_path":"terminal.json","sha256":"72a8131e2b7c8de8bd3cf57aa12aaab4989606354cdd93a4f04781dbc52026c9","byte_length":364,"status":"COMPLETE","output_authority":true},
+    "token_consumed": true,
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "source_lineage": {
+    "canonical_s0_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "attention_payload_count": 9,
+    "attention_payload_sha256": {
+      "blk.3.attn_norm.weight": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85",
+      "blk.3.attn_q_a.weight": "30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579",
+      "blk.3.attn_q_a_norm.weight": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f",
+      "blk.3.attn_q_b.weight": "c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47",
+      "blk.3.attn_kv_a_mqa.weight": "8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053",
+      "blk.3.attn_kv_a_norm.weight": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4",
+      "blk.3.attn_k_b.weight": "9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f",
+      "blk.3.attn_v_b.weight": "86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367",
+      "blk.3.attn_output.weight": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084"
+    },
+    "all_expected_equals_before_equals_consumed_equals_after": true,
+    "accepted_attention_reproduction": "10_OF_10_RETAINED_ONLY_EXACT_STAGE_IDENTITY",
+    "new_attention_execution": false,
+    "checkpoint_reconstruction": false
+  },
+  "private_manifest": {
+    "relative_path": "representative-s1-private-manifest-v1.json",
+    "sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+    "byte_length": 427,
+    "machine_local_root_not_committed": true,
+    "machine_local_absolute_path_not_committed": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true
+  },
+  "retained_s1": {
+    "relative_path": "representative-s1.f32le",
+    "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "semantic_role": "REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL",
+    "stage_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "formula": "S1 = f32(S0 + layer3_attention_output)",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "finite": true,
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_once_consume_same_descriptor": true,
+    "fstat_before_and_after": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true,
+    "no_writable_alias": true
+  },
+  "reproduction_adjudication": {
+    "additional_post_event_materialization_authorized": false,
+    "additional_post_event_materialization_performed": false,
+    "required_for_reuse_acceptance": false,
+    "adjudication": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+    "basis": "PRECOMMITTED_EXPECTED_SHA_PLUS_EXACT_RETAINED_BYTES_COMPLETE_TERMINAL_MANIFEST_RECEIPT_SOURCE_IDENTITIES_AND_ACCEPTED_10_OF_10_ATTENTION_REPRODUCTION",
+    "retroactive_execution_authority_expansion": false,
+    "future_reproduction_requires_separate_authority": true
+  },
+  "resolver": {
+    "path": "scripts/research/f017_representative_s1_output_reuse_v1.py",
+    "sha256": "d2ac1f4d5e43fb57dde67dd907d2a86e0adaba922f564a41a8117b98e405feef",
+    "checkpoint_capability": false,
+    "shard_capability": false,
+    "attention_compute_capability": false,
+    "s1_materialization_capability": false,
+    "ffn_artifact_capability": false,
+    "ffn_compute_capability": false,
+    "s2_compute_capability": false
+  },
+  "consumer_scope": {
+    "allowed": "CHECKPOINT_FREE_REPRESENTATIVE_S2_PREPARATION_AND_INPUT_AUTHORITY_ONLY",
+    "s1_release_v2_rerun": false,
+    "attention_reconstruction": false,
+    "ffn_artifact_consumption": false,
+    "s2_construction": false
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "s1_release_v2_reruns": 0,
+    "new_s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0
+  },
+  "prohibitions": {
+    "checkpoint_access": true,
+    "shard_open": true,
+    "attention_execution_or_reconstruction": true,
+    "s1_release_v2_rerun": true,
+    "new_s1_materialization": true,
+    "alternate_or_historical_s1": true,
+    "ffn_artifact_consumption_or_recomputation": true,
+    "s2_construction": true
+  },
+  "stop_boundary": "AFTER_S1_OUTPUT_REUSE_PREFLIGHT_BEFORE_FFN_CONSUMPTION_OR_S2_CONSTRUCTION",
+  "next_authority": "SEPARATE_CHECKPOINT_FREE_S2_PREPARATION_AUTHORITY"
+}
