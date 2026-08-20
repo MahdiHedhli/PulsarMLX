@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-single-use-release-v2-independent-approval-review",
+  "schema_version": "1.0.0",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_APPROVER",
+  "reviewer_model": "claude-fable-5",
+  "reviewed_head": "232d19d7573701805c683d7d02278ea21b956ebd",
+  "approval_path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-single-use-release-v2-independent-approval-v1.json",
+  "approval_sha256": "03ce0086ef955f3edfd7a9b218a72d6c8a2caa55bf40ec188a155c8924ab636b",
+  "release_sha256": "f6aa2133e91c9fc1639f3424e656f6db94677c71e7e1e03c64c5212bbed8f5b6",
+  "release_review_sha256": "959fbb2bf8f5efad33402364ed05921ff29abcea1493b62d684f61c55532d55e",
+  "release_reviewed_head": "626b614c087f66a7991dd2f1adf9c52c42e75581",
+  "execution_code_head": "0c5ac29777e78aa8a2755feb378ab47dbcfaae0b",
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-A1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "GO-token census enforced by parsed-object equality rather than canonical token bytes",
+      "evidence": "scripts/research/f017_representative_ffn_composition_release_wrapper_v2.py authorize() enforces the eight-field token census via dict equality against the expected object (duplicate keys rejected by the unique object_pairs_hook), so token byte-level canonicalization and key order are not constrained. Independently exercised the committed authorize() at head 232d19d7573701805c683d7d02278ea21b956ebd: missing-field, extra-field (including a direct release_review_sha256 field), wrong-disposition, forged-approval-sha, v1-release-sha, real_event_authorized=false, and wrong-attempt-id tokens all reject with GO_TOKEN; no authority is lost because approval_sha256 binds the exact approval bytes and the census is exact.",
+      "required_action": "None for v2. If a future revision records the token hash into durable state semantics beyond attempt-start, consider requiring canonical_json token bytes for uniform hashing."
+    }
+  ],
+  "statement": "REPRESENTATIVE FFN COMPOSITION SINGLE-USE RELEASE V2 APPROVAL ACCEPTED"
+}
