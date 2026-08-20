@@ -1,17 +1,34 @@
 {
   "schema": "pulsarmlx.f017.representative-shared-expert-single-use-release-loop-state",
   "schema_version": "1.0.0",
-  "phase": "BUILDER_CYCLE_1_COMMITTED_REVIEW_PENDING",
+  "phase": "TERMINATED_ACCEPTED",
   "cycle": 1,
   "builder_model": "GPT-5.6 Sol",
   "builder_effort": "High",
-  "reviewer_model": null,
-  "reviewer_artifact": null,
-  "reviewer_sha256": null,
-  "latest_verdict": null,
+  "final_composition_model": "GPT-5.6 Sol",
+  "final_composition_effort": "Extra High",
+  "latest_builder_commit": "6beee5cf128412e3d5bb7661be6952a01fde31a4",
+  "latest_review_commit": "8b8c27ef2799704f74e90ff446b1fda4c2d29c0d",
+  "reviewer_model": "claude-fable-5",
+  "reviewer_artifact": "docs/architecture/reviews/evidence/f017-representative-shared-expert-single-use-release-cycle-01-independent-review.json",
+  "reviewer_sha256": "f9a0d9540033e3491a224760e348ada5495cf0f36e3390868584dbde7c057f6e",
+  "latest_verdict": "ACCEPT",
   "blocking_findings": [],
   "required_findings": [],
-  "resolved_findings": [],
+  "resolved_findings": [
+    "AUTHORIZATION_D1_CLOSED_DESCRIPTOR_READBACK",
+    "AUTHORIZATION_D2_CLOSED_FIXED_MACHINE_WIDE_PATHS",
+    "AUTHORIZATION_D3_CLOSED_EXACT_PARSED_AUTHORIZATION_BYTES",
+    "AUTHORIZATION_D4_CLOSED_BOUND_ROLE_VOCABULARY"
+  ],
+  "defense_in_depth_findings": [
+    "DID_1_APPROVAL_AND_GO_TOKEN_BYTES_RE_READ_ACROSS_VALIDATE_AND_RECORD",
+    "DID_2_LEDGER_ADAPTER_IS_LOAD_BEARING_BUT_NOT_IN_RELEASE_BINDINGS",
+    "DID_3_HISTORICAL_EXECUTOR_CLI_EXECUTE_PATH_REMAINS_LOCALLY_INVOCABLE",
+    "DID_4_NO_COMMITTED_NEGATIVE_TESTS_FOR_APPROVAL_AND_GO_TOKEN_GATE",
+    "DID_5_INPUT_MODE_CONTRACT_STRICTER_THAN_EXECUTOR_CHECK",
+    "DID_6_CRASH_BETWEEN_STATE_ROOT_MKDIR_AND_DURABLE_ATTEMPT_START_BRICKS_WITHOUT_RECORD"
+  ],
   "release_sha256": "d582d296e2c031f354f7191d3027bb9dac74f3b638377ba5bcfe155c8ee0f37f",
   "execution_code_head": "ded6521d619a9e7e9ab75d7fef2234e73e69d806",
   "ledger": 175,
@@ -20,5 +37,5 @@
   "shared_expert_executions": 0,
   "ffn_completions": 0,
   "s2_constructions": 0,
-  "termination_condition": null
+  "termination_condition": "STOP_ACCEPTED"
 }

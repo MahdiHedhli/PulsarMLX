@@ -1,0 +1,49 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-single-use-release-closeout",
+  "schema_version": "1.0.0",
+  "starting_head": "e8c8e95ab8b32af20e4e58b6018aaf302e9ef431",
+  "execution_code_head": "ded6521d619a9e7e9ab75d7fef2234e73e69d806",
+  "builder_release_head": "6beee5cf128412e3d5bb7661be6952a01fde31a4",
+  "review_banking_head": "8b8c27ef2799704f74e90ff446b1fda4c2d29c0d",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-single-use-release-v1.json",
+    "sha256": "d582d296e2c031f354f7191d3027bb9dac74f3b638377ba5bcfe155c8ee0f37f",
+    "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+    "real_event_authorized": false
+  },
+  "independent_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-shared-expert-single-use-release-cycle-01-independent-review.json",
+    "sha256": "f9a0d9540033e3491a224760e348ada5495cf0f36e3390868584dbde7c057f6e",
+    "reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 6
+  },
+  "final_composition": {
+    "model": "GPT-5.6 Sol",
+    "effort": "Extra High",
+    "verdict": "ACCEPT",
+    "ready_for_shared_expert_execution_prep": true
+  },
+  "concrete_paths": {
+    "representative_input": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-input-v1/router_normalized.f32le",
+    "parameter_root": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package",
+    "attempt_state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/attempt-state",
+    "output": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs/representative-shared-expert-output.f32le",
+    "approval": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot/docs/architecture/reviews/evidence/f017-representative-shared-expert-recovery-single-use-release-v1-independent-approval-v1.json",
+    "go_token": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/go-token.json"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "go_token_created": false,
+  "shared_expert_executed": false,
+  "termination_condition": "STOP_ACCEPTED"
+}
