@@ -717,3 +717,26 @@ remains 175.
 Gate: one valid machine-local v2 token exists unconsumed; approval/review bytes
 are committed and accepted; ledger remains 175; checkpoint, attempt, FFN, S1,
 and S2 counters remain zero.
+
+## Phase 41 — Representative FFN execution banking and cross-event reuse
+
+- Reconcile the consumed release-v2 attempt from its durable attempt-start,
+  FFN-start, receipt, terminal, retained output, and private manifest, then bank
+  an append-only public execution packet that distinguishes release authority,
+  GO authority, release consumption, arithmetic execution, and output authority.
+- Bind the retained proof/reference FFN output to a consumer-scoped reuse
+  authorization and open-once resolver enforcing exact manifest, geometry,
+  finiteness, and EXPECTED = BEFORE = CONSUMED = AFTER identity without an FFN,
+  checkpoint, S1, or S2 capability.
+- Adjudicate post-event reproduction explicitly against the accepted routed
+  aggregate reuse precedent: the completed event did not authorize a second
+  composition, so exact byte retention plus matching COMPLETE terminal,
+  receipt, manifest, arithmetic, and input identities are reviewed as the
+  reuse basis rather than retroactively expanding execution authority.
+- Validate all authority, surface-isolation, retained-file, and downstream
+  boundary mutations, then bank an exact Claude Fable 5 review of committed
+  bytes and close out the bounded loop only on ACCEPT.
+
+Gate: the representative proof/reference FFN output is independently accepted
+for checkpoint-free cross-event reuse; release v2 remains consumed and is never
+rerun; ledger remains 175; no new FFN, S1, or S2 work occurs.

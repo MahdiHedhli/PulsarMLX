@@ -603,3 +603,12 @@
   one read-only, single-link, unconsumed v2 GO token while preserving ledger
   175 and zero attempt/FFN/S1/S2 execution per plan Phase 39 and Constitution
   III/XII (missing).
+
+## Phase 40: Convergence
+
+- [ ] T017-243 Bank the successful representative FFN release-v2 execution
+  packet and prepare, checkpoint-free validate, and independently accept an
+  append-only consumer-scoped cross-event reuse authority for the retained
+  proof/reference FFN output while prohibiting release rerun, FFN
+  recomputation, checkpoint fallback, production-serial-f32 relabeling, S1
+  materialization, and S2 construction per Constitution III/X/XII (missing).

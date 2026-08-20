@@ -1,0 +1,72 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-output-reuse-preparation",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "52a68bcd1d7dce66668a5c062065961133799c28",
+  "builder": {
+    "model": "GPT-5.6 Sol",
+    "effort": "High",
+    "role": "BUILDER_ORCHESTRATOR"
+  },
+  "execution_reconciliation": {
+    "evidence_path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-real-execution-result-v1.json",
+    "evidence_sha256": "946d41a37cb4ae97938eae195c6b665441088c197312474613f8ca4cb282b2df",
+    "attempt_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-PROOF-REFERENCE-1-ATTEMPT-1",
+    "terminal": "COMPLETE",
+    "output_authority": true,
+    "token_consumed": true,
+    "ffn_compositions": 1,
+    "ledger_before": 175,
+    "ledger_after": 175
+  },
+  "retained_output": {
+    "sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+    "private_manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+    "receipt_sha256": "8c55a32198070e3f9ef087242cebc0474151259ed0564d7963044ec5ad24b84e",
+    "terminal_sha256": "22cd0d23a72470acf8ce706140578602831b047e8562e577a7e1297d444ed1d9",
+    "semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+    "semantic_surface": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "finite_elements": 6144,
+    "mode": "0400",
+    "hard_link_count": 1
+  },
+  "package": {
+    "authorization_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-output-reuse-authorization-v1.json",
+    "authorization_sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06",
+    "resolver_path": "scripts/research/f017_representative_ffn_output_reuse_v1.py",
+    "resolver_sha256": "b7fc3c1cb5baf26ff4c74d4656a248174b66bbaeea533c71590a8937c09e3fc8",
+    "validator_path": "scripts/research/validate_f017_representative_ffn_output_reuse_v1.py",
+    "validator_sha256": "1afe3d82557c0c0ad80f54b55914c70257767bde15f5cfd206487b506ec7b592",
+    "tests_path": "scripts/research/tests/test_f017_representative_ffn_output_reuse_v1.py",
+    "tests_sha256": "d0c13512dc9893182b16abf5c29f866afd583d9c41f453e939bf6ccb96ce43e4"
+  },
+  "reproduction_adjudication": {
+    "release_authorized_post_event_reproduction": false,
+    "post_event_reproduction_performed": false,
+    "reuse_acceptance_requires_post_event_reproduction": false,
+    "basis": "EXACT_BYTE_RETENTION_PLUS_COMPLETE_TERMINAL_MANIFEST_RECEIPT_INPUT_IDENTITIES_AND_ACCEPTED_ARITHMETIC",
+    "accepted_precedent": "REPRESENTATIVE_ROUTED_AGGREGATE_CROSS_EVENT_REUSE_WITHOUT_POST_EVENT_RECOMPUTATION",
+    "future_reproduction_requires_separate_authority": true,
+    "independent_reviewer_must_adjudicate": true
+  },
+  "validation": {
+    "validator": "PASS",
+    "unit_tests": "7_OF_7_PASS",
+    "required_authorization_mutations": "ALL_REJECTED",
+    "required_execution_evidence_mutations": "ALL_REJECTED",
+    "writable_symlink_multilink_wrong_size_nonfinite_and_manifest_mismatch": "ALL_REJECTED",
+    "real_retained_preflight": "REPRESENTATIVE_FFN_OUTPUT_REUSE_PREFLIGHT_PASS",
+    "expected_before_consumed_after": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+    "ledger_adapter": "PASS_175",
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "release_v2_reruns": 0,
+    "new_ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0
+  },
+  "stop_boundary": "AFTER_FFN_OUTPUT_REUSE_PREFLIGHT_BEFORE_S1_MATERIALIZATION_OR_S2_CONSTRUCTION",
+  "status": "READY_FOR_COMMITTED_INDEPENDENT_REVIEW"
+}
