@@ -7,7 +7,7 @@
   "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
   "real_event_authorized": false,
   "approval_asserted": false,
-  "authoritative_execution_code_head": "2d3e562c03b76444ae3639f9af08f8e54d7306e4",
+  "authoritative_execution_code_head": "9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb",
   "head_semantics": "EXACT_LOAD_BEARING_BYTES_AT_CODE_HEAD;APPEND_ONLY_RELEASE_REVIEW_APPROVAL_AND_BANKING_COMMITS_PERMITTED",
   "bindings": {
     "authorization": {
@@ -44,19 +44,19 @@
     },
     "release_wrapper": {
       "path": "scripts/research/f017_representative_routed_aggregate_release_wrapper_v1.py",
-      "sha256": "9ac3172ffc0ac2fd4b8a7411a0ef2671cc5dbe9cececae4ad6fc0fa5a2c8bd7e"
+      "sha256": "3e2e72917af2f82abdb8e411ce81b6cc27b794877130d53f8636f5102cd3456c"
     },
     "terminalizer": {
       "path": "scripts/research/f017_representative_routed_aggregate_release_terminalizer_v1.py",
-      "sha256": "e087f2c9060fd058a517dc98748193d33acba9c94b6f2cf10bf6b43d12cb8267"
+      "sha256": "a71b70cfc530a9ee2d863a00d666ef4ba92425274e74ed8479df76657d26a26e"
     },
     "release_validator": {
       "path": "scripts/research/validate_f017_representative_routed_aggregate_single_use_release_v1.py",
-      "sha256": "4cc54c03dd9ec55aac75216698d3eb7ec5214c45ef328b10e88ff025e5b0ca93"
+      "sha256": "02a0ed3d9499c3b8996d1808be456b439c646dec1772508daf708c43cd087e53"
     },
     "release_rehearsal": {
       "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-release-rehearsal-v1.json",
-      "sha256": "a3a2db9f8ab819cd43cce196f5bb2ea54474e281a7269d53bd186e8b8401c03b"
+      "sha256": "fe049b2df91d360a4713fef489b9b7b211537e293f3169da0cac0ef1fca85840"
     }
   },
   "private_manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
@@ -85,6 +85,7 @@
     "attempts": 1,
     "concurrent_invocation": false,
     "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_AGGREGATE_COMPUTATION",
+    "aggregate_execution_counted_at": "DURABLE_AGGREGATE_START_BEFORE_COMPUTATION_REGARDLESS_OF_OUTCOME",
     "exclusive_attempt_creation": true,
     "pre_attempt_failure_unconsumed_only_if_no_aggregate_computation_and_no_output_authority": true,
     "release_remains_consumed_after_any_post_start_failure": true,

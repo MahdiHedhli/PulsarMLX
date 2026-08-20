@@ -2,11 +2,11 @@
   "schema": "pulsarmlx.f017.representative-routed-aggregate-single-use-release-preparation",
   "schema_version": "1.0.0",
   "starting_head": "259985b26eb943a3fbdada165875a91a79399ab1",
-  "execution_code_head": "2d3e562c03b76444ae3639f9af08f8e54d7306e4",
+  "execution_code_head": "9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb",
   "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
   "release": {
     "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-single-use-release-v1.json",
-    "sha256": "cbc7e99622d89893ff92af0cbdc0ba91f6678ff59679502626d8057ded798d41"
+    "sha256": "978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d"
   },
   "bindings": {
     "authorization_sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590",
@@ -17,10 +17,10 @@
     "private_manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
     "path_contract_sha256": "f9f2e24f4529dd47ee8cc966ab4433f3b99fcad76819865f60237802ad4b544f",
     "publication_contract_sha256": "ad38b4d1fd7ca8b10764eb3e5ab4b765452f9714f949ce077a5e253cb14ba691",
-    "wrapper_sha256": "9ac3172ffc0ac2fd4b8a7411a0ef2671cc5dbe9cececae4ad6fc0fa5a2c8bd7e",
-    "terminalizer_sha256": "e087f2c9060fd058a517dc98748193d33acba9c94b6f2cf10bf6b43d12cb8267",
-    "validator_sha256": "4cc54c03dd9ec55aac75216698d3eb7ec5214c45ef328b10e88ff025e5b0ca93",
-    "release_rehearsal_sha256": "a3a2db9f8ab819cd43cce196f5bb2ea54474e281a7269d53bd186e8b8401c03b"
+    "wrapper_sha256": "3e2e72917af2f82abdb8e411ce81b6cc27b794877130d53f8636f5102cd3456c",
+    "terminalizer_sha256": "a71b70cfc530a9ee2d863a00d666ef4ba92425274e74ed8479df76657d26a26e",
+    "validator_sha256": "02a0ed3d9499c3b8996d1808be456b439c646dec1772508daf708c43cd087e53",
+    "release_rehearsal_sha256": "fe049b2df91d360a4713fef489b9b7b211537e293f3169da0cac0ef1fca85840"
   },
   "path_resolution": {
     "retained_outputs": "$HOME/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs",
@@ -48,14 +48,14 @@
   },
   "validation": {
     "release_validator": "PASS",
-    "test_methods": 11,
-    "validator_mutations": 41,
-    "release_rehearsal_cases": 6,
+    "test_methods": 13,
+    "validator_mutations": 42,
+    "release_rehearsal_cases": 8,
     "release_rehearsal": "PASS",
     "production_preflight": "PRODUCTION_BINDINGS_RESOLVED",
     "production_preflight_packet_sha256": "dd39aaa2dd9f44121927d27b66f9537ec8ce81463ee24a1c0bc8b28bde2d6127",
     "retained_outputs": "8_OF_8_EXPECTED_BEFORE_CONSUMED_AFTER_PASS",
-    "final_composition_repair": "FC-B1_DESCRIPTOR_RELATIVE_TEMP_AND_COMPLETE_TERMINAL_AUTHORITY_GATE_PASS"
+    "final_composition_repair": "FC-B1_DESCRIPTOR_RELATIVE_TEMP_AND_COMPLETE_TERMINAL_AUTHORITY_GATE_PASS;FC3-NBR1_DURABLE_AGGREGATE_START_ACCOUNTING_PASS"
   },
   "accounting": {
     "ledger_before": 175,
