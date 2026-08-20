@@ -1,0 +1,120 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-AUTHORIZATION-1",
+  "event_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "preparation_head": "87d65a91e998ca9513262982e6453d8eb003178d",
+  "real_event_authorized": false,
+  "aggregate_semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "expert_output_reuse_authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+    "sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"
+  },
+  "expert_output_reuse_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-cycle-01-independent-review.json",
+    "sha256": "54d559fe39c13152c2c368fa1f99a219c167178b06d58f47bb46822af33b46bc",
+    "verdict": "ACCEPT"
+  },
+  "expert_execution_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-expert-recovery-real-execution-result-v1.json",
+    "sha256": "fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4",
+    "terminal_disposition": "COMPLETE"
+  },
+  "private_output_package": {
+    "manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
+    "output_count": 8,
+    "output_bytes": 196608,
+    "machine_local_paths_published": false
+  },
+  "representative_expert_input_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+  "atomic_id_weight_output_triples": [
+    {"ordinal": 0, "expert_id": 250, "routing_weight": 0.7487501576296707, "private_relative_path": "00-expert-250-down.f32le", "output_sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 1, "expert_id": 10, "routing_weight": 0.3348627106807668, "private_relative_path": "01-expert-10-down.f32le", "output_sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 2, "expert_id": 237, "routing_weight": 0.23863270273063697, "private_relative_path": "02-expert-237-down.f32le", "output_sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 3, "expert_id": 62, "routing_weight": 0.23688715675086147, "private_relative_path": "03-expert-62-down.f32le", "output_sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 4, "expert_id": 73, "routing_weight": 0.2514906203405492, "private_relative_path": "04-expert-73-down.f32le", "output_sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 5, "expert_id": 177, "routing_weight": 0.23059957299763345, "private_relative_path": "05-expert-177-down.f32le", "output_sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 6, "expert_id": 218, "routing_weight": 0.22915341148588297, "private_relative_path": "06-expert-218-down.f32le", "output_sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 7, "expert_id": 28, "routing_weight": 0.22962366738399842, "private_relative_path": "07-expert-28-down.f32le", "output_sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576}
+  ],
+  "preflight": {
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_directory_once": true,
+    "open_leaf_once_relative_to_validated_directory_descriptor": true,
+    "same_validated_descriptor_consumed": true,
+    "fstat_before_after_device_inode_equal": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true,
+    "no_writable_alias": true,
+    "exact_size": 24576,
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "finite": true,
+    "private_manifest_verified_before_outputs": true,
+    "historical_direct_dprefix_output_rejected": true
+  },
+  "semantic_adjudication": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-semantic-adjudication-v1.json",
+    "sha256": "ab6d9305a2392ceda77728b7892868e0310c56f20c0636ab67ffd2154adb0636"
+  },
+  "arithmetic_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json",
+    "sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2"
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+    "sha256": "a5ceeeb375539755eb71ff92867c53e264dfbfb18d958914033ac6de962f52bf",
+    "checkpoint_interface": false,
+    "shard_interface": false,
+    "expert_execution_interface": false,
+    "blas": false,
+    "parallel_reduction": false,
+    "gpu": false,
+    "future_approved_single_use_release_required": true
+  },
+  "synthetic_rehearsal": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json",
+    "sha256": "ac353d30ec4bbd6235726fee4174fecb98fcb21aa095a4fb71cefb18b49b981d",
+    "fresh_processes": 2,
+    "exact_output_identity": true,
+    "real_representative_output_bytes_used": false,
+    "result": "PASS"
+  },
+  "future_output": {
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "finite": true,
+    "concrete_sha256": "NOT_COMPUTED_UNTIL_SEPARATELY_RELEASED_EVENT"
+  },
+  "accounting": {
+    "starting_ledger": 175,
+    "terminal_ledger": 175,
+    "preparation_checkpoint_reads": 0,
+    "preparation_shard_opens": 0,
+    "preparation_expert_executions": 0,
+    "preparation_aggregate_executions": 0,
+    "future_checkpoint_read_budget": 0,
+    "future_shard_open_budget": 0,
+    "future_expert_execution_budget": 0,
+    "future_aggregate_execution_count": 1
+  },
+  "stop_boundary": "AFTER_ROUTED_AGGREGATE_ONLY",
+  "prohibitions": {
+    "production_serial_f32_surface": true,
+    "historical_direct_dprefix_output": true,
+    "checkpoint_access": true,
+    "shard_open": true,
+    "expert_execution": true,
+    "shared_expert": true,
+    "ffn_completion": true,
+    "residual_addition": true,
+    "s2_construction": true,
+    "retry_without_future_release": true,
+    "go_token_in_this_phase": true
+  }
+}

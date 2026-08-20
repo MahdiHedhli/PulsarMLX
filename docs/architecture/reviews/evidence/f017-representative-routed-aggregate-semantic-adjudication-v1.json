@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-semantic-adjudication",
+  "schema_version": "1.0.0",
+  "starting_head": "87d65a91e998ca9513262982e6453d8eb003178d",
+  "classification": "C_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION",
+  "adjudication": {
+    "canonical_research_reference": "f32 expert output -> exact f64 promotion -> f64 routing-weight multiplication -> direct CPython math.fsum of eight products -> f64[6144]",
+    "production_runtime": "selected-slot rank-order serial binary32 reduction",
+    "same_surface": false,
+    "ambiguity": false,
+    "authorization_target": "CANONICAL_F017_PROOF_REFERENCE_ROUTED_AGGREGATE_ONLY"
+  },
+  "evidence": [
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-weighted-moe-aggregate-perturbation-v1.json", "sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac", "role": "frozen analytical protected expression and accumulation"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-acceptance-v2.json", "sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe", "role": "accepted complete-layer consumer of binary64 analytical routed aggregate"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json", "sha256": "ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b", "role": "analytical semantic graph routed formula"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json", "sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85", "role": "distinct production serial-binary32 runtime policy"},
+    {"path": "docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json", "sha256": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832", "role": "production/reference source classification"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json", "sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070", "role": "accepted representative output and future aggregate-input authority"},
+    {"path": "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-cycle-01-independent-review.json", "sha256": "54d559fe39c13152c2c368fa1f99a219c167178b06d58f47bb46822af33b46bc", "role": "independent acceptance of arithmetic surface separation"}
+  ],
+  "portability_resolution": {
+    "term_math_fsum_equivalent_replaced_by": "DIRECT CPython 3.14.6 math.fsum call",
+    "environment": "CPython 3.14.6, Darwin arm64, little-endian, IEEE-754 binary64 radix 2 mantissa 53 round-to-nearest",
+    "other_environment": "FAIL_CLOSED",
+    "alternate_algorithm": "FORBIDDEN"
+  },
+  "real_aggregate_computed": false,
+  "accounting": {"ledger_before": 175, "ledger_after": 175, "checkpoint_reads": 0, "shard_opens": 0, "expert_executions": 0, "aggregate_executions": 0}
+}

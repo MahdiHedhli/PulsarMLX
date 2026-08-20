@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.autonomous-representative-routed-aggregate-authorization-loop-state",
+  "schema_version": "1.0.0",
+  "phase": "BUILDER_CYCLE_1_COMPLETE_REVIEW_PENDING",
+  "cycle": 1,
+  "maximum_cycles": 4,
+  "builder_model": "GPT-5.6 Sol",
+  "builder_effort": "High",
+  "reviewer_model": null,
+  "reviewer_artifact": null,
+  "reviewer_sha256": null,
+  "latest_verdict": null,
+  "findings": [],
+  "resolved_findings": [],
+  "aggregate_semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "ledger": 175,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "expert_executions": 0,
+  "aggregate_executions": 0,
+  "termination_condition": null
+}

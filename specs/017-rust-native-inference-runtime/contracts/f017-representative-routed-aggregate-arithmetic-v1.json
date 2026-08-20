@@ -1,0 +1,81 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-arithmetic-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ARITHMETIC-1",
+  "status": "FROZEN_NOT_EXECUTED",
+  "semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "canonical_order": [250, 10, 237, 62, 73, 177, 218, 28],
+  "dimension": 6144,
+  "input": {
+    "expert_output_dtype": "little-endian-f32",
+    "expert_output_shape": [6144],
+    "expert_output_byte_length": 24576,
+    "expert_output_serialization": "contiguous-c-order-ieee754-binary32-little-endian",
+    "routing_weight_dtype": "ieee754-binary64",
+    "routing_weight_serialization": "JSON decimal parsed directly to CPython binary64 and verified by float.hex authority"
+  },
+  "algorithm": {
+    "coordinate_iteration": "strict increasing k from 0 through 6143",
+    "term_order": "strict canonical representative ordinal 0 through 7",
+    "promotion": "struct.unpack_from('<f', raw_i, 4*k) produces the exact binary32 value promoted exactly to CPython binary64",
+    "multiplication": "one IEEE-754 binary64 multiplication weight_i * promoted_expert_i[k] under roundTiesToEven",
+    "accumulation": "call CPython math.fsum exactly once on the ordered tuple of eight binary64 products for each coordinate",
+    "formula": "M[k]=math.fsum(tuple(weight_i*float(unpack_f32_le(output_i,k)) for i in canonical_order))",
+    "equivalence_policy": "DIRECT_CALL_NOT_REIMPLEMENTATION; no substitute fsum-equivalent implementation is accepted",
+    "finite_input_required": true,
+    "finite_product_required": true,
+    "finite_output_required": true
+  },
+  "pinned_environment": {
+    "implementation": "CPython",
+    "version": "3.14.6",
+    "byteorder": "little",
+    "float_radix": 2,
+    "float_mant_dig": 53,
+    "float_rounds": 1,
+    "platform_machine": "arm64",
+    "platform_system": "Darwin",
+    "environment_mismatch": "FAIL_BEFORE_INPUT_CONSUMPTION"
+  },
+  "output": {
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "packing": "struct.pack_into('<d', output, 8*k, M[k]) in increasing coordinate order",
+    "finite": true
+  },
+  "forbidden_arithmetic": {
+    "serial_binary32_accumulation": true,
+    "binary32_product_cast": true,
+    "unspecified_pairwise_reduction": true,
+    "blas": true,
+    "parallel_reduction": true,
+    "gpu": true,
+    "expert_reordering": true,
+    "independent_weight_sort": true,
+    "alternate_fsum_implementation": true
+  },
+  "production_surface_separation": {
+    "production_policy": "selected_slot_rank_order_serial_binary32_reduction",
+    "relationship": "DIFFERENT_NUMERICAL_SURFACE",
+    "authorization": "NOT_AUTHORIZED_BY_THIS_CONTRACT",
+    "future_requirement": "a production candidate comparison or qualification must remain separately bound"
+  },
+  "authority": [
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-weighted-moe-aggregate-perturbation-v1.json", "sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-acceptance-v2.json", "sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json", "sha256": "ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json", "sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85"},
+    {"path": "docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json", "sha256": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832"},
+    {"path": "scripts/research/f017_weighted_moe_aggregate_theorem.py", "sha256": "74167ce38cfb60189e57877ddba8b96123d7df54963a200658136497700f7974"}
+  ],
+  "execution_accounting": {
+    "real_aggregate_computed_during_freeze": false,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0,
+    "ledger": 175
+  }
+}
