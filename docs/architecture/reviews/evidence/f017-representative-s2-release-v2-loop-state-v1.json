@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-v2-loop-state",
+  "schema_version": "1.0.0",
+  "phase": "INDEPENDENT_REVIEW_PENDING",
+  "cycle": 1,
+  "maximum_cycles": 4,
+  "builder_model": "gpt-5.6-sol",
+  "builder_effort": "high",
+  "final_composition_model": "gpt-5.6-sol",
+  "final_composition_effort": "extra-high",
+  "reviewer_model_required": "claude-fable-5",
+  "starting_head": "374ad9e1dbf7ef2fc6bf00c83a33d820671d6f83",
+  "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+  "release_v2": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v2.json",
+    "sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2"
+  },
+  "executor_v2_sha256": "440f90fc89f1acb431511810b4fc68e3247b22c05beeed2dca16c3a285aa83ff",
+  "wrapper_v2_sha256": "adbc76560c04bd7c6f225c4c097073b08666581867e91d7289814869afa579f3",
+  "terminalizer_v2_sha256": "b78a809eb3f9c93a5090204fa76c377ed4dc98a073adbcefa1842083959f0999",
+  "unchanged_arithmetic_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+  "unchanged_authorization_sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a",
+  "resolved_findings": [
+    {
+      "id": "READINESS-B1",
+      "resolution": "V2 validates the exact singular S1 producer manifest directly and retains a distinct exact FFN parser; final real retained preflight is PRODUCTION_BINDINGS_RESOLVED."
+    }
+  ],
+  "validation": {
+    "v1_regression_tests": "10/10 PASS",
+    "v2_tests": "17/17 PASS",
+    "validator": "PASS",
+    "synthetic_fresh_process_identity": "2/2 PASS",
+    "production_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "s1_expected_before_readback": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "ffn_expected_before_readback": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a"
+  },
+  "accounting": {
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0,
+    "durable_attempt_starts": 0,
+    "s2_starts": 0,
+    "s1_operand_execution_consumptions": 0,
+    "ffn_operand_execution_consumptions": 0,
+    "go_tokens_created": 0,
+    "go_tokens_consumed": 0
+  },
+  "termination_condition": "AWAITING_COMMITTED_CLAUDE_FABLE_5_REVIEW"
+}

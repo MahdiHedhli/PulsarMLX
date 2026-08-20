@@ -1,0 +1,94 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-single-use-release",
+  "schema_version": "2.0.0",
+  "event_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1",
+  "release_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-RELEASE-2",
+  "attempt_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-ATTEMPT-1",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "real_event_authorized": false,
+  "approval_asserted": false,
+  "preparation_base_head": "374ad9e1dbf7ef2fc6bf00c83a33d820671d6f83",
+  "authoritative_execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+  "head_semantics": "EXACT_LOAD_BEARING_BYTES_AT_CODE_HEAD;APPEND_ONLY_RELEASE_REVIEW_APPROVAL_AND_BANKING_COMMITS_PERMITTED",
+  "bindings": {
+    "authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-construction-authorization-v1.json","sha256":"b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a"},
+    "arithmetic_contract": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-arithmetic-v1.json","sha256":"abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86"},
+    "s1_reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-output-reuse-authorization-v1.json","sha256":"5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13"},
+    "ffn_reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-output-reuse-authorization-v1.json","sha256":"983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06"},
+    "approval_contract": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-release-approval-contract-v2.json","sha256":"fd97ad9bdd7ee513359011d93518a47f6e70cb14300b62c23139a07bb0b831d2"},
+    "executor": {"path":"scripts/research/f017_representative_s2_executor_v2.py","sha256":"440f90fc89f1acb431511810b4fc68e3247b22c05beeed2dca16c3a285aa83ff"},
+    "release_wrapper": {"path":"scripts/research/f017_representative_s2_release_wrapper_v2.py","sha256":"adbc76560c04bd7c6f225c4c097073b08666581867e91d7289814869afa579f3"},
+    "terminalizer": {"path":"scripts/research/f017_representative_s2_terminalizer_v2.py","sha256":"b78a809eb3f9c93a5090204fa76c377ed4dc98a073adbcefa1842083959f0999"},
+    "validator": {"path":"scripts/research/validate_f017_representative_s2_release_v2.py","sha256":"ecacbc7514545825dde855b1f37c249b8729052f3d8f8e48111ef3194962bf0f"},
+    "tests": {"path":"scripts/research/tests/test_f017_representative_s2_release_v2.py","sha256":"d2d8bf6c921fd117cae517d5dac216aeb8a47e19e36e2c4d8df67db4564b0cad"},
+    "synthetic_rehearsal": {"path":"docs/architecture/reviews/evidence/f017-representative-s2-synthetic-rehearsal-v2.json","sha256":"ca257faea847aeaf89d9dd2630ab62a9177fa975b47be7c1449f5ec68a772620"},
+    "v1_supersession": {"path":"docs/architecture/reviews/evidence/f017-representative-s2-release-v1-supersession-v1.json","sha256":"dbc73f9fbccb8262f6151a488cb37a452a5e5576bab987ca02d037604b777e80"}
+  },
+  "v1_disposition": {
+    "release_sha256": "1b05c09355974d53ddf4585eee8b4801bd726e3ecd626ea753f066c9e504a3b9",
+    "status": "SUPERSEDED_FOR_EXECUTION_AUTHORITY_DUE_TO_S1_MANIFEST_SCHEMA_INCOMPATIBILITY",
+    "arithmetic_semantics_remain_accepted": true,
+    "historical_review_remains_valid": true,
+    "v1_go_token_prohibited": true,
+    "v1_execution_occurred": false
+  },
+  "operand_manifest_contracts": {
+    "s1": {
+      "manifest_sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+      "schema": "pulsarmlx.f017.representative-s1-private-manifest",
+      "schema_version": "1.0.0",
+      "collection": "SINGULAR_ARTIFACT_OBJECT_ONLY",
+      "artifact_path_field": "path",
+      "producer_semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+      "consumer_alias_after_validation": "REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL",
+      "ambiguous_or_plural_collection_rejected": true
+    },
+    "ffn": {
+      "manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+      "schema": "pulsarmlx.f017.representative-ffn-output-private-manifest",
+      "schema_version": "1.0.0",
+      "collection": "ONE_ELEMENT_ARTIFACTS_ARRAY_ONLY",
+      "artifact_path_field": "symbolic_path",
+      "producer_semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+      "ambiguous_or_singular_collection_rejected": true
+    },
+    "normalization": "NONE_EXACT_PRODUCER_SCHEMAS_VALIDATED_SEPARATELY"
+  },
+  "operands": {
+    "s1": {"reuse_authorization_sha256":"5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13","sha256":"8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd","semantic_role":"REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL","dtype":"little-endian-f32","shape":[6144],"byte_length":24576},
+    "ffn": {"reuse_authorization_sha256":"983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06","sha256":"4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a","semantic_role":"REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT","dtype":"little-endian-f64","shape":[6144],"byte_length":49152}
+  },
+  "numerical_surface": {
+    "classification":"CANONICAL_F017_PROOF_REFERENCE_DERIVED_S2_SURFACE_INTENTIONALLY_NOT_CLAIMED_EQUIVALENT_TO_PRODUCTION_SERIAL_F32",
+    "formula":"S2_f32[k]=binary32(binary64(S1_f32[k])+FFN_f64[k])",
+    "s1_promotion":"exact IEEE-754 binary32-to-binary64 widening",
+    "addition":"one binary64 addition per coordinate, left promoted S1 then right FFN",
+    "addition_rounding":"round-to-nearest ties-to-even",
+    "final_cast":"one IEEE-754 binary64-to-binary32 conversion per coordinate",
+    "final_rounding":"round-to-nearest ties-to-even",
+    "coordinate_order":"increasing 0..6143",
+    "reduction":false,"fma":false,"blas":false,"gpu":false,"parallel_arithmetic":false,
+    "production_equivalence":"NOT_PROVEN_AND_NOT_CLAIMED"
+  },
+  "single_use": {"attempts":1,"s2_constructions":1,"exclusive_attempt_creation":true,"consumed_at":"DURABLE_ATTEMPT_START_BEFORE_S2_ARITHMETIC","s2_counted_at":"DURABLE_S2_START_BEFORE_ARITHMETIC_REGARDLESS_OF_OUTCOME","post_start_failure_consumes_release":true,"retry":false,"resume":false,"second_attempt":false,"concurrent_invocation":false,"terminalizer_required":true},
+  "input_preflight": {"identity_equation":"EXPECTED_SHA256 == BEFORE_SHA256 == CONSUMED_SHA256 == AFTER_SHA256","same_validated_descriptor_consumed":true,"regular_non_symlink_single_link_read_only":true,"exact_private_manifest":true,"exact_geometry_and_finiteness":true,"all_locally_detectable_failures_before_attempt_start":true},
+  "output_banking": {"semantic_role":"REPRESENTATIVE_M1F0_S2_PROOF_REFERENCE_DERIVED","dtype":"little-endian-f32","shape":[6144],"byte_length":24576,"finite":true,"canonical_serialization":"contiguous-c-order-ieee754-binary32-little-endian","descriptor_relative_exclusive_temp":true,"file_fsync":true,"no_replace_hard_link_publication":true,"parent_fsync":true,"descriptor_readback":true,"output_sha256_recorded":true,"private_manifest":true,"execution_receipt":true,"matching_complete_terminal_required":true,"partial_output_authority":false,"overwrite":false},
+  "machine_local_paths": {
+    "resolution":"FIXED_PATHLIB_HOME_AND_REPOSITORY_EXPRESSIONS_NO_CALLER_SELECTION",
+    "s1_root":"$HOME/.local/share/pulsarmlx/f017/representative-s1-materialization-release-2/outputs",
+    "ffn_root":"$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-2/outputs",
+    "state_root":"$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/attempt-state",
+    "output_root":"$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs",
+    "output":"$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs/representative-s2.f32le",
+    "private_manifest":"$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs/representative-s2-private-manifest-v1.json",
+    "receipt":"$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/attempt-state/s2-execution-receipt.json",
+    "approval":"$REPOSITORY/docs/architecture/reviews/evidence/f017-representative-s2-single-use-release-v2-independent-approval-v1.json",
+    "go_token":"$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/go-token.json"
+  },
+  "runtime": {"cpython":"3.14.6","platform":"Darwin-arm64","endianness":"little","thread_variables_equal_one":["OPENBLAS_NUM_THREADS","OMP_NUM_THREADS","VECLIB_MAXIMUM_THREADS","MKL_NUM_THREADS","NUMEXPR_NUM_THREADS"],"arithmetic_backend":"CPYTHON_STRUCT_AND_SCALAR_IEEE754_ONLY","numpy_required":false},
+  "accounting": {"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"new_attention_executions":0,"s1_materializations":0,"expert_executions":0,"shared_expert_executions":0,"ffn_compositions":0,"preparation_s2_constructions":0,"future_s2_constructions":1},
+  "future_approval": {"separate_committed_independent_approval_required":true,"approval_contract_sha256":"fd97ad9bdd7ee513359011d93518a47f6e70cb14300b62c23139a07bb0b831d2","approval_statement":"REPRESENTATIVE S2 SINGLE-USE RELEASE V2 APPROVED","release_review_and_reviewed_head_enforced":true,"reviewer_identity_model_enforced":true,"approval_is_not_go_token":true,"token_binding":"TRANSITIVE_THROUGH_EXACT_APPROVAL_SHA256","authority_chain":"RELEASE_V2_TO_COMMITTED_REVIEW_TARGET_HEAD_TO_INDEPENDENT_REVIEW_TO_SEPARATE_APPROVAL_TO_MACHINE_LOCAL_GO_TOKEN"},
+  "storage_required_bytes": 67108864,
+  "prohibitions": {"checkpoint_access":true,"shard_open":true,"new_attention_execution":true,"s1_reconstruction":true,"s1_materialization":true,"s1_release_rerun":true,"ffn_recomputation":true,"ffn_release_rerun":true,"routed_aggregate_recomputation":true,"expert_execution":true,"shared_expert_execution":true,"production_serial_f32_substitution":true,"alternate_or_historical_operand":true,"caller_selected_input_paths":true,"output_overwrite":true,"retry":true,"resume":true,"second_attempt":true,"approval_in_this_phase":true,"go_token_in_this_phase":true,"real_s2_construction_in_this_phase":true},
+  "stop_boundary": "AFTER_REPRESENTATIVE_S2_OUTPUT_ONLY"
+}

@@ -848,3 +848,23 @@ with zero checkpoint reads or shard opens.
 Gate: approval and approval-review bytes are committed and accepted; exactly
 one valid S2 token exists unconsumed; attempt/S2 starts remain absent; neither
 operand has been consumed by S2; ledger remains 175 with zero checkpoint reads.
+
+## Phase 47 — S2 consumer/release v2 manifest compatibility repair
+
+- Preserve release v1 and all historical review/approval bytes while marking
+  only its execution authority superseded after the real readiness gate proved
+  it cannot parse the exact retained S1 producer manifest.
+- Add a schema-specific v2 consumer that validates the accepted singular S1
+  `artifact` object and `LAYER3_POST_ATTENTION_RESIDUAL` producer vocabulary
+  directly, derives any consumer alias only afterward, and keeps the distinct
+  accepted FFN `artifacts` schema fail-closed.
+- Reuse the frozen v1 scalar S2 arithmetic object unchanged and preserve all
+  exclusive-attempt, durable-start, publication, terminalization, accounting,
+  checkpoint, S1, FFN, and downstream boundaries under new v2 release paths.
+- Require both synthetic real-geometry rehearsal and exact non-consuming real
+  retained preflight to resolve `PRODUCTION_BINDINGS_RESOLVED` before committed
+  Claude Fable 5 review; create no approval or GO token in this phase.
+
+Gate: release v2 is independently accepted for a later separate approval and
+readiness decision; exact S1/FFN retained bindings resolve without arithmetic,
+attempt state, or execution consumption; ledger remains 175 with zero reads.

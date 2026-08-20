@@ -667,3 +667,13 @@
   manifest uses its accepted singular `artifact` schema. Approval and review
   bytes are banked, but no GO token exists and a new append-only S2 consumer /
   release authority is required.
+
+## Phase 46: Convergence
+
+- [ ] T017-249 Preserve S2 release v1 history while adding an append-only v2
+  consumer/release that validates the exact singular S1 producer manifest and
+  distinct FFN manifest directly, preserves unchanged S2 arithmetic and
+  one-shot durability, passes synthetic plus exact retained preflight without
+  operand execution consumption, and banks exact Claude Fable 5 ACCEPT review
+  bytes with no approval, GO token, attempt, or S2 construction per plan Phase
+  47 and Constitution III/X/XII (missing).

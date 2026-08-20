@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-synthetic-rehearsal",
+  "schema_version": "2.0.0",
+  "result": "PASS",
+  "consumer_repair": "EXACT_S1_SINGULAR_PRODUCER_MANIFEST_AND_DISTINCT_FFN_PLURAL_PRODUCER_MANIFEST",
+  "synthetic_fresh_processes": 2,
+  "synthetic_output_identity": "2_OF_2_EXACT",
+  "synthetic_inputs": {
+    "s1_sha256": "28456c1c9c5c23d22f98c7720ec7a1eb8b4fa0ee512c2e9d4f514716e784797e",
+    "ffn_sha256": "6d427446bf059b9545a28300a186bc1faa8ce163cc4bf7910b3e83442f9b500a"
+  },
+  "synthetic_output_sha256": "db6ed405bf973ab0c1a238c6eec5b878c2e68b79f894be6bde7f23d35f425550",
+  "arithmetic_implementation": "UNCHANGED_ACCEPTED_V1_COMPOSE_BYTES_OBJECT_IDENTITY",
+  "test_results": {
+    "v1_regression_tests": {"passed": 10, "failed": 0},
+    "v2_manifest_and_release_tests": {"passed": 17, "failed": 0},
+    "manifest_specific_mutations": "ALL_REJECTED",
+    "concurrent_attempt_race": "ONE_WINNER_ONE_LOSER",
+    "terminalizer_v2_identity": "PASS"
+  },
+  "production_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+  "production_preflight_detail": {
+    "s1_manifest_schema": "pulsarmlx.f017.representative-s1-private-manifest/1.0.0/SINGULAR_ARTIFACT_OBJECT_ONLY",
+    "s1_manifest_sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+    "s1_expected_before_readback_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "ffn_manifest_schema": "pulsarmlx.f017.representative-ffn-output-private-manifest/1.0.0/ONE_ELEMENT_ARTIFACTS_ARRAY_ONLY",
+    "ffn_manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+    "ffn_expected_before_readback_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+    "attempt_start_present": false,
+    "s2_start_present": false,
+    "arithmetic_invoked": false
+  },
+  "real_s1_operand_execution_consumptions": 0,
+  "real_ffn_operand_execution_consumptions": 0,
+  "real_s2_constructions": 0,
+  "durable_attempt_starts": 0,
+  "s2_starts": 0,
+  "go_tokens_created": 0,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "ledger": 175
+}
