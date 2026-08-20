@@ -22,6 +22,7 @@ def module(name: str, path: str):
 
 executor = module("s1_executor", "scripts/research/f017_representative_s1_materialization_executor_v1.py")
 wrapper = module("s1_wrapper", "scripts/research/f017_representative_s1_materialization_release_wrapper_v1.py")
+wrapper_v2 = module("s1_wrapper_v2", "scripts/research/f017_representative_s1_materialization_release_wrapper_v2.py")
 validator = module("s1_validator", "scripts/research/validate_f017_representative_s1_materialization_release_v1.py")
 
 
@@ -66,6 +67,22 @@ def test_execute_calls_authority_gate_before_state(monkeypatch):
     monkeypatch.setattr(wrapper, "authorize", lambda *args: (_ for _ in ()).throw(wrapper.ReleaseError("TOKEN_AUTHORITY")))
     with pytest.raises(wrapper.ReleaseError, match="TOKEN_AUTHORITY"):
         wrapper.execute(Path("release.json"))
+
+
+def test_v2_ledger_adapter_contract_is_integer():
+    assert isinstance(wrapper_v2.current_ledger(), int)
+    assert wrapper_v2.current_ledger() == 175
+
+
+def test_v2_losing_concurrent_invocation_cannot_write_terminal(monkeypatch):
+    with tempfile.TemporaryDirectory() as name:
+        root = Path(name); os.chmod(root, 0o700)
+        state = root / "attempt-state"; state.mkdir(mode=0o700)
+        paths = {"root":root,"state":state,"outputs":root / "outputs","output":root / "outputs/s1","manifest":root / "outputs/manifest"}
+        monkeypatch.setattr(wrapper_v2, "preflight", lambda path: ({}, paths))
+        monkeypatch.setattr(wrapper_v2, "authorize", lambda *args: None)
+        with pytest.raises(FileExistsError): wrapper_v2.execute(Path("release.json"))
+        assert not (state / "terminal.json").exists()
 
 
 def base_authorization_release():
