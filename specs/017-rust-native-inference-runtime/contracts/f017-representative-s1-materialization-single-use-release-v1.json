@@ -1,0 +1,67 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-single-use-release",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "real_event_authorized": false,
+  "authoritative_execution_code_head": "23796ea82a1d3bfb7d9f7e1d657aeac2ca5b019f",
+  "event_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1",
+  "release_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-RELEASE-1",
+  "attempt_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-ATTEMPT-1",
+  "authorization_sha256": "f2efce04a1047d0e31b16f44e976a8b2b3102b340a6e3adfac32dfdf73f3ce0f",
+  "bindings": {
+    "authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-materialization-authorization-v1.json", "sha256": "f2efce04a1047d0e31b16f44e976a8b2b3102b340a6e3adfac32dfdf73f3ce0f"},
+    "executor": {"path": "scripts/research/f017_representative_s1_materialization_executor_v1.py", "sha256": "6f337f8c4a2487916864605f4a690b0c92273e85b177c9011e102405e8ab7776"},
+    "release_wrapper": {"path": "scripts/research/f017_representative_s1_materialization_release_wrapper_v1.py", "sha256": "b86d2d950da6a45298c209c278be10b43a5d9cbb2a78ad0d13c686ece97126ee"},
+    "terminalizer": {"path": "scripts/research/f017_representative_s1_materialization_terminalizer_v1.py", "sha256": "0f25f0fe6025e1d0d776995f25b23b61d72db562a1ec051071af395165f7921a"},
+    "validator": {"path": "scripts/research/validate_f017_representative_s1_materialization_release_v1.py", "sha256": "b4d42540dca32b97f14a4514a32f64d9071221535c658cf533516f74a7ad1575"},
+    "tests": {"path": "scripts/research/tests/test_f017_representative_s1_materialization_release_v1.py", "sha256": "30a752c008ffd0746bf475f2f1278a44ccea8c5a9ab1a9d91d6b00abd75e4e59"},
+    "synthetic_rehearsal": {"path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-synthetic-rehearsal-v1.json", "sha256": "699b40b0f53c6ca42e0dfd6b48de6cc262d57a21e7675703e5e1b991de2f8077"}
+  },
+  "runtime_interface": {
+    "candidate": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-candidate-v3.json",
+    "canonical_s0": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-vocabulary/.pulsarmlx-local/dprefix-exact-1/retained/layer_3_entry.f32le",
+    "canonical_s0_manifest": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-vocabulary/.pulsarmlx-local/dprefix-exact-1/retained/manifest.json",
+    "attention_retention_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-m1f0-release-1/retention",
+    "state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-s1-materialization-release-1/attempt-state",
+    "output_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-s1-materialization-release-1/outputs",
+    "output": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-s1-materialization-release-1/outputs/representative-s1.f32le"
+  },
+  "input_contract": {
+    "canonical_s0_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+    "canonical_s0_manifest_sha256": "a68316207957bc8f804c167b627c208f068d086aed85506c89d87569b992bc60",
+    "retained_attention_payloads": 9,
+    "retained_attention_packed_bytes": 132900864,
+    "packed_identities_bound_by_authorization_candidate": true,
+    "all_regular_non_symlink_single_link_read_only": true,
+    "before_after_identity_required": true,
+    "checkpoint_fallback": false,
+    "shard_fallback": false
+  },
+  "accounting": {"checkpoint_reads": 0, "shard_opens": 0, "new_attention_executions": 0, "s1_materializations": 1, "ffn_compositions": 0, "s2_constructions": 0, "ledger_before": 175, "ledger_after": 175},
+  "single_use": {"exclusive_attempt_creation": true, "durable_attempt_start_before_reconstruction": true, "durable_materialization_start_before_reconstruction": true, "attempts": 1, "no_retry": true, "no_resume": true, "no_second_attempt": true, "failure_after_attempt_start_consumes_release": true},
+  "output_contract": {
+    "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "finite_required": true,
+    "expected_equals_produced_equals_readback": true,
+    "publication": "DESCRIPTOR_RELATIVE_EXCLUSIVE_TEMP_FSYNC_NO_REPLACE_LINK_PARENT_FSYNC_DESCRIPTOR_READBACK",
+    "private_manifest_required": true,
+    "execution_receipt_required": true,
+    "matching_complete_terminal_required": true,
+    "mismatch_output_authority": false
+  },
+  "future_approval": {
+    "separate_committed_independent_approval_required": true,
+    "separate_machine_local_go_token_required": true,
+    "reviewer_model": "claude-fable-5",
+    "approval_statement": "REPRESENTATIVE S1 MATERIALIZATION SINGLE-USE RELEASE V1 APPROVED",
+    "token_exact_fields": ["approval_sha256", "attempt_id", "authorization_sha256", "disposition", "event_id", "real_event_authorized", "release_id", "release_sha256"]
+  },
+  "runtime": {"device": "CPU_ONLY", "cpython": "3.14.6", "numpy": "2.4.5", "endianness": "little", "thread_variables_equal_one": ["OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"], "blas": false, "gpu": false, "parallel_arithmetic": false},
+  "ffn_input_exposed": false,
+  "s2_interface_exposed": false,
+  "stop_boundary": "AFTER_REPRESENTATIVE_S1_RETENTION_ONLY"
+}

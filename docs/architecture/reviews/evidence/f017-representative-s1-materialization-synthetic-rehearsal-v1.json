@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-synthetic-rehearsal",
+  "schema_version": "1.0.0",
+  "disposition": "PASS",
+  "classification": "SYNTHETIC_REAL_OUTPUT_GEOMETRY_NO_RETAINED_PRODUCTION_INPUTS",
+  "fresh_processes": 2,
+  "output_geometry": {"dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "finite": true},
+  "process_output_sha256": ["d024a0cb436a0d4c0d6d0064e9f37160784260e50b834e00ae0a0efc7834f05b", "d024a0cb436a0d4c0d6d0064e9f37160784260e50b834e00ae0a0efc7834f05b"],
+  "exact_identity": "2/2",
+  "release_mechanics": {"descriptor_relative_exclusive_temp": "PASS", "fsync_before_publish": "PASS", "no_replace_link": "PASS", "parent_fsync": "PASS", "descriptor_readback": "PASS", "read_only_single_link": "PASS", "duplicate_publish_rejected": "PASS", "exclusive_attempt_race_rejected": "PASS"},
+  "mutation_suite": {"cases": 16, "rejected": 16, "wrong_s1_sha": "PASS", "wrong_stage": "PASS", "wrong_s0": "PASS", "wrong_attention_inventory": "PASS", "checkpoint_fallback": "PASS", "new_attention_execution": "PASS", "ffn_consumption": "PASS", "s2_interface": "PASS"},
+  "real_s1_materializations": 0,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "new_attention_executions": 0,
+  "ffn_compositions": 0,
+  "s2_constructions": 0
+}

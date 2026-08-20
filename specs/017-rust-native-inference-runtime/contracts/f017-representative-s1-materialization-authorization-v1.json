@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-authorization",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "real_event_authorized": false,
+  "authoritative_preparation_head": "23796ea82a1d3bfb7d9f7e1d657aeac2ca5b019f",
+  "event_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1",
+  "attempt_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-ATTEMPT-1",
+  "s1_target": {
+    "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "stage_name": "post_attention_residual",
+    "formula": "f32(S0 + layer3_attention_output)",
+    "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "classification_before_event": "HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED"
+  },
+  "source_authority": {
+    "real_execution_evidence": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json", "sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"},
+    "candidate": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-execution-candidate-v3.json", "sha256": "7c315fc55d09f725960a1f107442024895995ac6166c2dee4e9460c5313de8a8"},
+    "stage_vocabulary": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-stage-vocabulary-v1.json", "sha256": "4accb0a9ed6f31f839aa8e80c6f9b69d93890687a84a4d036af483757d493dd7"},
+    "reproduction_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-reproduction-v1.json", "sha256": "7e31865232357b29cfc92c423421d6442e4203a5b39520458346a2b1a827dcbf"},
+    "reproduction_producer": {"path": "scripts/research/f017_representative_m1f0_reproduce_from_retention_v1.py", "sha256": "b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3"},
+    "production_executor": {"path": "scripts/research/f017_representative_m1f0_executor_v3.py", "sha256": "9c1e5168a1d385f78cedc9a49d892aad41b1979b496585477286e183992a379e"},
+    "oracle": {"path": "scripts/research/prepare_f017_m1f0_real_reference.py", "sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d"},
+    "canonical_s0": {"key": "DPREFIX-EXACT-1", "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11", "descriptor_path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json", "descriptor_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256", "private_manifest_sha256": "a68316207957bc8f804c167b627c208f068d086aed85506c89d87569b992bc60"},
+    "attention_payloads": {"count": 9, "packed_bytes": 132900864, "inventory_bound_by_candidate": true, "checkpoint_fallback": false},
+    "accepted_reproduction": {"bundle_sha256": "175539424a5fe1b66c60d1e95c8361858d90fd4566b24b4915c2b1affda5023b", "runs": 10, "exact_stage_identity": "10/10", "fresh_processes": 2, "checkpoint_rereads": 0, "additional_shard_opens": 0}
+  },
+  "materialization_semantics": {
+    "classification": "CHECKPOINT_FREE_DETERMINISTIC_RECONSTRUCTION_NOT_NEW_REAL_ATTENTION_EXECUTION",
+    "extraction": "OBSERVE_ACCEPTED_COMPOSE_ORACLE_ATTENTION_RESIDUAL_LOCAL_AND_STOP_BEFORE_FFN_NORMALIZATION",
+    "expected_equals_produced_equals_readback": true,
+    "mismatch_never_acquires_authority": true
+  },
+  "ffn_reuse_reference_only": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-output-reuse-authorization-v1.json", "sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06", "consumed_in_this_event": false},
+  "accounting": {"ledger_before": 175, "ledger_after": 175, "checkpoint_reads": 0, "shard_opens": 0, "new_attention_executions": 0, "future_s1_materializations": 1, "expert_executions": 0, "ffn_compositions": 0, "s2_constructions": 0},
+  "prohibitions": {"checkpoint_access": true, "shard_open": true, "new_real_attention_execution": true, "router_execution": true, "expert_execution": true, "ffn_consumption": true, "ffn_composition": true, "s2_construction": true, "retry": true, "resume": true, "second_attempt": true},
+  "stop_boundary": "AFTER_REPRESENTATIVE_S1_RETENTION_ONLY"
+}

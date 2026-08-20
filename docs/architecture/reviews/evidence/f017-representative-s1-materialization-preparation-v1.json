@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-preparation",
+  "schema_version": "1.0.0",
+  "starting_head": "54e07cef2fe25eb74af8dbc1973df96bd837fea8",
+  "execution_code_head": "23796ea82a1d3bfb7d9f7e1d657aeac2ca5b019f",
+  "ledger_before": 175,
+  "ledger_after": 175,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "new_attention_executions": 0,
+  "s1_materializations": 0,
+  "ffn_compositions": 0,
+  "s2_constructions": 0,
+  "canonical_s1_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+  "accepted_historical_reproduction": "10/10 exact stage identity; 2 fresh processes; zero rereads/opens",
+  "preparation_rehearsal": "2/2 synthetic real-output-geometry identity",
+  "real_retained_bundle_executed_during_preparation": false,
+  "ffn_output_consumed": false,
+  "disposition": "PREPARED_REVIEW_REQUIRED"
+}
