@@ -1,0 +1,230 @@
+{
+  "accounting": {
+    "checkpoint_reads": 0,
+    "expert_executions": 0,
+    "future_aggregate_executions": 1,
+    "preparation_aggregate_executions": 0,
+    "shard_opens": 0,
+    "starting_ledger": 175,
+    "terminal_ledger": 175
+  },
+  "actual_reviewer_model": "claude-fable-5",
+  "blocking_findings": [],
+  "checkpoint_free_review": {
+    "aggregate_executions": 0,
+    "checkpoint_reads": 0,
+    "expert_executions": 0,
+    "go_tokens_accessed": 0,
+    "real_event_state_accessed": 0,
+    "real_retained_outputs_accessed": 0,
+    "shard_opens": 0,
+    "synthetic_bytes_only": true
+  },
+  "composition_answer": "YES - THE COMMITTED SINGLE-USE RELEASE AT 5f5d4989d48ffa4d879a6033c703f11ed12b77bc IS SUFFICIENT TO EXECUTE EXACTLY ONE CHECKPOINT-FREE REPRESENTATIVE ROUTED AGGREGATE ON THE ACCEPTED F017 PROOF/REFERENCE F64 MATH.FSUM SURFACE, WITHOUT RE-EXECUTING EXPERTS AND WITHOUT AUTHORIZING ANY SHARED/FFN/S2 WORK; EXECUTION REMAINS GATED BEHIND THE SEPARATE FUTURE COMMITTED INDEPENDENT APPROVAL AND MACHINE-LOCAL GO TOKEN BY DESIGN",
+  "consume_what_you_validated_verified": "OpenOnceInputs holds the eight descriptors across manifest identity check, EXPECTED != BEFORE hash, finiteness check, in-memory aggregation of exactly the validated bytes, and post-compute EXPECTED != CONSUMED != AFTER re-verification on the same descriptors with dev+ino identity",
+  "defense_in_depth_findings": [
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "load_executor verifies the executor sha256 with one read, then importlib re-reads the file from disk to execute; a same-uid writer racing between hash and exec could swap bytes. Such an attacker could equally rewrite the running wrapper, so this remains outside the enforceable boundary; hashing the exact bytes handed to the loader would close it. Unchanged since cycle 2.",
+      "id": "R3-D1",
+      "title": "EXECUTOR_LOAD_TOCTOU_CARRYFORWARD_R2_D1"
+    },
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "preflight executes the release validator subprocess without first hashing it against the release binding 02a0ed3d9499c3b8996d1808be456b439c646dec1772508daf708c43cd087e53; the chain still closes because the repo-mode validator verifies every binding's on-disk bytes including its own against the release document, and the future approval pins the release document bytes. Unchanged since cycle 2.",
+      "id": "R3-D2",
+      "title": "VALIDATOR_SUBPROCESS_NOT_SELF_PINNED_BY_WRAPPER_CARRYFORWARD_R2_D2"
+    },
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "the executor's own --execute mode still accepts caller-selected paths and a non-committed INDEPENDENTLY_APPROVED release document; it cannot mint output authority (the bound terminalizer rejects via attempt-start release_sha256 binding) but misuse could physically consume the fixed single-use paths and force adjudication. Fail-closed; the release binds only the wrapper as the execution entrypoint. Unchanged since cycle 2.",
+      "id": "R3-D3",
+      "title": "EXECUTOR_STANDALONE_EXECUTE_INTERFACE_CARRYFORWARD_R2_D3"
+    },
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "authorize() requires the approval to carry a reviewed_head key but does not constrain its value; execution_code_head, release_sha256, statement, verdict, ledger, and stop_boundary are all exactly constrained, and the approval is itself a committed reviewed artifact. Unchanged since cycle 2.",
+      "id": "R3-D4",
+      "title": "APPROVAL_REVIEWED_HEAD_VALUE_UNCONSTRAINED_CARRYFORWARD_R2_D5"
+    },
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "FileExistsError from a lost attempt/publication race and AggregateError raised by the bound executor during --execute are absent from the wrapper's __main__ catch list, so the process exits with a traceback instead of the FAIL_CLOSED JSON packet; the TERMINAL_FAILURE terminal (now carrying the durable aggregate-start-derived count) is still written first when the attempt had started, and no overwrite or double count can occur.",
+      "id": "R3-D5",
+      "title": "UNCAUGHT_EXCEPTION_EXIT_FORMATTING_CARRYFORWARD_R2_D6"
+    },
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "write_terminal and the __main__ FAIL_CLOSED counter derive aggregate_executions from (state_root/'aggregate-start.json').is_file(), which follows symlinks, while the bound terminalizer rejects a symlinked marker with ACCOUNTING_INTEGRITY_BLOCKER (verified live); a same-uid attacker planting a symlink inside the 0700 owner-only state root could skew only the wrapper-printed count, never authority, and reconciliation fail-closes. Hashing via O_NOFOLLOW in the wrapper probe would remove the asymmetry.",
+      "id": "R3-D6",
+      "title": "WRAPPER_MARKER_PROBE_FOLLOWS_SYMLINKS"
+    },
+    {
+      "class": "DEFENSE_IN_DEPTH",
+      "detail": "reconcile probes aggregate-start.json and the output path with exists(), which returns False for a dangling symlink, so a dangling symlink occupying either name is adjudicated as absent (INTERRUPTED_NO_OUTPUT) instead of raising an integrity blocker; symlinks to existing files are rejected (verified live), a COMPLETE terminal with a dangling output symlink still blocks on 'complete output identity', and the read-only tool can never confer authority from this state.",
+      "id": "R3-D7",
+      "title": "TERMINALIZER_TREATS_DANGLING_SYMLINK_AS_ABSENT"
+    }
+  ],
+  "exact_next_action": "BANK THIS CYCLE-3 ACCEPT REVIEW AS AN APPEND-ONLY DOCS COMMIT, RUN THE BUILDER EXTRA HIGH FINAL COMPOSITION OVER THE UNCHANGED HEAD 5f5d4989d48ffa4d879a6033c703f11ed12b77bc; ONLY IF IT RAISES NO NEW REQUIRED FINDING, PROCEED TO THE SEPARATE COMMITTED INDEPENDENT APPROVAL BINDING release_sha256 978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d AND execution_code_head 9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb, THEN CREATE THE MACHINE-LOCAL GO TOKEN WITH THE EXACT EIGHT BOUND FIELDS; DO NOT EXECUTE, RETRY, OR CREATE ANY TOKEN BEFORE THAT APPROVAL IS COMMITTED",
+  "execution_code_head": "9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb",
+  "execution_code_head_semantics_verified": "wrapper, terminalizer, executor, authorization, arithmetic contract, path contract, publication contract, and expert-output reuse authorization are byte-identical between 9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb and reviewed head 5f5d4989d48ffa4d879a6033c703f11ed12b77bc; the single post-code-head commit 5f5d498 (rebind aggregate execution accounting) changed only the release document (rebinding the stale wrapper/terminalizer/validator/rehearsal SHAs left over from the 9aba5f9 code repair plus the new aggregate_execution_counted_at field), the release validator constants and one mutation test, and the preparation/loop-state/rehearsal evidence; this matches the append-only release/review/banking convention accepted in cycles 1 and 2, and every binding SHA in the release document matches the exact committed bytes at the reviewed head",
+  "immutable_authority_checks": [
+    {
+      "artifact": "authorization",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json",
+      "recomputed_match": true,
+      "sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590"
+    },
+    {
+      "artifact": "arithmetic_contract",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json",
+      "recomputed_match": true,
+      "sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2"
+    },
+    {
+      "artifact": "executor",
+      "path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+      "recomputed_match": true,
+      "sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5"
+    },
+    {
+      "artifact": "synthetic_rehearsal",
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json",
+      "recomputed_match": true,
+      "sha256": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc"
+    },
+    {
+      "artifact": "final_independent_review",
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-02-independent-review.json",
+      "recomputed_match": true,
+      "sha256": "3c362e0b5ae337b30727580bac67859811e001a91bbc3d5b9c88165f45951c9a"
+    },
+    {
+      "artifact": "expert_output_reuse_authorization",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "recomputed_match": true,
+      "sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"
+    },
+    {
+      "artifact": "path_contract",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-release-paths-v1.json",
+      "recomputed_match": true,
+      "sha256": "f9f2e24f4529dd47ee8cc966ab4433f3b99fcad76819865f60237802ad4b544f"
+    },
+    {
+      "artifact": "publication_contract",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-output-publication-v1.json",
+      "recomputed_match": true,
+      "sha256": "ad38b4d1fd7ca8b10764eb3e5ab4b765452f9714f949ce077a5e253cb14ba691"
+    },
+    {
+      "artifact": "release_wrapper",
+      "path": "scripts/research/f017_representative_routed_aggregate_release_wrapper_v1.py",
+      "recomputed_match": true,
+      "sha256": "3e2e72917af2f82abdb8e411ce81b6cc27b794877130d53f8636f5102cd3456c"
+    },
+    {
+      "artifact": "terminalizer",
+      "path": "scripts/research/f017_representative_routed_aggregate_release_terminalizer_v1.py",
+      "recomputed_match": true,
+      "sha256": "a71b70cfc530a9ee2d863a00d666ef4ba92425274e74ed8479df76657d26a26e"
+    },
+    {
+      "artifact": "release_validator",
+      "path": "scripts/research/validate_f017_representative_routed_aggregate_single_use_release_v1.py",
+      "recomputed_match": true,
+      "sha256": "02a0ed3d9499c3b8996d1808be456b439c646dec1772508daf708c43cd087e53"
+    },
+    {
+      "artifact": "release_rehearsal",
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-release-rehearsal-v1.json",
+      "recomputed_match": true,
+      "regenerated_byte_identical": true,
+      "sha256": "fe049b2df91d360a4713fef489b9b7b211537e293f3169da0cac0ef1fca85840"
+    },
+    {
+      "artifact": "private_manifest",
+      "note": "bound by SHA only in release, executor MANIFEST_SHA constant, and path contract; consistent across all three; private bytes not accessed by this review",
+      "path": "MACHINE_LOCAL_NOT_IN_REPOSITORY",
+      "recomputed_match": null,
+      "sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a"
+    },
+    {
+      "artifact": "release_document",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-single-use-release-v1.json",
+      "recomputed_match": true,
+      "sha256": "978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d"
+    },
+    {
+      "artifact": "preparation_evidence",
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-single-use-release-preparation-v1.json",
+      "recomputed_match": true,
+      "sha256": "99fb50cda87213611a614d67ce7bcc91206ed6f294f680c8354a182855350623"
+    },
+    {
+      "artifact": "ledger_source",
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "recomputed_match": true,
+      "sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+    }
+  ],
+  "non_blocking_required_findings": [],
+  "release_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-single-use-release-v1.json",
+  "release_sha256": "978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d",
+  "release_status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "resolved_findings": [
+    {
+      "class": "BLOCKING",
+      "disposition": "RESOLVED_VERIFIED_STILL_REPAIRED_AT_THIS_HEAD",
+      "id": "FC-B1",
+      "repair_commits": [
+        "2d3e562c03b76444ae3639f9af08f8e54d7306e4",
+        "95089f083026bb5edc202b02866b95fd8cb30feb"
+      ],
+      "source": "GPT-5.6 Sol Extra High builder final composition review of cycle 1",
+      "title": "PUBLICATION_NOT_DESCRIPTOR_RELATIVE_END_TO_END",
+      "verification": "publish_no_replace opens the fixed output directory once as O_DIRECTORY|O_NOFOLLOW with lstat/fstat dev+ino substitution check, owner and exact 0700 mode gates; requires the authoritative basename absent relative to that descriptor; creates the random exclusive temporary with O_EXCL|O_NOFOLLOW dir_fd-relative; writes, fsyncs, fchmods 0400, fsyncs again; publishes by os.link of that exact temporary inode to the authoritative basename with no-replace semantics on the same descriptor; fsyncs the directory, unlinks the temporary, fsyncs again; reopens the authoritative basename O_NOFOLLOW dir_fd-relative and verifies regular/owner/0400/nlink==1/size==49152 plus byte-exact readback of the published inode; output authority requires the matching COMPLETE terminal (terminalizer requires terminal.output_sha256 == recomputed output identity and disposition COMPLETE). Verified by source audit at head, live symlinked-output-root rejection, live preexisting-output no-overwrite, live nlink==2 and symlink-swap output rejection, and byte-identical regeneration of the bound release rehearsal evidence"
+    },
+    {
+      "class": "NON_BLOCKING_REQUIRED",
+      "disposition": "RESOLVED_VERIFIED_ACROSS_ALL_BOUNDARIES",
+      "id": "FC3-NBR1",
+      "repair_commits": [
+        "9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb",
+        "5f5d4989d48ffa4d879a6033c703f11ed12b77bc"
+      ],
+      "source": "GPT-5.6 Sol Extra High builder final composition after cycle 2 (elevated from R2-D4)",
+      "title": "TERMINAL_ACCOUNTING_CONFLATES_COMPUTATION_WITH_PUBLICATION",
+      "verification": "begin_aggregate durably publishes aggregate-start.json (exclusive O_EXCL create, file fsync, directory fsync, 0400) after the durable attempt-start and strictly before aggregate_bytes; write_terminal derives aggregate_executions from the durable marker independently of output identity and refuses COMPLETE without the marker; the terminalizer reconstructs the count from the marker after interruption and requires terminal.aggregate_executions to agree. Boundary matrix verified live in sandbox: before any attempt -> FAIL_CLOSED count 0 no state; durable attempt-start without marker (crash or exception before begin_aggregate) -> release consumed, count 0, INTERRUPTED_NO_OUTPUT or TERMINAL_FAILURE with count 0; crash after durable aggregate-start before aggregate_bytes -> count reconstructs 1, release consumed; exception during aggregate_bytes and post-compute input-rehash failure -> TERMINAL_FAILURE count 1; every publication failure window including post-link readback failure -> TERMINAL_FAILURE count 1, output retained without authority; publish-then-crash before terminal -> INTERRUPTED_OUTPUT_PUBLISHED_REQUIRES_ADJUDICATION count 1 no authority; COMPLETE requires marker and matching output identity; terminalizer restart is read-only idempotent. Forgery attacks all fail closed: wrong-release marker, symlinked marker, marker count 2, wrong accounting_semantics string, terminal count disagreement, output without marker, repeat marker creation (pre-existing destination), state root without durable attempt-start (ACCOUNTING_INTEGRITY_BLOCKER_NO_DURABLE_START). No reachable state yields aggregate_executions > 1 or a second attempt; release document, validator, and rehearsal evidence bind DURABLE_AGGREGATE_START_BEFORE_COMPUTATION_REGARDLESS_OF_OUTCOME and the validator rejects the OUTPUT_PUBLICATION substitute"
+    }
+  ],
+  "review_chain": {
+    "both_prior_review_artifacts_recomputed_byte_identical": true,
+    "cycle_1_review_sha256": "dbf0379b9ae5529ac40cd1eb4415ceb2ef0dd98f3b67694c3c337bf1106d9642",
+    "cycle_1_verdict": "ACCEPT_OVERRIDDEN_BY_BUILDER_FINAL_COMPOSITION_FC_B1",
+    "cycle_2_review_sha256": "cd8315b940074eb4d3c53870da487b39b43d74514911b87c69f862609126fbe7",
+    "cycle_2_verdict": "ACCEPT_OVERRIDDEN_BY_BUILDER_FINAL_COMPOSITION_FC3_NBR1"
+  },
+  "review_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-RELEASE-1-REVIEW-CYCLE-3",
+  "reviewed_branch": "feat/017-real-checkpoint-runner",
+  "reviewed_head": "5f5d4989d48ffa4d879a6033c703f11ed12b77bc",
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-single-use-release-independent-review",
+  "schema_version": "1.0.0",
+  "tests_performed": [
+    "recomputed sha256 of all sixteen bound artifacts from committed bytes at exact head 5f5d4989d48ffa4d879a6033c703f11ed12b77bc on a clean tree and matched every release binding, the preparation evidence, the loop state, and the review-chain SHAs (cycle 1 dbf0379b, cycle 2 cd8315b9, authorization ACCEPT 3c362e0b)",
+    "verified authoritative_execution_code_head 9aba5f9: git diff 9aba5f9..HEAD touches only the release document, release validator plus one mutation test, and preparation/loop-state/rehearsal evidence; wrapper, terminalizer, executor, and all bound contracts are byte-identical, satisfying the append-only release/review/banking semantics",
+    "ran the bound release validator in full repo mode at head: REPRESENTATIVE_ROUTED_AGGREGATE_SINGLE_USE_RELEASE_VALID, including byte verification of every binding and of the validator itself against the release document",
+    "ran all committed checkpoint-free suites (25 tests: 11 wrapper/terminalizer, 2 release-validator mutation batteries covering 43 mutations, 12 executor/authorization) - all pass on pinned CPython 3.14.6 Darwin arm64",
+    "applied 20 independent adversarial release-document mutations (aggregate_execution_counted_at=OUTPUT_PUBLICATION, wrong code head, wrapper/validator SHA flips, one-ulp weight perturbation, expert swap, output-sha swap, future_aggregate_executions=2, retry/resume/second-attempt, real_event_authorized, approval_asserted, dropped go-token prohibition, removed s2 prohibition, removed ledger gate, wrong output bytes, manifest SHA flip, ninth triple, wrong stop boundary, INDEPENDENTLY_APPROVED status) - all rejected fail-closed",
+    "executed 15 live sandbox boundary/forgery probes against wrapper and terminalizer functions under a temporary HOME: wrong-release aggregate-start, symlinked marker, marker count 2, output without marker, terminal count disagreement, repeat marker creation, COMPLETE without marker, state root without durable attempt-start, output without attempt, nlink==2 output, symlink-swapped output, wrong-release attempt-start - all blocked; independent per-coordinate math.fsum recomputation on seeded synthetic f32 vectors bit-identical to aggregate_bytes, deterministic across calls, non-finite input rejected",
+    "regenerated the release rehearsal evidence with the bound generator under temporary HOMEs: byte-identical to committed fe049b2d (8/8 cases PASS including durable_aggregate_start_counts_execution and post_compute_prepublication_failure_counts_execution), actual schema checked rather than fixture",
+    "walked the complete FC3-NBR1 boundary matrix (pre-attempt, post-attempt-start pre-marker, post-marker pre-compute crash, exception during compute, post-compute rehash failure, every publication failure window including post-link readback, publish-then-crash before terminal, COMPLETE, TERMINAL_FAILURE, terminalizer restart) - durable marker monotonically drives the count, never exceeds 1, never permits a second attempt",
+    "verified FC-B1 remains repaired: source audit of publish_no_replace descriptor-relative chain plus live no-overwrite, symlinked-root, nlink and substitution rejections; output authority requires matching COMPLETE terminal in terminalizer and publication contract",
+    "verified ledger adapter live: current_ledger()==175 from the byte-pinned committed source (175->175, zero checkpoint/shard/expert budgets, exactly one future aggregate in both authorization and release accounting)",
+    "verified approval/token separation: committed approval artifact absent at head, machine-local release root contains only an empty outputs directory (names-only listing - no go-token.json, no attempt-state, no output), wrapper authorize() enforces exact approval key set and exact eight-field GO token equality, preflight-only mode forbids a token",
+    "verified proof/reference surface exclusivity: arithmetic contract pins direct math.fsum call (DIRECT_CALL_NOT_REIMPLEMENTATION) with forbidden serial-f32/pairwise/BLAS/parallel/GPU/reordering; authorization prohibits production_serial_f32_surface, historical_direct_dprefix_output, checkpoint/shard/expert/shared/FFN/residual/S2; executor imports stdlib only, wrapper loads only the SHA-pinned executor; synthetic rehearsal evidence shows two fresh processes with exact output identity and protected-output rejection; exact eight ID-weight-output triples byte-consistent across release, authorization, and reuse authorization"
+  ],
+  "verdict": "ACCEPT",
+  "zero_additional_real_reproduction_rationale_verified": "the accepted authorization budgets exactly one real aggregate execution; two-fresh-process determinism of the exact arithmetic surface is already frozen by the bound synthetic rehearsal (identical output SHA across processes), so any additional real run would exceed the accepted budget without adding information; reproduction block and preparation evidence state this consistently"
+}
