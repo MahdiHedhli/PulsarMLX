@@ -98,7 +98,7 @@ class AuthorityMutationTests(unittest.TestCase):
         for key,value in changes:
             doc=copy.deepcopy(base); doc[key]=value
             with self.subTest(key=key),self.assertRaises(validator.ValidationError): validator.validate_release(doc,repo=False)
-        nested=[("numerical_surface","addition","f32 addition"),("numerical_surface","fma",True),("numerical_surface","production_equivalence","PROVEN"),("single_use","retry",True),("single_use","second_attempt",True),("accounting","checkpoint_reads",1),("accounting","ffn_compositions",1),("accounting","future_s2_constructions",2),("prohibitions","s1_reconstruction",False),("prohibitions","ffn_recomputation",False)]
+        nested=[("numerical_surface","addition","f32 addition"),("numerical_surface","fma",True),("numerical_surface","production_equivalence","PROVEN"),("single_use","retry",True),("single_use","second_attempt",True),("operands","s1",{}),("operands","ffn",{}),("input_preflight","same_validated_descriptor_consumed",False),("output_banking","dtype","little-endian-f64"),("output_banking","overwrite",True),("runtime","arithmetic_backend","NUMPY_VECTOR"),("future_approval","release_review_and_reviewed_head_enforced",False),("accounting","checkpoint_reads",1),("accounting","ffn_compositions",1),("accounting","future_s2_constructions",2),("prohibitions","s1_reconstruction",False),("prohibitions","ffn_recomputation",False)]
         for section,key,value in nested:
             doc=copy.deepcopy(base); doc[section][key]=value
             with self.subTest(section=section,key=key),self.assertRaises(validator.ValidationError): validator.validate_release(doc,repo=False)
@@ -113,7 +113,7 @@ class FileAndDurabilityTests(unittest.TestCase):
 
     def create_operand(self, dtype: str) -> tuple[dict,Path]:
         name="operand.f32le" if dtype.endswith("f32") else "operand.f64le"; size=24576 if dtype.endswith("f32") else 49152
-        raw=b"\0"*size; role="SYNTHETIC_S1" if dtype.endswith("f32") else "SYNTHETIC_FFN"; manifest_name="manifest.json"
+        raw=b"\0"*size; role="SYNTHETIC_S1" if dtype.endswith("f32") else "SYNTHETIC_FFN"; manifest_name=f"manifest-{dtype[-3:]}.json"
         (self.root/name).write_bytes(raw); os.chmod(self.root/name,0o400)
         manifest=make_manifest(name,raw,role,dtype,size); (self.root/manifest_name).write_bytes(manifest); os.chmod(self.root/manifest_name,0o400)
         return {"manifest":{"relative_path":manifest_name,"sha256":hashlib.sha256(manifest).hexdigest(),"byte_length":len(manifest)},"artifact":{"relative_path":name,"sha256":hashlib.sha256(raw).hexdigest(),"semantic_role":role,"dtype":dtype,"shape":[6144],"byte_length":size}},self.root/name
@@ -132,6 +132,14 @@ class FileAndDurabilityTests(unittest.TestCase):
         with self.assertRaisesRegex(executor.S2Error,"SINGLE_LINK"): executor.OpenOperand(self.root,spec)
         alias.unlink(); path.unlink(); os.symlink("target",path)
         with self.assertRaises(OSError): executor.OpenOperand(self.root,spec)
+
+    def test_manifest_and_truncation_rejected(self) -> None:
+        spec,path=self.create_operand("little-endian-f32")
+        spec["manifest"]["sha256"]="0"*64
+        with self.assertRaisesRegex(executor.S2Error,"MANIFEST_SHA"): executor.OpenOperand(self.root,spec)
+        spec,_=self.create_operand("little-endian-f64")
+        operand=self.root/spec["artifact"]["relative_path"]; os.chmod(operand,0o600); operand.write_bytes(b"\0"*8); os.chmod(operand,0o400)
+        with self.assertRaisesRegex(executor.S2Error,"BYTE_LENGTH"): executor.OpenOperand(self.root,spec)
 
     def test_descriptor_relative_no_replace_publication(self) -> None:
         fd=wrapper.open_directory(self.root,exact_mode=0o700)

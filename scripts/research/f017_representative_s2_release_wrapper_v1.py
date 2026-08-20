@@ -243,9 +243,20 @@ def validate_approval(release: dict[str, Any], approval_path: Path) -> dict[str,
     review_path = ROOT / review_rel
     require(sha256_path(review_path) == approval["release_review_sha256"], "REVIEW_SHA")
     review = load(review_path)
+    require(set(review) == {
+        "schema", "schema_version", "reviewer_identity", "reviewer_model", "reviewed_head",
+        "release_path", "release_sha256", "authorization_sha256", "arithmetic_contract_sha256",
+        "execution_code_head", "verdict", "blocking_findings", "non_blocking_required_findings",
+        "defense_in_depth_findings", "statement",
+    }, "REVIEW_EXACT_FIELDS")
+    require(review.get("schema") == "pulsarmlx.f017.representative-s2-single-use-release-independent-review" and review.get("schema_version") == "1.0.0", "REVIEW_SCHEMA")
     require(review.get("reviewer_identity") == approval["release_reviewer_identity"] == REVIEWER_IDENTITY, "REVIEWER_IDENTITY")
     require(review.get("reviewer_model") == approval["release_reviewer_model"] == REVIEWER_MODEL, "REVIEWER_MODEL")
     require(review.get("reviewed_head") == approval["reviewed_head"], "REVIEWED_HEAD")
+    require(review.get("release_path") == RELEASE.relative_to(ROOT).as_posix(), "REVIEW_RELEASE_PATH")
+    require(review.get("release_sha256") == approval["release_sha256"], "REVIEW_RELEASE_SHA")
+    require(review.get("authorization_sha256") == AUTHORIZATION_SHA and review.get("arithmetic_contract_sha256") == ARITHMETIC_SHA, "REVIEW_AUTHORITY_BINDING")
+    require(review.get("execution_code_head") == approval["execution_code_head"], "REVIEW_CODE_HEAD")
     require(review.get("verdict") == "ACCEPT" and review.get("blocking_findings") == [] and review.get("non_blocking_required_findings") == [], "REVIEW_VERDICT")
     release_rel = RELEASE.relative_to(ROOT).as_posix()
     require(sha256(git_bytes(approval["reviewed_head"], release_rel)) == approval["release_sha256"], "REVIEWED_RELEASE_BYTES")
