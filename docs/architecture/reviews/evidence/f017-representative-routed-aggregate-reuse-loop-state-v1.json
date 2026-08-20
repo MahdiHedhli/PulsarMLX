@@ -1,13 +1,13 @@
 {
   "schema": "pulsarmlx.f017.representative-routed-aggregate-reuse-loop-state",
   "schema_version": "1.0.0",
-  "phase": "BUILDER_CYCLE_1_COMMITTED_REVIEW_PENDING",
+  "phase": "TERMINATED_ACCEPTED",
   "cycle": 1,
   "builder_model": "GPT-5.6 Sol",
   "builder_effort": "High",
-  "reviewer_model": null,
-  "reviewer_sha256": null,
-  "latest_verdict": null,
+  "reviewer_model": "claude-fable-5",
+  "reviewer_sha256": "49848c1f27e15360bb8514f6b9dbd32b523c73936af6218dcf6505fa3bdf36f8",
+  "latest_verdict": "ACCEPT",
   "blocking_findings": [],
   "required_findings": [],
   "resolved_findings": [],
@@ -21,5 +21,5 @@
   "shared_expert_executions": 0,
   "ffn_completions": 0,
   "s2_constructions": 0,
-  "termination_condition": null
+  "termination_condition": "STOP_ACCEPTED"
 }

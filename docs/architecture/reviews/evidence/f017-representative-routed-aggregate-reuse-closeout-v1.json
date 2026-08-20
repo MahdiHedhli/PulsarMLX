@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-reuse-closeout",
+  "schema_version": "1.0.0",
+  "starting_head": "b22d3bab0b290aa5ea536d6efc114dddc6044086",
+  "builder_commit": "65bff30febd805b52e0e25dc4ee79e3b451df8ce",
+  "review_commit": "f92045af4b3e017c886cf5efaec159371e10df80",
+  "authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json",
+    "sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+    "status": "PREPARED_REVIEW_REQUIRED",
+    "real_event_authorized": false
+  },
+  "independent_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-reuse-cycle-01-independent-review.json",
+    "sha256": "49848c1f27e15360bb8514f6b9dbd32b523c73936af6218dcf6505fa3bdf36f8",
+    "actual_reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 5
+  },
+  "final_composition": {
+    "builder_model": "GPT-5.6 Sol",
+    "builder_effort": "Extra High",
+    "verdict": "ACCEPT",
+    "safe_routed_reuse": true,
+    "next_required_authority": "REPRESENTATIVE_SHARED_EXPERT_RECOVERY_AUTHORIZATION_WITH_CROSS_EVENT_F_NORM_AND_THREE_WEIGHT_REUSE_BINDING",
+    "next_phase_checkpoint_free": true,
+    "ffn_completion_requires_later_separate_authority": true,
+    "s2_requires_separately_materialized_validated_s1_bytes": true
+  },
+  "defense_in_depth_disposition": {
+    "D1": "OPEN_BEFORE_S2_PLANNING; S1 is hash-retained reproducible, not presently byte-retained; irrelevant to routed reuse and shared recovery boundary",
+    "D2": "OPEN_FOR_NEXT_CONSUMER; future execution package must bind validator and authorization before resolver invocation",
+    "D3": "ACCEPTED_REDUNDANCY; hash equality and same open descriptor are load-bearing",
+    "D4": "OPEN_HARDENING; existing runtime checks and committed mutation coverage are sufficient for preparation-only reuse",
+    "D5": "OPEN_FOR_SHARED_AUTHORIZATION; future shared package must revalidate all three payloads from single descriptors and fail closed"
+  },
+  "next_boundary": {
+    "representative_input_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "retained_shared_parameter_count": 3,
+    "retained_shared_parameter_bytes": 27623424,
+    "checkpoint_reads_required": 0,
+    "shard_opens_required": 0,
+    "representative_shared_output_exists": false,
+    "historical_shared_output_disposition": "VALID_BUT_DIFFERENT_SURFACE"
+  },
+  "isolation": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "aggregate_recomputations": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "termination_condition": "STOP_ACCEPTED"
+}
