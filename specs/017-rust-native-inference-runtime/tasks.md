@@ -606,7 +606,7 @@
 
 ## Phase 40: Convergence
 
-- [ ] T017-243 Bank the successful representative FFN release-v2 execution
+- [x] T017-243 Bank the successful representative FFN release-v2 execution
   packet and prepare, checkpoint-free validate, and independently accept an
   append-only consumer-scoped cross-event reuse authority for the retained
   proof/reference FFN output while prohibiting release rerun, FFN

@@ -1,0 +1,67 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-output-reuse-closeout",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "52a68bcd1d7dce66668a5c062065961133799c28",
+  "builder_review_target_head": "cca9b56b278881b5e392f11b9a935771ab83e295",
+  "review_banking_commit": "be57ad6e8906eaed5021e43da133bea96f203860",
+  "cycles_used": 1,
+  "maximum_cycles": 4,
+  "builder_model": "GPT-5.6 Sol",
+  "builder_effort": "High",
+  "final_integration_effort": "Extra High",
+  "reviewer_model": "claude-fable-5",
+  "verdict": "ACCEPT",
+  "execution_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-real-execution-result-v1.json",
+    "sha256": "946d41a37cb4ae97938eae195c6b665441088c197312474613f8ca4cb282b2df"
+  },
+  "reuse_authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-output-reuse-authorization-v1.json",
+    "sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06"
+  },
+  "independent_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-ffn-output-reuse-cycle-01-independent-review.json",
+    "sha256": "a8ef051865cc5e7e18ef73e40434c6ebecae1b6e118d3230af402d6d2df0a182",
+    "reviewed_head": "cca9b56b278881b5e392f11b9a935771ab83e295",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 3
+  },
+  "reproduction_adjudication": {
+    "result": "SOUND_WITHOUT_REPRODUCTION",
+    "post_event_reproduction_authorized": false,
+    "post_event_reproduction_performed": false,
+    "future_reproduction_requires_separate_authority": true,
+    "basis": "EXACT_RETAINED_BYTES_COMPLETE_TERMINAL_OUTPUT_AUTHORITY_MANIFEST_RECEIPT_INPUT_IDENTITIES_AND_ACCEPTED_ARITHMETIC",
+    "precedent": "ACCEPTED_REPRESENTATIVE_ROUTED_AGGREGATE_CROSS_EVENT_REUSE_WITHOUT_POST_EVENT_RECOMPUTATION"
+  },
+  "defense_in_depth_dispositions": [
+    {
+      "id": "DID-1",
+      "disposition": "ACCEPTED_NON_BLOCKING",
+      "reason": "Consumption is unambiguously bound to the durable attempt-start and every committed/runtime consumer treats token-file presence as non-authoritative; any archival marker requires separate future authority."
+    },
+    {
+      "id": "DID-2",
+      "disposition": "ACCEPTED_NON_BLOCKING",
+      "reason": "The committed expert-ledger adapter reconstructs 175 from the banked 166-to-175 event and independently passes; a future unified ledger artifact is hardening, not a prerequisite for this zero-delta reuse."
+    },
+    {
+      "id": "DID-3",
+      "disposition": "ACCEPTED_NON_BLOCKING",
+      "reason": "The fixed Path.home release root is combined with owner, regular-file, non-symlink, single-link, read-only, exact-hash, manifest, durable-state, and held-descriptor checks; device/inode attestation may harden a future version."
+    }
+  ],
+  "final_accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "release_v2_reruns": 0,
+    "new_ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0
+  },
+  "result": "REPRESENTATIVE_FFN_REUSE_AUTHORIZED",
+  "next_safe_action": "PREPARE_A_SEPARATE_CHECKPOINT_FREE_S1_OR_S2_PHASE_AS_APPLICABLE;DO_NOT_RERUN_RELEASE_V2_OR_RECOMPUTE_FFN_OR_MATERIALIZE_S1_OR_CONSTRUCT_S2_WITHOUT_SEPARATE_AUTHORITY"
+}
