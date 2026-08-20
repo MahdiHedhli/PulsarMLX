@@ -198,6 +198,27 @@ class ManifestCompatibilityTests(unittest.TestCase):
         with self.assertRaisesRegex(executor.S2Error, "FFN_SPEC_CENSUS"):
             executor.OpenOperand(self.root, fixture.spec)
 
+    def test_ffn_singular_and_wrong_role_rejected(self) -> None:
+        fixture = OperandFixture(self.root, "ffn")
+        doc = copy.deepcopy(fixture.doc)
+        doc["artifact"] = doc.pop("artifacts")[0]
+        fixture.write_manifest(doc)
+        with self.assertRaisesRegex(executor.S2Error, "FFN_MANIFEST_BINDING"):
+            executor.OpenOperand(self.root, fixture.spec)
+        doc = copy.deepcopy(fixture.doc)
+        doc["artifacts"][0]["semantic_role"] = "LAYER3_POST_ATTENTION_RESIDUAL"
+        fixture.write_manifest(doc)
+        with self.assertRaisesRegex(executor.S2Error, "FFN_MANIFEST_BINDING"):
+            executor.OpenOperand(self.root, fixture.spec)
+
+    def test_stale_v1_parser_rejects_exact_singular_schema(self) -> None:
+        fixture = OperandFixture(self.root, "s1")
+        stale_spec = copy.deepcopy(fixture.spec)
+        stale_spec.pop("manifest_kind")
+        stale_spec["artifact"].pop("producer_semantic_role")
+        with self.assertRaisesRegex(executor_v1.S2Error, "MANIFEST_CENSUS"):
+            executor_v1.OpenOperand(self.root, stale_spec)
+
     def test_writable_symlink_multilink_and_descriptor_change_rejected(self) -> None:
         fixture = OperandFixture(self.root, "s1"); artifact = self.root / fixture.name
         os.chmod(artifact, 0o600)
@@ -230,6 +251,25 @@ class PreservedMechanicsTests(unittest.TestCase):
             wrapper.validate_release(ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v1.json")
         self.assertEqual(json.loads(V1_APPROVAL.read_text())["release_id"], "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-RELEASE-1")
         self.assertEqual(wrapper.RELEASE_ID, "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-RELEASE-2")
+        release = json.loads(RELEASE.read_text())
+        with self.assertRaisesRegex(wrapper.ReleaseError, "APPROVAL_CONSTANTS"):
+            wrapper.validate_approval(release, V1_APPROVAL)
+        with tempfile.TemporaryDirectory() as temp:
+            token_path = Path(temp) / "go-token.json"
+            v1_approval_sha = hashlib.sha256(V1_APPROVAL.read_bytes()).hexdigest()
+            token = {
+                "approval_sha256": v1_approval_sha,
+                "attempt_id": wrapper.ATTEMPT_ID,
+                "authorization_sha256": wrapper.AUTHORIZATION_SHA,
+                "disposition": "GO_EXECUTE_ONCE_NO_RETRY",
+                "event_id": wrapper.EVENT_ID,
+                "real_event_authorized": True,
+                "release_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-RELEASE-1",
+                "release_sha256": "1b05c09355974d53ddf4585eee8b4801bd726e3ecd626ea753f066c9e504a3b9",
+            }
+            token_path.write_bytes(canonical(token)); os.chmod(token_path, 0o400)
+            with self.assertRaisesRegex(wrapper.ReleaseError, "TOKEN_BINDING"):
+                wrapper.validate_token(token_path, release, V1_APPROVAL)
 
     def test_no_fallback_or_s2_arithmetic_in_preflight_source(self) -> None:
         source = Path(wrapper.__file__).read_text()
@@ -254,6 +294,39 @@ class PreservedMechanicsTests(unittest.TestCase):
 
     def test_terminalizer_uses_release_v2_identity(self) -> None:
         self.assertEqual(terminalizer.RELEASE_ID, "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-RELEASE-2")
+
+    def test_failure_after_s2_start_truthfully_counts_one(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); state = root / "attempt-state"; state.mkdir()
+            release = root / "release.json"; release.write_text("{}")
+            release_sha = hashlib.sha256(release.read_bytes()).hexdigest()
+            (state / "attempt-start.json").write_text(json.dumps({
+                "event_id": terminalizer.EVENT_ID, "release_id": terminalizer.RELEASE_ID,
+                "attempt_id": terminalizer.ATTEMPT_ID, "release_sha256": release_sha,
+            }))
+            (state / "s2-start.json").write_text(json.dumps({
+                "s2_constructions": 1,
+                "accounting_semantics": "DURABLE_START_COUNTS_ONE_S2_CONSTRUCTION_REGARDLESS_OF_OUTCOME",
+            }))
+            (state / "terminal.json").write_text(json.dumps({
+                "disposition": "TERMINAL_FAILURE", "output_authority": False,
+                "s2_constructions": 1, "retry": False, "resume": False, "second_attempt": False,
+            }))
+            result = terminalizer.reconcile(state, root / "missing-output", root / "missing-manifest", release)
+            self.assertEqual(result["disposition"], "TERMINAL_FAILURE_RECONSTRUCTED")
+            self.assertEqual(result["s2_constructions"], 1)
+            self.assertFalse(result["output_authority"])
+
+    def test_output_publication_remains_no_replace(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); os.chmod(root, 0o700)
+            descriptor = wrapper.open_directory(root, exact_mode=0o700)
+            try:
+                wrapper.publish(descriptor, "representative-s2.f32le", b"synthetic")
+                with self.assertRaisesRegex(wrapper.ReleaseError, "PREEXISTING_DESTINATION"):
+                    wrapper.publish(descriptor, "representative-s2.f32le", b"replacement")
+            finally:
+                os.close(descriptor)
 
     def test_release_mutations_rejected(self) -> None:
         base = json.loads(RELEASE.read_text())
