@@ -137,9 +137,8 @@ class OpenOperand:
             os.close(self.root_fd)
             raise
 
-    def verify_after(self) -> dict[str, str]:
+    def _stable_readback(self) -> str:
         require(self.descriptor is not None, "OPERAND_CLOSED")
-        consumed = sha256(self.raw)
         after_raw = read_exact(self.descriptor, len(self.raw))
         after_metadata = os.fstat(self.descriptor)
         after = sha256(after_raw)
@@ -149,6 +148,21 @@ class OpenOperand:
             == (after_metadata.st_dev, after_metadata.st_ino, after_metadata.st_size),
             "INPUT_OBJECT_CHANGED",
         )
+        require(self.expected_sha == self.before_sha == after, "EXPECTED_BEFORE_READBACK")
+        return after
+
+    def verify_preflight(self) -> dict[str, str]:
+        """Read-only descriptor stability check; this is not execution consumption."""
+        readback = self._stable_readback()
+        return {
+            "expected_sha256": self.expected_sha,
+            "before_sha256": self.before_sha,
+            "readback_sha256": readback,
+        }
+
+    def verify_after(self) -> dict[str, str]:
+        consumed = sha256(self.raw)
+        after = self._stable_readback()
         require(self.expected_sha == self.before_sha == consumed == after, "EXPECTED_BEFORE_CONSUMED_AFTER")
         return {
             "expected_sha256": self.expected_sha,

@@ -8,6 +8,7 @@ and the bound operand consumer.
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import re
@@ -31,7 +32,7 @@ ARITHMETIC_SHA = "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e
 S1_REUSE_SHA = "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13"
 FFN_REUSE_SHA = "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06"
 APPROVAL_CONTRACT_SHA = "fd97ad9bdd7ee513359011d93518a47f6e70cb14300b62c23139a07bb0b831d2"
-EXECUTOR_SHA = "af0633716d8d4008824d0f6147dbbc26fba5bcb365680f8a0d600ed9384c8217"
+EXECUTOR_SHA = "440f90fc89f1acb431511810b4fc68e3247b22c05beeed2dca16c3a285aa83ff"
 EVENT_ID = "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1"
 RELEASE_ID = EVENT_ID + "-RELEASE-2"
 ATTEMPT_ID = EVENT_ID + "-ATTEMPT-1"
@@ -191,7 +192,39 @@ execute = mechanics.execute
 
 
 def main() -> int:
-    return mechanics.main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--release", type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--preflight-only", action="store_true")
+    mode.add_argument("--execute", action="store_true")
+    parser.add_argument("--go-token", type=Path)
+    args = parser.parse_args()
+    if args.preflight_only:
+        require(args.go_token is None, "PREFLIGHT_TOKEN_FORBIDDEN")
+        release, paths = static_preflight(args.release)
+        executor = load_executor()
+        s1_spec, ffn_spec = operand_specs(load(AUTHORIZATION))
+        s1 = executor.OpenOperand(paths["s1_root"], s1_spec)
+        try:
+            ffn = executor.OpenOperand(paths["ffn_root"], ffn_spec)
+            try:
+                identities = {"s1": s1.verify_preflight(), "ffn": ffn.verify_preflight()}
+            finally:
+                ffn.close()
+        finally:
+            s1.close()
+        print(json.dumps({
+            "result": "PRODUCTION_BINDINGS_RESOLVED", "inputs_readiness": identities,
+            "operand_execution_consumptions": {"s1": 0, "ffn": 0},
+            "ledger": 175, "checkpoint_reads": 0, "shard_opens": 0,
+            "s1_materializations": 0, "ffn_compositions": 0, "s2_constructions": 0,
+            "attempt_start_present": False, "s2_start_present": False,
+            "stop_boundary": release["stop_boundary"],
+        }, sort_keys=True))
+        return 0
+    require(args.go_token is not None, "GO_TOKEN_REQUIRED")
+    print(json.dumps(execute(args.release, args.go_token), sort_keys=True))
+    return 0
 
 
 if __name__ == "__main__":

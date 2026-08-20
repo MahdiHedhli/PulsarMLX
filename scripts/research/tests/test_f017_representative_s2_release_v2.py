@@ -146,7 +146,7 @@ class ManifestCompatibilityTests(unittest.TestCase):
         opened_ffn = executor.OpenOperand(ffn_root, ffn.spec)
         try:
             self.assertEqual(opened_s1.consumer_semantic_role, "REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL")
-            self.assertEqual(len(set(opened_s1.verify_after().values())), 1)
+            self.assertEqual(len(set(opened_s1.verify_preflight().values())), 1)
             self.assertEqual(len(set(opened_ffn.verify_after().values())), 1)
         finally:
             opened_ffn.close(); opened_s1.close()
@@ -209,7 +209,7 @@ class ManifestCompatibilityTests(unittest.TestCase):
         alias.unlink(); opened = executor.OpenOperand(self.root, fixture.spec)
         try:
             os.chmod(artifact, 0o600); artifact.write_bytes(b"\1" * 24576); os.chmod(artifact, 0o400)
-            with self.assertRaisesRegex(executor.S2Error, "EXPECTED_BEFORE_CONSUMED_AFTER"):
+            with self.assertRaisesRegex(executor.S2Error, "EXPECTED_BEFORE_READBACK"):
                 opened.verify_after()
         finally:
             opened.close()
