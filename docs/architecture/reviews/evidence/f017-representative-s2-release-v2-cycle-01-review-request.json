@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-v2-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "review_target_head": "d2590ce60339832800e906757120d1be36134ff6",
+  "reviewer_required": "claude-fable-5",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v2.json",
+    "sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2"
+  },
+  "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+  "authorization_sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a",
+  "arithmetic_contract_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+  "s1_reuse_authorization_sha256": "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13",
+  "ffn_reuse_authorization_sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06",
+  "s1_manifest_sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+  "ffn_manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+  "review_scope": [
+    "Review git object d2590ce60339832800e906757120d1be36134ff6 and execution-code object 33d0355c94d0eb34147aadfa233c3e01322aa1ba; do not trust builder prose.",
+    "Prove release v1 and its historical review/approval bytes remain unchanged and v1 execution authority is superseded without implying the historical reviewer failed.",
+    "Verify the v2 S1 parser enforcement-checks the exact producer manifest schema/version, singular artifact-only census, path, LAYER3_POST_ATTENTION_RESIDUAL role, SHA, dtype, shape, byte length, producer fields, duplicate keys, and same descriptor before deriving any consumer alias.",
+    "Verify the FFN parser remains a distinct exact schema and rejects S1/FFN schema swapping or generic shape-only admission.",
+    "Verify the accepted scalar arithmetic object is unchanged and the proof/reference-derived S2 classification, rounding, order, no-FMA/no-BLAS/no-GPU/no-parallel rules are preserved.",
+    "Verify release v2 has new fixed state/output paths, rejects v1 approval/token authority, preserves exclusive durable attempt/S2 starts, no retry/resume/second attempt, truthful post-start accounting, durable no-replace publication, receipt, terminal, and partial-output rejection.",
+    "Verify synthetic tests and exact real retained PRODUCTION_BINDINGS_RESOLVED preflight are sufficient and that preflight creates no attempt/S2 start, performs no arithmetic, and records zero operand execution consumptions.",
+    "Attack malformed/ambiguous manifests, producer-role aliasing, wrong hashes/geometry, file policy, descriptor mutation, fallback compute/checkpoint paths, stale authority, race/terminal poisoning, and downstream expansion.",
+    "Treat BLOCKING and NON_BLOCKING_REQUIRED as acceptance-blocking. DEFENSE_IN_DEPTH requires a concrete non-blocking disposition."
+  ],
+  "required_question": "IS THIS COMMITTED APPEND-ONLY S2 RELEASE V2 SUFFICIENTLY BOUND AND INSTANTIABLE FOR A LATER INDEPENDENT APPROVAL, WHILE CORRECTLY CONSUMING THE EXACT RETAINED S1 PRODUCER MANIFEST AND PRESERVING ALL ACCEPTED S2 ARITHMETIC AND SINGLE-USE BOUNDARIES?",
+  "output_path": "docs/architecture/reviews/evidence/f017-representative-s2-release-v2-cycle-01-independent-review.json",
+  "output_exact_fields": [
+    "schema",
+    "schema_version",
+    "reviewer_identity",
+    "reviewer_model",
+    "reviewed_head",
+    "release_path",
+    "release_sha256",
+    "authorization_sha256",
+    "arithmetic_contract_sha256",
+    "execution_code_head",
+    "verdict",
+    "blocking_findings",
+    "non_blocking_required_findings",
+    "defense_in_depth_findings",
+    "statement"
+  ],
+  "output_constants": {
+    "schema": "pulsarmlx.f017.representative-s2-single-use-release-v2-independent-review",
+    "schema_version": "2.0.0",
+    "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+    "reviewer_model": "claude-fable-5",
+    "reviewed_head": "d2590ce60339832800e906757120d1be36134ff6",
+    "release_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v2.json",
+    "release_sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2",
+    "authorization_sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a",
+    "arithmetic_contract_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+    "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba"
+  }
+}
