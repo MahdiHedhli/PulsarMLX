@@ -555,3 +555,29 @@ Gate: the reuse authority is independently accepted for future aggregate
 authorization preparation only; the aggregate remains not evaluated, no GO
 token or execution authority exists, and the next action is to prepare a
 separate checkpoint-free routed-aggregate authorization.
+
+## Phase 34 — Representative routed-aggregate authorization
+
+- Classify the canonical F017 routed-aggregate arithmetic as a proof/reference
+  surface intentionally distinct from the production serial-f32 runtime:
+  promote each retained f32 expert output element exactly to binary64, multiply
+  by its banked binary64 routing weight, and call CPython 3.14.6 `math.fsum`
+  exactly once on the eight products in canonical representative order.
+- Require open-once consume-what-you-validated handling for all eight retained
+  representative expert outputs and reject historical direct-DPREFIX outputs,
+  protected representative identities in synthetic mode, and every
+  checkpoint, shard, expert, shared, FFN, residual, or S2 capability.
+- Rehearse only synthetic real-geometry inputs, bind a deterministic
+  little-endian f64 `[6144]` output contract, and preserve zero real aggregate
+  executions during authorization preparation.
+- Enforce a future separately approved one-shot release with fixed
+  event/release/attempt identities, exclusive durable attempt-start before
+  aggregate computation, no retry/resume/second attempt, and future
+  release-stage pinning of the concrete state and output destinations.
+- Bank the exact Fable 5 review chain and Extra High builder composition
+  closeout, treating all blocking and non-blocking-required findings as gates.
+
+Gate: the authorization is independently accepted for a future separately
+released checkpoint-free routed aggregate only; the real aggregate remains not
+computed, `real_event_authorized=false`, ledger remains 175, and the next action
+is to prepare an independently reviewed single-use routed-aggregate release.

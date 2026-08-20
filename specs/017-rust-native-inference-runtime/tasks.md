@@ -540,3 +540,10 @@
   `math.fsum` aggregate-input contract while separating the production serial-
   f32 policy, bank exact Fable 5 and Extra High composition acceptance, and
   preserve ledger 175 with zero checkpoint, shard, expert, and aggregate work.
+- [x] T017-236 Prepare and independently accept the checkpoint-free
+  representative routed-aggregate authorization: bind the eight retained
+  representative outputs, direct CPython 3.14.6 `math.fsum` binary64
+  proof/reference arithmetic, f64 `[6144]` serialization, synthetic
+  real-geometry rehearsal, durable one-shot semantics for a future separate
+  release, and preserve ledger 175 with zero checkpoint, shard, expert, and
+  real aggregate execution.

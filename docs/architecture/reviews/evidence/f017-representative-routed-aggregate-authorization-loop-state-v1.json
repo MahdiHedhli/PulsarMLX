@@ -1,25 +1,73 @@
 {
   "schema": "pulsarmlx.f017.autonomous-representative-routed-aggregate-authorization-loop-state",
   "schema_version": "1.0.0",
-  "phase": "BUILDER_CYCLE_2_REPAIR_COMPLETE_REVIEW_PENDING",
+  "phase": "STOP_ACCEPTED",
   "cycle": 2,
   "maximum_cycles": 4,
   "builder_model": "GPT-5.6 Sol",
-  "builder_effort": "High",
+  "builder_effort": "High; final composition Extra High",
   "reviewer_model": "claude-fable-5",
-  "reviewer_artifact": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-01-independent-review.json",
-  "reviewer_sha256": "4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420",
-  "latest_verdict": "REJECT",
-  "findings": ["RRA-C1-R1", "RRA-C1-R2"],
+  "reviewer_artifacts": [
+    {
+      "cycle": 1,
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-01-independent-review.json",
+      "sha256": "4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420",
+      "verdict": "REJECT"
+    },
+    {
+      "cycle": 2,
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-02-independent-review.json",
+      "sha256": "3c362e0b5ae337b30727580bac67859811e001a91bbc3d5b9c88165f45951c9a",
+      "verdict": "ACCEPT"
+    }
+  ],
+  "latest_verdict": "ACCEPT",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
   "resolved_findings": [
-    {"id": "RRA-C1-R1", "repair": "synthetic declarations and consumed bytes reject every protected representative output SHA; fresh-process negative gate passes"},
-    {"id": "RRA-C1-R2", "repair": "future execute requires exclusive durable attempt-start, fixed event/release/attempt identities, fresh output, terminal evidence, and permanent no-retry state"}
+    {
+      "id": "RRA-C1-R1",
+      "repair": "synthetic declarations and consumed bytes reject every protected representative output SHA; fresh-process negative gate passes"
+    },
+    {
+      "id": "RRA-C1-R2",
+      "repair": "future execute requires exclusive durable attempt-start, fixed event/release/attempt identities, fresh output, terminal evidence, and permanent no-retry state"
+    }
+  ],
+  "defense_in_depth_findings": [
+    {
+      "id": "RRA-C2-D1",
+      "disposition": "DEFER_TO_FUTURE_SINGLE_USE_RELEASE_APPROVAL",
+      "requirement": "pin concrete state-root and output paths in approval evidence or an enforcing wrapper before GO or execution"
+    },
+    {
+      "id": "RRA-C2-D2",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "a concurrent loser remains fail-closed with zero computation despite noncanonical error formatting"
+    },
+    {
+      "id": "RRA-C2-D3",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "real mode and the validator reject historical direct-DPREFIX identity; synthetic protected representative identities are blocked before consumption"
+    },
+    {
+      "id": "RRA-C2-D4",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "same-descriptor expected/before/consumed/after verification detects the kernel-level pre-existing foreign-writer case"
+    }
   ],
   "aggregate_semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "final_composition": {
+    "builder_model": "GPT-5.6 Sol",
+    "builder_effort": "Extra High",
+    "verdict": "ACCEPT_PREPARE_ONLY",
+    "ready_for_routed_aggregate_release": true,
+    "real_aggregate_execution_authorized": false
+  },
   "ledger": 175,
   "checkpoint_reads": 0,
   "shard_opens": 0,
   "expert_executions": 0,
   "aggregate_executions": 0,
-  "termination_condition": null
+  "termination_condition": "STOP_ACCEPTED"
 }

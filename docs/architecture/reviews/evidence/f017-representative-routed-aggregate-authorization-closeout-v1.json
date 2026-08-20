@@ -1,0 +1,89 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-authorization-closeout",
+  "schema_version": "1.0.0",
+  "starting_head": "87d65a91e998ca9513262982e6453d8eb003178d",
+  "builder_commit": "1e012f1d0102559d9e7a1acf38716a1bd5051489",
+  "cycle_1_review_commit": "02b10e27ae9590936de2afcbc1da1c06fdc035d0",
+  "repair_commit": "73a875f46cbd866a072e1e019a73dd1d1a6cc718",
+  "cycle_2_review_commit": "1bb1e60e199f578785f82be1c405adc3e0d00ebf",
+  "termination": "STOP_ACCEPTED",
+  "authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json",
+    "sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590",
+    "status": "PREPARED_REVIEW_REQUIRED",
+    "real_event_authorized": false
+  },
+  "semantic_adjudication": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-semantic-adjudication-v1.json",
+    "sha256": "ab6d9305a2392ceda77728b7892868e0310c56f20c0636ab67ffd2154adb0636",
+    "classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32"
+  },
+  "arithmetic_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json",
+    "sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2",
+    "output_dtype": "little-endian-f64",
+    "output_shape": [6144],
+    "output_bytes": 49152
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+    "sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5"
+  },
+  "synthetic_rehearsal": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json",
+    "sha256": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc",
+    "fresh_processes": 2,
+    "result": "PASS",
+    "real_representative_output_bytes_used": false
+  },
+  "independent_reviews": [
+    {
+      "cycle": 1,
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-01-independent-review.json",
+      "sha256": "4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420",
+      "actual_reviewer_model": "claude-fable-5",
+      "verdict": "REJECT",
+      "blocking_findings": 0,
+      "non_blocking_required_findings": 2
+    },
+    {
+      "cycle": 2,
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-02-independent-review.json",
+      "sha256": "3c362e0b5ae337b30727580bac67859811e001a91bbc3d5b9c88165f45951c9a",
+      "actual_reviewer_model": "claude-fable-5",
+      "verdict": "ACCEPT",
+      "blocking_findings": 0,
+      "non_blocking_required_findings": 0,
+      "defense_in_depth_findings": 4
+    }
+  ],
+  "repairs": {
+    "RRA-C1-R1": "protected representative output identities are rejected before synthetic consumption and by a second consumed-byte gate",
+    "RRA-C1-R2": "future execution is bound to fixed identities and an exclusive durable attempt-start with permanent no-retry semantics"
+  },
+  "final_composition": {
+    "builder_model": "GPT-5.6 Sol",
+    "builder_effort": "Extra High",
+    "verdict": "ACCEPT_PREPARE_ONLY",
+    "ready_for_routed_aggregate_release": true,
+    "required_release_stage_closure": "pin concrete state-root and output paths in independently reviewed release approval or an enforcing wrapper"
+  },
+  "validation": {
+    "validator": "PASS",
+    "test_methods": 12,
+    "authorization_mutations": 34,
+    "synthetic_rehearsal_regeneration": "BYTE_IDENTICAL",
+    "private_open_once_preflight": "8_OF_8_PASS",
+    "ledger_adapter": "PASS_175",
+    "git_diff_check": "PASS"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0
+  },
+  "next_safe_action": "PREPARE_AN_INDEPENDENTLY_REVIEWED_SINGLE_USE_ROUTED_AGGREGATE_RELEASE_THAT_PINS_CONCRETE_STATE_AND_OUTPUT_DESTINATIONS;DO_NOT_COMPUTE_THE_AGGREGATE_OR_CREATE_A_GO_TOKEN"
+}
