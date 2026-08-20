@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-output-publication",
+  "schema_version": "1.0.0",
+  "output": {
+    "basename": "routed-aggregate.f64le",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "finite": true,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian"
+  },
+  "publication_order": [
+    "verify fixed output directory by open-once O_DIRECTORY|O_NOFOLLOW descriptor",
+    "require authoritative basename absent relative to that descriptor",
+    "create an exclusive temporary regular file relative to the same descriptor",
+    "write exactly 49152 bytes",
+    "fsync the temporary file",
+    "chmod temporary file 0400",
+    "link temporary inode to authoritative basename with no-replace semantics",
+    "fsync output directory",
+    "unlink temporary name",
+    "fsync output directory again",
+    "open authoritative basename once with O_NOFOLLOW",
+    "fstat regular file, owner, mode 0400, nlink 1, and size 49152",
+    "hash and finite-check the authoritative descriptor",
+    "record SHA-256 in durable terminal evidence"
+  ],
+  "failure_semantics": {
+    "preexisting_authoritative_output": "FAIL_BEFORE_ATTEMPT_START",
+    "temporary_write_or_fsync_failure": "TERMINAL_FAILURE_RELEASE_CONSUMED",
+    "authoritative_link_collision": "TERMINAL_FAILURE_RELEASE_CONSUMED_NO_OVERWRITE",
+    "crash_after_authoritative_link": "OUTPUT_REMAINS_DURABLE_FOR_RECONCILIATION_RELEASE_CONSUMED",
+    "terminal_or_evidence_failure_after_publish": "OUTPUT_REMAINS_DURABLE_FOR_RECONCILIATION_RELEASE_CONSUMED",
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "prohibitions": {
+    "os_replace_for_authoritative_publish": true,
+    "overwrite": true,
+    "path_reopen_substitution": true,
+    "symlink_follow": true,
+    "cross_filesystem_copy": true,
+    "partial_output_authority": true
+  }
+}

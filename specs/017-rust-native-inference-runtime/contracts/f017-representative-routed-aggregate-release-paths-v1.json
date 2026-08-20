@@ -1,0 +1,80 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-release-paths",
+  "schema_version": "1.0.0",
+  "home_anchor": "pathlib.Path.home()",
+  "repository_anchor": "wrapper source parents[2]",
+  "bindings": {
+    "retained_output_root": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs",
+      "role": "EIGHT_RETAINED_REPRESENTATIVE_EXPERT_OUTPUTS",
+      "before_execution": "MUST_EXIST_DIRECTORY",
+      "symlink": false,
+      "owner": "CURRENT_UID",
+      "group_or_other_writable": false
+    },
+    "retained_output_manifest": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/manifest.json",
+      "role": "PRIVATE_REPRESENTATIVE_EXPERT_OUTPUT_MANIFEST",
+      "before_execution": "MUST_EXIST_REGULAR_FILE",
+      "sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
+      "symlink": false,
+      "hard_links": 1,
+      "writable": false
+    },
+    "release_root": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1",
+      "role": "MACHINE_LOCAL_RELEASE_ROOT",
+      "before_execution": "MUST_EXIST_DIRECTORY",
+      "mode": "0700",
+      "symlink": false,
+      "owner": "CURRENT_UID"
+    },
+    "attempt_state_root": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/attempt-state",
+      "role": "EXCLUSIVE_SINGLE_USE_ATTEMPT_STATE",
+      "before_execution": "MUST_NOT_EXIST",
+      "created_mode": "0700",
+      "symlink": false
+    },
+    "aggregate_output_root": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs",
+      "role": "AUTHORITATIVE_AGGREGATE_OUTPUT_DIRECTORY",
+      "before_execution": "MUST_EXIST_DIRECTORY",
+      "mode": "0700",
+      "symlink": false,
+      "owner": "CURRENT_UID"
+    },
+    "aggregate_output": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs/routed-aggregate.f64le",
+      "role": "AUTHORITATIVE_ROUTED_AGGREGATE_F64LE",
+      "before_execution": "MUST_NOT_EXIST",
+      "published_mode": "0400",
+      "symlink": false,
+      "hard_links_after_publish": 1,
+      "byte_length": 49152
+    },
+    "go_token": {
+      "expression": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/go-token.json",
+      "role": "FUTURE_MACHINE_LOCAL_GO_TOKEN",
+      "before_independent_approval": "MUST_NOT_EXIST",
+      "future_mode": "0400",
+      "symlink": false,
+      "hard_links": 1
+    },
+    "independent_approval": {
+      "expression": "$REPOSITORY/docs/architecture/reviews/evidence/f017-representative-routed-aggregate-single-use-release-v1-independent-approval-v1.json",
+      "role": "FUTURE_COMMITTED_INDEPENDENT_RELEASE_APPROVAL",
+      "before_independent_approval": "MUST_NOT_EXIST",
+      "future_symlink": false
+    }
+  },
+  "runtime_scratch": {
+    "dedicated_external_root_required": false,
+    "temporary_output_location": "aggregate_output_root",
+    "temporary_name_policy": ".routed-aggregate.f64le.<exclusive-random>",
+    "temporary_file_must_not_survive_success": true
+  },
+  "same_filesystem_requirement": "attempt_state_root.parent and aggregate_output_root st_dev must match",
+  "storage_free_bytes_required": 67108864,
+  "private_absolute_paths_published": false
+}
