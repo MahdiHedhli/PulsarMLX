@@ -1,0 +1,153 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-output-reuse-independent-review",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "maximum_cycles": 4,
+  "actual_reviewer_model": "claude-fable-5",
+  "required_reviewer_model": "claude-fable-5",
+  "reviewer_model_match": true,
+  "reviewed_head": "d2ee21a4431905b464a5f635be1c44279bdfe706",
+  "branch": "feat/017-real-checkpoint-runner",
+  "working_tree_clean_at_review": true,
+  "review_target": "EXACT_CLEAN_COMMITTED_HEAD_AT_INVOCATION",
+  "builder_commit": "89848a3f0fe3b6832fe0f7685dec44be24da4a2e",
+  "artifact_hashes_verified": {
+    "review_request": {"path": "docs/architecture/reviews/evidence/f017-representative-s1-output-reuse-cycle-01-review-request.json", "match": true},
+    "execution_evidence": {"path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-real-execution-result-v1.json", "sha256": "ea924afbc8972c194adc9d8a9759e1fca35ae8c2ab362225477cb4c54229fb55", "match": true},
+    "reuse_authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-output-reuse-authorization-v1.json", "sha256": "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13", "match": true},
+    "resolver": {"path": "scripts/research/f017_representative_s1_output_reuse_v1.py", "sha256": "d2ac1f4d5e43fb57dde67dd907d2a86e0adaba922f564a41a8117b98e405feef", "match": true},
+    "validator": {"path": "scripts/research/validate_f017_representative_s1_output_reuse_v1.py", "sha256": "e754d678c966d1b9a08f5aaa5fbc137fe655a4e04fe460d9c5d7149c251c4f89", "match": true},
+    "tests": {"path": "scripts/research/tests/test_f017_representative_s1_output_reuse_v1.py", "sha256": "63efbaa0d479d84cdce96c835e3fb6ce5cb9a4c78d651ff59bf4511cddf2511f", "match": true},
+    "preparation": {"path": "docs/architecture/reviews/evidence/f017-representative-s1-output-reuse-preparation-v1.json", "sha256": "d8be1e677da5f37499c65461a45bc5981991b53f31c27a07bbaa7d21281354ff", "match": true},
+    "upstream_authority": {
+      "materialization_authorization_sha256_match": true,
+      "single_use_release_v2_sha256_match": true,
+      "independent_release_approval_sha256_match": true,
+      "approval_review_sha256_match": true,
+      "release_review_sha256_match": true,
+      "executor_sha256_match_at_head_and_execution_code_head": true,
+      "release_wrapper_v2_sha256_match_at_head_and_execution_code_head": true,
+      "terminalizer_sha256_match_at_head_and_execution_code_head": true
+    }
+  },
+  "independent_verification": {
+    "durable_state_inspected_read_only": true,
+    "durable_file_hashes": {
+      "go_token": {"sha256": "9be322346373d267e5dd567fe45b8f8f21c4fd2bfaffaecdbb5e7b776441bab7", "matches_evidence_go_token_sha256": true, "mode": "0400", "hard_link_count": 1},
+      "attempt_start": {"sha256": "bf883109e3ffae39e60ccfd689e6fd3ae9703fa3399d3bfb5ec5ab0ad25ff41c", "match": true, "mode": "0400", "hard_link_count": 1},
+      "materialization_start": {"sha256": "d1ff891432e86fda733a870545b8ecdb6601493ce8f3781e266ef765474ac5fe", "match": true, "mode": "0400", "hard_link_count": 1},
+      "receipt": {"sha256": "fca40fd446d7b4098e60d0f9fdcc55c3181bdfb757d8e6065e671b9c9ab6a0dc", "match": true, "mode": "0400", "hard_link_count": 1},
+      "terminal": {"sha256": "72a8131e2b7c8de8bd3cf57aa12aaab4989606354cdd93a4f04781dbc52026c9", "match": true, "mode": "0400", "hard_link_count": 1},
+      "private_manifest": {"sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e", "match": true, "mode": "0400", "hard_link_count": 1},
+      "retained_s1": {"sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd", "match": true, "mode": "0400", "hard_link_count": 1}
+    },
+    "s1_bytes_independently_parsed": {
+      "byte_length": 24576,
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "finite_elements": 6144,
+      "nonfinite_elements": 0,
+      "minimum": -0.05930853635072708,
+      "maximum": 0.05760858952999115,
+      "matches_evidence_statistics": true
+    },
+    "committed_tests": "8_TESTS_OK_VIA_UNITTEST_41_SUBTESTS_ACCOUNTED",
+    "committed_validator": "REPRESENTATIVE_S1_OUTPUT_REUSE_AUTHORIZATION_VALID_EXIT_0",
+    "committed_validator_check_retained": "REPRESENTATIVE_S1_OUTPUT_REUSE_PREFLIGHT_PASS_EXIT_0",
+    "ledger_adapter_independent_run": 175,
+    "canonical_s0_durable_file_rehashed": {"sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11", "byte_length": 24576, "read_only": true, "hard_link_count": 1, "match": true}
+  },
+  "required_adjudications": {
+    "authority_chain_reconciliation": {
+      "verdict": "RECONCILED",
+      "detail": "release v2 (c441f956) -> independent approval (e2729bb1, binds release+authorization sha) -> go-token (9be32234, exact 8-field schema binding approval/release/authorization/attempt) -> durable attempt-start (bf883109, binds release sha + attempt id, no_retry/no_resume) -> materialization-start (d1ff8914, binds attempt-start sha, counts exactly 1 s1_materialization, 0 checkpoint/shard) -> receipt (fca40fd4, binds materialization-start sha, output sha, manifest sha, all 10 source identities, all-zero prohibited accounting) -> terminal (72a81312, COMPLETE, output_authority true, binds output/manifest/receipt shas, ledger 175) -> retained output bytes rehash to the precommitted 8309377e. Every link independently rehashed and parsed from durable read-only state; all cross-references exact."
+    },
+    "token_consumed_and_no_second_attempt": {
+      "verdict": "CONFIRMED",
+      "detail": "Consumption is durable via the attempt-state directory, not token deletion. Wrapper v2 preflight (line 115) hard-fails PRIOR_STATE when attempt-state, output, or manifest exist, and preflight runs before token authorization, so the still-present 0400 go-token cannot gate a second attempt; attempt creation itself is exclusive os.mkdir (EEXIST). Terminal COMPLETE plus attempt-start no_retry/no_resume make the consumption durable and machine-checkable. The release contract's single_use block (attempts=1, no_second_attempt, failure_after_attempt_start_consumes_release) matches the implemented behavior."
+    },
+    "s1_is_canonical_post_attention_residual_not_ffn_or_alternate_surface": {
+      "verdict": "CONFIRMED",
+      "detail": "Semantic role REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL, stage role LAYER3_POST_ATTENTION_RESIDUAL, formula S1 = f32(S0 + layer3_attention_output) are pinned identically in release v2 output_contract (precommitted before execution), private manifest, evidence, and reuse authorization. Receipt accounting shows ffn_compositions=0 and s2_constructions=0; release v2 declares ffn_input_exposed=false and s2_interface_exposed=false. Geometry [6144] f32 (24576 bytes) matches the layer-3 residual width, and shape/dtype/role mutations are rejected by the validator (verified by attack). No FFN or alternate surface can satisfy the precommitted hash."
+    },
+    "canonical_s0_and_nine_attention_identities": {
+      "verdict": "CONFIRMED",
+      "detail": "Canonical S0 expected sha 9c3a8821 is precommitted in candidate v3 and release v2 input_contract; evidence records expected==before==consumed==after; receipt source_after_sha256.canonical_s0 matches; the durable S0 file independently rehashes to 9c3a8821 (24576 bytes, 0444, nlink 1) today. All nine attention identities in the reuse authorization, evidence, and receipt are mutually equal and equal candidate v3's precommitted packed_sha256 values (verified programmatically for all nine keys), with all_expected_equals_before_equals_consumed_equals_after=true on that surface."
+    },
+    "open_once_same_descriptor_and_immutable_file_policy": {
+      "verdict": "CONFIRMED",
+      "detail": "Resolver opens O_NOFOLLOW/O_DIRECTORY dir fds with lstat/fstat dev+ino substitution checks, opens leaves once via dir_fd with pure-basename enforcement, requires regular file, owner uid, nlink==1, mode with no write bits, exact size; consumes and re-reads on the same descriptor with fstat before/after dev/ino/size identity and byte-for-byte after==before equality. Independently attacked via a mirrored durable tree: bit-flip, writable mode, symlink, hard-link alias, truncated receipt, and tampered terminal all rejected (OUTPUT_SHA, READ_ONLY_REQUIRED, ELOOP, SINGLE_HARD_LINK_REQUIRED, BYTE_LENGTH), while an untampered mirror passes, proving rejections are for the right reasons. Real durable files are all 0400, nlink 1, owner-only directories 0700."
+    },
+    "mutation_attacks": {
+      "verdict": "ALL_REJECTED",
+      "detail": "37 independent adversarial mutations executed by this reviewer (beyond the committed tests): wrong output/manifest/receipt/attempt-start/resolver shas, terminal failure and output_authority flip, geometry (shape/dtype), finiteness flag, FFN role and alternate-formula surface swaps, S0 and attention lineage mutations, checkpoint/ffn/s2 accounting increments, consumer-scope s2 flip, real_event_authorized flip, prohibition drop, evidence path swap, token_unconsumed, second_attempt, ledger drift, wrong preparation head, extra key, evidence-level head/result/double-materialization/checkpoint/output mutations, and six durable-state tamper attacks against a mirror. All rejected; validator exits 1 with REJECT on every mutated authorization."
+    },
+    "hidden_path_attacks": {
+      "verdict": "NONE_FOUND",
+      "detail": "Full source of resolver, validator, and tests read line-by-line: imports are hashlib/json/math/os/pathlib/stat/struct/argparse only; no numpy, no checkpoint or shard paths, no attention compute, no FFN artifact access, no S2 interface. The builder commit 89848a3 adds only the six reviewed files plus a loop-state doc; HEAD d2ee21a adds only the review request and a loop-state field update. Ledger adapter reads one pinned committed evidence file (sha dc53b458) and derives 175 arithmetically; checkpoint_reads and shard_opens remain 0 across all runs performed in this review. No checkpoint, shard, or payload bytes were accessed by this review; no S1 rerun, reconstruction, FFN consumption, or S2 construction occurred."
+    },
+    "reuse_soundness": {
+      "verdict": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+      "detail": "The output identity 8309377e was precommitted in the independently approved release v2 output_contract before execution; the single real execution produced exactly that hash with expected==produced==readback; the retained bytes still hash to it at review time and were independently re-parsed (6144/6144 finite, statistics matching); terminal, manifest, and receipt are cross-consistent and durably immutable; all 10 source identities are precommitted-expected==before==consumed==after. A post-event re-materialization could only re-derive a hash equality already established by the precommitment match and is prohibited by the single-use release; it would add no evidentiary power. Concur with the builder's adjudication and its basis. No retroactive execution-authority expansion is implied; any future reproduction requires separate authority."
+    },
+    "sufficiency_for_checkpoint_free_s2_preparation": {
+      "verdict": "SUFFICIENT_AS_S1_INPUT_AUTHORITY_S2_NOT_AUTHORIZED",
+      "detail": "The banked S1 carries everything S2 preparation needs on the S1 side: hash-pinned identity, exact geometry and dtype, verified finiteness, pinned semantic/stage role and formula, complete durable lineage to canonical S0 and the nine attention identities, and an open-once immutable consumption protocol. Checkpoint-free S2 preparation can therefore bind its input to sha 8309377e without any checkpoint or shard access. This answers sufficiency only: FFN-side authority and S2 construction remain prohibited here and require the separate SEPARATE_CHECKPOINT_FREE_S2_PREPARATION_AUTHORITY."
+    }
+  },
+  "findings": {
+    "BLOCKING": [],
+    "NON_BLOCKING_REQUIRED": [],
+    "DEFENSE_IN_DEPTH": [
+      {
+        "id": "R1-DD-1",
+        "title": "Durable roots derived from environment-controlled Path.home()",
+        "detail": "Resolver constants derive RELEASE_ROOT from Path.home() at import. An attacker controlling HOME could point the resolver at a substitute tree, but every consumed byte is verified against pinned SHA-256 constants, so only a byte-identical copy passes - identity-equivalent, not authority-forging. No action required for this cycle; a future hardening could pin st_dev/st_ino or an absolute root in the authorization."
+      },
+      {
+        "id": "R1-DD-2",
+        "title": "Point-in-time fstat cannot exclude a pre-existing writable descriptor",
+        "detail": "nlink==1 and mode 0400 are checked at open time; a hypothetical writable fd opened before publication cannot be excluded by fstat policy. Mitigated by exclusive-create 0600->0400 publication, same-descriptor after==before byte equality, and single-user ownership. Informational only."
+      }
+    ],
+    "OBSERVATIONS": [
+      {
+        "id": "R1-OBS-1",
+        "title": "attention_payload_sha256 values are packed identities",
+        "detail": "The nine hashes in the reuse authorization and receipt are the packed retained-payload identities (candidate v3 packed_sha256), not decoded_sha256; for the six quantized tensors these differ from decoded identities. The binding is exact and consistent across all documents on the packed surface, so this is correct, but future consumers should not compare these against decoded_sha256. Documentation clarity only."
+      },
+      {
+        "id": "R1-OBS-2",
+        "title": "Preparation test-count claim verified",
+        "detail": "8 tests pass under unittest; the claimed 41 subtests are accounted (7+9+10+11 mutation subtests plus 4 file-policy subtests)."
+      }
+    ]
+  },
+  "counter_observations": [
+    "The still-present go-token file is not a live capability: preflight PRIOR_STATE rejection precedes token authorization, so token presence is inert once attempt-state exists.",
+    "The precommitted-hash basis makes post-event reproduction evidentially redundant rather than merely inconvenient; the strongest possible reproduction outcome (identical hash) is already entailed by the banked precommitment match.",
+    "Resolver capability flags (all false) were verified against the actual source, not trusted from the authorization document."
+  ],
+  "reproduction_adjudication": {
+    "additional_post_event_materialization_authorized": false,
+    "additional_post_event_materialization_performed": false,
+    "required_for_reuse_acceptance": false,
+    "independent_adjudication": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+    "concur_with_builder": true,
+    "retroactive_execution_authority_expansion": false,
+    "future_reproduction_requires_separate_authority": true
+  },
+  "review_accounting": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "s1_release_v2_reruns": 0,
+    "new_s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0,
+    "ledger": 175,
+    "durable_state_mutations": 0
+  },
+  "verdict": "ACCEPT",
+  "next_safe_action": "PROCEED_TO_SEPARATE_CHECKPOINT_FREE_S2_PREPARATION_AUTHORITY_USING_BANKED_S1_SHA256_8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd_AS_INPUT_AUTHORITY;DO_NOT_RERUN_S1_OR_CONSTRUCT_S2_UNDER_THIS_AUTHORIZATION"
+}
