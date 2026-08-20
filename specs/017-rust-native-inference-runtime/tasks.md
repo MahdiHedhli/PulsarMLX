@@ -589,7 +589,7 @@
 
 ## Phase 38: Convergence
 
-- [ ] T017-241 CRITICAL supersede FFN single-use release v1 for execution
+- [x] T017-241 CRITICAL supersede FFN single-use release v1 for execution
   authority and prepare, checkpoint-free validate, and independently accept an
   append-only release/wrapper v2 whose exact approval schema enforcement binds
   the reviewed commit, independent release-review SHA, and reviewer identity in
