@@ -528,3 +528,8 @@
   and shard budgets, durable one-shot state, crash reconciliation, fixed
   destinations, separate approval/token gating, and preserve
   `real_event_authorized=false` with zero real expert executions.
+- [x] T017-234 Execute the independently approved retained-only representative
+  expert-output recovery release exactly once: preserve ledger 175-to-175 with
+  zero checkpoint reads and shard opens, bank eight finite f32 `[6144]`
+  canonical expert outputs, pass 2/2 fresh-process exact reproduction, retain
+  all 25 input identities unchanged, and stop before aggregate/shared/FFN/S2.

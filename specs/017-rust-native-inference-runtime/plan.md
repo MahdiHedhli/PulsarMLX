@@ -514,3 +514,21 @@ Gate: the release is independently accepted but remains
 checkpoint reads and shard opens zero, and no real representative expert
 execution has occurred. The only next action is a separate independent release
 approval; do not create a GO token or execute.
+
+## Phase 32 — Retained-only representative expert-output recovery
+
+- Execute the separately approved one-shot retained-only release exactly once
+  from the canonical representative `router_normalized` input and the 24
+  retained packed expert weights.
+- Preserve ledger 175-to-175 with zero checkpoint reads, zero shard opens, and
+  zero checkpoint bytes; require all retained inputs to hash identically before
+  and after computation.
+- Bank eight concrete little-endian f32 `[6144]` expert outputs in canonical
+  representative ID order and require two fresh-process exact reproductions.
+- Stop before weighted aggregation, shared-expert execution, FFN completion,
+  or S2 construction.
+
+Gate: terminal disposition is `COMPLETE`, eight finite output authorities are
+banked, 2/2 retained-only reproduction passes, downstream execution counts are
+zero, and ledger remains 175. The next action is checkpoint-free cross-event
+reuse authorization for these outputs; do not aggregate yet.

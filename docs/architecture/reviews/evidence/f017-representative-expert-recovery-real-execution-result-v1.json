@@ -1,0 +1,92 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-recovery-real-execution-result",
+  "schema_version": "1.0.0",
+  "disposition": "SUCCESS",
+  "terminal_disposition": "COMPLETE",
+  "execution_head": "af87a795ac6231e49ef6430a4222cab0fb279eca",
+  "process_exit": 0,
+  "authority": {
+    "authorization_sha256": "abbf12bc921c2d28f00a375225b5969145017cfe70da8bfa7486caf502f21c6f",
+    "release_sha256": "ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68",
+    "independent_approval_sha256": "c1b5f202205fa3930e4b55a1131a2168f6ac4a845a02b14931e067ebd3b921cc",
+    "go_token_sha256": "9cbcad24456be6ff8a2f38e490b320ff780b8d453db348412128a41d54e7c7ca",
+    "executor_sha256": "7831568ffe451ba8b03827a90618514e682ec4a1170882b3bab4acab3d5452ec"
+  },
+  "event": {
+    "event_id": "F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1",
+    "attempt_id": "F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1",
+    "release_id": "F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1",
+    "attempt_start_present": true,
+    "attempt_start_sha256": "176551926634031b289c2b7dec249ceec36006c596ac455480b60959c6e592e1",
+    "token_consumed_at": "DURABLE_ATTEMPT_START_BEFORE_EXPERT_COMPUTATION",
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "access_accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "checkpoint_bytes": 0,
+    "retained_payload_count": 24,
+    "retained_packed_bytes": 90439680,
+    "real_expert_computations": 8
+  },
+  "representative_expert_input": {
+    "sha256_expected": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "sha256_before": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "sha256_after": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "identity_unchanged": true,
+    "dtype": "little-endian-f32",
+    "shape": [6144]
+  },
+  "retained_payload_integrity": {
+    "expected_before_after_equal": true,
+    "verified": 24,
+    "mismatches": 0,
+    "all_after_sha256_match_authorization": true
+  },
+  "id_weight_pairs": [
+    {"ordinal": 0, "expert_id": 250, "routing_weight": 0.7487501576296707},
+    {"ordinal": 1, "expert_id": 10, "routing_weight": 0.3348627106807668},
+    {"ordinal": 2, "expert_id": 237, "routing_weight": 0.23863270273063697},
+    {"ordinal": 3, "expert_id": 62, "routing_weight": 0.23688715675086147},
+    {"ordinal": 4, "expert_id": 73, "routing_weight": 0.2514906203405492},
+    {"ordinal": 5, "expert_id": 177, "routing_weight": 0.23059957299763345},
+    {"ordinal": 6, "expert_id": 218, "routing_weight": 0.22915341148588297},
+    {"ordinal": 7, "expert_id": 28, "routing_weight": 0.22962366738399842}
+  ],
+  "outputs": [
+    {"ordinal": 0, "expert_id": 250, "private_relative_path": "00-expert-250-down.f32le", "sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 1, "expert_id": 10, "private_relative_path": "01-expert-10-down.f32le", "sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 2, "expert_id": 237, "private_relative_path": "02-expert-237-down.f32le", "sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 3, "expert_id": 62, "private_relative_path": "03-expert-62-down.f32le", "sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 4, "expert_id": 73, "private_relative_path": "04-expert-73-down.f32le", "sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 5, "expert_id": 177, "private_relative_path": "05-expert-177-down.f32le", "sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 6, "expert_id": 218, "private_relative_path": "06-expert-218-down.f32le", "sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true},
+    {"ordinal": 7, "expert_id": 28, "private_relative_path": "07-expert-28-down.f32le", "sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0", "byte_length": 24576, "dtype": "little-endian-f32", "shape": [6144], "finite": true}
+  ],
+  "private_package": {
+    "manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
+    "terminal_sha256": "bd7c696b7a2cfb3965818af573ad66b5b611d4c9d82f4f7a0ae601e216d1f3d3",
+    "output_files": 8,
+    "output_bytes_total": 196608,
+    "permissions": "READ_ONLY_SINGLE_LINK"
+  },
+  "reproduction": {
+    "fresh_processes_required": 2,
+    "fresh_processes_passed": 2,
+    "exact_output_identity": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0
+  },
+  "stop_boundary": "AFTER_EIGHT_INDIVIDUAL_REPRESENTATIVE_EXPERT_OUTPUTS_BEFORE_WEIGHTED_AGGREGATE",
+  "downstream_execution": {
+    "aggregate_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_completion_executions": 0,
+    "s2_constructions": 0
+  },
+  "next_action": "PREPARE_CHECKPOINT_FREE_CROSS_EVENT_REUSE_AUTHORIZATION_FOR_THE_EIGHT_REPRESENTATIVE_EXPERT_OUTPUTS;DO_NOT_AGGREGATE_OR_EXECUTE_DOWNSTREAM"
+}
