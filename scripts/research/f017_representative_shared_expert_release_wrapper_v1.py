@@ -20,9 +20,12 @@ import sys
 from types import ModuleType
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT / "scripts/research") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts/research"))
+
 from f017_representative_expert_ledger_adapter_v1 import current_ledger
 
-ROOT = Path(__file__).resolve().parents[2]
 RELEASE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-single-use-release-v1.json"
 AUTHORIZATION = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json"
 COMPUTATION = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-computation-v1.json"
