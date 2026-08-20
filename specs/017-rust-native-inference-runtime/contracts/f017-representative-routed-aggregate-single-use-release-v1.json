@@ -1,0 +1,168 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-single-use-release",
+  "schema_version": "1.0.0",
+  "event_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1",
+  "release_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-RELEASE-1",
+  "attempt_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-ATTEMPT-1",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "real_event_authorized": false,
+  "approval_asserted": false,
+  "authoritative_execution_code_head": "d38a42ad347eaca48e53e5530e2e312fa73e6bd8",
+  "head_semantics": "EXACT_LOAD_BEARING_BYTES_AT_CODE_HEAD;APPEND_ONLY_RELEASE_REVIEW_APPROVAL_AND_BANKING_COMMITS_PERMITTED",
+  "bindings": {
+    "authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json",
+      "sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590"
+    },
+    "arithmetic_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json",
+      "sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2"
+    },
+    "executor": {
+      "path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+      "sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5"
+    },
+    "synthetic_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json",
+      "sha256": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc"
+    },
+    "final_independent_review": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-02-independent-review.json",
+      "sha256": "3c362e0b5ae337b30727580bac67859811e001a91bbc3d5b9c88165f45951c9a"
+    },
+    "expert_output_reuse_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"
+    },
+    "path_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-release-paths-v1.json",
+      "sha256": "f9f2e24f4529dd47ee8cc966ab4433f3b99fcad76819865f60237802ad4b544f"
+    },
+    "publication_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-output-publication-v1.json",
+      "sha256": "c85c40b6c84d48b5094a23342a5a63700bdd01a5a135f1bc36699de3ec308fd4"
+    },
+    "release_wrapper": {
+      "path": "scripts/research/f017_representative_routed_aggregate_release_wrapper_v1.py",
+      "sha256": "6822eb1857b70fc69e451943501716ebb9a190e9ad9ed5004bf66d851411d7c6"
+    },
+    "terminalizer": {
+      "path": "scripts/research/f017_representative_routed_aggregate_release_terminalizer_v1.py",
+      "sha256": "29169be62b65f8106e5c4de4b47b6bb5001496794f80c76b8d0d92de476ac920"
+    },
+    "release_validator": {
+      "path": "scripts/research/validate_f017_representative_routed_aggregate_single_use_release_v1.py",
+      "sha256": "725a4f23d2e767d8dd12f47b639e5becc96a195d53fdba892249a2e47b3f36b3"
+    },
+    "release_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-release-rehearsal-v1.json",
+      "sha256": "1b6b4476af94365f18d52b59bea20e40242445d041358ee21ec503a26b71d654"
+    }
+  },
+  "private_manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
+  "aggregate_semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "production_serial_f32": "SEPARATE_UNAUTHORIZED_SURFACE",
+  "atomic_id_weight_output_triples": [
+    {"ordinal": 0, "expert_id": 250, "routing_weight": 0.7487501576296707, "private_relative_path": "00-expert-250-down.f32le", "output_sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 1, "expert_id": 10, "routing_weight": 0.3348627106807668, "private_relative_path": "01-expert-10-down.f32le", "output_sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 2, "expert_id": 237, "routing_weight": 0.23863270273063697, "private_relative_path": "02-expert-237-down.f32le", "output_sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 3, "expert_id": 62, "routing_weight": 0.23688715675086147, "private_relative_path": "03-expert-62-down.f32le", "output_sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 4, "expert_id": 73, "routing_weight": 0.2514906203405492, "private_relative_path": "04-expert-73-down.f32le", "output_sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 5, "expert_id": 177, "routing_weight": 0.23059957299763345, "private_relative_path": "05-expert-177-down.f32le", "output_sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 6, "expert_id": 218, "routing_weight": 0.22915341148588297, "private_relative_path": "06-expert-218-down.f32le", "output_sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+    {"ordinal": 7, "expert_id": 28, "routing_weight": 0.22962366738399842, "private_relative_path": "07-expert-28-down.f32le", "output_sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576}
+  ],
+  "machine_local_paths": {
+    "path_contract_sha256": "f9f2e24f4529dd47ee8cc966ab4433f3b99fcad76819865f60237802ad4b544f",
+    "resolution": "FIXED_PATHLIB_HOME_AND_REPOSITORY_EXPRESSIONS_NO_CALLER_SELECTION",
+    "state_root": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/attempt-state",
+    "output_root": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs",
+    "output": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs/routed-aggregate.f64le",
+    "approval": "$REPOSITORY/docs/architecture/reviews/evidence/f017-representative-routed-aggregate-single-use-release-v1-independent-approval-v1.json",
+    "go_token": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/go-token.json"
+  },
+  "single_use": {
+    "attempts": 1,
+    "concurrent_invocation": false,
+    "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_AGGREGATE_COMPUTATION",
+    "exclusive_attempt_creation": true,
+    "pre_attempt_failure_unconsumed_only_if_no_aggregate_computation_and_no_output_authority": true,
+    "release_remains_consumed_after_any_post_start_failure": true,
+    "interruption_reconciled_by_bound_terminalizer": true,
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "preexecution_gates": {
+    "ledger_175": true,
+    "all_eight_expected_before_consumed_after": true,
+    "exact_triples": true,
+    "reuse_authority": true,
+    "arithmetic_contract": true,
+    "executor_identity": true,
+    "runtime_environment": true,
+    "no_checkpoint_interface": true,
+    "no_expert_interface": true,
+    "attempt_state_absent": true,
+    "authoritative_output_absent": true,
+    "fixed_paths": true,
+    "output_parent_open_once": true,
+    "storage": true,
+    "same_filesystem": true
+  },
+  "output_publication": {
+    "contract_sha256": "c85c40b6c84d48b5094a23342a5a63700bdd01a5a135f1bc36699de3ec308fd4",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "finite": true,
+    "file_fsync": true,
+    "no_replace_hard_link_publish": true,
+    "parent_fsync": true,
+    "overwrite": false,
+    "partial_output_authority": false
+  },
+  "reproduction": {
+    "real_event_reproduction_runs": 0,
+    "reason": "ACCEPTED_AUTHORIZATION_BUDGETS_EXACTLY_ONE_REAL_AGGREGATE;TWO_FRESH_PROCESS_DETERMINISM_IS_ALREADY_FROZEN_BY_SYNTHETIC_REHEARSAL",
+    "synthetic_fresh_processes": 2,
+    "synthetic_exact_identity": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0
+  },
+  "accounting": {
+    "starting_ledger": 175,
+    "terminal_ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "preparation_aggregate_executions": 0,
+    "future_aggregate_executions": 1
+  },
+  "prohibitions": {
+    "checkpoint_access": true,
+    "shard_open": true,
+    "expert_execution": true,
+    "shared_expert": true,
+    "ffn_completion": true,
+    "residual_addition": true,
+    "s2_construction": true,
+    "production_serial_f32": true,
+    "alternate_executor": true,
+    "caller_selected_paths": true,
+    "overwrite": true,
+    "retry": true,
+    "resume": true,
+    "second_attempt": true,
+    "go_token_in_this_phase": true
+  },
+  "stop_boundary": "AFTER_ROUTED_AGGREGATE_ONLY",
+  "future_approval": {
+    "separate_committed_independent_approval_required": true,
+    "release_itself_is_not_a_token": true,
+    "approval_statement": "REPRESENTATIVE ROUTED-AGGREGATE SINGLE-USE RELEASE V1 APPROVED",
+    "token_exact_fields": ["approval_sha256", "attempt_id", "authorization_sha256", "disposition", "event_id", "real_event_authorized", "release_id", "release_sha256"]
+  }
+}

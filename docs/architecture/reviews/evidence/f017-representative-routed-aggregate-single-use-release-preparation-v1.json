@@ -1,0 +1,68 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-single-use-release-preparation",
+  "schema_version": "1.0.0",
+  "starting_head": "259985b26eb943a3fbdada165875a91a79399ab1",
+  "execution_code_head": "d38a42ad347eaca48e53e5530e2e312fa73e6bd8",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-single-use-release-v1.json",
+    "sha256": "09faf0102c3dee311509681cb8cf63875cc71634c0a7171c34684c7e9a581519"
+  },
+  "bindings": {
+    "authorization_sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590",
+    "arithmetic_contract_sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2",
+    "executor_sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5",
+    "final_review_sha256": "3c362e0b5ae337b30727580bac67859811e001a91bbc3d5b9c88165f45951c9a",
+    "expert_output_reuse_authorization_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+    "private_manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
+    "path_contract_sha256": "f9f2e24f4529dd47ee8cc966ab4433f3b99fcad76819865f60237802ad4b544f",
+    "publication_contract_sha256": "c85c40b6c84d48b5094a23342a5a63700bdd01a5a135f1bc36699de3ec308fd4",
+    "wrapper_sha256": "6822eb1857b70fc69e451943501716ebb9a190e9ad9ed5004bf66d851411d7c6",
+    "terminalizer_sha256": "29169be62b65f8106e5c4de4b47b6bb5001496794f80c76b8d0d92de476ac920",
+    "validator_sha256": "725a4f23d2e767d8dd12f47b639e5becc96a195d53fdba892249a2e47b3f36b3",
+    "release_rehearsal_sha256": "1b6b4476af94365f18d52b59bea20e40242445d041358ee21ec503a26b71d654"
+  },
+  "path_resolution": {
+    "retained_outputs": "$HOME/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs",
+    "attempt_state": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/attempt-state",
+    "output_root": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs",
+    "output": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs/routed-aggregate.f64le",
+    "approval": "$REPOSITORY/docs/architecture/reviews/evidence/f017-representative-routed-aggregate-single-use-release-v1-independent-approval-v1.json",
+    "go_token": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/go-token.json",
+    "caller_selection": false
+  },
+  "output_publication": {
+    "algorithm": "SAME_DIRECTORY_EXCLUSIVE_TEMP_FSYNC_CHMOD_LINK_NOREPLACE_PARENT_FSYNC_UNLINK_PARENT_FSYNC_VERIFY",
+    "output_dtype": "little-endian-f64",
+    "output_shape": [6144],
+    "output_bytes": 49152,
+    "overwrite": false,
+    "partial_output_authority": false
+  },
+  "reproduction": {
+    "real_event_runs": 1,
+    "additional_real_reproduction_runs": 0,
+    "accepted_synthetic_fresh_processes": 2,
+    "reason": "NO_REAL_REPRODUCTION_CONTRACT_EXISTS;ADDITIONAL_REAL_AGGREGATES_WOULD_EXCEED_THE_ACCEPTED_ONE_EXECUTION_BUDGET"
+  },
+  "validation": {
+    "release_validator": "PASS",
+    "test_methods": 10,
+    "validator_mutations": 39,
+    "release_rehearsal_cases": 5,
+    "release_rehearsal": "PASS",
+    "production_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "production_preflight_packet_sha256": "dd39aaa2dd9f44121927d27b66f9537ec8ce81463ee24a1c0bc8b28bde2d6127",
+    "retained_outputs": "8_OF_8_EXPECTED_BEFORE_CONSUMED_AFTER_PASS"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0
+  },
+  "real_event_authorized": false,
+  "go_token_created": false
+}
