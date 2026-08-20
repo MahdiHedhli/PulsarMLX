@@ -623,3 +623,13 @@
   no-replace publication and one-attempt semantics, exposes no checkpoint,
   real-attention, FFN, or S2 capability, and preserves ledger 175 with zero
   materializations during preparation per Constitution III/X/XII (missing).
+
+## Phase 42: Convergence
+
+- [ ] T017-245 Bank and independently accept the exact wrapper-enforced
+  representative S1 materialization release-v2 approval, validate the complete
+  retained S0/attention source surface and empty fixed execution state without
+  reconstruction, then create exactly one mode-0400, single-link, unconsumed
+  machine-local GO token while preserving ledger 175 and zero checkpoint,
+  attention-event, S1, FFN, or S2 execution per plan Phase 43 and Constitution
+  III/X/XII (missing).

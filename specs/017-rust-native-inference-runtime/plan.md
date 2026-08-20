@@ -763,3 +763,24 @@ Gate: S1 materialization machinery is independently accepted for a later
 approval/execution decision; no real S1 bytes are materialized, no GO token is
 created, ledger remains 175, and checkpoint, attention-event, FFN, and S2
 counters remain zero.
+
+## Phase 43 — S1 release-v2 approval and machine-local readiness
+
+- Materialize the exact 18-field approval required and enforcement-checked by
+  wrapper v2, binding the accepted release-v2 bytes and the accepted immutable
+  Claude Fable 5 release-review head, path, SHA, model, and verdict while
+  remaining non-executable and separate from the machine-local token.
+- Commit and independently review the approval bytes and their transitive
+  release -> review -> approval -> token authority chain before creating any
+  local execution authority.
+- Verify the canonical S0, its private manifest, all nine retained attention
+  payloads, pinned runtime, fixed release-v2 state/output destinations, and
+  zero prior materialization state without executing reconstruction arithmetic.
+- Only after every gate passes, create one exact eight-field, mode-0400,
+  regular, non-symlink, single-link GO token bound to the committed approval;
+  validate it through the read-only authority gate and stop unconsumed.
+
+Gate: one valid machine-local S1 release-v2 token exists unconsumed;
+approval/review bytes are committed and accepted; ledger remains 175; and
+checkpoint, attention-event, attempt, materialization, FFN, and S2 counters
+remain zero.
