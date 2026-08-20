@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-release-preparation",
+  "schema_version": "1.0.0",
+  "preparation_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-SINGLE-USE-RELEASE-PREPARATION-1",
+  "starting_head": "6a47b114bdcc4fbc724f2e8135b3e2c950b39582",
+  "execution_code_head": "ba49351bad99d39cc57a3cea4ce633c43326bd44",
+  "release_package_head": "0c8e9248dc6da940d0814f1d4452fba63624c546",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "real_event_authorized": false,
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-single-use-release-v1.json",
+    "sha256": "37752ccedadf5db5eb655d4ba4383a37a431197ec41e07d15f6aa7905dfc6b8a"
+  },
+  "validation": {
+    "release_validator": "PASS",
+    "release_unit_tests": "5_OF_5_PASS",
+    "upstream_ffn_tests": "7_OF_7_PASS",
+    "release_mutations_rejected": 47,
+    "release_mechanics_rehearsal": "8_OF_8_PASS",
+    "two_process_attempt_race": "EXACTLY_ONE_WINNER",
+    "wrong_geometry_and_nonfinite": "REJECTED",
+    "overwrite": "REJECTED",
+    "published_without_complete_terminal": "NO_OUTPUT_AUTHORITY",
+    "git_diff_check": "PASS"
+  },
+  "release_mechanics": {
+    "attempt_start": "EXCLUSIVE_DURABLE_NO_REPLACE_RECORD_BEFORE_FFN",
+    "ffn_start": "DURABLE_NO_REPLACE_RECORD_COUNTS_ONE_BEFORE_ARITHMETIC",
+    "output_publication": "DESCRIPTOR_RELATIVE_TEMP_FSYNC_NO_REPLACE_LINK_PARENT_FSYNC_READBACK",
+    "private_manifest": true,
+    "execution_receipt": true,
+    "complete_terminal_required": true,
+    "read_only_terminalizer": true
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "real_ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0,
+    "go_tokens": 0
+  },
+  "stop_boundary": "BEFORE_REAL_REPRESENTATIVE_FFN_COMPOSITION"
+}

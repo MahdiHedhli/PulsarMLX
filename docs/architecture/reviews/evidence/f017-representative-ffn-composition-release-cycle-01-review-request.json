@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.independent-adversarial-review-request",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-SINGLE-USE-RELEASE-CYCLE-01",
+  "review_target_branch": "feat/017-real-checkpoint-runner",
+  "review_target_head": "0c8e9248dc6da940d0814f1d4452fba63624c546",
+  "required_reviewer_model": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_ADVERSARIAL_REVIEWER_NOT_WORKFLOW_SUPERVISOR",
+  "repository_bytes_are_authoritative": true,
+  "committed_bytes_only": true,
+  "immutable_artifacts": {
+    "release_sha256": "37752ccedadf5db5eb655d4ba4383a37a431197ec41e07d15f6aa7905dfc6b8a",
+    "execution_code_head": "ba49351bad99d39cc57a3cea4ce633c43326bd44",
+    "ffn_authorization_sha256": "69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5",
+    "arithmetic_contract_sha256": "1054d014c23628fa56771518f066d14cfd445b0d7b4ba7da98b638c37981cdbb",
+    "routed_reuse_authorization_sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+    "routed_artifact_sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+    "shared_reuse_authorization_sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+    "shared_manifest_sha256": "fbdfb87783e72f011207cb06007cb91e955f6f824d96522f149fcb0d37d4ea52",
+    "shared_artifact_sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+    "executor_sha256": "7632b19af4a0b3bb16ec7032cec049bcab45dabd246cac5d77f0daaec24d256c",
+    "synthetic_rehearsal_sha256": "04c0448a124d36a7510650d725e09d1cc5f2ce66b0c8ee944da0b831a8d67a60",
+    "authorization_review_sha256": "72728eed90efae3e9c432d8301324ce26d9a99c580cd0dacf6f88c83a80580da",
+    "release_wrapper_sha256": "b5983ebf3bc5c6c6f48b57c3ea4af9f600bbe18b05a207f04146bdd4c4564e5d",
+    "terminalizer_sha256": "b7794453e3f9e97273ba43be227413d45672a78e487d182a74461e801eff6ba6",
+    "release_rehearsal_sha256": "c99856201bb674d8ccc2bdd1affb4eb5305c762d86ba1310459951e0b3634418"
+  },
+  "required_adjudications": [
+    "release binds exactly the accepted proof/reference FFN authorization and both retained input authorities",
+    "no production serial-f32 substitution or arithmetic reinterpretation is possible",
+    "authorization, release, approval, token, executor, arithmetic, and retained identities fail closed before computation",
+    "exclusive attempt creation admits at most one process and the loser performs zero FFN work",
+    "durable attempt-start consumes the release and durable FFN-start truthfully counts one composition before arithmetic",
+    "all post-start failure states remain consumed with deterministic read-only reconciliation",
+    "output and private manifest publication are descriptor-relative, no-replace, fsynced, read back, and independently gradable",
+    "output authority requires matching output, manifest, execution receipt, and COMPLETE terminal",
+    "no checkpoint, shard, expert, shared-expert, routed recomputation, S1 materialization, or S2 capability exists",
+    "the release is sufficient for a separate operator decision but does not approve or execute itself"
+  ],
+  "required_attacks": [
+    "wrong or stale authorization and release binding",
+    "wrong routed or shared artifact and private manifest",
+    "malformed, truncated, non-finite, or substituted input",
+    "wrong output dtype, shape, bytes, serialization, or finite state",
+    "production serial-f32 substitution",
+    "duplicate and concurrent attempt",
+    "crash before attempt-start, after attempt-start, after FFN-start, after publication, after receipt, and before terminal",
+    "forged COMPLETE terminal or receipt",
+    "retry, resume, second attempt, S1, and S2 authority expansion"
+  ],
+  "finding_classes": ["BLOCKING", "NON_BLOCKING_REQUIRED", "DEFENSE_IN_DEPTH"],
+  "acceptance_rule": "ACCEPT_ONLY_IF_BLOCKING_AND_NON_BLOCKING_REQUIRED_ARE_EMPTY",
+  "safety": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0,
+    "ledger": 175,
+    "go_tokens": 0,
+    "machine_local_real_tensor_access": false
+  },
+  "review_output_path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-cycle-01-independent-review.json",
+  "required_output": {
+    "exact_utf8_json_object": true,
+    "print_actual_model_path_sha_verdict": true,
+    "do_not_fix_findings": true
+  }
+}
