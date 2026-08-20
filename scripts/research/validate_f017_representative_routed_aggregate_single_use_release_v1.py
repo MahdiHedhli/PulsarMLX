@@ -80,7 +80,7 @@ def validate(document: dict[str, Any], *, repo: bool) -> None:
     bindings = document.get("bindings", {})
     for key, identity in expected_bindings.items():
         req(bindings.get(key, {}).get("sha256") == identity, f"binding: {key}")
-    for key in ("path_contract", "publication_contract", "release_wrapper", "terminalizer"):
+    for key in ("path_contract", "publication_contract", "release_wrapper", "terminalizer", "release_validator", "release_rehearsal"):
         req(isinstance(bindings.get(key, {}).get("sha256"), str) and len(bindings[key]["sha256"]) == 64, f"binding: {key}")
     if repo:
         for key, item in bindings.items():

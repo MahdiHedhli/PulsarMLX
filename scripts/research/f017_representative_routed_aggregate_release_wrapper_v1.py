@@ -203,7 +203,10 @@ def write_state_artifact(state_root: Path, name: str, packet: dict[str, Any]) ->
         require_absent_at(directory_fd, name)
         descriptor = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o400, dir_fd=directory_fd)
         try:
-            os.write(descriptor, raw)
+            view = memoryview(raw)
+            written = 0
+            while written < len(view):
+                written += os.write(descriptor, view[written:])
             os.fsync(descriptor)
         finally:
             os.close(descriptor)
