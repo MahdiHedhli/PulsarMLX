@@ -1,0 +1,146 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-recovery-single-use-release-independent-approval",
+  "schema_version": "1.1.0",
+  "approval_id": "F017-REPRESENTATIVE-EXPERT-RECOVERY-SINGLE-USE-RELEASE-V1-INDEPENDENT-APPROVAL-2",
+  "reviewed_head": "1163182399a2148579029213caf325684b71e350",
+  "actual_reviewer_model": "claude-fable-5",
+  "verdict": "ACCEPT",
+  "statement": "REPRESENTATIVE RETAINED-ONLY EXPERT RECOVERY SINGLE-USE RELEASE V1 APPROVED",
+  "release_id": "F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1",
+  "release_sha256": "ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68",
+  "correction": {
+    "prior_approval_path": "docs/architecture/reviews/evidence/f017-representative-expert-recovery-single-use-release-v1-independent-approval-v1.json",
+    "prior_approval_sha256": "64d3ea4e88bca65d6c9ba97fe67537332f1ab072902903af4ba5f1e846e56e6e",
+    "prior_verdict": "APPROVE",
+    "defect": "The v1 artifact substantively approved this release with zero BLOCKING and zero NON_BLOCKING_REQUIRED findings but emitted verdict APPROVE. The committed release wrapper authorize() (scripts/research/f017_representative_expert_recovery_release_wrapper_v1.py line 49) fail-closes unless approval.verdict is exactly ACCEPT, so v1 is not executable approval authority; pointing the wrapper at v1 raises INDEPENDENT_RELEASE_GATE.",
+    "resolution": "Independent full re-verification of the identical release bytes and authority chain at head 1163182399a2148579029213caf325684b71e350 (v1 reviewed 23d73e51a5def638b72e73a61c982bad3d8bd2a4; the single intervening commit adds only the banked v1 artifact itself, no code). This v2 artifact re-issues the same substantive approval with the wrapper-compatible verdict token ACCEPT. v1 is retained unmodified append-only as the historical record; v2 supersedes v1 as the sole executable approval authority for this release.",
+    "prior_artifact_not_modified": true
+  },
+  "authorization_sha256": "abbf12bc921c2d28f00a375225b5969145017cfe70da8bfa7486caf502f21c6f",
+  "executor_sha256": "7831568ffe451ba8b03827a90618514e682ec4a1170882b3bab4acab3d5452ec",
+  "execution_code_head": "6b175d4ca812fa01acafe6d1a38415fcd3efaae2",
+  "final_composition_review_sha256": "aeda9f78a35df3daf234c7b250e59690a4e600a3cddd9311f7b47e94e7e6e007",
+  "representative_expert_input_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+  "retained_payload_count": 24,
+  "retained_packed_bytes": 90439680,
+  "ledger": {
+    "starting_ledger": 175,
+    "terminal_ledger": 175,
+    "ledger_movement": 0,
+    "ledger_remains_175": true,
+    "ledger_change_on_any_outcome": 0
+  },
+  "access_budget": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_checkpoint_bytes": 0,
+    "retained_payloads_only": true,
+    "checkpoint_access_remains_prohibited": true
+  },
+  "id_weight_pairs": {
+    "binding": "ATOMIC_ID_WEIGHT_PAIR",
+    "count": 8,
+    "canonical_order": [250, 10, 237, 62, 73, 177, 218, 28],
+    "verified_identical_to_authorization_arrays": true,
+    "weights_verified_exact": true
+  },
+  "runtime_pins": {
+    "cpython": "3.14.6",
+    "numpy": "2.4.5",
+    "endianness": "little",
+    "device": "CPU_ONLY",
+    "thread_variables_equal_one": 5,
+    "enforced_fail_closed_by_bound_wrapper": true
+  },
+  "output_stop_boundary": "AFTER_EIGHT_INDIVIDUAL_REPRESENTATIVE_EXPERT_OUTPUTS_BEFORE_WEIGHTED_AGGREGATE",
+  "reproduction_requirement": {
+    "two_fresh_process_reproductions_required": 2,
+    "hash_exact_identity_required": true,
+    "consumer_authority_requires_terminal_complete": true
+  },
+  "prohibitions": {
+    "routed_aggregate": true,
+    "shared_expert": true,
+    "ffn_completion": true,
+    "s2_construction": true,
+    "checkpoint_access": true,
+    "shard_open": true,
+    "direct_dprefix_outputs": true,
+    "gpu": true,
+    "resume": true,
+    "retry": true,
+    "second_attempt": true
+  },
+  "single_use": {
+    "attempts": 1,
+    "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_EXPERT_COMPUTATION",
+    "concurrent_invocation": false,
+    "resume": false,
+    "retry": false,
+    "second_attempt": false,
+    "interruption_reconciled_by_bound_terminalizer": true,
+    "approves_only_one_retained_expert_recovery_execution": true
+  },
+  "approval_does_not_execute": true,
+  "approval_is_not_computation": true,
+  "separate_machine_local_go_token_required": true,
+  "approval_scope_declaration": "This approval does not execute anything and is not computation. It performed no checkpoint access, no shard opens, no retained-payload opens, no decoder invocation, and no expert computation; checkpoint access remains prohibited and the real payload ledger remains 175 with zero movement under any outcome. A separate machine-local byte-exact 8-field GO token (approval_sha256, attempt_id, authorization_sha256, disposition GO_EXECUTE_ONCE_NO_RETRY, event_id, real_event_authorized, release_id, release_sha256) is still required and was not created here; the approval_sha256 token field must bind this v2 file's sha256, not the superseded v1 artifact. This document approves exactly one retained-only representative expert-recovery execution of release F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1 through the bound release wrapper in the pinned environment, stopping after eight individual expert outputs before any weighted aggregate; it authorizes nothing else, no second attempt, no retry, no resume, and no downstream aggregation, shared-expert, FFN-completion, or S2 authority.",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "AP2-DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried FC-DID-1..FC-DID-7 from the banked final composition review (aeda9f78...)",
+      "detail": "The seven adjudicated defense-in-depth observations (environment not echoed into durable records; terminalizer does not separately record manifest.json; go-token synthesizable from committed bytes with path-relative one-shot enforcement under honest-operator threat model; executor transitively imports the module containing the sole checkpoint capability class with zero references; validator binds three helpers to self-declared hashes and is itself unpinned; --internal-reproduce gated only by an environment variable when invoked directly; validator plain-JSON parse, pre-attempt-start crash window, CPU_ONLY without runtime check) remain accurately characterized and non-blocking at the re-reviewed head: none can mint committed authority, move the ledger, open a checkpoint or shard, or bypass the byte-exact release_sha256 and approval pins on the authoritative wrapper path.",
+      "action_required_before_event": false
+    },
+    {
+      "id": "AP2-DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Release id_weight_pairs are pair objects while the authorization stores parallel arrays",
+      "detail": "The authorization has no id_weight_pairs key; it carries output_contract.canonical_order and routing_weights as parallel arrays. Independent recomputation at the re-reviewed head confirmed every release pair (ordinal, expert_id, routing_weight) is exactly consistent with those arrays and with selected_expert_ids, so the atomic pairing is faithful; the representational difference is noted only because a naive object-equality comparison between the two contracts returns false.",
+      "action_required_before_event": false
+    },
+    {
+      "id": "AP2-DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Wrapper approval gate checks only verdict, release_sha256, and release_id on the approval object",
+      "detail": "authorize() validates the operator-supplied approval file solely via verdict==ACCEPT, release_sha256, and release_id top-level fields; it does not check schema, statement, or blocking-finding emptiness. The go-token's approval_sha256 field byte-pins the approval file, and a tree sweep at the re-reviewed head confirmed no other committed JSON carries verdict ACCEPT together with top-level release_sha256 ccf33fef... and this release_id (the two banked ACCEPT reviews mentioning the release hash have no top-level release_sha256/release_id), so this v2 artifact is the unique committed document that can satisfy the gate. Non-blocking under the honest-operator threat model already adjudicated in FC-DID-3.",
+      "action_required_before_event": false
+    }
+  ],
+  "verification": {
+    "method": "Committed-bytes-only independent re-verification at head 1163182399a2148579029213caf325684b71e350 on feat/017-real-checkpoint-runner with a verified-clean working tree. No checkpoint, shard, retained payload, decoder binary, or private root was opened; no expert computation, no GO token creation, and no execution of any kind was performed. The prior v1 approval artifact was read and hashed but not modified.",
+    "checks": [
+      "git rev-parse HEAD == 1163182399a2148579029213caf325684b71e350 with clean status on feat/017-real-checkpoint-runner; all hashes recomputed from working-tree bytes identical to that head",
+      "Prior approval artifact recomputed == 64d3ea4e88bca65d6c9ba97fe67537332f1ab072902903af4ba5f1e846e56e6e (MATCH); its verdict is APPROVE and its statement, release_id, release_sha256, and all substantive bindings match this re-verification; wrapper authorize() line requires verdict exactly ACCEPT, confirming v1 is not executable authority",
+      "git log 23d73e5..1163182 contains exactly one commit adding only the banked v1 approval artifact (129 insertions, no deletions, no other paths): append-only, zero code drift since the v1 review head",
+      "Release contract sha256 recomputed == ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68 (MATCH) at specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-recovery-single-use-release-v1.json; strict-parses clean under duplicate-key rejection; status PREPARED_FOR_INDEPENDENT_APPROVAL, real_event_authorized=false, approval_asserted=false, release_itself_is_not_a_token=true; attempt_id F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-ATTEMPT-1, event_id F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1",
+      "All seven release bindings recomputed byte-exact: authorization abbf12bc921c2d28f00a375225b5969145017cfe70da8bfa7486caf502f21c6f, executor 7831568ffe451ba8b03827a90618514e682ec4a1170882b3bab4acab3d5452ec, independent_review df9b5192cc2df696657b8a8ed47f7417cf6f59aef601adacbd91191734e48142, ledger_adapter 3655b90cff0adb882f9c52c54a89baf5414cf86efaa203101d5487eb36901ee4, rehearsal 8d156da25f32c02de1ec8635edcb0ee0bc3be1baa5f72d5fd256697e39d1650f, release_wrapper 9242bbf2744c59f17d59712a91b5abae0234eae5d63056c2baa7b5ff0d504d30, terminalizer 7a3da0b61ec6a64b6decf0739bc831a3658440bf078796ef39bec6d75d49f532; plus computation contract cd4c52c2b329e397cd491ec23cc355aaae07b7ce2d0116ff86f0ce5dd4b499ad and input materializer 3c646eba9cbbc1c71646e06aaa7cc2f8edd279f75c8587fac292d162150d9b4f (all MATCH)",
+      "Final composition review recomputed == aeda9f78a35df3daf234c7b250e59690a4e600a3cddd9311f7b47e94e7e6e007 (MATCH), verdict ACCEPT at reviewed_head 90888d9 with zero BLOCKING and zero NON_BLOCKING_REQUIRED findings",
+      "authoritative_execution_code_head 6b175d4ca812fa01acafe6d1a38415fcd3efaae2 verified as ancestor of reviewed head; git diff 6b175d4..1163182 touches no file under scripts/ or src/, so load-bearing execution code at head is byte-identical to the bound code head per head_semantics APPEND_ONLY_RELEASE_AND_APPROVAL_COMMITS_PERMITTED",
+      "Representative input binding verified: sha256 687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c, 24576 bytes, shape [6144] little-endian-f32, checkpoint_fallback=false, expected_equals_before_equals_after=true, byte-identical representative_expert_input blocks between release and authorization",
+      "Retained payload inventory recomputed: 24 records, sum packed_bytes == 90,439,680, 24 unique packed_sha256, every record new_checkpoint_read_required=false and availability PERSISTED_PACKED_AUTHORITY, inventory byte-identical between release and authorization",
+      "Access accounting verified in both contracts: checkpoint reads 0, shard opens 0, new checkpoint bytes 0, starting_ledger == terminal_ledger == 175; committed ledger adapter executed at head returned current_ledger 175",
+      "id_weight_pairs verified: 8 pairs all binding ATOMIC_ID_WEIGHT_PAIR, ordinals 0-7, expert_id order 250,10,237,62,73,177,218,28 equal to the authorization's output_contract.canonical_order and selected_expert_ids, routing weights exactly equal to the authorization's routing_weights parallel array",
+      "Runtime pins verified in release preexecution_gates.pinned_environment (CPython 3.14.6, numpy 2.4.5, little endianness, CPU_ONLY, five thread variables = 1) and enforced fail-closed in the bound wrapper require_environment(), invoked in preflight before validator, executor preflight, and any attempt",
+      "Output stop boundary verified: stop_boundary AFTER_EIGHT_INDIVIDUAL_REPRESENTATIVE_EXPERT_OUTPUTS_BEFORE_WEIGHTED_AGGREGATE with aggregate_outputs=false, individual_outputs=8, bytes_each 24576, shape_each [6144], finite_checks_required, input_before_after_identity_required, all_eight_output_sha256_exact, output_sha256_banked_per_expert, two_fresh_process_reproductions_required=2, consumer_authority_requires_terminal_complete=true",
+      "Prohibitions verified all true in the release: routed_aggregate, shared_expert, ffn_completion, s2_construction, checkpoint_access, shard_open, direct_dprefix_outputs, gpu, resume, retry, second_attempt; executor contains zero ProductionShardProvider references",
+      "Single-use semantics verified: attempts=1, consumed_at DURABLE_ATTEMPT_START_BEFORE_EXPERT_COMPUTATION, no resume/retry/second attempt/concurrent invocation, crash interruption reconciled by the bound terminalizer, pre-attempt failure unconsumed only with no expert computation and no output authority",
+      "Wrapper authorize() verified to require a byte-exact 8-field go-token matching future_approval.future_token_exact_fields plus an approval with verdict exactly ACCEPT bound to release_sha256 and release_id (INDEPENDENT_RELEASE_GATE fail-closed); this v2 artifact carries verdict ACCEPT and both bindings, so it is wrapper-compatible where v1 was not",
+      "Committed release validator executed at head: REPRESENTATIVE_EXPERT_RELEASE_VALID exit 0; committed unittest suites executed: 5/5 PASS (release mutations, release repository pins, terminalizer-vs-executor output-name reconcile, authorization mutations, authorization repository pins)",
+      "Tree-wide search at head: no committed go-token artifact, no prior approval-v2 file, and no committed JSON other than this artifact carrying verdict ACCEPT with top-level release_sha256 ccf33fef... and release_id F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1; real_event_authorized=false everywhere at the reviewed head"
+    ],
+    "checkpoint_free_review": {
+      "checkpoint_reads": 0,
+      "shard_opens": 0,
+      "retained_payload_opens": 0,
+      "real_expert_executions": 0,
+      "go_tokens_created": 0,
+      "ledger_before": 175,
+      "ledger_after": 175
+    }
+  },
+  "next_action": "APPROVED WITH WRAPPER-COMPATIBLE VERDICT, EXECUTION STILL GATED: this approval does not execute and is not computation; checkpoint access remains prohibited and the ledger remains 175. Exactly one retained-only expert-recovery attempt may proceed only after the operator creates the separate machine-local byte-exact 8-field GO token binding this v2 artifact's file sha256 as approval_sha256, release_sha256 ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68, and release_id F017-REPRESENTATIVE-M1F0-EXPERT-OUTPUT-RECOVERY-1-RELEASE-1, sets PULSARMLX_F017_REP_EXPERT_RELEASE_APPROVAL to this v2 file, and invokes only the bound release wrapper in the pinned environment (CPython 3.14.6, NumPy 2.4.5, little-endian, CPU only, five thread variables = 1) against fresh fixed state/output roots. Stop after the eight individual expert outputs; no weighted aggregate, no shared expert, no FFN completion, no S2 construction, no retry, no resume, no second attempt under any outcome. The superseded v1 artifact must not be bound as approval authority."
+}
