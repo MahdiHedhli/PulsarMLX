@@ -653,3 +653,12 @@
   arithmetic/identity/publication/race mutations, and bank exact Claude Fable 5
   review bytes while creating no approval, GO token, real operand consumption,
   or S2 output per plan Phase 45 and Constitution III/X/XII (missing).
+
+## Phase 45: Convergence
+
+- [x] T017-248 Bank and independently accept the exact wrapper-enforced S2
+  release approval, validate both fixed retained operands and empty S2 state
+  without arithmetic, then create exactly one mode-0400, single-link,
+  unconsumed machine-local token while preserving ledger 175 and zero
+  checkpoint, S1, FFN, attempt-start, S2-start, or S2 execution per plan Phase
+  46 and Constitution III/X/XII (missing).

@@ -829,3 +829,22 @@ Gate: arithmetic, authorization, and release are independently accepted for a
 later separate approval and operator decision; no approval or GO token exists,
 neither real operand is consumed, no S2 is constructed, and ledger remains 175
 with zero checkpoint reads or shard opens.
+
+## Phase 46 — S2 independent approval and machine-local readiness
+
+- Bank the exact wrapper-enforced 28-field independent approval binding the
+  release, arithmetic, authorization, execution-code head, accepted reviewed
+  head, release-review bytes, and reviewer identity without itself executing or
+  acting as a token.
+- Independently review the committed approval and its acyclic release -> review
+  -> approval -> machine-local token chain before any local capability exists.
+- Verify the immutable S1 and FFN operands through their fixed manifests and
+  open-once descriptor policy, the pinned runtime, empty fixed S2 execution
+  state, and ledger 175 without entering the S2 arithmetic path.
+- Only after every gate passes, create one exact eight-field mode-0400,
+  single-link machine-local GO token, validate it through the non-executing
+  authority gate, and stop unconsumed.
+
+Gate: approval and approval-review bytes are committed and accepted; exactly
+one valid S2 token exists unconsumed; attempt/S2 starts remain absent; neither
+operand has been consumed by S2; ledger remains 175 with zero checkpoint reads.
