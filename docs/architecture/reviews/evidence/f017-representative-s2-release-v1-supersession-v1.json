@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-supersession",
+  "schema_version": "1.0.0",
+  "release_v1": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v1.json",
+    "sha256": "1b05c09355974d53ddf4585eee8b4801bd726e3ecd626ea753f066c9e504a3b9",
+    "disposition": "SUPERSEDED_FOR_EXECUTION_AUTHORITY_DUE_TO_S1_MANIFEST_SCHEMA_INCOMPATIBILITY"
+  },
+  "historical_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-release-cycle-01-independent-review.json",
+    "sha256": "5328b829abdfa1389ec2dbb3dd08f624cf9c9928e5c9c6fea1beac0c88d4160f",
+    "remains_valid_as_historical_review": true
+  },
+  "historical_approval": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-single-use-release-v1-independent-approval-v1.json",
+    "sha256": "17f9c1977327932a73550120704b42e01cb0b83b27fa8cd6647f259982be7949",
+    "must_never_mint_go_token": true
+  },
+  "readiness_blocker": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-execution-readiness-v1.json",
+    "sha256": "74bb10e4db48f96e284f5407ce865347ddb3ccbb05a7420f7f33b7c704ae3983",
+    "error": "S2Error:MANIFEST_CENSUS"
+  },
+  "preserved_authority": {
+    "arithmetic_contract_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+    "arithmetic_semantics_remain_accepted": true,
+    "release_mechanics_remain_historically_reviewed": true
+  },
+  "execution_accounting": {
+    "v1_go_tokens_created": 0,
+    "v1_attempt_starts": 0,
+    "v1_s2_starts": 0,
+    "v1_s2_constructions": 0,
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0
+  },
+  "repair_rule": "CONSUMER_ADAPTS_TO_EXACT_ACCEPTED_PRODUCER_MANIFEST;PRODUCER_BYTES_REMAIN_IMMUTABLE"
+}
