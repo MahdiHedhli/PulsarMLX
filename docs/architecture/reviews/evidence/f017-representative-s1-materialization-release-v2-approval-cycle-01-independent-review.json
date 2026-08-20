@@ -1,0 +1,81 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-release-v2-approval-independent-review",
+  "schema_version": "1.0.0",
+  "review_cycle": 1,
+  "actual_reviewer_model": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_ADVERSARIAL_APPROVAL_REVIEWER",
+  "reviewed_head": "469aefd9dcdf7f007ec9d2a100605a40fef67935",
+  "reviewed_branch": "feat/017-real-checkpoint-runner",
+  "worktree_clean": true,
+  "review_request_path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-release-v2-approval-cycle-01-review-request.md",
+  "approval_under_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-single-use-release-v2-independent-approval-v1.json",
+    "sha256": "e2729bb1c8aee5ef8cc1b9920bfa832c4eb2ffcb72b782e8df20af1698f36108",
+    "approval_bearing_head": "fe644ce672ab6705931d2ae427a3ef34cb7b2804",
+    "byte_identical_at_fe644ce_and_reviewed_head": true
+  },
+  "release_identity": {
+    "release_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-RELEASE-2",
+    "event_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1",
+    "attempt_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-ATTEMPT-1",
+    "release_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-materialization-single-use-release-v2.json",
+    "release_sha256": "c441f956122cba6866a6729248d092584c4b1ee7e9d574bd98cffe9d74247424",
+    "authorization_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-materialization-authorization-v1.json",
+    "authorization_sha256": "f2efce04a1047d0e31b16f44e976a8b2b3102b340a6e3adfac32dfdf73f3ce0f"
+  },
+  "release_review_identity": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-cycle-02-independent-review.json",
+    "sha256": "bd56546e21f8291864afbc0775681d63113f1629178c53ca49e7c8e79ae541d7",
+    "reviewed_head": "f0165acdae302aee3709070288af3178045de4c0",
+    "verdict": "ACCEPT",
+    "actual_reviewer_model": "claude-fable-5"
+  },
+  "verdict": "ACCEPT",
+  "tests_and_inspections": [
+    {"check": "git rev-parse HEAD; git status --porcelain; git branch --show-current", "outcome": "HEAD 469aefd9dcdf7f007ec9d2a100605a40fef67935 on feat/017-real-checkpoint-runner, porcelain empty (clean) — exact committed clean target of the committed review request"},
+    {"check": "shasum -a 256 over the approval, release v2, authorization v1, cycle-02 release review, superseded release v1, wrapper v2, executor v1", "outcome": "approval e2729bb1..., release c441f956..., authorization f2efce04..., release review bd56546e..., release v1 331b1afc..., wrapper v2 bff2dc00..., executor 6f337f8c... — all equal to the request-pinned and release-bound values; approval bytes at fe644ce (git show) hash identically, and fe644ce is an ancestor of HEAD"},
+    {"check": "wrapper-enforced approval schema derivation (wrapper v2 authorize(), lines 127-141) versus committed approval bytes", "outcome": "wrapper requires set(approval) == exactly 18 keys {schema, schema_version, event_id, release_id, attempt_id, release_sha256, authorization_sha256, reviewed_head, release_review_path, release_review_sha256, reviewer_model, verdict, approval_statement, approval_does_not_execute, approval_is_not_token, real_event_authorized, ledger, stop_boundary}; python set-equality against the committed approval returned True with n_keys 18 — no missing and no extra fields; every wrapper value constraint is satisfied by the committed bytes: schema id pulsarmlx.f017.representative-s1-materialization-release-independent-approval @ 1.0.0, event/release/attempt ids equal to release v2, release_sha256 equal to live sha_path of the fixed default release path (c441f956...), authorization_sha256 equal to release.authorization_sha256 (f2efce04...), reviewer_model claude-fable-5, verdict ACCEPT, statement 'REPRESENTATIVE S1 MATERIALIZATION SINGLE-USE RELEASE V2 APPROVED', approval_does_not_execute true, approval_is_not_token true, real_event_authorized false, ledger 175, stop_boundary AFTER_REPRESENTATIVE_S1_RETENTION_ONLY"},
+    {"check": "wrapper release-review sub-gate (lines 138-141)", "outcome": "approval.release_review_path resolves to the committed cycle-02 review whose recomputed sha256 equals approval.release_review_sha256 (bd56546e...); review verdict ACCEPT and review.reviewed_head f0165acd... equals approval.reviewed_head, both wrapper-enforced; review records actual_reviewer_model claude-fable-5 matching the required reviewer model"},
+    {"check": "recompute sha256 of all 13 release-v2 bindings (authorization, executor, release_wrapper, terminalizer, validator, tests, synthetic_rehearsal, candidate, oracle, base_executor, production_executor, q5_decoder_qualifier, ledger_adapter) against committed bytes at HEAD", "outcome": "13/13 MATCH — the approval therefore transitively pins, via release_sha256 -> bindings, the exact execution code, both decoder families, the candidate (which binds canonical S0 sha 9c3a8821.../24576 B, S0 private manifest a683 1620..., and all nine packed attention payload identities summing 132,900,864 bytes), the oracle carrying the expected-S1 anchor, and the tests; wrapper preflight hash-verifies every binding before the ledger gate, before any retained-byte access, and before any attempt state exists"},
+    {"check": "expected-S1 and reviewed-head transitive authority", "outcome": "executor v1 (sha-bound) hard-codes EXPECTED_S1_SHA256 8309377e... and EXPECTED_S0_SHA256 9c3a8821..., equal to authorization.s1_target.sha256 and source_authority.canonical_s0.sha256; release output_contract.sha256 equals the same value; git show at reviewed head f0165acd confirms release v2, authorization, wrapper v2, and executor bytes there are byte-identical to HEAD, so the ACCEPT release review adjudicated exactly the bytes the approval pins"},
+    {"check": "python3 validate_f017_representative_s1_materialization_release_v1.py --authorization <committed v1> --release <committed v2>", "outcome": "exit 0, result PASS, ledger 175, checkpoint_reads 0, shard_opens 0, s1_materializations 0, s2_constructions 0"},
+    {"check": "python3 f017_representative_expert_ledger_adapter_v1.py", "outcome": "exit 0, current_ledger 175, checkpoint_reads 0, shard_opens 0 — matches approval.ledger, release accounting ledger_before/after 175, and the wrapper LEDGER gate"},
+    {"check": "uv run --with pytest --with numpy python -m pytest scripts/research/tests/test_f017_representative_s1_materialization_release_v1.py -q", "outcome": "24 passed in 0.10s — includes the gate-order, integer-ledger-contract, losing-concurrent-invocation, binding-mutation, and require_immutable rejection tests"},
+    {"check": "release v1 versus the v2 gate (committed bytes of release v1, wrapper v1, wrapper v2)", "outcome": "release v1 sha 331b1afc... differs from the approval-pinned c441f956... and its release_id RELEASE-1 differs from the approval's RELEASE-2, so wrapper v2 invoked with --release v1 fails closed at APPROVAL_IDS/APPROVAL_AUTHORITY before any state; conversely wrapper v1 (b86d2d95..., the only wrapper release v1 binds) requires approval_statement 'REPRESENTATIVE S1 MATERIALIZATION SINGLE-USE RELEASE V1 APPROVED' and a release-1 state root, so the committed V2 approval cannot activate it; release v1 cannot satisfy the v2 gate in either direction"},
+    {"check": "approval-alone capability audit (wrapper v2 authorize/execute order; machine-local state)", "outcome": "authorize() requires approval AND go-token files (APPROVAL_OR_TOKEN_ABSENT) and runs before any directory creation, attempt state, or retained-byte publication; ~/.local/share/pulsarmlx/f017/representative-s1-materialization-release-2 does not exist (no state, no outputs, no go-token); the approval document itself declares approval_does_not_execute true, approval_is_not_token true, real_event_authorized false; no committed code path reads checkpoints or shards, executes new attention, composes FFN, constructs S2, materializes S1, creates an attempt, or consumes a token on the basis of the approval alone"},
+    {"check": "single-use and stop-boundary enforcement for a future exact eight-field token", "outcome": "wrapper token gate requires set equality to exactly {approval_sha256, attempt_id, authorization_sha256, disposition, event_id, real_event_authorized, release_id, release_sha256} and full dict equality with disposition GO_EXECUTE_ONCE_NO_RETRY, approval_sha256 equal to live approval bytes and release_sha256 equal to live release bytes; execute() gates on PRIOR_STATE (state dir, output, manifest all absent), takes the exclusive attempt-state mkdir as the first side effect, durably records attempt-start and materialization-start (s1_materializations 1) before reconstruction, and any attempt outcome (COMPLETE or owned TERMINAL_FAILURE, or even an unterminated owned attempt) leaves durable state that PRIOR_STATE permanently rejects, with no_retry/no_resume/no_second_attempt bound in the release — so the token can authorize at most one S1 materialization; stop_boundary AFTER_REPRESENTATIVE_S1_RETENTION_ONLY is uniformly declared and gated in authorization, release v2, wrapper preflight, approval, validator, and terminal records, with ffn_input_exposed false and s2_interface_exposed false"},
+    {"check": "chain topology and history audit", "outcome": "release+authorization committed at or before f0165acd -> cycle-02 release review targets f0165acd and is committed after it (360c114) -> approval committed at fe644ce pinning review bytes by sha -> machine-local token (absent, outside the repository) must pin approval bytes by sha: strictly layered by commit ancestry (f0165acd ancestor of fe644ce ancestor of HEAD) and by one-way sha references, hence acyclic; every gate failure raises before state creation (fail-closed); approval and execution authority remain distinct documents with distinct schemas, locations, and real_event_authorized polarity; git diff f0165acd..HEAD touches only 8 evidence/planning files (289 insertions, 1 deletion in plan/tasks prose) and none of the sha-bound artifacts"}
+  ],
+  "findings": [
+    {
+      "id": "S1MAT-APPR-R1-F1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Carried forward unchanged from the accepted cycle-02 release review: five defense-in-depth observations (S1MAT-R1-F5, S1MAT-R1-F6, S1MAT-R2-F1, S1MAT-R2-F2, S1MAT-R2-F3) remain present in the byte-identical bound code",
+      "evidence": "Wrapper v2 and executor v1 bytes at HEAD are identical to the cycle-02 reviewed head, so the path-based packed-payload immutability window, the ungated importability of executor.reconstruct, the stale authoritative_execution_code_head metadata field, the import-before-hash-verify module ordering, and the missing outputs-directory term in the PRIOR_STATE conjunction persist exactly as dispositioned. All five require an out-of-threat-model adversarial local writer or manual interference, none can mint authority (expected-S1 sha equality alone confers authority; mismatch_never_acquires_authority), and each fails closed or yields a truthful consumed-failure record.",
+      "required_action": "None for this approval cycle; the cycle-02 justifications were independently re-checked against committed bytes and remain valid. Optionally address in any future release revision."
+    },
+    {
+      "id": "S1MAT-APPR-R1-F2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "The eight-field go-token has no nonce or attempt-state binding, so token replay is prevented by the durable PRIOR_STATE gate rather than by the token itself",
+      "evidence": "The token is a pure function of (approval bytes, release bytes, ids, disposition). A second --execute with the same token fails closed pre-attempt at PRIOR_STATE because the first attempt's state directory durably persists in every outcome. Only manual deletion of the release-private state tree under ~/.local/share/pulsarmlx/... could re-open the gate, which is the same manual-interference class already dispositioned as defense in depth in cycle 02 (S1MAT-R2-F3), and even then the replayed event could only reproduce the identical expected-sha-gated S1 bytes with ledger 175-to-175 and zero checkpoint/shard access.",
+      "required_action": "May remain with justification. Optionally include a single-use nonce or the attempt-start sha in a future token schema."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": ["S1MAT-APPR-R1-F1", "S1MAT-APPR-R1-F2"],
+  "counter_observations": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "real_s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0,
+    "attempts_created": 0,
+    "tokens_created": 0,
+    "ledger": 175,
+    "notes": "This review read only committed repository bytes and ran only committed checkpoint-free tools: git/hash verification, the committed validator (PASS), the committed ledger adapter (175), and the committed 24-test synthetic suite. No checkpoint bytes, model shards, canonical S0 bytes, retained attention payload bytes, or FFN bytes were read; no S1 was reconstructed or materialized; no approval, token, attempt state, or machine-local file was created or modified; the only repository write is this review artifact at its requested path."
+  },
+  "final_question_answer": "YES. The committed approval at docs/architecture/reviews/evidence/f017-representative-s1-materialization-single-use-release-v2-independent-approval-v1.json (sha256 e2729bb1c8aee5ef8cc1b9920bfa832c4eb2ffcb72b782e8df20af1698f36108, byte-identical from its approval-bearing head fe644ce through reviewed head 469aefd9) is sufficient for a later machine-local token readiness phase without executing or materializing S1. It is exactly the 18-field document the sha-bound wrapper v2 authorize() gate demands — verified field-set-exact with no missing or extra keys and every value constraint satisfied against live committed bytes — and it pins, directly or through exact sha256 chains re-verified this cycle, the release v2 (c441f956...), the authorization (f2efce04...), the ACCEPT cycle-02 release review by claude-fable-5 at f0165acd (bd56546e..., whose reviewed bytes equal HEAD bytes for every bound artifact), all 13 execution-code and data bindings, the expected S1 identity 8309377e..., ledger 175-to-175, zero-checkpoint/zero-shard accounting, and the stop boundary AFTER_REPRESENTATIVE_S1_RETENTION_ONLY. The chain release -> review -> approval -> machine-local token is acyclic and fail-closed; the approval executes nothing and is not a token (both declared and structurally enforced: the go-token is absent, the release-2 machine-local root does not exist, and --execute today fails at APPROVAL_OR_TOKEN_ABSENT before any state); the superseded release v1 cannot satisfy the v2 gate in either direction; and a future token equal to exactly the eight bound fields can authorize at most one S1 materialization, after which durable attempt state permanently closes the gate. No BLOCKING and no NON_BLOCKING_REQUIRED findings remain; the two recorded observations are justified defense in depth. VERDICT: ACCEPT."
+}
