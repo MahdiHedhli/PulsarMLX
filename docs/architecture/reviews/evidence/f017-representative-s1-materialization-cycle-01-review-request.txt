@@ -1,0 +1,30 @@
+You are Claude Fable 5 acting only as the independent adversarial reviewer for PulsarMLX F017. Repository bytes are authoritative.
+
+Review only committed bytes at exact Git head a0f07f7e4beef7c45eac455e260887b939a3b8ca on branch feat/017-real-checkpoint-runner in /Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot. Begin by verifying that checkout/head/parity and that tracked files are clean. Do not treat uncommitted bytes, this prompt, builder prose, conversation, or machine-local retained artifacts as authority. Do not access checkpoint data, model shards, the real retained attention bundle, canonical S0 bytes, FFN output bytes, or invoke any real reconstruction/materialization path. You may inspect committed files and run checkpoint-free synthetic validators/tests.
+
+Objective: independently adjudicate whether the committed representative S1 materialization authorization and single-use release are sufficient to prepare exactly one later checkpoint-free deterministic reconstruction and durable retention of LAYER3_POST_ATTENTION_RESIDUAL with expected SHA 8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd, while performing no materialization now and exposing no checkpoint, new real-attention, FFN-consumption/composition, or S2 capability.
+
+Independently inspect executable producer/consumer relationships, not only declarative claims. Specifically attack:
+1. whether the extraction adapter truly observes the accepted compose_oracle attention_residual bytes and stops before FFN normalization/router work, without a new numerical implementation;
+2. whether the accepted real M1-F0 execution evidence, exact stage vocabulary, candidate, nine retained attention payload identities, canonical DPREFIX-EXACT-1 S0, 10/10 retained-only reproduction, and expected S1 SHA form an unambiguous authority chain;
+3. whether runtime source validation rejects wrong/truncated/writable/symlink/multi-link S0 or packed payloads, wrong decoder identities, altered epsilon, changed residual f32 casting, wrong stage, or checkpoint/shard fallbacks;
+4. whether every locally detectable gate occurs before arithmetic where required and whether the release counts one S1 materialization truthfully at durable materialization-start before reconstruction;
+5. whether exclusive attempt creation, no retry/resume/second attempt, partial-failure consumption, descriptor-relative exclusive publication, fsync, no-replace, readback, manifest, receipt, terminal, and authority rules are crash-safe and non-ambiguous;
+6. whether the future approval -> exact machine-local token chain is fail-closed and cannot be bypassed by direct wrapper invocation;
+7. whether there is any checkpoint path, shard-open path, real attention-event path, router/expert path, FFN input/consumption/composition path, or S2 construction interface;
+8. whether synthetic rehearsal and mutation/race coverage substantiate the committed claims without materializing real S1;
+9. whether release/accounting/ledger 175 semantics and output dtype f32 shape [6144] byte length 24576 are executable and consistent;
+10. producer/consumer schema mismatch, evidence-vocabulary mismatch, accounting mismatch, unrehearsed execution shape, weak validators, or unbound retained/local inputs.
+
+Treat BLOCKING and NON_BLOCKING_REQUIRED findings as acceptance-blocking. DEFENSE_IN_DEPTH may remain only with a concrete justification. Do not fix findings. Return ACCEPT only if no BLOCKING or NON_BLOCKING_REQUIRED finding remains.
+
+Write your exact JSON review artifact directly to:
+/Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot/docs/architecture/reviews/evidence/f017-representative-s1-materialization-cycle-01-independent-review.json
+
+The JSON must include at minimum: schema, schema_version, actual_reviewer_model, reviewer_role, reviewed_head, reviewed_branch, objective, verdict (ACCEPT or REJECT), findings array with stable id/classification/title/evidence/required_action, blocking_findings, non_blocking_required_findings, defense_in_depth_findings, tests_run with exact outcomes, authority_chain_adjudication, numerical_semantics_adjudication, durability_adjudication, boundary_adjudication, counter_observations (checkpoint_reads=0, shard_opens=0, real_s1_materializations=0 during review), and final_question_answer answering: IS THIS COMMITTED AUTHORIZATION/RELEASE SUFFICIENT TO PREPARE, BUT NOT EXECUTE, EXACTLY ONE CHECKPOINT-FREE REPRESENTATIVE S1 MATERIALIZATION AND RETENTION EVENT WITH NO FFN OR S2 AUTHORITY?
+
+After writing the file, print exactly these four lines:
+ACTUAL_REVIEWER_MODEL=<model>
+ARTIFACT_PATH=<absolute path>
+ARTIFACT_SHA256=<sha256>
+VERDICT=<ACCEPT|REJECT>
