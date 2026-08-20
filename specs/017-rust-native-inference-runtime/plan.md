@@ -699,3 +699,21 @@ token is created, no real FFN is computed, and ledger remains 175.
 Gate: release v2 is independently accepted and ready for a separate approval
 phase; no approval or GO token exists, no real FFN is computed, and ledger
 remains 175.
+
+## Phase 40 — FFN release v2 approval and machine-local readiness
+
+- Materialize the exact 28-field approval required by the v2 approval contract,
+  binding the accepted release/review/code/authorization/arithmetic chain while
+  remaining non-executable and distinct from the later machine-local token.
+- Commit and independently review the approval bytes with Claude Fable 5 before
+  any machine-local execution authority exists.
+- Verify the retained routed/shared files and manifests, pinned runtime, fixed
+  v2 state/output destinations, zero prior state, and preflight-only wrapper
+  disposition without performing FFN arithmetic.
+- Only after every gate passes, create one mode-0400, regular, non-symlink,
+  single-link GO token whose exact eight fields bind the committed approval SHA;
+  validate it without entering the wrapper execution path and stop unconsumed.
+
+Gate: one valid machine-local v2 token exists unconsumed; approval/review bytes
+are committed and accepted; ledger remains 175; checkpoint, attempt, FFN, S1,
+and S2 counters remain zero.
