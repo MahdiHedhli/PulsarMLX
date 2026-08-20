@@ -1,0 +1,177 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-recovery-real-execution-result",
+  "schema_version": "1.0.0",
+  "disposition": "SUCCESS",
+  "execution_head": "6ac4d134aa3ea64a6c6a7323f4a99ed33624fdb1",
+  "process_exit": 0,
+  "authority": {
+    "authorization_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+    "executor_sha256": "d57cd1ea3e9a74655ac2a3881f9b5aa1f5ee3036b76d18518b8834357273e0ec",
+    "go_token_sha256": "3b27ba85a7fb420751688898f5d96646678144e36c8b70852a964405a57e2cdb",
+    "independent_approval_sha256": "9e6b9ce6f71a4f6ede3510a2aed038ddb9b048c032e79966623e6c302f324b28",
+    "release_sha256": "d582d296e2c031f354f7191d3027bb9dac74f3b638377ba5bcfe155c8ee0f37f",
+    "release_wrapper_sha256": "92bd13ba8557f206c3e899c1c437a3fd7d7aa420888ea1c2474e35ec1f0afd98",
+    "reproduction_contract_sha256": "038543a1448957b7509a756bea2ab4c680aadd96573b10ee0733a9caaab15b54",
+    "reproduction_producer_sha256": "4a1a8fbb5c201bae45fe61d3eb1cadbe3ae1ad5a429632b703ec57667891ccd4"
+  },
+  "event": {
+    "event_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-1",
+    "release_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-1-RELEASE-1",
+    "attempt_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-1-ATTEMPT-1",
+    "attempt_start_present": true,
+    "attempt_start_sha256": "6d70841d32deb15abf0de5c4e0ec21b0e578a0929ff5bb09b7d95b92daa109ea",
+    "shared_computation_start_present": true,
+    "shared_computation_start_sha256": "055c073bd873c0c2583c1568683b9d3645186e2bb4fd2189b46d99059e573a4f",
+    "token_consumed": true,
+    "token_consumed_at": "DURABLE_ATTEMPT_START_BEFORE_SHARED_EXPERT_COMPUTATION",
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "retained_packed_bytes": 27623424,
+    "shared_expert_executions": 1,
+    "verification_reproduction_computations": 2,
+    "routed_aggregate_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "representative_input": {
+    "semantic_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_SHARED_EXPERT_INPUT",
+    "dtype": "little-endian-f32",
+    "shape": [
+      6144
+    ],
+    "byte_length": 24576,
+    "sha256_expected": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "sha256_before": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "sha256_after": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "identity_unchanged": true
+  },
+  "retained_parameters": [
+    {
+      "ordinal": 0,
+      "role": "gate",
+      "semantic_role": "SHARED_EXPERT_GATE_PROJECTION_WEIGHT",
+      "checkpoint_key": "blk.3.ffn_gate_shexp.weight",
+      "relative_path": "packed/01-gate.bin",
+      "quantization": "Q5_K",
+      "packed_bytes": 8650752,
+      "packed_sha256_expected": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "packed_sha256_before": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "packed_sha256_after": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "decoded_dtype": "little-endian-f32",
+      "decoded_shape": [
+        2048,
+        6144
+      ],
+      "decoded_sha256": "0dbb53a88bae423154f385ec547c9b778afe8127df6a19955dce2b1653d2282b",
+      "identity_unchanged": true
+    },
+    {
+      "ordinal": 1,
+      "role": "up",
+      "semantic_role": "SHARED_EXPERT_UP_PROJECTION_WEIGHT",
+      "checkpoint_key": "blk.3.ffn_up_shexp.weight",
+      "relative_path": "packed/02-up.bin",
+      "quantization": "Q5_K",
+      "packed_bytes": 8650752,
+      "packed_sha256_expected": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "packed_sha256_before": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "packed_sha256_after": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "decoded_dtype": "little-endian-f32",
+      "decoded_shape": [
+        2048,
+        6144
+      ],
+      "decoded_sha256": "86aae8655c565eeed20a3f87fd701fa15aff976600d095694cd163a0303e3000",
+      "identity_unchanged": true
+    },
+    {
+      "ordinal": 2,
+      "role": "down",
+      "semantic_role": "SHARED_EXPERT_DOWN_PROJECTION_WEIGHT",
+      "checkpoint_key": "blk.3.ffn_down_shexp.weight",
+      "relative_path": "packed/03-down.bin",
+      "quantization": "Q6_K",
+      "packed_bytes": 10321920,
+      "packed_sha256_expected": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083",
+      "packed_sha256_before": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083",
+      "packed_sha256_after": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083",
+      "decoded_dtype": "little-endian-f32",
+      "decoded_shape": [
+        6144,
+        2048
+      ],
+      "decoded_sha256": "97e654b6e4903cd35ae8fae15c03e9953b15ef3ad4f5c0c60210a1e7864fe4a3",
+      "identity_unchanged": true
+    }
+  ],
+  "retained_integrity": {
+    "representative_input_before_after_equal": true,
+    "parameter_before_after_equal": true,
+    "parameters_verified": 3,
+    "mismatches": 0,
+    "consume_what_was_validated": true
+  },
+  "output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs/representative-shared-expert-output.f32le",
+    "present": true,
+    "authority": true,
+    "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+    "dtype": "little-endian-f32",
+    "shape": [
+      6144
+    ],
+    "byte_length": 24576,
+    "finite": true,
+    "finite_elements": 6144,
+    "minimum": -0.007981352508068085,
+    "maximum": 0.009997857734560966,
+    "mode": "0400",
+    "nlink": 1,
+    "publication": "DESCRIPTOR_RELATIVE_EXCLUSIVE_TEMP_FSYNC_LINK_NOREPLACE_PARENT_FSYNC_DESCRIPTOR_READBACK",
+    "complete_terminal_identity_required": true
+  },
+  "reproduction": {
+    "runs_required": 2,
+    "runs_passed": 2,
+    "fresh_processes_required": 2,
+    "fresh_processes_passed": 2,
+    "exact_primary_output_identity": true,
+    "output_sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+    "retained_input_and_parameters_only": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "routed_aggregate_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "terminal": {
+    "disposition": "COMPLETE",
+    "terminal_sha256": "c50b18eff4face686da8bf85c3743040a63eb5a562c829af26f080626b5bb1f4",
+    "output_authority": true,
+    "output_sha256_matches": true,
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "shared_expert_executions": 1,
+    "routed_aggregate_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0,
+    "stop_boundary": "AFTER_REPRESENTATIVE_SHARED_EXPERT_OUTPUT_ONLY"
+  },
+  "downstream_prohibitions": {
+    "checkpoint_accessed": false,
+    "routed_aggregate_executed": false,
+    "routed_and_shared_combined": false,
+    "ffn_completed": false,
+    "s2_constructed": false
+  },
+  "next_action": "PREPARE_CHECKPOINT_FREE_CROSS_EVENT_REUSE_AUTHORIZATION_FOR_THE_REPRESENTATIVE_SHARED_EXPERT_OUTPUT;DO_NOT_COMBINE_WITH_ROUTED_AGGREGATE_OR_COMPLETE_FFN_OR_CONSTRUCT_S2"
+}
