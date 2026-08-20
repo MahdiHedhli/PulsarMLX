@@ -1,0 +1,142 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-output-reuse-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-FFN-OUTPUT-REUSE-CYCLE-01-INDEPENDENT-REVIEW",
+  "reviewed_head": "cca9b56b278881b5e392f11b9a935771ab83e295",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model": "claude-fable-5",
+  "verdict": "ACCEPT",
+  "execution_evidence_adjudication": {
+    "execution_evidence_sha256_recomputed": "946d41a37cb4ae97938eae195c6b665441088c197312474613f8ca4cb282b2df",
+    "reuse_authorization_sha256_recomputed": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06",
+    "resolver_sha256_recomputed": "b7fc3c1cb5baf26ff4c74d4656a248174b66bbaeea533c71590a8937c09e3fc8",
+    "validator_sha256_recomputed": "1afe3d82557c0c0ad80f54b55914c70257767bde15f5cfd206487b506ec7b592",
+    "tests_sha256_recomputed": "d0c13512dc9893182b16abf5c29f866afd583d9c41f453e939bf6ccb96ce43e4",
+    "preparation_sha256_recomputed": "836e87acbffe808a87b7c9d78ce90be15b381e324bbed0a33dd5e9d2ded35a2a",
+    "all_six_review_request_hashes_match_committed_bytes_at_target": true,
+    "authority_chain_recomputed_at_target": {
+      "single_use_release_v2_sha256": "f6aa2133e91c9fc1639f3424e656f6db94677c71e7e1e03c64c5212bbed8f5b6",
+      "independent_release_approval_sha256": "03ce0086ef955f3edfd7a9b218a72d6c8a2caa55bf40ec188a155c8924ab636b",
+      "approval_review_sha256": "23468de7972c6dfd08dd87b43571233850e81a9fb8249c04d0f33ab463b4dae9",
+      "ffn_authorization_sha256": "69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5",
+      "arithmetic_contract_sha256": "1054d014c23628fa56771518f066d14cfd445b0d7b4ba7da98b638c37981cdbb",
+      "all_match_pinned_bindings": true
+    },
+    "head_lineage": {
+      "execution_head_52a68bcd_is_ancestor_of_target": true,
+      "execution_code_head_0c5ac297_is_ancestor_of_target": true,
+      "attempt_start_reviewed_head_626b614c_is_ancestor_of_target": true
+    },
+    "durable_state_independently_hashed": {
+      "attempt_start_sha256": "cc76bf06bd4fff4a616d2a16407bfe1639134ed0c6f3290865dc424e6501634c",
+      "ffn_start_sha256": "0f97e1958d3e5e133b8725fc84693bb01001d06514f4d89f87c41390e179c853",
+      "receipt_sha256": "8c55a32198070e3f9ef087242cebc0474151259ed0564d7963044ec5ad24b84e",
+      "terminal_sha256": "22cd0d23a72470acf8ce706140578602831b047e8562e577a7e1297d444ed1d9",
+      "private_manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+      "go_token_sha256": "788e27911d22cfe66c9d6f878fe0a5485b4ad87e1afa6e69673c07ee858567ca",
+      "all_match_pinned_identities": true,
+      "all_mode_0400_nlink_1_regular_non_symlink": true
+    },
+    "token_consumption_durable_state_based": true,
+    "go_token_file_still_present_and_presence_correctly_not_treated_as_unconsumed": true,
+    "exactly_one_ffn_composition_across_ffn_start_receipt_and_terminal": true,
+    "terminal_disposition_complete_with_output_authority_true": true,
+    "terminal_binds_output_manifest_and_receipt_hashes": true,
+    "routed_identity_expected_equals_before_equals_consumed_equals_after": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+    "shared_identity_expected_equals_before_equals_consumed_equals_after": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+    "retained_routed_and_shared_input_files_rehashed_and_match": true,
+    "no_retry_no_resume_no_second_attempt": true,
+    "no_second_attempt_root_or_alternate_output_root_found": true
+  },
+  "retained_output_adjudication": {
+    "path_relative": "representative-ffn-composition-release-2/outputs/representative-ffn-output.f64le",
+    "sha256_recomputed_from_bytes": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+    "byte_length_observed": 49152,
+    "dtype_verified": "little-endian-f64",
+    "shape_verified": [6144],
+    "finite_elements_independently_counted": 6144,
+    "minimum_observed": -0.028463565905928738,
+    "maximum_observed": 0.03330063907823097,
+    "minimum_maximum_match_committed_evidence": true,
+    "mode_0400_nlink_1_regular_non_symlink": true,
+    "no_symlink_or_multilink_file_anywhere_in_release_2_tree": true,
+    "private_manifest_binds_exact_output_sha_and_proof_reference_surface": true,
+    "receipt_and_terminal_bind_exact_output_and_manifest_shas": true,
+    "semantic_surface": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "production_serial_f32_confusion_excluded_by_pinned_surface_and_mutation_tests": true,
+    "resolver_enforces_open_once_same_descriptor_fstat_identity_and_expected_before_consumed_after": true
+  },
+  "reproduction_adjudication": {
+    "question": "Is cross-event reuse of the retained FFN output sound without a retroactively authorized second FFN reproduction?",
+    "answer": "SOUND_WITHOUT_REPRODUCTION",
+    "release_v2_authorized_exactly_one_attempt": true,
+    "post_event_reproduction_authorized_by_release": false,
+    "post_event_reproduction_performed": false,
+    "requiring_reproduction_would_demand_retroactive_execution_authority_expansion": true,
+    "retroactive_authority_expansion_prohibited_by_framework": true,
+    "basis": "Output authority rests on exact byte retention independently rehashed by this review, cross-bound at execution time by four mutually referencing durable records (attempt-start, ffn-start, receipt, COMPLETE terminal with output_authority) plus the private manifest and committed evidence; inputs are the previously reuse-authorized routed and shared artifacts with EXPECTED=BEFORE=CONSUMED=AFTER identity; the arithmetic is the pre-approved deterministic scalar binary64 surface under the pinned arithmetic contract, executor, wrapper, and terminalizer at the pinned code head, so a reproduction would add no information not already hash-bound.",
+    "precedent_compared": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-REUSE-CYCLE-01-INDEPENDENT-REVIEW verdict ACCEPT: representative routed-aggregate cross-event reuse accepted without post-event recomputation under the same retention pattern; the FFN case carries equal or stronger evidence (independently approved single-use release v2, durable attempt-start and ffn-start, terminalizer reconciliation, exclusive no-replace publication).",
+    "future_deterministic_reproduction_requires_separate_authority": true,
+    "unresolved_reproduction_requirement": false
+  },
+  "boundary_adjudication": {
+    "reuse_grant_scope": "CHECKPOINT_FREE_REPRESENTATIVE_S2_PREPARATION_AND_INPUT_AUTHORITY_ONLY",
+    "stop_boundary": "AFTER_FFN_OUTPUT_REUSE_PREFLIGHT_BEFORE_S1_MATERIALIZATION_OR_S2_CONSTRUCTION",
+    "resolver_has_no_checkpoint_shard_expert_shared_routed_ffn_s1_or_s2_capability": true,
+    "resolver_imports_limited_to_stdlib_hash_json_math_os_stat_struct_pathlib": true,
+    "resolver_self_hash_binding_enforced": true,
+    "no_hidden_ffn_routed_shared_or_checkpoint_fallback_found_in_resolver_or_validator": true,
+    "no_hidden_s1_materialization_or_s2_construction_found": true,
+    "release_v2_rerun_prohibited_and_not_performed": true,
+    "surface_isolation_prohibits_serial_f32_substitution_conversion_and_historical_surface_leakage": true,
+    "this_review_performed_no_checkpoint_access_shard_open_ffn_composition_expert_or_shared_execution_s1_or_s2_work": true
+  },
+  "accounting": {
+    "real_payload_ledger": 175,
+    "ledger_derivation_verified": "base ledger reconstruction --check PASS at 166 cumulative tensor payloads (sha c68be19f2840dea612e8b20ff2933751800555c80ae66fcfbbff02086bbe18c0) plus committed expert-recovery 166-to-175 transition; f017_representative_expert_ledger_adapter_v1.py PASS 175; all durable attempt records and committed evidence record ledger 175 before and after",
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "release_v2_reruns": 0,
+    "new_ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0
+  },
+  "tests_performed": [
+    "Recomputed SHA-256 of all six review-request artifacts from committed bytes at cca9b56b278881b5e392f11b9a935771ab83e295; all match the review request exactly",
+    "Recomputed SHA-256 of the upstream authority chain (single-use release v2, independent approval, approval review, FFN authorization, arithmetic contract) at the target commit; all match pinned bindings in the reuse authorization and execution evidence",
+    "Verified git lineage: 52a68bcd, 0c5ac297, and 626b614c are commits and ancestors of the target",
+    "Independently hashed and stat-inspected all seven durable machine-local artifacts (attempt-start, ffn-start, receipt, terminal, private manifest, output, go-token): all pinned hashes match, all mode 0400, nlink 1, regular files; recursive sweep found no symlinks or multi-link files",
+    "Cross-verified durable JSON contents: terminal COMPLETE with output_authority true binding receipt, manifest, and output hashes; receipt records EXPECTED=BEFORE=CONSUMED=AFTER for routed and shared inputs; ffn_compositions equals 1 consistently across ffn-start, receipt, and terminal; ledger 175 in every record",
+    "Independently parsed the retained output: 49152 bytes, 6144 little-endian binary64 elements, all finite, minimum and maximum bitwise-match committed evidence, SHA-256 4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+    "Rehashed retained routed (872487d3...) and shared (8285fecf...) input files on disk; both match pinned identities",
+    "Confirmed working-tree bytes of resolver, validator, tests, authorization, and evidence equal committed bytes, then ran the committed validator: REPRESENTATIVE_FFN_OUTPUT_REUSE_AUTHORIZATION_VALID, exit 0",
+    "Ran the committed unit suite: 7 of 7 tests pass, including all authorization and execution-evidence mutation rejections and writable/symlink/hardlink/wrong-size/nonfinite/manifest-mismatch rejections",
+    "Ran the real retained resolver preflight against durable state: REPRESENTATIVE_FFN_OUTPUT_REUSE_PREFLIGHT_PASS with expected=before=consumed=after and all forbidden counters zero",
+    "Reconstructed the real-payload ledger with --check (PASS, 166), inspected the committed amendment, and ran both committed ledger adapters (m1f0 adapter PASS 166, expert adapter PASS 175), confirming the 175 figure is evidence-derived",
+    "Verified the cited precedent: F017 representative routed-aggregate reuse cycle-01 independent review is committed at the target with verdict ACCEPT and no post-event recomputation",
+    "Adversarially reviewed resolver and validator source for hidden checkpoint/shard/expert/shared/FFN/S1/S2 capability, caller-selectable paths, and surface-confusion paths; none found"
+  ],
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The consumed go-token file remains present on disk (mode 0400). Consumption is correctly durable-state based and both the release contract and reuse authorization state that presence does not mean unconsumed, but future tooling that only checks token presence could misread it. A separately authorized tombstone or archival marker for consumed tokens would remove the residual ambiguity."
+    },
+    {
+      "id": "DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The committed ledger value 175 is derived compositionally: the base append-only ledger reconstructs to 166 and the expert-recovery transition to 175 lives in a separate evidence artifact validated by f017_representative_expert_ledger_adapter_v1.py. Both adapters PASS and the chain is sound, but a single unified append-only ledger artifact recording all 175 payload events would eliminate the need for adapter composition during future audits."
+    },
+    {
+      "id": "DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The resolver resolves the fixed output root via Path.home(), which depends on the HOME environment variable. Exact-hash pinning and owner/nlink/mode checks make substitution non-viable in practice, but recording the release root's device/inode identity in the authorization, or attesting the absolute path, would harden path resolution against environment manipulation."
+    }
+  ],
+  "statement": "REPRESENTATIVE F017 PROOF-REFERENCE FFN OUTPUT CROSS-EVENT REUSE ACCEPTED",
+  "next_safe_action": "PROCEED_UNDER_SEPARATE_CHECKPOINT_FREE_REPRESENTATIVE_S1_OR_S2_PREPARATION_AUTHORITY_AS_APPLICABLE;NO_RELEASE_V2_RERUN_NO_FFN_RECOMPUTATION_NO_S1_MATERIALIZATION_OR_S2_CONSTRUCTION_UNTIL_SEPARATELY_AUTHORIZED_AND_INDEPENDENTLY_REVIEWED"
+}
