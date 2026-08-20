@@ -1,0 +1,17 @@
+You are Claude Fable 5 acting only as independent adversarial reviewer for PulsarMLX F017. Repository bytes are authoritative.
+
+Review only exact committed head f0165acdae302aee3709070288af3178045de4c0 on branch feat/017-real-checkpoint-runner in /Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot. Verify head/parity/clean tracked worktree. Do not access checkpoints, shards, canonical S0 bytes, the real retained attention bundle, FFN bytes, or invoke real S1 reconstruction/materialization. You may inspect committed bytes and run checkpoint-free tests; do not fix findings.
+
+This is cycle 2 after cycle-1 exact review SHA 3f48490a6ba369d9fa9f92609469830157775673107fa8e64cd1cdb7ff1a8b9e. Independently verify, rather than trusting the repair evidence, that S1MAT-R1-F1 (integer ledger contract/non-instantiable preflight), S1MAT-R1-F2 (losing concurrent terminal poisoning/handler masking), and S1MAT-R1-F3 (unbound imported numerical modules/candidate) are fully resolved by append-only release/wrapper v2; that F4 is closed or soundly disposed; and that F5/F6 remain only justified defense in depth.
+
+Perform a complete composition review of the committed authorization plus release v2, not merely a delta review. Attack the exact S1 expected authority, same accepted compose_oracle local extraction and stop before FFN normalization, S0 and all nine retained payload source gates, decoder/numerical/code bindings, exact production preflight executability, approval/token separation, durable attempt/materialization accounting, concurrent ownership, no-replace output/manifest/receipt/terminal authority, ledger 175-to-175, and absence of checkpoint, shard, new attention, router/expert, FFN, and S2 interfaces. Check producer/consumer schemas and run the committed synthetic validator/tests. Do not execute the real materialization.
+
+Classify every finding as BLOCKING, NON_BLOCKING_REQUIRED, or DEFENSE_IN_DEPTH. BLOCKING and NON_BLOCKING_REQUIRED both require REJECT. ACCEPT only if neither remains.
+
+Write exact JSON directly to /Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot/docs/architecture/reviews/evidence/f017-representative-s1-materialization-cycle-02-independent-review.json with at minimum schema, schema_version, actual_reviewer_model, reviewer_role, reviewed_head, reviewed_branch, prior_review_sha256, verdict, findings (stable id/classification/title/evidence/required_action), blocking_findings, non_blocking_required_findings, defense_in_depth_findings, resolved_prior_findings, tests_run, authority_chain_adjudication, numerical_semantics_adjudication, durability_adjudication, boundary_adjudication, counter_observations (checkpoint_reads 0, shard_opens 0, real_s1_materializations 0), and final_question_answer to: IS THIS COMMITTED AUTHORIZATION/RELEASE V2 SUFFICIENT TO PREPARE, BUT NOT EXECUTE, EXACTLY ONE CHECKPOINT-FREE REPRESENTATIVE S1 MATERIALIZATION AND RETENTION EVENT WITH NO FFN OR S2 AUTHORITY?
+
+After writing, print exactly:
+ACTUAL_REVIEWER_MODEL=<model>
+ARTIFACT_PATH=<absolute path>
+ARTIFACT_SHA256=<sha256>
+VERDICT=<ACCEPT|REJECT>
