@@ -1,0 +1,37 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-preparation",
+  "schema_version": "1.0.0",
+  "starting_head": "059ffff3ee78faaa00f0ee82f72ba4aa6dcb9ab0",
+  "execution_code_head": "3c200b62fdd0409d49cd38da4d7cc12405569e60",
+  "arithmetic_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-arithmetic-v1.json", "sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86"},
+  "authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-construction-authorization-v1.json", "sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a"},
+  "release": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v1.json", "sha256": "1b05c09355974d53ddf4585eee8b4801bd726e3ecd626ea753f066c9e504a3b9"},
+  "operands": {
+    "s1": {"reuse_authorization_sha256": "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13", "artifact_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd", "consumed_during_preparation": false},
+    "ffn": {"reuse_authorization_sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06", "artifact_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a", "consumed_during_preparation": false}
+  },
+  "numerical_adjudication": {
+    "formula": "S2_f32[k]=binary32(binary64(S1_f32[k])+FFN_f64[k])",
+    "classification": "CANONICAL_F017_PROOF_REFERENCE_DERIVED_S2_SURFACE_INTENTIONALLY_NOT_CLAIMED_EQUIVALENT_TO_PRODUCTION_SERIAL_F32",
+    "production_equivalence_proven": false,
+    "rounding": "binary64 addition and final binary32 conversion both round-to-nearest ties-to-even",
+    "alternate_arithmetic": false
+  },
+  "validation": {
+    "validator": "REPRESENTATIVE_S2_RELEASE_VALID",
+    "unit_tests": "10_OF_10_PASS",
+    "authorization_mutations": 17,
+    "release_mutations": 20,
+    "fresh_synthetic_processes": 2,
+    "synthetic_output_identity": "2_OF_2",
+    "ties_to_even_discriminators": "PASS",
+    "subnormal_no_flush": "PASS",
+    "proof_reference_vs_serial_f32_discriminator": "PASS",
+    "exclusive_attempt_race": "ONE_WINNER_ONE_LOSER",
+    "no_replace_publication": "PASS",
+    "terminal_reconciliation": "PASS"
+  },
+  "machine_local_state": {"s2_release_root_present": false, "attempt_state_present": false, "output_present": false, "go_token_present": false},
+  "accounting": {"ledger_before": 175, "ledger_after": 175, "checkpoint_reads": 0, "shard_opens": 0, "s1_materializations": 0, "ffn_compositions": 0, "s2_constructions": 0, "s1_operand_consumptions": 0, "ffn_operand_consumptions": 0, "go_tokens_created": 0},
+  "stop_boundary": "BEFORE_SEPARATE_APPROVAL_GO_TOKEN_OR_REAL_S2_CONSTRUCTION"
+}

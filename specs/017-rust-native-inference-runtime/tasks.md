@@ -643,3 +643,13 @@
   identity while prohibiting release rerun, attention reconstruction,
   checkpoint fallback, FFN consumption, and S2 construction per plan Phase 44
   and Constitution III/X/XII (missing).
+
+## Phase 44: Convergence
+
+- [x] T017-247 Freeze the exact representative proof/reference-derived S2
+  arithmetic, prepare the S1+FFN-bound checkpoint-free construction
+  authorization, implement and synthetically rehearse a durable one-attempt S2
+  release with no caller-selected inputs or fallback compute paths, validate
+  arithmetic/identity/publication/race mutations, and bank exact Claude Fable 5
+  review bytes while creating no approval, GO token, real operand consumption,
+  or S2 output per plan Phase 45 and Constitution III/X/XII (missing).

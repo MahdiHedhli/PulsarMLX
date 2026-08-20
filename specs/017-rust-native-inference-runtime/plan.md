@@ -808,3 +808,24 @@ remain zero.
 Gate: the canonical representative S1 artifact is independently accepted for
 checkpoint-free cross-event reuse; release v2 remains consumed and is never
 rerun; ledger remains 175; no attention, S1, FFN, or S2 work occurs.
+
+## Phase 45 — Representative S2 authorization and single-use release preparation
+
+- Bind the independently accepted S1 and proof/reference FFN reuse authorities
+  to a frozen scalar S2 arithmetic contract: exact binary32-to-binary64 S1
+  widening, one ordered binary64 addition, and one ties-to-even binary64-to-
+  binary32 cast per coordinate.
+- Preserve the resulting surface as proof/reference-derived and explicitly not
+  proven equivalent to production serial-f32 despite its final f32 storage.
+- Gate one future checkpoint-free S2 construction with immutable open-once
+  operands, exclusive durable attempt and S2 starts, no retry/resume/second
+  attempt, descriptor-relative durable no-replace publication, manifest,
+  receipt, terminalization, and truthful pre-arithmetic accounting.
+- Rehearse only synthetic real-geometry operands, reject arithmetic, lineage,
+  file-policy, fallback, race, and downstream-boundary mutations, then bank an
+  exact Claude Fable 5 review of committed bytes before approval readiness.
+
+Gate: arithmetic, authorization, and release are independently accepted for a
+later separate approval and operator decision; no approval or GO token exists,
+neither real operand is consumed, no S2 is constructed, and ledger remains 175
+with zero checkpoint reads or shard opens.
