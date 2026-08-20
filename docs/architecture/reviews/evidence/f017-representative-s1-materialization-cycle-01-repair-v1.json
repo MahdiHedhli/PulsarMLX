@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-review-repair",
+  "schema_version": "1.0.0",
+  "source_review_sha256": "3f48490a6ba369d9fa9f92609469830157775673107fa8e64cd1cdb7ff1a8b9e",
+  "source_verdict": "REJECT",
+  "superseding_release": "f017-representative-s1-materialization-single-use-release-v2.json",
+  "repairs": [
+    {"finding": "S1MAT-R1-F1", "classification": "BLOCKING", "resolution": "current_ledger integer contract corrected; exact production preflight executed successfully; release v1 superseded before approval"},
+    {"finding": "S1MAT-R1-F2", "classification": "NON_BLOCKING_REQUIRED", "resolution": "state-root exclusive mkdir is first attempt side effect; only owning process may terminalize; handler cannot mask original failure"},
+    {"finding": "S1MAT-R1-F3", "classification": "NON_BLOCKING_REQUIRED", "resolution": "candidate, oracle, base/v3 executors, Q5 qualifier, and ledger adapter are explicit pre-attempt SHA bindings"},
+    {"finding": "S1MAT-R1-F4", "classification": "DEFENSE_IN_DEPTH", "resolution": "closed: exact canonical S0 private manifest is now hash-verified during preflight"},
+    {"finding": "S1MAT-R1-F5", "classification": "DEFENSE_IN_DEPTH", "resolution": "retained with explicit risk disposition: single-user read-only single-link files, dual decoder identities, before/after hashes, and final expected S1 SHA all fail closed"},
+    {"finding": "S1MAT-R1-F6", "classification": "DEFENSE_IN_DEPTH", "resolution": "retained: direct executor import can create no durable authority; only approval/token-gated wrapper can bank output/manifest/receipt/terminal"}
+  ],
+  "validation": {
+    "tests": "24/24 PASS",
+    "production_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0
+  }
+}

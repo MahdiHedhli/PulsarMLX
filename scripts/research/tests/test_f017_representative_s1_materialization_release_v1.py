@@ -133,3 +133,17 @@ def test_wrong_size_nonfinite_and_source_alias_rejected():
         with pytest.raises(executor.S1Error, match="SOURCE_IDENTITY"): executor.require_immutable(item, "0"*64, 16)
         alias = Path(name) / "alias"; os.link(item, alias)
         with pytest.raises(executor.S1Error, match="SOURCE_WRITABLE_OR_LINKED"): executor.require_immutable(item, "0"*64, 16)
+
+
+def test_writable_symlink_and_import_authority_mutations_rejected():
+    with tempfile.TemporaryDirectory() as name:
+        root = Path(name); target = root / "target"; target.write_bytes(b"fixture")
+        with pytest.raises(executor.S1Error, match="SOURCE_WRITABLE_OR_LINKED"):
+            executor.require_immutable(target, executor.sha256(b"fixture"), 7)
+        os.chmod(target, 0o400); link = root / "link"; link.symlink_to(target)
+        with pytest.raises(executor.S1Error, match="SOURCE_NOT_REGULAR"):
+            executor.require_immutable(link, executor.sha256(b"fixture"), 7)
+    auth, release = base_authorization_release()
+    release["bindings"]["oracle"] = {"path":"scripts/research/prepare_f017_m1f0_real_reference.py","sha256":"0"*64}
+    with pytest.raises(validator.ValidationError, match="BINDING_SHA"):
+        validator.validate(auth, release)
