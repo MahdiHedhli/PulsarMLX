@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-release-independent-approval",
+  "schema_version": "1.0.0",
+  "event_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1",
+  "release_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-RELEASE-2",
+  "attempt_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-ATTEMPT-1",
+  "release_sha256": "c441f956122cba6866a6729248d092584c4b1ee7e9d574bd98cffe9d74247424",
+  "authorization_sha256": "f2efce04a1047d0e31b16f44e976a8b2b3102b340a6e3adfac32dfdf73f3ce0f",
+  "reviewed_head": "f0165acdae302aee3709070288af3178045de4c0",
+  "release_review_path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-cycle-02-independent-review.json",
+  "release_review_sha256": "bd56546e21f8291864afbc0775681d63113f1629178c53ca49e7c8e79ae541d7",
+  "reviewer_model": "claude-fable-5",
+  "verdict": "ACCEPT",
+  "approval_statement": "REPRESENTATIVE S1 MATERIALIZATION SINGLE-USE RELEASE V2 APPROVED",
+  "approval_does_not_execute": true,
+  "approval_is_not_token": true,
+  "real_event_authorized": false,
+  "ledger": 175,
+  "stop_boundary": "AFTER_REPRESENTATIVE_S1_RETENTION_ONLY"
+}
