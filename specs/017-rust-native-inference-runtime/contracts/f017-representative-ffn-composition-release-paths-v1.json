@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-release-paths",
+  "schema_version": "1.0.0",
+  "resolution": "FIXED_PATHLIB_HOME_AND_REPOSITORY_EXPRESSIONS_NO_CALLER_SELECTION",
+  "inputs": {
+    "routed_root": "$HOME/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs",
+    "routed_manifest": "routed-aggregate-private-manifest-v1.json",
+    "routed_artifact": "routed-aggregate.f64le",
+    "shared_root": "$HOME/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs",
+    "shared_manifest": "representative-shared-expert-output-private-manifest-v1.json",
+    "shared_artifact": "representative-shared-expert-output.f32le"
+  },
+  "release_root": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1",
+  "attempt_state_root": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/attempt-state",
+  "output_root": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/outputs",
+  "output": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/outputs/representative-ffn-output.f64le",
+  "output_private_manifest": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/outputs/representative-ffn-output-private-manifest-v1.json",
+  "execution_receipt": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/attempt-state/ffn-execution-receipt.json",
+  "approval": "$REPOSITORY/docs/architecture/reviews/evidence/f017-representative-ffn-composition-single-use-release-v1-independent-approval-v1.json",
+  "go_token": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/go-token.json",
+  "requirements": {
+    "input_roots_must_exist": true,
+    "release_root_mode": "0700",
+    "attempt_root_must_not_exist": true,
+    "output_root_mode": "0700",
+    "output_and_manifest_must_not_exist": true,
+    "directory_symlinks": false,
+    "caller_selected_real_paths": false,
+    "same_filesystem_for_state_and_output": true
+  }
+}

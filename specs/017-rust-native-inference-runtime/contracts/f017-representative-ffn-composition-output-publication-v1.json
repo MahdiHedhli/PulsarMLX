@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-output-publication",
+  "schema_version": "1.0.0",
+  "output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+    "basename": "representative-ffn-output.f64le",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "finite": true
+  },
+  "private_manifest": {
+    "schema": "pulsarmlx.f017.representative-ffn-output-private-manifest",
+    "schema_version": "1.0.0",
+    "basename": "representative-ffn-output-private-manifest-v1.json",
+    "artifact_count": 1,
+    "binds_output_sha256": true,
+    "declares_execution_receipt_relative_path": true,
+    "execution_receipt_binds_manifest_sha256": true
+  },
+  "publication_sequence": [
+    "OPEN_VALIDATED_OUTPUT_DIRECTORY_ONCE",
+    "REQUIRE_OUTPUT_AND_MANIFEST_ABSENT",
+    "CREATE_EXCLUSIVE_TEMP_RELATIVE_TO_DIRECTORY_DESCRIPTOR",
+    "WRITE_ALL_OUTPUT_BYTES",
+    "FILE_FSYNC",
+    "FCHMOD_0400",
+    "FILE_FSYNC",
+    "NO_REPLACE_HARD_LINK_PUBLICATION_RELATIVE_TO_SAME_DESCRIPTOR",
+    "PARENT_DIRECTORY_FSYNC",
+    "TEMP_UNLINK_RELATIVE_TO_SAME_DESCRIPTOR",
+    "PARENT_DIRECTORY_FSYNC",
+    "DESCRIPTOR_READ_BACK_SHA_GEOMETRY_AND_FINITE_VALIDATION",
+    "PUBLISH_PRIVATE_MANIFEST_BY_THE_SAME_NO_REPLACE_SEQUENCE",
+    "WRITE_DURABLE_EXECUTION_RECEIPT",
+    "WRITE_MATCHING_COMPLETE_TERMINAL"
+  ],
+  "authority": {
+    "output_alone_is_not_authority": true,
+    "manifest_alone_is_not_authority": true,
+    "receipt_alone_is_not_authority": true,
+    "matching_complete_terminal_required": true,
+    "published_output_survives_later_failure_for_adjudication": true,
+    "overwrite": false,
+    "partial_or_torn_output_authority": false
+  }
+}
