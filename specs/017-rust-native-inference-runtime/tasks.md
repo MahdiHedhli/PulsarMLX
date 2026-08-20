@@ -670,7 +670,7 @@
 
 ## Phase 46: Convergence
 
-- [ ] T017-249 Preserve S2 release v1 history while adding an append-only v2
+- [x] T017-249 Preserve S2 release v1 history while adding an append-only v2
   consumer/release that validates the exact singular S1 producer manifest and
   distinct FFN manifest directly, preserves unchanged S2 arithmetic and
   one-shot durability, passes synthetic plus exact retained preflight without

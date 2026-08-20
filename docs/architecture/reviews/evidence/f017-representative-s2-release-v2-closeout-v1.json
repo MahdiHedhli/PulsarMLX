@@ -1,0 +1,73 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-v2-closeout",
+  "schema_version": "1.0.0",
+  "status": "ACCEPT",
+  "ready_for_s2_v2_approval_readiness": true,
+  "starting_head": "374ad9e1dbf7ef2fc6bf00c83a33d820671d6f83",
+  "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+  "review_target_head": "d2590ce60339832800e906757120d1be36134ff6",
+  "review_banking_head": "9dcc656e68af5cb09c3070b0c40e61e5fee5181c",
+  "release_v1_disposition": "SUPERSEDED_FOR_EXECUTION_AUTHORITY_DUE_TO_S1_MANIFEST_SCHEMA_INCOMPATIBILITY",
+  "release_v2": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v2.json",
+    "sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2"
+  },
+  "executor_v2": {
+    "path": "scripts/research/f017_representative_s2_executor_v2.py",
+    "sha256": "440f90fc89f1acb431511810b4fc68e3247b22c05beeed2dca16c3a285aa83ff"
+  },
+  "wrapper_v2": {
+    "path": "scripts/research/f017_representative_s2_release_wrapper_v2.py",
+    "sha256": "adbc76560c04bd7c6f225c4c097073b08666581867e91d7289814869afa579f3"
+  },
+  "terminalizer_v2": {
+    "path": "scripts/research/f017_representative_s2_terminalizer_v2.py",
+    "sha256": "b78a809eb3f9c93a5090204fa76c377ed4dc98a073adbcefa1842083959f0999"
+  },
+  "authority_disposition": {
+    "construction_authorization_sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a",
+    "construction_authorization": "UNCHANGED_SEMANTICS_REBOUND_BY_RELEASE_V2",
+    "arithmetic_contract_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+    "arithmetic_implementation": "UNCHANGED_ACCEPTED_V1_COMPOSE_BYTES_OBJECT_IDENTITY"
+  },
+  "manifest_compatibility": {
+    "s1": "EXACT_SINGULAR_ARTIFACT_PRODUCER_SCHEMA_WITH_LAYER3_POST_ATTENTION_RESIDUAL_ROLE",
+    "ffn": "EXACT_DISTINCT_ONE_ELEMENT_ARTIFACTS_PRODUCER_SCHEMA",
+    "lossy_normalization": false,
+    "consumer_alias_derived_only_after_producer_validation": true
+  },
+  "validation": {
+    "v1_regression_tests": "10/10 PASS",
+    "v2_tests": "17/17 PASS",
+    "synthetic_fresh_processes": "2/2 EXACT",
+    "validator": "PASS",
+    "production_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "production_preflight_operand_execution_consumptions": 0,
+    "production_preflight_arithmetic": 0
+  },
+  "review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-release-v2-cycle-01-independent-review.json",
+    "sha256": "79016f237d850d03d89da10014795cd2113625532db34794ef99c04ba253b8b6",
+    "reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": ["DID-1", "DID-2", "DID-3"]
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0,
+    "durable_attempt_starts": 0,
+    "s2_starts": 0,
+    "s1_operand_execution_consumptions": 0,
+    "ffn_operand_execution_consumptions": 0,
+    "go_tokens_created": 0,
+    "go_tokens_consumed": 0
+  },
+  "next_safe_action": "CREATE_AND_INDEPENDENTLY_REVIEW_THE_EXACT_RELEASE_V2_APPROVAL_THEN_REPEAT_NON_ARITHMETIC_MACHINE_READINESS_BEFORE_ANY_GO_TOKEN"
+}
