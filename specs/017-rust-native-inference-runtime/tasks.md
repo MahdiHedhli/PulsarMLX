@@ -598,7 +598,7 @@
 
 ## Phase 39: Convergence
 
-- [ ] T017-242 Bank and independently accept the exact 28-field FFN release-v2
+- [x] T017-242 Bank and independently accept the exact 28-field FFN release-v2
   approval, prove checkpoint-free machine-local readiness, and create exactly
   one read-only, single-link, unconsumed v2 GO token while preserving ledger
   175 and zero attempt/FFN/S1/S2 execution per plan Phase 39 and Constitution
