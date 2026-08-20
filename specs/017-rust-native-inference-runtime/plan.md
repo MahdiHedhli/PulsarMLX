@@ -740,3 +740,26 @@ and S2 counters remain zero.
 Gate: the representative proof/reference FFN output is independently accepted
 for checkpoint-free cross-event reuse; release v2 remains consumed and is never
 rerun; ledger remains 175; no new FFN, S1, or S2 work occurs.
+
+## Phase 42 — Representative S1 materialization preparation
+
+- Bind the canonical `LAYER3_POST_ATTENTION_RESIDUAL` identity to the accepted
+  representative M1-F0 real-execution packet, stage vocabulary, retained-only
+  reproduction contract, exact producer, canonical DPREFIX-EXACT-1 S0, and
+  nine immutable retained attention payload authorities.
+- Add an append-only extraction adapter that uses the same frozen
+  `compose_oracle` numerical implementation as the accepted producer and emits
+  only canonical little-endian f32 `[6144]` S1 bytes; provide no checkpoint,
+  shard, router, expert, FFN, S1-consumer, or S2 interface.
+- Gate one future materialization with exclusive durable attempt creation,
+  durable materialization-start before reconstruction, no retry/resume/second
+  attempt, descriptor-relative expected/produced/read-back verification, and
+  durable no-replace output, private-manifest, receipt, and terminal banking.
+- Rehearse only synthetic real-geometry inputs and release mechanics, validate
+  stale/wrong authorities and arithmetic/boundary mutations, and bank exact
+  Claude Fable 5 review bytes before describing the release as accepted.
+
+Gate: S1 materialization machinery is independently accepted for a later
+approval/execution decision; no real S1 bytes are materialized, no GO token is
+created, ledger remains 175, and checkpoint, attention-event, FFN, and S2
+counters remain zero.

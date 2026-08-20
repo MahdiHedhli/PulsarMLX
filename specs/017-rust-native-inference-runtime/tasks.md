@@ -612,3 +612,14 @@
   proof/reference FFN output while prohibiting release rerun, FFN
   recomputation, checkpoint fallback, production-serial-f32 relabeling, S1
   materialization, and S2 construction per Constitution III/X/XII (missing).
+
+## Phase 41: Convergence
+
+- [ ] T017-244 Prepare, checkpoint-free validate, and independently accept an
+  append-only single-use representative S1 reconstruction-and-retention
+  authorization/release that extracts only the canonical
+  `post_attention_residual` bytes through the already accepted retained M1-F0
+  producer, enforces expected/produced/read-back SHA identity, durable
+  no-replace publication and one-attempt semantics, exposes no checkpoint,
+  real-attention, FFN, or S2 capability, and preserves ledger 175 with zero
+  materializations during preparation per Constitution III/X/XII (missing).
