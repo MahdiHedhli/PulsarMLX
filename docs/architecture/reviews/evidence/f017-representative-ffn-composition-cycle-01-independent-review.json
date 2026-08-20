@@ -1,0 +1,107 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-CYCLE-01-INDEPENDENT-REVIEW",
+  "actual_reviewer_model": "Claude Fable 5",
+  "reviewed_head": "f75040f6894754fab22fdeb9541e7f8a5030b292",
+  "reviewed_branch": "feat/017-real-checkpoint-runner",
+  "origin_parity": true,
+  "worktree_clean": true,
+  "verdict": "ACCEPT",
+  "answers": {
+    "A": "YES. The representative shared output sha256 8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b is safe for cross-event reuse. It is the primary output of the banked COMPLETE shared-expert recovery event (execution evidence b7e3d8a6d97f2c3771ed7a6ff07ee97176780089b60787ac45ebd0af3ce33bb6, terminal disposition COMPLETE, terminal_sha256 c50b18eff4face686da8bf85c3743040a63eb5a562c829af26f080626b5bb1f4) with 2/2 fresh-process exact byte-identity reproduction from retained inputs only, at ledger 175 with zero checkpoint reads and zero shard opens. The reuse authorization binds the full recovery chain by recomputed hash (recovery authorization 45b25de7, single-use release d582d296, independent release approval 9e6b9ce6), pins the artifact geometry f32[6144]/24576 bytes, enforces open-once same-descriptor consumption with expected==before==consumed==after, read-only nlink-1 non-symlink retention behind a hash-pinned private manifest, and excludes the historical direct-DPREFIX shared output 01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d, shared-expert recomputation, checkpoint fallback, alternate outputs, and surface conversion. The committed resolver has no checkpoint, shard, or compute capability and its bytes match the pinned sha f22bf94011691be4e98a64757ec08c2f2085ff4fb5d0ab325b56d70d17f495cd.",
+    "B": "YES. The committed FFN-composition authorization (69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5) is sufficient to produce exactly one representative F017 proof/reference FFN output after a separate independently approved single-use release, and it authorizes no execution now. status is PREPARED_REVIEW_REQUIRED with real_event_authorized false and go_token_in_this_phase prohibited; future_single_use requires a separate release, durable attempt-start before computation, exclusive attempt creation, attempts 1, ffn_compositions 1, and retry/resume/second_attempt all false; accounting pins future budgets of zero checkpoint reads, zero shard opens, zero expert and shared-expert executions, exactly one FFN composition, and zero S2 constructions. The committed executor CLI exposes only --preflight-only (opens and verifies real inputs, computes nothing) and --synthetic-rehearsal (rejects both real input identities before composing); the mutually exclusive mode group makes real composition unreachable from the committed CLI, confirmed by executing the CLI with --execute (rejected) and with a synthetic config declaring a real input sha (REAL_INPUT_IN_SYNTHETIC_MODE, exit 2). Real composition is reachable only by a future wrapper importing compose_from_open_inputs after its own gated release. Bit-determinism on the accepted surface is established: the arithmetic is a pure scalar function of the two pinned input byte strings (single two-operand binary64 addition per coordinate, no parallelism, no BLAS, no GPU, environment pinned to CPython 3.14.6 Darwin arm64 little-endian with thread variables pinned to 1), the banked synthetic rehearsal shows two-fresh-process exact identity against an independent exact rational oracle, and this review independently re-executed the committed deterministic rehearsal generator in additional fresh processes and reproduced the banked rehearsal document byte-for-byte including output sha 59b941a941093239291b3505be69d69a56ae2b852e88a6d5b06520a4a662b1de.",
+    "C": "YES. The required S1 authority is available for a later S2 step without checkpoint access, subject to a separate materialization/retention authority, and remains unauthorized here. S1 sha256 8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd is authoritative: it equals stage_sha256.post_attention_residual in the banked representative m1f0 execution result (dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190), verified by this review directly against the producer document. The classification HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED is accurate: concrete_retained_path and private_manifest_sha256 are null (no byte retention), while checkpoint-free reconstruction is available from the nine retained packed attention payloads plus canonical S0, FFN norm, router matrix, and correction bias authorities with 10/10 exact accepted stage identity across 2 fresh processes and zero checkpoint rereads, via the committed accepted reproduction producer whose bytes match the pinned sha b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3. materialization_authorized_now is false and SEPARATE_CHECKPOINT_FREE_S1_MATERIALIZATION_AND_RETENTION_AUTHORIZATION is required. S2=f32(f64(S1)+FFN) remains a separate boundary: s2_authorized is false everywhere, S1 byte authority with expected==before==consumed==after is required before any S2 execution authorization, s1_residual_addition and s2_construction are prohibited in this phase, and the stop boundary is AFTER_REPRESENTATIVE_FFN_OUTPUT_ONLY."
+  },
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "finding_id": "F017-FFN-COMP-C01-DID-001",
+      "class": "DEFENSE_IN_DEPTH",
+      "artifact": "scripts/research/validate_f017_representative_ffn_composition_v1.py",
+      "summary": "validate_shared_reuse does not pin the shared-reuse document's stop_boundary and next_authority string fields.",
+      "evidence": "The validator pins schema, ids, head, status, source hashes, manifest, artifact retention, surface isolation, resolver capabilities, consumer_scope, and accounting, but not the trailing stop_boundary or next_authority strings of f017-representative-shared-expert-output-reuse-authorization-v1.json. In repo mode this is fully mitigated because the whole document's bytes are recomputed against the pinned sha 3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a via the FFN authorization binding check; only the --no-repo path could accept an off-repo variant with altered narrative boundary text while every operative execution constraint (consumer_scope all false, accounting all zero) still holds and no execution flows from the validator.",
+      "required_repair": false
+    },
+    {
+      "finding_id": "F017-FFN-COMP-C01-DID-002",
+      "class": "DEFENSE_IN_DEPTH",
+      "artifact": "scripts/research/f017_representative_ffn_composition_executor_v1.py",
+      "summary": "Preflight mode validates pinned interior fields of the authorization document rather than pinning the document's own sha256.",
+      "evidence": "validate_authorization checks schema, version, PREPARED_REVIEW_REQUIRED state, the three pinned binding hashes (ROUTED_REUSE_SHA256, SHARED_REUSE_SHA256, ARITHMETIC_SHA256), both pinned real input hashes, and the exact future_output object, but does not require sha256(authorization file) == 69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5. A syntactically different document carrying identical pinned values would pass preflight. No composition or authority flows from preflight (it verifies and closes descriptors only), and any future real event requires a separately released wrapper, so this is hardening only.",
+      "required_repair": false
+    },
+    {
+      "finding_id": "F017-FFN-COMP-C01-DID-003",
+      "class": "DEFENSE_IN_DEPTH",
+      "artifact": "scripts/research/f017_representative_ffn_composition_executor_v1.py",
+      "summary": "Malformed synthetic configs missing expected keys raise an uncaught KeyError instead of a structured FAIL_CLOSED packet.",
+      "evidence": "In synthetic mode, document['inputs'][name]['artifact']['sha256'] at the protected-identity guard and document['inputs'] in open_pair raise KeyError for absent keys, exiting nonzero with a traceback rather than the CompositionError JSON packet emitted on stderr. Behavior remains fail-closed (nonzero exit, no composition); only the failure reporting shape differs.",
+      "required_repair": false
+    }
+  ],
+  "hash_verification": {
+    "method": "sha256 recomputed with shasum -a 256 over committed bytes at f75040f6894754fab22fdeb9541e7f8a5030b292 and compared to every declared cross-reference; all matched",
+    "mismatches": 0,
+    "verified": {
+      "shared_execution_evidence": "b7e3d8a6d97f2c3771ed7a6ff07ee97176780089b60787ac45ebd0af3ce33bb6",
+      "shared_reuse_authorization": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+      "shared_reuse_resolver": "f22bf94011691be4e98a64757ec08c2f2085ff4fb5d0ab325b56d70d17f495cd",
+      "routed_reuse_authorization": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+      "routed_reuse_review": "49848c1f27e15360bb8514f6b9dbd32b523c73936af6218dcf6505fa3bdf36f8",
+      "routed_reuse_resolver": "8e3919fbebc6ba80a9e63b5baa62f5cc8c61e536955dc46901a3de1d8ed855dd",
+      "arithmetic_contract": "1054d014c23628fa56771518f066d14cfd445b0d7b4ba7da98b638c37981cdbb",
+      "s1_authority": "7a77f7dbadd6753a7598c3d7be7a94b393b56d25a7fa778de0c9f71c1f3a6728",
+      "executor": "7632b19af4a0b3bb16ec7032cec049bcab45dabd246cac5d77f0daaec24d256c",
+      "synthetic_rehearsal": "04c0448a124d36a7510650d725e09d1cc5f2ce66b0c8ee944da0b831a8d67a60",
+      "rehearsal_producer": "1ec0323d83bc70e7a80f53a3669d3e851a388e08475357b1ac0853db2619adaf",
+      "ffn_authorization": "69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5",
+      "validator": "3ddca99c7ab73e2f8271e65ff8df6602d646b8420e79f42d2dfca49f9dc82e41",
+      "tests": "83eb9f472108ce46be2490376ee32b6430f6bb7f42d023ea4d61839188061874",
+      "preparation_evidence": "dd33ee58d8ca72fabb8ff61e1eb53a1fe945e03bf32551e3c5d7030da241992f",
+      "recovery_authorization": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "recovery_single_use_release": "d582d296e2c031f354f7191d3027bb9dac74f3b638377ba5bcfe155c8ee0f37f",
+      "recovery_independent_approval": "9e6b9ce6f71a4f6ede3510a2aed038ddb9b048c032e79966623e6c302f324b28",
+      "recovery_executor": "d57cd1ea3e9a74655ac2a3881f9b5aa1f5ee3036b76d18518b8834357273e0ec",
+      "shared_reproduction_producer": "4a1a8fbb5c201bae45fe61d3eb1cadbe3ae1ad5a429632b703ec57667891ccd4",
+      "semantic_graph_v2": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558",
+      "m1f0_execution_result": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "s1_reproduction_producer": "b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3",
+      "ffn_input_semantics": "4cab095f6301dbf4f82c95b7d8430ccb4e3101ab4211238400ef42bc368666f8",
+      "routed_aggregate_execution_result": "fd362662a72ee6c4a951432d0ceb603a1f31ba7f62b885059e9f05c1df673d43"
+    },
+    "producer_consumer_checks": [
+      "m1f0 execution result stage_sha256 is a dict keyed by stage name and stage_sha256['post_attention_residual'] equals the pinned S1 sha, matching the validator's actual consumer read at validate_ffn",
+      "shared execution evidence output block (sha256, dtype, shape, byte_length) equals the shared reuse retained_shared_output artifact block",
+      "routed reuse retained_aggregate.sha256 and shared reuse retained_shared_output.sha256 equal the FFN authorization input artifact hashes",
+      "rehearsal producer_sha256 and executor_sha256 match committed script bytes; rehearsal generator located by hash at scripts/research/generate_f017_representative_ffn_composition_rehearsal_v1.py",
+      "commit lineage: execution_head 6ac4d134aa3ea64a6c6a7323f4a99ed33624fdb1 and preparation heads 17f719602c089af57a2c3bdee74f2b140a9c8d38 both exist as ancestors of the reviewed head"
+    ]
+  },
+  "tests_and_mutations": {
+    "committed_validator_run": "REPRESENTATIVE_SHARED_OUTPUT_REUSE_AND_FFN_COMPOSITION_AUTHORIZATION_VALID, exit 0, repo mode against committed producer bytes",
+    "committed_tests_run": "7 of 7 unittest cases pass under CPython 3.14.6 with thread variables pinned to 1; 11 shared-reuse plus 25 FFN-authorization committed load-bearing mutations all fail closed (36 total, matching the preparation evidence count)",
+    "independent_mutations": "17 additional reviewer-authored mutations all rejected: shared historical sha changed, shared semantic_surface changed, shared consumer_id changed, shared real_event_authorized true, shared resolver ffn capability true, shared shape 6145, ffn cli_real_execution_mode true, ffn prohibition key removed, ffn prohibition key added, ffn s1 retention reclassified, ffn future_output concrete sha set, ffn preflight manifest gate off, ffn scalar multiplier 0.5, ffn stop boundary changed, ffn extra binding added, ffn composition count 0, ffn real_event_authorized true",
+    "independent_rehearsal_reproduction": "the committed deterministic rehearsal generator was re-executed by the reviewer in fresh processes; the regenerated evidence document matches the banked f017-representative-ffn-composition-synthetic-rehearsal-v1.json byte-for-byte, including output sha 59b941a941093239291b3505be69d69a56ae2b852e88a6d5b06520a4a662b1de and both runtime packets",
+    "independent_arithmetic_oracle": "reviewer-authored ties-to-even probes over compose_bytes with directed rounding-sensitive coordinates (1.0 + 2^-53 rounds to 1.0; (1+2^-52) + 2^-53 rounds to 1+2^-51) match an independent exact Fraction oracle across all 6144 coordinates",
+    "cli_real_execution_absence": "committed CLI executed with --execute is rejected by argparse; synthetic mode declaring a real input identity fails with REAL_INPUT_IN_SYNTHETIC_MODE at exit 2; preflight mode performs no composition; real composition is reachable only through compose_from_open_inputs imported by a future separately released single-use wrapper",
+    "real_bytes_touched": false,
+    "checkpoint_access_during_review": 0,
+    "shard_opens_during_review": 0
+  },
+  "accounting": {
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "direct_dprefix_leakage": "NONE. The historical direct-DPREFIX shared output 01dbd9ac75091fcd452ac9bb1bc2479ccdebc0bc7ac46d79285ff45d70e5928d appears only as an explicitly excluded identity (surface_isolation.historical_direct_dprefix_shared_output false, pinned by the validator and exercised by committed and reviewer mutations); the historical direct-DPREFIX aggregate is likewise excluded via prohibitions.historical_direct_dprefix_aggregate and the pinned routed input hash; no committed artifact in this composition offers a direct-DPREFIX, checkpoint, or recomputation fallback path.",
+  "arithmetic_disposition": "CONFIRMED_EXACT. FFN[k]=Routed[k]+binary64(Shared[k]) with routed decoded exactly as little-endian IEEE-754 binary64, shared promoted exactly from binary32 to binary64 (struct.unpack '<6144f' yields the exact binary64 promotion; float() is identity), no scalar multiplier (exact binary64 1.0), exactly one two-operand binary64 addition per coordinate in Routed-then-Shared order with round-to-nearest ties-to-even, serialized contiguous little-endian binary64 in increasing coordinate order. The semantic classification CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32 is correct: the routed operand is the accepted binary64 proof/reference aggregate, so the composition preserves the proof/reference lineage and is a different numerical surface from production serial f32, whose substitution is forbidden by the arithmetic contract, the authorization prohibitions, the executor checks, and fail-closed mutations.",
+  "s1_disposition": "AUTHORITATIVE_HASH_ONLY. S1 sha256 8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd is bound to the banked m1f0 producer stage post_attention_residual and correctly classified HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED with null retained path and null private manifest. A later S1 materialization can be checkpoint-free via the committed accepted reproduction producer over retained payloads (10/10 exact stage identity, 2 fresh processes, 0 checkpoint rereads), but materialization is not authorized by anything in this composition and requires a separate checkpoint-free S1 materialization and retention authorization, which must reproduce the pinned sha with expected==before==consumed==after before any S2 authorization.",
+  "stop_boundary_disposition": "INTACT. Preparation stops at BEFORE_REAL_REPRESENTATIVE_FFN_COMPOSITION with ledger 175 and zero checkpoint reads, shard opens, expert executions, shared-expert executions, FFN completions, and S2 constructions. The authorized future event stops at AFTER_REPRESENTATIVE_FFN_OUTPUT_ONLY with exactly one FFN composition and zero budgets for everything else. S2=f32(f64(S1)+FFN) remains a separate unauthorized boundary gated on S1 byte authority; s1_residual_addition, s2_construction, and go_token_in_this_phase are all prohibited, and mutation of any of these gates fails closed.",
+  "statement": "Independent adversarial review of the committed F017 representative FFN composition package at feat/017-real-checkpoint-runner head f75040f6894754fab22fdeb9541e7f8a5030b292 (origin parity, clean worktree). Repository bytes only; no checkpoint access, no shard opens, no model payload reads, no real tensor access, no real FFN or shared/routed computation, no S2 construction, and no ledger movement occurred during this review. Every declared cross-reference hash in the twelve reviewed artifacts and their upstream authorities was recomputed and matched; executable producer/consumer relationships were exercised directly, including the validator's read of the m1f0 stage map and both reuse documents; the committed validator and all seven checkpoint-free tests pass; 36 committed plus 17 reviewer-authored load-bearing mutations all fail closed; the deterministic synthetic rehearsal was independently re-executed and reproduced byte-for-byte; and the composition arithmetic was independently confirmed against an exact rational oracle including directed ties-to-even cases. No BLOCKING and no NON_BLOCKING_REQUIRED findings. Three DEFENSE_IN_DEPTH hardening observations are recorded; none is a required repair. Verdict ACCEPT. The shared output is safe for cross-event reuse; the FFN-composition authorization is sufficient for exactly one future separately released proof/reference FFN event without authorizing execution now; and S1 authority is available checkpoint-free for a later S2 step subject to a separate materialization/retention authority."
+}
