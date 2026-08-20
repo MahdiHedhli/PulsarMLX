@@ -78,15 +78,30 @@ def reconcile(state_root: Path, output_path: Path, release_path: Path) -> dict[s
     start = load(start_path)
     require(start.get("event_id") == EVENT_ID and start.get("release_id") == RELEASE_ID and start.get("attempt_id") == ATTEMPT_ID, "attempt identity")
     require(start.get("release_sha256") == sha(release_path), "attempt release binding")
+    aggregate_start_path = state_root / "aggregate-start.json"
+    aggregate_executions = 0
+    if aggregate_start_path.exists():
+        require(aggregate_start_path.is_file() and not aggregate_start_path.is_symlink(), "aggregate start identity")
+        aggregate_start = load(aggregate_start_path)
+        require(aggregate_start.get("event_id") == EVENT_ID and aggregate_start.get("release_id") == RELEASE_ID
+                and aggregate_start.get("attempt_id") == ATTEMPT_ID, "aggregate start event identity")
+        require(aggregate_start.get("release_sha256") == sha(release_path), "aggregate start release binding")
+        require(aggregate_start.get("accounting_semantics") ==
+                "DURABLE_START_COUNTS_ONE_AGGREGATE_EXECUTION_REGARDLESS_OF_OUTCOME", "aggregate accounting semantics")
+        require(aggregate_start.get("aggregate_executions") == 1, "aggregate start count")
+        aggregate_executions = 1
     terminal_path = state_root / "terminal.json"
     output_identity = validate_output(output_path) if output_path.exists() else None
+    require(output_identity is None or aggregate_executions == 1, "output without aggregate start")
     output_authority = False
     if terminal_path.exists():
         terminal = load(terminal_path)
         require(terminal.get("event_id") == EVENT_ID and terminal.get("release_id") == RELEASE_ID and terminal.get("attempt_id") == ATTEMPT_ID, "terminal identity")
         require(terminal.get("retry") is False and terminal.get("resume") is False and terminal.get("second_attempt") is False, "terminal one-shot")
+        require(terminal.get("aggregate_executions") == aggregate_executions, "terminal aggregate accounting")
         if terminal.get("disposition") == "COMPLETE":
             require(output_identity is not None and terminal.get("output_sha256") == output_identity, "complete output identity")
+            require(aggregate_executions == 1, "complete without aggregate execution")
             disposition = "COMPLETE_RECONSTRUCTED"
             output_authority = True
         else:
@@ -106,6 +121,7 @@ def reconcile(state_root: Path, output_path: Path, release_path: Path) -> dict[s
         "checkpoint_reads": 0,
         "shard_opens": 0,
         "expert_executions": 0,
+        "aggregate_executions": aggregate_executions,
         "retry": False,
         "resume": False,
         "second_attempt": False,

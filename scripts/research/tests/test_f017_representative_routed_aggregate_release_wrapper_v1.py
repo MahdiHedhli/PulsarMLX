@@ -101,7 +101,22 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
             self.assertEqual(packet["disposition"], "INTERRUPTED_NO_OUTPUT")
             self.assertTrue(packet["release_consumed"])
+            self.assertEqual(packet["aggregate_executions"], 0)
             self.assertFalse(packet["retry"])
+
+    def test_terminalizer_counts_durable_aggregate_start_without_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.make_roots(temporary)
+            release = Path(temporary) / "release.json"
+            approval = Path(temporary) / "approval.json"
+            token = Path(temporary) / "token.json"
+            for path in (release, approval, token):
+                path.write_text("{}\n")
+            WRAPPER.begin_attempt(paths, release, approval, token)
+            WRAPPER.begin_aggregate(paths, release)
+            packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
+            self.assertEqual(packet["disposition"], "INTERRUPTED_NO_OUTPUT")
+            self.assertEqual(packet["aggregate_executions"], 1)
 
     def test_terminalizer_recovers_published_output_without_terminal(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -113,6 +128,7 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             approval.write_text("{}\n")
             token.write_text("{}\n")
             WRAPPER.begin_attempt(paths, release, approval, token)
+            WRAPPER.begin_aggregate(paths, release)
             identity = WRAPPER.publish_no_replace(bytes(WRAPPER.OUTPUT_BYTES), paths["output_root"])
             packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
             self.assertEqual(packet["disposition"], "INTERRUPTED_OUTPUT_PUBLISHED_REQUIRES_ADJUDICATION")
@@ -131,6 +147,7 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             approval.write_text("{}\n")
             token.write_text("{}\n")
             WRAPPER.begin_attempt(paths, release, approval, token)
+            WRAPPER.begin_aggregate(paths, release)
             identity = WRAPPER.publish_no_replace(bytes(WRAPPER.OUTPUT_BYTES), paths["output_root"])
             WRAPPER.write_terminal(paths, "COMPLETE", identity, None)
             packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
@@ -148,6 +165,7 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             approval.write_text("{}\n")
             token.write_text("{}\n")
             WRAPPER.begin_attempt(paths, release, approval, token)
+            WRAPPER.begin_aggregate(paths, release)
             identity = WRAPPER.publish_no_replace(bytes(WRAPPER.OUTPUT_BYTES), paths["output_root"])
             WRAPPER.write_terminal(paths, "TERMINAL_FAILURE", identity, "synthetic-after-publish")
             packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
@@ -155,6 +173,22 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             self.assertEqual(packet["output_sha256"], identity)
             self.assertFalse(packet["output_authority"])
             self.assertTrue(packet["output_present_for_adjudication"])
+
+    def test_post_compute_prepublication_failure_counts_execution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.make_roots(temporary)
+            release = Path(temporary) / "release.json"
+            approval = Path(temporary) / "approval.json"
+            token = Path(temporary) / "token.json"
+            for path in (release, approval, token):
+                path.write_text("{}\n")
+            WRAPPER.begin_attempt(paths, release, approval, token)
+            WRAPPER.begin_aggregate(paths, release)
+            WRAPPER.write_terminal(paths, "TERMINAL_FAILURE", None, "synthetic-before-publish")
+            packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
+            self.assertEqual(packet["disposition"], "TERMINAL_FAILURE_RECONSTRUCTED")
+            self.assertEqual(packet["aggregate_executions"], 1)
+            self.assertFalse(packet["output_authority"])
 
 
 if __name__ == "__main__":

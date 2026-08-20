@@ -251,7 +251,27 @@ def begin_attempt(paths: dict[str, Path], release_path: Path, approval_path: Pat
     return write_state_artifact(state_root, "attempt-start.json", packet)
 
 
+def begin_aggregate(paths: dict[str, Path], release_path: Path) -> str:
+    packet = {
+        "schema": "pulsarmlx.f017.representative-routed-aggregate-release-aggregate-start",
+        "schema_version": "1.0.0",
+        "event_id": EVENT_ID,
+        "release_id": RELEASE_ID,
+        "attempt_id": ATTEMPT_ID,
+        "release_sha256": sha256_path(release_path),
+        "accounting_semantics": "DURABLE_START_COUNTS_ONE_AGGREGATE_EXECUTION_REGARDLESS_OF_OUTCOME",
+        "ledger": 175,
+        "checkpoint_reads": 0,
+        "shard_opens": 0,
+        "expert_executions": 0,
+        "aggregate_executions": 1,
+    }
+    return write_state_artifact(paths["state_root"], "aggregate-start.json", packet)
+
+
 def write_terminal(paths: dict[str, Path], disposition: str, output_sha256: str | None, error: str | None) -> str:
+    aggregate_executions = int((paths["state_root"] / "aggregate-start.json").is_file())
+    require(disposition != "COMPLETE" or aggregate_executions == 1, "complete without aggregate start")
     packet = {
         "schema": "pulsarmlx.f017.representative-routed-aggregate-release-terminal",
         "schema_version": "1.0.0",
@@ -266,7 +286,7 @@ def write_terminal(paths: dict[str, Path], disposition: str, output_sha256: str 
         "checkpoint_reads": 0,
         "shard_opens": 0,
         "expert_executions": 0,
-        "aggregate_executions": 1 if output_sha256 else 0,
+        "aggregate_executions": aggregate_executions,
         "retry": False,
         "resume": False,
         "second_attempt": False,
@@ -366,6 +386,7 @@ def main() -> int:
         with module.OpenOnceInputs(paths["input_root"], records, manifest_sha=module.MANIFEST_SHA, forbidden_shas=frozenset()) as inputs:
             begin_attempt(paths, args.release.resolve(), paths["approval"].resolve(), args.go_token.resolve())
             attempt_started = True
+            begin_aggregate(paths, args.release.resolve())
             raw = module.aggregate_bytes(inputs.raw_inputs)
             inputs.verify_after()
             output_identity = publish_no_replace(raw, paths["output_root"])
@@ -396,6 +417,11 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except (ReleaseError, FileNotFoundError, PermissionError, subprocess.CalledProcessError) as error:
+        aggregate_executions = 0
+        try:
+            aggregate_executions = int((fixed_paths()["state_root"] / "aggregate-start.json").is_file())
+        except Exception:
+            pass
         print(json.dumps({
             "disposition": "FAIL_CLOSED",
             "error": type(error).__name__,
@@ -403,6 +429,6 @@ if __name__ == "__main__":
             "checkpoint_reads": 0,
             "shard_opens": 0,
             "expert_executions": 0,
-            "aggregate_executions": 0,
+            "aggregate_executions": aggregate_executions,
         }, sort_keys=True), file=sys.stderr)
         raise SystemExit(2)

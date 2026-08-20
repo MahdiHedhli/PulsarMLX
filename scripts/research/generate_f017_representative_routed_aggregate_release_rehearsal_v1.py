@@ -13,6 +13,7 @@ import tempfile
 from f017_representative_routed_aggregate_release_wrapper_v1 import (
     OUTPUT_BYTES,
     ReleaseError,
+    begin_aggregate,
     begin_attempt,
     fixed_paths,
     publish_no_replace,
@@ -74,10 +75,26 @@ def main() -> int:
         if interrupted["disposition"] != "INTERRUPTED_NO_OUTPUT" or not interrupted["release_consumed"]:
             raise RuntimeError("interruption reconciliation")
         cases["interrupted_no_output_consumed"] = "PASS"
+        begin_aggregate(paths, release)
+        aggregate_started = reconcile(paths["state_root"], paths["output"], release)
+        if aggregate_started["aggregate_executions"] != 1:
+            raise RuntimeError("durable aggregate accounting")
+        cases["durable_aggregate_start_counts_execution"] = "PASS"
     with tempfile.TemporaryDirectory() as temporary:
         paths = roots(temporary)
         release, approval, token = authority_files(temporary)
         begin_attempt(paths, release, approval, token)
+        begin_aggregate(paths, release)
+        write_terminal(paths, "TERMINAL_FAILURE", None, "synthetic-before-publish")
+        failed = reconcile(paths["state_root"], paths["output"], release)
+        if failed["aggregate_executions"] != 1 or failed["output_authority"]:
+            raise RuntimeError("post-compute prepublication accounting")
+        cases["post_compute_prepublication_failure_counts_execution"] = "PASS"
+    with tempfile.TemporaryDirectory() as temporary:
+        paths = roots(temporary)
+        release, approval, token = authority_files(temporary)
+        begin_attempt(paths, release, approval, token)
+        begin_aggregate(paths, release)
         identity = publish_no_replace(synthetic, paths["output_root"])
         interrupted = reconcile(paths["state_root"], paths["output"], release)
         if (interrupted["disposition"] != "INTERRUPTED_OUTPUT_PUBLISHED_REQUIRES_ADJUDICATION"
@@ -88,6 +105,7 @@ def main() -> int:
         paths = roots(temporary)
         release, approval, token = authority_files(temporary)
         begin_attempt(paths, release, approval, token)
+        begin_aggregate(paths, release)
         identity = publish_no_replace(synthetic, paths["output_root"])
         write_terminal(paths, "TERMINAL_FAILURE", identity, "synthetic-after-publish")
         failed = reconcile(paths["state_root"], paths["output"], release)
