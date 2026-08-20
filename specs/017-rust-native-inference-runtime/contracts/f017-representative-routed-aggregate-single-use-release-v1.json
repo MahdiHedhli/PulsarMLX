@@ -7,7 +7,7 @@
   "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
   "real_event_authorized": false,
   "approval_asserted": false,
-  "authoritative_execution_code_head": "d38a42ad347eaca48e53e5530e2e312fa73e6bd8",
+  "authoritative_execution_code_head": "2d3e562c03b76444ae3639f9af08f8e54d7306e4",
   "head_semantics": "EXACT_LOAD_BEARING_BYTES_AT_CODE_HEAD;APPEND_ONLY_RELEASE_REVIEW_APPROVAL_AND_BANKING_COMMITS_PERMITTED",
   "bindings": {
     "authorization": {
@@ -40,23 +40,23 @@
     },
     "publication_contract": {
       "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-output-publication-v1.json",
-      "sha256": "c85c40b6c84d48b5094a23342a5a63700bdd01a5a135f1bc36699de3ec308fd4"
+      "sha256": "ad38b4d1fd7ca8b10764eb3e5ab4b765452f9714f949ce077a5e253cb14ba691"
     },
     "release_wrapper": {
       "path": "scripts/research/f017_representative_routed_aggregate_release_wrapper_v1.py",
-      "sha256": "6822eb1857b70fc69e451943501716ebb9a190e9ad9ed5004bf66d851411d7c6"
+      "sha256": "9ac3172ffc0ac2fd4b8a7411a0ef2671cc5dbe9cececae4ad6fc0fa5a2c8bd7e"
     },
     "terminalizer": {
       "path": "scripts/research/f017_representative_routed_aggregate_release_terminalizer_v1.py",
-      "sha256": "29169be62b65f8106e5c4de4b47b6bb5001496794f80c76b8d0d92de476ac920"
+      "sha256": "e087f2c9060fd058a517dc98748193d33acba9c94b6f2cf10bf6b43d12cb8267"
     },
     "release_validator": {
       "path": "scripts/research/validate_f017_representative_routed_aggregate_single_use_release_v1.py",
-      "sha256": "725a4f23d2e767d8dd12f47b639e5becc96a195d53fdba892249a2e47b3f36b3"
+      "sha256": "4cc54c03dd9ec55aac75216698d3eb7ec5214c45ef328b10e88ff025e5b0ca93"
     },
     "release_rehearsal": {
       "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-release-rehearsal-v1.json",
-      "sha256": "1b6b4476af94365f18d52b59bea20e40242445d041358ee21ec503a26b71d654"
+      "sha256": "a3a2db9f8ab819cd43cce196f5bb2ea54474e281a7269d53bd186e8b8401c03b"
     }
   },
   "private_manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
@@ -111,15 +111,17 @@
     "same_filesystem": true
   },
   "output_publication": {
-    "contract_sha256": "c85c40b6c84d48b5094a23342a5a63700bdd01a5a135f1bc36699de3ec308fd4",
+    "contract_sha256": "ad38b4d1fd7ca8b10764eb3e5ab4b765452f9714f949ce077a5e253cb14ba691",
     "dtype": "little-endian-f64",
     "shape": [6144],
     "byte_length": 49152,
     "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
     "finite": true,
     "file_fsync": true,
+    "descriptor_relative_temp_creation": true,
     "no_replace_hard_link_publish": true,
     "parent_fsync": true,
+    "authority_requires_matching_complete_terminal": true,
     "overwrite": false,
     "partial_output_authority": false
   },

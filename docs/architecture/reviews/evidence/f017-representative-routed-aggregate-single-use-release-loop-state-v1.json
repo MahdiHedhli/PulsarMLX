@@ -1,17 +1,30 @@
 {
   "schema": "pulsarmlx.f017.autonomous-representative-routed-aggregate-single-use-release-loop-state",
   "schema_version": "1.0.0",
-  "phase": "BUILDER_CYCLE_1_COMPLETE_REVIEW_PENDING",
-  "cycle": 1,
+  "phase": "BUILDER_CYCLE_2_COMPLETE_REVIEW_PENDING",
+  "cycle": 2,
   "maximum_cycles": 4,
   "builder_model": "GPT-5.6 Sol",
   "builder_effort": "High",
   "reviewer_model": "claude-fable-5",
-  "latest_reviewer_artifact": null,
-  "latest_reviewer_sha256": null,
-  "latest_verdict": null,
-  "findings": [],
-  "resolved_findings": [],
+  "latest_reviewer_artifact": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-release-cycle-01-independent-review.json",
+  "latest_reviewer_sha256": "dbf0379b9ae5529ac40cd1eb4415ceb2ef0dd98f3b67694c3c337bf1106d9642",
+  "latest_verdict": "ACCEPT_OVERRIDDEN_BY_BUILDER_FINAL_COMPOSITION_BLOCKER",
+  "findings": [
+    {
+      "id": "FC-B1",
+      "class": "BLOCKING",
+      "title": "PUBLICATION_NOT_DESCRIPTOR_RELATIVE_END_TO_END",
+      "source": "GPT-5.6 Sol Extra High final composition"
+    }
+  ],
+  "resolved_findings": [
+    {
+      "id": "FC-B1",
+      "resolution": "descriptor-relative exclusive temporary creation plus authority only from matching COMPLETE terminal",
+      "repair_commit": "2d3e562c03b76444ae3639f9af08f8e54d7306e4"
+    }
+  ],
   "ledger": 175,
   "checkpoint_reads": 0,
   "shard_opens": 0,

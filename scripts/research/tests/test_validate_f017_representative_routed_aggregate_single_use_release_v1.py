@@ -55,6 +55,8 @@ class RoutedAggregateReleaseValidatorTests(unittest.TestCase):
             lambda d: d["single_use"].__setitem__("exclusive_attempt_creation", False),
             lambda d: d["output_publication"].__setitem__("overwrite", True),
             lambda d: d["output_publication"].__setitem__("no_replace_hard_link_publish", False),
+            lambda d: d["output_publication"].__setitem__("descriptor_relative_temp_creation", False),
+            lambda d: d["output_publication"].__setitem__("authority_requires_matching_complete_terminal", False),
             lambda d: d["output_publication"].__setitem__("byte_length", 49151),
             lambda d: d["output_publication"].__setitem__("dtype", "little-endian-f32"),
             lambda d: d["reproduction"].__setitem__("synthetic_fresh_processes", 1),
