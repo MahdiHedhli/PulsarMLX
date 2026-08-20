@@ -1,0 +1,104 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-output-cross-event-reuse-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-EXPERT-OUTPUT-REUSE-1",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "preparation_base_head": "26f5fe81e63851a23e40ba432b643b0a24a86d33",
+  "real_event_authorized": false,
+  "purpose": "FUTURE_REPRESENTATIVE_ROUTED_AGGREGATE_AUTHORIZATION_PREPARATION_ONLY",
+  "authority": {
+    "representative_route_execution": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+    },
+    "concrete_route_values": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-concrete-route-values-v1.json",
+      "sha256": "6035308cb85a29617abe5dcb18be37ab6d99afb5193d28ed7993d41c2aeb7b49"
+    },
+    "representative_expert_input_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "expert_recovery_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-recovery-authorization-v1.json",
+      "sha256": "abbf12bc921c2d28f00a375225b5969145017cfe70da8bfa7486caf502f21c6f"
+    },
+    "expert_recovery_release": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-recovery-single-use-release-v1.json",
+      "sha256": "ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68"
+    },
+    "expert_recovery_release_approval": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-expert-recovery-single-use-release-v1-independent-approval-v2.json",
+      "sha256": "c1b5f202205fa3930e4b55a1131a2168f6ac4a845a02b14931e067ebd3b921cc"
+    },
+    "expert_execution_evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-expert-recovery-real-execution-result-v1.json",
+      "sha256": "fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4"
+    }
+  },
+  "private_package": {
+    "manifest_sha256": "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a",
+    "output_count": 8,
+    "output_bytes": 196608,
+    "machine_local_root_not_committed": true,
+    "machine_local_paths_published": false,
+    "retention_class": "PERSISTED_AUTHORITY_READ_ONLY_SINGLE_LINK"
+  },
+  "atomic_id_weight_output_triples": [
+    {"ordinal": 0, "expert_id": 250, "routing_weight": 0.7487501576296707, "private_relative_path": "00-expert-250-down.f32le", "output_sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 1, "expert_id": 10, "routing_weight": 0.3348627106807668, "private_relative_path": "01-expert-10-down.f32le", "output_sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 2, "expert_id": 237, "routing_weight": 0.23863270273063697, "private_relative_path": "02-expert-237-down.f32le", "output_sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 3, "expert_id": 62, "routing_weight": 0.23688715675086147, "private_relative_path": "03-expert-62-down.f32le", "output_sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 4, "expert_id": 73, "routing_weight": 0.2514906203405492, "private_relative_path": "04-expert-73-down.f32le", "output_sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 5, "expert_id": 177, "routing_weight": 0.23059957299763345, "private_relative_path": "05-expert-177-down.f32le", "output_sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 6, "expert_id": 218, "routing_weight": 0.22915341148588297, "private_relative_path": "06-expert-218-down.f32le", "output_sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"},
+    {"ordinal": 7, "expert_id": 28, "routing_weight": 0.22962366738399842, "private_relative_path": "07-expert-28-down.f32le", "output_sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576, "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT"}
+  ],
+  "retained_identity_contract": {
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_once_consume_same_descriptor": true,
+    "fstat_before_and_after": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true,
+    "no_writable_alias": true,
+    "finite_values": true
+  },
+  "reproducibility": {
+    "fresh_processes": 2,
+    "exact_output_identity": "8_OF_8_IN_BOTH_PROCESSES",
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "result": "PASS"
+  },
+  "aggregate_input_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-input-v1.json",
+    "sha256": "ec38d793a95894daa71a5179650b91978b4aec44512311aa29a7c5c897b4b872"
+  },
+  "resolver": {
+    "path": "scripts/research/f017_representative_expert_output_reuse_v1.py",
+    "sha256": "0c5b9cff18e55614aee1eae1d9a3c6a0d0acff520408ddd7dd180058c5d9e96a",
+    "checkpoint_capability": false,
+    "shard_capability": false,
+    "expert_execution_capability": false,
+    "aggregate_execution_capability": false
+  },
+  "accounting": {
+    "real_payload_ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0
+  },
+  "prohibitions": {
+    "historical_direct_dprefix_route": true,
+    "historical_direct_dprefix_expert_outputs": true,
+    "expert_reexecution_fallback": true,
+    "checkpoint_reread": true,
+    "alternate_expert_output": true,
+    "output_substitution": true,
+    "weight_reassignment": true,
+    "aggregate_execution": true,
+    "shared_expert_execution": true,
+    "ffn_completion": true,
+    "s2_construction": true
+  }
+}

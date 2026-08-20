@@ -1,0 +1,51 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-input-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-INPUT-1",
+  "status": "FROZEN_NOT_EVALUATED",
+  "protected_surface": "CANONICAL_ANALYTICAL_REPRESENTATIVE_ROUTED_AGGREGATE",
+  "dimension": 6144,
+  "atomic_order": [250, 10, 237, 62, 73, 177, 218, 28],
+  "semantics": {
+    "expert_output_input": "canonical-little-endian-ieee754-binary32-c-order promoted exactly to binary64",
+    "routing_weight_input": "canonical IEEE-754 binary64 from the representative post-attention route authority",
+    "per_term": "binary64(routing_weight_i) * binary64(expert_output_i[k]) using CPython binary64 multiplication",
+    "accumulation": "fixed Python-math.fsum-equivalent binary64 accumulation over the eight atomic triples in representative rank order",
+    "formula": "M[k]=math.fsum(weight_i*float64(expert_output_i[k]) for i in representative_rank_order)",
+    "casting_points": "one exact f32-to-f64 promotion before multiplication; no binary32 product cast; no final binary32 cast at this surface",
+    "output_dtype": "little-endian-f64",
+    "output_shape": [6144],
+    "output_byte_length": 49152,
+    "output_serialization": "canonical-little-endian-ieee754-binary64-c-order"
+  },
+  "surface_separation": {
+    "production_runtime_policy": "selected_slot_rank_order_serial_binary32_reduction",
+    "production_runtime_status": "SEPARATE_CANDIDATE_NUMERICAL_SURFACE_NOT_AUTHORIZED_HERE",
+    "reason": "the frozen analytical routed-aggregate and complete-layer theorem lineage explicitly protects Python-math.fsum-equivalent binary64 M; the production serial-f32 result requires its own later comparison/qualification",
+    "historical_direct_dprefix_surface": "VALID_BUT_DIFFERENT_SURFACE_AND_PROHIBITED_AS_INPUT"
+  },
+  "authority": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-weighted-moe-aggregate-perturbation-v1.json",
+      "sha256": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-acceptance-v2.json",
+      "sha256": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json",
+      "sha256": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json",
+      "sha256": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832"
+    }
+  ],
+  "execution": {
+    "aggregate_computed": false,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0
+  }
+}

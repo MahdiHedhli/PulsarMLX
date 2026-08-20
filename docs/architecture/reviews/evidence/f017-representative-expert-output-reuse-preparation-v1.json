@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-output-reuse-preparation",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "26f5fe81e63851a23e40ba432b643b0a24a86d33",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+    "sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"
+  },
+  "aggregate_input_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-input-v1.json",
+    "sha256": "ec38d793a95894daa71a5179650b91978b4aec44512311aa29a7c5c897b4b872"
+  },
+  "resolver": {
+    "path": "scripts/research/f017_representative_expert_output_reuse_v1.py",
+    "sha256": "0c5b9cff18e55614aee1eae1d9a3c6a0d0acff520408ddd7dd180058c5d9e96a"
+  },
+  "validator": {
+    "path": "scripts/research/validate_f017_representative_expert_output_reuse_v1.py",
+    "sha256": "7eb76d7edbc9c0eae0e4029561005138a81c03d3cfdffe3963b9f7131feb30df",
+    "result": "PASS"
+  },
+  "mutation_tests": {
+    "path": "scripts/research/tests/test_f017_representative_expert_output_reuse_v1.py",
+    "sha256": "9661fb2923730bd4fdf5589f1bbacbfe390499cd50ce12ced03c720fe688e213",
+    "test_methods": 6,
+    "authorization_mutations": 21,
+    "result": "PASS"
+  },
+  "private_preflight": {
+    "result_sha256": "0c940184cda6be3be8cd3114d482ee5d0e48dea8ac2499b874e994b12e6db2b6",
+    "outputs_verified": 8,
+    "bytes_verified": 196608,
+    "expected_before_consumed_after_equal": true,
+    "finite_values": 49152,
+    "machine_local_paths_published": false,
+    "result": "REPRESENTATIVE_EXPERT_OUTPUT_REUSE_PREFLIGHT_PASS"
+  },
+  "aggregate_execution": false,
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0
+  }
+}
