@@ -615,7 +615,7 @@
 
 ## Phase 41: Convergence
 
-- [ ] T017-244 Prepare, checkpoint-free validate, and independently accept an
+- [x] T017-244 Prepare, checkpoint-free validate, and independently accept an
   append-only single-use representative S1 reconstruction-and-retention
   authorization/release that extracts only the canonical
   `post_attention_residual` bytes through the already accepted retained M1-F0
