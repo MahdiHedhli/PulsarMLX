@@ -3,17 +3,23 @@
   "schema_version": "1.0.0",
   "preparation_head": "87d65a91e998ca9513262982e6453d8eb003178d",
   "status": "PREPARED_REVIEW_REQUIRED",
+  "cycle": 2,
+  "prior_review": {"path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-01-independent-review.json", "sha256": "4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420", "verdict": "REJECT"},
+  "repairs": {
+    "RRA-C1-R1": "synthetic declarations and consumed bytes reject protected representative output identities; fresh-process negative gate passes",
+    "RRA-C1-R2": "fixed one-shot identities plus exclusive durable attempt-start, existing-state/output refusal, terminal evidence, and no retry/resume/second attempt"
+  },
   "semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
-  "authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json", "sha256": "4e4ce481b021404528581eaa207e8ab96235b11e89fa9a439d5251aa21e14efc"},
+  "authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json", "sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590"},
   "semantic_adjudication": {"path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-semantic-adjudication-v1.json", "sha256": "ab6d9305a2392ceda77728b7892868e0310c56f20c0636ab67ffd2154adb0636"},
   "arithmetic_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json", "sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2"},
-  "executor": {"path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py", "sha256": "a5ceeeb375539755eb71ff92867c53e264dfbfb18d958914033ac6de962f52bf"},
-  "rehearsal_generator": {"path": "scripts/research/generate_f017_representative_routed_aggregate_rehearsal_v1.py", "sha256": "3271a3dce9bb216b19b5af2a7eaf3a7a9a4087b63f45b48454081ad56f8752d2"},
-  "synthetic_rehearsal": {"path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json", "sha256": "ac353d30ec4bbd6235726fee4174fecb98fcb21aa095a4fb71cefb18b49b981d", "fresh_processes": 2, "result": "PASS"},
-  "validator": {"path": "scripts/research/validate_f017_representative_routed_aggregate_authorization_v1.py", "sha256": "16547287ac1081abe85aacbb6744fc49b376ceaacfa11d5a5cc33e3ede5a2d0d", "result": "PASS"},
+  "executor": {"path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py", "sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5"},
+  "rehearsal_generator": {"path": "scripts/research/generate_f017_representative_routed_aggregate_rehearsal_v1.py", "sha256": "48017c8fc12ba51d0325d3d18838383acc5d334e49ab1b35a5b7a83896f22ffa"},
+  "synthetic_rehearsal": {"path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json", "sha256": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc", "fresh_processes": 2, "result": "PASS"},
+  "validator": {"path": "scripts/research/validate_f017_representative_routed_aggregate_authorization_v1.py", "sha256": "512d39d21e4854c1d57569a7932a3d01c7dcecaf137e2631cf3298fa82015f54", "result": "PASS"},
   "tests": [
-    {"path": "scripts/research/tests/test_f017_representative_routed_aggregate_executor_v1.py", "sha256": "cfdf724e9d48cd2d18cc12fbf4b8419e49e5681f5f79170954672cb7103fca31", "test_methods": 8, "result": "PASS"},
-    {"path": "scripts/research/tests/test_validate_f017_representative_routed_aggregate_authorization_v1.py", "sha256": "9db6c8375f8653653834331596662ca821ed788813e4acb7080e6b462ddc1556", "authorization_mutations": 30, "result": "PASS"}
+    {"path": "scripts/research/tests/test_f017_representative_routed_aggregate_executor_v1.py", "sha256": "bf1a314903fdeafc4cfbc425f725a40730f703318149271b3602e3b667ff7510", "test_methods": 10, "result": "PASS"},
+    {"path": "scripts/research/tests/test_validate_f017_representative_routed_aggregate_authorization_v1.py", "sha256": "a9bf9549f864a6e1e2f0712cac86fa743ded79b7c9905fcf534291d5eae9f3f0", "authorization_mutations": 34, "result": "PASS"}
   ],
   "real_input_preflight": {"result": "PRODUCTION_BINDINGS_RESOLVED", "packet_sha256": "bb13dcc62cb6218a233d262e9780fd088ec19106e9d2df90325659b20f7a6fcd", "inputs": 8, "real_aggregate_computed": false},
   "accounting": {"ledger_before": 175, "ledger_after": 175, "checkpoint_reads": 0, "shard_opens": 0, "expert_executions": 0, "aggregate_executions": 0}

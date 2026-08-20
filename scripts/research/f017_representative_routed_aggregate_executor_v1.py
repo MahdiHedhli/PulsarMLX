@@ -41,6 +41,9 @@ MANIFEST_SHA = "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a
 DIMENSION = 6144
 INPUT_BYTES = 24576
 OUTPUT_BYTES = 49152
+EVENT_ID = "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1"
+RELEASE_ID = f"{EVENT_ID}-RELEASE-1"
+ATTEMPT_ID = f"{EVENT_ID}-ATTEMPT-1"
 
 
 class AggregateError(ValueError):
@@ -95,7 +98,8 @@ def _read_exact_fd(fd: int, expected: int) -> bytes:
 
 
 class OpenOnceInputs:
-    def __init__(self, root: Path, records: list[dict[str, Any]], *, manifest_sha: str | None) -> None:
+    def __init__(self, root: Path, records: list[dict[str, Any]], *, manifest_sha: str | None,
+                 forbidden_shas: frozenset[str] = frozenset()) -> None:
         flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
         self.root_fd = os.open(root, flags)
         self.handles: list[tuple[int, os.stat_result, bytes, str]] = []
@@ -124,6 +128,7 @@ class OpenOnceInputs:
                     raw = _read_exact_fd(fd, INPUT_BYTES)
                     expected = record.get("output_sha256")
                     require(sha256_bytes(raw) == expected, "EXPECTED != BEFORE")
+                    require(expected not in forbidden_shas, "protected representative output forbidden in synthetic mode")
                     values = struct.unpack("<6144f", raw)
                     require(all(math.isfinite(value) for value in values), "non-finite input")
                     self.handles.append((fd, meta, raw, expected))
@@ -179,7 +184,10 @@ def validate_records(records: Any, *, synthetic: bool) -> list[dict[str, Any]]:
         require(record.get("private_relative_path") == f"{i:02d}-expert-{IDS[i]}-down.f32le", "filename binding")
         require(record.get("dtype") == "little-endian-f32" and record.get("shape") == [6144], "input dtype/shape")
         require(record.get("byte_length") == INPUT_BYTES, "input byte length")
-        if not synthetic:
+        if synthetic:
+            require(record.get("output_sha256") not in OUTPUT_SHAS,
+                    "protected representative output declared in synthetic mode")
+        else:
             require(record.get("output_sha256") == OUTPUT_SHAS[i], "representative output identity")
     return records
 
@@ -207,6 +215,7 @@ def aggregate_bytes(raw_inputs: tuple[bytes, ...], weights: tuple[float, ...] = 
 
 
 def _atomic_write(path: Path, raw: bytes) -> None:
+    require(not path.exists(), f"refuse to overwrite: {path.name}")
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
@@ -232,10 +241,57 @@ def validate_release(release_path: Path, authorization_path: Path) -> None:
                      "executor_sha256", "event_id", "release_id", "attempt_id", "disposition"}
     require(set(release) == expected_keys, "release schema keys")
     require(release.get("schema") == "pulsarmlx.f017.representative-routed-aggregate-single-use-release", "release schema")
+    require(release.get("schema_version") == "1.0.0", "release schema version")
     require(release.get("status") == "INDEPENDENTLY_APPROVED" and release.get("real_event_authorized") is True, "release approval")
     require(release.get("authorization_sha256") == sha256_path(authorization_path), "release authorization binding")
     require(release.get("executor_sha256") == sha256_path(Path(__file__)), "release executor binding")
+    require(release.get("event_id") == EVENT_ID and release.get("release_id") == RELEASE_ID
+            and release.get("attempt_id") == ATTEMPT_ID, "release/attempt identity")
     require(release.get("disposition") == "GO_EXECUTE_ONCE_NO_RETRY", "release disposition")
+
+
+def begin_attempt(state_root: Path, authorization_path: Path, release_path: Path) -> str:
+    require(not state_root.exists(), "PRIOR_ATTEMPT_STATE")
+    state_root.parent.mkdir(parents=True, exist_ok=True)
+    os.mkdir(state_root, 0o700)
+    parent_fd = os.open(state_root.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    try:
+        os.fsync(parent_fd)
+    finally:
+        os.close(parent_fd)
+    packet = {
+        "schema": "pulsarmlx.f017.representative-routed-aggregate-attempt-start",
+        "schema_version": "1.0.0",
+        "event_id": EVENT_ID,
+        "release_id": RELEASE_ID,
+        "attempt_id": ATTEMPT_ID,
+        "authorization_sha256": sha256_path(authorization_path),
+        "release_sha256": sha256_path(release_path),
+        "executor_sha256": sha256_path(Path(__file__)),
+        "consumption_boundary": "DURABLE_ATTEMPT_START_BEFORE_AGGREGATE_COMPUTATION",
+        "ledger": 175,
+    }
+    raw = (json.dumps(packet, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    _atomic_write(state_root / "attempt-start.json", raw)
+    return sha256_bytes(raw)
+
+
+def write_terminal(state_root: Path, disposition: str, *, output_sha256: str | None, error: str | None) -> None:
+    packet = {
+        "schema": "pulsarmlx.f017.representative-routed-aggregate-terminal",
+        "schema_version": "1.0.0",
+        "event_id": EVENT_ID,
+        "release_id": RELEASE_ID,
+        "attempt_id": ATTEMPT_ID,
+        "disposition": disposition,
+        "output_sha256": output_sha256,
+        "error": error,
+        "retry": False,
+        "resume": False,
+        "second_attempt": False,
+        "ledger": 175,
+    }
+    _atomic_write(state_root / "terminal.json", (json.dumps(packet, sort_keys=True, separators=(",", ":")) + "\n").encode())
 
 
 def main() -> int:
@@ -249,21 +305,34 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--release", type=Path)
+    parser.add_argument("--state-root", type=Path)
     args = parser.parse_args()
     require_environment()
 
     if args.synthetic_rehearsal:
-        require(args.synthetic_manifest is not None and args.authorization is None and args.release is None, "synthetic interface")
+        require(args.synthetic_manifest is not None and args.authorization is None and args.release is None
+                and args.state_root is None, "synthetic interface")
         manifest = load_json(args.synthetic_manifest)
         require(manifest.get("schema") == "pulsarmlx.f017.representative-routed-aggregate-synthetic-input", "synthetic schema")
         records = validate_records(manifest.get("inputs"), synthetic=True)
+        require(not any(record.get("output_sha256") in OUTPUT_SHAS for record in records),
+                "protected representative output declared in synthetic mode")
         manifest_sha = None
+        forbidden_shas = frozenset(OUTPUT_SHAS)
     else:
         require(args.authorization is not None and args.synthetic_manifest is None, "production interface")
         _, records = validate_authorization(args.authorization)
         manifest_sha = MANIFEST_SHA
+        forbidden_shas = frozenset()
+        if args.execute:
+            require(args.release is not None and args.state_root is not None, "approved release and state root required")
+            validate_release(args.release, args.authorization)
+            require(not args.state_root.exists(), "prior attempt state")
+            require(args.output is not None and not args.output.exists(), "fresh output required")
+        else:
+            require(args.release is None and args.state_root is None, "preflight cannot carry release/state")
 
-    with OpenOnceInputs(args.output_root, records, manifest_sha=manifest_sha) as inputs:
+    with OpenOnceInputs(args.output_root, records, manifest_sha=manifest_sha, forbidden_shas=forbidden_shas) as inputs:
         if args.preflight_only:
             after = inputs.verify_after()
             print(json.dumps({"disposition": "PRODUCTION_BINDINGS_RESOLVED", "inputs": len(after), "ledger": 175,
@@ -272,16 +341,23 @@ def main() -> int:
             return 0
         require(args.output is not None, "output required")
         if args.execute:
-            require(args.release is not None, "approved release required")
-            validate_release(args.release, args.authorization)
+            attempt_sha = begin_attempt(args.state_root, args.authorization, args.release)
         else:
             require(args.release is None, "synthetic release forbidden")
-        raw = aggregate_bytes(inputs.raw_inputs)
-        after = inputs.verify_after()
-        _atomic_write(args.output, raw)
+            attempt_sha = None
+        try:
+            raw = aggregate_bytes(inputs.raw_inputs)
+            after = inputs.verify_after()
+            _atomic_write(args.output, raw)
+            if args.execute:
+                write_terminal(args.state_root, "COMPLETE", output_sha256=sha256_bytes(raw), error=None)
+        except Exception as error:
+            if args.execute and args.state_root.exists() and not (args.state_root / "terminal.json").exists():
+                write_terminal(args.state_root, "TERMINAL_FAILURE", output_sha256=None, error=type(error).__name__)
+            raise
         print(json.dumps({"disposition": "SYNTHETIC_COMPLETE" if args.synthetic_rehearsal else "COMPLETE",
                           "output_sha256": sha256_bytes(raw), "output_bytes": len(raw), "output_dtype": "little-endian-f64",
-                          "output_shape": [6144], "inputs_after": after, "ledger": 175,
+                          "output_shape": [6144], "inputs_after": after, "attempt_start_sha256": attempt_sha, "ledger": 175,
                           "checkpoint_reads": 0, "shard_opens": 0, "expert_executions": 0,
                           "aggregate_executions": 0 if args.synthetic_rehearsal else 1}, sort_keys=True))
     return 0

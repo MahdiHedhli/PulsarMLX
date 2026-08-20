@@ -30,8 +30,8 @@ BINDINGS = {
     "expert_execution_evidence": "fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4",
     "semantic_adjudication": "ab6d9305a2392ceda77728b7892868e0310c56f20c0636ab67ffd2154adb0636",
     "arithmetic_contract": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2",
-    "executor": "a5ceeeb375539755eb71ff92867c53e264dfbfb18d958914033ac6de962f52bf",
-    "synthetic_rehearsal": "ac353d30ec4bbd6235726fee4174fecb98fcb21aa095a4fb71cefb18b49b981d",
+    "executor": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5",
+    "synthetic_rehearsal": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc",
 }
 
 
@@ -121,11 +121,14 @@ def validate(doc: dict[str, Any], *, repo: bool) -> None:
     rehearsal = load(ROOT / doc["synthetic_rehearsal"]["path"])
     req(rehearsal.get("result") == "PASS" and rehearsal.get("fresh_processes") == 2 and rehearsal.get("exact_identity") is True, "rehearsal")
     req(rehearsal.get("real_representative_output_bytes_used") is False and rehearsal.get("real_aggregate_executions") == 0, "rehearsal isolation")
+    req(rehearsal.get("fresh_process_protected_output_rejection") == "PASS_RC_2", "synthetic protected-output gate")
+    single = doc.get("future_single_use", {})
+    req(single == {"event_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1", "release_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-RELEASE-1", "attempt_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-ATTEMPT-1", "approved_release_required": True, "state_root_required": True, "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_AGGREGATE_COMPUTATION", "exclusive_state_root_creation": True, "prior_attempt_state_rejected": True, "existing_output_rejected": True, "terminal_written_on_success_or_caught_failure": True, "crash_after_attempt_start": "CONSUMED_NO_RETRY_MANUAL_RECONCILIATION_REQUIRED", "retry": False, "resume": False, "second_attempt": False}, "single use")
     req(doc.get("future_output") == {"dtype": "little-endian-f64", "shape": [6144], "byte_length": 49152, "serialization": "contiguous-c-order-ieee754-binary64-little-endian", "finite": True, "concrete_sha256": "NOT_COMPUTED_UNTIL_SEPARATELY_RELEASED_EVENT"}, "future output")
     req(doc.get("accounting") == {"starting_ledger": 175, "terminal_ledger": 175, "preparation_checkpoint_reads": 0, "preparation_shard_opens": 0, "preparation_expert_executions": 0, "preparation_aggregate_executions": 0, "future_checkpoint_read_budget": 0, "future_shard_open_budget": 0, "future_expert_execution_budget": 0, "future_aggregate_execution_count": 1}, "accounting")
     req(doc.get("stop_boundary") == "AFTER_ROUTED_AGGREGATE_ONLY", "stop boundary")
     prohibitions = doc.get("prohibitions", {})
-    req(set(prohibitions) == {"production_serial_f32_surface", "historical_direct_dprefix_output", "checkpoint_access", "shard_open", "expert_execution", "shared_expert", "ffn_completion", "residual_addition", "s2_construction", "retry_without_future_release", "go_token_in_this_phase"} and all(prohibitions.values()), "prohibitions")
+    req(set(prohibitions) == {"production_serial_f32_surface", "historical_direct_dprefix_output", "checkpoint_access", "shard_open", "expert_execution", "shared_expert", "ffn_completion", "residual_addition", "s2_construction", "retry_without_future_release", "go_token_in_this_phase", "synthetic_use_of_representative_output_identity"} and all(prohibitions.values()), "prohibitions")
 
 
 def main() -> int:

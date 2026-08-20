@@ -49,6 +49,10 @@ class AuthorizationValidatorTests(unittest.TestCase):
             lambda x: x["accounting"].__setitem__("preparation_shard_opens", 1),
             lambda x: x["accounting"].__setitem__("preparation_expert_executions", 1),
             lambda x: x["accounting"].__setitem__("future_aggregate_execution_count", 2),
+            lambda x: x["future_single_use"].__setitem__("consumed_at", "AFTER_COMPUTE"),
+            lambda x: x["future_single_use"].__setitem__("retry", True),
+            lambda x: x["future_single_use"].__setitem__("existing_output_rejected", False),
+            lambda x: x["prohibitions"].__setitem__("synthetic_use_of_representative_output_identity", False),
             lambda x: x["prohibitions"].__setitem__("shared_expert", False),
             lambda x: x.__setitem__("stop_boundary", "AFTER_FFN"),
         ]

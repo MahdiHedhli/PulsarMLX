@@ -63,6 +63,15 @@ def main() -> int:
             process_results.append(packet)
         if len(set(identities)) != 1:
             raise RuntimeError("fresh-process identity mismatch")
+        protected_manifest = json.loads(json.dumps(manifest))
+        protected_manifest["inputs"][0]["output_sha256"] = "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b"
+        protected_path = root / "protected-manifest.json"
+        protected_path.write_text(json.dumps(protected_manifest, sort_keys=True, separators=(",", ":")) + "\n")
+        negative = subprocess.run([str(PYTHON), str(EXECUTOR), "--synthetic-rehearsal",
+                                   "--synthetic-manifest", str(protected_path), "--output-root", str(root),
+                                   "--output", str(root / "forbidden.f64le")], capture_output=True, text=True)
+        if negative.returncode != 2 or "protected representative output declared" not in negative.stderr:
+            raise RuntimeError("synthetic protected-output gate failed")
         evidence = {
             "schema": "pulsarmlx.f017.representative-routed-aggregate-synthetic-rehearsal",
             "schema_version": "1.0.0",
@@ -86,10 +95,11 @@ def main() -> int:
             "expert_executions": 0,
             "real_aggregate_executions": 0,
             "synthetic_aggregate_executions": 2,
+            "fresh_process_protected_output_rejection": "PASS_RC_2",
             "real_representative_output_bytes_used": False,
             "result": "PASS"
         }
-        args.output.write_text(json.dumps(evidence, indent=2) + "\n")
+        args.output.write_text(json.dumps(evidence, sort_keys=True, separators=(",", ":")) + "\n")
     return 0
 
 

@@ -66,7 +66,7 @@
   },
   "executor": {
     "path": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
-    "sha256": "a5ceeeb375539755eb71ff92867c53e264dfbfb18d958914033ac6de962f52bf",
+    "sha256": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5",
     "checkpoint_interface": false,
     "shard_interface": false,
     "expert_execution_interface": false,
@@ -77,11 +77,27 @@
   },
   "synthetic_rehearsal": {
     "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json",
-    "sha256": "ac353d30ec4bbd6235726fee4174fecb98fcb21aa095a4fb71cefb18b49b981d",
+    "sha256": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc",
     "fresh_processes": 2,
     "exact_output_identity": true,
     "real_representative_output_bytes_used": false,
     "result": "PASS"
+  },
+  "future_single_use": {
+    "event_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1",
+    "release_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-RELEASE-1",
+    "attempt_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1-ATTEMPT-1",
+    "approved_release_required": true,
+    "state_root_required": true,
+    "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_AGGREGATE_COMPUTATION",
+    "exclusive_state_root_creation": true,
+    "prior_attempt_state_rejected": true,
+    "existing_output_rejected": true,
+    "terminal_written_on_success_or_caught_failure": true,
+    "crash_after_attempt_start": "CONSUMED_NO_RETRY_MANUAL_RECONCILIATION_REQUIRED",
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
   },
   "future_output": {
     "dtype": "little-endian-f64",
@@ -115,6 +131,7 @@
     "residual_addition": true,
     "s2_construction": true,
     "retry_without_future_release": true,
-    "go_token_in_this_phase": true
+    "go_token_in_this_phase": true,
+    "synthetic_use_of_representative_output_identity": true
   }
 }

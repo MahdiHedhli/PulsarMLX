@@ -10,7 +10,8 @@ import tempfile
 import unittest
 
 from scripts.research.f017_representative_routed_aggregate_executor_v1 import (
-    AggregateError, IDS, WEIGHTS, OpenOnceInputs, aggregate_bytes, validate_records,
+    AggregateError, IDS, OUTPUT_SHAS, WEIGHTS, OpenOnceInputs, aggregate_bytes, begin_attempt,
+    write_terminal, validate_records,
 )
 
 
@@ -75,6 +76,13 @@ class ArithmeticTests(unittest.TestCase):
             with self.assertRaises(AggregateError):
                 validate_records(base, synthetic=False)
 
+    def test_protected_real_output_identity_rejected_in_synthetic_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = records(Path(directory))
+            base[0]["output_sha256"] = OUTPUT_SHAS[0]
+            with self.assertRaises(AggregateError):
+                validate_records(base, synthetic=True)
+
 
 class RetainedInputTests(unittest.TestCase):
     def test_open_once_exact(self) -> None:
@@ -113,6 +121,26 @@ class RetainedInputTests(unittest.TestCase):
         inputs[0] = struct.pack("<f", float("nan")) + inputs[0][4:]
         with self.assertRaises(AggregateError):
             aggregate_bytes(tuple(inputs))
+
+    def test_durable_attempt_start_is_exclusive_and_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            authorization = root / "authorization.json"
+            release = root / "release.json"
+            authorization.write_text("{}\n")
+            release.write_text("{}\n")
+            state = root / "state"
+            identity = begin_attempt(state, authorization, release)
+            self.assertEqual(len(identity), 64)
+            self.assertTrue((state / "attempt-start.json").is_file())
+            with self.assertRaises(AggregateError):
+                begin_attempt(state, authorization, release)
+            write_terminal(state, "TERMINAL_FAILURE", output_sha256=None, error="TEST")
+            terminal = (state / "terminal.json").read_text()
+            self.assertIn('"retry":false', terminal)
+            self.assertIn('"resume":false', terminal)
+            with self.assertRaises(AggregateError):
+                write_terminal(state, "COMPLETE", output_sha256="0" * 64, error=None)
 
 
 if __name__ == "__main__":
