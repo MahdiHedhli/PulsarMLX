@@ -678,3 +678,24 @@ is computed, no GO token exists, and ledger remains 175.
 Gate: the release is independently accepted for a separate operator execution
 decision only; it remains `PREPARED_FOR_INDEPENDENT_APPROVAL`, no approval or GO
 token is created, no real FFN is computed, and ledger remains 175.
+
+## Phase 39 — Representative FFN-composition release v2 authority repair
+
+- Preserve release v1 and its independent technical review byte-for-byte while
+  classifying v1 as superseded only for execution authority because its exact
+  approval-key census cannot carry the release-review SHA and does not enforce
+  `reviewed_head`.
+- Add append-only release/wrapper v2 machinery with an acyclic authority chain:
+  committed release bytes, committed independent review target, immutable
+  Fable-5 review bytes, later independent approval binding the exact review SHA
+  and reviewed head, and a later machine-local token binding the approval SHA.
+- Enforcement-check every approval authority field, including review bytes,
+  reviewer identity/model, reviewed Git commit, release bytes at that commit,
+  authorization/arithmetic/code identities, accounting, and stop boundary.
+- Preserve the accepted proof/reference FFN numerical surface and all v1
+  durability, immutable-input, output-publication, terminalization, ledger,
+  checkpoint, expert, S1, and S2 boundaries without running the real FFN.
+
+Gate: release v2 is independently accepted and ready for a separate approval
+phase; no approval or GO token exists, no real FFN is computed, and ledger
+remains 175.

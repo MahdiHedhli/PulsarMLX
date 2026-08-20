@@ -1,0 +1,101 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-release-approval-contract",
+  "schema_version": "2.0.0",
+  "authority_chain": [
+    "RELEASE_V2_COMMITTED_BYTES",
+    "COMMITTED_REVIEW_TARGET_HEAD",
+    "INDEPENDENT_RELEASE_REVIEW_ARTIFACT",
+    "INDEPENDENT_APPROVAL_BINDING_RELEASE_REVIEW_SHA_AND_HEAD",
+    "MACHINE_LOCAL_GO_TOKEN_BINDING_APPROVAL_SHA"
+  ],
+  "acyclicity": "The release and wrapper exist before review; the review binds their committed bytes and target head; a later approval binds the immutable review bytes; a later machine-local token binds the immutable approval bytes. No earlier object depends on a later object hash.",
+  "approval_schema": "pulsarmlx.f017.representative-ffn-composition-single-use-release-independent-approval",
+  "approval_schema_version": "2.0.0",
+  "approval_exact_fields": [
+    "schema",
+    "schema_version",
+    "event_id",
+    "release_id",
+    "attempt_id",
+    "release_sha256",
+    "authorization_sha256",
+    "arithmetic_contract_sha256",
+    "execution_code_head",
+    "reviewed_head",
+    "release_review_path",
+    "release_review_sha256",
+    "release_reviewer_identity",
+    "release_reviewer_model",
+    "approver_identity",
+    "approver_model",
+    "verdict",
+    "statement",
+    "approval_does_not_execute",
+    "approval_is_not_token",
+    "real_event_authorized",
+    "ledger",
+    "checkpoint_read_budget",
+    "shard_open_budget",
+    "future_ffn_compositions",
+    "s1_materializations",
+    "s2_constructions",
+    "stop_boundary"
+  ],
+  "release_review_schema": "pulsarmlx.f017.representative-ffn-composition-single-use-release-v2-independent-review",
+  "release_review_schema_version": "1.0.0",
+  "release_review_exact_fields": [
+    "schema",
+    "schema_version",
+    "reviewer_identity",
+    "reviewer_model",
+    "reviewed_head",
+    "release_path",
+    "release_sha256",
+    "execution_code_head",
+    "verdict",
+    "blocking_findings",
+    "non_blocking_required_findings",
+    "defense_in_depth_findings",
+    "statement"
+  ],
+  "release_review_path_policy": {
+    "repository_relative_parent": "docs/architecture/reviews/evidence",
+    "basename_pattern": "f017-representative-ffn-composition-release-v2-cycle-[0-9][0-9]-independent-review.json",
+    "regular_file_required": true,
+    "symlink_forbidden": true,
+    "committed_at_runtime_head_required": true
+  },
+  "reviewer_authority": {
+    "release_reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+    "release_reviewer_model": "claude-fable-5",
+    "approver_identity": "CLAUDE_FABLE_5_INDEPENDENT_APPROVER",
+    "approver_model": "claude-fable-5"
+  },
+  "approval_statement": "REPRESENTATIVE FFN COMPOSITION SINGLE-USE RELEASE V2 APPROVED",
+  "approval_stage": {
+    "approval_does_not_execute": true,
+    "approval_is_not_token": true,
+    "real_event_authorized": false
+  },
+  "reviewed_head_enforcement": [
+    "approval.reviewed_head equals release-review.reviewed_head",
+    "reviewed_head names a committed ancestor of the runtime checkout",
+    "release bytes at reviewed_head hash to approval.release_sha256",
+    "wrapper bytes at reviewed_head hash to the release-bound wrapper SHA",
+    "release-review bytes hash to approval.release_review_sha256"
+  ],
+  "go_token": {
+    "exact_fields": [
+      "approval_sha256",
+      "attempt_id",
+      "authorization_sha256",
+      "disposition",
+      "event_id",
+      "real_event_authorized",
+      "release_id",
+      "release_sha256"
+    ],
+    "review_binding": "TRANSITIVE_THROUGH_EXACT_APPROVAL_SHA256",
+    "direct_release_review_sha256_omitted": "The exact approval bytes already bind and enforcement-check the review SHA and reviewed head; duplicating them in the token adds no independent authority."
+  }
+}

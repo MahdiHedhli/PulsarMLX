@@ -586,3 +586,12 @@
   an exact Fable 5 review loop while creating no GO token and performing no
   real FFN or S1/S2 work per the operator's release-preparation request
   (missing).
+
+## Phase 38: Convergence
+
+- [ ] T017-241 CRITICAL supersede FFN single-use release v1 for execution
+  authority and prepare, checkpoint-free validate, and independently accept an
+  append-only release/wrapper v2 whose exact approval schema enforcement binds
+  the reviewed commit, independent release-review SHA, and reviewer identity in
+  an acyclic release -> review -> approval -> machine-local token chain per
+  Constitution III/XII and plan Phase 38 (contradicts).

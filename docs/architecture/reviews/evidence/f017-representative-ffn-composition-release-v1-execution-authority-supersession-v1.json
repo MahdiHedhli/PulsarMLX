@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-release-execution-authority-supersession",
+  "schema_version": "1.0.0",
+  "superseded_release_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-single-use-release-v1.json",
+  "superseded_release_sha256": "37752ccedadf5db5eb655d4ba4383a37a431197ec41e07d15f6aa7905dfc6b8a",
+  "historical_review_path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-cycle-01-independent-review.json",
+  "historical_review_sha256": "10a0c72e2e8f5be3aa265231ae4565738ad62bdf4417e9fc5bc7c57bb0af2d58",
+  "historical_review_disposition": "VALID_REVIEW_OF_RELEASE_V1",
+  "execution_authority_disposition": "SUPERSEDED_FOR_EXECUTION_AUTHORITY_DUE_TO_APPROVAL_BINDING_DEFECT",
+  "defect": {
+    "approval_key_allowlist_is_exact": true,
+    "release_review_sha256_field_available": false,
+    "reviewed_head_field_enforcement_checked": false,
+    "effect": "A v1 approval cannot explicitly and mechanically bind the independently accepted release-review bytes and reviewed head while satisfying the v1 wrapper's exact approval key census."
+  },
+  "discovery_boundary": "SUBSEQUENT_INDEPENDENT_APPROVAL_AND_READINESS_GATE",
+  "reviewer_failure_implied": false,
+  "release_v1_must_not_authorize_execution": true,
+  "release_v1_approval_forbidden": true,
+  "release_v1_go_token_forbidden": true,
+  "ledger": 175,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "ffn_compositions": 0,
+  "s1_materializations": 0,
+  "s2_constructions": 0
+}
