@@ -42,7 +42,7 @@ def validate(authorization: dict[str, Any], release: dict[str, Any]) -> None:
 
     require(release.get("schema") == "pulsarmlx.f017.representative-s1-materialization-single-use-release", "RELEASE_SCHEMA")
     require(release.get("status") == "PREPARED_FOR_INDEPENDENT_APPROVAL" and release.get("real_event_authorized") is False, "RELEASE_STATUS")
-    require(release.get("authorization_sha256") == authorization.get("self_sha256"), "AUTH_BINDING")
+    require(release.get("authorization_sha256") == release.get("bindings", {}).get("authorization", {}).get("sha256"), "AUTH_BINDING")
     require(release.get("accounting") == {"checkpoint_reads":0,"shard_opens":0,"new_attention_executions":0,"s1_materializations":1,"ffn_compositions":0,"s2_constructions":0,"ledger_before":175,"ledger_after":175}, "RELEASE_ACCOUNTING")
     require(release.get("single_use") == {"exclusive_attempt_creation":True,"durable_attempt_start_before_reconstruction":True,"durable_materialization_start_before_reconstruction":True,"attempts":1,"no_retry":True,"no_resume":True,"no_second_attempt":True,"failure_after_attempt_start_consumes_release":True}, "SINGLE_USE")
     require(release.get("output_contract", {}).get("expected_equals_produced_equals_readback") is True, "OUTPUT_IDENTITY")

@@ -61,19 +61,20 @@ def test_exclusive_attempt_directory_race():
 
 
 def base_authorization_release():
+    fixture_path = "scripts/research/validate_f017_representative_s1_materialization_release_v1.py"
+    fixture_sha = validator.sha(ROOT / fixture_path)
     auth = {
         "schema":"pulsarmlx.f017.representative-s1-materialization-authorization","status":"PREPARED_REVIEW_REQUIRED","real_event_authorized":False,
-        "self_sha256":"a"*64,
         "s1_target":{"semantic_role":"LAYER3_POST_ATTENTION_RESIDUAL","stage_name":"post_attention_residual","formula":"f32(S0 + layer3_attention_output)","sha256":validator.EXPECTED_S1,"dtype":"little-endian-f32","shape":[6144],"byte_length":24576,"classification_before_event":"HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED"},
         "source_authority":{"real_execution_evidence":{"sha256":validator.EXPECTED_EVENT_EVIDENCE},"reproduction_contract":{"sha256":validator.EXPECTED_REPRODUCTION},"reproduction_producer":{"sha256":validator.EXPECTED_PRODUCER},"canonical_s0":{"sha256":"9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"},"attention_payloads":{"count":9,"packed_bytes":132900864,"inventory_bound_by_candidate":True,"checkpoint_fallback":False}},
         "accounting":{"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"new_attention_executions":0,"future_s1_materializations":1,"expert_executions":0,"ffn_compositions":0,"s2_constructions":0},
         "stop_boundary":"AFTER_REPRESENTATIVE_S1_RETENTION_ONLY","prohibitions":{key:True for key in ("checkpoint_access","shard_open","new_real_attention_execution","router_execution","expert_execution","ffn_consumption","ffn_composition","s2_construction","retry","resume","second_attempt")}}
-    release = {"schema":"pulsarmlx.f017.representative-s1-materialization-single-use-release","status":"PREPARED_FOR_INDEPENDENT_APPROVAL","real_event_authorized":False,"authorization_sha256":"a"*64,
+    release = {"schema":"pulsarmlx.f017.representative-s1-materialization-single-use-release","status":"PREPARED_FOR_INDEPENDENT_APPROVAL","real_event_authorized":False,"authorization_sha256":fixture_sha,
         "accounting":{"checkpoint_reads":0,"shard_opens":0,"new_attention_executions":0,"s1_materializations":1,"ffn_compositions":0,"s2_constructions":0,"ledger_before":175,"ledger_after":175},
         "single_use":{"exclusive_attempt_creation":True,"durable_attempt_start_before_reconstruction":True,"durable_materialization_start_before_reconstruction":True,"attempts":1,"no_retry":True,"no_resume":True,"no_second_attempt":True,"failure_after_attempt_start_consumes_release":True},
         "output_contract":{"expected_equals_produced_equals_readback":True,"sha256":validator.EXPECTED_S1,"publication":"DESCRIPTOR_RELATIVE_EXCLUSIVE_TEMP_FSYNC_NO_REPLACE_LINK_PARENT_FSYNC_DESCRIPTOR_READBACK"},
         "stop_boundary":"AFTER_REPRESENTATIVE_S1_RETENTION_ONLY","s2_interface_exposed":False,"ffn_input_exposed":False,
-        "runtime_interface":{key:key for key in ("candidate","canonical_s0","canonical_s0_manifest","attention_retention_root","state_root","output_root","output")},"bindings":{}}
+        "runtime_interface":{key:key for key in ("candidate","canonical_s0","canonical_s0_manifest","attention_retention_root","state_root","output_root","output")},"bindings":{"authorization":{"path":fixture_path,"sha256":fixture_sha}}}
     return auth, release
 
 
