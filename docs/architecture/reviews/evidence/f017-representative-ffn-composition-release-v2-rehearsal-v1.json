@@ -1,0 +1,38 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-release-v2-checkpoint-free-rehearsal",
+  "schema_version": "1.0.0",
+  "result": "PASS",
+  "execution_code_head": "0c5ac29777e78aa8a2755feb378ab47dbcfaae0b",
+  "wrapper_sha256": "0dbf1e08efa112215302d708709d5ef31771ff4e4f2fb03cbe065c9349a06522",
+  "terminalizer_sha256": "10069418ad94b39a504d95b1984529a42177917db54be1c9f9029f926c438161",
+  "approval_contract_sha256": "fb89706c1313dd7c1f8081b1fb2a39596f596dfff37a00e767efe5df83b956b9",
+  "commands": [
+    "/opt/homebrew/bin/python3.14 scripts/research/tests/test_f017_representative_ffn_composition_single_use_release_v2.py",
+    "/opt/homebrew/bin/python3.14 scripts/research/tests/test_f017_representative_ffn_composition_single_use_release_v1.py",
+    "/opt/homebrew/bin/python3.14 scripts/research/tests/test_f017_representative_ffn_composition_v1.py"
+  ],
+  "coverage": {
+    "release_binding_mutations": 24,
+    "approval_schema_and_authority_mutations": 12,
+    "release_review_chain_mutations": 6,
+    "go_token_mutations": 4,
+    "concurrent_attempt_race": "PASS_EXACTLY_ONE_WINNER_ZERO_FFN_START",
+    "durable_ffn_start_failure_accounting": "PASS_ONE_FFN_COMPOSITION_NO_OUTPUT_AUTHORITY",
+    "wrong_output_geometry_and_nonfinite": "PASS_REJECTED",
+    "v1_mechanics_regression": "PASS",
+    "executor_checkpoint_free_regression": "PASS"
+  },
+  "real_checkpoint_reads": 0,
+  "real_shard_opens": 0,
+  "real_expert_executions": 0,
+  "real_shared_expert_executions": 0,
+  "real_ffn_compositions": 0,
+  "durable_attempt_starts": 0,
+  "durable_ffn_starts": 0,
+  "s1_materializations": 0,
+  "s2_constructions": 0,
+  "approval_artifacts_created": 0,
+  "go_tokens_created": 0,
+  "checkpoint_free": true,
+  "real_retained_inputs_used_for_arithmetic": false
+}
