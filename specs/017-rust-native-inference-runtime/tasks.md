@@ -633,3 +633,13 @@
   machine-local GO token while preserving ledger 175 and zero checkpoint,
   attention-event, S1, FFN, or S2 execution per plan Phase 43 and Constitution
   III/X/XII (missing).
+
+## Phase 43: Convergence
+
+- [ ] T017-246 Bank the completed representative S1 materialization packet and
+  prepare, checkpoint-free validate, and independently accept a consumer-scoped
+  cross-event reuse authority for the immutable canonical post-attention
+  residual, enforcing descriptor-stable EXPECTED = BEFORE = CONSUMED = AFTER
+  identity while prohibiting release rerun, attention reconstruction,
+  checkpoint fallback, FFN consumption, and S2 construction per plan Phase 44
+  and Constitution III/X/XII (missing).

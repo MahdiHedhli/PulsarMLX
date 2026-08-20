@@ -784,3 +784,27 @@ Gate: one valid machine-local S1 release-v2 token exists unconsumed;
 approval/review bytes are committed and accepted; ledger remains 175; and
 checkpoint, attention-event, attempt, materialization, FFN, and S2 counters
 remain zero.
+
+## Phase 44 — Representative S1 execution banking and cross-event reuse
+
+- Reconcile the consumed release-v2 event from its durable attempt-start,
+  materialization-start, receipt, COMPLETE terminal, retained S1 output, and
+  private manifest, then bank an append-only execution packet distinguishing
+  historical attention authority, checkpoint-free reconstruction, release
+  consumption, materialization accounting, and retained output authority.
+- Bind the exact `LAYER3_POST_ATTENTION_RESIDUAL` bytes to a consumer-scoped
+  reuse authorization and open-once resolver enforcing immutable manifest,
+  geometry, finiteness, and EXPECTED = BEFORE = CONSUMED = AFTER identity on
+  the same descriptor without reconstruction or downstream computation.
+- Adjudicate reproduction against accepted F017 retained-output precedent: the
+  precommitted expected S1 SHA, matching durable COMPLETE chain, immutable
+  source identities, and accepted 10/10 retained-only attention reproduction
+  lineage are the reuse basis; any new reproduction requires separate
+  authority and is not executed here.
+- Validate authority, retained-file, lineage, accounting, and downstream
+  boundary mutations, then bank exact Claude Fable 5 review bytes and close
+  only on ACCEPT.
+
+Gate: the canonical representative S1 artifact is independently accepted for
+checkpoint-free cross-event reuse; release v2 remains consumed and is never
+rerun; ledger remains 175; no attention, S1, FFN, or S2 work occurs.
