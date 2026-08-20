@@ -1,0 +1,103 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-output-reuse-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-EXPERT-OUTPUT-REUSE-1-CYCLE-01-INDEPENDENT-REVIEW",
+  "reviewed_head": "592888f5c7bfafca01421a09db6865ad7acfda0c",
+  "preparation_base_head_confirmed_as_parent_of_reviewed_head": "26f5fe81e63851a23e40ba432b643b0a24a86d33",
+  "actual_reviewer_model": "claude-fable-5",
+  "review_scope": "COMMITTED_REPOSITORY_BYTES_ONLY_CHECKPOINT_FREE",
+  "verdict": "ACCEPT",
+  "composition_answer": "YES. The eight banked representative post-attention expert outputs are sufficiently bound for a future routed-aggregate authorization without re-executing experts and without accessing checkpoint data. The reuse authorization's eight atomic triples are byte-identical to the outputs banked by the COMPLETE representative expert-recovery real event (terminal_disposition COMPLETE at ancestor head af87a795ac6231e49ef6430a4222cab0fb279eca, 8 real expert computations from retained payloads, checkpoint_reads 0, shard_opens 0, 2/2 fresh-process reproduction with exact 8-of-8 output identity). Expert ID, representative binary64 routing weight, output filename, and output SHA-256 are bound atomically per triple in the canonical representative order [250,10,237,62,73,177,218,28], with expert 62 (weight 0.23688715675086147, ordinal 3) before expert 73 (weight 0.2514906203405492, ordinal 4), the reverse of the prohibited historical direct-DPREFIX order. Consumption is enforced by an open-once single-descriptor resolver with EXPECTED=BEFORE=CONSUMED=AFTER hashing, fstat before/after device-inode identity, regular-file, non-symlink (O_NOFOLLOW), single-hard-link, read-only, exact-size, and finiteness checks. The frozen aggregate-input contract pins the canonical analytical Python-math.fsum binary64 routed aggregate exactly as protected by committed doctrine and cleanly separates the unauthorized production selected-slot serial-binary32 surface. The authorization permits reuse preparation only: real_event_authorized false, ledger 175 unchanged, zero checkpoint reads, zero shard opens, zero expert executions, zero aggregate executions, and downstream aggregate, shared-expert, FFN-completion, and S2 construction prohibited.",
+  "adjudication": {
+    "q1_exact_banked_outputs": "PASS. All eight (ordinal, expert_id, routing_weight, private_relative_path, output_sha256, dtype little-endian-f32, shape [6144], byte_length 24576) records in the reuse authorization are byte-identical to the outputs and id_weight_pairs blocks of the COMPLETE expert-recovery real-execution evidence (sha256 fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4). That event reports reproduction fresh_processes_passed 2 of 2 with exact_output_identity true, checkpoint_reads 0, shard_opens 0, and computed the experts from 24 retained payloads, not from any checkpoint shard. The reuse package itself performs zero checkpoint access.",
+    "q2_retained_immutable_consumption": "PASS. The resolver opens each output once with O_RDONLY|O_NOFOLLOW, fstats the descriptor before and after, requires S_ISREG, st_nlink==1, mode & 0o222 == 0, st_size == byte_length == 24576, hashes the first read (BEFORE) against the authorization's EXPECTED sha, defines CONSUMED as exactly the validated BEFORE bytes from the same descriptor, re-reads the same descriptor for AFTER, requires identical device and inode, and requires EXPECTED==BEFORE==CONSUMED==AFTER. All 6144 f32 values per output must be finite. The private preflight evidence reports 8 outputs, 196608 bytes, 49152 finite values, all-equal identity, PASS.",
+    "q3_atomic_binding_and_order": "PASS. Each triple is a single atomic record binding id, weight, filename, and SHA; the validator enforces the full ordered lists of ordinals, IDs, weights, output SHAs, and the derived filenames f'{i:02d}-expert-{id}-down.f32le' by exact list equality, which is order-sensitive. Canonical order [250,10,237,62,73,177,218,28] with 62 before 73 was independently recomputed from the concrete route-values evidence: the uint16-LE id blob (fa000a00ed003e004900b100da001c00) hashes to a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f and the binary64-LE weight blob hashes to ff1a7127b418b80dce4e4361e314c16ad50e86484cb1861ad27f6f9ee70b8587, both matching the committed evidence and the expert-recovery authorization; all eight float-hex forms match the decimal weights bit-exactly and math.fsum(weights) == 2.5 exactly.",
+    "q4_leak_and_attack_attempts": "PASS. Producer/consumer mismatch: none; producer evidence and reuse authorization triples are byte-identical. Evidence vocabulary: schemas, statuses, stop boundaries, and prohibition vocabularies are mutually consistent across the chain. Output substitution: the eight banked SHAs appear only in the producer evidence, the reuse authorization, and the validator; they do not collide with any committed historical direct-DPREFIX artifact hash; exact-list validation plus resolver per-file hashing rejects substitution (verified by mutation and resolver tests). Order/weight reassignment: mutations swapping triples 3 and 4 (the 62/73 historical-order attack), reassigning expert_id, and copying weights are all rejected. Writable alias: single-hard-link plus read-only mode plus non-symlink open plus before/after device-inode identity; writable and symlink outputs are rejected by executed tests. Checkpoint/expert fallback: the resolver imports only Python stdlib (argparse, hashlib, json, math, os, pathlib, stat, struct) and has no checkpoint, shard, expert-compute, or aggregate-compute capability; the authorization declares all four capabilities false and the validator enforces those flags. The historical direct-DPREFIX route order [250,10,237,73,62,177,218,28] and its outputs are explicitly prohibited by the authorization's enforced prohibition census.",
+    "q5_aggregate_input_contract_derivation": "PASS. The frozen contract (status FROZEN_NOT_EVALUATED, aggregate_computed false) reproduces committed doctrine exactly: the protected expression M_k = python_fsum_i(q_i * f64(e_i[k])) from f017-weighted-moe-aggregate-perturbation-v1, the complete-layer-v2 definition of M as the fixed Python-math.fsum-equivalent binary64 sum of ID-keyed routing_weight * f64(expert_down_output), and the routing-contract-v3-clarified production_runtime_policy string selected_slot_rank_order_serial_binary32_reduction quoted verbatim and correctly classified as a separate candidate numerical surface not authorized here and requiring its own later qualification. The contract pins dimension 6144, the eight-triple atomic order, one exact f32-to-f64 promotion before binary64 multiplication, no intermediate or final binary32 cast at this surface, fsum accumulation (correctly rounded, hence a unique bit-exact binary64 result), and output little-endian-f64 [6144] of 49152 bytes with canonical serialization. Together with the pinned binary64 weights and pinned expert-output bytes, this is sufficient for a future routed-aggregate authorization to produce a single well-defined bit-exact result without computing the aggregate now.",
+    "q6_reuse_only_and_accounting": "PASS. status PREPARED_REVIEW_REQUIRED, real_event_authorized false, purpose FUTURE_REPRESENTATIVE_ROUTED_AGGREGATE_AUTHORIZATION_PREPARATION_ONLY. Accounting is exactly {real_payload_ledger 175, checkpoint_reads 0, shard_opens 0, expert_executions 0, aggregate_executions 0} and is enforced by dict equality in the validator. Ledger lineage verified: the single real route event moved the ledger 166 to 175; every subsequent committed stage including this package reports 175 with zero deltas. Prohibitions include aggregate_execution, shared_expert_execution, ffn_completion, and s2_construction, all true, with an enforced exact prohibition-key census of eleven entries.",
+    "q7_instantiability": "PASS. The package is executable, not merely declarative: the resolver is a runnable open-once consumer taking the committed authorization and a machine-local output root. Package-root binding is content-enforced: a root is accepted only if every one of the eight fixed leaf filenames (validated to be pure basenames, blocking traversal) resolves to a regular, read-only, single-link, non-symlink file of exactly 24576 bytes whose SHA-256 equals the committed value, so no ambiguous substitution is possible; any accepted root is byte-identical to the banked package. The private package manifest sha 2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a matches between the producer evidence and the reuse authorization, and no machine-local absolute paths are published.",
+    "q8_validator_and_test_strength": "PASS with defense-in-depth notes. The validator hardcodes every load-bearing constant (base head, expert IDs, weights, output SHAs, derived filenames, authority SHAs with live repo-byte verification, private-package dict, retained-identity keys, accounting dict, reproduction dict, prohibition census, aggregate-contract semantics pins, resolver capability flags) and fails closed with duplicate-key-rejecting JSON parsing. The committed test suite (6 methods, 21 authorization mutations plus 4 behavioral resolver tests covering open-once pass, writable rejection, symlink rejection, and hash substitution rejection) was independently executed by this reviewer: all pass, and the validator run against the repository prints REPRESENTATIVE_EXPERT_OUTPUT_REUSE_AUTHORIZATION_VALID with exit 0, matching the preparation evidence."
+  },
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The validator verifies the resolver and aggregate-input-contract identities by comparing the authorization's recorded sha256 values against live hashes of the repository files, rather than against constants pinned inside the validator (as it does for the six AUTHORITY entries). A future coordinated edit of the resolver or aggregate contract together with the corresponding recorded sha field would pass the validator; it also does not cross-check the aggregate contract's atomic_order, dimension, or per_term/casting_points strings against its own IDS/WEIGHTS constants. For the reviewed head this is fully mitigated: this reviewer independently confirmed the committed bytes hash to the recorded values and that the aggregate contract's atomic_order equals the canonical order."
+    },
+    {
+      "id": "DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The resolver trusts whatever authorization document it is passed via --authorization and does not self-verify that document's sha256 against the committed contract; enforcement of authorization identity relies on chaining the pinned validator first. The future routed-aggregate authorization should mandate running the pinned validator (sha256 7eb76d7edbc9c0eae0e4029561005138a81c03d3cfdffe3963b9f7131feb30df) against the committed authorization before invoking the resolver, and should pin both hashes."
+    },
+    {
+      "id": "DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The resolver does not independently verify the private package manifest (manifest_sha256 2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a); per-file SHA, size, and filename checks functionally subsume it for the eight consumed outputs, so this is redundancy only."
+    },
+    {
+      "id": "DID-4",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The validator does not pin the authorization's top-level schema, authorization_id, or purpose strings (only schema_version, status, real_event_authorized, and preparation_base_head). These fields are declarative labels with no load-bearing effect given every operative field is pinned, but pinning them would close a cosmetic relabeling avenue."
+    },
+    {
+      "id": "DID-5",
+      "classification": "DEFENSE_IN_DEPTH",
+      "finding": "The mutation test's output-substitution case uses hash 799ce090e2da9268e0c79c2462d132319757e623b6128984d148bc400d92fba5, which appears nowhere else in the committed tree; it is a synthetic foreign hash rather than a concrete committed historical direct-DPREFIX expert-output hash. Rejection is by exact-list equality, so the protection is equivalent, but a test keyed to a documented historical hash would make the historical-leak prohibition self-evidencing."
+    }
+  ],
+  "verification": {
+    "reviewed_artifact_sha256": {
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-input-v1.json": "ec38d793a95894daa71a5179650b91978b4aec44512311aa29a7c5c897b4b872",
+      "scripts/research/f017_representative_expert_output_reuse_v1.py": "0c5b9cff18e55614aee1eae1d9a3c6a0d0acff520408ddd7dd180058c5d9e96a",
+      "scripts/research/validate_f017_representative_expert_output_reuse_v1.py": "7eb76d7edbc9c0eae0e4029561005138a81c03d3cfdffe3963b9f7131feb30df",
+      "scripts/research/tests/test_f017_representative_expert_output_reuse_v1.py": "9661fb2923730bd4fdf5589f1bbacbfe390499cd50ce12ced03c720fe688e213",
+      "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-preparation-v1.json": "90e2d51d061f7e3e6598742ab37ffa41ee411d789dc6caf1f997853eb85482ec",
+      "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-loop-state-v1.json": "3cdf2969976e3eb66ff72cbb36fce1dc4dfa5757709f75d0204c8ca82d0096cb"
+    },
+    "authority_chain_sha256_recomputed_from_committed_bytes": {
+      "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "docs/architecture/reviews/evidence/f017-representative-m1f0-concrete-route-values-v1.json": "6035308cb85a29617abe5dcb18be37ab6d99afb5193d28ed7993d41c2aeb7b49",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-recovery-authorization-v1.json": "abbf12bc921c2d28f00a375225b5969145017cfe70da8bfa7486caf502f21c6f",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-recovery-single-use-release-v1.json": "ccf33fef03c2204fa443b981c273dd795f0bf6ea82ae89d5780e385c20fbdf68",
+      "docs/architecture/reviews/evidence/f017-representative-expert-recovery-single-use-release-v1-independent-approval-v2.json": "c1b5f202205fa3930e4b55a1131a2168f6ac4a845a02b14931e067ebd3b921cc",
+      "docs/architecture/reviews/evidence/f017-representative-expert-recovery-real-execution-result-v1.json": "fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4",
+      "specs/017-rust-native-inference-runtime/contracts/f017-weighted-moe-aggregate-perturbation-v1.json": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac",
+      "specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-acceptance-v2.json": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe",
+      "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85",
+      "docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832"
+    },
+    "recomputed_bindings": {
+      "selected_ids_uint16_le_hex": "fa000a00ed003e004900b100da001c00",
+      "selected_ids_sha256": "a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f",
+      "routing_weights_binary64_le_sha256": "ff1a7127b418b80dce4e4361e314c16ad50e86484cb1861ad27f6f9ee70b8587",
+      "routing_weight_float_hex_forms_bit_exact": true,
+      "math_fsum_of_weights_exactly": 2.5,
+      "expert_62_ordinal_3_before_expert_73_ordinal_4": true,
+      "expert_62_weight_less_than_expert_73_weight_confirming_route_order_not_weight_sort": true,
+      "eight_times_24576_equals_196608": true,
+      "banked_output_shas_disjoint_from_all_committed_historical_direct_dprefix_hashes": true,
+      "preparation_base_head_equals_parent_of_reviewed_head": true,
+      "expert_recovery_execution_head_af87a795_is_ancestor_of_reviewed_head": true,
+      "route_event_head_c1cdb079_is_ancestor_of_reviewed_head": true
+    },
+    "independent_executions": {
+      "validator_run": "python3 scripts/research/validate_f017_representative_expert_output_reuse_v1.py -> REPRESENTATIVE_EXPERT_OUTPUT_REUSE_AUTHORIZATION_VALID, exit 0",
+      "test_run": "python3 -m unittest scripts.research.tests.test_f017_representative_expert_output_reuse_v1 -> 6 tests, OK",
+      "mutation_count_confirmed": 21,
+      "resolver_behavioral_tests_confirmed": ["open_once_pass", "writable_rejected", "symlink_rejected", "hash_substitution_rejected"]
+    }
+  },
+  "checkpoint_free_review": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0,
+    "private_output_bytes_accessed": false,
+    "machine_local_private_paths_published": false
+  }
+}
