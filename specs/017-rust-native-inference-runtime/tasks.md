@@ -547,3 +547,12 @@
   real-geometry rehearsal, durable one-shot semantics for a future separate
   release, and preserve ledger 175 with zero checkpoint, shard, expert, and
   real aggregate execution.
+- [x] T017-237 Prepare and independently accept the checkpoint-free
+  representative routed-aggregate single-use release: pin fixed retained-input,
+  attempt, output, approval, and token destinations; require exclusive durable
+  attempt-start, independent durable aggregate-execution accounting, and
+  deterministic interruption reconciliation; publish one f64 `[6144]`
+  artifact durably without replacement and confer authority only through a
+  matching `COMPLETE` terminal; retain the accepted two-process synthetic
+  determinism contract; and preserve ledger 175 with zero real aggregate
+  execution and no GO token.

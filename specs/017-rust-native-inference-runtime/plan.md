@@ -581,3 +581,31 @@ Gate: the authorization is independently accepted for a future separately
 released checkpoint-free routed aggregate only; the real aggregate remains not
 computed, `real_event_authorized=false`, ledger remains 175, and the next action
 is to prepare an independently reviewed single-use routed-aggregate release.
+
+## Phase 35 — Representative routed-aggregate single-use release
+
+- Bind the accepted proof/reference authorization, arithmetic, executor,
+  rehearsal, reuse authority, and Fable review to one fixed event, release, and
+  attempt identity at ledger 175-to-175 with zero checkpoint, shard, and expert
+  budgets.
+- Resolve retained inputs, attempt state, output directory/file, future
+  approval, and future token from fixed home/repository expressions with no
+  caller-selected path surface.
+- Consume the release at an exclusive durable attempt-start; durably count the
+  one aggregate execution independently of output publication; prohibit
+  concurrent invocation, retry, resume, and a second attempt; and bind a
+  read-only interruption terminalizer.
+- Publish exactly one finite little-endian f64 `[6144]` output through
+  descriptor-relative exclusive temporary creation, file fsync, no-replace
+  hard-link publication, parent fsync, temporary unlink, and descriptor-based
+  read-back; require a matching `COMPLETE` terminal for output authority.
+- Preserve the accepted one-real-aggregate budget: no extra real reproduction
+  runs are introduced; two-fresh-process exact determinism remains established
+  by the frozen synthetic rehearsal.
+- Bank three exact Fable 5 reviews and Extra High builder composition
+  acceptance while leaving the release `PREPARED_FOR_INDEPENDENT_APPROVAL` and
+  without creating a GO token.
+
+Gate: the release is independently accepted for separate approval and operator
+preparation only; the real aggregate remains not computed, state/output/token
+remain absent, and the next action is a separate independent release approval.

@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-single-use-release-closeout",
+  "schema_version": "1.0.0",
+  "starting_head": "259985b26eb943a3fbdada165875a91a79399ab1",
+  "closeout_preparation_head": "49837c9f5d9ed71492092eaa13cee58811eaa454",
+  "execution_code_head": "9aba5f979e3c8d2bfbcc7757e8edf7e51c1882bb",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-single-use-release-v1.json",
+    "sha256": "978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d",
+    "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+    "real_event_authorized": false
+  },
+  "reviews": [
+    {
+      "cycle": 1,
+      "model": "claude-fable-5",
+      "sha256": "dbf0379b9ae5529ac40cd1eb4415ceb2ef0dd98f3b67694c3c337bf1106d9642",
+      "verdict": "ACCEPT_OVERRIDDEN_BY_BUILDER_COMPOSITION_FC-B1"
+    },
+    {
+      "cycle": 2,
+      "model": "claude-fable-5",
+      "sha256": "cd8315b940074eb4d3c53870da487b39b43d74514911b87c69f862609126fbe7",
+      "verdict": "ACCEPT_OVERRIDDEN_BY_BUILDER_COMPOSITION_FC3-NBR1"
+    },
+    {
+      "cycle": 3,
+      "model": "claude-fable-5",
+      "sha256": "fef933e7b2f1d6bf8e3533b324dfa4a178ea9f5d0ec8d03b9479aba357c10d89",
+      "verdict": "ACCEPT"
+    }
+  ],
+  "resolved_findings": [
+    "FC-B1_DESCRIPTOR_RELATIVE_PUBLICATION_AND_COMPLETE_TERMINAL_AUTHORITY",
+    "FC3-NBR1_DURABLE_AGGREGATE_EXECUTION_ACCOUNTING_INDEPENDENT_OF_PUBLICATION"
+  ],
+  "final_composition": {
+    "model": "GPT-5.6 Sol",
+    "effort": "Extra High",
+    "verdict": "ACCEPT",
+    "ready_for_routed_aggregate_execution_prep": true
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0
+  },
+  "reproduction": {
+    "additional_real_runs": 0,
+    "synthetic_fresh_processes": 2,
+    "synthetic_exact_identity": true
+  },
+  "approval_created": false,
+  "go_token_created": false,
+  "termination_condition": "STOP_ACCEPTED",
+  "next_action": "OBTAIN_SEPARATE_COMMITTED_INDEPENDENT_RELEASE_APPROVAL_THEN_PREPARE_MACHINE_LOCAL_GO_TOKEN_WITHOUT_EXECUTING"
+}
