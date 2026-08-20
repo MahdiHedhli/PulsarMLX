@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-single-use-release-rehearsal",
+  "schema_version": "1.0.0",
+  "execution_code_head": "ded6521d619a9e7e9ab75d7fef2234e73e69d806",
+  "result": "PASS",
+  "preparation_only": true,
+  "real_event_authorized": false,
+  "real_retained_preflight": {
+    "result": "PRODUCTION_BINDINGS_RESOLVED",
+    "representative_input_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "parameter_manifest_sha256": "c7669c26eb2520dd6857bde7eb7c18d84e29d8083759bac33f265781efb990e6",
+    "parameter_sha256": [
+      "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083"
+    ],
+    "retained_packed_bytes": 27623424,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "shared_expert_executions": 0
+  },
+  "synthetic_publication": {
+    "geometry": "little-endian-f32[6144]",
+    "byte_length": 24576,
+    "descriptor_relative_exclusive_temp": true,
+    "file_fsync": true,
+    "no_replace_hard_link_publish": true,
+    "parent_fsync": true,
+    "descriptor_readback": true,
+    "readback_sha256": "de676bae28a480011d3d012db14bef539324e62a841a9627863c689bea168af3",
+    "overwrite_rejected": true,
+    "real_output_computed": false
+  },
+  "authorization_rehearsal_linkage": {
+    "sha256": "54f80a379948dfd1697c9d5a7962ad3c39cf75d404d4c7c1c166ac9ca2f184f9",
+    "real_geometry": true,
+    "fresh_processes": 2,
+    "exact_output_identity": "2_OF_2",
+    "failure_cases": "23_OF_23_PASS"
+  },
+  "future_real_event_reproduction": {
+    "required_fresh_processes": 2,
+    "required_exact_primary_output_identity": "2_OF_2",
+    "producer_sha256": "4a1a8fbb5c201bae45fe61d3eb1cadbe3ae1ad5a429632b703ec57667891ccd4",
+    "executed_during_preparation": false
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  }
+}

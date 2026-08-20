@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-single-use-release-preparation",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "e8c8e95ab8b32af20e4e58b6018aaf302e9ef431",
+  "execution_code_head": "ded6521d619a9e7e9ab75d7fef2234e73e69d806",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-single-use-release-v1.json",
+    "sha256": "d582d296e2c031f354f7191d3027bb9dac74f3b638377ba5bcfe155c8ee0f37f",
+    "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+    "real_event_authorized": false
+  },
+  "validation": {
+    "validator": "REPRESENTATIVE_SHARED_EXPERT_SINGLE_USE_RELEASE_VALID",
+    "unit_test_groups": "6_OF_6_PASS",
+    "release_mutations": 39,
+    "authorization_rehearsal": "2_OF_2_FRESH_PROCESS_EXACT;23_OF_23_FAILURE_CASES",
+    "real_retained_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "synthetic_publication": "PASS_DESCRIPTOR_READBACK_AND_OVERWRITE_REJECTION",
+    "real_shared_expert_computation": false
+  },
+  "machine_local_paths": {
+    "representative_input": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-input-v1/router_normalized.f32le",
+    "parameter_root": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package",
+    "attempt_state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/attempt-state",
+    "output_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs",
+    "output": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs/representative-shared-expert-output.f32le",
+    "approval": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot/docs/architecture/reviews/evidence/f017-representative-shared-expert-recovery-single-use-release-v1-independent-approval-v1.json",
+    "go_token": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/go-token.json",
+    "attempt_absent": true,
+    "output_absent": true,
+    "go_token_created": false
+  },
+  "defense_in_depth_closeout": {
+    "D1": "CLOSED_DESCRIPTOR_READBACK",
+    "D2": "CLOSED_FIXED_MACHINE_WIDE_PATHS",
+    "D3": "CLOSED_EXACT_PARSED_AUTHORIZATION_BYTES",
+    "D4": "CLOSED_BOUND_ROLE_VOCABULARY",
+    "D5": "RETAINED_AS_UNREACHABLE_NONSEMANTIC_REHEARSAL_HOOK"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "disposition": "PREPARED_REVIEW_REQUIRED"
+}

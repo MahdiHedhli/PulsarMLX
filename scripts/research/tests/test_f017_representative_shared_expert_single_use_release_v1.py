@@ -34,7 +34,7 @@ class ReleaseContractTests(unittest.TestCase):
         candidate = copy.deepcopy(self.release)
         mutate(candidate)
         with self.assertRaises(Exception):
-            validator.validate_release(candidate)
+            validator.validate_release(candidate, repo_mode=True)
 
     def test_committed_release(self):
         validator.validate_release(self.release)
