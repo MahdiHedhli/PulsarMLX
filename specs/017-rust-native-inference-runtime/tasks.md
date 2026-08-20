@@ -564,7 +564,7 @@
   authorization/release/execution authorities, preserving their actual
   checkpoint-free dispositions and exact committed identities per Constitution
   XII (partial).
-- [ ] T017-239 Prepare and independently accept checkpoint-free cross-event
+- [x] T017-239 Prepare and independently accept checkpoint-free cross-event
   reuse of the banked representative shared-expert output and one future
   proof/reference FFN-composition authorization: bind immutable shared and
   routed inputs, adjudicate routed-plus-shared and later S1 residual semantics,
