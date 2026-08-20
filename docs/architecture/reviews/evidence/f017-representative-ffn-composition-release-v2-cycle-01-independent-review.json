@@ -1,0 +1,44 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-single-use-release-v2-independent-review",
+  "schema_version": "1.0.0",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model": "claude-fable-5",
+  "reviewed_head": "626b614c087f66a7991dd2f1adf9c52c42e75581",
+  "release_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-single-use-release-v2.json",
+  "release_sha256": "f6aa2133e91c9fc1639f3424e656f6db94677c71e7e1e03c64c5212bbed8f5b6",
+  "execution_code_head": "0c5ac29777e78aa8a2755feb378ab47dbcfaae0b",
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Rehearsal coverage label undercounts committed release-document mutations",
+      "evidence": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-v2-rehearsal-v1.json reports release_binding_mutations=24 while the committed suite test_release_load_bearing_mutations_reject in scripts/research/tests/test_f017_representative_ffn_composition_single_use_release_v2.py enforces 25 release-document mutations; independent re-execution confirmed all 25 reject. Coverage is strictly better than the evidence label claims; no enforcement path reads this count (validator requires only result=PASS and real_ffn_compositions=0).",
+      "required_action": "None for v2 (the rehearsal is hash-bound into the reviewed release bytes; correcting it would require a byte change). Record the precise mutation census in any future rehearsal evidence."
+    },
+    {
+      "id": "DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Working-tree validator and terminalizer bytes are not hash-checked by the executing wrapper",
+      "evidence": "scripts/research/f017_representative_ffn_composition_release_wrapper_v2.py validate_fixed_bindings checks authorization, arithmetic, reuse authorizations, executor, approval contract, supersession, v1 release, and v1 review, and validate_review_chain checks all bindings at reviewed_head; but the working-tree copies of the validator invoked at preflight and of the terminalizer are not byte-checked against the release bindings before use. Self-verification of the executing wrapper is inherently limited; execution-code-head discipline relies on the operator running the bound bytes, which the approval's execution_code_head and reviewed_head checks are designed to attest.",
+      "required_action": "In any future revision (append-only), add working-tree SHA-256 checks for the bound validator and terminalizer to validate_fixed_bindings."
+    },
+    {
+      "id": "DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Re-hash window between authorization validation and durable state recording",
+      "evidence": "In wrapper v2 main --execute, authorize() validates release/approval bytes, then begin_attempt, begin_ffn, and write_receipt re-read and re-hash the release and approval files when recording durable state. A machine-local byte swap in that window would be recorded (mismatching the validated hashes and the go-token binding) but not re-validated at record time. The terminalizer re-checks release identity at reconcile (ATTEMPT_RELEASE, FFN_RELEASE), and an adversary with that write access could subvert the wrapper itself, so no additional authority is lost.",
+      "required_action": "Optionally hash release and approval bytes once at authorize() and thread those values into the durable records in a future revision."
+    },
+    {
+      "id": "DID-4",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Concurrent-attempt loser can exit via uncaught FileExistsError traceback instead of FAIL_CLOSED JSON",
+      "evidence": "begin_attempt's os.mkdir is the exclusive-creation gate; a losing concurrent invocation raises FileExistsError, which is not in the wrapper __main__ except tuple (ReleaseError, FileNotFoundError, PermissionError, CalledProcessError), so the loser exits with a traceback rather than the FAIL_CLOSED JSON envelope. Independently re-executed the committed race test: exactly one winner, zero ffn-start, zero compute for the loser; fail-closed behavior and single-use accounting are unaffected, only the error surface is non-uniform.",
+      "required_action": "Optionally include FileExistsError in the fail-closed handler in a future revision."
+    }
+  ],
+  "statement": "REPRESENTATIVE FFN COMPOSITION SINGLE-USE RELEASE V2 ACCEPTED FOR SEPARATE APPROVAL"
+}
