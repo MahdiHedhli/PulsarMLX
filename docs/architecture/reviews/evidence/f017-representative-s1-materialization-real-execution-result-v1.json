@@ -1,0 +1,140 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-materialization-real-execution-result",
+  "schema_version": "1.0.0",
+  "result": "SUCCESS",
+  "execution_head": "dbcf1dc5cafde118e7904b3e6174389215758182",
+  "process_exit": 0,
+  "authority": {
+    "authorization_sha256": "f2efce04a1047d0e31b16f44e976a8b2b3102b340a6e3adfac32dfdf73f3ce0f",
+    "release_v2_sha256": "c441f956122cba6866a6729248d092584c4b1ee7e9d574bd98cffe9d74247424",
+    "independent_approval_sha256": "e2729bb1c8aee5ef8cc1b9920bfa832c4eb2ffcb72b782e8df20af1698f36108",
+    "approval_review_sha256": "f3104e4a0ffdfb4399f56fa4cef57a53e70ce37f9e2274983a986c64550794b1",
+    "release_review_sha256": "bd56546e21f8291864afbc0775681d63113f1629178c53ca49e7c8e79ae541d7",
+    "go_token_sha256": "9be322346373d267e5dd567fe45b8f8f21c4fd2bfaffaecdbb5e7b776441bab7",
+    "execution_code_head": "6272f3b846b62d11ba27a6ce5a5bfbdb6fae3fac",
+    "executor_sha256": "6f337f8c4a2487916864605f4a690b0c92273e85b177c9011e102405e8ab7776",
+    "release_wrapper_v2_sha256": "bff2dc009819d5ef8d06027936ea249e129f504358a312255fa275cd8ac2dca8",
+    "terminalizer_sha256": "0f25f0fe6025e1d0d776995f25b23b61d72db562a1ec051071af395165f7921a"
+  },
+  "historical_attention_authority": {
+    "classification": "ACCEPTED_REPRESENTATIVE_M1F0_ATTENTION_LINEAGE",
+    "real_execution_evidence_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+    "real_execution_evidence_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+    "new_real_attention_event": false,
+    "checkpoint_free_reconstruction": true
+  },
+  "attempt": {
+    "event_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1",
+    "release_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-RELEASE-2",
+    "attempt_id": "F017-REPRESENTATIVE-S1-MATERIALIZATION-1-ATTEMPT-1",
+    "attempt_start_sha256": "bf883109e3ffae39e60ccfd689e6fd3ae9703fa3399d3bfb5ec5ab0ad25ff41c",
+    "materialization_start_sha256": "d1ff891432e86fda733a870545b8ecdb6601493ce8f3781e266ef765474ac5fe",
+    "go_token_file_present": true,
+    "go_token_consumed": true,
+    "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_RECONSTRUCTION",
+    "s1_counted_at": "DURABLE_MATERIALIZATION_START_BEFORE_RECONSTRUCTION",
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "source_lineage": {
+    "canonical_s0": {
+      "semantic_role": "DPREFIX_EXACT_1_LAYER3_ENTRY",
+      "expected_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "before_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "consumed_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "after_sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11"
+    },
+    "attention_payloads": [
+      {"key":"blk.3.attn_norm.weight","sha256":"8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85"},
+      {"key":"blk.3.attn_q_a.weight","sha256":"30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579"},
+      {"key":"blk.3.attn_q_a_norm.weight","sha256":"faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f"},
+      {"key":"blk.3.attn_q_b.weight","sha256":"c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47"},
+      {"key":"blk.3.attn_kv_a_mqa.weight","sha256":"8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053"},
+      {"key":"blk.3.attn_kv_a_norm.weight","sha256":"ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4"},
+      {"key":"blk.3.attn_k_b.weight","sha256":"9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f"},
+      {"key":"blk.3.attn_v_b.weight","sha256":"86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367"},
+      {"key":"blk.3.attn_output.weight","sha256":"30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084"}
+    ],
+    "all_expected_equals_before_equals_consumed_equals_after": true
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "durable_attempt_starts": 1,
+    "materialization_starts": 1,
+    "s1_materializations": 1,
+    "ffn_compositions": 0,
+    "s2_constructions": 0
+  },
+  "retained_output": {
+    "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "reuse_role": "REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL",
+    "formula": "S1 = f32(S0 + layer3_attention_output)",
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-s1-materialization-release-2/outputs/representative-s1.f32le",
+    "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "expected_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "expected_equals_produced_equals_readback": true,
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "finite": true,
+    "finite_elements": 6144,
+    "minimum": -0.05930853635072708,
+    "maximum": 0.05760858952999115,
+    "mode": "0400",
+    "hard_link_count": 1,
+    "authority": true
+  },
+  "private_manifest": {
+    "relative_path": "representative-s1-private-manifest-v1.json",
+    "sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+    "byte_length": 427,
+    "mode": "0400",
+    "hard_link_count": 1,
+    "output_sha256_matches": true
+  },
+  "receipt": {
+    "relative_path": "s1-execution-receipt.json",
+    "sha256": "fca40fd446d7b4098e60d0f9fdcc55c3181bdfb757d8e6065e671b9c9ab6a0dc",
+    "byte_length": 1383,
+    "output_sha256_matches": true,
+    "manifest_sha256_matches": true,
+    "source_identities_match": true
+  },
+  "terminal": {
+    "relative_path": "terminal.json",
+    "sha256": "72a8131e2b7c8de8bd3cf57aa12aaab4989606354cdd93a4f04781dbc52026c9",
+    "byte_length": 364,
+    "status": "COMPLETE",
+    "output_authority": true,
+    "output_manifest_receipt_cross_consistent": true,
+    "ledger": 175
+  },
+  "authority_separation": {
+    "historical_attention_authority_is_not_new_execution": true,
+    "checkpoint_free_reconstruction_is_not_new_attention_event": true,
+    "durable_attempt_start_consumed_release": true,
+    "materialization_start_counted_one_s1": true,
+    "complete_terminal_and_retained_bytes_establish_output_authority": true,
+    "present_go_token_file_does_not_mean_unconsumed": true
+  },
+  "reproduction": {
+    "additional_post_event_materialization_authorized": false,
+    "additional_post_event_materialization_performed": false,
+    "new_s1_materializations": 0,
+    "accepted_attention_reproduction_lineage": "10_OF_10_RETAINED_ONLY_EXACT_STAGE_IDENTITY",
+    "adjudication": "DEFERRED_TO_SEPARATE_CROSS_EVENT_REUSE_REVIEW_NO_RETROACTIVE_AUTHORITY_EXPANSION"
+  },
+  "downstream_prohibitions": {
+    "release_v2_rerun": false,
+    "checkpoint_accessed": false,
+    "new_attention_execution": false,
+    "ffn_artifact_consumed_or_recomputed": false,
+    "s2_constructed": false
+  },
+  "next_action": "PREPARE_AND_INDEPENDENTLY_REVIEW_CHECKPOINT_FREE_CROSS_EVENT_REUSE_AUTHORITY_FOR_BANKED_S1;DO_NOT_RERUN_MATERIALIZATION_OR_CONSTRUCT_S2"
+}
