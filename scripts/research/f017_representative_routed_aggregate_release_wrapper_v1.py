@@ -10,12 +10,12 @@ import json
 import math
 import os
 from pathlib import Path
+import secrets
 import shutil
 import stat
 import struct
 import subprocess
 import sys
-import tempfile
 from types import ModuleType
 from typing import Any
 
@@ -162,8 +162,13 @@ def publish_no_replace(raw: bytes, output_root: Path, output_basename: str = OUT
     temporary_name: str | None = None
     try:
         require_absent_at(directory_fd, output_basename)
-        descriptor, temporary_path = tempfile.mkstemp(prefix=f".{output_basename}.", dir=output_root)
-        temporary_name = Path(temporary_path).name
+        temporary_name = f".{output_basename}.{secrets.token_hex(16)}"
+        descriptor = os.open(
+            temporary_name,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=directory_fd,
+        )
         try:
             view = memoryview(raw)
             written = 0

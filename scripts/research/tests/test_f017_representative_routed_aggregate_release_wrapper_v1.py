@@ -115,9 +115,11 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             WRAPPER.begin_attempt(paths, release, approval, token)
             identity = WRAPPER.publish_no_replace(bytes(WRAPPER.OUTPUT_BYTES), paths["output_root"])
             packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
-            self.assertEqual(packet["disposition"], "INTERRUPTED_OUTPUT_PUBLISHED")
+            self.assertEqual(packet["disposition"], "INTERRUPTED_OUTPUT_PUBLISHED_REQUIRES_ADJUDICATION")
             self.assertEqual(packet["output_sha256"], identity)
             self.assertTrue(packet["release_consumed"])
+            self.assertFalse(packet["output_authority"])
+            self.assertTrue(packet["output_present_for_adjudication"])
 
     def test_terminalizer_reconstructs_complete(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -134,6 +136,25 @@ class RoutedAggregateReleaseWrapperTests(unittest.TestCase):
             packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
             self.assertEqual(packet["disposition"], "COMPLETE_RECONSTRUCTED")
             self.assertEqual(packet["output_sha256"], identity)
+            self.assertTrue(packet["output_authority"])
+
+    def test_terminal_failure_never_confers_output_authority(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            paths = self.make_roots(temporary)
+            release = Path(temporary) / "release.json"
+            approval = Path(temporary) / "approval.json"
+            token = Path(temporary) / "token.json"
+            release.write_text("{}\n")
+            approval.write_text("{}\n")
+            token.write_text("{}\n")
+            WRAPPER.begin_attempt(paths, release, approval, token)
+            identity = WRAPPER.publish_no_replace(bytes(WRAPPER.OUTPUT_BYTES), paths["output_root"])
+            WRAPPER.write_terminal(paths, "TERMINAL_FAILURE", identity, "synthetic-after-publish")
+            packet = TERMINALIZER.reconcile(paths["state_root"], paths["output"], release)
+            self.assertEqual(packet["disposition"], "TERMINAL_FAILURE_RECONSTRUCTED")
+            self.assertEqual(packet["output_sha256"], identity)
+            self.assertFalse(packet["output_authority"])
+            self.assertTrue(packet["output_present_for_adjudication"])
 
 
 if __name__ == "__main__":

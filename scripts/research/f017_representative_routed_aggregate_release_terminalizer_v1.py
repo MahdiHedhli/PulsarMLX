@@ -70,7 +70,8 @@ def validate_output(path: Path) -> str:
 def reconcile(state_root: Path, output_path: Path, release_path: Path) -> dict[str, Any]:
     if not state_root.exists():
         require(not output_path.exists(), "output without attempt")
-        return {"disposition": "NO_ATTEMPT", "release_consumed": False, "output_authority": False}
+        return {"disposition": "NO_ATTEMPT", "release_consumed": False, "output_authority": False,
+                "output_present_for_adjudication": False}
     require(state_root.is_dir() and not state_root.is_symlink(), "state root identity")
     start_path = state_root / "attempt-start.json"
     require(start_path.is_file() and not start_path.is_symlink(), "ACCOUNTING_INTEGRITY_BLOCKER_NO_DURABLE_START")
@@ -79,6 +80,7 @@ def reconcile(state_root: Path, output_path: Path, release_path: Path) -> dict[s
     require(start.get("release_sha256") == sha(release_path), "attempt release binding")
     terminal_path = state_root / "terminal.json"
     output_identity = validate_output(output_path) if output_path.exists() else None
+    output_authority = False
     if terminal_path.exists():
         terminal = load(terminal_path)
         require(terminal.get("event_id") == EVENT_ID and terminal.get("release_id") == RELEASE_ID and terminal.get("attempt_id") == ATTEMPT_ID, "terminal identity")
@@ -86,17 +88,19 @@ def reconcile(state_root: Path, output_path: Path, release_path: Path) -> dict[s
         if terminal.get("disposition") == "COMPLETE":
             require(output_identity is not None and terminal.get("output_sha256") == output_identity, "complete output identity")
             disposition = "COMPLETE_RECONSTRUCTED"
+            output_authority = True
         else:
             require(terminal.get("disposition") == "TERMINAL_FAILURE", "terminal disposition")
             disposition = "TERMINAL_FAILURE_RECONSTRUCTED"
     elif output_identity is not None:
-        disposition = "INTERRUPTED_OUTPUT_PUBLISHED"
+        disposition = "INTERRUPTED_OUTPUT_PUBLISHED_REQUIRES_ADJUDICATION"
     else:
         disposition = "INTERRUPTED_NO_OUTPUT"
     return {
         "disposition": disposition,
         "release_consumed": True,
-        "output_authority": output_identity is not None,
+        "output_authority": output_authority,
+        "output_present_for_adjudication": output_identity is not None,
         "output_sha256": output_identity,
         "ledger": 175,
         "checkpoint_reads": 0,

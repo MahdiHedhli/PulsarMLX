@@ -16,6 +16,7 @@ from f017_representative_routed_aggregate_release_wrapper_v1 import (
     begin_attempt,
     fixed_paths,
     publish_no_replace,
+    write_terminal,
 )
 from f017_representative_routed_aggregate_release_terminalizer_v1 import reconcile
 
@@ -79,9 +80,21 @@ def main() -> int:
         begin_attempt(paths, release, approval, token)
         identity = publish_no_replace(synthetic, paths["output_root"])
         interrupted = reconcile(paths["state_root"], paths["output"], release)
-        if interrupted["disposition"] != "INTERRUPTED_OUTPUT_PUBLISHED" or interrupted["output_sha256"] != identity:
+        if (interrupted["disposition"] != "INTERRUPTED_OUTPUT_PUBLISHED_REQUIRES_ADJUDICATION"
+                or interrupted["output_sha256"] != identity or interrupted["output_authority"]):
             raise RuntimeError("published interruption reconciliation")
-        cases["published_output_without_terminal_recovered"] = "PASS"
+        cases["published_output_without_terminal_retained_for_adjudication"] = "PASS"
+    with tempfile.TemporaryDirectory() as temporary:
+        paths = roots(temporary)
+        release, approval, token = authority_files(temporary)
+        begin_attempt(paths, release, approval, token)
+        identity = publish_no_replace(synthetic, paths["output_root"])
+        write_terminal(paths, "TERMINAL_FAILURE", identity, "synthetic-after-publish")
+        failed = reconcile(paths["state_root"], paths["output"], release)
+        if (failed["disposition"] != "TERMINAL_FAILURE_RECONSTRUCTED"
+                or failed["output_sha256"] != identity or failed["output_authority"]):
+            raise RuntimeError("terminal failure output authority")
+        cases["terminal_failure_output_retained_without_authority"] = "PASS"
     evidence = {
         "schema": "pulsarmlx.f017.representative-routed-aggregate-release-rehearsal",
         "schema_version": "1.0.0",

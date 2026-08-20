@@ -30,7 +30,8 @@
     "temporary_write_or_fsync_failure": "TERMINAL_FAILURE_RELEASE_CONSUMED",
     "authoritative_link_collision": "TERMINAL_FAILURE_RELEASE_CONSUMED_NO_OVERWRITE",
     "crash_after_authoritative_link": "OUTPUT_REMAINS_DURABLE_FOR_RECONCILIATION_RELEASE_CONSUMED",
-    "terminal_or_evidence_failure_after_publish": "OUTPUT_REMAINS_DURABLE_FOR_RECONCILIATION_RELEASE_CONSUMED",
+    "terminal_or_evidence_failure_after_publish": "OUTPUT_REMAINS_DURABLE_FOR_ADJUDICATION_NOT_AUTHORITY_RELEASE_CONSUMED",
+    "output_authority_requires_matching_complete_terminal": true,
     "retry": false,
     "resume": false,
     "second_attempt": false
