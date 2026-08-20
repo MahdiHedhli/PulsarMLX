@@ -1,0 +1,120 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-input-semantics",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_PREPARATION_ONLY_NO_EXECUTION_AUTHORITY",
+  "semantic_graph": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+    "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+  },
+  "representative_boundary": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v3.json",
+    "sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3"
+  },
+  "representative_surfaces": {
+    "S1": {
+      "role": "LAYER3_POST_ATTENTION_RESIDUAL",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "required_for_S2": true,
+      "retention_status": "RETAINED_BY_COMPLETED_REPRESENTATIVE_M1F0_EVENT"
+    },
+    "F_norm": {
+      "role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_EXPERT_INPUT",
+      "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+      "private_manifest_sha256": "78f94815ca9402b398a3e11817ab94926a98feaf2447e455a7b18af31d8c78d2",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "shared_expert_input": true,
+      "routed_expert_input": true
+    },
+    "Routed": {
+      "role": "REPRESENTATIVE_M1F0_ROUTED_AGGREGATE_PROOF_REFERENCE",
+      "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+      "dtype": "little-endian-f64",
+      "shape": [6144],
+      "arithmetic_surface": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32"
+    },
+    "Shared": {
+      "input": "F_norm",
+      "formula": "Shared=shared_down(silu(shared_gate(F_norm))*shared_up(F_norm))",
+      "arithmetic": "strict binary32 fixed increasing-column order, per-operation binary32 rounding, no BLAS",
+      "output_dtype": "little-endian-f32",
+      "output_shape": [6144],
+      "representative_output_status": "NOT_YET_COMPUTED"
+    },
+    "FFN": {
+      "formula": "FFN=Routed+f64(Shared)",
+      "addition_dtype": "binary64",
+      "fixed_order": "for each component add Routed then exact f32-to-f64 promotion of Shared",
+      "output_dtype": "little-endian-f64",
+      "output_shape": [6144],
+      "status": "NOT_YET_COMPUTED"
+    },
+    "S2": {
+      "formula": "S2=f32(f64(S1)+FFN)",
+      "addition_dtype": "binary64",
+      "cast": "one final IEEE-754 binary32 round-to-nearest-ties-to-even per component",
+      "output_dtype": "little-endian-f32",
+      "output_shape": [6144],
+      "status": "NOT_YET_COMPUTED"
+    }
+  },
+  "historical_lineage_classification": [
+    {
+      "artifact": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-authorization-v1.json",
+      "sha256": "222c79e92fdc10ec82ec87e7efbd7d5f4a9030e1b3095484fdd343e7109b7ef0",
+      "classification": "STRUCTURAL_ONLY",
+      "reason": "shared-expert tensor geometry, quantization, decoders, and fixed-order kernel are input-position-independent; the bound canonical input is direct DPREFIX rather than representative post-attention F_norm"
+    },
+    {
+      "artifact": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-result-v1.json",
+      "sha256": "971c371ce7b1220f612f941c76c0fe359f122c8ff6f3643711fab946d11eff24",
+      "classification": "VALID_BUT_DIFFERENT_SURFACE",
+      "reason": "output 01dbd9ac... was computed from direct DPREFIX normalization and is not representative shared output authority"
+    },
+    {
+      "artifact": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-output-private-reuse-authorization-v1.json",
+      "sha256": "19a6890a1bd63f4832e76e3b9cba389eb33eb3e6366ab2cd0bb0aefa8a93f151",
+      "classification": "VALID_BUT_DIFFERENT_SURFACE",
+      "reason": "consumer and delta-S scope are restricted to the historical direct-DPREFIX complete-layer proof"
+    },
+    {
+      "artifact": "docs/architecture/reviews/evidence/f017-complete-layer-aggregate-v2-evaluation-v1.json",
+      "sha256": "aae05b6fed0f8dfe78da24afd38914f603a70b5b7cd3903b4d0a153c9ed2052e",
+      "classification": "STRUCTURAL_ONLY",
+      "reason": "the composition formulas and casting points agree with the semantic graph, but all numerical inputs belong to the direct-DPREFIX surface"
+    },
+    {
+      "artifact": "docs/architecture/reviews/evidence/f017-complete-layer-aggregate-acceptance-v2-freeze.json",
+      "sha256": "fd393a13e1c5040a9ec4ad11f3adeb2990b497876e72bcc01336dfcc666aaf0a",
+      "classification": "STRUCTURAL_ONLY",
+      "reason": "accepted FFN/S2 formula lineage only; not representative numerical output authority"
+    }
+  ],
+  "shared_expert_next_boundary": {
+    "representative_input": {
+      "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+      "availability": "RETAINED_IMMUTABLE_MACHINE_LOCAL_AUTHORITY"
+    },
+    "model_weights": [
+      {"role": "gate", "checkpoint_key": "blk.3.ffn_gate_shexp.weight", "packed_sha256": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414", "packed_bytes": 8650752, "quantization": "Q5_K", "shape": [2048, 6144]},
+      {"role": "up", "checkpoint_key": "blk.3.ffn_up_shexp.weight", "packed_sha256": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe", "packed_bytes": 8650752, "quantization": "Q5_K", "shape": [2048, 6144]},
+      {"role": "down", "checkpoint_key": "blk.3.ffn_down_shexp.weight", "packed_sha256": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083", "packed_bytes": 10321920, "quantization": "Q6_K", "shape": [6144, 2048]}
+    ],
+    "packed_total_bytes": 27623424,
+    "physical_availability": "3_OF_3_RETAINED_READ_ONLY_SINGLE_LINK_HASH_VERIFIED",
+    "surface_independence_proof": "model parameter tensors are functions of layer/expert role only; the input vector is supplied separately to the shared-expert formula",
+    "authority_gap": "SEPARATE_APPEND_ONLY_CROSS_EVENT_WEIGHT_REUSE_AND_REPRESENTATIVE_SHARED_EXPERT_EXECUTION_AUTHORIZATION_REQUIRED",
+    "next_phase_checkpoint_free": true,
+    "checkpoint_reads_required": 0,
+    "shard_opens_required": 0
+  },
+  "prohibitions": {
+    "historical_direct_dprefix_shared_output": true,
+    "shared_expert_execution": true,
+    "routed_shared_combination": true,
+    "ffn_completion": true,
+    "s2_construction": true,
+    "checkpoint_access": true
+  }
+}

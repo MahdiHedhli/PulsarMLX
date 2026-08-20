@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-reuse-preparation",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "b22d3bab0b290aa5ea536d6efc114dddc6044086",
+  "artifacts": {
+    "reuse_authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json", "sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb"},
+    "downstream_semantics": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-input-semantics-v1.json", "sha256": "4cab095f6301dbf4f82c95b7d8430ccb4e3101ab4211238400ef42bc368666f8"},
+    "resolver": {"path": "scripts/research/f017_representative_routed_aggregate_reuse_v1.py", "sha256": "8e3919fbebc6ba80a9e63b5baa62f5cc8c61e536955dc46901a3de1d8ed855dd"},
+    "validator": {"path": "scripts/research/validate_f017_representative_routed_aggregate_reuse_v1.py", "sha256": "076b33561543e92785bdad2b5c0d4dd42da835042dafddb251ee4ab46b54b354"},
+    "tests": {"path": "scripts/research/tests/test_f017_representative_routed_aggregate_reuse_v1.py", "sha256": "6b904324ad80d906083a1f516f945aafa3534dece0ae80b95df15ad9e48702db"},
+    "private_manifest": {"sha256": "2403f7b321139d85c811e722298ac4bb164ffd3b0e41e1c73ed7fadd10e55d11", "committed": false, "machine_local_path_published": false}
+  },
+  "validation": {
+    "authorization_validator": "PASS",
+    "unit_tests": "7_OF_7_PASS",
+    "mutation_cases": 23,
+    "real_retained_preflight": "REPRESENTATIVE_ROUTED_AGGREGATE_REUSE_PREFLIGHT_PASS",
+    "expected_before_consumed_after_equal": true,
+    "finite_count": 6144,
+    "aggregate_sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9"
+  },
+  "next_boundary": {
+    "authority": "REPRESENTATIVE_SHARED_EXPERT_RECOVERY_AUTHORIZATION",
+    "representative_input_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "retained_shared_weight_payloads": 3,
+    "retained_shared_weight_packed_bytes": 27623424,
+    "retained_weight_hashes_verified": true,
+    "checkpoint_free_possible": true,
+    "separate_weight_reuse_authority_required": true,
+    "historical_shared_output_reusable": false
+  },
+  "isolation": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "aggregate_recomputations": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "disposition": "PREPARED_REVIEW_REQUIRED"
+}

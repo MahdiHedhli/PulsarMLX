@@ -1,0 +1,111 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-reuse-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-REUSE-1",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "real_event_authorized": false,
+  "preparation_base_head": "b22d3bab0b290aa5ea536d6efc114dddc6044086",
+  "source_authority": {
+    "execution_evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-real-execution-result-v1.json",
+      "sha256": "fd362662a72ee6c4a951432d0ceb603a1f31ba7f62b885059e9f05c1df673d43",
+      "result": "SUCCESS",
+      "terminal": "COMPLETE",
+      "reconstructed_terminal": "COMPLETE_RECONSTRUCTED"
+    },
+    "arithmetic_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json",
+      "sha256": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2"
+    },
+    "aggregate_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json",
+      "sha256": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590"
+    },
+    "single_use_release": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-single-use-release-v1.json",
+      "sha256": "978908b1e3eac07c4a9565ed307122034d9cc8c797807ec788f9c521d2d5b98d"
+    },
+    "independent_release_approval": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-single-use-release-v1-independent-approval-v1.json",
+      "sha256": "542a434b68b3f92ca6062c5c2fb93f1bae3a775214b78b2848e8bbec22eab334"
+    }
+  },
+  "private_manifest": {
+    "relative_path": "routed-aggregate-private-manifest-v1.json",
+    "sha256": "2403f7b321139d85c811e722298ac4bb164ffd3b0e41e1c73ed7fadd10e55d11",
+    "byte_length": 1370,
+    "machine_local_root_not_committed": true,
+    "machine_local_path_not_published": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true
+  },
+  "retained_aggregate": {
+    "relative_path": "routed-aggregate.f64le",
+    "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+    "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_AGGREGATE_PROOF_REFERENCE",
+    "semantic_surface": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "finite": true,
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_once_consume_same_descriptor": true,
+    "fstat_before_and_after": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true,
+    "no_writable_alias": true
+  },
+  "surface_isolation": {
+    "proof_reference_surface_required": true,
+    "production_serial_f32_authority": false,
+    "surface_conversion_authorized": false,
+    "serial_f32_substitution_authorized": false,
+    "aggregate_recomputation_fallback": false,
+    "alternate_aggregate_output": false,
+    "historical_direct_dprefix_aggregate": false
+  },
+  "resolver": {
+    "path": "scripts/research/f017_representative_routed_aggregate_reuse_v1.py",
+    "sha256": "8e3919fbebc6ba80a9e63b5baa62f5cc8c61e536955dc46901a3de1d8ed855dd",
+    "checkpoint_capability": false,
+    "shard_capability": false,
+    "aggregate_compute_capability": false,
+    "shared_expert_compute_capability": false,
+    "ffn_compute_capability": false,
+    "s2_compute_capability": false
+  },
+  "downstream_semantics": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-input-semantics-v1.json",
+    "sha256": "4cab095f6301dbf4f82c95b7d8430ccb4e3101ab4211238400ef42bc368666f8",
+    "representative_shared_output_status": "NOT_YET_COMPUTED",
+    "next_authority": "REPRESENTATIVE_SHARED_EXPERT_RECOVERY_AUTHORIZATION",
+    "next_phase_checkpoint_free": true
+  },
+  "consumer_scope": {
+    "allowed": "CHECKPOINT_FREE_DOWNSTREAM_PREPARATION_AND_FFN_COMPOSITION_INPUT_AUTHORITY_ONLY",
+    "shared_expert_execution": false,
+    "routed_shared_combination": false,
+    "ffn_completion": false,
+    "s2_construction": false
+  },
+  "accounting": {
+    "real_payload_ledger_before": 175,
+    "real_payload_ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "aggregate_recomputations": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "historical_immutability": {
+    "historical_direct_dprefix_shared_output": "VALID_BUT_DIFFERENT_SURFACE",
+    "historical_direct_dprefix_aggregate": "VALID_BUT_DIFFERENT_SURFACE",
+    "historical_complete_layer_v2": "STRUCTURAL_ONLY_FOR_COMPOSITION_FORMULA",
+    "real_payload_ledger": 175
+  }
+}
