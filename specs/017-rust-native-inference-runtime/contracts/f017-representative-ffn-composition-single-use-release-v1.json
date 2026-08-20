@@ -1,0 +1,212 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-single-use-release",
+  "schema_version": "1.0.0",
+  "event_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-PROOF-REFERENCE-1",
+  "release_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-PROOF-REFERENCE-1-RELEASE-1",
+  "attempt_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-PROOF-REFERENCE-1-ATTEMPT-1",
+  "status": "PREPARED_FOR_INDEPENDENT_APPROVAL",
+  "real_event_authorized": false,
+  "approval_asserted": false,
+  "authoritative_execution_code_head": "ba49351bad99d39cc57a3cea4ce633c43326bd44",
+  "head_semantics": "EXACT_LOAD_BEARING_BYTES_AT_CODE_HEAD;APPEND_ONLY_RELEASE_REVIEW_APPROVAL_AND_BANKING_COMMITS_PERMITTED",
+  "bindings": {
+    "ffn_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-authorization-v1.json",
+      "sha256": "69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5"
+    },
+    "arithmetic_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-arithmetic-v1.json",
+      "sha256": "1054d014c23628fa56771518f066d14cfd445b0d7b4ba7da98b638c37981cdbb"
+    },
+    "routed_reuse_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json",
+      "sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb"
+    },
+    "shared_reuse_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-output-reuse-authorization-v1.json",
+      "sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a"
+    },
+    "executor": {
+      "path": "scripts/research/f017_representative_ffn_composition_executor_v1.py",
+      "sha256": "7632b19af4a0b3bb16ec7032cec049bcab45dabd246cac5d77f0daaec24d256c"
+    },
+    "synthetic_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-synthetic-rehearsal-v1.json",
+      "sha256": "04c0448a124d36a7510650d725e09d1cc5f2ce66b0c8ee944da0b831a8d67a60"
+    },
+    "ffn_authorization_review": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-cycle-01-independent-review.json",
+      "sha256": "72728eed90efae3e9c432d8301324ce26d9a99c580cd0dacf6f88c83a80580da"
+    },
+    "path_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-release-paths-v1.json",
+      "sha256": "6592053ab3ba80fe8957be5b7cbbfcad737980f0952971e8079cc9bb03f05ff0"
+    },
+    "publication_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-output-publication-v1.json",
+      "sha256": "fc139cf0f51c3f114653c421079f390b91a64004bb73a34a143ed8d6a3688f86"
+    },
+    "release_wrapper": {
+      "path": "scripts/research/f017_representative_ffn_composition_release_wrapper_v1.py",
+      "sha256": "b5983ebf3bc5c6c6f48b57c3ea4af9f600bbe18b05a207f04146bdd4c4564e5d"
+    },
+    "terminalizer": {
+      "path": "scripts/research/f017_representative_ffn_composition_release_terminalizer_v1.py",
+      "sha256": "b7794453e3f9e97273ba43be227413d45672a78e487d182a74461e801eff6ba6"
+    },
+    "release_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-rehearsal-v1.json",
+      "sha256": "c99856201bb674d8ccc2bdd1affb4eb5305c762d86ba1310459951e0b3634418"
+    },
+    "release_validator": {
+      "path": "scripts/research/validate_f017_representative_ffn_composition_single_use_release_v1.py",
+      "sha256": "ea457fe02f4a5bb03d3aa1c96c1ad941fc1dcfaf3f8e27d8cadd9bc205d884be"
+    },
+    "release_tests": {
+      "path": "scripts/research/tests/test_f017_representative_ffn_composition_single_use_release_v1.py",
+      "sha256": "11bd52cf600342549cff3a7c047554261aa01aebf39fb8228046171da7be485e"
+    }
+  },
+  "retained_inputs": {
+    "routed": {
+      "reuse_authorization_sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+      "private_manifest_sha256": "2403f7b321139d85c811e722298ac4bb164ffd3b0e41e1c73ed7fadd10e55d11",
+      "relative_path": "routed-aggregate.f64le",
+      "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+      "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_AGGREGATE_PROOF_REFERENCE",
+      "dtype": "little-endian-f64",
+      "shape": [6144],
+      "byte_length": 49152
+    },
+    "shared": {
+      "reuse_authorization_sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+      "private_manifest_sha256": "fbdfb87783e72f011207cb06007cb91e955f6f824d96522f149fcb0d37d4ea52",
+      "relative_path": "representative-shared-expert-output.f32le",
+      "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+      "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "byte_length": 24576
+    }
+  },
+  "numerical_surface": {
+    "classification": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "formula": "FFN[k]=Routed_f64[k]+binary64(Shared_f32[k])",
+    "shared_promotion": "exact IEEE-754 binary32-to-binary64",
+    "shared_multiplier": "NONE; binary64 1.0",
+    "addition": "one binary64 addition per coordinate",
+    "rounding": "round-to-nearest ties-to-even",
+    "coordinate_order": "increasing 0..6143",
+    "reduction": false,
+    "blas": false,
+    "gpu": false,
+    "parallel_arithmetic": false,
+    "production_serial_f32": "SEPARATE_UNAUTHORIZED_SURFACE"
+  },
+  "preexecution_gates": {
+    "ledger_175": true,
+    "authorization_and_release_identity": true,
+    "routed_expected_before_consumed_after": true,
+    "shared_expected_before_consumed_after": true,
+    "private_manifests": true,
+    "executor_and_arithmetic": true,
+    "runtime_environment": true,
+    "no_checkpoint_or_shard_interface": true,
+    "no_expert_or_shared_compute_interface": true,
+    "attempt_root_absent": true,
+    "output_and_manifest_absent": true,
+    "fixed_paths": true,
+    "output_parent_open_once": true,
+    "same_state_output_filesystem": true,
+    "storage": true,
+    "all_locally_checkable_before_ffn": true
+  },
+  "single_use": {
+    "attempts": 1,
+    "concurrent_invocation": false,
+    "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_FFN_COMPUTATION",
+    "ffn_execution_counted_at": "DURABLE_FFN_START_BEFORE_COMPUTATION_REGARDLESS_OF_OUTCOME",
+    "exclusive_attempt_creation": true,
+    "partial_root_without_attempt_start": "UNCONSUMED_ZERO_COMPUTE_MANUAL_ADJUDICATION_REQUIRED",
+    "release_remains_consumed_after_any_post_start_outcome": true,
+    "interruption_reconciled_by_bound_terminalizer": true,
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "output_banking": {
+    "semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+    "dtype": "little-endian-f64",
+    "shape": [6144],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "finite": true,
+    "output_sha256_recorded": true,
+    "private_manifest": true,
+    "execution_receipt": true,
+    "file_fsync": true,
+    "descriptor_relative_exclusive_temp": true,
+    "no_replace_publication": true,
+    "parent_fsync": true,
+    "descriptor_read_back": true,
+    "matching_complete_terminal_required": true,
+    "published_failure_artifacts_retained_for_adjudication": true,
+    "overwrite": false,
+    "partial_output_authority": false
+  },
+  "machine_local_paths": {
+    "resolution": "FIXED_PATHLIB_HOME_AND_REPOSITORY_EXPRESSIONS_NO_CALLER_SELECTION",
+    "state_root": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/attempt-state",
+    "output_root": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/outputs",
+    "output": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/outputs/representative-ffn-output.f64le",
+    "output_private_manifest": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/outputs/representative-ffn-output-private-manifest-v1.json",
+    "execution_receipt": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/attempt-state/ffn-execution-receipt.json",
+    "approval": "$REPOSITORY/docs/architecture/reviews/evidence/f017-representative-ffn-composition-single-use-release-v1-independent-approval-v1.json",
+    "go_token": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-1/go-token.json"
+  },
+  "runtime": {
+    "cpython": "3.14.6",
+    "platform": "Darwin-arm64",
+    "endianness": "little",
+    "thread_variables_equal_one": ["OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"],
+    "arithmetic_backend": "CPYTHON_STRUCT_AND_SCALAR_IEEE754_ONLY",
+    "numpy_required": false
+  },
+  "accounting": {
+    "starting_ledger": 175,
+    "terminal_ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "preparation_ffn_compositions": 0,
+    "future_ffn_compositions": 1,
+    "s1_materializations": 0,
+    "s2_constructions": 0
+  },
+  "prohibitions": {
+    "checkpoint_access": true,
+    "shard_open": true,
+    "expert_execution": true,
+    "shared_expert_execution": true,
+    "routed_aggregate_recomputation": true,
+    "production_serial_f32": true,
+    "alternate_executor": true,
+    "caller_selected_paths": true,
+    "s1_materialization": true,
+    "s1_input_interface": true,
+    "s2_construction": true,
+    "overwrite": true,
+    "retry": true,
+    "resume": true,
+    "second_attempt": true,
+    "go_token_in_this_phase": true
+  },
+  "stop_boundary": "AFTER_REPRESENTATIVE_FFN_OUTPUT_ONLY",
+  "future_approval": {
+    "separate_committed_independent_approval_required": true,
+    "release_itself_is_not_a_token": true,
+    "approval_statement": "REPRESENTATIVE FFN COMPOSITION SINGLE-USE RELEASE V1 APPROVED",
+    "token_exact_fields": ["approval_sha256", "attempt_id", "authorization_sha256", "disposition", "event_id", "real_event_authorized", "release_id", "release_sha256"]
+  }
+}

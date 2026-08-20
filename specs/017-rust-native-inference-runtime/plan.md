@@ -653,3 +653,28 @@ shared composition nor S2 has been performed.
 Gate: shared-output reuse and the future one-shot checkpoint-free FFN
 composition authorization are independently accepted; no real FFN output or S2
 is computed, no GO token exists, and ledger remains 175.
+
+## Phase 38 — Representative FFN-composition single-use release
+
+- Bind the accepted proof/reference FFN authorization, routed/shared reuse
+  authorities, exact retained inputs, arithmetic, executor, synthetic
+  rehearsal, and accepted review to an immutable execution-code head and one
+  future event/release/attempt identity.
+- Pin ledger 175-to-175 with zero checkpoint, shard, expert, shared-expert,
+  S1-materialization, and S2 budgets; count exactly one FFN composition at a
+  durable FFN-start record before arithmetic regardless of its outcome.
+- Consume the release through exclusive durable attempt creation; prohibit
+  concurrency, retry, resume, and second attempt; reconcile partial-start,
+  interrupted, published-but-incomplete, terminal-failure, and COMPLETE states
+  without rerunning computation.
+- Publish one finite little-endian f64 `[6144]` output and its private manifest
+  by descriptor-relative exclusive temporary files, fsync, no-replace hard
+  links, parent fsync, and descriptor read-back; bind both through a durable
+  execution receipt and require a matching COMPLETE terminal for authority.
+- Expose no S1 input/materialization or S2 construction path, create no GO
+  token, and bank exact Fable 5 request/review artifacts under the bounded
+  autonomous review policy.
+
+Gate: the release is independently accepted for a separate operator execution
+decision only; it remains `PREPARED_FOR_INDEPENDENT_APPROVAL`, no approval or GO
+token is created, no real FFN is computed, and ledger remains 175.

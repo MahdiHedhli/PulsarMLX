@@ -572,3 +572,17 @@
   FFN or S2, bank exact Fable 5 review bytes, and preserve ledger 175 with zero
   checkpoint, shard, expert, FFN, and S2 execution per the operator's
   shared-output reuse and FFN-boundary request (missing).
+
+## Phase 37: Convergence
+
+- [ ] T017-240 Prepare and independently accept the checkpoint-free
+  representative FFN-composition single-use release: bind the accepted f64
+  proof/reference authorization, routed/shared reuse authorities and retained
+  identities, exact executor/rehearsal/runtime, ledger 175-to-175, and fixed
+  zero checkpoint/shard/expert/shared/S2 budgets; implement exclusive durable
+  attempt start, truthful failure accounting, immutable input consumption,
+  durable no-replace f64 `[6144]` output publication and private manifest,
+  deterministic terminalization, adversarial concurrency/mutation tests, and
+  an exact Fable 5 review loop while creating no GO token and performing no
+  real FFN or S1/S2 work per the operator's release-preparation request
+  (missing).
