@@ -532,3 +532,26 @@ Gate: terminal disposition is `COMPLETE`, eight finite output authorities are
 banked, 2/2 retained-only reproduction passes, downstream execution counts are
 zero, and ledger remains 175. The next action is checkpoint-free cross-event
 reuse authorization for these outputs; do not aggregate yet.
+
+## Phase 33 — Representative expert-output cross-event reuse
+
+- Bind the eight concrete representative expert outputs atomically to their
+  canonical post-attention route IDs and binary64 routing weights in exact rank
+  order, preserving expert 62 before expert 73.
+- Require open-once consume-what-you-validated retention with exact expected,
+  before, consumed, and after SHA equality; regular, non-symlink, read-only,
+  single-link files; exact f32 `[6144]` geometry; and finite values.
+- Freeze the future analytical aggregate-input surface as exact f32-to-f64
+  promotion, binary64 weight multiplication, and Python `math.fsum`-equivalent
+  binary64 accumulation while keeping the production serial-f32 runtime policy
+  separate and unauthorized.
+- Prohibit historical direct-DPREFIX outputs, checkpoint/expert fallback,
+  aggregate/shared/FFN/S2 execution, and preserve ledger 175 with zero reads,
+  opens, expert executions, and aggregate executions.
+- Bank the exact Fable 5 ACCEPT review and Extra High builder composition
+  closeout, retaining justified defense-in-depth notes for the future consumer.
+
+Gate: the reuse authority is independently accepted for future aggregate
+authorization preparation only; the aggregate remains not evaluated, no GO
+token or execution authority exists, and the next action is to prepare a
+separate checkpoint-free routed-aggregate authorization.

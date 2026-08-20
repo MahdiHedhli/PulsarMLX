@@ -533,3 +533,10 @@
   zero checkpoint reads and shard opens, bank eight finite f32 `[6144]`
   canonical expert outputs, pass 2/2 fresh-process exact reproduction, retain
   all 25 input identities unchanged, and stop before aggregate/shared/FFN/S2.
+- [x] T017-235 Prepare and independently accept checkpoint-free cross-event
+  reuse of the eight representative expert outputs: atomically bind canonical
+  ID-weight-output triples, enforce open-once expected/before/consumed/after
+  identity and immutable f32 `[6144]` geometry, freeze the analytical binary64
+  `math.fsum` aggregate-input contract while separating the production serial-
+  f32 policy, bank exact Fable 5 and Extra High composition acceptance, and
+  preserve ledger 175 with zero checkpoint, shard, expert, and aggregate work.

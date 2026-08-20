@@ -1,22 +1,56 @@
 {
   "schema": "pulsarmlx.f017.autonomous-representative-expert-output-reuse-loop-state",
   "schema_version": "1.0.0",
-  "phase": "BUILDER_CYCLE_1_COMPLETE_REVIEW_PENDING",
+  "phase": "STOP_ACCEPTED",
   "cycle": 1,
   "maximum_cycles": 4,
   "builder_model": "GPT-5.6 Sol",
-  "builder_effort": "High",
-  "reviewer_model": null,
-  "latest_reviewer_artifact": null,
-  "latest_reviewer_sha256": null,
-  "latest_verdict": null,
+  "builder_effort": "High; final composition Extra High",
+  "reviewer_model": "claude-fable-5",
+  "latest_reviewer_artifact": "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-cycle-01-independent-review.json",
+  "latest_reviewer_sha256": "54d559fe39c13152c2c368fa1f99a219c167178b06d58f47bb46822af33b46bc",
+  "latest_verdict": "ACCEPT",
   "blocking_findings": [],
   "non_blocking_required_findings": [],
   "resolved_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "reviewer independently pinned the reviewed resolver and aggregate-contract bytes; a future aggregate authorization must pin both identities"
+    },
+    {
+      "id": "DID-2",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "future aggregate authorization must invoke the pinned validator before the resolver and bind authorization, validator, and resolver identities"
+    },
+    {
+      "id": "DID-3",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "the manifest is redundant because eight exact filename-size-SHA checks fully determine the consumed package"
+    },
+    {
+      "id": "DID-4",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "unpinned fields are non-operative labels; all load-bearing state and capability fields are pinned"
+    },
+    {
+      "id": "DID-5",
+      "disposition": "OPEN_JUSTIFIED",
+      "reason": "exact output-list equality rejects any foreign hash; future tests may add a named historical hash for explanatory clarity"
+    }
+  ],
   "ledger": 175,
   "checkpoint_reads": 0,
   "shard_opens": 0,
   "expert_executions": 0,
   "aggregate_executions": 0,
-  "termination_condition": null
+  "final_composition": {
+    "builder_model": "GPT-5.6 Sol",
+    "builder_effort": "Extra High",
+    "verdict": "ACCEPT_PREPARE_ONLY",
+    "blocking_findings": [],
+    "non_blocking_required_findings": []
+  },
+  "termination_condition": "STOP_ACCEPTED"
 }

@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.representative-expert-output-reuse-closeout",
+  "schema_version": "1.0.0",
+  "starting_head": "26f5fe81e63851a23e40ba432b643b0a24a86d33",
+  "builder_commit": "592888f5c7bfafca01421a09db6865ad7acfda0c",
+  "review_commit": "2003d69963e864f1f38b90fdd386a87ac0a8aebe",
+  "termination": "STOP_ACCEPTED",
+  "authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+    "sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+    "status": "PREPARED_REVIEW_REQUIRED",
+    "real_event_authorized": false
+  },
+  "aggregate_input_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-input-v1.json",
+    "sha256": "ec38d793a95894daa71a5179650b91978b4aec44512311aa29a7c5c897b4b872",
+    "status": "FROZEN_NOT_EVALUATED",
+    "aggregate_computed": false
+  },
+  "preparation_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-preparation-v1.json",
+    "sha256": "90e2d51d061f7e3e6598742ab37ffa41ee411d789dc6caf1f997853eb85482ec"
+  },
+  "independent_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-cycle-01-independent-review.json",
+    "sha256": "54d559fe39c13152c2c368fa1f99a219c167178b06d58f47bb46822af33b46bc",
+    "actual_reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 5
+  },
+  "final_composition": {
+    "builder_model": "GPT-5.6 Sol",
+    "builder_effort": "Extra High",
+    "verdict": "ACCEPT_PREPARE_ONLY",
+    "sufficient_for_future_routed_aggregate_authorization": true,
+    "aggregate_execution_authorized": false
+  },
+  "validation": {
+    "reuse_test_methods": 6,
+    "authorization_mutations": 21,
+    "resolver_behavior_attacks": 4,
+    "weighted_aggregate_theorem_tests": 22,
+    "retained_expert_authorization_release_tests": 5,
+    "validator": "PASS",
+    "private_open_once_preflight": "8_OF_8_PASS",
+    "git_diff_check": "PASS"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0
+  },
+  "next_safe_action": "PREPARE_A_CHECKPOINT_FREE_ROUTED_AGGREGATE_AUTHORIZATION_USING_THE_ACCEPTED_REPRESENTATIVE_EXPERT_OUTPUT_REUSE_AUTHORITY;DO_NOT_COMPUTE_THE_AGGREGATE"
+}
