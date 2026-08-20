@@ -656,9 +656,14 @@
 
 ## Phase 45: Convergence
 
-- [x] T017-248 Bank and independently accept the exact wrapper-enforced S2
+- [ ] T017-248 Bank and independently accept the exact wrapper-enforced S2
   release approval, validate both fixed retained operands and empty S2 state
   without arithmetic, then create exactly one mode-0400, single-link,
   unconsumed machine-local token while preserving ledger 175 and zero
   checkpoint, S1, FFN, attempt-start, S2-start, or S2 execution per plan Phase
   46 and Constitution III/X/XII (missing).
+  Blocked fail-closed at machine-local readiness: the accepted S2 executor
+  requires an `artifacts` manifest census while the exact SHA-bound S1 producer
+  manifest uses its accepted singular `artifact` schema. Approval and review
+  bytes are banked, but no GO token exists and a new append-only S2 consumer /
+  release authority is required.

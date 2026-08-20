@@ -1,0 +1,114 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-execution-readiness",
+  "schema_version": "1.0.0",
+  "status": "BLOCKED_FAIL_CLOSED",
+  "ready_for_s2_execution": false,
+  "starting_head": "8cb040e94ffac97f61ee27cd12c87079fe7f0b65",
+  "approval_banking_head": "24d0552ffec6679b67c2e7822197a1a4bdafbf62",
+  "approval_review_banking_head": "bbbd36a43c5ec6cb9129065ec80a54e1ff93e236",
+  "execution_code_head": "3c200b62fdd0409d49cd38da4d7cc12405569e60",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v1.json",
+    "sha256": "1b05c09355974d53ddf4585eee8b4801bd726e3ecd626ea753f066c9e504a3b9"
+  },
+  "approval": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-single-use-release-v1-independent-approval-v1.json",
+    "sha256": "17f9c1977327932a73550120704b42e01cb0b83b27fa8cd6647f259982be7949",
+    "field_count": 28,
+    "wrapper_gate": "PASS"
+  },
+  "approval_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-release-approval-cycle-01-independent-review.json",
+    "sha256": "ebbf4a1129706767a17b2f314dbdb265bd87818f5931796a735b5a387d7aec69",
+    "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+    "reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": ["DID-A1", "DID-A2", "DID-A3"]
+  },
+  "ledger": {
+    "before": 175,
+    "after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0
+  },
+  "machine_local_operands": {
+    "s1": {
+      "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "private_manifest_sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+      "receipt_sha256": "fca40fd446d7b4098e60d0f9fdcc55c3181bdfb757d8e6065e671b9c9ab6a0dc",
+      "terminal_sha256": "72a8131e2b7c8de8bd3cf57aa12aaab4989606354cdd93a4f04781dbc52026c9",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "byte_length": 24576,
+      "finite_count": 6144,
+      "regular_non_symlink_single_link_read_only": true,
+      "same_descriptor_identity_stable": true
+    },
+    "ffn": {
+      "sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "private_manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+      "receipt_sha256": "8c55a32198070e3f9ef087242cebc0474151259ed0564d7963044ec5ad24b84e",
+      "terminal_sha256": "22cd0d23a72470acf8ce706140578602831b047e8562e577a7e1297d444ed1d9",
+      "dtype": "little-endian-f64",
+      "shape": [6144],
+      "byte_length": 49152,
+      "finite_count": 6144,
+      "regular_non_symlink_single_link_read_only": true,
+      "same_descriptor_identity_stable": true
+    }
+  },
+  "runtime": {
+    "cpython": "3.14.6",
+    "platform": "Darwin-arm64",
+    "endianness": "little",
+    "thread_variables_equal_one": true
+  },
+  "production_preflight": {
+    "result": "FAIL_CLOSED",
+    "error": "S2Error:MANIFEST_CENSUS",
+    "arithmetic_invoked": false,
+    "attempt_state_created": false,
+    "s2_start_created": false,
+    "operand_execution_consumptions": 0
+  },
+  "blocking_finding": {
+    "id": "READINESS-B1",
+    "classification": "BLOCKING",
+    "title": "Accepted S2 consumer cannot parse the exact retained S1 private manifest",
+    "detail": "The SHA-bound retained S1 manifest uses the accepted producer schema with a singular artifact object, path, and LAYER3_POST_ATTENTION_RESIDUAL role. OpenOperand in the accepted S2 executor requires an artifacts list of length one with symbolic_path and the consumer-facing representative S1 role. The exact production preflight therefore fails at MANIFEST_CENSUS before opening the S1 artifact or entering arithmetic.",
+    "disposition": "FAIL_CLOSED_NO_TOKEN. Repair requires append-only S2 consumer/release authority and fresh independent review; changing the accepted executor bytes would invalidate the accepted release, review, and approval chain."
+  },
+  "state_root": {
+    "release_root_exists": true,
+    "release_root_mode": "0700",
+    "attempt_root_absent": true,
+    "durable_attempt_start_absent": true,
+    "s2_start_absent": true,
+    "output_root_absent": true,
+    "output_absent": true,
+    "private_manifest_absent": true,
+    "receipt_absent": true,
+    "terminal_absent": true,
+    "go_token_absent": true
+  },
+  "accounting": {
+    "s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0,
+    "durable_attempt_starts": 0,
+    "s2_starts": 0,
+    "s1_operand_execution_consumptions": 0,
+    "ffn_operand_execution_consumptions": 0,
+    "go_tokens_created": 0,
+    "go_tokens_consumed": 0
+  },
+  "ntfy": {
+    "start": "PASS",
+    "review_verdict": "PASS",
+    "approval_accept": "PASS",
+    "blocker": "PASS"
+  },
+  "termination_condition": "MACHINE_LOCAL_READINESS_BLOCKED_BEFORE_GO_TOKEN_CREATION"
+}
