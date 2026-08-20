@@ -626,7 +626,7 @@
 
 ## Phase 42: Convergence
 
-- [ ] T017-245 Bank and independently accept the exact wrapper-enforced
+- [x] T017-245 Bank and independently accept the exact wrapper-enforced
   representative S1 materialization release-v2 approval, validate the complete
   retained S0/attention source surface and empty fixed execution state without
   reconstruction, then create exactly one mode-0400, single-link, unconsumed
