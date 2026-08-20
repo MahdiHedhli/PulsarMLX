@@ -1,0 +1,75 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-output-reuse-closeout",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "dbcf1dc5cafde118e7904b3e6174389215758182",
+  "builder_review_target_head": "d2ee21a4431905b464a5f635be1c44279bdfe706",
+  "review_banking_commit": "8bf831596d9cd6e3735ab3a8a869be10bdd9df9c",
+  "cycles_used": 1,
+  "maximum_cycles": 4,
+  "builder_model": "GPT-5.6 Sol",
+  "builder_effort": "High",
+  "final_integration_effort": "Extra High",
+  "reviewer_model": "claude-fable-5",
+  "verdict": "ACCEPT",
+  "execution_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s1-materialization-real-execution-result-v1.json",
+    "sha256": "ea924afbc8972c194adc9d8a9759e1fca35ae8c2ab362225477cb4c54229fb55"
+  },
+  "reuse_authorization": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-output-reuse-authorization-v1.json",
+    "sha256": "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13"
+  },
+  "independent_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s1-output-reuse-cycle-01-independent-review.json",
+    "sha256": "b4eb3a45a1b50c8030cecb515cd28e411baee6134dd9f058fe2fc97fb282dbef",
+    "reviewed_head": "d2ee21a4431905b464a5f635be1c44279bdfe706",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 2
+  },
+  "reproduction_adjudication": {
+    "result": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+    "additional_materialization_authorized": false,
+    "additional_materialization_performed": false,
+    "future_reproduction_requires_separate_authority": true,
+    "basis": "PRECOMMITTED_EXPECTED_SHA_PLUS_EXACT_RETAINED_BYTES_COMPLETE_TERMINAL_MANIFEST_RECEIPT_SOURCE_IDENTITIES_AND_ACCEPTED_10_OF_10_ATTENTION_REPRODUCTION",
+    "precedent": "ACCEPTED_REPRESENTATIVE_FFN_AND_ROUTED_AGGREGATE_CROSS_EVENT_REUSE_WITHOUT_POST_EVENT_RECOMPUTATION"
+  },
+  "defense_in_depth_dispositions": [
+    {
+      "id": "R1-DD-1",
+      "disposition": "ACCEPTED_NON_BLOCKING",
+      "reason": "Path.home root selection cannot forge authority because output, manifest, receipt, terminal, upstream evidence, owner, mode, link count, geometry, and same-descriptor bytes are all exact-hash bound; an alternate root can only supply identity-equivalent bytes."
+    },
+    {
+      "id": "R1-DD-2",
+      "disposition": "ACCEPTED_NON_BLOCKING",
+      "reason": "A hypothetical pre-existing writable descriptor is outside the accepted single-user publication threat model; exclusive publication, mode 0400, single-link policy, held-descriptor metadata, and before/after byte equality remain fail-closed for authority."
+    }
+  ],
+  "clarity_observations": [
+    {
+      "id": "R1-OBS-1",
+      "disposition": "DOCUMENTED",
+      "reason": "The nine attention source hashes intentionally bind retained packed identities, not decoded tensor identities; all authorities use this vocabulary consistently."
+    },
+    {
+      "id": "R1-OBS-2",
+      "disposition": "VERIFIED",
+      "reason": "The preparation claim of eight tests and 41 adversarial subtests was independently reproduced."
+    }
+  ],
+  "final_accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "s1_release_v2_reruns": 0,
+    "new_s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0
+  },
+  "result": "REPRESENTATIVE_S1_REUSE_AUTHORIZED",
+  "next_safe_action": "PREPARE_A_SEPARATE_CHECKPOINT_FREE_S2_AUTHORIZATION_USING_THE_BANKED_S1_AND_ALREADY_ACCEPTED_FFN_REUSE_AUTHORITIES;DO_NOT_RERUN_S1_OR_CONSUME_FFN_OR_CONSTRUCT_S2_WITHOUT_SEPARATE_ACCEPTED_AUTHORITY"
+}

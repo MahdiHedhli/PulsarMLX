@@ -1,7 +1,7 @@
 {
   "schema": "pulsarmlx.f017.representative-s1-output-reuse-loop-state",
   "schema_version": "1.0.0",
-  "phase": "REVIEW_PENDING",
+  "phase": "STOP_ACCEPTED",
   "cycle": 1,
   "maximum_cycles": 4,
   "builder_model": "GPT-5.6 Sol",
@@ -9,15 +9,15 @@
   "final_integration_effort": "Extra High",
   "reviewer_model_required": "claude-fable-5",
   "latest_builder_commit": "89848a3f0fe3b6832fe0f7685dec44be24da4a2e",
-  "latest_review_artifact": null,
-  "latest_review_sha256": null,
-  "latest_verdict": null,
+  "latest_review_artifact": "docs/architecture/reviews/evidence/f017-representative-s1-output-reuse-cycle-01-independent-review.json",
+  "latest_review_sha256": "b4eb3a45a1b50c8030cecb515cd28e411baee6134dd9f058fe2fc97fb282dbef",
+  "latest_verdict": "ACCEPT",
   "blocking_findings": [],
   "non_blocking_required_findings": [],
-  "defense_in_depth_findings": [],
+  "defense_in_depth_findings": ["R1-DD-1", "R1-DD-2"],
   "resolved_findings": ["BUILDER_VALIDATOR_DECLARATIVE_S1_IDENTITY_GATE_STRENGTHENED_BEFORE_REVIEW"],
   "reproduction_required_for_reuse": false,
-  "reproduction_adjudication_pending_independent_review": true,
+  "reproduction_adjudication_pending_independent_review": false,
   "ledger": 175,
   "checkpoint_reads": 0,
   "shard_opens": 0,
@@ -26,5 +26,5 @@
   "new_s1_materializations": 0,
   "ffn_compositions": 0,
   "s2_constructions": 0,
-  "termination_condition": null
+  "termination_condition": "STOP_ACCEPTED"
 }

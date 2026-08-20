@@ -636,7 +636,7 @@
 
 ## Phase 43: Convergence
 
-- [ ] T017-246 Bank the completed representative S1 materialization packet and
+- [x] T017-246 Bank the completed representative S1 materialization packet and
   prepare, checkpoint-free validate, and independently accept a consumer-scoped
   cross-event reuse authority for the immutable canonical post-attention
   residual, enforcing descriptor-stable EXPECTED = BEFORE = CONSUMED = AFTER
