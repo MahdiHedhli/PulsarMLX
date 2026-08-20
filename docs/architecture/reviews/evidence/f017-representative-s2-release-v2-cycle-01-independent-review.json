@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-single-use-release-v2-independent-review",
+  "schema_version": "2.0.0",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model": "claude-fable-5",
+  "reviewed_head": "d2590ce60339832800e906757120d1be36134ff6",
+  "release_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v2.json",
+  "release_sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2",
+  "authorization_sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a",
+  "arithmetic_contract_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+  "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "title": "Runtime wrapper does not hash-verify the v1_supersession binding at execution time",
+      "detail": "mechanics.validate_bindings (reused v1 bytes d99b9100..., invoked by v2 validate_release) verifies the six fixed bindings plus release_wrapper/terminalizer/validator/tests/synthetic_rehearsal, but not bindings.v1_supersession. Only the committed validator v2 (ecacbc75...) pins SUPERSESSION_SHA dbc73f9f... and verifies the bytes.",
+      "disposition": "NON_BLOCKING_ACCEPTED: the supersession document is not load-bearing for execution authority; execution gates on approval/token/binding hashes that are runtime-verified, and validator v2 plus this review independently confirmed the supersession bytes at d2590ce. Recommend adding v1_supersession to the runtime binding loop in a future append-only revision."
+    },
+    {
+      "id": "DID-2",
+      "title": "Working-tree release file re-hashed at multiple points creates a narrow local TOCTOU window",
+      "detail": "sha256_path(RELEASE) is computed independently in validate_approval (APPROVAL_RELEASE), validate_token (TOKEN_BINDING), begin_attempt, and the execution receipt. A local writer mutating the working-tree release between reads could record inconsistent SHAs after authority validation.",
+      "disposition": "NON_BLOCKING_ACCEPTED: the approval is pinned to committed reviewed-head bytes via git_bytes (REVIEWED_RELEASE_BYTES), the go token binds the same release SHA, and terminalizer reconcile re-checks attempt-start release_sha256 against the release file, so any divergence surfaces as ATTEMPT_RELEASE/ACCOUNTING_INTEGRITY_BLOCKER. Exploitation requires write access to the operator's own repository and yields fail-closed outcomes, never silent authority."
+    },
+    {
+      "id": "DID-3",
+      "title": "No direct committed test for an over-length (2+ element) FFN artifacts array",
+      "detail": "test_f017_representative_s2_release_v2.py exercises FFN singular-collection and wrong-role rejection but not a two-element artifacts array; rejection relies on whole-document equality in _validate_ffn_manifest (FFN_MANIFEST_BINDING).",
+      "disposition": "NON_BLOCKING_ACCEPTED: exact document equality against a one-element expected artifacts list provably rejects any additional element, and the pinned retained-manifest identity (sha256 0f6a887f..., 627 bytes, independently reconstructed and matched during this review) excludes all other byte sequences before parsing semantics apply. A direct census test is a cheap future hardening addition."
+    }
+  ],
+  "statement": "YES. THIS COMMITTED APPEND-ONLY S2 RELEASE V2 IS SUFFICIENTLY BOUND AND INSTANTIABLE FOR A LATER INDEPENDENT APPROVAL, CORRECTLY CONSUMES THE EXACT RETAINED S1 PRODUCER MANIFEST, AND PRESERVES ALL ACCEPTED S2 ARITHMETIC AND SINGLE-USE BOUNDARIES. Verified against committed bytes only: release v2 at reviewed head d2590ce hashes to 1182257c... and pins all twelve bindings, each matching committed bytes at both d2590ce and execution code head 33d0355 (synthetic rehearsal added append-only at d2590ce); the d2590ce diff over 33d0355 is 219 insertions and 0 deletions. Release v1 (1b05c093...), its cycle-01 review (5328b829...), approval (17f9c197...), and readiness blocker (74bb10e4...) each have exactly one commit in history and match the supersession record dbc73f9f...; v1 execution authority is superseded solely for S1 manifest schema incompatibility (S2Error:MANIFEST_CENSUS, a consumer-side census mismatch, not a reviewer failure), v1 go tokens are prohibited with zero ever minted, and the stale v1 parser cannot consume the real singular S1 manifest, so no residual v1 execution path exists. The v2 S1 parser enforcement-checks by whole-document equality the exact producer schema pulsarmlx.f017.representative-s1-private-manifest/1.0.0, singular artifact-object-only census, path field, LAYER3_POST_ATTENTION_RESIDUAL producer role, sha256 8309377e..., little-endian-f32, shape [6144], byte length 24576, finite flag, and duplicate-key-free JSON, deriving the consumer alias REPRESENTATIVE_M1F0_S1_POST_ATTENTION_RESIDUAL only after validation of the same descriptor later consumed; the FFN parser remains a distinct exact schema (one-element artifacts array, symbolic_path) and schema swapping or shape-only admission fails closed (FFN_SPEC_CENSUS/S1_MANIFEST_BINDING). Instantiability is proven arithmetically: canonical JSON serialization of the parser-expected S1 and FFN documents reproduces the pinned retained-manifest identities 9ddf842c.../427 bytes and 0f6a887f.../627 bytes exactly. The accepted scalar arithmetic object is unchanged (executor v1 c0268b47... byte-identical at both heads; v2 delegates by object identity) and the proof/reference-derived classification, promotion, single binary64 RNE addition in S1-then-FFN order, single RNE final cast, increasing coordinate order, and no-FMA/no-BLAS/no-GPU/no-parallel rules are preserved and contract-checked at execution (ARITHMETIC_IDENTITY abbf1583...). Release v2 fixes new state/output paths under representative-s2-release-2, rejects v1 approval and token authority (RELEASE_PATH/APPROVAL_CONSTANTS/TOKEN_BINDING, test-verified), preserves exclusive durable attempt creation via O_EXCL mkdir and publish, durable attempt/S2 starts before arithmetic, no retry/resume/second attempt, truthful post-start failure accounting counting one construction, durable no-replace hard-link publication with fsync and readback, receipt, matching-complete-terminal requirement, and partial-output rejection (PARTIAL_PUBLICATION). The committed 17-test v2 suite and 10-test v1 regression suite pass at the reviewed head under pinned CPython 3.14.6 (independently re-executed in an isolated worktree), the committed validator accepts the release including code-head byte checks, and the exact real retained PRODUCTION_BINDINGS_RESOLVED preflight creates no attempt or S2 start, performs no arithmetic, and records zero operand execution consumptions (verify_preflight is read-only descriptor-stable readback; rehearsal accounting shows zero durable starts and zero go tokens). No BLOCKING or NON_BLOCKING_REQUIRED findings; three DEFENSE_IN_DEPTH findings carry concrete non-blocking dispositions. Real S2 arithmetic was not executed during this review."
+}
