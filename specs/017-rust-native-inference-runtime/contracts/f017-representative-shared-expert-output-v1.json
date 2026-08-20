@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-output",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_FUTURE_OUTPUT_CONTRACT_NO_EXECUTION_AUTHORITY",
+  "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+  "filename": "representative-shared-expert-output.f32le",
+  "dtype": "little-endian-f32",
+  "shape": [6144],
+  "byte_length": 24576,
+  "canonical_serialization": "contiguous little-endian IEEE-754 binary32 vector",
+  "finite_check": "6144_OF_6144_FINITE",
+  "identity": {
+    "sha256_recorded_after_descriptor_readback": true,
+    "representative_input_before_after_required": true,
+    "parameter_before_after_required": true
+  },
+  "publication": {
+    "exclusive_output_root": true,
+    "preexisting_output_rejected": true,
+    "temporary_write": true,
+    "file_fsync": true,
+    "mode": "0400",
+    "no_replace_hard_link_publish": true,
+    "parent_fsync": true,
+    "partial_output_has_no_authority": true
+  },
+  "stop_boundary": "AFTER_REPRESENTATIVE_SHARED_EXPERT_OUTPUT_ONLY",
+  "prohibited": ["ROUTED_SHARED_COMBINATION", "FFN_COMPLETION", "S2_CONSTRUCTION", "SHARED_OUTPUT_HISTORICAL_SUBSTITUTION"]
+}

@@ -1,0 +1,65 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-computation",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_NO_EXECUTION_AUTHORITY",
+  "input": {
+    "semantic_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_SHARED_EXPERT_INPUT",
+    "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "private_manifest_sha256": "78f94815ca9402b398a3e11817ab94926a98feaf2447e455a7b18af31d8c78d2",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "production_graph_binding": "F_norm feeds both routed and shared expert projections"
+  },
+  "formula": {
+    "gate": "gate=strict_f32_matvec(W_gate_shared,F_norm)",
+    "up": "up=strict_f32_matvec(W_up_shared,F_norm)",
+    "activation": "activated=strict_f32_silu(gate)",
+    "hidden": "hidden=f32(activated*up)",
+    "down": "Shared=strict_f32_matvec(W_down_shared,hidden)",
+    "projection_order": ["gate", "up", "silu", "multiply", "down"]
+  },
+  "arithmetic": {
+    "projection_accumulation": "binary32 increasing-column order with binary32 product and binary32 add at every column",
+    "silu": "binary32 negation, binary32 exp, binary32 add-one, binary32 division",
+    "hidden_multiplication": "elementwise binary32 multiplication",
+    "casting_points": "decoded matrices, input, every projection product/sum, SiLU primitive, hidden product, and output are binary32",
+    "blas": false,
+    "parallel_reduction": false,
+    "gpu": false,
+    "matrix_orientation": "row-major out-by-in"
+  },
+  "decoders": {
+    "policy": "SAME_RETAINED_PACKED_BYTES_DECODED_BY_A_AND_B_EXACT_CANONICAL_LE_F32_OR_TERMINAL_FAILURE",
+    "q5_k": {
+      "decoder_a": {"path": "scripts/research/prepare_f017_m1f0_real_reference.py", "source_sha256": "ec9a679b78ccd5adb5353cb689cefe642307a07fdb9a266d65d99dab86c6e48d", "symbol": "decode_q5_k_spec", "implementation_sha256": "89b02c839392a17485e10f0c1d796de3cf055d39170ca5af48186fb86e9a15e7"},
+      "decoder_b": {"path": "scripts/research/qualify_f017_m1f0_q5_k_real.py", "source_sha256": "57d5de26453b52ac569fd72bc84512f65bd73c5aff5c59280c42ae145bff1e30", "symbol": "decode_q5_k_upstream_spec", "implementation_sha256": "a9f9d60fffb4d72bcadb637f4bcbe21fc86c76cc34d2bda8d2b8fc722a1b1541"},
+      "independence": "INDEPENDENT_EXACT_REAL_BYTE_QUALIFIED"
+    },
+    "q6_k": {
+      "decoder_a": {"path": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py", "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501", "symbol": "decode_q6_k_spec", "implementation_sha256": "39a153b958b398964966c1041606497eaa23f9e7bee6e15cc406474cc2b20039"},
+      "decoder_b": {"path": "scripts/research/f017_m1f_minus1_dense_prefix_prep.py", "source_sha256": "cfac692461a8772bf7c0d1605b78ab88c43ac593c4431236453e0c8902f51501", "symbol": "decode_q6_k_independent", "implementation_sha256": "999f228465cc2c805da456413872f327d1437e8651f772a555b94f06363f1b76"},
+      "independence": "INDEPENDENT_EXACT_REAL_BYTE_QUALIFIED"
+    },
+    "decoded_hashes_required": ["0dbb53a88bae423154f385ec547c9b778afe8127df6a19955dce2b1653d2282b", "86aae8655c565eeed20a3f87fd701fa15aff976600d095694cd163a0303e3000", "97e654b6e4903cd35ae8fae15c03e9953b15ef3ad4f5c0c60210a1e7864fe4a3"]
+  },
+  "runtime_kernel_identities": {
+    "strict_f32_matvec": "0dfcd369a75a0ca9d567d95fc7246623ba7d5743b93b7e2c02d73bc7baff9ee8",
+    "strict_f32_silu": "85fd261c4121aa152b8c0938d49ac8906cccdbf228e2f953dca21ced7db65e24",
+    "compute": "c2363271a5a2e4be172e5860616f04e99d28da9a9c331b95e5f34412acc6b23f"
+  },
+  "output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "canonical_serialization": "contiguous little-endian IEEE-754 binary32 vector",
+    "finite": true
+  },
+  "historical_lineage": {
+    "historical_kernel_and_decoder_structure": "STRUCTURAL_ONLY",
+    "historical_parameter_bytes": "SAME_SURFACE_REUSABLE",
+    "historical_direct_dprefix_input": "VALID_BUT_DIFFERENT_SURFACE",
+    "historical_shared_output": "VALID_BUT_DIFFERENT_SURFACE"
+  }
+}

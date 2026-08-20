@@ -1,0 +1,86 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-parameter-reuse",
+  "schema_version": "1.0.0",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "consumer_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-1",
+  "source_authority": {
+    "source_event": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1",
+    "historical_authorization": {"path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-authorization-v1.json", "sha256": "222c79e92fdc10ec82ec87e7efbd7d5f4a9030e1b3095484fdd343e7109b7ef0"},
+    "historical_result": {"path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-result-v1.json", "sha256": "971c371ce7b1220f612f941c76c0fe359f122c8ff6f3643711fab946d11eff24"},
+    "historical_evidence_review": {"path": "docs/architecture/reviews/evidence/f017-canonical-shared-expert-recovery-evidence-review-v1.json", "sha256": "7107e690c4ad3ad951166e7045fcf4d1e034a12b8e94f8bc9de2a68d5551bc8a"},
+    "historical_private_manifest_sha256": "f04707514ddb90fd0e70fb4aeb0fc471d5ee0f448ac4c0763b984fe050f57116",
+    "representative_private_manifest_sha256": "c7669c26eb2520dd6857bde7eb7c18d84e29d8083759bac33f265781efb990e6",
+    "source_ledger_interval": [163, 166],
+    "source_checkpoint_reads": 3,
+    "source_shard_opens": 1
+  },
+  "surface_independence": {
+    "classification": "SAME_MODEL_PARAMETER_SURFACE_REUSABLE",
+    "proof": "checkpoint tensor keys bind immutable layer-3 shared-expert parameter matrices by layer and projection role; activation values are separate operands and are absent from packed model-weight bytes",
+    "historical_input_reusable": false,
+    "historical_output_reusable": false,
+    "representative_input_supplied_separately": true
+  },
+  "parameters": [
+    {
+      "ordinal": 0,
+      "checkpoint_key": "blk.3.ffn_gate_shexp.weight",
+      "role": "gate",
+      "semantic_role": "SHARED_EXPERT_GATE_PROJECTION_WEIGHT",
+      "relative_path": "packed/01-gate.bin",
+      "packed_sha256": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "decoded_sha256": "0dbb53a88bae423154f385ec547c9b778afe8127df6a19955dce2b1653d2282b",
+      "quantization": "Q5_K",
+      "packed_bytes": 8650752,
+      "decoded_bytes": 50331648,
+      "decoded_dtype": "little-endian-f32",
+      "decoded_shape": [2048, 6144]
+    },
+    {
+      "ordinal": 1,
+      "checkpoint_key": "blk.3.ffn_up_shexp.weight",
+      "role": "up",
+      "semantic_role": "SHARED_EXPERT_UP_PROJECTION_WEIGHT",
+      "relative_path": "packed/02-up.bin",
+      "packed_sha256": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "decoded_sha256": "86aae8655c565eeed20a3f87fd701fa15aff976600d095694cd163a0303e3000",
+      "quantization": "Q5_K",
+      "packed_bytes": 8650752,
+      "decoded_bytes": 50331648,
+      "decoded_dtype": "little-endian-f32",
+      "decoded_shape": [2048, 6144]
+    },
+    {
+      "ordinal": 2,
+      "checkpoint_key": "blk.3.ffn_down_shexp.weight",
+      "role": "down",
+      "semantic_role": "SHARED_EXPERT_DOWN_PROJECTION_WEIGHT",
+      "relative_path": "packed/03-down.bin",
+      "packed_sha256": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083",
+      "decoded_sha256": "97e654b6e4903cd35ae8fae15c03e9953b15ef3ad4f5c0c60210a1e7864fe4a3",
+      "quantization": "Q6_K",
+      "packed_bytes": 10321920,
+      "decoded_bytes": 50331648,
+      "decoded_dtype": "little-endian-f32",
+      "decoded_shape": [6144, 2048]
+    }
+  ],
+  "packed_total_bytes": 27623424,
+  "decoded_total_bytes": 150994944,
+  "retained_identity_contract": {
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_once_consume_same_descriptor": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true,
+    "no_writable_alias": true,
+    "no_reopen_by_path": true
+  },
+  "access": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "checkpoint_fallback": false,
+    "alternate_parameter_authority": false
+  }
+}

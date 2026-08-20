@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-authorization-loop-state",
+  "schema_version": "1.0.0",
+  "phase": "BUILDER_CYCLE_1_COMMITTED_REVIEW_PENDING",
+  "cycle": 1,
+  "builder_model": "GPT-5.6 Sol",
+  "builder_effort": "High",
+  "reviewer_model": null,
+  "reviewer_sha256": null,
+  "latest_verdict": null,
+  "blocking_findings": [],
+  "required_findings": [],
+  "resolved_findings": [],
+  "shared_input_authority": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+  "parameter_authorities": ["750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414", "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe", "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083"],
+  "ledger": 175,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "shared_expert_executions": 0,
+  "ffn_completions": 0,
+  "s2_constructions": 0,
+  "termination_condition": null
+}

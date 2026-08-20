@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-authorization-preparation",
+  "schema_version": "1.0.0",
+  "preparation_base_head": "a013096aa92881f23b11f4c8ebfb3b623f3b6800",
+  "artifacts": {
+    "authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json", "sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596"},
+    "parameter_reuse": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-parameter-reuse-v1.json", "sha256": "935e50753f0b90656c59bdad811e9b45e8bc246b5f9c85cc21cf762297c4f347"},
+    "computation_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-computation-v1.json", "sha256": "605bf430406ddbc3351f0e597debf989e853dc74bf4fc1e5e36e5b8df4217187"},
+    "output_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-output-v1.json", "sha256": "fc2beafe9f771e27bace66c4bd576e2075d02869e8cf0560e0ec513db63763a3"},
+    "executor": {"path": "scripts/research/f017_representative_shared_expert_recovery_executor_v1.py", "sha256": "d57cd1ea3e9a74655ac2a3881f9b5aa1f5ee3036b76d18518b8834357273e0ec"},
+    "rehearsal_producer": {"path": "scripts/research/rehearse_f017_representative_shared_expert_recovery_v1.py", "sha256": "71da800e3ee57e01339d1ede046b790694ffb3f6f7a0c296484588592798b8fc"},
+    "rehearsal": {"path": "docs/architecture/reviews/evidence/f017-representative-shared-expert-synthetic-rehearsal-v1.json", "sha256": "54f80a379948dfd1697c9d5a7962ad3c39cf75d404d4c7c1c166ac9ca2f184f9"},
+    "validator": {"path": "scripts/research/validate_f017_representative_shared_expert_recovery_authorization_v1.py", "sha256": "f58162cb77aa5e4a3c94fb693fb93b6c5375f1d8bdb8235757855033d8a63e15"},
+    "tests": {"path": "scripts/research/tests/test_f017_representative_shared_expert_recovery_authorization_v1.py", "sha256": "e0ccf7846b54d7aca66e2c236b2ddec9e42b00aecb3760bb65bee97149787177"},
+    "private_parameter_manifest": {"sha256": "c7669c26eb2520dd6857bde7eb7c18d84e29d8083759bac33f265781efb990e6", "committed": false, "machine_local_path_published": false}
+  },
+  "input_adjudication": {
+    "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_SHARED_EXPERT_INPUT",
+    "semantic_graph_proves_shared_and_routed_use_same_F_norm": true,
+    "historical_direct_dprefix_input_reused": false
+  },
+  "parameter_adjudication": {
+    "parameter_count": 3,
+    "packed_bytes": 27623424,
+    "decoded_bytes": 150994944,
+    "packed_hashes_verified": true,
+    "decoded_hashes_anchored_to_completed_source_event": true,
+    "surface_independent_model_weights": true,
+    "checkpoint_fallback": false
+  },
+  "validation": {
+    "authorization_validator": "PASS",
+    "unit_tests": "6_OF_6_PASS",
+    "authorization_mutations": 30,
+    "real_retained_preflight": "PRODUCTION_BINDINGS_RESOLVED",
+    "real_geometry_rehearsal": "PASS",
+    "fresh_processes": 2,
+    "fresh_process_output_identity": "2_OF_2_EXACT",
+    "synthetic_output_sha256": "9eb5ee8de16bf1804ba77c38cbdd17dd99b82b0485748c0c39b0b757e60c59a6",
+    "failure_cases": "23_OF_23_PASS"
+  },
+  "isolation": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "disposition": "PREPARED_REVIEW_REQUIRED"
+}

@@ -1,0 +1,115 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-recovery-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-AUTHORIZATION-1",
+  "event_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-1",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "real_event_authorized": false,
+  "preparation_base_head": "a013096aa92881f23b11f4c8ebfb3b623f3b6800",
+  "upstream_authority": {
+    "semantic_graph": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json", "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"},
+    "representative_boundary": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v3.json", "sha256": "a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3"},
+    "route_execution_evidence": {"path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json", "sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"},
+    "routed_aggregate_execution_evidence": {"path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-real-execution-result-v1.json", "sha256": "fd362662a72ee6c4a951432d0ceb603a1f31ba7f62b885059e9f05c1df673d43"},
+    "routed_aggregate_reuse": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json", "sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb"},
+    "routed_aggregate_reuse_review": {"path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-reuse-cycle-01-independent-review.json", "sha256": "49848c1f27e15360bb8514f6b9dbd32b523c73936af6218dcf6505fa3bdf36f8"}
+  },
+  "representative_input": {
+    "semantic_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_SHARED_EXPERT_INPUT",
+    "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+    "private_manifest_sha256": "78f94815ca9402b398a3e11817ab94926a98feaf2447e455a7b18af31d8c78d2",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_once_consume_same_descriptor": true
+  },
+  "parameter_reuse": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-parameter-reuse-v1.json",
+    "sha256": "935e50753f0b90656c59bdad811e9b45e8bc246b5f9c85cc21cf762297c4f347",
+    "private_manifest_sha256": "c7669c26eb2520dd6857bde7eb7c18d84e29d8083759bac33f265781efb990e6",
+    "consumer_id": "F017-REPRESENTATIVE-M1F0-SHARED-EXPERT-RECOVERY-1",
+    "checkpoint_fallback": false
+  },
+  "parameter_manifest": {
+    "relative_path": "representative-shared-expert-weight-reuse-manifest-v1.json",
+    "sha256": "c7669c26eb2520dd6857bde7eb7c18d84e29d8083759bac33f265781efb990e6",
+    "byte_length": 1941,
+    "machine_local_path_not_committed": true
+  },
+  "retained_parameters": [
+    {"ordinal": 0, "checkpoint_key": "blk.3.ffn_gate_shexp.weight", "role": "gate", "semantic_role": "SHARED_EXPERT_GATE_PROJECTION_WEIGHT", "relative_path": "packed/01-gate.bin", "packed_sha256": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414", "decoded_sha256": "0dbb53a88bae423154f385ec547c9b778afe8127df6a19955dce2b1653d2282b", "quantization": "Q5_K", "packed_bytes": 8650752, "decoded_bytes": 50331648, "decoded_dtype": "little-endian-f32", "decoded_shape": [2048, 6144]},
+    {"ordinal": 1, "checkpoint_key": "blk.3.ffn_up_shexp.weight", "role": "up", "semantic_role": "SHARED_EXPERT_UP_PROJECTION_WEIGHT", "relative_path": "packed/02-up.bin", "packed_sha256": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe", "decoded_sha256": "86aae8655c565eeed20a3f87fd701fa15aff976600d095694cd163a0303e3000", "quantization": "Q5_K", "packed_bytes": 8650752, "decoded_bytes": 50331648, "decoded_dtype": "little-endian-f32", "decoded_shape": [2048, 6144]},
+    {"ordinal": 2, "checkpoint_key": "blk.3.ffn_down_shexp.weight", "role": "down", "semantic_role": "SHARED_EXPERT_DOWN_PROJECTION_WEIGHT", "relative_path": "packed/03-down.bin", "packed_sha256": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083", "decoded_sha256": "97e654b6e4903cd35ae8fae15c03e9953b15ef3ad4f5c0c60210a1e7864fe4a3", "quantization": "Q6_K", "packed_bytes": 10321920, "decoded_bytes": 50331648, "decoded_dtype": "little-endian-f32", "decoded_shape": [6144, 2048]}
+  ],
+  "computation_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-computation-v1.json",
+    "sha256": "605bf430406ddbc3351f0e597debf989e853dc74bf4fc1e5e36e5b8df4217187"
+  },
+  "output_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-output-v1.json",
+    "sha256": "fc2beafe9f771e27bace66c4bd576e2075d02869e8cf0560e0ec513db63763a3",
+    "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576
+  },
+  "executor": {
+    "path": "scripts/research/f017_representative_shared_expert_recovery_executor_v1.py",
+    "sha256": "d57cd1ea3e9a74655ac2a3881f9b5aa1f5ee3036b76d18518b8834357273e0ec",
+    "checkpoint_path_interface": false,
+    "shard_path_interface": false,
+    "arbitrary_inventory": false,
+    "arbitrary_input": false,
+    "arbitrary_output_role": false
+  },
+  "rehearsal": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-shared-expert-synthetic-rehearsal-v1.json",
+    "sha256": "54f80a379948dfd1697c9d5a7962ad3c39cf75d404d4c7c1c166ac9ca2f184f9",
+    "fresh_processes": 2,
+    "exact_output_identity": "2_OF_2",
+    "real_geometry": true,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_shared_expert_executions": 0
+  },
+  "one_shot_semantics": {
+    "durable_attempt_start": true,
+    "durable_shared_computation_start": true,
+    "exclusive_attempt_root": true,
+    "retry": false,
+    "resume": false,
+    "second_attempt": false,
+    "failure_after_attempt_start_consumes_release": true
+  },
+  "access_accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "future_shared_expert_executions": 1,
+    "preparation_shared_expert_executions": 0,
+    "routed_aggregate_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "stop_boundary": "AFTER_REPRESENTATIVE_SHARED_EXPERT_OUTPUT_ONLY",
+  "prohibitions": {
+    "checkpoint_access": true,
+    "checkpoint_fallback": true,
+    "shard_open": true,
+    "historical_direct_dprefix_input": true,
+    "historical_shared_output_substitution": true,
+    "routed_shared_combination": true,
+    "ffn_completion": true,
+    "s2_construction": true,
+    "gpu": true,
+    "blas": true
+  },
+  "historical_lineage": {
+    "shared_parameter_bytes": "SAME_SURFACE_REUSABLE",
+    "decoder_and_kernel_structure": "STRUCTURAL_ONLY",
+    "historical_direct_dprefix_input": "VALID_BUT_DIFFERENT_SURFACE",
+    "historical_shared_output": "VALID_BUT_DIFFERENT_SURFACE"
+  }
+}
