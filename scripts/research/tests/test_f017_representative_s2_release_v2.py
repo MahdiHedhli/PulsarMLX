@@ -234,8 +234,11 @@ class PreservedMechanicsTests(unittest.TestCase):
     def test_no_fallback_or_s2_arithmetic_in_preflight_source(self) -> None:
         source = Path(wrapper.__file__).read_text()
         self.assertNotIn("checkpoint", Path(executor.__file__).read_text().lower())
-        self.assertNotIn("s1-materialization", source)
-        self.assertNotIn("ffn-composition-release-2/go-token", source)
+        self.assertNotIn("--s1", source)
+        self.assertNotIn("--ffn", source)
+        self.assertNotIn("--checkpoint", source)
+        self.assertNotIn("subprocess", source)
+        self.assertNotIn("os.system", source)
 
     def test_concurrent_attempt_race_still_one_winner(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
