@@ -8,7 +8,7 @@
   "builder_effort": "High",
   "final_integration_effort": "Extra High",
   "reviewer_model_required": "claude-fable-5",
-  "latest_builder_commit": null,
+  "latest_builder_commit": "89848a3f0fe3b6832fe0f7685dec44be24da4a2e",
   "latest_review_artifact": null,
   "latest_review_sha256": null,
   "latest_verdict": null,

@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-output-reuse-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "maximum_cycles": 4,
+  "branch": "feat/017-real-checkpoint-runner",
+  "review_target": "EXACT_CLEAN_COMMITTED_HEAD_AT_INVOCATION",
+  "required_reviewer_model": "claude-fable-5",
+  "builder_commit": "89848a3f0fe3b6832fe0f7685dec44be24da4a2e",
+  "artifacts": {
+    "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-s1-materialization-real-execution-result-v1.json","sha256":"ea924afbc8972c194adc9d8a9759e1fca35ae8c2ab362225477cb4c54229fb55"},
+    "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-output-reuse-authorization-v1.json","sha256":"5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13"},
+    "resolver": {"path":"scripts/research/f017_representative_s1_output_reuse_v1.py","sha256":"d2ac1f4d5e43fb57dde67dd907d2a86e0adaba922f564a41a8117b98e405feef"},
+    "validator": {"path":"scripts/research/validate_f017_representative_s1_output_reuse_v1.py","sha256":"e754d678c966d1b9a08f5aaa5fbc137fe655a4e04fe460d9c5d7149c251c4f89"},
+    "tests": {"path":"scripts/research/tests/test_f017_representative_s1_output_reuse_v1.py","sha256":"63efbaa0d479d84cdce96c835e3fb6ce5cb9a4c78d651ff59bf4511cddf2511f"},
+    "preparation": {"path":"docs/architecture/reviews/evidence/f017-representative-s1-output-reuse-preparation-v1.json","sha256":"d8be1e677da5f37499c65461a45bc5981991b53f31c27a07bbaa7d21281354ff"}
+  },
+  "fixed_rules": [
+    "repository bytes are authoritative",
+    "review only the exact committed target head",
+    "no checkpoint or shard access",
+    "do not rerun S1 release v2 or perform any reconstruction/materialization",
+    "independently inspect executable producer/consumer schemas and durable state",
+    "test claims rather than trust validators or builder prose",
+    "treat BLOCKING and NON_BLOCKING_REQUIRED as acceptance-blocking",
+    "do not fix findings",
+    "write the exact JSON review artifact to the requested path"
+  ],
+  "required_adjudications": [
+    "reconcile release approval token attempt-start materialization-start receipt terminal manifest and output authority",
+    "verify the still-present token is durably consumed and cannot permit a second attempt",
+    "verify the S1 bytes are canonical post-attention residual authority and not an FFN or alternate surface",
+    "verify canonical S0 and all nine attention identities are bound expected before consumed after",
+    "verify open-once same-descriptor reuse and immutable file policy",
+    "attack wrong SHA manifest receipt terminal authority geometry finiteness and lineage mutations",
+    "attack hidden checkpoint shard attention reconstruction S1 rerun FFN consumption and S2 paths",
+    "explicitly adjudicate whether reuse is SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+    "answer whether the authority is sufficient for future checkpoint-free S2 preparation without authorizing S2"
+  ],
+  "requested_review_path": "docs/architecture/reviews/evidence/f017-representative-s1-output-reuse-cycle-01-independent-review.json",
+  "required_output": ["actual reviewer model","exact reviewed head","artifact hashes","findings by classification","verdict","counter observations","reproduction adjudication","next safe action"]
+}
