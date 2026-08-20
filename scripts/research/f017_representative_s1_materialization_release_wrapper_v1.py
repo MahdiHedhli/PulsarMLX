@@ -49,6 +49,8 @@ def fixed_paths(home: Path | None = None) -> dict[str, Path]:
         "attention_retention": home / ".local/share/pulsarmlx/f017/representative-m1f0-release-1/retention",
         "root": root, "state": root / "attempt-state", "outputs": root / "outputs",
         "output": root / "outputs" / OUTPUT_NAME, "manifest": root / "outputs" / MANIFEST_NAME,
+        "approval": ROOT / "docs/architecture/reviews/evidence/f017-representative-s1-materialization-single-use-release-v1-independent-approval-v1.json",
+        "go_token": root / "go-token.json",
     }
 
 
@@ -115,8 +117,31 @@ def preflight(release_path: Path, home: Path | None = None) -> tuple[dict[str, A
     return release, paths
 
 
+def authorize(release_path: Path, release: dict[str, Any], paths: dict[str, Path]) -> None:
+    require(paths["approval"].is_file() and paths["go_token"].is_file(), "APPROVAL_OR_TOKEN_ABSENT")
+    approval = json.loads(paths["approval"].read_text(encoding="utf-8"))
+    approval_keys = {"schema","schema_version","event_id","release_id","attempt_id","release_sha256","authorization_sha256","reviewed_head","release_review_path","release_review_sha256","reviewer_model","verdict","approval_statement","approval_does_not_execute","approval_is_not_token","real_event_authorized","ledger","stop_boundary"}
+    require(set(approval) == approval_keys, "APPROVAL_SCHEMA")
+    require(approval["schema"] == "pulsarmlx.f017.representative-s1-materialization-release-independent-approval" and approval["schema_version"] == "1.0.0", "APPROVAL_VERSION")
+    require(approval["event_id"] == release["event_id"] and approval["release_id"] == release["release_id"] and approval["attempt_id"] == release["attempt_id"], "APPROVAL_IDS")
+    require(approval["release_sha256"] == sha_path(release_path) and approval["authorization_sha256"] == release["authorization_sha256"], "APPROVAL_AUTHORITY")
+    require(approval["reviewer_model"] == "claude-fable-5" and approval["verdict"] == "ACCEPT", "APPROVAL_REVIEWER")
+    require(approval["approval_statement"] == "REPRESENTATIVE S1 MATERIALIZATION SINGLE-USE RELEASE V1 APPROVED", "APPROVAL_STATEMENT")
+    require(approval["approval_does_not_execute"] is True and approval["approval_is_not_token"] is True and approval["real_event_authorized"] is False, "APPROVAL_SEPARATION")
+    require(approval["ledger"] == 175 and approval["stop_boundary"] == "AFTER_REPRESENTATIVE_S1_RETENTION_ONLY", "APPROVAL_BOUNDARY")
+    review_path = ROOT / approval["release_review_path"]
+    require(review_path.is_file() and sha_path(review_path) == approval["release_review_sha256"], "APPROVAL_REVIEW_SHA")
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    require(review.get("verdict") == "ACCEPT" and review.get("reviewed_head") == approval["reviewed_head"], "APPROVAL_REVIEW_CONTENT")
+    token = json.loads(paths["go_token"].read_text(encoding="utf-8"))
+    token_keys = {"approval_sha256","attempt_id","authorization_sha256","disposition","event_id","real_event_authorized","release_id","release_sha256"}
+    require(set(token) == token_keys, "TOKEN_SCHEMA")
+    require(token == {"approval_sha256":sha_path(paths["approval"]),"attempt_id":release["attempt_id"],"authorization_sha256":release["authorization_sha256"],"disposition":"GO_EXECUTE_ONCE_NO_RETRY","event_id":release["event_id"],"real_event_authorized":True,"release_id":release["release_id"],"release_sha256":sha_path(release_path)}, "TOKEN_AUTHORITY")
+
+
 def execute(release_path: Path) -> dict[str, Any]:
     release, paths = preflight(release_path)
+    authorize(release_path, release, paths)
     paths["root"].mkdir(parents=True, exist_ok=True, mode=0o700); os.chmod(paths["root"], 0o700)
     paths["outputs"].mkdir(mode=0o700); os.mkdir(paths["state"], 0o700)
     parent = open_dir(paths["root"]); os.fsync(parent); os.close(parent)

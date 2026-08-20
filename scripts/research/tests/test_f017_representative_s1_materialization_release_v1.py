@@ -60,6 +60,14 @@ def test_exclusive_attempt_directory_race():
         with pytest.raises(FileExistsError): os.mkdir(target, 0o700)
 
 
+def test_execute_calls_authority_gate_before_state(monkeypatch):
+    release, paths = {}, {"state": Path("must-not-exist")}
+    monkeypatch.setattr(wrapper, "preflight", lambda path: (release, paths))
+    monkeypatch.setattr(wrapper, "authorize", lambda *args: (_ for _ in ()).throw(wrapper.ReleaseError("TOKEN_AUTHORITY")))
+    with pytest.raises(wrapper.ReleaseError, match="TOKEN_AUTHORITY"):
+        wrapper.execute(Path("release.json"))
+
+
 def base_authorization_release():
     fixture_path = "scripts/research/validate_f017_representative_s1_materialization_release_v1.py"
     fixture_sha = validator.sha(ROOT / fixture_path)
