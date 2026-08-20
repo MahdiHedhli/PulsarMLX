@@ -1,0 +1,144 @@
+{
+  "schema": "pulsarmlx.f017.representative-routed-aggregate-independent-review",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-ROUTED-AGGREGATE-AUTHORIZATION-1-CYCLE-02-INDEPENDENT-REVIEW",
+  "cycle": 2,
+  "reviewed_head": "73a875f46cbd866a072e1e019a73dd1d1a6cc718",
+  "actual_reviewer_model": "claude-fable-5",
+  "review_scope": "COMMITTED_REPOSITORY_BYTES_ONLY_CHECKPOINT_FREE_NO_PRIVATE_PACKAGE_ACCESS_NO_REAL_AGGREGATE",
+  "verdict": "ACCEPT",
+  "composition_answer": "YES. The committed authorization at head 73a875f46cbd866a072e1e019a73dd1d1a6cc718 is sufficient to permit exactly one future checkpoint-free routed-aggregate execution over the eight banked representative expert outputs, under a future separately approved single-use release, while preserving the intentional distinction from the production serial-f32 surface. Both cycle-1 required findings are independently verified as repaired from committed bytes, not from repair claims: (RRA-C1-R1) synthetic mode now rejects any declaration of a protected representative output identity at validate_records time, before any file is opened, with a second consumed-bytes layer via forbidden_shas in OpenOnceInputs (transitively complete because the computed SHA must equal the declared SHA before the membership check), and this review's fresh-process attacks -- a synthetic manifest declaring all eight protected OUTPUT_SHAS and one declaring a single protected SHA -- both fail closed with exit 2, disposition FAIL_CLOSED, truthful zero counters, and no output file; the authorization adds the prohibition synthetic_use_of_representative_output_identity and the validator requires the rehearsal's fresh-process negative gate PASS_RC_2. (RRA-C1-R2) the --execute path now enforces fixed pinned event/release/attempt identities (EVENT ...-ANALYTICAL-1, RELEASE ...-RELEASE-1, ATTEMPT ...-ATTEMPT-1) in validate_release, an exclusive durable attempt-start (atomic os.mkdir of the state root, fsynced parent, then an fsynced atomically written attempt-start.json binding authorization, release, and executor SHAs with consumption boundary DURABLE_ATTEMPT_START_BEFORE_AGGREGATE_COMPUTATION and ledger 175) before any aggregate computation, prior-attempt-state refusal, fresh-output refusal, overwrite-refusing atomic writes, and a terminal.json on success or caught failure carrying retry:false, resume:false, second_attempt:false. This review verified fresh-process that replay after crash-after-state-root-creation, replay after crash-after-durable-attempt-start, replay after a completed terminal, and existing-output invocation are all denied with exit 2 and truthful counters, and that a forged syntactically valid release with correct authorization and executor SHA bindings still cannot execute: it fails closed at the private-manifest identity gate without creating any state root, because execution requires the private package manifest bytes (sha 2b3a0ef3...) and the eight exact protected input SHAs, none of which are in the repository. Concurrent double execution at the same state root is excluded by the atomic mkdir (exactly one attempt-start can ever exist there; the loser computes nothing and cannot write into the winner's state root because begin_attempt precedes the guarded try block). The exact triples remain byte-equal to the accepted representative expert-output reuse authorization (mod semantic_role) and to the join of the COMPLETE real expert execution evidence, in canonical order [250,10,237,62,73,177,218,28] with expert 62 before expert 73 despite 73's larger weight, excluding any independent weight sort; the historical direct-DPREFIX output remains rejected in real mode and by the validator. The arithmetic contract and semantic adjudication are unchanged from cycle 1 (byte-identical SHAs) and continue to pin direct CPython 3.14.6 math.fsum binary64 accumulation with exact f32-to-f64 promotion, little-endian f64[6144] serialization, fail-closed environment mismatch (verified fresh-process under Python 3.9.6: FAIL_CLOSED before input consumption), and forbidden serial-f32/BLAS/parallel/GPU/alternate-fsum substitution, correctly classified CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32 with the production selected_slot_rank_order_serial_binary32_reduction surface explicitly not authorized. The rehearsal generator now emits canonical serialization and its committed evidence is byte-identical to a fresh regeneration (resolving RRA-C1-D2), with the synthetic output SHA reproduced bit-exactly in four fresh processes during this review, and the release identity value-pinning resolves RRA-C1-D1. Preparation performed zero checkpoint/shard/expert/real-aggregate work, ledger 175 to 175, exactly one future aggregate execution is budgeted, and the stop boundary is AFTER_ROUTED_AGGREGATE_ONLY. Remaining findings are defense-in-depth only; the most material -- the committed release schema cannot itself pin the concrete state-root path, so exactly-once against a willfully re-invoking release holder relies on the future release-approval stage pinning state-root and output paths -- must be closed at that future approval, which remains a separate independently approved event.",
+  "prior_review_binding": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-01-independent-review.json",
+    "sha256": "4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420",
+    "verdict": "REJECT",
+    "findings": ["RRA-C1-R1", "RRA-C1-R2"],
+    "committed_bytes_recomputed_and_matched": true
+  },
+  "resolved_findings": [
+    {
+      "id": "RRA-C1-R1",
+      "status": "RESOLVED_VERIFIED",
+      "verification": "validate_records(synthetic=True) rejects any record whose output_sha256 is in OUTPUT_SHAS before any file open; main() re-checks all records; OpenOnceInputs rejects forbidden consumed identities (complete because sha256(bytes)==declared is required first, so protected bytes cannot be consumed under a non-protected declaration). Fresh-process attacks by this review (all-eight-protected manifest, single-protected manifest) exit 2 with FAIL_CLOSED, truthful zero counters, no output. The committed rehearsal evidence records a fresh-process negative gate (fresh_process_protected_output_rejection PASS_RC_2) which the committed validator now requires, and the authorization adds prohibition synthetic_use_of_representative_output_identity with a validator mutation covering it."
+    },
+    {
+      "id": "RRA-C1-R2",
+      "status": "RESOLVED_VERIFIED",
+      "verification": "validate_release now pins event_id/release_id/attempt_id/schema_version values and the exact key set; begin_attempt creates the state root with atomic exclusive os.mkdir plus parent fsync and writes an fsynced attempt-start.json binding authorization/release/executor SHAs before aggregate_bytes; --execute refuses an existing state root and an existing output; _atomic_write refuses overwrite; terminal.json is written on success (COMPLETE with output sha) or caught failure (TERMINAL_FAILURE) with retry/resume/second_attempt false. Fresh-process verification: prior-state replay, crash-after-attempt-start replay, completed-terminal replay, and existing-output invocation all exit 2 fail-closed with no state mutation; a forged release with correct SHA bindings cannot reach computation without the private manifest and protected input bytes and creates no state root on any denied path. The exact remediation prescribed by cycle 1 is implemented; the residual operator-discipline gap is recorded as RRA-C2-D1."
+    },
+    {
+      "id": "RRA-C1-D1",
+      "status": "RESOLVED_VERIFIED",
+      "verification": "Release identity values (event_id, release_id, attempt_id, schema_version) are now pinned by validate_release; wrong-event-id release rejected fresh-process with 'release/attempt identity'."
+    },
+    {
+      "id": "RRA-C1-D2",
+      "status": "RESOLVED_VERIFIED",
+      "verification": "Committed rehearsal evidence is byte-identical to a fresh run of the committed generator (sha256 064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc reproduced exactly)."
+    },
+    {
+      "id": "RRA-C1-D3",
+      "status": "PARTIALLY_RESOLVED",
+      "verification": "The generator now performs a fresh-process FAIL_CLOSED exit-2 negative invocation (protected-output gate) recorded in evidence and required by the validator. Adjudication and reuse-review remain bound by exact SHA-256 without redundant verdict-field parsing; sufficient identity, unchanged residual."
+    },
+    {
+      "id": "RRA-C1-D4",
+      "status": "OPEN_ACCEPTED",
+      "verification": "Kernel-level pre-existing foreign write-descriptor limit unchanged; fully mitigated because consumed bytes are the validated first-read bytes and AFTER re-read on the same descriptor detects tampering. Carried as RRA-C2-D4, no action required."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "RRA-C2-D1",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "Release-to-state-root binding is by operator argument, not committed bytes",
+      "artifact": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+      "detail": "Exactly-once is durably enforced per --state-root: the atomic mkdir plus attempt-start makes replay, crash-resume, and concurrent double-run at the same state root impossible. But --state-root and --output are caller-supplied, and the exact-key release schema (set(release) == expected_keys) cannot carry a state_root pin without invalidating the release executor SHA binding, so a holder of the one approved release could deliberately re-invoke --execute with a different state root and output path after a successful terminal. This requires willful violation of GO_EXECUTE_ONCE_NO_RETRY by the sole release holder; any re-run is byte-identical by full bit-determinism and consumes zero ledger, checkpoint, shard, or expert budget, and the duplicate attempt-start would truthfully claim the same fixed ATTEMPT-1 identity, making it detectable in reconciliation. Required at the future release-approval stage: pin the concrete state-root and output paths in the approval evidence or ship an enforcing release wrapper, consistent with the accepted expert-recovery release-wrapper precedent.",
+      "resolution_stage": "FUTURE_SINGLE_USE_RELEASE_APPROVAL"
+    },
+    {
+      "id": "RRA-C2-D2",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "Concurrent race loser exits with uncaught OSError instead of FAIL_CLOSED packet",
+      "artifact": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+      "detail": "If two --execute invocations race past the state_root.exists() checks, os.mkdir guarantees exactly one winner; the loser raises FileExistsError, which is not an AggregateError, so it exits with a traceback (rc 1) rather than the FAIL_CLOSED JSON packet with truthful counters. Behavior is still fail-closed (the loser computes nothing, writes nothing, and cannot write a terminal into the winner's state root because begin_attempt precedes the guarded try block). Similarly _atomic_write has a small exists()-to-os.replace TOCTOU window, bounded because state-root exclusivity excludes any second executor writer. Cosmetic/robustness only.",
+      "resolution_stage": "OPTIONAL_EXECUTOR_HARDENING"
+    },
+    {
+      "id": "RRA-C2-D3",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "Synthetic-mode forbidden set omits the historical direct-DPREFIX identity and package-root manifest rejection",
+      "artifact": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+      "detail": "Synthetic mode rejects exactly the eight protected representative OUTPUT_SHAS. It does not additionally reject the historical direct-DPREFIX output identity (6479a835...) as a declared synthetic input, nor an --output-root containing a manifest.json whose SHA equals MANIFEST_SHA (the optional part of cycle 1's R1 remediation). Consuming any protected bytes still requires declaring their true SHA (computed-equals-declared is enforced first) and requires those exact bytes to be locally present at exactly 24576 bytes; real mode and the validator both reject the historical identity outright. Residual hardening only.",
+      "resolution_stage": "OPTIONAL_EXECUTOR_HARDENING"
+    },
+    {
+      "id": "RRA-C2-D4",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "Writable-alias exclusion cannot cover pre-existing foreign write descriptors (carried from RRA-C1-D4)",
+      "artifact": "scripts/research/f017_representative_routed_aggregate_executor_v1.py",
+      "detail": "st_nlink==1 plus mode&0o222==0 cannot exclude a write-open descriptor already held by another process; kernel-level limit shared with the accepted reuse resolver, fully mitigated because EXPECTED=BEFORE=CONSUMED holds on the validated first-read bytes and the AFTER re-read on the same device/inode-checked descriptor detects tampering. No action required.",
+      "resolution_stage": "NONE_REQUIRED"
+    }
+  ],
+  "adjudication": {
+    "synthetic_isolation": "PASS. Declaration-time rejection of protected identities precedes any file open; consumed-bytes membership is transitively enforced; fresh-process attacks fail closed with truthful counters; rehearsal generator and evidence are clean and byte-reproducible.",
+    "exactly_once": "PASS per state root. Exclusive durable attempt-start before computation, fixed pinned identities, prior-state/existing-output/terminal replay all denied fresh-process, crash-after-state-root-creation and crash-after-durable-attempt-start both leave a state root that permanently denies retry (CONSUMED_NO_RETRY_MANUAL_RECONCILIATION_REQUIRED), caught failures write TERMINAL_FAILURE, success writes COMPLETE; residual release-holder path recorded as RRA-C2-D1 for the future approval stage.",
+    "identities": "PASS. EVENT F017-REPRESENTATIVE-ROUTED-AGGREGATE-ANALYTICAL-1, RELEASE ...-RELEASE-1, ATTEMPT ...-ATTEMPT-1 pinned in executor constants, release validation, attempt-start, and terminal packets; release binds authorization bytes and executor bytes by SHA-256; no release document exists in the repository (schema string appears only inside the executor).",
+    "input_immutability": "PASS. Open-directory-once, O_NOFOLLOW leaf opens relative to the validated directory descriptor, private manifest verified before outputs in real mode, regular/nlink==1/read-only/exact-24576 checks, EXPECTED=BEFORE=CONSUMED=AFTER on the same device/inode descriptor, traversal excluded by pure-basename check; producer joins to the reuse authorization (mod semantic_role) and to the execution evidence id_weight_pairs/outputs join independently reproduced equal.",
+    "ordering": "PASS. Canonical [250,10,237,62,73,177,218,28] with 62 (ordinal 3, weight 0.23688715675086147) before 73 (ordinal 4, weight 0.2514906203405492) proving non-vacuous order sensitivity; ordinal-swap rejected fresh-process ('ordinal order'); historical direct-DPREFIX output rejected in real mode, by the validator, and by a committed mutation test.",
+    "arithmetic": "PASS. Direct CPython 3.14.6 math.fsum on the ordered 8-tuple of binary64 products, exact f32 promotion via struct.unpack, contiguous little-endian f64[6144] output; environment mismatch verified FAIL_CLOSED fresh-process under Python 3.9.6 before input consumption; serial-f32 divergence, order, and weight-reassignment rejections re-run and passing; four fresh-process bit-identical reproductions of the synthetic output during this review; all eight weights round-trip exactly through binary64 repr.",
+    "scope_and_accounting": "PASS. Ledger 175 to 175 across authorization, arithmetic contract, adjudication, rehearsal, preparation, and loop state; all preparation counters zero; future budgets pin zero checkpoint/shard/expert work and exactly one aggregate execution; stop boundary AFTER_ROUTED_AGGREGATE_ONLY; go token prohibited in this phase; preflight packet SHA recomputed equal to committed bb13dcc62cb6218a233d262e9780fd088ec19106e9d2df90325659b20f7a6fcd.",
+    "validator_and_tests": "PASS. Committed validator (full repo mode) prints REPRESENTATIVE_ROUTED_AGGREGATE_AUTHORIZATION_VALID under pinned CPython 3.14.6; all 12 committed test methods pass (10 executor including the new protected-identity and durable-attempt-start tests, 2 validator including 34 authorization mutations covering the new single-use, prohibition, and rehearsal-gate fields); counts match preparation claims exactly."
+  },
+  "verification": {
+    "head_verified": "73a875f46cbd866a072e1e019a73dd1d1a6cc718 on feat/017-real-checkpoint-runner with clean working tree; authorization preparation_head 87d65a91e998ca9513262982e6453d8eb003178d unchanged and matched by validator START_HEAD",
+    "prior_review_binding_verified": "committed cycle-01 review bytes recompute to sha256 4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420, exactly matching the preparation and loop-state prior-review bindings",
+    "sha_bindings_recomputed": "all authorization, preparation, loop-state, validator-constant, and arithmetic-authority SHA-256 bindings recomputed from committed bytes and matched, including authorization bytes d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590, executor fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5, and the unchanged-from-cycle-1 arithmetic contract, adjudication, and six upstream authority artifacts",
+    "validator_executed": "full repo mode PASS under pinned CPython 3.14.6 Darwin arm64",
+    "tests_executed": "12/12 pass under pinned CPython 3.14.6 (10 executor test methods, 34 validator mutations)",
+    "rehearsal_reproduced_byte_identical": "fresh generator run produced bytes with sha256 064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc identical to the committed evidence; synthetic output sha 9b87bc4559d25cc296b4c48a5670f4ea6504266060ac50c090ccccced307e3ff reproduced in four fresh processes total this review",
+    "fresh_process_fail_closed_attacks": "protected-identity synthetic manifests (all eight and single), synthetic mode with release or authorization supplied, forged release with correct SHA bindings, tampered release (event id, disposition, extra key, executor sha), prior attempt state, crash-after-attempt-start state, completed-terminal state, existing output, execute without release/state, preflight carrying release, ordinal swap, and Python 3.9.6 environment mismatch: all exit 2 FAIL_CLOSED with truthful zero counters and zero state-root creation on denied paths",
+    "preflight_packet_recomputed": "sha256 bb13dcc62cb6218a233d262e9780fd088ec19106e9d2df90325659b20f7a6fcd matched",
+    "release_absence": "repository-wide search: the single-use-release schema string exists only inside the executor; no release document committed",
+    "producer_joins_reproduced": "reuse authorization triples equal reviewed triples plus semantic_role REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUT; execution evidence id_weight_pairs joined with outputs equals reviewed triples; reuse review verdict ACCEPT and execution evidence terminal_disposition COMPLETE re-read from bytes; private_package.manifest_sha256 and authority.representative_expert_input_sha256 in the reuse authorization match the reviewed authorization",
+    "no_private_access": "the retained representative package, checkpoints, and shards were never accessed; the real aggregate was never computed; only synthetic temp-directory bytes were processed",
+    "reviewed_artifact_sha256": {
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-authorization-v1.json": "d103ab6abc81cbeffea1c95553ba70b41cd7c430b403b39bcf2542d6cc4d3590",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-arithmetic-v1.json": "ef4b6f5c4e66efd031d6fba1fafee087e5496dd16b5b6f658204359f89762da2",
+      "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-semantic-adjudication-v1.json": "ab6d9305a2392ceda77728b7892868e0310c56f20c0636ab67ffd2154adb0636",
+      "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-synthetic-rehearsal-v1.json": "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dcc",
+      "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-authorization-preparation-v1.json": "929b32cf0b2c778c7839471225ced0929519e0175c155fcb1a60aaa45d135af7",
+      "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-authorization-loop-state-v1.json": "9514179b79e8cf11664cc14a3dfde848e76b447108873b46368009bb6b579f30",
+      "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-cycle-01-independent-review.json": "4fe2d7676833f385c1a5127885d46f87ea758a7e40ae01b912932e4bd34e9420",
+      "scripts/research/f017_representative_routed_aggregate_executor_v1.py": "fa85558686caa3a57ca356d7e49e5d73ca1f7cb512c1148b670ce0f504e921d5",
+      "scripts/research/generate_f017_representative_routed_aggregate_rehearsal_v1.py": "48017c8fc12ba51d0325d3d18838383acc5d334e49ab1b35a5b7a83896f22ffa",
+      "scripts/research/validate_f017_representative_routed_aggregate_authorization_v1.py": "512d39d21e4854c1d57569a7932a3d01c7dcecaf137e2631cf3298fa82015f54",
+      "scripts/research/tests/test_f017_representative_routed_aggregate_executor_v1.py": "bf1a314903fdeafc4cfbc425f725a40730f703318149271b3602e3b667ff7510",
+      "scripts/research/tests/test_validate_f017_representative_routed_aggregate_authorization_v1.py": "a9bf9549f864a6e1e2f0712cac86fa743ded79b7c9905fcf534291d5eae9f3f0",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "docs/architecture/reviews/evidence/f017-representative-expert-output-reuse-cycle-01-independent-review.json": "54d559fe39c13152c2c368fa1f99a219c167178b06d58f47bb46822af33b46bc",
+      "docs/architecture/reviews/evidence/f017-representative-expert-recovery-real-execution-result-v1.json": "fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4",
+      "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-input-v1.json": "ec38d793a95894daa71a5179650b91978b4aec44512311aa29a7c5c897b4b872",
+      "specs/017-rust-native-inference-runtime/contracts/f017-weighted-moe-aggregate-perturbation-v1.json": "ff1a15c29b79681458d74452c8c72dde9c9bf5eb44637d05a7e4ea9eb1525fac",
+      "specs/017-rust-native-inference-runtime/contracts/f017-complete-layer-aggregate-acceptance-v2.json": "13896ac22c03d7354c25f4d182de828b44df0d7239dd7e269175f69d597209fe",
+      "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v1.json": "ece281ecdd7f5d3ad9a06e76304d0d76e63499153960529676ab889059f98a7b",
+      "specs/017-rust-native-inference-runtime/contracts/f017-m1f-routing-contract-v3-clarified.json": "c5662a611abc000703606d799a7214ee27e39c556bc6595f217c86498e944a85",
+      "docs/architecture/reviews/evidence/f017-routing-contract-v3-source-trace-v1.json": "356ffad4e72d6950605a0c0afb7cef3b549000a7de15c8b61f8216370fad3832",
+      "scripts/research/f017_weighted_moe_aggregate_theorem.py": "74167ce38cfb60189e57877ddba8b96123d7df54963a200658136497700f7974"
+    }
+  },
+  "checkpoint_free_review": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0,
+    "synthetic_aggregate_executions_during_review": 4,
+    "real_representative_output_bytes_accessed": false,
+    "real_aggregate_computed": false
+  }
+}
