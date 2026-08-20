@@ -575,7 +575,7 @@
 
 ## Phase 37: Convergence
 
-- [ ] T017-240 Prepare and independently accept the checkpoint-free
+- [x] T017-240 Prepare and independently accept the checkpoint-free
   representative FFN-composition single-use release: bind the accepted f64
   proof/reference authorization, routed/shared reuse authorities and retained
   identities, exact executor/rehearsal/runtime, ledger 175-to-175, and fixed

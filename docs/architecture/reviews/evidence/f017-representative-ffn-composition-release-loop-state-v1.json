@@ -1,19 +1,40 @@
 {
   "schema": "pulsarmlx.f017.representative-ffn-composition-release-autonomous-loop-state",
   "schema_version": "1.0.0",
-  "phase": "CYCLE_1_REVIEW_REQUEST_READY",
+  "phase": "STOP_ACCEPTED",
   "cycle": 1,
   "maximum_cycles": 4,
   "builder_model": "GPT-5.6 Sol",
   "builder_effort": "High",
-  "final_composition_effort": "Extra High pending",
-  "reviewer_model": "Claude Fable 5 pending",
+  "final_composition_effort": "Extra High complete",
+  "reviewer_model": "claude-fable-5",
   "review_target_head": "0c8e9248dc6da940d0814f1d4452fba63624c546",
   "review_request": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-cycle-01-review-request.json",
-  "latest_review_artifact": null,
-  "latest_review_sha256": null,
-  "latest_verdict": null,
-  "findings": [],
+  "latest_review_artifact": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-cycle-01-independent-review.json",
+  "latest_review_sha256": "10a0c72e2e8f5be3aa265231ae4565738ad62bdf4417e9fc5bc7c57bb0af2d58",
+  "latest_verdict": "ACCEPT",
+  "findings": [
+    {
+      "id": "F017-FFN-REL-CYCLE01-DID-1",
+      "class": "DEFENSE_IN_DEPTH",
+      "disposition": "RETAINED_NON_BLOCKING; multi-process tests prove one winner and zero loser computation; only race-loser reporting is unstructured"
+    },
+    {
+      "id": "F017-FFN-REL-CYCLE01-DID-2",
+      "class": "DEFENSE_IN_DEPTH",
+      "disposition": "RETAINED_NON_BLOCKING; immutable code-head and redundant runtime binding checks preserve authority; future revision may add validator self-pin symmetry"
+    },
+    {
+      "id": "F017-FFN-REL-CYCLE01-DID-3",
+      "class": "DEFENSE_IN_DEPTH",
+      "disposition": "RETAINED_NON_BLOCKING; device nonzero check is vacuous but same-descriptor identity, mode, link, size, manifest, and four-way SHA equality are enforced"
+    },
+    {
+      "id": "F017-FFN-REL-CYCLE01-DID-4",
+      "class": "DEFENSE_IN_DEPTH",
+      "disposition": "RETAINED_NON_BLOCKING; approval/token decisions use validated exact objects and later hash reread affects audit recording only"
+    }
+  ],
   "resolved_findings": [],
   "release_sha256": "37752ccedadf5db5eb655d4ba4383a37a431197ec41e07d15f6aa7905dfc6b8a",
   "ledger": 175,
@@ -25,5 +46,5 @@
   "s1_materializations": 0,
   "s2_constructions": 0,
   "go_tokens": 0,
-  "termination_reason": null
+  "termination_reason": "STOP_ACCEPTED"
 }
