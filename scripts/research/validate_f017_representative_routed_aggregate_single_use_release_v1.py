@@ -19,6 +19,12 @@ REHEARSAL_SHA = "064d938d5ac2b3bd8a9ed0a6633ec94a25f12c7e7f49f4a3c53c6c059e4f4dc
 REVIEW_SHA = "3c362e0b5ae337b30727580bac67859811e001a91bbc3d5b9c88165f45951c9a"
 REUSE_SHA = "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"
 MANIFEST_SHA = "2b3a0ef3bb2d896dd04add67e6fc729b2b400170b58f9038751cee612d58bc7a"
+EXECUTION_CODE_HEAD = "d38a42ad347eaca48e53e5530e2e312fa73e6bd8"
+PATH_CONTRACT_SHA = "f9f2e24f4529dd47ee8cc966ab4433f3b99fcad76819865f60237802ad4b544f"
+PUBLICATION_CONTRACT_SHA = "c85c40b6c84d48b5094a23342a5a63700bdd01a5a135f1bc36699de3ec308fd4"
+WRAPPER_SHA = "6822eb1857b70fc69e451943501716ebb9a190e9ad9ed5004bf66d851411d7c6"
+TERMINALIZER_SHA = "29169be62b65f8106e5c4de4b47b6bb5001496794f80c76b8d0d92de476ac920"
+RELEASE_REHEARSAL_SHA = "1b6b4476af94365f18d52b59bea20e40242445d041358ee21ec503a26b71d654"
 IDS = [250, 10, 237, 62, 73, 177, 218, 28]
 WEIGHTS = [0.7487501576296707, 0.3348627106807668, 0.23863270273063697, 0.23688715675086147,
            0.2514906203405492, 0.23059957299763345, 0.22915341148588297, 0.22962366738399842]
@@ -68,7 +74,7 @@ def validate(document: dict[str, Any], *, repo: bool) -> None:
     req(document.get("status") == "PREPARED_FOR_INDEPENDENT_APPROVAL", "status")
     req(document.get("real_event_authorized") is False and document.get("approval_asserted") is False, "approval state")
     req(document.get("head_semantics") == "EXACT_LOAD_BEARING_BYTES_AT_CODE_HEAD;APPEND_ONLY_RELEASE_REVIEW_APPROVAL_AND_BANKING_COMMITS_PERMITTED", "head semantics")
-    req(isinstance(document.get("authoritative_execution_code_head"), str) and len(document["authoritative_execution_code_head"]) == 40, "code head")
+    req(document.get("authoritative_execution_code_head") == EXECUTION_CODE_HEAD, "code head")
     expected_bindings = {
         "authorization": AUTH_SHA,
         "arithmetic_contract": ARITHMETIC_SHA,
@@ -82,6 +88,11 @@ def validate(document: dict[str, Any], *, repo: bool) -> None:
         req(bindings.get(key, {}).get("sha256") == identity, f"binding: {key}")
     for key in ("path_contract", "publication_contract", "release_wrapper", "terminalizer", "release_validator", "release_rehearsal"):
         req(isinstance(bindings.get(key, {}).get("sha256"), str) and len(bindings[key]["sha256"]) == 64, f"binding: {key}")
+    req(bindings["path_contract"]["sha256"] == PATH_CONTRACT_SHA, "path contract identity")
+    req(bindings["publication_contract"]["sha256"] == PUBLICATION_CONTRACT_SHA, "publication contract identity")
+    req(bindings["release_wrapper"]["sha256"] == WRAPPER_SHA, "wrapper identity")
+    req(bindings["terminalizer"]["sha256"] == TERMINALIZER_SHA, "terminalizer identity")
+    req(bindings["release_rehearsal"]["sha256"] == RELEASE_REHEARSAL_SHA, "release rehearsal identity")
     if repo:
         for key, item in bindings.items():
             req(sha(ROOT / item["path"]) == item["sha256"], f"binding bytes: {key}")
