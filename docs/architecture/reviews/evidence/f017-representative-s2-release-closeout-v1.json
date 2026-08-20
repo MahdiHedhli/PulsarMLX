@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-closeout",
+  "schema_version": "1.0.0",
+  "result": "ACCEPT",
+  "starting_head": "059ffff3ee78faaa00f0ee82f72ba4aa6dcb9ab0",
+  "execution_code_head": "3c200b62fdd0409d49cd38da4d7cc12405569e60",
+  "reviewed_head": "35a607896eab09fe985e43a5aab6eca839a866d9",
+  "review_banking_commit": "53871f4afbba429f9ed7455fa4692fa9cdf53b0e",
+  "release": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v1.json", "sha256": "1b05c09355974d53ddf4585eee8b4801bd726e3ecd626ea753f066c9e504a3b9"},
+  "authorization": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-construction-authorization-v1.json", "sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a"},
+  "arithmetic_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-arithmetic-v1.json", "sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86"},
+  "review": {"path": "docs/architecture/reviews/evidence/f017-representative-s2-release-cycle-01-independent-review.json", "sha256": "5328b829abdfa1389ec2dbb3dd08f624cf9c9928e5c9c6fea1beac0c88d4160f", "reviewer_model": "claude-fable-5", "verdict": "ACCEPT", "blocking_findings": [], "non_blocking_required_findings": []},
+  "defense_in_depth_dispositions": {
+    "DID-1": "NON_BLOCKING_LEDGER_ADAPTER_IS_READ_ONLY_FAIL_CLOSED_AND_INTERNALLY_PINS_ITS_COMMITTED_SOURCE;ADD_TO_ANY_FUTURE_RELEASE_BINDING_CENSUS",
+    "DID-2": "NON_BLOCKING_REVIEWER_INDEPENDENTLY_REESTABLISHED_ALL_SYNTHETIC_PROPERTIES_AND_REHEARSAL_EVIDENCE_IS_NOT_EXECUTION_AUTHORITY",
+    "DID-3": "NON_BLOCKING_TERMINAL_PATH_IS_FIXED_AND_ENFORCED_BY_HASH_BOUND_WRAPPER_AND_TERMINALIZER_DESPITE_DESCRIPTIVE_RELEASE_PATH_OMISSION",
+    "DID-4": "NON_BLOCKING_HOME_OVERRIDE_IS_IMPORT_ONLY_TEST_PLUMBING_UNREACHABLE_FROM_THE_COMMITTED_CLI"
+  },
+  "final_composition": {
+    "builder_model": "GPT-5.6 Sol",
+    "effort": "Extra High",
+    "arithmetic_unambiguous": true,
+    "proof_reference_vs_production_distinction_preserved": true,
+    "s1_lineage_exact": true,
+    "ffn_lineage_exact": true,
+    "single_use_fail_closed": true,
+    "output_authority_requires_complete_terminal": true,
+    "separate_approval_required": true,
+    "go_token_created": false
+  },
+  "accounting": {"ledger_before": 175, "ledger_after": 175, "checkpoint_reads": 0, "shard_opens": 0, "s1_materializations": 0, "ffn_compositions": 0, "s2_constructions": 0, "s1_operand_consumptions": 0, "ffn_operand_consumptions": 0, "go_tokens_created": 0},
+  "ntfy": {"start": "PASS", "review_verdict": "PASS", "accept": "PASS"},
+  "ready_for_s2_release_approval_readiness": true,
+  "next_safe_action": "BEGIN_A_SEPARATE_INDEPENDENT_APPROVAL_AND_MACHINE_LOCAL_READINESS_WORKFLOW_FOR_THE_ACCEPTED_S2_RELEASE;DO_NOT_CREATE_A_GO_TOKEN_OR_CONSTRUCT_S2_IN_THIS_PHASE"
+}
