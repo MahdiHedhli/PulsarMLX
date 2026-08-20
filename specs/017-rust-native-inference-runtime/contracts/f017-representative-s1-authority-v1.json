@@ -1,0 +1,58 @@
+{
+  "schema": "pulsarmlx.f017.representative-s1-authority",
+  "schema_version": "1.0.0",
+  "authority_id": "F017-REPRESENTATIVE-M1F0-S1-HASH-RETAINED-REPRODUCIBLE-1",
+  "status": "FROZEN_PREPARATION_ONLY_NO_BYTE_AUTHORITY",
+  "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+  "formula": "S1=f32(S0+layer3_attention_output)",
+  "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+  "dtype": "little-endian-f32",
+  "shape": [
+    6144
+  ],
+  "byte_length": 24576,
+  "retention_classification": "HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED",
+  "concrete_retained_path": null,
+  "private_manifest_sha256": null,
+  "source_authority": {
+    "representative_m1f0_execution": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "stage_name": "post_attention_residual",
+      "stage_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd"
+    },
+    "semantic_graph": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    },
+    "accepted_reproduction_producer": {
+      "path": "scripts/research/f017_representative_m1f0_reproduce_from_retention_v1.py",
+      "sha256": "b17f1034688f2cf01243d04380151c1ad5c9f321d19a7bc29907a00a10993cc3"
+    },
+    "reproduction_bundle_sha256": "175539424a5fe1b66c60d1e95c8361858d90fd4566b24b4915c2b1affda5023b"
+  },
+  "checkpoint_free_reconstruction": {
+    "available": true,
+    "source": "nine retained packed attention payloads plus canonical S0, FFN norm, router matrix, and correction bias retained authorities",
+    "accepted_stage_identity": "10_OF_10_EXACT",
+    "fresh_processes": 2,
+    "checkpoint_rereads": 0,
+    "additional_shard_opens": 0,
+    "materialization_authorized_now": false,
+    "required_next_authority": "SEPARATE_CHECKPOINT_FREE_S1_MATERIALIZATION_AND_RETENTION_AUTHORIZATION"
+  },
+  "future_s2_gate": {
+    "formula": "S2=f32(f64(S1)+FFN)",
+    "s1_byte_authority_required_before_s2_execution_authorization": true,
+    "materialized_sha256_must_equal": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "expected_equals_before_equals_consumed_equals_after_required": true,
+    "s2_authorized": false
+  },
+  "accounting": {
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-arithmetic",
+  "schema_version": "1.0.0",
+  "contract_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-ARITHMETIC-1",
+  "status": "FROZEN_PREPARATION_ONLY_NO_EXECUTION_AUTHORITY",
+  "semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "authority": {
+    "semantic_graph": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    },
+    "prior_input_semantics": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-input-semantics-v1.json",
+      "sha256": "4cab095f6301dbf4f82c95b7d8430ccb4e3101ab4211238400ef42bc368666f8"
+    },
+    "historical_complete_layer_freeze": {
+      "path": "docs/architecture/reviews/evidence/f017-complete-layer-aggregate-acceptance-v2-freeze.json",
+      "sha256": "fd393a13e1c5040a9ec4ad11f3adeb2990b497876e72bcc01336dfcc666aaf0a",
+      "classification": "STRUCTURAL_ONLY"
+    },
+    "historical_complete_layer_evaluation": {
+      "path": "docs/architecture/reviews/evidence/f017-complete-layer-aggregate-v2-evaluation-v1.json",
+      "sha256": "aae05b6fed0f8dfe78da24afd38914f603a70b5b7cd3903b4d0a153c9ed2052e",
+      "classification": "STRUCTURAL_ONLY"
+    }
+  },
+  "inputs": {
+    "routed": {
+      "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_AGGREGATE_PROOF_REFERENCE",
+      "semantic_surface": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+      "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+      "dtype": "little-endian-f64",
+      "shape": [
+        6144
+      ],
+      "byte_length": 49152
+    },
+    "shared": {
+      "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+      "semantic_surface": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_SHARED_EXPERT_STRICT_F32_SURFACE",
+      "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "byte_length": 24576
+    }
+  },
+  "algorithm": {
+    "formula": "FFN[k]=Routed[k]+binary64(Shared[k])",
+    "coordinate_order": "increasing k from 0 through 6143",
+    "routed_decode": "read each canonical little-endian IEEE-754 binary64 element exactly",
+    "shared_promotion": "exact IEEE-754 binary32-to-binary64 promotion",
+    "shared_scalar_multiplier": "NONE; exact multiplier is binary64 1.0",
+    "addition_order": "Routed first, then exactly promoted Shared",
+    "addition_dtype": "IEEE-754 binary64",
+    "rounding": "round-to-nearest ties-to-even once at each binary64 addition",
+    "implementation": "CPython 3.14.6 scalar float addition over decoded struct values",
+    "parallelism": "none",
+    "blas": false,
+    "gpu": false,
+    "reduction": "none; exactly one two-operand binary64 addition per coordinate",
+    "finite_inputs_required": true,
+    "finite_output_required": true
+  },
+  "output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+    "dtype": "little-endian-f64",
+    "shape": [
+      6144
+    ],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "packing": "struct.pack_into('<d', output, 8*k, FFN[k]) in increasing coordinate order",
+    "finite": true
+  },
+  "production_surface_separation": {
+    "production_serial_f32_relationship": "DIFFERENT_NUMERICAL_SURFACE",
+    "production_serial_f32_authorized": false,
+    "implicit_aliasing_or_conversion": false,
+    "reason": "the accepted routed input is a binary64 proof/reference aggregate; composing it with exact f32-to-f64 Shared promotion preserves the accepted proof/reference lineage rather than the production serial-f32 runtime"
+  },
+  "forbidden": {
+    "production_serial_f32_substitution": true,
+    "shared_scalar_multiplier_other_than_one": true,
+    "reordered_or_parallel_addition": true,
+    "blas_or_gpu": true,
+    "historical_direct_dprefix_input": true,
+    "checkpoint_or_expert_fallback": true,
+    "s1_residual_addition": true,
+    "s2_construction": true
+  }
+}

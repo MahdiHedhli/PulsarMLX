@@ -1,0 +1,100 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-synthetic-rehearsal",
+  "schema_version": "1.0.0",
+  "result": "PASS",
+  "producer_sha256": "1ec0323d83bc70e7a80f53a3669d3e851a388e08475357b1ac0853db2619adaf",
+  "executor_sha256": "7632b19af4a0b3bb16ec7032cec049bcab45dabd246cac5d77f0daaec24d256c",
+  "real_geometry": {
+    "routed": "f64[6144]",
+    "shared": "f32[6144]",
+    "output": "f64[6144]"
+  },
+  "fresh_processes": 2,
+  "exact_identity": true,
+  "independent_exact_rational_oracle": true,
+  "output_sha256": "59b941a941093239291b3505be69d69a56ae2b852e88a6d5b06520a4a662b1de",
+  "real_routed_bytes_used": false,
+  "real_shared_bytes_used": false,
+  "real_ffn_completions": 0,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "expert_executions": 0,
+  "shared_expert_executions": 0,
+  "s2_constructions": 0,
+  "runtime_packets": [
+    {
+      "checkpoint_reads": 0,
+      "disposition": "SYNTHETIC_COMPLETE",
+      "expert_executions": 0,
+      "ffn_completions": 0,
+      "inputs_after": {
+        "routed": {
+          "after_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec",
+          "before_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec",
+          "consumed_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec",
+          "expected_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec"
+        },
+        "shared": {
+          "after_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353",
+          "before_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353",
+          "consumed_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353",
+          "expected_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353"
+        }
+      },
+      "ledger": 175,
+      "output_bytes": 49152,
+      "output_dtype": "little-endian-f64",
+      "output_sha256": "59b941a941093239291b3505be69d69a56ae2b852e88a6d5b06520a4a662b1de",
+      "output_shape": [
+        6144
+      ],
+      "s2_constructions": 0,
+      "shard_opens": 0,
+      "shared_expert_executions": 0
+    },
+    {
+      "checkpoint_reads": 0,
+      "disposition": "SYNTHETIC_COMPLETE",
+      "expert_executions": 0,
+      "ffn_completions": 0,
+      "inputs_after": {
+        "routed": {
+          "after_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec",
+          "before_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec",
+          "consumed_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec",
+          "expected_sha256": "43a26a97bc3d9d8c5a5d614db79edf0d3399d8663de1d564f49a3ec0a9d147ec"
+        },
+        "shared": {
+          "after_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353",
+          "before_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353",
+          "consumed_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353",
+          "expected_sha256": "573fb4be4b6f73e085de4283841667d764966c97824ef814f100858979b1c353"
+        }
+      },
+      "ledger": 175,
+      "output_bytes": 49152,
+      "output_dtype": "little-endian-f64",
+      "output_sha256": "59b941a941093239291b3505be69d69a56ae2b852e88a6d5b06520a4a662b1de",
+      "output_shape": [
+        6144
+      ],
+      "s2_constructions": 0,
+      "shard_opens": 0,
+      "shared_expert_executions": 0
+    }
+  ],
+  "required_failure_classes_covered_by_committed_tests": [
+    "wrong_routed_sha",
+    "wrong_shared_sha",
+    "production_serial_f32_substitution",
+    "wrong_promotion_or_casting",
+    "wrong_addition_order",
+    "nan_or_inf",
+    "wrong_dtype_or_shape",
+    "historical_shared_output",
+    "historical_aggregate",
+    "checkpoint_fallback",
+    "retry_or_duplicate_execution",
+    "s2_execution_attempt"
+  ]
+}

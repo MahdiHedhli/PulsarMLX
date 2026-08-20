@@ -1,0 +1,74 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-preparation",
+  "schema_version": "1.0.0",
+  "preparation_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-PREPARATION-1",
+  "preparation_base_head": "17f719602c089af57a2c3bdee74f2b140a9c8d38",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "real_event_authorized": false,
+  "authority": {
+    "shared_execution_evidence_sha256": "b7e3d8a6d97f2c3771ed7a6ff07ee97176780089b60787ac45ebd0af3ce33bb6",
+    "shared_output_sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+    "shared_private_manifest_sha256": "fbdfb87783e72f011207cb06007cb91e955f6f824d96522f149fcb0d37d4ea52",
+    "shared_reuse_authorization_sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+    "routed_aggregate_sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+    "routed_private_manifest_sha256": "2403f7b321139d85c811e722298ac4bb164ffd3b0e41e1c73ed7fadd10e55d11",
+    "routed_reuse_authorization_sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+    "ffn_arithmetic_contract_sha256": "1054d014c23628fa56771518f066d14cfd445b0d7b4ba7da98b638c37981cdbb",
+    "s1_authority_sha256": "7a77f7dbadd6753a7598c3d7be7a94b393b56d25a7fa778de0c9f71c1f3a6728",
+    "executor_sha256": "7632b19af4a0b3bb16ec7032cec049bcab45dabd246cac5d77f0daaec24d256c",
+    "rehearsal_sha256": "04c0448a124d36a7510650d725e09d1cc5f2ce66b0c8ee944da0b831a8d67a60",
+    "authorization_sha256": "69e6e49b0e2967b9b7cde7ee00154b7abdaa08609904eca75e54c29b8e4ca1a5",
+    "validator_sha256": "3ddca99c7ab73e2f8271e65ff8df6602d646b8420e79f42d2dfca49f9dc82e41",
+    "tests_sha256": "83eb9f472108ce46be2490376ee32b6430f6bb7f42d023ea4d61839188061874"
+  },
+  "shared_output_reuse_preflight": {
+    "result": "REPRESENTATIVE_SHARED_EXPERT_OUTPUT_REUSE_PREFLIGHT_PASS",
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "finite_count": 6144,
+    "shared_expert_recomputations": 0
+  },
+  "ffn_preflight": {
+    "result": "PRODUCTION_BINDINGS_RESOLVED",
+    "routed_expected_equals_before_equals_consumed_equals_after": true,
+    "shared_expected_equals_before_equals_consumed_equals_after": true,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "semantic_adjudication": {
+    "ffn_surface": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "formula": "FFN[k]=Routed[k]+binary64(Shared[k])",
+    "shared_multiplier": "NONE; exact binary64 1.0",
+    "output": "little-endian-f64 [6144], 49152 bytes",
+    "production_serial_f32": "SEPARATE_UNAUTHORIZED_SURFACE"
+  },
+  "s1_boundary": {
+    "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "retention_classification": "HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED",
+    "checkpoint_free_reconstruction_available": true,
+    "materialization_authorized": false,
+    "s2_formula": "S2=f32(f64(S1)+FFN)",
+    "s2_authorized": false
+  },
+  "tests": {
+    "unit_tests": 7,
+    "unit_tests_passed": 7,
+    "load_bearing_mutations_rejected": 36,
+    "synthetic_fresh_processes": 2,
+    "synthetic_exact_identity": true,
+    "independent_exact_rational_oracle": true,
+    "real_routed_bytes_used_in_rehearsal": false,
+    "real_shared_bytes_used_in_rehearsal": false
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_completions": 0,
+    "s2_constructions": 0
+  },
+  "stop_boundary": "BEFORE_REAL_REPRESENTATIVE_FFN_COMPOSITION"
+}

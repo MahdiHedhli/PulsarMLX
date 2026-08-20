@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-autonomous-loop-state",
+  "schema_version": "1.0.0",
+  "phase": "CYCLE_1_BUILDER_COMPLETE_REVIEW_PENDING",
+  "cycle": 1,
+  "builder_model": "GPT-5.6 Sol",
+  "builder_effort": "High",
+  "reviewer_model": "PENDING_CLAUDE_FABLE_5",
+  "latest_review_artifact": null,
+  "latest_review_sha256": null,
+  "latest_verdict": null,
+  "findings": [],
+  "resolved_findings": [],
+  "routed_aggregate_sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+  "shared_output_sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+  "shared_reuse_authorization_sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+  "ffn_semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "s1_authority": {
+    "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "checkpoint_free_available": true,
+    "byte_retained": false
+  },
+  "ledger": 175,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "expert_executions": 0,
+  "shared_expert_executions": 0,
+  "ffn_completions": 0,
+  "s2_constructions": 0,
+  "termination_reason": null
+}

@@ -1,0 +1,203 @@
+{
+  "schema": "pulsarmlx.f017.representative-ffn-composition-authorization",
+  "schema_version": "1.0.0",
+  "authorization_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-AUTHORIZATION-1",
+  "event_id": "F017-REPRESENTATIVE-FFN-COMPOSITION-PROOF-REFERENCE-1",
+  "preparation_head": "17f719602c089af57a2c3bdee74f2b140a9c8d38",
+  "status": "PREPARED_REVIEW_REQUIRED",
+  "real_event_authorized": false,
+  "semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+  "bindings": {
+    "routed_reuse_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json",
+      "sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb"
+    },
+    "routed_reuse_review": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-routed-aggregate-reuse-cycle-01-independent-review.json",
+      "sha256": "49848c1f27e15360bb8514f6b9dbd32b523c73936af6218dcf6505fa3bdf36f8"
+    },
+    "shared_reuse_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-output-reuse-authorization-v1.json",
+      "sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a"
+    },
+    "shared_execution_evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-shared-expert-recovery-real-execution-result-v1.json",
+      "sha256": "b7e3d8a6d97f2c3771ed7a6ff07ee97176780089b60787ac45ebd0af3ce33bb6"
+    },
+    "arithmetic_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-composition-arithmetic-v1.json",
+      "sha256": "1054d014c23628fa56771518f066d14cfd445b0d7b4ba7da98b638c37981cdbb"
+    },
+    "s1_authority": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-authority-v1.json",
+      "sha256": "7a77f7dbadd6753a7598c3d7be7a94b393b56d25a7fa778de0c9f71c1f3a6728"
+    },
+    "semantic_graph": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-layer3-production-semantic-graph-v2.json",
+      "sha256": "1585dad6b989fd0ac9b231f4e66e4d0129021868d027a3352a7b740707561558"
+    },
+    "executor": {
+      "path": "scripts/research/f017_representative_ffn_composition_executor_v1.py",
+      "sha256": "7632b19af4a0b3bb16ec7032cec049bcab45dabd246cac5d77f0daaec24d256c"
+    },
+    "synthetic_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-ffn-composition-synthetic-rehearsal-v1.json",
+      "sha256": "04c0448a124d36a7510650d725e09d1cc5f2ce66b0c8ee944da0b831a8d67a60"
+    }
+  },
+  "inputs": {
+    "routed": {
+      "reuse_authorization_sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+      "manifest": {
+        "relative_path": "routed-aggregate-private-manifest-v1.json",
+        "sha256": "2403f7b321139d85c811e722298ac4bb164ffd3b0e41e1c73ed7fadd10e55d11",
+        "byte_length": 1370
+      },
+      "artifact": {
+        "relative_path": "routed-aggregate.f64le",
+        "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+        "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_AGGREGATE_PROOF_REFERENCE",
+        "semantic_surface": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+        "dtype": "little-endian-f64",
+        "shape": [
+          6144
+        ],
+        "byte_length": 49152
+      }
+    },
+    "shared": {
+      "reuse_authorization_sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+      "manifest": {
+        "relative_path": "representative-shared-expert-output-private-manifest-v1.json",
+        "sha256": "fbdfb87783e72f011207cb06007cb91e955f6f824d96522f149fcb0d37d4ea52",
+        "byte_length": 1325
+      },
+      "artifact": {
+        "relative_path": "representative-shared-expert-output.f32le",
+        "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+        "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+        "semantic_surface": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_SHARED_EXPERT_STRICT_F32_SURFACE",
+        "dtype": "little-endian-f32",
+        "shape": [
+          6144
+        ],
+        "byte_length": 24576
+      }
+    }
+  },
+  "preflight": {
+    "expected_equals_before_equals_consumed_equals_after": true,
+    "open_directory_once": true,
+    "open_leaf_once_relative_to_validated_directory_descriptor": true,
+    "same_validated_descriptor_consumed": true,
+    "regular_file": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "read_only": true,
+    "no_writable_alias": true,
+    "finite": true,
+    "private_manifest_verified_before_input": true,
+    "historical_inputs_rejected": true,
+    "all_locally_checkable_failures_before_ffn_computation": true
+  },
+  "arithmetic": {
+    "formula": "FFN[k]=Routed[k]+binary64(Shared[k])",
+    "routed_dtype": "little-endian-f64",
+    "shared_dtype": "little-endian-f32",
+    "shared_promotion": "exact IEEE-754 binary32-to-binary64",
+    "shared_scalar_multiplier": "NONE; binary64 1.0",
+    "addition_order": "Routed then promoted Shared",
+    "addition_dtype": "IEEE-754 binary64",
+    "rounding": "round-to-nearest ties-to-even",
+    "coordinates": 6144,
+    "parallelism": false,
+    "blas": false,
+    "gpu": false
+  },
+  "executor": {
+    "cli_real_execution_mode": false,
+    "real_input_preflight_mode": true,
+    "synthetic_rehearsal_mode": true,
+    "future_single_use_wrapper_import_required": true,
+    "checkpoint_interface": false,
+    "shard_interface": false,
+    "expert_execution_interface": false,
+    "shared_expert_execution_interface": false,
+    "s2_interface": false,
+    "production_serial_f32_fallback": false
+  },
+  "future_output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+    "dtype": "little-endian-f64",
+    "shape": [
+      6144
+    ],
+    "byte_length": 49152,
+    "serialization": "contiguous-c-order-ieee754-binary64-little-endian",
+    "finite": true,
+    "concrete_sha256": "NOT_COMPUTED_UNTIL_SEPARATELY_RELEASED_EVENT"
+  },
+  "future_single_use": {
+    "separate_independently_approved_release_required": true,
+    "durable_attempt_start_before_ffn_computation": true,
+    "exclusive_attempt_creation": true,
+    "attempts": 1,
+    "ffn_compositions": 1,
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "s1_and_s2_boundary": {
+    "s1_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+    "s1_semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+    "s1_retention_classification": "HASH_RETAINED_REPRODUCIBLE_NOT_BYTE_RETAINED",
+    "s1_checkpoint_free_reconstruction_available": true,
+    "s1_materialization_authorized": false,
+    "s2_formula": "S2=f32(f64(S1)+FFN)",
+    "s2_authorized": false,
+    "required_before_s2_authorization": "SEPARATE_CHECKPOINT_FREE_S1_MATERIALIZATION_AND_RETENTION_AUTHORITY"
+  },
+  "accounting": {
+    "starting_ledger": 175,
+    "terminal_ledger": 175,
+    "preparation_checkpoint_reads": 0,
+    "preparation_shard_opens": 0,
+    "preparation_expert_executions": 0,
+    "preparation_shared_expert_executions": 0,
+    "preparation_ffn_completions": 0,
+    "preparation_s2_constructions": 0,
+    "future_checkpoint_read_budget": 0,
+    "future_shard_open_budget": 0,
+    "future_expert_execution_budget": 0,
+    "future_shared_expert_execution_budget": 0,
+    "future_ffn_composition_count": 1,
+    "future_s2_construction_budget": 0
+  },
+  "runtime": {
+    "cpython": "3.14.6",
+    "platform": "Darwin-arm64",
+    "endianness": "little",
+    "thread_variables_equal_one": [
+      "OPENBLAS_NUM_THREADS",
+      "OMP_NUM_THREADS",
+      "VECLIB_MAXIMUM_THREADS",
+      "MKL_NUM_THREADS",
+      "NUMEXPR_NUM_THREADS"
+    ]
+  },
+  "prohibitions": {
+    "checkpoint_access": true,
+    "shard_open": true,
+    "expert_execution": true,
+    "shared_expert_execution": true,
+    "routed_aggregate_recomputation": true,
+    "historical_direct_dprefix_aggregate": true,
+    "historical_direct_dprefix_shared_output": true,
+    "production_serial_f32_substitution": true,
+    "s1_materialization_in_this_authorization": true,
+    "s1_residual_addition": true,
+    "s2_construction": true,
+    "go_token_in_this_phase": true
+  },
+  "stop_boundary": "AFTER_REPRESENTATIVE_FFN_OUTPUT_ONLY"
+}

@@ -556,3 +556,19 @@
   matching `COMPLETE` terminal; retain the accepted two-process synthetic
   determinism contract; and preserve ledger 175 with zero real aggregate
   execution and no GO token.
+
+## Phase 36: Convergence
+
+- [x] T017-238 Reconcile the append-only F017 plan/task ledger with the already
+  banked routed-aggregate execution/reuse and representative shared-expert
+  authorization/release/execution authorities, preserving their actual
+  checkpoint-free dispositions and exact committed identities per Constitution
+  XII (partial).
+- [ ] T017-239 Prepare and independently accept checkpoint-free cross-event
+  reuse of the banked representative shared-expert output and one future
+  proof/reference FFN-composition authorization: bind immutable shared and
+  routed inputs, adjudicate routed-plus-shared and later S1 residual semantics,
+  implement/rehearse/validate an exact executor without evaluating the real
+  FFN or S2, bank exact Fable 5 review bytes, and preserve ledger 175 with zero
+  checkpoint, shard, expert, FFN, and S2 execution per the operator's
+  shared-output reuse and FFN-boundary request (missing).

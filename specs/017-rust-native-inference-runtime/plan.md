@@ -609,3 +609,47 @@ is to prepare an independently reviewed single-use routed-aggregate release.
 Gate: the release is independently accepted for separate approval and operator
 preparation only; the real aggregate remains not computed, state/output/token
 remain absent, and the next action is a separate independent release approval.
+
+## Phase 36 — Banked aggregate and shared-expert authority reconciliation
+
+- Record the successful routed-aggregate event and its immutable f64 `[6144]`
+  proof/reference output while keeping production serial-f32 explicitly
+  separate.
+- Bind the accepted routed-aggregate cross-event reuse authority with open-once
+  consume-what-you-validated semantics and zero recomputation capability.
+- Record the independently accepted representative shared-expert
+  authorization, release, approval, and retained-only real execution result:
+  one finite f32 `[6144]` output, 2/2 exact fresh-process reproduction, and
+  unchanged retained input and parameter identities.
+- Preserve ledger 175 with zero new checkpoint reads, shard opens, downstream
+  FFN completions, and S2 constructions throughout reconciliation.
+
+Gate: the routed aggregate and shared-expert output are independently banked
+authorities on their distinct accepted numerical surfaces; neither routed-plus-
+shared composition nor S2 has been performed.
+
+## Phase 37 — Shared-output reuse and representative FFN composition
+
+- Bind the banked representative shared-expert output through a private
+  manifest and open-once same-descriptor resolver requiring exact expected,
+  before, consumed, and after identity, finite f32 `[6144]` geometry, and
+  immutable single-link read-only storage.
+- Freeze routed-plus-shared arithmetic as the canonical F017 proof/reference
+  FFN surface: preserve the routed f64 `[6144]` contribution, exactly promote
+  each shared f32 element to binary64 with no scalar multiplier, add in fixed
+  routed-then-shared order under IEEE-754 round-to-nearest-ties-to-even, and
+  serialize a finite little-endian f64 `[6144]` result.
+- Keep the proof/reference surface distinct from the unauthorized production
+  serial-f32 path and prohibit historical direct-DPREFIX inputs, checkpoint or
+  compute fallbacks, BLAS, GPU, parallel reduction, and S2 construction.
+- Bind S1 as `LAYER3_POST_ATTENTION_RESIDUAL`, hash-retained and reproducible
+  checkpoint-free but not byte-retained; require a separate future S1
+  materialization/retention authority before S2 preparation.
+- Rehearse only synthetic real-geometry inputs in two fresh processes against
+  an exact rational oracle; expose real-input preflight but no real-execution
+  CLI; validate committed producer/consumer schemas and load-bearing
+  mutations; bank exact Fable 5 review bytes.
+
+Gate: shared-output reuse and the future one-shot checkpoint-free FFN
+composition authorization are independently accepted; no real FFN output or S2
+is computed, no GO token exists, and ledger remains 175.
