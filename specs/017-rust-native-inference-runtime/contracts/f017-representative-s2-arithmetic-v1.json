@@ -1,0 +1,96 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-arithmetic",
+  "schema_version": "1.0.0",
+  "contract_id": "F017-REPRESENTATIVE-S2-ARITHMETIC-1",
+  "status": "FROZEN_NO_EXECUTION_AUTHORITY",
+  "semantic_classification": "CANONICAL_F017_PROOF_REFERENCE_DERIVED_S2_SURFACE_INTENTIONALLY_NOT_CLAIMED_EQUIVALENT_TO_PRODUCTION_SERIAL_F32",
+  "formula": "S2_f32[k]=binary32(binary64(S1_f32[k])+FFN_f64[k])",
+  "coordinates": {
+    "count": 6144,
+    "order": "strictly increasing 0..6143",
+    "independent": true,
+    "reduction": false
+  },
+  "s1_decode": {
+    "dtype": "IEEE-754 binary32",
+    "serialization": "contiguous-c-order-little-endian",
+    "shape": [6144],
+    "byte_length": 24576,
+    "finite_required": true
+  },
+  "s1_promotion": {
+    "operation": "exact IEEE-754 binary32-to-binary64 widening",
+    "arithmetic_before_promotion": false,
+    "rounding": "exact-no-rounding"
+  },
+  "ffn_decode": {
+    "dtype": "IEEE-754 binary64",
+    "serialization": "contiguous-c-order-little-endian",
+    "shape": [6144],
+    "byte_length": 49152,
+    "finite_required": true,
+    "surface": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32"
+  },
+  "addition": {
+    "left_operand": "exactly-promoted-S1-binary64",
+    "right_operand": "FFN-binary64",
+    "dtype": "IEEE-754 binary64",
+    "operations_per_coordinate": 1,
+    "rounding_mode": "round-to-nearest-ties-to-even",
+    "finite_intermediate_required": true,
+    "fma": false,
+    "reduction": false,
+    "blas": false,
+    "gpu": false,
+    "parallel_arithmetic": false
+  },
+  "final_cast": {
+    "operation": "IEEE-754 binary64-to-binary32 conversion",
+    "rounding_mode": "round-to-nearest-ties-to-even",
+    "roundings_per_coordinate": 1,
+    "saturation": false,
+    "flush_to_zero": false,
+    "finite_output_required": true
+  },
+  "output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_S2_PROOF_REFERENCE_DERIVED",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "serialization": "contiguous-c-order-ieee754-binary32-little-endian",
+    "concrete_sha256": "NOT_COMPUTED_UNTIL_SEPARATELY_APPROVED_REAL_EVENT"
+  },
+  "implementation_authority": {
+    "runtime": "CPython-3.14.6-Darwin-arm64",
+    "algorithm": "serial struct.iter_unpack; Python binary64 scalar addition; struct.pack little-endian binary32 final conversion",
+    "thread_variables_equal_one": [
+      "OPENBLAS_NUM_THREADS",
+      "OMP_NUM_THREADS",
+      "VECLIB_MAXIMUM_THREADS",
+      "MKL_NUM_THREADS",
+      "NUMEXPR_NUM_THREADS"
+    ],
+    "numpy": false,
+    "vectorized_conversion": false,
+    "alternate_surface_fallback": false
+  },
+  "production_relationship": {
+    "production_serial_f32_equivalence_proven": false,
+    "final_f32_storage_implies_production_equivalence": false,
+    "production_authority": false,
+    "required_label": "PROOF_REFERENCE_DERIVED_NOT_PRODUCTION_SERIAL_F32"
+  },
+  "prohibitions": [
+    "S1_BINARY32_ADDITION_BEFORE_PROMOTION",
+    "FFN_DOWNCAST_BEFORE_ADDITION",
+    "FINAL_CAST_BEFORE_ADDITION",
+    "FINAL_CAST_OMITTED",
+    "FMA",
+    "BLAS",
+    "GPU",
+    "PARALLEL_ARITHMETIC",
+    "PRODUCTION_SERIAL_F32_SUBSTITUTION",
+    "FLUSH_TO_ZERO",
+    "SATURATION"
+  ]
+}
