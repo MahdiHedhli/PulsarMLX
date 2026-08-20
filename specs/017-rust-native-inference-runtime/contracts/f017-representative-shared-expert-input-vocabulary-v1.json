@@ -1,0 +1,12 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-input-vocabulary",
+  "schema_version": "1.0.0",
+  "canonical_sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+  "stage_name": "router_normalized",
+  "semantic_graph_name": "F_norm",
+  "upstream_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_EXPERT_INPUT",
+  "shared_expert_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_SHARED_EXPERT_INPUT",
+  "relationship": "EXACT_BYTE_IDENTITY_ONE_F_NORM_FEEDS_ROUTED_AND_SHARED_EXPERTS",
+  "role_alias_is_not_a_new_tensor_or_surface": true,
+  "historical_direct_dprefix_role": "VALID_BUT_DIFFERENT_SURFACE"
+}

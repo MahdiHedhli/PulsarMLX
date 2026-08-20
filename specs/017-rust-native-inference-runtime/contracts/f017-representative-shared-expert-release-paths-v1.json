@@ -1,0 +1,55 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-release-paths",
+  "schema_version": "1.0.0",
+  "host_home": "/Users/mhedhli",
+  "repository_root": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot",
+  "representative_input": {
+    "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-input-v1/router_normalized.f32le",
+    "role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_SHARED_EXPERT_INPUT",
+    "preexecution": "MUST_EXIST_REGULAR_NON_SYMLINK_NLINK1_MODE0400_SHA_BOUND"
+  },
+  "parameter_root": {
+    "path": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package",
+    "role": "RETAINED_SHARED_EXPERT_PARAMETER_PACKAGE",
+    "preexecution": "MUST_EXIST_DIRECTORY_NON_SYMLINK_OWNER_ONLY"
+  },
+  "parameter_manifest": {
+    "path": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package/representative-shared-expert-weight-reuse-manifest-v1.json",
+    "preexecution": "MUST_EXIST_REGULAR_NON_SYMLINK_NLINK1_MODE0400_SHA_BOUND"
+  },
+  "gate_payload": {
+    "path": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package/packed/01-gate.bin",
+    "preexecution": "MUST_EXIST_REGULAR_NON_SYMLINK_NLINK1_MODE0400_SHA_BOUND"
+  },
+  "up_payload": {
+    "path": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package/packed/02-up.bin",
+    "preexecution": "MUST_EXIST_REGULAR_NON_SYMLINK_NLINK1_MODE0400_SHA_BOUND"
+  },
+  "down_payload": {
+    "path": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-runner/.pulsarmlx-local/canonical-shared-expert-output-recovery-1/package/packed/03-down.bin",
+    "preexecution": "MUST_EXIST_REGULAR_NON_SYMLINK_NLINK1_MODE0400_SHA_BOUND"
+  },
+  "attempt_state_root": {
+    "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/attempt-state",
+    "preexecution": "MUST_NOT_EXIST"
+  },
+  "output_root": {
+    "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs",
+    "preexecution": "MUST_NOT_EXIST"
+  },
+  "output": {
+    "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs/representative-shared-expert-output.f32le",
+    "preexecution": "MUST_NOT_EXIST"
+  },
+  "approval": {
+    "path": "/Users/mhedhli/Documents/Coding/PulsarMLX-f017-live-one-shot/docs/architecture/reviews/evidence/f017-representative-shared-expert-recovery-single-use-release-v1-independent-approval-v1.json",
+    "preexecution": "MUST_EXIST_ONLY_AFTER_SEPARATE_INDEPENDENT_APPROVAL"
+  },
+  "go_token": {
+    "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/go-token.json",
+    "preexecution": "MUST_EXIST_ONLY_AFTER_OPERATOR_AUTHORIZATION_MODE0400_NLINK1"
+  },
+  "scratch": null,
+  "caller_selected_paths": false,
+  "checkpoint_or_shard_path": null
+}

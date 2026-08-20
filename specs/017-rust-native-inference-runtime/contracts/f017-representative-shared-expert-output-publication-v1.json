@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-output-publication",
+  "schema_version": "1.0.0",
+  "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+  "dtype": "little-endian-f32",
+  "shape": [6144],
+  "byte_length": 24576,
+  "canonical_serialization": "contiguous-c-order-ieee754-binary32-little-endian",
+  "finite": true,
+  "sequence": [
+    "OPEN_VALIDATED_OUTPUT_DIRECTORY_DESCRIPTOR",
+    "REQUIRE_OUTPUT_ABSENT_RELATIVE_TO_DESCRIPTOR",
+    "CREATE_EXCLUSIVE_TEMP_RELATIVE_TO_SAME_DESCRIPTOR",
+    "WRITE_EXACT_BYTES",
+    "FSYNC_TEMP",
+    "FCHMOD_0400",
+    "FSYNC_TEMP_AFTER_MODE",
+    "NO_REPLACE_HARD_LINK_PUBLISH_RELATIVE_TO_SAME_DESCRIPTOR",
+    "FSYNC_PARENT",
+    "UNLINK_TEMP_RELATIVE_TO_SAME_DESCRIPTOR",
+    "FSYNC_PARENT",
+    "OPEN_PUBLISHED_OUTPUT_RELATIVE_TO_SAME_DESCRIPTOR",
+    "FSTAT_AND_DESCRIPTOR_READBACK",
+    "REQUIRE_READBACK_EQUALS_COMPUTED_BYTES",
+    "REQUIRE_MATCHING_COMPLETE_TERMINAL"
+  ],
+  "overwrite": false,
+  "partial_output_authority": false,
+  "published_output_requires_complete_terminal": true,
+  "descriptor_readback_closes_authorization_review_D1": true
+}

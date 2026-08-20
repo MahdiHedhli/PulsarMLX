@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.representative-shared-expert-reproduction",
+  "schema_version": "1.0.0",
+  "runs": 2,
+  "fresh_processes": 2,
+  "input_surface": "EXACT_RETAINED_REPRESENTATIVE_F_NORM_AND_THREE_EXACT_RETAINED_PARAMETER_PAYLOADS",
+  "required_identity": "2_OF_2_EXACT_PRIMARY_OUTPUT_SHA256",
+  "finite_checks": "2_OF_2_PASS",
+  "input_before_after_identity": "2_OF_2_EXACT",
+  "parameter_before_after_identity": "2_OF_2_EXACT",
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "routed_aggregate_executions": 0,
+  "ffn_completions": 0,
+  "s2_constructions": 0,
+  "real_event_shared_expert_executions": 1,
+  "verification_reproduction_computations": 2,
+  "reproduction_outputs_are_not_separate_authority": true,
+  "producer_mode": "FRESH_PROCESS_REPRODUCE_FROM_RETENTION_NO_PUBLICATION"
+}
