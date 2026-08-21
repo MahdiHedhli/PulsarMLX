@@ -4,7 +4,10 @@
 from __future__ import annotations
 import argparse, hashlib, json, os
 from pathlib import Path
-from f017_apple_serial_f32_capture_wrapper_v2 import GateError, load_unique, sha
+try:
+    from .f017_apple_serial_f32_capture_wrapper_v2 import GateError, load_unique, sha
+except ImportError:
+    from f017_apple_serial_f32_capture_wrapper_v2 import GateError, load_unique, sha
 
 REPO = Path(__file__).resolve().parents[2]
 

@@ -315,21 +315,42 @@ def assemble(descriptors: list[dict]) -> dict:
     return validate_destination(descriptors)
 
 
+def refresh_runner_package(descriptors: list[dict]) -> dict:
+    if ATTEMPT_ROOT.exists() or CAPTURE_ROOT.exists():
+        raise ReadinessError("EXECUTION_STATE_PRESENT_NO_REFRESH")
+    if not PACKAGE_ROOT.is_dir() or not PACKAGE_CENSUS.is_file():
+        raise ReadinessError("PACKAGE_NOT_ASSEMBLED")
+    expected = canonical(make_runner_package(descriptors))
+    temporary = PACKAGE_PARENT / "package.json.refresh"
+    if temporary.exists():
+        raise ReadinessError("REFRESH_TEMP_PRESENT")
+    write_exclusive(temporary, expected)
+    if PACKAGE_JSON.exists():
+        PACKAGE_JSON.chmod(0o600)
+        PACKAGE_JSON.unlink()
+    os.rename(temporary, PACKAGE_JSON)
+    fsync_dir(PACKAGE_PARENT)
+    return validate_destination(descriptors)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--assemble", action="store_true")
     parser.add_argument("--validate", action="store_true")
     parser.add_argument("--print-census", action="store_true")
+    parser.add_argument("--refresh-runner-package", action="store_true")
     args = parser.parse_args()
-    if sum((args.assemble, args.validate, args.print_census)) != 1:
+    if sum((args.assemble, args.validate, args.print_census, args.refresh_runner_package)) != 1:
         raise SystemExit("choose exactly one mode")
     descriptors = derive_descriptors()
     if args.assemble:
         result = assemble(descriptors)
     elif args.validate:
         result = validate_destination(descriptors)
-    else:
+    elif args.print_census:
         result = census_document(descriptors)
+    else:
+        result = refresh_runner_package(descriptors)
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 0
 

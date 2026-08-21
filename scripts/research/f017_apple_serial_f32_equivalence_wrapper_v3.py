@@ -16,14 +16,24 @@ import secrets
 import subprocess
 import sys
 
-from f017_apple_serial_f32_capture_wrapper_v2 import (
-    GateError, durable_create, fsync_dir, load_unique, owner_matches, sha,
-    terminalize_owned_failure, terminalize_owned_success,
-)
-from f017_apple_serial_f32_execution_readiness_v1 import (
-    ATTEMPT_ROOT, CAPTURE_ROOT, PACKAGE_CENSUS, PACKAGE_JSON,
-    ReadinessError, derive_descriptors, validate_destination,
-)
+try:
+    from .f017_apple_serial_f32_capture_wrapper_v2 import (
+        GateError, durable_create, fsync_dir, load_unique, owner_matches, sha,
+        terminalize_owned_failure, terminalize_owned_success,
+    )
+    from .f017_apple_serial_f32_execution_readiness_v1 import (
+        ATTEMPT_ROOT, CAPTURE_ROOT, PACKAGE_CENSUS, PACKAGE_JSON,
+        ReadinessError, derive_descriptors, validate_destination,
+    )
+except ImportError:
+    from f017_apple_serial_f32_capture_wrapper_v2 import (
+        GateError, durable_create, fsync_dir, load_unique, owner_matches, sha,
+        terminalize_owned_failure, terminalize_owned_success,
+    )
+    from f017_apple_serial_f32_execution_readiness_v1 import (
+        ATTEMPT_ROOT, CAPTURE_ROOT, PACKAGE_CENSUS, PACKAGE_JSON,
+        ReadinessError, derive_descriptors, validate_destination,
+    )
 
 REPO = Path(__file__).resolve().parents[2]
 THREADS = {"OPENBLAS_NUM_THREADS":"1", "OMP_NUM_THREADS":"1", "VECLIB_MAXIMUM_THREADS":"1", "MKL_NUM_THREADS":"1", "NUMEXPR_NUM_THREADS":"1"}
