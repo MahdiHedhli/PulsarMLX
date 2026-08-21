@@ -1,0 +1,44 @@
+{
+  "schema":"pulsarmlx.f017.production-serial-f32-equivalence-independent-review-request",
+  "schema_version":"2.0.0",
+  "cycle":2,
+  "reviewer_model_required":"claude-fable-5",
+  "reviewer_track":"INDEPENDENT_ADVERSARIAL_SPECIFICATION_AND_ACCOUNTING",
+  "reviewed_branch":"feat/017-real-checkpoint-runner",
+  "reviewed_commit":"96503db702e95c7a08746924a208304819139803",
+  "review_scope":"COMMITTED_PUSHED_BYTES_AT_REVIEWED_COMMIT_ONLY",
+  "reviewed_artifact_hashes":{
+    "specification":"3ff986346812e124058b51dd96c7b459616b1564d5275da0442ce818dc1c1eb2",
+    "contract":"661bd32ec86a14b098f0f992eb890f1dde0b29d86b8953de52329fb0549797db",
+    "validator":"6cc4fb928966803eb674af93b74a58d5053fb9f2ba990fe5e8a328a9d6db9630",
+    "negative_tests":"d3184bb43a7d1e1b6d9b53f14c23df113c4a8ae3267fce5000ae59517ed741f7",
+    "validation":"287e20791e677ac087c00b5135b67d2c94d4e1342ae2d5ec64dba40f17f1f3a2",
+    "master_ledger_v2":"aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "ledger_validator":"598bc39e1b2d962d7c43dfd4ab231a370447eede1cd11333803dea7e93871d83",
+    "bound_resolver":"ceb8982c3709f728a6bd60785fd6a519e215c39704379c0661373d22b28b740e"
+  },
+  "required_adjudications":[
+    "Reconstruct the immutable master-ledger-v1 0-to-166 event chain and the exact nine-receipt representative 166-to-175 extension; identify any gap, overlap, duplicate, unexplained increment, or authority conflict.",
+    "Determine whether master ledger v2 is a sound append-only accounting reconciliation and whether it consumed zero new payload.",
+    "Attack the future same-commit event-result/master-ledger rule and terminal receipt-count cross-check.",
+    "Verify generic bound-field resolution reads exact SHA-bound duplicate-key-hardened JSON and compares resolved values rather than tuple presence.",
+    "Verify executable numeric bindings actually extract source constants/tokens and honestly mark unextractable semantics.",
+    "Verify RN1 is non-blocking for this retained-only phase but a hard gate for the next execution-capable generation.",
+    "Verify all five next-natural-rebind dispositions are safe now and mandatory at the named future boundary.",
+    "Re-adjudicate production implementation inventory, every stage arithmetic row, proof/reference distinctions, vocabulary, tolerances, routing rules, retained reuse, checkpoint NO decision, and blocked execution readiness.",
+    "Run the committed validators/tests or equivalent read-only checks; do not execute numerical or checkpoint paths.",
+    "ACCEPT only if there are zero BLOCKING and zero NON_BLOCKING_REQUIRED findings."
+  ],
+  "severity_policy":{"BLOCKING":"ACCEPTANCE_BLOCKING","NON_BLOCKING_REQUIRED":"ACCEPTANCE_BLOCKING","DEFENSE_IN_DEPTH":"REQUIRES_EXPLICIT_NON_WEAKENING_DISPOSITION"},
+  "required_response":{
+    "path":"docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-v1.json",
+    "schema":"pulsarmlx.f017.production-serial-f32-equivalence-independent-review",
+    "schema_version":"2.0.0",
+    "fields":["schema","schema_version","reviewer_model","reviewer_track_or_invocation_identity","reviewed_branch","reviewed_head","reviewed_artifact_hashes","reviewer_tests","findings","finding_to_fix_mapping","defense_in_depth_dispositions","answers","blocking_findings","non_blocking_required_findings","defense_in_depth_findings","verdict","statement"],
+    "finding_rule":"EVERY_FINDING_HAS_STABLE_ID_AND_SEVERITY",
+    "repair_rule":"EVERY_REPAIRED_FINDING_HAS_FINDING_TO_FIX_MAPPING",
+    "verdict_values":["ACCEPT","REJECT","NON_BLOCKING_REQUIRED"]
+  },
+  "prohibitions":{"checkpoint_reads":0,"shard_opens":0,"real_payload_consumption":0,"numerical_reruns":0,"production_equivalence_executions":0},
+  "statement_requested":"F017 PRODUCTION SERIAL-F32 EQUIVALENCE SPECIFICATION V1 ACCEPTED"
+}
