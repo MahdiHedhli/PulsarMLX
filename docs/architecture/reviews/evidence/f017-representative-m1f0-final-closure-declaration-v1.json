@@ -1,0 +1,113 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-final-closure-declaration",
+  "schema_version": "1.0.0",
+  "declaration_id": "F017-REPRESENTATIVE-M1F0-FINAL-CLOSURE-DECLARATION-1",
+  "authoritative_branch": "feat/017-real-checkpoint-runner",
+  "declaration_base_head": "19206a43818236792f6e366dcf3130e2e990e758",
+  "declaration_status": "ACCEPTED",
+  "declaration_statement": "REPRESENTATIVE_M1F0_FINAL_CLOSURE: ACCEPTED",
+  "closure_statement": "The canonical representative M1-F0 S0-to-S2 proof/reference lineage is closed against the accepted committed evidence package.",
+  "accepted_authority": {
+    "closure_package": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-package-v1.json",
+      "sha256": "7b6d38d15889a0811bd8a0d54ce0e9e495da7918cea323d7995d9dc35e1c5402"
+    },
+    "closure_review": {
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-cycle-01-independent-review.json",
+      "sha256": "1b014af874ca90f30b17c2fac87a66744126067401c76c2386eaf54596662a3a",
+      "reviewed_head": "694879463427dc83f3153a46e8abbf766deb856a",
+      "reviewer_model": "claude-fable-5",
+      "verdict": "ACCEPT",
+      "blocking_findings": 0,
+      "non_blocking_required_findings": 0,
+      "accounting_closure": "PASS"
+    }
+  },
+  "canonical_authority": {
+    "canonical_stage_count": 10,
+    "attention_substage_count": 19,
+    "representative_s2_sha256": "0341314230654d21fa56506dfe601f90bdb603fc38fd1203b6dd62b1e54c98c1",
+    "final_real_payload_ledger": 175,
+    "accounting_closure": "PASS",
+    "proof_reference_surface_disposition": "PRESERVED_WITH_EXPLICIT_NON_CLAIM_OF_PRODUCTION_SERIAL_F32_EQUIVALENCE",
+    "single_use_authority_disposition": "ALL_EXECUTION_CAPABLE_AUTHORITIES_CONSUMED_OR_EXPLICITLY_SUPERSEDED;NO_LEGITIMATE_REPLAY_TOKEN"
+  },
+  "scope_proven": {
+    "canonical_s0_authority_bound": true,
+    "representative_attention_path_executed_and_retained": true,
+    "s1_concretely_retained": true,
+    "representative_routed_experts_bound": true,
+    "routed_aggregate_bound": true,
+    "shared_expert_bound": true,
+    "ffn_bound": true,
+    "s2_concretely_retained": true,
+    "complete_s0_to_s2_lineage_independently_reviewed": true,
+    "accounting_closure_passes": true,
+    "final_real_payload_ledger_is_175": true,
+    "no_hidden_post_attention_checkpoint_rereads_in_accepted_lineage": true,
+    "all_execution_capable_single_use_authorities_consumed_or_explicitly_superseded": true,
+    "no_legitimate_replay_token_for_completed_numerical_stages": true
+  },
+  "scope_limit": "ACCEPTED_REPRESENTATIVE_M1F0_S0_TO_S2_PROOF_REFERENCE_PATH_ONLY",
+  "non_claims": {
+    "full_model_correctness": false,
+    "all_token_correctness": false,
+    "production_serial_f32_equivalence": false,
+    "generalized_glm_correctness": false,
+    "performance_readiness": false,
+    "production_readiness": false,
+    "checkpoint_work_beyond_exact_representative_path": false
+  },
+  "surface_non_claim": "Proof/reference numerical surfaces are not claimed equivalent to production serial-f32 unless separately proven.",
+  "defense_in_depth_review_binding": {
+    "source_review_sha256": "1b014af874ca90f30b17c2fac87a66744126067401c76c2386eaf54596662a3a",
+    "classification": "NON_BLOCKING_HARDENING_NOTES_CARRIED_FORWARD",
+    "count": 4,
+    "findings": [
+      {
+        "id": "DID-1",
+        "title": "Pure-document validator does not pin the redundant route hash copies in canonical_graph[4]",
+        "disposition": "NON_BLOCKING_ACCEPTED;PACKAGE_SHA_AND_AUTHORITATIVE_ROUTE_IDENTITIES_REMAIN_PINNED"
+      },
+      {
+        "id": "DID-2",
+        "title": "Validator pins only the s2 key of reproduction_status and does not pin graph[1].retained_only_reproduction",
+        "disposition": "NON_BLOCKING_ACCEPTED;AUTHORITATIVE_ATTENTION_EVIDENCE_SHA_REMAINS_PINNED"
+      },
+      {
+        "id": "DID-3",
+        "title": "Validator does not pin S1 formula, dtype/shape strings, next_authority, or unresolved_limitations",
+        "disposition": "NON_BLOCKING_ACCEPTED;UPSTREAM_S1_EVIDENCE_PACKAGE_SHA_AND_CLOSURE_BOUNDARY_REMAIN_PINNED"
+      },
+      {
+        "id": "DID-4",
+        "title": "Supersession disposition relabel SUPERSEDED_ to CONSUMED_ passes the prefix-based disposition check",
+        "disposition": "NON_BLOCKING_ACCEPTED;EXACT_SUPERSESSION_EVIDENCE_SHAS_REMAIN_PINNED"
+      }
+    ]
+  },
+  "later_committed_evidence_audit": {
+    "reviewed_head": "694879463427dc83f3153a46e8abbf766deb856a",
+    "declaration_base_head": "19206a43818236792f6e366dcf3130e2e990e758",
+    "closure_package_unchanged_since_review": true,
+    "closure_review_unchanged": true,
+    "contradictory_later_committed_evidence": false,
+    "result": "PASS"
+  },
+  "declaration_phase_accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "attention_executions": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "aggregate_executions": 0,
+    "s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0
+  },
+  "new_independent_review_required": false,
+  "independent_review_authority": "1b014af874ca90f30b17c2fac87a66744126067401c76c2386eaf54596662a3a",
+  "termination_condition": "REPRESENTATIVE_M1F0_FINAL_CLOSURE_ACCEPTED"
+}

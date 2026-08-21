@@ -698,3 +698,12 @@
   a machine-verifiable package accepted by Claude Fable 5 while stopping before
   the separate final project-level closure declaration per plan Phase 49 and
   Constitution III/X/XII.
+
+## Phase 49: Convergence
+
+- [x] T017-252 Bind the exact accepted closure package and Claude Fable 5
+  ACCEPT review into an append-only representative M1-F0 final closure
+  declaration, preserve all proof/reference non-claims and four accepted
+  defense-in-depth notes, validate reviewed-byte identity, stage/accounting/
+  replay scope, and ledger 175, then commit and push without checkpoint, shard,
+  or numerical-stage activity per plan Phase 50 and Constitution III/X/XII.

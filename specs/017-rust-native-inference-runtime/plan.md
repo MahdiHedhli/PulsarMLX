@@ -910,3 +910,22 @@ S1, FFN, attempt, and S2 counters remain zero.
 Gate: S2 reuse and the complete representative M1-F0 closure package are
 independently accepted; ledger remains 175; no checkpoint, shard, or numerical
 stage activity occurs; and the workflow stops before final closure declaration.
+
+## Phase 50 — Representative M1-F0 final closure declaration
+
+- Bind the byte-identical accepted closure package and Claude Fable 5 ACCEPT
+  review into one append-only documentation/evidence declaration at ledger 175.
+- Declare only the canonical representative M1-F0 S0-to-S2 proof/reference
+  lineage closed, preserving all explicit full-model, all-token, production
+  serial-f32 equivalence, generalized correctness, performance, and production
+  non-claims.
+- Carry all accepted defense-in-depth findings forward as non-blocking
+  hardening notes and bind the consumed/superseded single-use authority and
+  no-legitimate-replay conclusions without creating new execution authority.
+- Validate repository hashes, reviewed-byte identity, Git ancestry, stage and
+  attention counts, S2 identity, accounting closure, ledger, scope, non-claims,
+  and zero declaration-phase numerical activity before committing and pushing.
+
+Gate: `REPRESENTATIVE_M1F0_FINAL_CLOSURE: ACCEPTED` is committed and pushed;
+the declaration adds no numerical or production claim, ledger remains 175,
+and checkpoint, shard, and every numerical-stage counter remain zero.
