@@ -10,6 +10,7 @@ except ImportError:
     from f017_apple_serial_f32_capture_wrapper_v2 import GateError, load_unique, sha
 
 REPO = Path(__file__).resolve().parents[2]
+APPROVAL_STATEMENT = "APPLE PRODUCTION SERIAL-F32 EQUIVALENCE SINGLE-USE RELEASE V4 APPROVED"
 
 
 def canonical(value):
@@ -34,8 +35,22 @@ def main() -> int:
     if not args.operator_confirm_exactly_once or args.approval is None or args.output is None:
         raise GateError("EXPLICIT_OPERATOR_ONLY_LIVE_ISSUANCE_REQUIRED")
     approval = load_unique(args.approval)
+    if set(approval) != set(release["approval_schema_fields"]):
+        raise GateError("APPROVAL_FIELD_CENSUS")
     if approval.get("verdict") != "ACCEPT" or approval.get("human_approval_identity") in (None, "", "INERT"):
         raise GateError("HUMAN_APPROVAL_REQUIRED")
+    if approval.get("release_sha256") != sha(args.release) or approval.get("approval_statement") != release.get("required_approval_statement") or release.get("required_approval_statement") != APPROVAL_STATEMENT:
+        raise GateError("APPROVAL_RELEASE_SCOPE")
+    if approval.get("readiness_head") != approval.get("reviewed_head") or approval.get("reviewer_model") != "claude-fable-5":
+        raise GateError("APPROVAL_REVIEW_SCOPE")
+    review_path = REPO / approval.get("readiness_review_path", "")
+    if not review_path.is_file() or sha(review_path) != approval.get("readiness_review_sha256"):
+        raise GateError("APPROVAL_REVIEW_SHA")
+    review = load_unique(review_path)
+    if review.get("verdict") != "ACCEPT" or review.get("reviewer_model") != "claude-fable-5" or review.get("reviewed_head") != approval.get("reviewed_head"):
+        raise GateError("APPROVAL_REVIEW_AUTHORITY")
+    if approval.get("ledger") != 175 or approval.get("stop_boundary") != release["stop_boundary"] or approval.get("real_event_authorized") is not True:
+        raise GateError("APPROVAL_BUDGET_SCOPE")
     fields = release["go_token_schema_fields"]
     direct = ["event_id","release_id","attempt_id","execution_code_head","native_executable_sha256","package_root_sha256","stage_manifest_sha256","capture_manifest_sha256","comparison_contract_sha256","determinism_contract_sha256","wrapper_sha256","terminalizer_sha256"]
     token = {key: approval[key] for key in direct}

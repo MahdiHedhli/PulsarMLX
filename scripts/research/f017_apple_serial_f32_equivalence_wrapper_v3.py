@@ -20,7 +20,7 @@ import sys
 try:
     from .f017_apple_serial_f32_capture_wrapper_v2 import (
         GateError, durable_create, fsync_dir, load_unique, owner_matches, sha,
-        terminalize_owned_failure, terminalize_owned_success,
+        terminalize_owned_failure, validate_capture,
     )
     from .f017_apple_serial_f32_execution_readiness_v1 import (
         ATTEMPT_ROOT, CAPTURE_ROOT, PACKAGE_CENSUS, PACKAGE_JSON,
@@ -29,7 +29,7 @@ try:
 except ImportError:
     from f017_apple_serial_f32_capture_wrapper_v2 import (
         GateError, durable_create, fsync_dir, load_unique, owner_matches, sha,
-        terminalize_owned_failure, terminalize_owned_success,
+        terminalize_owned_failure, validate_capture,
     )
     from f017_apple_serial_f32_execution_readiness_v1 import (
         ATTEMPT_ROOT, CAPTURE_ROOT, PACKAGE_CENSUS, PACKAGE_JSON,
@@ -38,6 +38,7 @@ except ImportError:
 
 REPO = Path(__file__).resolve().parents[2]
 THREADS = {"OPENBLAS_NUM_THREADS":"1", "OMP_NUM_THREADS":"1", "VECLIB_MAXIMUM_THREADS":"1", "MKL_NUM_THREADS":"1", "NUMEXPR_NUM_THREADS":"1"}
+APPROVAL_STATEMENT = "APPLE PRODUCTION SERIAL-F32 EQUIVALENCE SINGLE-USE RELEASE V4 APPROVED"
 
 
 def verify_binding(binding: dict) -> Path:
@@ -68,10 +69,12 @@ def validate_machine_runtime(release: dict, runner: Path) -> None:
 
 def validate_release(path: Path) -> dict:
     release = load_unique(path)
-    if release.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-equivalence-release" or release.get("schema_version") != "3.0.0":
+    if release.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-equivalence-release" or release.get("schema_version") != "4.0.0":
         raise GateError("RELEASE_SCHEMA")
     if release.get("real_event_authorized") is not False or release.get("live_go_token_created") is not False:
         raise GateError("PREMATURE_AUTHORITY")
+    if release.get("required_approval_statement") != APPROVAL_STATEMENT or release.get("stop_boundary") != "AFTER_SINGLE_APPLE_PRODUCTION_SERIAL_F32_CAPTURE_AND_FROZEN_COMPARISON_ONLY" or release.get("determinism_authority") != "SEPARATE_FUTURE_RELEASE_REQUIRED":
+        raise GateError("RELEASE_AUTHORITY_BOUNDARY")
     if release.get("ledger") != {"start":175,"terminal":175,"classification":"RETAINED_ONLY_REAL_EXECUTION_EVENT_ZERO_PAYLOAD_DELTA"}:
         raise GateError("LEDGER")
     budgets = release.get("execution_budgets", {})
@@ -149,17 +152,94 @@ def validate_authority(release_path: Path, release: dict, approval_path: Path, t
     for field, expected in required.items():
         if approval.get(field) != expected or token.get(field) != expected:
             raise GateError(f"AUTHORITY_BINDING:{field}")
+    if approval.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-equivalence-independent-approval" or approval.get("schema_version") != "1.0.0":
+        raise GateError("APPROVAL_SCHEMA")
+    if approval.get("readiness_head") != approval.get("reviewed_head") or token.get("readiness_head") != approval.get("reviewed_head"):
+        raise GateError("REVIEWED_HEAD_BINDING")
+    review_path = REPO / approval.get("readiness_review_path", "")
+    if not review_path.is_file() or sha(review_path) != approval.get("readiness_review_sha256"):
+        raise GateError("READINESS_REVIEW_SHA")
+    review = load_unique(review_path)
+    if review.get("reviewer_model") != "claude-fable-5" or review.get("verdict") != "ACCEPT" or review.get("reviewed_head") != approval.get("reviewed_head"):
+        raise GateError("READINESS_REVIEW_AUTHORITY")
     if token.get("approval_sha256") != sha(approval_path):
         raise GateError("APPROVAL_SHA")
-    if approval.get("verdict") != "ACCEPT" or approval.get("human_approval_identity") in (None, "", "INERT"):
+    if approval.get("reviewer_model") != "claude-fable-5" or approval.get("verdict") != "ACCEPT" or approval.get("human_approval_identity") in (None, "", "INERT"):
         raise GateError("HUMAN_APPROVAL")
+    if approval.get("approval_statement") != release["required_approval_statement"] or approval.get("ledger") != 175 or approval.get("stop_boundary") != release["stop_boundary"] or approval.get("real_event_authorized") is not True:
+        raise GateError("APPROVAL_SCOPE")
     if approval.get("approval_does_not_execute") is not True or approval.get("approval_is_not_token") is not True:
         raise GateError("APPROVAL_SEPARATION")
     if token.get("disposition") != "GO_EXECUTE_ONCE_NO_RETRY" or token.get("real_event_authorized") is not True:
         raise GateError("TOKEN_DISPOSITION")
     if token.get("allowed_attempt_count") != 1 or token.get("retries") != 0 or token.get("resume") is not False:
         raise GateError("TOKEN_ONE_SHOT")
+    token_scope = {
+        "expected_starting_ledger": 175,
+        "allowed_real_payload_consumption": 0,
+        "checkpoint_reads": 0,
+        "checkpoint_fallback": "PROHIBITED",
+        "allowed_stage_range": "input_hidden..production_s2",
+        "allowed_output_root": release["machine_local_paths"]["capture_root"],
+        "human_approval_identity": approval["human_approval_identity"],
+    }
+    for field, expected in token_scope.items():
+        if token.get(field) != expected:
+            raise GateError(f"TOKEN_SCOPE:{field}")
     return approval, token
+
+
+def terminalize_owned_success_v3(root: Path, capture_root: Path, invocation_id: str, owner_sha: str) -> None:
+    """Bank success from the actual receipt census; retained-only means empty."""
+    if not owner_matches(root, invocation_id, owner_sha):
+        raise GateError("SUCCESS_TERMINALIZATION_NOT_OWNED")
+    receipt_dir = root / "payload-receipts"
+    receipt_rows = sorted(path for path in receipt_dir.iterdir() if path.is_file())
+    if receipt_rows:
+        raise GateError("RETAINED_ONLY_EVENT_HAS_PAYLOAD_RECEIPTS")
+    consumed_reads = len(receipt_rows)
+    receipt_inventory = [{"path": path.name, "sha256": sha(path)} for path in receipt_rows]
+    capture = validate_capture(capture_root)
+    receipt = {
+        "schema": "pulsarmlx.f017.apple-production-serial-f32-execution-receipt",
+        "schema_version": "3.0.0",
+        "invocation_id": invocation_id,
+        "owner_sha256": owner_sha,
+        "capture": capture,
+        "checkpoint_reads": consumed_reads,
+        "shard_opens": 0,
+        "production_equivalence_executions": 1,
+    }
+    receipt_sha = durable_create(root / "execution-receipt.json", receipt)
+    terminal = {
+        "schema": "pulsarmlx.f017.apple-production-serial-f32-terminal",
+        "schema_version": "3.0.0",
+        "status": "COMPLETE",
+        "invocation_id": invocation_id,
+        "owner_sha256": owner_sha,
+        "consumed_reads": consumed_reads,
+        "receipt_inventory": receipt_inventory,
+        "ledger_before": 175,
+        "ledger_after": 175 + consumed_reads,
+        "checkpoint_reads": consumed_reads,
+        "shard_opens": 0,
+        "production_equivalence_executions": 1,
+        "execution_receipt_sha256": receipt_sha,
+        "capture_manifest_sha256": capture["capture_manifest_sha256"],
+        "output_authority": True,
+        "no_retry": True,
+    }
+    durable_create(root / "terminal.json", terminal)
+    rows = []
+    for path in sorted(path for path in root.iterdir() if path.is_file() and path.name != "artifact-inventory.json"):
+        rows.append({"path": path.name, "sha256": sha(path)})
+    durable_create(root / "artifact-inventory.json", {
+        "schema": "pulsarmlx.f017.apple-production-serial-f32-attempt-inventory",
+        "schema_version": "3.0.0",
+        "invocation_id": invocation_id,
+        "owner_sha256": owner_sha,
+        "artifacts": rows,
+    })
 
 
 def execute(release_path: Path, release: dict, approval_path: Path, token_path: Path) -> int:
@@ -183,7 +263,7 @@ def execute(release_path: Path, release: dict, approval_path: Path, token_path: 
         if completed.returncode:
             terminalize_owned_failure(ATTEMPT_ROOT, invocation_id, owner_sha, "RUNNER_EXIT", completed.returncode)
             return completed.returncode
-        terminalize_owned_success(ATTEMPT_ROOT, CAPTURE_ROOT, invocation_id, owner_sha)
+        terminalize_owned_success_v3(ATTEMPT_ROOT, CAPTURE_ROOT, invocation_id, owner_sha)
         return 0
     except BaseException as exc:
         if owner_matches(ATTEMPT_ROOT, invocation_id, owner_sha) and not (ATTEMPT_ROOT / "terminal.json").exists():
