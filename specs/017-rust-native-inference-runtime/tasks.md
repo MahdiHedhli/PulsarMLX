@@ -732,7 +732,7 @@
 
 ## Phase 52: Convergence
 
-- [ ] T017-255 Assemble and byte-verify the exact retained 40-tensor Apple
+- [x] T017-255 Assemble and byte-verify the exact retained 40-tensor Apple
   production package, rebind all load-bearing source/runtime/native identities,
   freeze comparison/routing/determinism/accounting and one-shot authorization
   contracts, rehearse RN1 lifecycle failure modes with inert payloads, and bank

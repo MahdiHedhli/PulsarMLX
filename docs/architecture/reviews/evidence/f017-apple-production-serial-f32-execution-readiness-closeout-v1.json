@@ -1,0 +1,73 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-closeout",
+  "schema_version": "1.0.0",
+  "branch": "feat/017-real-checkpoint-runner",
+  "starting_head": "887d1e23cc238d70331ec67286c60826af3c0212",
+  "accepted_reviewed_head": "e3f4fac905d46695355844a41fcdf449e7d6fad4",
+  "review_banking_head": "646adb4d520c1a9008fb5f1daecaae89d2de81e5",
+  "execution_code_head": "53cc3eca345f7afdd00921dc14eeac28ed6156ab",
+  "package": {
+    "manifest_path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-retained-40-tensor-package-v1.json",
+    "manifest_sha256": "eacab6401fca8264ab4ac80674e8968ce4fd419f9e10f6fff3fc997f639ed573",
+    "tensor_count": 40,
+    "total_bytes": 257305600,
+    "package_root_sha256": "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6",
+    "source_destination_identity": "40/40 PASS",
+    "checkpoint_access": "NONE"
+  },
+  "runtime": {
+    "code_manifest_path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-code-manifest-v4.json",
+    "code_manifest_sha256": "d58943bafbde5832d242b36732d6758278ed797d647720864a3d9d611217f936",
+    "runtime_rebind_path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-runtime-rebind-v4.json",
+    "runtime_rebind_sha256": "a3e166b89dd4fb327d13055822998da838767dac00a343eaf53334a6a2a9b28c",
+    "native_executable_sha256": "fe82ab79f6c1a4798fb1204dd5deee24aa6bfaaa9b2cd7f841cca20afde553e5",
+    "mlx_dylib_sha256": "c30b1529178de28d23817e6e73ea5133cf63af060379c41a27aa7420aa616b3d",
+    "mlx_c_dylib_sha256": "9882fe1f7ec1fcdb10cebde60e88b41826ab4dfed8ae624b99be419d6fa89561"
+  },
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-equivalence-single-use-release-v5.json",
+    "sha256": "617c3106593624100af1a6a55a15612e122156c53756e435740a959691df7cd2",
+    "one_attempt": true,
+    "retries": 0,
+    "resume": false,
+    "live_go_created": false,
+    "real_event_authorized": false,
+    "stop_boundary": "AFTER_SINGLE_APPLE_PRODUCTION_SERIAL_F32_CAPTURE_AND_FROZEN_COMPARISON_ONLY"
+  },
+  "comparison": {
+    "stage_count": 34,
+    "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-comparison-execution-contract-v1.json",
+    "contract_sha256": "72d4a68702845b69c5d65759bb615180da0eead02355b78804d4a06b76424ecf",
+    "routing_gates_sha256": "791fd886787e8bdba72bafe9cf5a072de31a6918c220c80f351a1fe4b1093589",
+    "determinism_contract_sha256": "2fab2460886b43b9158be06b75537b57a40e0e933c3783b8df83f05ac2d47f3b",
+    "determinism_authority": "SEPARATE_FUTURE_RELEASE_REQUIRED",
+    "executed": false
+  },
+  "accounting": {
+    "classification": "RETAINED_ONLY_REAL_EXECUTION_EVENT_ZERO_PAYLOAD_DELTA",
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "all_numerical_execution_counters": 0,
+    "production_equivalence_executions": 0,
+    "representative_determinism_runs": 0,
+    "live_go_tokens": 0,
+    "real_authorization_consumptions": 0
+  },
+  "review": {
+    "cycles_used": 3,
+    "model": "claude-fable-5",
+    "raw_path": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-execution-readiness-cycle-03-independent-review-v1.json",
+    "raw_sha256": "6fe52b7ca32eb1e1f4aac18dd6fa7485fb29ae71901c3b8b23004cf32491e2e6",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 0,
+    "verdict": "ACCEPT"
+  },
+  "checkpoint_access_decision": "CHECKPOINT_ACCESS_REQUIRED: NO",
+  "ready_for_human_gated_production_serial_f32_equivalence_execution": true,
+  "production_serial_f32_equivalence_executed": false,
+  "live_go_token_created": false,
+  "next_safe_action": "HUMAN_OPERATOR_DECIDES_WHETHER_TO_AUTHORIZE_OR_DECLINE_EXACTLY_ONE_REVIEWED_EXECUTION"
+}
