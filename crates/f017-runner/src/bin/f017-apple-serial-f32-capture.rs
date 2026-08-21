@@ -170,22 +170,6 @@ fn decode(spec: &TensorSpec) -> Result<Vec<f32>, String> {
     let mut output = vec![0.0_f32; count];
     match spec.encoding.as_str() {
         "F32_LE" => return f32le(&bytes, count),
-        "Q4_K" => {
-            let row_bytes = columns / 256 * 144;
-            if columns % 256 != 0 || bytes.len() != rows * row_bytes {
-                return Err("Q4_K_LAYOUT".into());
-            }
-            for row in 0..rows {
-                let decoded = quant::cpu_dot::dequant_q4_k(
-                    &bytes[row * row_bytes..(row + 1) * row_bytes],
-                    columns,
-                );
-                if decoded.len() != columns {
-                    return Err("Q4_K_DECODE".into());
-                }
-                output[row * columns..(row + 1) * columns].copy_from_slice(&decoded);
-            }
-        }
         "Q5_K" => {
             let row_bytes = columns / 256 * 176;
             if columns % 256 != 0 || bytes.len() != rows * row_bytes {
@@ -383,6 +367,7 @@ fn validate_package(package: &Package) -> Result<(), String> {
         || package.qk_rope != 64
         || package.kv_lora != 512
         || package.value_dim != 256
+        || package.rope_base.to_bits() != 1_000_000.0_f32.to_bits()
     {
         return Err("PACKAGE_POLICY".into());
     }

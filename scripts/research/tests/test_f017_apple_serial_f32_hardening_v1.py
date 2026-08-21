@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import threading
 import unittest
+from unittest import mock
 
 from scripts.research import f017_bound_authority_resolver_v2 as resolver
 from scripts.research import f017_real_payload_event_detector_v2 as detector
@@ -103,6 +104,37 @@ class RN1Tests(unittest.TestCase):
         result = subprocess.run([str(script)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 78)
         self.assertIn("TOMBSTONED", result.stderr)
+
+    def test_execute_records_runtime_binding_and_terminalizes_owned_runner_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            runner = repo / "stub-runner"
+            runner.write_text("#!/bin/sh\nexit 7\n")
+            os.chmod(runner, 0o500)
+            release_path = repo / "release.json"
+            approval_path = repo / "approval.json"
+            token_path = repo / "token.json"
+            write(release_path, {"release":"synthetic"})
+            write(approval_path, {"approval":"synthetic"})
+            write(token_path, {"token":"synthetic"})
+            release = {
+                "event_id":"E-1", "release_id":"R-1", "attempt_id":"A-1",
+                "wrapper_sha256":"a" * 64, "executor_sha256":"b" * 64,
+                "execution_code_head":"c" * 40,
+                "runtime_binding":{"path":"runtime.json","sha256":"d" * 64},
+                "runner_path":"stub-runner",
+                "machine_local_paths":{
+                    "attempt_root":str(repo / "attempt"),
+                    "capture_root":str(repo / "capture"),
+                    "package_manifest":str(repo / "package.json"),
+                },
+            }
+            with mock.patch.object(wrapper, "validate_authorization", return_value=({}, {})):
+                self.assertEqual(wrapper.execute(repo, release_path, release, approval_path, token_path), 7)
+            start = wrapper.load_unique(repo / "attempt" / "attempt-start.json")
+            self.assertEqual(start["environment_identity"], release["runtime_binding"])
+            terminal = wrapper.load_unique(repo / "attempt" / "terminal.json")
+            self.assertEqual((terminal["status"], terminal["reason"], terminal["process_exit"]), ("TERMINAL_FAILURE", "RUNNER_EXIT", 7))
 
 
 if __name__ == "__main__":

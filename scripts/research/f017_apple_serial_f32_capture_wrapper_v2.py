@@ -22,6 +22,19 @@ class GateError(RuntimeError):
     pass
 
 
+STAGE_IDS = [
+    "input_hidden", "attention_normalized", "query_rank", "query_rank_normalized",
+    "query_heads", "kv_raw", "kv_normalized", "key_nope", "attention_scores",
+    "attention_weights", "value_heads", "attention_output", "post_attention_residual",
+    "router_normalized", "router_logits", "router_probabilities", "router_scores",
+    "ranking", "selected_ids", "routing_weights", "routed_gate", "routed_up",
+    "routed_silu", "routed_gate_up_product", "routed_weighted_hidden",
+    "routed_down_outputs", "routed_aggregate", "shared_gate", "shared_up",
+    "shared_silu", "shared_gate_up_product", "shared_expert_output", "production_ffn",
+    "production_s2",
+]
+
+
 def load_unique(path: Path):
     def pairs(items):
         out = {}
@@ -88,6 +101,18 @@ def validate_release(repo: Path, release_path: Path) -> dict:
     for binding in manifest.get("artifacts", []):
         verify_binding(repo, binding)
     verify_binding(repo, release["authorization_schema"])
+    runtime_path = verify_binding(repo, release["runtime_binding"])
+    runtime = load_unique(runtime_path)
+    for family in ("mlx", "mlx_c"):
+        for key in ("library", "version_header"):
+            binding = runtime[family][key]
+            if sha(Path(binding["path"])) != binding["sha256"]:
+                raise GateError(f"RUNTIME_IDENTITY:{family}:{key}")
+    umbrella = runtime["mlx_c"]["umbrella_header"]
+    if sha(Path(umbrella["path"])) != umbrella["sha256"]:
+        raise GateError("RUNTIME_IDENTITY:mlx_c:umbrella_header")
+    for binding in release.get("bound_contracts", []):
+        verify_binding(repo, binding)
     runner = repo / release["runner_path"]
     if not runner.is_file() or runner.is_symlink():
         raise GateError("EXECUTOR_FILE")
@@ -176,6 +201,8 @@ def validate_capture(root: Path) -> dict:
     for ordinal, row in enumerate(stages):
         if not isinstance(row, dict) or row.get("ordinal") != ordinal or row.get("stage_id") in seen:
             raise GateError("CAPTURE_CENSUS")
+        if row["stage_id"] != STAGE_IDS[ordinal]:
+            raise GateError("CAPTURE_STAGE_ORDER")
         seen.add(row["stage_id"])
         path = root / row.get("path", "")
         if path.parent != root or not path.is_file() or sha(path) != row.get("sha256"):
@@ -184,6 +211,9 @@ def validate_capture(root: Path) -> dict:
         if stat.st_nlink != 1 or stat.st_mode & 0o222 or path.is_symlink() or stat.st_size != row.get("byte_length"):
             raise GateError("CAPTURE_FILE_POLICY")
         inventory.append({"path": path.name, "sha256": row["sha256"]})
+    allowed = {"capture-manifest.json", *(row["path"] for row in stages)}
+    if {path.name for path in root.iterdir()} != allowed:
+        raise GateError("CAPTURE_UNMANIFESTED_OR_MISSING_FILE")
     return {
         "capture_manifest_sha256": sha(manifest_path),
         "stage_count": len(stages),
@@ -258,24 +288,24 @@ def execute(repo: Path, release_path: Path, release: dict, approval_path: Path, 
         "ownership": "EXCLUSIVE_DURABLE_UNTIL_TERMINAL",
     }
     owner_sha = durable_create(attempt_root / "owner.json", owner)
-    start = {
-        "schema": "pulsarmlx.f017.apple-production-serial-f32-attempt-start",
-        "schema_version": "2.0.0",
-        "attempt_id": release["attempt_id"],
-        "invocation_id": invocation_id,
-        "owner_sha256": owner_sha,
-        "wrapper_sha256": release["wrapper_sha256"],
-        "executor_sha256": release["executor_sha256"],
-        "contract_sha256": sha(release_path),
-        "expected_starting_ledger": 175,
-        "authorization_sha256": sha(approval_path),
-        "git_head": release["execution_code_head"],
-        "environment_identity": release["runtime_identity"],
-    }
-    durable_create(attempt_root / "attempt-start.json", start)
-    (attempt_root / "payload-receipts").mkdir(mode=0o700)
-    fsync_dir(attempt_root)
     try:
+        start = {
+            "schema": "pulsarmlx.f017.apple-production-serial-f32-attempt-start",
+            "schema_version": "2.0.0",
+            "attempt_id": release["attempt_id"],
+            "invocation_id": invocation_id,
+            "owner_sha256": owner_sha,
+            "wrapper_sha256": release["wrapper_sha256"],
+            "executor_sha256": release["executor_sha256"],
+            "contract_sha256": sha(release_path),
+            "expected_starting_ledger": 175,
+            "authorization_sha256": sha(approval_path),
+            "git_head": release["execution_code_head"],
+            "environment_identity": release["runtime_binding"],
+        }
+        durable_create(attempt_root / "attempt-start.json", start)
+        (attempt_root / "payload-receipts").mkdir(mode=0o700)
+        fsync_dir(attempt_root)
         durable_create(attempt_root / "comparison-start.json", {
             "schema": "pulsarmlx.f017.apple-production-serial-f32-comparison-start",
             "attempt_id": release["attempt_id"], "invocation_id": invocation_id,

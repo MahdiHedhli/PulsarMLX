@@ -397,7 +397,7 @@ pub fn run_apple_serial_f32(
         || matrices.router.columns != width
         || matrices.routed.len() != ROUTER_TOP_K
         || matrices.router.rows < ROUTER_TOP_K
-        || inputs.rope_base <= 0.0
+        || inputs.rope_base.to_bits() != 1_000_000.0_f32.to_bits()
         || inputs.attention_scale <= 0.0
     {
         return Err(AppleGraphError::InvalidShape("graph"));
@@ -413,6 +413,14 @@ pub fn run_apple_serial_f32(
     ] {
         matrix.validate(name)?;
     }
+    for expert in &matrices.routed {
+        expert.gate.validate("routed_gate")?;
+        expert.up.validate("routed_up")?;
+        expert.down.validate("routed_down")?;
+    }
+    matrices.shared.gate.validate("shared.gate")?;
+    matrices.shared.up.validate("shared.up")?;
+    matrices.shared.down.validate("shared.down")?;
     let mut seen = BTreeSet::new();
     capture(sink, &mut seen, "input_hidden", &[width], &inputs.s0)?;
 

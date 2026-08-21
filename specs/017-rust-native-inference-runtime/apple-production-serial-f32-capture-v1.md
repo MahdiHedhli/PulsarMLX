@@ -49,7 +49,7 @@ fast-math and from the closed binary64 proof/reference surface.
 The runner accepts only fixed package roles. It opens each retained input once
 with `O_NOFOLLOW`, checks regular/non-symlink/single-link/read-only policy,
 hashes the same descriptor, decodes it, and verifies finite output. The exact
-decoders are bound for F32_LE, Q4_K, Q5_K, Q6_K, Q8_0, IQ2_XXS, and IQ3_XXS.
+reachable decoders are bound for F32_LE, Q5_K, Q6_K, Q8_0, IQ2_XXS, and IQ3_XXS.
 Decoded binary32 matrices are imported into MLX and passed to `mlx_matvec`.
 There is no checkpoint, shard, alternate decoder, BLAS, CPU projection, or GPU
 fallback interface.

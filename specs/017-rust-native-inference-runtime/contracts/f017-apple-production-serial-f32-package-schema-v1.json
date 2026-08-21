@@ -7,6 +7,7 @@
   "fixed_graph": {
     "graph_version": "f017-apple-serial-f32-s0-s2-v1",
     "position": 0,
+    "rope_base_f32": 1000000.0,
     "attention_scale_f32": 0.0625,
     "expert_weight_scale_f32": 2.5,
     "heads": 64,

@@ -69,7 +69,8 @@ def validate_stage_contract(stage: dict[str, Any], source: str) -> None:
     required = {"id", "symbol", "input", "output", "accumulator", "order", "rounding", "backend", "determinism", "classification"}
     classes = {"AUTHORITATIVE_APPLE_PRODUCTION", "SHARED_PRODUCTION_IMPLEMENTATION", "PRODUCTION_BACKEND_SPECIFIC"}
     for row in rows:
-        require(set(row) == required, f"stage fields:{row.get('id')}")
+        expected_fields = required | ({"numeric_constants"} if row.get("id") == "query_heads" else set())
+        require(set(row) == expected_fields, f"stage fields:{row.get('id')}")
         require(row["classification"] in classes, f"stage class:{row['id']}")
         require("UNRESOLVED" not in json.dumps(row), f"unresolved stage:{row['id']}")
         require("run_r9" not in row["symbol"] and "run_r10" not in row["symbol"] and "reference" not in row["symbol"].lower(), f"reference stage:{row['id']}")
@@ -78,6 +79,7 @@ def validate_stage_contract(stage: dict[str, Any], source: str) -> None:
     require(next(r for r in rows if r["id"] == "routed_aggregate")["order"] == "SELECTED_SLOT_RANK_0_TO_7_SERIAL_LEFT_FOLD", "routed order")
     require(next(r for r in rows if r["id"] == "production_ffn")["rounding"] == "ONE_BINARY32_ADD", "FFN rounding")
     require(next(r for r in rows if r["id"] == "production_s2")["rounding"] == "ONE_BINARY32_ADD", "S2 rounding")
+    require(next(r for r in rows if r["id"] == "query_heads")["numeric_constants"] == {"rope_base_f32": 1_000_000.0, "position": 0}, "RoPE constants")
 
 
 def validate_source_semantics(source: str, binary: str) -> None:
@@ -86,6 +88,7 @@ def validate_source_semantics(source: str, binary: str) -> None:
         "pub const RMS_EPSILON: f32 = 0.00001_f32;",
         "pub const ROUTER_TOP_K: usize = 8;",
         "pub const ROUTER_DENOMINATOR_FLOOR: f32 = 6.103_515_625e-5_f32;",
+        "inputs.rope_base.to_bits() != 1_000_000.0_f32.to_bits()",
         "for slot in 0..ROUTER_TOP_K",
         "ranking.sort_by",
         "then_with(|| a.cmp(&b))",
@@ -120,6 +123,7 @@ def validate_package_contract(package: dict[str, Any]) -> None:
     require(len(package.get("tensor_roles", [])) == 19, "package role census")
     require(package.get("checkpoint_paths") == [] and package.get("fallback") is False, "package fallback")
     require(package.get("fixed_graph", {}).get("routed_expert_ids") == [250, 10, 237, 62, 73, 177, 218, 28], "package route")
+    require(package.get("fixed_graph", {}).get("rope_base_f32") == 1_000_000.0, "package RoPE base")
 
 
 def validate_release_shape(release: dict[str, Any]) -> None:
