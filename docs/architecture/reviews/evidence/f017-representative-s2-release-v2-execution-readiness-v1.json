@@ -1,0 +1,113 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-release-v2-execution-readiness",
+  "schema_version": "1.0.0",
+  "readiness_base_head": "8f350375a4425dfd4b3539ff7e6f6083ceecf36e",
+  "authoritative_branch": "feat/017-real-checkpoint-runner",
+  "starting_head": "13a2102722a477a7dd67ecb6b29f22c55a557974",
+  "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+  "release": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-single-use-release-v2.json",
+    "sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2"
+  },
+  "approval": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-single-use-release-v2-independent-approval-v1.json",
+    "sha256": "c6ccffc3b1917f958bff14e9c693d9ec78dd49f452bb51ae7ef8eb85e45d86dc",
+    "field_count": 28,
+    "wrapper_gate": "PASS"
+  },
+  "approval_review": {
+    "path": "docs/architecture/reviews/evidence/f017-representative-s2-release-v2-approval-cycle-01-independent-review.json",
+    "sha256": "d70571cb1fa21e3de0fd4bb1208ffacf8f1b7e859230d258883a723f1c7c87a6",
+    "reviewed_head": "184ba3b961b393b8a5608f2b599a180045156685",
+    "reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 1
+  },
+  "operands": {
+    "s1": {
+      "path": "$HOME/.local/share/pulsarmlx/f017/representative-s1-materialization-release-2/outputs/representative-s1.f32le",
+      "manifest_sha256": "9ddf842ceec92eee3ae51e9386e4774315965654d711b5751d98ad96868d876e",
+      "expected_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "before_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "readback_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "byte_length": 24576,
+      "finite_count": 6144,
+      "file_policy": "REGULAR_NON_SYMLINK_MODE_0400_SINGLE_LINK_DESCRIPTOR_STABLE"
+    },
+    "ffn": {
+      "path": "$HOME/.local/share/pulsarmlx/f017/representative-ffn-composition-release-2/outputs/representative-ffn-output.f64le",
+      "manifest_sha256": "0f6a887fed8e0e4a96494f50bf94879ffec74ef6bc1d0fa64f9b0a3771efc04c",
+      "expected_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "before_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "readback_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "dtype": "little-endian-f64",
+      "shape": [6144],
+      "byte_length": 49152,
+      "finite_count": 6144,
+      "file_policy": "REGULAR_NON_SYMLINK_MODE_0400_SINGLE_LINK_DESCRIPTOR_STABLE"
+    }
+  },
+  "runtime": {
+    "cpython": "3.14.6",
+    "platform": "Darwin-arm64",
+    "endianness": "little",
+    "thread_variables": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    }
+  },
+  "production_preflight": {
+    "result": "PRODUCTION_BINDINGS_RESOLVED",
+    "arithmetic_executed": false,
+    "attempt_start_present": false,
+    "s2_start_present": false,
+    "operand_execution_consumptions": {"s1": 0, "ffn": 0}
+  },
+  "state": {
+    "release_v1_execution_authority": "SUPERSEDED",
+    "release_v1_attempt_root_present": false,
+    "release_v1_output_root_present": false,
+    "release_v1_go_token_present": false,
+    "release_v2_root_mode": "0700",
+    "release_v2_attempt_root_present": false,
+    "release_v2_output_root_present": false,
+    "release_v2_output_present": false,
+    "release_v2_private_manifest_present": false,
+    "release_v2_receipt_present": false,
+    "release_v2_terminal_present": false
+  },
+  "go_token": {
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/go-token.json",
+    "sha256": "ac84a4d1eff2ecdeecbe23e0bc50f530261efd8f9db50c0655cb6c0f88addb87",
+    "field_count": 8,
+    "mode": "0400",
+    "regular": true,
+    "non_symlink": true,
+    "hard_link_count": 1,
+    "created_count": 1,
+    "consumed_count": 0,
+    "committed_token_gate": "PASS"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "s1_materializations": 0,
+    "ffn_compositions": 0,
+    "s2_constructions": 0,
+    "durable_attempt_starts": 0,
+    "s2_starts": 0,
+    "s1_operand_execution_consumptions": 0,
+    "ffn_operand_execution_consumptions": 0
+  },
+  "ready_for_s2_v2_execution": true,
+  "stop_boundary": "BEFORE_REAL_S2_CONSTRUCTION"
+}

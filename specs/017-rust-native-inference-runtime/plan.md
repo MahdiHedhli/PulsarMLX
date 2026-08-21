@@ -868,3 +868,24 @@ operand has been consumed by S2; ledger remains 175 with zero checkpoint reads.
 Gate: release v2 is independently accepted for a later separate approval and
 readiness decision; exact S1/FFN retained bindings resolve without arithmetic,
 attempt state, or execution consumption; ledger remains 175 with zero reads.
+
+## Phase 48 — S2 release v2 independent approval and execution readiness
+
+- Bank the exact wrapper-enforced 28-field v2 approval and independently review
+  its release-review, reviewed-head, execution-code, construction, arithmetic,
+  reviewer, operand-lineage, accounting, and stop-boundary chain from committed
+  bytes only.
+- Resolve the exact singular S1 and distinct plural FFN producer manifests from
+  their fixed retained paths with same-descriptor expected/before/read-back
+  identity, immutable file policy, exact geometry, and full finiteness checks.
+- Confirm the fixed release-v2 state and output surfaces remain absent, preserve
+  release-v1 supersession, and create exactly one mode-0400, single-link,
+  machine-local eight-field token only after the non-arithmetic production
+  preflight returns `PRODUCTION_BINDINGS_RESOLVED`.
+- Validate the token through the committed non-executing authority gate and
+  stop with it byte-identical and unconsumed; create no attempt-start, S2-start,
+  operand execution consumption, or S2 output.
+
+Gate: approval and approval-review bytes are committed and accepted; one valid
+S2 release-v2 token exists unconsumed; ledger remains 175; checkpoint, shard,
+S1, FFN, attempt, and S2 counters remain zero.

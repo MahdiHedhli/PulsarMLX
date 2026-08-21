@@ -677,3 +677,13 @@
   operand execution consumption, and banks exact Claude Fable 5 ACCEPT review
   bytes with no approval, GO token, attempt, or S2 construction per plan Phase
   47 and Constitution III/X/XII (missing).
+
+## Phase 47: Convergence
+
+- [x] T017-250 Bank and independently accept the exact S2 release-v2 approval,
+  resolve the real singular S1 and distinct FFN producer authorities through
+  non-arithmetic same-descriptor preflight, verify the fixed v2 execution state
+  remains absent, and create exactly one mode-0400, single-link, unconsumed
+  machine-local token while preserving ledger 175 and zero checkpoint, shard,
+  S1, FFN, attempt-start, S2-start, operand-consumption, or S2 execution per
+  plan Phase 48 and Constitution III/X/XII.
