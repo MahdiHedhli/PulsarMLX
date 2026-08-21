@@ -1,0 +1,113 @@
+{
+  "schema": "pulsarmlx.f017.final-p1-admission-hardening-review-result/1.0.0",
+  "review_cycle": 2,
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "33e394cd1f1b0022c538b817a87baa3cf22c1b42",
+  "reviewer": {
+    "cli": "claude-code-2.1.235",
+    "model": "claude-fable-5",
+    "session_id": "77ea1578-09c7-419c-a0c2-ea501358e06b"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-final-p1-admission-hardening-cycle-02-request.md",
+    "sha256": "c342d48049a6b32d50a3888d48c99f91c32ff61401e98ce8beaadaba4c8f360c"
+  },
+  "exact_cli_response": {
+    "path": "docs/architecture/reviews/evidence/f017-final-p1-admission-hardening-cycle-02-fable-cli.json",
+    "sha256": "99de33c93ff3fee172aebc182b5d5547136fab1fc475ead4117e4cdeccb08294"
+  },
+  "controlling_ci": {
+    "run_id": 32531735838,
+    "head": "33e394cd1f1b0022c538b817a87baa3cf22c1b42",
+    "conclusion": "success",
+    "native_job_id": 96924935741,
+    "workspace_job_id": 96924935985,
+    "native_adapter_tests": {"passed": 13, "failed": 0, "ignored": 0},
+    "p1_admission_tests": {"passed": 9, "failed": 0},
+    "rust_oracle_tests": {"passed": 4, "failed": 0},
+    "native_qualification_skips": 0
+  },
+  "prior_findings": [
+    {
+      "id": "F017-FV-B1-001",
+      "disposition": "RESOLVED",
+      "repair_commit": "9760c156adaff534852147ec2f4d592eff9983b7"
+    },
+    {
+      "id": "F017-FV-B2-001",
+      "disposition": "RESOLVED",
+      "repair_commit": "9760c156adaff534852147ec2f4d592eff9983b7"
+    },
+    {
+      "id": "F017-FV-P1-001",
+      "disposition": "PARTIAL_REPAIR_BLOCKER_SURVIVES_TWO_REVIEW_CYCLES",
+      "repair_commits": [
+        "9760c156adaff534852147ec2f4d592eff9983b7",
+        "33e394cd1f1b0022c538b817a87baa3cf22c1b42"
+      ]
+    },
+    {
+      "id": "F017-FV-EDGE-001",
+      "disposition": "RESOLVED",
+      "repair_commit": "9760c156adaff534852147ec2f4d592eff9983b7"
+    },
+    {
+      "id": "F017-FV-HIST-001",
+      "disposition": "RESOLVED",
+      "repair_commits": [
+        "9760c156adaff534852147ec2f4d592eff9983b7",
+        "33e394cd1f1b0022c538b817a87baa3cf22c1b42"
+      ]
+    },
+    {
+      "id": "F017-FV-ORACLE-001",
+      "disposition": "RESOLVED_DEFENSE_IN_DEPTH",
+      "repair_commit": "9760c156adaff534852147ec2f4d592eff9983b7"
+    }
+  ],
+  "cycle_2_findings": [
+    {
+      "id": "F017-IR1-P1-001",
+      "severity": "BLOCKING",
+      "disposition": "UNRESOLVED_REPEATED_BLOCKER",
+      "summary": "No committed exact admission-contract instance and no identity-bound real P1 executor mechanically emits the required 22-counter receipt."
+    },
+    {
+      "id": "F017-IR2-P1-003",
+      "severity": "BLOCKING",
+      "disposition": "UNRESOLVED_NEW_BLOCKER",
+      "summary": "platform.processor() returns arm on Apple Silicon, so the M1 Ultra device gate rejects the bound target."
+    },
+    {
+      "id": "F017-IR1-P1-002",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "disposition": "RESOLVED",
+      "repair_commit": "33e394cd1f1b0022c538b817a87baa3cf22c1b42"
+    },
+    {
+      "id": "F017-IR1-HIST-002",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "disposition": "RESOLVED",
+      "repair_commit": "33e394cd1f1b0022c538b817a87baa3cf22c1b42"
+    },
+    {
+      "id": "F017-IR2-STATE-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "disposition": "DEFER_TO_EXECUTION_CAPABLE_ADMISSION_GENERATION"
+    },
+    {
+      "id": "F017-IR2-ORACLE-003",
+      "severity": "DEFENSE_IN_DEPTH",
+      "disposition": "DEFER_TO_RECEIPT_EXECUTOR_GENERATION"
+    }
+  ],
+  "invariants": {
+    "m1_ultra_p1_executions": 0,
+    "full_model_inference_executions": 0,
+    "checkpoint_reads": 0,
+    "live_p1_authorization_artifacts": 0,
+    "real_authorization_consumptions": 0
+  },
+  "verdict": "REJECT",
+  "termination": "ESCALATE_REPEATED_BLOCKER_AFTER_TWO_REVIEW_CYCLES"
+}
