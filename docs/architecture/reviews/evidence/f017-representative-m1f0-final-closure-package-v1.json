@@ -1,0 +1,215 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-final-closure-package",
+  "schema_version": "1.0.0",
+  "closure_package_id": "F017-REPRESENTATIVE-M1F0-FINAL-CLOSURE-PACKAGE-1",
+  "preparation_head": "d34ff3d2ef2a08a48f7be1833f72b0d295149524",
+  "status": "PREPARED_FOR_INDEPENDENT_FINAL_CLOSURE_REVIEW",
+  "project_level_m1f0_closure_declared": false,
+  "final_closure_requires_separate_authority": true,
+  "bound_canonical_stage_count": 10,
+  "canonical_graph": [
+    {
+      "ordinal": 0,
+      "stage": "S0",
+      "semantic_role": "CANONICAL_LAYER3_PRE_ATTENTION_HIDDEN_STATE_DPREFIX_EXACT_1",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json","sha256":"dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"}
+    },
+    {
+      "ordinal": 1,
+      "stage": "ATTENTION_AND_ROUTE_SURFACE",
+      "semantic_role": "REPRESENTATIVE_M1F0_LAYER3_ATTENTION_ROUTE_EXECUTION",
+      "evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json","sha256":"dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"},
+      "stage_sha256": {
+        "input_hidden": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+        "attention_normalized": "5a73ca4d2def05d38529365242845d29ae92956e00d770b69694662161d32b9f",
+        "query_rank": "17eea937719b3fab96f81252c9076176a0be5e8a2de0c91667a9bb93bd484dce",
+        "query_rank_normalized": "9a3db16a46fe88a8e4519434d4084561544be39c4b9132a0e8b0e6e584ee6dd7",
+        "query_heads": "88fadaec9db988a5e8f781c43909ccdf016fa390e7d3a6f14e1861a15cacb914",
+        "kv_raw": "1d0247977881d9cb7819a79a1a093df74155492f56ff27ac89d371e19c4d1aec",
+        "kv_normalized": "252774a4a3c5f26388ca74ef4458f67ec5e521811494d2fe0e7be7bbf4c6ab07",
+        "key_nope": "fa5968068d8ac5599ad392198f1348b2bbd118b7ef8b2db2b29c365177a4d87b",
+        "attention_scores": "4366bfb68e99caa1f3d26d86efc0042e6aac92a230f405cd7fb760c74ee9ba74",
+        "attention_weights": "2f20cd03c9cd392a406c56232b0ff93a15f6d6d7da79086bfa14f55d4a4031b0",
+        "value_heads": "0c544940e9747f5aeebe97c27bbe5b47240bd415b5bb9780a3ac9686a027dcbb",
+        "attention_output": "7b0948a561a41fb3fdf5ab3f4b7d04d8a3941cfbbb51c54aa0745cb6ec278a6e",
+        "post_attention_residual": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+        "router_normalized": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+        "router_logits": "62d0f85f0673fa6d964e7573861851e4894f9b7433241083753833fe461d3c6d",
+        "router_scores": "bf70b166ac9d8e6119b3920f0f6c4f1e69dece1f45b1904e2d5ef77e8da0d575",
+        "ranking": "b2de9d7a4fe2701f0cda51f6b95a5396195e0bf0c44924aa6d46b4a899af549d",
+        "selected_ids": "a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f",
+        "routing_weights": "ff1a7127b418b80dce4e4361e314c16ad50e86484cb1861ad27f6f9ee70b8587"
+      },
+      "historical_access_accounting": {"ledger_before":166,"ledger_after":175,"checkpoint_reads":9,"shard_opens":1,"packed_bytes_consumed":132900864,"checkpoint_rereads":0,"expert_executions":0},
+      "retained_only_reproduction": {"runs":10,"exact_stage_identity":"10/10","exact_route_identity":"10/10","fresh_processes":2,"checkpoint_rereads":0,"additional_shard_opens":0,"bundle_sha256":"175539424a5fe1b66c60d1e95c8361858d90fd4566b24b4915c2b1affda5023b"}
+    },
+    {
+      "ordinal": 2,
+      "stage": "S1",
+      "semantic_role": "LAYER3_POST_ATTENTION_RESIDUAL",
+      "formula": "S1 = f32(S0 + layer3_attention_output)",
+      "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-s1-materialization-real-execution-result-v1.json","sha256":"ea924afbc8972c194adc9d8a9759e1fca35ae8c2ab362225477cb4c54229fb55"},
+      "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-output-reuse-authorization-v1.json","sha256":"5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13"}
+    },
+    {
+      "ordinal": 3,
+      "stage": "F_NORM_ROUTER_NORMALIZED",
+      "semantic_role": "CANONICAL_REPRESENTATIVE_POST_ATTENTION_FFN_NORMALIZED_INPUT",
+      "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json","sha256":"dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"}
+    },
+    {
+      "ordinal": 4,
+      "stage": "REPRESENTATIVE_ROUTE",
+      "semantic_role": "REPRESENTATIVE_M1F0_ROUTED_EXPERT_ID_WEIGHT_AUTHORITY",
+      "route_sha256": "03dc2dfbed65848fdcb649f41f98793ca0f8cdd702c76b55d71c762fc5338103",
+      "selected_ids_sha256": "a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f",
+      "routing_weights_sha256": "ff1a7127b418b80dce4e4361e314c16ad50e86484cb1861ad27f6f9ee70b8587",
+      "ordered_id_weight_pairs": [
+        {"expert_id":250,"weight":0.7487501576296707},
+        {"expert_id":10,"weight":0.3348627106807668},
+        {"expert_id":237,"weight":0.23863270273063697},
+        {"expert_id":62,"weight":0.23688715675086147},
+        {"expert_id":73,"weight":0.2514906203405492},
+        {"expert_id":177,"weight":0.23059957299763345},
+        {"expert_id":218,"weight":0.22915341148588297},
+        {"expert_id":28,"weight":0.22962366738399842}
+      ],
+      "evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-concrete-route-values-v1.json","sha256":"6035308cb85a29617abe5dcb18be37ab6d99afb5193d28ed7993d41c2aeb7b49"},
+      "historical_direct_dprefix_route": "VALID_BUT_DIFFERENT_SURFACE_PROHIBITED_FROM_SUBSTITUTION"
+    },
+    {
+      "ordinal": 5,
+      "stage": "ROUTED_EXPERTS",
+      "semantic_role": "EIGHT_REPRESENTATIVE_M1F0_ROUTED_EXPERT_OUTPUTS",
+      "ordered_outputs": [
+        {"expert_id":250,"sha256":"0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b"},
+        {"expert_id":10,"sha256":"d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3"},
+        {"expert_id":237,"sha256":"4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b"},
+        {"expert_id":62,"sha256":"2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128"},
+        {"expert_id":73,"sha256":"9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3"},
+        {"expert_id":177,"sha256":"18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201"},
+        {"expert_id":218,"sha256":"f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d"},
+        {"expert_id":28,"sha256":"45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0"}
+      ],
+      "dtype": "little-endian-f32",
+      "shape_each": [6144],
+      "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-expert-recovery-real-execution-result-v1.json","sha256":"fe1cad02405b74d9000afec915bdf7e772e6dd77c13b7e4cc5b5db35606b51e4"},
+      "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json","sha256":"1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070"},
+      "historical_direct_dprefix_outputs": "VALID_BUT_DIFFERENT_SURFACE_PROHIBITED_FROM_SUBSTITUTION"
+    },
+    {
+      "ordinal": 6,
+      "stage": "ROUTED_AGGREGATE",
+      "semantic_role": "CANONICAL_F017_PROOF_REFERENCE_ROUTED_AGGREGATE",
+      "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+      "dtype": "little-endian-f64",
+      "shape": [6144],
+      "surface": "CANONICAL_F017_PROOF_REFERENCE_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+      "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-routed-aggregate-real-execution-result-v1.json","sha256":"fd362662a72ee6c4a951432d0ceb603a1f31ba7f62b885059e9f05c1df673d43"},
+      "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json","sha256":"f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb"}
+    },
+    {
+      "ordinal": 7,
+      "stage": "SHARED_EXPERT",
+      "semantic_role": "REPRESENTATIVE_M1F0_SHARED_EXPERT_OUTPUT",
+      "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-shared-expert-recovery-real-execution-result-v1.json","sha256":"b7e3d8a6d97f2c3771ed7a6ff07ee97176780089b60787ac45ebd0af3ce33bb6"},
+      "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-output-reuse-authorization-v1.json","sha256":"3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a"}
+    },
+    {
+      "ordinal": 8,
+      "stage": "FFN",
+      "semantic_role": "REPRESENTATIVE_M1F0_FFN_PROOF_REFERENCE_OUTPUT",
+      "sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "formula": "FFN[k] = Routed_f64[k] + binary64(Shared_f32[k])",
+      "dtype": "little-endian-f64",
+      "shape": [6144],
+      "surface": "CANONICAL_F017_PROOF_REFERENCE_FFN_SURFACE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+      "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-ffn-composition-real-execution-result-v1.json","sha256":"946d41a37cb4ae97938eae195c6b665441088c197312474613f8ca4cb282b2df"},
+      "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-output-reuse-authorization-v1.json","sha256":"983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06"}
+    },
+    {
+      "ordinal": 9,
+      "stage": "S2",
+      "semantic_role": "REPRESENTATIVE_M1F0_S2_PROOF_REFERENCE_DERIVED",
+      "sha256": "0341314230654d21fa56506dfe601f90bdb603fc38fd1203b6dd62b1e54c98c1",
+      "formula": "S2_f32[k] = binary32(binary64(S1_f32[k]) + FFN_f64[k])",
+      "dtype": "little-endian-f32",
+      "shape": [6144],
+      "surface": "CANONICAL_F017_PROOF_REFERENCE_DERIVED_S2_SURFACE_INTENTIONALLY_NOT_CLAIMED_EQUIVALENT_TO_PRODUCTION_SERIAL_F32",
+      "execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-s2-real-execution-result-v1.json","sha256":"f64d0ff797a9bd1ae9a0f7c2b99cfb9ed5894b1110cc433de152b1c2526fdd75"},
+      "reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-output-reuse-authorization-v1.json","sha256":"35b7c6232858577c6b523fd416820845255eb094ca8be8102d9dd01f2b1b77b5"},
+      "reuse_review": {"path":"docs/architecture/reviews/evidence/f017-representative-s2-output-reuse-cycle-01-independent-review.json","sha256":"4b42a4b88090394225310d93b1af53610685ccb944223ba6249fc841440e7312"}
+    }
+  ],
+  "accounting_closure": {
+    "representative_lineage_ledger_start": 166,
+    "representative_lineage_ledger_final": 175,
+    "only_ledger_consuming_representative_event": "REPRESENTATIVE_M1F0_ATTENTION_ROUTE_EXECUTION",
+    "only_ledger_transition": "166_TO_175",
+    "historical_checkpoint_reads": 9,
+    "historical_shard_opens": 1,
+    "post_attention_checkpoint_reads": 0,
+    "post_attention_shard_opens": 0,
+    "closure_preparation_checkpoint_reads": 0,
+    "closure_preparation_shard_opens": 0,
+    "final_ledger": 175,
+    "hidden_checkpoint_rereads": 0,
+    "hidden_shard_opens": 0,
+    "unauthorized_second_attempts": 0,
+    "historical_direct_dprefix_substitutions": 0
+  },
+  "single_use_authority_disposition": [
+    {"authority":"ATTENTION_RELEASE_2","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"},
+    {"authority":"REPRESENTATIVE_EXPERT_RELEASE_1","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"},
+    {"authority":"ROUTED_AGGREGATE_RELEASE_1","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"},
+    {"authority":"SHARED_EXPERT_RELEASE_1","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"},
+    {"authority":"FFN_RELEASE_1","disposition":"SUPERSEDED_FOR_EXECUTION_AUTHORITY_DUE_TO_APPROVAL_BINDING_DEFECT","evidence":{"path":"docs/architecture/reviews/evidence/f017-representative-ffn-composition-release-v1-execution-authority-supersession-v1.json","sha256":"d22aecdd123defa5166c3bae44b67efa1a9e3dc8aad343e909e059b3e948ae08"}},
+    {"authority":"FFN_RELEASE_2","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"},
+    {"authority":"S1_RELEASE_2","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"},
+    {"authority":"S2_RELEASE_1","disposition":"SUPERSEDED_FOR_EXECUTION_AUTHORITY_DUE_TO_S1_MANIFEST_SCHEMA_INCOMPATIBILITY","evidence":{"path":"docs/architecture/reviews/evidence/f017-representative-s2-release-v1-supersession-v1.json","sha256":"dbc73f9fbccb8262f6151a488cb37a452a5e5576bab987ca02d037604b777e80"}},
+    {"authority":"S2_RELEASE_2","disposition":"CONSUMED_BY_DURABLE_ATTEMPT_START"}
+  ],
+  "replay_closure": {
+    "completed_release_tokens_are_consumed_by_durable_state": true,
+    "present_token_files_do_not_restore_authority": true,
+    "no_retry_resume_or_second_attempt": true,
+    "superseded_v1_authorities_cannot_execute": true,
+    "no_live_go_token_can_legitimately_replay_a_completed_stage": true
+  },
+  "reproduction_status": {
+    "attention": "10_OF_10_RETAINED_ONLY_EXACT_STAGE_AND_ROUTE_IDENTITY",
+    "routed_experts": "2_OF_2_FRESH_PROCESS_EXACT_OUTPUT_IDENTITY",
+    "routed_aggregate": "ACCEPTED_DETERMINISTIC_EVENT_AND_REUSE_AUTHORITY",
+    "shared_expert": "2_OF_2_FRESH_PROCESS_EXACT_OUTPUT_IDENTITY",
+    "ffn": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+    "s1": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+    "s2": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION"
+  },
+  "surface_disposition": {
+    "production_serial_f32_equivalence_claimed": false,
+    "routed_aggregate": "PROOF_REFERENCE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "ffn": "PROOF_REFERENCE_INTENTIONALLY_DISTINCT_FROM_PRODUCTION_SERIAL_F32",
+    "s2": "PROOF_REFERENCE_DERIVED_INTENTIONALLY_NOT_CLAIMED_EQUIVALENT_TO_PRODUCTION_SERIAL_F32"
+  },
+  "unresolved_limitations": [
+    "NO_PRODUCTION_SERIAL_F32_EQUIVALENCE_CLAIM_FOR_ROUTED_AGGREGATE_FFN_OR_S2",
+    "REPRESENTATIVE_M1F0_IS_A_SINGLE_CANONICAL_LAYER3_REPRESENTATIVE_SURFACE_NOT_FULL_MODEL_INFERENCE",
+    "NO_ADDITIONAL_POST_EVENT_S2_REPRODUCTION_WAS_AUTHORIZED_OR_PERFORMED",
+    "FINAL_PROJECT_LEVEL_M1F0_CLOSURE_DECLARATION_REQUIRES_SEPARATE_AUTHORITY"
+  ],
+  "closure_preparation_activity": {"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"attention_executions":0,"expert_executions":0,"shared_expert_executions":0,"aggregate_executions":0,"ffn_compositions":0,"s1_materializations":0,"s2_constructions":0},
+  "stop_boundary": "AFTER_INDEPENDENT_CLOSURE_PACKAGE_REVIEW_BEFORE_FINAL_PROJECT_LEVEL_M1F0_CLOSURE_DECLARATION",
+  "next_authority": "SEPARATE_FINAL_REPRESENTATIVE_M1F0_CLOSURE_DECLARATION"
+}

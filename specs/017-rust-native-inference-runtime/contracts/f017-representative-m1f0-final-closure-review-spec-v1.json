@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-final-closure-review-spec",
+  "schema_version": "1.0.0",
+  "review_id": "F017-REPRESENTATIVE-M1F0-FINAL-CLOSURE-REVIEW-1",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model": "claude-fable-5",
+  "review_committed_bytes_only": true,
+  "closure_package": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-package-v1.json","sha256":"7b6d38d15889a0811bd8a0d54ce0e9e495da7918cea323d7995d9dc35e1c5402"},
+  "required_attacks": [
+    "MISSING_LINEAGE_EDGE",
+    "WRONG_STAGE_VOCABULARY",
+    "HASH_MISMATCH",
+    "STALE_OR_SUPERSEDED_AUTHORITY",
+    "HISTORICAL_DIRECT_DPREFIX_SUBSTITUTION",
+    "PROOF_REFERENCE_PRODUCTION_CONFLATION",
+    "LEDGER_MISMATCH",
+    "HIDDEN_CHECKPOINT_OR_SHARD_REREAD",
+    "HIDDEN_NUMERICAL_RERUN",
+    "MISSING_TERMINAL_OR_OUTPUT_AUTHORITY",
+    "REPRODUCTION_OVERCLAIM",
+    "REPLAYABLE_SINGLE_USE_STATE",
+    "S0_S1_CONFUSION",
+    "FFN_S2_ARITHMETIC_MISMATCH",
+    "INCOMPLETE_EVIDENCE_BINDING",
+    "CLOSURE_CLAIM_STRONGER_THAN_EVIDENCE"
+  ],
+  "acceptance_criteria": {
+    "all_ten_canonical_stages_bound": true,
+    "all_bound_artifact_hashes_recomputed": true,
+    "attention_nineteen_of_nineteen_stage_hashes_exact": true,
+    "route_order_weights_and_eight_outputs_atomic": true,
+    "ledger_closure_exact": true,
+    "single_use_and_superseded_authority_closure_exact": true,
+    "surface_non_equivalence_disclosures_preserved": true,
+    "blocking_findings_empty": true,
+    "non_blocking_required_findings_empty": true
+  },
+  "finding_policy": {"BLOCKING":"REJECT","NON_BLOCKING_REQUIRED":"REJECT","DEFENSE_IN_DEPTH":"ALLOWED_ONLY_WITH_CONCRETE_NON_BLOCKING_DISPOSITION"},
+  "review_does_not_declare_project_level_closure": true,
+  "hard_prohibitions": {"checkpoint_access":true,"shard_open":true,"numerical_stage_execution":true,"go_token_creation":true,"project_level_closure_declaration":true},
+  "required_verdict_question": "IS_THE_COMMITTED_REPRESENTATIVE_M1F0_CLOSURE_PACKAGE_COMPLETE_INTERNALLY_CONSISTENT_AND_READY_FOR_A_SEPARATE_FINAL_CLOSURE_DECLARATION_WITHOUT_RERUNNING_ANY_NUMERICAL_STAGE",
+  "stop_boundary": "AFTER_INDEPENDENT_CLOSURE_PACKAGE_REVIEW_BEFORE_FINAL_PROJECT_LEVEL_M1F0_CLOSURE_DECLARATION"
+}
