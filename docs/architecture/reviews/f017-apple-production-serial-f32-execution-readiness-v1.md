@@ -66,7 +66,9 @@ The approval and GO schemas bind the exact reviewed head, code, executable,
 runtime, package, stage/capture/comparison/determinism contracts, wrapper,
 terminalizer, ledger, attempt, output root, and human approval identity. Normal
 validation cannot create a live token. A live token requires an explicit future
-operator-only command and is single-use with no retry or resume.
+operator-only command and is single-use with no retry or resume. Token schema
+literals and the exact canonical execution-readiness review path/schema are
+enforcement-checked, not merely present in the field census.
 
 RN1 requires exclusive attempt ownership, durable owned attempt and execution
 starts before arithmetic, invocation-owned cleanup, receipt-derived accounting,
@@ -75,6 +77,8 @@ and GO scope field, including the accepted review bytes/head, ledger, zero
 payload/checkpoint budgets, stage range, and output root. Success terminalization
 derives counts from the actual receipt census and rejects any payload receipt in
 this retained-only event. Wrapper v1 remains tombstoned.
+The execution code manifest also binds the shared wrapper-v2 helper module from
+which the wrapper, terminalizer, and GO generator import fail-closed primitives.
 
 ## Operator boundary
 

@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-validation",
+  "schema_version": "3.0.0",
+  "cycle": 3,
+  "branch": "feat/017-real-checkpoint-runner",
+  "execution_code_head": "53cc3eca345f7afdd00921dc14eeac28ed6156ab",
+  "mechanical_measurement": {
+    "path": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-execution-readiness-cycle-03-mechanical-measurement-v1.json",
+    "sha256": "77b85145192ffb3546d1d1d2e30299c0ba8f47ce30bf72d4dfb730e0bddba1f5",
+    "method": "VALIDATOR_DIRECT_REHASH_OF_ACTUAL_MACHINE_BYTES"
+  },
+  "finding_to_fix_mappings": [
+    {"finding_id": "F017-SF32-EXECREADY-C2-F1", "fix": "wrapper and GO generator now pin live-token schema/version, exact execution-readiness review schema/version, and the canonical cycle-03 review path before issuance or attempt-start"},
+    {"finding_id": "F017-SF32-EXECREADY-C2-F2", "fix": "code-manifest v4 binds and preflight rehashes f017_apple_serial_f32_capture_wrapper_v2.py alongside every other transitive execution-path module"}
+  ],
+  "bindings": {
+    "code_manifest_v4_sha256": "d58943bafbde5832d242b36732d6758278ed797d647720864a3d9d611217f936",
+    "runtime_rebind_v4_sha256": "a3e166b89dd4fb327d13055822998da838767dac00a343eaf53334a6a2a9b28c",
+    "authorization_schema_v4_sha256": "7c343cced43b6cea22d87f008d2a75edb89b99b2d57e6f8c94b714781dc7d942",
+    "release_v5_sha256": "617c3106593624100af1a6a55a15612e122156c53756e435740a959691df7cd2",
+    "wrapper_sha256": "b8c5ce07fa6e6d1c96028f1b2d31c88c41a3085ee171295c766394ca500e7874",
+    "go_generator_sha256": "4ff28e8586c15fecba205615dac346dc2f64242657d922b9905cf831ff9b36a4",
+    "determinism_v2_sha256": "2fab2460886b43b9158be06b75537b57a40e0e933c3783b8df83f05ac2d47f3b"
+  },
+  "commands": [
+    {"command": "validator --repo --write-evidence ... --validated-head 53cc3ec...", "result": "PASS_MECHANICAL_RUNTIME_AND_PACKAGE_REHASH"},
+    {"command": "python3 -m unittest readiness + hardening + capture validators", "result": "PASS_27_TESTS_WITH_75_AUTHORITY_MUTATIONS"},
+    {"command": "ten-process harness --self-test", "result": "PASS_STRUCTURE_NO_REPRESENTATIVE_RUN"},
+    {"command": "release-v5 wrapper --preflight-only", "result": "PRODUCTION_BINDINGS_RESOLVED_NO_ATTEMPT_NO_ARITHMETIC"}
+  ],
+  "cycle_02_raw_review": {
+    "path": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-execution-readiness-cycle-02-independent-review-v1.json",
+    "sha256": "f8690075f3a639fd835e1c9ee049652d0e280f88b20f1437148479a503cd75fd",
+    "verdict": "ACCEPT",
+    "defense_in_depth_closed_before_human_boundary": ["F017-SF32-EXECREADY-C2-F1", "F017-SF32-EXECREADY-C2-F2"]
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "production_equivalence_executions": 0,
+    "representative_determinism_runs": 0,
+    "live_go_tokens": 0,
+    "real_authorization_consumptions": 0
+  },
+  "result": "PASS_READY_FOR_CYCLE_03_FINAL_REVIEW"
+}

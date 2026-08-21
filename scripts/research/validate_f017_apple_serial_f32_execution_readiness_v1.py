@@ -45,7 +45,7 @@ def validate_package_contract(doc):
 
 def validate_code_manifest(doc):
     paths={r["path"] for r in doc["artifacts"]}
-    for required in ("crates/quant/src/iq_ref.rs","crates/quant/src/cpu_dot_tables.rs","crates/quant/src/cpu_dot.rs","crates/quant/src/q6_k_ref.rs","crates/quant/src/q8_0_ref.rs","crates/stream/src/apple_mlx_bridge.mm"):
+    for required in ("crates/quant/src/iq_ref.rs","crates/quant/src/cpu_dot_tables.rs","crates/quant/src/cpu_dot.rs","crates/quant/src/q6_k_ref.rs","crates/quant/src/q8_0_ref.rs","crates/stream/src/apple_mlx_bridge.mm","scripts/research/f017_apple_serial_f32_capture_wrapper_v2.py"):
         require(required in paths, f"CODE_SOURCE:{required}")
     head=load(CONTRACTS/"f017-apple-production-serial-f32-execution-code-head-v1.json")["execution_code_head"]
     require(doc["execution_code_head"]==head, "CODE_HEAD")
