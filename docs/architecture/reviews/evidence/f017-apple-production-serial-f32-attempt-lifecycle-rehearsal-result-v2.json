@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-attempt-lifecycle-rehearsal-result",
+  "schema_version": "2.0.0",
+  "predecessor": {
+    "path": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-attempt-lifecycle-rehearsal-result-v1.json",
+    "sha256": "c1b4e9bbafdb7eabd77c0b79746f18c8676783e2bc34f332980cf3005b02ecb2",
+    "cases": "PASS_19_OF_19_FAIL_CLOSED"
+  },
+  "new_cases": [
+    {"case": "all_non_hash_approval_and_go_scope_fields_enforced", "mutations": 7, "result": "FAIL_CLOSED_PASS"},
+    {"case": "retained_only_success_with_payload_receipt", "mutations": 1, "result": "FAIL_CLOSED_PASS_BEFORE_TERMINAL"},
+    {"case": "determinism_authority_conflated_with_single_capture_go", "mutations": 1, "result": "FAIL_CLOSED_BY_SEPARATE_FUTURE_RELEASE_REQUIREMENT"}
+  ],
+  "total_cases": 22,
+  "result": "PASS_22_OF_22_FAIL_CLOSED",
+  "representative_data": false,
+  "ledger_before": 175,
+  "ledger_after": 175,
+  "checkpoint_reads": 0,
+  "shard_opens": 0,
+  "production_equivalence_executions": 0,
+  "representative_determinism_runs": 0,
+  "live_go_tokens": 0
+}

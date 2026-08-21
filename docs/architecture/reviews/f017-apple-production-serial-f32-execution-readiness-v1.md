@@ -51,6 +51,10 @@ input. Every one of 34 stage files must be byte-identical across all runs. Any
 failure banks all hashes, reports the earliest divergent stage, and blocks an
 equivalence claim. No averaging or tolerance can conceal nondeterminism.
 
+The single capture/comparison release does not authorize these ten runs. They
+require a separate future independently reviewed ten-run release with ten
+one-run authorizations and distinct attempt roots.
+
 ## Single use and accounting
 
 The future event is a retained-only real execution event with zero new payload
@@ -66,7 +70,11 @@ operator-only command and is single-use with no retry or resume.
 
 RN1 requires exclusive attempt ownership, durable owned attempt and execution
 starts before arithmetic, invocation-owned cleanup, receipt-derived accounting,
-and fail-closed reconciliation. Wrapper v1 remains tombstoned.
+and fail-closed reconciliation. The consumer enforcement-checks every approval
+and GO scope field, including the accepted review bytes/head, ledger, zero
+payload/checkpoint budgets, stage range, and output root. Success terminalization
+derives counts from the actual receipt census and rejects any payload receipt in
+this retained-only event. Wrapper v1 remains tombstoned.
 
 ## Operator boundary
 

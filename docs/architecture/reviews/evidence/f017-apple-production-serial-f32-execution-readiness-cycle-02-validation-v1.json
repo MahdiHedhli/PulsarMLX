@@ -1,0 +1,51 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-validation",
+  "schema_version": "2.0.0",
+  "cycle": 2,
+  "branch": "feat/017-real-checkpoint-runner",
+  "execution_code_head": "2af52b5b49f0f7d2fdc8d89c72902b197f4d41e6",
+  "mechanical_measurement": {
+    "path": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-execution-readiness-cycle-02-mechanical-measurement-v1.json",
+    "sha256": "177eabb3063ce6593aaf8b70bfc65a3f8c82e9b07678221ca012d970876ed8d8",
+    "method": "VALIDATOR_DIRECT_REHASH_OF_ACTUAL_MACHINE_BYTES"
+  },
+  "finding_to_fix_mappings": [
+    {"finding_id": "F017-SF32-EXECREADY-C1-F1", "fix": "validator now emits actual executable, MLX, and MLX-C hashes and mechanically writes the banked measurement; measured dylib hashes are c30b1529... and 9882fe1f..."},
+    {"finding_id": "F017-SF32-EXECREADY-C1-F2", "fix": "wrapper enforcement-checks review bytes/head and every approval/GO scope field, including ledger, zero payload/checkpoint budget, stage range, output root, and human identity"},
+    {"finding_id": "F017-SF32-EXECREADY-C1-F3", "fix": "success terminalization derives consumed reads, receipt inventory, and ledger from the actual receipt census and rejects any retained-only payload receipt"},
+    {"finding_id": "F017-SF32-EXECREADY-C1-F4", "fix": "release v4 stop boundary covers one capture/comparison only; determinism requires a separate future independently reviewed ten-run release"}
+  ],
+  "bindings": {
+    "code_manifest_v3_sha256": "6f30108558b99915bab1251fa981fdec3e02827a2b4a2a4027aab3cfee3f7e0e",
+    "runtime_rebind_v3_sha256": "e9c8c638be517264d81252fd28afac97500ebd845face1071164bba09fb5f289",
+    "authorization_schema_v3_sha256": "a93eef980187def20023116b594750bbb75c5055d5143bf9fe80a8c966a0b252",
+    "release_v4_sha256": "1391b45f7079deb718745846be09dcb56b8a2bc049b7004354cf2553401dd148",
+    "wrapper_sha256": "a7ed43e788843e01ad1b6210c2894fd1664de9756fb456661cce361c3ce60d1e",
+    "go_generator_sha256": "b177b6825252653e329a8abc6ca3b5ad9e41c1ef1c3ab83ab53d849d0db64672",
+    "determinism_v2_sha256": "66fc9db46f8f9641b8cca9270c9a1d818dc9de7519ea5af145cc794816ce4932"
+  },
+  "commands": [
+    {"command": "validator --repo --write-evidence ... --validated-head 2af52b5...", "result": "PASS_MECHANICAL_RUNTIME_AND_PACKAGE_REHASH"},
+    {"command": "python3 -m unittest readiness + hardening + capture validators", "result": "PASS_27_TESTS"},
+    {"command": "cargo test -p f017-runner --test apple_serial_f32", "result": "PASS_5_OF_5_SYNTHETIC_NATIVE"},
+    {"command": "ten-process harness --self-test", "result": "PASS_STRUCTURE_NO_REPRESENTATIVE_RUN"},
+    {"command": "GO generator inert-fixture validation", "result": "PASS_INERT_REJECTED_AS_LIVE"},
+    {"command": "release-v4 wrapper --preflight-only", "result": "PRODUCTION_BINDINGS_RESOLVED_NO_ATTEMPT_NO_ARITHMETIC"}
+  ],
+  "cycle_01_raw_review": {
+    "path": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-execution-readiness-cycle-01-independent-review-v1.json",
+    "sha256": "f6bbfec3f7254cf94c1aaa3e8863f68c1e9bbbe2e8b39531b0db10a11fc55f35",
+    "verdict": "REJECT"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "production_equivalence_executions": 0,
+    "representative_determinism_runs": 0,
+    "live_go_tokens": 0,
+    "real_authorization_consumptions": 0
+  },
+  "result": "PASS_READY_FOR_CYCLE_02_REVIEW"
+}
