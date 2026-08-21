@@ -24,3 +24,7 @@ path = "src/main.rs"
 [[bin]]
 name = "f017-dense-prefix-candidate"
 path = "src/bin/f017-dense-prefix-candidate.rs"
+
+[[bin]]
+name = "f017-apple-serial-f32-capture"
+path = "src/bin/f017-apple-serial-f32-capture.rs"

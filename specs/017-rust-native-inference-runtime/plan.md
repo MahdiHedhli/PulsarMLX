@@ -955,3 +955,29 @@ Gate: the retained-only specification and accounting reconciliation are
 independently accepted; ledger is receipt-derived at 175; checkpoint, shard,
 and all numerical counters remain zero; execution preparation remains blocked
 until the full Apple serial-f32 path and unresolved arithmetic rows are closed.
+
+## Phase 52 — Apple production serial-f32 capture and execution hardening
+
+- Add an authoritative Apple M1-F0 S0-to-S2 graph using pinned native MLX f32
+  matvec for decoded projection matrices and explicit ordered binary32 host
+  operations for RMSNorm, RoPE, attention, routing, expert scalar operations,
+  routed aggregation, FFN composition, and S2 residual construction.
+- Freeze all 34 direct capture points, retained tensor/package schemas, decoder
+  implementations, exact Homebrew MLX/MLX-C identities, determinism scope, and
+  proof/reference separation without reading retained payload bytes or running
+  the representative graph.
+- Close RN1 through exclusive attempt ownership, durable owned starts,
+  invocation-owned terminalization, receipt-derived accounting, complete
+  artifact inventory, and fail-closed partial-root recovery; tombstone wrapper
+  v1 and immutably bind the v2 gate to a two-stage code manifest.
+- Replace filename event discovery with schema/semantic discovery, require
+  strict typed hash-first bound-field resolution, and bank post-commit
+  same-commit ledger enforcement evidence while preserving ledger 175.
+- Compile and link the native Apple runner, execute only synthetic scalar and
+  release-mechanics tests, and obtain Claude Fable 5 acceptance of exact pushed
+  bytes before any approval, package, GO token, or comparison execution.
+
+Gate: the Apple capture/release-preparation surface is independently accepted,
+all load-bearing semantics are resolved on the pinned environment, ledger stays
+175 with no checkpoint or numerical execution, and the next phase may prepare
+a separate human-gated production-equivalence execution package.

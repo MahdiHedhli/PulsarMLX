@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-package-schema",
+  "schema_version": "1.0.0",
+  "package_schema": "pulsarmlx.f017.apple-production-serial-f32-package",
+  "package_schema_version": "1.0.0",
+  "package_created": false,
+  "fixed_graph": {
+    "graph_version": "f017-apple-serial-f32-s0-s2-v1",
+    "position": 0,
+    "attention_scale_f32": 0.0625,
+    "expert_weight_scale_f32": 2.5,
+    "heads": 64,
+    "qk_nope": 192,
+    "qk_rope": 64,
+    "kv_lora": 512,
+    "value_dim": 256,
+    "routed_expert_ids": [250, 10, 237, 62, 73, 177, 218, 28]
+  },
+  "tensor_roles": [
+    {"role":"s0","encoding":"F32_LE","shape":[6144],"authority":"DPREFIX_EXACT_1"},
+    {"role":"attention_norm_scale","encoding":"F32_LE","shape":[6144],"authority":"RETAINED_ATTENTION_PAYLOAD_00"},
+    {"role":"q_rank_norm_scale","encoding":"F32_LE","shape":[2048],"authority":"RETAINED_ATTENTION_PAYLOAD_02"},
+    {"role":"kv_norm_scale","encoding":"F32_LE","shape":[512],"authority":"RETAINED_ATTENTION_PAYLOAD_05"},
+    {"role":"ffn_norm_scale","encoding":"F32_LE","shape":[6144],"authority":"RETAINED_ROUTER_AUTHORITY"},
+    {"role":"correction_bias","encoding":"F32_LE","shape":[256],"authority":"RETAINED_ROUTER_AUTHORITY"},
+    {"role":"q_a","encoding":"Q5_K","shape":[2048,6144],"authority":"RETAINED_ATTENTION_PAYLOAD_01"},
+    {"role":"q_b","encoding":"Q8_0","shape":[64,256,2048],"authority":"RETAINED_ATTENTION_PAYLOAD_03"},
+    {"role":"kv_a","encoding":"Q8_0","shape":[576,6144],"authority":"RETAINED_ATTENTION_PAYLOAD_04"},
+    {"role":"k_b","encoding":"Q8_0","shape":[64,512,192],"authority":"RETAINED_ATTENTION_PAYLOAD_06"},
+    {"role":"v_b","encoding":"Q8_0","shape":[64,256,512],"authority":"RETAINED_ATTENTION_PAYLOAD_07"},
+    {"role":"attention_output","encoding":"Q5_K","shape":[6144,16384],"authority":"RETAINED_ATTENTION_PAYLOAD_08"},
+    {"role":"router","encoding":"F32_LE","shape":[256,6144],"authority":"RETAINED_ROUTER_AUTHORITY"},
+    {"role":"routed.{slot}.gate","slot_range":[0,7],"encoding":"IQ2_XXS","shape":[2048,6144],"authority":"RETAINED_SELECTED_EXPERT_WEIGHT_AUTHORITY"},
+    {"role":"routed.{slot}.up","slot_range":[0,7],"encoding":"IQ2_XXS","shape":[2048,6144],"authority":"RETAINED_SELECTED_EXPERT_WEIGHT_AUTHORITY"},
+    {"role":"routed.{slot}.down","slot_range":[0,7],"encoding":"IQ3_XXS","shape":[6144,2048],"authority":"RETAINED_SELECTED_EXPERT_WEIGHT_AUTHORITY"},
+    {"role":"shared.gate","encoding":"Q5_K","shape":[2048,6144],"authority":"RETAINED_SHARED_EXPERT_WEIGHT_AUTHORITY"},
+    {"role":"shared.up","encoding":"Q5_K","shape":[2048,6144],"authority":"RETAINED_SHARED_EXPERT_WEIGHT_AUTHORITY"},
+    {"role":"shared.down","encoding":"Q6_K","shape":[6144,2048],"authority":"RETAINED_SHARED_EXPERT_WEIGHT_AUTHORITY"}
+  ],
+  "source_authorities": [
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-boundary-v3.json","sha256":"a9dc0d9effb3e52844203a34be587d12f0f7b011fb58d33c5dbdbe5b650deed3"},
+    {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json","sha256":"dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json","sha256":"fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json","sha256":"45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596"}
+  ],
+  "path_policy": "ABSOLUTE_FIXED_REGULAR_NON_SYMLINK_SINGLE_LINK_READ_ONLY_SAME_DESCRIPTOR",
+  "checkpoint_paths": [],
+  "fallback": false,
+  "live_package_manifest": false
+}

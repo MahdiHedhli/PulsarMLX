@@ -1,4 +1,5 @@
 pub mod admission;
+pub mod apple_serial_f32;
 pub mod artifact_paths;
 pub mod checkpoint;
 pub mod cli;

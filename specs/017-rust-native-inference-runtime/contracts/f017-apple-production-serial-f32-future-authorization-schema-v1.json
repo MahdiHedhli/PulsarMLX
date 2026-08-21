@@ -1,0 +1,3 @@
+{
+  "schema":"pulsarmlx.f017.apple-production-serial-f32-future-authorization-schema","schema_version":"1.0.0","inert":true,"real_event_authorized":false,"live_token":false,"approval_fields":["schema","schema_version","event_id","release_id","attempt_id","release_sha256","code_manifest_sha256","reviewed_head","release_review_path","release_review_sha256","reviewer_model","verdict","approval_statement","approval_does_not_execute","approval_is_not_token","real_event_authorized","ledger","stop_boundary"],"go_token_fields":["approval_sha256","attempt_id","disposition","event_id","real_event_authorized","release_id","release_sha256"],"required_disposition":"GO_EXECUTE_ONCE_NO_RETRY","future_human_gate":true,"issued_approvals":0,"issued_tokens":0
+}

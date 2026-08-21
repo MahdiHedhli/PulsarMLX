@@ -1,0 +1,10 @@
+{
+  "schema":"pulsarmlx.f017.apple-production-serial-f32-decoder-bindings","schema_version":"1.0.0","output_dtype":"f32","fallback":"PROHIBITED","formats":[
+    {"format":"F32_LE","implementation":{"path":"crates/f017-runner/src/bin/f017-apple-serial-f32-capture.rs","sha256":"f4e41bb277bbf498fa735a3cbd98794e08b2119fda5061c0fda56341f06b9d75"},"symbol":"f32le","version":"APPLE_CAPTURE_V1","block_geometry":"4_BYTES_PER_VALUE","scale_semantics":"NONE","output_dtype":"f32"},
+    {"format":"Q5_K","implementation":{"path":"crates/quant/src/cpu_dot.rs","sha256":"45cf090b27c6a427d23c2a9d0fbe031fd6074c521c9b7101d92bcaf14f975143"},"symbol":"dequant_q5_k","version":"PINNED_SOURCE","block_geometry":"256_VALUES_176_BYTES","scale_semantics":"F16_D_AND_DMIN_K_SCALE_MIN_PLUS_HIGH_BITS","output_dtype":"f32"},
+    {"format":"Q6_K","implementation":{"path":"crates/quant/src/q6_k_ref.rs","sha256":"a4d308ef1aa874865e668002a8911d8247247dd490e301018f730aeb06ab35fd"},"symbol":"decode_q6_k_matrix","version":"PINNED_SOURCE","block_geometry":"256_VALUES_210_BYTES","scale_semantics":"F16_SUPER_SCALE_INT8_SUBSCALES","output_dtype":"f32"},
+    {"format":"Q8_0","implementation":{"path":"crates/quant/src/q8_0_ref.rs","sha256":"728d3d68645effd285e968554c4051c702877d71fb3437eba98eaecd59574e7e"},"symbol":"decode_q8_0_matrix","version":"PINNED_SOURCE","block_geometry":"32_VALUES_34_BYTES","scale_semantics":"F16_SCALE_TIMES_I8","output_dtype":"f32"},
+    {"format":"IQ2_XXS","implementation":{"path":"crates/quant/src/iq_ref.rs","sha256":"c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"},"symbol":"decode_iq2_xxs_matrix","version":"PINNED_SOURCE","block_geometry":"256_VALUES_66_BYTES","scale_semantics":"F16_SCALE_GRID_SIGNS","output_dtype":"f32"},
+    {"format":"IQ3_XXS","implementation":{"path":"crates/quant/src/iq_ref.rs","sha256":"c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"},"symbol":"decode_iq3_xxs_matrix","version":"PINNED_SOURCE","block_geometry":"256_VALUES_98_BYTES","scale_semantics":"F16_SCALE_AUX_GRID_SIGNS","output_dtype":"f32"}
+  ]
+}

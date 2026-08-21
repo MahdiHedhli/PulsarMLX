@@ -718,3 +718,14 @@
   load-bearing mutations; and bank exact Claude Fable 5 ACCEPT review bytes
   while performing zero checkpoint, shard, payload, or numerical execution per
   plan Phase 51 and Constitution III/X/XII.
+
+## Phase 51: Convergence
+
+- [ ] T017-254 Implement and freeze the complete pinned-MLX Apple production
+  serial-f32 M1-F0 S0-to-S2 call graph and 34-stage direct capture surface;
+  close RN1 ownership, receipt accounting, strict bound/event validation,
+  decoder/code/runtime bindings, partial-root recovery, and wrapper-v1
+  supersession; run only retained-free synthetic/native build validation; and
+  bank exact Claude Fable 5 ACCEPT review bytes while preserving ledger 175,
+  zero checkpoint/shard/numerical execution, and zero live authorization tokens
+  per plan Phase 52 and Constitution III/X/XII.
