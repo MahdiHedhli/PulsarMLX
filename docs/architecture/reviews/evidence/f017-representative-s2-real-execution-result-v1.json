@@ -1,0 +1,132 @@
+{
+  "schema": "pulsarmlx.f017.representative-s2-real-execution-result",
+  "schema_version": "1.0.0",
+  "result": "SUCCESS",
+  "execution_head": "49cd1327178186adad141b5e0b601bc8a1c7c191",
+  "process_exit": 0,
+  "authority": {
+    "release_v2_sha256": "1182257c5c5f14525a2942b4802bde7ed59e7253ffafefbeceef5f05a5a994a2",
+    "independent_approval_sha256": "c6ccffc3b1917f958bff14e9c693d9ec78dd49f452bb51ae7ef8eb85e45d86dc",
+    "approval_review_sha256": "d70571cb1fa21e3de0fd4bb1208ffacf8f1b7e859230d258883a723f1c7c87a6",
+    "release_review_sha256": "79016f237d850d03d89da10014795cd2113625532db34794ef99c04ba253b8b6",
+    "go_token_sha256": "ac84a4d1eff2ecdeecbe23e0bc50f530261efd8f9db50c0655cb6c0f88addb87",
+    "construction_authorization_sha256": "b85b255f8aa47968ec7a83cbe332d0ee8928874959685495d0c6e808e204185a",
+    "arithmetic_contract_sha256": "abbf158320d1fdfade5b8553e9ea1871c34830f541e4186074262fc702776e86",
+    "execution_code_head": "33d0355c94d0eb34147aadfa233c3e01322aa1ba",
+    "executor_v2_sha256": "440f90fc89f1acb431511810b4fc68e3247b22c05beeed2dca16c3a285aa83ff",
+    "wrapper_v2_sha256": "adbc76560c04bd7c6f225c4c097073b08666581867e91d7289814869afa579f3",
+    "terminalizer_v2_sha256": "b78a809eb3f9c93a5090204fa76c377ed4dc98a073adbcefa1842083959f0999"
+  },
+  "attempt": {
+    "event_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1",
+    "release_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-RELEASE-2",
+    "attempt_id": "F017-REPRESENTATIVE-S2-PROOF-REFERENCE-DERIVED-1-ATTEMPT-1",
+    "attempt_start": {"relative_path":"attempt-start.json","sha256":"abc478f56c19629043da7bbc46fb25e4f4cd4d73ae71f6ab6fe5dc4d273e0fbc","byte_length":875},
+    "s2_start": {"relative_path":"s2-start.json","sha256":"a274d5be1396bf8900820447152b4ab03ab4bb129ca58a44b0dfa64ee151dcf6","byte_length":665},
+    "receipt": {"relative_path":"s2-execution-receipt.json","sha256":"2321205359ffb5b28518ab8488632f165a33b9d641ba86913dcb7128559763b9","byte_length":1624},
+    "terminal": {"relative_path":"terminal.json","sha256":"b5448de77aba28e1892291efec780bd5a7c4b2a07440fa119416215c11ca216b","byte_length":843,"disposition":"COMPLETE","output_authority":true},
+    "go_token_file_present": true,
+    "go_token_consumed": true,
+    "consumed_at": "DURABLE_ATTEMPT_START_BEFORE_S2_ARITHMETIC",
+    "s2_counted_at": "DURABLE_S2_START_BEFORE_ARITHMETIC_REGARDLESS_OF_OUTCOME",
+    "retry": false,
+    "resume": false,
+    "second_attempt": false
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "new_attention_executions": 0,
+    "expert_executions": 0,
+    "shared_expert_executions": 0,
+    "new_s1_materializations": 0,
+    "new_ffn_compositions": 0,
+    "durable_attempt_starts": 1,
+    "s2_starts": 1,
+    "s1_execution_consumptions": 1,
+    "ffn_execution_consumptions": 1,
+    "s2_constructions": 1
+  },
+  "retained_inputs": {
+    "s1": {
+      "reuse_authorization_sha256": "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13",
+      "expected_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "before_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "consumed_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "after_sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "identity_unchanged": true
+    },
+    "ffn": {
+      "reuse_authorization_sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06",
+      "expected_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "before_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "consumed_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "after_sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "identity_unchanged": true
+    }
+  },
+  "output": {
+    "semantic_role": "REPRESENTATIVE_M1F0_S2_PROOF_REFERENCE_DERIVED",
+    "semantic_surface": "CANONICAL_F017_PROOF_REFERENCE_DERIVED_S2_SURFACE_INTENTIONALLY_NOT_CLAIMED_EQUIVALENT_TO_PRODUCTION_SERIAL_F32",
+    "formula": "S2_f32[k] = binary32(binary64(S1_f32[k]) + FFN_f64[k])",
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs/representative-s2.f32le",
+    "present": true,
+    "authority": true,
+    "sha256": "0341314230654d21fa56506dfe601f90bdb603fc38fd1203b6dd62b1e54c98c1",
+    "dtype": "little-endian-f32",
+    "shape": [6144],
+    "byte_length": 24576,
+    "finite": true,
+    "finite_elements": 6144,
+    "mode": "0400",
+    "hard_link_count": 1,
+    "publication": "DESCRIPTOR_RELATIVE_EXCLUSIVE_TEMP_FSYNC_LINK_NOREPLACE_PARENT_FSYNC_DESCRIPTOR_READBACK",
+    "complete_terminal_identity_required": true
+  },
+  "private_manifest": {
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs/representative-s2-private-manifest-v1.json",
+    "sha256": "fa0f8d9aeb19a6358611ef063cd120878eeb7ebdad6fce9e245f8625f019cabc",
+    "byte_length": 629,
+    "mode": "0400",
+    "hard_link_count": 1,
+    "output_sha256_matches": true
+  },
+  "receipt": {
+    "path": "$HOME/.local/share/pulsarmlx/f017/representative-s2-release-2/attempt-state/s2-execution-receipt.json",
+    "sha256": "2321205359ffb5b28518ab8488632f165a33b9d641ba86913dcb7128559763b9",
+    "output_sha256_matches": true,
+    "manifest_sha256_matches": true,
+    "input_identities_match": true
+  },
+  "terminal": {
+    "disposition": "COMPLETE",
+    "terminal_sha256": "b5448de77aba28e1892291efec780bd5a7c4b2a07440fa119416215c11ca216b",
+    "output_authority": true,
+    "output_sha256_matches": true,
+    "manifest_sha256_matches": true,
+    "receipt_sha256_matches": true,
+    "ledger": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "s2_constructions": 1,
+    "stop_boundary": "AFTER_REPRESENTATIVE_S2_OUTPUT_ONLY"
+  },
+  "authority_separation": {
+    "release_authorized_one_future_attempt": true,
+    "go_token_authorized_exact_release_attempt": true,
+    "durable_attempt_start_consumed_release": true,
+    "durable_s2_start_counted_construction": true,
+    "complete_terminal_and_retained_bytes_establish_output_authority": true,
+    "present_go_token_file_does_not_mean_unconsumed": true
+  },
+  "reproduction": {
+    "post_event_reproduction_authorized_by_release": false,
+    "post_event_reproduction_performed": false,
+    "new_s2_constructions": 0,
+    "accepted_synthetic_rehearsal": "2_OF_2_FRESH_PROCESS_EXACT_SYNTHETIC_REAL_GEOMETRY",
+    "adjudication": "DEFERRED_TO_SEPARATE_CROSS_EVENT_REUSE_REVIEW_NO_RETROACTIVE_AUTHORITY_EXPANSION"
+  },
+  "next_action": "PREPARE_AND_INDEPENDENTLY_REVIEW_CHECKPOINT_FREE_CROSS_EVENT_REUSE_AUTHORITY;DO_NOT_RERUN_S2_OR_ANY_NUMERICAL_STAGE"
+}
