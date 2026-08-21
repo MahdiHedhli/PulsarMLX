@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-capture-validation",
+  "schema_version": "1.0.0",
+  "validated_branch": "feat/017-real-checkpoint-runner",
+  "validated_head": "92abaa15597fd402ea41feeeca7c65b65c9c2440",
+  "execution_code_head": "653aa77755136ed292251c3f9cbe60e70343294a",
+  "release_sha256": "8896ccde445d2caaaa45997d4be904b7e214ddaaaaebfbeea573117c4fbf6d7f",
+  "native_executable_sha256": "42b268955b282545e74aa8a3c6339d2b75777a2b6b8c9e5cee76fdaddcc2b90f",
+  "commands": [
+    {"command":"PULSAR_REQUIRE_NATIVE_MLX=1 cargo build -p f017-runner --bin f017-apple-serial-f32-capture --release","result":"PASS_NATIVE_MLX_LINKED"},
+    {"command":"PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p f017-runner --test apple_serial_f32","result":"PASS_5_OF_5"},
+    {"command":"python3 scripts/research/validate_f017_apple_production_serial_f32_capture_v1.py","result":"PASS_34_STAGES_6_DECODERS"},
+    {"command":"python3 -m unittest scripts.research.tests.test_f017_apple_serial_f32_hardening_v1 scripts.research.tests.test_validate_f017_apple_production_serial_f32_capture_v1","result":"PASS_18_TESTS_42_MUTATION_SUBCASES"},
+    {"command":"cargo test -p quant","result":"PASS_45_LIBRARY_AND_DECODER_TESTS_PLUS_WRITER_E2E"},
+    {"command":"python3 scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py --review-result docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-result-v1.json","result":"PASS_PRIOR_ACCEPTED_SPEC"},
+    {"command":"python3 scripts/research/validate_f017_real_payload_ledger_v2.py","result":"PASS_TERMINAL_175"},
+    {"command":"python3 scripts/research/validate_f017_future_real_payload_banking_v2.py --head HEAD","result":"PASS_ZERO_ADVANCING_COMMITS"},
+    {"command":"OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 python3 scripts/research/f017_apple_serial_f32_capture_wrapper_v2.py --release specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-capture-single-use-release-v2.json --preflight-only","result":"APPLE_SERIAL_F32_RELEASE_SCHEMA_PREFLIGHT_PASS_NO_ARITHMETIC"}
+  ],
+  "mutation_coverage": ["source-path","source-symbol","stage-order","dtype","shape","rounding-boundary","accumulator","routing-membership","routing-order","capture-count","runtime-version","runtime-library-hash","decoder-binding","tensor-census","retained-authority","RN1-owner","receipt-count","event-schema","ledger","authorization-schema","release-binding","executor-hash","wrapper-v1-tombstone","checkpoint-fallback","proof-helper-import","f64-widening","live-token"],
+  "accounting": {"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"production_equivalence_executions":0,"numerical_stage_executions":0,"live_go_tokens":0},
+  "machine_binding": {"hardware":"APPLE_SILICON_M1_ULTRA","mlx":"0.32.1","mlx_c":"0.6.0_4","backend":"APPLE_METAL_GPU","native_dylibs":"EXACT_HASH_PASS"},
+  "result": "PASS"
+}
