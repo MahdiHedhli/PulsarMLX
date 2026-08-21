@@ -729,3 +729,13 @@
   bank exact Claude Fable 5 ACCEPT review bytes while preserving ledger 175,
   zero checkpoint/shard/numerical execution, and zero live authorization tokens
   per plan Phase 52 and Constitution III/X/XII.
+
+## Phase 52: Convergence
+
+- [ ] T017-255 Assemble and byte-verify the exact retained 40-tensor Apple
+  production package, rebind all load-bearing source/runtime/native identities,
+  freeze comparison/routing/determinism/accounting and one-shot authorization
+  contracts, rehearse RN1 lifecycle failure modes with inert payloads, and bank
+  exact Claude Fable 5 ACCEPT review bytes while preserving ledger 175, zero
+  checkpoint/shard/numerical execution, and zero live GO tokens per plan Phase
+  53 and Constitution III/X/XII.

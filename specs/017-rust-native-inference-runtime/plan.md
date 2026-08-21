@@ -981,3 +981,27 @@ Gate: the Apple capture/release-preparation surface is independently accepted,
 all load-bearing semantics are resolved on the pinned environment, ledger stays
 175 with no checkpoint or numerical execution, and the next phase may prepare
 a separate human-gated production-equivalence execution package.
+
+## Phase 53 — Production serial-f32 equivalence execution readiness
+
+- Assemble exactly 40 already-retained tensor payloads at a fixed machine-local
+  root without decoding, conversion, checkpoint fallback, or numerical work;
+  bind their ordered descriptors and actual bytes to a mechanically rederived
+  package root.
+- Expand the execution source manifest through every known load-bearing IQ,
+  K-quant, CPU-dot, MLX dispatch, serialization, wrapper, and terminalization
+  source, and pin the native executable, Homebrew MLX/MLX-C dylibs, toolchain,
+  hardware, OS, and five single-thread environment controls.
+- Freeze the 34-stage comparison package, structural routing-gate order, exact
+  ten-fresh-process byte-determinism protocol, retained-only zero-payload event
+  accounting, and an operator-only one-shot approval/GO schema.
+- Require complete package/runtime rehashing before RN1 attempt ownership;
+  retain invocation-owned durable start and receipt-derived terminalization;
+  rehearse all failure paths using synthetic or inert authority only.
+- Obtain Claude Fable 5 acceptance of exact pushed bytes.  Do not mint a live
+  approval or GO token and do not run the representative production graph,
+  determinism qualification, comparison, checkpoint, or any numerical stage.
+
+Gate: one narrow human decision may authorize or decline exactly one reviewed
+production serial-f32 equivalence execution; all tensors, tolerances, runtime,
+capture stages, route gates, retry policy, and accounting are already frozen.
