@@ -687,3 +687,14 @@
   machine-local token while preserving ledger 175 and zero checkpoint, shard,
   S1, FFN, attempt-start, S2-start, operand-consumption, or S2 execution per
   plan Phase 48 and Constitution III/X/XII.
+
+## Phase 48: Convergence
+
+- [x] T017-251 Reconcile and bank the consumed S2 release-v2 event, prepare and
+  independently accept immutable cross-event S2 reuse without an unauthorized
+  second construction, then bind the complete ten-stage representative M1-F0
+  graph, 19 attention substages, exact route/expert identities, accounting,
+  numerical-surface limitations, and consumed/superseded release closure into
+  a machine-verifiable package accepted by Claude Fable 5 while stopping before
+  the separate final project-level closure declaration per plan Phase 49 and
+  Constitution III/X/XII.

@@ -889,3 +889,24 @@ attempt state, or execution consumption; ledger remains 175 with zero reads.
 Gate: approval and approval-review bytes are committed and accepted; one valid
 S2 release-v2 token exists unconsumed; ledger remains 175; checkpoint, shard,
 S1, FFN, attempt, and S2 counters remain zero.
+
+## Phase 49 — S2 banking, reuse, and representative M1-F0 closure preparation
+
+- Reconcile the consumed S2 release-v2 event from durable attempt/S2 starts,
+  immutable S1/FFN consumed identities, receipt, manifest, COMPLETE terminal,
+  and retained output, then bank append-only execution evidence without
+  rerunning arithmetic.
+- Bind the retained proof/reference-derived S2 to an open-once cross-event
+  reuse authority, adjudicate it sound without retroactive post-event
+  reproduction, and bank a committed Claude Fable 5 ACCEPT review.
+- Assemble a machine-verifiable ten-stage canonical graph from S0 through S2,
+  including all 19 attention substage hashes, the exact route and eight expert
+  outputs, proof/reference arithmetic and surface disclosures, ledger closure,
+  consumed/superseded single-use authorities, and replay closure.
+- Validate mutations and bank a second committed Claude Fable 5 ACCEPT review
+  of the closure package while preserving the separate final project-level
+  closure declaration as an unexercised authority boundary.
+
+Gate: S2 reuse and the complete representative M1-F0 closure package are
+independently accepted; ledger remains 175; no checkpoint, shard, or numerical
+stage activity occurs; and the workflow stops before final closure declaration.

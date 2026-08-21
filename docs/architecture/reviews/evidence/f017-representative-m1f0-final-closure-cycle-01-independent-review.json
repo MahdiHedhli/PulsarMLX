@@ -1,0 +1,47 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-final-closure-independent-review",
+  "schema_version": "1.0.0",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model": "claude-fable-5",
+  "reviewed_head": "694879463427dc83f3153a46e8abbf766deb856a",
+  "closure_package_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-package-v1.json",
+  "closure_package_sha256": "7b6d38d15889a0811bd8a0d54ce0e9e495da7918cea323d7995d9dc35e1c5402",
+  "review_spec_sha256": "f1e5eb3811777fcdf54840500b948b388f1acdf2d57db857949493aff547facc",
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {
+      "id": "DID-1",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Pure-document validator does not pin the redundant route hash copies in canonical_graph[4]",
+      "evidence": "Independent mutations selected_ids_sha256=0*64 and routing_weights_sha256=0*64 on canonical_graph[4] of an in-memory copy passed validate(); the authoritative copies in canonical_graph[1].stage_sha256 are pinned and were independently recomputed byte-exact from the published uint16_le ids (fa000a00ed003e004900b100da001c00 -> a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f) and binary64_le weights (-> ff1a7127b418b80dce4e4361e314c16ad50e86484cb1861ad27f6f9ee70b8587), and the composite route_sha256 03dc2dfbed65848fdcb649f41f98793ca0f8cdd702c76b55d71c762fc5338103 was independently reconstructed from the documented serialization and is pinned by validate().",
+      "required_action": "Non-exploitable this cycle: any byte tamper of the committed package changes its SHA-256 away from 7b6d38d15889a0811bd8a0d54ce0e9e495da7918cea323d7995d9dc35e1c5402 which the review spec and this review bind, and the authoritative route identity fields are pinned. Recommend pinning the redundant graph[4] hash copies in a future validator revision; no action required for this cycle."
+    },
+    {
+      "id": "DID-2",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Validator pins only the s2 key of reproduction_status and does not pin graph[1].retained_only_reproduction",
+      "evidence": "Independent mutations reproduction_status.attention=0_OF_10 and retained_only_reproduction.runs=0/exact_stage_identity=0/10 on in-memory copies passed validate(); the authoritative reproduction record (bundle_sha256 175539424a5fe1b66c60d1e95c8361858d90fd4566b24b4915c2b1affda5023b, 10/10 retained-only stage and route identity, 2 fresh processes, 0 checkpoint rereads) lives in the attention execution evidence whose SHA-256 dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190 is enforced by bind().",
+      "required_action": "Non-exploitable this cycle: the pinned evidence-file SHA binding is the authoritative source and package-byte tamper changes the bound package SHA. Recommend exact-dict pinning of reproduction_status and retained_only_reproduction in a future validator revision; no action required for this cycle."
+    },
+    {
+      "id": "DID-3",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Validator does not pin S1 formula, dtype/shape strings, next_authority, or unresolved_limitations",
+      "evidence": "Independent mutations canonical_graph[2].formula='S1 = f32(S0 - layer3_attention_output)', canonical_graph[9].dtype='little-endian-f64', next_authority='SELF_GRANTED_CLOSURE', and unresolved_limitations=[] on in-memory copies passed validate(); FFN and S2 formulas, stage vocabulary, stop_boundary, and closure-declaration booleans are pinned and their mutations are rejected. The same next_authority class was adjudicated non-exploitable as DID-1 of the accepted S2 reuse review 4b42a4b88090394225310d93b1af53610685ccb944223ba6249fc841440e7312.",
+      "required_action": "Non-exploitable this cycle: the S1 formula and identity are hash-anchored through the S1 execution evidence ea924afbc8972c194adc9d8a9759e1fca35ae8c2ab362225477cb4c54229fb55 (formula, expected=produced=readback 8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd), and closure remains blocked by the pinned stop_boundary and project_level_m1f0_closure_declared=false checks. Recommend pinning these fields in a future validator revision; no action required for this cycle."
+    },
+    {
+      "id": "DID-4",
+      "classification": "DEFENSE_IN_DEPTH",
+      "title": "Supersession disposition relabel SUPERSEDED_ to CONSUMED_ passes the prefix-based disposition check",
+      "evidence": "Independent mutation single_use_authority_disposition[7].disposition='CONSUMED_BY_DURABLE_ATTEMPT_START' for S2_RELEASE_1 on an in-memory copy passed validate() because the check only requires a CONSUMED_/SUPERSEDED_ prefix; the committed supersession records for FFN_RELEASE_1 (sha256 d22aecdd123defa5166c3bae44b67efa1a9e3dc8aad343e909e059b3e948ae08) and S2_RELEASE_1 (sha256 dbc73f9fbccb8262f6151a488cb37a452a5e5576bab987ca02d037604b777e80) remain hash-bound and record zero v1 go tokens, attempt starts, and constructions.",
+      "required_action": "Non-exploitable this cycle: supersession evidence bindings are enforced by bind() (tamper of the bound sha is rejected, verified by mutation), superseded v1 releases are forbidden from minting go tokens by the committed supersession records, and any package-byte relabel changes the bound package SHA. Recommend pinning the exact per-authority disposition strings in a future validator revision; no action required for this cycle."
+    }
+  ],
+  "accounting_closure": "PASS",
+  "reproduction_adjudication": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+  "final_closure_declaration_made": false,
+  "statement": "REPRESENTATIVE M1F0 FINAL CLOSURE PACKAGE ACCEPTED FOR SEPARATE FINAL CLOSURE DECLARATION"
+}

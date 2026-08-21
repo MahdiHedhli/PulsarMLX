@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-final-closure-preparation-closeout",
+  "schema_version": "1.0.0",
+  "status": "READY_FOR_SEPARATE_FINAL_CLOSURE_DECLARATION",
+  "starting_head": "49cd1327178186adad141b5e0b601bc8a1c7c191",
+  "s2_execution_evidence": {"path":"docs/architecture/reviews/evidence/f017-representative-s2-real-execution-result-v1.json","sha256":"f64d0ff797a9bd1ae9a0f7c2b99cfb9ed5894b1110cc433de152b1c2526fdd75"},
+  "s2_reuse_authorization": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-output-reuse-authorization-v1.json","sha256":"35b7c6232858577c6b523fd416820845255eb094ca8be8102d9dd01f2b1b77b5"},
+  "s2_reuse_review": {"path":"docs/architecture/reviews/evidence/f017-representative-s2-output-reuse-cycle-01-independent-review.json","sha256":"4b42a4b88090394225310d93b1af53610685ccb944223ba6249fc841440e7312","verdict":"ACCEPT","cycle":1,"blocking_findings":0,"non_blocking_required_findings":0,"defense_in_depth_findings":2},
+  "s2_reproduction_adjudication": "SOUND_WITHOUT_ADDITIONAL_POST_EVENT_REPRODUCTION",
+  "closure_package": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-package-v1.json","sha256":"7b6d38d15889a0811bd8a0d54ce0e9e495da7918cea323d7995d9dc35e1c5402","bound_canonical_stages":10},
+  "closure_review_spec": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-final-closure-review-spec-v1.json","sha256":"f1e5eb3811777fcdf54840500b948b388f1acdf2d57db857949493aff547facc"},
+  "closure_review": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-cycle-01-independent-review.json","sha256":"1b014af874ca90f30b17c2fac87a66744126067401c76c2386eaf54596662a3a","reviewed_head":"694879463427dc83f3153a46e8abbf766deb856a","reviewer_model":"claude-fable-5","verdict":"ACCEPT","cycle":1,"blocking_findings":0,"non_blocking_required_findings":0,"defense_in_depth_findings":4},
+  "accounting": {"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"attention_executions":0,"expert_executions":0,"shared_expert_executions":0,"aggregate_executions":0,"ffn_compositions":0,"s1_materializations":0,"s2_constructions":0},
+  "proof_reference_surface_disposition": "PRESERVED_WITH_EXPLICIT_NON_CLAIM_OF_PRODUCTION_SERIAL_F32_EQUIVALENCE",
+  "superseded_authority_disposition": "ALL_EXECUTION_CAPABLE_AUTHORITIES_CONSUMED_OR_EXPLICITLY_SUPERSEDED;NO_LEGITIMATE_REPLAY_TOKEN",
+  "project_level_m1f0_closure_declared": false,
+  "ready_for_representative_m1f0_final_closure": true,
+  "human_interventions_required_for_preparation": 0,
+  "separate_authority_required": "FINAL_REPRESENTATIVE_M1F0_CLOSURE_DECLARATION",
+  "termination_condition": "STOP_ACCEPTED_BEFORE_FINAL_PROJECT_LEVEL_M1F0_CLOSURE_DECLARATION"
+}
