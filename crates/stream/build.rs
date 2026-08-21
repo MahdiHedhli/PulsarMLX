@@ -13,6 +13,7 @@ fn main() {
 
     println!("cargo:rerun-if-changed=src/apple_metal_bridge.mm");
     println!("cargo:rerun-if-changed=src/apple_mlx_bridge.mm");
+    println!("cargo:rerun-if-changed=src/apple_mlx_deallocation_observer.mm");
     println!("cargo:rerun-if-env-changed=MLX_C_PREFIX");
     println!("cargo:rerun-if-env-changed=MLX_PREFIX");
     cc::Build::new()
@@ -40,6 +41,7 @@ fn main() {
         cc::Build::new()
             .cpp(true)
             .file("src/apple_mlx_bridge.mm")
+            .file("src/apple_mlx_deallocation_observer.mm")
             .include(&mlx_include)
             .flag("-std=c++17")
             .flag("-fobjc-arc")

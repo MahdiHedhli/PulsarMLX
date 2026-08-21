@@ -2,7 +2,7 @@
 
 **Feature Branch**: `feat/017-rust-native-inference-runtime`
 **Created**: 2026-08-09
-**Status**: Draft (spec-kit updates applied, implementation not started)
+**Status**: Native foundation implemented and final admission hardening in progress. The checkpoint-free independent oracle and pinned native CI are qualified; M1 Ultra P1 and full-model inference have not executed under Feature 017.
 **Input**: Feature 016 completed evidence + post-golden-eight authoritative inputs in `docs/research/glm52/`
 
 ## Background

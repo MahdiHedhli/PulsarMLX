@@ -93,7 +93,8 @@ mod apple_mlx_bridge;
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
 pub use apple_mlx_bridge::{
     MlxArray, MlxComputedArray, MlxContext, MlxDebugStreamCounters, MlxDevice,
-    MlxOwnershipSnapshot, MlxStreamMode,
+    MlxNativeFreeCounters, MlxOwnershipSnapshot, MlxStreamAuthority, MlxStreamMode,
+    MlxStreamOrigin,
 };
 
 /// Build the universe of per-expert slab reads for every streamed layer of

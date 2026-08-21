@@ -112,6 +112,45 @@ fn q8_edge_distributions_match_independent_exact_f32_bits() {
 }
 
 #[test]
+fn residual_cancellation_and_signed_zero_cases_are_executable() {
+    let document = oracle();
+    let cases = document["edge_distributions"]["residual"]
+        .as_array()
+        .expect("residual edge cases must be an array");
+    assert_eq!(cases.len(), 2);
+    for case in cases {
+        let terms = case["terms"]
+            .as_array()
+            .expect("residual terms must be present")
+            .iter()
+            .map(|value| value.as_f64().expect("residual term must be f64"))
+            .collect::<Vec<_>>();
+        let actual = terms
+            .iter()
+            .copied()
+            .fold(0.0_f64, |sum, value| sum + value);
+        let expected = case["sequential_sum"]
+            .as_f64()
+            .expect("expected sequential sum must be f64");
+        assert_eq!(actual.to_bits(), expected.to_bits(), "{}", case["name"]);
+    }
+
+    // Independently specified IEEE-754 binary32 residual boundaries. These
+    // bit assertions exercise the candidate operation rather than metadata.
+    let cases: &[(&str, f32, f32, u32)] = &[
+        ("positive_negative_cancellation", 1.0, -1.0, 0x0000_0000),
+        ("negative_zero_inputs", -0.0, -0.0, 0x8000_0000),
+        ("small_plus_large_half_ulp", 1.0, 16_777_216.0, 0x4b80_0000),
+        ("large_plus_small_half_ulp", 16_777_216.0, 1.0, 0x4b80_0000),
+        ("large_plus_one_ulp", 16_777_216.0, 2.0, 0x4b80_0001),
+    ];
+    for (name, left, right, expected_bits) in cases {
+        let actual = *left + *right;
+        assert_eq!(actual.to_bits(), *expected_bits, "{name}");
+    }
+}
+
+#[test]
 fn ordered_candidate_ladder_matches_independent_oracle() {
     let document = oracle();
     let boundaries = &document["boundaries"];

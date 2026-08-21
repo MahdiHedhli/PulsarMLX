@@ -22,6 +22,11 @@ unsafe extern "C" {
         error_capacity: usize,
     ) -> i32;
     fn pulsar_mlx_context_destroy(context: *mut RawMlxContext);
+    fn pulsar_mlx_context_stream_authority(
+        context: *mut RawMlxContext,
+        origin: *mut i32,
+        handle_owned: *mut i32,
+    ) -> i32;
     fn pulsar_mlx_context_synchronize(
         context: *mut RawMlxContext,
         error_buffer: *mut c_char,
@@ -49,6 +54,19 @@ unsafe extern "C" {
         error_capacity: usize,
     ) -> i32;
     fn pulsar_mlx_debug_fail_next_after_stream_create();
+    fn pulsar_mlx_debug_set_next_release_fault(fault: i32);
+    fn pulsar_mlx_debug_cleanup_release_fault() -> i32;
+    fn pulsar_mlx_debug_native_stream_counters(
+        default_cpu_created: *mut u64,
+        default_cpu_freed: *mut u64,
+        default_gpu_created: *mut u64,
+        default_gpu_freed: *mut u64,
+        owned_created: *mut u64,
+        owned_freed: *mut u64,
+        live_handles: *mut u64,
+        duplicate_free_attempts: *mut u64,
+        origin_mismatches: *mut u64,
+    ) -> i32;
     fn pulsar_mlx_validate_f32_count(
         count: usize,
         error_buffer: *mut c_char,
@@ -104,6 +122,19 @@ pub enum MlxStreamMode {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MlxStreamOrigin {
+    DefaultCpu,
+    DefaultGpu,
+    OwnedDevice,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MlxStreamAuthority {
+    pub origin: MlxStreamOrigin,
+    pub handle_owned: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct MlxOwnershipSnapshot {
     pub callback_count: u64,
     pub managed_created: u64,
@@ -121,6 +152,19 @@ pub struct MlxDebugStreamCounters {
     pub default_gpu_freed: u64,
     pub owned_created: u64,
     pub owned_freed: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MlxNativeFreeCounters {
+    pub default_cpu_created: u64,
+    pub default_cpu_freed: u64,
+    pub default_gpu_created: u64,
+    pub default_gpu_freed: u64,
+    pub owned_created: u64,
+    pub owned_freed: u64,
+    pub live_handles: u64,
+    pub duplicate_free_attempts: u64,
+    pub origin_mismatches: u64,
 }
 
 fn bridge_error(status: i32, buffer: &[i8; ERROR_CAPACITY]) -> String {
@@ -174,11 +218,33 @@ impl MlxContext {
         self.stream_mode
     }
 
+    pub fn stream_authority(&self) -> Result<MlxStreamAuthority, String> {
+        let mut origin = 0;
+        let mut handle_owned = 0;
+        let status = unsafe {
+            pulsar_mlx_context_stream_authority(self.raw, &mut origin, &mut handle_owned)
+        };
+        if status != 0 {
+            return Err(format!(
+                "MLX bridge status {status}: stream authority unavailable"
+            ));
+        }
+        let origin = match origin {
+            1 => MlxStreamOrigin::DefaultCpu,
+            2 => MlxStreamOrigin::DefaultGpu,
+            3 => MlxStreamOrigin::OwnedDevice,
+            _ => return Err("MLX bridge returned an unknown stream origin".to_owned()),
+        };
+        Ok(MlxStreamAuthority {
+            origin,
+            handle_owned: handle_owned == 1,
+        })
+    }
+
     pub fn synchronize(&self) -> Result<(), String> {
         let mut error = [0_i8; ERROR_CAPACITY];
-        let status = unsafe {
-            pulsar_mlx_context_synchronize(self.raw, error.as_mut_ptr(), ERROR_CAPACITY)
-        };
+        let status =
+            unsafe { pulsar_mlx_context_synchronize(self.raw, error.as_mut_ptr(), ERROR_CAPACITY) };
         if status != 0 {
             return Err(bridge_error(status, &error));
         }
@@ -252,16 +318,60 @@ impl MlxContext {
         })
     }
 
+    pub fn debug_native_free_counters() -> Result<MlxNativeFreeCounters, String> {
+        let mut counters = MlxNativeFreeCounters {
+            default_cpu_created: 0,
+            default_cpu_freed: 0,
+            default_gpu_created: 0,
+            default_gpu_freed: 0,
+            owned_created: 0,
+            owned_freed: 0,
+            live_handles: 0,
+            duplicate_free_attempts: 0,
+            origin_mismatches: 0,
+        };
+        let status = unsafe {
+            pulsar_mlx_debug_native_stream_counters(
+                &mut counters.default_cpu_created,
+                &mut counters.default_cpu_freed,
+                &mut counters.default_gpu_created,
+                &mut counters.default_gpu_freed,
+                &mut counters.owned_created,
+                &mut counters.owned_freed,
+                &mut counters.live_handles,
+                &mut counters.duplicate_free_attempts,
+                &mut counters.origin_mismatches,
+            )
+        };
+        if status != 0 {
+            return Err(format!("MLX native observer status {status}"));
+        }
+        Ok(counters)
+    }
+
     #[doc(hidden)]
     pub fn debug_fail_next_after_stream_create() {
         unsafe { pulsar_mlx_debug_fail_next_after_stream_create() };
     }
 
+    #[doc(hidden)]
+    pub fn debug_set_next_release_fault(fault: i32) {
+        unsafe { pulsar_mlx_debug_set_next_release_fault(fault) };
+    }
+
+    #[doc(hidden)]
+    pub fn debug_cleanup_release_fault() -> Result<(), String> {
+        let status = unsafe { pulsar_mlx_debug_cleanup_release_fault() };
+        if status != 0 {
+            return Err(format!("MLX release-fault cleanup status {status}"));
+        }
+        Ok(())
+    }
+
     pub fn validate_f32_count(count: usize) -> Result<(), String> {
         let mut error = [0_i8; ERROR_CAPACITY];
-        let status = unsafe {
-            pulsar_mlx_validate_f32_count(count, error.as_mut_ptr(), ERROR_CAPACITY)
-        };
+        let status =
+            unsafe { pulsar_mlx_validate_f32_count(count, error.as_mut_ptr(), ERROR_CAPACITY) };
         if status != 0 {
             return Err(bridge_error(status, &error));
         }
@@ -362,12 +472,7 @@ impl<'a> MlxArray<'a> {
         let mut callbacks = 0;
         let mut error = [0_i8; ERROR_CAPACITY];
         let status = unsafe {
-            pulsar_mlx_array_destroy(
-                self.raw,
-                &mut callbacks,
-                error.as_mut_ptr(),
-                ERROR_CAPACITY,
-            )
+            pulsar_mlx_array_destroy(self.raw, &mut callbacks, error.as_mut_ptr(), ERROR_CAPACITY)
         };
         self.raw = ptr::null_mut();
         if status != 0 {
@@ -411,12 +516,7 @@ impl<'a> MlxComputedArray<'a> {
         let mut callbacks = 0;
         let mut error = [0_i8; ERROR_CAPACITY];
         let status = unsafe {
-            pulsar_mlx_array_destroy(
-                self.raw,
-                &mut callbacks,
-                error.as_mut_ptr(),
-                ERROR_CAPACITY,
-            )
+            pulsar_mlx_array_destroy(self.raw, &mut callbacks, error.as_mut_ptr(), ERROR_CAPACITY)
         };
         self.raw = ptr::null_mut();
         if status != 0 {

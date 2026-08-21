@@ -5,7 +5,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <new>
+
+extern "C" {
+int pulsar_mlx_native_stream_observe_create(mlx_stream stream, int origin);
+int pulsar_mlx_native_stream_free(mlx_stream stream, int origin);
+int pulsar_mlx_native_stream_probe_duplicate(mlx_stream stream, int origin);
+int pulsar_mlx_native_stream_observer_snapshot(
+    uint64_t *, uint64_t *, uint64_t *, uint64_t *, uint64_t *, uint64_t *,
+    uint64_t *, uint64_t *, uint64_t *);
+}
 
 namespace {
 
@@ -57,6 +67,10 @@ std::atomic<uint64_t> default_gpu_stream_freed{0};
 std::atomic<uint64_t> owned_stream_created{0};
 std::atomic<uint64_t> owned_stream_freed{0};
 std::atomic<bool> fail_next_after_stream_create{false};
+std::atomic<int> next_release_fault{0};
+mlx_stream skipped_native_stream{};
+StreamOrigin skipped_native_origin = StreamOrigin::None;
+std::atomic<int> skipped_logical_origin{0};
 
 int set_error(char *buffer, size_t capacity, const char *message) {
     if (buffer != nullptr && capacity > 0) {
@@ -144,13 +158,43 @@ void record_stream_freed(StreamOrigin origin) {
     }
 }
 
+int observer_origin(StreamOrigin origin) {
+    return static_cast<int>(origin);
+}
+
+bool observe_stream_created(mlx_stream stream, StreamOrigin origin) {
+    return pulsar_mlx_native_stream_observe_create(stream,
+                                                    observer_origin(origin)) == 0;
+}
+
 void release_stream_handle(MlxContextObject *context) {
     if (context == nullptr || !context->stream_handle_owned ||
         context->stream.ctx == nullptr) {
         return;
     }
-    mlx_stream_free(context->stream);
-    record_stream_freed(context->stream_origin);
+    int fault = next_release_fault.exchange(0, std::memory_order_acq_rel);
+    if (fault == 1) {
+        skipped_native_stream = context->stream;
+        skipped_native_origin = context->stream_origin;
+    } else {
+        int status = pulsar_mlx_native_stream_free(
+            context->stream, observer_origin(context->stream_origin));
+        if (status != 0) {
+            std::abort();
+        }
+        if (fault == 3) {
+            if (pulsar_mlx_native_stream_probe_duplicate(
+                    context->stream, observer_origin(context->stream_origin)) != -2) {
+                std::abort();
+            }
+        }
+    }
+    if (fault == 2) {
+        skipped_logical_origin.store(observer_origin(context->stream_origin),
+                                     std::memory_order_release);
+    } else {
+        record_stream_freed(context->stream_origin);
+    }
     context->stream = {};
     context->stream_handle_owned = false;
 }
@@ -168,9 +212,15 @@ void restore_default_cpu_context() {
 
     mlx_stream cpu_stream = mlx_default_cpu_stream_new();
     if (cpu_stream.ctx != nullptr) {
+        if (!observe_stream_created(cpu_stream, StreamOrigin::DefaultCpu)) {
+            std::abort();
+        }
         record_stream_created(StreamOrigin::DefaultCpu);
         mlx_set_default_stream(cpu_stream);
-        mlx_stream_free(cpu_stream);
+        if (pulsar_mlx_native_stream_free(
+                cpu_stream, observer_origin(StreamOrigin::DefaultCpu)) != 0) {
+            std::abort();
+        }
         record_stream_freed(StreamOrigin::DefaultCpu);
     }
 }
@@ -284,6 +334,11 @@ int pulsar_mlx_context_create(
         context->stream_origin = StreamOrigin::OwnedDevice;
         if (context->stream.ctx != nullptr) {
             context->stream_handle_owned = true;
+            if (!observe_stream_created(context->stream, context->stream_origin)) {
+                destroy_context(context);
+                return set_error(error_buffer, error_capacity,
+                                 "native stream observer rejected owned handle");
+            }
             record_stream_created(context->stream_origin);
         }
         if (context->stream.ctx == nullptr ||
@@ -301,6 +356,11 @@ int pulsar_mlx_context_create(
                               : mlx_default_gpu_stream_new();
         if (context->stream.ctx != nullptr) {
             context->stream_handle_owned = true;
+            if (!observe_stream_created(context->stream, context->stream_origin)) {
+                destroy_context(context);
+                return set_error(error_buffer, error_capacity,
+                                 "native stream observer rejected default handle");
+            }
             record_stream_created(context->stream_origin);
         }
         if (context->stream.ctx == nullptr) {
@@ -325,6 +385,19 @@ int pulsar_mlx_context_stream_owned(PulsarMlxContext *raw_context) {
                    context->stream_origin == StreamOrigin::OwnedDevice
                ? 1
                : 0;
+}
+
+int pulsar_mlx_context_stream_authority(
+    PulsarMlxContext *raw_context,
+    int *origin,
+    int *handle_owned) {
+    auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
+    if (context == nullptr || origin == nullptr || handle_owned == nullptr) {
+        return -1;
+    }
+    *origin = observer_origin(context->stream_origin);
+    *handle_owned = context->stream_handle_owned ? 1 : 0;
+    return 0;
 }
 
 void pulsar_mlx_context_destroy(PulsarMlxContext *raw_context) {
@@ -540,6 +613,44 @@ int pulsar_mlx_debug_stream_counters(
 
 void pulsar_mlx_debug_fail_next_after_stream_create() {
     fail_next_after_stream_create.store(true, std::memory_order_release);
+}
+
+void pulsar_mlx_debug_set_next_release_fault(int fault) {
+    next_release_fault.store(fault, std::memory_order_release);
+}
+
+int pulsar_mlx_debug_cleanup_release_fault() {
+    if (skipped_native_stream.ctx != nullptr) {
+        int status = pulsar_mlx_native_stream_free(
+            skipped_native_stream, observer_origin(skipped_native_origin));
+        skipped_native_stream = {};
+        skipped_native_origin = StreamOrigin::None;
+        if (status != 0) {
+            return status;
+        }
+    }
+    int logical_origin = skipped_logical_origin.exchange(0,
+                                                         std::memory_order_acq_rel);
+    if (logical_origin != 0) {
+        record_stream_freed(static_cast<StreamOrigin>(logical_origin));
+    }
+    return 0;
+}
+
+int pulsar_mlx_debug_native_stream_counters(
+    uint64_t *default_cpu_created,
+    uint64_t *default_cpu_freed,
+    uint64_t *default_gpu_created,
+    uint64_t *default_gpu_freed,
+    uint64_t *owned_created,
+    uint64_t *owned_freed,
+    uint64_t *live_handles,
+    uint64_t *duplicate_free_attempts,
+    uint64_t *origin_mismatches) {
+    return pulsar_mlx_native_stream_observer_snapshot(
+        default_cpu_created, default_cpu_freed, default_gpu_created,
+        default_gpu_freed, owned_created, owned_freed, live_handles,
+        duplicate_free_attempts, origin_mismatches);
 }
 
 int pulsar_mlx_validate_f32_count(
