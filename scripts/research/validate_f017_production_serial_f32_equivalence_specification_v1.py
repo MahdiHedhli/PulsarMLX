@@ -10,6 +10,12 @@ import pathlib
 import sys
 from typing import Any
 
+from f017_bound_authority_resolver_v1 import (
+    BoundAuthorityError,
+    validate_bound_fields,
+    validate_executable_numeric_bindings,
+)
+
 
 CONTRACT = pathlib.Path("specs/017-rust-native-inference-runtime/contracts/f017-production-serial-f32-equivalence-specification-v1.json")
 REVIEW_RESULT = pathlib.Path("docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-01-independent-review-result-v1.json")
@@ -147,6 +153,13 @@ def validate_contract(repo: pathlib.Path, data: dict[str, Any]) -> None:
     require(routing.get("selected_order") == "EXACT_REQUIRED", "route order not exact")
     require(routing.get("order_canonicalization") == "PROHIBITED", "route order canonicalization enabled")
     verify_bound(repo, routing["source"])
+    try:
+        bound_observations = validate_bound_fields(repo, data)
+        numeric_observations = validate_executable_numeric_bindings(repo, data.get("executable_numeric_bindings", []))
+    except BoundAuthorityError as exc:
+        raise Invalid(str(exc)) from exc
+    require(len(bound_observations) == 5, "bound-field census")
+    require(len(numeric_observations) == 4, "executable-numeric census")
 
     matrix = data.get("retained_artifact_matrix")
     require(isinstance(matrix, list) and len(matrix) == 13, "retained matrix census")
@@ -172,6 +185,23 @@ def validate_contract(repo: pathlib.Path, data: dict[str, Any]) -> None:
     require(accounting.get("ledger_before") == 175 and accounting.get("ledger_after") == 175, "ledger changed")
     for field in ("checkpoint_reads", "shard_opens", "attention_executions", "expert_executions", "aggregate_executions", "shared_expert_executions", "ffn_compositions", "s1_materializations", "s2_constructions", "production_equivalence_executions"):
         require(accounting.get(field) == 0, f"nonzero execution counter {field}")
+    reconciliation = data.get("master_ledger_reconciliation", {})
+    require(reconciliation.get("status") == "PASS_APPEND_ONLY_V2", "master ledger not reconciled")
+    require(reconciliation.get("receipt_chain_terminal_count") == 175, "receipt terminal count")
+    verify_bound(repo, reconciliation["authoritative_ledger"])
+    for key in ("current_adapter", "adapter_implementation", "reconstruction_validator", "supplemental_assurance"):
+        verify_bound(repo, reconciliation[key])
+    require(reconciliation.get("new_real_payload_consumption") == 0 and reconciliation.get("checkpoint_reads") == 0 and reconciliation.get("shard_opens") == 0, "reconciliation crossed payload boundary")
+    rn1 = data.get("rn1_future_execution_gate", {})
+    require(rn1.get("current_retained_only_spec_blocked_by_wrapper_fix") is False, "RN1 improperly blocks retained-only spec")
+    require(rn1.get("next_execution_capable_generation_blocked_until_accepted") is True and len(rn1.get("requirements", [])) == 9, "RN1 future gate weakened")
+    backlog = data.get("next_natural_rebind_backlog")
+    require(isinstance(backlog, list) and len(backlog) == 5 and all(row.get("phase_blocking") is False and row.get("natural_generation") and row.get("disposition") for row in backlog), "rebind backlog")
+    strengthened = data.get("strengthened_independent_review_schema", {})
+    require(strengthened.get("required_from_cycle") == 2 and len(strengthened.get("fields", [])) == 11 and strengthened.get("historical_closure_artifacts_mutated") is False, "review schema strengthening")
+    machinery = data.get("generic_validation_machinery", {})
+    verify_bound(repo, machinery["bound_field_resolver"])
+    require(machinery.get("bound_field_status") == "PASS_5_OF_5" and machinery.get("executable_numeric_status") == "PASS_4_OF_4", "generic validator status")
     phase = data.get("phase_disposition", {})
     require(phase.get("execution_status") == "BLOCKED", "unresolved implementation not blocking")
     require(phase.get("readiness") == "READY_FOR_PRODUCTION_SERIAL_F32_EQUIVALENCE_EXECUTION_PREPARATION: NO", "premature readiness")
@@ -192,6 +222,13 @@ def validate_review(repo: pathlib.Path, result_path: pathlib.Path) -> None:
     require(result.get("reviewed_branch") == "feat/017-real-checkpoint-runner", "review branch mismatch")
     reviewed_head = result.get("reviewed_head")
     require(isinstance(reviewed_head, str) and len(reviewed_head) == 40, "reviewed head missing")
+    require(isinstance(result.get("reviewer_track_or_invocation_identity"), str) and result["reviewer_track_or_invocation_identity"], "review invocation identity missing")
+    require(isinstance(result.get("reviewed_artifact_hashes"), dict) and result["reviewed_artifact_hashes"], "reviewed hashes missing")
+    require(isinstance(result.get("reviewer_tests"), list) and result["reviewer_tests"], "reviewer tests missing")
+    findings = result.get("findings")
+    require(isinstance(findings, list), "findings missing")
+    require(all(isinstance(item, dict) and item.get("id") and item.get("severity") in {"BLOCKING", "NON_BLOCKING_REQUIRED", "DEFENSE_IN_DEPTH"} for item in findings), "finding schema")
+    require(isinstance(result.get("finding_to_fix_mapping"), list), "finding-to-fix mapping missing")
     dispositions = result.get("defense_in_depth_dispositions", [])
     require(all(item.get("disposition") and item.get("why_non_blocking") for item in dispositions), "defense-in-depth finding lacks disposition")
 

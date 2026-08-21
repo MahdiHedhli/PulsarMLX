@@ -929,3 +929,29 @@ stage activity occurs; and the workflow stops before final closure declaration.
 Gate: `REPRESENTATIVE_M1F0_FINAL_CLOSURE: ACCEPTED` is committed and pushed;
 the declaration adds no numerical or production claim, ledger remains 175,
 and checkpoint, shard, and every numerical-stage counter remain zero.
+
+## Phase 51 — Production serial-f32 equivalence surface specification
+
+- Preserve the closed representative M1-F0 proof/reference lineage as the
+  immutable comparison baseline while inventorying the extant CUDA production
+  graph, Apple MLX projection alternate, scalar qualification surfaces, and
+  missing full Apple serial-f32 path from executable source authority.
+- Freeze each attention, routing, expert, aggregate, shared, FFN, and S2
+  production arithmetic row, the three-axis comparison vocabulary, exact route
+  obligations, pre-execution tolerance policy, retained-authority matrix,
+  checkpoint decision, and bounded human-gated future execution roadmap.
+- Reconcile the stale 166 master ledger prefix with the accepted nine-receipt
+  representative event through append-only master ledger v2 at 175; add a
+  receipt-derived same-commit future banking invariant and current adapter
+  without rewriting accepted historical evidence.
+- Add generic duplicate-key-hardened bound-field resolution, executable numeric
+  source binding with explicit extraction limitations, RN1 ownership gates for
+  the next execution-capable wrapper, and the named next-natural-rebind backlog.
+- Validate all accounting, authority, arithmetic, tolerance, routing, review,
+  and premature-result mutations, then bank exact Claude Fable 5 review bytes
+  under the strengthened review schema without executing a comparison.
+
+Gate: the retained-only specification and accounting reconciliation are
+independently accepted; ledger is receipt-derived at 175; checkpoint, shard,
+and all numerical counters remain zero; execution preparation remains blocked
+until the full Apple serial-f32 path and unresolved arithmetic rows are closed.

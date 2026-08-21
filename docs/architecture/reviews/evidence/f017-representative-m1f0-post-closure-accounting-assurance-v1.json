@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.representative-m1f0-post-closure-accounting-assurance",
+  "schema_version": "1.0.0",
+  "assurance_id": "F017-REPRESENTATIVE-M1F0-POST-CLOSURE-ACCOUNTING-ASSURANCE-1",
+  "classification": "SUPPLEMENTAL_ACCOUNTING_ASSURANCE_WITHOUT_HISTORICAL_MUTATION",
+  "immutable_closure": {
+    "declaration": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-declaration-v1.json","sha256":"58bef0209859f6a6417fc7795dedf39d06ba7074e91c0c5a7ef9826d19e81049"},
+    "package": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-package-v1.json","sha256":"7b6d38d15889a0811bd8a0d54ce0e9e495da7918cea323d7995d9dc35e1c5402"},
+    "review": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-cycle-01-independent-review.json","sha256":"1b014af874ca90f30b17c2fac87a66744126067401c76c2386eaf54596662a3a"}
+  },
+  "finding": {"id":"COUNT","description":"master ledger v1 ends at 166 and predates the accepted nine-receipt representative M1-F0 event","closure_count":175,"classification":"STALE_MASTER_ACCOUNTING_SURFACE"},
+  "reconciliation": {
+    "authoritative_master_ledger": {"path":"docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json","sha256":"aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e","json_path":["cumulative_tensor_payloads"],"expected":175},
+    "historical_prefix": {"path":"docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json","sha256":"c68be19f2840dea612e8b20ff2933751800555c80ae66fcfbbff02086bbe18c0","json_path":["cumulative_tensor_payloads"],"expected":166},
+    "representative_event": {"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json","sha256":"dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190","json_path":["access_accounting","ledger_after"],"expected":175},
+    "receipt_chain":"166_TO_175_NINE_UNIQUE_CONSECUTIVE_RECEIPTS",
+    "gaps":0,
+    "overlaps":0,
+    "duplicate_consumptions":0,
+    "unexplained_increments":0,
+    "result":"PASS"
+  },
+  "impact": {"closure_numerical_claims_changed":false,"closure_surface_claims_changed":false,"closure_count_corrected":false,"master_accounting_surface_updated_append_only":true},
+  "activity": {"new_real_payload_consumption":0,"checkpoint_reads":0,"shard_opens":0,"attention_executions":0,"expert_executions":0,"aggregate_executions":0,"shared_expert_executions":0,"ffn_compositions":0,"s1_materializations":0,"s2_constructions":0,"production_equivalence_executions":0},
+  "statement":"THE ACCEPTED CLOSURE COUNT 175 IS RECEIPT-DERIVED; MASTER LEDGER V2 IS THE AUTHORITATIVE CURRENT ACCOUNTING SURFACE; LEDGER V1 REMAINS THE IMMUTABLE 166 PREFIX"
+}

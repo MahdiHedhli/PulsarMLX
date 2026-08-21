@@ -5,12 +5,14 @@ import copy
 import importlib.util
 import json
 import pathlib
+import sys
 import tempfile
 import unittest
 
 
 REPO = pathlib.Path(__file__).resolve().parents[3]
 VALIDATOR_PATH = REPO / "scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py"
+sys.path.insert(0, str(VALIDATOR_PATH.parent))
 SPEC = importlib.util.spec_from_file_location("validator", VALIDATOR_PATH)
 assert SPEC and SPEC.loader
 validator = importlib.util.module_from_spec(SPEC)
@@ -31,6 +33,9 @@ class MutationTests(unittest.TestCase):
 
     def stage(self, data, stage_id):
         return next(row for row in data["stage_contracts"] if row["id"] == stage_id)
+
+    def test_unmodified_contract_accepts(self):
+        validator.validate_contract(REPO, copy.deepcopy(self.original))
 
     def test_wrong_implementation_path(self):
         self.rejected(lambda d: d["implementation_inventory"][0].update(path="README.md"))
@@ -86,6 +91,24 @@ class MutationTests(unittest.TestCase):
     def test_missing_stage(self):
         self.rejected(lambda d: d["stage_contracts"].pop())
 
+    def test_bound_field_value_mismatch(self):
+        self.rejected(lambda d: d["bound_field_bindings"][0].update(expected=174))
+
+    def test_bound_field_hash_mismatch(self):
+        self.rejected(lambda d: d["bound_field_bindings"][0].update(sha256="0" * 64))
+
+    def test_executable_numeric_literal_mismatch(self):
+        self.rejected(lambda d: d["executable_numeric_bindings"][0].update(expected=0.5))
+
+    def test_executable_numeric_pattern_unresolved(self):
+        self.rejected(lambda d: d["executable_numeric_bindings"][0].update(pattern="DOES_NOT_EXIST"))
+
+    def test_master_ledger_reconciliation_removed(self):
+        self.rejected(lambda d: d["master_ledger_reconciliation"].update(status="UNRESOLVED"))
+
+    def test_rn1_weakened(self):
+        self.rejected(lambda d: d["rn1_future_execution_gate"].update(next_execution_capable_generation_blocked_until_accepted=False))
+
     def test_duplicate_json_keys_rejected(self):
         with tempfile.TemporaryDirectory() as td:
             path = pathlib.Path(td) / "dup.json"
@@ -108,6 +131,11 @@ class ReviewResultMutationTests(unittest.TestCase):
             "non_blocking_required_findings": 0,
             "reviewed_branch": "feat/017-real-checkpoint-runner",
             "reviewed_head": "a" * 40,
+            "reviewer_track_or_invocation_identity": "test-track",
+            "reviewed_artifact_hashes": {"contract": "a" * 64},
+            "reviewer_tests": ["test"],
+            "findings": [],
+            "finding_to_fix_mapping": [],
             "exact_request": {"path": str(request.relative_to(REPO)) if request.is_relative_to(REPO) else str(request), "sha256": validator.sha256(request)},
             "exact_response": {"path": str(response.relative_to(REPO)) if response.is_relative_to(REPO) else str(response), "sha256": validator.sha256(response)},
             "defense_in_depth_dispositions": [],

@@ -1,0 +1,49 @@
+{
+  "schema":"pulsarmlx.f017.production-serial-f32-equivalence-validation",
+  "schema_version":"2.0.0",
+  "cycle":2,
+  "repair_trigger":"POST_CLOSURE_COUNT_AND_VALIDATOR_STRENGTHENING_ADDENDUM",
+  "artifacts":{
+    "specification":{"path":"specs/017-rust-native-inference-runtime/production-serial-f32-equivalence-spec-v1.md","sha256":"3ff986346812e124058b51dd96c7b459616b1564d5275da0442ce818dc1c1eb2"},
+    "contract":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-production-serial-f32-equivalence-specification-v1.json","sha256":"661bd32ec86a14b098f0f992eb890f1dde0b29d86b8953de52329fb0549797db"},
+    "validator":{"path":"scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py","sha256":"6cc4fb928966803eb674af93b74a58d5053fb9f2ba990fe5e8a328a9d6db9630"},
+    "negative_tests":{"path":"scripts/research/tests/test_f017_production_serial_f32_equivalence_specification_v1.py","sha256":"d3184bb43a7d1e1b6d9b53f14c23df113c4a8ae3267fce5000ae59517ed741f7"},
+    "master_ledger_v2":{"path":"docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json","sha256":"aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e"},
+    "ledger_validator":{"path":"scripts/research/validate_f017_real_payload_ledger_v2.py","sha256":"598bc39e1b2d962d7c43dfd4ab231a370447eede1cd11333803dea7e93871d83"},
+    "ledger_tests":{"path":"scripts/research/tests/test_f017_real_payload_ledger_v2.py","sha256":"ab15e7c31af2494d77a939f99a86e5f5516ae9c542943c8e1d370bb37b2918d3"},
+    "current_ledger_adapter_contract":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-real-payload-ledger-adapter-v2.json","sha256":"754f93ba5ff54c0e7e0620300574972e3400f9edd92d5b1a71537501a6cf4e72"},
+    "current_ledger_adapter":{"path":"scripts/research/f017_real_payload_ledger_adapter_v2.py","sha256":"a4ccd0392a0ccb2c3d00c23f2152869b6bd68aae9e724ee4d01724d0601554d2"},
+    "bound_authority_resolver":{"path":"scripts/research/f017_bound_authority_resolver_v1.py","sha256":"ceb8982c3709f728a6bd60785fd6a519e215c39704379c0661373d22b28b740e"},
+    "supplemental_closure_assurance":{"path":"docs/architecture/reviews/evidence/f017-representative-m1f0-post-closure-accounting-assurance-v1.json","sha256":"98b267bd703521abfc22ede94b19c6b0a57e4b26cb0d581b2daf1e4ecf991a4d"}
+  },
+  "commands":[
+    "python3 scripts/research/validate_f017_real_payload_ledger.py --check docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v1.json",
+    "python3 scripts/research/validate_f017_real_payload_ledger_v2.py --check docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json --skip-git-rule",
+    "python3 scripts/research/f017_real_payload_ledger_adapter_v2.py",
+    "python3 scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py --pre-review",
+    "python3 -m unittest scripts/research/tests/test_f017_production_serial_f32_equivalence_specification_v1.py scripts/research/tests/test_f017_real_payload_ledger_v2.py",
+    "python3 scripts/research/validate_f017_representative_m1f0_final_closure_declaration_v1.py",
+    "git diff --check"
+  ],
+  "results":{
+    "historical_master_v1_reconstruction":"PASS_166",
+    "representative_receipt_extension":"PASS_9_RECEIPTS_167_THROUGH_175",
+    "master_v2_reconstruction":"PASS_175",
+    "gaps":0,
+    "overlaps":0,
+    "duplicate_receipts":0,
+    "unexplained_increments":0,
+    "new_payload_consumption":0,
+    "current_adapter":"PASS_3_SOURCES_AGREE_175",
+    "bound_fields":"PASS_5_OF_5",
+    "executable_numeric_bindings":"PASS_4_OF_4",
+    "contract_validation":"PASS",
+    "negative_tests":"PASS_37_OF_37",
+    "closure_regression":"PASS",
+    "execution_preparation_readiness":"NO"
+  },
+  "future_same_commit_invariant":"EVENT_RESULT_THAT_ADVANCES_RECEIPTS_MUST_UPDATE_MASTER_LEDGER_V2_IN_SAME_COMMIT",
+  "rn1_status":"HARD_GATE_FOR_NEXT_EXECUTION_CAPABLE_GENERATION_NOT_A_RETAINED_ONLY_SPEC_BLOCKER",
+  "accounting":{"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"attention_executions":0,"expert_executions":0,"aggregate_executions":0,"shared_expert_executions":0,"ffn_compositions":0,"s1_materializations":0,"s2_constructions":0,"production_equivalence_executions":0},
+  "result":"PASS_FOR_CYCLE_2_INDEPENDENT_REVIEW"
+}

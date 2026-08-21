@@ -18,5 +18,14 @@
 - [x] Future roadmap is human-gated, bounded, environment-pinned, and fail-closed.
 - [x] Validator covers all load-bearing contract fields and bound file hashes.
 - [x] Negative tests cover authority, arithmetic, tolerance, routing, accounting, review, and premature-result mutations.
+- [x] Master ledger v2 reconstructs the immutable 166 prefix and nine-receipt 166→175 extension with no gaps or overlaps.
+- [x] Reconciliation consumes zero real payload and preserves historical ledger/closure bytes.
+- [x] Current ledger adapter resolves three independent bound fields to 175.
+- [x] Future event-result/master-ledger same-commit invariant is executable.
+- [x] Generic bound-field resolver checks path, SHA, duplicate keys, JSON path, and expected value.
+- [x] Executable numeric bindings mechanically resolve four source authorities and state extraction limitations.
+- [x] RN1 attempt-ownership requirements are a hard gate for the next execution-capable generation.
+- [x] Five next-natural-rebind items have named mandatory generations and non-blocking dispositions.
+- [x] Cycle-2 review schema requires invocation identity, exact hashes, tests, stable finding IDs, fix mapping, and dispositions.
 - [ ] Exact Fable 5 review request and response banked.
 - [ ] Final independent verdict is ACCEPT with no BLOCKING or NON_BLOCKING_REQUIRED findings.

@@ -1,0 +1,15 @@
+{
+  "schema":"pulsarmlx.f017.real-payload-ledger-adapter",
+  "schema_version":"2.0.0",
+  "adapter_id":"F017-REAL-PAYLOAD-LEDGER-ADAPTER-2",
+  "normalized_field":"current_ledger",
+  "expected_current_ledger":175,
+  "sources":[
+    {"role":"authoritative_master_v2","path":"docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json","sha256":"aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e","json_path":["cumulative_tensor_payloads"],"expected":175},
+    {"role":"accepted_closure_declaration","path":"docs/architecture/reviews/evidence/f017-representative-m1f0-final-closure-declaration-v1.json","sha256":"58bef0209859f6a6417fc7795dedf39d06ba7074e91c0c5a7ef9826d19e81049","json_path":["canonical_authority","final_real_payload_ledger"],"expected":175},
+    {"role":"accepted_representative_event","path":"docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json","sha256":"dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190","json_path":["access_accounting","ledger_after"],"expected":175}
+  ],
+  "source_agreement_required":true,
+  "historical_v1_adapter_disposition":"PRESERVED_FOR_ITS_PRE_EVENT_166_BOUNDARY_NOT_CURRENT_AUTHORITY",
+  "failure_policy":{"fail_closed":true,"checkpoint_reads":0,"shard_opens":0,"ledger_mutation":false}
+}

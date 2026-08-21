@@ -77,15 +77,35 @@ The retained matrix in the machine contract binds S0, all accepted attention/rou
 
 `CHECKPOINT_ACCESS_REQUIRED: NO`. The accepted retained attention, router, routed-expert, shared-expert, S1, and neutral-input authorities contain the inputs and weight payloads needed for a retained-only comparison. The blocker is the absence of a fully accepted production serial-f32 Apple entry point and unresolved kernel-specific arithmetic, not missing checkpoint data. Any later discovery of a missing tensor invalidates this decision and requires a separate authorization; ledger 175 cannot move in this phase.
 
+## Master ledger reconciliation
+
+Repository inspection confirmed the post-closure COUNT finding. The immutable master ledger v1 ends at 166 after canonical shared-expert weight recovery. The later accepted representative M1-F0 attention/route event contains nine unique durable receipts with ordinals 0..8 and consecutive `ledger_after` values 167..175; their packed-byte total is 132,900,864, the event terminal is COMPLETE, and both closure authorities record 175. This is a stale master accounting surface, not an ambiguous event conflict.
+
+The append-only authoritative master ledger v2 preserves v1 byte-for-byte as its historical prefix and appends the SHA-bound representative event and exact receipt chain. It resolves to 175 with zero gaps, overlaps, duplicate receipts, or unexplained increments. This reconciliation consumed zero payloads and performed zero checkpoint reads, shard opens, or numerical executions.
+
+Beginning after the reconciliation base, every future real-payload event result that advances receipt accounting must update the master ledger in the same commit. The post-event count must be derived from validated receipts. A manually repeated count is not an authority. `terminal.consumed_reads` must equal the validated receipt count, and terminal JSON is never the sole accounting authority.
+
+## Mechanical authority resolution
+
+The generic bound-authority resolver now enforces every new F017 `path` + `sha256` + `field`/`json_path` declaration by loading duplicate-key-hardened committed JSON, verifying bytes, resolving the exact field, and comparing it with the declared expected value. The serial-f32 contract uses it for master ledger v2, closure package/declaration ledger values, RMSNorm epsilon, and top-k.
+
+Executable numeric bindings mechanically extract the production router denominator clamp, attention softmax denominator clamp, RMS epsilon metadata key, and expert-count metadata key from the exact source bytes. RMS epsilon and top-k values are runtime metadata, so their concrete representative values are separately bound to the accepted boundary and selection contracts. Device `expf`/`rsqrtf`, contraction, tile topology, and runtime metadata loading cannot be reduced to static constants; those limitations remain explicit and block execution rather than being represented as executable bindings.
+
+## Future execution ownership gate and rebind backlog
+
+The retained-only specification is not blocked by an absent execution wrapper, but the next execution-capable generation must close RN1 before authorization: acquire an exclusive owned lock before authority, durably record ownership, terminalize only an attempt this invocation owns, derive consumed reads from receipts, cross-check terminal counts, and retain the one-terminal/one-invocation restriction until independent acceptance.
+
+The next natural rebinds are: terminalizer orphan-hash-to-inventory binding at the next terminalizer contract; restored decoder-binding declarations at the next decoder consumer; gate self-SHA at the next execution gate; a committed RN3 partial-root clearing procedure before the next single-use release; and wrapper-v1 tombstoning in the next wrapper supersession package. None is load-bearing for this non-executing specification, and all become mandatory at the named execution-capable boundary.
+
 ## Future execution roadmap
 
-1. Human approval is required to implement and independently qualify a retained-only production capture runner. It must expose no checkpoint path.
+1. Human approval is required to implement and independently qualify a retained-only production capture runner. It must expose no checkpoint path and must satisfy the RN1 ownership gate.
 2. Bind exact source head, compiler, CUDA/Metal/runtime, device, fast-math flags, kernel hashes, and fixed thread/device configuration.
 3. Preflight all retained inputs by descriptor with expected/before/consumed/after identity and prove ledger 175 with zero reads/opens.
 4. Capture canonical bytes at every frozen stage without changing the production call graph.
 5. Run exact membership/order checks before weight metrics, then compare stages in graph order.
 6. Require ten same-environment deterministic repetitions; distinguish semantic numerical equivalence from implementation-specific byte reproducibility and make no hardware/toolchain portability claim.
-7. Bank journal, receipt, environment identity, stage hashes, metric vectors, and terminal state. Any failure is terminal and cannot weaken thresholds.
+7. Bank the event result, receipts, and master ledger update in the same commit, plus journal, environment identity, stage hashes, metric vectors, and terminal state. Any failure is terminal and cannot weaken thresholds.
 8. Independent Fable 5 review is required before any result claim.
 
 Termination is `BLOCKED` until the full production entry point and every `UNRESOLVED_PRODUCTION_SEMANTICS` row acquire committed implementation authority and defensible pre-execution tolerances. No production-equivalence execution is authorized by this specification.

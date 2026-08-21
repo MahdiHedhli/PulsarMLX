@@ -1,0 +1,15 @@
+{
+  "schema":"pulsarmlx.f017.production-serial-f32-equivalence-review-invocation-failure",
+  "schema_version":"1.0.0",
+  "cycle":1,
+  "reviewed_head_requested":"ae028c763dd92c5a20a1143d1f035fcd90ef9bab",
+  "reviewer_model_requested":"claude-fable-5",
+  "reviewer_cli":"/Users/mhedhli/.local/bin/claude",
+  "reviewer_cli_version":"2.1.235 (Claude Code)",
+  "elapsed_before_termination":"GREATER_THAN_15_MINUTES",
+  "artifact_written":false,
+  "verdict":null,
+  "failure":"CLI_RETURNED_EXECUTION_ERROR_WITHOUT_REVIEW_BYTES",
+  "disposition":"NOT_A_VALID_REVIEW;TARGET_SUPERSEDED_BY_COUNT_AND_VALIDATOR_REPAIR_BEFORE_ACCEPTANCE;FRESH_CYCLE_2_FABLE_5_REVIEW_REQUIRED",
+  "execution_activity":{"checkpoint_reads":0,"shard_opens":0,"numerical_runners":0,"production_equivalence_executions":0}
+}
