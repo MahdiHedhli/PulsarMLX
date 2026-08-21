@@ -1,0 +1,121 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-independent-review",
+  "schema_version": "1.0.0",
+  "reviewer_identity": "CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track_or_invocation_identity": "F017-APPLE-PRODUCTION-SERIAL-F32-EXECUTION-READINESS-CYCLE-01-INDEPENDENT-REVIEW-1",
+  "reviewed_branch": "feat/017-real-checkpoint-runner",
+  "reviewed_head": "082dae108bfcbfba969dda8c901e0229c6d014a0",
+  "reviewed_artifact_hashes": {
+    "execution_code_head": "30c77a1ae5ae6e709ef84aeba26568ca954cb2c8",
+    "code_manifest_v2_sha256": "6b77dada90376f959059a122046445d4ca48acf1b524e22dd8018f9c5658120f",
+    "runtime_rebind_v2_sha256": "636519608444c52cf0eb00ab688e9e60ce3d412931205fd15e5f7e72474c3f5c",
+    "equivalence_single_use_release_v3_sha256": "9dc99b59eb620fe9071532585fd06ed92655c2085b8ba55da767bd9f5113cf8b",
+    "package_root_specification_v1_sha256": "442a444e68b1052b40d04f6014dd9d68c161a663d71533804c889705f2e0aaef",
+    "retained_40_tensor_package_v1_sha256": "eacab6401fca8264ab4ac80674e8968ce4fd419f9e10f6fff3fc997f639ed573",
+    "comparison_execution_contract_v1_sha256": "72d4a68702845b69c5d65759bb615180da0eead02355b78804d4a06b76424ecf",
+    "routing_execution_gates_v1_sha256": "791fd886787e8bdba72bafe9cf5a072de31a6918c220c80f351a1fe4b1093589",
+    "determinism_v2_sha256": "0b899c252d3bb565a62321cae2294ee0517f8ad70fff4d86bf9cc0c2b928e92b",
+    "future_real_event_accounting_v1_sha256": "655e70686b7013cdf9a4caf95227cf38d1412f44334eb7ea5d6c9a5dd77cd12e",
+    "future_authorization_schema_v2_sha256": "6c2103b0e7e35b91bb023dfb703efb43eccf26c8e3268ea0a4d3c646b3ac0ae7",
+    "attempt_lifecycle_rehearsal_v1_sha256": "e6eb5f962b4e38bfac59f84dad68690cc8741b5a3beb4daf1066feb7635f7b7d",
+    "stage_manifest_v1_sha256": "aeabfcbf2d889a6dcd04db7cef2b249cdcca8e2032f07d14b6d6f8be33e7b0a4",
+    "capture_manifest_v1_sha256": "dc4fd298a1145d4cc15e1429638837c2a05e4ab9120dd96819ab6ba3500b0af6",
+    "inert_go_fixture_v1_sha256_release_binding_verified": "9dc99b59eb620fe9071532585fd06ed92655c2085b8ba55da767bd9f5113cf8b",
+    "package_root_result_v1_sha256": "42e8dc93e92c8183ee2f67766a70335cddbf44be865778371609282d167dffac",
+    "master_ledger_v2_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "wrapper_v1_sha256": "c7fedaf5ff3edb774a2726ca395767d032e220825c479fcbb0cf4c3e751d8214",
+    "wrapper_v2_sha256": "1380cc10c06df2cd5d5662997f7ce2849b3fb33eea5293ab630762d1bcf14e21",
+    "wrapper_v3_sha256": "21e93e8434e5cfbf27428758814599bc77fd0a090fe1b56e270fbc7b7cfabd92",
+    "terminalizer_v2_sha256": "aecc40ff55485e733abdeb090dbc466d9ddc6f8e67ed4105461eec0902d57469",
+    "go_generator_v1_sha256": "a60897b38ca7b9616495dcb55449a7c473fec37bd398fd0e37eeca344f034f0f",
+    "ten_process_harness_v1_sha256": "5e9065c66f3cf14098667711c327ecf62e221e387c686d5041f4723629d95332",
+    "native_executable_sha256_rehashed_live": "fe82ab79f6c1a4798fb1204dd5deee24aa6bfaaa9b2cd7f841cca20afde553e5",
+    "libmlx_dylib_sha256_rehashed_live": "c30b1529178de28d23817e6e73ea5133cf63af060379c41a27aa7420aa616b3d",
+    "libmlxc_dylib_sha256_rehashed_live": "9882fe1f7ec1fcdb10cebde60e88b41826ab4dfed8ae624b99be419d6fa89561",
+    "package_root_sha256_independently_rederived": "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6",
+    "package_census_sha256_rehashed_live": "ef65b0b12d3ccc8b592176dfbd0a51248bb1794da789fbc3f5c6988629b75f29",
+    "runner_package_sha256_rehashed_live": "1cb3999c01d3a8bf497fb18d1e4dabad704b1993e8d669cb8760d4537e228346"
+  },
+  "tests_performed": [
+    "Pinned detached read-only worktree at 082dae108bfcbfba969dda8c901e0229c6d014a0; reviewed only committed bytes; no checkpoint, shard, representative graph, comparison, determinism run, numerical stage, approval, live GO, or attempt start executed.",
+    "Recomputed SHA-256 of all 16 cross-referenced contract and evidence files at the reviewed head; all bindings verified exact, including release-v3 bound_contracts, code manifest, runtime rebind, and inert GO fixture bindings.",
+    "Verified all 21 code-manifest-v2 artifacts (including crates/quant/src/iq_ref.rs and crates/quant/src/cpu_dot_tables.rs) hash-exact at execution_code_head 30c77a1 and byte-identical at reviewed head 082dae1: zero readiness-to-GO source drift; decoder coverage maps IQ2_XXS/IQ3_XXS/Q5_K/Q6_K/Q8_0 to manifested sources.",
+    "Rehashed the immutable executable live (fe82ab79, regular file, mode 0555, nlink 1, non-symlink) and Homebrew MLX 0.32.1 / MLX-C 0.6.0_4 dylibs and version/umbrella headers live; all match runtime-rebind-v2 exactly.",
+    "Independently rehashed all 40 retained tensor files (257,305,600 bytes total, exact file census, all regular/read-only/nlink-1) and mechanically rederived the ordered-descriptor package root with reviewer-authored code, reproducing 564a33ae...45be6 without trusting any JSON root claim.",
+    "Ran a 10-case physical adversarial battery against the committed validator logic on a synthetic sandbox copy of the package: wrong byte, same-size substitution, extra file, missing file, symlink with identical bytes, hard-link alias, writable bit, reordered census descriptor, forged census root claim, extra directory; all 10 failed closed while an unmutated baseline passed.",
+    "Ran a 9-case inert authority battery against wrapper-v3 validate_authority using synthetic INERT-identity artifacts only: inert fixture as token, missing field, extra field, wrong release sha, duplicate JSON key, tampered approval after token mint, resume=true, allowed_attempt_count=2 all rejected; poisoned budget fields survived to the human-approval gate, establishing finding F017-SF32-EXECREADY-C1-F2.",
+    "Verified consumer ordering: wrapper-v3 main() completes validate_release (all contract, code, runtime, executable, machine, environment and full package rehashes plus root rederivation) before execute() may create the exclusive RN1 attempt root; verified runner binary refuses execution without the wrapper-owned durable owner record via PULSARMLX_F017_OWNED_ATTEMPT_SHA256 and byte-exact owner.json.",
+    "Verified zero checkpoint fallback: release checkpoint_paths [] and checkpoint_fallback false gated, runner Package deny_unknown_fields with checkpoint_paths required empty, no decode-from-checkpoint path in the runner, package tensors pinned to the 40 fixed roles/encodings/shapes with absolute paths, O_NOFOLLOW open with dev/ino TOCTOU checks and post-read identity checks.",
+    "Ran committed inert validators from the detached worktree under the five pinned thread variables: repo readiness validator PASS (40 tensors, root, ledger 175, zero counters); 25 unit tests PASS; ten-process harness --self-test PASS with no representative run; GO generator inert-fixture validation PASS (inert rejected as live); GO generator without operator flag refused; wrapper-v3 --preflight-only resolved production bindings with no attempt and no arithmetic; wrapper-v1 tombstone exit 78; machine attempt root, capture root and go-token path confirmed absent before and after.",
+    "Ran PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p f017-runner --test apple_serial_f32 on byte-identical sources: 5/5 synthetic native tests PASS.",
+    "Verified the 34-stage mapping is identical across comparison-execution-contract-v1 stage_rows, stage-manifest-v1, capture-manifest-v1 stage_ids, and wrapper STAGE_IDS; all rows NOT_EXECUTED with observed_result null; tolerances frozen with post_hoc_changes false and enlargement requiring new contract and review; ordered structural routing gates (membership, order, tie, weights, routed stages, aggregate) precede numeric comparison with no order canonicalization; proof/reference f64 surfaces bound as expected authorities distinct from production serial-f32 outputs.",
+    "Verified RN1 semantics in wrapper v2/v3 and terminalizer v2: exclusive fixed-root mkdir with fsync, O_EXCL 0400 owner/attempt-start/comparison-start before arithmetic, invocation-owned terminalization only when owner sha still matches, duplicate and retry invocations fail closed on ATTEMPT_ALREADY_EXISTS_NO_RETRY, read-only reconciler cross-checks terminal owner, receipt-derived consumed reads, receipt inventory, receipt-derived ledger_after, and artifact inventory orphan/missing/hash rejection.",
+    "Verified future event accounting contract: retained-only classification, ledger 175 to 175, manual increment false, terminal not sole authority, receipts/result/master-ledger same-commit banking; master ledger v2 terminal_count 175 confirmed; searched machine and repo for live approvals or GO tokens for this event: none exist.",
+    "Cross-checked every field of the banked cycle-01 validation evidence against live measurements; all fields reproduced except the two dylib hashes, which match neither the frozen contract nor any dylib that exists or ever existed in git history or Homebrew Cellar on this machine (finding F017-SF32-EXECREADY-C1-F1).",
+    "Verified the operator boundary: GO generator requires an explicit --operator-confirm-exactly-once flag plus ACCEPT approval with non-INERT human identity and O_EXCL output; normal validation paths cannot mint a live token; a minted token is consumable at most once because the fixed attempt root is durably consumed and never unlocked, stolen, or retried; after independent acceptance the only remaining operator choice is to authorize or decline exactly one reviewed execution."
+  ],
+  "findings": [
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F1",
+      "severity": "BLOCKING",
+      "title": "Banked cycle-01 validation evidence contains fabricated MLX/MLX-C dylib hashes not derived from any actual bytes",
+      "evidence": "docs/architecture/reviews/evidence/f017-apple-production-serial-f32-execution-readiness-cycle-01-validation-v1.json records mlx_dylib_sha256=c30b247a597c69f40a6740f43e3033e00926a72838ffac20961ec06379e1a4ce and mlx_c_dylib_sha256=9882c904e860e968b70fdaeb6b722e871715a83f5c8a8cb164756312376871e5. Live rehash of /opt/homebrew/opt/mlx/lib/libmlx.dylib and /opt/homebrew/opt/mlx-c/lib/libmlxc.dylib yields c30b1529178de28d23817e6e73ea5133cf63af060379c41a27aa7420aa616b3d and 9882fe1f7ec1fcdb10cebde60e88b41826ab4dfed8ae624b99be419d6fa89561, matching runtime-rebind-v2 and the runner's compiled-in pins exactly. The evidence values share only a 4-hex-character prefix with the real hashes, appear nowhere else in git history (git log -S finds only commit 082dae1), match no Cellar artifact, and are produced by no committed tool: the repo validator whose PASS line the evidence quotes never hashes dylibs. The banked validation record therefore contains hand-transcribed or fabricated values in exactly the runtime-drift-detection surface this readiness package exists to freeze, so the evidence chain for cycle-01 validation is not mechanically derived and cannot be trusted as a record of what was measured. Enforcement-side artifacts (runtime-rebind-v2, wrapper-v3 preflight, runner pins) carry the correct hashes, so no unsafe execution path is opened, but a readiness package whose banked validation evidence asserts unmeasured values fails evidence integrity.",
+      "required_action": "Regenerate the execution-readiness validation evidence mechanically from actual rehashes (extend the validator to emit the dylib hashes it verifies, or bank the wrapper preflight's own measured output), commit the corrected evidence, and submit the corrected head for a fresh independent review cycle. No approval or GO may be issued against the 082dae1 evidence.",
+      "disposition": "REJECTED_UNTIL_EVIDENCE_REGENERATED_MECHANICALLY_AND_REREVIEWED"
+    },
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F2",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "wrapper-v3 validate_authority does not pin non-hash GO-token and approval fields to release constants",
+      "evidence": "Empirical probe: a synthetic token with checkpoint_reads=999, checkpoint_fallback=ALLOWED, allowed_stage_range=EVERYTHING, allowed_output_root=/tmp/evil, allowed_real_payload_consumption=999999 passed the field census, all thirteen hash bindings, and the approval-sha gate, reaching the human-approval gate; static reading of scripts/research/f017_apple_serial_f32_equivalence_wrapper_v3.py lines 127-162 confirms no gate examines checkpoint_reads, checkpoint_fallback, allowed_stage_range, allowed_output_root, allowed_real_payload_consumption, expected_starting_ledger, readiness_head, or the approval's reviewed_head/readiness_review_sha256 values. Not weakening today: the runner binary reads no token fields, has no checkpoint or shard interface, rejects unknown package fields, writes only to the package-pinned fixed_capture_root, and the package's checkpoint_paths must be empty; the poisoned fields are therefore dead values under the frozen code.",
+      "required_action": "Extend validate_authority to pin every remaining approval/token field to release constants: checkpoint_reads==0, checkpoint_fallback=='PROHIBITED', allowed_real_payload_consumption==0, expected_starting_ledger==175, allowed_stage_range=='input_hidden..production_s2', allowed_output_root==release.machine_local_paths.capture_root, and readiness_head/reviewed_head equal to the independently accepted readiness head.",
+      "disposition": "DEFENSE_IN_DEPTH_NON_WEAKENING; exact bind point: wrapper-v3 revision plus code-manifest v3 update, landed and independently re-reviewed in the next readiness cycle, strictly before any human approval is signed or the operator-only GO generator is invoked."
+    },
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F3",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "Success-path terminal hard-sets consumed_reads=0 and receipt_inventory=[] instead of deriving them from the receipts census",
+      "evidence": "scripts/research/f017_apple_serial_f32_capture_wrapper_v2.py terminalize_owned_success writes consumed_reads:0, receipt_inventory:[], ledger_after:175 as literals, while terminalize_owned_failure derives them from the payload-receipts directory. If receipts were ever present at success terminalization, the terminal would misstate accounting at write time and be caught only afterwards by the read-only reconciler (terminalizer v2 rejects TERMINAL_RECEIPT_COUNT_MISMATCH, TERMINAL_ORPHAN_INVENTORY_MISMATCH, TERMINAL_LEDGER_NOT_RECEIPT_DERIVED) and by same-commit master-ledger validation. Not weakening today: the runner has no payload-receipt-writing interface for this retained-only event, and the fail-closed reconciliation cross-check plus receipt-directory census remain the accounting authority, so the 175-to-175 zero-delta claim is receipt-cross-checked rather than trusted from terminal.json.",
+      "required_action": "Derive success-path consumed_reads, receipt_inventory, and ledger_after from the actual payload-receipts directory census and fail terminalization closed if the census is non-empty for this retained-only event.",
+      "disposition": "DEFENSE_IN_DEPTH_NON_WEAKENING; exact bind point: same wrapper-v3/terminalization revision and code-manifest v3 update as F017-SF32-EXECREADY-C1-F2, independently re-reviewed before any live GO issuance."
+    },
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F4",
+      "severity": "DEFENSE_IN_DEPTH",
+      "title": "Ten-process determinism qualification is not executable under the frozen tooling and the release stop-boundary wording could be misread as covering it",
+      "evidence": "determinism-v2 correctly banks executed:false and representative_runs_this_phase:0, and the bound harness (f017_apple_serial_f32_ten_process_harness_v1.py, sha 5e9065c6) is deliberately inert: representative mode always exits with FUTURE_OPERATOR_WRAPPER_MUST_INJECT_TEN_DISTINCT_ONE_RUN_AUTHORIZATIONS. RN1 permits exactly one attempt at one fixed attempt root, the release budgets attempts=1, and the single-invocation runbook may be lifted only after independent ACCEPT of a successor contract, so no run-01..run-10 execution path exists in the reviewed bytes. However, release-v3 stop_boundary reads AFTER_APPLE_PRODUCTION_SERIAL_F32_CAPTURE_COMPARISON_AND_TEN_PROCESS_DETERMINISM_ONLY, which an operator could misread as this GO authorizing determinism runs. Not weakening: every determinism execution path fails closed today and no averaging or tolerance surface exists; byte-identity comparison and earliest-divergence reporting are correctly frozen in the contract and harness helper.",
+      "required_action": "The one authorized execution under this event is the single capture/comparison attempt only. The ten-fresh-process determinism qualification requires its own future release contract defining ten one-run authorizations and per-run attempt roots, with its own independent review; the current GO schema must not be construed to cover it.",
+      "disposition": "DEFENSE_IN_DEPTH_NON_WEAKENING; exact bind point: the future determinism-execution release contract issued after the RN1 single-invocation runbook lift, which must restate the frozen byte-identity/no-averaging/no-tolerance rules and be independently reviewed before any determinism run."
+    }
+  ],
+  "blocking_findings": [
+    "F017-SF32-EXECREADY-C1-F1"
+  ],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    "F017-SF32-EXECREADY-C1-F2",
+    "F017-SF32-EXECREADY-C1-F3",
+    "F017-SF32-EXECREADY-C1-F4"
+  ],
+  "finding_to_fix_mappings": [
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F1",
+      "fix": "Mechanically regenerate f017-apple-production-serial-f32-execution-readiness-cycle-01-validation evidence with tool-derived dylib hashes (c30b1529... and 9882fe1f... as measured), bank it in a new commit, and request cycle-02 independent review of the corrected head before any approval or GO issuance."
+    },
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F2",
+      "fix": "Pin all non-hash approval/GO-token fields to release constants inside wrapper-v3 validate_authority; land via code-manifest v3 and re-review before the operator-only GO generator may be invoked."
+    },
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F3",
+      "fix": "Make terminalize_owned_success receipt-census-derived and fail closed on any receipt presence for this retained-only event; land in the same wrapper revision and re-review as F2."
+    },
+    {
+      "finding_id": "F017-SF32-EXECREADY-C1-F4",
+      "fix": "Clarify in the successor release that the current GO covers only the single capture/comparison attempt, and gate the ten-process determinism qualification behind its own future independently reviewed release contract."
+    }
+  ],
+  "verdict": "REJECT",
+  "statement": "PRODUCTION SERIAL-F32 EQUIVALENCE EXECUTION READINESS REJECTED AT CYCLE 1: the enforcement chain (frozen contracts, code manifest, runtime pins, RN1 ownership, package root, authority gates) verified sound under adversarial rehash and mutation testing, but the banked cycle-01 validation evidence contains fabricated MLX/MLX-C dylib hashes that were never derived from actual bytes, so the readiness evidence chain is not mechanically trustworthy; regenerate the evidence mechanically and submit for a fresh independent review before any approval, live GO token, or attempt start."
+}
