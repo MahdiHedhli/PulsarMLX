@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.production-serial-f32-equivalence-validation",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "base_head": "db60f6bd4aeffe6d2f85530ddf5e3bb0e1ebbf71",
+  "artifacts": {
+    "specification": {"path": "specs/017-rust-native-inference-runtime/production-serial-f32-equivalence-spec-v1.md", "sha256": "8739c29e5e20cb829028da27462514f1098c57ddca8f36b0104708ff989332b0"},
+    "contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-production-serial-f32-equivalence-specification-v1.json", "sha256": "16e9428d92fa657cf4d935d722176d324e63653e8016670233f401dbc15086bb"},
+    "validator": {"path": "scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py", "sha256": "134d0616487b8e01c081c816a9c5a537ffad3694376af6a0cbc2664c3892e802"},
+    "negative_tests": {"path": "scripts/research/tests/test_f017_production_serial_f32_equivalence_specification_v1.py", "sha256": "c92beae3f3a25fe2920d00513acebecf0e61ee26745ade20c60dd36a876e6982"},
+    "quality_checklist": {"path": "specs/017-rust-native-inference-runtime/checklists/production-serial-f32-equivalence-specification-v1.md", "sha256": "10deffd060e441a8fdc90e09f68b85d6a3a80f81481bacfac85174fcc214efae"}
+  },
+  "commands": [
+    "python3 scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py --pre-review",
+    "python3 -m unittest scripts/research/tests/test_f017_production_serial_f32_equivalence_specification_v1.py",
+    "python3 scripts/research/validate_f017_representative_m1f0_final_closure_declaration_v1.py",
+    "git diff --check"
+  ],
+  "results": {
+    "contract_validation": "PASS",
+    "negative_tests": "PASS_23_OF_23",
+    "closure_regression": "PASS",
+    "diff_check": "PASS",
+    "production_entry_point_status": "BLOCKED_MISSING_FULL_APPLE_SERIAL_F32_S0_TO_S2_ENTRY_POINT",
+    "checkpoint_access_decision": "CHECKPOINT_ACCESS_REQUIRED: NO",
+    "execution_preparation_readiness": "NO"
+  },
+  "mutation_coverage": [
+    "AUTHORITATIVE_IMPLEMENTATION_PATH",
+    "PRODUCTION_SYMBOL",
+    "ACCUMULATOR_DTYPE",
+    "ACCUMULATION_ORDER",
+    "ROUNDING_BOUNDARY",
+    "BYTE_EQUIVALENCE_STRENGTH",
+    "TOLERANCE_ENLARGEMENT",
+    "TOLERANCE_JUSTIFICATION",
+    "ROUTE_MEMBERSHIP",
+    "ROUTE_ORDER",
+    "RETAINED_ARTIFACT_SHA",
+    "CHECKPOINT_DECISION",
+    "LEDGER",
+    "EXECUTION_COUNTER",
+    "CLASSIFICATION_ENUM",
+    "PREMATURE_OBSERVED_RESULT",
+    "PREMATURE_READINESS",
+    "STAGE_CENSUS",
+    "DUPLICATE_JSON_KEYS",
+    "REVIEWER_MODEL_SUBSTITUTION",
+    "ACCEPT_WITH_BLOCKING_FINDING",
+    "ACCEPT_WITH_NON_BLOCKING_REQUIRED_FINDING",
+    "UNBANKED_OR_CHANGED_REVIEW_BYTES"
+  ],
+  "accounting": {"ledger_before": 175, "ledger_after": 175, "checkpoint_reads": 0, "shard_opens": 0, "attention_executions": 0, "expert_executions": 0, "aggregate_executions": 0, "shared_expert_executions": 0, "ffn_compositions": 0, "s1_materializations": 0, "s2_constructions": 0, "production_equivalence_executions": 0},
+  "real_numerical_runners_invoked": 0,
+  "result": "PASS_FOR_INDEPENDENT_SPECIFICATION_REVIEW"
+}

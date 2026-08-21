@@ -1,0 +1,22 @@
+# F017 Production Serial-F32 Equivalence Specification Quality
+
+- [x] Closed proof/reference declaration, package, and review are hash-bound.
+- [x] Extant full production call path and Apple alternate path are separately classified.
+- [x] Missing full Apple serial-f32 path is explicit and execution-blocking.
+- [x] Every required attention, route, expert, aggregate, FFN, and S2 stage has a source/symbol and arithmetic row.
+- [x] Accumulator type, order, rounding, kernel dependence, and relationship are explicit.
+- [x] Intended relationship, execution status, and observed result use disjoint exact vocabularies.
+- [x] No unexecuted stage claims an observed equivalence result.
+- [x] Exact membership and exact order are independent routing gates.
+- [x] Numeric thresholds are pre-frozen and source-justified; fixture-only bounds are not promoted.
+- [x] Relative error is explicitly disabled with justification.
+- [x] NaN/Inf, signed zero, dtype, shape, endianness, and byte rules are explicit.
+- [x] Retained artifacts distinguish neutral inputs, model weights, and proof/reference expected outputs.
+- [x] Proof/reference outputs cannot be relabeled as production outputs.
+- [x] Checkpoint requirement resolves to NO from committed retained authorities.
+- [x] Ledger remains 175 and every execution counter is zero.
+- [x] Future roadmap is human-gated, bounded, environment-pinned, and fail-closed.
+- [x] Validator covers all load-bearing contract fields and bound file hashes.
+- [x] Negative tests cover authority, arithmetic, tolerance, routing, accounting, review, and premature-result mutations.
+- [ ] Exact Fable 5 review request and response banked.
+- [ ] Final independent verdict is ACCEPT with no BLOCKING or NON_BLOCKING_REQUIRED findings.
