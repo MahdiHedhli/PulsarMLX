@@ -1,0 +1,21 @@
+{
+  "schema":"pulsarmlx.f017.apple-production-serial-f32-capture-independent-review-result",
+  "schema_version":"1.0.0",
+  "reviewer_identity":"CLAUDE_FABLE_5_INDEPENDENT_ADVERSARIAL_REVIEWER",
+  "reviewer_model":"claude-fable-5",
+  "reviewer_track_or_invocation_identity":"f017-live-one-shot/apple-production-serial-f32-capture-cycle-02-independent-adversarial-review",
+  "reviewed_branch":"feat/017-real-checkpoint-runner",
+  "reviewed_head":"3fb41455c8043f819a21b8d7ad9a72cf49d7642f",
+  "raw_review":{"path":"docs/architecture/reviews/evidence/f017-apple-production-serial-f32-capture-cycle-02-independent-review-v1.json","sha256":"168868a6dca7436c8dbe05348075d3eb6d93cfd4068f501a663d9768981708c8"},
+  "release":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-capture-single-use-release-v2.json","sha256":"b913d803b687760bce9666a40e070b5aeb44a710a438a8862dcdb2b926d110d3"},
+  "execution_code_head":"2deb3c99cb783da832f8b2274c985557191e0233",
+  "blocking_findings":[],
+  "non_blocking_required_findings":[],
+  "defense_in_depth_findings":[
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-02-F1","disposition":"ACCEPTED_NON_WEAKENING_WHOLE_BINARY_AND_COMMIT_BINDING_CLOSE_DRIFT;ADD_IQ_REF_AND_CPU_DOT_TABLES_AT_NEXT_CODE_MANIFEST_GENERATION"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-02-F2","disposition":"ACCEPTED_NON_WEAKENING_DIVERGENCE_TERMINALIZES_FAIL_CLOSED;EXACT_PACKAGE_ROOT_CROSS_BINDING_REQUIRED_AT_PRE_APPROVAL_READINESS"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-02-F3","disposition":"ACCEPTED_NON_WEAKENING_PINNED_IMPLEMENTATION_ONLY;TEN_RUN_BYTE_IDENTITY_REQUIRED_BEFORE_EQUIVALENCE_CLAIM"}
+  ],
+  "verdict":"ACCEPT",
+  "statement":"APPLE PRODUCTION SERIAL-F32 CAPTURE SURFACE ACCEPTED FOR FUTURE HUMAN-GATED EQUIVALENCE EXECUTION PREPARATION"
+}

@@ -721,7 +721,7 @@
 
 ## Phase 51: Convergence
 
-- [ ] T017-254 Implement and freeze the complete pinned-MLX Apple production
+- [x] T017-254 Implement and freeze the complete pinned-MLX Apple production
   serial-f32 M1-F0 S0-to-S2 call graph and 34-stage direct capture surface;
   close RN1 ownership, receipt accounting, strict bound/event validation,
   decoder/code/runtime bindings, partial-root recovery, and wrapper-v1

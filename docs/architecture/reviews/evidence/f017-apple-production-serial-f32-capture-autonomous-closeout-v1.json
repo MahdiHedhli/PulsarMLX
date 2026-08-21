@@ -1,0 +1,20 @@
+{
+  "schema":"pulsarmlx.f017.apple-production-serial-f32-capture-autonomous-closeout",
+  "schema_version":"1.0.0",
+  "starting_head":"aa7b6226d55867a007e4760018c4286cba0f2d1d",
+  "accepted_review_target":"3fb41455c8043f819a21b8d7ad9a72cf49d7642f",
+  "execution_code_head":"2deb3c99cb783da832f8b2274c985557191e0233",
+  "cycles_used":2,
+  "release":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-capture-single-use-release-v2.json","sha256":"b913d803b687760bce9666a40e070b5aeb44a710a438a8862dcdb2b926d110d3","real_event_authorized":false,"live_go_token_created":false},
+  "native_runtime":{"mlx_version":"0.32.1","mlx_c_version":"0.6.0_4","backend":"APPLE_METAL_GPU","executable_sha256":"fe82ab79f6c1a4798fb1204dd5deee24aa6bfaaa9b2cd7f841cca20afde553e5"},
+  "capture_surface":{"canonical_stages":34,"expanded_tensor_inputs":40,"reachable_decoder_formats":6,"direct_values_only":true,"checkpoint_fallback":false},
+  "review":{"path":"docs/architecture/reviews/evidence/f017-apple-production-serial-f32-capture-cycle-02-independent-review-v1.json","sha256":"168868a6dca7436c8dbe05348075d3eb6d93cfd4068f501a663d9768981708c8","reviewer_model":"claude-fable-5","verdict":"ACCEPT","blocking":0,"non_blocking_required":0,"defense_in_depth":3},
+  "accounting":{"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"attention_executions":0,"expert_executions":0,"aggregate_executions":0,"shared_expert_executions":0,"ffn_compositions":0,"s1_materializations":0,"s2_constructions":0,"production_equivalence_executions":0},
+  "checkpoint_access_decision":"CHECKPOINT_ACCESS_REQUIRED: NO",
+  "determinism_qualification":{"repetitions_required":10,"executed":false,"exact_stage_bytes_required":true,"cross_hardware_portability":"NOT_CLAIMED"},
+  "future_execution_gates":["SEPARATE_COMMITTED_INDEPENDENT_APPROVAL","EXACT_RETAINED_PACKAGE_AND_RELEASE_ROOT_CROSS_BINDING","EXACT_NATIVE_EXECUTABLE_AND_RUNTIME_REHASH","SINGLE_MACHINE_LOCAL_GO_TOKEN","TEN_FRESH_PROCESS_BYTE_IDENTITY","FROZEN_TOLERANCE_COMPARISON","HUMAN_OPERATOR_DECISION"],
+  "next_natural_rebind_backlog":["ADD_IQ_REF_AND_CPU_DOT_TABLES_TO_CODE_MANIFEST","PIN_PACKAGE_FIXED_ROOTS_DIRECTLY_IN_CONSUMER_SCHEMA","TERMINALIZER_ORPHAN_HASH_INVENTORY_REBIND_WHEN_NEXT_TERMINALIZER_GENERATION_CHANGES"],
+  "ready_for_production_serial_f32_equivalence_execution_preparation":true,
+  "production_serial_f32_equivalence_executed":false,
+  "termination_condition":"STOP_ACCEPTED_BEFORE_APPROVAL_TOKEN_OR_COMPARISON"
+}
