@@ -1,0 +1,61 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-capture-release",
+  "schema_version": "2.0.0",
+  "event_id": "F017-APPLE-PRODUCTION-SERIAL-F32-CAPTURE-1",
+  "release_id": "F017-APPLE-PRODUCTION-SERIAL-F32-CAPTURE-1-RELEASE-2",
+  "attempt_id": "F017-APPLE-PRODUCTION-SERIAL-F32-CAPTURE-1-ATTEMPT-1",
+  "execution_code_head": "653aa77755136ed292251c3f9cbe60e70343294a",
+  "code_manifest": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-code-manifest-v1.json",
+    "sha256": "4da019803fd4e9414c4273e9f4d702b0e52c98a69b4ca3cef7803b7884849db9"
+  },
+  "authorization_schema": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-future-authorization-schema-v1.json",
+    "sha256": "9485eda5f4ff76f1bea58f6b29c64fb39e2cf6750fb757d286e7f09e1a90e6aa"
+  },
+  "runtime_binding": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-runtime-binding-v1.json",
+    "sha256": "eae7e0c14fde2506f5b6ccfd14cdc144f025eb68c1a31b5994ddf857b8cc54b0"
+  },
+  "bound_contracts": [
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-architecture-v1.json","sha256":"15ac47003cda36dfdb3d2df77aa731e1abe768060c9aac9d21767bfc15bf6ead"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-stage-manifest-v1.json","sha256":"591998fe071f72003510e7980e64bb49a1b15de66ffa63e8e916e42d94a4ef16"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-capture-manifest-v1.json","sha256":"b02befeaf80bbbb10430d94b28388e9f2e0e4b6c86dca0dd3db4518f5a122e9b"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-decoder-bindings-v1.json","sha256":"9bf36bcc435d404ee641f159a22a07bab4b10539de1c05aa7b80b051f4a74e87"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-package-schema-v1.json","sha256":"3556ffa0eba3be1059a1b2d3334dbb05de4b865c2de53b5b5d9cdfab1f9ccb5c"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-rn1-ownership-v2.json","sha256":"097a46d7c9fe01ea46be6f87e290403df16360a20ed25de41b0029e739876e60"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-determinism-v1.json","sha256":"7139f64bb195eadd4fd52e8e36939ca04e273addcda5855fc900801e9bbe052f"},
+    {"path":"docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json","sha256":"aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e"}
+  ],
+  "runner_path": "target/release/f017-apple-serial-f32-capture",
+  "executor_sha256": "42b268955b282545e74aa8a3c6339d2b75777a2b6b8c9e5cee76fdaddcc2b90f",
+  "wrapper_sha256": "089fbe1a54ee2dcf3e646165baff14f59383ce3a7af211ac40691a123ef0743e",
+  "ledger": {"start":175,"terminal":175},
+  "execution_budgets": {
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "attention_executions": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0,
+    "production_equivalence_executions": 1
+  },
+  "machine_local_paths": {
+    "attempt_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-capture-release-2/attempt-state",
+    "capture_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-capture-release-2/captures",
+    "package_manifest": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-capture-release-2/package.json",
+    "go_token": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-capture-release-2/go-token.json"
+  },
+  "approval_schema_fields": ["schema","schema_version","event_id","release_id","attempt_id","release_sha256","code_manifest_sha256","reviewed_head","release_review_path","release_review_sha256","reviewer_model","verdict","approval_statement","approval_does_not_execute","approval_is_not_token","real_event_authorized","ledger","stop_boundary"],
+  "go_token_schema_fields": ["approval_sha256","attempt_id","disposition","event_id","real_event_authorized","release_id","release_sha256"],
+  "retry": false,
+  "resume": false,
+  "second_attempt": false,
+  "real_event_authorized": false,
+  "live_go_token_created": false,
+  "stop_boundary": "AFTER_APPLE_PRODUCTION_SERIAL_F32_CAPTURE_AND_COMPARISON_ONLY",
+  "status": "PREPARED_REVIEW_REQUIRED"
+}
