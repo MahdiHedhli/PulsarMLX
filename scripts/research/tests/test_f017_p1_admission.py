@@ -85,6 +85,7 @@ def fixture_contract() -> dict:
             "live_authorization_present": False,
         },
         "state": {
+            "root": "/Users/mhedhli/.local/share/pulsarmlx/f017/m1-ultra-p1-admission-v1",
             "lifecycle": ["PREPARED", "AUTHORIZED", "CONSUMING", "CONSUMED_TERMINAL"],
             "exclusive_attempt_claim": True,
             "durable_ownership": True,
@@ -133,6 +134,7 @@ class ContractTests(unittest.TestCase):
             lambda x: x["accounting"]["stream_authority_fields"].remove("native_handle_owned"),
             lambda x: x["authorization"].__setitem__("live_authorization_present", True),
             lambda x: x["authorization"].__setitem__("normal_validation_can_authorize", True),
+            lambda x: x["state"].__setitem__("root", "/tmp/caller-selected-p1-state"),
             lambda x: x["state"].__setitem__("automatic_retry", True),
             lambda x: x["prohibitions"].__setitem__("full_model_inference", False),
             lambda x: x["prohibitions"].__setitem__("second_p1", False),
@@ -204,6 +206,17 @@ class OneShotTests(unittest.TestCase):
             self.assertEqual(gate.load_json(terminal)["retry_permitted"], False)
             with self.assertRaises(gate.AdmissionError):
                 gate.claim_attempt(root, authorization)
+
+    def test_fresh_authorization_cannot_launch_second_p1(self) -> None:
+        first = self.authorization()
+        second = self.authorization()
+        second["authorization_id"] = "auth-2"
+        second["attempt_id"] = "attempt-2"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            gate.claim_attempt(root, first)
+            with self.assertRaisesRegex(gate.AdmissionError, "already been consumed"):
+                gate.claim_attempt(root, second)
 
     def test_inert_stale_and_forged_authorizations_rejected(self) -> None:
         mutations = [

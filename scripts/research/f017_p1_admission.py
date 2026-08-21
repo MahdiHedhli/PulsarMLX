@@ -213,6 +213,7 @@ def validate_contract(document: dict[str, Any], repo_root: Path) -> None:
         raise AdmissionError("validation may not mint authorization")
 
     if document["state"] != {
+        "root": "/Users/mhedhli/.local/share/pulsarmlx/f017/m1-ultra-p1-admission-v1",
         "lifecycle": ["PREPARED", "AUTHORIZED", "CONSUMING", "CONSUMED_TERMINAL"],
         "exclusive_attempt_claim": True,
         "durable_ownership": True,
@@ -314,6 +315,17 @@ def verify_repository_state(contract: dict[str, Any], repo_root: Path) -> None:
 
 
 def verify_checkpoint_payload(contract: dict[str, Any], checkpoint_root: Path) -> None:
+    environment_name = contract["checkpoint"]["path_environment"]
+    configured = os.environ.get(environment_name)
+    if not configured:
+        raise AdmissionError(f"checkpoint environment {environment_name} is absent")
+    try:
+        expected_root = Path(configured).resolve(strict=True)
+        supplied_root = checkpoint_root.resolve(strict=True)
+    except OSError as exc:
+        raise AdmissionError(f"checkpoint root cannot be resolved: {exc}") from exc
+    if supplied_root != expected_root:
+        raise AdmissionError("caller-selected alternate checkpoint root rejected")
     if not checkpoint_root.is_dir() or checkpoint_root.is_symlink():
         raise AdmissionError("checkpoint root is not a real directory")
     for shard in contract["checkpoint"]["shards"]:
@@ -395,10 +407,31 @@ def _durable_json(path: Path, value: dict[str, Any], exclusive: bool = True) -> 
 
 def claim_attempt(state_root: Path, authorization: dict[str, Any]) -> Path:
     state_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    # One reviewed contract admits at most one P1 in total, not one P1 per
+    # caller-selected attempt id.  The durable contract-wide claim is created
+    # before the attempt directory, so a second authorization (even with a new
+    # attempt id) cannot consume this admission surface.
+    claim = state_root / "p1-once.claim.json"
+    try:
+        _durable_json(
+            claim,
+            {
+                "state": "CONSUMING",
+                "authorization_id": authorization["authorization_id"],
+                "attempt_id": authorization["attempt_id"],
+                "owner_pid": os.getpid(),
+                "started_at_unix": time.time(),
+                "retry_permitted": False,
+            },
+        )
+    except FileExistsError as exc:
+        raise AdmissionError("P1 contract has already been consumed or claimed") from exc
     attempt_root = state_root / authorization["attempt_id"]
     try:
         attempt_root.mkdir(mode=0o700)
     except FileExistsError as exc:
+        # The contract-wide claim remains durable and consumed.  Never remove
+        # it to repair a malformed or colliding attempt id.
         raise AdmissionError("authorization attempt already consumed or in progress") from exc
     ownership = {
         "state": "CONSUMING",
@@ -436,6 +469,8 @@ def execute_once(
 ) -> None:
     contract = load_json(contract_path)
     validate_contract(contract, repo_root)
+    if state_root != Path(contract["state"]["root"]):
+        raise AdmissionError("caller-selected alternate P1 state root rejected")
     authorization = load_json(authorization_path)
     validate_authorization(
         authorization,

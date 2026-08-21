@@ -64,7 +64,7 @@ exactly one P1 followed by a mandatory stop. It explicitly reconciles every
 managed/derived/callback counter, all six stream counters, context singleton,
 registrations/teardowns, in-flight work, and native-ready generations.
 
-## Final CI evidence
+## Historical implementation CI evidence
 
 - Run: `31449698582`, success, head
   `47575474b52b68f6f1a8ab7f4d373c598024212a`.
@@ -81,6 +81,22 @@ registrations/teardowns, in-flight work, and native-ready generations.
 - The dedicated native job did not skip native tests. The separate workspace
   baseline intentionally compiles without MLX C and reports its existing skip;
   that skip is not used as native qualification evidence.
+
+## Admission-hardening CI evidence
+
+- Repair implementation head:
+  `9760c156adaff534852147ec2f4d592eff9983b7`.
+- GitHub Actions run: `32530443531`, success, exact repair implementation head.
+- Dedicated native job `96921241861`: success, pinned MLX 0.31.2 / MLX C
+  0.6.0, `PULSAR_REQUIRE_NATIVE_MLX=1`, and `13 passed; 0 failed; 0 ignored`.
+- The same job ran the P1 admission mutation suite (`8` tests at that repair
+  head), the oracle-independence policy, deterministic oracle regeneration,
+  Python oracle tests, and Rust independent parity (`4 passed`).
+- Any later documentation/evidence-only commit must still receive a fresh
+  successful branch CI run and the independent reviewer must inspect that run
+  directly. This paragraph is evidence for the immutable repair implementation
+  bytes, not a self-referential claim that its containing commit reviewed
+  itself.
 
 ## Decision requested
 
