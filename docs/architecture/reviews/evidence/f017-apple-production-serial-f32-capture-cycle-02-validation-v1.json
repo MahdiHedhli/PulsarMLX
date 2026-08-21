@@ -1,0 +1,28 @@
+{
+  "schema":"pulsarmlx.f017.apple-production-serial-f32-capture-validation",
+  "schema_version":"1.0.0",
+  "cycle":2,
+  "branch":"feat/017-real-checkpoint-runner",
+  "execution_code_head":"2deb3c99cb783da832f8b2274c985557191e0233",
+  "release_sha256":"b913d803b687760bce9666a40e070b5aeb44a710a438a8862dcdb2b926d110d3",
+  "native_executable_sha256":"fe82ab79f6c1a4798fb1204dd5deee24aa6bfaaa9b2cd7f841cca20afde553e5",
+  "finding_to_fix_mappings":[
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F1","fix":"wrapper uses hash-bound runtime_binding in attempt-start, encloses all post-owner work in owned terminalization, and synthetic execute test proves a runner failure yields durable TERMINAL_FAILURE"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F2","fix":"rope_base is exactly bit-pinned to f32 1000000.0 in graph, executable package gate, package contract, stage contract, and validator"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F3","fix":"dead Q4_K arm removed and specification aligned to six reachable formats"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F4","fix":"wrapper rehashes runtime binding, installed MLX dylibs/headers, and every bound contract before authority"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F5","fix":"wrapper pins exact ordered 34-stage census and rejects unmanifested capture-root entries"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F6","fix":"all routed and shared expert matrices receive explicit graph-level validation"},
+    {"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F7","fix":"code manifest now binds duplicate-key parser and all reachable quant source modules"}
+  ],
+  "commands":[
+    {"command":"PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p f017-runner --test apple_serial_f32","result":"PASS_5_OF_5"},
+    {"command":"python3 -m unittest scripts.research.tests.test_f017_apple_serial_f32_hardening_v1 scripts.research.tests.test_validate_f017_apple_production_serial_f32_capture_v1","result":"PASS_19_TESTS_INCLUDING_SYNTHETIC_EXECUTE_TERMINALIZATION"},
+    {"command":"python3 scripts/research/validate_f017_apple_production_serial_f32_capture_v1.py","result":"PASS_34_STAGES_6_DECODERS"},
+    {"command":"python3 scripts/research/f017_apple_serial_f32_capture_wrapper_v2.py --release specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-capture-single-use-release-v2.json --preflight-only","result":"PASS_NO_ARITHMETIC"},
+    {"command":"python3 scripts/research/validate_f017_future_real_payload_banking_v2.py --head HEAD","result":"PASS_ZERO_ADVANCING_COMMITS"}
+  ],
+  "remaining_defense_in_depth":[{"finding_id":"F017-APPLE-CAPTURE-REVIEW-01-F8","disposition":"PINNED_IMPLEMENTATION_AUTHORITY_WITH_MANDATORY_10_RUN_BYTE_IDENTITY_GATE;NO_PORTABILITY_OR_EQUIVALENCE_CLAIM"}],
+  "accounting":{"ledger_before":175,"ledger_after":175,"checkpoint_reads":0,"shard_opens":0,"production_equivalence_executions":0,"live_go_tokens":0},
+  "result":"PASS"
+}
