@@ -38,7 +38,7 @@ except ImportError:
 
 REPO = Path(__file__).resolve().parents[2]
 THREADS = {"OPENBLAS_NUM_THREADS":"1", "OMP_NUM_THREADS":"1", "VECLIB_MAXIMUM_THREADS":"1", "MKL_NUM_THREADS":"1", "NUMEXPR_NUM_THREADS":"1"}
-APPROVAL_STATEMENT = "APPLE PRODUCTION SERIAL-F32 EQUIVALENCE SINGLE-USE RELEASE V4 APPROVED"
+APPROVAL_STATEMENT = "APPLE PRODUCTION SERIAL-F32 EQUIVALENCE SINGLE-USE RELEASE V5 APPROVED"
 
 
 def verify_binding(binding: dict) -> Path:
@@ -69,7 +69,7 @@ def validate_machine_runtime(release: dict, runner: Path) -> None:
 
 def validate_release(path: Path) -> dict:
     release = load_unique(path)
-    if release.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-equivalence-release" or release.get("schema_version") != "4.0.0":
+    if release.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-equivalence-release" or release.get("schema_version") != "5.0.0":
         raise GateError("RELEASE_SCHEMA")
     if release.get("real_event_authorized") is not False or release.get("live_go_token_created") is not False:
         raise GateError("PREMATURE_AUTHORITY")
@@ -156,10 +156,16 @@ def validate_authority(release_path: Path, release: dict, approval_path: Path, t
         raise GateError("APPROVAL_SCHEMA")
     if approval.get("readiness_head") != approval.get("reviewed_head") or token.get("readiness_head") != approval.get("reviewed_head"):
         raise GateError("REVIEWED_HEAD_BINDING")
+    if token.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-live-go" or token.get("schema_version") != "1.0.0":
+        raise GateError("TOKEN_SCHEMA")
+    if approval.get("readiness_review_path") != release.get("canonical_readiness_review_path"):
+        raise GateError("READINESS_REVIEW_PATH")
     review_path = REPO / approval.get("readiness_review_path", "")
     if not review_path.is_file() or sha(review_path) != approval.get("readiness_review_sha256"):
         raise GateError("READINESS_REVIEW_SHA")
     review = load_unique(review_path)
+    if review.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-independent-review" or review.get("schema_version") != "1.0.0":
+        raise GateError("READINESS_REVIEW_SCHEMA")
     if review.get("reviewer_model") != "claude-fable-5" or review.get("verdict") != "ACCEPT" or review.get("reviewed_head") != approval.get("reviewed_head"):
         raise GateError("READINESS_REVIEW_AUTHORITY")
     if token.get("approval_sha256") != sha(approval_path):

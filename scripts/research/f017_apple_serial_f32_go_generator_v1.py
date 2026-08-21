@@ -10,7 +10,7 @@ except ImportError:
     from f017_apple_serial_f32_capture_wrapper_v2 import GateError, load_unique, sha
 
 REPO = Path(__file__).resolve().parents[2]
-APPROVAL_STATEMENT = "APPLE PRODUCTION SERIAL-F32 EQUIVALENCE SINGLE-USE RELEASE V4 APPROVED"
+APPROVAL_STATEMENT = "APPLE PRODUCTION SERIAL-F32 EQUIVALENCE SINGLE-USE RELEASE V5 APPROVED"
 
 
 def canonical(value):
@@ -43,10 +43,14 @@ def main() -> int:
         raise GateError("APPROVAL_RELEASE_SCOPE")
     if approval.get("readiness_head") != approval.get("reviewed_head") or approval.get("reviewer_model") != "claude-fable-5":
         raise GateError("APPROVAL_REVIEW_SCOPE")
+    if approval.get("readiness_review_path") != release.get("canonical_readiness_review_path"):
+        raise GateError("APPROVAL_REVIEW_PATH")
     review_path = REPO / approval.get("readiness_review_path", "")
     if not review_path.is_file() or sha(review_path) != approval.get("readiness_review_sha256"):
         raise GateError("APPROVAL_REVIEW_SHA")
     review = load_unique(review_path)
+    if review.get("schema") != "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-independent-review" or review.get("schema_version") != "1.0.0":
+        raise GateError("APPROVAL_REVIEW_SCHEMA")
     if review.get("verdict") != "ACCEPT" or review.get("reviewer_model") != "claude-fable-5" or review.get("reviewed_head") != approval.get("reviewed_head"):
         raise GateError("APPROVAL_REVIEW_AUTHORITY")
     if approval.get("ledger") != 175 or approval.get("stop_boundary") != release["stop_boundary"] or approval.get("real_event_authorized") is not True:

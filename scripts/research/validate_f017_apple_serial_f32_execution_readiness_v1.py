@@ -14,7 +14,7 @@ except ImportError:
 
 REPO = Path(__file__).resolve().parents[2]
 CONTRACTS = REPO / "specs/017-rust-native-inference-runtime/contracts"
-RELEASE = CONTRACTS / "f017-apple-production-serial-f32-equivalence-single-use-release-v4.json"
+RELEASE = CONTRACTS / "f017-apple-production-serial-f32-equivalence-single-use-release-v5.json"
 
 class ValidationError(RuntimeError): pass
 def load(path):
@@ -89,13 +89,13 @@ def validate_accounting(doc):
 
 def validate_repo():
     package=load(CONTRACTS/"f017-apple-production-serial-f32-retained-40-tensor-package-v1.json")
-    code=load(CONTRACTS/"f017-apple-production-serial-f32-code-manifest-v3.json")
+    code=load(CONTRACTS/"f017-apple-production-serial-f32-code-manifest-v4.json")
     comparison=load(CONTRACTS/"f017-apple-production-serial-f32-comparison-execution-contract-v1.json")
     routing=load(CONTRACTS/"f017-apple-production-serial-f32-routing-execution-gates-v1.json")
     determinism=load(CONTRACTS/"f017-apple-production-serial-f32-determinism-v2.json")
     accounting=load(CONTRACTS/"f017-apple-production-serial-f32-future-real-event-accounting-v1.json")
-    auth=load(CONTRACTS/"f017-apple-production-serial-f32-future-authorization-schema-v3.json")
-    inert=load(CONTRACTS/"f017-apple-production-serial-f32-inert-go-fixture-v2.json")
+    auth=load(CONTRACTS/"f017-apple-production-serial-f32-future-authorization-schema-v4.json")
+    inert=load(CONTRACTS/"f017-apple-production-serial-f32-inert-go-fixture-v3.json")
     validate_package_contract(package); validate_code_manifest(code); validate_comparison(comparison); validate_routing(routing); validate_determinism(determinism); validate_accounting(accounting); validate_authorization(auth,inert)
     package_result=validate_destination(derive_descriptors())
     require(package_result["package_root_sha256"]==package["package_root_sha256"], "PACKAGE_ROOT")
@@ -107,7 +107,7 @@ def validate_repo():
         require(not path.exists(), f"STATE_PRESENT:{path}")
     tombstone=subprocess.run([str(REPO/"scripts/research/f017_apple_serial_f32_capture_wrapper_v1.py")],capture_output=True,text=True)
     require(tombstone.returncode==78 and "TOMBSTONED" in tombstone.stderr, "WRAPPER_V1")
-    runtime=load(CONTRACTS/"f017-apple-production-serial-f32-runtime-rebind-v3.json")
+    runtime=load(CONTRACTS/"f017-apple-production-serial-f32-runtime-rebind-v4.json")
     return {"status":"F017_APPLE_SERIAL_F32_EXECUTION_READINESS_VALID","tensor_count":40,"package_root_sha256":package_result["package_root_sha256"],"ledger":175,"checkpoint_reads":0,"shard_opens":0,"production_equivalence_executions":0,"determinism_runs":0,"live_go_tokens":0,"native_executable_sha256":sha(Path(runtime["native_executable"]["path"])),"mlx_dylib_sha256":sha(Path(runtime["mlx"]["library"]["path"])),"mlx_c_dylib_sha256":sha(Path(runtime["mlx_c"]["library"]["path"]))}
 
 

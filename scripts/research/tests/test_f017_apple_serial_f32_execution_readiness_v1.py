@@ -12,13 +12,13 @@ class ReadinessMutationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.package=doc("f017-apple-production-serial-f32-retained-40-tensor-package-v1.json")
-        cls.code=doc("f017-apple-production-serial-f32-code-manifest-v3.json")
+        cls.code=doc("f017-apple-production-serial-f32-code-manifest-v4.json")
         cls.comparison=doc("f017-apple-production-serial-f32-comparison-execution-contract-v1.json")
         cls.routing=doc("f017-apple-production-serial-f32-routing-execution-gates-v1.json")
         cls.determinism=doc("f017-apple-production-serial-f32-determinism-v2.json")
         cls.accounting=doc("f017-apple-production-serial-f32-future-real-event-accounting-v1.json")
-        cls.auth=doc("f017-apple-production-serial-f32-future-authorization-schema-v3.json")
-        cls.inert=doc("f017-apple-production-serial-f32-inert-go-fixture-v2.json")
+        cls.auth=doc("f017-apple-production-serial-f32-future-authorization-schema-v4.json")
+        cls.inert=doc("f017-apple-production-serial-f32-inert-go-fixture-v3.json")
     def reject(self, function, baseline, mutations):
         for i,mutation in enumerate(mutations):
             value=copy.deepcopy(baseline); mutation(value)
@@ -45,10 +45,11 @@ class ReadinessMutationTests(unittest.TestCase):
         self.assertNotEqual(base,package.package_root_sha(changed))
 
     def test_all_authority_scope_fields_are_enforced(self):
-        release=doc("f017-apple-production-serial-f32-equivalence-single-use-release-v4.json")
+        release=doc("f017-apple-production-serial-f32-equivalence-single-use-release-v5.json")
         with tempfile.TemporaryDirectory() as td:
             root=Path(td); release_path=root/"release.json"; review_path=root/"review.json"; approval_path=root/"approval.json"; token_path=root/"token.json"
             release["machine_local_paths"]["capture_root"]="/fixed/capture"
+            release["canonical_readiness_review_path"]="review.json"
             release_path.write_text(json.dumps(release,sort_keys=True,separators=(",", ":"))+"\n")
             reviewed_head="1"*40
             review={"schema":"pulsarmlx.f017.apple-production-serial-f32-execution-readiness-independent-review","schema_version":"1.0.0","reviewer_model":"claude-fable-5","reviewed_head":reviewed_head,"verdict":"ACCEPT"}
@@ -68,6 +69,19 @@ class ReadinessMutationTests(unittest.TestCase):
                     token_path.write_text(json.dumps(changed,sort_keys=True,separators=(",", ":"))+"\n")
                     with self.subTest(field=field), self.assertRaises(wrapper.GateError): wrapper.validate_authority(release_path,release,approval_path,token_path)
                 token_path.write_text(json.dumps(token,sort_keys=True,separators=(",", ":"))+"\n")
+                for field,bad in (("schema","EVIL"),("schema_version","9.9.9")):
+                    changed=copy.deepcopy(token); changed[field]=bad
+                    token_path.write_text(json.dumps(changed,sort_keys=True,separators=(",", ":"))+"\n")
+                    with self.subTest(field=field), self.assertRaises(wrapper.GateError): wrapper.validate_authority(release_path,release,approval_path,token_path)
+                token_path.write_text(json.dumps(token,sort_keys=True,separators=(",", ":"))+"\n")
+                changed_review=copy.deepcopy(review); changed_review["schema"]="pulsarmlx.f017.apple-production-serial-f32-capture-independent-review"
+                review_path.write_text(json.dumps(changed_review,sort_keys=True,separators=(",", ":"))+"\n")
+                changed_approval=copy.deepcopy(approval); changed_approval["readiness_review_sha256"]=wrapper.sha(review_path)
+                approval_path.write_text(json.dumps(changed_approval,sort_keys=True,separators=(",", ":"))+"\n")
+                changed_token=copy.deepcopy(token); changed_token["approval_sha256"]=wrapper.sha(approval_path)
+                token_path.write_text(json.dumps(changed_token,sort_keys=True,separators=(",", ":"))+"\n")
+                with self.assertRaisesRegex(wrapper.GateError,"READINESS_REVIEW_SCHEMA"):
+                    wrapper.validate_authority(release_path,release,approval_path,token_path)
 
     def test_success_terminalization_rejects_any_payload_receipt(self):
         with tempfile.TemporaryDirectory() as td:
