@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import platform
 import secrets
 import subprocess
 import sys
@@ -44,6 +45,25 @@ def verify_binding(binding: dict) -> Path:
     if not path.is_file() or sha(path) != binding["sha256"]:
         raise GateError(f"BINDING:{binding.get('path')}")
     return path
+
+
+def validate_machine_runtime(release: dict, runner: Path) -> None:
+    if platform.machine() != "arm64":
+        raise GateError("RUNTIME_ARCH")
+    product = subprocess.check_output(["/usr/bin/sw_vers", "-productVersion"], text=True).strip()
+    build = subprocess.check_output(["/usr/bin/sw_vers", "-buildVersion"], text=True).strip()
+    if (product, build) != ("26.0", "25A354"):
+        raise GateError("RUNTIME_MACOS")
+    hardware = subprocess.check_output(["/usr/sbin/system_profiler", "SPHardwareDataType"], text=True)
+    if "Chip: Apple M1 Ultra" not in hardware:
+        raise GateError("RUNTIME_HARDWARE")
+    for key, value in THREADS.items():
+        if os.environ.get(key) != value:
+            raise GateError(f"RUNTIME_THREAD:{key}")
+    links = subprocess.check_output(["/usr/bin/otool", "-L", str(runner)], text=True)
+    required = release["runtime_required_linkage"]
+    if any(item not in links for item in required):
+        raise GateError("RUNTIME_LINKAGE")
 
 
 def validate_release(path: Path) -> dict:
@@ -80,6 +100,10 @@ def validate_release(path: Path) -> dict:
     runner = REPO / release["runner_path"]
     if not runner.is_file() or runner.is_symlink() or sha(runner) != release["native_executable_sha256"]:
         raise GateError("EXECUTOR_SHA")
+    meta = runner.stat()
+    if meta.st_nlink != 1 or meta.st_mode & 0o222:
+        raise GateError("EXECUTOR_IMMUTABILITY")
+    validate_machine_runtime(release, runner)
     paths = release["machine_local_paths"]
     if Path(paths["package_manifest"]) != PACKAGE_JSON or Path(paths["package_census"]) != PACKAGE_CENSUS:
         raise GateError("PACKAGE_PATH_BINDING")

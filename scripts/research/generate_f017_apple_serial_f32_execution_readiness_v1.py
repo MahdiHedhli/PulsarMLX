@@ -12,6 +12,7 @@ from f017_apple_serial_f32_execution_readiness_v1 import (
 CONTRACTS = REPO / "specs/017-rust-native-inference-runtime/contracts"
 EVIDENCE = REPO / "docs/architecture/reviews/evidence"
 RUNNER_SHA = "fe82ab79f6c1a4798fb1204dd5deee24aa6bfaaa9b2cd7f841cca20afde553e5"
+PINNED_RUNNER = Path("/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/bin/f017-apple-serial-f32-capture")
 
 
 def canonical(value): return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode() + b"\n"
@@ -66,7 +67,7 @@ def main():
     runtime = json.loads(runtime_v1.read_text())
     runtime_rebind = write("f017-apple-production-serial-f32-runtime-rebind-v2.json", {
         "schema":"pulsarmlx.f017.apple-production-serial-f32-runtime-rebind","schema_version":"2.0.0",
-        "execution_code_head":CODE_HEAD,"code_manifest":binding(code_manifest),"native_executable":{"path":"target/release/f017-apple-serial-f32-capture","sha256":RUNNER_SHA,"build_command":"PULSAR_REQUIRE_NATIVE_MLX=1 cargo build --release -p f017-runner --bin f017-apple-serial-f32-capture","target":"aarch64-apple-darwin","mode":"release"},
+        "execution_code_head":CODE_HEAD,"code_manifest":binding(code_manifest),"native_executable":{"path":str(PINNED_RUNNER),"sha256":RUNNER_SHA,"build_command":"PULSAR_REQUIRE_NATIVE_MLX=1 cargo build --release -p f017-runner --bin f017-apple-serial-f32-capture; immutable byte-identical copy to fixed readiness path","target":"aarch64-apple-darwin","mode":"release","regular":True,"non_symlink":True,"single_link":True,"read_only":True},
         "runtime_binding_v1":binding(runtime_v1),"platform":runtime["platform"],"mlx":runtime["mlx"],"mlx_c":runtime["mlx_c"],"linkage":runtime["linkage"],"toolchain":runtime["toolchain"],"thread_limits":runtime["thread_limits"],
         "otool_required_paths":[runtime["mlx_c"]["library"]["path"],runtime["mlx"]["library"]["path"],runtime["linkage"]["metal_framework"]],
         "pre_attempt_rehash_required":True,"runtime_drift_disposition":"FAIL_BEFORE_ATTEMPT_START","portability":"NOT_CLAIMED",
@@ -139,7 +140,7 @@ def main():
     bound=[root_spec,package_manifest,root_result,comparison,routing,determinism,accounting,auth_schema,rehearsal_contract,stage_manifest,capture_manifest]
     release = {
         "schema":"pulsarmlx.f017.apple-production-serial-f32-equivalence-release","schema_version":"3.0.0","status":"PREPARED_REVIEW_REQUIRED","event_id":"F017-APPLE-PRODUCTION-SERIAL-F32-EQUIVALENCE-1","release_id":"F017-APPLE-PRODUCTION-SERIAL-F32-EQUIVALENCE-1-RELEASE-3","attempt_id":"F017-APPLE-PRODUCTION-SERIAL-F32-EQUIVALENCE-1-ATTEMPT-1","execution_code_head":CODE_HEAD,
-        "code_manifest":binding(code_manifest),"runtime_binding":binding(runtime_rebind),"runner_path":"target/release/f017-apple-serial-f32-capture","native_executable_sha256":RUNNER_SHA,"wrapper_sha256":sha(wrapper),"terminalizer_sha256":sha(terminalizer),
+        "code_manifest":binding(code_manifest),"runtime_binding":binding(runtime_rebind),"runner_path":str(PINNED_RUNNER),"native_executable_sha256":RUNNER_SHA,"wrapper_sha256":sha(wrapper),"terminalizer_sha256":sha(terminalizer),"runtime_required_linkage":["/opt/homebrew/opt/mlx-c/lib/libmlxc.dylib","/opt/homebrew/opt/mlx/lib/libmlx.dylib","/System/Library/Frameworks/Metal.framework/Versions/A/Metal"],
         "package_root_sha256":root,"package_census_sha256":sha(PACKAGE_CENSUS),"runner_package_sha256":sha(PACKAGE_JSON),"stage_manifest_sha256":sha(stage_manifest),"capture_manifest_sha256":sha(capture_manifest),"comparison_contract_sha256":sha(comparison),"determinism_contract_sha256":sha(determinism),
         "bound_contracts":[binding(path) for path in bound],"machine_local_paths":{"package_root":str(PACKAGE_ROOT),"package_manifest":str(PACKAGE_JSON),"package_census":str(PACKAGE_CENSUS),"attempt_root":str(ATTEMPT_ROOT),"capture_root":str(CAPTURE_ROOT),"go_token":"/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-release-1/go-token.json"},
         "environment":{"thread_limits":{"OPENBLAS_NUM_THREADS":"1","OMP_NUM_THREADS":"1","VECLIB_MAXIMUM_THREADS":"1","MKL_NUM_THREADS":"1","NUMEXPR_NUM_THREADS":"1"}},"ledger":{"start":175,"terminal":175,"classification":"RETAINED_ONLY_REAL_EXECUTION_EVENT_ZERO_PAYLOAD_DELTA"},
