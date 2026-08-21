@@ -1,0 +1,61 @@
+{
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-execution-readiness-validation",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "branch": "feat/017-real-checkpoint-runner",
+  "validated_head": "b001187917802f5dd4e0fe666579a78e003f9c7f",
+  "execution_code_head": "30c77a1ae5ae6e709ef84aeba26568ca954cb2c8",
+  "package": {
+    "tensor_count": 40,
+    "total_bytes": 257305600,
+    "package_root_sha256": "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6",
+    "source_destination_byte_identity": "40/40 PASS",
+    "machine_census_sha256": "ef65b0b12d3ccc8b592176dfbd0a51248bb1794da789fbc3f5c6988629b75f29",
+    "runner_package_sha256": "1cb3999c01d3a8bf497fb18d1e4dabad704b1993e8d669cb8760d4537e228346"
+  },
+  "runtime": {
+    "native_executable_sha256": "fe82ab79f6c1a4798fb1204dd5deee24aa6bfaaa9b2cd7f841cca20afde553e5",
+    "native_executable_mode": "0555",
+    "native_executable_hard_links": 1,
+    "code_manifest_sha256": "6b77dada90376f959059a122046445d4ca48acf1b524e22dd8018f9c5658120f",
+    "runtime_rebind_sha256": "636519608444c52cf0eb00ab688e9e60ce3d412931205fd15e5f7e72474c3f5c",
+    "mlx_version": "0.32.1",
+    "mlx_dylib_sha256": "c30b247a597c69f40a6740f43e3033e00926a72838ffac20961ec06379e1a4ce",
+    "mlx_c_version": "0.6.0_4",
+    "mlx_c_dylib_sha256": "9882c904e860e968b70fdaeb6b722e871715a83f5c8a8cb164756312376871e5",
+    "hardware": "Apple M1 Ultra",
+    "macos": "26.0 (25A354)",
+    "thread_limits": "OPENBLAS_NUM_THREADS=OMP_NUM_THREADS=VECLIB_MAXIMUM_THREADS=MKL_NUM_THREADS=NUMEXPR_NUM_THREADS=1"
+  },
+  "commands": [
+    {"command": "PYTHONPATH=. /opt/homebrew/bin/python3 scripts/research/validate_f017_apple_serial_f32_execution_readiness_v1.py --repo", "result": "PASS_40_TENSORS_ROOT_RUNTIME_CONTRACTS_ZERO_COUNTERS"},
+    {"command": "PYTHONPATH=. /opt/homebrew/bin/python3 -m unittest scripts.research.tests.test_f017_apple_serial_f32_execution_readiness_v1 scripts.research.tests.test_f017_apple_serial_f32_hardening_v1 scripts.research.tests.test_validate_f017_apple_production_serial_f32_capture_v1", "result": "PASS_25_TESTS"},
+    {"command": "PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p f017-runner --test apple_serial_f32", "result": "PASS_5_OF_5_SYNTHETIC_NATIVE"},
+    {"command": "/opt/homebrew/bin/python3 scripts/research/f017_apple_serial_f32_ten_process_harness_v1.py --contract specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-determinism-v2.json --self-test", "result": "PASS_STRUCTURE_NO_REPRESENTATIVE_RUN"},
+    {"command": "/opt/homebrew/bin/python3 scripts/research/f017_apple_serial_f32_go_generator_v1.py --release specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-equivalence-single-use-release-v3.json --validate-inert-fixture specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-inert-go-fixture-v1.json", "result": "PASS_INERT_REJECTED_AS_LIVE"},
+    {"command": "/opt/homebrew/bin/python3 scripts/research/f017_apple_serial_f32_equivalence_wrapper_v3.py --release specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-equivalence-single-use-release-v3.json --preflight-only", "result": "PRODUCTION_BINDINGS_RESOLVED_NO_ATTEMPT_NO_ARITHMETIC"}
+  ],
+  "mutation_coverage": {
+    "readiness_mutations": 34,
+    "lifecycle_cases": 19,
+    "result": "ALL_FAIL_CLOSED_OR_ROOT_CHANGE_PROVEN"
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "attention_executions": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0,
+    "production_equivalence_executions": 0,
+    "representative_determinism_runs": 0,
+    "live_go_tokens": 0,
+    "real_authorization_consumptions": 0
+  },
+  "result": "PASS"
+}
