@@ -710,7 +710,7 @@
 
 ## Phase 50: Convergence
 
-- [ ] T017-253 Freeze the first-phase production serial-f32 implementation,
+- [x] T017-253 Freeze the first-phase production serial-f32 implementation,
   stage arithmetic, vocabulary, tolerances, routing, retained reuse,
   checkpoint decision, and future execution roadmap; reconcile the receipt
   chain into append-only master ledger v2 at 175; add generic bound-field and

@@ -27,5 +27,5 @@
 - [x] RN1 attempt-ownership requirements are a hard gate for the next execution-capable generation.
 - [x] Five next-natural-rebind items have named mandatory generations and non-blocking dispositions.
 - [x] Cycle-2 review schema requires invocation identity, exact hashes, tests, stable finding IDs, fix mapping, and dispositions.
-- [ ] Exact Fable 5 review request and response banked.
-- [ ] Final independent verdict is ACCEPT with no BLOCKING or NON_BLOCKING_REQUIRED findings.
+- [x] Exact Fable 5 review request and response banked.
+- [x] Final independent verdict is ACCEPT with no BLOCKING or NON_BLOCKING_REQUIRED findings.

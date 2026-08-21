@@ -1,0 +1,100 @@
+{
+  "schema": "pulsarmlx.f017.production-serial-f32-equivalence-specification-closeout",
+  "schema_version": "1.0.0",
+  "branch": "feat/017-real-checkpoint-runner",
+  "starting_head": "db60f6bd4aeffe6d2f85530ddf5e3bb0e1ebbf71",
+  "reviewed_head": "96503db702e95c7a08746924a208304819139803",
+  "review_request_commit": "004e6983e6ac8b7340dd9930242d2f1f024020e3",
+  "artifacts": {
+    "specification": {
+      "path": "specs/017-rust-native-inference-runtime/production-serial-f32-equivalence-spec-v1.md",
+      "sha256": "3ff986346812e124058b51dd96c7b459616b1564d5275da0442ce818dc1c1eb2"
+    },
+    "contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-production-serial-f32-equivalence-specification-v1.json",
+      "sha256": "661bd32ec86a14b098f0f992eb890f1dde0b29d86b8953de52329fb0549797db"
+    },
+    "validator": {
+      "path": "scripts/research/validate_f017_production_serial_f32_equivalence_specification_v1.py",
+      "sha256": "6cc4fb928966803eb674af93b74a58d5053fb9f2ba990fe5e8a328a9d6db9630"
+    },
+    "negative_tests": {
+      "path": "scripts/research/tests/test_f017_production_serial_f32_equivalence_specification_v1.py",
+      "sha256": "d3184bb43a7d1e1b6d9b53f14c23df113c4a8ae3267fce5000ae59517ed741f7"
+    },
+    "review_request": {
+      "path": "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-review-request-v1.json",
+      "sha256": "27651f062400dd637b13133a94663ecfe30100afc0e9867ebab9940069615684"
+    },
+    "review_response": {
+      "path": "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-v1.json",
+      "sha256": "9359fd11a2fba0630d0b455a2aceded949b38a7e1caff671aef00ede549eceea"
+    },
+    "normalized_review_result": {
+      "path": "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-result-v1.json",
+      "sha256": "703a1683ea9ed1d3c49ac7e43df8284f79da5ce6970ccf4a76c5192f93c4623c"
+    },
+    "validation": {
+      "path": "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-validation-v1.json",
+      "sha256": "287e20791e677ac087c00b5135b67d2c94d4e1342ae2d5ec64dba40f17f1f3a2"
+    }
+  },
+  "count_reconciliation": {
+    "status": "PASS_UNAMBIGUOUS_RECEIPT_DERIVED_RECONCILIATION",
+    "historical_master_ledger_v1_terminal": 166,
+    "receipt_chain_start": 166,
+    "receipt_count": 9,
+    "receipt_chain_terminal": 175,
+    "authority_conflict": false,
+    "classification": "HISTORICAL_MASTER_ACCOUNTING_SURFACE_STALE_ONLY",
+    "authoritative_master_ledger": {
+      "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+      "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e"
+    },
+    "new_real_payload_consumption": 0
+  },
+  "strengthened_validation": {
+    "review_schema": "PASS_11_REQUIRED_FIELDS_FROM_CYCLE_2",
+    "bound_field_resolution": "PASS_5_OF_5",
+    "executable_numeric_binding": "PASS_4_OF_4",
+    "ledger_adapter_sources": "PASS_3_OF_3_AT_175",
+    "negative_tests": "PASS_37_OF_37"
+  },
+  "future_execution_gates": {
+    "rn1_attempt_ownership_and_receipt_accounting": "REQUIRED_BEFORE_ANY_NEXT_GENERATION_EXECUTION_CAPABLE_WRAPPER_OR_AUTHORIZATION",
+    "single_invocation_runbook_remains_required": true,
+    "next_natural_rebind_backlog": [
+      "TERMINALIZER_ORPHAN_HASH_VERSUS_INVENTORY_BINDING",
+      "RESTORE_DECODER_BINDING_DECLARATIONS",
+      "GATE_SELF_SHA_BINDING",
+      "RN3_PARTIAL_ROOT_CLEARING_PROCEDURE",
+      "WRAPPER_V1_EXECUTION_AUTHORITY_TOMBSTONE"
+    ]
+  },
+  "accounting": {
+    "ledger_before": 175,
+    "ledger_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "attention_executions": 0,
+    "expert_executions": 0,
+    "aggregate_executions": 0,
+    "shared_expert_executions": 0,
+    "ffn_compositions": 0,
+    "s1_materializations": 0,
+    "s2_constructions": 0,
+    "production_equivalence_executions": 0
+  },
+  "review": {
+    "reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 3,
+    "all_defense_in_depth_findings_dispositioned": true
+  },
+  "specification_phase": "ACCEPTED",
+  "execution_preparation_readiness": "BLOCKED",
+  "readiness": "READY_FOR_PRODUCTION_SERIAL_F32_EQUIVALENCE_EXECUTION_PREPARATION: NO",
+  "reason": "The retained-only specification is accepted, but no authoritative full Apple serial-f32 S0-to-S2 production entry point exists and multiple production numerical semantics remain execution-blocking."
+}

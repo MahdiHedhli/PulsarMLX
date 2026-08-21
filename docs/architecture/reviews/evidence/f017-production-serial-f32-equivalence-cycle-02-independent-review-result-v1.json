@@ -1,0 +1,97 @@
+{
+  "schema": "pulsarmlx.f017.production-serial-f32-equivalence-independent-review-result",
+  "schema_version": "2.0.0",
+  "cycle": 2,
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track_or_invocation_identity": "INDEPENDENT_ADVERSARIAL_SPECIFICATION_AND_ACCOUNTING; claude-fable-5 non-interactive Claude Agent SDK invocation on 2026-08-21; committed-bytes-only detached review of 96503db702e95c7a08746924a208304819139803",
+  "reviewed_branch": "feat/017-real-checkpoint-runner",
+  "reviewed_head": "96503db702e95c7a08746924a208304819139803",
+  "reviewed_artifact_hashes": {
+    "specification": "3ff986346812e124058b51dd96c7b459616b1564d5275da0442ce818dc1c1eb2",
+    "contract": "661bd32ec86a14b098f0f992eb890f1dde0b29d86b8953de52329fb0549797db",
+    "validator": "6cc4fb928966803eb674af93b74a58d5053fb9f2ba990fe5e8a328a9d6db9630",
+    "negative_tests": "d3184bb43a7d1e1b6d9b53f14c23df113c4a8ae3267fce5000ae59517ed741f7",
+    "validation": "287e20791e677ac087c00b5135b67d2c94d4e1342ae2d5ec64dba40f17f1f3a2",
+    "master_ledger_v2": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "ledger_validator": "598bc39e1b2d962d7c43dfd4ab231a370447eede1cd11333803dea7e93871d83",
+    "bound_resolver": "ceb8982c3709f728a6bd60785fd6a519e215c39704379c0661373d22b28b740e"
+  },
+  "reviewer_tests": [
+    "RT-01 PASS committed detached worktree",
+    "RT-02 PASS all request and external authority hashes",
+    "RT-03 PASS immutable ledger-v1 reconstruction terminal 166",
+    "RT-04 PASS ledger-v2 reconstruction terminal 175 with same-commit rule enabled",
+    "RT-05 PASS ledger adapter three-source agreement 175",
+    "RT-06 PASS specification validator bound fields 5/5 and executable numerics 4/4",
+    "RT-07 PASS 37/37 negative tests",
+    "RT-08 PASS closure regression",
+    "RT-09 PASS git diff check",
+    "RT-10 PASS independent receipt-chain reconstruction",
+    "RT-11 confirmed filename-heuristic defense-in-depth gap",
+    "RT-12 confirmed cross-type equality defense-in-depth gap",
+    "RT-13 PASS reviewed commit pushed"
+  ],
+  "findings": [
+    {
+      "id": "F017-SF32-C2-DID-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "same-commit master-ledger rule uses a filename heuristic"
+    },
+    {
+      "id": "F017-SF32-C2-DID-002",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "bound-value comparison uses Python cross-type equality"
+    },
+    {
+      "id": "F017-SF32-C2-DID-003",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "banked cycle-02 validation used the pre-commit --skip-git-rule path"
+    }
+  ],
+  "finding_to_fix_mapping": [
+    {
+      "finding_id": "COUNT",
+      "fix": "append-only receipt-derived master ledger v2, adapter v2, reconstruction validator, and same-commit invariant",
+      "fixed_at_commit": "96503db702e95c7a08746924a208304819139803",
+      "status": "REPAIRED_AND_INDEPENDENTLY_VERIFIED"
+    },
+    {
+      "finding_id": "CYCLE-01-INVOCATION-FAILURE",
+      "fix": "failure banked without verdict; target superseded; fresh strengthened cycle-2 review completed",
+      "fixed_at_commit": "96503db702e95c7a08746924a208304819139803",
+      "status": "REPAIRED_BY_FRESH_CYCLE_2_REVIEW"
+    }
+  ],
+  "defense_in_depth_dispositions": [
+    {
+      "finding_id": "F017-SF32-C2-DID-001",
+      "disposition": "Strengthen event discovery to schema-based detection with strict non-bool integer guards at the next execution-capable generation.",
+      "why_non_blocking": "This phase authorizes no advancing event; the normative rule is unconditional and the receipt-derived ledger is exact at the reviewed head."
+    },
+    {
+      "finding_id": "F017-SF32-C2-DID-002",
+      "disposition": "Require strict type equality in the next resolver generation.",
+      "why_non_blocking": "Every current bound file is byte-pinned before field resolution and all nine current values have the exact declared type."
+    },
+    {
+      "finding_id": "F017-SF32-C2-DID-003",
+      "disposition": "Future banked validation must record a post-commit with-rule run.",
+      "why_non_blocking": "The independent reviewer executed the rule at the reviewed commit and it passed."
+    }
+  ],
+  "exact_request": {
+    "path": "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-review-request-v1.json",
+    "sha256": "27651f062400dd637b13133a94663ecfe30100afc0e9867ebab9940069615684"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-v1.json",
+    "sha256": "9359fd11a2fba0630d0b455a2aceded949b38a7e1caff671aef00ede549eceea"
+  },
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 3,
+  "verdict": "ACCEPT",
+  "statement": "F017 PRODUCTION SERIAL-F32 EQUIVALENCE SPECIFICATION V1 ACCEPTED",
+  "execution_readiness": "BLOCKED",
+  "readiness": "READY_FOR_PRODUCTION_SERIAL_F32_EQUIVALENCE_EXECUTION_PREPARATION: NO"
+}
