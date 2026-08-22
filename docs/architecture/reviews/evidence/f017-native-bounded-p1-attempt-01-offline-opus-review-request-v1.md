@@ -27,6 +27,18 @@ Perform a fresh, high-effort review of committed bytes at a clean detached workt
 
 Recompute all values from Git and direct CI evidence. Treat later evidence commits as append-only review packaging, not implementation changes.
 
+## Cross-vendor disagreement search
+
+Gemini 3.1 Pro High was invoked through AGY against the same implementation. Recompute rather than inherit its conclusion:
+
+- request SHA-256 `57d55ebab972157b0f70a77c6a4acb5ee44771ed7697fd5d26ca760465fae479`;
+- exact CLI response SHA-256 `eb2bf610d3ec4ee18b8f08705edd4e77e3b94d20f12849eb8bc581003077cd7e`;
+- detailed report SHA-256 `bc9fa5096275eb520c955536eb7077cb56ad9ff8457410aa651775b6fee20caa`;
+- normalized result SHA-256 `3fad33c6f2e7c3c1a8e55f8f81d3a067d5a98174bb76864ad980d8390440584e`;
+- advisory verdict `ADVISORY_CONCUR`.
+
+The AGY CLI envelope ended `ERROR_CONTEXT_CANCELED_AFTER_COMPLETE_RESPONSE`; this is disclosed, not normalized away. Gemini labeled the defective expected oracle, immutable attempt status, and unresolved causation as blocking/required for a future attempt 2 while expressly reporting no material disagreement with this offline package. Decide independently whether that scope disposition is sound.
+
 ## Load-bearing package
 
 Recompute and review at least:
