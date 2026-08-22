@@ -1,0 +1,33 @@
+{
+  "schema":"pulsarmlx.f017.native-retention-reuse-review-request",
+  "schema_version":"1.0.0",
+  "cycle":2,
+  "reviewer_model_required":"claude-fable-5",
+  "reviewed_branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"e37732a16f6ef347f067bff00b624f144eb8a961",
+  "committed_pushed_bytes_only":true,
+  "reviewed_artifact_hashes":{
+    "grant":"b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28",
+    "package":"a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f",
+    "consumer":"ea4280f4c8a766b80e530888de869ef0ccacee64326133ba14d285b5637a0664",
+    "enforcer":"bbab9aabc184b709c4375da5edcc7ac874ac01ee16801b8613ee43c4427158c5",
+    "authority_repair":"5e2bb009b630551d5d65438e080f4dc2fe5f9455bbbadf09955a58666b65078a",
+    "validator":"87b2aa51ec9b8033fce2aef4a3319c932b353ce25bc1614a69998cfa6d24a89f",
+    "mutation_tests":"2977db60533d50dbb57fac674f8e37648f72112c02fbee2a36069d146694a560",
+    "architecture":"9b8fc4783933f93d26fcf6a549167dbc630ffb4bf7283fa622c6843888fd08d1",
+    "cycle_01_response":"75af842dc6838d37186b1b3ad3ca9b527c70f003710c0754b959d2b4efd9bae9",
+    "cycle_01_result":"9451bc8a5dadef54400f721f87f36bd9c19845babfb0a22193df8007bb83610a"
+  },
+  "required_rechecks":[
+    "F017-RRC1-F1 one durable attempt represents exactly 10 same-process plus 10 fresh-process runs, 34 exact-byte stages each, and 800 read receipts",
+    "F017-RRC1-F2 append-only authority repair resolves the historical tuple and both roots",
+    "F017-RRC1-F3 duplicate read rejected and exact ordinal census enforced",
+    "F017-RRC1-F4 AFTER identity independently reread from same descriptor",
+    "F017-RRC1-F5 durable owner exists before any retained read; only owner terminalizes; runtime machine and dylib hashes checked before claim; terminal receipt count derived from receipts",
+    "F017-RRC1-F6 Rust execution enforcer test exists and source commits must be ancestors of claimed historical branch",
+    "D3.5 output cannot tune D0 and scope remains representative layer3 only",
+    "no retained bytes or checkpoint data are read during review"
+  ],
+  "acceptance_rule":"BLOCKING_AND_NON_BLOCKING_REQUIRED_MUST_BOTH_EQUAL_ZERO",
+  "requested_verdicts":["ACCEPT","REJECT"]
+}
