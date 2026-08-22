@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-ci-evidence/1.0.0",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "run_id": 32578854836,
+  "head_sha": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+  "event": "push",
+  "status": "completed",
+  "conclusion": "success",
+  "run_url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32578854836",
+  "complete_log_sha256": "54a38878c507cc8a81270158a1862db656c4ed22152c70857934bcf86cf4dbcf",
+  "metadata_sha256": "8ce94ba353c00ae6bd6cbf30b5465838127fc14e93572bb456b688f6b9bb11d8",
+  "jobs": [
+    {
+      "id": 97045110675,
+      "name": "Apple Silicon workspace baseline",
+      "conclusion": "success"
+    },
+    {
+      "id": 97045110590,
+      "name": "Apple MLX small-fixture validation",
+      "conclusion": "success",
+      "pulsar_require_native_mlx": "1",
+      "native_qualification_skips": 0,
+      "stream_lib_tests": "47/47 PASS",
+      "native_adapter_tests": "15/15 PASS",
+      "all_zero_accounting_rejection": "PASS",
+      "d3_5": {
+        "result": "PASS",
+        "stage_count": 34,
+        "receipt_count": 89,
+        "original_checkpoint_reads": 0,
+        "normalized_result_sha256": "472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4"
+      },
+      "receipt_v3_synthetic": {
+        "result": "PASS",
+        "source_built_binary": true,
+        "fresh_processes": 10,
+        "summary_byte_identity": "EXACT_10_OF_10",
+        "original_checkpoint_reads": 0,
+        "real_m1_ultra_p1_executed": false,
+        "ephemeral_evidence_sha256": "56683e1ead424a42533797239d847d6dc6264f09b520894f2dc1e3631264bd92"
+      }
+    }
+  ],
+  "cycle_1_required_repairs": {
+    "F017-OPUS-C4-01": "source-built exact-head synthetic executor and ten-process evidence",
+    "F017-OPUS-C4-02": "CI executes target/release source build with derived authority",
+    "F017-OPUS-C4-03": "all-zero or stale accounting pairs rejected",
+    "F017-OPUS-C4-04": "operator-authorized Opus final reviewer and exact verdict vocabulary enforced"
+  },
+  "hard_invariants": {
+    "real_m1_ultra_p1_executions": 0,
+    "full_model_real_checkpoint_inference_executions": 0,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorizations": 0,
+    "historical_master_ledger": 175
+  }
+}
