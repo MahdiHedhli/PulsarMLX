@@ -6,9 +6,9 @@
   "consumer": {
     "id": "F017-NATIVE-D3_5-NUMERICAL-GRADER-1",
     "executable_path": "${REPOSITORY_ROOT}/target/release/f017-native-d35-grader",
-    "executable_sha256": "bbf84851b8d4bcedd7ff526e753b113fac585621d90fe05a4660d88f5ad975cb",
+    "executable_sha256": "3768dcc632cdc8f572cc5f0880040c8eaf72ba979cb2f8148ada6f5e802e4992",
     "source_path": "crates/f017-native/src/bin/d35_grader.rs",
-    "source_sha256": "e446ab7edea7299e9e92e94791d08bd318577a588af7b9eb55045b8adef868f7"
+    "source_sha256": "de2e39c899f5e847222b20d1771d192bae6ea512afb1353ad8d69547610ac580"
   },
   "authority": {
     "d0_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json",
@@ -317,7 +317,7 @@
       "shape": [
         6144
       ],
-      "serialization": "CANONICAL_F32_LE",
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "54e0ea92fca38522405b4d52977eb46910d2e739",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json",

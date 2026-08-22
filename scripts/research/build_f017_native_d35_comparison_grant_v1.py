@@ -115,7 +115,8 @@ def operand_inventory(old_grant: dict) -> list[dict]:
         rows.append({
             "role": f"operand.{source['role']}", "path": source["path"], "sha256": source["sha256"],
             "byte_count": source["byte_count"], "dtype": source["encoding"], "shape": source["shape"],
-            "serialization": source["decoder_binding"], "source_branch": source["source_branch"],
+            "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS" if source["role"] == "s0" else source["decoder_binding"],
+            "source_branch": source["source_branch"],
             "source_commit": source["source_commit"], "source_authority_path": source["source_authority_path"],
             "source_authority_sha256": source["source_authority_sha256"],
             "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",

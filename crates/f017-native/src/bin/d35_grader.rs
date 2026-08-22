@@ -30,6 +30,10 @@ const ROUTING_WEIGHTS_SHA256: &str =
 const RANKING_SHA256: &str = "b2de9d7a4fe2701f0cda51f6b95a5396195e0bf0c44924aa6d46b4a899af549d";
 const OUTPUT_ROOT: &str = "${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1";
 const HISTORICAL_HEAD: &str = "f2a7aa38c96b85cf7939c8ed653076732f066222";
+const EXPECTED_READ_COUNT: usize = 15;
+const OPERAND_READ_COUNT: usize = 40;
+const CAPTURE_READ_COUNT: usize = 34;
+const TOTAL_READ_COUNT: usize = 89;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -386,7 +390,7 @@ fn metric_row(
         result: if numeric {
             result.into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     })
 }
@@ -524,11 +528,13 @@ fn run() -> Result<(), String> {
         || grant.event.original_checkpoint_shard_opens != 0
         || grant.event.historical_payload_ledger_delta != 0
         || grant.authority.historical_master_terminal != 175
-        || grant.expected_read_count != grant.expected_reads.len()
-        || grant.operand_read_count != grant.operand_reads.len()
-        || grant.capture_read_count != grant.capture_reads.len()
-        || grant.total_read_count
-            != grant.expected_reads.len() + grant.operand_reads.len() + grant.capture_reads.len()
+        || grant.expected_read_count != EXPECTED_READ_COUNT
+        || grant.operand_read_count != OPERAND_READ_COUNT
+        || grant.capture_read_count != CAPTURE_READ_COUNT
+        || grant.total_read_count != TOTAL_READ_COUNT
+        || grant.expected_reads.len() != EXPECTED_READ_COUNT
+        || grant.operand_reads.len() != OPERAND_READ_COUNT
+        || grant.capture_reads.len() != CAPTURE_READ_COUNT
     {
         return Err("GRANT_POLICY".into());
     }
@@ -575,6 +581,76 @@ fn run() -> Result<(), String> {
     all.extend(grant.expected_reads.clone());
     all.extend(grant.operand_reads.clone());
     all.extend(grant.capture_reads.clone());
+    let expected_registry = [
+        (
+            "expected.input_hidden",
+            "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+        ),
+        (
+            "expected.post_attention_residual",
+            "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+        ),
+        (
+            "expected.router_normalized",
+            "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+        ),
+        (
+            "expected.routed_aggregate",
+            "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+        ),
+        (
+            "expected.shared_expert_output",
+            "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+        ),
+        (
+            "expected.production_ffn",
+            "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+        ),
+        (
+            "expected.production_s2",
+            "0341314230654d21fa56506dfe601f90bdb603fc38fd1203b6dd62b1e54c98c1",
+        ),
+        (
+            "expected.expert_down.0",
+            "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b",
+        ),
+        (
+            "expected.expert_down.1",
+            "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3",
+        ),
+        (
+            "expected.expert_down.2",
+            "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b",
+        ),
+        (
+            "expected.expert_down.3",
+            "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128",
+        ),
+        (
+            "expected.expert_down.4",
+            "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3",
+        ),
+        (
+            "expected.expert_down.5",
+            "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201",
+        ),
+        (
+            "expected.expert_down.6",
+            "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d",
+        ),
+        (
+            "expected.expert_down.7",
+            "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0",
+        ),
+    ];
+    if !grant
+        .expected_reads
+        .iter()
+        .zip(expected_registry)
+        .all(|(row, (role, expected_sha))| row.role == role && row.sha256 == expected_sha)
+    {
+        return Err("EXPECTED_REGISTRY_BINDING".into());
+    }
     let mut roles = BTreeSet::new();
     let mut source_cache: BTreeMap<(String, String), String> = BTreeMap::new();
     for (ordinal, row) in all.iter().enumerate() {
@@ -643,7 +719,7 @@ fn run() -> Result<(), String> {
         result: if c0 == e0 {
             "BYTE_EQUIVALENT".into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     });
     for (ord, id, oracle) in [
@@ -684,7 +760,7 @@ fn run() -> Result<(), String> {
         result: if sha(ranking) == grant.route_authority.ranking_sha256 {
             "BYTE_EQUIVALENT".into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     });
     let selected = decode_hex(&grant.route_authority.selected_ids_hex)?;
@@ -706,7 +782,7 @@ fn run() -> Result<(), String> {
         result: if selected_pass {
             "BYTE_EQUIVALENT".into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     });
     let route_expected = f64_values(&decode_hex(&grant.route_authority.routing_weights_f64_hex)?)?;
@@ -733,7 +809,7 @@ fn run() -> Result<(), String> {
         && interval_pass;
     route.numeric_pass &= route.structural_pass;
     if !route.numeric_pass {
-        route.result = "FAILED_FROZEN_CONTRACT".into();
+        route.result = "FAILED_CONTRACT".into();
     }
     rows.push(route);
 
@@ -781,22 +857,24 @@ fn run() -> Result<(), String> {
     let actual_up = capture("routed_up")?;
     let gm = metrics(&actual_gate, &routed_gate_expected)?;
     let um = metrics(&actual_up, &routed_up_expected)?;
-    let gp = actual_gate
-        .iter()
-        .zip(&routed_gate_expected)
-        .zip(&routed_gate_caps)
-        .all(|((&a, &e), &c)| (a - e).abs() <= c);
-    let upass = actual_up
-        .iter()
-        .zip(&routed_up_expected)
-        .zip(&routed_up_caps)
-        .all(|((&a, &e), &c)| (a - e).abs() <= c);
+    let gp = signed_zero_compatible(&actual_gate, &routed_gate_expected)
+        && actual_gate
+            .iter()
+            .zip(&routed_gate_expected)
+            .zip(&routed_gate_caps)
+            .all(|((&a, &e), &c)| (a - e).abs() <= c);
+    let upass = signed_zero_compatible(&actual_up, &routed_up_expected)
+        && actual_up
+            .iter()
+            .zip(&routed_up_expected)
+            .zip(&routed_up_caps)
+            .all(|((&a, &e), &c)| (a - e).abs() <= c);
     rows.push(Metric {
         ordinal: 20,
         stage_id: "routed_gate".into(),
         class: "NUMERICALLY_BOUNDED_REQUIRED".into(),
         oracle: "INDEPENDENT_COMPLETE_EXPERT".into(),
-        metric: "operand_conditioned_matvec_all_eight_experts".into(),
+        metric: "operand_conditioned_matvec".into(),
         max_abs_error: Some(gm.0),
         rmse: Some(gm.1),
         cosine_similarity: Some(gm.2),
@@ -806,7 +884,7 @@ fn run() -> Result<(), String> {
         result: if gp {
             "NUMERICALLY_EQUIVALENT_WITHIN_FROZEN_TOLERANCE".into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     });
     rows.push(Metric {
@@ -814,7 +892,7 @@ fn run() -> Result<(), String> {
         stage_id: "routed_up".into(),
         class: "NUMERICALLY_BOUNDED_REQUIRED".into(),
         oracle: "INDEPENDENT_COMPLETE_EXPERT".into(),
-        metric: "operand_conditioned_matvec_all_eight_experts".into(),
+        metric: "operand_conditioned_matvec".into(),
         max_abs_error: Some(um.0),
         rmse: Some(um.1),
         cosine_similarity: Some(um.2),
@@ -824,7 +902,7 @@ fn run() -> Result<(), String> {
         result: if upass {
             "NUMERICALLY_EQUIVALENT_WITHIN_FROZEN_TOLERANCE".into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     });
     // Grade all eight down projections against an independent reference chain.
@@ -840,11 +918,12 @@ fn run() -> Result<(), String> {
         down_caps.extend(c);
     }
     let dm = metrics(&down_actual, &down_expected)?;
-    let dpass = down_actual
-        .iter()
-        .zip(&down_expected)
-        .zip(&down_caps)
-        .all(|((&a, &e), &c)| (a - e).abs() <= c);
+    let dpass = signed_zero_compatible(&down_actual, &down_expected)
+        && down_actual
+            .iter()
+            .zip(&down_expected)
+            .zip(&down_caps)
+            .all(|((&a, &e), &c)| (a - e).abs() <= c);
     rows.push(Metric {
         ordinal: 25,
         stage_id: "routed_down_outputs".into(),
@@ -860,7 +939,7 @@ fn run() -> Result<(), String> {
         result: if dpass {
             "NUMERICALLY_EQUIVALENT_WITHIN_FROZEN_TOLERANCE".into()
         } else {
-            "FAILED_FROZEN_CONTRACT".into()
+            "FAILED_CONTRACT".into()
         },
     });
 
@@ -878,11 +957,11 @@ fn run() -> Result<(), String> {
         let (e, c) = f64_matvec_and_caps(&w, 2048, 6144, &input)?;
         let a = capture(id)?;
         let m = metrics(&a, &e)?;
-        let pass = a
-            .iter()
-            .zip(&e)
-            .zip(&c)
-            .all(|((&x, &y), &cap)| (x - y).abs() <= cap);
+        let pass = signed_zero_compatible(&a, &e)
+            && a.iter()
+                .zip(&e)
+                .zip(&c)
+                .all(|((&x, &y), &cap)| (x - y).abs() <= cap);
         rows.push(Metric {
             ordinal: ord,
             stage_id: id.into(),
@@ -898,7 +977,7 @@ fn run() -> Result<(), String> {
             result: if pass {
                 "NUMERICALLY_EQUIVALENT_WITHIN_FROZEN_TOLERANCE".into()
             } else {
-                "FAILED_FROZEN_CONTRACT".into()
+                "FAILED_CONTRACT".into()
             },
         });
     }
@@ -913,7 +992,7 @@ fn run() -> Result<(), String> {
         0.015625,
         0.0078125,
         0.9999,
-        "INTENTIONALLY_DISTINCT_WITHIN_DIAGNOSTIC_BOUND",
+        "INTENTIONALLY_DISTINCT",
     )?);
     rows.push(metric_row(
         31,
@@ -939,7 +1018,7 @@ fn run() -> Result<(), String> {
         0.015625,
         0.0078125,
         0.9999,
-        "INTENTIONALLY_DISTINCT_WITHIN_DIAGNOSTIC_BOUND",
+        "INTENTIONALLY_DISTINCT",
     )?);
     rows.push(metric_row(
         33,
@@ -952,7 +1031,7 @@ fn run() -> Result<(), String> {
         0.0625,
         0.03125,
         0.999,
-        "INTENTIONALLY_DISTINCT_WITHIN_DIAGNOSTIC_BOUND",
+        "INTENTIONALLY_DISTINCT",
     )?);
 
     // These stages are correctness-qualified by independent boundary oracles and
@@ -1076,7 +1155,7 @@ fn run() -> Result<(), String> {
                 .find(|r| r.ordinal == *o)
                 .is_some_and(|r| r.structural_pass && r.numeric_pass)
         });
-    let result = serde_json::json!({"schema":"pulsarmlx.f017.native-d3-5-numerical-grading-result/1.0.0","grant_sha256":sha(&grant_bytes),"d0_sha256":D0_SHA256,"d3_5_evidence_sha256":EVIDENCE_SHA256,"existing_captures_reused":true,"native_execution_performed":false,"original_checkpoint_reads":0,"historical_payload_ledger_delta":0,"read_receipt_count":receipts.len(),"read_receipts":receipts,"stage_metrics":rows,"required_ordinal_count":required.len(),"retained_qualification":if pass{"MIXED_D0_V2_CLASS/PASS"}else{"FAILED_FROZEN_CONTRACT"},"pass":pass});
+    let result = serde_json::json!({"schema":"pulsarmlx.f017.native-d3-5-numerical-grading-result/1.0.0","grant_sha256":sha(&grant_bytes),"d0_sha256":D0_SHA256,"d3_5_evidence_sha256":EVIDENCE_SHA256,"existing_captures_reused":true,"native_execution_performed":false,"original_checkpoint_reads":0,"historical_payload_ledger_delta":0,"read_receipt_count":receipts.len(),"read_receipts":receipts,"stage_metrics":rows,"required_ordinal_count":required.len(),"retained_qualification":if pass{"MIXED_D0_V2_CLASS/PASS"}else{"FAILED_CONTRACT"},"pass":pass});
     let output_root = resolve_bound_path(&grant.allowed_output_root)?;
     fs::create_dir(&output_root).map_err(|e| format!("OUTPUT_ROOT_CREATE:{e}"))?;
     let result_path = output_root.join("grading-result.json");
@@ -1084,7 +1163,7 @@ fn run() -> Result<(), String> {
     let terminal = serde_json::json!({"schema":"pulsarmlx.f017.native-d3-5-grading-terminal/1.0.0","event_id":grant.event.event_id,"attempt_id":grant.event.attempt_id,"state":if pass{"COMPLETE"}else{"TERMINAL_FAILURE"},"result_sha256":result_sha,"receipt_count":receipts.len(),"original_checkpoint_reads":0,"historical_payload_ledger_delta":0});
     let _ = write_json_exclusive(&output_root.join("terminal.json"), &terminal)?;
     if !pass {
-        return Err("FAILED_FROZEN_CONTRACT".into());
+        return Err("FAILED_CONTRACT".into());
     }
     println!("F017_D35_NUMERICAL_GRADING: PASS {result_sha}");
     Ok(())

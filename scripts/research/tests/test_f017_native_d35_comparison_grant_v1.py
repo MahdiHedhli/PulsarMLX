@@ -47,6 +47,8 @@ class GrantMutations(unittest.TestCase):
             ("duplicate_role",lambda x:x["capture_reads"][0].__setitem__("role",x["expected_reads"][0]["role"])),
             ("ids",lambda x:x["route_authority"].__setitem__("selected_ids_hex","00"*16)),
             ("weights",lambda x:x["route_authority"].__setitem__("routing_weights_f64_hex","00"*64)),
+            ("ranking",lambda x:x["route_authority"].__setitem__("ranking_sha256","0"*64)),
+            ("s0_serialization",lambda x:x["operand_reads"][0].__setitem__("serialization","CANONICAL_F32_LE")),
         ]
         for name,mutation in mutations:
             with self.subTest(mutation=name): self.reject(mutation)
@@ -64,7 +66,8 @@ class GrantMutations(unittest.TestCase):
         source=(ROOT/"crates/f017-native/src/bin/d35_grader.rs").read_text()
         for label in ["RETAINED_CANONICAL_S1","RETAINED_CANONICAL_ROUTER_NORMALIZED","INDEPENDENT_COMPLETE_EXPERT"]:
             self.assertIn(label,source)
-        self.assertIn("operand_conditioned_matvec_all_eight_experts",source)
+        self.assertNotIn("operand_conditioned_matvec_all_eight_experts",source)
+        self.assertGreaterEqual(source.count('metric: "operand_conditioned_matvec"'),4)
         self.assertNotIn('oracle:"OPERAND_CONDITIONED_F64"',source)
 
 

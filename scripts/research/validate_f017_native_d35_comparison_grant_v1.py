@@ -108,7 +108,10 @@ def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
         source=capture_by_role.get(row["role"])
         if source is None:
             raise ValueError("capture authority role")
-        expected_dtype="U16_LE" if "u16" in source["dtype"] else "F32_LE"
+        dtype_map={"little-endian-u16":"U16_LE","little-endian-f32":"F32_LE"}
+        if source["dtype"] not in dtype_map:
+            raise ValueError("capture dtype vocabulary")
+        expected_dtype=dtype_map[source["dtype"]]
         if (row["sha256"],row["byte_count"],row["shape"],row["dtype"]) != (source["sha256"],source["byte_length"],source["shape"],expected_dtype):
             raise ValueError("capture authority mismatch")
     disclosure=load(ROOT/authority["diagnostic_disclosure_path"])
@@ -134,6 +137,10 @@ def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
     route = doc["route_authority"]
     if sha_bytes(bytes.fromhex(route["selected_ids_hex"])) != route["selected_ids_sha256"] or sha_bytes(bytes.fromhex(route["routing_weights_f64_hex"])) != route["routing_weights_sha256"]:
         raise ValueError("route byte binding")
+    if route["ranking_sha256"]!="b2de9d7a4fe2701f0cda51f6b95a5396195e0bf0c44924aa6d46b4a899af549d":
+        raise ValueError("route ranking authority")
+    if doc["operand_reads"][0]["serialization"]!="CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS":
+        raise ValueError("S0 serialization vocabulary")
     if doc["allowed_output_root"]!="${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1":
         raise ValueError("output root binding")
     if resolve_bound_path(doc["allowed_output_root"]).exists():
