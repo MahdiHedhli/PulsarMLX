@@ -1,0 +1,89 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-independent-review-result/2.0.0",
+  "review_cycle": 1,
+  "temporary_reviewer_substitution": {
+    "active": true,
+    "reason": "CLAUDE_FABLE_5_QUOTA_EXHAUSTED",
+    "policy_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-temporary-reviewer-policy-v1.json",
+    "policy_sha256": "879e323ae411e4e1b0eb2888a569e8d7d11cd4772e221d17e313fc3dbc0956aa",
+    "fable_ratification_pending": true
+  },
+  "reviewer": {
+    "identity": "claude-opus-5",
+    "canonical_model": "claude-opus-5",
+    "provider": "Anthropic firstParty via Claude Code CLI",
+    "track": "temporary-whole-domain-interim-independent-review",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "cli_version": "2.1.235",
+    "invocation": "claude --model claude-opus-5 --effort high --output-format json --dangerously-skip-permissions -p <exact committed request>",
+    "session_id": "73e83130-4d5a-45a9-b289-f03b253e426e",
+    "service_tier": "standard",
+    "num_turns": 84,
+    "duration_ms": 1174958
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_commit": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "review_worktree": "DETACHED_CLEAN_EXACT_REVIEWED_COMMIT",
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-01-request.md",
+    "sha256": "a65a8c4d89b1dce1805bba6892f0d615a15f79b92e99ca1e135ed16b05d80b6b"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-01-exact-cli-response.json",
+    "sha256": "283d11a413206be9a82baa8d2690778f23b9efa20785c9f103305f5d54e44682"
+  },
+  "exact_head_ci": {
+    "run_id": 32560783265,
+    "head": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+    "branch": "feat/017-rust-native-inference-runtime",
+    "conclusion": "success",
+    "reviewer_inspected_directly": true
+  },
+  "reviewed_artifacts": [
+    {"path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-package-v1.json", "sha256": "c40ccfbde041f9158f27e93451e782077c69753f79cca4b36daf2699b32ac80f"},
+    {"path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-pre-review-validation-v1.json", "sha256": "677b0e07c713665111887211b268953f50bc0deac562451af272cbfd10d42f56"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json", "sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-counter-semantics-v1.json", "sha256": "f3aab3b065628f96bfe1fab1a045a9af3d2261e2b5d7ef69c1528fb0a7d88246"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-accounting-residency-v1.json", "sha256": "d2312004f05cafbfd1f1779ccfbbb9e1a0c8c5b4e916aa0601abb04dbefe9c84"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-execution-architecture-v2.json", "sha256": "ccb01e8dfeb5432598ded15b99783f186ebb5a03a794f25b70660a202d7a6f39"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json", "sha256": "340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json", "sha256": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28"},
+    {"path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json", "sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8"},
+    {"path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json", "sha256": "472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4"},
+    {"path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json", "sha256": "9d4d29870e8aa67d9ca9ed2702bddd4b9248930204e4f03f05c5f05f2727b163"},
+    {"path": "docs/architecture/reviews/evidence/f017-native-d3-5-ungranted-diagnostic-read-disclosure-v1.json", "sha256": "a1daa331ce641b7e34459de1f7a5584632c8cb5bce82862a66e93b330e9aa03b"},
+    {"path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v1.json", "sha256": "3ea4091530d62b00eb5dd149de822fcfde7e092209462c5e7f4bf662a4ac99d2"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json", "sha256": "44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda"}
+  ],
+  "tests_performed_by_reviewer": [
+    {"command": "cargo test -p stream --lib", "result": "PASS_45"},
+    {"command": "cargo test -p f017-native --release --no-fail-fast", "result": "PASS_8"},
+    {"command": "cargo test -p quant --no-fail-fast", "result": "PASS_29_ACROSS_6_TARGETS"},
+    {"command": "f017-native-bounded-p1 plan-only", "result": "PASS_0_CHECKPOINT_READS"},
+    {"command": "f017-native-bounded-p1 validate-contract", "result": "PASS_NO_AUTHORIZATION_MINTED"},
+    {"command": "f017-native-synthetic-p1 against committed fixture and authority", "result": "FAIL_STALE_SCHEMA_FINDING_F1"}
+  ],
+  "findings": [
+    {"id": "F017-OPUS-C1-F1", "severity": "BLOCKING", "title": "Synthetic full-model qualification is stale and unreproducible at the reviewed head", "affected": ["docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v1.json", "specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v1.json", "crates/stream/src/p1_domain.rs"], "required_repair": "Regenerate the inert authority with receipt schema 2.0.0 fields, rerun ten fresh-process qualification, re-bank evidence, and rebind the result in the admission contract.", "fresh_ci_required": true, "invalidates_d3_5": false},
+    {"id": "F017-OPUS-C1-F2", "severity": "NON_BLOCKING_REQUIRED", "title": "RN1 lifecycle and synthetic full-graph have zero exact-head CI coverage", "affected": [".github/workflows/macos.yml", "crates/stream/src/lib.rs"], "required_repair": "Run stream lib RN1 tests in the MLX-provisioned job and add a synthetic full-graph execution step.", "fresh_ci_required": true, "invalidates_d3_5": false},
+    {"id": "F017-OPUS-C1-F3", "severity": "DEFENSE_IN_DEPTH", "title": "Q4_K and Q5_K malformed inputs can panic instead of failing closed", "disposition": "Bound checkpoint catalog fixes valid block geometry and size; close before any catalog rebind."},
+    {"id": "F017-OPUS-C1-F4", "severity": "DEFENSE_IN_DEPTH", "title": "Catalog format string and type_id are not cross-validated", "disposition": "Bound catalog has zero mismatches; close before any catalog rebind."},
+    {"id": "F017-OPUS-C1-F5", "severity": "DEFENSE_IN_DEPTH", "title": "execution_code_head is provenance-only", "disposition": "Executable and 24-file manifest are exact; close before live authorization minting."},
+    {"id": "F017-OPUS-C1-F6", "severity": "DEFENSE_IN_DEPTH", "title": "RoPE is elided at position zero but comment claims computation", "disposition": "Numerically identity for fixed position zero; document and guard before any position greater than zero."},
+    {"id": "F017-OPUS-C1-F7", "severity": "DEFENSE_IN_DEPTH", "title": "Full vocabulary materialization risks consuming one-shot by memory failure", "disposition": "Correctness remains fail-closed; optimize before scheduling real P1."},
+    {"id": "F017-OPUS-C1-F8", "severity": "DEFENSE_IN_DEPTH", "title": "Synthetic routing fixture is numerically degenerate", "disposition": "D3.5 separately binds structural routing; strengthen while regenerating synthetic qualification."},
+    {"id": "F017-OPUS-C1-F9", "severity": "DEFENSE_IN_DEPTH", "title": "attempt_id path traversal is not rejected", "disposition": "Claim is still consumed fail-closed; reject unsafe identifiers before live authorization."},
+    {"id": "F017-OPUS-C1-F10", "severity": "DEFENSE_IN_DEPTH", "title": "validate_accounting accepts an all-zero snapshot pair", "disposition": "Native build and real producer make it unreachable; add liveness and checked subtraction before real P1."}
+  ],
+  "blocking_count": 1,
+  "non_blocking_required_count": 1,
+  "defense_in_depth_count": 8,
+  "verdict": "REJECT",
+  "invariants": {
+    "fable_ratification_pending": true,
+    "real_m1_ultra_p1_executed_during_review": false,
+    "full_model_real_checkpoint_inference_executed_during_review": false,
+    "original_checkpoint_reads_during_review": 0,
+    "live_p1_authorization_created_during_review": false
+  }
+}
