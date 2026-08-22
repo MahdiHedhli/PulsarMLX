@@ -44,6 +44,13 @@ def resolve_bound_path(text: str) -> Path:
     raise ValueError("unbound path prefix")
 
 
+def authority_path(text: str) -> Path:
+    """Resolve symbolic HOME for cross-host authority comparison, not file I/O."""
+    if text.startswith("${HOME}/"):
+        return Path("/Users/mhedhli") / text.removeprefix("${HOME}/")
+    return Path(text)
+
+
 def committed_bytes(commit: str, path: str) -> bytes:
     return subprocess.check_output(["git", "show", f"{commit}:{path}"], cwd=ROOT)
 
@@ -101,7 +108,7 @@ def validate(
     operand_by_role={f"operand.{row['role']}":row for row in old_grant["allowed_reads"]}
     for row in doc["operand_reads"]:
         source=operand_by_role.get(row["role"])
-        if source is None or (resolve_bound_path(row["path"]),row["sha256"],row["byte_count"],row["dtype"],row["shape"]) != (Path(source["path"]),source["sha256"],source["byte_count"],source["encoding"],source["shape"]):
+        if source is None or (authority_path(row["path"]),row["sha256"],row["byte_count"],row["dtype"],row["shape"]) != (authority_path(source["path"]),source["sha256"],source["byte_count"],source["encoding"],source["shape"]):
             raise ValueError("operand authority mismatch")
     evidence=load(ROOT/authority["d3_5_evidence_path"]); mapping=load(ROOT/authority["stage_mapping_path"])
     pinned_manifest_sha=evidence["machine_local_authority"]["representative_manifest_sha256"]
@@ -132,12 +139,12 @@ def validate(
             if (row["sha256"],row["byte_count"],row["shape"],row["dtype"]) != (source["sha256"],source["byte_length"],source["shape"],expected_dtype):
                 raise ValueError("capture authority mismatch")
     disclosure=load(ROOT/authority["diagnostic_disclosure_path"])
-    disclosed={row["path"]:row["sha256"] for row in disclosure["diagnostic_retained_artifact_reads"]}
+    disclosed={str(authority_path(row["path"])):row["sha256"] for row in disclosure["diagnostic_retained_artifact_reads"]}
     for row in doc["expected_reads"][1:]:
-        if disclosed.get(str(resolve_bound_path(row["path"]))) != row["sha256"]:
+        if disclosed.get(str(authority_path(row["path"]))) != row["sha256"]:
             raise ValueError("expected authority mismatch")
     s0=old_grant["allowed_reads"][0]
-    if (resolve_bound_path(doc["expected_reads"][0]["path"]),doc["expected_reads"][0]["sha256"]) != (Path(s0["path"]),s0["sha256"]):
+    if (authority_path(doc["expected_reads"][0]["path"]),doc["expected_reads"][0]["sha256"]) != (authority_path(s0["path"]),s0["sha256"]):
         raise ValueError("S0 expected authority mismatch")
     if mapping["stage_count"] != 34 or len(mapping["rows"]) != 34 or mapping["policy"] != {"producer_role_validated_before_alias":True,"implicit_mapping":False,"direct_production_copy_allowed_for_recomputed_stage":False}:
         raise ValueError("mapping policy")
