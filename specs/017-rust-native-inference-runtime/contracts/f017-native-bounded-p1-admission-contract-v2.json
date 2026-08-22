@@ -1,0 +1,245 @@
+{
+  "authorities": {
+    "comparison_read_grant": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json",
+      "sha256": "340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f"
+    },
+    "cross_branch_authority": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-domain-cross-branch-authority-v1.json",
+      "sha256": "dec44d48faf46d30f3cad6193442eac55a1bd978311d9daa9c1ac28f40308f90"
+    },
+    "d0": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json",
+      "sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"
+    },
+    "d1": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-counter-semantics-v1.json",
+      "sha256": "f3aab3b065628f96bfe1fab1a045a9af3d2261e2b5d7ef69c1528fb0a7d88246"
+    },
+    "d2": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-accounting-residency-v1.json",
+      "sha256": "d2312004f05cafbfd1f1779ccfbbb9e1a0c8c5b4e916aa0601abb04dbefe9c84"
+    },
+    "d3_5_acceptance": {
+      "path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json",
+      "sha256": "9d4d29870e8aa67d9ca9ed2702bddd4b9248930204e4f03f05c5f05f2727b163"
+    },
+    "d3_5_result": {
+      "path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json",
+      "sha256": "472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4"
+    },
+    "execution_architecture": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-execution-architecture-v2.json",
+      "sha256": "ccb01e8dfeb5432598ded15b99783f186ebb5a03a794f25b70660a202d7a6f39"
+    },
+    "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_master_terminal_value": 175,
+    "retention_reuse_grant": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json",
+      "sha256": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28"
+    },
+    "runtime_provenance": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-runtime-provenance-v1.json",
+      "sha256": "a614377d4faacd501f34ef8dedc1754e432f3ed13630233208f32b5e19819b6d"
+    },
+    "synthetic_full_graph_result": {
+      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v1.json",
+      "sha256": "3ea4091530d62b00eb5dd149de822fcfde7e092209462c5e7f4bf662a4ac99d2"
+    }
+  },
+  "branch": "feat/017-rust-native-inference-runtime",
+  "checkpoint": {
+    "catalog": {
+      "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+      "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+    },
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "fallback": "PROHIBITED",
+    "manifest": {
+      "path": "docs/validation/glm52-checkpoint.json",
+      "sha256": "34b65d586c86d24ee10f3a2ed55491fb3a5a6b9ddbaf893bf9e0ab962c96cf8f"
+    },
+    "root_environment": "PULSARMLX_GLM_GGUF",
+    "shards": [
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",
+        "sha256": "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18",
+        "size_bytes": 9423744
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+        "size_bytes": 49105028960
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",
+        "sha256": "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",
+        "sha256": "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",
+        "sha256": "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d",
+        "size_bytes": 49143176640
+      },
+      {
+        "filename": "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",
+        "sha256": "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d",
+        "size_bytes": 41914650304
+      }
+    ]
+  },
+  "code_manifest": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "0fc37aff9036a4c6a46ae396a1f9f0355412f3c447e44e0f070b5150c19c01ea"
+    },
+    {
+      "path": "crates/f017-native/Cargo.toml",
+      "sha256": "b81bea82f0ec301e621503d811ee595141032f7808993e8846cbba3ce8935369"
+    },
+    {
+      "path": "crates/f017-native/build.rs",
+      "sha256": "992c2227dafe51466a4f40898f2138fe3c26101d219acaa122a5b68b97ef859a"
+    },
+    {
+      "path": "crates/f017-native/src/lib.rs",
+      "sha256": "042001c80c92946ec832b9c666e2aae5df8aefc66dc9a83645a3a54e451a8fa7"
+    },
+    {
+      "path": "crates/f017-native/src/contract.rs",
+      "sha256": "7fe6ea44c942573077cbc7f3130e4e2d6c4f195e297af4c0a7cd094b4680c8e1"
+    },
+    {
+      "path": "crates/f017-native/src/executor.rs",
+      "sha256": "013de70272b109b68374c4148ad3d35ec78d0dff72765e7152a01107e161edaf"
+    },
+    {
+      "path": "crates/f017-native/src/loader.rs",
+      "sha256": "b71fcc73d8e2f01cc0ffd2e39fee49fb0409801634c2de10a462704343e6566f"
+    },
+    {
+      "path": "crates/f017-native/src/model.rs",
+      "sha256": "0b7f7ff181e607264f4ef514adda229b96209769a46d2cda86055b8474732710"
+    },
+    {
+      "path": "crates/f017-native/src/bin/bounded_p1.rs",
+      "sha256": "30da806e1525e98180e0d9290846cd41f170b0888cdad2e90ec0392a114d8750"
+    },
+    {
+      "path": "crates/gguf/src/lib.rs",
+      "sha256": "4567fd49bb39564b252547025f297ffe502325e7e74cbd79d9d42c328af0c2b9"
+    },
+    {
+      "path": "crates/quant/build.rs",
+      "sha256": "d3049253b6c16419468346d86ea1e0a3ace5bb3a1154f430a833c5300c3f60da"
+    },
+    {
+      "path": "crates/quant/src/lib.rs",
+      "sha256": "a582fc2b4fdfea1d54beb67937cecb13db55273d0bcede6a2d37272594fbe3ff"
+    },
+    {
+      "path": "crates/quant/src/cpu_dot.rs",
+      "sha256": "64e5385a9a6e0690ba6841809ea268b06ce9f52b1ad63b2dde50b066bdf81d7d"
+    },
+    {
+      "path": "crates/quant/src/cpu_dot_tables.rs",
+      "sha256": "8dc16e47d422a5bf52ba6efb3d754e70af6ae43c88179d59bf6977711003f85b"
+    },
+    {
+      "path": "crates/quant/src/extra_ref.rs",
+      "sha256": "4ebb2f6314d13c9e6b7448233cff04b533f83f5a36985305497077a9238e86f5"
+    },
+    {
+      "path": "crates/quant/src/iq.rs",
+      "sha256": "43a79a985efb881a4a5b3caa918b554b37733c8ea15367b40283bcd33a16508c"
+    },
+    {
+      "path": "crates/quant/src/iq_ref.rs",
+      "sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"
+    },
+    {
+      "path": "crates/quant/src/q6_k_ref.rs",
+      "sha256": "a4d308ef1aa874865e668002a8911d8247247dd490e301018f730aeb06ab35fd"
+    },
+    {
+      "path": "crates/stream/build.rs",
+      "sha256": "f178e8615267322b3552226f06e28a61a4306c1c033768f9396662ce63280d2b"
+    },
+    {
+      "path": "crates/stream/src/lib.rs",
+      "sha256": "39f12a4206068f428f8a0bfe8daecd7f068251e252f03e9f2ccc84cff8de2066"
+    },
+    {
+      "path": "crates/stream/src/p1_domain.rs",
+      "sha256": "a693384579ca22dd919d11a99878834354cbb386dde22dd8c866e9d8de42a9f4"
+    },
+    {
+      "path": "crates/stream/src/apple_mlx_bridge.rs",
+      "sha256": "08ca3a7da61da41707d6cf5f50822432eae721ae2912730ef23fe9ddeeed358c"
+    },
+    {
+      "path": "crates/stream/src/apple_mlx_bridge.mm",
+      "sha256": "e68b1f1553903c6a06cba6f29947e275f3362d33beaa591326a3c2ccdeda6142"
+    },
+    {
+      "path": "crates/stream/src/apple_mlx_deallocation_observer.mm",
+      "sha256": "f0dab44abaf6897d7924149a17fb5e4f335f4f51ae945282e4081ef0b862663c"
+    }
+  ],
+  "execution_code_head": "22a76e4c248434a1827e81501607f93b0779352e",
+  "executor": {
+    "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
+    "sha256": "3894c4d12c93ac4c4f3584d2a9a41370c5074e7ef91402cfd8b16bf698c9c7ba"
+  },
+  "live_authorization_present": false,
+  "normal_validation_can_authorize": false,
+  "one_shot": {
+    "attempts": 1,
+    "expected_token": 21615,
+    "generated_token_limit": 1,
+    "initial_kv_state": "EMPTY_CLEAN_PROCESS",
+    "mandatory_stop": true,
+    "prompt_token": 9703,
+    "receipt_schema": "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0",
+    "resume": false,
+    "retries": 0,
+    "sequence_position": 0
+  },
+  "runtime": {
+    "architecture": "arm64",
+    "build_profile": "release",
+    "dylibs": [
+      {
+        "path": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2/lib/libmlx.dylib",
+        "sha256": "ad9b597b08e28b43c9b9791d2948fea601c76fe0b4a06d08cceeb4ad7b15e20d"
+      },
+      {
+        "path": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2/lib/libmlxc.dylib",
+        "sha256": "3401e4f91a1d3f9b02c9bd1e728a10753f256d90bb1b40aebcaf8225592bee1a"
+      }
+    ],
+    "environment": {
+      "MLX_C_PREFIX": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2",
+      "MLX_PREFIX": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2",
+      "OMP_NUM_THREADS": "1",
+      "PULSAR_REQUIRE_NATIVE_MLX": "1",
+      "RAYON_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    },
+    "machine_brand": "Apple M1 Ultra",
+    "macos_build": "25A354",
+    "memory_sample_max_age_seconds": 5,
+    "minimum_available_memory_bytes": 17179869184,
+    "mlx_c_version": "0.6.0",
+    "mlx_version": "0.31.2",
+    "rustc_version": "rustc 1.97.1 (8bab26f4f 2026-07-14) (Homebrew)"
+  },
+  "schema": "pulsarmlx.f017.native-bounded-p1-admission-contract/2.0.0",
+  "state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/native-bounded-p1-v1",
+  "status": "PREPARED_HUMAN_GATE_REQUIRED"
+}
