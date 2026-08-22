@@ -9,10 +9,16 @@
 
 pub mod cpu_dot;
 pub mod cpu_dot_tables;
+mod extra_ref;
 pub mod iq;
 mod q8_0_ref;
 mod q6_k_ref;
 mod iq_ref;
+
+pub use extra_ref::{
+    decode_iq2_s_matrix, decode_iq4_xs_matrix, decode_q2_k_matrix, decode_q3_k_matrix,
+    ExtraQuantError,
+};
 
 pub use iq_ref::{
     decode_iq2_xxs_matrix, decode_iq3_xxs_matrix, IQXXSError, IQ2_XXS_BLOCK_BYTES,

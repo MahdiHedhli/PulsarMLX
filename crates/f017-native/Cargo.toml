@@ -14,6 +14,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
 libc = "0.2"
+gguf = { path = "../gguf" }
 
 [[bin]]
 name = "f017-native-retained-qualification"
@@ -22,3 +23,7 @@ path = "src/bin/retained_qualification.rs"
 [[bin]]
 name = "f017-native-d35-grader"
 path = "src/bin/d35_grader.rs"
+
+[[bin]]
+name = "f017-native-bounded-p1"
+path = "src/bin/bounded_p1.rs"

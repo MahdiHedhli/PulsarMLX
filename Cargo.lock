@@ -232,6 +232,7 @@ dependencies = [
 name = "f017-native"
 version = "0.1.0"
 dependencies = [
+ "gguf",
  "libc",
  "quant",
  "serde",
