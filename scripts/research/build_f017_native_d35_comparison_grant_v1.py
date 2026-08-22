@@ -153,7 +153,7 @@ def mapping_and_captures(manifest: dict) -> tuple[dict, list[dict]]:
             "role": f"capture.{stage['stage_id']}", "path": str(root / stage["path"]), "sha256": stage["sha256"],
             "byte_count": stage["byte_length"], "dtype": "U16_LE" if "u16" in stage["dtype"] else "F32_LE",
             "shape": stage["shape"], "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
-            "source_branch": "feat/017-rust-native-inference-runtime", "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+            "source_branch": "feat/017-rust-native-inference-runtime", "source_commit": "f38dc275b86799712725765cec489089a4a4db50",
             "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
             "source_authority_sha256": digest(D35), "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
         })

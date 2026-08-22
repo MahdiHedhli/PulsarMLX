@@ -5,6 +5,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3]
@@ -40,12 +41,31 @@ class GrantMutations(unittest.TestCase):
             ("missing_expected",lambda x:x["expected_reads"].pop()),
             ("operand_sha",lambda x:x["operand_reads"][0].__setitem__("sha256","0"*64)),
             ("capture_path",lambda x:x["capture_reads"][0].__setitem__("path","/tmp/checkpoint/shard.bin")),
+            ("capture_commit",lambda x:x["capture_reads"][0].__setitem__("source_commit","f38dc2756bd4949e8883d6afc33b324fe264dd19")),
+            ("capture_dtype",lambda x:x["capture_reads"][0].__setitem__("dtype","F64_LE")),
+            ("source_authority",lambda x:x["capture_reads"][0].__setitem__("source_authority_sha256","0"*64)),
             ("duplicate_role",lambda x:x["capture_reads"][0].__setitem__("role",x["expected_reads"][0]["role"])),
             ("ids",lambda x:x["route_authority"].__setitem__("selected_ids_hex","00"*16)),
             ("weights",lambda x:x["route_authority"].__setitem__("routing_weights_f64_hex","00"*64)),
         ]
         for name,mutation in mutations:
             with self.subTest(mutation=name): self.reject(mutation)
+
+    def test_capture_manifest_hash_is_committed_authority(self):
+        original_sha=validator.sha
+        def mutate_manifest_hash(path):
+            if path.name == "capture-manifest.json": return "0"*64
+            return original_sha(path)
+        with mock.patch.object(validator,"sha",side_effect=mutate_manifest_hash):
+            with self.assertRaisesRegex(ValueError,"capture manifest committed pin"):
+                validator.validate(resolve_executable=False)
+
+    def test_grader_uses_exact_d0_oracle_vocabulary_and_all_experts(self):
+        source=(ROOT/"crates/f017-native/src/bin/d35_grader.rs").read_text()
+        for label in ["RETAINED_CANONICAL_S1","RETAINED_CANONICAL_ROUTER_NORMALIZED","INDEPENDENT_COMPLETE_EXPERT"]:
+            self.assertIn(label,source)
+        self.assertIn("operand_conditioned_matvec_all_eight_experts",source)
+        self.assertNotIn('oracle:"OPERAND_CONDITIONED_F64"',source)
 
 
 if __name__=="__main__": unittest.main()

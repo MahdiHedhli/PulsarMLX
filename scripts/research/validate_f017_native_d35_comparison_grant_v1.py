@@ -88,17 +88,28 @@ def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
             raise ValueError("read row path/hash/size")
         if row["source_branch"] not in {"feat/017-real-checkpoint-runner","feat/017-rust-native-inference-runtime"} or len(row["source_commit"]) != 40 or len(row["source_authority_sha256"]) != 64:
             raise ValueError("read row provenance")
-    old_grant=load(ROOT/"specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json")
+    old_grant_path=ROOT/"specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json"
+    if sha(old_grant_path)!="b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28":
+        raise ValueError("retention reuse grant binding")
+    old_grant=load(old_grant_path)
     operand_by_role={f"operand.{row['role']}":row for row in old_grant["allowed_reads"]}
     for row in doc["operand_reads"]:
         source=operand_by_role.get(row["role"])
         if source is None or (resolve_bound_path(row["path"]),row["sha256"],row["byte_count"],row["dtype"],row["shape"]) != (Path(source["path"]),source["sha256"],source["byte_count"],source["encoding"],source["shape"]):
             raise ValueError("operand authority mismatch")
-    capture_manifest=load(Path.home()/".local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/capture-manifest.json")
+    capture_manifest_path=Path.home()/".local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/capture-manifest.json"
+    evidence=load(ROOT/authority["d3_5_evidence_path"]); mapping=load(ROOT/authority["stage_mapping_path"])
+    pinned_manifest_sha=evidence["machine_local_authority"]["representative_manifest_sha256"]
+    if sha(capture_manifest_path)!=pinned_manifest_sha or mapping["source_capture_manifest_sha256"]!=pinned_manifest_sha:
+        raise ValueError("capture manifest committed pin")
+    capture_manifest=load(capture_manifest_path)
     capture_by_role={f"capture.{row['stage_id']}":row for row in capture_manifest["stages"]}
     for row in doc["capture_reads"]:
         source=capture_by_role.get(row["role"])
-        if source is None or (row["sha256"],row["byte_count"],row["shape"]) != (source["sha256"],source["byte_length"],source["shape"]):
+        if source is None:
+            raise ValueError("capture authority role")
+        expected_dtype="U16_LE" if "u16" in source["dtype"] else "F32_LE"
+        if (row["sha256"],row["byte_count"],row["shape"],row["dtype"]) != (source["sha256"],source["byte_length"],source["shape"],expected_dtype):
             raise ValueError("capture authority mismatch")
     disclosure=load(ROOT/authority["diagnostic_disclosure_path"])
     disclosed={row["path"]:row["sha256"] for row in disclosure["diagnostic_retained_artifact_reads"]}
@@ -108,14 +119,23 @@ def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
     s0=old_grant["allowed_reads"][0]
     if (resolve_bound_path(doc["expected_reads"][0]["path"]),doc["expected_reads"][0]["sha256"]) != (Path(s0["path"]),s0["sha256"]):
         raise ValueError("S0 expected authority mismatch")
-    mapping = load(ROOT / authority["stage_mapping_path"])
     if mapping["stage_count"] != 34 or len(mapping["rows"]) != 34 or mapping["policy"] != {"producer_role_validated_before_alias":True,"implicit_mapping":False,"direct_production_copy_allowed_for_recomputed_stage":False}:
         raise ValueError("mapping policy")
     if any(row["production_method"] == "RETAINED_DIRECT_VALUE" for row in mapping["rows"][1:]):
         raise ValueError("recomputation vocabulary")
+    authority_cache={}
+    for row in sum(groups,[]):
+        key=(row["source_commit"],row["source_authority_path"])
+        if key not in authority_cache:
+            try: authority_cache[key]=sha_bytes(committed_bytes(*key))
+            except subprocess.CalledProcessError as error: raise ValueError(f"unresolved source authority: {key}") from error
+        if authority_cache[key]!=row["source_authority_sha256"]:
+            raise ValueError(f"source authority hash mismatch: {key}")
     route = doc["route_authority"]
     if sha_bytes(bytes.fromhex(route["selected_ids_hex"])) != route["selected_ids_sha256"] or sha_bytes(bytes.fromhex(route["routing_weights_f64_hex"])) != route["routing_weights_sha256"]:
         raise ValueError("route byte binding")
+    if doc["allowed_output_root"]!="${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1":
+        raise ValueError("output root binding")
     if resolve_bound_path(doc["allowed_output_root"]).exists():
         raise ValueError("grading output root must be absent before event")
     return {"result":"PASS","grant_sha256":sha(path),"read_census":89,"expected_reads":15,"operand_reads":40,"capture_reads":34,"payload_reads_during_validation":0,"original_checkpoint_reads":0}
