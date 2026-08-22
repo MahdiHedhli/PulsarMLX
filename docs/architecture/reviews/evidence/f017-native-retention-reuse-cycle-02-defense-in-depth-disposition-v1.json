@@ -1,0 +1,34 @@
+{
+  "schema":"pulsarmlx.f017.native-retention-reuse-defense-in-depth-disposition",
+  "schema_version":"1.0.0",
+  "reviewed_head":"e37732a16f6ef347f067bff00b624f144eb8a961",
+  "reviewer":"claude-fable-5",
+  "verdict":"ACCEPT",
+  "exact_response":{"path":"docs/architecture/reviews/evidence/f017-native-retention-reuse-cycle-02-exact-claude-response-v1.md","sha256":"7fd70f644a3bd5c5a14253c01cc4148cf2dadf9ca4163bc6418522489eb64acd"},
+  "normalized_review":{"path":"docs/architecture/reviews/evidence/f017-native-retention-reuse-cycle-02-independent-review-v1.json","sha256":"f1c84c24426ee27d4096ad8977748553fafa4427d06adf85e2ebf2e5696066c3"},
+  "dispositions":[
+    {
+      "finding_id":"F017-RRC2-F1",
+      "disposition":"CORRECTED_APPEND_ONLY_WITHOUT_CHANGING_REVIEWED_AUTHORITY",
+      "correction":"The exact field is reproduction.bundle_sha256, not retained_only_reproduction.bundle_sha256.",
+      "authority_impact":"NONE_THE_VALUE_PATH_IS_EXPLANATORY_AND_ALL_AUTHORITY_BEARING_HASHES_WERE_RECOMPUTED_BY_FABLE"
+    },
+    {
+      "finding_id":"F017-RRC2-F2",
+      "disposition":"ACCEPTED_NON_WEAKENING_LIMITATION_FOR_REVIEWED_D3_5_EVENT",
+      "rationale":"The owner hashes both dylibs and exact machine/runtime environment before durable claim; every child is execed from the exact current executable with the inherited exact environment; all 34 stage bytes and S2 must match across every child. No tolerance can hide drift.",
+      "later_bind_point":"NEXT_NATIVE_EXECUTOR_GENERATION_MUST_REHASH_LOADED_DYLIBS_IN_EVERY_FRESH_PROCESS_BEFORE_ANY_AUTHORITY_READ"
+    },
+    {
+      "finding_id":"F017-RRC2-F3",
+      "disposition":"POST_EVENT_ACCEPTANCE_VALIDATOR_GATE",
+      "rationale":"The reviewed producer writes actual_count and reads together from its exact 40-receipt in-memory census; committed flow cannot emit a mismatch.",
+      "later_bind_point":"D3_5_RESULT_VALIDATOR_MUST_REQUIRE_actual_count_EQUALS_len_reads_EQUALS_40_FOR_ALL_20_RUNS_BEFORE_RETAINED_QUALIFICATION_ACCEPTANCE"
+    }
+  ],
+  "acceptance_blockers":0,
+  "non_blocking_required_findings":0,
+  "retained_qualification_execution_at_disposition":0,
+  "checkpoint_reads":0,
+  "real_p1_executions":0
+}
