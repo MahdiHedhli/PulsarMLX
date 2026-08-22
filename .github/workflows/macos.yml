@@ -321,6 +321,9 @@ jobs:
             specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v1.json \
             specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json \
             .
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_geometry.py \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json \
+            crates/f017-native/src/model.rs
           .venv/bin/python scripts/research/validate_f017_attempt_2_template.py \
             specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-template-v1.json \
             --expect-blocked
@@ -332,7 +335,7 @@ jobs:
           assert result["result"]=="PASS"
           assert result["original_checkpoint_shard_opens"]==0
           assert result["original_checkpoint_payload_reads"]==0
-          assert result["mutation_count"]==15
+          assert result["mutation_count"]==16
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
           .venv/bin/python -m pytest -q \
