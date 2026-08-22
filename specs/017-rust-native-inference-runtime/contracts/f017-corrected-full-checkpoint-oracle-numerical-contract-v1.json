@@ -1,0 +1,90 @@
+{
+  "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-numerical-contract/1.0.0",
+  "status": "FROZEN_BEFORE_TARGET_CHECKPOINT_EXECUTION",
+  "central_question": "WHAT_INDEPENDENT_FULL_CHECKPOINT_EVIDENCE_JUSTIFIES_FUTURE_NATIVE_BOUNDED_P1_EXPECTED_BEHAVIOR",
+  "target_observation_quarantine": {
+    "historical_values_disclosed_only_in_attempt_1_closeout": true,
+    "forbidden_in_new_implementation_and_methodology": ["HISTORICAL_EXPECTED_TOKEN_LITERAL", "ATTEMPT_1_PRODUCED_TOKEN_LITERAL"],
+    "forbidden_uses": ["SEED_SELECTION", "TOLERANCE_SELECTION", "SAFETY_FACTOR", "TOP_N", "ORACLE_ARCHITECTURE", "STOPPING_RULE", "SUCCESS_RULE"]
+  },
+  "oracle_roles": {
+    "primary": {
+      "id": "INDEPENDENT_CPU_REFERENCE",
+      "implementation": "scripts/research/f017_corrected_oracle_primary.py",
+      "arithmetic": "DETERMINISTIC_FIXED_ORDER_BINARY64",
+      "prohibited_dependencies": ["RUST_PRODUCTION", "FFI", "MLX", "NATIVE_P1", "PRODUCTION_DECODER", "OFFLINE_FORENSICS_DECODER", "PRODUCTION_CHECKPOINT_READER"]
+    },
+    "secondary": {
+      "id": "INDEPENDENT_ACCELERATED_CROSS_CHECK",
+      "implementation": "scripts/research/f017_corrected_oracle_secondary.py",
+      "arithmetic": "BINARY32_MLX_ACCELERATED_MATVEC",
+      "sole_authority": false,
+      "shared_primary_graph_or_decoder": false
+    },
+    "native_observation": {"role": "IMMUTABLE_CANDIDATE_OBSERVATION_ONLY", "oracle": false, "rerun": false}
+  },
+  "full_graph_stage_census": [
+    "TOKEN_EMBEDDING", "ATTENTION_RMSNORM", "Q_A_PROJECTION", "Q_RANK_RMSNORM", "Q_B_PROJECTION",
+    "KV_A_PROJECTION", "COMPRESSED_KV_RMSNORM", "K_RECONSTRUCTION", "V_RECONSTRUCTION", "ROPE",
+    "ATTENTION_SCORE", "CAUSAL_MASK", "SOFTMAX", "VALUE_ACCUMULATION", "ATTENTION_OUTPUT_PROJECTION",
+    "POST_ATTENTION_RESIDUAL", "FFN_RMSNORM", "DENSE_GATE", "DENSE_UP", "DENSE_SILU_PRODUCT", "DENSE_DOWN",
+    "ROUTER_LOGITS", "ROUTER_SIGMOID", "CORRECTION_BIAS", "STABLE_TOP_K", "ROUTE_NORMALIZATION",
+    "ROUTED_EXPERTS", "ROUTED_AGGREGATE", "SHARED_EXPERT", "FFN_COMPOSITION", "LAYER_RESIDUAL",
+    "FINAL_RMSNORM", "OUTPUT_PROJECTION", "FULL_LOGITS", "TOP_N", "ARGMAX"
+  ],
+  "reference_arithmetic": {
+    "decode_output": "BINARY64_VALUES_FROM_EXACT_PACKED_CODE_SEMANTICS",
+    "matvec_multiply": "BINARY64",
+    "matvec_accumulator": "BINARY64_SERIAL_LEFT_FOLD_IN_ASCENDING_COLUMN_ORDER",
+    "rmsnorm": "BINARY64_SERIAL_SUM_OF_SQUARES",
+    "epsilon": "EXACT_BINARY64_CONVERSION_OF_CONTRACT_DECIMAL",
+    "sigmoid_silu_softmax": "CPYTHON_LIBM_BINARY64_FIXED_CALL_ORDER",
+    "route_rank": "DESCENDING_SCORE_THEN_ASCENDING_EXPERT_ID",
+    "route_normalization_floor": "2^-14",
+    "routed_aggregate": "SELECTED_SLOT_ORDER_BINARY64_LEFT_FOLD",
+    "residual": "BINARY64_COORDINATE_ADD",
+    "argmax": "DESCENDING_LOGIT_THEN_ASCENDING_TOKEN_ID"
+  },
+  "capture": {
+    "top_n": 32,
+    "full_logits_retained": true,
+    "full_logits_canonical_hash": true,
+    "top_ids_and_exact_bits": true,
+    "top_1_margin": true,
+    "per_layer_fields": ["LAYER_INPUT", "POST_ATTENTION_RESIDUAL", "ROUTER_NORMALIZED", "SELECTED_EXPERT_IDS", "ROUTING_WEIGHTS", "ROUTED_AGGREGATE", "SHARED_OUTPUT", "LAYER_OUTPUT"]
+  },
+  "structural_rules": {
+    "route_membership": "EXACT",
+    "route_order": "EXACT",
+    "tie_behavior": "EXACT_LOWEST_ID",
+    "structure_before_numeric": true
+  },
+  "uncertainty_derivation": {
+    "target_output_may_set_threshold": false,
+    "corpus": "PREDECLARED_SYNTHETIC_SEEDS_18101_THROUGH_18112_PLUS_REVIEWED_RETAINED_REPRESENTATIVE_IF_GRANTED",
+    "fresh_process_repeats": 3,
+    "safety_factor": 64,
+    "factor_justification": "SIX_BITS_OF_HEADROOM_OVER_NON_TARGET_FRESH_PROCESS_SPREAD_WITH_STRUCTURAL_EXACTNESS_REQUIRED_SEPARATELY",
+    "accelerated_max_abs": "MAX(2^-15,64*MAX_NON_TARGET_FRESH_PROCESS_MAX_ABS)",
+    "accelerated_rmse": "MAX(2^-17,64*MAX_NON_TARGET_FRESH_PROCESS_RMSE)",
+    "cosine_min": "1-MAX(2^-20,64*MAX_NON_TARGET_FRESH_PROCESS_COSINE_DISTANCE)",
+    "relative_error": "DIAGNOSTIC_ONLY_BECAUSE_NEAR_ZERO_COORDINATES_MAKE_IT_UNSTABLE",
+    "nan_inf": "FAIL",
+    "signed_zero": "DIAGNOSTIC_EXCEPT_WHERE_EXACT_FIXTURE_DECLARES_SIGN",
+    "exact_thresholds_must_be_banked_before_target_authorization": true
+  },
+  "outcomes": {
+    "EXACT_EXPECTED_TOKEN_STABLE": "PRIMARY_AND_SECONDARY_TOP1_AGREE_AND_STRUCTURAL_ROUTES_AGREE_AND_MARGIN_GT_2X_FROZEN_LOGIT_UNCERTAINTY",
+    "NUMERICALLY_STABLE_TOP_K_ONLY": "EXACT_TOPK_SET_AND_ORDER_AND_LOGITS_WITHIN_BOUNDS_BUT_TOP1_MARGIN_NOT_STABLE",
+    "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY": "TOP1_CAN_CHANGE_INSIDE_ACCEPTED_ENVELOPE",
+    "ORACLE_DISAGREEMENT": "STRUCTURE_OR_NUMERICS_EXCEED_FROZEN_CONTRACT",
+    "ORACLE_EXECUTION_FAILURE": "INCOMPLETE_OR_INVALID_EVENT"
+  },
+  "future_p1_consequence": {
+    "EXACT_EXPECTED_TOKEN_STABLE": "EXACT_TOKEN_GATE_PERMITTED",
+    "NUMERICALLY_STABLE_TOP_K_ONLY": "TOPK_LOGIT_GATE_REQUIRED_NO_SINGLE_TOKEN_GATE",
+    "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY": "SINGLE_EXPECTED_TOKEN_PROHIBITED",
+    "ORACLE_DISAGREEMENT": "ATTEMPT_2_BLOCKED",
+    "ORACLE_EXECUTION_FAILURE": "ATTEMPT_2_BLOCKED"
+  }
+}

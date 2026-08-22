@@ -7,8 +7,10 @@
 use crate::{MlxContext, MlxDevice, MlxStreamMode, P1AccountingSnapshot};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::ffi::CString;
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
+use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -16,12 +18,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub const RECEIPT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0";
 pub const TERMINAL_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-terminal/1.0.0";
 pub const EVIDENCED_RECEIPT_SCHEMA: &str =
-    "pulsarmlx.f017.native-bounded-p1-execution-receipt/3.0.0";
-pub const EVIDENCED_TERMINAL_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-terminal/2.0.0";
-pub const SNAPSHOT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-accounting-snapshot/1.0.0";
-pub const ACCESS_EVENT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-access-event/1.0.0";
-pub const ACCESS_CENSUS_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-access-census/1.0.0";
-pub const DIAGNOSTIC_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-diagnostic-manifest/1.0.0";
+    "pulsarmlx.f017.native-bounded-p1-execution-receipt/4.0.0";
+pub const EVIDENCED_TERMINAL_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-terminal/3.0.0";
+pub const SNAPSHOT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-accounting-snapshot/2.0.0";
+pub const ACCESS_EVENT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-access-event/2.0.0";
+pub const ACCESS_CENSUS_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-access-census/2.0.0";
+pub const DIAGNOSTIC_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-diagnostic-manifest/2.0.0";
 pub const PROMPT_TOKEN: u32 = 9703;
 pub const EXPECTED_TOKEN: u32 = 21615;
 
@@ -146,6 +148,9 @@ pub struct BoundedP1Receipt {
 pub struct P1AccessEvent {
     pub schema: String,
     pub sequence: u64,
+    pub authorization_id: String,
+    pub attempt_id: String,
+    pub process_id: u32,
     pub kind: String,
     pub authority_id: String,
     pub sha256: String,
@@ -165,6 +170,7 @@ pub struct P1AccessCensus {
     pub shard_open_count: u64,
     pub shard_identity_rehash_count: u64,
     pub read_only_private_map_count: u64,
+    pub map_teardown_count: u64,
     pub tensor_lookup_count: u64,
     pub tensor_first_use_count: u64,
     pub tensor_reuse_count: u64,
@@ -316,7 +322,7 @@ pub trait BoundedP1Math {
     fn execute_one(&mut self, context: &MlxContext, prompt_token: u32) -> Result<u32, String>;
 }
 
-/// Forward-only producer contract used by executor generation v3. The
+/// Forward-only producer contract used by executor generation v4. The
 /// recorder belongs to the RN1-owned attempt; math can report access and
 /// already-produced numerical fingerprints but cannot author receipts.
 pub trait EvidencedP1Math {
@@ -334,6 +340,7 @@ pub struct P1EvidenceRecorder {
     diagnostic_layer_dir: PathBuf,
     authorization_id: String,
     attempt_id: String,
+    process_id: u32,
     events: Vec<P1AccessEvent>,
 }
 
@@ -351,6 +358,7 @@ impl P1EvidenceRecorder {
             diagnostic_layer_dir,
             authorization_id: authority.authorization_id.clone(),
             attempt_id: authority.attempt_id.clone(),
+            process_id: std::process::id(),
             events: Vec::new(),
         })
     }
@@ -369,10 +377,7 @@ impl P1EvidenceRecorder {
         let path = self
             .diagnostic_layer_dir
             .join(format!("{:08}.json", diagnostic.layer));
-        write_exclusive(&path, diagnostic).map_err(|error| error.to_string())?;
-        if sha256(&path).map_err(|error| error.to_string())?.len() != 64 {
-            return Err("layer diagnostic readback failed".into());
-        }
+        write_exclusive_verified(&path, diagnostic).map_err(|error| error.to_string())?;
         Ok(path)
     }
 
@@ -389,6 +394,7 @@ impl P1EvidenceRecorder {
             "SHARD_OPEN",
             "SHARD_IDENTITY_REHASH",
             "READ_ONLY_PRIVATE_MMAP",
+            "MAP_TEARDOWN",
             "TENSOR_LOOKUP",
             "TENSOR_FIRST_USE",
             "TENSOR_REUSE",
@@ -407,6 +413,9 @@ impl P1EvidenceRecorder {
         let event = P1AccessEvent {
             schema: ACCESS_EVENT_SCHEMA.into(),
             sequence: self.events.len() as u64,
+            authorization_id: self.authorization_id.clone(),
+            attempt_id: self.attempt_id.clone(),
+            process_id: self.process_id,
             kind: kind.into(),
             authority_id: authority_id.into(),
             sha256: content_sha256.into(),
@@ -416,12 +425,70 @@ impl P1EvidenceRecorder {
             recorded_at_unix_ns: now_ns().map_err(|error| error.to_string())?,
         };
         let path = self.event_dir.join(format!("{:08}.json", event.sequence));
-        write_exclusive(&path, &event).map_err(|error| error.to_string())?;
-        if sha256(&path).map_err(|error| error.to_string())?.len() != 64 {
-            return Err("access event readback failed".into());
-        }
+        write_exclusive_verified(&path, &event).map_err(|error| error.to_string())?;
         self.events.push(event);
         Ok(())
+    }
+
+    /// These guard producers are called by the corresponding real control
+    /// branches. They make rejected alternate/fallback access, residency
+    /// observation, explicit extraction, and teardown visible rather than
+    /// encoding their absence as an implied zero.
+    pub fn record_fallback_attempt(
+        &mut self,
+        authority_id: &str,
+        result: &str,
+    ) -> Result<(), String> {
+        self.record("FALLBACK_ATTEMPT", authority_id, "", 0, None, result)
+    }
+
+    pub fn record_alternate_root_attempt(
+        &mut self,
+        authority_id: &str,
+        result: &str,
+    ) -> Result<(), String> {
+        self.record("ALTERNATE_ROOT_ATTEMPT", authority_id, "", 0, None, result)
+    }
+
+    pub fn record_page_residency_observation(
+        &mut self,
+        shard_id: &str,
+        resident_bytes: u64,
+        result: &str,
+    ) -> Result<(), String> {
+        self.record(
+            "PAGE_RESIDENCY_OBSERVATION",
+            shard_id,
+            "",
+            resident_bytes,
+            None,
+            result,
+        )
+    }
+
+    pub fn record_historical_payload_extraction_attempt(
+        &mut self,
+        authority_id: &str,
+        result: &str,
+    ) -> Result<(), String> {
+        self.record(
+            "HISTORICAL_EXPLICIT_PAYLOAD_EXTRACTION",
+            authority_id,
+            "",
+            0,
+            None,
+            result,
+        )
+    }
+
+    pub fn record_map_teardown(
+        &mut self,
+        shard_id: &str,
+        sha256: &str,
+        size_bytes: u64,
+        result: &str,
+    ) -> Result<(), String> {
+        self.record("MAP_TEARDOWN", shard_id, sha256, size_bytes, None, result)
     }
 
     fn census(&self) -> P1AccessCensus {
@@ -439,6 +506,7 @@ impl P1EvidenceRecorder {
             shard_open_count: count("SHARD_OPEN"),
             shard_identity_rehash_count: count("SHARD_IDENTITY_REHASH"),
             read_only_private_map_count: count("READ_ONLY_PRIVATE_MMAP"),
+            map_teardown_count: count("MAP_TEARDOWN"),
             tensor_lookup_count: count("TENSOR_LOOKUP"),
             tensor_first_use_count: count("TENSOR_FIRST_USE"),
             tensor_reuse_count: count("TENSOR_REUSE"),
@@ -482,18 +550,118 @@ fn fsync_directory(path: &Path) -> Result<(), P1DomainError> {
     Ok(())
 }
 
-fn write_exclusive(path: &Path, value: &impl Serialize) -> Result<(), P1DomainError> {
+fn readback_descriptor_relative(path: &Path) -> Result<Vec<u8>, P1DomainError> {
+    let parent = path
+        .parent()
+        .ok_or_else(|| P1DomainError::Rejected("path has no parent".into()))?;
+    let filename = path
+        .file_name()
+        .ok_or_else(|| P1DomainError::Rejected("path has no filename".into()))?;
+    let filename = CString::new(filename.as_encoded_bytes())
+        .map_err(|_| P1DomainError::Rejected("evidence filename contains NUL".into()))?;
+    let directory = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+        .open(parent)?;
+    let fd = unsafe {
+        libc::openat(
+            directory.as_raw_fd(),
+            filename.as_ptr(),
+            libc::O_RDONLY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+        )
+    };
+    if fd < 0 {
+        return Err(P1DomainError::Io(std::io::Error::last_os_error()));
+    }
+    let mut input = unsafe { File::from_raw_fd(fd) };
+    let metadata = input.metadata()?;
+    if !metadata.is_file() {
+        return Err(P1DomainError::Rejected(
+            "durable evidence readback is not a regular file".into(),
+        ));
+    }
+    let mut bytes = Vec::new();
+    input.read_to_end(&mut bytes)?;
+    Ok(bytes)
+}
+
+fn digest_bytes(bytes: &[u8]) -> String {
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum DurableWriteFault {
+    ShortWrite,
+    WriteFailure,
+    FsyncFailure,
+    DirectoryFsyncFailure,
+    ReadbackMismatch,
+    InstallFailure,
+}
+
+/// Install one canonical JSON artifact and prove the exact serialized bytes
+/// are durable and descriptor-relatively readable before returning authority.
+fn write_exclusive_verified(path: &Path, value: &impl Serialize) -> Result<String, P1DomainError> {
+    write_exclusive_verified_with_fault(path, value, None)
+}
+
+fn write_exclusive_verified_with_fault(
+    path: &Path,
+    value: &impl Serialize,
+    fault: Option<DurableWriteFault>,
+) -> Result<String, P1DomainError> {
+    if fault == Some(DurableWriteFault::InstallFailure) {
+        return Err(P1DomainError::Rejected(
+            "injected no-replace installation failure".into(),
+        ));
+    }
+    let expected = canonical_json(value)?;
     let mut output = OpenOptions::new()
         .write(true)
         .create_new(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_CLOEXEC)
         .mode(0o400)
         .open(path)?;
-    output.write_all(&canonical_json(value)?)?;
+    if fault == Some(DurableWriteFault::WriteFailure) {
+        return Err(P1DomainError::Rejected("injected write failure".into()));
+    }
+    if fault == Some(DurableWriteFault::ShortWrite) {
+        output.write_all(&expected[..expected.len().saturating_sub(1)])?;
+        output.sync_all()?;
+        return Err(P1DomainError::Rejected("injected short write".into()));
+    }
+    output.write_all(&expected)?;
+    if fault == Some(DurableWriteFault::FsyncFailure) {
+        return Err(P1DomainError::Rejected(
+            "injected file fsync failure".into(),
+        ));
+    }
     output.sync_all()?;
+    if fault == Some(DurableWriteFault::DirectoryFsyncFailure) {
+        return Err(P1DomainError::Rejected(
+            "injected directory fsync failure".into(),
+        ));
+    }
     fsync_directory(
         path.parent()
             .ok_or_else(|| P1DomainError::Rejected("path has no parent".into()))?,
-    )
+    )?;
+    drop(output);
+    let mut observed = readback_descriptor_relative(path)?;
+    if fault == Some(DurableWriteFault::ReadbackMismatch) && !observed.is_empty() {
+        observed[0] ^= 1;
+    }
+    if observed != expected {
+        return Err(P1DomainError::Rejected(
+            "durable evidence exact serialized readback mismatch".into(),
+        ));
+    }
+    let _: serde_json::Value = serde_json::from_slice(&observed)?;
+    Ok(digest_bytes(&observed))
+}
+
+fn write_exclusive(path: &Path, value: &impl Serialize) -> Result<(), P1DomainError> {
+    write_exclusive_verified(path, value).map(|_| ())
 }
 
 fn sha256(path: &Path) -> Result<String, P1DomainError> {
@@ -512,6 +680,7 @@ fn sha256(path: &Path) -> Result<String, P1DomainError> {
 
 impl OwnedAttempt {
     fn claim(root: &Path, authority: &P1AttemptAuthority) -> Result<Self, P1DomainError> {
+        validate_state_root_path(root)?;
         if root.exists() {
             let metadata = fs::symlink_metadata(root)?;
             if metadata.file_type().is_symlink() || !metadata.is_dir() {
@@ -659,6 +828,35 @@ impl OwnedAttempt {
     }
 }
 
+fn validate_state_root_path(root: &Path) -> Result<(), P1DomainError> {
+    if !root.is_absolute() {
+        return Err(P1DomainError::Rejected(
+            "attempt state root must be absolute".into(),
+        ));
+    }
+    let mut existing = Some(root);
+    while let Some(path) = existing {
+        match fs::symlink_metadata(path) {
+            Ok(metadata) => {
+                if metadata.file_type().is_symlink() {
+                    return Err(P1DomainError::Rejected(
+                        "symlink in attempt state-root ancestry".into(),
+                    ));
+                }
+                if path != root && !metadata.is_dir() {
+                    return Err(P1DomainError::Rejected(
+                        "non-directory in attempt state-root ancestry".into(),
+                    ));
+                }
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(P1DomainError::Io(error)),
+        }
+        existing = path.parent();
+    }
+    Ok(())
+}
+
 fn validate_authority(
     authority: &P1AttemptAuthority,
     inert_test: bool,
@@ -685,7 +883,6 @@ fn validate_authority(
         || !is_safe_authority_identifier(&authority.authorization_id)
         || !is_safe_authority_identifier(&authority.attempt_id)
         || authority.prompt_token != PROMPT_TOKEN
-        || authority.expected_token != EXPECTED_TOKEN
         || authority.attempts != 1
         || authority.retries != 0
         || authority.resume
@@ -957,14 +1154,7 @@ fn execute_bounded_p1_impl(
 }
 
 fn write_hashed(path: &Path, value: &impl Serialize) -> Result<String, P1DomainError> {
-    write_exclusive(path, value)?;
-    let digest = sha256(path)?;
-    if digest.len() != 64 {
-        return Err(P1DomainError::Rejected(
-            "durable evidence readback failed".into(),
-        ));
-    }
-    Ok(digest)
+    write_exclusive_verified(path, value)
 }
 
 fn failure_diagnostic(
@@ -1256,7 +1446,10 @@ mod tests {
     #[test]
     fn inert_math_only_boundary_emits_real_receipt_and_replay_fails() {
         let _serial = NATIVE_CONTEXT_TEST_LOCK.lock().unwrap();
-        let root = std::env::temp_dir().join(format!("f017-p1-inert-{}", now_ns().unwrap()));
+        let root = std::env::temp_dir()
+            .canonicalize()
+            .unwrap()
+            .join(format!("f017-p1-inert-{}", now_ns().unwrap()));
         let mut math = InertMath { invocations: 0 };
         let receipt =
             execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut math).unwrap();
@@ -1299,7 +1492,10 @@ mod tests {
                 Ok(7)
             }
         }
-        let root = std::env::temp_dir().join(format!("f017-p1-wrong-{}", now_ns().unwrap()));
+        let root = std::env::temp_dir()
+            .canonicalize()
+            .unwrap()
+            .join(format!("f017-p1-wrong-{}", now_ns().unwrap()));
         assert!(execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut Wrong).is_err());
         let terminal = fs::read_to_string(root.join("INERT-ATTEMPT-1/terminal.json")).unwrap();
         assert!(terminal.contains("TERMINAL_FAILURE_NO_RETRY"));
@@ -1367,8 +1563,10 @@ mod tests {
     #[test]
     fn evidenced_token_mismatch_banks_complete_failure_evidence_before_returning() {
         let _serial = NATIVE_CONTEXT_TEST_LOCK.lock().unwrap();
-        let root =
-            std::env::temp_dir().join(format!("f017-p1-evidenced-mismatch-{}", now_ns().unwrap()));
+        let root = std::env::temp_dir()
+            .canonicalize()
+            .unwrap()
+            .join(format!("f017-p1-evidenced-mismatch-{}", now_ns().unwrap()));
         let mut math = EvidencedInertMath {
             token: 7,
             invocations: 0,
@@ -1454,8 +1652,10 @@ mod tests {
                 Err("INJECTED_MIDDLE_LAYER_FAILURE".into())
             }
         }
-        let root =
-            std::env::temp_dir().join(format!("f017-p1-evidenced-injected-{}", now_ns().unwrap()));
+        let root = std::env::temp_dir()
+            .canonicalize()
+            .unwrap()
+            .join(format!("f017-p1-evidenced-injected-{}", now_ns().unwrap()));
         assert!(execute_evidenced_bounded_p1_once(
             &root,
             &authority(),
@@ -1570,7 +1770,7 @@ mod tests {
             FailurePoint::FinalNorm,
             FailurePoint::Logits,
         ] {
-            let root = std::env::temp_dir().join(format!(
+            let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
                 "f017-p1-evidenced-matrix-{point:?}-{}",
                 now_ns().unwrap()
             ));
@@ -1615,7 +1815,7 @@ mod tests {
             ("INERT/AUTH", "INERT-ATTEMPT-1"),
             ("INERT\0AUTH", "INERT-ATTEMPT-1"),
         ] {
-            let root = std::env::temp_dir().join(format!(
+            let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
                 "f017-p1-unsafe-id-{}-{}",
                 std::process::id(),
                 now_ns().unwrap()
@@ -1630,5 +1830,62 @@ mod tests {
             assert_eq!(math.invocations, 0);
             assert!(!root.exists(), "unsafe identifier created durable state");
         }
+    }
+
+    #[test]
+    fn durable_writer_faults_fail_closed_before_authority() {
+        for fault in [
+            DurableWriteFault::ShortWrite,
+            DurableWriteFault::WriteFailure,
+            DurableWriteFault::FsyncFailure,
+            DurableWriteFault::DirectoryFsyncFailure,
+            DurableWriteFault::ReadbackMismatch,
+            DurableWriteFault::InstallFailure,
+        ] {
+            let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
+                "f017-durable-fault-{fault:?}-{}",
+                now_ns().unwrap()
+            ));
+            fs::create_dir(&root).unwrap();
+            let path = root.join("artifact.json");
+            let result = write_exclusive_verified_with_fault(
+                &path,
+                &serde_json::json!({"schema":"test", "value":1}),
+                Some(fault),
+            );
+            assert!(result.is_err(), "{fault:?} unexpectedly produced authority");
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[test]
+    fn durable_writer_rejects_no_replace_collision() {
+        let root = std::env::temp_dir()
+            .canonicalize()
+            .unwrap()
+            .join(format!("f017-durable-collision-{}", now_ns().unwrap()));
+        fs::create_dir(&root).unwrap();
+        let path = root.join("artifact.json");
+        write_exclusive_verified(&path, &serde_json::json!({"value":1})).unwrap();
+        assert!(write_exclusive_verified(&path, &serde_json::json!({"value":2})).is_err());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn state_root_symlinked_ancestor_fails_before_claim() {
+        use std::os::unix::fs::symlink;
+        let root = std::env::temp_dir()
+            .canonicalize()
+            .unwrap()
+            .join(format!("f017-state-ancestor-{}", now_ns().unwrap()));
+        let real = root.join("real");
+        let link = root.join("link");
+        fs::create_dir_all(&real).unwrap();
+        symlink(&real, &link).unwrap();
+        let state = link.join("state");
+        let mut math = InertMath { invocations: 0 };
+        assert!(execute_inert_bounded_p1_once(&state, &authority(), runtime(), &mut math).is_err());
+        assert_eq!(math.invocations, 0);
+        fs::remove_dir_all(root).unwrap();
     }
 }

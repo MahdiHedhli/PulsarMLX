@@ -1,0 +1,219 @@
+{
+  "cases": [
+    {
+      "cosine_distance": 1.7763568394002505e-15,
+      "layers": 1,
+      "max_abs": 4.107448953183379e-08,
+      "primary_token": 4,
+      "rmse": 2.0178932157329038e-08,
+      "route_structure_exact": true,
+      "secondary_token": 4,
+      "seed": 18101
+    },
+    {
+      "cosine_distance": 2.220446049250313e-16,
+      "layers": 2,
+      "max_abs": 1.2222317158361307e-08,
+      "primary_token": 8,
+      "rmse": 7.920050373805645e-09,
+      "route_structure_exact": true,
+      "secondary_token": 8,
+      "seed": 18102
+    },
+    {
+      "cosine_distance": 2.220446049250313e-16,
+      "layers": 3,
+      "max_abs": 1.8460908079998006e-08,
+      "primary_token": 1,
+      "rmse": 1.1434318558513741e-08,
+      "route_structure_exact": true,
+      "secondary_token": 1,
+      "seed": 18103
+    },
+    {
+      "cosine_distance": 6.106226635438361e-15,
+      "layers": 4,
+      "max_abs": 4.750799287300822e-08,
+      "primary_token": 5,
+      "rmse": 2.849703169846757e-08,
+      "route_structure_exact": true,
+      "secondary_token": 5,
+      "seed": 18104
+    },
+    {
+      "cosine_distance": 4.440892098500626e-16,
+      "layers": 5,
+      "max_abs": 2.1290977647581144e-08,
+      "primary_token": 4,
+      "rmse": 1.2093792931371348e-08,
+      "route_structure_exact": true,
+      "secondary_token": 4,
+      "seed": 18105
+    },
+    {
+      "cosine_distance": 5.329070518200751e-15,
+      "layers": 6,
+      "max_abs": 3.878181234484579e-08,
+      "primary_token": 6,
+      "rmse": 2.157035746747701e-08,
+      "route_structure_exact": true,
+      "secondary_token": 6,
+      "seed": 18106
+    },
+    {
+      "cosine_distance": 3.3306690738754696e-16,
+      "layers": 1,
+      "max_abs": 1.7237755334242877e-08,
+      "primary_token": 7,
+      "rmse": 8.512039524993153e-09,
+      "route_structure_exact": true,
+      "secondary_token": 7,
+      "seed": 18107
+    },
+    {
+      "cosine_distance": 1.1102230246251565e-15,
+      "layers": 2,
+      "max_abs": 3.3538381072339973e-08,
+      "primary_token": 7,
+      "rmse": 1.8878868883593223e-08,
+      "route_structure_exact": true,
+      "secondary_token": 7,
+      "seed": 18108
+    },
+    {
+      "cosine_distance": 1.3766765505351941e-14,
+      "layers": 3,
+      "max_abs": 8.58526722630204e-08,
+      "primary_token": 5,
+      "rmse": 5.284984889860582e-08,
+      "route_structure_exact": true,
+      "secondary_token": 5,
+      "seed": 18109
+    },
+    {
+      "cosine_distance": 2.220446049250313e-14,
+      "layers": 4,
+      "max_abs": 9.944108014803277e-08,
+      "primary_token": 0,
+      "rmse": 5.193212410847091e-08,
+      "route_structure_exact": true,
+      "secondary_token": 0,
+      "seed": 18110
+    },
+    {
+      "cosine_distance": 1.6653345369377348e-14,
+      "layers": 5,
+      "max_abs": 8.017370334290064e-08,
+      "primary_token": 2,
+      "rmse": 5.096704669908281e-08,
+      "route_structure_exact": true,
+      "secondary_token": 2,
+      "seed": 18111
+    },
+    {
+      "cosine_distance": 7.66053886991358e-15,
+      "layers": 6,
+      "max_abs": 6.708329730598095e-08,
+      "primary_token": 0,
+      "rmse": 4.4220211833881675e-08,
+      "route_structure_exact": true,
+      "secondary_token": 0,
+      "seed": 18112
+    }
+  ],
+  "fresh_process_repeats": 3,
+  "frozen_thresholds": {
+    "cosine_min": 0.9999990463256836,
+    "max_abs": 3.0517578125e-05,
+    "rmse": 7.62939453125e-06
+  },
+  "mutation_count": 15,
+  "mutations": [
+    {
+      "id": "Q6_K_LANE",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "IQ3_XXS_LANE",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "ROPE_POSITION",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "BOS_INSERTION",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "QK_TRANSPOSE",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "TENSOR_OFFSET",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "QUANT_TYPE_ID",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "ROUTE_BIAS_ORDER",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "ROUTE_WEIGHT_PLACEMENT",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "WRONG_EXPERT",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "WRONG_SHARED",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "LAYER_COUNT",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "FINAL_NORM",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "OUTPUT_TRANSPOSE",
+      "localized_or_rejected": true
+    },
+    {
+      "id": "ACCUMULATION_PRECISION",
+      "localized_or_rejected": true
+    }
+  ],
+  "original_checkpoint_payload_reads": 0,
+  "original_checkpoint_shard_opens": 0,
+  "primary_fresh_process_byte_identity": true,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-free-qualification/1.0.0",
+  "secondary_fresh_process_byte_identity": true,
+  "seeds": [
+    18101,
+    18102,
+    18103,
+    18104,
+    18105,
+    18106,
+    18107,
+    18108,
+    18109,
+    18110,
+    18111,
+    18112
+  ],
+  "target_observation_leakage": {
+    "scripts/research/f017_corrected_oracle_primary.py": [],
+    "scripts/research/f017_corrected_oracle_secondary.py": [],
+    "scripts/research/f017_oracle_primary_decoders.py": [],
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json": []
+  }
+}

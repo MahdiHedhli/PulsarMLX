@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-template/1.0.0",
+  "status": "TEMPLATE_FAILS_CLOSED_ORACLE_NOT_EXECUTED",
+  "executable_authority": false,
+  "attempt": 2,
+  "attempt_1_retry": false,
+  "corrected_oracle_result": null,
+  "corrected_oracle_classification": null,
+  "acceptance_mode": null,
+  "acceptance_modes": {
+    "EXACT_EXPECTED_TOKEN_STABLE": {"requires_exact_token_from_bound_oracle_result": true},
+    "NUMERICALLY_STABLE_TOP_K_ONLY": {"exact_token_forbidden": true, "requires_exact_top_k_and_frozen_logit_contract": true},
+    "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY": {"instantiation": "PROHIBITED"},
+    "ORACLE_DISAGREEMENT": {"instantiation": "PROHIBITED"},
+    "ORACLE_EXECUTION_FAILURE": {"instantiation": "PROHIBITED"}
+  },
+  "forward_evidence_contract": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v4.json",
+  "required_diagnostics": ["PRE_SNAPSHOT", "ACCESS_CENSUS", "79_LAYER_FINGERPRINTS", "FULL_LOGITS", "POST_SNAPSHOT", "FAILURE_OR_SUCCESS_RECEIPT", "RECEIPT_BOUND_TERMINAL"],
+  "attempts": 1,
+  "retries": 0,
+  "resume": false,
+  "mandatory_stop": true,
+  "live_authorization_created": false,
+  "validation_rule": "REJECT_UNTIL_CORRECTED_ORACLE_EVENT_RESULT_AND_INDEPENDENT_ACCEPTANCE_ARE_SHA_BOUND"
+}

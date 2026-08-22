@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access-contract/1.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED_NOT_EXECUTED",
+  "event_class": "F017_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "bindings": {
+    "primary": {"path": "scripts/research/f017_corrected_oracle_primary.py", "sha256": "1415e8dc885520fce5741537be4128b17e5783003051e19cc915d2d0fed97aa6"},
+    "primary_decoders": {"path": "scripts/research/f017_oracle_primary_decoders.py", "sha256": "1c635f9b18368da3b4106b4101f34a0ae8e060ed87e8c95e64b0db6da293afc7"},
+    "secondary": {"path": "scripts/research/f017_corrected_oracle_secondary.py", "sha256": "3d16611ad13537938405bb8ba0d76da89e02574ce2b23ceea80a07bbb114e7ac"},
+    "event_coordinator": {"path": "scripts/research/execute_f017_corrected_oracle_event.py", "sha256": "17129408fa6a927630568cd92ff406920105ed43c60f5a196a0e8da8b9edfc67"},
+    "authorizer_validator": {"path": "scripts/research/validate_f017_corrected_oracle_access.py", "sha256": "40aedcd6aaffe1e243f901c8e740a92506c8a92d762ba231e5a2daae866ecd57"},
+    "numerical_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json", "sha256": "182c33d75f7f76ea8fc7ee469dc224004fb42743809b79f133f212d8663f3609"},
+    "forward_evidence": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v4.json", "sha256": "41c46f55369a71a632e30669aa848e2b9ffcc24ff69a8e469e7f8f12d66bbf03"},
+    "synthetic_qualification": {"path": "docs/architecture/reviews/evidence/f017-corrected-oracle-checkpoint-free-qualification-v1.json", "sha256": "6f8745dc16444ba49239a4c22b91100c7b002e12f07d10a6a914106c5033c2fa"},
+    "checkpoint_manifest": {"path": "docs/validation/glm52-checkpoint.json", "sha256": "34b65d586c86d24ee10f3a2ed55491fb3a5a6b9ddbaf893bf9e0ab962c96cf8f"},
+    "checkpoint_catalog": {"path": "docs/research/glm52/raw/f016-c01-catalog-0001.json", "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"}
+  },
+  "shared_immutable_codebook_data": [
+    {"path": "scripts/research/iq2_xxs_tables.py", "sha256": "050b2ed26afbe6f15abf1dcd3789d6cddd93cee4ce87e8b13e86cf3f503aa756"},
+    {"path": "scripts/research/iq3_xxs_tables.py", "sha256": "87f01f518f954fa095b20e0ea8112a6073a4a88d394046c145052404437c5042"},
+    {"path": "scripts/research/iq_extra_tables.py", "sha256": "08c0f3cf2fa33d7a51109959d773f2ae21f282c166b848d154903ce51f38d83e"}
+  ],
+  "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+  "shards": [
+    {"filename":"GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf","sha256":"7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18","size_bytes":9423744},
+    {"filename":"GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf","sha256":"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36","size_bytes":49105028960},
+    {"filename":"GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf","sha256":"1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b","size_bytes":49143176640},
+    {"filename":"GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf","sha256":"10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e","size_bytes":49143176640},
+    {"filename":"GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf","sha256":"40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d","size_bytes":49143176640},
+    {"filename":"GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf","sha256":"eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d","size_bytes":41914650304}
+  ],
+  "consumers": [
+    {"id":"INDEPENDENT_CPU_REFERENCE","event":"PRIMARY_ORACLE_EVENT","attempts":1,"retries":0,"resume":false},
+    {"id":"INDEPENDENT_ACCELERATED_CROSS_CHECK","event":"SECONDARY_ORACLE_EVENT","attempts":1,"retries":0,"resume":false}
+  ],
+  "context": {"prompt_token":9703,"position":0,"kv_state":"EMPTY","mask":"ONE_VISIBLE_KEY_CAUSAL","sampling":"NONE_GREEDY_ARGMAX","top_n":32},
+  "memory": {"physical_environment_bytes":137438953472,"max_primary_decoded_row_bytes":2478080,"full_model_decode_resident":false,"read_only":true,"write_mapping":false,"minimum_free_bytes":17179869184},
+  "accounting": {"historical_master_ledger_sha256":"aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e","historical_terminal":175,"historical_delta":0,"oracle_event_ledger_delta":2,"page_residency_is_observational":true,"logical_tensor_use_receipts_required":true},
+  "recovery": {"same_event_layer_resume":false,"attempts":1,"retries":0,"resume":false,"partial_result_is_authority":false},
+  "authorization": {"live_created":false,"normal_validation_can_mint":false,"operator_only_environment_required":true,"expected_token_field_permitted":false},
+  "outputs": ["PRIMARY_RESULT","SECONDARY_RESULT","ACCESS_EVENTS","ACCESS_CENSUS","PER_LAYER_CAPTURES","FULL_LOGITS","TOP_N","STABILITY_CLASSIFICATION","RECEIPT","TERMINAL"]
+}

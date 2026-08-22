@@ -1,0 +1,106 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-forward-failure-evidence-contract/2.0.0",
+  "status": "FROZEN_FORWARD_ONLY",
+  "applies_to_executor_generation": "EVIDENCED_V4_AND_LATER",
+  "supersedes_for_future_execution": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v3.json",
+  "attempt_1_disposition": "TERMINAL_FAILURE_BANKED_WITH_EXPLICIT_CONTRACT_NONCONFORMITIES",
+  "attempt_1_retroactive_receipt_permitted": false,
+  "legacy_current_execution_commands": {
+    "execute": "TOMBSTONED",
+    "execute-evidenced-v3": "TOMBSTONED",
+    "current": "execute-evidenced-v4"
+  },
+  "durable_install": {
+    "create": "EXCLUSIVE_CREATE_NEW_NO_REPLACE",
+    "file_mode": "0400",
+    "file_fsync": true,
+    "parent_directory_fsync": true,
+    "readback": "OPENAT_PARENT_DESCRIPTOR_O_NOFOLLOW",
+    "byte_comparison": "EXACT_SERIALIZED_BYTES",
+    "schema_validation_source": "READBACK_BYTES",
+    "sha256_source": "READBACK_BYTES",
+    "next_artifact_binds_prior_sha": true
+  },
+  "durability_order": [
+    "DURABLE_OWNED_ATTEMPT_START",
+    "DURABLE_PRE_ACCOUNTING_SNAPSHOT",
+    "INCREMENTAL_DURABLE_ACCESS_EVENTS",
+    "PRODUCTION_MATH_AND_INCREMENTAL_LAYER_FINGERPRINTS",
+    "SYNCHRONIZE_AND_MAP_TEARDOWN",
+    "DURABLE_POST_ACCOUNTING_SNAPSHOT",
+    "DURABLE_ACCESS_CENSUS",
+    "DURABLE_NUMERICAL_DIAGNOSTIC_MANIFEST",
+    "ACCOUNTING_VALIDATION",
+    "ACCEPTANCE_COMPARISON",
+    "DURABLE_EXECUTION_RECEIPT",
+    "RECEIPT_BOUND_TERMINAL",
+    "MANDATORY_STOP"
+  ],
+  "schemas": {
+    "receipt": "pulsarmlx.f017.native-bounded-p1-execution-receipt/4.0.0",
+    "terminal": "pulsarmlx.f017.native-bounded-p1-terminal/3.0.0",
+    "snapshot": "pulsarmlx.f017.native-bounded-p1-accounting-snapshot/2.0.0",
+    "access_event": "pulsarmlx.f017.native-bounded-p1-access-event/2.0.0",
+    "access_census": "pulsarmlx.f017.native-bounded-p1-access-census/2.0.0",
+    "diagnostic": "pulsarmlx.f017.native-bounded-p1-diagnostic-manifest/2.0.0"
+  },
+  "access_event_identity_fields": [
+    "authorization_id",
+    "attempt_id",
+    "process_id",
+    "sequence",
+    "kind",
+    "authority_id",
+    "sha256",
+    "size_bytes",
+    "tensor_name",
+    "result",
+    "recorded_at_unix_ns"
+  ],
+  "access_kinds": [
+    "SHARD_OPEN",
+    "SHARD_IDENTITY_REHASH",
+    "READ_ONLY_PRIVATE_MMAP",
+    "MAP_TEARDOWN",
+    "TENSOR_LOOKUP",
+    "TENSOR_FIRST_USE",
+    "TENSOR_REUSE",
+    "PAGE_RESIDENCY_OBSERVATION",
+    "HISTORICAL_EXPLICIT_PAYLOAD_EXTRACTION",
+    "UNEXPECTED_ACCESS_ATTEMPT",
+    "FALLBACK_ATTEMPT",
+    "ALTERNATE_ROOT_ATTEMPT"
+  ],
+  "producer_rules": {
+    "successful_map_has_page_residency_observation": true,
+    "successful_map_has_exactly_one_teardown": true,
+    "rejected_fallback_and_alternate_root_have_durable_events": true,
+    "historical_payload_extraction_requires_explicit_event": true,
+    "test_authored_production_census": false
+  },
+  "fault_injection_required": [
+    "SHORT_WRITE",
+    "WRITE_FAILURE",
+    "FILE_FSYNC_FAILURE",
+    "DIRECTORY_FSYNC_FAILURE",
+    "NO_REPLACE_COLLISION",
+    "READBACK_MISMATCH",
+    "INSTALL_FAILURE",
+    "ENOSPC_EQUIVALENT",
+    "RECEIPT_WRITE_FAILURE",
+    "TERMINAL_WRITE_FAILURE"
+  ],
+  "path_rules": {
+    "absolute_state_root": true,
+    "symlink_in_root_or_ancestry": "REJECT",
+    "precreated_attempt_directory": "REJECT",
+    "identifier_alphabet": "ASCII_ALNUM_HYPHEN_UNDERSCORE",
+    "identifier_max_bytes": 128,
+    "nul_unicode_separator_traversal_absolute_overlength": "REJECT_BEFORE_CLAIM"
+  },
+  "historical_master_ledger_terminal": 175,
+  "receipt_derived_counts_outrank_terminal_claims": true,
+  "retry_permitted": false,
+  "resume_permitted": false,
+  "mandatory_stop": true
+}

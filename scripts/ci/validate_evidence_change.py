@@ -76,7 +76,7 @@ def _resolve_binding(repository: Path, head: str, binding: dict[str, Any]) -> bo
     path = binding.get("path")
     expected_sha = binding.get("sha256")
     if not isinstance(path, str) or not isinstance(expected_sha, str) or not SHA256.fullmatch(expected_sha):
-        return False
+        raise ValidationError("malformed path/SHA binding")
     posix = PurePosixPath(path)
     if posix.is_absolute() or ".." in posix.parts:
         raise ValidationError(f"unsafe bound path: {path}")
@@ -119,6 +119,19 @@ def _walk_bindings(repository: Path, head: str, value: Any) -> int:
     if isinstance(value, dict):
         if "path" in value and "sha256" in value:
             count += int(_resolve_binding(repository, head, value))
+        for key, path in value.items():
+            if not key.endswith("_path"):
+                continue
+            prefix = key[:-5]
+            sha_key = f"{prefix}_sha256"
+            if sha_key not in value:
+                continue
+            binding = {"path": path, "sha256": value[sha_key]}
+            for suffix in ("field", "json_path", "value", "expected", "equals", "commit", "source_commit"):
+                sibling = f"{prefix}_{suffix}"
+                if sibling in value:
+                    binding[suffix] = value[sibling]
+            count += int(_resolve_binding(repository, head, binding))
         for nested in value.values():
             count += _walk_bindings(repository, head, nested)
     elif isinstance(value, list):

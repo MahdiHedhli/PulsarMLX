@@ -258,6 +258,8 @@ struct MappedShard {
     _file: File,
     ptr: *mut libc::c_void,
     len: usize,
+    authority_id: String,
+    sha256: String,
 }
 unsafe impl Send for MappedShard {}
 impl Drop for MappedShard {
@@ -342,10 +344,32 @@ impl MappedShard {
                 "PASS_PROT_READ_MAP_PRIVATE",
             )?;
         }
+        if let Some(recorder) = recorder.as_deref_mut() {
+            let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+            if page_size <= 0 {
+                return Err("page size observation".into());
+            }
+            let page_size = page_size as usize;
+            let pages = len.div_ceil(page_size);
+            let mut residency = vec![0_u8; pages];
+            let status =
+                unsafe { libc::mincore(ptr, len, residency.as_mut_ptr() as *mut libc::c_char) };
+            if status != 0 {
+                return Err("page residency observation".into());
+            }
+            let resident_pages = residency.iter().filter(|value| **value & 1 == 1).count();
+            recorder.record_page_residency_observation(
+                &expected.filename,
+                resident_pages.saturating_mul(page_size) as u64,
+                "PASS_MINCORE_OBSERVATION_ONLY",
+            )?;
+        }
         Ok(Self {
             _file: file,
             ptr,
             len,
+            authority_id: expected.filename.clone(),
+            sha256: expected.sha256.clone(),
         })
     }
     fn read(&self, offset: u64, len: usize) -> Result<&[u8], String> {
@@ -470,6 +494,22 @@ impl SecureCheckpoint {
             .read(offset, matrix_bytes)?
             .to_vec())
     }
+
+    fn teardown_evidenced(mut self, recorder: &mut P1EvidenceRecorder) -> Result<(), String> {
+        for (_, shard) in std::mem::take(&mut self.shards) {
+            let authority_id = shard.authority_id.clone();
+            let sha256 = shard.sha256.clone();
+            let size_bytes = shard.len as u64;
+            drop(shard);
+            recorder.record_map_teardown(
+                &authority_id,
+                &sha256,
+                size_bytes,
+                "PASS_MUNMAP_DROP_COMPLETED",
+            )?;
+        }
+        Ok(())
+    }
 }
 
 pub struct EvidencedTensorSource<'a> {
@@ -485,6 +525,10 @@ impl<'a> EvidencedTensorSource<'a> {
             recorder,
             used: BTreeSet::new(),
         }
+    }
+
+    pub fn finish_access(self) -> Result<(), String> {
+        self.checkpoint.teardown_evidenced(self.recorder)
     }
 
     fn lookup(&mut self, name: &str) -> Result<TensorRecord, String> {

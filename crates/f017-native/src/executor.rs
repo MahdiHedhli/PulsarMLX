@@ -12,7 +12,7 @@ use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
 use stream::{
     BoundedP1Math, EvidencedP1Math, MlxContext, P1EvidenceRecorder, P1LayerDiagnostic,
-    P1NumericalDiagnosticManifest, DIAGNOSTIC_SCHEMA, EXPECTED_TOKEN,
+    P1NumericalDiagnosticManifest, DIAGNOSTIC_SCHEMA,
 };
 
 pub struct FullNativeP1Math {
@@ -54,6 +54,7 @@ pub struct FullNativeP1MathV3 {
     pub manifest: Option<CheckpointManifest>,
     pub catalog: Option<TensorCatalog>,
     pub config: ModelConfig,
+    pub expected_token: u32,
     invocations: u32,
 }
 
@@ -63,12 +64,14 @@ impl FullNativeP1MathV3 {
         manifest: CheckpointManifest,
         catalog: TensorCatalog,
         config: ModelConfig,
+        expected_token: u32,
     ) -> Self {
         Self {
             checkpoint_root,
             manifest: Some(manifest),
             catalog: Some(catalog),
             config,
+            expected_token,
             invocations: 0,
         }
     }
@@ -134,7 +137,7 @@ impl DiagnosticObserver {
         Ok(())
     }
 
-    fn finish(self) -> P1NumericalDiagnosticManifest {
+    fn finish(self, expected_token: u32) -> P1NumericalDiagnosticManifest {
         P1NumericalDiagnosticManifest {
             schema: DIAGNOSTIC_SCHEMA.into(),
             backend: "NATIVE_RUST_MLX_FULL_GLM52_ONE_TOKEN_EVIDENCED_V3".into(),
@@ -150,7 +153,7 @@ impl DiagnosticObserver {
             top_token_ids: self.top_token_ids,
             top_logit_f32_bits: self.top_logit_f32_bits,
             selected_token: self.selected_token,
-            expected_token: EXPECTED_TOKEN,
+            expected_token,
             tie_rule: "LOWEST_TOKEN_ID_ON_EQUAL_F32_LOGIT".into(),
         }
     }
@@ -254,6 +257,7 @@ impl EvidencedP1Math for FullNativeP1MathV3 {
             prompt_token,
             &mut observer,
         )?;
-        Ok((token, observer.finish()))
+        source.finish_access()?;
+        Ok((token, observer.finish(self.expected_token)))
     }
 }

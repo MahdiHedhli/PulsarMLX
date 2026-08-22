@@ -50,7 +50,8 @@ jobs:
             BASE_SHA="$PR_BASE_SHA"
           fi
           if test -z "$BASE_SHA" || test "$BASE_SHA" = 0000000000000000000000000000000000000000; then
-            BASE_SHA="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
+            DEFAULT_BRANCH="$(git remote show origin | sed -n 's/.*HEAD branch: //p')"
+            BASE_SHA="$(git merge-base HEAD "origin/${DEFAULT_BRANCH:-main}" 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -1)"
           fi
           python3 scripts/ci/classify_ci_change.py \
             --repository . \
@@ -109,7 +110,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check "$BASE_SHA" "$HEAD_SHA"
-          test -z "$(git diff --diff-filter=AM --summary "$BASE_SHA" "$HEAD_SHA" | grep 'mode 120000' || true)"
+          test -z "$(git diff --raw "$BASE_SHA" "$HEAD_SHA" | awk '$2=="120000" || $3=="120000" {print}' || true)"
           git diff --name-status "$BASE_SHA" "$HEAD_SHA"
 
   closed-branch-guard:
@@ -206,6 +207,8 @@ jobs:
         run: cargo build -p f017-native --release --all-targets
       - name: Test exact native F017 producer targets
         run: cargo test -p f017-native --release --no-fail-fast
+      - name: Test evidence-aware CI routing and integrity tooling
+        run: python3 -m unittest discover -s scripts/ci/tests -v
       - name: Validate Feature 002 research methodology
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
@@ -306,6 +309,31 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify attempt-1 offline diagnostics and forward evidence
         run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify corrected oracle pre-access domain
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          cargo test -p stream p1_domain --no-default-features
+          .venv/bin/python scripts/research/qualify_f017_corrected_oracles.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-qualification.json"
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_access.py validate \
+            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v1.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json \
+            .
+          .venv/bin/python scripts/research/validate_f017_attempt_2_template.py \
+            specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-template-v1.json \
+            --expect-blocked
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result=json.loads((Path(os.environ["RUNNER_TEMP"])/"f017-corrected-oracle-qualification.json").read_text())
+          assert result["result"]=="PASS"
+          assert result["original_checkpoint_shard_opens"]==0
+          assert result["original_checkpoint_payload_reads"]==0
+          assert result["mutation_count"]==15
+          PY
           test -z "$PULSARMLX_MODEL_GGUF"
           .venv/bin/python -m pytest -q \
             scripts/research/tests/test_audit_f017_native_checkpoint_plan.py \
