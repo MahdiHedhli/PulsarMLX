@@ -1,0 +1,131 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-postmortem",
+  "schema_version": "1.0.0",
+  "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
+  "authorization_id": "F017-NATIVE-BOUNDED-P1-AUTHORIZATION-1",
+  "disposition": "TERMINAL_FAILURE_BANKED_WITH_EXPLICIT_CONTRACT_NONCONFORMITIES",
+  "retry": "PERMANENTLY_PROHIBITED",
+  "resume": false,
+  "authority_inventory": [
+    {"role":"HUMAN_APPROVAL","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-human-approval-v1.json","sha256":"3788fe3060f5d78002adc7f22f94e98c9163a09be1e71648bcade3bde65b3ec7"},
+    {"role":"LIVE_AUTHORIZATION_CONSUMED","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-live-authorization-v1.json","sha256":"c1a81febcec0171a0aba63da44f645d630b7daca1b4031d52a4b3cecea6a42b7"},
+    {"role":"DURABLE_OWNED_CLAIM","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-owned-claim-v1.json","sha256":"35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965"},
+    {"role":"DURABLE_ATTEMPT_START","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-durable-start-v1.json","sha256":"35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965"},
+    {"role":"TERMINAL","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-terminal-v1.json","sha256":"de5f918324048fec8e49d63a60d9db6ba536171f4e1ea0dae6f5e5ddfdf7a6ed"},
+    {"role":"PREAUTHORIZATION_MEMORY","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-preauthorization-memory-v1.txt","sha256":"8bebdaef9e08ca12cdd4ecba3273cc964593974455cb2d1622ed7ec6d2d827f2"},
+    {"role":"EXECUTION_EVIDENCE","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-execution-evidence-v1.json","sha256":"c3dcc92cec8fde419bfdb437e0191a768fce8f48fc78b2e4b78171164caafb7b"},
+    {"role":"NATIVE_EVENT_LEDGER","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-native-event-ledger-v1.json","sha256":"24d8bd899cf6809387c40d6bd37d5b8f30a2056fa23a19e84bd4f2758305b5dd"},
+    {"role":"BANKING_VALIDATION","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-banking-validation-v1.json","sha256":"384e468aec6c9a241db6417e49c80eb3a1251e28e6b7744ae2c60081bfb4c490"},
+    {"role":"POST_EXECUTION_REVIEW","path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-opus-normalized-result-v1.json","sha256":"b5259d3487c15a782f172e93b3bc92f2b0dc52fd7500313a4b4c75097a2df217"},
+    {"role":"ADMISSION_CONTRACT","path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json","sha256":"91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03"},
+    {"role":"EXECUTOR","path":"specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1","sha256":"21f405cae64469ab1aed89e571464f6b2278681578d714718cb7183ba01fb062"}
+  ],
+  "chronology": {
+    "durable_start_unix_ns": 1787413730265710000,
+    "terminal_unix_ns": 1787413853729272000,
+    "duration_after_durable_start_ns": 123463562000,
+    "ordered_events": [
+      "PREAUTHORIZATION_GATES_PASSED",
+      "LIVE_AUTHORIZATION_MINTED",
+      "EXCLUSIVE_OWNED_CLAIM_DURABLY_BANKED",
+      "ATTEMPT_DURABLY_STARTED_AND_AUTHORITY_CONSUMED",
+      "BOUNDED_ONE_TOKEN_PATH_RAN",
+      "IN_PROCESS_ACCOUNTING_VALIDATION_RETURNED",
+      "PRODUCED_TOKEN_17351_DID_NOT_EQUAL_EXPECTED_TOKEN_21615",
+      "PROCESS_EXITED_2",
+      "TERMINAL_FAILURE_NO_RETRY_BANKED",
+      "MANDATORY_STOP_OBSERVED",
+      "INDEPENDENT_FAILURE_EVIDENCE_REVIEW_ACCEPTED"
+    ]
+  },
+  "committed_facts": {
+    "prompt_token": 9703,
+    "expected_token": 21615,
+    "produced_token": 17351,
+    "generated_token_count": 1,
+    "process_exit": 2,
+    "result": "TOKEN_MISMATCH",
+    "one_durable_attempt_started": true,
+    "authorization_consumed_at_durable_owned_claim": true,
+    "six_shard_opens_and_private_read_only_maps_authorized": true,
+    "accounting_validator_reached_before_token_comparison": true,
+    "receipt_emitted": false,
+    "durable_pre_snapshot_emitted": false,
+    "durable_post_snapshot_emitted": false,
+    "durable_access_census_emitted": false,
+    "mandatory_stop_observed": true,
+    "retry_count": 0,
+    "further_real_inference": false,
+    "historical_master_before": 175,
+    "historical_master_after": 175,
+    "native_event_before": 0,
+    "native_event_after": 1
+  },
+  "machine_local_control_state": {
+    "root": "/Users/mhedhli/.local/share/pulsarmlx/f017/native-bounded-p1-v1",
+    "inspected_control_files_only": true,
+    "checkpoint_files_opened": 0,
+    "authorization_sha256": "c1a81febcec0171a0aba63da44f645d630b7daca1b4031d52a4b3cecea6a42b7",
+    "owned_claim_sha256": "35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965",
+    "durable_start_sha256": "35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965",
+    "terminal_sha256": "de5f918324048fec8e49d63a60d9db6ba536171f4e1ea0dae6f5e5ddfdf7a6ed",
+    "state_left_byte_identical": true,
+    "attempt_2_authorization_absent": true,
+    "attempt_2_state_absent": true
+  },
+  "unknown_facts": [
+    "WHETHER_ALL_SIX_SHARD_OPENS_COMPLETED",
+    "WHETHER_ALL_SIX_PRIVATE_READ_ONLY_MAPS_COMPLETED",
+    "EXACT_LOGICAL_TENSOR_USE_CENSUS",
+    "EXACT_PRE_AND_POST_22_COUNTER_VALUES",
+    "FIRST_NUMERICAL_DIVERGENCE_STAGE",
+    "FINAL_HIDDEN_FINAL_NORM_AND_FULL_LOGIT_IDENTITIES",
+    "TOP_N_LOGIT_ORDER_AND_MARGIN",
+    "WHETHER_IMPLEMENTATION_OR_EXPECTED_TOKEN_AUTHORITY_CAUSED_THE_MISMATCH"
+  ],
+  "contract_nonconformities": [
+    "NO_FAILURE_RECEIPT",
+    "NO_DURABLE_PRE_22_COUNTER_SNAPSHOT",
+    "NO_DURABLE_POST_22_COUNTER_SNAPSHOT",
+    "NO_DURABLE_SHARD_OPEN_MAP_CENSUS",
+    "NO_DURABLE_LOGICAL_TENSOR_USE_CENSUS",
+    "TERMINAL_DOES_NOT_BIND_RECEIPT_SHA256",
+    "ACCOUNTING_CLOSURE_FAILS_DESPITE_IN_PROCESS_RECONCILIATION_CONTROL_FLOW"
+  ],
+  "diagnostic_value_retained": [
+    "EXACT_AUTHORITY_AND_EXECUTOR_IDENTITIES",
+    "EXACT_PROMPT_EXPECTED_AND_OBSERVED_TOKEN",
+    "EXACT_DURATION_AND_TERMINAL_ORDER",
+    "ONE_SHOT_CONSUMPTION_AND_MANDATORY_STOP",
+    "HISTORICAL_AND_NATIVE_EVENT_LEDGER_RELATIONSHIP"
+  ],
+  "prohibited_conclusions": [
+    "TOKEN_17351_IS_CORRECT",
+    "TOKEN_21615_IS_CORRECT_WITHOUT_REVALIDATION",
+    "ALL_CHECKPOINT_MAPS_OR_TENSOR_USES_COMPLETED",
+    "IN_PROCESS_COUNTER_VALUES_CAN_BE_RECONSTRUCTED",
+    "FIRST_DIVERGENCE_CAN_BE_INFERRED_FROM_ONE_TOKEN",
+    "ATTEMPT_1_MAY_BE_RETRIED_RESUMED_OR_RESET",
+    "A_RETROACTIVE_RECEIPT_MAY_BE_FABRICATED"
+  ],
+  "future_attempt_criteria": [
+    "EXPECTED_TOKEN_AUTHORITY_DISPOSITIONED",
+    "SCIENTIFIC_ROOT_CAUSE_OR_DIAGNOSTIC_PURPOSE_INDEPENDENTLY_ACCEPTED",
+    "NEW_EXECUTOR_GENERATION_EMITS_FAILURE_RECEIPTS",
+    "PRE_AND_POST_22_COUNTER_SNAPSHOTS_DURABLE",
+    "ACCESS_CENSUS_DURABLE",
+    "PER_LAYER_AND_FINAL_LOGIT_DIAGNOSTICS_DURABLE",
+    "SYNTHETIC_AND_AFFECTED_RETAINED_QUALIFICATION_PASS",
+    "EXACT_HEAD_CI_AND_INDEPENDENT_REVIEW_ACCEPT",
+    "NEW_SEPARATE_HUMAN_AUTHORIZATION"
+  ],
+  "phase_accounting": {
+    "p1_attempt_1_retries": 0,
+    "p1_attempt_2_executions": 0,
+    "live_attempt_2_authorizations": 0,
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_mmaps": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "further_real_inference": 0
+  }
+}
