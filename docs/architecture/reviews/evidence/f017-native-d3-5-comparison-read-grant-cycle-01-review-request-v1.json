@@ -1,0 +1,54 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-comparison-read-grant-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "reviewer_model_required": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_ADVERSARIAL_COMPARISON_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "3b83ef6a4bfbd6b6282bcfe1a13fc02dd59cc8e3",
+  "committed_pushed_bytes_only": true,
+  "reviewed_artifact_hashes": {
+    "grant": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json","sha256":"ed745c5bd5cba73808550f0d53cf0b0dd35f0365e97f090c310da1ba80bc1920"},
+    "stage_mapping": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-canonical-stage-mapping-v1.json","sha256":"9f8bb8b0b65188fd2377521c79655c82842063f870a30aeeaea97e0483cd74c5"},
+    "consumer": {"path":"crates/f017-native/src/bin/d35_grader.rs","sha256":"35650d198a3f8a3bd28986e43186e8cdfeb20d66b1e4dc2d91454c3f8249ac82"},
+    "builder": {"path":"scripts/research/build_f017_native_d35_comparison_grant_v1.py","sha256":"3b5343f0465d9ccb80eb6e855d52b3d0158a8c5f533c548fccc7bc0c33b97ebf"},
+    "validator": {"path":"scripts/research/validate_f017_native_d35_comparison_grant_v1.py","sha256":"f240268b92ae4bbe78d02352db726154b7aa5782f882ade2c1cb2d66bc5da810"},
+    "mutation_tests": {"path":"scripts/research/tests/test_f017_native_d35_comparison_grant_v1.py","sha256":"d1ee29957f1366fdf042d3f48e3af3b37059005c4f9facaeadc78ef6baeb1024"},
+    "d0": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json","sha256":"cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"},
+    "d3_5_evidence": {"path":"docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json","sha256":"13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8"},
+    "diagnostic_disclosure": {"path":"docs/architecture/reviews/evidence/f017-native-d3-5-ungranted-diagnostic-read-disclosure-v1.json","sha256":"a1daa331ce641b7e34459de1f7a5584632c8cb5bce82862a66e93b330e9aa03b"}
+  },
+  "validation_at_reviewed_head": [
+    "python3 scripts/research/validate_f017_native_d35_comparison_grant_v1.py => PASS; 89 metadata-bound reads; payload reads 0",
+    "python3 -m unittest scripts.research.tests.test_f017_native_d35_comparison_grant_v1 -v => PASS; 17 mutation classes",
+    "cargo test -p f017-native --no-run => PASS"
+  ],
+  "required_attacks": [
+    "wrong grading consumer or executable/source substitution",
+    "missing, extra, reordered, or duplicated expected, operand, or capture read",
+    "wrong path, SHA, size, dtype, shape, serialization, source commit, or authority",
+    "unresolved cross-branch authority or ambient retained permission",
+    "disclosed ungranted diagnostics reused as acceptance evidence",
+    "checkpoint or shard fallback reachable",
+    "read without EXPECTED=BEFORE=CONSUMED=AFTER same-descriptor receipt",
+    "read budget not exact",
+    "D0 or D3.5 evidence substitution",
+    "native capture regeneration or second D3.5 execution",
+    "tolerance or class mutation after capture",
+    "invalid direct_production_copy vocabulary on recomputed stages",
+    "OCB cap derived from native output or observed error",
+    "route membership, order, or tie semantics weakened",
+    "output outside fixed event root",
+    "retry, resume, second attempt, checkpoint read, or historical ledger advance"
+  ],
+  "execution_prohibitions_during_review": {
+    "comparison_payload_reads": 0,
+    "d3_5_numerical_execution": 0,
+    "original_checkpoint_reads": 0,
+    "real_p1_executions": 0,
+    "live_p1_authorizations": 0
+  },
+  "finding_severities": ["BLOCKING","NON_BLOCKING_REQUIRED","DEFENSE_IN_DEPTH"],
+  "acceptance_rule": "ACCEPT_ONLY_WITH_ZERO_BLOCKING_AND_ZERO_NON_BLOCKING_REQUIRED",
+  "requested_verdicts": ["ACCEPT","REJECT"]
+}
