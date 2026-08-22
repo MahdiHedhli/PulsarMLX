@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-review-repair-disposition/1.0.0",
+  "review_cycle": 1,
+  "reviewer": "claude-opus-5",
+  "reviewed_head": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "review_response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-01-exact-cli-response.json",
+  "review_response_sha256": "283d11a413206be9a82baa8d2690778f23b9efa20785c9f103305f5d54e44682",
+  "repair_commit": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+  "exact_head_ci": {
+    "run_id": 32572958959,
+    "head": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+    "conclusion": "success"
+  },
+  "finding_to_fix": [
+    {
+      "finding_id": "F017-OPUS-C1-F1",
+      "severity": "BLOCKING",
+      "fix": "Added a schema-2.0 qualification producer, exact receipt/terminal/accounting validator, banked exact synthetic executor, inert authority v2, ten fresh-process receipts, terminals, owned claims, summaries, and append-only qualification-v2 evidence. Rebound admission contract v2 to the new qualification result.",
+      "paths": [
+        "scripts/research/qualify_f017_native_full_model_synthetic_v2.py",
+        "specs/017-rust-native-inference-runtime/bin/f017-native-synthetic-p1-v2",
+        "specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v2.json",
+        "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v2.json",
+        "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v2",
+        "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json"
+      ],
+      "validation": {
+        "fresh_processes": 10,
+        "receipt_schema": "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0",
+        "summary_byte_identity": "EXACT_10_OF_10",
+        "qualification_result_sha256": "2a73ef07a3062e313726179a628b7030dca88dc51cea89145544fc3629beb91b",
+        "admission_contract_sha256": "1c1423874c10ea3fa4087533775def3524a1a64882abb0f66068b04ea7ce173b",
+        "checkpoint_reads": 0,
+        "real_p1_executions": 0
+      },
+      "status": "REPAIRED_PENDING_INDEPENDENT_REREVIEW"
+    },
+    {
+      "finding_id": "F017-OPUS-C1-F2",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "fix": "The pinned-MLX CI job now executes cargo test -p stream --lib and the ten-fresh-process receipt-v2 full-model synthetic qualification.",
+      "path": ".github/workflows/macos.yml",
+      "validation": {
+        "stream_lib_tests": "45_PASSED",
+        "rn1_tests": "2_PASSED",
+        "synthetic_fresh_processes": 10,
+        "ci_run_id": 32572958959,
+        "ci_conclusion": "success"
+      },
+      "status": "REPAIRED_PENDING_INDEPENDENT_REREVIEW"
+    }
+  ],
+  "defense_in_depth_dispositions": [
+    {"finding_id": "F017-OPUS-C1-F3", "disposition": "Bound catalog proves valid Q4_K/Q5_K geometry; malformed-input hardening is required before any catalog rebind."},
+    {"finding_id": "F017-OPUS-C1-F4", "disposition": "Bound catalog has no format/type mismatch; explicit cross-validation is required before any catalog rebind."},
+    {"finding_id": "F017-OPUS-C1-F5", "disposition": "Executable and 24-file production manifest remain exact; execution-code provenance equality must close before live authorization minting."},
+    {"finding_id": "F017-OPUS-C1-F6", "disposition": "Position zero makes RoPE identity for bounded P1; documentation/guard must close before any non-zero position or second token."},
+    {"finding_id": "F017-OPUS-C1-F7", "disposition": "Memory pressure fails closed without wrong output; embedding/logit memory optimization remains a pre-scheduling hardening item."},
+    {"finding_id": "F017-OPUS-C1-F8", "disposition": "D3.5 independently grades routing structure and weights; strengthen synthetic routing fixture before relying on it as routing authority."},
+    {"finding_id": "F017-OPUS-C1-F9", "disposition": "Traversal still consumes the contract-wide claim fail-closed; identifier grammar must close before live authorization minting."},
+    {"finding_id": "F017-OPUS-C1-F10", "disposition": "Real native cfg and producer make all-zero snapshots unreachable; explicit liveness and checked subtraction remain required before live authorization minting."}
+  ],
+  "d0_changed": false,
+  "d3_5_changed": false,
+  "d3_5_numerical_reexecution": false,
+  "real_m1_ultra_p1_executed": false,
+  "original_checkpoint_reads": 0,
+  "live_p1_authorization_created": false
+}
