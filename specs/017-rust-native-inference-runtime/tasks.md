@@ -90,3 +90,14 @@
 ## Release-prep
 
 - [ ] T018-00 Send milestone NTFY update after authoritative input incorporation and milestone gates.
+
+## Native bounded-P1 execution domain qualification
+
+- [x] T019-00 Reconcile the native and historical branches and prove the historical master real-payload ledger v2 receipt chain terminates at 175.
+- [x] T019-01 Freeze the cross-branch ownership and exact-consumption rule, including the native-domain ledger chaining precondition.
+- [ ] T019-02 Freeze, validate, commit, push, and independently review D0 native numerical acceptance before final executor architecture.
+- [ ] T019-03 Freeze D1 per-counter semantics and D2 P1 accounting/residency.
+- [ ] T019-04 Build the unified live snapshot API, native bounded executor, receipt producer, and math-only mock path.
+- [ ] T019-05 Review the consumer-scoped retained reuse grant and run D3.5 retained-only native qualification.
+- [ ] T019-06 Freeze the exact real P1 contract and future one-shot authorization mechanism without issuing live authority.
+- [ ] T019-07 Run exact-head CI, cross-vendor review, final Fable review, and bank the final domain declaration or rejection.

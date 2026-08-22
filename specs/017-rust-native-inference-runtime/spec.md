@@ -156,3 +156,46 @@ Acceptance:
 - Bridge spike telemetry-backed and teardown-safe
 - MLX boundary ADR drafted and reviewed
 - checkpoint-free ladder reaches representative layer/logits boundary without checkpoint download
+
+## Native bounded-P1 execution domain qualification
+
+The native bounded-P1 domain is an append-only successor to the rejected
+validator-only admission surface. It is governed by the committed
+`f017-native-domain-cross-branch-authority-v1.json` rule: the historical
+`feat/017-real-checkpoint-runner` branch owns the closed representative
+proof/reference lineage, retained artifacts, receipts, and master real-payload
+ledger v2; this branch owns native runtime and future native execution. A
+cross-branch consumer must bind branch, commit, path, SHA-256, schema/version,
+and semantic role. Filename equality and unproven copies confer no authority.
+
+The historical master count is a prerequisite, not a duplicated constant. The
+native event model chains from the validated ledger-v2 SHA and terminal count
+175. A zero-payload native event still binds that root. Any advancing payload
+event must derive its count from receipts and bank the event result and master
+ledger update in the same commit.
+
+Numerical acceptance is frozen in D0 before the executor architecture or
+retained qualification. D0 results may later be falsified by D3.5, but D3.5
+output may never select or tune a tolerance. A falsified empirical derivation
+requires an append-only D0 revision, a fresh synthetic or pinned-fixture corpus
+that excludes the triggering D3.5 output, and a new independent D0 review.
+Empirical D0 derivations may use only synthetic or already-pinned public-safe
+fixtures; retained representative artifacts remain grant-gated until D3.5.
+
+The D3.5 consumer grant must enumerate every allowed read with exact size and
+SHA-256. The qualification runner banks one receipt per read with the same
+census discipline used by the historical nine-read event. The qualification
+claim is restricted to the representative layer-3 S0-to-S2 surface. It does
+not qualify the remaining approximately 93-layer full forward; that remainder
+continues to rely on F016 structural lineage plus separately generalized and
+validated per-stage semantics until a future real bounded-P1 review closes it.
+
+The new execution lifecycle rebinds RN1: one invocation exclusively owns and
+durably records its claim; exception cleanup may terminalize only the attempt
+that invocation started and owns; terminal counts are receipt-derived and
+cross-checked; and terminal state alone is never accounting authority.
+
+This host is the intended M1 Ultra retention node. If later execution moves to
+another node, the graph parks before D3.5 until an exact retained-store handoff
+is separately bound. Cross-vendor review uses the installed AGY CLI with
+`gemini-3.1-pro-high`; Claude Fable 5 remains the final voting reviewer.

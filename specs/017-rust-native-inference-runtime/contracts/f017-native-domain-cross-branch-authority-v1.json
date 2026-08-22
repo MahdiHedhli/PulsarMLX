@@ -1,0 +1,87 @@
+{
+  "schema": "pulsarmlx.f017.native-domain-cross-branch-authority",
+  "schema_version": "1.0.0",
+  "native_domain": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "base_head": "8027b4cfc08866dc841c80363e4bdc4663318b4a",
+    "owns": [
+      "NATIVE_RUNTIME_IMPLEMENTATION",
+      "NATIVE_MLX_LIFETIME_AND_STREAM_OWNERSHIP",
+      "NATIVE_BOUNDED_P1_EXECUTION_DOMAIN",
+      "FUTURE_NATIVE_P1_EXECUTION_EVENTS",
+      "NATIVE_PRODUCTION_QUALIFICATION"
+    ]
+  },
+  "historical_domain": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "head": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+    "owns": [
+      "CLOSED_REPRESENTATIVE_M1F0_PROOF_REFERENCE_LINEAGE",
+      "HISTORICAL_REAL_PAYLOAD_RECEIPTS",
+      "RECONCILED_MASTER_REAL_PAYLOAD_LEDGER_V2",
+      "RETAINED_REPRESENTATIVE_ARTIFACTS",
+      "ACCEPTED_CANONICAL_STAGE_IDENTITIES"
+    ]
+  },
+  "cross_branch_consumption_rule": {
+    "required_identity_fields": [
+      "branch",
+      "commit",
+      "path",
+      "sha256",
+      "schema",
+      "schema_version",
+      "semantic_role"
+    ],
+    "filename_equality_is_authority": false,
+    "copied_bytes_without_pinned_provenance_are_authority": false
+  },
+  "historical_authorities": [
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+      "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+      "schema": "pulsarmlx.f017.real-payload-access-ledger",
+      "schema_version": "2.0.0",
+      "semantic_role": "AUTHORITATIVE_HISTORICAL_MASTER_REAL_PAYLOAD_LEDGER"
+    },
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "docs/architecture/reviews/evidence/f017-representative-m1f0-post-closure-accounting-assurance-v1.json",
+      "sha256": "98b267bd703521abfc22ede94b19c6b0a57e4b26cb0d581b2daf1e4ecf991a4d",
+      "schema": "pulsarmlx.f017.representative-m1f0-post-closure-accounting-assurance",
+      "schema_version": "1.0.0",
+      "semantic_role": "POST_CLOSURE_ACCOUNTING_ASSURANCE"
+    }
+  ],
+  "master_ledger_precondition": {
+    "result": "MASTER_LEDGER_RECONCILIATION_FOR_NATIVE_DOMAIN: PASS",
+    "prefix_terminal_count": 166,
+    "appended_receipt_counts": [167, 168, 169, 170, 171, 172, 173, 174, 175],
+    "terminal_count": 175,
+    "gaps": 0,
+    "overlaps": 0,
+    "duplicate_receipts": 0,
+    "unexplained_increments": 0,
+    "contradictory_authority": "NONE",
+    "new_payload_consumption_during_reconciliation": 0
+  },
+  "native_ledger_chaining": {
+    "competing_master_count_permitted": false,
+    "historical_master_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "future_native_events_must_bind_historical_master": true,
+    "zero_payload_native_event_must_still_bind_historical_master": true,
+    "post_event_count_must_be_receipt_derived": true,
+    "event_result_and_ledger_update_same_commit_if_count_advances": true
+  },
+  "phase_accounting": {
+    "historical_master_before": 175,
+    "historical_master_after": 175,
+    "checkpoint_reads": 0,
+    "shard_opens": 0,
+    "real_m1_ultra_p1_executions": 0,
+    "live_p1_authorizations": 0
+  }
+}
