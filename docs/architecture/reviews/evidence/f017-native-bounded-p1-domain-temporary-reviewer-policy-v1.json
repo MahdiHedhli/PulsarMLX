@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-temporary-reviewer-policy/1.0.0",
+  "status": "ACTIVE_UNTIL_CLAUDE_FABLE_5_QUOTA_RESTORES",
+  "reason": "Claude Fable 5 is temporarily unavailable because the configured Claude CLI account exhausted its monthly quota.",
+  "expected_fable_restore_local": "2026-08-25T13:00:00-04:00",
+  "reviewer_preference": [
+    "claude-opus-5",
+    "claude-opus-4-8"
+  ],
+  "other_reviewer_substitution_permitted": false,
+  "temporary_review_meaning": "An Opus ACCEPT is an interim independent review only. It permits retained-only, synthetic, CI, packaging, documentation, and pre-authorization engineering; it does not authorize real P1 and does not waive a later fresh Claude Fable 5 ratification.",
+  "required_fable_ratification_verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+  "authoritative_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_review_target": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "final_evidence_base_head": "be6de5fc3793d399fe4ac4fd23bf118c60409fc7",
+  "exact_head_ci": {
+    "run_id": 32560783265,
+    "head": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+    "conclusion": "success"
+  },
+  "implementation_immutability": "Implementation bytes at the review target remain unchanged until the temporary review finds a repairable defect or accepts those exact bytes. Any later implementation change requires a new exact-head CI run and a fresh independent review.",
+  "review_worktree": "DETACHED_CLEAN_EXACT_TARGET",
+  "severity_vocabulary": [
+    "BLOCKING",
+    "NON_BLOCKING_REQUIRED",
+    "DEFENSE_IN_DEPTH"
+  ],
+  "acceptance_blocking_severities": [
+    "BLOCKING",
+    "NON_BLOCKING_REQUIRED"
+  ],
+  "interim_accept_verdict": "OPUS_INTERIM_ACCEPT_FOR_F017_NATIVE_BOUNDED_P1_DOMAIN",
+  "reject_verdict": "REJECT",
+  "retained_qualification": "MIXED_D0_V2_CLASS/PASS",
+  "historical_master_ledger_terminal": 175,
+  "invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "full_model_real_checkpoint_inference_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "real_p1_authorization_consumed": false
+  }
+}
