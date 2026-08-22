@@ -17,6 +17,11 @@ def unique(path):
 def sha_bytes(value): return hashlib.sha256(value).hexdigest()
 def sha(path): return sha_bytes(path.read_bytes())
 
+def package_root(reads):
+    fields = ("ordinal","canonical_tensor_id","role","destination_relative_path","sha256","byte_count","encoding","shape","quantization","decoder_binding","source_authority_path","source_authority_sha256","source_result_event")
+    value = {"schema":"pulsarmlx.f017.apple-production-serial-f32-retained-package-root","schema_version":"1.0.0","package_version":"F017-APPLE-SERIAL-F32-RETAINED-40-V1","tensor_count":40,"ordered_tensor_descriptors":[{key: row[key] for key in fields} for row in reads]}
+    return sha_bytes(json.dumps(value, sort_keys=True, separators=(",", ":")).encode() + b"\n")
+
 def historical(commit, path):
     return subprocess.check_output(
         ["git", "show", f"{commit}:{path}"], cwd=ROOT, stderr=subprocess.DEVNULL
@@ -30,6 +35,8 @@ def validate(grant_path=GRANT, package_path=PACKAGE):
     if grant["d0_sha256"] != sha(ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json"): raise ValueError("D0")
     if grant["historical_master_ledger_sha256"] != "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e": raise ValueError("ledger")
     if grant["tensor_count"] != 40 or len(grant["allowed_reads"]) != 40 or len(package["tensors"]) != 40: raise ValueError("census")
+    if grant["historical_package_root_sha256"] != "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6": raise ValueError("historical package root")
+    if package_root(grant["allowed_reads"]) != grant["package_root_sha256"] or grant["package_root_sha256"] != "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c": raise ValueError("native consumer package root")
     if grant["total_bytes"] != 257305600 or sum(x["byte_count"] for x in grant["allowed_reads"]) != 257305600: raise ValueError("bytes")
     if grant["attempts"] != 1 or grant["checkpoint_fallback"] or any(grant[k] for k in ["original_checkpoint_reads","original_checkpoint_shard_opens","historical_payload_ledger_delta"]): raise ValueError("execution policy")
     seen = set()

@@ -6,7 +6,8 @@
   "consumer_source_sha256": "faa8c2eee3158a71419ee95e8e55ad5f4eb87a0fa6ff55c771f02be20d00e2d1",
   "d0_sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9",
   "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
-  "package_root_sha256": "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6",
+  "historical_package_root_sha256": "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6",
+  "package_root_sha256": "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c",
   "tensor_count": 40,
   "total_bytes": 257305600,
   "attempts": 1,
@@ -30,7 +31,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "54e0ea92fca38522405b4d52977eb46910d2e739",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json",
-      "source_authority_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256"
+      "source_authority_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256",
+      "canonical_tensor_id": "layer3.s0",
+      "destination_relative_path": "tensors/00-s0.f32le",
+      "quantization": "F32",
+      "decoder_binding": "CANONICAL_F32_LE",
+      "source_result_event": "DPREFIX-EXACT-1"
     },
     {
       "ordinal": 1,
@@ -45,7 +51,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_norm.weight",
+      "destination_relative_path": "tensors/01-attention_norm_scale.f32le",
+      "quantization": "F32",
+      "decoder_binding": "F017_APPLE_F32_LE_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 2,
@@ -61,7 +72,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_q_a.weight",
+      "destination_relative_path": "tensors/02-q_a.bin",
+      "quantization": "Q5_K",
+      "decoder_binding": "F017_APPLE_Q5_K_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 3,
@@ -76,7 +92,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_q_a_norm.weight",
+      "destination_relative_path": "tensors/03-q_rank_norm_scale.f32le",
+      "quantization": "F32",
+      "decoder_binding": "F017_APPLE_F32_LE_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 4,
@@ -93,7 +114,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_q_b.weight",
+      "destination_relative_path": "tensors/04-q_b.bin",
+      "quantization": "Q8_0",
+      "decoder_binding": "F017_APPLE_Q8_0_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 5,
@@ -109,7 +135,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_kv_a_mqa.weight",
+      "destination_relative_path": "tensors/05-kv_a.bin",
+      "quantization": "Q8_0",
+      "decoder_binding": "F017_APPLE_Q8_0_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 6,
@@ -124,7 +155,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_kv_a_norm.weight",
+      "destination_relative_path": "tensors/06-kv_norm_scale.f32le",
+      "quantization": "F32",
+      "decoder_binding": "F017_APPLE_F32_LE_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 7,
@@ -141,7 +177,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_k_b.weight",
+      "destination_relative_path": "tensors/07-k_b.bin",
+      "quantization": "Q8_0",
+      "decoder_binding": "F017_APPLE_Q8_0_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 8,
@@ -158,7 +199,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_v_b.weight",
+      "destination_relative_path": "tensors/08-v_b.bin",
+      "quantization": "Q8_0",
+      "decoder_binding": "F017_APPLE_Q8_0_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 9,
@@ -174,7 +220,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
       "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
-      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190"
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "canonical_tensor_id": "blk.3.attn_output.weight",
+      "destination_relative_path": "tensors/09-attention_output.bin",
+      "quantization": "Q5_K",
+      "decoder_binding": "F017_APPLE_Q5_K_V1",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 10,
@@ -189,7 +240,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
-      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1"
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "canonical_tensor_id": "blk.3.ffn_norm.weight",
+      "destination_relative_path": "tensors/10-ffn_norm_scale.f32le",
+      "quantization": "F32",
+      "decoder_binding": "CANONICAL_F32_LE",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 11,
@@ -204,7 +260,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
-      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1"
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "canonical_tensor_id": "blk.3.exp_probs_b.bias",
+      "destination_relative_path": "tensors/11-correction_bias.f32le",
+      "quantization": "F32",
+      "decoder_binding": "CANONICAL_F32_LE",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 12,
@@ -220,7 +281,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
-      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1"
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "canonical_tensor_id": "blk.3.ffn_gate_inp.weight",
+      "destination_relative_path": "tensors/12-router.f32le",
+      "quantization": "F32",
+      "decoder_binding": "CANONICAL_F32_LE",
+      "source_result_event": "F017-REPRESENTATIVE-M1F0-ATTEMPT-1"
     },
     {
       "ordinal": 13,
@@ -236,7 +302,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#250",
+      "destination_relative_path": "tensors/13-routed-0-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:1"
     },
     {
       "ordinal": 14,
@@ -252,7 +323,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#250",
+      "destination_relative_path": "tensors/14-routed-0-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:2"
     },
     {
       "ordinal": 15,
@@ -268,7 +344,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#250",
+      "destination_relative_path": "tensors/15-routed-0-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:3"
     },
     {
       "ordinal": 16,
@@ -284,7 +365,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#10",
+      "destination_relative_path": "tensors/16-routed-1-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:4"
     },
     {
       "ordinal": 17,
@@ -300,7 +386,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#10",
+      "destination_relative_path": "tensors/17-routed-1-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:5"
     },
     {
       "ordinal": 18,
@@ -316,7 +407,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#10",
+      "destination_relative_path": "tensors/18-routed-1-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:6"
     },
     {
       "ordinal": 19,
@@ -332,7 +428,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#237",
+      "destination_relative_path": "tensors/19-routed-2-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:7"
     },
     {
       "ordinal": 20,
@@ -348,7 +449,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#237",
+      "destination_relative_path": "tensors/20-routed-2-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:8"
     },
     {
       "ordinal": 21,
@@ -364,7 +470,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#237",
+      "destination_relative_path": "tensors/21-routed-2-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:9"
     },
     {
       "ordinal": 22,
@@ -380,7 +491,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#62",
+      "destination_relative_path": "tensors/22-routed-3-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:13"
     },
     {
       "ordinal": 23,
@@ -396,7 +512,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#62",
+      "destination_relative_path": "tensors/23-routed-3-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:14"
     },
     {
       "ordinal": 24,
@@ -412,7 +533,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#62",
+      "destination_relative_path": "tensors/24-routed-3-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:15"
     },
     {
       "ordinal": 25,
@@ -428,7 +554,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#73",
+      "destination_relative_path": "tensors/25-routed-4-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:10"
     },
     {
       "ordinal": 26,
@@ -444,7 +575,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#73",
+      "destination_relative_path": "tensors/26-routed-4-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:11"
     },
     {
       "ordinal": 27,
@@ -460,7 +596,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#73",
+      "destination_relative_path": "tensors/27-routed-4-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:12"
     },
     {
       "ordinal": 28,
@@ -476,7 +617,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#177",
+      "destination_relative_path": "tensors/28-routed-5-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:16"
     },
     {
       "ordinal": 29,
@@ -492,7 +638,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#177",
+      "destination_relative_path": "tensors/29-routed-5-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:17"
     },
     {
       "ordinal": 30,
@@ -508,7 +659,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#177",
+      "destination_relative_path": "tensors/30-routed-5-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:18"
     },
     {
       "ordinal": 31,
@@ -524,7 +680,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#218",
+      "destination_relative_path": "tensors/31-routed-6-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:19"
     },
     {
       "ordinal": 32,
@@ -540,7 +701,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#218",
+      "destination_relative_path": "tensors/32-routed-6-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:20"
     },
     {
       "ordinal": 33,
@@ -556,7 +722,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#218",
+      "destination_relative_path": "tensors/33-routed-6-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:21"
     },
     {
       "ordinal": 34,
@@ -572,7 +743,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_gate_exps.weight#28",
+      "destination_relative_path": "tensors/34-routed-7-gate.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:22"
     },
     {
       "ordinal": 35,
@@ -588,7 +764,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_up_exps.weight#28",
+      "destination_relative_path": "tensors/35-routed-7-up.bin",
+      "quantization": "IQ2_XXS",
+      "decoder_binding": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:23"
     },
     {
       "ordinal": 36,
@@ -604,7 +785,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
-      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39"
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "canonical_tensor_id": "blk.3.ffn_down_exps.weight#28",
+      "destination_relative_path": "tensors/36-routed-7-down.bin",
+      "quantization": "IQ3_XXS",
+      "decoder_binding": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-EXPERT-OUTPUT-RECOVERY:24"
     },
     {
       "ordinal": 37,
@@ -620,7 +806,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "f66343747623a9692dd73df997ec9dc2575a827d",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json",
-      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596"
+      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "canonical_tensor_id": "blk.3.ffn_gate_shexp.weight",
+      "destination_relative_path": "tensors/37-shared-gate.bin",
+      "quantization": "Q5_K",
+      "decoder_binding": "F017_Q5_K_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1"
     },
     {
       "ordinal": 38,
@@ -636,7 +827,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "f66343747623a9692dd73df997ec9dc2575a827d",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json",
-      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596"
+      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "canonical_tensor_id": "blk.3.ffn_up_shexp.weight",
+      "destination_relative_path": "tensors/38-shared-up.bin",
+      "quantization": "Q5_K",
+      "decoder_binding": "F017_Q5_K_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1"
     },
     {
       "ordinal": 39,
@@ -652,7 +848,12 @@
       "source_branch": "feat/017-real-checkpoint-runner",
       "source_commit": "f66343747623a9692dd73df997ec9dc2575a827d",
       "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json",
-      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596"
+      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "canonical_tensor_id": "blk.3.ffn_down_shexp.weight",
+      "destination_relative_path": "tensors/39-shared-down.bin",
+      "quantization": "Q6_K",
+      "decoder_binding": "F017_Q6_K_DUAL_ACCEPTED",
+      "source_result_event": "F017-CANONICAL-SHARED-EXPERT-OUTPUT-RECOVERY-1"
     }
   ]
 }

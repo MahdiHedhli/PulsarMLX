@@ -10,21 +10,32 @@ use std::path::{Path, PathBuf};
 pub const CONSUMER_ID: &str = "F017-NATIVE-REPRESENTATIVE-LAYER3-QUALIFICATION-1";
 pub const GRANT_SCHEMA: &str = "pulsarmlx.f017.native-retained-reuse-grant/1.0.0";
 pub const PACKAGE_SCHEMA: &str = "pulsarmlx.f017.apple-production-serial-f32-package";
+pub const EXPECTED_GRANT_SHA256: &str = "15b2fbb2504546147fe7747f46004d1661c88d9eb9966fb04e218185f5f57776";
+pub const EXPECTED_PACKAGE_SHA256: &str = "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f";
+pub const EXPECTED_D0_SHA256: &str = "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9";
+pub const EXPECTED_LEDGER_SHA256: &str = "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e";
+pub const HISTORICAL_PACKAGE_ROOT_SHA256: &str = "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6";
+pub const EXPECTED_PACKAGE_ROOT_SHA256: &str = "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c";
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AllowedRead {
     pub ordinal: usize,
     pub role: String,
+    pub canonical_tensor_id: String,
+    pub destination_relative_path: String,
     pub path: PathBuf,
     pub byte_count: u64,
     pub sha256: String,
     pub encoding: String,
+    pub quantization: String,
+    pub decoder_binding: String,
     pub shape: Vec<usize>,
     pub source_branch: String,
     pub source_commit: String,
     pub source_authority_path: String,
     pub source_authority_sha256: String,
+    pub source_result_event: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -37,6 +48,7 @@ pub struct RetainedReuseGrant {
     pub consumer_source_sha256: String,
     pub d0_sha256: String,
     pub historical_master_ledger_sha256: String,
+    pub historical_package_root_sha256: String,
     pub package_root_sha256: String,
     pub tensor_count: usize,
     pub total_bytes: u64,
@@ -125,11 +137,47 @@ pub fn sha256_bytes(bytes: &[u8]) -> String {
 }
 
 pub fn load_grant(path: &Path) -> Result<RetainedReuseGrant, String> {
-    parse_json_no_duplicates(&fs::read(path).map_err(|e| format!("GRANT_READ:{e}"))?)
+    let bytes = fs::read(path).map_err(|e| format!("GRANT_READ:{e}"))?;
+    if sha256_bytes(&bytes) != EXPECTED_GRANT_SHA256 {
+        return Err("GRANT_EXACT_SHA".into());
+    }
+    parse_json_no_duplicates(&bytes)
 }
 
 pub fn load_package(path: &Path) -> Result<RetainedPackage, String> {
-    parse_json_no_duplicates(&fs::read(path).map_err(|e| format!("PACKAGE_READ:{e}"))?)
+    let bytes = fs::read(path).map_err(|e| format!("PACKAGE_READ:{e}"))?;
+    if sha256_bytes(&bytes) != EXPECTED_PACKAGE_SHA256 {
+        return Err("PACKAGE_EXACT_SHA".into());
+    }
+    parse_json_no_duplicates(&bytes)
+}
+
+fn package_root(grant: &RetainedReuseGrant) -> Result<String, String> {
+    let descriptors = grant.allowed_reads.iter().map(|row| serde_json::json!({
+        "ordinal": row.ordinal,
+        "canonical_tensor_id": row.canonical_tensor_id,
+        "role": row.role,
+        "destination_relative_path": row.destination_relative_path,
+        "sha256": row.sha256,
+        "byte_count": row.byte_count,
+        "encoding": row.encoding,
+        "shape": row.shape,
+        "quantization": row.quantization,
+        "decoder_binding": row.decoder_binding,
+        "source_authority_path": row.source_authority_path,
+        "source_authority_sha256": row.source_authority_sha256,
+        "source_result_event": row.source_result_event,
+    })).collect::<Vec<_>>();
+    let value = serde_json::json!({
+        "schema":"pulsarmlx.f017.apple-production-serial-f32-retained-package-root",
+        "schema_version":"1.0.0",
+        "package_version":"F017-APPLE-SERIAL-F32-RETAINED-40-V1",
+        "tensor_count":40,
+        "ordered_tensor_descriptors":descriptors,
+    });
+    let mut bytes = serde_json::to_vec(&value).map_err(|e| format!("ROOT_JSON:{e}"))?;
+    bytes.push(b'\n');
+    Ok(sha256_bytes(&bytes))
 }
 
 impl GrantedInputs {
@@ -141,6 +189,11 @@ impl GrantedInputs {
             || grant.original_checkpoint_reads != 0
             || grant.original_checkpoint_shard_opens != 0
             || grant.historical_payload_ledger_delta != 0
+            || grant.d0_sha256 != EXPECTED_D0_SHA256
+            || grant.historical_master_ledger_sha256 != EXPECTED_LEDGER_SHA256
+            || grant.historical_package_root_sha256 != HISTORICAL_PACKAGE_ROOT_SHA256
+            || grant.package_root_sha256 != EXPECTED_PACKAGE_ROOT_SHA256
+            || package_root(&grant)? != EXPECTED_PACKAGE_ROOT_SHA256
             || grant.terminal_semantics != "ONE_ATTEMPT_NO_RETRY_NO_RESUME_COMPLETE_OR_TERMINAL_FAILURE"
             || grant.allowed_reads.len() != 40
             || grant.tensor_count != 40
@@ -266,6 +319,7 @@ mod tests {
             schema: GRANT_SCHEMA.into(), grant_id: "g".into(), consumer_id: CONSUMER_ID.into(),
             consumer_source_path: "x".into(), consumer_source_sha256: "0".repeat(64),
             d0_sha256: "1".repeat(64), historical_master_ledger_sha256: "2".repeat(64),
+            historical_package_root_sha256: "3".repeat(64),
             package_root_sha256: "3".repeat(64), tensor_count: 40, total_bytes: 0,
             attempts: 1, checkpoint_fallback: false, original_checkpoint_reads: 0,
             original_checkpoint_shard_opens: 0, historical_payload_ledger_delta: 0,
