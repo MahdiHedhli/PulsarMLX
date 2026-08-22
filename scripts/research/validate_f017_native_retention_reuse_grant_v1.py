@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import argparse, hashlib, json, pathlib, subprocess
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+GRANT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json"
+PACKAGE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-retained-qualification-package-v1.json"
+
+def unique(path):
+    def pairs(values):
+        out = {}
+        for key, value in values:
+            if key in out: raise ValueError(f"duplicate key {key}")
+            out[key] = value
+        return out
+    return json.loads(path.read_text(), object_pairs_hook=pairs)
+
+def sha_bytes(value): return hashlib.sha256(value).hexdigest()
+def sha(path): return sha_bytes(path.read_bytes())
+
+def historical(commit, path):
+    return subprocess.check_output(
+        ["git", "show", f"{commit}:{path}"], cwd=ROOT, stderr=subprocess.DEVNULL
+    )
+
+def validate(grant_path=GRANT, package_path=PACKAGE):
+    grant, package = unique(grant_path), unique(package_path)
+    if grant["schema"] != "pulsarmlx.f017.native-retained-reuse-grant/1.0.0": raise ValueError("schema")
+    if grant["consumer_id"] != "F017-NATIVE-REPRESENTATIVE-LAYER3-QUALIFICATION-1": raise ValueError("consumer")
+    if sha(ROOT / grant["consumer_source_path"]) != grant["consumer_source_sha256"]: raise ValueError("consumer hash")
+    if grant["d0_sha256"] != sha(ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json"): raise ValueError("D0")
+    if grant["historical_master_ledger_sha256"] != "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e": raise ValueError("ledger")
+    if grant["tensor_count"] != 40 or len(grant["allowed_reads"]) != 40 or len(package["tensors"]) != 40: raise ValueError("census")
+    if grant["total_bytes"] != 257305600 or sum(x["byte_count"] for x in grant["allowed_reads"]) != 257305600: raise ValueError("bytes")
+    if grant["attempts"] != 1 or grant["checkpoint_fallback"] or any(grant[k] for k in ["original_checkpoint_reads","original_checkpoint_shard_opens","historical_payload_ledger_delta"]): raise ValueError("execution policy")
+    seen = set()
+    for ordinal, item in enumerate(grant["allowed_reads"]):
+        if item["ordinal"] != ordinal or item["role"] in seen: raise ValueError("order/duplicate")
+        seen.add(item["role"])
+        spec = package["tensors"].get(item["role"])
+        if spec is None: raise ValueError("role")
+        for key in ["path","sha256","encoding","shape"]:
+            if spec[key] != item[key]: raise ValueError(f"package mismatch {item['role']} {key}")
+        if item["byte_count"] <= 0 or len(item["sha256"]) != 64: raise ValueError("read identity")
+        if item["source_branch"] != "feat/017-real-checkpoint-runner" or len(item["source_commit"]) != 40: raise ValueError("source authority")
+        if sha_bytes(historical(item["source_commit"], item["source_authority_path"])) != item["source_authority_sha256"]: raise ValueError(f"source hash {item['role']}")
+    if package["checkpoint_paths"] != [] or package["runtime"]["mlx_version"] != "0.31.2" or package["runtime"]["mlx_c_version"] != "0.6.0": raise ValueError("package runtime")
+    return grant
+
+def main():
+    parser = argparse.ArgumentParser(); parser.add_argument("--grant", type=pathlib.Path, default=GRANT); parser.add_argument("--package", type=pathlib.Path, default=PACKAGE)
+    args = parser.parse_args(); validate(args.grant, args.package)
+    print("PASS: native consumer-scoped grant 40/40 exact reads; no checkpoint fallback")
+
+if __name__ == "__main__": main()
