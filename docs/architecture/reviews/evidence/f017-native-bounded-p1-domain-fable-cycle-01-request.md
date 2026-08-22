@@ -1,10 +1,10 @@
 # F017 native bounded-P1 execution domain — final Claude Fable 5 review C1
 
-Perform a fresh final independent adversarial review of committed branch `feat/017-rust-native-inference-runtime` at exact pushed head `d4f5749e967b74a9206dce235713c7cffd3b51d2`. Work only from the detached worktree provided. Git and exact-head CI are authoritative.
+Perform a fresh final independent adversarial review of committed branch `feat/017-rust-native-inference-runtime` at exact pushed head `d2d8c9af75e03f49d03f89dd6e3501b501d33be2`. Work only from the detached worktree provided. Git and exact-head CI are authoritative.
 
 This is verification-only. Do not execute M1 Ultra P1, open/read the original checkpoint, run full-model real-checkpoint inference, create a live P1 authorization, or modify repository bytes. Retained D3.5 has already executed once under its reviewed consumer grants and must not be rerun.
 
-Recompute all load-bearing hashes. Inspect exact-head CI run `32559348579`. Primary review packet: `docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-package-v1.json`. Exact P1 admission contract expected SHA: `44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda`. Banked native executable expected SHA: `3894c4d12c93ac4c4f3584d2a9a41370c5074e7ef91402cfd8b16bf698c9c7ba`. Execution-code head: `22a76e4c248434a1827e81501607f93b0779352e`.
+Recompute all load-bearing hashes. Inspect exact-head CI run `32559658103`. Primary review packet: `docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-package-v1.json`. Exact P1 admission contract expected SHA: `44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda`. Banked native executable expected SHA: `3894c4d12c93ac4c4f3584d2a9a41370c5074e7ef91402cfd8b16bf698c9c7ba`. Execution-code head: `22a76e4c248434a1827e81501607f93b0779352e`.
 
 Attack the entire authority graph:
 
