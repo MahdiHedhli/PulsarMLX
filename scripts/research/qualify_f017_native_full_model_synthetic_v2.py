@@ -149,6 +149,30 @@ def exact_keys(value: dict[str, object], expected: set[str], label: str) -> None
         )
 
 
+def validate_accounting_liveness(before: dict[str, int], after: dict[str, int]) -> None:
+    deltas = {name: after[name] - before[name] for name in COUNTERS}
+    if any(value < 0 for value in deltas.values()):
+        raise ValueError("accounting counter regressed")
+    required_positive = {
+        "callback_count",
+        "managed_created",
+        "managed_destroyed",
+        "owned_stream_created",
+        "owned_stream_freed",
+        "native_owned_stream_freed",
+        "registrations",
+        "teardowns",
+    }
+    if any(deltas[name] <= 0 for name in required_positive) or not any(deltas.values()):
+        raise ValueError("accounting snapshot lacks required live lifecycle deltas")
+    if deltas["managed_created"] != deltas["managed_destroyed"] \
+            or deltas["callback_count"] != deltas["managed_destroyed"] \
+            or deltas["owned_stream_created"] != deltas["owned_stream_freed"] \
+            or deltas["owned_stream_freed"] != deltas["native_owned_stream_freed"] \
+            or deltas["registrations"] != deltas["teardowns"]:
+        raise ValueError("accounting liveness deltas do not reconcile")
+
+
 def validate_run(
     state: Path, summary_path: Path, fixture_sha: str, authority: dict[str, object]
 ) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
@@ -167,6 +191,9 @@ def validate_run(
     for snapshot in (receipt["accounting_before"], receipt["accounting_after"]):
         if any(type(value) is not int or value < 0 for value in snapshot.values()):
             raise ValueError("counter type/value rejected")
+    validate_accounting_liveness(
+        receipt["accounting_before"], receipt["accounting_after"]
+    )
     required_receipt = {
         "schema": "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0",
         "event_class": "NATIVE_P1_INERT_MATH_BOUNDARY_REHEARSAL",

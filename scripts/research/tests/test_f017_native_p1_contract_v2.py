@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -17,6 +18,14 @@ CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native
 EXECUTOR = ROOT / "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1"
 AUTHORIZER = ROOT / "scripts/research/f017_native_p1_authorization.py"
 INERT = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-native-bounded-p1-human-approval-inert-v1.json"
+
+
+def load_authorizer():
+    spec = importlib.util.spec_from_file_location("f017_native_p1_authorization", AUTHORIZER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class ExactContract(unittest.TestCase):
@@ -110,6 +119,29 @@ class ExactContract(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(state.exists())
+
+    def test_operator_authorized_final_reviewer_vocabulary_is_exact(self) -> None:
+        authorizer = load_authorizer()
+        accepted = {
+            "path": "review.json",
+            "sha256": "a" * 64,
+            "reviewer_model": "claude-opus-5",
+            "verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+            "blocking_count": 0,
+            "non_blocking_required_count": 0,
+        }
+        self.assertEqual(authorizer.validate_final_review(accepted), accepted)
+        for key, value in [
+            ("reviewer_model", "claude-fable-5"),
+            ("verdict", "ACCEPT"),
+            ("blocking_count", 1),
+            ("non_blocking_required_count", 1),
+            ("blocking_count", False),
+        ]:
+            candidate = copy.deepcopy(accepted)
+            candidate[key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                authorizer.validate_final_review(candidate)
 
 
 if __name__ == "__main__":

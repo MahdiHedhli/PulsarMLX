@@ -3,7 +3,7 @@
 
 Normal validation and template generation cannot create an execution authority.
 The authorize command requires a separately committed human approval that binds
-the final domain declaration, final Fable review, exact readiness head, and
+the final domain declaration, operator-authorized final review, exact readiness head, and
 exact contract. This script is not invoked during domain qualification.
 """
 
@@ -20,6 +20,8 @@ from pathlib import Path
 APPROVAL_SCHEMA = "pulsarmlx.f017.native-bounded-p1-human-approval/1.0.0"
 DECISION = "AUTHORIZE_EXACTLY_ONE_BOUNDED_M1_ULTRA_P1"
 STATEMENT = "AUTHORIZE EXACTLY ONE REVIEWED BOUNDED M1 ULTRA P1; NO RETRY; MANDATORY STOP"
+FINAL_REVIEWER_MODEL = "claude-opus-5"
+FINAL_REVIEW_VERDICT = "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1"
 
 
 def strict_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -79,6 +81,20 @@ def validate_binding(root: Path, value: object, label: str) -> tuple[Path, str]:
     return path, expected
 
 
+def validate_final_review(final_review: object) -> dict[str, object]:
+    if not isinstance(final_review, dict):
+        raise ValueError("final review binding")
+    exact_keys(final_review, {"path", "sha256", "reviewer_model", "verdict", "blocking_count", "non_blocking_required_count"}, "final review")
+    if final_review["reviewer_model"] != FINAL_REVIEWER_MODEL \
+            or final_review["verdict"] != FINAL_REVIEW_VERDICT \
+            or type(final_review["blocking_count"]) is not int \
+            or type(final_review["non_blocking_required_count"]) is not int \
+            or final_review["blocking_count"] != 0 \
+            or final_review["non_blocking_required_count"] != 0:
+        raise ValueError("final review is not accepting")
+    return final_review
+
+
 def approval_template(contract_path: Path, out: Path) -> None:
     _, contract_sha = load(contract_path)
     value = {
@@ -93,7 +109,7 @@ def approval_template(contract_path: Path, out: Path) -> None:
         "domain_declaration": {"path": "FUTURE_COMMITTED_PATH", "sha256": "FUTURE_SHA256"},
         "final_review": {
             "path": "FUTURE_COMMITTED_PATH", "sha256": "FUTURE_SHA256",
-            "reviewer_model": "claude-fable-5", "verdict": "FUTURE_ACCEPT_OR_REJECT",
+            "reviewer_model": FINAL_REVIEWER_MODEL, "verdict": "FUTURE_ACCEPT_OR_REJECT",
             "blocking_count": None, "non_blocking_required_count": None
         }
     }
@@ -112,13 +128,7 @@ def authorize(repo: Path, approval_path: Path, contract_path: Path) -> Path:
         raise ValueError("human approval authority mismatch")
     validate_authority_identifier(approval["authorization_id"], "authorization identity")
     validate_authority_identifier(approval["attempt_id"], "attempt identity")
-    final_review = approval["final_review"]
-    if not isinstance(final_review, dict):
-        raise ValueError("final review binding")
-    exact_keys(final_review, {"path", "sha256", "reviewer_model", "verdict", "blocking_count", "non_blocking_required_count"}, "final review")
-    if final_review["reviewer_model"] != "claude-fable-5" or final_review["verdict"] != "ACCEPT" \
-            or final_review["blocking_count"] != 0 or final_review["non_blocking_required_count"] != 0:
-        raise ValueError("final review is not accepting")
+    final_review = validate_final_review(approval["final_review"])
     declaration_path, declaration_sha = validate_binding(repo, approval["domain_declaration"], "domain declaration")
     review_path, review_sha = validate_binding(repo, {"path": final_review["path"], "sha256": final_review["sha256"]}, "final review")
     del declaration_path, review_path
@@ -132,13 +142,13 @@ def authorize(repo: Path, approval_path: Path, contract_path: Path) -> Path:
     parent = state_root.parent.resolve(strict=True)
     if parent / state_root.name != state_root or state_root.exists():
         raise ValueError("state root is not a fresh exact path")
-    state_root.mkdir(mode=0o700)
-    output = state_root / "authorization.json"
     authorities = contract["authorities"]
     checkpoint = contract["checkpoint"]
     one = contract["one_shot"]
     if approval["attempt_id"] != one["attempt_id"]:
         raise ValueError("attempt identity mismatch")
+    state_root.mkdir(mode=0o700)
+    output = state_root / "authorization.json"
     value = {
         "authorization_id": approval["authorization_id"],
         "attempt_id": approval["attempt_id"],

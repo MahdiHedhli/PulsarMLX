@@ -180,6 +180,7 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
         "crates/f017-native/Cargo.toml",
         "crates/f017-native/build.rs",
         "crates/f017-native/src/lib.rs",
+        "crates/f017-native/src/json.rs",
         "crates/f017-native/src/contract.rs",
         "crates/f017-native/src/executor.rs",
         "crates/f017-native/src/loader.rs",
@@ -200,6 +201,7 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
         "crates/stream/src/apple_mlx_bridge.rs",
         "crates/stream/src/apple_mlx_bridge.mm",
         "crates/stream/src/apple_mlx_deallocation_observer.mm",
+        "scripts/research/f017_native_p1_authorization.py",
     ]
     .into_iter()
     .map(str::to_owned)

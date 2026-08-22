@@ -254,7 +254,8 @@ fn route(
 
 /// Execute exactly token embedding -> every layer -> final norm/logits ->
 /// argmax. With a clean single-token cache each attention softmax has one
-/// visible key, but Q/K/RoPE are still computed and validated.
+/// visible key. At the contract-bound sequence position zero, RoPE is the
+/// identity; this producer validates the Q/K NoPE surface used by the score.
 pub fn execute_one_token(
     source: &mut impl TensorSource,
     backend: &mut impl MatvecBackend,

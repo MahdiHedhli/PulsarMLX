@@ -111,10 +111,27 @@ pub fn validate_plan(manifest: &CheckpointManifest, catalog: &TensorCatalog) -> 
         "F32", "Q2_K", "Q3_K", "Q4_K", "Q5_K", "Q6_K", "Q8_0", "IQ2_S", "IQ2_XXS", "IQ3_XXS",
         "IQ4_XS",
     ];
+    let expected_type_id = |format: &str| -> Option<u32> {
+        Some(match format {
+            "F32" => 0,
+            "Q8_0" => 8,
+            "Q2_K" => 10,
+            "Q3_K" => 11,
+            "Q4_K" => 12,
+            "Q5_K" => 13,
+            "Q6_K" => 14,
+            "IQ2_XXS" => 16,
+            "IQ3_XXS" => 18,
+            "IQ2_S" => 22,
+            "IQ4_XS" => 23,
+            _ => return None,
+        })
+    };
     for tensor in &catalog.tensors {
         if !files.contains(tensor.file.as_str())
             || !names.insert(tensor.name.clone())
             || !allowed.contains(&tensor.format.as_str())
+            || expected_type_id(&tensor.format) != Some(tensor.type_id)
             || tensor.dims.is_empty()
             || tensor.dims.iter().any(|v| *v == 0)
         {
@@ -672,6 +689,9 @@ mod tests {
         let mut missing = catalog.clone();
         missing.tensors.pop();
         assert!(validate_plan(&manifest, &missing).is_err());
+        let mut mismatched_format = catalog.clone();
+        mismatched_format.tensors[0].type_id = 8;
+        assert!(validate_plan(&manifest, &mismatched_format).is_err());
 
         let mut wrong_hash = manifest.clone();
         wrong_hash.files[0].sha256 = "0".repeat(64);

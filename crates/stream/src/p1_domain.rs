@@ -378,6 +378,11 @@ fn validate_accounting(
     before: &P1AccountingSnapshot,
     after: &P1AccountingSnapshot,
 ) -> Result<(), P1DomainError> {
+    let delta = |before: u64, after: u64| {
+        after
+            .checked_sub(before)
+            .ok_or_else(|| P1DomainError::Rejected("P1 lifecycle counter regressed".into()))
+    };
     let balanced = [
         (
             before.managed_created,
@@ -416,10 +421,12 @@ fn validate_accounting(
             after.teardowns,
         ),
     ];
-    if balanced.iter().any(|(bc, ac, bd, ad)| ac - bc != ad - bd) {
-        return Err(P1DomainError::Rejected(
-            "P1 lifecycle counters did not reconcile".into(),
-        ));
+    for (bc, ac, bd, ad) in balanced {
+        if delta(bc, ac)? != delta(bd, ad)? {
+            return Err(P1DomainError::Rejected(
+                "P1 lifecycle counters did not reconcile".into(),
+            ));
+        }
     }
     for (logical_before, logical_after, native_before, native_after) in [
         (
@@ -441,7 +448,7 @@ fn validate_accounting(
             after.native_owned_stream_freed,
         ),
     ] {
-        if logical_after - logical_before != native_after - native_before {
+        if delta(logical_before, logical_after)? != delta(native_before, native_after)? {
             return Err(P1DomainError::Rejected(
                 "logical/native free delta mismatch".into(),
             ));
@@ -458,6 +465,31 @@ fn validate_accounting(
             "P1 native terminal accounting is not clean".into(),
         ));
     }
+    let managed_created = delta(before.managed_created, after.managed_created)?;
+    let managed_destroyed = delta(before.managed_destroyed, after.managed_destroyed)?;
+    let callback_count = delta(before.callback_count, after.callback_count)?;
+    let owned_created = delta(before.owned_stream_created, after.owned_stream_created)?;
+    let owned_freed = delta(before.owned_stream_freed, after.owned_stream_freed)?;
+    let native_owned_freed = delta(
+        before.native_owned_stream_freed,
+        after.native_owned_stream_freed,
+    )?;
+    let registrations = delta(before.registrations, after.registrations)?;
+    let teardowns = delta(before.teardowns, after.teardowns)?;
+    if managed_created == 0
+        || managed_destroyed == 0
+        || callback_count == 0
+        || callback_count != managed_destroyed
+        || owned_created == 0
+        || owned_freed == 0
+        || native_owned_freed == 0
+        || registrations == 0
+        || teardowns == 0
+    {
+        return Err(P1DomainError::Rejected(
+            "P1 accounting lacks required live native lifecycle deltas".into(),
+        ));
+    }
     Ok(())
 }
 
@@ -469,6 +501,11 @@ pub fn execute_bounded_p1_once(
     runtime: P1RuntimeIdentity,
     math: &mut impl BoundedP1Math,
 ) -> Result<BoundedP1Receipt, P1DomainError> {
+    if math.backend_id().starts_with("INERT_NO_CHECKPOINT_") {
+        return Err(P1DomainError::Rejected(
+            "inert producer identity rejected by real execution path".into(),
+        ));
+    }
     execute_bounded_p1_impl(state_root, authority, runtime, math, false)
 }
 
@@ -677,6 +714,12 @@ mod tests {
     }
 
     #[test]
+    fn all_zero_or_stale_accounting_snapshot_is_rejected() {
+        let snapshot = P1AccountingSnapshot::default();
+        assert!(validate_accounting(&snapshot, &snapshot).is_err());
+    }
+
+    #[test]
     fn wrong_result_consumes_attempt_and_banks_failure_terminal() {
         let _serial = NATIVE_CONTEXT_TEST_LOCK.lock().unwrap();
         struct Wrong;
@@ -719,7 +762,9 @@ mod tests {
             candidate.authorization_id = authorization_id.into();
             candidate.attempt_id = attempt_id.into();
             let mut math = InertMath { invocations: 0 };
-            assert!(execute_inert_bounded_p1_once(&root, &candidate, runtime(), &mut math).is_err());
+            assert!(
+                execute_inert_bounded_p1_once(&root, &candidate, runtime(), &mut math).is_err()
+            );
             assert_eq!(math.invocations, 0);
             assert!(!root.exists(), "unsafe identifier created durable state");
         }

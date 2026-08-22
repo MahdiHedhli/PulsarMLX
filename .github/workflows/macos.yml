@@ -152,10 +152,19 @@ jobs:
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
           cargo build -p f017-native --release --bin f017-native-synthetic-p1
+          SOURCE_BINARY=target/release/f017-native-synthetic-p1
+          SOURCE_AUTHORITY="$RUNNER_TEMP/f017-native-synthetic-source-authority.json"
+          .venv/bin/python scripts/research/build_f017_native_synthetic_inert_authority.py \
+            --template specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v2.json \
+            --binary "$SOURCE_BINARY" \
+            --execution-code-head "$(git rev-parse HEAD)" \
+            --authorization-id F017-NATIVE-TINY-FULL-MODEL-CI-AUTHORITY-3 \
+            --attempt-id F017-NATIVE-TINY-FULL-MODEL-CI-ATTEMPT-3 \
+            --output "$SOURCE_AUTHORITY"
           .venv/bin/python scripts/research/qualify_f017_native_full_model_synthetic_v2.py \
-            --binary specs/017-rust-native-inference-runtime/bin/f017-native-synthetic-p1-v2 \
+            --binary "$SOURCE_BINARY" \
             --fixture specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-v1.json \
-            --authority specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v2.json \
+            --authority "$SOURCE_AUTHORITY" \
             --output-root "$RUNNER_TEMP/f017-native-synthetic-v2" \
             --evidence-output "$RUNNER_TEMP/f017-native-synthetic-v2-evidence.json" \
             --execution-code-head "$(git rev-parse HEAD)" \
