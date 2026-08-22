@@ -85,6 +85,8 @@ jobs:
           PY
       - name: Build exact native F017 producer targets
         run: cargo build -p f017-native --release --all-targets
+      - name: Test exact native F017 producer targets
+        run: cargo test -p f017-native --release --no-fail-fast
       - name: Validate Feature 002 research methodology
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
@@ -112,6 +114,31 @@ jobs:
             --rust-output crates/engine/src/f017_oracle_generated.rs \
             --check
           cargo test -p engine --test f017_independent_oracle -- --nocapture
+      - name: Validate retained D3.5 authority and numerical grading
+        run: |
+          .venv/bin/python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          path = Path("scripts/research/validate_f017_native_d35_comparison_grant_v1.py")
+          spec = importlib.util.spec_from_file_location("f017_d35_grant", path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          result = module.validate(
+              resolve_executable=False,
+              resolve_machine_local=False,
+              require_pre_event_root_absent=False,
+          )
+          assert result["result"] == "PASS_COMMITTED_STRUCTURE_ONLY"
+          assert result["validation_scope"] == "COMMITTED_STRUCTURE_ONLY_NOT_EXECUTION_AUTHORITY"
+          assert result["read_census"] == 89
+          assert result["original_checkpoint_reads"] == 0
+          PY
+          .venv/bin/python scripts/research/validate_f017_native_d35_numerical_grading_v1.py
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_native_d35_comparison_grant_v1 \
+            scripts.research.tests.test_f017_native_d35_numerical_grading_v1 \
+            -v
       - name: Execute required native MLX adapter matrix
         run: |
           echo "PULSAR_REQUIRE_NATIVE_MLX=1; executing native adapter tests (no skip permitted)"
