@@ -8,7 +8,8 @@ Review committed bytes only in a detached, clean, non-authoritative worktree at 
 
 - C2 exact response: `docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-exact-cli-response.json`, SHA-256 `b89eb63d7ae372ae4f226ec0a60db3640b8740d01b130de33b058e4cfbaa4251`.
 - C2 normalized result: `docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-normalized-result.json`, SHA-256 `4ade469de333f5c773a5707a557f019b0de8238fd6b3101a29d12284ded31d25`.
-- C2 repair disposition is at the later evidence tip and will be supplied verbatim with this request.
+- C2 repair disposition: `docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-repair-disposition.json`, SHA-256 `49ba3545bc4a1bcaaa462b998a5cac68a82e1b5b3cc3ca0419a4e6ea0e2f8b77` (read from evidence tip `c32e0d44081463d4aa4a1598cee9370cda52f590`; it binds the immutable target but is not target implementation authority).
+- Exact-head CI evidence: `docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-ci-32574711605.json`, SHA-256 `5591b0a135ebccbe1305afabf0d8123d4eb054937e64d6a20c074bcf08fde10e` (read from the same evidence tip and independently verify through GitHub).
 - Repair implementation commit: `038cdbfdf707dc80d2a548650885922cfa5aeb9e`.
 - Exact review target and authority-rebind commit: `ab236b924f7dd7a95d226c5bb528315a4a68d72c`.
 - Admission contract: `specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json`, SHA-256 `cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb`.
