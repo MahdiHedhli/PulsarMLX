@@ -1,0 +1,69 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-execution-architecture",
+  "schema_version": "1.0.0",
+  "architecture_id": "F017-NATIVE-BOUNDED-P1-EXECUTION-DOMAIN-1",
+  "status": "IMPLEMENTATION_IN_PROGRESS_RETAINED_CONSUMER_INSTANTIABLE_REAL_P1_MATH_NOT_YET_INSTANTIABLE",
+  "authority": {
+    "native_branch": "feat/017-rust-native-inference-runtime",
+    "historical_branch": "feat/017-real-checkpoint-runner",
+    "historical_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+    "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_master_terminal_count": 175
+  },
+  "bound_contracts": {
+    "d0": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json", "sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"},
+    "d1": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-counter-semantics-v1.json", "sha256": "f3aab3b065628f96bfe1fab1a045a9af3d2261e2b5d7ef69c1528fb0a7d88246"},
+    "d2": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-accounting-residency-v1.json", "sha256": "d2312004f05cafbfd1f1779ccfbbb9e1a0c8c5b4e916aa0601abb04dbefe9c84"}
+  },
+  "ownership_domain": {
+    "process": "ONE_NATIVE_RUST_PROCESS",
+    "math_backend": "PINNED_MLX_METAL_MATVEC_PLUS_RUST_SERIAL_F32",
+    "cross_runtime_counter_stitching": false,
+    "mock_boundary": "TENSOR_MATH_ONLY",
+    "receipt_emitter": "EXECUTOR_OWNED",
+    "attempt_lifecycle": "EXCLUSIVE_OWNED_CLAIM_DURABLE_START_OWNER_ONLY_TERMINALIZATION_RECEIPT_CENSUS",
+    "retry": false,
+    "resume": false,
+    "continuation": false,
+    "mandatory_stop": true
+  },
+  "retained_qualification": {
+    "consumer_id": "F017-NATIVE-REPRESENTATIVE-LAYER3-QUALIFICATION-1",
+    "runner_source": {"path": "crates/f017-native/src/bin/retained_qualification.rs", "sha256": "faa8c2eee3158a71419ee95e8e55ad5f4eb87a0fa6ff55c771f02be20d00e2d1"},
+    "grant_enforcer": {"path": "crates/f017-native/src/retained.rs", "sha256": "79a4467d3adb9257da06186d81b3966ab1e969db1e586a113e35a756832edcf5"},
+    "canonical_graph": {"path": "crates/stream/src/f017_apple_serial_f32.rs", "sha256": "f27df2391669349c32051030f3b1450686c8ced560251f1fc58a5b7b476c8792", "historical_source_commit": "2deb3c99cb783da832f8b2274c985557191e0233"},
+    "tensor_count": 40,
+    "total_bytes": 257305600,
+    "checkpoint_fallback": false,
+    "per_read_receipts": true,
+    "same_descriptor_consumed": true,
+    "scope": "REPRESENTATIVE_LAYER3_S0_TO_S2_ONLY_NOT_FULL_FORWARD"
+  },
+  "runtime": {
+    "mlx": "0.31.2",
+    "mlx_c": "0.6.0",
+    "libmlx_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+    "libmlxc_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+    "machine": "Apple M1 Ultra",
+    "architecture": "arm64"
+  },
+  "load_bearing_sources": [
+    {"path": "crates/quant/src/cpu_dot.rs", "sha256": "64e5385a9a6e0690ba6841809ea268b06ce9f52b1ad63b2dde50b066bdf81d7d"},
+    {"path": "crates/quant/src/iq_ref.rs", "sha256": "c1606b39afff3a56334c8f56358c711dcbcb5f2df904d4e86612fd2a09b19161"},
+    {"path": "crates/quant/src/cpu_dot_tables.rs", "sha256": "8dc16e47d422a5bf52ba6efb3d754e70af6ae43c88179d59bf6977711003f85b"},
+    {"path": "crates/stream/src/apple_mlx_bridge.rs", "sha256": "08ca3a7da61da41707d6cf5f50822432eae721ae2912730ef23fe9ddeeed358c"},
+    {"path": "crates/stream/src/apple_mlx_bridge.mm", "sha256": "e68b1f1553903c6a06cba6f29947e275f3362d33beaa591326a3c2ccdeda6142"},
+    {"path": "crates/stream/src/p1_domain.rs", "sha256": "83ea40e2f90e9c4dc9e2a601212ec712af2cd714b694c71b2e868b0613f380d0"}
+  ],
+  "instantiability": {
+    "retained_qualification_consumer": "SOURCE_AND_NATIVE_BUILD_INSTANTIABLE_PENDING_REVIEWED_GRANT",
+    "math_only_mock_receipt_chain": "INSTANTIABLE",
+    "real_full_checkpoint_bounded_p1_math": "NOT_YET_INSTANTIABLE_BLOCKS_FINAL_DOMAIN_ACCEPTANCE"
+  },
+  "phase_invariants": {
+    "real_m1_ultra_p1_executions": 0,
+    "full_model_real_checkpoint_inference_executions": 0,
+    "live_p1_authorizations": 0,
+    "original_checkpoint_reads_for_d3_5": 0
+  }
+}

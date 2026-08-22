@@ -1,0 +1,20 @@
+[package]
+name = "f017-native"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Native retained qualification and bounded-P1 producer for Feature 017."
+build = "build.rs"
+
+[dependencies]
+quant = { path = "../quant" }
+stream = { path = "../stream" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+libc = "0.2"
+
+[[bin]]
+name = "f017-native-retained-qualification"
+path = "src/bin/retained_qualification.rs"
