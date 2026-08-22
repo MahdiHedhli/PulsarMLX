@@ -46,6 +46,13 @@ def _hash_json(value: object) -> str:
     return hashlib.sha256((json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()).hexdigest()
 
 
+def _hash_path(path: Path) -> str:
+    digest=hashlib.sha256()
+    with path.open("rb",buffering=0) as source:
+        while chunk:=source.read(1024*1024): digest.update(chunk)
+    return digest.hexdigest()
+
+
 @dataclass(frozen=True)
 class Geometry:
     layers: int
@@ -120,28 +127,45 @@ class StreamingCatalogSource:
             raise ValueError("live scientific-access authorization required")
         if auth.get("attempts") != 1 or auth.get("retries") != 0 or auth.get("resume"):
             raise ValueError("invalid scientific-access lifecycle")
+        if "INDEPENDENT_CPU_REFERENCE" not in auth.get("consumers", []):
+            raise ValueError("primary consumer not granted")
+        if _hash_path(Path(__file__).resolve()) != auth.get("primary_sha256"):
+            raise ValueError("primary producer identity mismatch")
+        if _hash_path(catalog.resolve(strict=True)) != auth.get("checkpoint_catalog_sha256"):
+            raise ValueError("catalog identity mismatch")
         root = checkpoint_root.resolve(strict=True)
         if str(root) != auth.get("checkpoint_root") or root.is_symlink():
             raise ValueError("checkpoint root authority mismatch")
         document = _strict_json(catalog)
         self.records = {item["name"]: item for item in document["tensors"]}
+        self.shards = {item["filename"]: item for item in auth.get("shards", [])}
+        identity_path=os.environ.get("F017_ORACLE_CHECKPOINT_IDENTITY")
+        if not identity_path: raise ValueError("checkpoint identity evidence required")
+        identity=_strict_json(Path(identity_path))
+        if identity.get("authorization_id")!=auth["authorization_id"] or identity.get("result")!="PASS" or identity.get("shards")!=auth.get("shards"):
+            raise ValueError("checkpoint identity evidence mismatch")
         self.root, self.auth = root, auth
         self.handles: dict[str, int] = {}
-        self.used: set[str] = set()
+        self.reads: dict[str, dict[str, int]] = {}
         event_root=os.environ.get("F017_ORACLE_ACCESS_EVENT_DIR")
         if not event_root: raise ValueError("durable access-event directory required")
         self.event_root=Path(event_root);self.event_root.mkdir(mode=0o700,parents=False,exist_ok=False);self.sequence=0
 
-    def _event(self,kind,authority,result,size=0,tensor=None):
+    def _event(self,kind,authority,result,size=0,tensor=None,offset=None,descriptor=None,expert=None,count=None):
         value={"schema":"pulsarmlx.f017.corrected-oracle-access-event/1.0.0","sequence":self.sequence,
                "authorization_id":self.auth["authorization_id"],"consumer":"INDEPENDENT_CPU_REFERENCE",
                "process_id":os.getpid(),"kind":kind,"authority_id":authority,"result":result,
-               "size_bytes":size,"tensor_name":tensor}
+               "size_bytes":size,"tensor_name":tensor,"offset_bytes":offset,
+               "descriptor_identity":descriptor,"expert_ordinal":expert,"repeat_count":count}
         data=(json.dumps(value,sort_keys=True,separators=(",",":"))+"\n").encode();path=self.event_root/f"{self.sequence:08}.json"
         fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
         with os.fdopen(fd,"wb") as out: out.write(data);out.flush();os.fsync(out.fileno())
-        dfd=os.open(self.event_root,os.O_RDONLY);os.fsync(dfd);os.close(dfd)
-        if path.read_bytes()!=data: raise ValueError("access event readback")
+        dfd=os.open(self.event_root,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW);os.fsync(dfd)
+        rfd=os.open(path.name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=dfd)
+        with os.fdopen(rfd,"rb") as source: observed=source.read()
+        os.close(dfd)
+        if observed!=data: raise ValueError("access event readback")
+        _strict_json(path)
         self.sequence+=1
 
     def _raw(self, record: dict, expert: int | None, rows: int, columns: int, row_start: int = 0) -> bytes:
@@ -156,14 +180,52 @@ class StreamingCatalogSource:
         offset = int(record["data_offset_abs"]) + (0 if expert is None else expert * full_matrix_bytes) + row_start * row_bytes
         shard = record["file"]
         if shard not in self.handles:
-            self.handles[shard] = os.open(self.root / shard, os.O_RDONLY | os.O_NOFOLLOW)
-            self._event("SHARD_OPEN",shard,"PASS_READ_ONLY_NOFOLLOW",os.fstat(self.handles[shard]).st_size)
-        self._event("TENSOR_RESOLUTION",record["name"],"PASS_CATALOG_BOUND",matrix_bytes,record["name"])
-        raw = os.pread(self.handles[shard], matrix_bytes, offset)
+            expected = self.shards.get(shard)
+            if not expected:
+                self._event("SHARD_OPEN_ATTEMPT", shard, "REJECT_UNAUTHORIZED_SHARD")
+                raise ValueError("unauthorized shard")
+            self._event("SHARD_OPEN_ATTEMPT", shard, "STARTED_READ_ONLY_NOFOLLOW")
+            try:
+                descriptor = os.open(self.root / shard, os.O_RDONLY | os.O_NOFOLLOW)
+                stat = os.fstat(descriptor)
+                identity = f"dev={stat.st_dev};ino={stat.st_ino};mode={stat.st_mode:o}"
+                if stat.st_size != int(expected["size_bytes"]):
+                    os.close(descriptor)
+                    self._event("SHARD_OPEN_RESULT", shard, "FAIL_SIZE_MISMATCH", stat.st_size,
+                                descriptor=identity)
+                    raise ValueError("shard size mismatch")
+                self.handles[shard] = descriptor
+                self._event("SHARD_OPEN_RESULT", shard, "PASS_READ_ONLY_NOFOLLOW", stat.st_size,
+                            descriptor=identity)
+            except ValueError:
+                raise
+            except Exception as exc:
+                if shard not in self.handles:
+                    self._event("SHARD_OPEN_RESULT", shard, f"FAIL_{type(exc).__name__}")
+                raise
+        seen = record["name"] in self.reads
+        if not seen:
+            self._event("TENSOR_RESOLUTION",record["name"],"PASS_CATALOG_BOUND",matrix_bytes,record["name"],offset,expert=expert)
+            self._event("PAYLOAD_READ_ATTEMPT", record["name"], "STARTED_EXACT_PREAD",
+                        matrix_bytes, record["name"], offset, expert=expert)
+        try:
+            raw = os.pread(self.handles[shard], matrix_bytes, offset)
+        except Exception as exc:
+            self._event("PAYLOAD_READ_RESULT", record["name"], f"FAIL_{type(exc).__name__}",
+                        0, record["name"], offset, expert=expert)
+            raise
         if len(raw) != matrix_bytes:
+            self._event("PAYLOAD_READ_RESULT", record["name"], "FAIL_SHORT_READ",
+                        len(raw), record["name"], offset, expert=expert)
             raise ValueError("short tensor read")
-        kind="TENSOR_FIRST_USE" if record["name"] not in self.used else "TENSOR_REUSE";self.used.add(record["name"])
-        self._event(kind,record["name"],"PASS_EXACT_PREAD",len(raw),record["name"])
+        if not seen:
+            self._event("PAYLOAD_READ_RESULT", record["name"], "PASS_EXACT_PREAD",
+                        len(raw), record["name"], offset, expert=expert)
+            self._event("TENSOR_FIRST_USE",record["name"],"PASS_DECODE_INPUT",len(raw),record["name"],offset,expert=expert)
+            self.reads[record["name"]] = {"count": 1, "bytes": len(raw)}
+        else:
+            self.reads[record["name"]]["count"] += 1
+            self.reads[record["name"]]["bytes"] += len(raw)
         return raw
 
     def _tensor(self, name: str, expert: int | None, rows: int, columns: int) -> list[float]:
@@ -185,6 +247,9 @@ class StreamingCatalogSource:
         return StreamingMatrix(self, name, expert, rows, columns)
 
     def close(self) -> None:
+        for tensor, summary in sorted(self.reads.items()):
+            self._event("TENSOR_REUSE_SUMMARY", tensor, "PASS_COMPLETE",
+                        summary["bytes"], tensor, count=max(0, summary["count"] - 1))
         for shard,descriptor in self.handles.items():
             os.close(descriptor)
             self._event("SHARD_TEARDOWN",shard,"PASS_CLOSE")
@@ -224,6 +289,35 @@ def _matvec(matrix: list[float], rows: int, columns: int, vector: list[float]) -
         for column in range(columns):
             total += float(matrix[row * columns + column]) * float(vector[column])
         output.append(total)
+    return output
+
+
+def _transpose_matvec(matrix: list[float], rows: int, columns: int,
+                      vector: list[float]) -> list[float]:
+    """Fixed-order matrix-transpose/vector product.
+
+    The GLM MLA K-B tensor is stored as ``[kv_rank, qk_nope]`` for the
+    production contraction.  Constructing the explicit key requires the
+    transpose product; keeping this operation visible prevents a one-key
+    shortcut from silently deleting K semantics.
+    """
+    if len(vector) != rows:
+        raise ValueError("transpose matvec shape")
+    if isinstance(matrix, StreamingMatrix):
+        if matrix.rows != rows or matrix.columns != columns:
+            raise ValueError("streaming transpose matvec shape")
+        output = [0.0] * columns
+        for row in range(rows):
+            value = float(vector[row])
+            for column, weight in enumerate(matrix.row(row)):
+                output[column] += float(weight) * value
+        return output
+    if len(matrix) != rows * columns:
+        raise ValueError("transpose matvec shape")
+    output = [0.0] * columns
+    for row in range(rows):
+        for column in range(columns):
+            output[column] += float(matrix[row * columns + column]) * float(vector[row])
     return output
 
 
@@ -278,21 +372,43 @@ def execute(source: Source, geometry: Geometry, token: int, position: int = 0) -
         q = _matvec(source.matrix(f"blk.{layer}.attn_q_b.weight", geometry.heads * qdim, geometry.q_rank), geometry.heads * qdim, geometry.q_rank, qan)
         kv = _matvec(source.matrix(f"blk.{layer}.attn_kv_a_mqa.weight", geometry.kv_rank + geometry.qk_rope, geometry.hidden), geometry.kv_rank + geometry.qk_rope, geometry.hidden, normalized)
         kvn = _rms(kv[:geometry.kv_rank], source.vector(f"blk.{layer}.attn_kv_a_norm.weight", geometry.kv_rank), geometry.rms_epsilon)
-        # Position zero is identity. Nonzero qualification rotates the query
-        # and one-key rope lanes under fixed even/odd pairing.
+        # The bounded event has one causal key, but it still instantiates the
+        # complete Q/K/RoPE/score/softmax surface.  A one-element softmax is
+        # exactly one; that fact is an outcome of the frozen context, not a
+        # license to omit K or score construction.
+        key_rope = list(kv[geometry.kv_rank:])
         for head in range(geometry.heads):
             for lane in range(0, geometry.qk_rope, 2):
                 theta = position / geometry.rope_base ** (lane / geometry.qk_rope)
                 c, s = math.cos(theta), math.sin(theta)
                 base = head * qdim + geometry.qk_nope + lane
                 q[base], q[base + 1] = q[base] * c - q[base + 1] * s, q[base] * s + q[base + 1] * c
+        for lane in range(0, geometry.qk_rope, 2):
+            theta = position / geometry.rope_base ** (lane / geometry.qk_rope)
+            c, s = math.cos(theta), math.sin(theta)
+            key_rope[lane], key_rope[lane + 1] = (
+                key_rope[lane] * c - key_rope[lane + 1] * s,
+                key_rope[lane] * s + key_rope[lane + 1] * c,
+            )
         values = []
+        attention_scores = []
         for head in range(geometry.heads):
-            values.extend(_matvec(source.expert(f"blk.{layer}.attn_v_b.weight", head, geometry.value_dim, geometry.kv_rank), geometry.value_dim, geometry.kv_rank, kvn))
-            key = _matvec(source.expert(f"blk.{layer}.attn_k_b.weight", head, geometry.kv_rank, geometry.qk_nope), geometry.kv_rank, geometry.qk_nope, q[head * qdim:head * qdim + geometry.qk_nope])
-            score = sum(a * b for a, b in zip(key, kvn, strict=True)) / math.sqrt(qdim)
+            value = _matvec(source.expert(f"blk.{layer}.attn_v_b.weight", head, geometry.value_dim, geometry.kv_rank), geometry.value_dim, geometry.kv_rank, kvn)
+            key_nope = _transpose_matvec(
+                source.expert(f"blk.{layer}.attn_k_b.weight", head, geometry.kv_rank, geometry.qk_nope),
+                geometry.kv_rank, geometry.qk_nope, kvn,
+            )
+            qbase = head * qdim
+            q_nope = q[qbase:qbase + geometry.qk_nope]
+            q_rope = q[qbase + geometry.qk_nope:qbase + qdim]
+            score = (sum(a * b for a, b in zip(q_nope, key_nope, strict=True))
+                     + sum(a * b for a, b in zip(q_rope, key_rope, strict=True))) / math.sqrt(qdim)
             if not math.isfinite(score):
                 raise ValueError("attention score")
+            attention_scores.append(struct.pack("<d", score).hex())
+            softmax_weight = math.exp(score - score)
+            softmax_weight /= softmax_weight
+            values.extend(component * softmax_weight for component in value)
         attention = _matvec(source.matrix(f"blk.{layer}.attn_output.weight", geometry.hidden, geometry.heads * geometry.value_dim), geometry.hidden, geometry.heads * geometry.value_dim, values)
         hidden = _residual(hidden, attention)
         post_attention = list(hidden)
@@ -315,6 +431,7 @@ def execute(source: Source, geometry: Geometry, token: int, position: int = 0) -
             "post_attention_residual_sha256": _hash_f64(post_attention),
             "router_normalized_sha256": _hash_f64(router_input),
             "selected_expert_ids": selected,
+            "attention_score_f64_bits": attention_scores,
             "routing_weight_f64_bits": [struct.pack("<d", w).hex() for w in weights],
             "routed_aggregate_sha256": _hash_f64(routed) if routed else None,
             "shared_output_sha256": _hash_f64(shared) if shared else None,
@@ -356,12 +473,23 @@ def main() -> int:
         result = execute(JsonSource(fixture["tensors"]), Geometry.from_json(fixture["geometry"]), fixture["token"], fixture.get("position", 0))
     else:
         authority = _strict_json(arguments.authorization)
+        if _hash_path(arguments.geometry.resolve(strict=True)) != authority.get("geometry_sha256"):
+            raise ValueError("geometry identity mismatch")
         source = StreamingCatalogSource(arguments.authorization, arguments.catalog, arguments.checkpoint_root)
         try:
             result = execute(source, Geometry.from_json(_strict_json(arguments.geometry)), authority["prompt_token"], authority["position"])
         finally:
             source.close()
-    arguments.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    data=(json.dumps(result,indent=2,sort_keys=True)+"\n").encode()
+    arguments.output.parent.mkdir(parents=True,exist_ok=True)
+    fd=os.open(arguments.output,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
+    with os.fdopen(fd,"wb") as output: output.write(data);output.flush();os.fsync(output.fileno())
+    dfd=os.open(arguments.output.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW);os.fsync(dfd)
+    rfd=os.open(arguments.output.name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=dfd)
+    with os.fdopen(rfd,"rb") as source: observed=source.read()
+    os.close(dfd)
+    if observed!=data: raise ValueError("oracle result exact readback")
+    _strict_json(arguments.output)
     return 0
 
 

@@ -22,6 +22,12 @@ TOP_N = 32
 ORACLE_ID = "F017_INDEPENDENT_ACCELERATED_CROSS_CHECK_V1"
 AUTH_SCHEMA = "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/1.0.0"
 
+def hash_path(path):
+    value=hashlib.sha256()
+    with path.open("rb",buffering=0) as source:
+        while chunk:=source.read(1024*1024): value.update(chunk)
+    return value.hexdigest()
+
 
 def strict(path: Path) -> dict:
     def hook(items):
@@ -57,23 +63,37 @@ class CatalogStore:
         auth = strict(authorization)
         if auth.get("schema") != AUTH_SCHEMA or auth.get("state") != "AUTHORIZED" or not auth.get("live"):
             raise ValueError("live scientific-access authorization required")
+        if "INDEPENDENT_ACCELERATED_CROSS_CHECK" not in auth.get("consumers",[]): raise ValueError("secondary consumer not granted")
+        if hash_path(Path(__file__).resolve())!=auth.get("secondary_sha256"): raise ValueError("secondary producer identity mismatch")
+        if hash_path(catalog.resolve(strict=True))!=auth.get("checkpoint_catalog_sha256"): raise ValueError("catalog identity mismatch")
         root = checkpoint_root.resolve(strict=True)
         if str(root) != auth.get("checkpoint_root") or root.is_symlink():
             raise ValueError("checkpoint root authority mismatch")
         self.root, self.auth = root, auth
         self.records = {item["name"]: item for item in strict(catalog)["tensors"]}
-        self.handles = {};self.used=set();event_root=os.environ.get("F017_ORACLE_ACCESS_EVENT_DIR")
+        self.shards = {item["filename"]: item for item in auth.get("shards", [])}
+        identity_path=os.environ.get("F017_ORACLE_CHECKPOINT_IDENTITY")
+        if not identity_path: raise ValueError("checkpoint identity evidence required")
+        identity=strict(Path(identity_path))
+        if identity.get("authorization_id")!=auth["authorization_id"] or identity.get("result")!="PASS" or identity.get("shards")!=auth.get("shards"):
+            raise ValueError("checkpoint identity evidence mismatch")
+        self.handles = {};self.reads={};event_root=os.environ.get("F017_ORACLE_ACCESS_EVENT_DIR")
         if not event_root: raise ValueError("durable access-event directory required")
         self.event_root=Path(event_root);self.event_root.mkdir(mode=0o700,parents=False,exist_ok=False);self.sequence=0
-    def _event(self,kind,authority,result,size=0,tensor=None):
+    def _event(self,kind,authority,result,size=0,tensor=None,offset=None,descriptor=None,expert=None,count=None):
         value={"schema":"pulsarmlx.f017.corrected-oracle-access-event/1.0.0","sequence":self.sequence,
                "authorization_id":self.auth["authorization_id"],"consumer":"INDEPENDENT_ACCELERATED_CROSS_CHECK",
-               "process_id":os.getpid(),"kind":kind,"authority_id":authority,"result":result,"size_bytes":size,"tensor_name":tensor}
+               "process_id":os.getpid(),"kind":kind,"authority_id":authority,"result":result,"size_bytes":size,"tensor_name":tensor,
+               "offset_bytes":offset,"descriptor_identity":descriptor,"expert_ordinal":expert,"repeat_count":count}
         data=(json.dumps(value,sort_keys=True,separators=(",",":"))+"\n").encode();path=self.event_root/f"{self.sequence:08}.json"
         fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
         with os.fdopen(fd,"wb") as out: out.write(data);out.flush();os.fsync(out.fileno())
-        dfd=os.open(self.event_root,os.O_RDONLY);os.fsync(dfd);os.close(dfd)
-        if path.read_bytes()!=data: raise ValueError("access event readback")
+        dfd=os.open(self.event_root,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW);os.fsync(dfd)
+        rfd=os.open(path.name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=dfd)
+        with os.fdopen(rfd,"rb") as source: observed=source.read()
+        os.close(dfd)
+        if observed!=data: raise ValueError("access event readback")
+        strict(path)
         self.sequence+=1
     def _get(self, name, expert, rows, cols, row_start=0):
         from qualify_f017_quantization_matrix_v1 import independent_decode
@@ -85,17 +105,43 @@ class CatalogStore:
         offset=int(record["data_offset_abs"])+(0 if expert is None else expert*full_rows*row_bytes)+row_start*row_bytes
         shard=record["file"]
         if shard not in self.handles:
-            self.handles[shard]=os.open(self.root/shard,os.O_RDONLY|os.O_NOFOLLOW);self._event("SHARD_OPEN",shard,"PASS_READ_ONLY_NOFOLLOW",os.fstat(self.handles[shard]).st_size)
-        self._event("TENSOR_RESOLUTION",name,"PASS_CATALOG_BOUND",size,name)
-        raw=os.pread(self.handles[shard],size,offset)
-        if len(raw)!=size: raise ValueError("short tensor read")
-        kind="TENSOR_FIRST_USE" if name not in self.used else "TENSOR_REUSE";self.used.add(name);self._event(kind,name,"PASS_EXACT_PREAD",len(raw),name)
+            expected=self.shards.get(shard)
+            if not expected:
+                self._event("SHARD_OPEN_ATTEMPT",shard,"REJECT_UNAUTHORIZED_SHARD");raise ValueError("unauthorized shard")
+            self._event("SHARD_OPEN_ATTEMPT",shard,"STARTED_READ_ONLY_NOFOLLOW")
+            try:
+                descriptor=os.open(self.root/shard,os.O_RDONLY|os.O_NOFOLLOW);stat=os.fstat(descriptor)
+                identity=f"dev={stat.st_dev};ino={stat.st_ino};mode={stat.st_mode:o}"
+                if stat.st_size!=int(expected["size_bytes"]):
+                    os.close(descriptor);self._event("SHARD_OPEN_RESULT",shard,"FAIL_SIZE_MISMATCH",stat.st_size,descriptor=identity);raise ValueError("shard size mismatch")
+                self.handles[shard]=descriptor;self._event("SHARD_OPEN_RESULT",shard,"PASS_READ_ONLY_NOFOLLOW",stat.st_size,descriptor=identity)
+            except ValueError:
+                raise
+            except Exception as exc:
+                if shard not in self.handles: self._event("SHARD_OPEN_RESULT",shard,f"FAIL_{type(exc).__name__}")
+                raise
+        seen=name in self.reads
+        if not seen:
+            self._event("TENSOR_RESOLUTION",name,"PASS_CATALOG_BOUND",size,name,offset,expert=expert)
+            self._event("PAYLOAD_READ_ATTEMPT",name,"STARTED_EXACT_PREAD",size,name,offset,expert=expert)
+        try: raw=os.pread(self.handles[shard],size,offset)
+        except Exception as exc:
+            self._event("PAYLOAD_READ_RESULT",name,f"FAIL_{type(exc).__name__}",0,name,offset,expert=expert);raise
+        if len(raw)!=size:
+            self._event("PAYLOAD_READ_RESULT",name,"FAIL_SHORT_READ",len(raw),name,offset,expert=expert);raise ValueError("short tensor read")
+        if not seen:
+            self._event("PAYLOAD_READ_RESULT",name,"PASS_EXACT_PREAD",len(raw),name,offset,expert=expert)
+            self._event("TENSOR_FIRST_USE",name,"PASS_DECODE_INPUT",len(raw),name,offset,expert=expert)
+            self.reads[name]={"count":1,"bytes":len(raw)}
+        else:
+            self.reads[name]["count"]+=1;self.reads[name]["bytes"]+=len(raw)
         values=independent_decode(fmt,raw,rows*cols)
         return np.asarray(values,dtype=np.float32).reshape(rows,cols)
     def vector(self,name,n): return self._get(name,None,1,n).reshape(n)
     def matrix(self,name,rows,cols): return CatalogMatrix(self,name,None,rows,cols)
     def expert(self,name,expert,rows,cols): return CatalogMatrix(self,name,expert,rows,cols)
     def close(self):
+        for tensor,summary in sorted(self.reads.items()): self._event("TENSOR_REUSE_SUMMARY",tensor,"PASS_COMPLETE",summary["bytes"],tensor,count=max(0,summary["count"]-1))
         for shard,descriptor in self.handles.items(): os.close(descriptor);self._event("SHARD_TEARDOWN",shard,"PASS_CLOSE")
         self.handles.clear()
 
@@ -131,6 +177,22 @@ def mv(matrix, vector, use_mlx=False):
     return (matrix.astype(np.float64) @ vector.astype(np.float64)).astype(np.float32)
 
 
+def transpose_mv(matrix, vector, use_mlx=False):
+    if isinstance(matrix, CatalogMatrix):
+        if len(vector) != matrix.rows:
+            raise ValueError("transpose matvec geometry")
+        result = np.zeros(matrix.cols, dtype=np.float64)
+        for row in range(matrix.rows):
+            result += matrix.row(row).astype(np.float64) * float(vector[row])
+        return result.astype(np.float32)
+    if use_mlx:
+        import mlx.core as mx
+        value = mx.transpose(mx.array(matrix)) @ mx.array(vector)
+        mx.eval(value)
+        return np.asarray(value, dtype=np.float32)
+    return (matrix.astype(np.float64).T @ vector.astype(np.float64)).astype(np.float32)
+
+
 def swiglu(store, prefix, x, inner, hidden, use_mlx, expert=None, shared=False, weight=1.0):
     def projection(suffix, rows, cols):
         if expert is not None:
@@ -159,6 +221,7 @@ def execute(document: dict, use_mlx=False, store=None) -> dict:
         q = mv(store.matrix(f"blk.{layer}.attn_q_b.weight", g["heads"] * qdim, g["q_rank"]), qan, use_mlx)
         kv = mv(store.matrix(f"blk.{layer}.attn_kv_a_mqa.weight", g["kv_rank"] + g["qk_rope"], h), xn, use_mlx)
         kvn = rms(kv[:g["kv_rank"]], store.vector(f"blk.{layer}.attn_kv_a_norm.weight", g["kv_rank"]), g["rms_epsilon"])
+        key_rope = kv[g["kv_rank"]:].copy()
         for head in range(g["heads"]):
             for lane in range(0, g["qk_rope"], 2):
                 theta = position / g["rope_base"] ** (lane / g["qk_rope"])
@@ -166,12 +229,25 @@ def execute(document: dict, use_mlx=False, store=None) -> dict:
                 base = head * qdim + g["qk_nope"] + lane
                 a, b = q[base], q[base + 1]
                 q[base], q[base + 1] = a * c - b * s, a * s + b * c
+        for lane in range(0, g["qk_rope"], 2):
+            theta = position / g["rope_base"] ** (lane / g["qk_rope"])
+            c, s = np.float32(math.cos(theta)), np.float32(math.sin(theta))
+            a, b = key_rope[lane], key_rope[lane + 1]
+            key_rope[lane], key_rope[lane + 1] = a * c - b * s, a * s + b * c
         values = []
+        attention_scores = []
         for head in range(g["heads"]):
-            values.extend(mv(store.expert(f"blk.{layer}.attn_v_b.weight", head, g["value_dim"], g["kv_rank"]), kvn, use_mlx))
-            key = mv(store.expert(f"blk.{layer}.attn_k_b.weight", head, g["kv_rank"], g["qk_nope"]), q[head * qdim:head * qdim + g["qk_nope"]], use_mlx)
-            if not np.isfinite(np.dot(key, kvn)):
+            value = mv(store.expert(f"blk.{layer}.attn_v_b.weight", head, g["value_dim"], g["kv_rank"]), kvn, use_mlx)
+            key_nope = transpose_mv(store.expert(f"blk.{layer}.attn_k_b.weight", head, g["kv_rank"], g["qk_nope"]), kvn, use_mlx)
+            base = head * qdim
+            score = (np.dot(q[base:base + g["qk_nope"]].astype(np.float64), key_nope.astype(np.float64))
+                     + np.dot(q[base + g["qk_nope"]:base + qdim].astype(np.float64), key_rope.astype(np.float64))) / math.sqrt(qdim)
+            if not np.isfinite(score):
                 raise ValueError("attention score")
+            attention_scores.append(struct.pack("<f", np.float32(score)).hex())
+            softmax_weight = np.float32(math.exp(float(score) - float(score)))
+            softmax_weight = np.float32(softmax_weight / softmax_weight)
+            values.extend((value * softmax_weight).astype(np.float32))
         attention = mv(store.matrix(f"blk.{layer}.attn_output.weight", h, g["heads"] * g["value_dim"]), np.asarray(values, dtype=np.float32), use_mlx)
         hidden = (hidden + attention).astype(np.float32)
         post_attention = hidden.copy()
@@ -195,6 +271,7 @@ def execute(document: dict, use_mlx=False, store=None) -> dict:
         hidden = (hidden + ffn).astype(np.float32)
         layers.append({"layer": layer, "layer_input_sha256": digest(layer_input),
                        "post_attention_residual_sha256": digest(post_attention),
+                       "attention_score_f32_bits": attention_scores,
                        "router_normalized_sha256": digest(fx), "selected_expert_ids": selected,
                        "routing_weight_f32_bits": [struct.pack("<f", w).hex() for w in weights],
                        "routed_aggregate_sha256": digest(routed) if routed.size else None,
@@ -222,11 +299,21 @@ def main() -> int:
     args = parser.parse_args()
     if args.command=="synthetic": result=execute(strict(args.fixture),args.backend=="mlx")
     elif args.command=="target":
-        auth=strict(args.authorization);store=CatalogStore(args.authorization,args.catalog,args.checkpoint_root)
+        auth=strict(args.authorization)
+        if hash_path(args.geometry.resolve(strict=True))!=auth.get("geometry_sha256"): raise ValueError("geometry identity mismatch")
+        store=CatalogStore(args.authorization,args.catalog,args.checkpoint_root)
         try: result=execute({"geometry":strict(args.geometry),"token":auth["prompt_token"],"position":auth["position"]},True,store)
         finally: store.close()
     else: parser.error("command required")
-    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    data=(json.dumps(result,indent=2,sort_keys=True)+"\n").encode();args.output.parent.mkdir(parents=True,exist_ok=True)
+    fd=os.open(args.output,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o400)
+    with os.fdopen(fd,"wb") as output: output.write(data);output.flush();os.fsync(output.fileno())
+    dfd=os.open(args.output.parent,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW);os.fsync(dfd)
+    rfd=os.open(args.output.name,os.O_RDONLY|os.O_NOFOLLOW,dir_fd=dfd)
+    with os.fdopen(rfd,"rb") as source: observed=source.read()
+    os.close(dfd)
+    if observed!=data: raise ValueError("oracle result exact readback")
+    strict(args.output)
     return 0
 
 

@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-geometry/1.0.0",
+  "layers": 79,
+  "hidden": 6144,
+  "vocab": 154880,
+  "dense_layers": 3,
+  "experts": 256,
+  "top_k": 8,
+  "dense_ffn": 12288,
+  "expert_ffn": 2048,
+  "heads": 64,
+  "q_rank": 2048,
+  "kv_rank": 512,
+  "qk_nope": 192,
+  "qk_rope": 64,
+  "value_dim": 256,
+  "rms_epsilon": 0.00001,
+  "rope_base": 8000000.0,
+  "route_scale": 2.5,
+  "source_authority": {
+    "path": "crates/f017-native/src/model.rs",
+    "symbol": "ModelConfig::glm52",
+    "mechanical_validation": "scripts/research/validate_f017_corrected_oracle_geometry.py"
+  }
+}

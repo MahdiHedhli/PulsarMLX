@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json,sys,tempfile,unittest
+import json,subprocess,sys,tempfile,unittest
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[3];sys.path.insert(0,str(ROOT/"scripts/research"))
@@ -30,4 +30,20 @@ class CorrectedOraclePreaccess(unittest.TestCase):
   inert=ROOT/"specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v1.json"
   catalog=ROOT/"docs/research/glm52/raw/f016-c01-catalog-0001.json"
   with self.assertRaises(ValueError): StreamingCatalogSource(inert,catalog,ROOT)
+ def test_named_packed_mutations_are_real_and_banked(self):
+  with tempfile.TemporaryDirectory() as directory:
+   output=Path(directory)/"qualification.json"
+   subprocess.run([sys.executable,str(ROOT/"scripts/research/qualify_f017_corrected_oracles.py"),"--output",str(output)],check=True,cwd=ROOT,capture_output=True)
+   result=json.loads(output.read_text());self.assertEqual(result["packed_decoder_case_count"],44)
+   mutations={item["id"]:item for item in result["mutations"]}
+   self.assertEqual(mutations["Q6_K_PACKED_LANE"]["test_kind"],"PACKED_BLOCK_BIT_MUTATION")
+   self.assertEqual(mutations["IQ3_XXS_PACKED_LANE"]["test_kind"],"PACKED_BLOCK_BIT_MUTATION")
+   self.assertEqual(mutations["QUANT_TYPE_ID"]["test_kind"],"DISPATCH_GEOMETRY_REJECTION")
+   self.assertEqual(mutations["PACKED_TENSOR_OFFSET"]["test_kind"],"ENCODED_BYTE_OFFSET_SHIFT")
+   self.assertEqual(mutations["ACCUMULATION_PRECISION"]["test_kind"],"BINARY64_VS_BINARY32_LEFT_FOLD_WITNESS")
+ def test_scientific_consumers_are_explicitly_namespaced(self):
+  coordinator=(ROOT/"scripts/research/execute_f017_corrected_oracle_event.py").read_text()
+  self.assertIn('root/f"{consumer}-access-events"',coordinator)
+  self.assertIn('("primary",ROOT/',coordinator)
+  self.assertIn('("secondary",ROOT/',coordinator)
 if __name__=="__main__": unittest.main()
