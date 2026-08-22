@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.closed-historical-branch-ci-policy",
+  "schema_version": "1.0.0",
+  "branch": "feat/017-real-checkpoint-runner",
+  "policy_base_head": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+  "program_state": "CLOSED_PROOF_REFERENCE_AND_LEDGER_AUTHORITY",
+  "ci_only_change_reopens_program": false,
+  "accepted_historical_bytes_modified": false,
+  "automatic_modes": {
+    "evidence_only": "LIGHTWEIGHT_EVIDENCE_INTEGRITY",
+    "docs_only": "LIGHTWEIGHT_DOCUMENTATION_INTEGRITY",
+    "implementation_or_unknown": "CLOSED_BRANCH_GUARD_NO_NATIVE_BUILD"
+  },
+  "manual_full_qualification_requires_separate_operator_authority": true,
+  "classifier": {
+    "path": "scripts/ci/classify_ci_change.py",
+    "sha256": "7aa2b4effb42ffc7db5c88c9cfbe465296a73417fb92a3156c32831f7e05b325"
+  },
+  "evidence_validator": {
+    "path": "scripts/ci/validate_evidence_change.py",
+    "sha256": "db886bf483fe5132b7d1fbf3b0946372c6ee240d29b573406a3ab3089595190c"
+  },
+  "workflow": {
+    "path": ".github/workflows/macos.yml",
+    "sha256": "d52ed257374e9e90a82144e36f155fb9d0f542bf48012bb98e6367008d402efa"
+  },
+  "historical_master_ledger": {
+    "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+    "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "terminal_count": 175,
+    "byte_identical": true
+  }
+}
