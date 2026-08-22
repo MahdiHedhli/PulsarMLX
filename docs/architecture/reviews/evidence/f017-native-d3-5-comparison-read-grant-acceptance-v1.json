@@ -1,0 +1,12 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-comparison-read-grant-acceptance/1.0.0",
+  "acceptance_id":"F017-NATIVE-D3_5-COMPARISON-READ-GRANT-ACCEPTANCE-1",
+  "branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"c7e3193d05dfe81576d2a07a633b77ed7aa52d9c",
+  "grant":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json","sha256":"340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f"},
+  "consumer":{"path":"crates/f017-native/src/bin/d35_grader.rs","sha256":"de2e39c899f5e847222b20d1771d192bae6ea512afb1353ad8d69547610ac580","executable_sha256":"3768dcc632cdc8f572cc5f0880040c8eaf72ba979cb2f8148ada6f5e802e4992"},
+  "review":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-03-exact-claude-response-v1.md","sha256":"48b7a4822376360d6f7540644f09973a77fb2e955de91a2adc87ae5dd1f4eac1","reviewer_model":"claude-fable-5","verdict":"ACCEPT","blocking":0,"non_blocking_required":0},
+  "read_budget":{"expected":15,"operands":40,"captures":34,"total":89,"original_checkpoint_reads":0},
+  "event_budget":{"grading_events":1,"native_capture_regenerations":0,"historical_payload_ledger_delta":0,"retries":0,"resume":false},
+  "status":"ACCEPTED_FOR_ONE_RECEIPTED_D3_5_NUMERICAL_GRADING_EVENT"
+}
