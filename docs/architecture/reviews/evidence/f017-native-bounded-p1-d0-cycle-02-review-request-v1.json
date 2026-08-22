@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-d0-independent-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 2,
+  "reviewer_model_required": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_NUMERICAL_CONTRACT_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "f43d3a9c661ba80fe4c49813a568ee3e6910847a",
+  "committed_bytes_only": true,
+  "base_v1_sha256": "e30b86475b8161a434a91c958829cd66306935076900c489688e0fb116cf9997",
+  "overlay_v2_sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9",
+  "validator_v2_sha256": "55254090b5a5040ed5e1f3e4560104c3c21f3e5911ced68b97674a8fc5d11070",
+  "tests_v2_sha256": "f22d7348542aff818ec78cfcd1a9acd98223849d0fae2132a4aea116ebdac481",
+  "prior_exact_response_sha256": "0b1e8d53d1dc58722cad163da17b5f8665f8be1e25135678b7b19af8599f7e78",
+  "prior_normalized_result_sha256": "8c05c3a8c6831a81f7528823204241b325609b22d0b41b5dd4dd42b759b3bc97",
+  "required_rechecks": [
+    "F1 router_normalized restored to retained numeric R10-intermediate grade",
+    "F3 source schema/version/semantic-role binding resolves from exact bytes",
+    "F2 every effective oracle label resolves to pinned independent JSON path or comparison ordinal/SHA",
+    "F4 misderived-tolerance repair rule is mutation locked",
+    "F5 D3.5 runtime and stage-dispatch evidence is mandatory",
+    "no tolerance changed from D0 v1",
+    "D3.5 may falsify but cannot tune D0",
+    "representative layer-3 scope remains distinct from full-forward qualification"
+  ],
+  "execution_prohibitions": [
+    "REAL_P1",
+    "FULL_MODEL_REAL_CHECKPOINT_INFERENCE",
+    "CHECKPOINT_READ",
+    "RETAINED_REPRESENTATIVE_READ",
+    "D3_5_EXECUTION",
+    "LIVE_AUTHORIZATION"
+  ],
+  "acceptance_rule": "ZERO_BLOCKING_AND_ZERO_NON_BLOCKING_REQUIRED",
+  "requested_verdicts": ["ACCEPT", "REJECT"]
+}
