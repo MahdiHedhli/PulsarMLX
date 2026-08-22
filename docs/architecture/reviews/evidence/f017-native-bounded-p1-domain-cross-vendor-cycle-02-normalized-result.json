@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-cross-vendor-review-result/1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "provider_family": "Google Gemini",
+    "track": "AGY CLI cross-vendor disagreement search",
+    "effort": "high",
+    "invocation_status": "SUCCESS_WITH_POLICY_REFUSAL"
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_commit": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "exact_head_ci": {
+    "run_id": 32560783265,
+    "conclusion": "success"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-02-request.md",
+    "sha256": "acfe029d53a722a683df7be210224556681448f3cacf7ad30aa35187ce8af370"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-02-exact-agy-response.json",
+    "sha256": "eb512f1a916a326d2b89ad11daa19a475fa452cac3d008e89d8457e4ff9263f2"
+  },
+  "tests_performed_by_reviewer": [],
+  "findings": [],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 0,
+  "verdict": "REVIEW_NOT_PERFORMED_POLICY_REFUSAL",
+  "acceptance_effect": "NO_ACCEPTANCE_AUTHORITY; RETRY_WITH_NON_SECURITY_EVIDENCE_CONSISTENCY_FRAMING"
+}
