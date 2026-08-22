@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-ci-evidence/1.0.0",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "run_id": 32574711605,
+  "head_sha": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+  "event": "push",
+  "status": "completed",
+  "conclusion": "success",
+  "run_url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32574711605",
+  "complete_log_sha256": "779f7ce02b334975a6b9c61f5848dab803f6e14a6c62478aa432fcab0fdf9670",
+  "jobs": [
+    {
+      "id": 97035230920,
+      "name": "Apple Silicon workspace baseline",
+      "conclusion": "success"
+    },
+    {
+      "id": 97035230981,
+      "name": "Apple MLX small-fixture validation",
+      "conclusion": "success",
+      "pulsar_require_native_mlx": "1",
+      "native_qualification_skips": 0,
+      "stream_lib_tests": "46/46 PASS",
+      "identifier_containment_test": "PASS",
+      "native_adapter_tests": "15/15 PASS",
+      "d3_5": {
+        "result": "PASS",
+        "stage_count": 34,
+        "receipt_count": 89,
+        "original_checkpoint_reads": 0
+      },
+      "receipt_v2_synthetic": {
+        "result": "PASS",
+        "fresh_processes": 10,
+        "summary_byte_identity": "EXACT_10_OF_10",
+        "original_checkpoint_reads": 0,
+        "real_m1_ultra_p1_executed": false,
+        "ephemeral_evidence_sha256": "33a86b49d1fdba804c45f692ca7a5de09bc659e6d5553c240742ccd704db5447"
+      }
+    }
+  ],
+  "hard_invariants": {
+    "real_m1_ultra_p1_executions": 0,
+    "full_model_real_checkpoint_inference_executions": 0,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorizations": 0,
+    "historical_master_ledger": 175
+  }
+}
