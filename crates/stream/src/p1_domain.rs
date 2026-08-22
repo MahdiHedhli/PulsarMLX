@@ -431,9 +431,33 @@ pub fn execute_bounded_p1_once(
     runtime: P1RuntimeIdentity,
     math: &mut impl BoundedP1Math,
 ) -> Result<BoundedP1Receipt, P1DomainError> {
-    // Inert qualification exists only inside this crate's cfg(test) build.
-    // Release binaries cannot convert a non-live fixture into execution.
-    let inert_test = cfg!(test) && math.backend_id().starts_with("INERT_");
+    execute_bounded_p1_impl(state_root, authority, runtime, math, false)
+}
+
+/// Execute the same ownership/accounting/receipt path with a math producer
+/// that is statically identified as unable to access a checkpoint. This is
+/// qualification authority, never real-event authority.
+pub fn execute_inert_bounded_p1_once(
+    state_root: &Path,
+    authority: &P1AttemptAuthority,
+    runtime: P1RuntimeIdentity,
+    math: &mut impl BoundedP1Math,
+) -> Result<BoundedP1Receipt, P1DomainError> {
+    if !math.backend_id().starts_with("INERT_NO_CHECKPOINT_") {
+        return Err(P1DomainError::Rejected(
+            "inert producer identity rejected".into(),
+        ));
+    }
+    execute_bounded_p1_impl(state_root, authority, runtime, math, true)
+}
+
+fn execute_bounded_p1_impl(
+    state_root: &Path,
+    authority: &P1AttemptAuthority,
+    runtime: P1RuntimeIdentity,
+    math: &mut impl BoundedP1Math,
+    inert_test: bool,
+) -> Result<BoundedP1Receipt, P1DomainError> {
     validate_authority(authority, inert_test)?;
     let mut attempt = OwnedAttempt::claim(state_root, authority)?;
     let started = now_ns()?;
@@ -511,6 +535,9 @@ pub fn execute_bounded_p1_once(
 mod tests {
     use super::*;
     use crate::MlxArray;
+    use std::sync::Mutex;
+
+    static NATIVE_CONTEXT_TEST_LOCK: Mutex<()> = Mutex::new(());
 
     struct InertMath {
         invocations: u32,
@@ -572,9 +599,11 @@ mod tests {
 
     #[test]
     fn inert_math_only_boundary_emits_real_receipt_and_replay_fails() {
+        let _serial = NATIVE_CONTEXT_TEST_LOCK.lock().unwrap();
         let root = std::env::temp_dir().join(format!("f017-p1-inert-{}", now_ns().unwrap()));
         let mut math = InertMath { invocations: 0 };
-        let receipt = execute_bounded_p1_once(&root, &authority(), runtime(), &mut math).unwrap();
+        let receipt =
+            execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut math).unwrap();
         assert_eq!(math.invocations, 1);
         assert_eq!(receipt.result_token, EXPECTED_TOKEN);
         assert_eq!(receipt.accounting_before.context_active, 0);
@@ -585,17 +614,20 @@ mod tests {
             .is_file());
         assert!(root.join("INERT-ATTEMPT-1/terminal.json").is_file());
         let mut second = InertMath { invocations: 0 };
-        assert!(execute_bounded_p1_once(&root, &authority(), runtime(), &mut second).is_err());
+        assert!(
+            execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut second).is_err()
+        );
         assert_eq!(second.invocations, 0);
         fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
     fn wrong_result_consumes_attempt_and_banks_failure_terminal() {
+        let _serial = NATIVE_CONTEXT_TEST_LOCK.lock().unwrap();
         struct Wrong;
         impl BoundedP1Math for Wrong {
             fn backend_id(&self) -> &'static str {
-                "INERT_WRONG"
+                "INERT_NO_CHECKPOINT_WRONG"
             }
             fn execute_one(
                 &mut self,
@@ -606,10 +638,10 @@ mod tests {
             }
         }
         let root = std::env::temp_dir().join(format!("f017-p1-wrong-{}", now_ns().unwrap()));
-        assert!(execute_bounded_p1_once(&root, &authority(), runtime(), &mut Wrong).is_err());
+        assert!(execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut Wrong).is_err());
         let terminal = fs::read_to_string(root.join("INERT-ATTEMPT-1/terminal.json")).unwrap();
         assert!(terminal.contains("TERMINAL_FAILURE_NO_RETRY"));
-        assert!(execute_bounded_p1_once(&root, &authority(), runtime(), &mut Wrong).is_err());
+        assert!(execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut Wrong).is_err());
         fs::remove_dir_all(root).unwrap();
     }
 }

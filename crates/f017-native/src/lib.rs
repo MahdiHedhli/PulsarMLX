@@ -5,3 +5,4 @@ pub mod json;
 pub mod loader;
 pub mod model;
 pub mod retained;
+pub mod synthetic;

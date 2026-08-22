@@ -27,3 +27,7 @@ path = "src/bin/d35_grader.rs"
 [[bin]]
 name = "f017-native-bounded-p1"
 path = "src/bin/bounded_p1.rs"
+
+[[bin]]
+name = "f017-native-synthetic-p1"
+path = "src/bin/synthetic_p1.rs"
