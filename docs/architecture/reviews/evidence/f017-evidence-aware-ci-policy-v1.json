@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.evidence-aware-ci-policy",
+  "schema_version": "1.0.0",
+  "status": "IMPLEMENTED_PENDING_EXACT_RUN_VERIFICATION",
+  "classifier": {
+    "path": "scripts/ci/classify_ci_change.py",
+    "sha256": "7aa2b4effb42ffc7db5c88c9cfbe465296a73417fb92a3156c32831f7e05b325",
+    "unknown_default": "FULL_NATIVE",
+    "mixed_default": "FULL_NATIVE",
+    "manual_modes": ["auto", "full", "evidence"],
+    "manual_evidence_cannot_override_code": true
+  },
+  "evidence_validator": {
+    "path": "scripts/ci/validate_evidence_change.py",
+    "sha256": "db886bf483fe5132b7d1fbf3b0946372c6ee240d29b573406a3ab3089595190c",
+    "append_only": true,
+    "duplicate_key_rejection": true,
+    "bound_field_resolution": true,
+    "credential_shape_scan": true,
+    "native_builds": 0
+  },
+  "attempt_1_validator": {
+    "path": "scripts/ci/validate_f017_attempt1_evidence.py",
+    "sha256": "a58c4a715f1befb6824200dd18c8f788871c01bd71d6f896b31982082dc1c60d",
+    "checkpoint_access": 0,
+    "expected_result": "PASS_IMMUTABLE_TERMINAL_FAILURE"
+  },
+  "workflow": {
+    "path": ".github/workflows/macos.yml",
+    "sha256": "8fedccbf669eb2d75e65de1c1d7c799e0d5e7f2e300e8a65b04b172644aa97b9",
+    "classifier_runner": "ubuntu-latest",
+    "full_native_runners": "macos-15",
+    "aggregate_always_runs": true,
+    "concurrency_group": "workflow/ref",
+    "cancel_in_progress": true
+  },
+  "modes": {
+    "FULL_NATIVE": "WORKSPACE_AND_PINNED_NATIVE_MLX_QUALIFICATION",
+    "EVIDENCE_ONLY": "APPEND_ONLY_EVIDENCE_INTEGRITY_NO_NATIVE_BUILD",
+    "DOCS_ONLY": "DIFF_AND_SYMLINK_INTEGRITY_NO_NATIVE_BUILD",
+    "CLOSED_BRANCH_GUARD": "FAIL_CHEAPLY_WITHOUT_NATIVE_BUILD",
+    "NO_CHANGES": "LIGHTWEIGHT_AGGREGATE_ONLY",
+    "UNKNOWN_DEFAULT_FULL": "FULL_NATIVE_FAIL_CLOSED_DEFAULT"
+  },
+  "required_check_disposition": {
+    "existing_expensive_job_names_preserved": true,
+    "skipped_jobs_are_terminal_not_pending": true,
+    "new_aggregate_name": "CI aggregate status",
+    "branch_protection_detected": false
+  },
+  "verification": {
+    "classifier_unit_tests": 18,
+    "evidence_validator_unit_tests": 5,
+    "exact_run_ids": [],
+    "acceptance_deferred_until_full_and_evidence_runs_pass": true
+  }
+}
