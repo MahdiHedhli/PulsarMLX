@@ -1,0 +1,38 @@
+{
+  "schema": "pulsarmlx.f017.closed-historical-branch-ci-routing-verification-probe",
+  "schema_version": "1.0.0",
+  "branch": "feat/017-real-checkpoint-runner",
+  "policy_head": "8aedee7b0cd0bcaf123d2359a1b287c75f227664",
+  "policy_bootstrap_run": {
+    "run_id": 32586291587,
+    "classification": "CLOSED_BRANCH_GUARD",
+    "classifier": "PASS",
+    "guard": "EXPECTED_FAILURE",
+    "apple_workspace_job": "SKIPPED",
+    "native_mlx_job": "SKIPPED",
+    "full_research_corpus": "NOT_EXECUTED"
+  },
+  "verification_expectation_for_this_commit": {
+    "classification": "EVIDENCE_ONLY",
+    "evidence_integrity": "PASS",
+    "aggregate": "PASS",
+    "apple_workspace_job": "SKIPPED",
+    "native_mlx_job": "SKIPPED",
+    "full_research_corpus": "NOT_EXECUTED"
+  },
+  "policy": {
+    "commit": "8aedee7b0cd0bcaf123d2359a1b287c75f227664",
+    "path": "docs/architecture/reviews/evidence/f017-closed-historical-branch-ci-policy-v1.json",
+    "sha256": "10bbbe84a3324c5f61e618ce2b584e4b0034149aeeb437891047d8dddc0b67de"
+  },
+  "workflow": {
+    "commit": "8aedee7b0cd0bcaf123d2359a1b287c75f227664",
+    "path": ".github/workflows/macos.yml",
+    "sha256": "d52ed257374e9e90a82144e36f155fb9d0f542bf48012bb98e6367008d402efa"
+  },
+  "program_reopened": false,
+  "accepted_historical_numerical_bytes_modified": false,
+  "historical_master_terminal": 175,
+  "new_numerical_executions": 0,
+  "checkpoint_opens": 0
+}
