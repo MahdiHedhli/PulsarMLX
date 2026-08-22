@@ -59,6 +59,13 @@ def exact_keys(value: dict[str, object], expected: set[str], label: str) -> None
         raise ValueError(f"{label} key census mismatch")
 
 
+def validate_authority_identifier(value: object, label: str) -> str:
+    if not isinstance(value, str) or not value or len(value) > 128 \
+            or any(not (character.isascii() and (character.isalnum() or character in "-_")) for character in value):
+        raise ValueError(f"unsafe {label}")
+    return value
+
+
 def validate_binding(root: Path, value: object, label: str) -> tuple[Path, str]:
     if not isinstance(value, dict):
         raise ValueError(f"{label} binding")
@@ -103,6 +110,8 @@ def authorize(repo: Path, approval_path: Path, contract_path: Path) -> Path:
     if approval["schema"] != APPROVAL_SCHEMA or approval["decision"] != DECISION \
             or approval["statement"] != STATEMENT or approval["contract_sha256"] != contract_sha:
         raise ValueError("human approval authority mismatch")
+    validate_authority_identifier(approval["authorization_id"], "authorization identity")
+    validate_authority_identifier(approval["attempt_id"], "attempt identity")
     final_review = approval["final_review"]
     if not isinstance(final_review, dict):
         raise ValueError("final review binding")
@@ -128,6 +137,8 @@ def authorize(repo: Path, approval_path: Path, contract_path: Path) -> Path:
     authorities = contract["authorities"]
     checkpoint = contract["checkpoint"]
     one = contract["one_shot"]
+    if approval["attempt_id"] != one["attempt_id"]:
+        raise ValueError("attempt identity mismatch")
     value = {
         "authorization_id": approval["authorization_id"],
         "attempt_id": approval["attempt_id"],

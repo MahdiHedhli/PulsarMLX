@@ -76,6 +76,7 @@ class ExactContract(unittest.TestCase):
             (("runtime", "mlx_version"), "0.32.1"),
             (("runtime", "minimum_available_memory_bytes"), 1),
             (("one_shot", "prompt_token"), 1),
+            (("one_shot", "attempt_id"), "../../ESCAPED"),
             (("one_shot", "expected_token"), 1),
             (("one_shot", "attempts"), 2),
             (("one_shot", "retries"), 1),

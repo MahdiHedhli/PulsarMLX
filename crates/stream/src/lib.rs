@@ -89,7 +89,8 @@ mod p1_domain;
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
 pub use p1_domain::{
     execute_bounded_p1_once, execute_inert_bounded_p1_once, BoundedP1Math, BoundedP1Receipt,
-    P1AttemptAuthority, P1DomainError, P1RuntimeIdentity, RECEIPT_SCHEMA,
+    validate_real_p1_authority, P1AttemptAuthority, P1DomainError, P1RuntimeIdentity,
+    RECEIPT_SCHEMA,
 };
 
 #[cfg(target_os = "macos")]

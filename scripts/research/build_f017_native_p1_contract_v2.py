@@ -111,6 +111,7 @@ def main() -> None:
             },
         },
         "one_shot": {
+            "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
             "prompt_token": 9703,
             "expected_token": 21615,
             "attempts": 1,

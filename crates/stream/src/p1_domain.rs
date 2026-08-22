@@ -341,8 +341,8 @@ fn validate_authority(
     ];
     if sha256_hashes.iter().any(|value| value.len() != 64)
         || authority.git_head.len() != 40
-        || authority.authorization_id.is_empty()
-        || authority.attempt_id.is_empty()
+        || !is_safe_authority_identifier(&authority.authorization_id)
+        || !is_safe_authority_identifier(&authority.attempt_id)
         || authority.prompt_token != PROMPT_TOKEN
         || authority.expected_token != EXPECTED_TOKEN
         || authority.attempts != 1
@@ -357,6 +357,21 @@ fn validate_authority(
         ));
     }
     Ok(())
+}
+
+/// Validate a real-event authority before checkpoint planning or opening.
+pub fn validate_real_p1_authority(authority: &P1AttemptAuthority) -> Result<(), P1DomainError> {
+    validate_authority(authority, false)
+}
+
+/// Authority identifiers become descriptor-relative durable-state names. Keep
+/// them to a single, portable component before any state root is created.
+fn is_safe_authority_identifier(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
 }
 
 fn validate_accounting(
@@ -683,5 +698,30 @@ mod tests {
         assert!(terminal.contains("TERMINAL_FAILURE_NO_RETRY"));
         assert!(execute_inert_bounded_p1_once(&root, &authority(), runtime(), &mut Wrong).is_err());
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn authority_identifiers_cannot_escape_the_owned_state_root() {
+        let _serial = NATIVE_CONTEXT_TEST_LOCK.lock().unwrap();
+        for (authorization_id, attempt_id) in [
+            ("INERT-AUTH-1", "../../ESCAPED"),
+            ("INERT-AUTH-1", "/tmp/F017-ESCAPED"),
+            ("../AUTH", "INERT-ATTEMPT-1"),
+            ("INERT/AUTH", "INERT-ATTEMPT-1"),
+            ("INERT\0AUTH", "INERT-ATTEMPT-1"),
+        ] {
+            let root = std::env::temp_dir().join(format!(
+                "f017-p1-unsafe-id-{}-{}",
+                std::process::id(),
+                now_ns().unwrap()
+            ));
+            let mut candidate = authority();
+            candidate.authorization_id = authorization_id.into();
+            candidate.attempt_id = attempt_id.into();
+            let mut math = InertMath { invocations: 0 };
+            assert!(execute_inert_bounded_p1_once(&root, &candidate, runtime(), &mut math).is_err());
+            assert_eq!(math.invocations, 0);
+            assert!(!root.exists(), "unsafe identifier created durable state");
+        }
     }
 }

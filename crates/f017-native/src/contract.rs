@@ -69,6 +69,7 @@ pub struct RuntimeBinding {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OneShotBinding {
+    pub attempt_id: String,
     pub prompt_token: u32,
     pub expected_token: u32,
     pub attempts: u32,
@@ -238,7 +239,8 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
         return Err("checkpoint authority mismatch".into());
     }
     let one = &contract.one_shot;
-    if one.prompt_token != 9703
+    if one.attempt_id != "F017-NATIVE-BOUNDED-P1-ATTEMPT-1"
+        || one.prompt_token != 9703
         || one.expected_token != 21615
         || one.attempts != 1
         || one.retries != 0

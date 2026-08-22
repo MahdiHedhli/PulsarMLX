@@ -10,7 +10,9 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use stream::{execute_bounded_p1_once, P1AttemptAuthority, P1RuntimeIdentity};
+use stream::{
+    execute_bounded_p1_once, validate_real_p1_authority, P1AttemptAuthority, P1RuntimeIdentity,
+};
 
 fn sha(path: &Path) -> Result<String, String> {
     let bytes = fs::read(path).map_err(|e| e.to_string())?;
@@ -65,7 +67,9 @@ fn run() -> Result<(), String> {
             let manifest_path=PathBuf::from(&a[2]);let catalog_path=PathBuf::from(&a[3]);let root=PathBuf::from(&a[4]);let auth_path=PathBuf::from(&a[5]);let state=PathBuf::from(&a[6]);let contract=PathBuf::from(&a[7]);
             let repo=std::env::current_dir().map_err(|e|e.to_string())?;let(real_contract,contract_sha)=f017_native::contract::load(&contract)?;f017_native::contract::validate_static(&real_contract,&repo)?;
             let authority:P1AttemptAuthority=f017_native::json::parse_json_no_duplicates(&fs::read(&auth_path).map_err(|e|e.to_string())?)?;
+            validate_real_p1_authority(&authority).map_err(|e|e.to_string())?;
             if !authority.real_event_authorized
+                || authority.attempt_id!=real_contract.one_shot.attempt_id
                 || authority.checkpoint_manifest_sha256!=sha(&manifest_path)?
                 || authority.checkpoint_catalog_sha256!=sha(&catalog_path)?
                 || authority.contract_sha256!=contract_sha
