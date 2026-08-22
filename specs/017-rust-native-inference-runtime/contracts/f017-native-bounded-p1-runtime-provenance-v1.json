@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-runtime-provenance",
+  "schema_version": "1.0.0",
+  "status": "PINNED_MACHINE_LOCAL_RUNTIME_BUILT_NOT_EXECUTED",
+  "installer": {
+    "path": "scripts/ci/install_native_mlx.sh",
+    "sha256": "ec8e5d01ef3c3251be181c885db4d2cbac8fd8dbf5c56f4fca04dc1e22a011d3"
+  },
+  "install_prefix": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2",
+  "mlx": {
+    "version": "0.31.2",
+    "source_commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+    "library_path": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2/lib/libmlx.dylib",
+    "library_sha256": "ad9b597b08e28b43c9b9791d2948fea601c76fe0b4a06d08cceeb4ad7b15e20d",
+    "metallib_path": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2/lib/mlx.metallib",
+    "metallib_sha256": "5518fd265f31a8973732996d5eecc612301c94c1852156fb9ff30f6b708be365",
+    "metal_jit": false
+  },
+  "mlx_c": {
+    "version": "0.6.0",
+    "source_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+    "library_path": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2/lib/libmlxc.dylib",
+    "library_sha256": "3401e4f91a1d3f9b02c9bd1e728a10753f256d90bb1b40aebcaf8225592bee1a",
+    "patches": [
+      {"commit":"1e3c24ffebfdfbeecca054c51637fc4381d98aab","sha256":"24831d5bc44b72a0fd027572a4e4eaf754ed9805ffed86185bb8dbdfb6284818"},
+      {"commit":"89d3454ac3f46ff68668dd9f7817c6d47650e47c","sha256":"411749fd1908fdee783c3b378471603606852ce3a0ee0011ca5b66f47187b9d3"},
+      {"commit":"782d4712862b247a094086419ce130fd82cf3c53","sha256":"4469b3ec2836efeadce98a192ae26f423cdbbd182edcd2126f4a6ef36891ce58"},
+      {"commit":"fba4470b89073180056c9ea46c443051375f7399","sha256":"5102eafc68ea94cbe8cabb4acaa9905e17d1c92cb6a1b8c7f0f73dc863c09609"}
+    ]
+  },
+  "toolchain": {
+    "rustc": "rustc 1.97.1 (8bab26f4f 2026-07-14) (Homebrew)",
+    "apple_clang": "17.0.0.17000604",
+    "metal": "Apple metal version 32023.864 (metalfe-32023.864)",
+    "macos_sdk": "26.2",
+    "macos_build": "25A354"
+  },
+  "machine": {"brand":"Apple M1 Ultra","architecture":"arm64"},
+  "checkpoint_reads": 0,
+  "real_p1_executions": 0
+}

@@ -1,0 +1,68 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-execution-architecture",
+  "schema_version": "2.0.0",
+  "architecture_id": "F017-NATIVE-BOUNDED-P1-EXECUTION-DOMAIN-2",
+  "status": "FULL_PRODUCER_INSTANTIABLE_REAL_P1_HUMAN_AUTHORIZATION_NOT_CREATED",
+  "supersedes": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-execution-architecture-v1.json","sha256":"9b8fc4783933f93d26fcf6a549167dbc630ffb4bf7283fa622c6843888fd08d1"},
+  "process_domain": "ONE_NATIVE_RUST_PROCESS",
+  "producer": {
+    "entrypoint": "crates/f017-native/src/bin/bounded_p1.rs",
+    "math_owner": "crates/f017-native/src/executor.rs::FullNativeP1Math",
+    "model_graph": "crates/f017-native/src/model.rs::execute_one_token",
+    "checkpoint_loader": "crates/f017-native/src/loader.rs::SecureCheckpoint",
+    "accounting_receipt_domain": "crates/stream/src/p1_domain.rs::execute_bounded_p1_once"
+  },
+  "graph": {
+    "model": "GLM-5.2",
+    "layers": 79,
+    "checkpoint_tensors": 1809,
+    "checkpoint_shards": 6,
+    "prompt_token": 9703,
+    "expected_first_output_token": 21615,
+    "generated_token_limit": 1,
+    "initial_kv_state": "EMPTY_CLEAN_PROCESS",
+    "sequence_position": 0,
+    "continuation": false
+  },
+  "numerics": {
+    "backend": "PINNED_MLX_METAL_MATVEC_PLUS_RUST_SERIAL_F32",
+    "gpu_policy": "OWNED_DEVICE_GPU",
+    "quantized_weight_formats": ["F32","F16","Q8_0","Q5_K","Q6_K","Q2_K","Q3_K","IQ2_XXS","IQ2_S","IQ3_XXS","IQ4_XS"],
+    "acceptance_contract": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json","sha256":"cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"}
+  },
+  "attempt_lifecycle": {
+    "claim": "EXCLUSIVE_OWNED_DURABLE_CLAIM_BEFORE_EXECUTION",
+    "terminalizer": "THIS_INVOCATION_ONLY",
+    "terminal_receipt_census": "REQUIRED_AND_FAIL_CLOSED",
+    "attempts": 1,
+    "retries": 0,
+    "resume": false,
+    "mandatory_stop": true
+  },
+  "mock_boundary": {
+    "substituted": "TENSOR_MATH_ONLY",
+    "real": ["claim","context","streams","ownership","native_free_observer","22_counter_snapshots","receipt_emitter","terminalizer"],
+    "checkpoint_reachable": false,
+    "fresh_processes": 10,
+    "result": "PASS"
+  },
+  "retained_qualification_scope": {
+    "qualified": "REPRESENTATIVE_LAYER3_S0_TO_S2_SURFACE",
+    "not_qualified": "REMAINING_FULL_79_LAYER_FORWARD",
+    "remainder_basis": "F016_STRUCTURAL_LINEAGE_PLUS_D0_PER_STAGE_SEMANTICS_GENERALIZED_PENDING_ONE_REAL_BOUNDED_P1",
+    "production_equivalence_overclaim": false
+  },
+  "accounting": {
+    "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_terminal_value": 175,
+    "future_event_class": "NATIVE_P1_EXECUTION_EVENT",
+    "historical_payload_delta": 0,
+    "native_event_delta": 1
+  },
+  "phase_invariants": {
+    "real_m1_ultra_p1_executions": 0,
+    "full_model_real_checkpoint_inference_executions": 0,
+    "live_p1_authorizations": 0,
+    "checkpoint_reads": 0
+  }
+}

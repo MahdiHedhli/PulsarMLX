@@ -24,9 +24,14 @@ pub struct FileBinding {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AuthorityBindings {
+    pub cross_branch_authority: FileBinding,
+    pub execution_architecture: FileBinding,
+    pub runtime_provenance: FileBinding,
     pub d0: FileBinding,
     pub d1: FileBinding,
     pub d2: FileBinding,
+    pub retention_reuse_grant: FileBinding,
+    pub comparison_read_grant: FileBinding,
     pub d3_5_result: FileBinding,
     pub d3_5_acceptance: FileBinding,
     pub synthetic_full_graph_result: FileBinding,
@@ -153,9 +158,14 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
     }
     for binding in contract.code_manifest.iter().chain([
         &contract.executor,
+        &contract.authorities.cross_branch_authority,
+        &contract.authorities.execution_architecture,
+        &contract.authorities.runtime_provenance,
         &contract.authorities.d0,
         &contract.authorities.d1,
         &contract.authorities.d2,
+        &contract.authorities.retention_reuse_grant,
+        &contract.authorities.comparison_read_grant,
         &contract.authorities.d3_5_result,
         &contract.authorities.d3_5_acceptance,
         &contract.authorities.synthetic_full_graph_result,
