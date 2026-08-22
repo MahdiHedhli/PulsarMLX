@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.native-retention-reuse-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "reviewer_model_required": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_ADVERSARIAL_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "f6c3ba3489673618c82c40e527488b5d2ea59ba4",
+  "committed_pushed_bytes_only": true,
+  "reviewed_artifact_hashes": {
+    "grant": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json", "sha256": "15b2fbb2504546147fe7747f46004d1661c88d9eb9966fb04e218185f5f57776"},
+    "package": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-retained-qualification-package-v1.json", "sha256": "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f"},
+    "consumer": {"path": "crates/f017-native/src/bin/retained_qualification.rs", "sha256": "faa8c2eee3158a71419ee95e8e55ad5f4eb87a0fa6ff55c771f02be20d00e2d1"},
+    "grant_enforcer": {"path": "crates/f017-native/src/retained.rs", "sha256": "29df7cc2ed675d8de2976bf9478e46a601aa2eb0e79f34603503a3fe03c9d26f"},
+    "validator": {"path": "scripts/research/validate_f017_native_retention_reuse_grant_v1.py", "sha256": "4434686af6eea6b39747b258468aea4789ab774764b6892130368905e5a98f4f"},
+    "mutation_tests": {"path": "scripts/research/test_f017_native_retention_reuse_grant_mutations_v1.py", "sha256": "d76c4933fc56833e2870592d3dca1b3932cd68e7356207d73f3af05f47cd185a"},
+    "d0": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json", "sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"}
+  },
+  "required_attacks": [
+    "wrong consumer ID or consumer bytes",
+    "wrong retained artifact path, size, SHA, encoding, shape, or provenance",
+    "missing, extra, reordered, or duplicated read",
+    "package-root claim trusted rather than rederived from actual read identities",
+    "source authority path/SHA tuple unresolved or historical typo silently accepted",
+    "checkpoint or shard fallback reachable",
+    "retained read without per-read EXPECTED=BEFORE=CONSUMED=AFTER receipt",
+    "grant permits output outside fixed root",
+    "grant permits retry, resume, second attempt, or historical ledger advance",
+    "native proof/reference qualification relabeled full-forward or production-correctness proof",
+    "D3.5 result can tune D0 tolerance",
+    "D0 same-process and fresh-process repeat obligations are not representable under one qualification event",
+    "execution can start without exact grant/package SHA enforcement",
+    "runtime differs from MLX 0.31.2 / MLX C 0.6.0 / Apple M1 Ultra"
+  ],
+  "execution_prohibitions": {
+    "retained_qualification_execution": 0,
+    "original_checkpoint_reads": 0,
+    "real_p1_executions": 0,
+    "live_p1_authorizations": 0
+  },
+  "acceptance_rule": "BLOCKING_AND_NON_BLOCKING_REQUIRED_MUST_BOTH_EQUAL_ZERO",
+  "requested_verdicts": ["ACCEPT", "REJECT"]
+}
