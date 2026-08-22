@@ -13,7 +13,7 @@ use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub const RECEIPT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-execution-receipt/1.0.0";
+pub const RECEIPT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0";
 pub const TERMINAL_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-terminal/1.0.0";
 pub const PROMPT_TOKEN: u32 = 9703;
 pub const EXPECTED_TOKEN: u32 = 21615;
@@ -61,8 +61,13 @@ pub struct P1AttemptAuthority {
     pub d0_sha256: String,
     pub d1_sha256: String,
     pub d2_sha256: String,
+    pub d3_5_result_sha256: String,
+    pub d3_5_acceptance_sha256: String,
+    pub synthetic_full_graph_result_sha256: String,
     pub checkpoint_manifest_sha256: String,
+    pub checkpoint_catalog_sha256: String,
     pub checkpoint_set_sha256: String,
+    pub historical_master_terminal_value: u64,
     pub prompt_token: u32,
     pub expected_token: u32,
     pub attempts: u32,
@@ -98,7 +103,11 @@ pub struct BoundedP1Receipt {
     pub d0_sha256: String,
     pub d1_sha256: String,
     pub d2_sha256: String,
+    pub d3_5_result_sha256: String,
+    pub d3_5_acceptance_sha256: String,
+    pub synthetic_full_graph_result_sha256: String,
     pub checkpoint_manifest_sha256: String,
+    pub checkpoint_catalog_sha256: String,
     pub checkpoint_set_sha256: String,
     pub runtime: P1RuntimeIdentity,
     pub accounting_before: P1AccountingSnapshot,
@@ -314,7 +323,11 @@ fn validate_authority(
         &authority.d0_sha256,
         &authority.d1_sha256,
         &authority.d2_sha256,
+        &authority.d3_5_result_sha256,
+        &authority.d3_5_acceptance_sha256,
+        &authority.synthetic_full_graph_result_sha256,
         &authority.checkpoint_manifest_sha256,
+        &authority.checkpoint_catalog_sha256,
         &authority.checkpoint_set_sha256,
     ];
     if sha256_hashes.iter().any(|value| value.len() != 64)
@@ -327,6 +340,7 @@ fn validate_authority(
         || authority.retries != 0
         || authority.resume
         || !authority.mandatory_stop
+        || authority.historical_master_terminal_value != 175
         || authority.real_event_authorized == inert_test
     {
         return Err(P1DomainError::Rejected(
@@ -497,7 +511,13 @@ fn execute_bounded_p1_impl(
             d0_sha256: authority.d0_sha256.clone(),
             d1_sha256: authority.d1_sha256.clone(),
             d2_sha256: authority.d2_sha256.clone(),
+            d3_5_result_sha256: authority.d3_5_result_sha256.clone(),
+            d3_5_acceptance_sha256: authority.d3_5_acceptance_sha256.clone(),
+            synthetic_full_graph_result_sha256: authority
+                .synthetic_full_graph_result_sha256
+                .clone(),
             checkpoint_manifest_sha256: authority.checkpoint_manifest_sha256.clone(),
+            checkpoint_catalog_sha256: authority.checkpoint_catalog_sha256.clone(),
             checkpoint_set_sha256: authority.checkpoint_set_sha256.clone(),
             runtime,
             accounting_before: before,
@@ -506,8 +526,8 @@ fn execute_bounded_p1_impl(
             result_token: token,
             generated_token_count: 1,
             native_event_delta: u32::from(!inert_test),
-            historical_master_before: 175,
-            historical_master_after: 175,
+            historical_master_before: authority.historical_master_terminal_value,
+            historical_master_after: authority.historical_master_terminal_value,
             historical_master_delta: 0,
             mandatory_stop_observed: true,
             execution_result: "EXPECTED_TOKEN_MATCH".into(),
@@ -573,8 +593,13 @@ mod tests {
             d0_sha256: "e".repeat(64),
             d1_sha256: "f".repeat(64),
             d2_sha256: "1".repeat(64),
+            d3_5_result_sha256: "4".repeat(64),
+            d3_5_acceptance_sha256: "5".repeat(64),
+            synthetic_full_graph_result_sha256: "6".repeat(64),
             checkpoint_manifest_sha256: "2".repeat(64),
+            checkpoint_catalog_sha256: "7".repeat(64),
             checkpoint_set_sha256: "3".repeat(64),
+            historical_master_terminal_value: 175,
             prompt_token: PROMPT_TOKEN,
             expected_token: EXPECTED_TOKEN,
             attempts: 1,

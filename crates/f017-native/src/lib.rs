@@ -1,5 +1,6 @@
 //! F017 native execution-domain producers.
 
+pub mod contract;
 pub mod executor;
 pub mod json;
 pub mod loader;
