@@ -150,66 +150,137 @@
       "test_kind": "ENCODED_BYTE_OFFSET_SHIFT"
     },
     {
-      "binary32": 0.0,
-      "binary64": 1.0,
-      "id": "ACCUMULATION_PRECISION",
-      "localized_or_rejected": true,
-      "test_kind": "BINARY64_VS_BINARY32_LEFT_FOLD_WITNESS"
-    },
-    {
+      "changed_fields": [
+        "attention_score_f64_bits"
+      ],
+      "earliest_layer": 0,
       "id": "ROPE_POSITION",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "attention_score_f64_bits",
+        "layer_input_sha256",
+        "layer_output_sha256",
+        "post_attention_residual_sha256",
+        "router_normalized_sha256"
+      ],
+      "earliest_layer": 0,
       "id": "BOS_INSERTION",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "attention_score_f64_bits"
+      ],
+      "earliest_layer": 0,
       "id": "QK_TRANSPOSE",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "attention_score_f64_bits"
+      ],
+      "earliest_layer": 0,
       "id": "TENSOR_OFFSET",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "layer_output_sha256",
+        "routed_aggregate_sha256",
+        "selected_expert_ids"
+      ],
+      "earliest_layer": 1,
       "id": "ROUTE_BIAS_ORDER",
       "localized_or_rejected": true,
-      "test_kind": "SEMANTIC_FIXTURE_MUTATION"
+      "test_kind": "EXECUTED_GRAPH_SEMANTIC_MUTATION"
     },
     {
+      "changed_fields": [
+        "layer_output_sha256",
+        "routed_aggregate_sha256"
+      ],
+      "earliest_layer": 1,
       "id": "ROUTE_WEIGHT_PLACEMENT",
       "localized_or_rejected": true,
-      "test_kind": "SEMANTIC_FIXTURE_MUTATION"
+      "test_kind": "EXECUTED_GRAPH_SEMANTIC_MUTATION"
     },
     {
+      "changed_fields": [
+        "layer_output_sha256",
+        "routed_aggregate_sha256"
+      ],
+      "earliest_layer": 1,
       "id": "WRONG_EXPERT",
       "localized_or_rejected": true,
-      "test_kind": "SEMANTIC_FIXTURE_MUTATION"
+      "test_kind": "EXECUTED_GRAPH_SEMANTIC_MUTATION"
     },
     {
+      "changed_fields": [
+        "layer_output_sha256",
+        "shared_output_sha256"
+      ],
+      "earliest_layer": 1,
       "id": "WRONG_SHARED",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "final_hidden_sha256",
+        "final_norm_sha256",
+        "full_logits",
+        "full_logits_sha256",
+        "layer_count",
+        "top",
+        "top_1_margin"
+      ],
+      "earliest_layer": null,
       "id": "LAYER_COUNT",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "final_norm_sha256",
+        "full_logits",
+        "full_logits_sha256",
+        "top",
+        "top_1_margin"
+      ],
+      "earliest_layer": null,
       "id": "FINAL_NORM",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
     },
     {
+      "changed_fields": [
+        "full_logits",
+        "full_logits_sha256",
+        "top",
+        "top_1_margin"
+      ],
+      "earliest_layer": null,
       "id": "OUTPUT_TRANSPOSE",
       "localized_or_rejected": true,
       "test_kind": "SEMANTIC_FIXTURE_MUTATION"
+    },
+    {
+      "changed_fields": [
+        "attention_score_f64_bits",
+        "layer_output_sha256",
+        "post_attention_residual_sha256",
+        "router_normalized_sha256"
+      ],
+      "earliest_layer": 0,
+      "id": "ACCUMULATION_PRECISION",
+      "localized_or_rejected": true,
+      "test_kind": "EXECUTED_GRAPH_SEMANTIC_MUTATION"
     }
   ],
   "original_checkpoint_payload_reads": 0,
@@ -528,7 +599,7 @@
   "primary_fresh_process_byte_identity": true,
   "result": "PASS",
   "safety_factor": 65536,
-  "safety_factor_derivation": "NEXT_POWER_OF_TWO_CEILING((TARGET_MAX_REDUCTION_16384/FIXTURE_MAX_REDUCTION_4)*(TARGET_LAYERS_79/FIXTURE_MAX_LAYERS_6))",
+  "safety_factor_derivation": "NEXT_POWER_OF_TWO_CEILING((TARGET_MAX_REDUCTION_16384/FIXTURE_MAX_REDUCTION_6)*(TARGET_LAYERS_79/FIXTURE_MAX_LAYERS_6)); ABSOLUTE_LOGIT_SCALE_TRANSFER_IS_CONSERVATIVE_FAIL_CLOSED_NOT_A_TARGET_ERROR_MODEL",
   "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-free-qualification/1.0.0",
   "secondary_fresh_process_byte_identity": true,
   "seeds": [

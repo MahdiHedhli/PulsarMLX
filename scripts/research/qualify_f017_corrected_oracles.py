@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 """Checkpoint-free qualification for corrected primary/secondary oracles."""
 from __future__ import annotations
-import argparse, hashlib, json, math, os, subprocess, sys, tempfile
+import argparse, hashlib, json, math, os, struct, subprocess, sys, tempfile
 from pathlib import Path
+from unittest import mock
 
 ROOT=Path(__file__).resolve().parents[2]
 RESEARCH=ROOT/"scripts/research"
 sys.path.insert(0, str(RESEARCH))
 from f017_oracle_primary_decoders import decode as primary_decode
 from qualify_f017_quantization_matrix_v1 import FORMATS, independent_decode, synthetic_block
+import f017_corrected_oracle_primary as primary_module
+from generate_f017_corrected_oracle_fixtures import fixture as make_fixture
 
 SEEDS=tuple(range(18101,18113))
 SAFETY_FACTOR=65536
-SAFETY_FACTOR_DERIVATION="NEXT_POWER_OF_TWO_CEILING((TARGET_MAX_REDUCTION_16384/FIXTURE_MAX_REDUCTION_4)*(TARGET_LAYERS_79/FIXTURE_MAX_LAYERS_6))"
+SAFETY_FACTOR_DERIVATION="NEXT_POWER_OF_TWO_CEILING((TARGET_MAX_REDUCTION_16384/FIXTURE_MAX_REDUCTION_6)*(TARGET_LAYERS_79/FIXTURE_MAX_LAYERS_6)); ABSOLUTE_LOGIT_SCALE_TRANSFER_IS_CONSERVATIVE_FAIL_CLOSED_NOT_A_TARGET_ERROR_MODEL"
 GRAPH_MUTATIONS=("ROPE_POSITION","BOS_INSERTION","QK_TRANSPOSE","TENSOR_OFFSET",
                  "ROUTE_BIAS_ORDER","ROUTE_WEIGHT_PLACEMENT","WRONG_EXPERT",
-                 "WRONG_SHARED","LAYER_COUNT","FINAL_NORM","OUTPUT_TRANSPOSE")
+                 "WRONG_SHARED","LAYER_COUNT","FINAL_NORM","OUTPUT_TRANSPOSE","ACCUMULATION_PRECISION")
 
 def load(path): return json.loads(path.read_text())
 def canonical(value): return (json.dumps(value,sort_keys=True,separators=(",",":"))+"\n").encode()
@@ -40,10 +43,7 @@ def mutate(document,name):
     elif name=="LAYER_COUNT" and d["geometry"]["layers"]>1: d["geometry"]["layers"]-=1
     elif name=="FINAL_NORM": t["output_norm.weight"][0]*=-1
     elif name=="OUTPUT_TRANSPOSE": t["output.weight"]=list(reversed(t["output.weight"]))
-    elif name in {"ROUTE_BIAS_ORDER","WRONG_EXPERT","ROUTE_WEIGHT_PLACEMENT"}:
-        keys=[k for k in t if "exp_probs_b.bias" in k]
-        if keys: t[keys[0]]=[-100.0,-100.0,100.0,99.0]
-        else: t["token_embd.weight"][0]+=.125
+    elif name in {"ROUTE_BIAS_ORDER","WRONG_EXPERT","ROUTE_WEIGHT_PLACEMENT","ACCUMULATION_PRECISION"}: pass
     elif name=="WRONG_SHARED":
         keys=[k for k in t if "shexp" in k]
         if keys: t[keys[0]][0]+=.125
@@ -84,13 +84,53 @@ def quantized_differential_and_mutations():
     if [float(v).hex() for v in primary_decode("Q6_K",raw,count)]==[float(v).hex() for v in primary_decode("Q6_K",shifted,count)]:
         raise SystemExit("tensor offset mutation not detected")
     mutations.append({"id":"PACKED_TENSOR_OFFSET","localized_or_rejected":True,"test_kind":"ENCODED_BYTE_OFFSET_SHIFT"})
-    values=(16777216.0,1.0,-16777216.0);f64=sum(values);f32=0.0
-    import struct
-    for value in values: f32=struct.unpack("<f",struct.pack("<f",f32+value))[0]
-    if f64==f32: raise SystemExit("precision mutation witness failed")
-    mutations.append({"id":"ACCUMULATION_PRECISION","localized_or_rejected":True,
-                      "test_kind":"BINARY64_VS_BINARY32_LEFT_FOLD_WITNESS","binary64":f64,"binary32":f32})
     return cases,mutations
+
+class ShiftedExpertSource:
+    def __init__(self,source,expert_count): self.source,self.expert_count=source,expert_count
+    def vector(self,*args): return self.source.vector(*args)
+    def matrix(self,*args): return self.source.matrix(*args)
+    def expert(self,name,expert,rows,columns):
+        selected=(expert+1)%self.expert_count if "_exps.weight" in name else expert
+        return self.source.expert(name,selected,rows,columns)
+
+def f32(value): return struct.unpack("<f",struct.pack("<f",float(value)))[0]
+
+def f32_left_fold_matvec(matrix,rows,columns,vector):
+    if len(matrix)!=rows*columns or len(vector)!=columns: raise ValueError("mutated matvec geometry")
+    output=[]
+    for row in range(rows):
+        total=0.0
+        for column in range(columns): total=f32(total+f32(f32(matrix[row*columns+column])*f32(vector[column])))
+        output.append(total)
+    return output
+
+def candidate_result(document,name):
+    geometry=primary_module.Geometry.from_json(document["geometry"]);source=primary_module.JsonSource(document["tensors"])
+    if name=="WRONG_EXPERT": source=ShiftedExpertSource(source,geometry.experts)
+    if name=="ROUTE_BIAS_ORDER":
+        def route_without_bias(logits,bias,count,scale):
+            probabilities=[1.0/(1.0+math.exp(-value)) for value in logits]
+            order=sorted(range(len(logits)),key=lambda index:(-probabilities[index],index))[:count]
+            denominator=max(sum(probabilities[index] for index in order),2.0**-14)
+            return order,[probabilities[index]/denominator*scale for index in order]
+        context=mock.patch.object(primary_module,"_route",route_without_bias)
+    elif name=="ROUTE_WEIGHT_PLACEMENT":
+        original=primary_module._swiglu
+        def unweighted(*args,**kwargs):
+            if kwargs.get("expert") is not None: kwargs["weight"]=1.0
+            return original(*args,**kwargs)
+        context=mock.patch.object(primary_module,"_swiglu",unweighted)
+    elif name=="ACCUMULATION_PRECISION": context=mock.patch.object(primary_module,"_matvec",f32_left_fold_matvec)
+    else: context=mock.patch.object(primary_module,"_matvec",primary_module._matvec)
+    with context: return primary_module.execute(source,geometry,document["token"],document["position"])
+
+def localization(before,after):
+    for left,right in zip(before["layers"],after["layers"]):
+        fields=sorted(key for key in left if left.get(key)!=right.get(key))
+        if fields: return {"earliest_layer":left["layer"],"changed_fields":fields}
+    fields=sorted(key for key in before if key not in {"layers","result_sha256"} and before.get(key)!=after.get(key))
+    return {"earliest_layer":None,"changed_fields":fields}
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument("--output",type=Path,required=True);args=parser.parse_args()
@@ -128,13 +168,21 @@ def main():
         base_path.write_bytes(canonical(base));run([sys.executable,str(RESEARCH/"f017_corrected_oracle_primary.py"),"synthetic",str(base_path),str(base_p)])
         base_result=load(base_p)
         for name in GRAPH_MUTATIONS:
-            altered=mutate(base,name);path=work/f"mutation-{name}.json";result=work/f"mutation-{name}-result.json";path.write_bytes(canonical(altered))
-            try:
-                run([sys.executable,str(RESEARCH/"f017_corrected_oracle_primary.py"),"synthetic",str(path),str(result)])
-                changed=load(result).get("result_sha256")!=base_result.get("result_sha256")
-            except Exception: changed=True
+            candidate_base=json.loads(json.dumps(base))
+            if name=="ROUTE_BIAS_ORDER":
+                gate=next(key for key in candidate_base["tensors"] if "ffn_gate_inp.weight" in key)
+                bias=next(key for key in candidate_base["tensors"] if "exp_probs_b.bias" in key)
+                candidate_base["tensors"][gate]=[0.0]*len(candidate_base["tensors"][gate]);candidate_base["tensors"][bias]=[-0.3,-0.1,0.3,0.1]
+            expected=primary_module.execute(primary_module.JsonSource(candidate_base["tensors"]),primary_module.Geometry.from_json(candidate_base["geometry"]),candidate_base["token"],candidate_base["position"])
+            if name in {"ROUTE_BIAS_ORDER","ROUTE_WEIGHT_PLACEMENT","WRONG_EXPERT","ACCUMULATION_PRECISION"}:
+                observed=candidate_result(candidate_base,name);kind="EXECUTED_GRAPH_SEMANTIC_MUTATION"
+            else:
+                altered=mutate(candidate_base,name);observed=primary_module.execute(primary_module.JsonSource(altered["tensors"]),primary_module.Geometry.from_json(altered["geometry"]),altered["token"],altered["position"]);kind="SEMANTIC_FIXTURE_MUTATION"
+            changed=observed.get("result_sha256")!=expected.get("result_sha256")
             if not changed: raise SystemExit(f"mutation not localized: {name}")
-            mutations.append({"id":name,"localized_or_rejected":True,"test_kind":"SEMANTIC_FIXTURE_MUTATION"})
+            location=localization(expected,observed)
+            if not location["changed_fields"]: raise SystemExit(f"mutation lacks localized capture: {name}")
+            mutations.append({"id":name,"localized_or_rejected":True,"test_kind":kind,**location})
     doc={"schema":"pulsarmlx.f017.corrected-oracle-checkpoint-free-qualification/1.0.0","result":"PASS",
          "seeds":list(SEEDS),"fresh_process_repeats":3,"cases":cases,"frozen_thresholds":thresholds,
          "safety_factor":SAFETY_FACTOR,"safety_factor_derivation":SAFETY_FACTOR_DERIVATION,

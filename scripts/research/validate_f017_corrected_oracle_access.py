@@ -45,8 +45,8 @@ def validate(auth, contract, repo, require_live=False):
     for role in ("primary","primary_decoders","secondary","secondary_decoder_authority","event_coordinator","authorizer_validator","geometry","geometry_validator","numerical_contract","forward_evidence","synthetic_qualification","checkpoint_manifest","checkpoint_catalog"):
         binding=contract["bindings"][role];path=repo/binding["path"]
         if not path.is_file() or path.is_symlink() or sha(path)!=binding["sha256"]: raise ValueError(f"binding {role}")
-    for group in ("secondary_decoder_dependencies","shared_immutable_codebook_data"):
-        for binding in contract[group]:
+    for group in ("secondary_decoder_dependencies","shared_immutable_codebook_data","independent_known_answer_authorities"):
+        for binding in contract.get(group,[]):
             path=repo/binding["path"]
             if not path.is_file() or path.is_symlink() or sha(path)!=binding["sha256"]: raise ValueError(f"transitive binding {binding['path']}")
     if auth["contract_sha256"]!=sha(repo/"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json"): raise ValueError("contract binding")

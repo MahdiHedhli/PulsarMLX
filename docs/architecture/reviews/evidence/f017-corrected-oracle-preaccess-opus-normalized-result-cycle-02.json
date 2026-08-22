@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-independent-review-result/1.0.0",
+  "cycle": 2,
+  "reviewer": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "fresh_session_id": "e4cbc741-7408-4bf9-9c98-9e85f3040f1f"
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "651c325a9120c18be51d83bdb4587b0fcc7260cc",
+  "implementation_head": "0f0fc80876ba6f9e11615b3c8dd29c72b4b90451",
+  "package_head": "f107fff93d39dba80a80e30bbad055e9b405b843",
+  "exact_head_ci": 32601851854,
+  "verdict": "REJECT",
+  "findings": [
+    {"id":"F017-C2-GEOMETRY-CENSUS","severity":"BLOCKING","disposition":"REPAIRED_IN_CYCLE_02"},
+    {"id":"F017-C2-CENSUS-UNSATISFIABLE","severity":"BLOCKING","disposition":"REPAIRED_IN_CYCLE_02"},
+    {"id":"F017-C2-IQ4XS-COMMON-MODE","severity":"BLOCKING","disposition":"REPAIRED_IN_CYCLE_02_AGAINST_PINNED_GGML_KNOWN_ANSWER"},
+    {"id":"F017-C2-TARGET-READER-UNTESTED","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIRED_IN_CYCLE_02"},
+    {"id":"F017-C2-MUTATION-DEGENERATE","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIRED_IN_CYCLE_02"},
+    {"id":"F017-C2-SAFETY-FACTOR-PREMISE","severity":"DEFENSE_IN_DEPTH","disposition":"CORRECTED_FIXTURE_REDUCTION_DEPTH_AND_RETAINED_CONSERVATIVE_FACTOR"},
+    {"id":"F017-C2-FIXTURE-FORMAT-LABEL","severity":"DEFENSE_IN_DEPTH","disposition":"CLARIFIED_SEPARATE_PACKED_DECODER_AND_PLAIN_GRAPH_STORAGE_SURFACES"},
+    {"id":"F017-C2-MEMORY-FIGURE","severity":"DEFENSE_IN_DEPTH","disposition":"REPLACED_WITH_EXPLICIT_CANONICAL_BUFFER_GEOMETRY_AND_PYTHON_OVERHEAD_NONCLAIM"}
+  ],
+  "blocking_count": 3,
+  "non_blocking_required_count": 2,
+  "defense_in_depth_count": 3,
+  "p1_attempt_2_executed": false,
+  "corrected_full_checkpoint_oracle_executed": false,
+  "original_checkpoint_reads": 0
+}

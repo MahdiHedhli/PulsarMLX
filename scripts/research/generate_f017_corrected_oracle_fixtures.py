@@ -47,7 +47,8 @@ def fixture(seed):
     return {"schema":"pulsarmlx.f017.corrected-oracle-synthetic-fixture/1.0.0","seed":seed,
             "coverage":{"position":"ZERO" if seed%3==0 else "NONZERO","route":"EXACT_TIE" if seed==18103 else "NEAR_TIE" if seed==18104 else "VARIED",
                         "context":"ONE_TOKEN" if seed%2 else "PREFIX_POSITION_SURROGATE",
-                        "quant_format":("F32","Q2_K","Q3_K","Q4_K","Q5_K","Q6_K","Q8_0","IQ2_S","IQ2_XXS","IQ3_XXS","IQ4_XS")[seed%11]},
+                        "separate_packed_decoder_focus":("F32","Q2_K","Q3_K","Q4_K","Q5_K","Q6_K","Q8_0","IQ2_S","IQ2_XXS","IQ3_XXS","IQ4_XS")[seed%11],
+                        "graph_tensor_storage":"PLAIN_FLOAT_SYNTHETIC_NOT_PACKED_QUANT"},
             "geometry":g,"token":seed%g["vocab"],"position":0 if seed%3==0 else seed%7+1,"tensors":t}
 
 

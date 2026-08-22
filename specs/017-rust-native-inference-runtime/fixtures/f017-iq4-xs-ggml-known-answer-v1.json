@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.iq4-xs-ggml-known-answer/1.0.0",
+  "upstream": {
+    "repository": "https://github.com/ggml-org/llama.cpp.git",
+    "revision": "b06aa774c03dbbb624e726664b714a57d1f49815",
+    "path": "ggml/src/ggml-quants.c",
+    "source_sha256": "07143d7068936ae46b3c528b2f3d4bbb666e74d88992165716174d243573965d",
+    "symbol": "dequantize_row_iq4_xs"
+  },
+  "block": {
+    "d_f16_bits_le": "003c",
+    "scales_h_le": "aaaa",
+    "scales_l_hex": "11111111",
+    "group_qs_rule": "byte[j] = ((15-j)<<4)|j for j=0..15, repeated for 8 groups",
+    "decoded_scale_each_group": 1
+  },
+  "expected_first_group": {
+    "lane_order": "LOW_NIBBLES_0_THROUGH_15_THEN_HIGH_NIBBLES_0_THROUGH_15",
+    "values": [-127,-104,-83,-65,-49,-35,-22,-10,1,13,25,38,53,69,89,113,113,89,69,53,38,25,13,1,-10,-22,-35,-49,-65,-83,-104,-127]
+  },
+  "target_checkpoint_payload_used": false
+}

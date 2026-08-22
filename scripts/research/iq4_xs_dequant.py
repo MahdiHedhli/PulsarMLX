@@ -23,8 +23,7 @@ def dequantize_row_iq4_xs(encoded: bytes, n: int | None = None) -> list[float]:
             ls = ((scales_l[ib >> 1] >> (4 * (ib & 1))) & 0xF) | (((scales_h >> (2 * ib)) & 3) << 4)
             ls = ls - 32
             scale = d * float(ls)
-            for j in range(16):
-                byte = qs[ib * 16 + j]
-                out.append(scale * KVALUES_IQ4NL[byte & 0xF])
-                out.append(scale * KVALUES_IQ4NL[byte >> 4])
+            group = qs[ib * 16 : ib * 16 + 16]
+            out.extend(scale * KVALUES_IQ4NL[byte & 0xF] for byte in group)
+            out.extend(scale * KVALUES_IQ4NL[byte >> 4] for byte in group)
     return out

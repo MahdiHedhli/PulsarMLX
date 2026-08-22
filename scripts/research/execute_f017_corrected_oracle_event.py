@@ -55,8 +55,29 @@ def verify_checkpoint_identity(checkpoint_root,auth,root):
   finally:
    if descriptor is not None: os.close(descriptor);bank_event(event_root,sequence,auth,"SHARD_IDENTITY_CLOSE",name,"PASS");sequence+=1
  return bank(root/"checkpoint-identity.json",{"schema":"pulsarmlx.f017.corrected-oracle-checkpoint-identity/1.0.0","authorization_id":auth["authorization_id"],"owner_pid":os.getpid(),"shards":observed,"event_count":sequence,"result":"PASS"})
-def access_census(root,auth,catalog):
- expected={item["name"] for item in strict(catalog)["tensors"]};consumers={};expected_shards={item["filename"] for item in auth["shards"]}
+
+def graph_tensor_names(geometry):
+ names={"token_embd.weight","output_norm.weight","output.weight"}
+ for layer in range(int(geometry["layers"])):
+  prefix=f"blk.{layer}"
+  names.update({f"{prefix}.attn_norm.weight",f"{prefix}.attn_q_a.weight",f"{prefix}.attn_q_a_norm.weight",
+                f"{prefix}.attn_q_b.weight",f"{prefix}.attn_kv_a_mqa.weight",f"{prefix}.attn_kv_a_norm.weight",
+                f"{prefix}.attn_k_b.weight",f"{prefix}.attn_v_b.weight",f"{prefix}.attn_output.weight",
+                f"{prefix}.ffn_norm.weight"})
+  if layer<int(geometry["dense_layers"]):
+   names.update({f"{prefix}.ffn_gate.weight",f"{prefix}.ffn_up.weight",f"{prefix}.ffn_down.weight"})
+  else:
+   names.update({f"{prefix}.ffn_gate_inp.weight",f"{prefix}.exp_probs_b.bias",
+                 f"{prefix}.ffn_gate_exps.weight",f"{prefix}.ffn_up_exps.weight",f"{prefix}.ffn_down_exps.weight",
+                 f"{prefix}.ffn_gate_shexp.weight",f"{prefix}.ffn_up_shexp.weight",f"{prefix}.ffn_down_shexp.weight"})
+ return names
+
+def access_census(root,auth,catalog,geometry):
+ records=strict(catalog)["tensors"];catalog_names={item["name"] for item in records};expected=graph_tensor_names(geometry)
+ if not expected.issubset(catalog_names): raise ValueError("graph tensor absent from catalog")
+ record_by_name={item["name"]:item for item in records};expected_shards={record_by_name[name]["file"] for name in expected};authorized_shards={item["filename"] for item in auth["shards"]}
+ if not expected_shards.issubset(authorized_shards): raise ValueError("graph shard absent from authority")
+ declared_non_access=sorted(catalog_names-expected);consumers={}
  for directory,consumer in (("primary-access-events","INDEPENDENT_CPU_REFERENCE"),("secondary-access-events","INDEPENDENT_ACCELERATED_CROSS_CHECK")):
   events=[strict(path) for path in sorted((root/directory).glob("*.json"))]
   if [event["sequence"] for event in events]!=list(range(len(events))): raise ValueError("access sequence discontinuity")
@@ -65,7 +86,11 @@ def access_census(root,auth,catalog):
   if resolved!=expected or opened!=expected_shards: raise ValueError(f"access census mismatch {consumer}")
   if any(str(event["result"]).startswith(("FAIL","REJECT")) for event in events): raise ValueError("failed access event")
   consumers[consumer]={"event_count":len(events),"resolved_tensor_count":len(resolved),"opened_shard_count":len(opened),"first_use_count":sum(event["kind"]=="TENSOR_FIRST_USE" for event in events),"repeat_use_count":sum((event.get("repeat_count") or 0) for event in events if event["kind"]=="TENSOR_REUSE_SUMMARY")}
- return {"schema":"pulsarmlx.f017.corrected-oracle-access-census/1.0.0","authorization_id":auth["authorization_id"],"catalog_tensor_count":len(expected),"consumers":consumers,"unexpected_access_count":0,"fallback_attempt_count":0,"alternate_root_attempt_count":0,"result":"PASS"}
+ return {"schema":"pulsarmlx.f017.corrected-oracle-access-census/1.0.0","authorization_id":auth["authorization_id"],
+         "catalog_tensor_count":len(catalog_names),"graph_tensor_count":len(expected),"declared_non_access_tensor_count":len(declared_non_access),
+         "declared_non_access_tensors":declared_non_access,"authorized_shard_count":len(authorized_shards),
+         "graph_payload_shards":sorted(expected_shards),"identity_only_shards":sorted(authorized_shards-expected_shards),
+         "consumers":consumers,"unexpected_access_count":0,"fallback_attempt_count":0,"alternate_root_attempt_count":0,"result":"PASS"}
 def metrics(primary,secondary):
  left=[float(value) for value in primary["full_logits"]];right=[float(value) for value in secondary["full_logits"]]
  if len(left)!=len(right): raise ValueError("logit geometry")
@@ -91,7 +116,7 @@ def main():
   for consumer,script,output in (("primary",ROOT/"scripts/research/f017_corrected_oracle_primary.py",primary),("secondary",ROOT/"scripts/research/f017_corrected_oracle_secondary.py",secondary)):
    env=os.environ.copy();env["F017_ORACLE_ACCESS_EVENT_DIR"]=str(root/f"{consumer}-access-events");env["F017_ORACLE_CHECKPOINT_IDENTITY"]=str(root/"checkpoint-identity.json")
    subprocess.run([sys.executable,str(script),"target",str(args.authorization),str(args.catalog),str(args.checkpoint_root),str(args.geometry),str(output)],cwd=ROOT,env=env,check=True)
-  census_sha=bank(root/"access-census.json",access_census(root,auth,args.catalog));first,second=strict(primary),strict(secondary);observed=metrics(first,second)
+  census_sha=bank(root/"access-census.json",access_census(root,auth,args.catalog,strict(args.geometry)));first,second=strict(primary),strict(secondary);observed=metrics(first,second)
   structural=all(a["selected_expert_ids"]==b["selected_expert_ids"] for a,b in zip(first["layers"],second["layers"],strict=True));qualification=strict(ROOT/contract["bindings"]["synthetic_qualification"]["path"]);bound=qualification["frozen_thresholds"]
   within=observed["max_abs"]<=bound["max_abs"] and observed["rmse"]<=bound["rmse"] and observed["cosine_similarity"]>=bound["cosine_min"];same_top=first["selected_token"]==second["selected_token"];same_order=[item["token_id"] for item in first["top"]]==[item["token_id"] for item in second["top"]];uncertainty=bound["max_abs"]
   if not structural or not within: result_state="ORACLE_DISAGREEMENT"

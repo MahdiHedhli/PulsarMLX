@@ -203,9 +203,12 @@ pub fn decode_iq4_xs_matrix(
             let low = (scales_l[group / 2] >> (4 * (group & 1))) & 15;
             let high = ((scales_h >> (2 * group)) & 3) as u8;
             let scale = d * f32::from((low | (high << 4)) as i8 - 32);
-            for byte in &qs[group * 16..group * 16 + 16] {
+            let group_bytes = &qs[group * 16..group * 16 + 16];
+            for byte in group_bytes {
                 out[at] = scale * f32::from(KVALUES_IQ4NL[usize::from(byte & 15)]);
                 at += 1;
+            }
+            for byte in group_bytes {
                 out[at] = scale * f32::from(KVALUES_IQ4NL[usize::from(byte >> 4)]);
                 at += 1;
             }
@@ -240,5 +243,24 @@ mod tests {
             assert!(out.iter().all(|v| *v == 0.0));
             assert!(decoder(&vec![0; bytes - 1], 1, QK_K, &mut out).is_err());
         }
+    }
+
+    #[test]
+    fn iq4_xs_uses_ggml_split_low_then_high_lane_order() {
+        let mut block = vec![0_u8; IQ4_XS_BYTES];
+        block[..2].copy_from_slice(&0x3c00_u16.to_le_bytes());
+        block[2..4].copy_from_slice(&0xaaaa_u16.to_le_bytes());
+        block[4..8].fill(0x11);
+        for group in 0..8 {
+            for lane in 0..16 {
+                block[8 + group * 16 + lane] = ((15 - lane) as u8) << 4 | lane as u8;
+            }
+        }
+        let mut out = vec![0.0; QK_K];
+        decode_iq4_xs_matrix(&block, 1, QK_K, &mut out).unwrap();
+        let expected_low: Vec<f32> = KVALUES_IQ4NL.iter().map(|value| f32::from(*value)).collect();
+        let expected_high: Vec<f32> = KVALUES_IQ4NL.iter().rev().map(|value| f32::from(*value)).collect();
+        assert_eq!(&out[..16], expected_low.as_slice());
+        assert_eq!(&out[16..32], expected_high.as_slice());
     }
 }

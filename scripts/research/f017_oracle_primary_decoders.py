@@ -163,8 +163,9 @@ def _decode_block(fmt: str, block: bytes) -> list[float]:
         for group in range(8):
             packed = (scale_low[group // 2] >> (4 * (group & 1))) & 15
             scale = d * ((packed | (((scale_high >> (2 * group)) & 3) << 4)) - 32)
-            for byte in qs[16 * group:16 * group + 16]:
-                out.extend((scale * KVALUES_IQ4NL[byte & 15], scale * KVALUES_IQ4NL[byte >> 4]))
+            group_bytes = qs[16 * group:16 * group + 16]
+            out.extend(scale * KVALUES_IQ4NL[byte & 15] for byte in group_bytes)
+            out.extend(scale * KVALUES_IQ4NL[byte >> 4] for byte in group_bytes)
         return out
     raise ValueError(f"unsupported format {fmt}")
 

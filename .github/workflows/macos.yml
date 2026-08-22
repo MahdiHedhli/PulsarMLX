@@ -342,6 +342,8 @@ jobs:
             scripts/research/tests/test_audit_f017_native_checkpoint_plan.py \
             scripts/research/tests/test_f017_q6_oracle_lane_order.py \
             scripts/research/tests/test_f017_iq3_oracle_lane_order.py \
+            scripts/research/tests/test_f017_iq4_xs_oracle_lane_order.py \
+            scripts/research/tests/test_f017_corrected_oracle_preaccess.py \
             scripts/research/tests/test_validate_f017_failure_evidence_v3.py \
             scripts/research/tests/test_f017_native_synthetic_family_v1.py
           .venv/bin/python scripts/research/audit_f017_native_checkpoint_plan.py \

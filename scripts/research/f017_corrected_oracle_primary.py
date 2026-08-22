@@ -12,6 +12,7 @@ import hashlib
 import json
 import math
 import os
+import stat
 import struct
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,16 +24,17 @@ ORACLE_ID = "F017_INDEPENDENT_CPU_REFERENCE_V1"
 AUTH_SCHEMA = "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/1.0.0"
 TOP_N = 32
 
+def _pairs(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
 
 def _strict_json(path: Path) -> dict:
-    def pairs(items):
-        result = {}
-        for key, value in items:
-            if key in result:
-                raise ValueError(f"duplicate JSON key: {key}")
-            result[key] = value
-        return result
-    return json.loads(path.read_text(), object_pairs_hook=pairs)
+    return json.loads(path.read_text(), object_pairs_hook=_pairs)
 
 
 def _hash_f64(values: list[float]) -> str:
@@ -76,9 +78,9 @@ class Geometry:
     @classmethod
     def from_json(cls, value: dict) -> "Geometry":
         expected = set(cls.__annotations__)
-        if set(value) != expected:
+        if not expected.issubset(value):
             raise ValueError("geometry key census")
-        result = cls(**value)
+        result = cls(**{key: value[key] for key in expected})
         if result.layers < 1 or result.hidden < 1 or result.vocab < 2 or result.qk_rope % 2:
             raise ValueError("invalid geometry")
         return result
@@ -139,17 +141,33 @@ class StreamingCatalogSource:
         document = _strict_json(catalog)
         self.records = {item["name"]: item for item in document["tensors"]}
         self.shards = {item["filename"]: item for item in auth.get("shards", [])}
-        identity_path=os.environ.get("F017_ORACLE_CHECKPOINT_IDENTITY")
-        if not identity_path: raise ValueError("checkpoint identity evidence required")
-        identity=_strict_json(Path(identity_path))
-        if identity.get("authorization_id")!=auth["authorization_id"] or identity.get("result")!="PASS" or identity.get("shards")!=auth.get("shards"):
-            raise ValueError("checkpoint identity evidence mismatch")
         self.root, self.auth = root, auth
         self.handles: dict[str, int] = {}
         self.reads: dict[str, dict[str, int]] = {}
         event_root=os.environ.get("F017_ORACLE_ACCESS_EVENT_DIR")
         if not event_root: raise ValueError("durable access-event directory required")
         self.event_root=Path(event_root);self.event_root.mkdir(mode=0o700,parents=False,exist_ok=False);self.sequence=0
+        identity_path=os.environ.get("F017_ORACLE_CHECKPOINT_IDENTITY")
+        if not identity_path: raise ValueError("checkpoint identity evidence required")
+        self._event("CHECKPOINT_IDENTITY_EVIDENCE_READ_ATTEMPT",identity_path,"STARTED_READ_ONLY_NOFOLLOW")
+        try:
+            identity_file=Path(identity_path)
+            descriptor=os.open(identity_file,os.O_RDONLY|os.O_NOFOLLOW)
+            try:
+                identity_stat=os.fstat(descriptor)
+                if not stat.S_ISREG(identity_stat.st_mode) or identity_stat.st_size>1024*1024:
+                    raise ValueError("checkpoint identity evidence file")
+                identity_bytes=os.read(descriptor,identity_stat.st_size)
+                if len(identity_bytes)!=identity_stat.st_size or os.read(descriptor,1):
+                    raise ValueError("checkpoint identity evidence readback")
+            finally: os.close(descriptor)
+            identity=json.loads(identity_bytes,object_pairs_hook=_pairs)
+            if identity.get("authorization_id")!=auth["authorization_id"] or identity.get("result")!="PASS" or identity.get("shards")!=auth.get("shards"):
+                raise ValueError("checkpoint identity evidence mismatch")
+            self._event("CHECKPOINT_IDENTITY_EVIDENCE_READ_RESULT",identity_path,"PASS_BOUND",len(identity_bytes))
+        except Exception as exc:
+            self._event("CHECKPOINT_IDENTITY_EVIDENCE_READ_RESULT",identity_path,f"FAIL_{type(exc).__name__}")
+            raise
 
     def _event(self,kind,authority,result,size=0,tensor=None,offset=None,descriptor=None,expert=None,count=None):
         value={"schema":"pulsarmlx.f017.corrected-oracle-access-event/1.0.0","sequence":self.sequence,
