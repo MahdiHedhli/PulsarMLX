@@ -102,10 +102,10 @@ def portable(path: str | Path) -> str:
     resolved = str(Path(path).resolve())
     home = str(Path.home().resolve())
     root = str(ROOT.resolve())
-    if resolved == home or resolved.startswith(home + "/"):
-        return "${HOME}" + resolved[len(home):]
     if resolved == root or resolved.startswith(root + "/"):
         return "${REPOSITORY_ROOT}" + resolved[len(root):]
+    if resolved == home or resolved.startswith(home + "/"):
+        return "${HOME}" + resolved[len(home):]
     raise ValueError(f"path is outside bound roots: {resolved}")
 
 

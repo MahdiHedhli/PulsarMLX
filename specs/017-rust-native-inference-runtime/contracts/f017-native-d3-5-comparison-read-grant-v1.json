@@ -5,7 +5,7 @@
   "status": "INDEPENDENT_REVIEW_ACCEPT_REQUIRED_BEFORE_USE",
   "consumer": {
     "id": "F017-NATIVE-D3_5-NUMERICAL-GRADER-1",
-    "executable_path": "${HOME}/Documents/Coding/PulsarMLX/target/release/f017-native-d35-grader",
+    "executable_path": "${REPOSITORY_ROOT}/target/release/f017-native-d35-grader",
     "executable_sha256": "8cb0d125d0db2b825ba4c516088d998fc4db279534b9efe60ba9c1772c60b77f",
     "source_path": "crates/f017-native/src/bin/d35_grader.rs",
     "source_sha256": "35650d198a3f8a3bd28986e43186e8cdfeb20d66b1e4dc2d91454c3f8249ac82"
