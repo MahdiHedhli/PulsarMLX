@@ -121,6 +121,23 @@ fn unified_p1_snapshot_is_live_complete_and_reconciles_after_teardown() {
 }
 
 #[test]
+fn pinned_native_mlx_matvec_uses_shaped_managed_arrays() {
+    let _guard = test_lock();
+    let context = MlxContext::new(MlxDevice::Gpu, MlxStreamMode::Owned).unwrap();
+    let mut matrix_owner = vec![1.0_f32, 2.0, 3.0, 4.0];
+    let mut vector_owner = vec![5.0_f32, 6.0];
+    let matrix = context
+        .import_f32_shaped(&mut matrix_owner, &[2, 2])
+        .unwrap();
+    let vector = context.import_f32(&mut vector_owner).unwrap();
+    let result = matrix.matvec(&vector).unwrap();
+    result.evaluate_sync().unwrap();
+    let mut output = [0.0_f32; 2];
+    result.copy_f32(&mut output).unwrap();
+    assert_eq!(output, [17.0, 39.0]);
+}
+
+#[test]
 fn cpu_managed_import_lifecycle_is_balanced() {
     let _guard = test_lock();
     let context =

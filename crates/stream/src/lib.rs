@@ -81,6 +81,17 @@ pub use validation::{
     ValidationMode,
 };
 
+pub mod f017_apple_serial_f32;
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+mod p1_domain;
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+pub use p1_domain::{
+    execute_bounded_p1_once, BoundedP1Math, BoundedP1Receipt, P1AttemptAuthority,
+    P1DomainError, P1RuntimeIdentity,
+};
+
 #[cfg(target_os = "macos")]
 mod apple_metal_bridge;
 
