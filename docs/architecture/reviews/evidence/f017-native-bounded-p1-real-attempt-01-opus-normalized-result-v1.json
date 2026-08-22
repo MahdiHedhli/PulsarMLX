@@ -1,0 +1,74 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-post-execution-independent-review-result",
+  "schema_version": "1.0.0",
+  "reviewer": {
+    "model": "claude-opus-5",
+    "canonical_model": "claude-opus-5",
+    "provider": "firstParty",
+    "effort": "high",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "invocation": "claude -p --model claude-opus-5 --effort high --output-format json --no-session-persistence --permission-mode dontAsk --disallowedTools Edit Write NotebookEdit",
+    "fresh_session": true,
+    "session_id": "135afb51-bb37-4cd3-bb80-5341c8d7f035",
+    "duration_ms": 495126,
+    "turns": 53
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "199f37962e497e8c35b79c58e899a2fbd01dcbc3",
+  "execution_evidence_head": "91f4694c7676d93c0643c12e9b10a1cfb19dc6bd",
+  "executed_git_identity": "fdb186d4df1c0ce6b3953eb97d1437a55ffd4c60",
+  "detached_clean_worktree": true,
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-opus-review-request-v1.md",
+    "sha256": "12ff988feeaa7129b910154893907bd9a363ea0e942428333f4f0f57a0deba5c"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-opus-exact-response-v1.json",
+    "sha256": "b235bbb8145867fd606cc9e94fdf6fb8b6b5c2531ec466b1e17f11764d752a99"
+  },
+  "reviewed_artifacts": [
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-human-approval-v1.json","sha256":"3788fe3060f5d78002adc7f22f94e98c9163a09be1e71648bcade3bde65b3ec7"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-live-authorization-v1.json","sha256":"c1a81febcec0171a0aba63da44f645d630b7daca1b4031d52a4b3cecea6a42b7"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-owned-claim-v1.json","sha256":"35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-durable-start-v1.json","sha256":"35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-terminal-v1.json","sha256":"de5f918324048fec8e49d63a60d9db6ba536171f4e1ea0dae6f5e5ddfdf7a6ed"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-execution-evidence-v1.json","sha256":"c3dcc92cec8fde419bfdb437e0191a768fce8f48fc78b2e4b78171164caafb7b"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-native-event-ledger-v1.json","sha256":"24d8bd899cf6809387c40d6bd37d5b8f30a2056fa23a19e84bd4f2758305b5dd"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-banking-validation-v1.json","sha256":"384e468aec6c9a241db6417e49c80eb3a1251e28e6b7744ae2c60081bfb4c490"},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-preauthorization-memory-v1.txt","sha256":"8bebdaef9e08ca12cdd4ecba3273cc964593974455cb2d1622ed7ec6d2d827f2"}
+  ],
+  "attack_results": {
+    "authorization_single_use": "PASS",
+    "checkpoint_runtime_machine_identity": "PASS",
+    "owned_attempt_rn1_terminalization": "PASS",
+    "prompt_actual_expected_token_consistency": "PASS_TOKEN_MISMATCH_CONFIRMED",
+    "mandatory_stop": "PASS",
+    "historical_ledger_separation": "PASS",
+    "native_event_accounting_truthfulness": "PASS_WITH_DISCLOSED_RECEIPT_NONCONFORMITY",
+    "counter_control_flow_reconciliation": "PASS_IN_PROCESS_VALUES_NOT_DURABLY_RETAINED",
+    "receipt_and_terminal_agreement": "PASS_RECEIPT_COUNT_ZERO_MATCHES_ABSENCE",
+    "git_ref_repair_execution_byte_integrity": "PASS"
+  },
+  "findings": [
+    {"id":"F-1","severity":"DEFENSE_IN_DEPTH","summary":"Executor failure path structurally cannot satisfy D2 receipting","disposition":"FORWARD_ONLY_FAILURE_RECEIPT_SCHEMA_AND_EMITTER_BEFORE_ANY_FUTURE_AUTHORIZATION_NO_RERUN"},
+    {"id":"F-2","severity":"DEFENSE_IN_DEPTH","summary":"Exact 22-counter snapshots exist only as a control-flow inference","disposition":"COVERED_BY_F-1_FORWARD_ONLY_NO_RETROACTIVE_RECONSTRUCTION"},
+    {"id":"F-3","severity":"DEFENSE_IN_DEPTH","summary":"Produced token 17351 has no machine-emitted durable artifact","disposition":"RAW_STDERR_CAPTURE_UNAVAILABLE;PRESERVE_OPERATOR_ATTESTATION_AND_DO_NOT_RERUN"},
+    {"id":"F-4","severity":"DEFENSE_IN_DEPTH","summary":"Approval declaration and review hashes are not machine-enforced at execution time","disposition":"INDEPENDENTLY_RECOMPUTED_FOR_THIS_ATTEMPT;FORWARD_ONLY_EXECUTOR_REBIND"},
+    {"id":"F-5","severity":"DEFENSE_IN_DEPTH","summary":"One-shot enforcement depends on non-committed machine-local state","disposition":"STATE_LEFT_INTACT;OPTIONAL_FORWARD_ONLY_IMMUTABILITY_HARDENING"},
+    {"id":"F-6","severity":"DEFENSE_IN_DEPTH","summary":"Committed executor binary lacks a cryptographic source-to-binary build attestation","disposition":"SELF_HASH_AND_SOURCE_MANIFEST_VERIFIED;FORWARD_ONLY_BUILD_RECEIPT"},
+    {"id":"F-7","severity":"DEFENSE_IN_DEPTH","summary":"A hypothetical terminalization double fault would mask the original error","disposition":"NOT_TRIGGERED;FORWARD_ONLY_COMPOSITE_ERROR_PRESERVATION"}
+  ],
+  "blocking_count": 0,
+  "non_blocking_required_count": 0,
+  "defense_in_depth_count": 7,
+  "verdict": "ACCEPT_POST_EXECUTION_FAILURE_EVIDENCE",
+  "p1_verdict": "FAIL",
+  "safety_state": {
+    "p1_attempts": 1,
+    "p1_retries": 0,
+    "p1_resume": false,
+    "mandatory_stop": true,
+    "further_real_inference_executed": false
+  },
+  "exact_next_safe_action": "OFFLINE_DIAGNOSIS_FROM_BANKED_BYTES_ONLY;NO_CHECKPOINT_OPEN;NO_P1_RETRY;FORWARD_FIX_FAILURE_RECEIPTING_BEFORE_ANY_NEW_AUTHORIZATION_PROPOSAL"
+}
