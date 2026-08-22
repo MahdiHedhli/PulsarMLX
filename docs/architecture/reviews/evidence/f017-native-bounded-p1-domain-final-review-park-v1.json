@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-review-park/1.0.0",
+  "status": "PARKED_AT_REQUIRED_CLAUDE_FABLE_5_FINAL_REVIEW_GATE",
+  "authoritative_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_review_target": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "exact_head_ci": {
+    "run_id": 32560783265,
+    "conclusion": "success"
+  },
+  "cross_vendor_review": {
+    "reviewer": "gemini-3.1-pro-high via AGY CLI",
+    "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-03-request.md",
+    "request_sha256": "adf4ad3b8d885920fef1286f6361d2e8cd88d3214b83239168dd4c4ba70f829c",
+    "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-03-exact-agy-response.json",
+    "response_sha256": "a6ab062b3d1c69007fd156c5a859372f77be4063612689660074add4bfb2026f",
+    "verdict": "NO_MATERIAL_DISAGREEMENT"
+  },
+  "required_final_review": {
+    "reviewer": "claude-fable-5",
+    "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-fable-cycle-02-request.md",
+    "request_sha256": "9774d099f8962dd0b15dd90c827354ca8cf79a10762e0ab94c3c90a982685a10",
+    "failed_response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-fable-cycle-02-exact-cli-response.json",
+    "failed_response_sha256": "8489c7d5b227744f96c5a190ea27b5f77c0a9486109ecc6a9e8b335cde01a3e3",
+    "failure": "HTTP_429_MONTHLY_SPEND_LIMIT",
+    "verdict": null
+  },
+  "acceptance_declaration_created": false,
+  "retained_qualification": "MIXED_D0_V2_CLASS/PASS",
+  "real_m1_ultra_p1_executed": false,
+  "full_model_real_checkpoint_inference_executed": false,
+  "original_checkpoint_reads_during_phase": 0,
+  "live_p1_authorization_created": false,
+  "ready_to_freeze_single_bounded_p1_authorization": false,
+  "next_safe_action": "Restore Claude CLI Fable 5 quota, then rerun the committed cycle-02 request against exact implementation head aeca5b08ae96f6bd97f507c81ae373e4b86f9e90 and exact-head CI run 32560783265; do not modify implementation or execute P1 unless that review produces an accepted verdict."
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-review-result/1.0.0",
+  "reviewer": {
+    "required_model": "claude-fable-5",
+    "provider_family": "Anthropic Claude",
+    "track": "Claude CLI final whole-domain review",
+    "effort": "high",
+    "session_id": "914f83b4-293c-4cc9-99df-2357b5948b01"
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "review_target": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "exact_head_ci": {
+    "run_id": 32560783265,
+    "conclusion": "success"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-fable-cycle-02-request.md",
+    "sha256": "9774d099f8962dd0b15dd90c827354ca8cf79a10762e0ab94c3c90a982685a10"
+  },
+  "exact_cli_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-fable-cycle-02-exact-cli-response.json",
+    "sha256": "8489c7d5b227744f96c5a190ea27b5f77c0a9486109ecc6a9e8b335cde01a3e3"
+  },
+  "invocation": {
+    "exit_code": 1,
+    "terminal_reason": "api_error",
+    "api_error_status": 429,
+    "error": "Claude CLI monthly spend limit reached",
+    "review_completed": false,
+    "substitution_used": false
+  },
+  "tests_performed_by_reviewer": [],
+  "findings": [],
+  "blocking_findings": null,
+  "non_blocking_required_findings": null,
+  "defense_in_depth_findings": null,
+  "verdict": "REVIEWER_UNAVAILABLE_NO_VERDICT",
+  "acceptance_effect": "PARK_AT_FINAL_FABLE_GATE; DOMAIN_ACCEPTANCE_PROHIBITED",
+  "runtime_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "full_model_real_checkpoint_inference_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false
+  }
+}
