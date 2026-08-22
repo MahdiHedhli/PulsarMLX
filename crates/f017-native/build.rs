@@ -17,6 +17,16 @@ fn main() {
         && mlx.join("lib/libmlx.dylib").is_file();
     if available {
         println!("cargo:rustc-cfg=pulsar_native_mlx");
+        println!(
+            "cargo:rustc-link-arg-bin=f017-native-bounded-p1=-Wl,-rpath,{}",
+            mlx_c.join("lib").display()
+        );
+        if mlx != mlx_c {
+            println!(
+                "cargo:rustc-link-arg-bin=f017-native-bounded-p1=-Wl,-rpath,{}",
+                mlx.join("lib").display()
+            );
+        }
     } else if std::env::var("PULSAR_REQUIRE_NATIVE_MLX").as_deref() == Ok("1") {
         panic!("PULSAR_REQUIRE_NATIVE_MLX=1 but pinned native MLX is unavailable");
     }
