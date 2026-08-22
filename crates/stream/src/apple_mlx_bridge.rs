@@ -67,6 +67,7 @@ unsafe extern "C" {
         duplicate_free_attempts: *mut u64,
         origin_mismatches: *mut u64,
     ) -> i32;
+    fn pulsar_mlx_p1_accounting_snapshot(out: *mut P1AccountingSnapshot) -> i32;
     fn pulsar_mlx_validate_f32_count(
         count: usize,
         error_buffer: *mut c_char,
@@ -165,6 +166,51 @@ pub struct MlxNativeFreeCounters {
     pub live_handles: u64,
     pub duplicate_free_attempts: u64,
     pub origin_mismatches: u64,
+}
+
+/// Exact live 22-field accounting census for one bounded native P1 process.
+///
+/// Values are produced below the executor by the native MLX bridge and its
+/// independent deallocation observer. Callers cannot inject values. A fresh
+/// capture is required at each pre/post boundary.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct P1AccountingSnapshot {
+    pub callback_count: u64,
+    pub managed_created: u64,
+    pub managed_destroyed: u64,
+    pub derived_created: u64,
+    pub derived_destroyed: u64,
+    pub default_cpu_stream_created: u64,
+    pub default_cpu_stream_freed: u64,
+    pub default_gpu_stream_created: u64,
+    pub default_gpu_stream_freed: u64,
+    pub owned_stream_created: u64,
+    pub owned_stream_freed: u64,
+    pub native_default_cpu_stream_freed: u64,
+    pub native_default_gpu_stream_freed: u64,
+    pub native_owned_stream_freed: u64,
+    pub native_live_stream_handles: u64,
+    pub native_duplicate_free_attempts: u64,
+    pub native_origin_mismatches: u64,
+    pub context_active: u64,
+    pub registrations: u64,
+    pub teardowns: u64,
+    pub in_flight_work: u64,
+    pub stale_native_ready_generations: u64,
+}
+
+impl P1AccountingSnapshot {
+    /// Capture the current process-owned native accounting state.
+    pub fn capture() -> Result<Self, String> {
+        let mut value = Self::default();
+        let status = unsafe { pulsar_mlx_p1_accounting_snapshot(&mut value) };
+        if status != 0 {
+            return Err(format!("MLX P1 accounting snapshot status {status}"));
+        }
+        Ok(value)
+    }
 }
 
 fn bridge_error(status: i32, buffer: &[i8; ERROR_CAPACITY]) -> String {

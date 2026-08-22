@@ -2,7 +2,10 @@
 
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
-use stream::{MlxContext, MlxDevice, MlxNativeFreeCounters, MlxStreamMode, MlxStreamOrigin};
+use stream::{
+    MlxContext, MlxDevice, MlxNativeFreeCounters, MlxStreamMode, MlxStreamOrigin,
+    P1AccountingSnapshot,
+};
 
 fn test_lock() -> MutexGuard<'static, ()> {
     static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
@@ -77,6 +80,44 @@ fn gpu_managed_import_lifecycle_matrix_is_balanced() {
     let _guard = test_lock();
     run_managed_matrix(MlxStreamMode::BorrowedDefault, 30);
     run_managed_matrix(MlxStreamMode::Owned, 100);
+}
+
+#[test]
+fn unified_p1_snapshot_is_live_complete_and_reconciles_after_teardown() {
+    let _guard = test_lock();
+    let before = P1AccountingSnapshot::capture().expect("pre snapshot");
+    {
+        let context =
+            MlxContext::new(MlxDevice::Gpu, MlxStreamMode::Owned).expect("owned GPU MLX context");
+        let active = P1AccountingSnapshot::capture().expect("active snapshot");
+        assert_eq!(active.context_active, 1);
+        assert_eq!(active.registrations - before.registrations, 1);
+        let mut owner = vec![1.0_f32, -1.0, 0.0, -0.0];
+        let input = context.import_f32(&mut owner).expect("managed input");
+        let derived = input.add_self().expect("derived input");
+        assert_eq!(input.destroy().expect("source-first destroy"), 0);
+        assert_eq!(derived.destroy().expect("derived destroy"), 0);
+        context.synchronize().expect("quiescence sync");
+    }
+    let after = P1AccountingSnapshot::capture().expect("post snapshot");
+    assert_eq!(after.context_active, 0);
+    assert_eq!(after.registrations - before.registrations, 1);
+    assert_eq!(after.teardowns - before.teardowns, 1);
+    assert_eq!(after.managed_created - before.managed_created, 1);
+    assert_eq!(after.managed_destroyed - before.managed_destroyed, 1);
+    assert_eq!(after.derived_created - before.derived_created, 1);
+    assert_eq!(after.derived_destroyed - before.derived_destroyed, 1);
+    assert_eq!(after.callback_count - before.callback_count, 1);
+    assert_eq!(after.in_flight_work, 0);
+    assert_eq!(after.stale_native_ready_generations, 0);
+    assert_eq!(
+        after.native_live_stream_handles,
+        before.native_live_stream_handles
+    );
+    assert_eq!(
+        after.owned_stream_freed - before.owned_stream_freed,
+        after.native_owned_stream_freed - before.native_owned_stream_freed
+    );
 }
 
 #[test]

@@ -94,7 +94,7 @@ mod apple_mlx_bridge;
 pub use apple_mlx_bridge::{
     MlxArray, MlxComputedArray, MlxContext, MlxDebugStreamCounters, MlxDevice,
     MlxNativeFreeCounters, MlxOwnershipSnapshot, MlxStreamAuthority, MlxStreamMode,
-    MlxStreamOrigin,
+    MlxStreamOrigin, P1AccountingSnapshot,
 };
 
 /// Build the universe of per-expert slab reads for every streamed layer of

@@ -48,6 +48,8 @@ struct MlxContextObject {
     StreamOrigin stream_origin = StreamOrigin::None;
     bool stream_handle_owned = false;
     bool singleton_claimed = false;
+    bool registered = false;
+    uint64_t generation = 0;
     AccountingState *accounting = nullptr;
     OwnershipState *ownership_states = nullptr;
 };
@@ -60,6 +62,17 @@ struct MlxArrayObject {
 };
 
 std::atomic<bool> context_active{false};
+std::atomic<uint64_t> active_generation{0};
+std::atomic<uint64_t> next_generation{1};
+std::atomic<uint64_t> p1_callback_count{0};
+std::atomic<uint64_t> p1_managed_created{0};
+std::atomic<uint64_t> p1_managed_destroyed{0};
+std::atomic<uint64_t> p1_derived_created{0};
+std::atomic<uint64_t> p1_derived_destroyed{0};
+std::atomic<uint64_t> p1_registrations{0};
+std::atomic<uint64_t> p1_teardowns{0};
+std::atomic<uint64_t> p1_in_flight_work{0};
+std::atomic<uint64_t> p1_stale_native_ready_generations{0};
 std::atomic<uint64_t> default_cpu_stream_created{0};
 std::atomic<uint64_t> default_cpu_stream_freed{0};
 std::atomic<uint64_t> default_gpu_stream_created{0};
@@ -119,11 +132,21 @@ void managed_owner_released(void *payload) {
         return;
     }
     ownership->callback_count.fetch_add(1, std::memory_order_relaxed);
+    p1_callback_count.fetch_add(1, std::memory_order_relaxed);
     if (ownership->accounting != nullptr) {
         ownership->accounting->callback_count.fetch_add(1,
                                                         std::memory_order_relaxed);
     }
     release_ownership(ownership);
+}
+
+bool context_generation_is_current(MlxContextObject *context) {
+    if (context != nullptr && context->generation != 0 &&
+        active_generation.load(std::memory_order_acquire) == context->generation) {
+        return true;
+    }
+    p1_stale_native_ready_generations.fetch_add(1, std::memory_order_relaxed);
+    return false;
 }
 
 void record_stream_created(StreamOrigin origin) {
@@ -229,6 +252,10 @@ void destroy_context(MlxContextObject *context) {
     if (context == nullptr) {
         return;
     }
+    if (context->stream.ctx != nullptr) {
+        mlx_synchronize(context->stream);
+        p1_in_flight_work.store(0, std::memory_order_release);
+    }
     restore_default_cpu_context();
     release_stream_handle(context);
     if (context->device.ctx != nullptr) {
@@ -243,7 +270,11 @@ void destroy_context(MlxContextObject *context) {
     }
     release_accounting(context->accounting);
     if (context->singleton_claimed) {
+        active_generation.store(0, std::memory_order_release);
         context_active.store(false, std::memory_order_release);
+    }
+    if (context->registered) {
+        p1_teardowns.fetch_add(1, std::memory_order_relaxed);
     }
     delete context;
 }
@@ -258,9 +289,11 @@ int destroy_array(MlxArrayObject *array, uint64_t *callback_count) {
             if (array->derived) {
                 array->ownership->accounting->derived_destroyed.fetch_add(
                     1, std::memory_order_relaxed);
+                p1_derived_destroyed.fetch_add(1, std::memory_order_relaxed);
             } else {
                 array->ownership->accounting->managed_destroyed.fetch_add(
                     1, std::memory_order_relaxed);
+                p1_managed_destroyed.fetch_add(1, std::memory_order_relaxed);
             }
         }
         if (callback_count != nullptr) {
@@ -283,6 +316,31 @@ extern "C" {
 
 typedef void PulsarMlxContext;
 typedef void PulsarMlxArray;
+
+struct PulsarMlxP1AccountingSnapshot {
+    uint64_t callback_count;
+    uint64_t managed_created;
+    uint64_t managed_destroyed;
+    uint64_t derived_created;
+    uint64_t derived_destroyed;
+    uint64_t default_cpu_stream_created;
+    uint64_t default_cpu_stream_freed;
+    uint64_t default_gpu_stream_created;
+    uint64_t default_gpu_stream_freed;
+    uint64_t owned_stream_created;
+    uint64_t owned_stream_freed;
+    uint64_t native_default_cpu_stream_freed;
+    uint64_t native_default_gpu_stream_freed;
+    uint64_t native_owned_stream_freed;
+    uint64_t native_live_stream_handles;
+    uint64_t native_duplicate_free_attempts;
+    uint64_t native_origin_mismatches;
+    uint64_t context_active;
+    uint64_t registrations;
+    uint64_t teardowns;
+    uint64_t in_flight_work;
+    uint64_t stale_native_ready_generations;
+};
 
 int pulsar_mlx_context_create(
     int device_type,
@@ -311,6 +369,8 @@ int pulsar_mlx_context_create(
                          "MLX context allocation failed");
     }
     context->singleton_claimed = true;
+    context->generation = next_generation.fetch_add(1, std::memory_order_acq_rel);
+    active_generation.store(context->generation, std::memory_order_release);
     context->accounting = new (std::nothrow) AccountingState();
     if (context->accounting == nullptr) {
         destroy_context(context);
@@ -375,6 +435,8 @@ int pulsar_mlx_context_create(
         return set_error(error_buffer, error_capacity,
                          "injected failure after MLX stream creation");
     }
+    context->registered = true;
+    p1_registrations.fetch_add(1, std::memory_order_relaxed);
     *out_context = reinterpret_cast<PulsarMlxContext *>(context);
     return 0;
 }
@@ -412,7 +474,8 @@ int pulsar_mlx_import_f32(
     char *error_buffer,
     size_t error_capacity) {
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
-    if (context == nullptr || data == nullptr || count == 0 ||
+    if (context == nullptr || !context_generation_is_current(context) ||
+        data == nullptr || count == 0 ||
         count > static_cast<size_t>(INT_MAX) || out_array == nullptr) {
         return set_error(error_buffer, error_capacity,
                          "invalid MLX f32 import arguments");
@@ -444,6 +507,7 @@ int pulsar_mlx_import_f32(
     }
     context->accounting->managed_created.fetch_add(1,
                                                    std::memory_order_relaxed);
+    p1_managed_created.fetch_add(1, std::memory_order_relaxed);
     *out_array = reinterpret_cast<PulsarMlxArray *>(array);
     return 0;
 }
@@ -455,7 +519,8 @@ int pulsar_mlx_array_eval_sync(
     size_t error_capacity) {
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
     auto *array = reinterpret_cast<MlxArrayObject *>(raw_array);
-    if (context == nullptr || array == nullptr || array->context != context) {
+    if (context == nullptr || !context_generation_is_current(context) ||
+        array == nullptr || array->context != context) {
         return set_error(error_buffer, error_capacity,
                          "MLX array/context ownership mismatch");
     }
@@ -466,6 +531,7 @@ int pulsar_mlx_array_eval_sync(
         return set_error(error_buffer, error_capacity,
                          "MLX submission-stream synchronization failed");
     }
+    p1_in_flight_work.store(0, std::memory_order_release);
     return 0;
 }
 
@@ -477,7 +543,8 @@ int pulsar_mlx_array_add_self(
     size_t error_capacity) {
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
     auto *source = reinterpret_cast<MlxArrayObject *>(raw_array);
-    if (context == nullptr || source == nullptr || source->context != context ||
+    if (context == nullptr || !context_generation_is_current(context) ||
+        source == nullptr || source->context != context ||
         source->ownership == nullptr || out_array == nullptr) {
         return set_error(error_buffer, error_capacity,
                          "MLX add ownership mismatch");
@@ -498,6 +565,8 @@ int pulsar_mlx_array_add_self(
     retain_ownership(result->ownership);
     result->ownership->accounting->derived_created.fetch_add(
         1, std::memory_order_relaxed);
+    p1_derived_created.fetch_add(1, std::memory_order_relaxed);
+    p1_in_flight_work.fetch_add(1, std::memory_order_relaxed);
     *out_array = reinterpret_cast<PulsarMlxArray *>(result);
     return 0;
 }
@@ -544,7 +613,8 @@ int pulsar_mlx_context_synchronize(
     char *error_buffer,
     size_t error_capacity) {
     auto *context = reinterpret_cast<MlxContextObject *>(raw_context);
-    if (context == nullptr || context->stream.ctx == nullptr) {
+    if (context == nullptr || !context_generation_is_current(context) ||
+        context->stream.ctx == nullptr) {
         return set_error(error_buffer, error_capacity,
                          "invalid MLX context synchronization arguments");
     }
@@ -552,6 +622,42 @@ int pulsar_mlx_context_synchronize(
         return set_error(error_buffer, error_capacity,
                          "MLX context synchronization failed");
     }
+    p1_in_flight_work.store(0, std::memory_order_release);
+    return 0;
+}
+
+int pulsar_mlx_p1_accounting_snapshot(PulsarMlxP1AccountingSnapshot *out) {
+    if (out == nullptr) {
+        return -1;
+    }
+    uint64_t native_default_cpu_created = 0;
+    uint64_t native_default_gpu_created = 0;
+    uint64_t native_owned_created = 0;
+    if (pulsar_mlx_native_stream_observer_snapshot(
+            &native_default_cpu_created, &out->native_default_cpu_stream_freed,
+            &native_default_gpu_created, &out->native_default_gpu_stream_freed,
+            &native_owned_created, &out->native_owned_stream_freed,
+            &out->native_live_stream_handles,
+            &out->native_duplicate_free_attempts,
+            &out->native_origin_mismatches) != 0) {
+        return -2;
+    }
+    out->callback_count = p1_callback_count.load(std::memory_order_acquire);
+    out->managed_created = p1_managed_created.load(std::memory_order_acquire);
+    out->managed_destroyed = p1_managed_destroyed.load(std::memory_order_acquire);
+    out->derived_created = p1_derived_created.load(std::memory_order_acquire);
+    out->derived_destroyed = p1_derived_destroyed.load(std::memory_order_acquire);
+    out->default_cpu_stream_created = default_cpu_stream_created.load(std::memory_order_acquire);
+    out->default_cpu_stream_freed = default_cpu_stream_freed.load(std::memory_order_acquire);
+    out->default_gpu_stream_created = default_gpu_stream_created.load(std::memory_order_acquire);
+    out->default_gpu_stream_freed = default_gpu_stream_freed.load(std::memory_order_acquire);
+    out->owned_stream_created = owned_stream_created.load(std::memory_order_acquire);
+    out->owned_stream_freed = owned_stream_freed.load(std::memory_order_acquire);
+    out->context_active = context_active.load(std::memory_order_acquire) ? 1 : 0;
+    out->registrations = p1_registrations.load(std::memory_order_acquire);
+    out->teardowns = p1_teardowns.load(std::memory_order_acquire);
+    out->in_flight_work = p1_in_flight_work.load(std::memory_order_acquire);
+    out->stale_native_ready_generations = p1_stale_native_ready_generations.load(std::memory_order_acquire);
     return 0;
 }
 
