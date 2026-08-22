@@ -1,0 +1,1618 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-comparison-read-grant/1.0.0",
+  "schema_version": "1.0.0",
+  "grant_id": "F017-NATIVE-D3_5-COMPARISON-READ-GRANT-1",
+  "status": "INDEPENDENT_REVIEW_ACCEPT_REQUIRED_BEFORE_USE",
+  "consumer": {
+    "id": "F017-NATIVE-D3_5-NUMERICAL-GRADER-1",
+    "executable_path": "${HOME}/Documents/Coding/PulsarMLX/target/release/f017-native-d35-grader",
+    "executable_sha256": "8cb0d125d0db2b825ba4c516088d998fc4db279534b9efe60ba9c1772c60b77f",
+    "source_path": "crates/f017-native/src/bin/d35_grader.rs",
+    "source_sha256": "35650d198a3f8a3bd28986e43186e8cdfeb20d66b1e4dc2d91454c3f8249ac82"
+  },
+  "authority": {
+    "d0_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json",
+    "d0_sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9",
+    "d3_5_evidence_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+    "d3_5_evidence_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+    "stage_mapping_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-canonical-stage-mapping-v1.json",
+    "stage_mapping_sha256": "9f8bb8b0b65188fd2377521c79655c82842063f870a30aeeaea97e0483cd74c5",
+    "historical_master_ledger_path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+    "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_master_terminal": 175,
+    "diagnostic_disclosure_path": "docs/architecture/reviews/evidence/f017-native-d3-5-ungranted-diagnostic-read-disclosure-v1.json",
+    "diagnostic_disclosure_sha256": "a1daa331ce641b7e34459de1f7a5584632c8cb5bce82862a66e93b330e9aa03b",
+    "diagnostic_metrics_reusable": false
+  },
+  "event": {
+    "event_id": "F017-NATIVE-D3_5-NUMERICAL-GRADING-1",
+    "attempt_id": "F017-NATIVE-D3_5-NUMERICAL-GRADING-1-ATTEMPT-1",
+    "attempts": 1,
+    "retries": 0,
+    "resume": false,
+    "numerical_reexecution": false,
+    "native_capture_regeneration": false,
+    "historical_payload_ledger_delta": 0,
+    "original_checkpoint_reads": 0,
+    "original_checkpoint_shard_opens": 0,
+    "terminal_semantics": "ONE_OWNED_ATTEMPT_COMPLETE_OR_TERMINAL_FAILURE_NO_RETRY_NO_RESUME"
+  },
+  "allowed_output_root": "${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1",
+  "expected_read_count": 15,
+  "operand_read_count": 40,
+  "capture_read_count": 34,
+  "total_read_count": 89,
+  "route_authority": {
+    "selected_ids_hex": "fa000a00ed003e004900b100da001c00",
+    "selected_ids_sha256": "a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f",
+    "routing_weights_f64_hex": "f29dfce3c2f5e73ffe85c101646ed53f78f9fd32848bce3f202f8b7f5152ce3f2142671d6c18d03f0c8a3f6c4984cd3f24a20c24e654cd3f30a3e6ee4e64cd3f",
+    "routing_weights_sha256": "ff1a7127b418b80dce4e4361e314c16ad50e86484cb1861ad27f6f9ee70b8587",
+    "ranking_sha256": "b2de9d7a4fe2701f0cda51f6b95a5396195e0bf0c44924aa6d46b4a899af549d",
+    "tie_semantics": "DESCENDING_SCORE_LOWER_EXPERT_ID"
+  },
+  "expected_reads": [
+    {
+      "role": "expected.input_hidden",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/00-s0.f32le",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "54e0ea92fca38522405b4d52977eb46910d2e739",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json",
+      "source_authority_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256",
+      "allowed_purpose": "D0_BYTE_EXACT_EXPECTED_INPUT_HIDDEN",
+      "ordinal": 0
+    },
+    {
+      "role": "expected.post_attention_residual",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-s1-materialization-release-2/outputs/representative-s1.f32le",
+      "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s1-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "5c6437f2ab6ae2d01acc765430880195211e892dfb612fbb3b4125d9038ffe13",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 1
+    },
+    {
+      "role": "expected.router_normalized",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-input-v1/router_normalized.f32le",
+      "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 2
+    },
+    {
+      "role": "expected.routed_aggregate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs/routed-aggregate.f64le",
+      "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9",
+      "byte_count": 49152,
+      "dtype": "F64_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F64_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-routed-aggregate-reuse-authorization-v1.json",
+      "source_authority_sha256": "f04a1eb901f4c738f421b34cc065e2ca20b8938ae00e49ee17e67aeffd99fdfb",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 3
+    },
+    {
+      "role": "expected.shared_expert_output",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs/representative-shared-expert-output.f32le",
+      "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "3642200f50f2ed7140243cd885dfe8c3d8628f5605ab37467cc342ea6376019a",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 4
+    },
+    {
+      "role": "expected.production_ffn",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-ffn-composition-release-2/outputs/representative-ffn-output.f64le",
+      "sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a",
+      "byte_count": 49152,
+      "dtype": "F64_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F64_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-ffn-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "983b119970f8d60bddb887d4478455b4d9eb638c3dc90853319cc302f290cd06",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 5
+    },
+    {
+      "role": "expected.production_s2",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs/representative-s2.f32le",
+      "sha256": "0341314230654d21fa56506dfe601f90bdb603fc38fd1203b6dd62b1e54c98c1",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-s2-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "35b7c6232858577c6b523fd416820845255eb094ca8be8102d9dd01f2b1b77b5",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 6
+    },
+    {
+      "role": "expected.expert_down.0",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/00-expert-250-down.f32le",
+      "sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 7
+    },
+    {
+      "role": "expected.expert_down.1",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/01-expert-10-down.f32le",
+      "sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 8
+    },
+    {
+      "role": "expected.expert_down.2",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/02-expert-237-down.f32le",
+      "sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 9
+    },
+    {
+      "role": "expected.expert_down.3",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/03-expert-62-down.f32le",
+      "sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 10
+    },
+    {
+      "role": "expected.expert_down.4",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/04-expert-73-down.f32le",
+      "sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 11
+    },
+    {
+      "role": "expected.expert_down.5",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/05-expert-177-down.f32le",
+      "sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 12
+    },
+    {
+      "role": "expected.expert_down.6",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/06-expert-218-down.f32le",
+      "sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 13
+    },
+    {
+      "role": "expected.expert_down.7",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/07-expert-28-down.f32le",
+      "sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_F32_CONTIGUOUS",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-output-reuse-authorization-v1.json",
+      "source_authority_sha256": "1b8b053d60f87c9da8c8c81a41a3d82f7652859a2464941c39b5a1eab3d7c070",
+      "allowed_purpose": "D0_EXPECTED_ARTIFACT_OR_INDEPENDENT_REFERENCE_CROSSCHECK",
+      "ordinal": 14
+    }
+  ],
+  "operand_reads": [
+    {
+      "role": "operand.s0",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/00-s0.f32le",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_F32_LE",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "54e0ea92fca38522405b4d52977eb46910d2e739",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-dprefix-exact1-descriptor-v1.json",
+      "source_authority_sha256": "393bd6f6e933aa8a50e1a836328e91cb3a42b68b08249d723c70190f4fa52256",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 15
+    },
+    {
+      "role": "operand.attention_norm_scale",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/01-attention_norm_scale.f32le",
+      "sha256": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "F017_APPLE_F32_LE_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 16
+    },
+    {
+      "role": "operand.q_a",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/02-q_a.bin",
+      "sha256": "30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579",
+      "byte_count": 8650752,
+      "dtype": "Q5_K",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_APPLE_Q5_K_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 17
+    },
+    {
+      "role": "operand.q_rank_norm_scale",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/03-q_rank_norm_scale.f32le",
+      "sha256": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "F017_APPLE_F32_LE_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 18
+    },
+    {
+      "role": "operand.q_b",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/04-q_b.bin",
+      "sha256": "c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47",
+      "byte_count": 35651584,
+      "dtype": "Q8_0",
+      "shape": [
+        64,
+        256,
+        2048
+      ],
+      "serialization": "F017_APPLE_Q8_0_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 19
+    },
+    {
+      "role": "operand.kv_a",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/05-kv_a.bin",
+      "sha256": "8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053",
+      "byte_count": 3760128,
+      "dtype": "Q8_0",
+      "shape": [
+        576,
+        6144
+      ],
+      "serialization": "F017_APPLE_Q8_0_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 20
+    },
+    {
+      "role": "operand.kv_norm_scale",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/06-kv_norm_scale.f32le",
+      "sha256": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4",
+      "byte_count": 2048,
+      "dtype": "F32_LE",
+      "shape": [
+        512
+      ],
+      "serialization": "F017_APPLE_F32_LE_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 21
+    },
+    {
+      "role": "operand.k_b",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/07-k_b.bin",
+      "sha256": "9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f",
+      "byte_count": 6684672,
+      "dtype": "Q8_0",
+      "shape": [
+        64,
+        512,
+        192
+      ],
+      "serialization": "F017_APPLE_Q8_0_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 22
+    },
+    {
+      "role": "operand.v_b",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/08-v_b.bin",
+      "sha256": "86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367",
+      "byte_count": 8912896,
+      "dtype": "Q8_0",
+      "shape": [
+        64,
+        256,
+        512
+      ],
+      "serialization": "F017_APPLE_Q8_0_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 23
+    },
+    {
+      "role": "operand.attention_output",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/09-attention_output.bin",
+      "sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084",
+      "byte_count": 69206016,
+      "dtype": "Q5_K",
+      "shape": [
+        6144,
+        16384
+      ],
+      "serialization": "F017_APPLE_Q5_K_V1",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "c1cdb07942e62a9b23ff775f0bbb020ba6be733c",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "source_authority_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 24
+    },
+    {
+      "role": "operand.ffn_norm_scale",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/10-ffn_norm_scale.f32le",
+      "sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_F32_LE",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 25
+    },
+    {
+      "role": "operand.correction_bias",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/11-correction_bias.f32le",
+      "sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491",
+      "byte_count": 1024,
+      "dtype": "F32_LE",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_F32_LE",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 26
+    },
+    {
+      "role": "operand.router",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/12-router.f32le",
+      "sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+      "byte_count": 6291456,
+      "dtype": "F32_LE",
+      "shape": [
+        256,
+        6144
+      ],
+      "serialization": "CANONICAL_F32_LE",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
+      "source_authority_sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 27
+    },
+    {
+      "role": "operand.routed.0.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/13-routed-0-gate.bin",
+      "sha256": "e613c5ba56ab0c916f9ab119b3ef8e63127f06485c0c3d34c67bff759d17bbf6",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 28
+    },
+    {
+      "role": "operand.routed.0.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/14-routed-0-up.bin",
+      "sha256": "793a6eefeec5a9d879ba5c30b1af795477a5184bb84030984f08de2f07c4a2bc",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 29
+    },
+    {
+      "role": "operand.routed.0.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/15-routed-0-down.bin",
+      "sha256": "a48ad063e644ca57eda6a289e5fa02e3bffea95ea1e80c8b3cff9667697bebc0",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 30
+    },
+    {
+      "role": "operand.routed.1.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/16-routed-1-gate.bin",
+      "sha256": "ce6e74edc6626e676d87c0dcc68d58aed3469b2565b4afc74f38a1fd0ab192d2",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 31
+    },
+    {
+      "role": "operand.routed.1.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/17-routed-1-up.bin",
+      "sha256": "6210d76534e8642620946d3107c5756b75cca97c3f1989e9013817172888b19a",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 32
+    },
+    {
+      "role": "operand.routed.1.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/18-routed-1-down.bin",
+      "sha256": "b7e4f855d999e5b411a4fab3388c19ca67c96df82e14ddd61dd20536cbedebc9",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 33
+    },
+    {
+      "role": "operand.routed.2.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/19-routed-2-gate.bin",
+      "sha256": "23e8d2454898a857b602c028d282912413aaa378f78a49004291b1c469e93bdf",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 34
+    },
+    {
+      "role": "operand.routed.2.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/20-routed-2-up.bin",
+      "sha256": "9cce3c663ed33ec1ac01246ea3288b49f01604403be42479836a65d11f36de79",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 35
+    },
+    {
+      "role": "operand.routed.2.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/21-routed-2-down.bin",
+      "sha256": "ab54025c1ae1d71967178c911dd01f192d83469ce55ca0a5ed7b3558dc856f96",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 36
+    },
+    {
+      "role": "operand.routed.3.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/22-routed-3-gate.bin",
+      "sha256": "5be4d37764c41e1d00da6dba6a835cd941d2b38c4f6d130fa71390e4292b6e52",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 37
+    },
+    {
+      "role": "operand.routed.3.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/23-routed-3-up.bin",
+      "sha256": "195073ca8888f2281c35acd564945947db0e5088ca805a32a0dbc05642317a51",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 38
+    },
+    {
+      "role": "operand.routed.3.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/24-routed-3-down.bin",
+      "sha256": "2be8b94e40f7644899ac6cb8ebc4e2c53ff029805f7f5ad1388a4c2a7756d6b1",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 39
+    },
+    {
+      "role": "operand.routed.4.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/25-routed-4-gate.bin",
+      "sha256": "0078727840938c597f055d117c1b8064301b9f7a1fb650996e4a74273b4ac9b0",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 40
+    },
+    {
+      "role": "operand.routed.4.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/26-routed-4-up.bin",
+      "sha256": "191b5040835f35e1937975d332949b2926e0ef3e1cf0ee0574391b39317af24d",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 41
+    },
+    {
+      "role": "operand.routed.4.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/27-routed-4-down.bin",
+      "sha256": "1d8c56883f463652898b2a4fe1ddfc8c9108b964bb747d3cedeaff7dd48d6697",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 42
+    },
+    {
+      "role": "operand.routed.5.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/28-routed-5-gate.bin",
+      "sha256": "11c3343737c270f0120261442a43123aa0798c1a925fdd661717daeece6c8f3f",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 43
+    },
+    {
+      "role": "operand.routed.5.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/29-routed-5-up.bin",
+      "sha256": "d8f21cdf66425d2e771ab574ddab3328bc9822344286c49b55ebe4ebe8fce33e",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 44
+    },
+    {
+      "role": "operand.routed.5.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/30-routed-5-down.bin",
+      "sha256": "9c576015d119c6ab3feacd3ee9dcbbc7fbf8c8553a5a4aadbda16b5c2367bed1",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 45
+    },
+    {
+      "role": "operand.routed.6.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/31-routed-6-gate.bin",
+      "sha256": "931f9e83cb2dff359267ab2f6efbc76cdae9d5f3c9e41d9df02c88e0e2361287",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 46
+    },
+    {
+      "role": "operand.routed.6.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/32-routed-6-up.bin",
+      "sha256": "ee46156298d3aecf5fbc73586d23e95f3a74b60ceb42be4ed35e4f71fb49bc1e",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 47
+    },
+    {
+      "role": "operand.routed.6.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/33-routed-6-down.bin",
+      "sha256": "8e6a5139d2a9f80baa2849aa2714175d02a0d431f8b839750da5f20de4a4d341",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 48
+    },
+    {
+      "role": "operand.routed.7.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/34-routed-7-gate.bin",
+      "sha256": "bea04db17cb072fce161706bb72ceb53f3cdadee29df607b3b9d0ece1a149bd4",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 49
+    },
+    {
+      "role": "operand.routed.7.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/35-routed-7-up.bin",
+      "sha256": "cc6fceb76623c545cb23d7bcc5941e10f98828cb647ae74e528bf9a073a302f6",
+      "byte_count": 3244032,
+      "dtype": "IQ2_XXS",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_IQ2_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 50
+    },
+    {
+      "role": "operand.routed.7.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/36-routed-7-down.bin",
+      "sha256": "28d49109243d17c9f8f6dd703fdcfb6734bdf540ac117614e0ee01e9304f3604",
+      "byte_count": 4816896,
+      "dtype": "IQ3_XXS",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_IQ3_XXS_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "be26de43596a0854c7ce8b3ccafc45eb1f63fadd",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-expert-packed-weight-reuse-authorization-v1.json",
+      "source_authority_sha256": "fb6eb026bee375674c5d6ac0f18b837ad17ea770868d7c3dbd4f5e94decf4b39",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 51
+    },
+    {
+      "role": "operand.shared.gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/37-shared-gate.bin",
+      "sha256": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "byte_count": 8650752,
+      "dtype": "Q5_K",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_Q5_K_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f66343747623a9692dd73df997ec9dc2575a827d",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json",
+      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 52
+    },
+    {
+      "role": "operand.shared.up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/38-shared-up.bin",
+      "sha256": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "byte_count": 8650752,
+      "dtype": "Q5_K",
+      "shape": [
+        2048,
+        6144
+      ],
+      "serialization": "F017_Q5_K_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f66343747623a9692dd73df997ec9dc2575a827d",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json",
+      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 53
+    },
+    {
+      "role": "operand.shared.down",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/39-shared-down.bin",
+      "sha256": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083",
+      "byte_count": 10321920,
+      "dtype": "Q6_K",
+      "shape": [
+        6144,
+        2048
+      ],
+      "serialization": "F017_Q6_K_DUAL_ACCEPTED",
+      "source_branch": "feat/017-real-checkpoint-runner",
+      "source_commit": "f66343747623a9692dd73df997ec9dc2575a827d",
+      "source_authority_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-shared-expert-recovery-authorization-v1.json",
+      "source_authority_sha256": "45b25de7978e01898eb5ea948202d70d5b43f33c2cbc84ec7b11a9955c5d9596",
+      "allowed_purpose": "OPERAND_CONDITIONED_F64_ORACLE_AND_CAP_DERIVATION_ONLY",
+      "ordinal": 54
+    }
+  ],
+  "capture_reads": [
+    {
+      "role": "capture.input_hidden",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/00-input_hidden.f32le",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 55
+    },
+    {
+      "role": "capture.attention_normalized",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/01-attention_normalized.f32le",
+      "sha256": "5a73ca4d2def05d38529365242845d29ae92956e00d770b69694662161d32b9f",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 56
+    },
+    {
+      "role": "capture.query_rank",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/02-query_rank.f32le",
+      "sha256": "c25e6740aa3f8eff22dff3f558793092b3091e3106e7d1231341579c88b4162a",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 57
+    },
+    {
+      "role": "capture.query_rank_normalized",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/03-query_rank_normalized.f32le",
+      "sha256": "4efb505f59b8b7deea66bdfc41a368f11d8a3f2773ecbac80d0e2049a095cd19",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 58
+    },
+    {
+      "role": "capture.query_heads",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/04-query_heads.f32le",
+      "sha256": "28e539a695a756563691ace4940351210ffa1fbd3dbc1ba905ba60ecd4e7dcff",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        64,
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 59
+    },
+    {
+      "role": "capture.kv_raw",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/05-kv_raw.f32le",
+      "sha256": "584eebb47ad8f6bdc6e13fae02f03e6acebc131f5724babecb319ca88b6eb16d",
+      "byte_count": 2304,
+      "dtype": "F32_LE",
+      "shape": [
+        576
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 60
+    },
+    {
+      "role": "capture.kv_normalized",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/06-kv_normalized.f32le",
+      "sha256": "9d9dcc1b798d2af6fe01f41f88bfab13be83fa8b220728595469038a313c46d6",
+      "byte_count": 2048,
+      "dtype": "F32_LE",
+      "shape": [
+        512
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 61
+    },
+    {
+      "role": "capture.key_nope",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/07-key_nope.f32le",
+      "sha256": "c41b76cfbdc13d06222126d3db996cbb0b19fdffc74bbfc81f9c0012979e47ca",
+      "byte_count": 131072,
+      "dtype": "F32_LE",
+      "shape": [
+        64,
+        512
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 62
+    },
+    {
+      "role": "capture.attention_scores",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/08-attention_scores.f32le",
+      "sha256": "3e693a1404036d3d48f55f458657ed6d0836c82a8ac66953ec2739f9a1befdb8",
+      "byte_count": 256,
+      "dtype": "F32_LE",
+      "shape": [
+        64
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 63
+    },
+    {
+      "role": "capture.attention_weights",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/09-attention_weights.f32le",
+      "sha256": "2f20cd03c9cd392a406c56232b0ff93a15f6d6d7da79086bfa14f55d4a4031b0",
+      "byte_count": 256,
+      "dtype": "F32_LE",
+      "shape": [
+        64
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 64
+    },
+    {
+      "role": "capture.value_heads",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/10-value_heads.f32le",
+      "sha256": "3b0462f87f5e9f53280391d268658d8818760ced332efd4416b57b13a71c9e50",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        64,
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 65
+    },
+    {
+      "role": "capture.attention_output",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/11-attention_output.f32le",
+      "sha256": "714d6f6e0d3c52def1ad0c689edbc551fd64ca82c38c598611768f00dcc1fd58",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 66
+    },
+    {
+      "role": "capture.post_attention_residual",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/12-post_attention_residual.f32le",
+      "sha256": "7e08b2d8956f98d0895dae648fb0a5705cf3e846c7a00505946e6cd5ea033afd",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 67
+    },
+    {
+      "role": "capture.router_normalized",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/13-router_normalized.f32le",
+      "sha256": "03f93af5dc3e746317c26b9f66e60c52714d8e767022d4e74754dfee8dd545b9",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 68
+    },
+    {
+      "role": "capture.router_logits",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/14-router_logits.f32le",
+      "sha256": "1d11d9f9ecb9b7fb1b9b5559887120157a81253fdf2a5432cd35b1ee409338a9",
+      "byte_count": 1024,
+      "dtype": "F32_LE",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 69
+    },
+    {
+      "role": "capture.router_probabilities",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/15-router_probabilities.f32le",
+      "sha256": "f2cb25ecbeb581c340926e204e9102eaca7868288770c159b9cae3fa28a53a30",
+      "byte_count": 1024,
+      "dtype": "F32_LE",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 70
+    },
+    {
+      "role": "capture.router_scores",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/16-router_scores.f32le",
+      "sha256": "5d887d1cbd61b5e5ecabd7730b0be6839d84747c1a8a1835c1cc1e911789528e",
+      "byte_count": 1024,
+      "dtype": "F32_LE",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 71
+    },
+    {
+      "role": "capture.ranking",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/17-ranking.u16le",
+      "sha256": "b2de9d7a4fe2701f0cda51f6b95a5396195e0bf0c44924aa6d46b4a899af549d",
+      "byte_count": 512,
+      "dtype": "U16_LE",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 72
+    },
+    {
+      "role": "capture.selected_ids",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/18-selected_ids.u16le",
+      "sha256": "a0f2e2b59ebc606c43e17eab8f76a5b14c26b678bef2a9b0207c3f7dd15f164f",
+      "byte_count": 16,
+      "dtype": "U16_LE",
+      "shape": [
+        8
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 73
+    },
+    {
+      "role": "capture.routing_weights",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/19-routing_weights.f32le",
+      "sha256": "dc9003f7cb8cd615df5918459b5dc408666ad7f1afef96abccb88a8ff322788d",
+      "byte_count": 32,
+      "dtype": "F32_LE",
+      "shape": [
+        8
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 74
+    },
+    {
+      "role": "capture.routed_gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/20-routed_gate.f32le",
+      "sha256": "d2bedb6e3563a9b198a840cbaee01588e2aeb878bbc9624b9488d6bb46d0b4e6",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 75
+    },
+    {
+      "role": "capture.routed_up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/21-routed_up.f32le",
+      "sha256": "8cbe769a2b2128f7fc96719edc7955164a950fdf44bda94c4efdaa7f21d695a9",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 76
+    },
+    {
+      "role": "capture.routed_silu",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/22-routed_silu.f32le",
+      "sha256": "58d801d75f7089564d521d7c4ce0bb54cec1262a48e5ff639afb702a0eb50a88",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 77
+    },
+    {
+      "role": "capture.routed_gate_up_product",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/23-routed_gate_up_product.f32le",
+      "sha256": "1754df044aa45370b6f5aed295d559b97fd74a0fd2e0bc00290cfd4b13e33a66",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 78
+    },
+    {
+      "role": "capture.routed_weighted_hidden",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/24-routed_weighted_hidden.f32le",
+      "sha256": "c2e1be55c62d487c408b6ed4e0464ed0084135b2e1527235c3476f4b48102dd0",
+      "byte_count": 65536,
+      "dtype": "F32_LE",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 79
+    },
+    {
+      "role": "capture.routed_down_outputs",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/25-routed_down_outputs.f32le",
+      "sha256": "622015a23b51afc195291720eb714112b91a596f4f2a8502e4d1754eb7b7d858",
+      "byte_count": 196608,
+      "dtype": "F32_LE",
+      "shape": [
+        8,
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 80
+    },
+    {
+      "role": "capture.routed_aggregate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/26-routed_aggregate.f32le",
+      "sha256": "7944e0428b042d8dd14def51310ecb30e58edebf94d9cc6a84633580065cd43c",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 81
+    },
+    {
+      "role": "capture.shared_gate",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/27-shared_gate.f32le",
+      "sha256": "f0724debb300f1b09d0e78b61d69d08ad3d44a975d86f778a9bcc6d121fb0e47",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 82
+    },
+    {
+      "role": "capture.shared_up",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/28-shared_up.f32le",
+      "sha256": "7ebbb46d20400122a912f109463dd60ddf580fcebe3ac8f7517a0dd023305079",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 83
+    },
+    {
+      "role": "capture.shared_silu",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/29-shared_silu.f32le",
+      "sha256": "bede6abd9a721b4a378b4c12d5b1cc81949d9777715f4c3d32cd514a29abd8d1",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 84
+    },
+    {
+      "role": "capture.shared_gate_up_product",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/30-shared_gate_up_product.f32le",
+      "sha256": "eae11cccc49203502e59020e5f67502814e49f1c85f48e929c4ff179629faf6b",
+      "byte_count": 8192,
+      "dtype": "F32_LE",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 85
+    },
+    {
+      "role": "capture.shared_expert_output",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/31-shared_expert_output.f32le",
+      "sha256": "2aef33640324fd3a73220b622e4490987acbca457f52ce5fcca3818e94872e12",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 86
+    },
+    {
+      "role": "capture.production_ffn",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/32-production_ffn.f32le",
+      "sha256": "48bf577a03e1737bfb518beb22445a9cfac0392517e7ff72447438234a60a30f",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 87
+    },
+    {
+      "role": "capture.production_s2",
+      "path": "${HOME}/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/33-production_s2.f32le",
+      "sha256": "cef89456c067d295888115867357dba3758a690a548acb4cfbdc5866a3e6cf56",
+      "byte_count": 24576,
+      "dtype": "F32_LE",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "source_branch": "feat/017-rust-native-inference-runtime",
+      "source_commit": "f38dc2756bd4949e8883d6afc33b324fe264dd19",
+      "source_authority_path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+      "source_authority_sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+      "allowed_purpose": "GRADE_EXISTING_IMMUTABLE_D3_5_CAPTURE_ONLY",
+      "ordinal": 88
+    }
+  ]
+}

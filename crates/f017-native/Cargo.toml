@@ -18,3 +18,7 @@ libc = "0.2"
 [[bin]]
 name = "f017-native-retained-qualification"
 path = "src/bin/retained_qualification.rs"
+
+[[bin]]
+name = "f017-native-d35-grader"
+path = "src/bin/d35_grader.rs"
