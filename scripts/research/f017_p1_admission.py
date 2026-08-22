@@ -82,6 +82,30 @@ REQUIRED_COUNTERS = {
     "in_flight_work",
     "stale_native_ready_generations",
 }
+RECEIPT_KEYS = {
+    "schema",
+    "authorization_id",
+    "attempt_id",
+    "contract_sha256",
+    "executor_sha256",
+    "git_head",
+    "checkpoint_identity",
+    "runtime_identity",
+    "machine_identity",
+    "accounting_before",
+    "accounting_after",
+    "prompt_token",
+    "generated_tokens",
+    "expected_token",
+    "mandatory_stop_observed",
+    "execution_result",
+    "terminal_state",
+    "started_at_unix",
+    "completed_at_unix",
+}
+CHECKPOINT_IDENTITY_KEYS = {"manifest_sha256", "set_sha256"}
+RUNTIME_IDENTITY_KEYS = {"mlx_version", "mlx_c_version", "machine_file_sha256"}
+MACHINE_IDENTITY_KEYS = {"architecture", "brand"}
 
 
 class AdmissionError(RuntimeError):
@@ -189,6 +213,20 @@ def validate_contract(document: dict[str, Any], repo_root: Path) -> None:
         raise AdmissionError("P1 scope expanded")
     if not isinstance(p1["argv"], list) or not p1["argv"]:
         raise AdmissionError("P1 executable argv is not bound")
+    executor_relative = Path(p1["executor_path"])
+    if executor_relative.is_absolute() or ".." in executor_relative.parts:
+        raise AdmissionError("P1 executor path must be repository-relative")
+    executor_path = repo_root / executor_relative
+    if (
+        not executor_path.is_file()
+        or executor_path.is_symlink()
+        or not os.access(executor_path, os.X_OK)
+        or not executor_path.resolve(strict=True).is_relative_to(repo_root.resolve(strict=True))
+        or sha256_path(executor_path) != p1["executor_sha256"]
+    ):
+        raise AdmissionError("P1 executor identity mismatch")
+    if p1["argv"][0] != str(executor_path):
+        raise AdmissionError("P1 argv[0] is not the bound executor")
     if p1["receipt_schema"] != "pulsarmlx.f017.p1-execution-receipt/1.0.0":
         raise AdmissionError("P1 receipt schema is not bound")
 
@@ -337,31 +375,105 @@ def verify_checkpoint_payload(contract: dict[str, Any], checkpoint_root: Path) -
             raise AdmissionError(f"checkpoint shard hash mismatch: {path.name}")
 
 
-def verify_runtime_machine(contract: dict[str, Any]) -> None:
+def _apple_cpu_brand(
+    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+) -> str:
+    try:
+        result = runner(
+            ["/usr/sbin/sysctl", "-n", "machdep.cpu.brand_string"],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise AdmissionError(f"M1 Ultra sysctl observation failed: {exc}") from exc
+    brand = result.stdout.rstrip("\r\n")
+    if brand != "Apple M1 Ultra":
+        raise AdmissionError(f"P1 device brand mismatch: {brand!r}")
+    return brand
+
+
+def verify_runtime_machine(
+    contract: dict[str, Any],
+    runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+    machine: Callable[[], str] = platform.machine,
+) -> None:
     runtime = contract["runtime"]
     if os.environ.get("PULSAR_REQUIRE_NATIVE_MLX") != "1":
         raise AdmissionError("PULSAR_REQUIRE_NATIVE_MLX=1 is required")
-    if platform.machine() != "arm64" or "M1 Ultra" not in platform.processor():
-        raise AdmissionError("P1 device is not the bound Apple M1 Ultra")
+    if machine() != "arm64":
+        raise AdmissionError("P1 architecture is not arm64")
+    _apple_cpu_brand(runner)
     for binding in runtime["machine_files"]:
         path = Path(binding["path"])
         if path.is_symlink() or not path.is_file() or sha256_path(path) != binding["sha256"]:
             raise AdmissionError(f"machine runtime binding mismatch: {path}")
 
 
-def validate_execution_receipt(receipt: dict[str, Any], contract: dict[str, Any]) -> None:
+def _require_counter_snapshot(value: Any, label: str) -> dict[str, int]:
+    if not isinstance(value, dict) or set(value) != REQUIRED_COUNTERS:
+        raise AdmissionError(f"{label} counter census mismatch")
+    for key, counter in value.items():
+        if isinstance(counter, bool) or not isinstance(counter, int) or counter < 0:
+            raise AdmissionError(f"{label}.{key} is not a non-negative integer")
+    return value
+
+
+def validate_execution_receipt(
+    receipt: dict[str, Any],
+    contract: dict[str, Any],
+    authorization: dict[str, Any],
+    contract_sha256: str,
+) -> None:
+    _require_keys(receipt, RECEIPT_KEYS, "receipt")
     if receipt.get("schema") != contract["p1"]["receipt_schema"]:
         raise AdmissionError("P1 execution receipt schema mismatch")
+    if (
+        receipt["authorization_id"] != authorization["authorization_id"]
+        or receipt["attempt_id"] != authorization["attempt_id"]
+        or receipt["contract_sha256"] != contract_sha256
+        or receipt["executor_sha256"] != contract["p1"]["executor_sha256"]
+        or receipt["git_head"] != contract["repository"]["execution_code_head"]
+    ):
+        raise AdmissionError("P1 receipt authority mismatch")
+    checkpoint = receipt["checkpoint_identity"]
+    _require_keys(checkpoint, CHECKPOINT_IDENTITY_KEYS, "receipt.checkpoint_identity")
+    if checkpoint != {
+        "manifest_sha256": contract["checkpoint"]["manifest_sha256"],
+        "set_sha256": contract["checkpoint"]["set_sha256"],
+    }:
+        raise AdmissionError("P1 receipt checkpoint identity mismatch")
+    runtime = receipt["runtime_identity"]
+    _require_keys(runtime, RUNTIME_IDENTITY_KEYS, "receipt.runtime_identity")
+    expected_machine_files = {
+        row["path"]: row["sha256"] for row in contract["runtime"]["machine_files"]
+    }
+    if runtime != {
+        "mlx_version": contract["runtime"]["mlx_version"],
+        "mlx_c_version": contract["runtime"]["mlx_c_version"],
+        "machine_file_sha256": expected_machine_files,
+    }:
+        raise AdmissionError("P1 receipt runtime identity mismatch")
+    machine_identity = receipt["machine_identity"]
+    _require_keys(machine_identity, MACHINE_IDENTITY_KEYS, "receipt.machine_identity")
+    if machine_identity != {"architecture": "arm64", "brand": "Apple M1 Ultra"}:
+        raise AdmissionError("P1 receipt machine identity mismatch")
     if receipt.get("prompt_token") != PROMPT_TOKEN or receipt.get("generated_tokens") != [EXPECTED_TOKEN]:
         raise AdmissionError("P1 token vector mismatch or execution exceeded one token")
+    if receipt["expected_token"] != EXPECTED_TOKEN:
+        raise AdmissionError("P1 expected token binding mismatch")
     if receipt.get("mandatory_stop_observed") is not True:
         raise AdmissionError("P1 runner did not observe mandatory stop")
-    before = receipt.get("accounting_before")
-    after = receipt.get("accounting_after")
-    if not isinstance(before, dict) or not isinstance(after, dict):
-        raise AdmissionError("mechanical pre/post accounting is absent")
-    if set(before) != REQUIRED_COUNTERS or set(after) != REQUIRED_COUNTERS:
-        raise AdmissionError("mechanical accounting counter census mismatch")
+    if receipt["execution_result"] != "EXPECTED_TOKEN_MATCH" or receipt["terminal_state"] != "COMPLETE_MANDATORY_STOP":
+        raise AdmissionError("P1 receipt result/terminal mismatch")
+    for key in ("started_at_unix", "completed_at_unix"):
+        if isinstance(receipt[key], bool) or not isinstance(receipt[key], (int, float)):
+            raise AdmissionError(f"P1 receipt {key} type mismatch")
+    if receipt["completed_at_unix"] < receipt["started_at_unix"]:
+        raise AdmissionError("P1 receipt timestamps are reversed")
+    before = _require_counter_snapshot(receipt["accounting_before"], "accounting_before")
+    after = _require_counter_snapshot(receipt["accounting_after"], "accounting_after")
     for prefix in ("managed", "derived"):
         if after[f"{prefix}_created"] - before[f"{prefix}_created"] != after[f"{prefix}_destroyed"] - before[f"{prefix}_destroyed"]:
             raise AdmissionError(f"{prefix} ownership did not reconcile")
@@ -387,6 +499,30 @@ def validate_execution_receipt(receipt: dict[str, Any], contract: dict[str, Any]
         raise AdmissionError("registrations and teardowns did not reconcile")
     if after["stale_native_ready_generations"] != 0:
         raise AdmissionError("stale native-ready generation remains")
+
+
+def verify_state_root(contract: dict[str, Any], state_root: Path) -> None:
+    expected = Path(contract["state"]["root"])
+    if not expected.is_absolute() or not state_root.is_absolute() or state_root != expected:
+        raise AdmissionError("caller-selected alternate P1 state root rejected")
+    current = Path(expected.anchor)
+    for part in expected.parts[1:]:
+        current = current / part
+        if current.exists() or current.is_symlink():
+            if current.is_symlink():
+                raise AdmissionError(f"P1 state-root symlink rejected: {current}")
+        else:
+            if current != expected:
+                raise AdmissionError(f"P1 state-root ancestor is absent: {current}")
+            break
+    if expected.exists():
+        stat = expected.stat()
+        if not expected.is_dir() or stat.st_uid != os.getuid() or stat.st_mode & 0o077:
+            raise AdmissionError("P1 state root ownership or permissions are unsafe")
+        if expected.resolve(strict=True) != expected:
+            raise AdmissionError("P1 state root resolved identity mismatch")
+    elif expected.parent.resolve(strict=True) != expected.parent:
+        raise AdmissionError("P1 state-root parent resolved identity mismatch")
 
 
 def _durable_json(path: Path, value: dict[str, Any], exclusive: bool = True) -> None:
@@ -469,8 +605,7 @@ def execute_once(
 ) -> None:
     contract = load_json(contract_path)
     validate_contract(contract, repo_root)
-    if state_root != Path(contract["state"]["root"]):
-        raise AdmissionError("caller-selected alternate P1 state root rejected")
+    verify_state_root(contract, state_root)
     authorization = load_json(authorization_path)
     validate_authorization(
         authorization,
@@ -495,7 +630,9 @@ def execute_once(
         result = subprocess.run(argv, cwd=repo_root, check=False)
         if result.returncode != 0:
             raise AdmissionError(f"P1 executable exited {result.returncode}")
-        validate_execution_receipt(load_json(receipt_path), contract)
+        validate_execution_receipt(
+            load_json(receipt_path), contract, authorization, sha256_path(contract_path)
+        )
         terminalize(attempt_root, authorization, "COMPLETE_MANDATORY_STOP")
     except BaseException:
         if not (attempt_root / "terminal.json").exists():

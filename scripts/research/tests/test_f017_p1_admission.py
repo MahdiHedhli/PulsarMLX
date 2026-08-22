@@ -66,7 +66,9 @@ def fixture_contract() -> dict:
             "retries": 0,
             "resume": False,
             "mandatory_stop": "AFTER_FIRST_GENERATED_TOKEN_AND_TERMINALIZATION",
-            "argv": ["/bound/p1-runner", "--checkpoint", "{checkpoint_root}", "--receipt", "{receipt_path}"],
+            "executor_path": "scripts/research/f017_p1_admission.py",
+            "executor_sha256": gate.sha256_path(MODULE_PATH),
+            "argv": [str(MODULE_PATH), "--checkpoint", "{checkpoint_root}", "--receipt", "{receipt_path}"],
             "receipt_schema": "pulsarmlx.f017.p1-execution-receipt/1.0.0",
         },
         "accounting": {
@@ -129,6 +131,8 @@ class ContractTests(unittest.TestCase):
             lambda x: x["p1"].__setitem__("retries", 1),
             lambda x: x["p1"].__setitem__("resume", True),
             lambda x: x["p1"].__setitem__("mandatory_stop", "REMOVED"),
+            lambda x: x["p1"].__setitem__("executor_sha256", "0" * 64),
+            lambda x: x["p1"]["argv"].__setitem__(0, "/tmp/unbound-executor"),
             lambda x: x["accounting"]["required_counters"].remove("callback_count"),
             lambda x: x["accounting"].__setitem__("observation", "CALLER_SUPPLIED"),
             lambda x: x["accounting"]["stream_authority_fields"].remove("native_handle_owned"),
@@ -174,6 +178,65 @@ class MemoryTests(unittest.TestCase):
         }
         with self.assertRaises(gate.AdmissionError):
             gate.require_fresh_memory_sample(sample, 7.0)
+
+
+class RuntimeIdentityTests(unittest.TestCase):
+    def _runner(self, stdout: str = "Apple M1 Ultra\n", returncode: int = 0):
+        def run(argv, **kwargs):
+            self.assertEqual(argv, ["/usr/sbin/sysctl", "-n", "machdep.cpu.brand_string"])
+            if kwargs.get("check") and returncode:
+                raise subprocess.CalledProcessError(returncode, argv)
+            return subprocess.CompletedProcess(argv, returncode, stdout, "")
+        return run
+
+    @mock.patch.dict(os.environ, {"PULSAR_REQUIRE_NATIVE_MLX": "1"})
+    def test_exact_m1_ultra_and_arm64_accept(self) -> None:
+        gate.verify_runtime_machine(fixture_contract(), runner=self._runner(), machine=lambda: "arm64")
+
+    @mock.patch.dict(os.environ, {"PULSAR_REQUIRE_NATIVE_MLX": "1"})
+    def test_other_brands_and_architectures_reject(self) -> None:
+        for brand in ["Apple M1 Max\n", "Apple M2 Ultra\n", "arm\n", "\n", "Apple M1 Ultra spoof\n"]:
+            with self.subTest(brand=brand), self.assertRaises(gate.AdmissionError):
+                gate.verify_runtime_machine(fixture_contract(), runner=self._runner(brand), machine=lambda: "arm64")
+        with self.assertRaises(gate.AdmissionError):
+            gate.verify_runtime_machine(fixture_contract(), runner=self._runner(), machine=lambda: "x86_64")
+        with self.assertRaises(gate.AdmissionError):
+            gate.verify_runtime_machine(fixture_contract(), runner=self._runner(returncode=1), machine=lambda: "arm64")
+
+
+class StateRootTests(unittest.TestCase):
+    def contract_for(self, root: Path) -> dict:
+        contract = fixture_contract()
+        contract["state"]["root"] = str(root)
+        return contract
+
+    def test_clean_absent_or_private_existing_root_accepts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            absent = parent / "state"
+            gate.verify_state_root(self.contract_for(absent), absent)
+            absent.mkdir(mode=0o700)
+            gate.verify_state_root(self.contract_for(absent), absent)
+
+    def test_alternate_and_symlinked_roots_reject(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary).resolve()
+            expected = parent / "state"
+            with self.assertRaises(gate.AdmissionError):
+                gate.verify_state_root(self.contract_for(expected), parent / "alternate")
+            target = parent / "target"
+            target.mkdir(mode=0o700)
+            leaf = parent / "leaf"
+            leaf.symlink_to(target, target_is_directory=True)
+            with self.assertRaises(gate.AdmissionError):
+                gate.verify_state_root(self.contract_for(leaf), leaf)
+            real_parent = parent / "real-parent"
+            real_parent.mkdir(mode=0o700)
+            alias_parent = parent / "alias-parent"
+            alias_parent.symlink_to(real_parent, target_is_directory=True)
+            aliased = alias_parent / "state"
+            with self.assertRaises(gate.AdmissionError):
+                gate.verify_state_root(self.contract_for(aliased), aliased)
 
 
 class OneShotTests(unittest.TestCase):
@@ -240,25 +303,53 @@ class OneShotTests(unittest.TestCase):
         after = copy.deepcopy(before)
         receipt = {
             "schema": "pulsarmlx.f017.p1-execution-receipt/1.0.0",
+            "authorization_id": "auth-1",
+            "attempt_id": "attempt-1",
+            "contract_sha256": "a" * 64,
+            "executor_sha256": fixture_contract()["p1"]["executor_sha256"],
+            "git_head": "1" * 40,
+            "checkpoint_identity": {
+                "manifest_sha256": fixture_contract()["checkpoint"]["manifest_sha256"],
+                "set_sha256": fixture_contract()["checkpoint"]["set_sha256"],
+            },
+            "runtime_identity": {
+                "mlx_version": "0.31.2",
+                "mlx_c_version": "0.6.0",
+                "machine_file_sha256": {},
+            },
+            "machine_identity": {"architecture": "arm64", "brand": "Apple M1 Ultra"},
             "prompt_token": gate.PROMPT_TOKEN,
             "generated_tokens": [gate.EXPECTED_TOKEN],
+            "expected_token": gate.EXPECTED_TOKEN,
             "mandatory_stop_observed": True,
+            "execution_result": "EXPECTED_TOKEN_MATCH",
+            "terminal_state": "COMPLETE_MANDATORY_STOP",
+            "started_at_unix": 1.0,
+            "completed_at_unix": 2.0,
             "accounting_before": before,
             "accounting_after": after,
         }
-        gate.validate_execution_receipt(receipt, fixture_contract())
+        gate.validate_execution_receipt(receipt, fixture_contract(), self.authorization(), "a" * 64)
         broken = copy.deepcopy(receipt)
         del broken["accounting_after"]["native_owned_stream_freed"]
         with self.assertRaises(gate.AdmissionError):
-            gate.validate_execution_receipt(broken, fixture_contract())
+            gate.validate_execution_receipt(broken, fixture_contract(), self.authorization(), "a" * 64)
         broken = copy.deepcopy(receipt)
         broken["accounting_after"]["owned_stream_freed"] = 1
         with self.assertRaises(gate.AdmissionError):
-            gate.validate_execution_receipt(broken, fixture_contract())
+            gate.validate_execution_receipt(broken, fixture_contract(), self.authorization(), "a" * 64)
         broken = copy.deepcopy(receipt)
         broken["generated_tokens"] = [gate.EXPECTED_TOKEN, 1]
         with self.assertRaises(gate.AdmissionError):
-            gate.validate_execution_receipt(broken, fixture_contract())
+            gate.validate_execution_receipt(broken, fixture_contract(), self.authorization(), "a" * 64)
+        broken = copy.deepcopy(receipt)
+        broken["unknown"] = 1
+        with self.assertRaises(gate.AdmissionError):
+            gate.validate_execution_receipt(broken, fixture_contract(), self.authorization(), "a" * 64)
+        broken = copy.deepcopy(receipt)
+        broken["accounting_after"]["callback_count"] = True
+        with self.assertRaises(gate.AdmissionError):
+            gate.validate_execution_receipt(broken, fixture_contract(), self.authorization(), "a" * 64)
 
 
 if __name__ == "__main__":
