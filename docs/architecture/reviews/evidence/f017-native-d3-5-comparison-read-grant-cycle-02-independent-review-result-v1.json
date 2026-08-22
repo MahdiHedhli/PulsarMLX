@@ -1,0 +1,24 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-comparison-read-grant-independent-review-result",
+  "schema_version":"1.0.0",
+  "cycle":2,
+  "reviewer_model":"claude-fable-5",
+  "reviewer_track":"INDEPENDENT_ADVERSARIAL_COMPARISON_AUTHORITY_REVIEWER",
+  "reviewed_branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"d11054eb67a8e193a9d84dd663f90aa028e97131",
+  "request":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-02-review-request-v1.json","sha256":"ab75712c20ea7845a13d61f507f8b021545d658cf610380f854c1e34fc1d9046"},
+  "exact_response":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-02-exact-claude-response-v1.md","sha256":"30456801c1dfb13256e259a635493e9e29265b3bc91a727aafbe0839e89195e3"},
+  "repair_commit":"c7e3193d05dfe81576d2a07a633b77ed7aa52d9c",
+  "findings":[
+    {"id":"F017-D35-GRADER-008","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIRED","fix":"Ordinals 20/21 now emit exact frozen metric operand_conditioned_matvec; eight-expert geometry remains separately enforced."},
+    {"id":"F017-D35-GRADER-009","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED_WHERE_CONTRACT_DEFINED","fix":"Failure rows now emit FAILED_CONTRACT and intentional-distinction rows emit INTENTIONALLY_DISTINCT. Reproducibility/structural headline strings remain explicit because frozen D0 lacks corresponding result values while requiring those classes."},
+    {"id":"F017-D35-GRADER-010","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Consumer pins exact 15/40/34/89 budgets and all 15 expected role/SHA registry entries."},
+    {"id":"F017-D35-GRADER-011","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Signed-zero bit equality is enforced on all five OCB comparisons."},
+    {"id":"F017-D35-VALIDATOR-012","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Validator pins ranking SHA, uses an exact capture dtype map, and normalizes S0 serialization vocabulary."}
+  ],
+  "blocking_findings":0,
+  "non_blocking_required_findings":1,
+  "defense_in_depth_findings":4,
+  "verdict":"REJECT",
+  "next_boundary":"FRESH_CYCLE_3_REVIEW_OF_REPAIRED_COMMITTED_BYTES"
+}
