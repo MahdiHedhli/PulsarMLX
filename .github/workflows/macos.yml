@@ -83,6 +83,8 @@ jobs:
           assert version("mlx-metal") == "0.32.0"
           assert version("numpy") == "2.4.5"
           PY
+      - name: Build exact native F017 producer targets
+        run: cargo build -p f017-native --release --all-targets
       - name: Validate Feature 002 research methodology
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"

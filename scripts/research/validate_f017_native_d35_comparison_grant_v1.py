@@ -48,7 +48,13 @@ def committed_bytes(commit: str, path: str) -> bytes:
     return subprocess.check_output(["git", "show", f"{commit}:{path}"], cwd=ROOT)
 
 
-def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
+def validate(
+    path: Path = DEFAULT,
+    *,
+    resolve_executable: bool = True,
+    resolve_machine_local: bool = True,
+    require_pre_event_root_absent: bool = True,
+) -> dict:
     doc = load(path)
     if set(doc) != EXPECTED_TOP:
         raise ValueError("top-level key census")
@@ -97,23 +103,34 @@ def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
         source=operand_by_role.get(row["role"])
         if source is None or (resolve_bound_path(row["path"]),row["sha256"],row["byte_count"],row["dtype"],row["shape"]) != (Path(source["path"]),source["sha256"],source["byte_count"],source["encoding"],source["shape"]):
             raise ValueError("operand authority mismatch")
-    capture_manifest_path=Path.home()/".local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/capture-manifest.json"
     evidence=load(ROOT/authority["d3_5_evidence_path"]); mapping=load(ROOT/authority["stage_mapping_path"])
     pinned_manifest_sha=evidence["machine_local_authority"]["representative_manifest_sha256"]
-    if sha(capture_manifest_path)!=pinned_manifest_sha or mapping["source_capture_manifest_sha256"]!=pinned_manifest_sha:
+    if mapping["source_capture_manifest_sha256"]!=pinned_manifest_sha:
         raise ValueError("capture manifest committed pin")
-    capture_manifest=load(capture_manifest_path)
-    capture_by_role={f"capture.{row['stage_id']}":row for row in capture_manifest["stages"]}
-    for row in doc["capture_reads"]:
-        source=capture_by_role.get(row["role"])
-        if source is None:
-            raise ValueError("capture authority role")
-        dtype_map={"little-endian-u16":"U16_LE","little-endian-f32":"F32_LE"}
-        if source["dtype"] not in dtype_map:
-            raise ValueError("capture dtype vocabulary")
-        expected_dtype=dtype_map[source["dtype"]]
-        if (row["sha256"],row["byte_count"],row["shape"],row["dtype"]) != (source["sha256"],source["byte_length"],source["shape"],expected_dtype):
-            raise ValueError("capture authority mismatch")
+    dtype_map={"little-endian-u16":"U16_LE","little-endian-f32":"F32_LE"}
+    for row, stage in zip(doc["capture_reads"], mapping["rows"]):
+        if (
+            row["role"] != f"capture.{stage['native_stage_id']}"
+            or row["dtype"] != dtype_map.get(stage["dtype"])
+            or row["shape"] != stage["shape"]
+            or row["serialization"] != "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA"
+        ):
+            raise ValueError("capture mapping vocabulary")
+    if resolve_machine_local:
+        capture_manifest_path=Path.home()/".local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures/same-00/capture-manifest.json"
+        if sha(capture_manifest_path)!=pinned_manifest_sha:
+            raise ValueError("capture manifest committed pin")
+        capture_manifest=load(capture_manifest_path)
+        capture_by_role={f"capture.{row['stage_id']}":row for row in capture_manifest["stages"]}
+        for row in doc["capture_reads"]:
+            source=capture_by_role.get(row["role"])
+            if source is None:
+                raise ValueError("capture authority role")
+            if source["dtype"] not in dtype_map:
+                raise ValueError("capture dtype vocabulary")
+            expected_dtype=dtype_map[source["dtype"]]
+            if (row["sha256"],row["byte_count"],row["shape"],row["dtype"]) != (source["sha256"],source["byte_length"],source["shape"],expected_dtype):
+                raise ValueError("capture authority mismatch")
     disclosure=load(ROOT/authority["diagnostic_disclosure_path"])
     disclosed={row["path"]:row["sha256"] for row in disclosure["diagnostic_retained_artifact_reads"]}
     for row in doc["expected_reads"][1:]:
@@ -143,9 +160,21 @@ def validate(path: Path = DEFAULT, *, resolve_executable: bool = True) -> dict:
         raise ValueError("S0 serialization vocabulary")
     if doc["allowed_output_root"]!="${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1":
         raise ValueError("output root binding")
-    if resolve_bound_path(doc["allowed_output_root"]).exists():
+    if require_pre_event_root_absent and resolve_bound_path(doc["allowed_output_root"]).exists():
         raise ValueError("grading output root must be absent before event")
-    return {"result":"PASS","grant_sha256":sha(path),"read_census":89,"expected_reads":15,"operand_reads":40,"capture_reads":34,"payload_reads_during_validation":0,"original_checkpoint_reads":0}
+    full_pre_event = resolve_executable and resolve_machine_local and require_pre_event_root_absent
+    return {
+        "result": "PASS" if full_pre_event else "PASS_COMMITTED_STRUCTURE_ONLY",
+        "validation_scope": "FULL_PRE_EVENT" if full_pre_event else "COMMITTED_STRUCTURE_ONLY_NOT_EXECUTION_AUTHORITY",
+        "machine_local_bytes_rehashed": resolve_machine_local,
+        "grant_sha256": sha(path),
+        "read_census": 89,
+        "expected_reads": 15,
+        "operand_reads": 40,
+        "capture_reads": 34,
+        "payload_reads_during_validation": 0,
+        "original_checkpoint_reads": 0,
+    }
 
 
 def main() -> None:

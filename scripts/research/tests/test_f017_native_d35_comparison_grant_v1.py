@@ -22,9 +22,22 @@ class GrantMutations(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/"grant.json"; path.write_text(json.dumps(value)+"\n")
             with self.assertRaises((ValueError,FileNotFoundError)):
-                validator.validate(path,resolve_executable=False)
+                validator.validate(
+                    path,
+                    resolve_executable=False,
+                    resolve_machine_local=False,
+                    require_pre_event_root_absent=False,
+                )
 
-    def test_baseline(self): self.assertEqual(validator.validate()["result"],"PASS")
+    def test_baseline(self):
+        self.assertEqual(
+            validator.validate(
+                resolve_executable=False,
+                resolve_machine_local=False,
+                require_pre_event_root_absent=False,
+            )["result"],
+            "PASS_COMMITTED_STRUCTURE_ONLY",
+        )
     def test_mutations(self):
         mutations=[
             ("extra",lambda x:x.__setitem__("unknown",1)),
@@ -54,13 +67,20 @@ class GrantMutations(unittest.TestCase):
             with self.subTest(mutation=name): self.reject(mutation)
 
     def test_capture_manifest_hash_is_committed_authority(self):
-        original_sha=validator.sha
-        def mutate_manifest_hash(path):
-            if path.name == "capture-manifest.json": return "0"*64
-            return original_sha(path)
-        with mock.patch.object(validator,"sha",side_effect=mutate_manifest_hash):
+        original_load=validator.load
+        def mutate_manifest_pin(path):
+            value=original_load(path)
+            if path.name == "f017-native-retained-qualification-execution-evidence-v1.json":
+                value=copy.deepcopy(value)
+                value["machine_local_authority"]["representative_manifest_sha256"]="0"*64
+            return value
+        with mock.patch.object(validator,"load",side_effect=mutate_manifest_pin):
             with self.assertRaisesRegex(ValueError,"capture manifest committed pin"):
-                validator.validate(resolve_executable=False)
+                validator.validate(
+                    resolve_executable=False,
+                    resolve_machine_local=False,
+                    require_pre_event_root_absent=False,
+                )
 
     def test_grader_uses_exact_d0_oracle_vocabulary_and_all_experts(self):
         source=(ROOT/"crates/f017-native/src/bin/d35_grader.rs").read_text()

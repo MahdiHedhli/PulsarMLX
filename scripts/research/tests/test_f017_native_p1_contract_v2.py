@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import os
 import subprocess
@@ -20,11 +21,15 @@ INERT = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-native-bou
 
 class ExactContract(unittest.TestCase):
     def validate(self, document: dict[str, object]) -> subprocess.CompletedProcess[str]:
-        with tempfile.NamedTemporaryFile("w", suffix=".json") as candidate:
-            json.dump(document, candidate)
-            candidate.flush()
+        with tempfile.TemporaryDirectory() as directory:
+            portable = copy.deepcopy(document)
+            exact_state_root = json.loads(CONTRACT.read_text())["state_root"]
+            if portable["state_root"] == exact_state_root:
+                portable["state_root"] = str(Path(directory).resolve() / "state")
+            candidate = Path(directory) / "contract.json"
+            candidate.write_text(json.dumps(portable) + "\n")
             return subprocess.run(
-                [str(EXECUTOR), "validate-contract", candidate.name, str(ROOT)],
+                [str(EXECUTOR), "validate-contract", str(candidate), str(ROOT)],
                 cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
 
@@ -41,10 +46,11 @@ class ExactContract(unittest.TestCase):
             )
 
     def test_exact_contract_is_instantiable_without_checkpoint_access(self) -> None:
-        result = subprocess.run(
-            [str(EXECUTOR), "validate-contract", str(CONTRACT), str(ROOT)],
-            cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        self.assertEqual(
+            hashlib.sha256(CONTRACT.read_bytes()).hexdigest(),
+            "44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda",
         )
+        result = self.validate(json.loads(CONTRACT.read_text()))
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_load_bearing_mutations_fail_closed(self) -> None:

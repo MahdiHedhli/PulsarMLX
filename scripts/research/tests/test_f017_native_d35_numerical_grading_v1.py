@@ -18,7 +18,7 @@ class NumericalGradingMutations(unittest.TestCase):
     def reject(self,mutation):
         result=copy.deepcopy(self.result); terminal=copy.deepcopy(self.terminal); mutation(result,terminal)
         with tempfile.TemporaryDirectory() as directory:
-            rp=Path(directory)/"result.json"; tp=Path(directory)/"terminal.json"; rp.write_text(json.dumps(result)+"\n"); terminal["result_sha256"]=validator.restored_result_sha(rp); tp.write_text(json.dumps(terminal)+"\n")
+            rp=Path(directory)/"result.json"; tp=Path(directory)/"terminal.json"; rp.write_text(json.dumps(result)+"\n"); tp.write_text(json.dumps(terminal)+"\n")
             with self.assertRaises(ValueError): validator.validate(rp,tp)
     def test_baseline(self): self.assertEqual(validator.validate()["result"],"PASS")
     def test_mutations(self):

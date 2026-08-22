@@ -15,6 +15,7 @@ TERMINAL=ROOT/"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-gra
 GRANT=ROOT/"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json"
 D0_V1=ROOT/"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v1.json"
 D0_V2=ROOT/"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json"
+EXECUTION_EVIDENCE=ROOT/"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-execution-evidence-v1.json"
 
 def no_duplicates(pairs):
     result={}
@@ -25,14 +26,13 @@ def no_duplicates(pairs):
 
 def load(path): return json.loads(Path(path).read_text(),object_pairs_hook=no_duplicates)
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
-def restored_result_sha(path):
-    data=Path(path).read_bytes().replace(b"${HOME}/",(str(Path.home())+"/").encode())
-    return hashlib.sha256(data).hexdigest()
-
 def validate(result_path=RESULT,terminal_path=TERMINAL):
-    result=load(result_path); terminal=load(terminal_path); grant=load(GRANT); d0=load(D0_V1); overlay=load(D0_V2)
+    result=load(result_path); terminal=load(terminal_path); grant=load(GRANT); d0=load(D0_V1); overlay=load(D0_V2); evidence=load(EXECUTION_EVIDENCE)
     if sha(GRANT)!="340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f": raise ValueError("grant SHA")
     if sha(D0_V2)!="cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9": raise ValueError("D0 SHA")
+    if sha(EXECUTION_EVIDENCE)!="cb4eb81c257b125b1e983ce5006f623a5bc85757532a786f3ac71e0743023486": raise ValueError("execution evidence SHA")
+    banked=evidence["banked_result"]
+    if sha(result_path)!=banked["normalized_sha256"] or banked["normalized_sha256"]!="472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4": raise ValueError("banked normalized result identity")
     if set(result)!={"schema","grant_sha256","d0_sha256","d3_5_evidence_sha256","existing_captures_reused","native_execution_performed","original_checkpoint_reads","historical_payload_ledger_delta","read_receipt_count","read_receipts","stage_metrics","required_ordinal_count","retained_qualification","pass"}: raise ValueError("result key census")
     if set(terminal)!={"schema","event_id","attempt_id","state","result_sha256","receipt_count","original_checkpoint_reads","historical_payload_ledger_delta"}: raise ValueError("terminal key census")
     if result["grant_sha256"]!=sha(GRANT) or result["d0_sha256"]!=sha(D0_V2) or result["d3_5_evidence_sha256"]!="13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8": raise ValueError("authority binding")
@@ -60,8 +60,8 @@ def validate(result_path=RESULT,terminal_path=TERMINAL):
         if row["metric"]=="operand_conditioned_matvec" and (row["max_per_coordinate_cap"] is None or row["max_abs_error"]>row["max_per_coordinate_cap"]): raise ValueError("OCB bound")
     required={ordinal for ordinal,row in effective.items() if row["class"]!="IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY"}
     if result["required_ordinal_count"]!=len(required) or len(required)!=15: raise ValueError("required census")
-    if terminal["schema"]!="pulsarmlx.f017.native-d3-5-grading-terminal/1.0.0" or terminal["state"]!="COMPLETE" or terminal["result_sha256"]!=restored_result_sha(result_path) or terminal["receipt_count"]!=89 or terminal["original_checkpoint_reads"]!=0 or terminal["historical_payload_ledger_delta"]!=0: raise ValueError("terminal")
-    return {"result":"PASS","normalized_result_sha256":sha(result_path),"restored_machine_result_sha256":restored_result_sha(result_path),"terminal_sha256":sha(terminal_path),"stage_count":34,"receipt_count":89,"original_checkpoint_reads":0,"historical_payload_ledger_delta":0}
+    if terminal["schema"]!="pulsarmlx.f017.native-d3-5-grading-terminal/1.0.0" or terminal["state"]!="COMPLETE" or terminal["result_sha256"]!=banked["restored_machine_local_sha256"] or terminal["receipt_count"]!=89 or terminal["original_checkpoint_reads"]!=0 or terminal["historical_payload_ledger_delta"]!=0: raise ValueError("terminal")
+    return {"result":"PASS","normalized_result_sha256":sha(result_path),"restored_machine_result_sha256":banked["restored_machine_local_sha256"],"terminal_sha256":sha(terminal_path),"stage_count":34,"receipt_count":89,"original_checkpoint_reads":0,"historical_payload_ledger_delta":0}
 
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument("result",nargs="?",type=Path,default=RESULT); parser.add_argument("--terminal",type=Path,default=TERMINAL); args=parser.parse_args()
