@@ -1,0 +1,74 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-cross-vendor-review-result/1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "provider_family": "Google Gemini",
+    "track": "AGY CLI cross-vendor evidence-consistency review",
+    "effort": "high",
+    "invocation_status": "ERROR_WITH_COMPLETE_SUBSTANTIVE_RESPONSE",
+    "invocation_error": "Find command timed out after the reviewer completed its evidence analysis and explicit verdict"
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_commit": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+  "exact_head_ci": {
+    "run_id": 32560783265,
+    "conclusion": "success",
+    "native_test_step": "PASS",
+    "d3_5_validator_step": "PASS"
+  },
+  "reviewed_artifacts": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-package-v1.json",
+      "sha256": "c40ccfbde041f9158f27e93451e782077c69753f79cca4b36daf2699b32ac80f"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+      "sha256": "44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda"
+    },
+    {
+      "path": ".github/workflows/macos.yml",
+      "sha256": "9e3bf0bf18707d7d5b34cf80c23ad2b3234016bea65b64fb91b0c8663fb9d82e"
+    }
+  ],
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-03-request.md",
+    "sha256": "adf4ad3b8d885920fef1286f6361d2e8cd88d3214b83239168dd4c4ba70f829c"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-03-exact-agy-response.json",
+    "sha256": "a6ab062b3d1c69007fd156c5a859372f77be4063612689660074add4bfb2026f"
+  },
+  "tests_performed_by_reviewer": [
+    "verified explicit native crate test step in exact-head CI",
+    "verified explicit D3.5 structural, numerical, and mutation gates",
+    "verified Python/native MLX dylib isolation",
+    "checked D0 epistemic freeze",
+    "checked D1 live producers and D2 ledger binding",
+    "checked math-only mock and RN1 ownership",
+    "checked retained receipt census and D3.5 scope",
+    "checked exact P1 contract one-shot boundary"
+  ],
+  "findings": [],
+  "cycle_01_findings": [
+    {
+      "id": "CI_OMITS_F017_NATIVE_TESTS",
+      "severity": "BLOCKING",
+      "disposition": "CLOSED_VERIFIED"
+    },
+    {
+      "id": "CI_OMITS_D3_5_VALIDATORS",
+      "severity": "BLOCKING",
+      "disposition": "CLOSED_VERIFIED"
+    }
+  ],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 0,
+  "material_disagreement": false,
+  "verdict": "NO_MATERIAL_DISAGREEMENT",
+  "runtime_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false
+  }
+}
