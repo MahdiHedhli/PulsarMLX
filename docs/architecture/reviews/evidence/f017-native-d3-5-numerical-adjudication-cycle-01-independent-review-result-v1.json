@@ -1,0 +1,20 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-numerical-adjudication-independent-review-result/1.0.0",
+  "cycle":1,
+  "reviewer_model":"claude-fable-5",
+  "reviewer_track":"INDEPENDENT_D3_5_NUMERICAL_ADJUDICATOR",
+  "reviewed_branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"768242766462e76774e41c8acc89e8a7d33a20d4",
+  "request":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-adjudication-cycle-01-review-request-v1.json","sha256":"70979d6d8b7ba468ea4a4afbfcf801f5935684ffb63bf914d317881282da8bbf"},
+  "exact_response":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-adjudication-cycle-01-exact-claude-response-v1.md","sha256":"cb3dc2227469a770b5d8ee954e2d19d13f48003d84a4a7224573e5a76849d8f5"},
+  "findings":[
+    {"id":"F-D35N-ADJ-001","severity":"DEFENSE_IN_DEPTH","disposition":"ACCEPTED_NON_WEAKENING_NEXT_D0_NOTE","rationale":"Observed OCB headroom is ample and every coordinate passes the frozen analytical cap; a future D0 revision may clarify upstream-deviation coverage without changing this result."},
+    {"id":"F-D35N-ADJ-002","severity":"DEFENSE_IN_DEPTH","disposition":"ACCEPTED_NON_WEAKENING_NEXT_D0_NOTE","rationale":"The consumer enforces matching zero sign where both values are zero; a future D0 revision may clarify the intended EXACT_BITS wording."},
+    {"id":"F-D35N-ADJ-003","severity":"DEFENSE_IN_DEPTH","disposition":"ACCEPTED_HASH_CHAIN_ENFORCED","rationale":"Result and terminal hashes are pinned by execution evidence and this adjudication; the next validator revision may duplicate those exact pins and threshold literals."}
+  ],
+  "blocking_findings":0,
+  "non_blocking_required_findings":0,
+  "defense_in_depth_findings":3,
+  "verdict":"ACCEPT",
+  "retained_qualification":"MIXED_D0_V2_CLASS/PASS"
+}

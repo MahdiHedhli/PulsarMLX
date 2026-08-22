@@ -1,0 +1,13 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-numerical-qualification-acceptance/1.0.0",
+  "acceptance_id":"F017-NATIVE-D3_5-NUMERICAL-QUALIFICATION-ACCEPTANCE-1",
+  "branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"768242766462e76774e41c8acc89e8a7d33a20d4",
+  "d0":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json","sha256":"cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"},
+  "grading_result":{"normalized_path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json","normalized_sha256":"472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4","restored_machine_sha256":"df5cc8e549b0d794846c4cd3205a5759c721009368b680f29e608e0457dad613"},
+  "terminal":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-terminal-v1.json","sha256":"fda21b8ccbe32bdcf15cf285b7369bcbcc04486e81bb4b2af92d990e790e9fdf","state":"COMPLETE"},
+  "review":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-adjudication-cycle-01-exact-claude-response-v1.md","sha256":"cb3dc2227469a770b5d8ee954e2d19d13f48003d84a4a7224573e5a76849d8f5","reviewer_model":"claude-fable-5","verdict":"ACCEPT","blocking":0,"non_blocking_required":0},
+  "retained_qualification":"MIXED_D0_V2_CLASS/PASS",
+  "accounting":{"comparison_read_receipts":89,"original_checkpoint_reads":0,"historical_payload_ledger_delta":0,"native_capture_regenerations":0,"real_p1_executions":0},
+  "status":"D3_5_NUMERICALLY_ACCEPTED_PHASE_B_MAY_BEGIN"
+}
