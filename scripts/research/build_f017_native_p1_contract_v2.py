@@ -72,7 +72,7 @@ def main() -> None:
             "comparison_read_grant": binding("specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json"),
             "d3_5_result": binding("docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json"),
             "d3_5_acceptance": binding("docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json"),
-            "synthetic_full_graph_result": binding("docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v1.json"),
+            "synthetic_full_graph_result": binding("docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v2.json"),
             "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
             "historical_master_terminal_value": 175,
         },

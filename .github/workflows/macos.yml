@@ -147,6 +147,35 @@ jobs:
           test -f "$MLX_PREFIX/lib/libmlx.dylib"
           cargo test -p stream --test apple_mlx_bridge -- --nocapture
           cargo test -p stream --test apple_metal_bridge -- --nocapture
+          cargo test -p stream --lib -- --nocapture
+      - name: Execute receipt-v2 synthetic full-model qualification
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          cargo build -p f017-native --release --bin f017-native-synthetic-p1
+          .venv/bin/python scripts/research/qualify_f017_native_full_model_synthetic_v2.py \
+            --binary specs/017-rust-native-inference-runtime/bin/f017-native-synthetic-p1-v2 \
+            --fixture specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-v1.json \
+            --authority specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v2.json \
+            --output-root "$RUNNER_TEMP/f017-native-synthetic-v2" \
+            --evidence-output "$RUNNER_TEMP/f017-native-synthetic-v2-evidence.json" \
+            --execution-code-head "$(git rev-parse HEAD)" \
+            --fresh-processes 10
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "f017-native-synthetic-v2-evidence.json").read_text()
+          )
+          assert evidence["result"] == "PASS"
+          assert evidence["receipt_schema"] == "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0"
+          assert evidence["fresh_processes"] == 10
+          assert evidence["summary_byte_identity"] == "EXACT_10_OF_10"
+          assert evidence["original_checkpoint_reads"] == 0
+          assert evidence["real_m1_ultra_p1_executed"] is False
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"

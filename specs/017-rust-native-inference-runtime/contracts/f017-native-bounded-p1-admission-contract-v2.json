@@ -43,8 +43,8 @@
       "sha256": "a614377d4faacd501f34ef8dedc1754e432f3ed13630233208f32b5e19819b6d"
     },
     "synthetic_full_graph_result": {
-      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v1.json",
-      "sha256": "3ea4091530d62b00eb5dd149de822fcfde7e092209462c5e7f4bf662a4ac99d2"
+      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v2.json",
+      "sha256": "2a73ef07a3062e313726179a628b7030dca88dc51cea89145544fc3629beb91b"
     }
   },
   "branch": "feat/017-rust-native-inference-runtime",
