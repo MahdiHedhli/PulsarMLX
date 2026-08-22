@@ -1,0 +1,10 @@
+{
+  "attempt_id": "F017-NATIVE-D3_5-NUMERICAL-GRADING-1-ATTEMPT-1",
+  "event_id": "F017-NATIVE-D3_5-NUMERICAL-GRADING-1",
+  "historical_payload_ledger_delta": 0,
+  "original_checkpoint_reads": 0,
+  "receipt_count": 89,
+  "result_sha256": "df5cc8e549b0d794846c4cd3205a5759c721009368b680f29e608e0457dad613",
+  "schema": "pulsarmlx.f017.native-d3-5-grading-terminal/1.0.0",
+  "state": "COMPLETE"
+}
