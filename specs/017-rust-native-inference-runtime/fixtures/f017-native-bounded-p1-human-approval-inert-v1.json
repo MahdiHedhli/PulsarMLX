@@ -2,7 +2,7 @@
   "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
   "authorization_id": "FUTURE_HUMAN_ASSIGNED",
   "branch": "feat/017-rust-native-inference-runtime",
-  "contract_sha256": "cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb",
+  "contract_sha256": "91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03",
   "decision": "NOT_AUTHORIZED_TEMPLATE",
   "domain_declaration": {
     "path": "FUTURE_COMMITTED_PATH",
@@ -12,7 +12,7 @@
     "blocking_count": null,
     "non_blocking_required_count": null,
     "path": "FUTURE_COMMITTED_PATH",
-    "reviewer_model": "claude-fable-5",
+    "reviewer_model": "claude-opus-5",
     "sha256": "FUTURE_SHA256",
     "verdict": "FUTURE_ACCEPT_OR_REJECT"
   },

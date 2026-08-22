@@ -43,8 +43,8 @@
       "sha256": "a614377d4faacd501f34ef8dedc1754e432f3ed13630233208f32b5e19819b6d"
     },
     "synthetic_full_graph_result": {
-      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v2.json",
-      "sha256": "2a73ef07a3062e313726179a628b7030dca88dc51cea89145544fc3629beb91b"
+      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v3.json",
+      "sha256": "c1b012a40a8ffecdb3912d343b193e30d7c47b130fc255496eb00a114af32360"
     }
   },
   "branch": "feat/017-rust-native-inference-runtime",
@@ -111,8 +111,12 @@
       "sha256": "042001c80c92946ec832b9c666e2aae5df8aefc66dc9a83645a3a54e451a8fa7"
     },
     {
+      "path": "crates/f017-native/src/json.rs",
+      "sha256": "99b3e6b447365bce16d750dfedfdc8fddb8f65782299e37e25fb9ec425fca57e"
+    },
+    {
       "path": "crates/f017-native/src/contract.rs",
-      "sha256": "db9c6a490e780f0de9f6838025caefef40244cf714ebd57d088f473326a0fbc9"
+      "sha256": "cc06636c5208a3b37e02f4d68f60e57394a167c9b46ca1f831ab5f838ba34a99"
     },
     {
       "path": "crates/f017-native/src/executor.rs",
@@ -120,11 +124,11 @@
     },
     {
       "path": "crates/f017-native/src/loader.rs",
-      "sha256": "b71fcc73d8e2f01cc0ffd2e39fee49fb0409801634c2de10a462704343e6566f"
+      "sha256": "68f550044dbb778069be697a6eb33d992adc78b7293087c0110bfbdbd2ef9966"
     },
     {
       "path": "crates/f017-native/src/model.rs",
-      "sha256": "0b7f7ff181e607264f4ef514adda229b96209769a46d2cda86055b8474732710"
+      "sha256": "d4b62c6f0f995b6955ae00b430ed8157bd7523a3d9eacfccbfb46bfc471d24b3"
     },
     {
       "path": "crates/f017-native/src/bin/bounded_p1.rs",
@@ -176,7 +180,7 @@
     },
     {
       "path": "crates/stream/src/p1_domain.rs",
-      "sha256": "13741f93ecba2df6b76b6514e8bf98312f0ed1fede029567cdfb7c21c8cf558b"
+      "sha256": "072999b196ffb41e37baf2e0f3262520d4b9fe6fa3bd9680e224892eb1fdc61b"
     },
     {
       "path": "crates/stream/src/apple_mlx_bridge.rs",
@@ -189,12 +193,16 @@
     {
       "path": "crates/stream/src/apple_mlx_deallocation_observer.mm",
       "sha256": "f0dab44abaf6897d7924149a17fb5e4f335f4f51ae945282e4081ef0b862663c"
+    },
+    {
+      "path": "scripts/research/f017_native_p1_authorization.py",
+      "sha256": "46bba0261ba6568ed76e0d8ffbd4c3061b95f3f411a41a7af85e58578b33af87"
     }
   ],
-  "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
+  "execution_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
   "executor": {
     "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
-    "sha256": "6f0ad9370caf2582934a917029476f505e1a3792b46cbdfe046c7cda85cf31dc"
+    "sha256": "21f405cae64469ab1aed89e571464f6b2278681578d714718cb7183ba01fb062"
   },
   "live_authorization_present": false,
   "normal_validation_can_authorize": false,

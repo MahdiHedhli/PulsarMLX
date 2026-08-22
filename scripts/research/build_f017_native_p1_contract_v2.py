@@ -60,7 +60,7 @@ def main() -> None:
         "schema": "pulsarmlx.f017.native-bounded-p1-admission-contract/2.0.0",
         "status": "PREPARED_HUMAN_GATE_REQUIRED",
         "branch": "feat/017-rust-native-inference-runtime",
-        "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
+        "execution_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
         "executor": binding("specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1"),
         "code_manifest": [binding(path) for path in CODE],
         "authorities": {
@@ -74,7 +74,7 @@ def main() -> None:
             "comparison_read_grant": binding("specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json"),
             "d3_5_result": binding("docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json"),
             "d3_5_acceptance": binding("docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json"),
-            "synthetic_full_graph_result": binding("docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v2.json"),
+            "synthetic_full_graph_result": binding("docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v3.json"),
             "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
             "historical_master_terminal_value": 175,
         },

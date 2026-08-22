@@ -1,0 +1,89 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-ratification-repair-disposition/1.0.0",
+  "cycle": 1,
+  "review": {
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-01-normalized-result.json",
+    "normalized_result_sha256": "3d91e8c8df26b95bfea3f6a59077daabc7f649086f1d86733f8e124eb63bdbde",
+    "exact_response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-01-exact-cli-response.json",
+    "exact_response_sha256": "b627c169b3c9b241a642eda370c1834846545ab010ff798c51c24aa8c518e6d4",
+    "verdict": "REJECT"
+  },
+  "repair_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
+  "repairs": [
+    {
+      "finding_ids": ["F017-OPUS-C4-01", "F017-OPUS-C4-02"],
+      "disposition": "CLOSED_PENDING_EXACT_HEAD_CI_AND_REREVIEW",
+      "mechanism": "Rebuilt the synthetic producer from the repair head, rebound a new inert authority, executed ten fresh processes with exact byte-identical summaries, banked append-only v3 evidence, rebound the live admission contract, and changed CI to execute the source-built binary rather than stale banked bytes.",
+      "bindings": [
+        {"path": "specs/017-rust-native-inference-runtime/bin/f017-native-synthetic-p1-v3", "sha256": "3bf2db898e574f00e7b312ac1ab140c8d707183e402367958f863f8cef879be8"},
+        {"path": "specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v3.json", "sha256": "e0ee71870738de9100217abc1a1570a4816e960ad5ad971af86edd3cf0108eb9"},
+        {"path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v3.json", "sha256": "c1b012a40a8ffecdb3912d343b193e30d7c47b130fc255496eb00a114af32360"},
+        {"path": ".github/workflows/macos.yml", "sha256": "9a823711e331622bcf706dd308599df420b922789f1dce69f7172236b4ad0098"}
+      ],
+      "qualification": {
+        "fresh_processes": 10,
+        "summary_byte_identity": "EXACT_10_OF_10",
+        "original_checkpoint_reads": 0,
+        "real_m1_ultra_p1_executed": false
+      }
+    },
+    {
+      "finding_ids": ["F017-OPUS-C4-03"],
+      "disposition": "CLOSED_PENDING_EXACT_HEAD_CI_AND_REREVIEW",
+      "mechanism": "Both the Rust receipt producer and Python qualification validator require positive managed-owner, callback, owned-stream, independent-native-free, registration, and teardown deltas; all-zero/stale and spoofed delta pairs fail closed.",
+      "bindings": [
+        {"path": "crates/stream/src/p1_domain.rs", "sha256": "072999b196ffb41e37baf2e0f3262520d4b9fe6fa3bd9680e224892eb1fdc61b"},
+        {"path": "scripts/research/qualify_f017_native_full_model_synthetic_v2.py", "sha256": "352da76ec82e05f172bb5c4c9ebb38495251c9c68d637a5b3d703ec5c18ade93"}
+      ]
+    },
+    {
+      "finding_ids": ["F017-OPUS-C4-04"],
+      "disposition": "CLOSED_PENDING_EXACT_HEAD_CI_AND_REREVIEW",
+      "mechanism": "The operator-only authorizer now requires claude-opus-5 and the exact ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1 verdict, strict integer zero finding counts, and binds that script in the admission code manifest.",
+      "bindings": [
+        {"path": "scripts/research/f017_native_p1_authorization.py", "sha256": "46bba0261ba6568ed76e0d8ffbd4c3061b95f3f411a41a7af85e58578b33af87"},
+        {"path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json", "sha256": "91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03"}
+      ]
+    }
+  ],
+  "additional_defense_in_depth_closed": [
+    {
+      "finding": "F017-OPUS-C4-07",
+      "disposition": "CLOSED",
+      "mechanism": "crates/f017-native/src/json.rs is now in the exact code-manifest census."
+    },
+    {
+      "finding": "F017-OPUS-C4-08",
+      "disposition": "CLOSED",
+      "mechanism": "Plan validation now mechanically cross-checks each of the 1,809 format strings against its exact GGUF type_id before shard opening."
+    },
+    {
+      "finding": "F017-OPUS-C4-10",
+      "disposition": "CLOSED",
+      "mechanism": "Attempt/contract identity is checked before state-root creation."
+    },
+    {
+      "finding": "F017-OPUS-C4-11",
+      "disposition": "CLOSED",
+      "mechanism": "The real execution path explicitly rejects INERT_NO_CHECKPOINT producer identities."
+    }
+  ],
+  "historical_correction": {
+    "finding": "F017-OPUS-C4-13",
+    "disposition": "APPEND_ONLY_CORRECTION_BANKED_HERE",
+    "statement": "The historical C2-F6 claim that execution code was unchanged ceased to be true after containment repair 038cdbfdf707dc80d2a548650885922cfa5aeb9e. Current authority rests on exact-head source rederivation and the new v3 qualification, not that historical wording."
+  },
+  "admission_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+    "sha256": "91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03",
+    "execution_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
+    "executor_sha256": "21f405cae64469ab1aed89e571464f6b2278681578d714718cb7183ba01fb062",
+    "live_authorization_present": false
+  },
+  "hard_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "historical_master_ledger": 175
+  }
+}

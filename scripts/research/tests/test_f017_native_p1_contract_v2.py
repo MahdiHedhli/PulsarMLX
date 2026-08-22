@@ -57,7 +57,7 @@ class ExactContract(unittest.TestCase):
     def test_exact_contract_is_instantiable_without_checkpoint_access(self) -> None:
         self.assertEqual(
             hashlib.sha256(CONTRACT.read_bytes()).hexdigest(),
-            "cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb",
+            "91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03",
         )
         result = self.validate(json.loads(CONTRACT.read_text()))
         self.assertEqual(result.returncode, 0, result.stderr)
