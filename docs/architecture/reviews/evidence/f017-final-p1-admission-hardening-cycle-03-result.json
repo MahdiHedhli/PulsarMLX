@@ -1,0 +1,79 @@
+{
+  "schema": "pulsarmlx.f017.final-p1-admission-hardening-review-result/1.0.0",
+  "review_cycle": 3,
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "322b8c72922ba8b83f85b03b18c795095021549a",
+  "reviewer": {
+    "cli": "claude-code-2.1.235",
+    "model": "claude-fable-5",
+    "session_id": "8656463e-0346-4044-9940-18b8315dabc2"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-final-p1-admission-hardening-cycle-03-request.md",
+    "sha256": "b83bd10a031bb3023f2df3ac5d53f1e99cb44558876c4506401c4482faf9951d"
+  },
+  "exact_cli_response": {
+    "path": "docs/architecture/reviews/evidence/f017-final-p1-admission-hardening-cycle-03-fable-cli.json",
+    "sha256": "54977ac161ecd850e60c7fba2618ce264acd5491fbbb31d573618bcad43cd3aa"
+  },
+  "controlling_ci": {
+    "run_id": 32540722272,
+    "head": "322b8c72922ba8b83f85b03b18c795095021549a",
+    "conclusion": "success",
+    "native_job_id": 96950069936,
+    "workspace_job_id": 96950069714,
+    "native_adapter_tests": {"passed": 13, "failed": 0, "ignored": 0},
+    "p1_admission_tests": {"passed": 13, "failed": 0},
+    "rust_oracle_tests": {"passed": 4, "failed": 0},
+    "native_qualification_skips": 0
+  },
+  "repairs": [
+    {
+      "id": "F017-IR2-P1-003",
+      "disposition": "RESOLVED",
+      "repair_commit": "322b8c72922ba8b83f85b03b18c795095021549a"
+    },
+    {
+      "id": "F017-IR2-STATE-001",
+      "disposition": "RESOLVED",
+      "repair_commit": "322b8c72922ba8b83f85b03b18c795095021549a"
+    },
+    {
+      "id": "F017-IR2-ORACLE-003",
+      "disposition": "RESOLVED",
+      "repair_commit": "322b8c72922ba8b83f85b03b18c795095021549a"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F017-IR1-P1-001",
+      "severity": "BLOCKING",
+      "disposition": "UNRESOLVED_REPEATED_THIRD_REVIEW_CYCLE",
+      "summary": "No committed exact admission contract, no real bounded-P1 executor, and no unified mechanical producer for the 22-counter receipt."
+    },
+    {
+      "id": "F017-IR3-CONTRACT-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "disposition": "DEFER_TO_REAL_EXECUTOR_CONTRACT_GENERATION"
+    },
+    {
+      "id": "F017-IR3-EXEC-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "disposition": "DEFER_TO_REAL_EXECUTOR_GENERATION"
+    },
+    {
+      "id": "F017-IR3-GIT-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "disposition": "DEFER_TO_REAL_EXECUTOR_GENERATION"
+    }
+  ],
+  "invariants": {
+    "m1_ultra_p1_executions": 0,
+    "full_model_inference_executions": 0,
+    "checkpoint_reads": 0,
+    "live_p1_authorization_artifacts": 0,
+    "real_authorization_consumptions": 0
+  },
+  "verdict": "REJECT",
+  "termination": "ESCALATE_REPEATED_ARCHITECTURAL_BLOCKER_AFTER_THREE_REVIEW_CYCLES"
+}
