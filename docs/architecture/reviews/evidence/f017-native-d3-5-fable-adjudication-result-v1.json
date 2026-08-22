@@ -1,0 +1,85 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-fable-adjudication-result",
+  "schema_version": "1.0.0",
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_NUMERICAL_AND_AUTHORITY_ADJUDICATOR",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "fe7b13d69c6970d6125c6630ac10299d62c11102",
+  "detached_read_only_worktree": true,
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-d3-5-fable-adjudication-request-v1.md",
+    "sha256": "dea2b57e7bd47b6f180cfad77e7413e5e0e61b0e602c73beb2c9ee87175491db"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-d3-5-fable-adjudication-exact-response-v1.md",
+    "sha256": "f56cbdb0fa7c6b98b85d20a414ca19f4c92774739215ce588c2b192fcc0d5aa7"
+  },
+  "tests_performed": [
+    "Recomputed request-listed and committed-authority hashes at the detached reviewed head",
+    "Ran the read-only D3.5 execution-evidence validator against immutable machine-local bytes",
+    "Independently verified all 20 receipt censuses and terminal receipt-derived count 800",
+    "Verified 20x34 stage bytes, vocabulary, serialization, runtime pins, owner chain, and zero checkpoint accounting",
+    "Compared the 10 D0 bound comparison ordinals and found only byte-exact ordinals 0, 17, and 18 hash-identical",
+    "Audited consumer-scoped grant coverage for expected-output comparison reads",
+    "Audited representative operand-conditioned oracle instantiability",
+    "Audited AGY Gemini finding consistency, D0 epistemic lock, D3.5 scope, and real P1 producer instantiability"
+  ],
+  "findings": [
+    {
+      "id": "F5-ADJ-01",
+      "severity": "BLOCKING",
+      "scope": "D3_5_NUMERICAL_PASS",
+      "summary": "Hashes of non-byte-equivalent produced and expected values cannot instantiate D0 elementwise metrics.",
+      "required_repair": "Add an authorized payload-reading comparison step; no D3.5 numerical rerun is required."
+    },
+    {
+      "id": "F5-ADJ-02",
+      "severity": "BLOCKING",
+      "scope": "D3_5_NUMERICAL_PASS",
+      "summary": "Expected artifacts are not enumerated in the native consumer grant.",
+      "required_repair": "Bank and independently accept an append-only native comparison-read grant with exact paths, SHAs, consumer, and per-read receipts."
+    },
+    {
+      "id": "F5-ADJ-03",
+      "severity": "BLOCKING",
+      "scope": "D3_5_NUMERICAL_PASS_ORDINALS_20_21_25_27_28",
+      "summary": "Synthetic fixtures cannot alone grade representative operand-conditioned rows.",
+      "required_repair": "Authorize an f64 reference producer on actual retained operands or create and re-review an append-only D0 revision with retained expected intermediates."
+    },
+    {
+      "id": "F5-ADJ-04",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "scope": "CROSS_VENDOR_DISAGREEMENT",
+      "summary": "AGY Gemini CONTINUE is internally contradictory and factually overruled.",
+      "required_repair": "Bank this Fable adjudication as the controlling disagreement disposition.",
+      "disposition": "REPAIRED_BY_THIS_BANKED_RESULT"
+    },
+    {
+      "id": "F5-ADJ-05",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "scope": "CAPTURE_MANIFEST_VOCABULARY",
+      "summary": "direct_production_copy true is semantically false for natively recomputed stages.",
+      "required_repair": "Append-only vocabulary correction before any grading consumer relies on the manifests."
+    },
+    {
+      "id": "F5-ADJ-06",
+      "severity": "DEFENSE_IN_DEPTH",
+      "scope": "FUTURE_RUN_RECEIPT_IDENTITY",
+      "summary": "Future repetitions should bind a per-run nonce into receipts."
+    },
+    {
+      "id": "F5-ADJ-07",
+      "severity": "DEFENSE_IN_DEPTH",
+      "scope": "COMPARISON_ENVIRONMENT_PROVENANCE",
+      "summary": "The future grading contract should explicitly record expected-runtime versus native-runtime version skew."
+    }
+  ],
+  "blocking_findings": 3,
+  "non_blocking_required_findings": 2,
+  "defense_in_depth_findings": 2,
+  "execution_evidence_accepted": true,
+  "d3_5_numerical_pass": false,
+  "another_retained_numerical_execution_required": false,
+  "real_p1_instantiable": false,
+  "verdict": "ACCEPT_D3_5_EXECUTION_EVIDENCE_ONLY"
+}

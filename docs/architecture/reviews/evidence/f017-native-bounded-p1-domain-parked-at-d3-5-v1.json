@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-parked-state",
+  "schema_version": "1.0.0",
+  "status": "PARKED_AT_D3_5_AUTHORITY_AND_ORACLE_REPAIR_BOUNDARY",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "execution_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+    "sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+    "disposition": "ACCEPTED_EXECUTION_ACCOUNTING_AND_DETERMINISM_ONLY"
+  },
+  "cross_vendor_review": {
+    "path": "docs/architecture/reviews/evidence/f017-native-d3-5-cross-vendor-agy-gemini-review-v1.json",
+    "sha256": "d61fc1142c5f58030be15fdcb0c5b8bf4f57a35e0192662dafd08c45f4a68dbd",
+    "reviewer": "gemini-3.1-pro-high via AGY CLI",
+    "verdict": "CONTINUE",
+    "disposition": "MATERIALLY_OVERRULED_BY_FABLE_ADJUDICATION"
+  },
+  "fable_adjudication": {
+    "path": "docs/architecture/reviews/evidence/f017-native-d3-5-fable-adjudication-result-v1.json",
+    "sha256": "7108cd545c97e371ffec5637c02eb51b6b5bebc6ad463b4388bf8f870b67a8b4",
+    "response_path": "docs/architecture/reviews/evidence/f017-native-d3-5-fable-adjudication-exact-response-v1.md",
+    "response_sha256": "f56cbdb0fa7c6b98b85d20a414ca19f4c92774739215ce588c2b192fcc0d5aa7",
+    "reviewed_head": "fe7b13d69c6970d6125c6630ac10299d62c11102",
+    "reviewer": "claude-fable-5",
+    "verdict": "ACCEPT_D3_5_EXECUTION_EVIDENCE_ONLY"
+  },
+  "acceptance_blockers": [
+    "F5-ADJ-01",
+    "F5-ADJ-02",
+    "F5-ADJ-03",
+    "F5-ADJ-05",
+    "REAL_FULL_CHECKPOINT_BOUNDED_P1_MATH_NOT_YET_INSTANTIABLE"
+  ],
+  "d0_epistemic_lock": {
+    "d3_5_may_falsify": true,
+    "d3_5_may_set_or_tune_tolerance": false,
+    "tolerance_repair": "NEW_APPEND_ONLY_D0_FROM_FRESH_NON_TRIGGER_CORPUS_AND_NEW_FABLE_REVIEW"
+  },
+  "scope": {
+    "retained_execution": "REPRESENTATIVE_LAYER_3_S0_TO_S2_ONLY",
+    "full_forward_qualified": false,
+    "remaining_forward_basis": "F016_STRUCTURAL_LINEAGE_PLUS_GENERALIZED_PER_STAGE_SEMANTICS_REQUIRES_SEPARATE_REAL_P1_EVIDENCE"
+  },
+  "accounting": {
+    "historical_master_ledger": 175,
+    "retained_qualification_events": 1,
+    "retained_qualification_runs": 20,
+    "original_checkpoint_reads": 0,
+    "original_checkpoint_shard_opens": 0,
+    "real_m1_ultra_p1_executions": 0,
+    "full_model_real_checkpoint_inference_executions": 0,
+    "live_p1_authorizations": 0,
+    "real_p1_authorization_consumptions": 0
+  },
+  "next_safe_action": "APPEND_ONLY_NATIVE_COMPARISON_READ_GRANT_PLUS_ACTUAL_REPRESENTATIVE_ORACLE_INSTANTIATION_AND_CAPTURE_VOCABULARY_REPAIR_THEN_FRESH_INDEPENDENT_REVIEW_WITHOUT_RERUNNING_D3_5"
+}
