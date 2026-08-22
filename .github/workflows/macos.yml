@@ -130,29 +130,33 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |
-          PYTHONPATH=python .venv/bin/python -m unittest discover \
+          env -u DYLD_LIBRARY_PATH PYTHONPATH=python \
+            .venv/bin/python -m unittest discover \
             -s python/pulsar_mlx_worker/tests -v
       - name: Execute Rust-to-worker generated router integration
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
-          PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+          env -u DYLD_LIBRARY_PATH PULSARMLX_MODEL_GGUF='' \
+            cargo test -p mlx-backend \
             --test router_worker_integration \
             real_python_worker_two_row_router_matches_committed_golden -- \
             --ignored --exact
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Execute native MLX device smoke
         run: |
-          cargo test -p mlx-backend --test device_smoke \
+          env -u DYLD_LIBRARY_PATH cargo test -p mlx-backend --test device_smoke \
             native_device_smoke_command_emits_evaluated_evidence -- \
             --ignored --exact
       - name: Execute bounded MLX tensor fixtures
         run: |
-          cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
+          env -u DYLD_LIBRARY_PATH cargo run -p mlx-backend --bin pulsar-mlx -- \
+            validate-fixtures \
             --manifest fixtures/mlx/manifest.json \
             --evidence "$RUNNER_TEMP/mlx-tensor-fixtures.json"
       - name: Execute synthetic routed-MoE fixture
         run: |
-          cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
+          env -u DYLD_LIBRARY_PATH cargo run -p mlx-backend --bin pulsar-mlx -- \
+            validate-synthetic-moe \
             --fixture fixtures/mlx/routed-moe-v1.json \
             --evidence "$RUNNER_TEMP/synthetic-moe-v1.json"
       - name: Verify bounded evidence and external-model exclusion
