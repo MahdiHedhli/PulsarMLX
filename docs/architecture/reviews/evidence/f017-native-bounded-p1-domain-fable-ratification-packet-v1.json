@@ -1,0 +1,88 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-fable-ratification-packet/1.0.0",
+  "status": "PREPARED_FABLE_RATIFICATION_PENDING",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation": {
+    "reviewed_head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+    "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
+    "executor_path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
+    "executor_sha256": "6f0ad9370caf2582934a917029476f505e1a3792b46cbdfe046c7cda85cf31dc",
+    "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+    "contract_sha256": "cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb"
+  },
+  "exact_head_ci": {
+    "run_id": 32574711605,
+    "conclusion": "success",
+    "evidence_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-ci-32574711605.json",
+    "evidence_sha256": "5591b0a135ebccbe1305afabf0d8123d4eb054937e64d6a20c074bcf08fde10e"
+  },
+  "opus_history": [
+    {
+      "cycle": 1,
+      "reviewed_head": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+      "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-01-exact-cli-response.json",
+      "response_sha256": "283d11a413206be9a82baa8d2690778f23b9efa20785c9f103305f5d54e44682",
+      "normalized_sha256": "b6b08c9d6bb5dd6e06858b19253dfe98ebe77def172aa4fe370eaf8cb45ec497",
+      "verdict": "REJECT"
+    },
+    {
+      "cycle": 2,
+      "reviewed_head": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+      "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-exact-cli-response.json",
+      "response_sha256": "b89eb63d7ae372ae4f226ec0a60db3640b8740d01b130de33b058e4cfbaa4251",
+      "normalized_sha256": "4ade469de333f5c773a5707a557f019b0de8238fd6b3101a29d12284ded31d25",
+      "verdict": "REJECT"
+    },
+    {
+      "cycle": 3,
+      "reviewed_head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+      "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-request.md",
+      "request_sha256": "0d3a7b35aec30e29b299d6ab5cdf1247a44f3242f85c336486692759a1c230be",
+      "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-exact-cli-response.json",
+      "response_sha256": "433df44cbe2c8ebc05963f18cc534da7ac967e6ae0fd0667f182276c63b4f2a5",
+      "normalized_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-normalized-result.json",
+      "normalized_sha256": "7e31e423b254add48759a60f83fbdf80880e3520087ab145cea48014a32b072c",
+      "verdict": "OPUS_INTERIM_ACCEPT_FOR_F017_NATIVE_BOUNDED_P1_DOMAIN",
+      "blocking": 0,
+      "non_blocking_required": 0,
+      "defense_in_depth": 7
+    }
+  ],
+  "interim_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-interim-declaration-v1.json",
+    "sha256": "33af1bb79f836bae07dfaab1106a40c2291b24b15f59aee2cf389213c4613e5d"
+  },
+  "ratification_requirements": {
+    "reviewer": "claude-fable-5",
+    "must_independently_review_bytes": true,
+    "must_inspect_opus_findings_and_repairs": true,
+    "must_rerun_critical_attacks": true,
+    "opus_accept_does_not_bias_or_constrain": true,
+    "required_verdict_before_real_p1": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+    "blocking_and_non_blocking_required_prevent_acceptance": true
+  },
+  "critical_ratification_attacks": [
+    "identifier traversal and absolute-path escape before checkpoint planning",
+    "synthetic source-built versus banked executable provenance",
+    "D3.5 grants, read census, tolerance epistemics, and stage mapping",
+    "full bounded-P1 graph instantiability and no continuation",
+    "checkpoint plan, tensor census, quantized decoder and fallback rejection",
+    "22-counter liveness, receipt emitter, RN1 ownership and replay",
+    "runtime, M1 Ultra, memory freshness, executable and dylib binding",
+    "historical ledger 175 separation",
+    "B1/B2/oracle/residual regressions",
+    "all seven Opus C3 defense-in-depth dispositions"
+  ],
+  "known_evidence_label_correction": {
+    "opus_c3_prose_reported_request_sha256": "7417d345c12422784fabd8b6c8133a9d05b58846ab7275a99472b413df255aba",
+    "actual_invoked_request_sha256": "0d3a7b35aec30e29b299d6ab5cdf1247a44f3242f85c336486692759a1c230be",
+    "required_action": "Fable independently verify the request revision history and do not inherit either label without recomputation"
+  },
+  "hard_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "full_model_real_checkpoint_inference_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "historical_master_ledger": 175
+  }
+}

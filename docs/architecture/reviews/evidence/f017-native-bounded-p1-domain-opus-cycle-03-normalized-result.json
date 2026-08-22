@@ -1,0 +1,120 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-opus-review-result/1.0.0",
+  "cycle": 3,
+  "temporary_substitution": {
+    "reason": "claude-fable-5 quota unavailable until approximately Tuesday 13:00 local",
+    "preferred_temporary_model": "claude-opus-5",
+    "does_not_waive_fable_ratification": true
+  },
+  "reviewer": {
+    "identity": "claude-opus-5",
+    "canonical_model": "claude-opus-5",
+    "provider": "firstParty",
+    "cli_path": "/Users/mhedhli/.local/bin/claude",
+    "cli_version": "2.1.235 (Claude Code)",
+    "invocation": "claude --model claude-opus-5 --effort high --output-format json --dangerously-skip-permissions -p < exact committed request",
+    "session_id": "accbe4b0-6be3-423b-a914-3b06bbaf3446",
+    "turns": 95
+  },
+  "reviewed_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+    "detached_clean_worktree": true,
+    "exact_head_ci_run": 32574711605,
+    "exact_head_ci_conclusion": "success"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-request.md",
+    "invoked_sha256": "0d3a7b35aec30e29b299d6ab5cdf1247a44f3242f85c336486692759a1c230be",
+    "reviewer_text_reported_prior_revision_sha256": "7417d345c12422784fabd8b6c8133a9d05b58846ab7275a99472b413df255aba",
+    "disposition": "The invocation consumed the final committed 0d3a revision. The reviewer's prose cited the immediately prior request revision while independently executing the final request contents. Preserve both identities; Fable must verify this history rather than inherit the label."
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-exact-cli-response.json",
+    "sha256": "433df44cbe2c8ebc05963f18cc534da7ac967e6ae0fd0667f182276c63b4f2a5",
+    "is_error": false,
+    "stop_reason": "end_turn"
+  },
+  "tests_independently_performed": [
+    "30 crafted identifier authorities against the banked executor",
+    "cargo test -p stream --lib: 46/46",
+    "cargo test -p stream --test apple_mlx_bridge: 15/15",
+    "cargo test -p stream --test apple_metal_bridge: 1/1",
+    "cargo test -p f017-native --release: 7/7",
+    "cargo test -p quant --release: 20/20",
+    "seven F017 contract/authority validators",
+    "nine Python test modules: 56/58 under Python 3.14 with the two pin failures passing 4/4 under frozen Python 3.13.13",
+    "RN1 replay, symlink, file-root, 12 authority mutations, and four-way race",
+    "ten fresh processes using a source-built exact-head synthetic producer",
+    "all contract and authority SHA recomputation",
+    "direct CI run and native-job log inspection",
+    "historical ledger object-graph and receipt-continuity reconstruction"
+  ],
+  "repair_reverification": {
+    "finding_id": "F017-OPUS-C2-F1",
+    "result": "CLOSED",
+    "unsafe_cases_rejected": 30,
+    "claim_files_created": 0,
+    "attempt_state_created": 0,
+    "checkpoint_planning_or_opening_reached": false,
+    "math_invocations": 0
+  },
+  "findings": [
+    {
+      "id": "F017-OPUS-C3-F1",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Banked synthetic executable predates the containment repair and CI labels ephemeral evidence with the current head",
+      "disposition": "Non-weakening for interim review because the repair is rejection-only, safe qualification identifiers are unaffected, exact-head source-built ten-process reproduction passed, and the repaired path passed 46/46 tests. Rebuild/rebind synthetic producer before human approval consumes synthetic_full_graph_result."
+    },
+    {
+      "id": "F017-OPUS-C3-F2",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The earlier C2-F6 disposition's unchanged-code premise became false after the containment repair",
+      "disposition": "Correct the historical rationale in the Fable packet; substantive evidence is the exact-head independent re-derivation, not the stale statement."
+    },
+    {
+      "id": "F017-OPUS-C3-F3",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Peak real-P1 memory plausibly approaches the 16 GiB gate and OOM would consume the attempt",
+      "disposition": "Correctness remains fail-closed. Resolve allocation peak or raise the mechanically bound floor before live authorization."
+    },
+    {
+      "id": "F017-OPUS-C3-F4",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Catalog type_id geometry and type decoder channels are not mechanically cross-validated",
+      "disposition": "The exact SHA-bound catalog is internally consistent, so the mutation is unreachable in the accepted gate. Bind the cross-check before catalog rebind or live authorization, whichever occurs first."
+    },
+    {
+      "id": "F017-OPUS-C3-F5",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The operator authorizer creates the state root before its attempt-id/contract cross-check",
+      "disposition": "Availability-only wedge with no execution authority; reorder the cross-check before state creation in the live-authorization generation."
+    },
+    {
+      "id": "F017-OPUS-C3-F6",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The real producer path lacks the converse of the inert producer-identity guard",
+      "disposition": "Exact executor and backend are otherwise SHA- and contract-bound. Add the converse guard before live authorization."
+    },
+    {
+      "id": "F017-OPUS-C3-F7",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Accounting reconciliation does not itself require a liveness counter to advance",
+      "disposition": "Live FFI and fail-closed native build make all-zero unreachable in accepted qualification. Require registrations, teardowns, and owned-stream liveness before banking a real receipt."
+    }
+  ],
+  "counts": {
+    "blocking": 0,
+    "non_blocking_required": 0,
+    "defense_in_depth": 7
+  },
+  "verdict": "OPUS_INTERIM_ACCEPT_FOR_F017_NATIVE_BOUNDED_P1_DOMAIN",
+  "fable_ratification_pending": true,
+  "hard_invariants": {
+    "real_m1_ultra_p1_executed_during_review": false,
+    "full_model_real_checkpoint_inference_executed_during_review": false,
+    "original_checkpoint_reads_during_review": 0,
+    "live_p1_authorization_created_during_review": false,
+    "historical_master_ledger": 175
+  }
+}
