@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.native-expanded-full-graph-synthetic-differential/1.0.0",
+  "result": "PASS",
+  "seeds": [17018, 17019, 17020, 17021, 17022, 17023],
+  "case_count": 6,
+  "production_orchestration": true,
+  "synthetic_tensor_source_only": true,
+  "independent_python_oracle": true,
+  "stage_bound": "128*binary32_unit_roundoff*max(1,max_abs_expected)",
+  "stage_metric_count": 137,
+  "result_sha256": "3b89b114e80a77241f8d6223dc782d77a108b90a55f8cb18d444edb9b76601c7",
+  "cases": [
+    {"seed":17018,"layers":1,"experts":2,"top_k":1,"route_modes":[],"result_token":5,"stage_metrics":10,"max_abs_error":9.13085937526148e-07,"result":"PASS"},
+    {"seed":17019,"layers":2,"experts":3,"top_k":2,"route_modes":["VARIED_BY_LAYER"],"result_token":6,"stage_metrics":17,"max_abs_error":1.4979248064150852e-06,"result":"PASS"},
+    {"seed":17020,"layers":3,"experts":4,"top_k":2,"route_modes":["VARIED_BY_LAYER","VARIED_BY_LAYER"],"result_token":7,"stage_metrics":24,"max_abs_error":1.8755950925708476e-07,"result":"PASS"},
+    {"seed":17021,"layers":4,"experts":4,"top_k":3,"route_modes":["VARIED_BY_LAYER","VARIED_BY_LAYER"],"result_token":8,"stage_metrics":31,"max_abs_error":9.053955078996978e-07,"result":"PASS"},
+    {"seed":17022,"layers":3,"experts":4,"top_k":2,"route_modes":["EXACT_TIE_LOWER_ID","EXACT_TIE_LOWER_ID"],"result_token":9,"stage_metrics":24,"max_abs_error":5.164794920631266e-07,"result":"PASS"},
+    {"seed":17023,"layers":4,"experts":4,"top_k":2,"route_modes":["NEAR_TIE_BIAS","NEAR_TIE_BIAS"],"result_token":10,"stage_metrics":31,"max_abs_error":4.626464829016186e-07,"result":"PASS"}
+  ],
+  "mutation_localization": [
+    "wrong_route_tie",
+    "wrong_expert",
+    "wrong_layer_count",
+    "wrong_final_projection",
+    "Q6_lane_swap",
+    "IQ3_lane_interleave"
+  ],
+  "limitations": [
+    "Attempt 1 is position zero; a nonzero-RoPE full forward is not evidence about that attempt.",
+    "Packed-format correctness is qualified separately by the eleven-format matrix.",
+    "Synthetic agreement does not establish a corrected real-checkpoint expected token."
+  ],
+  "original_checkpoint_shard_opens": 0,
+  "original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false
+}

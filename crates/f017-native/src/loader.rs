@@ -1,15 +1,17 @@
 //! Exact six-shard, read-only checkpoint loader. Real use performs the full
-//! shard rehash before attempt authority and maps each shard MAP_PRIVATE.
+//! shard rehash and maps each shard MAP_PRIVATE. The forward evidenced path
+//! performs both on the one recorded descriptor after durable attempt start.
 
 use crate::model::{Matrix, TensorSource};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::os::fd::AsRawFd;
-use std::os::unix::fs::OpenOptionsExt;
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::path::Path;
+use stream::P1EvidenceRecorder;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -237,17 +239,18 @@ pub fn validate_plan(manifest: &CheckpointManifest, catalog: &TensorCatalog) -> 
     Ok(())
 }
 
-fn sha_file(path: &Path) -> Result<String, String> {
-    let mut f = File::open(path).map_err(|e| e.to_string())?;
+fn sha_open_file(file: &mut File) -> Result<String, String> {
+    file.seek(SeekFrom::Start(0)).map_err(|e| e.to_string())?;
     let mut h = Sha256::new();
     let mut b = [0_u8; 1024 * 1024];
     loop {
-        let n = f.read(&mut b).map_err(|e| e.to_string())?;
+        let n = file.read(&mut b).map_err(|e| e.to_string())?;
         if n == 0 {
             break;
         }
         h.update(&b[..n]);
     }
+    file.seek(SeekFrom::Start(0)).map_err(|e| e.to_string())?;
     Ok(format!("{:x}", h.finalize()))
 }
 
@@ -265,19 +268,56 @@ impl Drop for MappedShard {
     }
 }
 impl MappedShard {
-    fn open(path: &Path, expected: &ShardIdentity) -> Result<Self, String> {
+    fn open(
+        path: &Path,
+        expected: &ShardIdentity,
+        mut recorder: Option<&mut P1EvidenceRecorder>,
+    ) -> Result<Self, String> {
         let meta = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
         if meta.file_type().is_symlink() || !meta.is_file() || meta.len() != expected.size_bytes {
             return Err("unsafe shard".into());
         }
-        if sha_file(path)? != expected.sha256 {
-            return Err("shard hash".into());
-        }
-        let file = std::fs::OpenOptions::new()
+        let mut file = std::fs::OpenOptions::new()
             .read(true)
             .custom_flags(libc::O_NOFOLLOW)
             .open(path)
             .map_err(|e| e.to_string())?;
+        let descriptor_meta = file.metadata().map_err(|e| e.to_string())?;
+        if !descriptor_meta.is_file()
+            || descriptor_meta.len() != meta.len()
+            || descriptor_meta.dev() != meta.dev()
+            || descriptor_meta.ino() != meta.ino()
+        {
+            return Err("shard same-descriptor identity".into());
+        }
+        if let Some(recorder) = recorder.as_deref_mut() {
+            recorder.record(
+                "SHARD_OPEN",
+                &expected.filename,
+                &expected.sha256,
+                expected.size_bytes,
+                None,
+                "PASS_READ_ONLY_NOFOLLOW",
+            )?;
+        }
+        let observed_sha256 = sha_open_file(&mut file)?;
+        if let Some(recorder) = recorder.as_deref_mut() {
+            recorder.record(
+                "SHARD_IDENTITY_REHASH",
+                &expected.filename,
+                &observed_sha256,
+                expected.size_bytes,
+                None,
+                if observed_sha256 == expected.sha256 {
+                    "PASS_EXPECTED_SHA256"
+                } else {
+                    "REJECTED_SHA256_MISMATCH"
+                },
+            )?;
+        }
+        if observed_sha256 != expected.sha256 {
+            return Err("shard hash".into());
+        }
         let len = usize::try_from(meta.len()).map_err(|_| "shard length")?;
         let ptr = unsafe {
             libc::mmap(
@@ -291,6 +331,16 @@ impl MappedShard {
         };
         if ptr == libc::MAP_FAILED {
             return Err("mmap".into());
+        }
+        if let Some(recorder) = recorder.as_deref_mut() {
+            recorder.record(
+                "READ_ONLY_PRIVATE_MMAP",
+                &expected.filename,
+                &expected.sha256,
+                expected.size_bytes,
+                None,
+                "PASS_PROT_READ_MAP_PRIVATE",
+            )?;
         }
         Ok(Self {
             _file: file,
@@ -319,6 +369,24 @@ impl SecureCheckpoint {
         manifest: CheckpointManifest,
         catalog: TensorCatalog,
     ) -> Result<Self, String> {
+        Self::open_internal(root, manifest, catalog, None)
+    }
+
+    pub fn open_evidenced(
+        root: &Path,
+        manifest: CheckpointManifest,
+        catalog: TensorCatalog,
+        recorder: &mut P1EvidenceRecorder,
+    ) -> Result<Self, String> {
+        Self::open_internal(root, manifest, catalog, Some(recorder))
+    }
+
+    fn open_internal(
+        root: &Path,
+        manifest: CheckpointManifest,
+        catalog: TensorCatalog,
+        mut recorder: Option<&mut P1EvidenceRecorder>,
+    ) -> Result<Self, String> {
         validate_plan(&manifest, &catalog)?;
         let resolved = root.canonicalize().map_err(|e| e.to_string())?;
         if resolved != root {
@@ -331,10 +399,8 @@ impl SecureCheckpoint {
         let mut shards = BTreeMap::new();
         for expected in &manifest.files {
             let path = root.join(&expected.filename);
-            shards.insert(
-                expected.filename.clone(),
-                MappedShard::open(&path, expected)?,
-            );
+            let mapped = MappedShard::open(&path, expected, recorder.as_deref_mut())?;
+            shards.insert(expected.filename.clone(), mapped);
         }
         // Every directory entry participates in the census. An extra
         // directory, socket, or symlink must not disappear merely because it
@@ -370,7 +436,11 @@ impl SecureCheckpoint {
             .get(name)
             .ok_or_else(|| format!("missing tensor {name}"))
     }
-    fn encoded(&self, record: &TensorRecord, expert: Option<usize>) -> Result<Vec<u8>, String> {
+    fn encoded_range(
+        &self,
+        record: &TensorRecord,
+        expert: Option<usize>,
+    ) -> Result<(u64, usize), String> {
         let columns = usize::try_from(record.dims[0]).map_err(|_| "columns")?;
         let rows = usize::try_from(*record.dims.get(1).unwrap_or(&1)).map_err(|_| "rows")?;
         let ty = gguf::TensorType::from_id(record.type_id);
@@ -388,12 +458,126 @@ impl SecureCheckpoint {
                 return Err("expert id".into());
             }
         }
+        Ok((record.data_offset_abs + expert_offset as u64, matrix_bytes))
+    }
+
+    fn encoded(&self, record: &TensorRecord, expert: Option<usize>) -> Result<Vec<u8>, String> {
+        let (offset, matrix_bytes) = self.encoded_range(record, expert)?;
         Ok(self
             .shards
             .get(&record.file)
             .ok_or("shard")?
-            .read(record.data_offset_abs + expert_offset as u64, matrix_bytes)?
+            .read(offset, matrix_bytes)?
             .to_vec())
+    }
+}
+
+pub struct EvidencedTensorSource<'a> {
+    checkpoint: SecureCheckpoint,
+    recorder: &'a mut P1EvidenceRecorder,
+    used: BTreeSet<String>,
+}
+
+impl<'a> EvidencedTensorSource<'a> {
+    pub fn new(checkpoint: SecureCheckpoint, recorder: &'a mut P1EvidenceRecorder) -> Self {
+        Self {
+            checkpoint,
+            recorder,
+            used: BTreeSet::new(),
+        }
+    }
+
+    fn lookup(&mut self, name: &str) -> Result<TensorRecord, String> {
+        match self.checkpoint.record(name) {
+            Ok(record) => Ok(record.clone()),
+            Err(error) => {
+                self.recorder.record(
+                    "UNEXPECTED_ACCESS_ATTEMPT",
+                    name,
+                    "",
+                    0,
+                    Some(name),
+                    "REJECTED_MISSING_TENSOR",
+                )?;
+                Err(error)
+            }
+        }
+    }
+
+    fn record_lookup(&mut self, name: &str, size_bytes: usize) -> Result<(), String> {
+        self.recorder.record(
+            "TENSOR_LOOKUP",
+            name,
+            "",
+            size_bytes as u64,
+            Some(name),
+            "AUTHORIZED_BEFORE_PAYLOAD_COPY",
+        )
+    }
+
+    fn record_use(&mut self, name: &str, size_bytes: usize) -> Result<(), String> {
+        let kind = if self.used.insert(name.to_owned()) {
+            "TENSOR_FIRST_USE"
+        } else {
+            "TENSOR_REUSE"
+        };
+        self.recorder
+            .record(kind, name, "", size_bytes as u64, Some(name), "PASS")
+    }
+}
+
+impl TensorSource for EvidencedTensorSource<'_> {
+    fn vector(&mut self, name: &str, length: usize) -> Result<Vec<f32>, String> {
+        let r = self.lookup(name)?;
+        if r.dims != vec![length as u64] {
+            return Err("vector shape".into());
+        }
+        let (_, size) = self.checkpoint.encoded_range(&r, None)?;
+        self.record_lookup(name, size)?;
+        let encoded = self.checkpoint.encoded(&r, None)?;
+        self.record_use(name, encoded.len())?;
+        decode(&r, &encoded, 1, length)
+    }
+
+    fn matrix(&mut self, name: &str, rows: usize, columns: usize) -> Result<Matrix, String> {
+        let r = self.lookup(name)?;
+        if r.dims != vec![columns as u64, rows as u64] {
+            return Err(format!("matrix shape {name}"));
+        }
+        let (_, size) = self.checkpoint.encoded_range(&r, None)?;
+        self.record_lookup(name, size)?;
+        let encoded = self.checkpoint.encoded(&r, None)?;
+        self.record_use(name, encoded.len())?;
+        let values = decode(&r, &encoded, rows, columns)?;
+        Ok(Matrix {
+            rows,
+            columns,
+            values,
+        })
+    }
+
+    fn expert_matrix(
+        &mut self,
+        name: &str,
+        expert: usize,
+        rows: usize,
+        columns: usize,
+    ) -> Result<Matrix, String> {
+        let r = self.lookup(name)?;
+        if r.dims.len() != 3 || r.dims[0] != columns as u64 || r.dims[1] != rows as u64 {
+            return Err("expert shape".into());
+        }
+        let authority = format!("{name}#expert={expert}");
+        let (_, size) = self.checkpoint.encoded_range(&r, Some(expert))?;
+        self.record_lookup(&authority, size)?;
+        let encoded = self.checkpoint.encoded(&r, Some(expert))?;
+        self.record_use(&authority, encoded.len())?;
+        let values = decode(&r, &encoded, rows, columns)?;
+        Ok(Matrix {
+            rows,
+            columns,
+            values,
+        })
     }
 }
 
@@ -420,13 +604,21 @@ fn decode(
             quant::decode_q3_k_matrix(bytes, rows, columns, &mut out).map_err(|e| e.to_string())?
         }
         "Q4_K" => {
-            for (r, row) in bytes.chunks_exact(columns / 256 * 144).enumerate() {
+            let row_bytes = columns.checked_div(256).ok_or("q4 shape")? * 144;
+            if columns % 256 != 0 || bytes.len() != rows.checked_mul(row_bytes).ok_or("q4 bytes")? {
+                return Err("q4 bytes".into());
+            }
+            for (r, row) in bytes.chunks_exact(row_bytes).enumerate() {
                 out[r * columns..(r + 1) * columns]
                     .copy_from_slice(&quant::cpu_dot::dequant_q4_k(row, columns));
             }
         }
         "Q5_K" => {
-            for (r, row) in bytes.chunks_exact(columns / 256 * 176).enumerate() {
+            let row_bytes = columns.checked_div(256).ok_or("q5 shape")? * 176;
+            if columns % 256 != 0 || bytes.len() != rows.checked_mul(row_bytes).ok_or("q5 bytes")? {
+                return Err("q5 bytes".into());
+            }
+            for (r, row) in bytes.chunks_exact(row_bytes).enumerate() {
                 out[r * columns..(r + 1) * columns]
                     .copy_from_slice(&quant::cpu_dot::dequant_q5_k(row, columns));
             }
@@ -452,6 +644,44 @@ fn decode(
         return Err("nonfinite decode".into());
     }
     Ok(out)
+}
+
+/// Checkpoint-free qualification entry point for the exact decoder dispatch
+/// used by the secure loader. It accepts bytes directly and has no filesystem
+/// or checkpoint-root capability.
+pub fn decode_packed_matrix_for_qualification(
+    format: &str,
+    type_id: u32,
+    bytes: &[u8],
+    rows: usize,
+    columns: usize,
+) -> Result<Vec<f32>, String> {
+    let expected_type_id = match format {
+        "F32" => 0,
+        "Q8_0" => 8,
+        "Q2_K" => 10,
+        "Q3_K" => 11,
+        "Q4_K" => 12,
+        "Q5_K" => 13,
+        "Q6_K" => 14,
+        "IQ2_XXS" => 16,
+        "IQ3_XXS" => 18,
+        "IQ2_S" => 22,
+        "IQ4_XS" => 23,
+        _ => return Err("unsupported qualification format".into()),
+    };
+    if type_id != expected_type_id {
+        return Err("qualification format/type-ID mismatch".into());
+    }
+    let record = TensorRecord {
+        name: "SYNTHETIC_QUALIFICATION_MATRIX".into(),
+        file: "NO_CHECKPOINT_FILE".into(),
+        data_offset_abs: 0,
+        dims: vec![columns as u64, rows as u64],
+        type_id,
+        format: format.into(),
+    };
+    decode(&record, bytes, rows, columns)
 }
 
 impl TensorSource for SecureCheckpoint {

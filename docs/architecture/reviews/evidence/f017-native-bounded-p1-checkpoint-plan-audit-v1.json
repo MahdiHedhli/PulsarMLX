@@ -1,0 +1,63 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-metadata-plan-audit/1.0.0",
+  "status": "PASS",
+  "manifest": {
+    "path": "docs/validation/glm52-checkpoint.json",
+    "sha256": "34b65d586c86d24ee10f3a2ed55491fb3a5a6b9ddbaf893bf9e0ab962c96cf8f"
+  },
+  "catalog": {
+    "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+    "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+  },
+  "tensor_count": 1809,
+  "layer_count": 79,
+  "expert_count": 256,
+  "expert_tensor_count": 228,
+  "shard_count": 6,
+  "model_architecture": {
+    "hidden_size": 6144,
+    "vocabulary_size": 154880,
+    "leading_dense_layers": 3,
+    "expert_top_k": 8,
+    "dense_intermediate_size": 12288,
+    "expert_intermediate_size": 2048,
+    "attention_head_count": 64,
+    "query_rank": 2048,
+    "kv_rank": 512,
+    "qk_nope_dimension": 192,
+    "qk_rope_dimension": 64,
+    "value_dimension": 256
+  },
+  "model_architecture_derivation": "catalog.kv_selected plus first _exps.weight layer",
+  "quant_formats": {
+    "F32": 709,
+    "IQ2_S": 2,
+    "IQ2_XXS": 148,
+    "IQ3_XXS": 71,
+    "IQ4_XS": 4,
+    "Q2_K": 2,
+    "Q3_K": 1,
+    "Q4_K": 2,
+    "Q5_K": 312,
+    "Q6_K": 82,
+    "Q8_0": 476
+  },
+  "alignment_bytes": 32,
+  "overlap_count": 0,
+  "duplicate_tensor_count": 0,
+  "unknown_format_count": 0,
+  "mutation_results": {
+    "format_string_only": "REJECTED",
+    "type_id_only": "REJECTED",
+    "decoder_dispatch": "REJECTED",
+    "block_size": "REJECTED",
+    "tensor_byte_count": "REJECTED",
+    "misalignment": "REJECTED",
+    "overlap": "REJECTED",
+    "duplicate_name": "REJECTED",
+    "wrong_shard": "REJECTED"
+  },
+  "audit_method": "Committed manifest and catalog metadata only; no checkpoint root argument is accepted by the audit tool.",
+  "checkpoint_shard_opens": 0,
+  "checkpoint_payload_reads": 0
+}

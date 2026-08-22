@@ -1,0 +1,70 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-forward-failure-evidence-contract/1.0.0",
+  "status": "FROZEN_FORWARD_ONLY",
+  "applies_to_executor_generation": "EVIDENCED_V3_AND_LATER",
+  "attempt_1_disposition": "TERMINAL_FAILURE_BANKED_WITH_EXPLICIT_CONTRACT_NONCONFORMITIES",
+  "attempt_1_retroactive_receipt_permitted": false,
+  "durability_order": [
+    "DURABLE_OWNED_ATTEMPT_START",
+    "DURABLE_PRE_ACCOUNTING_SNAPSHOT",
+    "INCREMENTAL_DURABLE_ACCESS_EVENTS",
+    "PRODUCTION_MATH_AND_INCREMENTAL_LAYER_FINGERPRINTS",
+    "SYNCHRONIZE",
+    "DURABLE_POST_ACCOUNTING_SNAPSHOT",
+    "DURABLE_ACCESS_CENSUS",
+    "DURABLE_NUMERICAL_DIAGNOSTIC_MANIFEST",
+    "ACCOUNTING_VALIDATION",
+    "EXPECTED_TOKEN_COMPARISON",
+    "DURABLE_EXECUTION_RECEIPT",
+    "RECEIPT_BOUND_TERMINAL",
+    "MANDATORY_STOP"
+  ],
+  "schemas": {
+    "receipt": "pulsarmlx.f017.native-bounded-p1-execution-receipt/3.0.0",
+    "terminal": "pulsarmlx.f017.native-bounded-p1-terminal/2.0.0",
+    "snapshot": "pulsarmlx.f017.native-bounded-p1-accounting-snapshot/1.0.0",
+    "access_event": "pulsarmlx.f017.native-bounded-p1-access-event/1.0.0",
+    "access_census": "pulsarmlx.f017.native-bounded-p1-access-census/1.0.0",
+    "diagnostic": "pulsarmlx.f017.native-bounded-p1-diagnostic-manifest/1.0.0"
+  },
+  "post_start_terminal_classes": [
+    "EXPECTED_TOKEN_MATCH",
+    "TOKEN_MISMATCH",
+    "PRODUCER_FAILURE",
+    "ACCOUNTING_FAILURE"
+  ],
+  "access_kinds": [
+    "SHARD_OPEN",
+    "SHARD_IDENTITY_REHASH",
+    "READ_ONLY_PRIVATE_MMAP",
+    "TENSOR_LOOKUP",
+    "TENSOR_FIRST_USE",
+    "TENSOR_REUSE",
+    "PAGE_RESIDENCY_OBSERVATION",
+    "HISTORICAL_EXPLICIT_PAYLOAD_EXTRACTION",
+    "UNEXPECTED_ACCESS_ATTEMPT",
+    "FALLBACK_ATTEMPT",
+    "ALTERNATE_ROOT_ATTEMPT"
+  ],
+  "real_execution_access_invariants": {
+    "expected_shard_open_count": 6,
+    "expected_shard_identity_rehash_count": 6,
+    "expected_read_only_private_map_count": 6,
+    "historical_explicit_payload_extraction_count": 0,
+    "unexpected_access_attempt_count": 0,
+    "fallback_attempt_count": 0,
+    "alternate_root_attempt_count": 0
+  },
+  "diagnostic_invariants": {
+    "layer_count": 79,
+    "top_logit_count": 32,
+    "dtype": "little-endian-f32",
+    "serialization": "F32_LE_DIRECT_PRODUCTION_BUFFER_HASHES",
+    "recomputation_for_logging": false
+  },
+  "historical_master_ledger_terminal": 175,
+  "receipt_derived_counts_outrank_terminal_claims": true,
+  "retry_permitted": false,
+  "resume_permitted": false,
+  "mandatory_stop": true
+}

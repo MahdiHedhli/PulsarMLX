@@ -1,0 +1,87 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-forward-failure-injection-evidence/1.0.0",
+  "status": "PASS",
+  "scope": "SYNTHETIC_INERT_NO_CHECKPOINT",
+  "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v3.json",
+  "producer_path": "crates/stream/src/p1_domain.rs",
+  "production_entry_path": "crates/f017-native/src/bin/bounded_p1.rs",
+  "ordinary_post_start_injections": [
+    "FIRST_SHARD_OPEN",
+    "PARTIAL_MAP",
+    "TENSOR_PLAN_MISMATCH",
+    "FIRST_TENSOR_USE",
+    "MIDDLE_LAYER",
+    "FINAL_NORM",
+    "LOGITS",
+    "TOKEN_MISMATCH"
+  ],
+  "ordinary_post_start_result": {
+    "pre_snapshot_present": true,
+    "post_snapshot_present": true,
+    "incremental_access_events_present": true,
+    "access_census_present": true,
+    "numerical_diagnostic_manifest_present": true,
+    "receipt_present": true,
+    "terminal_present": true,
+    "terminal_binds_receipt": true,
+    "attempt_count": 1,
+    "retry_count": 0,
+    "mandatory_stop": true
+  },
+  "boundary_injections": [
+    {
+      "point": "BEFORE_CLAIM",
+      "expected": "REJECT_WITHOUT_ATTEMPT_ROOT",
+      "mechanism": "authority validation"
+    },
+    {
+      "point": "AFTER_CLAIM_OR_DURABLE_START",
+      "expected": "OWNED_CONSUMED_ATTEMPT_REMAINS_NON_REPLAYABLE",
+      "mechanism": "RN1 exclusive no-replace claim and owner-bound terminalization"
+    },
+    {
+      "point": "AFTER_PRE_SNAPSHOT",
+      "expected": "DURABLE_PRE_SNAPSHOT_SURVIVES",
+      "mechanism": "exclusive write, file fsync, parent fsync, SHA readback"
+    },
+    {
+      "point": "AFTER_PRODUCED_TOKEN",
+      "expected": "POST_SNAPSHOT_AND_ACCOUNTING_PRECEDE_TOKEN_COMPARISON",
+      "mechanism": "frozen durability order"
+    },
+    {
+      "point": "POST_SNAPSHOT",
+      "expected": "DURABLE_POST_SNAPSHOT_SURVIVES",
+      "mechanism": "exclusive write, file fsync, parent fsync, SHA readback"
+    },
+    {
+      "point": "RECEIPT_WRITE_PHYSICAL_FAILURE",
+      "expected": "FAIL_CLOSED_WITH_PRIOR_DURABLE_EVIDENCE; NO_RECEIPT_CLAIM",
+      "mechanism": "exclusive no-replace write; a failed physical write cannot be represented as a successfully durable receipt"
+    },
+    {
+      "point": "TERMINAL_WRITE_PHYSICAL_FAILURE",
+      "expected": "DURABLE_RECEIPT_REMAINS; ATTEMPT REMAINS CONSUMED; RECONCILIATION_REQUIRED",
+      "mechanism": "receipt is committed and read back before terminalization"
+    }
+  ],
+  "tests": [
+    "p1_domain::tests::evidenced_failure_matrix_banks_receipt_and_terminal_for_ordinary_post_start_failures",
+    "p1_domain::tests::evidenced_mid_execution_failure_retains_maximum_post_start_evidence",
+    "p1_domain::tests::evidenced_token_mismatch_banks_complete_failure_evidence_before_returning",
+    "p1_domain::tests::authority_identifiers_cannot_escape_the_owned_state_root"
+  ],
+  "attempt_1_retroactivity": {
+    "receipt_fabricated": false,
+    "snapshots_fabricated": false,
+    "access_census_fabricated": false,
+    "disposition": "TERMINAL_FAILURE_BANKED_WITH_EXPLICIT_CONTRACT_NONCONFORMITIES"
+  },
+  "accounting": {
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_mmaps": 0,
+    "original_checkpoint_payload_reads": 0,
+    "real_p1_executions": 0,
+    "live_authorizations_created": 0
+  }
+}

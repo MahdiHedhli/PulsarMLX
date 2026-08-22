@@ -88,9 +88,13 @@ mod p1_domain;
 
 #[cfg(all(target_os = "macos", pulsar_native_mlx))]
 pub use p1_domain::{
-    execute_bounded_p1_once, execute_inert_bounded_p1_once, BoundedP1Math, BoundedP1Receipt,
-    validate_real_p1_authority, P1AttemptAuthority, P1DomainError, P1RuntimeIdentity,
-    RECEIPT_SCHEMA,
+    execute_bounded_p1_once, execute_evidenced_bounded_p1_once, execute_inert_bounded_p1_once,
+    validate_real_p1_authority, BoundedP1Math, BoundedP1Receipt, EvidencedBoundedP1Receipt,
+    EvidencedP1Math, P1AccessCensus, P1AccessEvent, P1AttemptAuthority, P1DomainError,
+    P1DurableSnapshot, P1EvidenceRecorder, P1LayerDiagnostic, P1NumericalDiagnosticManifest,
+    P1RuntimeIdentity, ACCESS_CENSUS_SCHEMA, ACCESS_EVENT_SCHEMA, DIAGNOSTIC_SCHEMA,
+    EVIDENCED_RECEIPT_SCHEMA, EVIDENCED_TERMINAL_SCHEMA, EXPECTED_TOKEN, PROMPT_TOKEN,
+    RECEIPT_SCHEMA, SNAPSHOT_SCHEMA,
 };
 
 #[cfg(target_os = "macos")]

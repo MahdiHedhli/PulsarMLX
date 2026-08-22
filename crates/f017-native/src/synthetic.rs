@@ -39,7 +39,11 @@ pub struct SyntheticSource {
 }
 impl SyntheticSource {
     pub fn from_fixture(f: SyntheticFixture) -> Result<(Self, ModelConfig, u32, u32), String> {
-        if f.schema != "pulsarmlx.f017.native-tiny-full-model-fixture/1.0.0" || f.seed != 17017 {
+        let accepted = (f.schema == "pulsarmlx.f017.native-tiny-full-model-fixture/1.0.0"
+            && f.seed == 17017)
+            || (f.schema == "pulsarmlx.f017.native-full-graph-differential-fixture/1.0.0"
+                && (17018..=17023).contains(&f.seed));
+        if !accepted {
             return Err("synthetic fixture authority".into());
         }
         f.config.validate()?;

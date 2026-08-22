@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.native-quantization-eleven-format-differential-summary/1.0.0",
+  "result": "PASS",
+  "seed": 17017,
+  "qualification_tool": "scripts/research/qualify_f017_quantization_matrix_v1.py",
+  "native_probe": "crates/f017-native/src/bin/quant_native_matvec_probe.rs",
+  "result_sha256": "284cb12b80e7a64248c45744c1b99425cc5b093bd42bc0938c2406d25c38898e",
+  "native_matvec_bound": "2*gamma(2*columns)*sum_abs(weight*activation)+4*columns*minimum_binary32_subnormal",
+  "frozen_tolerance": "8*binary32_unit_roundoff*max(1,max_abs_independent_expected)",
+  "format_results": [
+    {"format":"F32","type_id":0,"tensor_count":709,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":0.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"Q2_K","type_id":10,"tensor_count":2,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":4.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"Q3_K","type_id":11,"tensor_count":1,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":6.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"Q4_K","type_id":12,"tensor_count":2,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":22.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"Q5_K","type_id":13,"tensor_count":312,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":96.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"Q6_K","type_id":14,"tensor_count":82,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":16.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"Q8_0","type_id":8,"tensor_count":476,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":4.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"IQ2_S","type_id":22,"tensor_count":2,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":4.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"IQ2_XXS","type_id":16,"tensor_count":148,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":7.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"IQ3_XXS","type_id":18,"tensor_count":71,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":32.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true},
+    {"format":"IQ4_XS","type_id":23,"tensor_count":4,"case_count":4,"decoder_max_abs_error":0.0,"native_mlx_matvec_max_abs_error":128.0,"all_exact_f32_bits":true,"all_native_matvecs_within_frozen_ocb":true,"malformed_length_rejected":true}
+  ],
+  "case_modes": ["zero","pattern","minimum_subnormal_scale","maximum_finite_scale"],
+  "total_case_count": 44,
+  "defects_found_in_prior_expected_token_oracle": [
+    {"id":"F017-OFFLINE-Q6-LANE-001","path":"scripts/research/ggml_kquants.py","defect":"Q6_K coordinate groups 32..63 and 64..95 were swapped","status":"REPAIRED_AND_MUTATION_TESTED"},
+    {"id":"F017-OFFLINE-IQ3-LANE-001","path":"scripts/research/iq3_xxs_dequant.py","defect":"IQ3_XXS paired four-coordinate grids were interleaved instead of serialized four-then-four","status":"REPAIRED_AND_MUTATION_TESTED"}
+  ],
+  "independence": "Python scalar format ports do not call Rust, MLX, FFI, checkpoint readers, or production matvec helpers.",
+  "scope": "Two-row synthetic encoded matrices through the secure-loader decoder dispatch and native MLX f32 matvec; this does not prove a real-checkpoint token.",
+  "original_checkpoint_shard_opens": 0,
+  "original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false
+}

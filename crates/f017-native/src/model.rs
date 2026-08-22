@@ -101,6 +101,58 @@ pub trait MatvecBackend {
     fn matvec(&mut self, role: &str, matrix: &Matrix, vector: &[f32]) -> Result<Vec<f32>, String>;
 }
 
+/// Observation boundary for hashes of buffers already produced by the real
+/// graph. Implementations must not request another tensor operation.
+pub trait ExecutionObserver {
+    fn layer(
+        &mut self,
+        layer: usize,
+        layer_input: &[f32],
+        post_attention_residual: &[f32],
+        router_normalized_input: &[f32],
+        selected_expert_ids: &[usize],
+        routing_weights: &[f32],
+        routed_aggregate: &[f32],
+        shared_expert: &[f32],
+        layer_output: &[f32],
+    ) -> Result<(), String>;
+
+    fn final_output(
+        &mut self,
+        hidden: &[f32],
+        normalized: &[f32],
+        logits: &[f32],
+        selected_token: u32,
+    ) -> Result<(), String>;
+}
+
+struct NoopObserver;
+impl ExecutionObserver for NoopObserver {
+    fn layer(
+        &mut self,
+        _layer: usize,
+        _layer_input: &[f32],
+        _post_attention_residual: &[f32],
+        _router_normalized_input: &[f32],
+        _selected_expert_ids: &[usize],
+        _routing_weights: &[f32],
+        _routed_aggregate: &[f32],
+        _shared_expert: &[f32],
+        _layer_output: &[f32],
+    ) -> Result<(), String> {
+        Ok(())
+    }
+    fn final_output(
+        &mut self,
+        _hidden: &[f32],
+        _normalized: &[f32],
+        _logits: &[f32],
+        _selected_token: u32,
+    ) -> Result<(), String> {
+        Ok(())
+    }
+}
+
 pub struct NativeMlxBackend<'a> {
     pub context: &'a stream::MlxContext,
 }
@@ -262,6 +314,16 @@ pub fn execute_one_token(
     config: &ModelConfig,
     token: u32,
 ) -> Result<u32, String> {
+    execute_one_token_observed(source, backend, config, token, &mut NoopObserver)
+}
+
+pub fn execute_one_token_observed(
+    source: &mut impl TensorSource,
+    backend: &mut impl MatvecBackend,
+    config: &ModelConfig,
+    token: u32,
+    observer: &mut impl ExecutionObserver,
+) -> Result<u32, String> {
     config.validate()?;
     if token as usize >= config.vocab {
         return Err("token out of range".into());
@@ -271,6 +333,7 @@ pub fn execute_one_token(
         [token as usize * config.hidden..(token as usize + 1) * config.hidden]
         .to_vec();
     for layer in 0..config.layer_count {
+        let layer_input = x.clone();
         let attn_norm = source.vector(&format!("blk.{layer}.attn_norm.weight"), config.hidden)?;
         let xn = rms_norm(&x, &attn_norm, config.rms_epsilon)?;
         let qa = backend.matvec(
@@ -353,74 +416,90 @@ pub fn execute_one_token(
             &values,
         )?;
         x = residual(&x, &attention)?;
+        let post_attention_residual = x.clone();
         let ffn_norm = source.vector(&format!("blk.{layer}.ffn_norm.weight"), config.hidden)?;
         let fx = rms_norm(&x, &ffn_norm, config.rms_epsilon)?;
-        let ffn = if layer < config.leading_dense_layers {
-            swiglu(
-                source,
-                backend,
-                &format!("blk.{layer}.ffn"),
-                None,
-                false,
-                &fx,
-                config.dense_ffn,
-                config.hidden,
-                1.0,
-            )?
-        } else {
-            let logits = backend.matvec(
-                "router",
-                &source.matrix(
-                    &format!("blk.{layer}.ffn_gate_inp.weight"),
-                    config.expert_count,
-                    config.hidden,
-                )?,
-                &fx,
-            )?;
-            let bias = source.vector(
-                &format!("blk.{layer}.exp_probs_b.bias"),
-                config.expert_count,
-            )?;
-            let (ids, weights) = route(
-                &logits,
-                &bias,
-                config.expert_top_k,
-                config.expert_weight_scale,
-            )?;
-            let mut acc = vec![0.0_f32; config.hidden];
-            for (id, weight) in ids.into_iter().zip(weights) {
-                let part = swiglu(
+        let (ffn, selected_ids, routing_weights, routed_aggregate, shared_expert) =
+            if layer < config.leading_dense_layers {
+                let dense = swiglu(
                     source,
                     backend,
                     &format!("blk.{layer}.ffn"),
-                    Some(id),
+                    None,
                     false,
+                    &fx,
+                    config.dense_ffn,
+                    config.hidden,
+                    1.0,
+                )?;
+                (dense, Vec::new(), Vec::new(), Vec::new(), Vec::new())
+            } else {
+                let logits = backend.matvec(
+                    "router",
+                    &source.matrix(
+                        &format!("blk.{layer}.ffn_gate_inp.weight"),
+                        config.expert_count,
+                        config.hidden,
+                    )?,
+                    &fx,
+                )?;
+                let bias = source.vector(
+                    &format!("blk.{layer}.exp_probs_b.bias"),
+                    config.expert_count,
+                )?;
+                let (ids, weights) = route(
+                    &logits,
+                    &bias,
+                    config.expert_top_k,
+                    config.expert_weight_scale,
+                )?;
+                let mut acc = vec![0.0_f32; config.hidden];
+                for (&id, &weight) in ids.iter().zip(&weights) {
+                    let part = swiglu(
+                        source,
+                        backend,
+                        &format!("blk.{layer}.ffn"),
+                        Some(id),
+                        false,
+                        &fx,
+                        config.expert_ffn,
+                        config.hidden,
+                        weight,
+                    )?;
+                    for (a, p) in acc.iter_mut().zip(part) {
+                        *a = (*a + p) as f32;
+                    }
+                }
+                let routed = acc.clone();
+                let shared = swiglu(
+                    source,
+                    backend,
+                    &format!("blk.{layer}.ffn"),
+                    None,
+                    true,
                     &fx,
                     config.expert_ffn,
                     config.hidden,
-                    weight,
+                    1.0,
                 )?;
-                for (a, p) in acc.iter_mut().zip(part) {
-                    *a = (*a + p) as f32;
+                for (a, p) in acc.iter_mut().zip(&shared) {
+                    *a = (*a + *p) as f32;
                 }
-            }
-            let shared = swiglu(
-                source,
-                backend,
-                &format!("blk.{layer}.ffn"),
-                None,
-                true,
-                &fx,
-                config.expert_ffn,
-                config.hidden,
-                1.0,
-            )?;
-            for (a, p) in acc.iter_mut().zip(shared) {
-                *a = (*a + p) as f32;
-            }
-            acc
-        };
+                let composed = acc.clone();
+                (composed, ids, weights, routed, shared)
+            };
         x = residual(&x, &ffn)?;
+        observer.layer(
+            layer,
+            &layer_input,
+            &post_attention_residual,
+            &fx,
+            &selected_ids,
+            &routing_weights,
+            &routed_aggregate,
+            &shared_expert,
+            &x,
+        )?;
     }
     let normalized = rms_norm(
         &x,
@@ -432,12 +511,14 @@ pub fn execute_one_token(
         &source.matrix("output.weight", config.vocab, config.hidden)?,
         &normalized,
     )?;
-    logits
+    let selected = logits
         .iter()
         .enumerate()
         .max_by(|(ia, a), (ib, b)| a.total_cmp(b).then_with(|| ib.cmp(ia)))
         .map(|(index, _)| index as u32)
-        .ok_or_else(|| "empty logits".into())
+        .ok_or_else(|| "empty logits".to_string())?;
+    observer.final_output(&x, &normalized, &logits, selected)?;
+    Ok(selected)
 }
 
 #[cfg(test)]
