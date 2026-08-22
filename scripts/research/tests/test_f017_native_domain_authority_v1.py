@@ -24,7 +24,12 @@ class NativeDomainAuthorityTests(unittest.TestCase):
         return path
 
     def test_committed_authority_resolves(self) -> None:
-        self.assertEqual(validate(CONTRACT, ROOT)["terminal_count"], 175)
+        result = validate(CONTRACT, ROOT)
+        self.assertEqual(result["terminal_count"], 175)
+        self.assertEqual(
+            result["historical_head"],
+            "f2a7aa38c96b85cf7939c8ed653076732f066222",
+        )
 
     def test_wrong_historical_sha_fails(self) -> None:
         path = self._mutated(lambda value: value["historical_authorities"][0].update(sha256="0" * 64))

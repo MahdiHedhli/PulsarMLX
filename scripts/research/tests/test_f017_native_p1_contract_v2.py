@@ -9,8 +9,10 @@ import importlib.util
 import json
 import os
 import subprocess
+import tarfile
 import tempfile
 import unittest
+from io import BytesIO
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -29,6 +31,27 @@ def load_authorizer():
 
 
 class ExactContract(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._historical_directory = tempfile.TemporaryDirectory(
+            prefix="f017-attempt1-contract-head-"
+        )
+        archive = subprocess.run(
+            ["git", "archive", "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13"],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.PIPE,
+        ).stdout
+        with tarfile.open(fileobj=BytesIO(archive)) as bundle:
+            bundle.extractall(cls._historical_directory.name, filter="data")
+        cls.historical_root = Path(cls._historical_directory.name)
+        cls.historical_contract = cls.historical_root / CONTRACT.relative_to(ROOT)
+        cls.historical_executor = cls.historical_root / EXECUTOR.relative_to(ROOT)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._historical_directory.cleanup()
+
     def validate(self, document: dict[str, object]) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as directory:
             portable = copy.deepcopy(document)
@@ -38,8 +61,16 @@ class ExactContract(unittest.TestCase):
             candidate = Path(directory) / "contract.json"
             candidate.write_text(json.dumps(portable) + "\n")
             return subprocess.run(
-                [str(EXECUTOR), "validate-contract", str(candidate), str(ROOT)],
-                cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                [
+                    str(self.historical_executor),
+                    "validate-contract",
+                    str(candidate),
+                    str(self.historical_root),
+                ],
+                cwd=self.historical_root,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
 
     def validate_machine(self, document: dict[str, object]) -> subprocess.CompletedProcess[str]:
@@ -49,8 +80,13 @@ class ExactContract(unittest.TestCase):
             environment = os.environ.copy()
             environment.update(document["runtime"]["environment"])
             return subprocess.run(
-                [str(EXECUTOR), "machine-preflight", candidate.name, str(ROOT)],
-                cwd=ROOT, env=environment, text=True,
+                [
+                    str(self.historical_executor),
+                    "machine-preflight",
+                    candidate.name,
+                    str(self.historical_root),
+                ],
+                cwd=self.historical_root, env=environment, text=True,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
 
@@ -59,8 +95,20 @@ class ExactContract(unittest.TestCase):
             hashlib.sha256(CONTRACT.read_bytes()).hexdigest(),
             "91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03",
         )
-        result = self.validate(json.loads(CONTRACT.read_text()))
+        result = self.validate(json.loads(self.historical_contract.read_text()))
         self.assertEqual(result.returncode, 0, result.stderr)
+
+        # Attempt-1's exact contract must not silently validate against a later
+        # execution generation whose source bindings changed.
+        current = subprocess.run(
+            [str(EXECUTOR), "validate-contract", str(CONTRACT), str(ROOT)],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        self.assertNotEqual(current.returncode, 0)
+        self.assertIn("repository binding mismatch", current.stderr)
 
     def test_load_bearing_mutations_fail_closed(self) -> None:
         base = json.loads(CONTRACT.read_text())
@@ -111,14 +159,31 @@ class ExactContract(unittest.TestCase):
         self.assertNotEqual(self.validate_machine(runtime_drift).returncode, 0)
 
     def test_inert_human_template_cannot_authorize_or_create_state(self) -> None:
-        state = Path(json.loads(CONTRACT.read_text())["state_root"])
-        self.assertFalse(state.exists())
-        result = subprocess.run(
-            ["/usr/bin/python3", str(AUTHORIZER), "authorize", str(INERT), str(CONTRACT)],
-            cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(state.exists())
+        # Attempt 1's accepted state root is now durably consumed and must not
+        # be removed for a test. Exercise the inert authorization boundary at
+        # an isolated, absent root instead.
+        with tempfile.TemporaryDirectory(prefix="f017-inert-auth-") as directory:
+            state = Path(directory) / "state"
+            portable = json.loads(CONTRACT.read_text())
+            portable["state_root"] = str(state)
+            candidate = Path(directory) / "contract.json"
+            candidate.write_text(json.dumps(portable) + "\n")
+            self.assertFalse(state.exists())
+            result = subprocess.run(
+                [
+                    "/usr/bin/python3",
+                    str(AUTHORIZER),
+                    "authorize",
+                    str(INERT),
+                    str(candidate),
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(state.exists())
 
     def test_operator_authorized_final_reviewer_vocabulary_is_exact(self) -> None:
         authorizer = load_authorizer()

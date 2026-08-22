@@ -68,8 +68,20 @@ def validate(contract_path: Path, repo: Path) -> dict[str, Any]:
         raise AuthorityError("native authority inventory mismatch")
     historical = contract["historical_domain"]
     remote_ref = f"origin/{historical['branch']}"
-    if _git(repo, "rev-parse", remote_ref).decode().strip() != historical["head"]:
-        raise AuthorityError("historical branch head mismatch")
+    # The contract pins an immutable historical authority commit, not the
+    # forever-current tip of the closed branch. CI-policy/evidence commits may
+    # advance that branch without superseding the pinned numerical authority.
+    # Require the pinned object to exist and remain in the remote history.
+    _git(repo, "cat-file", "-e", f"{historical['head']}^{{commit}}")
+    try:
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", historical["head"], remote_ref],
+            cwd=repo,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise AuthorityError("pinned historical authority left remote history") from exc
     required = {
         "branch", "commit", "path", "sha256", "schema", "schema_version", "semantic_role"
     }
