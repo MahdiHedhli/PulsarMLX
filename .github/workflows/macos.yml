@@ -22,9 +22,13 @@ jobs:
           cargo -V
           test "$(uname -m)" = arm64
       - name: Check workspace
-        run: cargo check --workspace --all-targets
+        # f017-native deliberately has no non-native implementation: its
+        # public executor surface is compiled only after the pinned MLX/MLX-C
+        # installation in the dedicated qualification job below. Keep the
+        # general baseline explicit rather than silently compiling a stub.
+        run: cargo check --workspace --exclude f017-native --all-targets
       - name: Test workspace
-        run: cargo test --workspace --no-fail-fast
+        run: cargo test --workspace --exclude f017-native --no-fail-fast
 
   apple-mlx-small-fixtures:
     name: Apple MLX small-fixture validation
