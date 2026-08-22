@@ -2,7 +2,7 @@
   "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
   "authorization_id": "FUTURE_HUMAN_ASSIGNED",
   "branch": "feat/017-rust-native-inference-runtime",
-  "contract_sha256": "1c1423874c10ea3fa4087533775def3524a1a64882abb0f66068b04ea7ce173b",
+  "contract_sha256": "cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb",
   "decision": "NOT_AUTHORIZED_TEMPLATE",
   "domain_declaration": {
     "path": "FUTURE_COMMITTED_PATH",

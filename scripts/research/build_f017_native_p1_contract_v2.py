@@ -58,7 +58,7 @@ def main() -> None:
         "schema": "pulsarmlx.f017.native-bounded-p1-admission-contract/2.0.0",
         "status": "PREPARED_HUMAN_GATE_REQUIRED",
         "branch": "feat/017-rust-native-inference-runtime",
-        "execution_code_head": "22a76e4c248434a1827e81501607f93b0779352e",
+        "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
         "executor": binding("specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1"),
         "code_manifest": [binding(path) for path in CODE],
         "authorities": {

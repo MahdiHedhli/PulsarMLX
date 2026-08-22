@@ -112,7 +112,7 @@
     },
     {
       "path": "crates/f017-native/src/contract.rs",
-      "sha256": "7fe6ea44c942573077cbc7f3130e4e2d6c4f195e297af4c0a7cd094b4680c8e1"
+      "sha256": "db9c6a490e780f0de9f6838025caefef40244cf714ebd57d088f473326a0fbc9"
     },
     {
       "path": "crates/f017-native/src/executor.rs",
@@ -128,7 +128,7 @@
     },
     {
       "path": "crates/f017-native/src/bin/bounded_p1.rs",
-      "sha256": "30da806e1525e98180e0d9290846cd41f170b0888cdad2e90ec0392a114d8750"
+      "sha256": "f257326578de5b2fd1c1b53a7b75e4ed1c95160be8e1f8288ab9d7c4286839ef"
     },
     {
       "path": "crates/gguf/src/lib.rs",
@@ -172,11 +172,11 @@
     },
     {
       "path": "crates/stream/src/lib.rs",
-      "sha256": "39f12a4206068f428f8a0bfe8daecd7f068251e252f03e9f2ccc84cff8de2066"
+      "sha256": "fcb86e27f2760d69d9518e240ed7e00711623c49b7baae48e251644d794a193e"
     },
     {
       "path": "crates/stream/src/p1_domain.rs",
-      "sha256": "a693384579ca22dd919d11a99878834354cbb386dde22dd8c866e9d8de42a9f4"
+      "sha256": "13741f93ecba2df6b76b6514e8bf98312f0ed1fede029567cdfb7c21c8cf558b"
     },
     {
       "path": "crates/stream/src/apple_mlx_bridge.rs",
@@ -191,14 +191,15 @@
       "sha256": "f0dab44abaf6897d7924149a17fb5e4f335f4f51ae945282e4081ef0b862663c"
     }
   ],
-  "execution_code_head": "22a76e4c248434a1827e81501607f93b0779352e",
+  "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
   "executor": {
     "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
-    "sha256": "3894c4d12c93ac4c4f3584d2a9a41370c5074e7ef91402cfd8b16bf698c9c7ba"
+    "sha256": "6f0ad9370caf2582934a917029476f505e1a3792b46cbdfe046c7cda85cf31dc"
   },
   "live_authorization_present": false,
   "normal_validation_can_authorize": false,
   "one_shot": {
+    "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
     "attempts": 1,
     "expected_token": 21615,
     "generated_token_limit": 1,
