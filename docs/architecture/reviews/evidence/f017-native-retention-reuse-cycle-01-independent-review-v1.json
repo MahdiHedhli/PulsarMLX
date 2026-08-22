@@ -1,0 +1,52 @@
+{
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_ADVERSARIAL_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "f6c3ba3489673618c82c40e527488b5d2ea59ba4",
+  "reviewed_artifact_hashes": {
+    "grant": "15b2fbb2504546147fe7747f46004d1661c88d9eb9966fb04e218185f5f57776",
+    "package": "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f",
+    "consumer": "faa8c2eee3158a71419ee95e8e55ad5f4eb87a0fa6ff55c771f02be20d00e2d1",
+    "grant_enforcer": "29df7cc2ed675d8de2976bf9478e46a601aa2eb0e79f34603503a3fe03c9d26f",
+    "validator": "4434686af6eea6b39747b258468aea4789ab774764b6892130368905e5a98f4f",
+    "mutation_tests": "d76c4933fc56833e2870592d3dca1b3932cd68e7356207d73f3af05f47cd185a",
+    "d0": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"
+  },
+  "tests_performed": [
+    "seven reviewed hashes recomputed",
+    "native and historical package roots independently rederived",
+    "five source tuples resolved and 40/40 artifact SHAs attested",
+    "40/40 package/grant cross-consistency and quantized byte geometry",
+    "ledger and canonical graph pins verified",
+    "consumer read set and checkpoint unreachability inspected",
+    "validator PASS and 20/20 mutations rejected",
+    "crate compile and two unit tests PASS"
+  ],
+  "findings": [
+    {
+      "id": "F017-RRC1-F1",
+      "severity": "BLOCKING",
+      "path": "crates/f017-native/src/bin/retained_qualification.rs",
+      "evidence": "D0 requires 10 same-process and 10 fresh-process exact-byte repetitions for 20 stages, while the reviewed one-attempt consumer ran only once and had one fixed capture root.",
+      "failure_mode": "The single granted attempt could not produce the repetition evidence required by its own D0 contract.",
+      "required_repair": "Represent all 20 subruns under one durable qualification event or bind a separately granted determinism consumer."
+    },
+    {
+      "id": "F017-RRC1-F2",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json",
+      "evidence": "Ordinals 10-12 correctly replace an unresolvable historical path/bundle-hash tuple with router reuse authorization v2, but no committed authority-repair record explained the substitution or package-root delta.",
+      "failure_mode": "The substantively correct repair was silent and not independently reconstructible without archaeology.",
+      "required_repair": "Commit an append-only authority-repair record binding the defective tuple, replacement, affected ordinals, and both roots."
+    },
+    {"id":"F017-RRC1-F3","severity":"DEFENSE_IN_DEPTH","path":"crates/f017-native/src/retained.rs","evidence":"Duplicate roles were not marked consumed and the receipt census checked only length.","failure_mode":"A modified consumer could omit one role and duplicate another.","required_repair":"Reject duplicate reads and enforce exact ordinal set."},
+    {"id":"F017-RRC1-F4","severity":"DEFENSE_IN_DEPTH","path":"crates/f017-native/src/retained.rs","evidence":"after_sha256 rehashed the first in-memory buffer rather than an independent descriptor readback.","failure_mode":"Receipt overstated measured AFTER identity.","required_repair":"Perform independent descriptor readback or narrow the claim."},
+    {"id":"F017-RRC1-F5","severity":"DEFENSE_IN_DEPTH","path":"crates/f017-native/src/bin/retained_qualification.rs","evidence":"Durable attempt state and runtime/dylib checks were deferred outside the committed consumer.","failure_mode":"A pre-capture crash or runtime drift could evade local enforcement.","required_repair":"Commit wrapper-owned durable start before reads and runtime identity checks."},
+    {"id":"F017-RRC1-F6","severity":"DEFENSE_IN_DEPTH","path":"scripts/research/test_f017_native_retention_reuse_grant_mutations_v1.py","evidence":"Mutations exercised the Python validator more deeply than the Rust enforcer and source commit ancestry was unchecked.","failure_mode":"Execution-path enforcement could regress independently of the mirror.","required_repair":"Add Rust enforcement tests and verify source commit ancestry."}
+  ],
+  "blocking_findings": 1,
+  "non_blocking_required_findings": 1,
+  "defense_in_depth_findings": 4,
+  "verdict": "REJECT",
+  "statement": "Roots, hashes, source tuples, checkpoint unreachability, and scope held. Acceptance failed because D0 repetition evidence was unrepresentable and the ordinal 10-12 authority repair was undocumented. No retained bytes, checkpoint data, qualification, P1, or authorization was used."
+}

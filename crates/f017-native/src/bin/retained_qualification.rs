@@ -11,28 +11,93 @@ use stream::f017_apple_serial_f32::{
 use f017_native::retained::{
     load_grant, load_package, GrantedInputs, RetainedPackage as Package, TensorSpec,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
-use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct CaptureRow {
     ordinal: usize,
     stage_id: String,
     shape: Vec<usize>,
-    dtype: &'static str,
+    dtype: String,
     byte_length: usize,
     sha256: String,
     path: String,
     direct_production_copy: bool,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CaptureManifest {
+    schema: String,
+    schema_version: String,
+    stages: Vec<CaptureRow>,
+    s2_sha256: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct QualificationOwner {
+    schema: String,
+    event_id: String,
+    owner_pid: u32,
+    ownership_nonce: String,
+    state: String,
+    same_process_runs: u32,
+    fresh_process_runs: u32,
+    retry: bool,
+    resume: bool,
+}
+
 fn sha_bytes(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
+}
+
+fn sha_file(path: &Path) -> Result<String, String> {
+    let bytes = fs::read(path).map_err(|e| format!("RUNTIME_FILE_READ:{e}"))?;
+    Ok(sha_bytes(&bytes))
+}
+
+fn runtime_preflight(package: &Package) -> Result<(), String> {
+    const PREFIX: &str = "/Users/mhedhli/.local/pulsarmlx/mlx-native-0.31.2-mlxc-0.6.0-a4b08e1";
+    let prefix = Path::new(PREFIX);
+    let libmlx = prefix.join("lib/libmlx.dylib");
+    let libmlxc = prefix.join("lib/libmlxc.dylib");
+    for path in [&libmlx, &libmlxc] {
+        let metadata = fs::symlink_metadata(path).map_err(|e| format!("RUNTIME_STAT:{e}"))?;
+        if !metadata.file_type().is_file() || metadata.file_type().is_symlink() {
+            return Err("RUNTIME_LIBRARY_POLICY".into());
+        }
+    }
+    let brand = std::process::Command::new("/usr/sbin/sysctl")
+        .args(["-n", "machdep.cpu.brand_string"])
+        .output()
+        .map_err(|e| format!("MACHINE_BRAND:{e}"))?;
+    let brand = String::from_utf8(brand.stdout).map_err(|_| "MACHINE_BRAND_UTF8")?;
+    let required_dyld = prefix.join("lib").display().to_string();
+    if !brand.ends_with('\n')
+        || brand.trim_end_matches(['\r', '\n']) != "Apple M1 Ultra"
+        || std::env::consts::ARCH != "aarch64"
+        || std::env::var("PULSAR_REQUIRE_NATIVE_MLX").as_deref() != Ok("1")
+        || std::env::var("MLX_PREFIX").as_deref() != Ok(PREFIX)
+        || std::env::var("MLX_C_PREFIX").as_deref() != Ok(PREFIX)
+        || std::env::var("DYLD_LIBRARY_PATH").as_deref() != Ok(required_dyld.as_str())
+        || sha_file(&libmlx)? != package.runtime.libmlx_sha256
+        || sha_file(&libmlxc)? != package.runtime.libmlxc_sha256
+        || package.runtime.mlx_version != "0.31.2"
+        || package.runtime.mlx_c_version != "0.6.0"
+        || package.runtime.thread_limits.iter().any(|(name, expected)| {
+            expected != "1" || std::env::var(name).as_deref() != Ok("1")
+        })
+    {
+        return Err("PINNED_RUNTIME_OR_MACHINE_IDENTITY".into());
+    }
+    Ok(())
 }
 
 fn fsync_directory(path: &Path) -> Result<(), String> {
@@ -257,7 +322,7 @@ impl CaptureSink for DirectoryCapture {
             ordinal: self.rows.len(),
             stage_id: stage_id.into(),
             shape: shape.to_vec(),
-            dtype: "little-endian-f32",
+            dtype: "little-endian-f32".into(),
             byte_length: bytes.len(),
             sha256: published_sha,
             path: name,
@@ -284,7 +349,7 @@ impl CaptureSink for DirectoryCapture {
             ordinal: self.rows.len(),
             stage_id: stage_id.into(),
             shape: shape.to_vec(),
-            dtype: "little-endian-u16",
+            dtype: "little-endian-u16".into(),
             byte_length: bytes.len(),
             sha256: published_sha,
             path: name,
@@ -393,8 +458,7 @@ fn validate_package(package: &Package) -> Result<(), String> {
     Ok(())
 }
 
-fn main() -> Result<(), String> {
-    let arguments = std::env::args().collect::<Vec<_>>();
+fn execute_one(arguments: &[String], capture_root: PathBuf) -> Result<(), String> {
     let package_at = arguments
         .iter()
         .position(|v| v == "--package")
@@ -416,11 +480,9 @@ fn main() -> Result<(), String> {
     if !arguments.iter().any(|v| v == "--execute") {
         return Err("MODE".into());
     }
-    let owner_path = package.fixed_attempt_root.join("owner.json");
-    let owner_sha = std::env::var("PULSARMLX_F017_OWNED_ATTEMPT_SHA256")
-        .map_err(|_| "WRAPPER_OWNERSHIP_REQUIRED")?;
-    let _owner = open_once(&owner_path, &owner_sha)?;
-    let capture_root = granted.grant().allowed_output_root.clone();
+    if capture_root.parent() != Some(granted.grant().allowed_output_root.as_path()) {
+        return Err("OUTPUT_NOT_GRANT_DERIVED".into());
+    }
     if capture_root.exists() {
         return Err("CAPTURE_ROOT_EXISTS".into());
     }
@@ -469,7 +531,7 @@ fn main() -> Result<(), String> {
     if capture_root.exists() {
         return Err("CAPTURE_ROOT_CHANGED_DURING_PREFLIGHT".into());
     }
-    if granted.receipts().len() != 40 {
+    if !granted.complete_census() {
         return Err("RETAINED_READ_RECEIPT_CENSUS".into());
     }
     fs::create_dir(&capture_root).map_err(|e| format!("CAPTURE_ROOT: {e}"))?;
@@ -503,4 +565,304 @@ fn main() -> Result<(), String> {
     }
     #[cfg(not(all(target_os = "macos", pulsar_native_mlx)))]
     Err("PINNED_NATIVE_MLX_REQUIRED".into())
+}
+
+fn argument_value<'a>(arguments: &'a [String], name: &str) -> Result<&'a str, String> {
+    arguments
+        .iter()
+        .position(|value| value == name)
+        .and_then(|index| arguments.get(index + 1))
+        .map(String::as_str)
+        .ok_or_else(|| format!("MISSING_ARGUMENT:{name}"))
+}
+
+fn qualification_owner(
+    event_id: &str,
+    owner_pid: u32,
+    ownership_nonce: String,
+    state: &str,
+) -> QualificationOwner {
+    QualificationOwner {
+        schema: "pulsarmlx.f017.native-retained-qualification-owner/1.0.0".into(),
+        event_id: event_id.into(),
+        owner_pid,
+        ownership_nonce,
+        state: state.into(),
+        same_process_runs: 10,
+        fresh_process_runs: 10,
+        retry: false,
+        resume: false,
+    }
+}
+
+fn verify_worker_owner(arguments: &[String]) -> Result<(Package, PathBuf), String> {
+    let package = load_package(Path::new(argument_value(arguments, "--package")?))?;
+    let grant = load_grant(Path::new(argument_value(arguments, "--grant")?))?;
+    let run: usize = argument_value(arguments, "--run")?
+        .parse()
+        .map_err(|_| "WORKER_RUN")?;
+    if run >= 10 {
+        return Err("WORKER_RUN_RANGE".into());
+    }
+    let owner_path = package.fixed_attempt_root.join("owner.json");
+    let expected_sha = std::env::var("PULSARMLX_F017_QUALIFICATION_OWNER_SHA256")
+        .map_err(|_| "WORKER_OWNER_SHA")?;
+    let bytes = open_once(&owner_path, &expected_sha)?;
+    let owner: QualificationOwner = f017_native::json::parse_json_no_duplicates(&bytes)?;
+    let expected_pid = std::env::var("PULSARMLX_F017_QUALIFICATION_OWNER_PID")
+        .map_err(|_| "WORKER_OWNER_PID")?
+        .parse::<u32>()
+        .map_err(|_| "WORKER_OWNER_PID")?;
+    let expected_nonce = std::env::var("PULSARMLX_F017_QUALIFICATION_OWNER_NONCE")
+        .map_err(|_| "WORKER_OWNER_NONCE")?;
+    if owner.owner_pid != expected_pid
+        || owner.ownership_nonce != expected_nonce
+        || owner.state != "CONSUMING"
+        || owner.retry
+        || owner.resume
+        || unsafe { libc::kill(expected_pid as i32, 0) } != 0
+    {
+        return Err("WORKER_OWNER_MISMATCH".into());
+    }
+    Ok((package, grant.allowed_output_root.join(format!("fresh-{run:02}"))))
+}
+
+fn capture_manifest(path: &Path) -> Result<CaptureManifest, String> {
+    f017_native::json::parse_json_no_duplicates(
+        &fs::read(path).map_err(|error| format!("CAPTURE_MANIFEST_READ:{error}"))?,
+    )
+}
+
+fn bank_batch_result(output_root: &Path, owner: &QualificationOwner) -> Result<String, String> {
+    let mut manifests = Vec::with_capacity(20);
+    for family in ["same", "fresh"] {
+        for run in 0..10 {
+            let root = output_root.join(format!("{family}-{run:02}"));
+            let manifest = capture_manifest(&root.join("capture-manifest.json"))?;
+            if manifest.schema != "pulsarmlx.f017.apple-production-serial-f32-capture-manifest"
+                || manifest.schema_version != "1.0.0"
+                || manifest.stages.len() != 34
+            {
+                return Err("CAPTURE_MANIFEST_CENSUS".into());
+            }
+            let reads: serde_json::Value = f017_native::json::parse_json_no_duplicates(
+                &fs::read(root.join("retained-read-receipts.json"))
+                    .map_err(|error| format!("READ_RECEIPTS:{error}"))?,
+            )?;
+            if reads.get("actual_count").and_then(|value| value.as_u64()) != Some(40) {
+                return Err("PER_RUN_READ_RECEIPT_CENSUS".into());
+            }
+            manifests.push((family, run, manifest));
+        }
+    }
+    let baseline = &manifests[0].2;
+    for (_, _, manifest) in manifests.iter().skip(1) {
+        if manifest.s2_sha256 != baseline.s2_sha256 {
+            return Err("D3_5_S2_REPEAT_DIVERGENCE".into());
+        }
+        for (expected, actual) in baseline.stages.iter().zip(&manifest.stages) {
+            if expected.ordinal != actual.ordinal
+                || expected.stage_id != actual.stage_id
+                || expected.shape != actual.shape
+                || expected.dtype != actual.dtype
+                || expected.byte_length != actual.byte_length
+                || expected.sha256 != actual.sha256
+            {
+                return Err(format!("D3_5_EARLIEST_DIVERGENCE:{}", expected.stage_id));
+            }
+        }
+    }
+    let result = serde_json::json!({
+        "schema":"pulsarmlx.f017.native-retained-qualification-repeat-result/1.0.0",
+        "event_id":owner.event_id,
+        "owner_pid":owner.owner_pid,
+        "ownership_nonce":owner.ownership_nonce,
+        "same_process_runs":10,
+        "fresh_process_runs":10,
+        "total_runs":20,
+        "stages_per_run":34,
+        "retained_reads_per_run":40,
+        "retained_read_receipts":800,
+        "all_stage_bytes_exact":true,
+        "earliest_divergence":null,
+        "s2_sha256":baseline.s2_sha256,
+        "original_checkpoint_reads":0,
+        "original_checkpoint_shard_opens":0,
+        "historical_payload_ledger_delta":0,
+    });
+    let bytes = serde_json::to_vec_pretty(&result).map_err(|e| format!("BATCH_JSON:{e}"))?;
+    publish_bytes(&output_root.join("repeat-result.json"), &bytes)
+}
+
+fn terminalize_batch(
+    attempt_root: &Path,
+    output_root: &Path,
+    owner: &QualificationOwner,
+    state: &str,
+    repeat_result_sha256: Option<&str>,
+) -> Result<(), String> {
+    let owner_bytes = open_once(&attempt_root.join("owner.json"), &sha_bytes(
+        &fs::read(attempt_root.join("owner.json")).map_err(|e| format!("OWNER_READ:{e}"))?,
+    ))?;
+    let observed: QualificationOwner = f017_native::json::parse_json_no_duplicates(&owner_bytes)?;
+    if observed.owner_pid != owner.owner_pid
+        || observed.ownership_nonce != owner.ownership_nonce
+        || observed.event_id != owner.event_id
+    {
+        return Err("TERMINAL_NOT_OWNER".into());
+    }
+    let mut receipt_count = 0_u32;
+    if output_root.is_dir() {
+        for entry in fs::read_dir(output_root).map_err(|e| format!("OUTPUT_CENSUS:{e}"))? {
+            let entry = entry.map_err(|e| format!("OUTPUT_CENSUS_ENTRY:{e}"))?;
+            let receipt_path = entry.path().join("retained-read-receipts.json");
+            if receipt_path.is_file() {
+                let receipt: serde_json::Value = f017_native::json::parse_json_no_duplicates(
+                    &fs::read(&receipt_path).map_err(|e| format!("TERMINAL_RECEIPT_READ:{e}"))?,
+                )?;
+                receipt_count = receipt_count
+                    .checked_add(receipt.get("actual_count").and_then(|v| v.as_u64()).ok_or("TERMINAL_RECEIPT_COUNT")? as u32)
+                    .ok_or("TERMINAL_RECEIPT_OVERFLOW")?;
+            }
+        }
+    }
+    if repeat_result_sha256.is_some() && receipt_count != 800 {
+        return Err("SUCCESS_TERMINAL_RECEIPT_CENSUS".into());
+    }
+    let terminal = serde_json::json!({
+        "schema":"pulsarmlx.f017.native-retained-qualification-terminal/1.0.0",
+        "event_id":owner.event_id,
+        "owner_pid":owner.owner_pid,
+        "ownership_nonce":owner.ownership_nonce,
+        "state":state,
+        "repeat_result_sha256":repeat_result_sha256,
+        "authoritative_retained_read_receipt_count":receipt_count,
+        "expected_success_receipt_count":800,
+        "retry_permitted":false,
+        "resume_permitted":false,
+    });
+    let bytes = serde_json::to_vec_pretty(&terminal).map_err(|e| format!("TERMINAL_JSON:{e}"))?;
+    publish_bytes(&attempt_root.join("terminal.json"), &bytes)?;
+    Ok(())
+}
+
+fn execute_batch(arguments: &[String]) -> Result<(), String> {
+    let package = load_package(Path::new(argument_value(arguments, "--package")?))?;
+    let grant = load_grant(Path::new(argument_value(arguments, "--grant")?))?;
+    runtime_preflight(&package)?;
+    if package.fixed_attempt_root.exists() || grant.allowed_output_root.exists() {
+        return Err("QUALIFICATION_EVENT_ALREADY_CONSUMED_OR_PARTIAL".into());
+    }
+    fs::create_dir(&package.fixed_attempt_root).map_err(|e| format!("ATTEMPT_ROOT:{e}"))?;
+    fs::set_permissions(&package.fixed_attempt_root, fs::Permissions::from_mode(0o700))
+        .map_err(|e| format!("ATTEMPT_MODE:{e}"))?;
+    fsync_directory(package.fixed_attempt_root.parent().ok_or("ATTEMPT_PARENT")?)?;
+    let owner_pid = std::process::id();
+    let nonce = format!("{}-{owner_pid}-{}", grant.grant_id, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|_| "CLOCK")?.as_nanos());
+    let owner = qualification_owner(&grant.grant_id, owner_pid, nonce.clone(), "CONSUMING");
+    let owner_bytes = serde_json::to_vec_pretty(&owner).map_err(|e| format!("OWNER_JSON:{e}"))?;
+    let owner_sha = publish_bytes(&package.fixed_attempt_root.join("owner.json"), &owner_bytes)?;
+    publish_bytes(&package.fixed_attempt_root.join("durable-attempt-start.json"), &owner_bytes)?;
+    fs::create_dir(&grant.allowed_output_root).map_err(|e| format!("OUTPUT_ROOT:{e}"))?;
+    fsync_directory(grant.allowed_output_root.parent().ok_or("OUTPUT_PARENT")?)?;
+
+    let mut worker_arguments = arguments.to_vec();
+    worker_arguments.push("--execute".into());
+    let outcome = (|| {
+        for run in 0..10 {
+            execute_one(&worker_arguments, grant.allowed_output_root.join(format!("same-{run:02}")))?;
+        }
+        let executable = std::env::current_exe().map_err(|e| format!("CURRENT_EXE:{e}"))?;
+        for run in 0..10 {
+            let status = std::process::Command::new(&executable)
+                .arg("--package").arg(argument_value(arguments, "--package")?)
+                .arg("--grant").arg(argument_value(arguments, "--grant")?)
+                .arg("--fresh-worker").arg("--run").arg(run.to_string())
+                .env("PULSARMLX_F017_QUALIFICATION_OWNER_SHA256", &owner_sha)
+                .env("PULSARMLX_F017_QUALIFICATION_OWNER_PID", owner_pid.to_string())
+                .env("PULSARMLX_F017_QUALIFICATION_OWNER_NONCE", &nonce)
+                .status().map_err(|e| format!("FRESH_PROCESS:{e}"))?;
+            if !status.success() { return Err(format!("FRESH_PROCESS_EXIT:{run}:{status}")); }
+        }
+        bank_batch_result(&grant.allowed_output_root, &owner)
+    })();
+    match outcome {
+        Ok(result_sha) => terminalize_batch(&package.fixed_attempt_root, &grant.allowed_output_root, &owner, "COMPLETE", Some(&result_sha)),
+        Err(error) => {
+            let terminal = terminalize_batch(&package.fixed_attempt_root, &grant.allowed_output_root, &owner, "TERMINAL_FAILURE", None);
+            terminal.and(Err(error))
+        }
+    }
+}
+
+fn main() -> Result<(), String> {
+    let arguments = std::env::args().collect::<Vec<_>>();
+    if arguments.iter().any(|value| value == "--preflight-only") {
+        return execute_one(&arguments, PathBuf::from("/preflight-not-used"));
+    }
+    if arguments.iter().any(|value| value == "--fresh-worker") {
+        let (_, output) = verify_worker_owner(&arguments)?;
+        let mut worker_arguments = arguments.clone();
+        worker_arguments.push("--execute".into());
+        return execute_one(&worker_arguments, output);
+    }
+    if arguments.iter().any(|value| value == "--execute-batch") {
+        return execute_batch(&arguments);
+    }
+    Err("MODE_REQUIRES_PREFLIGHT_OR_WRAPPER_OWNED_BATCH".into())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_root(label: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "pulsarmlx-f017-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ))
+    }
+
+    fn seed_run(root: &Path, family: &str, run: usize) {
+        let run_root = root.join(format!("{family}-{run:02}"));
+        fs::create_dir(&run_root).unwrap();
+        let stages = (0..34).map(|ordinal| CaptureRow {
+            ordinal,
+            stage_id: format!("stage-{ordinal:02}"),
+            shape: vec![1],
+            dtype: "little-endian-f32".into(),
+            byte_length: 4,
+            sha256: format!("{ordinal:064x}"),
+            path: format!("{ordinal:02}.f32le"),
+            direct_production_copy: true,
+        }).collect::<Vec<_>>();
+        fs::write(run_root.join("capture-manifest.json"), serde_json::to_vec(&serde_json::json!({
+            "schema":"pulsarmlx.f017.apple-production-serial-f32-capture-manifest",
+            "schema_version":"1.0.0","stages":stages,"s2_sha256":"f".repeat(64)
+        })).unwrap()).unwrap();
+        fs::write(run_root.join("retained-read-receipts.json"), br#"{"actual_count":40}"#).unwrap();
+    }
+
+    #[test]
+    fn repeat_batch_requires_10_same_and_10_fresh_with_exact_stage_bytes() {
+        let root = test_root("repeat-batch");
+        fs::create_dir(&root).unwrap();
+        for family in ["same", "fresh"] {
+            for run in 0..10 { seed_run(&root, family, run); }
+        }
+        let owner = qualification_owner("event", 1, "nonce".into(), "CONSUMING");
+        assert!(bank_batch_result(&root, &owner).is_ok());
+        fs::set_permissions(root.join("repeat-result.json"), fs::Permissions::from_mode(0o600)).unwrap();
+        fs::remove_file(root.join("repeat-result.json")).unwrap();
+        let changed = root.join("fresh-09/capture-manifest.json");
+        let mut manifest: serde_json::Value = serde_json::from_slice(&fs::read(&changed).unwrap()).unwrap();
+        manifest["stages"][7]["sha256"] = serde_json::Value::String("e".repeat(64));
+        fs::write(&changed, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        assert_eq!(bank_batch_result(&root, &owner).unwrap_err(), "D3_5_EARLIEST_DIVERGENCE:stage-07");
+        fs::remove_dir_all(&root).unwrap();
+    }
 }

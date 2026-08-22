@@ -29,15 +29,17 @@
   },
   "retained_qualification": {
     "consumer_id": "F017-NATIVE-REPRESENTATIVE-LAYER3-QUALIFICATION-1",
-    "runner_source": {"path": "crates/f017-native/src/bin/retained_qualification.rs", "sha256": "faa8c2eee3158a71419ee95e8e55ad5f4eb87a0fa6ff55c771f02be20d00e2d1"},
-    "grant_enforcer": {"path": "crates/f017-native/src/retained.rs", "sha256": "29df7cc2ed675d8de2976bf9478e46a601aa2eb0e79f34603503a3fe03c9d26f"},
+    "runner_source": {"path": "crates/f017-native/src/bin/retained_qualification.rs", "sha256": "ea4280f4c8a766b80e530888de869ef0ccacee64326133ba14d285b5637a0664"},
+    "grant_enforcer": {"path": "crates/f017-native/src/retained.rs", "sha256": "bbab9aabc184b709c4375da5edcc7ac874ac01ee16801b8613ee43c4427158c5"},
+    "authority_repair": {"path": "docs/architecture/reviews/evidence/f017-native-retained-router-authority-repair-v1.json", "sha256": "5e2bb009b630551d5d65438e080f4dc2fe5f9455bbbadf09955a58666b65078a"},
     "canonical_graph": {"path": "crates/stream/src/f017_apple_serial_f32.rs", "sha256": "f27df2391669349c32051030f3b1450686c8ced560251f1fc58a5b7b476c8792", "historical_source_commit": "2deb3c99cb783da832f8b2274c985557191e0233"},
     "tensor_count": 40,
     "total_bytes": 257305600,
     "checkpoint_fallback": false,
     "per_read_receipts": true,
     "same_descriptor_consumed": true,
-    "scope": "REPRESENTATIVE_LAYER3_S0_TO_S2_ONLY_NOT_FULL_FORWARD"
+    "scope": "REPRESENTATIVE_LAYER3_S0_TO_S2_ONLY_NOT_FULL_FORWARD",
+    "qualification_event": {"attempts":1,"same_process_runs":10,"fresh_process_runs":10,"total_runs":20,"stages_per_run":34,"retained_read_receipts":800,"repeat_identity":"ALL_34_STAGE_BYTES_EXACT"}
   },
   "runtime": {
     "mlx": "0.31.2",

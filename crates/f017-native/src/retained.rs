@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, OpenOptions};
-use std::io::Read;
+use std::io::{Read, Seek, SeekFrom};
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
 
 pub const CONSUMER_ID: &str = "F017-NATIVE-REPRESENTATIVE-LAYER3-QUALIFICATION-1";
 pub const GRANT_SCHEMA: &str = "pulsarmlx.f017.native-retained-reuse-grant/1.0.0";
 pub const PACKAGE_SCHEMA: &str = "pulsarmlx.f017.apple-production-serial-f32-package";
-pub const EXPECTED_GRANT_SHA256: &str = "15b2fbb2504546147fe7747f46004d1661c88d9eb9966fb04e218185f5f57776";
+pub const EXPECTED_GRANT_SHA256: &str = "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28";
 pub const EXPECTED_PACKAGE_SHA256: &str = "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f";
 pub const EXPECTED_D0_SHA256: &str = "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9";
 pub const EXPECTED_LEDGER_SHA256: &str = "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e";
@@ -53,6 +53,12 @@ pub struct RetainedReuseGrant {
     pub tensor_count: usize,
     pub total_bytes: u64,
     pub attempts: u32,
+    pub qualification_runs: u32,
+    pub same_process_runs: u32,
+    pub fresh_process_runs: u32,
+    pub stages_per_run: u32,
+    pub retained_reads_per_run: u32,
+    pub expected_retained_read_receipts: u32,
     pub checkpoint_fallback: bool,
     pub original_checkpoint_reads: u32,
     pub original_checkpoint_shard_opens: u32,
@@ -130,6 +136,7 @@ pub struct GrantedInputs {
     grant: RetainedReuseGrant,
     by_role: BTreeMap<String, AllowedRead>,
     receipts: Vec<RetainedReadReceipt>,
+    consumed_roles: BTreeSet<String>,
 }
 
 pub fn sha256_bytes(bytes: &[u8]) -> String {
@@ -185,6 +192,12 @@ impl GrantedInputs {
         if grant.schema != GRANT_SCHEMA
             || grant.consumer_id != CONSUMER_ID
             || grant.attempts != 1
+            || grant.qualification_runs != 20
+            || grant.same_process_runs != 10
+            || grant.fresh_process_runs != 10
+            || grant.stages_per_run != 34
+            || grant.retained_reads_per_run != 40
+            || grant.expected_retained_read_receipts != 800
             || grant.checkpoint_fallback
             || grant.original_checkpoint_reads != 0
             || grant.original_checkpoint_shard_opens != 0
@@ -238,10 +251,14 @@ impl GrantedInputs {
             grant,
             by_role,
             receipts: Vec::new(),
+            consumed_roles: BTreeSet::new(),
         })
     }
 
     pub fn read(&mut self, role: &str) -> Result<Vec<u8>, String> {
+        if !self.consumed_roles.insert(role.to_owned()) {
+            return Err(format!("DUPLICATE_RETAINED_READ:{role}"));
+        }
         let allowed = self
             .by_role
             .get(role)
@@ -272,6 +289,11 @@ impl GrantedInputs {
         if before_sha != allowed.sha256 || bytes.len() as u64 != allowed.byte_count {
             return Err(format!("READ_IDENTITY:{role}"));
         }
+        file.seek(SeekFrom::Start(0))
+            .map_err(|e| format!("READBACK_SEEK:{e}"))?;
+        let mut readback = Vec::with_capacity(allowed.byte_count as usize);
+        file.read_to_end(&mut readback)
+            .map_err(|e| format!("READBACK_BYTES:{e}"))?;
         let after = file.metadata().map_err(|e| format!("READ_AFTER:{e}"))?;
         if opened.dev() != after.dev()
             || opened.ino() != after.ino()
@@ -279,7 +301,10 @@ impl GrantedInputs {
         {
             return Err(format!("READ_AFTER_IDENTITY:{role}"));
         }
-        let after_sha = sha256_bytes(&bytes);
+        let after_sha = sha256_bytes(&readback);
+        if readback.len() as u64 != allowed.byte_count || after_sha != allowed.sha256 {
+            return Err(format!("READBACK_IDENTITY:{role}"));
+        }
         self.receipts.push(RetainedReadReceipt {
             schema: "pulsarmlx.f017.native-retained-read-receipt/1.0.0",
             grant_id: self.grant.grant_id.clone(),
@@ -304,6 +329,13 @@ impl GrantedInputs {
         &self.receipts
     }
 
+    pub fn complete_census(&self) -> bool {
+        self.receipts.len() == 40
+            && self.consumed_roles.len() == 40
+            && self.receipts.iter().map(|row| row.ordinal).collect::<BTreeSet<_>>()
+                == (0..40).collect::<BTreeSet<_>>()
+    }
+
     pub fn grant(&self) -> &RetainedReuseGrant {
         &self.grant
     }
@@ -312,20 +344,27 @@ impl GrantedInputs {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::os::unix::fs::PermissionsExt;
 
-    #[test]
-    fn grant_requires_exact_closed_census() {
-        let grant = RetainedReuseGrant {
+    fn fake_grant() -> RetainedReuseGrant {
+        RetainedReuseGrant {
             schema: GRANT_SCHEMA.into(), grant_id: "g".into(), consumer_id: CONSUMER_ID.into(),
             consumer_source_path: "x".into(), consumer_source_sha256: "0".repeat(64),
             d0_sha256: "1".repeat(64), historical_master_ledger_sha256: "2".repeat(64),
             historical_package_root_sha256: "3".repeat(64),
             package_root_sha256: "3".repeat(64), tensor_count: 40, total_bytes: 0,
-            attempts: 1, checkpoint_fallback: false, original_checkpoint_reads: 0,
+            attempts: 1, qualification_runs:20, same_process_runs:10, fresh_process_runs:10,
+            stages_per_run:34, retained_reads_per_run:40, expected_retained_read_receipts:800,
+            checkpoint_fallback: false, original_checkpoint_reads: 0,
             original_checkpoint_shard_opens: 0, historical_payload_ledger_delta: 0,
             terminal_semantics: "ONE_ATTEMPT_NO_RETRY_NO_RESUME_COMPLETE_OR_TERMINAL_FAILURE".into(),
             allowed_output_root: PathBuf::from("/tmp/out"), allowed_reads: vec![],
-        };
+        }
+    }
+
+    #[test]
+    fn grant_requires_exact_closed_census() {
+        let grant = fake_grant();
         let package = RetainedPackage {
             schema: PACKAGE_SCHEMA.into(), schema_version: "1.0.0".into(), graph_version: "g".into(),
             execution_code_head: "h".into(), fixed_attempt_root: "/tmp/a".into(), fixed_capture_root: "/tmp/c".into(),
@@ -336,5 +375,33 @@ mod tests {
             libmlxc_sha256:"x".into(), backend:"b".into(), thread_limits:BTreeMap::new() }, checkpoint_paths: vec![],
         };
         assert!(GrantedInputs::validate(grant, &package).is_err());
+    }
+
+    #[test]
+    fn execution_enforcer_rejects_duplicate_read_and_measures_readback() {
+        let root = std::env::temp_dir().join(format!("pulsarmlx-f017-read-{}", std::process::id()));
+        fs::create_dir(&root).unwrap();
+        let path = root.join("input.bin");
+        fs::write(&path, b"retained").unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o400)).unwrap();
+        let allowed = AllowedRead {
+            ordinal:0, role:"r".into(), canonical_tensor_id:"x".into(), destination_relative_path:"tensors/x".into(),
+            path:path.clone(), byte_count:8, sha256:sha256_bytes(b"retained"), encoding:"RAW".into(),
+            quantization:"NONE".into(), decoder_binding:"RAW".into(), shape:vec![8],
+            source_branch:"feat/017-real-checkpoint-runner".into(), source_commit:"0".repeat(40),
+            source_authority_path:"x".into(), source_authority_sha256:"0".repeat(64), source_result_event:"x".into(),
+        };
+        let mut inputs = GrantedInputs {
+            grant: fake_grant(),
+            by_role: BTreeMap::from([("r".into(), allowed)]),
+            receipts: Vec::new(),
+            consumed_roles: BTreeSet::new(),
+        };
+        assert_eq!(inputs.read("r").unwrap(), b"retained");
+        assert_eq!(inputs.receipts[0].expected_sha256, inputs.receipts[0].after_sha256);
+        assert_eq!(inputs.read("r").unwrap_err(), "DUPLICATE_RETAINED_READ:r");
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        fs::remove_file(&path).unwrap();
+        fs::remove_dir(&root).unwrap();
     }
 }

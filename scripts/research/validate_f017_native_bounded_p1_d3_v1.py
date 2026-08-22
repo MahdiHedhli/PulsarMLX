@@ -17,7 +17,7 @@ def main():
         for item in section.values():
             if sha(ROOT / item["path"]) != item["sha256"]:
                 raise SystemExit(f"bound hash: {item['path']}")
-    for item in [data["retained_qualification"]["runner_source"], data["retained_qualification"]["grant_enforcer"], data["retained_qualification"]["canonical_graph"], *data["load_bearing_sources"]]:
+    for item in [data["retained_qualification"]["runner_source"], data["retained_qualification"]["grant_enforcer"], data["retained_qualification"]["authority_repair"], data["retained_qualification"]["canonical_graph"], *data["load_bearing_sources"]]:
         if sha(ROOT / item["path"]) != item["sha256"]:
             raise SystemExit(f"source hash: {item['path']}")
     own = data["ownership_domain"]
@@ -26,6 +26,8 @@ def main():
     retained = data["retained_qualification"]
     if retained["tensor_count"] != 40 or retained["checkpoint_fallback"] or not retained["per_read_receipts"]:
         raise SystemExit("retained")
+    if retained["qualification_event"] != {"attempts":1,"same_process_runs":10,"fresh_process_runs":10,"total_runs":20,"stages_per_run":34,"retained_read_receipts":800,"repeat_identity":"ALL_34_STAGE_BYTES_EXACT"}:
+        raise SystemExit("qualification event")
     if data["instantiability"]["real_full_checkpoint_bounded_p1_math"] != "NOT_YET_INSTANTIABLE_BLOCKS_FINAL_DOMAIN_ACCEPTANCE":
         raise SystemExit("scope honesty")
     if any(data["phase_invariants"].values()):

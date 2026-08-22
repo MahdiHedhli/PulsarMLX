@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.native-retention-reuse-review-result",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "reviewer_model": "claude-fable-5",
+  "reviewed_head": "f6c3ba3489673618c82c40e527488b5d2ea59ba4",
+  "verdict": "REJECT",
+  "blocking_findings": ["F017-RRC1-F1"],
+  "non_blocking_required_findings": ["F017-RRC1-F2"],
+  "defense_in_depth_findings": ["F017-RRC1-F3", "F017-RRC1-F4", "F017-RRC1-F5", "F017-RRC1-F6"],
+  "repair_map": {
+    "F017-RRC1-F1": "ONE_DURABLE_EVENT_10_SAME_PROCESS_PLUS_10_FRESH_PROCESS_34_STAGE_EXACT_BATCH",
+    "F017-RRC1-F2": "APPEND_ONLY_ROUTER_AUTHORITY_REPAIR_RECORD",
+    "F017-RRC1-F3": "DUPLICATE_READ_REJECTION_AND_EXACT_ORDINAL_CENSUS",
+    "F017-RRC1-F4": "INDEPENDENT_SAME_DESCRIPTOR_READBACK",
+    "F017-RRC1-F5": "DURABLE_OWNER_BEFORE_READS_RUNTIME_HASH_AND_MACHINE_PREFLIGHT",
+    "F017-RRC1-F6": "RUST_ENFORCER_TEST_AND_SOURCE_BRANCH_ANCESTRY"
+  },
+  "retained_qualification_executed": false,
+  "checkpoint_reads": 0,
+  "real_p1_executed": false
+}

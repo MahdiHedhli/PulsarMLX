@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.f017.native-retained-authority-repair",
+  "schema_version": "1.0.0",
+  "repair_id": "F017-NATIVE-RETAINED-ROUTER-AUTHORITY-REPAIR-1",
+  "status": "APPEND_ONLY_CONSUMER_SIDE_AUTHORITY_REPAIR",
+  "finding": "F017-RRC1-F2",
+  "historical_package": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "commit": "b001187917802f5dd4e0fe666579a78e003f9c7f",
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-retained-40-tensor-package-v1.json",
+    "sha256": "eacab6401fca8264ab4ac80674e8968ce4fd419f9e10f6fff3fc997f639ed573",
+    "package_root_sha256": "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6"
+  },
+  "defect": {
+    "affected_ordinals": [10, 11, 12],
+    "affected_roles": ["ffn_norm_scale", "correction_bias", "router"],
+    "declared_path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-retained-authority-reuse-v1.json",
+    "declared_sha256": "175539424a5fe1b66c60d1e95c8361858d90fd4566b24b4915c2b1affda5023b",
+    "path_resolution": "NO_SUCH_PATH_AT_ANY_FETCHED_COMMIT",
+    "sha_resolution": {
+      "actual_semantic_identity": "REPRESENTATIVE_M1F0_RETAINED_REPRODUCTION_BUNDLE_SHA256",
+      "attested_by_path": "docs/architecture/reviews/evidence/f017-representative-m1f0-real-execution-result-v1.json",
+      "attested_by_sha256": "dc53b458fe9c189b4cfbfd83889e7997aa5decba799c421944ac93edb237f190",
+      "json_path": "retained_only_reproduction.bundle_sha256"
+    }
+  },
+  "replacement_authority": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-representative-m1f0-router-reuse-authorization-v2.json",
+    "sha256": "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1",
+    "attested_artifacts": [
+      {"ordinal": 10, "role": "ffn_norm_scale", "sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f", "dtype": "little-endian-f32", "shape": [6144], "byte_length": 24576},
+      {"ordinal": 11, "role": "correction_bias", "sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491", "dtype": "little-endian-f32", "shape": [256], "byte_length": 1024},
+      {"ordinal": 12, "role": "router", "sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a", "dtype": "little-endian-f32", "shape": [256, 6144], "byte_length": 6291456}
+    ]
+  },
+  "native_consumer_result": {
+    "grant_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json",
+    "grant_sha256": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28",
+    "native_consumer_package_root_sha256": "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c",
+    "artifact_bytes_changed": false,
+    "historical_bytes_rewritten": false,
+    "checkpoint_access": 0,
+    "retained_artifact_reads_during_repair": 0
+  },
+  "disposition": "HISTORICAL_PACKAGE_PRESERVED_NATIVE_CONSUMER_BINDS_RESOLVABLE_V2_AUTHORITY_AND_NEW_PROVENANCE_ROOT"
+}

@@ -4,6 +4,7 @@ import argparse, hashlib, json, pathlib, subprocess
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 GRANT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json"
 PACKAGE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-retained-qualification-package-v1.json"
+REPAIR = ROOT / "docs/architecture/reviews/evidence/f017-native-retained-router-authority-repair-v1.json"
 
 def unique(path):
     def pairs(values):
@@ -38,7 +39,7 @@ def validate(grant_path=GRANT, package_path=PACKAGE):
     if grant["historical_package_root_sha256"] != "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6": raise ValueError("historical package root")
     if package_root(grant["allowed_reads"]) != grant["package_root_sha256"] or grant["package_root_sha256"] != "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c": raise ValueError("native consumer package root")
     if grant["total_bytes"] != 257305600 or sum(x["byte_count"] for x in grant["allowed_reads"]) != 257305600: raise ValueError("bytes")
-    if grant["attempts"] != 1 or grant["checkpoint_fallback"] or any(grant[k] for k in ["original_checkpoint_reads","original_checkpoint_shard_opens","historical_payload_ledger_delta"]): raise ValueError("execution policy")
+    if [grant[k] for k in ["attempts","qualification_runs","same_process_runs","fresh_process_runs","stages_per_run","retained_reads_per_run","expected_retained_read_receipts"]] != [1,20,10,10,34,40,800] or grant["checkpoint_fallback"] or any(grant[k] for k in ["original_checkpoint_reads","original_checkpoint_shard_opens","historical_payload_ledger_delta"]): raise ValueError("execution policy")
     seen = set()
     for ordinal, item in enumerate(grant["allowed_reads"]):
         if item["ordinal"] != ordinal or item["role"] in seen: raise ValueError("order/duplicate")
@@ -49,8 +50,11 @@ def validate(grant_path=GRANT, package_path=PACKAGE):
             if spec[key] != item[key]: raise ValueError(f"package mismatch {item['role']} {key}")
         if item["byte_count"] <= 0 or len(item["sha256"]) != 64: raise ValueError("read identity")
         if item["source_branch"] != "feat/017-real-checkpoint-runner" or len(item["source_commit"]) != 40: raise ValueError("source authority")
+        if subprocess.run(["git", "merge-base", "--is-ancestor", item["source_commit"], "origin/feat/017-real-checkpoint-runner"], cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode: raise ValueError("source commit not on claimed branch")
         if sha_bytes(historical(item["source_commit"], item["source_authority_path"])) != item["source_authority_sha256"]: raise ValueError(f"source hash {item['role']}")
     if package["checkpoint_paths"] != [] or package["runtime"]["mlx_version"] != "0.31.2" or package["runtime"]["mlx_c_version"] != "0.6.0": raise ValueError("package runtime")
+    repair = unique(REPAIR)
+    if repair["defect"]["affected_ordinals"] != [10,11,12] or repair["replacement_authority"]["sha256"] != "c46b00cb263347e1a345b1766fd1e36d3758c6e21ae15674bfe8dfc8841f21a1" or repair["native_consumer_result"]["grant_sha256"] != sha(grant_path): raise ValueError("authority repair evidence")
     return grant
 
 def main():

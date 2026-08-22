@@ -37,6 +37,10 @@ cases = [
     lambda g: g.update(original_checkpoint_shard_opens=1),
     lambda g: g.update(historical_payload_ledger_delta=1),
     lambda g: g.update(attempts=2),
+    lambda g: g.update(qualification_runs=19),
+    lambda g: g.update(same_process_runs=9),
+    lambda g: g.update(fresh_process_runs=9),
+    lambda g: g.update(expected_retained_read_receipts=799),
 ]
 
 for index, case in enumerate(cases):
