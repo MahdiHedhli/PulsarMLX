@@ -1,0 +1,79 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-ungranted-diagnostic-read-disclosure",
+  "schema_version": "1.0.0",
+  "status": "DISCLOSED_FAIL_CLOSED_NOT_ACCEPTANCE_AUTHORITY",
+  "scope": "POST_EVENT_BUILDER_DIAGNOSTIC_OUTSIDE_THE_OWNED_D3_5_EXECUTION",
+  "d3_5_event_affected": false,
+  "d3_5_event_read_receipts_affected": false,
+  "original_checkpoint_reads": 0,
+  "original_checkpoint_shard_opens": 0,
+  "historical_payload_ledger_delta": 0,
+  "diagnostic_retained_artifact_reads": [
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-s1-materialization-release-2/outputs/representative-s1.f32le",
+      "sha256": "8309377ee8e8f34eb91cdb025624144eb5be7821ed9e4a295df29b13aac5a0dd"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-input-v1/router_normalized.f32le",
+      "sha256": "687a692a452e30860c34055942061f4ff368ec0e1c815439c71e457a444fe62c"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-routed-aggregate-release-1/outputs/routed-aggregate.f64le",
+      "sha256": "872487d337305aab82e80a87b84763b6e3dd2901f88ae2ed6b64277aba9a20f9"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-shared-expert-release-1/outputs/representative-shared-expert-output.f32le",
+      "sha256": "8285fecf6e3232f19a0cc11b5d98ee5003f036db6bcd3cd52a7e9dbde9bb1b5b"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-ffn-composition-release-2/outputs/representative-ffn-output.f64le",
+      "sha256": "4d7aaeb58c4ee33dcaf2329c8cd46234d69ee7f16bb7e6338ac9e0b7a5e6ad1a"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-s2-release-2/outputs/representative-s2.f32le",
+      "sha256": "0341314230654d21fa56506dfe601f90bdb603fc38fd1203b6dd62b1e54c98c1"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/00-expert-250-down.f32le",
+      "sha256": "0b6036ef2e77142094b673c421b96719619a58e15eee7522347b37f73d9b892b"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/01-expert-10-down.f32le",
+      "sha256": "d9adb474f64c98349dfe0a6c768b2020b27f62ecc85874975c990b880ef304b3"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/02-expert-237-down.f32le",
+      "sha256": "4ac842afb3b1909f9f0e07013c86bbdca90cd246b6190bf190a60fe9767fdd9b"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/03-expert-62-down.f32le",
+      "sha256": "2550cccf9b2f1a83b2e2f03f090ee135dc525a15eaf1bab18d1a2fb97af16128"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/04-expert-73-down.f32le",
+      "sha256": "9aa5e1dae2619c440c65689154de332da313990b4ba07fdac45e78a65ad3a7d3"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/05-expert-177-down.f32le",
+      "sha256": "18260d4936483b6f7d83d2d0ec72d01fc761f2ac5726fa9b7bda243a4db9a201"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/06-expert-218-down.f32le",
+      "sha256": "f4a8fc1e3bb91a8a5635505f766a07ef2cfb135378d224ed5f545617d781537d"
+    },
+    {
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/representative-expert-recovery-release-1/outputs/07-expert-28-down.f32le",
+      "sha256": "45029a47061c43746344d5b0a9366b8129630019a3196d0be146efc5e1a361f0"
+    }
+  ],
+  "read_count_unique_paths": 14,
+  "receipt_count": 0,
+  "authority_disposition": "THESE_DIAGNOSTIC_READS_AND_ANY_DERIVED_METRICS_ARE_NOT_AUTHORITY_AND_MUST_NOT_BE_USED_TO_DECLARE_D3_5_PASS",
+  "relationship_to_fable_adjudication": {
+    "result_path": "docs/architecture/reviews/evidence/f017-native-d3-5-fable-adjudication-result-v1.json",
+    "result_sha256": "7108cd545c97e371ffec5637c02eb51b6b5bebc6ad463b4388bf8f870b67a8b4",
+    "finding": "F5-ADJ-02",
+    "effect": "CONFIRMS_THE_COMPARISON_READ_GRANT_IS_REQUIRED_BEFORE_ANY_FUTURE_GRADING_READ"
+  },
+  "next_safe_action": "DO_NOT_REPEAT_OR_RELY_ON_THE_DIAGNOSTIC_READS; CREATE_AND_REVIEW_AN_APPEND_ONLY_NATIVE_COMPARISON_READ_GRANT_BEFORE_A_RECEIPTED_GRADING_EVENT"
+}
