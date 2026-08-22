@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-retained-qualification-disposition/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "e00811df76c480b53b1bcab35fcb01ea8475b089",
+  "status": "NOT_EXECUTED_NO_NEW_CONSUMER_GRANT",
+  "reason": "The accepted pre-access result is established by synthetic, packed-decoder, metadata, and target-reader qualification. No machine-local retained numerical artifact was required or read by either new oracle consumer.",
+  "historical_retained_qualification_disposition": "Preserved as immutable prior evidence; not silently reused as authority for the new consumers.",
+  "new_consumer_scoped_grants": [],
+  "retained_artifact_reads": 0,
+  "original_checkpoint_shard_opens": 0,
+  "original_checkpoint_payload_reads": 0,
+  "historical_master_ledger_delta": 0,
+  "acceptance_dependency": false
+}

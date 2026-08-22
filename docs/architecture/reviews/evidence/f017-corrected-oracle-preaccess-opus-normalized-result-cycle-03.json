@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-independent-review-result/1.0.0",
+  "cycle": 3,
+  "reviewer": {"model":"claude-opus-5","effort":"high","cli":"claude","fresh_session_id":"8bb14f13-db29-4fef-b45e-04b958e68f4f"},
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "34029f179a107c02a1cd28cbb0085c22f12190d9",
+  "implementation_head": "e00811df76c480b53b1bcab35fcb01ea8475b089",
+  "package_head": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+  "exact_head_ci": 32604077031,
+  "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION_PREPARATION",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [
+    {"id":"F017-C3-DID-SECONDARY-ONE-SHOT-DIRECT","disposition":"Coordinator validation is mandatory before either child starts; direct secondary hardening is bound to the next reader generation and does not weaken this event boundary."},
+    {"id":"F017-C3-DID-SECONDARY-GEOMETRY-CHECKS","disposition":"All 1410 bound requests independently satisfy geometry and block divisibility; add direct secondary checks at the next reader generation for localization, not acceptance safety."},
+    {"id":"F017-C3-DID-CENSUS-ZERO-FIELDS","disposition":"Set equality and FAIL/REJECT scanning enforce the underlying invariants; rename hardcoded summary predicates at the next schema generation so they cannot be mistaken for observed counters."},
+    {"id":"F017-C3-DID-LAYER-NUMERIC-CROSSCHECK","disposition":"Route structure and full logits are acceptance gates; per-layer hashes are diagnostic surfaces. A future post-event comparator may add frozen per-layer numeric bounds without changing this pre-access contract."},
+    {"id":"F017-C3-DID-QUALIFIER-SOURCE-BINDING","disposition":"The qualification output, implementation head, source tree, and exact-head CI are committed and reproducible; bind the qualifier source directly in the next scientific-access contract generation."},
+    {"id":"F017-C3-DID-ROPE-NONZERO-POSITION","disposition":"The event contract and validator pin position zero where either lane convention is identity. Any future nonzero-position reuse is prohibited until RoPE semantics are separately resolved and reviewed."}
+  ],
+  "defense_in_depth_count": 6,
+  "all_dispositions_non_weakening": true,
+  "original_checkpoint_reads": 0,
+  "corrected_full_checkpoint_oracle_executed": false,
+  "p1_attempt_2_executed": false
+}
