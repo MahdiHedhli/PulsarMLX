@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-instantiability-exact-head-ci/1.0.0",
+  "result": "PASS",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+  "implementation_source_head": "546e7aa6cbdf03317c363f752e824868ca01d32f",
+  "run_id": 32624610787,
+  "event": "push",
+  "mode": "FULL_NATIVE",
+  "created_at": "2026-08-23T07:04:49Z",
+  "completed_at": "2026-08-23T07:14:16Z",
+  "jobs": [
+    {"id": 97157893871, "name": "Classify committed change", "result": "success"},
+    {"id": 97157905324, "name": "Apple MLX small-fixture validation", "result": "success"},
+    {"id": 97157905354, "name": "Apple Silicon workspace baseline", "result": "success"},
+    {"id": 97158913154, "name": "CI aggregate status", "result": "success"}
+  ],
+  "qualification": {
+    "workspace_baseline": "PASS",
+    "pinned_native_mlx": "PASS",
+    "native_producer_targets": "PASS",
+    "research_unittest_count": 462,
+    "research_unittest_result": "PASS",
+    "corrected_oracle_preaccess_pytest_count": 56,
+    "corrected_oracle_preaccess_subtest_count": 28,
+    "corrected_oracle_preaccess_result": "PASS",
+    "authorization_interface_tests": "PASS",
+    "two_phase_mint_tests": "PASS",
+    "consumer_target_instantiability": "PASS",
+    "synthetic_file_backed_event": "PASS",
+    "event_accounting": "PASS",
+    "event_02_immutability": "PASS",
+    "memory_preflight": "PASS",
+    "numerical_regressions": "PASS",
+    "evidence_aware_ci": "PASS",
+    "secondary_python_mlx_runtime_isolated_from_native_rust_dylib": "PASS",
+    "required_native_qualification_skips": 0
+  },
+  "predecessor_failure": {
+    "run_id": 32624054720,
+    "head": "66888e21f858dcc2be882f95ad759814e05c24f8",
+    "classification": "SECONDARY_PYTHON_MLX_ABI_COLLISION_WITH_INHERITED_NATIVE_RUST_DYLD_LIBRARY_PATH",
+    "repair": "SECONDARY_SUBPROCESS_LOCKFILE_RUNTIME_ISOLATION",
+    "numerical_source_changed": false,
+    "closed_by_run": 32624610787
+  },
+  "log": {
+    "source": "gh run view 32624610787 --job 97157905324 --log",
+    "sha256": "09cda08364020bd31ae8880aa6a33e22384d8e84427170876669a6aa4c32ebd2"
+  },
+  "safety": {
+    "event_03_authorization_created": false,
+    "event_03_executed": false,
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_payload_reads": 0,
+    "p1_attempt_2_executed": false,
+    "historical_master_ledger": 175
+  }
+}
