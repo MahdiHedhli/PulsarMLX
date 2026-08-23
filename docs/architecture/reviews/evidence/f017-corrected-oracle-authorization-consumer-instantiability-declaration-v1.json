@@ -1,0 +1,191 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-instantiability-declaration/1.0.0",
+  "declaration": "F017_CORRECTED_ORACLE_AUTHORIZATION_CONSUMER_INSTANTIABILITY: ACCEPTED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "d40af431511fca1a3f213db57085071d45cb9d13",
+  "implementation_head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+  "declaration_basis_head": "80848566a3132a92b55d63f9e19fd3d39e79bfb5",
+  "root_defect": "AUTHORIZATION_TO_CONSUMER_SCHEMA_INSTANTIABILITY_DEFECT",
+  "event_02": {
+    "failure_summary": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-execution-failure-summary-v1.json",
+      "sha256": "617cb92605eb93cba3f24e7395a1a12ba0797ac2130213e2a72b5e83b87381eb"
+    },
+    "postmortem": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-instantiability-postmortem-v1.json",
+      "sha256": "93626f0ad5bf5f9bd213930c93d36ad91defb0c2c401bceef16cfb322c63aa96"
+    },
+    "authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/2.0.0",
+    "consumer_expected_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/1.0.0",
+    "checkpoint_identity_shards_opened_and_hashed": 6,
+    "checkpoint_identity_event_count": 30,
+    "graph_mmaps": 0,
+    "logical_tensor_reads": 0,
+    "primary_numerical_consumer_started": false,
+    "secondary_numerical_consumer_started": false,
+    "historical_oracle_event_delta": 2,
+    "historical_delta_disposition": "V2_PACKAGE_RESERVATION_OF_TWO_AUTHORIZED_CONSUMER_SLOTS; NOT_REINTERPRETED_AS_CONSUMER_STARTS",
+    "retry": false,
+    "resume": false,
+    "immutable": true
+  },
+  "successor_authority": {
+    "schema_version": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
+    "interface": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v1.json",
+      "sha256": "7fe819de2e139ffdff36568b9805e83b75f8c1c400afee6061377e5e14d36d64"
+    },
+    "shared_non_numerical_parser": {
+      "path": "scripts/research/f017_corrected_oracle_authorization_v3.py",
+      "sha256": "875330d68a77165943fce2a11ade5ae824a61d9b0ba4734179190186fc308c65"
+    },
+    "primary_consumer": {
+      "path": "scripts/research/f017_corrected_oracle_primary_v3.py",
+      "sha256": "d52c27af336e20dce1a88ca7ddcc0778ead871aa0d25bc1bd9fc34aac5a5b444",
+      "capability_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v1.json",
+      "capability_sha256": "f90a85ac12740d6f5e4fc5318e2f39cc9be2504ebe01a5347b69845bf296f397"
+    },
+    "secondary_consumer": {
+      "path": "scripts/research/f017_corrected_oracle_secondary_v3.py",
+      "sha256": "941f1cb5e62c61997e11043e4cec0bd20398dba7fdb2c710740f6f49a8396aed",
+      "capability_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v1.json",
+      "capability_sha256": "7b778766630451483fe443180be63faf2bb676a551adb43b1d5a4bd9f2ea9102"
+    },
+    "two_phase_authorizer": {
+      "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py",
+      "sha256": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6"
+    },
+    "coordinator": {
+      "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py",
+      "sha256": "738bbc139be79d75635bf5c012e6e4422d22a906e9274584db49d0146749b556"
+    },
+    "scientific_access_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json",
+      "sha256": "1bcddb151676210e2168f40663090af988e97ee4b825f2a40dafd59107b783f0"
+    },
+    "inert_authorization": {
+      "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v3.json",
+      "sha256": "9c3a36b6feb84eda088d06a6d4f88ff69510a4a8e3471be0a7311db69855d1fd"
+    },
+    "event_accounting": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v3.json",
+      "sha256": "5897dc6a70325ddaf93a3033dacd33dda201536500e5e76b1deab353aaa76349"
+    },
+    "authority_manifest": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-instantiability-authority-manifest-v1.json",
+      "sha256": "d702b8ad6feef209466f3d82dd30d05f31a310d984ec7b2a569c1c4029df6aea"
+    }
+  },
+  "instantiability": {
+    "qualification": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-authorization-consumer-instantiability-qualification-v1.json",
+      "sha256": "9faa32b90c4fdae29e41d103330bbfd39f799c33eed7811bf16ba785f1e5bf62"
+    },
+    "primary_validation_fresh_processes": 10,
+    "secondary_validation_fresh_processes": 10,
+    "full_synthetic_coordinator_fresh_processes": 10,
+    "synthetic_shards": 6,
+    "synthetic_layers": 2,
+    "dense_layers": 1,
+    "moe_layers": 1,
+    "mutation_classes": 25,
+    "primary_target": "PASS",
+    "secondary_target": "PASS",
+    "full_coordinator": "PASS",
+    "checkpoint_opens_before_handshake": 0,
+    "checkpoint_reads_before_handshake": 0,
+    "original_checkpoint_access": 0
+  },
+  "unchanged_numerical_authorities": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
+      "sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4"
+    },
+    {
+      "path": "scripts/research/f017_corrected_oracle_primary.py",
+      "sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1"
+    },
+    {
+      "path": "scripts/research/f017_corrected_oracle_secondary.py",
+      "sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29"
+    },
+    {
+      "path": "scripts/research/f017_oracle_primary_decoders.py",
+      "sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-checkpoint-free-qualification-v1.json",
+      "sha256": "b9c2f7dcd9982120f804594e9e268b7d0d764190625789717d104f4e4829c052"
+    }
+  ],
+  "ci": {
+    "full_native": {
+      "head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+      "run_id": 32624610787,
+      "mode": "FULL_NATIVE",
+      "result": "PASS",
+      "research_tests": 463,
+      "corrected_oracle_tests": 56,
+      "corrected_oracle_subtests": 28,
+      "required_native_skips": 0,
+      "evidence_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-exact-head-ci-v1.json",
+      "evidence_sha256": "4b202d8bc2fbb52dfeb3ee969ad25e291434de56e9377e2b180724fb2d510126"
+    },
+    "review_packet": {
+      "run_id": 32625080456,
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "native_mlx_jobs_launched": 0
+    },
+    "review_banking_recovery": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-review-banking-recovery-v1.json",
+      "sha256": "b434574d27322186f8f34fefb22501b589f2ada6d5abe7d6b17c672345e7b6fc",
+      "run_id": 32626861929,
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "native_mlx_jobs_launched": 0
+    },
+    "failed_review_banking_run_disclosed": 32626766691
+  },
+  "reviews": {
+    "gemini": {
+      "model": "gemini-3.1-pro-high",
+      "cli": "AGY 1.1.19",
+      "reviewed_head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+      "request_sha256": "1e8c757089871a534c794cb9a65d3d19c15c71f5d9c945ac14ac3e3badbf2ff3",
+      "response_sha256": "e58debac82cac9bfdaf45e23a74e6616060fe519dec75a3d3631219796f63c21",
+      "normalized_result_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-gemini-normalized-result-cycle-01.json",
+      "normalized_result_sha256": "cd2cb8a116684d9916e06a22f233675ba5c03657bd25e521841ac82163f0e180",
+      "verdict": "ACCEPT",
+      "material_disagreement": false
+    },
+    "opus": {
+      "model": "claude-opus-5",
+      "effort": "high",
+      "reviewed_head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+      "request_sha256": "032a21a73ce8fce49f8ed81131800dbaa7b754d3747d4bd0adbb66359fa40671",
+      "response_sha256": "114cce2a1e22c0ead1cba1e1209323e09d19f573d75ad66cc5fda7754f59efce",
+      "normalized_result_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-opus-normalized-result-cycle-01.json",
+      "normalized_result_sha256": "80832f8a13720dd7e7aeeb2417fd5a89bc4b0ffdadd692054d750e861fb3fea0",
+      "blocking_findings": 0,
+      "non_blocking_required_findings": 0,
+      "defense_in_depth_findings": 6,
+      "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION_PREPARATION"
+    }
+  },
+  "safety": {
+    "EVENT_02_RETRY": "NO",
+    "EVENT_03_EXECUTED": "NO",
+    "LIVE_EVENT_03_AUTHORIZATION_CREATED": "NO",
+    "CORRECTED_FULL_CHECKPOINT_ORACLE_NUMERICAL_RESULT_AVAILABLE": "NO",
+    "PRIMARY_REAL_ORACLE_EXECUTIONS": 0,
+    "SECONDARY_REAL_ORACLE_EXECUTIONS": 0,
+    "NEW_ORIGINAL_CHECKPOINT_SHARD_OPENS": 0,
+    "NEW_ORIGINAL_CHECKPOINT_PAYLOAD_READS": 0,
+    "P1_ATTEMPT_2_EXECUTED": "NO",
+    "FURTHER_REAL_INFERENCE_EXECUTED": "NO",
+    "HISTORICAL_MASTER_LEDGER": 175
+  },
+  "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION": "YES",
+  "READY_TO_PREPARE_P1_ATTEMPT_2_AUTHORIZATION": "NO"
+}
