@@ -1,0 +1,100 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-03-operator-approval-evidence/1.0.0",
+  "approval_id": "F017-CORRECTED-ORACLE-EVENT-03-OPERATOR-GO",
+  "decision": "GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_V3",
+  "approval_source": "EXPLICIT_OPERATOR_GO_IN_CURRENT_CODEX_TASK",
+  "approved_at_utc": "2026-08-23T11:06:16Z",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "accepted_evidence_head": "1e871593895e8d72ad70e298fe8c4af2c8486e28",
+  "implementation_head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+  "instantiability_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-authorization-consumer-instantiability-declaration-v1.json",
+    "sha256": "01947f628b495ff5d2bc8d463bd7a7c8dffcfd1862f371140afed6a1cce5be06"
+  },
+  "authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
+  "authorization_interface": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v1.json",
+    "sha256": "7fe819de2e139ffdff36568b9805e83b75f8c1c400afee6061377e5e14d36d64"
+  },
+  "shared_parser": {
+    "path": "scripts/research/f017_corrected_oracle_authorization_v3.py",
+    "sha256": "875330d68a77165943fce2a11ade5ae824a61d9b0ba4734179190186fc308c65"
+  },
+  "primary_consumer": {
+    "role": "INDEPENDENT_CPU_REFERENCE",
+    "path": "scripts/research/f017_corrected_oracle_primary_v3.py",
+    "sha256": "d52c27af336e20dce1a88ca7ddcc0778ead871aa0d25bc1bd9fc34aac5a5b444",
+    "capability_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v1.json",
+    "capability_sha256": "f90a85ac12740d6f5e4fc5318e2f39cc9be2504ebe01a5347b69845bf296f397"
+  },
+  "secondary_consumer": {
+    "role": "INDEPENDENT_ACCELERATED_CROSS_CHECK",
+    "path": "scripts/research/f017_corrected_oracle_secondary_v3.py",
+    "sha256": "941f1cb5e62c61997e11043e4cec0bd20398dba7fdb2c710740f6f49a8396aed",
+    "capability_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v1.json",
+    "capability_sha256": "7b778766630451483fe443180be63faf2bb676a551adb43b1d5a4bd9f2ea9102"
+  },
+  "two_phase_authorizer": {
+    "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py",
+    "sha256": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6"
+  },
+  "coordinator": {
+    "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py",
+    "sha256": "738bbc139be79d75635bf5c012e6e4422d22a906e9274584db49d0146749b556"
+  },
+  "scientific_access_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json",
+    "sha256": "1bcddb151676210e2168f40663090af988e97ee4b825f2a40dafd59107b783f0"
+  },
+  "event_accounting_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v3.json",
+    "sha256": "5897dc6a70325ddaf93a3033dacd33dda201536500e5e76b1deab353aaa76349"
+  },
+  "numerical_authorities": {
+    "methodology_sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4",
+    "primary_sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+    "secondary_sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+    "primary_decoder_sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"
+  },
+  "checkpoint_authority": {
+    "root": "/Users/mhedhli/Models/PulsarMLX/GLM-5.2-UD-IQ2_XXS",
+    "manifest_sha256": "34b65d586c86d24ee10f3a2ed55491fb3a5a6b9ddbaf893bf9e0ab962c96cf8f",
+    "catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "shard_count": 6
+  },
+  "machine": {
+    "brand": "Apple M1 Ultra",
+    "architecture": "arm64"
+  },
+  "identities": {
+    "live_authorization_id": "F017-CORRECTED-ORACLE-LIVE-AUTHORIZATION-03",
+    "package_attempt_id": "F017-CORRECTED-ORACLE-PACKAGE-ATTEMPT-03",
+    "primary_event_id": "F017-CORRECTED-ORACLE-PRIMARY-EVENT-03",
+    "secondary_event_id": "F017-CORRECTED-ORACLE-SECONDARY-EVENT-03"
+  },
+  "roots": {
+    "package_state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/corrected-full-checkpoint-oracle-event-03-v3",
+    "package_output_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/corrected-full-checkpoint-oracle-event-03-v3",
+    "primary_state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/corrected-full-checkpoint-oracle-event-03-v3/primary",
+    "secondary_state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/corrected-full-checkpoint-oracle-event-03-v3/secondary"
+  },
+  "context": {
+    "prompt_token": 9703,
+    "position": 0,
+    "kv_state": "EMPTY",
+    "mask": "ONE_VISIBLE_KEY_CAUSAL",
+    "sampling": "NONE_GREEDY_ARGMAX",
+    "top_n": 32
+  },
+  "attempts": 1,
+  "retries": 0,
+  "resume": false,
+  "historical_master_ledger": 175,
+  "target_observation_quarantine": "21615_AND_17351_PROHIBITED_FROM_RUNTIME_AUTHORITY",
+  "authorization_survives_load_bearing_byte_change": false,
+  "EVENT_02_AUTHORITY_REUSED": "NO",
+  "EVENT_03_GO": "YES",
+  "EXPECTED_TOKEN_FIELD_PERMITTED": "NO",
+  "P1_ATTEMPT_2_PERMITTED": "NO"
+}
