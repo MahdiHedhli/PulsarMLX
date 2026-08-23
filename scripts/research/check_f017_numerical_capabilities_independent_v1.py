@@ -13,6 +13,13 @@ import json
 from pathlib import Path
 
 
+def semantic_import(module: str, identities: dict[str, str]) -> str | None:
+    matches = [name for name in identities if module == name or module.startswith(name + ".")]
+    if not matches:
+        return None
+    return identities[max(matches, key=len)]
+
+
 def check(path: Path, policy: dict) -> dict:
     tree = ast.parse(path.read_text(), filename=str(path))
     parents = {child: parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)}
@@ -20,10 +27,17 @@ def check(path: Path, policy: dict) -> dict:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                semantic = policy["module_identities"].get(alias.name)
+                semantic = semantic_import(alias.name, policy["module_identities"])
                 if semantic:
+                    canonical_modules = {
+                        module
+                        for module, identity in policy["module_identities"].items()
+                        if identity == semantic
+                    }
+                    if alias.name not in canonical_modules:
+                        raise ValueError(f"independent checker: capability submodule {alias.name}")
                     aliases[alias.asname or alias.name.split(".")[0]] = semantic
-        if isinstance(node, ast.ImportFrom) and node.module in policy["module_identities"]:
+        if isinstance(node, ast.ImportFrom) and node.module and semantic_import(node.module, policy["module_identities"]):
             raise ValueError("independent checker: import-from capability")
     uses = 0
     for node in ast.walk(tree):

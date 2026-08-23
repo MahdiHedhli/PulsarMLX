@@ -37,8 +37,26 @@ def load(name: str, path: Path):
 def mutation_cases() -> list[dict]:
     cases: list[dict] = []
 
+    expected_by_category = {
+        "F5_R4": ["CAPABILITY_ASSIGNMENT_ESCAPE"],
+        "MODULE_ESCAPE": ["CAPABILITY_ASSIGNMENT_ESCAPE", "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE", "CAPABILITY_NAMED_EXPRESSION_ESCAPE", "CAPABILITY_RETURN_ESCAPE", "CAPABILITY_DEFAULT_CAPTURE", "MODULE_CAPABILITY_ESCAPE"],
+        "MEMBER_ESCAPE": ["CAPABILITY_ASSIGNMENT_ESCAPE", "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE", "CAPABILITY_NAMED_EXPRESSION_ESCAPE", "CAPABILITY_RETURN_ESCAPE", "CAPABILITY_DEFAULT_CAPTURE", "CAPABILITY_ARGUMENT_ESCAPE"],
+        "DYNAMIC_ACCESS": ["DYNAMIC_CAPABILITY_SURFACE", "META_CAPABILITY_SURFACE", "CAPABILITY_ARGUMENT_ESCAPE", "CAPABILITY_RETURN_ESCAPE", "CAPABILITY_ATTRIBUTE_CHAIN"],
+        "UNKNOWN_RECEIVER": ["UNAPPROVED_RECEIVER_METHOD", "DYNAMIC_CAPABILITY_SURFACE", "META_CAPABILITY_SURFACE"],
+        "CONTAINER_RECEIVER": ["UNAPPROVED_RECEIVER_METHOD", "DYNAMIC_CAPABILITY_SURFACE"],
+        "IMPORT_REPRESENTATION": ["CAPABILITY_IMPORT_CENSUS", "CAPABILITY_IMPORT_FROM_PROHIBITED", "CAPABILITY_STAR_IMPORT_PROHIBITED", "CAPABILITY_RETURN_ESCAPE"],
+        "SUBMODULE_IDENTITY": ["CAPABILITY_IMPORT_CENSUS", "CAPABILITY_IMPORT_FROM_PROHIBITED"],
+        "RECEIVER_SHADOWING": ["UNAPPROVED_RECEIVER_METHOD"],
+        "DECLARED_BINDING_FORM": ["CAPABILITY_DECORATOR_ESCAPE", "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE", "UNAPPROVED_RECEIVER_METHOD"],
+    }
+
     def add(category: str, source: str) -> None:
-        cases.append({"id": f"CAP-{len(cases) + 1:03d}", "category": category, "source": source})
+        cases.append({
+            "id": f"CAP-{len(cases) + 1:03d}",
+            "category": category,
+            "source": source,
+            "expected_rejection_classes": expected_by_category[category],
+        })
 
     add("F5_R4", "_backend = np\ndef probe():\n    return _backend.memmap('x')")
 
@@ -100,6 +118,26 @@ def mutation_cases() -> list[dict]:
         "class Probe:\n    import numpy as inner\n    value = inner.memmap('x')",
     ):
         add("IMPORT_REPRESENTATION", source)
+    for source in (
+        "import numpy.lib\ndef probe():\n    return numpy.memmap('x')",
+        "import numpy.ctypeslib as _n\ndef probe():\n    return _n.load_library('x', '.')",
+        "from numpy.lib import format as _format",
+        "import mlx.core.fast as _fast",
+    ):
+        add("SUBMODULE_IDENTITY", source)
+    for source in (
+        "_scratch = np.zeros(4)\ndef probe(_scratch):\n    return _scratch.tobytes()",
+        "class Probe:\n    tensors = np.zeros(2)\n    def method(self, tensors):\n        return tensors.tobytes()",
+        "_scratch = np.zeros(4)\ndef probe(value):\n    alias = value\n    return alias.tobytes()",
+    ):
+        add("RECEIVER_SHADOWING", source)
+    for source in (
+        "@np.asarray\ndef probe():\n    return None",
+        "value = np.zeros(1)\nvalue += np",
+        "value = np.zeros(1)\ntry:\n    raise ValueError()\nexcept Exception as value:\n    value.tobytes()",
+        "value = np.zeros(1)\nmatch object():\n    case value:\n        value.tobytes()",
+    ):
+        add("DECLARED_BINDING_FORM", source)
     if len(cases) < 120:
         raise AssertionError("mutation census")
     if len({case["source"] for case in cases}) != len(cases):
@@ -169,9 +207,22 @@ def runtime_proxy_qualification(policy: dict, work: Path) -> dict:
             sys.modules["mlx"] = previous_package
         else:
             sys.modules.pop("mlx", None)
+    numpy_subset = observed_numpy <= numpy_allowed
+    mlx_subset = observed_mlx <= mlx_allowed
+    if not numpy_subset:
+        raise ValueError(f"runtime NumPy capability outside contract: {sorted(observed_numpy - numpy_allowed)}")
+    if not mlx_subset:
+        raise ValueError(f"runtime MLX capability outside contract: {sorted(observed_mlx - mlx_allowed)}")
     if observed_mlx != mlx_allowed:
         raise ValueError(f"runtime MLX capability census: {sorted(observed_mlx)}")
-    return {"result": "PASS", "numpy_members_observed": sorted(observed_numpy), "mlx_members_observed": sorted(observed_mlx), "subset_of_contract": True}
+    return {
+        "result": "PASS",
+        "numpy_members_observed": sorted(observed_numpy),
+        "mlx_members_observed": sorted(observed_mlx),
+        "numpy_subset_of_contract": numpy_subset,
+        "mlx_subset_of_contract": mlx_subset,
+        "subset_of_contract": numpy_subset and mlx_subset,
+    }
 
 
 def main() -> int:
@@ -203,7 +254,20 @@ def main() -> int:
         try:
             analyzer.CapabilityAnalyzer(policy, role="secondary", path=f"mutation:{case['id']}").analyze(baseline + "\n" + case["source"] + "\n")
         except Exception as exc:
-            observed.append({"id": case["id"], "category": case["category"], "result": "REJECTED", "rejection": str(exc).split(":", 1)[0]})
+            rejection = str(exc).split(":", 1)[0]
+            if rejection not in case["expected_rejection_classes"]:
+                raise ValueError(
+                    f"capability mutation rejected by wrong control: {case['id']} {rejection} "
+                    f"not in {case['expected_rejection_classes']}"
+                ) from exc
+            observed.append({
+                "id": case["id"],
+                "category": case["category"],
+                "expected_rejection_classes": case["expected_rejection_classes"],
+                "result": "REJECTED",
+                "rejection": rejection,
+                "validator": "scripts/research/f017_numerical_capability_analysis_v1.py",
+            })
         else:
             raise ValueError(f"capability mutation unexpectedly passed: {case['id']} {case['source']}")
     with tempfile.TemporaryDirectory(prefix="f017-capability-v1-") as directory:
@@ -215,6 +279,14 @@ def main() -> int:
         "mutation_count": len(cases),
         "unexpected_pass_count": 0,
         "category_census": {category: sum(item["category"] == category for item in observed) for category in sorted({item["category"] for item in observed})},
+        "rejection_control_census": {
+            rejection: sum(item["rejection"] == rejection for item in observed)
+            for rejection in sorted({item["rejection"] for item in observed})
+        },
+        "transport_rejection_count": sum(
+            item["rejection"].startswith("CAPABILITY_") and item["rejection"] != "CAPABILITY_IMPORT_CENSUS"
+            for item in observed
+        ),
         "mutations": observed,
         "accepted_current_sources": accepted,
         "independent_checker": independent,

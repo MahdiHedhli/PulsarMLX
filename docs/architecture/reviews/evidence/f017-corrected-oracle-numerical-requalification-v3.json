@@ -13,9 +13,9 @@
     18111,
     18112
   ],
-  "capability_mutation_count": 170,
+  "capability_mutation_count": 181,
   "capability_policy_changed": true,
-  "capability_qualification_sha256": "96cc7b22fac529a34b3738516e4ed6f6c888631da1ac61d3f913c092224f144f",
+  "capability_qualification_sha256": "0fe21ef9bd7904acd34ae3f93a6f62364a500d5ca7ce9fa4ad017cd6ca36b7a8",
   "capability_unexpected_pass_count": 0,
   "expanded_case_count": 6,
   "expanded_qualification_sha256": "3b89b114e80a77241f8d6223dc782d77a108b90a55f8cb18d444edb9b76601c7",
@@ -236,6 +236,7 @@
       "eval",
       "transpose"
     ],
+    "mlx_subset_of_contract": true,
     "numpy_members_observed": [
       "asarray",
       "dot",
@@ -247,6 +248,7 @@
       "sqrt",
       "zeros"
     ],
+    "numpy_subset_of_contract": true,
     "result": "PASS",
     "subset_of_contract": true
   },

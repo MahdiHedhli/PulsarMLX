@@ -55,6 +55,32 @@ def _scope_name(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str:
     return ".".join(reversed(parts)) or "<module>"
 
 
+def _semantic_import(module: str, identities: dict[str, str]) -> str | None:
+    """Resolve a capability module by semantic package ancestry."""
+    matches = [name for name in identities if module == name or module.startswith(name + ".")]
+    if not matches:
+        return None
+    return identities[max(matches, key=len)]
+
+
+def _scope_candidates(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> list[str]:
+    """Return Python lexical scopes, excluding class scope from method lookup."""
+    current: ast.AST | None = node
+    functions: list[ast.AST] = []
+    nearest_class: ast.ClassDef | None = None
+    while current is not None:
+        if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            functions.append(current)
+        elif isinstance(current, ast.ClassDef) and nearest_class is None:
+            nearest_class = current
+        current = parents.get(current)
+    if functions:
+        return [_scope_name(scope, parents) for scope in functions] + ["<module>"]
+    if nearest_class is not None:
+        return [_scope_name(nearest_class, parents), "<module>"]
+    return ["<module>"]
+
+
 def _contains(node: ast.AST, target: ast.AST) -> bool:
     return any(part is target for part in ast.walk(node))
 
@@ -158,7 +184,7 @@ class CapabilityAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    semantic = identities.get(alias.name)
+                    semantic = _semantic_import(alias.name, identities)
                     if semantic:
                         local = alias.asname or alias.name.split(".")[0]
                         self.capability_imports.append({
@@ -169,7 +195,7 @@ class CapabilityAnalyzer:
                         self.module_aliases[local] = semantic
                         self.bindings[(_scope_name(node, self.parents), local)] = semantic
             elif isinstance(node, ast.ImportFrom):
-                if node.module in identities:
+                if node.module and _semantic_import(node.module, identities):
                     self._error(node, "CAPABILITY_IMPORT_FROM_PROHIBITED", node.module or "")
                 if node.names and any(alias.name == "*" for alias in node.names):
                     self._error(node, "CAPABILITY_STAR_IMPORT_PROHIBITED", node.module or "")
@@ -268,18 +294,22 @@ class CapabilityAnalyzer:
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
-            for argument in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
+            arguments = [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs]
+            if node.args.vararg is not None:
+                arguments.append(node.args.vararg)
+            if node.args.kwarg is not None:
+                arguments.append(node.args.kwarg)
+            for argument in arguments:
                 keys = (f"{_scope_name(node, self.parents)}.{argument.arg}", f"{node.name}.{argument.arg}")
+                provenance = UNKNOWN
                 for key in keys:
                     if key in parameter_roles:
-                        self.bindings[(_scope_name(node, self.parents), argument.arg)] = parameter_roles[key]
+                        provenance = parameter_roles[key]
                         break
+                self.bindings[(_scope_name(node, self.parents), argument.arg)] = provenance
 
     def _binding_for(self, name: str, node: ast.AST) -> str:
-        scope = _scope_name(node, self.parents)
-        parts = scope.split(".") if scope != "<module>" else []
-        candidates = [".".join(parts[:index]) for index in range(len(parts), 0, -1)] + ["<module>"]
-        for candidate in candidates:
+        for candidate in _scope_candidates(node, self.parents):
             value = self.bindings.get((candidate, name))
             if value is not None:
                 return value
@@ -302,10 +332,26 @@ class CapabilityAnalyzer:
                     pairs.append((node.target, node.value))
                 elif isinstance(node, (ast.For, ast.AsyncFor)):
                     pairs.append((node.target, node.iter))
+                elif isinstance(node, ast.AugAssign):
+                    pairs.append((node.target, node.value))
                 elif isinstance(node, (ast.With, ast.AsyncWith)):
                     pairs.extend((item.optional_vars, item.context_expr) for item in node.items if item.optional_vars)
                 elif isinstance(node, ast.comprehension):
                     pairs.append((node.target, node.iter))
+                elif isinstance(node, ast.ExceptHandler) and node.name:
+                    target = ast.Name(id=node.name, ctx=ast.Store())
+                    ast.copy_location(target, node)
+                    pairs.append((target, ast.Constant(value=None)))
+                elif isinstance(node, ast.Match):
+                    for pattern in ast.walk(node):
+                        if isinstance(pattern, ast.MatchAs) and pattern.name:
+                            target = ast.Name(id=pattern.name, ctx=ast.Store())
+                            ast.copy_location(target, pattern)
+                            pairs.append((target, ast.Constant(value=None)))
+                        elif isinstance(pattern, ast.MatchStar) and pattern.name:
+                            target = ast.Name(id=pattern.name, ctx=ast.Store())
+                            ast.copy_location(target, pattern)
+                            pairs.append((target, ast.Constant(value=None)))
                 for target, value in pairs:
                     scope = _scope_name(node, self.parents)
                     expanded = list(zip(target.elts, value.elts, strict=True)) if (
@@ -405,6 +451,9 @@ class CapabilityAnalyzer:
             elif isinstance(node, ast.NamedExpr):
                 if _capability(self._expression(node.value)):
                     self._error(node, "CAPABILITY_NAMED_EXPRESSION_ESCAPE", ast.unparse(node.value))
+            elif isinstance(node, ast.AugAssign):
+                if _capability(self._expression(node.target)) or _capability(self._expression(node.value)):
+                    self._error(node, "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE", ast.unparse(node))
             elif isinstance(node, (ast.Return, ast.Yield, ast.YieldFrom)) and node.value is not None:
                 if _capability(self._expression(node.value)):
                     self._error(node, "CAPABILITY_RETURN_ESCAPE", ast.unparse(node.value))
@@ -422,6 +471,10 @@ class CapabilityAnalyzer:
                 for value in defaults:
                     if _capability(self._expression(value)):
                         self._error(value, "CAPABILITY_DEFAULT_CAPTURE", ast.unparse(value))
+                decorators = getattr(node, "decorator_list", ())
+                for value in decorators:
+                    if _capability(self._expression(value)):
+                        self._error(value, "CAPABILITY_DECORATOR_ESCAPE", ast.unparse(value))
 
     def _validate_receiver_calls(self, tree: ast.AST) -> None:
         ignored = set(self.policy["non_method_attributes"])
@@ -433,11 +486,6 @@ class CapabilityAnalyzer:
                 continue
             if isinstance(receiver, ast.Name) and receiver.id in self.policy["standard_module_roots"]:
                 continue
-            if isinstance(receiver, ast.Call) and isinstance(receiver.func, ast.Attribute):
-                root = receiver.func.value
-                if isinstance(root, ast.Name) and root.id in self.module_aliases:
-                    # Chained call on a safe module result, e.g. np.asarray(...).tobytes().
-                    pass
             method = node.func.attr
             if method in ignored:
                 continue
@@ -466,8 +514,8 @@ class CapabilityAnalyzer:
         ):
             raise CapabilityViolation(f"CAPABILITY_IMPORT_CENSUS:{self.path}")
         self._fixed_point(tree)
-        self._validate_module_uses(tree)
         self._validate_capability_transport(tree)
+        self._validate_module_uses(tree)
         self._validate_receiver_calls(tree)
         bytecode_names = tuple(sorted({
             name

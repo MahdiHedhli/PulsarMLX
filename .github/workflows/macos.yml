@@ -320,6 +320,12 @@ jobs:
           .venv/bin/python scripts/research/validate_f017_historical_corrected_oracle_authorities_v6.py
           .venv/bin/python scripts/research/extract_f017_corrected_oracle_numerics_v2.py
           .venv/bin/python scripts/research/extract_f017_corrected_oracle_target_sources_v6.py
+          .venv/bin/python scripts/research/generate_f017_numerical_capability_authorities_v1.py
+          git diff --exit-code -- \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-receiver-provenance-v1.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-use-manifest-v1.json \
+            docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-bytecode-audit-v1.json
           .venv/bin/python scripts/research/validate_f017_corrected_oracle_numerical_authority_v3.py
           .venv/bin/python scripts/research/qualify_f017_numerical_capability_policy_v1.py \
             --output "$RUNNER_TEMP/f017-corrected-oracle-numerical-capability-qualification-v1.json"

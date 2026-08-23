@@ -70,3 +70,34 @@ def test_qualification_bytes_are_cwd_independent() -> None:
         assert first.read_bytes() == second.read_bytes()
         text = first.read_text()
         assert str(ROOT) not in text
+
+
+@pytest.mark.parametrize("probe", [
+    "import numpy.lib\ndef probe(): return numpy.memmap('x')",
+    "import numpy.ctypeslib as backend\ndef probe(): return backend.load_library('x', '.')",
+    "import mlx.core.fast as backend",
+])
+def test_capability_submodule_identity_is_semantic(probe: str) -> None:
+    analyzer = load(f"f017_capability_submodule_{abs(hash(probe))}", RESEARCH / "f017_numerical_capability_analysis_v1.py")
+    checker = load(f"f017_capability_submodule_checker_{abs(hash(probe))}", RESEARCH / "check_f017_numerical_capabilities_independent_v1.py")
+    policy = json.loads(POLICY.read_text())
+    baseline = (RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py").read_text()
+    with pytest.raises(analyzer.CapabilityViolation):
+        analyzer.CapabilityAnalyzer(policy, role="secondary", path="probe.py").analyze(baseline + "\n" + probe)
+    with tempfile.TemporaryDirectory(prefix="f017-capability-submodule-") as directory:
+        path = Path(directory) / "probe.py"
+        path.write_text(baseline + "\n" + probe)
+        with pytest.raises(ValueError):
+            checker.check(path, policy)
+
+
+@pytest.mark.parametrize("probe", [
+    "_scratch=np.zeros(4)\ndef probe(_scratch): return _scratch.tobytes()",
+    "class Probe:\n    tensors=np.zeros(2)\n    def method(self, tensors): return tensors.tobytes()",
+])
+def test_parameter_shadowing_never_inherits_receiver_provenance(probe: str) -> None:
+    analyzer = load(f"f017_capability_shadow_{abs(hash(probe))}", RESEARCH / "f017_numerical_capability_analysis_v1.py")
+    policy = json.loads(POLICY.read_text())
+    baseline = (RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py").read_text()
+    with pytest.raises(analyzer.CapabilityViolation, match="UNAPPROVED_RECEIVER_METHOD"):
+        analyzer.CapabilityAnalyzer(policy, role="secondary", path="probe.py").analyze(baseline + "\n" + probe)

@@ -2086,14 +2086,17 @@
       "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
     }
   },
-  "analyzer_sha256": "94b314078fb6b5280ea6da82a55093e8fea765e85a4cfcb4a8c11fc299d72f2b",
+  "analyzer_sha256": "923c66e189f4e39ce1cfaeec73f8ece8c3f5b5ee0369b6183cabf44286bb9f0d",
   "category_census": {
     "CONTAINER_RECEIVER": 10,
+    "DECLARED_BINDING_FORM": 4,
     "DYNAMIC_ACCESS": 20,
     "F5_R4": 1,
     "IMPORT_REPRESENTATION": 10,
     "MEMBER_ESCAPE": 60,
     "MODULE_ESCAPE": 40,
+    "RECEIVER_SHADOWING": 3,
+    "SUBMODULE_IDENTITY": 4,
     "UNKNOWN_RECEIVER": 29
   },
   "exact_f5_r4_rejected": true,
@@ -2114,1034 +2117,2531 @@
       }
     }
   },
-  "independent_checker_sha256": "9ee21cb8d11f99b03957307dc81bf6b48bc0467bf190260c460d07a69858c2f1",
-  "mutation_count": 170,
+  "independent_checker_sha256": "573a022d44f5bb109238a77d43a9e51bd3510e7996e8bc10601600ecf07b9d91",
+  "mutation_count": 181,
   "mutations": [
     {
       "category": "F5_R4",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE"
+      ],
       "id": "CAP-001",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-002",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-003",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-004",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-005",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-006",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-007",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-008",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-009",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-010",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-011",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-012",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-013",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-014",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-015",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-016",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-017",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-018",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-019",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-020",
       "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-021",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-022",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-023",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-024",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-025",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-026",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-027",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-028",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-029",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-030",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-031",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-032",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-033",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-034",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-035",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-036",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-037",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-038",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-039",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-040",
       "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
       "id": "CAP-041",
-      "rejection": "MODULE_CAPABILITY_ESCAPE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-042",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-043",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-044",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-045",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-046",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-047",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-048",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-049",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-050",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-051",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-052",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-053",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-054",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-055",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-056",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-057",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-058",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-059",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-060",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-061",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-062",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-063",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-064",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-065",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-066",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-067",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-068",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-069",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-070",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-071",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-072",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-073",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-074",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-075",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-076",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-077",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-078",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-079",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-080",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-081",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-082",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-083",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-084",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-085",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-086",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-087",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-088",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-089",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-090",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-091",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-092",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-093",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-094",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-095",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-096",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-097",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-098",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-099",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-100",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
       "id": "CAP-101",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-102",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-103",
       "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-104",
       "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-105",
-      "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-106",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-107",
       "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-108",
       "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-109",
       "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-110",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-111",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-112",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-113",
       "rejection": "CAPABILITY_ATTRIBUTE_CHAIN",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-114",
-      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-115",
-      "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-116",
-      "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-117",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-118",
       "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-119",
       "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-120",
-      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
       "id": "CAP-121",
-      "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-122",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-123",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-124",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-125",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-126",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-127",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-128",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-129",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-130",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-131",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-132",
       "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-133",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-134",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-135",
       "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-136",
       "rejection": "META_CAPABILITY_SURFACE",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-137",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-138",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-139",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-140",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-141",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-142",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-143",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-144",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-145",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-146",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-147",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-148",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-149",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-150",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-151",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-152",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-153",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-154",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-155",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-156",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-157",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-158",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-159",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
       "id": "CAP-160",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-161",
       "rejection": "CAPABILITY_IMPORT_CENSUS",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-162",
       "rejection": "CAPABILITY_IMPORT_CENSUS",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-163",
       "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-164",
       "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-165",
       "rejection": "CAPABILITY_IMPORT_CENSUS",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-166",
       "rejection": "CAPABILITY_IMPORT_CENSUS",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-167",
       "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-168",
       "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-169",
       "rejection": "CAPABILITY_IMPORT_CENSUS",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
       "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
       "id": "CAP-170",
       "rejection": "CAPABILITY_IMPORT_CENSUS",
-      "result": "REJECTED"
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-171",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-172",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-173",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-174",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-175",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-176",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-177",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-178",
+      "rejection": "CAPABILITY_DECORATOR_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-179",
+      "rejection": "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-180",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-181",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     }
   ],
   "original_checkpoint_payload_reads": 0,
   "original_checkpoint_shard_opens": 0,
-  "policy_sha256": "c4637e72ad4287d5672370435cab694f4e353bf05b6f64ea1dc32d1a88069e46",
+  "policy_sha256": "dca9b2d7ff8c64785bc5e84e9c3a6cd8d38c31bcdfd85c131f62aa2f36857f4f",
   "primary_pure_core_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+  "rejection_control_census": {
+    "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE": 6,
+    "CAPABILITY_ARGUMENT_ESCAPE": 12,
+    "CAPABILITY_ASSIGNMENT_ESCAPE": 51,
+    "CAPABILITY_ATTRIBUTE_CHAIN": 1,
+    "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE": 1,
+    "CAPABILITY_DECORATOR_ESCAPE": 1,
+    "CAPABILITY_DEFAULT_CAPTURE": 12,
+    "CAPABILITY_IMPORT_CENSUS": 9,
+    "CAPABILITY_IMPORT_FROM_PROHIBITED": 5,
+    "CAPABILITY_NAMED_EXPRESSION_ESCAPE": 6,
+    "CAPABILITY_RETURN_ESCAPE": 24,
+    "DYNAMIC_CAPABILITY_SURFACE": 5,
+    "META_CAPABILITY_SURFACE": 5,
+    "MODULE_CAPABILITY_ESCAPE": 2,
+    "UNAPPROVED_RECEIVER_METHOD": 41
+  },
   "result": "PASS",
   "runtime_proxy": {
     "mlx_members_observed": [
@@ -3149,6 +4649,7 @@
       "eval",
       "transpose"
     ],
+    "mlx_subset_of_contract": true,
     "numpy_members_observed": [
       "asarray",
       "dot",
@@ -3160,10 +4661,12 @@
       "sqrt",
       "zeros"
     ],
+    "numpy_subset_of_contract": true,
     "result": "PASS",
     "subset_of_contract": true
   },
   "schema": "pulsarmlx.f017.numerical-capability-qualification/1.0.0",
   "secondary_pure_core_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+  "transport_rejection_count": 119,
   "unexpected_pass_count": 0
 }

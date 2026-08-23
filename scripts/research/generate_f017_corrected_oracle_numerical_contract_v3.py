@@ -36,6 +36,7 @@ def main() -> int:
         "receiver_provenance": CONTRACTS / "f017-corrected-oracle-receiver-provenance-v1.json",
         "capability_use_manifest": CONTRACTS / "f017-corrected-oracle-numerical-capability-use-manifest-v1.json",
         "capability_analyzer": RESEARCH / "f017_numerical_capability_analysis_v1.py",
+        "capability_authority_generator": RESEARCH / "generate_f017_numerical_capability_authorities_v1.py",
         "independent_capability_checker": RESEARCH / "check_f017_numerical_capabilities_independent_v1.py",
         "capability_qualifier": RESEARCH / "qualify_f017_numerical_capability_policy_v1.py",
         "capability_qualification": EVIDENCE / "f017-corrected-oracle-numerical-capability-qualification-v1.json",

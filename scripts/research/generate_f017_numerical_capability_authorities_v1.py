@@ -33,6 +33,7 @@ def policy() -> dict:
         "schema": "pulsarmlx.f017.numerical-capability-policy/1.0.0",
         "status": "FROZEN",
         "semantic_identity_basis": "IMPORT_RESOLUTION_NOT_LOCAL_SPELLING",
+        "semantic_identity_matching": "EXACT_MODULE_OR_DOTTED_DESCENDANT",
         "module_identities": {"numpy": "PYTHON_MODULE_NUMPY", "mlx.core": "PYTHON_MODULE_MLX_CORE"},
         "exact_capability_imports": {
             "primary": [],
@@ -123,7 +124,7 @@ def policy() -> dict:
         },
         "non_method_attributes": [],
         "binding_forms": [
-            "Assign", "AnnAssign", "NamedExpr", "Tuple", "List", "Starred", "For", "AsyncFor",
+            "Assign", "AnnAssign", "AugAssign", "NamedExpr", "Tuple", "List", "Starred", "For", "AsyncFor",
             "comprehension", "With", "AsyncWith", "ExceptHandler", "arguments", "defaults", "kw_defaults",
             "decorators", "class_attributes", "Match", "Import", "ImportFrom",
         ],
@@ -153,7 +154,13 @@ def main() -> int:
         ("primary", "f017_corrected_oracle_primary_numerics_v2.py"),
         ("secondary", "f017_corrected_oracle_secondary_numerics_v2.py"),
     ):
-        analyses.append(module.analyze_path(RESEARCH / filename, policy_path, role).as_json())
+        path = RESEARCH / filename
+        relative = path.relative_to(ROOT).as_posix()
+        analyses.append(
+            module.CapabilityAnalyzer(module.load_policy(policy_path), role=role, path=relative)
+            .analyze(path.read_text())
+            .as_json()
+        )
     approved_member_names = {
         member
         for module_policy in policy()["semantic_modules"].values()
