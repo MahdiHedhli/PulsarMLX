@@ -1,0 +1,79 @@
+{
+  "baseline_validator_result": {
+    "identity_count": 129,
+    "required_cell_count": 2296
+  },
+  "finding_reproductions": {
+    "C3-B-1": {
+      "mutation": {
+        "reservation_is_not_execution": false,
+        "unstarted_consumer_delta": 1
+      },
+      "reproduced": true,
+      "validator_still_passed": true
+    },
+    "C3-B-2": {
+      "fabricated_binding": "secondary_terminal_sha256",
+      "fabricated_unstarted_outcomes": [
+        "ABORT_BEFORE_SECONDARY_START",
+        "ABORT_BEFORE_PRIMARY_START"
+      ],
+      "reproduced": true,
+      "validator_still_passed": true
+    },
+    "C3-B-3": {
+      "absent_leaf_model_present": false,
+      "reproduced": true,
+      "strict_resolution_applied_before_install": true
+    },
+    "C3-B-4": {
+      "reproduced": true,
+      "unmeasured_paths": {
+        "authorizer": "scripts/research/validate_f017_corrected_oracle_access_v3.py",
+        "coordinator": "scripts/research/execute_f017_corrected_oracle_event_v3.py",
+        "primary": "scripts/research/f017_corrected_oracle_primary_v3.py",
+        "secondary": "scripts/research/f017_corrected_oracle_secondary_v3.py"
+      }
+    },
+    "C3-B-5": {
+      "reproduced": true,
+      "serialization_domain_defined": false,
+      "sha_identity_count": 40
+    },
+    "C3-B-6": {
+      "live_entrypoints": {
+        "v2": {
+          "authorize_live_reachable": true,
+          "historical_only_guard": false,
+          "path": "scripts/research/validate_f017_corrected_oracle_access_v2.py"
+        },
+        "v3": {
+          "authorize_live_reachable": true,
+          "historical_only_guard": false,
+          "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py"
+        }
+      },
+      "reproduced": true,
+      "unsupported_supersession_claims": [
+        {
+          "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py",
+          "required_behavior": "V3_AUTHORIZER_REJECTS_LIVE_MINT"
+        },
+        {
+          "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py",
+          "required_behavior": "V3_COORDINATOR_REJECTS_NEW_PACKAGE_EXECUTION"
+        }
+      ]
+    }
+  },
+  "original_checkpoint_access": {
+    "identity_hash_reads": 0,
+    "mmaps": 0,
+    "payload_reads": 0,
+    "shard_opens": 0,
+    "tensor_reads": 0
+  },
+  "result": "PASS_REPRODUCED_REJECTED_V4_FAILURES",
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-v4-semantic-failure-reproduction/1.0.0",
+  "source_head": "ce903151d1175add8fb0d90e09849e03edd8fb8d"
+}
