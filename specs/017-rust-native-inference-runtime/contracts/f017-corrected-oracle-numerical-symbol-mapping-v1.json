@@ -1,0 +1,51 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-symbol-mapping/1.0.0",
+  "historical_commit": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+  "formula_change_count": 0,
+  "primary": {
+    "historical_path": "scripts/research/f017_corrected_oracle_primary.py",
+    "successor_path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+    "exact_or_interface_only": {
+      "Geometry": "Geometry",
+      "Source": "Source",
+      "JsonSource": "JsonSource",
+      "_hash_f64": "_hash_f64",
+      "_hash_json": "_hash_json",
+      "_matvec": "_matvec",
+      "_transpose_matvec": "_transpose_matvec",
+      "_rms": "_rms",
+      "_silu": "_silu",
+      "_residual": "_residual",
+      "_projection": "_projection",
+      "_swiglu": "_swiglu",
+      "_route": "_route",
+      "execute": "execute"
+    },
+    "moved_target_arithmetic": {
+      "StreamingMatrix.matvec": "_matvec::RowMatrix branch"
+    },
+    "removed_plumbing": ["AUTH_SCHEMA", "StreamingCatalogSource", "StreamingMatrix", "main", "_strict_json", "_hash_path"]
+  },
+  "secondary": {
+    "historical_path": "scripts/research/f017_corrected_oracle_secondary.py",
+    "successor_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+    "exact_or_interface_only": {
+      "Store": "Store",
+      "digest": "digest",
+      "rms": "rms",
+      "mv": "mv",
+      "transpose_mv": "transpose_mv",
+      "swiglu": "swiglu",
+      "execute": "execute"
+    },
+    "moved_target_arithmetic": {
+      "CatalogMatrix.matvec": "mv::RowMatrix branch"
+    },
+    "removed_plumbing": ["AUTH_SCHEMA", "CatalogStore", "CatalogMatrix", "main", "strict", "hash_path"]
+  },
+  "equivalence_authority": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v2.json",
+    "case_count": 24,
+    "complete_result_exact": true
+  }
+}

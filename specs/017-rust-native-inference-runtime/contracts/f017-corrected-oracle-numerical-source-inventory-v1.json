@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-source-inventory/1.0.0",
+  "historical_commit": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+  "classification_census": ["PURE_NUMERICAL_CORE", "SYNTHETIC_SOURCE", "TARGET_CHECKPOINT_SOURCE", "AUTHORIZATION_VALIDATION", "ACCESS_EVENT_PRODUCER", "SERIALIZATION", "CLI_ENTRY_POINT", "HISTORICAL_ONLY", "UNRESOLVED"],
+  "primary": {
+    "path": "scripts/research/f017_corrected_oracle_primary.py",
+    "sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+    "symbol_count": 44,
+    "symbols": {
+      "PURE_NUMERICAL_CORE": ["ORACLE_ID", "TOP_N", "_hash_f64", "Geometry", "Geometry.from_json", "Source", "Source.vector", "Source.matrix", "Source.expert", "_matvec", "_transpose_matvec", "_rms", "_silu", "_residual", "_projection", "_swiglu", "_route", "execute"],
+      "SYNTHETIC_SOURCE": ["JsonSource", "JsonSource.__init__", "JsonSource._get", "JsonSource.vector", "JsonSource.matrix", "JsonSource.expert"],
+      "TARGET_CHECKPOINT_SOURCE": ["_hash_path", "StreamingCatalogSource", "StreamingCatalogSource._raw", "StreamingCatalogSource._tensor", "StreamingCatalogSource.vector", "StreamingCatalogSource.matrix", "StreamingCatalogSource.expert", "StreamingCatalogSource.close", "StreamingMatrix", "StreamingMatrix.__init__", "StreamingMatrix.row", "StreamingMatrix.__getitem__", "StreamingMatrix.matvec"],
+      "AUTHORIZATION_VALIDATION": ["AUTH_SCHEMA", "StreamingCatalogSource.__init__"],
+      "ACCESS_EVENT_PRODUCER": ["StreamingCatalogSource._event"],
+      "SERIALIZATION": ["_pairs", "_strict_json", "_hash_json"],
+      "CLI_ENTRY_POINT": ["main"],
+      "HISTORICAL_ONLY": [],
+      "UNRESOLVED": []
+    }
+  },
+  "secondary": {
+    "path": "scripts/research/f017_corrected_oracle_secondary.py",
+    "sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+    "symbol_count": 32,
+    "symbols": {
+      "PURE_NUMERICAL_CORE": ["TOP_N", "ORACLE_ID", "digest", "rms", "mv", "transpose_mv", "swiglu", "execute"],
+      "SYNTHETIC_SOURCE": ["Store", "Store.__init__", "Store.get", "Store.vector", "Store.matrix", "Store.expert"],
+      "TARGET_CHECKPOINT_SOURCE": ["hash_path", "CatalogStore", "CatalogStore._get", "CatalogStore.vector", "CatalogStore.matrix", "CatalogStore.expert", "CatalogStore.close", "CatalogMatrix", "CatalogMatrix.__init__", "CatalogMatrix.row", "CatalogMatrix.__getitem__", "CatalogMatrix.matvec"],
+      "AUTHORIZATION_VALIDATION": ["AUTH_SCHEMA", "CatalogStore.__init__"],
+      "ACCESS_EVENT_PRODUCER": ["CatalogStore._event"],
+      "SERIALIZATION": ["_pairs", "strict"],
+      "CLI_ENTRY_POINT": ["main"],
+      "HISTORICAL_ONLY": [],
+      "UNRESOLVED": []
+    }
+  },
+  "unresolved_symbol_count": 0,
+  "result": "COMPLETE"
+}

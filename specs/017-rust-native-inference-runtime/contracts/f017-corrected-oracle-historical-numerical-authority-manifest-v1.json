@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-historical-numerical-authority-manifest/1.0.0",
+  "historical_commit": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+  "status": "HISTORICAL_GIT_ONLY",
+  "authorities": [
+    {
+      "role": "INDEPENDENT_CPU_REFERENCE",
+      "path": "scripts/research/f017_corrected_oracle_primary.py",
+      "sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+      "historical_target_capability": true,
+      "current_tree_status": "HISTORICAL_ONLY_TOMBSTONE"
+    },
+    {
+      "role": "INDEPENDENT_ACCELERATED_CROSS_CHECK",
+      "path": "scripts/research/f017_corrected_oracle_secondary.py",
+      "sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+      "historical_target_capability": true,
+      "current_tree_status": "HISTORICAL_ONLY_TOMBSTONE"
+    }
+  ],
+  "numerical_methodology_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
+    "sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4"
+  },
+  "checkpoint_free_qualification": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-checkpoint-free-qualification-v1.json",
+    "sha256": "b9c2f7dcd9982120f804594e9e268b7d0d764190625789717d104f4e4829c052"
+  },
+  "reconstruction": "GIT_SHOW_OR_GIT_ARCHIVE_EXACT_COMMIT_ONLY",
+  "current_tree_execution_permitted": false
+}

@@ -310,21 +310,15 @@ jobs:
       - name: Qualify attempt-1 offline diagnostics and forward evidence
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
-      - name: Qualify corrected oracle pre-access domain
+      - name: Qualify corrected oracle historical and active authority split
         run: |
           set -euo pipefail
           test -z "$PULSARMLX_MODEL_GGUF"
           cargo test -p stream p1_domain --no-default-features
           .venv/bin/python scripts/research/qualify_f017_corrected_oracles.py \
             --output "$RUNNER_TEMP/f017-corrected-oracle-qualification.json"
-          .venv/bin/python scripts/research/validate_f017_corrected_oracle_access_v2.py validate \
-            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json \
-            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json \
-            .
-          .venv/bin/python scripts/research/validate_f017_corrected_oracle_access_v3.py validate \
-            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v3.json \
-            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json \
-            .
+          .venv/bin/python scripts/research/validate_f017_historical_corrected_oracle_authorities_v6.py
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_numerical_authority_v2.py
           .venv/bin/python scripts/research/validate_f017_corrected_oracle_geometry.py \
             specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json \
             crates/f017-native/src/model.rs
@@ -349,6 +343,7 @@ jobs:
             scripts/research/tests/test_f017_iq4_xs_oracle_lane_order.py \
             scripts/research/tests/test_f017_corrected_oracle_instantiability_v3.py \
             scripts/research/tests/test_f017_corrected_oracle_preaccess.py \
+            scripts/research/tests/test_f017_corrected_oracle_numerical_authority_v2.py \
             scripts/research/tests/test_validate_f017_failure_evidence_v3.py \
             scripts/research/tests/test_f017_native_synthetic_family_v1.py
           .venv/bin/python scripts/research/audit_f017_native_checkpoint_plan.py \

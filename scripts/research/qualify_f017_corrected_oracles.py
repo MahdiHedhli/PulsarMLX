@@ -10,7 +10,7 @@ RESEARCH=ROOT/"scripts/research"
 sys.path.insert(0, str(RESEARCH))
 from f017_oracle_primary_decoders import decode as primary_decode
 from qualify_f017_quantization_matrix_v1 import FORMATS, independent_decode, synthetic_block
-import f017_corrected_oracle_primary as primary_module
+import f017_corrected_oracle_primary_numerics_v2 as primary_module
 from generate_f017_corrected_oracle_fixtures import fixture as make_fixture
 
 SEEDS=tuple(range(18101,18113))
@@ -136,7 +136,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument("--output",type=Path,required=True);args=parser.parse_args()
     # Historical target observations are quarantined from new implementation.
     forbidden=(str(21600+15),str(17300+51))
-    scanned=[RESEARCH/"f017_corrected_oracle_primary.py",RESEARCH/"f017_corrected_oracle_secondary.py",
+    scanned=[RESEARCH/"f017_corrected_oracle_primary_numerics_v2.py",RESEARCH/"f017_corrected_oracle_secondary_numerics_v2.py",
              RESEARCH/"f017_oracle_primary_decoders.py",
              ROOT/"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json"]
     leakage={str(path.relative_to(ROOT)):[value for value in forbidden if value in path.read_text()] for path in scanned}
@@ -150,8 +150,8 @@ def main():
             fixture=fixtures/f"fixture-{seed}.json";p_hashes=[];s_hashes=[];last=None
             for repeat in range(3):
                 p=work/f"{seed}-{repeat}-p.json";s=work/f"{seed}-{repeat}-s.json"
-                run([sys.executable,str(RESEARCH/"f017_corrected_oracle_primary.py"),"synthetic",str(fixture),str(p)])
-                run([sys.executable,str(RESEARCH/"f017_corrected_oracle_secondary.py"),"synthetic",str(fixture),str(s)])
+                run([sys.executable,str(RESEARCH/"f017_corrected_oracle_checkpoint_free_runner_v2.py"),"primary",str(fixture),str(p)])
+                run([sys.executable,str(RESEARCH/"f017_corrected_oracle_checkpoint_free_runner_v2.py"),"secondary",str(fixture),str(s)])
                 pa,sa=load(p),load(s);p_hashes.append(sha(p));s_hashes.append(sha(s));last=(pa,sa)
             # Complete outputs include no timestamps/PIDs and must be identical.
             primary_repeat_identity &= len(set(p_hashes))==1; secondary_repeat_identity &= len(set(s_hashes))==1
@@ -165,7 +165,7 @@ def main():
         if not primary_repeat_identity or not secondary_repeat_identity: raise SystemExit("fresh process reproducibility")
         decoder_cases,mutations=quantized_differential_and_mutations()
         base=load(fixtures/"fixture-18106.json");base_path=work/"base.json";base_p=work/"base-result.json"
-        base_path.write_bytes(canonical(base));run([sys.executable,str(RESEARCH/"f017_corrected_oracle_primary.py"),"synthetic",str(base_path),str(base_p)])
+        base_path.write_bytes(canonical(base));run([sys.executable,str(RESEARCH/"f017_corrected_oracle_checkpoint_free_runner_v2.py"),"primary",str(base_path),str(base_p)])
         base_result=load(base_p)
         for name in GRAPH_MUTATIONS:
             candidate_base=json.loads(json.dumps(base))

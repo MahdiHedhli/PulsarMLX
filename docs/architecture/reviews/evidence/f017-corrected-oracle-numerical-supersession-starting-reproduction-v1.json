@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-starting-reproduction/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+  "result": "REPRODUCED",
+  "direct_target_reachability": {
+    "primary": {
+      "path": "scripts/research/f017_corrected_oracle_primary.py",
+      "sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+      "target_subcommand": true,
+      "checkpoint_open_surface": "StreamingCatalogSource",
+      "payload_read_surface": "os.pread"
+    },
+    "secondary": {
+      "path": "scripts/research/f017_corrected_oracle_secondary.py",
+      "sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+      "target_subcommand": true,
+      "checkpoint_open_surface": "CatalogStore",
+      "payload_read_surface": "os.pread"
+    }
+  },
+  "reachable_wrappers": [
+    "scripts/research/execute_f017_corrected_oracle_event.py",
+    "scripts/research/execute_f017_corrected_oracle_event_v2.py",
+    "scripts/research/f017_corrected_oracle_primary_v3.py",
+    "scripts/research/f017_corrected_oracle_secondary_v3.py"
+  ],
+  "reachable_live_mint_surfaces": [
+    "scripts/research/validate_f017_corrected_oracle_access.py",
+    "scripts/research/validate_f017_corrected_oracle_access_v2.py",
+    "scripts/research/validate_f017_corrected_oracle_access_v3.py"
+  ],
+  "full_native_failure": {
+    "run_id": 32652026771,
+    "result": "FAIL",
+    "cause": "CURRENT_TREE_V2_BINDING_VALIDATION_AFTER_HISTORICAL_TOMBSTONE_CHANGE",
+    "exception": "ValueError: binding event_coordinator"
+  },
+  "semantic_column_mutation": {
+    "execution": "DETACHED_EXACT_STARTING_HEAD",
+    "baseline_validator_result": "PASS",
+    "mutations": {
+      "source": "SUBSTRING_MATCH_OK",
+      "equality_rule": "WARN_ONLY",
+      "validator": "attacker/validator.py",
+      "failure_classification": "IGNORE"
+    },
+    "mutated_validator_result": "PASS",
+    "classification": "REGISTRY_AND_MATRIX_NOT_BYTE_ANCHORED_AND_SEMANTIC_COLUMNS_TRUTHINESS_ONLY"
+  },
+  "shared_derivation_weakness": {
+    "validator_imported": "f017_lifecycle_semantics_v5",
+    "independent_derivation": false
+  },
+  "event_04_state_exists": false,
+  "p1_attempt_2_state_exists": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175
+}
