@@ -80,6 +80,7 @@ class MemoryParserTests(unittest.TestCase):
             base.replace("Pages free: 1.", "Pages free: -1."),
             base.replace("Pages free: 1.", "Pages free: 1.0."),
             base.replace("Pages free: 1.", "Pages free: 1e3."),
+            base.replace("Pages free: 1.", "Pages free: １."),
             base.replace("Pages free: 1.", "Pages free: 1. garbage"),
             base.replace("Pages free: 1.", "Pages free 1."),
         )
@@ -91,6 +92,28 @@ class MemoryParserTests(unittest.TestCase):
         completed = subprocess.CompletedProcess(["/usr/bin/vm_stat"], 1, b"", b"bad")
         with mock.patch("scripts.research.f017_macos_memory_observation_v1.subprocess.run", return_value=completed), self.assertRaises(MemoryObservationError):
             observe_vm_stat()
+
+    def test_command_is_fixed_and_caller_memory_overrides_are_impossible(self):
+        completed = subprocess.CompletedProcess(["/usr/bin/vm_stat"], 0, fixture().encode(), b"")
+        with mock.patch(
+            "scripts.research.f017_macos_memory_observation_v1.subprocess.run",
+            return_value=completed,
+        ) as invoked:
+            observed = observe_vm_stat()
+        self.assertEqual(observed.page_size_bytes, 16384)
+        invoked.assert_called_once_with(
+            ["/usr/bin/vm_stat"],
+            check=False,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=5.0,
+            shell=False,
+        )
+        with self.assertRaises(TypeError):
+            observe_vm_stat(page_size_bytes=4096)  # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            observe_vm_stat(available_bytes=2**80)  # type: ignore[call-arg]
         with mock.patch("scripts.research.f017_macos_memory_observation_v1.subprocess.run", side_effect=subprocess.TimeoutExpired("vm_stat", 5)), self.assertRaises(MemoryObservationError):
             observe_vm_stat()
         completed = subprocess.CompletedProcess(["/usr/bin/vm_stat"], 0, fixture().encode(), b"warning")
