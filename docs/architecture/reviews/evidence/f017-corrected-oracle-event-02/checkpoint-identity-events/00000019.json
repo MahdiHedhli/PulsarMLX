@@ -1,0 +1,1 @@
+{"authority_id":"GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf","authorization_id":"F017-CORRECTED-ORACLE-INERT-FIXTURE-2","kind":"SHARD_IDENTITY_CLOSE","owner_pid":97871,"result":"PASS","schema":"pulsarmlx.f017.corrected-oracle-checkpoint-identity-event/1.0.0","sequence":19,"sha256":null,"size_bytes":0,"timestamp_ns":1787456267788313000}
