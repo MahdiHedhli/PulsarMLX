@@ -1,0 +1,49 @@
+{
+  "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-preflight-failure/1.0.0",
+  "event_id": "F017-CORRECTED-FULL-CHECKPOINT-ORACLE-EVENT-01",
+  "observed_at_utc": "2026-08-23T00:14:53Z",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "observed_head": "820a4c2885dbcb4460dfdf9efa01058576cb7163",
+  "accepted_package_head": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+  "preaccess_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-full-checkpoint-oracle-preaccess-domain-declaration-v2.json",
+    "sha256": "f85dae853e1f6ca9bfeb54cee5958536cea67cf097735e5156a4c283a66b808d"
+  },
+  "scientific_access_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json",
+    "sha256": "fdff100fc91efc3ca337bd256dd290a6211f18eb6ce38255ed50f30da806b434"
+  },
+  "event_coordinator": {
+    "path": "scripts/research/execute_f017_corrected_oracle_event.py",
+    "sha256": "e76a73150c415f73a6c8fc29429636084ab126c3302036bce39414dede40ce8a"
+  },
+  "preflight_gate": "FRESH_AVAILABLE_MEMORY_OBSERVATION",
+  "machine": {
+    "brand": "Apple M1 Ultra",
+    "architecture": "arm64",
+    "macos_version": "26.0",
+    "macos_build": "25A354"
+  },
+  "observed_vm_stat_header": "Mach Virtual Memory Statistics: (page size of 16384 bytes)",
+  "frozen_parser_expression": "int(text.splitlines()[0].split()[-1].rstrip(\".\"))",
+  "observed_parser_token": "bytes)",
+  "failure": "ValueError: invalid literal for int() with base 10: 'bytes)'",
+  "classification": "LOAD_BEARING_PREFLIGHT_FAILURE_REQUIRES_REVIEWED_COORDINATOR_REPAIR",
+  "authorization_minted": false,
+  "primary_authorization_minted": false,
+  "secondary_authorization_minted": false,
+  "primary_event_started": false,
+  "secondary_event_started": false,
+  "corrected_full_checkpoint_oracle_executed": false,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_mmaps": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "oracle_event_ledger_delta": 0,
+  "historical_master_ledger_before": 175,
+  "historical_master_ledger_after": 175,
+  "p1_attempt_1_retry": false,
+  "p1_attempt_2_executed": false,
+  "live_p1_attempt_2_authorization_created": false,
+  "go_disposition": "EXPIRED_BEFORE_MINT_ON_LOAD_BEARING_PREFLIGHT_FAILURE",
+  "required_next_boundary": "Repair the vm_stat page-size parser, run FULL_NATIVE CI, obtain fresh independent review, and request a new operator GO."
+}
