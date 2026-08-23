@@ -57,15 +57,29 @@ def function_names(text: str) -> set[str]:
 
 def validate_pure_core(path: Path, role: str) -> None:
     text = path.read_text(); tree = ast.parse(text)
-    forbidden_imports = {
-        "argparse", "ctypes", "fcntl", "importlib", "io", "mmap", "os",
-        "pathlib", "shutil", "socket", "subprocess", "sys", "tempfile",
-    }
+    allowed_imports = {
+        "primary": {"__future__", "dataclasses", "hashlib", "json", "math", "struct", "typing"},
+        "secondary": {"__future__", "hashlib", "json", "math", "mlx", "numpy", "struct", "typing"},
+    }[role]
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
-            if any(alias.name.split(".")[0] in forbidden_imports for alias in node.names): raise ValueError(f"{role} pure-core import")
-        if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] in forbidden_imports: raise ValueError(f"{role} pure-core import")
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"open", "compile", "exec", "eval", "__import__"}: raise ValueError(f"{role} pure-core call")
+            if any(alias.name.split(".")[0] not in allowed_imports for alias in node.names):
+                raise ValueError(f"{role} pure-core import")
+        if isinstance(node, ast.ImportFrom):
+            if node.level != 0 or (node.module or "").split(".")[0] not in allowed_imports:
+                raise ValueError(f"{role} pure-core import")
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in {
+                "open", "compile", "exec", "eval", "__import__", "getattr",
+                "globals", "locals", "vars",
+            }:
+                raise ValueError(f"{role} pure-core call")
+            if isinstance(node.func, ast.Attribute) and node.func.attr in {
+                "open", "dlopen", "__import__",
+            }:
+                raise ValueError(f"{role} pure-core attribute call")
+        if isinstance(node, ast.Name) and node.id == "__builtins__":
+            raise ValueError(f"{role} pure-core builtins escape")
     forbidden_names = {"AUTH_SCHEMA", "StreamingCatalogSource", "CatalogStore", "main"}
     if symbols(text) & forbidden_names: raise ValueError(f"{role} pure-core target symbol")
 
@@ -74,6 +88,17 @@ def main() -> int:
     primary = ROOT / "scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
     secondary = ROOT / "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
     validate_pure_core(primary, "primary"); validate_pure_core(secondary, "secondary")
+    target_method_census = {
+        "f017_corrected_oracle_primary_target_source_v6.py": {
+            "__getitem__", "__init__", "_event", "_hash_path", "_pairs",
+            "_raw", "_strict_json", "_tensor", "close", "expert", "matrix",
+            "row", "vector",
+        },
+        "f017_corrected_oracle_secondary_target_source_v6.py": {
+            "__getitem__", "__init__", "_event", "_get", "_pairs", "close",
+            "expert", "hash_path", "matrix", "row", "strict", "vector",
+        },
+    }
     for target in (ROOT / "scripts/research/f017_corrected_oracle_primary_target_source_v6.py", ROOT / "scripts/research/f017_corrected_oracle_secondary_target_source_v6.py"):
         target_functions = function_names(target.read_text())
         graph_arithmetic = {
@@ -83,6 +108,8 @@ def main() -> int:
         }
         if target_functions & graph_arithmetic:
             raise ValueError(f"target source contains graph arithmetic: {sorted(target_functions & graph_arithmetic)}")
+        if target_functions != target_method_census[target.name]:
+            raise ValueError(f"target source function census drift: {target.name}")
     inventory = json_value(CONTRACTS / "f017-corrected-oracle-numerical-source-inventory-v1.json")
     for role in ("primary", "secondary"):
         record = inventory[role]; historical_text = subprocess.run(["git", "show", f"{HISTORICAL_COMMIT}:{record['path']}"], cwd=ROOT, check=True, capture_output=True, text=True).stdout

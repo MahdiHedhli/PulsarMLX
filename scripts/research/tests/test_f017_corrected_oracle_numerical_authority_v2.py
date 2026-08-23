@@ -72,3 +72,29 @@ def test_exact_file_binding_rejects_path_and_sha_mutations() -> None:
                 pass
             else:
                 raise AssertionError(f"binding mutation accepted: {mutation}")
+
+
+def test_pure_core_import_policy_is_allowlist_not_denylist() -> None:
+    module = validator_module()
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "core.py"
+        accepted = "from __future__ import annotations\nimport math\ndef execute():\n    return math.sqrt(4.0)\n"
+        path.write_text(accepted)
+        module.validate_pure_core(path, "primary")
+        escapes = (
+            "import urllib.request\n",
+            "import _ctypes\n",
+            "import zipfile\n",
+            "import runpy\n",
+            "from . import os\n",
+            "def f():\n    return builtins.__import__('os')\n",
+            "def f():\n    return __builtins__['__import__']('os')\n",
+        )
+        for source in escapes:
+            path.write_text(source)
+            try:
+                module.validate_pure_core(path, "primary")
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"pure-core escape accepted: {source!r}")

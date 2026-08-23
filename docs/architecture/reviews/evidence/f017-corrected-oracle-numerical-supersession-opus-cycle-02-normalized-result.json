@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-review/1.0.0",
+  "reviewer": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "session": "f7472c4e-a88a-4ffd-894c-1937c424bb99"
+  },
+  "reviewed_head": "7fff686ab2a576230dcf23c8e43ca8e4d74c35fa",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [
+    {
+      "id": "F5-R1",
+      "summary": "PURE_CORE_IMPORT_DENYLIST_REMAINS_FAIL_OPEN"
+    }
+  ],
+  "defense_in_depth_findings": ["F6-R2", "F1-R3"],
+  "formula_change_required": false,
+  "threshold_change_required": false,
+  "original_checkpoint_access_required": false,
+  "independence_loss_required": false,
+  "verdict": "REJECT",
+  "safety": {
+    "event_04_authorization_created": false,
+    "event_04_executed": false,
+    "historical_master_ledger": 175,
+    "original_checkpoint_access": 0,
+    "p1_attempt_2_executed": false,
+    "primary_real_oracle_executions": 0,
+    "secondary_real_oracle_executions": 0
+  }
+}
