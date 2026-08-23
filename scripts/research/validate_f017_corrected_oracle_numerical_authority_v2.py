@@ -55,12 +55,53 @@ def function_names(text: str) -> set[str]:
     }
 
 
+def import_signature(text: str) -> list[str]:
+    return sorted(
+        ast.dump(node, include_attributes=False)
+        for node in ast.walk(ast.parse(text))
+        if isinstance(node, (ast.Import, ast.ImportFrom))
+    )
+
+
+def assigned_surface_names(text: str) -> set[str]:
+    result: set[str] = set()
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.NamedExpr)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                for part in ast.walk(target):
+                    if isinstance(part, ast.Name): result.add(part.id)
+                    if isinstance(part, ast.Attribute): result.add(part.attr)
+        if isinstance(node, ast.Dict):
+            result.update(
+                key.value for key in node.keys
+                if isinstance(key, ast.Constant) and isinstance(key.value, str)
+            )
+    return result
+
+
 def validate_pure_core(path: Path, role: str) -> None:
     text = path.read_text(); tree = ast.parse(text)
-    allowed_imports = {
-        "primary": {"__future__", "dataclasses", "hashlib", "json", "math", "struct", "typing"},
-        "secondary": {"__future__", "hashlib", "json", "math", "mlx", "numpy", "struct", "typing"},
+    expected_imports = {
+        "primary": [
+            "Import(names=[alias(name='hashlib')])", "Import(names=[alias(name='json')])",
+            "Import(names=[alias(name='math')])", "Import(names=[alias(name='struct')])",
+            "ImportFrom(module='__future__', names=[alias(name='annotations')], level=0)",
+            "ImportFrom(module='dataclasses', names=[alias(name='dataclass')], level=0)",
+            "ImportFrom(module='typing', names=[alias(name='Protocol'), alias(name='runtime_checkable')], level=0)",
+        ],
+        "secondary": [
+            "Import(names=[alias(name='hashlib')])", "Import(names=[alias(name='math')])",
+            "Import(names=[alias(name='mlx.core', asname='mx')])",
+            "Import(names=[alias(name='mlx.core', asname='mx')])",
+            "Import(names=[alias(name='mlx.core', asname='mx')])",
+            "Import(names=[alias(name='numpy', asname='np')])", "Import(names=[alias(name='struct')])",
+            "ImportFrom(module='__future__', names=[alias(name='annotations')], level=0)",
+            "ImportFrom(module='typing', names=[alias(name='Protocol'), alias(name='runtime_checkable')], level=0)",
+        ],
     }[role]
+    if import_signature(text) != sorted(expected_imports):
+        raise ValueError(f"{role} pure-core exact import surface")
     dangerous_call_names = {
         "open", "compile", "exec", "eval", "__import__", "getattr",
         "globals", "locals", "vars",
@@ -90,12 +131,6 @@ def validate_pure_core(path: Path, role: str) -> None:
         "mx": {"array", "eval", "transpose"},
     }
     for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            if any(alias.name.split(".")[0] not in allowed_imports for alias in node.names):
-                raise ValueError(f"{role} pure-core import")
-        if isinstance(node, ast.ImportFrom):
-            if node.level != 0 or (node.module or "").split(".")[0] not in allowed_imports:
-                raise ValueError(f"{role} pure-core import")
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and node.func.id in tainted_aliases:
                 raise ValueError(f"{role} pure-core call")
@@ -103,8 +138,13 @@ def validate_pure_core(path: Path, role: str) -> None:
                 "open", "dlopen", "__import__",
             }:
                 raise ValueError(f"{role} pure-core attribute call")
-        if isinstance(node, ast.Name) and node.id == "__builtins__":
-            raise ValueError(f"{role} pure-core builtins escape")
+        if isinstance(node, ast.Name) and node.id in {
+            "open", "compile", "exec", "eval", "__import__", "getattr",
+            "globals", "locals", "vars", "__builtins__", "__loader__", "__spec__",
+        }:
+            raise ValueError(f"{role} pure-core builtin/meta-loader escape")
+        if isinstance(node, ast.Attribute) and node.attr in {"__globals__", "load_module", "exec_module"}:
+            raise ValueError(f"{role} pure-core meta-loader attribute escape")
         if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
             root = node.value.id
             if root in numeric_attribute_allowlist and node.attr not in numeric_attribute_allowlist[root]:
@@ -141,7 +181,7 @@ def main() -> int:
         }
         if target_functions & graph_arithmetic:
             raise ValueError(f"target source contains graph arithmetic: {sorted(target_functions & graph_arithmetic)}")
-        if symbols(target.read_text()) & graph_arithmetic:
+        if assigned_surface_names(target.read_text()) & graph_arithmetic:
             raise ValueError("target source contains assigned graph arithmetic surface")
         if target_functions != target_method_census[target.name]:
             raise ValueError(f"target source function census drift: {target.name}")
@@ -194,6 +234,8 @@ def main() -> int:
     expected_authority_bindings = {
         "historical_authority_manifest": CONTRACTS / "f017-corrected-oracle-historical-numerical-authority-manifest-v1.json",
         "numerical_requalification": EVIDENCE / "f017-corrected-oracle-numerical-requalification-v2.json",
+        "numerical_qualifier": ROOT / "scripts/research/qualify_f017_corrected_oracle_numerical_authority_v2.py",
+        "numerical_validator": ROOT / "scripts/research/validate_f017_corrected_oracle_numerical_authority_v2.py",
         "separation_architecture": CONTRACTS / "f017-corrected-oracle-numerical-separation-architecture-v1.json",
     }
     if set(contract["authority_bindings"]) != set(expected_authority_bindings):

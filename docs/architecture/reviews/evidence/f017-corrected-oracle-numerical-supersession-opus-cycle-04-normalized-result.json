@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-review/1.0.0",
+  "reviewer": {"model": "claude-opus-5", "effort": "high", "session": "8d17550a-dcfa-4cd7-afcb-96e48c9e177e"},
+  "reviewed_head": "d85ddbf50989b370dffa2277941a15750cfddf70",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [
+    {"id": "F5-R3", "summary": "NUMERICAL_MODULE_ATTRIBUTE_ALLOWLIST_IS_ALIAS_SPELLING_BOUND"},
+    {"id": "D1-R1", "summary": "BUILTIN_ALIAS_TAINT_MISSES_NON_NAME_BINDING_FORMS"},
+    {"id": "D2-R1", "summary": "ASSIGNED_GRAPH_NAME_GUARD_SKIPS_CLASS_BODIES"}
+  ],
+  "defense_in_depth_findings": ["DID-1", "DID-2"],
+  "formula_change_required": false,
+  "threshold_change_required": false,
+  "original_checkpoint_access_required": false,
+  "independence_loss_required": false,
+  "verdict": "REJECT",
+  "safety": {"event_04_authorization_created": false, "event_04_executed": false, "historical_master_ledger": 175, "original_checkpoint_access": 0, "p1_attempt_2_executed": false, "primary_real_oracle_executions": 0, "secondary_real_oracle_executions": 0}
+}

@@ -47,6 +47,8 @@ def main() -> int:
         "separation_architecture": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-separation-architecture-v1.json", "sha256": sha("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-separation-architecture-v1.json")},
         "historical_authority_manifest": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-historical-numerical-authority-manifest-v1.json", "sha256": sha("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-historical-numerical-authority-manifest-v1.json")},
         "numerical_requalification": {"path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v2.json", "sha256": sha("docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v2.json")},
+        "numerical_qualifier": {"path": "scripts/research/qualify_f017_corrected_oracle_numerical_authority_v2.py", "sha256": sha("scripts/research/qualify_f017_corrected_oracle_numerical_authority_v2.py")},
+        "numerical_validator": {"path": "scripts/research/validate_f017_corrected_oracle_numerical_authority_v2.py", "sha256": sha("scripts/research/validate_f017_corrected_oracle_numerical_authority_v2.py")},
     }
     data = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode() + b"\n"
     temporary = OUTPUT.with_name(OUTPUT.name + ".generating")

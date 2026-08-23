@@ -78,7 +78,7 @@ def test_pure_core_import_policy_is_allowlist_not_denylist() -> None:
     module = validator_module()
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "core.py"
-        accepted = "from __future__ import annotations\nimport math\ndef execute():\n    return math.sqrt(4.0)\n"
+        accepted = (RESEARCH / "f017_corrected_oracle_primary_numerics_v2.py").read_text()
         path.write_text(accepted)
         module.validate_pure_core(path, "primary")
         escapes = (
@@ -93,7 +93,7 @@ def test_pure_core_import_policy_is_allowlist_not_denylist() -> None:
             "_e = eval\n@_e\ndef f():\n    return 1\n",
         )
         for source in escapes:
-            path.write_text(source)
+            path.write_text(accepted + "\n" + source)
             try:
                 module.validate_pure_core(path, "primary")
             except ValueError:
@@ -106,17 +106,50 @@ def test_secondary_numeric_modules_expose_only_reviewed_arithmetic_attributes() 
     module = validator_module()
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "secondary.py"
-        path.write_text("import numpy as np\ndef f(x):\n    return np.asarray(x, dtype=np.float32)\n")
+        baseline = (RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py").read_text()
+        path.write_text(baseline)
         module.validate_pure_core(path, "secondary")
         for expression in (
             "np.load('x')", "np.fromfile('x')", "np.memmap('x')", "np.save('x', [])",
             "mx.load('x')", "mx.export_function('x')",
         ):
-            module_name = "mlx.core as mx" if expression.startswith("mx.") else "numpy as np"
-            path.write_text(f"import {module_name}\ndef f():\n    return {expression}\n")
+            path.write_text(baseline + f"\ndef f017_policy_probe():\n    return {expression}\n")
             try:
                 module.validate_pure_core(path, "secondary")
             except ValueError:
                 pass
             else:
                 raise AssertionError(f"numeric-module file capability accepted: {expression}")
+
+
+def test_import_aliases_and_assignment_shapes_cannot_evade_purity() -> None:
+    module = validator_module()
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "core.py"
+        baseline = (RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py").read_text()
+        escapes = (
+            "import numpy\ndef f(): return numpy.load('x')\n",
+            "import numpy as onp\ndef f(): return onp.memmap('x')\n",
+            "from numpy import load\ndef f(): return load('x')\n",
+            "from numpy import *\n",
+            "import mlx.core as mcore\ndef f(): return mcore.load('x')\n",
+            "a, b = open, eval\ndef f(): return a('x')\n",
+            "def f(_o=open): return _o('x')\n",
+            "def f(): return __loader__.load_module('os')\n",
+            "def f(): return f.__globals__['__builtins__']\n",
+        )
+        for source in escapes:
+            path.write_text(baseline + "\n" + source)
+            try:
+                module.validate_pure_core(path, "secondary")
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"alias-shaped escape accepted: {source!r}")
+
+
+def test_assigned_graph_names_are_collected_at_any_depth() -> None:
+    module = validator_module()
+    source = "class Target:\n    matvec = lambda self, x: x\n    ops = {'execute': lambda value: value}\n"
+    assigned = module.assigned_surface_names(source)
+    assert {"matvec", "execute"}.issubset(assigned)
