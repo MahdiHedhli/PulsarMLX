@@ -1,15 +1,1 @@
-{
-  "authorization_schemas": ["pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0"],
-  "consumer_role": "INDEPENDENT_ACCELERATED_CROSS_CHECK",
-  "decoder_path": "scripts/research/qualify_f017_quantization_matrix_v1.py",
-  "decoder_sha256": "ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53",
-  "numerical_authority_path": "scripts/research/f017_corrected_oracle_secondary.py",
-  "numerical_authority_sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
-  "oracle_id": "F017_INDEPENDENT_ACCELERATED_CROSS_CHECK_V1",
-  "producer_path": "scripts/research/f017_corrected_oracle_secondary_v3.py",
-  "producer_sha256": "941f1cb5e62c61997e11043e4cec0bd20398dba7fdb2c710740f6f49a8396aed",
-  "schema": "pulsarmlx.f017.corrected-oracle-consumer-capability/1.0.0",
-  "scientific_access_contract_schemas": ["pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access-contract/3.0.0"],
-  "target_command": "target",
-  "validation_only_command": "validate-live-authorization"
-}
+{"authorization_schemas":["pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0"],"consumer_role":"INDEPENDENT_ACCELERATED_CROSS_CHECK","decoder_path":"scripts/research/qualify_f017_quantization_matrix_v1.py","decoder_sha256":"ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53","numerical_authority_path":"scripts/research/f017_corrected_oracle_secondary.py","numerical_authority_sha256":"8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29","oracle_id":"F017_INDEPENDENT_ACCELERATED_CROSS_CHECK_V1","producer_path":"scripts/research/f017_corrected_oracle_secondary_v3.py","producer_sha256":"941f1cb5e62c61997e11043e4cec0bd20398dba7fdb2c710740f6f49a8396aed","schema":"pulsarmlx.f017.corrected-oracle-consumer-capability/1.0.0","scientific_access_contract_schemas":["pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access-contract/3.0.0"],"target_command":"target","validation_only_command":"validate-live-authorization"}

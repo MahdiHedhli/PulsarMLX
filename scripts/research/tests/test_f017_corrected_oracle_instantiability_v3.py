@@ -11,6 +11,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -270,6 +271,17 @@ class SyntheticPackage:
             self.installed, self.mint_evidence, self.mint_reports,
         )
 
+    def rewrite_contract_bindings(self) -> None:
+        """Rebind synthetic control artifacts after an intentional contract mutation."""
+        bank_json(self.contract, self.contract_document)
+        contract_sha = digest(self.contract)
+        self.inert_document["contract_sha256"] = contract_sha
+        self.approval_document["contract_sha256"] = contract_sha
+        self.preflight_document["contract_sha256"] = contract_sha
+        bank_json(self.inert, self.inert_document)
+        bank_json(self.approval, self.approval_document)
+        bank_json(self.preflight, self.preflight_document)
+
 
 class AuthorizationConsumerInstantiabilityV3(unittest.TestCase):
     @classmethod
@@ -301,6 +313,35 @@ class AuthorizationConsumerInstantiabilityV3(unittest.TestCase):
             self.assertNotIn(b"INERT", json.loads(installed)["authorization_id"].encode())
             self.assertFalse(package.package_root.exists())
             self.assertEqual(evidence["checkpoint_shard_opens"], 0)
+
+    def test_two_phase_mint_requires_both_real_consumer_validations(self):
+        with self.temporary() as directory:
+            package = SyntheticPackage(Path(directory), 3)
+            calls = []
+            real = authorizer._run_consumer
+            def observe(script, *args, **kwargs):
+                calls.append(script.name)
+                return real(script, *args, **kwargs)
+            with mock.patch.object(authorizer, "_run_consumer", side_effect=observe):
+                package.mint()
+            self.assertEqual(calls, ["f017_corrected_oracle_primary_v3.py", "f017_corrected_oracle_secondary_v3.py"])
+
+    def test_reused_package_or_consumer_event_identity_is_rejected(self):
+        for key in ("live_authorization_id", "primary_event_id", "secondary_event_id"):
+            with self.subTest(key=key), self.temporary() as directory:
+                fake_root = Path(directory)
+                evidence = fake_root / "docs/architecture/reviews/evidence"
+                evidence.mkdir(parents=True)
+                approval = fake_root / "approval.json"
+                identity = f"F017-REUSED-{key.upper()}"
+                document = {"live_authorization_id": "F017-UNUSED-AUTHORIZATION",
+                            "primary_event_id": "F017-UNUSED-PRIMARY-EVENT",
+                            "secondary_event_id": "F017-UNUSED-SECONDARY-EVENT"}
+                document[key] = identity
+                bank_json(approval, document)
+                bank_json(evidence / "prior.json", {"historical_identity": identity})
+                with mock.patch.object(authorizer, "ROOT", fake_root), self.assertRaises(ValueError):
+                    authorizer._require_unused_live_identities(document, approval)
 
     def test_validation_only_fresh_processes_are_exact_and_side_effect_free(self):
         with self.temporary() as directory:
@@ -424,6 +465,57 @@ class AuthorizationConsumerInstantiabilityV3(unittest.TestCase):
             self.assertEqual(receipt["primary_event_delta"], 0)
             self.assertEqual(receipt["secondary_event_delta"], 0)
             self.assertFalse(receipt["primary"]["started"])
+            self.assertFalse(receipt["secondary"]["started"])
+
+    def test_capability_mismatch_fails_before_state_and_checkpoint_identity(self):
+        with self.temporary() as directory:
+            package = SyntheticPackage(Path(directory), 55)
+            package.contract_document["consumer_capabilities"]["primary"]["sha256"] = "1" * 64
+            package.rewrite_contract_bindings()
+            package.mint()
+            handshake = package.root / "handshake.json"
+            with self.assertRaises(ValueError):
+                coordinator.handshake(package.installed, package.contract, package.catalog,
+                                      package.checkpoint, handshake, scope="SYNTHETIC_QUALIFICATION")
+            self.assertFalse(package.package_root.exists())
+            self.assertFalse(handshake.exists())
+
+    def test_handshake_failure_prevents_identity_hash_and_package_state(self):
+        with self.temporary() as directory:
+            package = SyntheticPackage(Path(directory), 56)
+            package.mint()
+            arguments = SimpleNamespace(
+                authorization=package.installed, contract=package.contract, catalog=package.catalog,
+                checkpoint_root=package.checkpoint, geometry=package.geometry,
+                package_root=package.package_root, handshake_output=package.root / "handshake.json",
+            )
+            with mock.patch.object(coordinator, "handshake", side_effect=ValueError("injected handshake failure")), \
+                 mock.patch.object(coordinator, "verify_checkpoint_identity") as identity, \
+                 self.assertRaises(ValueError):
+                coordinator.execute_event(arguments, scope="SYNTHETIC_QUALIFICATION")
+            identity.assert_not_called()
+            self.assertFalse(package.package_root.exists())
+
+    def test_primary_precompletion_failure_does_not_start_secondary(self):
+        with self.temporary() as directory:
+            package = SyntheticPackage(Path(directory), 57)
+            package.mint()
+            arguments = SimpleNamespace(
+                authorization=package.installed, contract=package.contract, catalog=package.catalog,
+                checkpoint_root=package.checkpoint, geometry=package.geometry,
+                package_root=package.package_root, handshake_output=package.root / "handshake.json",
+            )
+            real_run = subprocess.run
+            def fail_primary_target(command, *args, **kwargs):
+                if "f017_corrected_oracle_primary_v3.py" in str(command[1]) and "target" in command:
+                    raise subprocess.CalledProcessError(9, command)
+                return real_run(command, *args, **kwargs)
+            with mock.patch.object(coordinator.subprocess, "run", side_effect=fail_primary_target):
+                self.assertEqual(coordinator.execute_event(arguments, scope="SYNTHETIC_QUALIFICATION"), 2)
+            receipt = json.loads((package.package_root / "receipt.json").read_text())
+            self.assertEqual(receipt["primary_event_delta"], 1)
+            self.assertEqual(receipt["secondary_event_delta"], 0)
+            self.assertTrue(receipt["primary"]["started"])
             self.assertFalse(receipt["secondary"]["started"])
 
     def test_candidate_install_byte_mismatch_is_detected(self):
