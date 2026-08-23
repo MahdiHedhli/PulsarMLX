@@ -32,6 +32,21 @@ def bank(path,value):
  json.loads(observed,object_pairs_hook=_pairs)
  return hashlib.sha256(observed).hexdigest()
 
+def repository_authority(contract: dict) -> dict:
+ def git(*arguments):
+  return subprocess.run(["/usr/bin/git",*arguments],cwd=ROOT,check=True,text=True,capture_output=True,timeout=10).stdout.strip()
+ if Path(git("rev-parse","--show-toplevel")).resolve(strict=True)!=ROOT: raise ValueError("repository root")
+ head=git("rev-parse","HEAD")
+ if git("status","--porcelain=v1","--untracked-files=all"): raise ValueError("worktree not clean")
+ expected=contract["implementation_head"]
+ ancestor=subprocess.run(["/usr/bin/git","merge-base","--is-ancestor",expected,head],cwd=ROOT,check=False,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=10)
+ if ancestor.returncode!=0: raise ValueError("implementation head not ancestor")
+ remote=git("rev-parse",f"refs/remotes/origin/{contract['branch']}")
+ if remote!=head: raise ValueError("local/remote parity")
+ branch=git("branch","--show-current")
+ if branch!=contract["branch"]: raise ValueError("authoritative branch")
+ return {"git_head":head,"local_remote_parity":True,"worktree_clean":True}
+
 def preflight(contract_path: Path, output: Path | None = None) -> dict:
  """Validate non-payload execution authority and fresh host memory only."""
  contract=strict(contract_path)
@@ -41,6 +56,7 @@ def preflight(contract_path: Path, output: Path | None = None) -> dict:
  expected_parser=ROOT/bindings["memory_observer"]["path"]
  if Path(__file__).resolve()!=expected_coordinator.resolve(strict=True) or sha(expected_coordinator)!=bindings["event_coordinator"]["sha256"]: raise ValueError("coordinator identity")
  if sha(expected_parser)!=bindings["memory_observer"]["sha256"]: raise ValueError("memory observer identity")
+ repository=repository_authority(contract)
  brand=subprocess.run(["/usr/sbin/sysctl","-n","machdep.cpu.brand_string"],check=True,text=True,capture_output=True,timeout=5).stdout.rstrip("\r\n")
  if brand!="Apple M1 Ultra" or platform.machine()!="arm64": raise ValueError("machine identity")
  observed=observe_vm_stat()
@@ -48,7 +64,7 @@ def preflight(contract_path: Path, output: Path | None = None) -> dict:
  if minimum!=MINIMUM_FREE_BYTES or observed.available_bytes<minimum: raise ValueError("memory floor")
  report={"schema":PREFLIGHT_SCHEMA,"result":"PASS","branch":contract["branch"],"implementation_head":contract["implementation_head"],
          "contract_sha256":sha(contract_path),"coordinator_sha256":sha(expected_coordinator),"memory_observer_sha256":sha(expected_parser),
-         "machine_brand":brand,"architecture":platform.machine(),"minimum_free_bytes":minimum,"observation":observed.as_dict(),
+         **repository,"machine_brand":brand,"architecture":platform.machine(),"minimum_free_bytes":minimum,"observation":observed.as_dict(),
          "state_created":False,"authorization_created":False,"checkpoint_shard_opens":0,"checkpoint_payload_reads":0}
  if output is not None: bank(output,report)
  return report

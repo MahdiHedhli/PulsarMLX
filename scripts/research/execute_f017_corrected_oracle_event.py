@@ -97,6 +97,7 @@ def metrics(primary,secondary):
  differences=[abs(a-b) for a,b in zip(left,right,strict=True)];rmse=math.sqrt(sum(value*value for value in differences)/len(differences));dot=sum(a*b for a,b in zip(left,right,strict=True));norm=math.sqrt(sum(a*a for a in left)*sum(b*b for b in right))
  return {"max_abs":max(differences),"rmse":rmse,"cosine_similarity":dot/norm if norm else 1.0}
 def main():
+ raise SystemExit("HISTORICAL_ONLY: corrected-oracle coordinator v1 is superseded and ineligible for live authority")
  parser=argparse.ArgumentParser();parser.add_argument("authorization",type=Path);parser.add_argument("contract",type=Path);parser.add_argument("catalog",type=Path);parser.add_argument("checkpoint_root",type=Path);parser.add_argument("geometry",type=Path);parser.add_argument("state_root",type=Path);args=parser.parse_args()
  subprocess.run([sys.executable,str(ROOT/"scripts/research/validate_f017_corrected_oracle_access.py"),"validate",str(args.authorization),str(args.contract),str(ROOT),"--require-live"],check=True)
  auth=strict(args.authorization);contract=strict(args.contract)

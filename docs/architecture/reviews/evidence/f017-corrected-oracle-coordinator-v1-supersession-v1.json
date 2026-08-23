@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-coordinator-supersession/1.0.0",
+  "classification": "APPEND_ONLY_EXECUTION_AUTHORITY_SUPERSESSION",
+  "failed_preflight_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-full-checkpoint-oracle-event-01-preflight-failure-v1.json",
+    "sha256": "f7443acc057d619ac478f43aafcea51f81b77ab65e3b3141776f30ddcfbb7b24"
+  },
+  "old_coordinator": {
+    "path": "scripts/research/execute_f017_corrected_oracle_event.py",
+    "historical_commit": "820a4c2885dbcb4460dfdf9efa01058576cb7163",
+    "historical_sha256": "e76a73150c415f73a6c8fc29429636084ab126c3302036bce39414dede40ce8a",
+    "failure": "The positional final-token parser supplied bytes) to int for the accepted macOS 26 vm_stat header.",
+    "disposition": "HISTORICAL_ONLY_INELIGIBLE_FOR_FUTURE_LIVE_AUTHORITY",
+    "current_tombstone_sha256": "9593f18a576f55ba2b9bd607f1a059e50d3080f6f55909a631e5d30bc2660ba9"
+  },
+  "new_coordinator": {
+    "path": "scripts/research/execute_f017_corrected_oracle_event_v2.py",
+    "sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f",
+    "memory_observer_path": "scripts/research/f017_macos_memory_observation_v1.py",
+    "memory_observer_sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477"
+  },
+  "old_scientific_access_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json",
+    "sha256": "fdff100fc91efc3ca337bd256dd290a6211f18eb6ce38255ed50f30da806b434",
+    "disposition": "HISTORICAL_ONLY"
+  },
+  "new_scientific_access_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json",
+    "sha256": "ce7354e25144e79342f9879ee689fdce79270d6707ee533747a141fcdab03560",
+    "disposition": "CURRENT_PREPARED_NOT_AUTHORIZED"
+  },
+  "expired_operator_go_reusable": false,
+  "numerical_methodology_changed": false,
+  "primary_oracle_changed": false,
+  "secondary_oracle_changed": false,
+  "checkpoint_free_qualification_changed": false,
+  "live_oracle_authorization_created": false,
+  "corrected_full_checkpoint_oracle_executed": false,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "historical_master_ledger": 175
+}
