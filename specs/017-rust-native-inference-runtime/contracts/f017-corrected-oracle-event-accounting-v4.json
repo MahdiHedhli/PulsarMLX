@@ -1,0 +1,24 @@
+{
+  "authorization_mint_delta": 0,
+  "event_02_disposition": "V2_PACKAGE_RESERVATION_OF_TWO_AUTHORIZED_CONSUMER_SLOTS; NO HISTORICAL REINTERPRETATION",
+  "event_03_disposition": "NO_CANDIDATE_NO_AUTHORIZATION_NO_PACKAGE_NO_LEDGER_DELTA",
+  "event_counts_derived_from_durable_start_receipts": true,
+  "historical_master_delta": 0,
+  "historical_master_terminal": 175,
+  "package_attempt_delta_on_durable_start": 1,
+  "primary_event_delta_on_primary_durable_start": 1,
+  "required_ledger_bindings": [
+    "authorization_id",
+    "package_attempt_id",
+    "event_id",
+    "durable_start_sha256",
+    "event_class",
+    "sequence",
+    "prior_entry",
+    "result"
+  ],
+  "reservation_is_not_execution": true,
+  "schema": "pulsarmlx.f017.corrected-oracle-event-accounting/4.0.0",
+  "secondary_event_delta_on_secondary_durable_start": 1,
+  "unstarted_consumer_delta": 0
+}

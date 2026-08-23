@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-v3-lifecycle-authority-supersession/1.0.0",
+  "classification": "V3_HISTORICAL_ONLY_AFTER_EVENT_03_PRE_MINT_INTERFACE_FAILURE",
+  "event_03_failure": "PACKAGE_ATTEMPT_IDENTITY_NOT_REPRESENTABLE",
+  "superseded_authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
+  "successor_authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/4.0.0",
+  "v3_disposition": {
+    "historical_reconstruction": true,
+    "forensic_validation": true,
+    "future_live_authorization_mint": false,
+    "future_target_execution": false,
+    "event_04_authority": false
+  },
+  "required_implementation_controls": [
+    "V3_AUTHORIZER_REJECTS_LIVE_MINT",
+    "V3_COORDINATOR_REJECTS_NEW_PACKAGE_EXECUTION",
+    "V4_CAPABILITIES_ACCEPT_ONLY_AUTHORIZATION_SCHEMA_V4_FOR_LIVE_EXECUTION",
+    "V1_V2_V3_CONSUMERS_ARE_HISTORICAL_ONLY"
+  ],
+  "numerical_authority_changed": false,
+  "event_03_artifacts_changed": false,
+  "event_04_executed": false,
+  "live_event_04_authorization_created": false,
+  "original_checkpoint_access_during_supersession": 0
+}
