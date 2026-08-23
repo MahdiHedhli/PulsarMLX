@@ -64,7 +64,7 @@
   "context": {"prompt_token": 9703, "position": 0, "kv_state": "EMPTY", "mask": "ONE_VISIBLE_KEY_CAUSAL", "sampling": "NONE_GREEDY_ARGMAX", "top_n": 32},
   "memory_preflight": {"command": ["/usr/bin/vm_stat"], "command_timeout_seconds": 5, "maximum_stdout_bytes": 65536, "sample_freshness_seconds": 5, "minimum_free_bytes": 17179869184, "available_memory_formula": "page_size_bytes*(pages_free+pages_inactive+pages_speculative+pages_purgeable)", "authorization_requires_fresh_pass": true, "state_creation_before_pass": false, "checkpoint_access_before_pass": false},
   "accounting": {"authorization_mint_delta": 0, "package_attempt_delta_on_durable_start": 1, "primary_event_delta_on_durable_start": 1, "secondary_event_delta_on_durable_start": 1, "unstarted_consumer_delta": 0, "historical_master_terminal": 175, "historical_master_delta": 0},
-  "execution": {"consumer_timeout_seconds": 300, "attempts": 1, "retries": 0, "resume": false, "secondary_after_primary_prestart_failure": false},
+  "execution": {"consumer_timeout_seconds": null, "attempts": 1, "retries": 0, "resume": false, "secondary_after_primary_prestart_failure": false},
   "frozen_thresholds": {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32},
   "qualification": {"scope": "SYNTHETIC_QUALIFICATION_ONLY", "synthetic_checkpoint_root": ".pulsarmlx-local/research-work/F017-SYNTHETIC-QUALIFICATION-ROOT", "synthetic_catalog_path": ".pulsarmlx-local/research-work/F017-SYNTHETIC-QUALIFICATION-CATALOG.json", "production_authority_mintable": false}
 }

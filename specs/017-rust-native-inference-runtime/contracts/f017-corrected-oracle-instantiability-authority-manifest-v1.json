@@ -22,8 +22,8 @@
     {"role": "SECONDARY_CAPABILITY", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v1.json", "sha256": "7b778766630451483fe443180be63faf2bb676a551adb43b1d5a4bd9f2ea9102"},
     {"role": "TWO_PHASE_AUTHORIZER", "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py", "sha256": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6"},
     {"role": "HANDSHAKE_COORDINATOR", "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py", "sha256": "9efeabb2a0981e1a7c88c2db4a8865fecd2bb581628de92cd8abb520a473b188"},
-    {"role": "SCIENTIFIC_ACCESS_CONTRACT", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json", "sha256": "3fae995a8789b0cbc20a8c06db0ee8bda6eea855473ac54a413d87e5df1c8d07"},
-    {"role": "INERT_AUTHORIZATION", "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v3.json", "sha256": "e5c3697fa368e37fc63b18172cd14378dbf35279ece289682a35e5eb41a7a2c8"},
+    {"role": "SCIENTIFIC_ACCESS_CONTRACT", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json", "sha256": "a384c845574b2ee629ad00db8609b7ab8743a4a61e37108c74fb68fc011f2cb0"},
+    {"role": "INERT_AUTHORIZATION", "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v3.json", "sha256": "6ee327a12bba1587e12c30b85f7243c71d9bbd4fd31e1adf03426d98fef99527"},
     {"role": "EVENT_ACCOUNTING", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v3.json", "sha256": "5897dc6a70325ddaf93a3033dacd33dda201536500e5e76b1deab353aaa76349"},
     {"role": "SYNTHETIC_INSTANTIABILITY", "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-authorization-consumer-instantiability-qualification-v1.json", "sha256": "903a0ce883edd307efd614b0bbe62cb8507706e39f11d747c956d149040efd98"}
   ],
