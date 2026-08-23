@@ -22,6 +22,12 @@ def json_value(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
+def require_file_binding(binding: dict, path: Path, root: Path = ROOT) -> None:
+    expected = {"path": str(path.relative_to(root)), "sha256": sha(path)}
+    if binding != expected:
+        raise ValueError(f"file authority binding drift: {expected['path']}")
+
+
 def historical_sha(path: str) -> str:
     data = subprocess.run(["git", "show", f"{HISTORICAL_COMMIT}:{path}"], cwd=ROOT, check=True, capture_output=True).stdout
     return hashlib.sha256(data).hexdigest()
@@ -40,14 +46,26 @@ def symbols(text: str) -> set[str]:
     walk(tree); return found
 
 
+def function_names(text: str) -> set[str]:
+    """Return every function/method name, including methods nested in classes."""
+    return {
+        node.name
+        for node in ast.walk(ast.parse(text))
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+
+
 def validate_pure_core(path: Path, role: str) -> None:
     text = path.read_text(); tree = ast.parse(text)
-    forbidden_imports = {"argparse", "os", "pathlib", "mmap", "subprocess", "fcntl"}
+    forbidden_imports = {
+        "argparse", "ctypes", "fcntl", "importlib", "io", "mmap", "os",
+        "pathlib", "shutil", "socket", "subprocess", "sys", "tempfile",
+    }
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             if any(alias.name.split(".")[0] in forbidden_imports for alias in node.names): raise ValueError(f"{role} pure-core import")
         if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] in forbidden_imports: raise ValueError(f"{role} pure-core import")
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"open", "compile", "exec", "eval"}: raise ValueError(f"{role} pure-core call")
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"open", "compile", "exec", "eval", "__import__"}: raise ValueError(f"{role} pure-core call")
     forbidden_names = {"AUTH_SCHEMA", "StreamingCatalogSource", "CatalogStore", "main"}
     if symbols(text) & forbidden_names: raise ValueError(f"{role} pure-core target symbol")
 
@@ -57,8 +75,14 @@ def main() -> int:
     secondary = ROOT / "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
     validate_pure_core(primary, "primary"); validate_pure_core(secondary, "secondary")
     for target in (ROOT / "scripts/research/f017_corrected_oracle_primary_target_source_v6.py", ROOT / "scripts/research/f017_corrected_oracle_secondary_target_source_v6.py"):
-        target_symbols = symbols(target.read_text())
-        if target_symbols & {"execute", "rms", "mv", "_matvec", "_route", "swiglu", "_swiglu"}: raise ValueError("target source contains graph arithmetic")
+        target_functions = function_names(target.read_text())
+        graph_arithmetic = {
+            "execute", "rms", "_rms", "mv", "_matvec", "matvec",
+            "transpose_mv", "_transpose_matvec", "route", "_route",
+            "swiglu", "_swiglu", "softmax", "rope", "attention",
+        }
+        if target_functions & graph_arithmetic:
+            raise ValueError(f"target source contains graph arithmetic: {sorted(target_functions & graph_arithmetic)}")
     inventory = json_value(CONTRACTS / "f017-corrected-oracle-numerical-source-inventory-v1.json")
     for role in ("primary", "secondary"):
         record = inventory[role]; historical_text = subprocess.run(["git", "show", f"{HISTORICAL_COMMIT}:{record['path']}"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
@@ -86,9 +110,49 @@ def main() -> int:
     if contract["frozen_thresholds"] != expected_thresholds: raise ValueError("threshold drift")
     for role, path in (("primary", primary), ("secondary", secondary)):
         if contract["oracle_roles"][role]["implementation_sha256"] != sha(path): raise ValueError(f"{role} core binding")
+    role_paths = {
+        "primary": {
+            "implementation": primary,
+            "target_source": ROOT / "scripts/research/f017_corrected_oracle_primary_target_source_v6.py",
+            "decoder": ROOT / "scripts/research/f017_oracle_primary_decoders.py",
+        },
+        "secondary": {
+            "implementation": secondary,
+            "target_source": ROOT / "scripts/research/f017_corrected_oracle_secondary_target_source_v6.py",
+            "decoder": ROOT / "scripts/research/qualify_f017_quantization_matrix_v1.py",
+        },
+    }
+    for role, bindings in role_paths.items():
+        declared = contract["oracle_roles"][role]
+        for field, path in bindings.items():
+            if declared[field] != str(path.relative_to(ROOT)):
+                raise ValueError(f"{role} {field} path binding")
+            if declared[f"{field}_sha256"] != sha(path):
+                raise ValueError(f"{role} {field} SHA binding")
+    expected_authority_bindings = {
+        "historical_authority_manifest": CONTRACTS / "f017-corrected-oracle-historical-numerical-authority-manifest-v1.json",
+        "numerical_requalification": EVIDENCE / "f017-corrected-oracle-numerical-requalification-v2.json",
+        "separation_architecture": CONTRACTS / "f017-corrected-oracle-numerical-separation-architecture-v1.json",
+    }
+    if set(contract["authority_bindings"]) != set(expected_authority_bindings):
+        raise ValueError("authority binding census")
+    for name, path in expected_authority_bindings.items():
+        try:
+            require_file_binding(contract["authority_bindings"][name], path)
+        except ValueError as exc:
+            raise ValueError(f"authority binding drift: {name}") from exc
     qualification = json_value(EVIDENCE / "f017-corrected-oracle-numerical-requalification-v2.json")
     if qualification["result"] != "PASS" or qualification["historical_successor_equivalence_case_count"] != 24 or qualification["packed_decoder_case_count"] != 44 or qualification["target_adapter_synthetic_repeat_count"] != 10: raise ValueError("numerical qualification census")
     if qualification["original_checkpoint_shard_opens"] != 0 or qualification["original_checkpoint_payload_reads"] != 0: raise ValueError("checkpoint access")
+    qualification_bindings = {
+        "primary_pure_core_sha256": primary,
+        "secondary_pure_core_sha256": secondary,
+        "primary_target_source_sha256": role_paths["primary"]["target_source"],
+        "secondary_target_source_sha256": role_paths["secondary"]["target_source"],
+    }
+    for field, path in qualification_bindings.items():
+        if qualification[field] != sha(path):
+            raise ValueError(f"qualification source binding drift: {field}")
     print(json.dumps({"result": "PASS", "historical_authorities": 2, "pure_cores": 2, "tombstones": len(tombstones), "equivalence_cases": 24}))
     return 0
 

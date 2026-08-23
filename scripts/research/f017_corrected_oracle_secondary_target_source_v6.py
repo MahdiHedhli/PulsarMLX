@@ -134,8 +134,13 @@ class SecondaryTargetSourceV6:
 
 
 class SecondaryTargetMatrixV6:
-    def __init__(self,source,name,expert,rows,cols): self.source,self.name,self.expert,self.rows,self.cols=source,name,expert,rows,cols
-    def row(self,index): return self.source._get(self.name,self.expert,1,self.cols,index).reshape(self.cols)
+    def __init__(self,source,name,expert,rows,cols):
+        self.source,self.name,self.expert,self.rows,self.cols=source,name,expert,rows,cols
+        record=source.records.get(name)
+        if record is None or record["dims"][:2] != [cols,rows]: raise ValueError(f"catalog matrix geometry: {name}")
+    def row(self,index):
+        if not 0 <= index < self.rows: raise IndexError(index)
+        return self.source._get(self.name,self.expert,1,self.cols,index).reshape(self.cols)
     def __getitem__(self,item):
         if isinstance(item,int): return self.row(item)
         raise ValueError("catalog matrix supports row indexing only")

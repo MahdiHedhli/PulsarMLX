@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 import ast
+import importlib.util
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 RESEARCH = ROOT / "scripts/research"
+
+
+def validator_module():
+    path = RESEARCH / "validate_f017_corrected_oracle_numerical_authority_v2.py"
+    spec = importlib.util.spec_from_file_location("f017_num_v2_validator", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_numerical_authority_bundle_passes() -> None:
@@ -33,3 +44,31 @@ def test_all_retired_surfaces_fail_closed() -> None:
         completed = subprocess.run([sys.executable, str(RESEARCH / name)], cwd=ROOT, text=True, capture_output=True)
         assert completed.returncode != 0
         assert "HISTORICAL_ONLY" in completed.stderr
+
+
+def test_target_arithmetic_guard_includes_class_methods() -> None:
+    module = validator_module()
+    source = "class Target:\n    def matvec(self, value):\n        return value\n"
+    assert "Target.matvec" in module.symbols(source)
+    assert "matvec" in module.function_names(source)
+
+
+def test_exact_file_binding_rejects_path_and_sha_mutations() -> None:
+    module = validator_module()
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        path = root / "authority.json"
+        path.write_bytes(b"{}\n")
+        valid = {"path": "authority.json", "sha256": module.sha(path)}
+        module.require_file_binding(valid, path, root)
+        for mutation in (
+            {**valid, "path": "other.json"},
+            {**valid, "sha256": "0" * 64},
+            {**valid, "extra": True},
+        ):
+            try:
+                module.require_file_binding(mutation, path, root)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"binding mutation accepted: {mutation}")

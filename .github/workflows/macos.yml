@@ -318,7 +318,14 @@ jobs:
           .venv/bin/python scripts/research/qualify_f017_corrected_oracles.py \
             --output "$RUNNER_TEMP/f017-corrected-oracle-qualification.json"
           .venv/bin/python scripts/research/validate_f017_historical_corrected_oracle_authorities_v6.py
+          .venv/bin/python scripts/research/extract_f017_corrected_oracle_numerics_v2.py
+          .venv/bin/python scripts/research/extract_f017_corrected_oracle_target_sources_v6.py
           .venv/bin/python scripts/research/validate_f017_corrected_oracle_numerical_authority_v2.py
+          .venv/bin/python scripts/research/qualify_f017_corrected_oracle_numerical_authority_v2.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v2.json"
+          cmp \
+            "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v2.json" \
+            docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v2.json
           .venv/bin/python scripts/research/validate_f017_corrected_oracle_geometry.py \
             specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json \
             crates/f017-native/src/model.rs
