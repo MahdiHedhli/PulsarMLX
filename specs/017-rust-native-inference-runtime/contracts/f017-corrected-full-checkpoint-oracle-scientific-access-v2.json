@@ -8,7 +8,7 @@
     "reason": "MEMORY_PREFLIGHT_PARSER_REPAIR_ONLY"
   },
   "branch": "feat/017-rust-native-inference-runtime",
-  "implementation_head": "0f6983bcb700ab111ef8a3ee15d44f48e8fe84c3",
+  "implementation_head": "b92ba90a5b401fe44aa4c7dbe3c62cc6e23c3ddd",
   "bindings": {
     "primary": {"path": "scripts/research/f017_corrected_oracle_primary.py", "sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1"},
     "primary_decoders": {"path": "scripts/research/f017_oracle_primary_decoders.py", "sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"},

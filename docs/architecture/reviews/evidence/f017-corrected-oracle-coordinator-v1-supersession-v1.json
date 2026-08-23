@@ -26,7 +26,7 @@
   },
   "new_scientific_access_contract": {
     "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json",
-    "sha256": "b158ea54dabad6f8eb3a98dd244ca8ae3f033922ca00546945f00610438f73bd",
+    "sha256": "ae39f31c5f1b8df06bfe6893a24de91e7926ae6e05b9a2e8bc8e51eadf519046",
     "disposition": "CURRENT_PREPARED_NOT_AUTHORIZED"
   },
   "expired_operator_go_reusable": false,

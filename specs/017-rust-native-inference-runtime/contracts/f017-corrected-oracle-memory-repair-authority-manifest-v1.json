@@ -1,13 +1,13 @@
 {
   "schema": "pulsarmlx.f017.corrected-oracle-memory-repair-authority-manifest/1.0.0",
-  "implementation_head": "0f6983bcb700ab111ef8a3ee15d44f48e8fe84c3",
+  "implementation_head": "b92ba90a5b401fe44aa4c7dbe3c62cc6e23c3ddd",
   "execution_authorities": [
     {"path": "scripts/research/execute_f017_corrected_oracle_event_v2.py", "sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f", "role": "CURRENT_EVENT_COORDINATOR"},
     {"path": "scripts/research/f017_macos_memory_observation_v1.py", "sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477", "role": "STRICT_MEMORY_OBSERVER"},
     {"path": "scripts/research/validate_f017_corrected_oracle_access_v2.py", "sha256": "f00146a622f890b7d565e7b83f0a229300c69e7935a718820c95851ec5a78520", "role": "V2_VALIDATOR_AND_FUTURE_OPERATOR_ONLY_AUTHORIZER"},
     {"path": "specs/017-rust-native-inference-runtime/contracts/f017-macos-memory-observation-contract-v1.json", "sha256": "e89a473140d927fdb62aec50443d6fb9864ff8047244301cea91659b4440fd2d", "role": "MEMORY_PARSER_CONTRACT"},
-    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json", "sha256": "b158ea54dabad6f8eb3a98dd244ca8ae3f033922ca00546945f00610438f73bd", "role": "CURRENT_SCIENTIFIC_ACCESS_CONTRACT"},
-    {"path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json", "sha256": "0fce90f5b11dae2b7a135720ddc7db5d76ece3906beeefe6e4c77bfb5eedd966", "role": "INERT_NON_AUTHORITY_FIXTURE"}
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json", "sha256": "ae39f31c5f1b8df06bfe6893a24de91e7926ae6e05b9a2e8bc8e51eadf519046", "role": "CURRENT_SCIENTIFIC_ACCESS_CONTRACT"},
+    {"path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json", "sha256": "8bc2fe4e3a6f2ea8686836da403d61439e4f85d73e4939e3a01a72b7113fa969", "role": "INERT_NON_AUTHORITY_FIXTURE"}
   ],
   "unchanged_numerical_authorities": [
     {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json", "sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4"},
