@@ -61,6 +61,34 @@ def validate_pure_core(path: Path, role: str) -> None:
         "primary": {"__future__", "dataclasses", "hashlib", "json", "math", "struct", "typing"},
         "secondary": {"__future__", "hashlib", "json", "math", "mlx", "numpy", "struct", "typing"},
     }[role]
+    dangerous_call_names = {
+        "open", "compile", "exec", "eval", "__import__", "getattr",
+        "globals", "locals", "vars",
+    }
+    tainted_aliases = set(dangerous_call_names)
+    changed = True
+    while changed:
+        changed = False
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+                continue
+            value = node.value
+            tainted = (
+                isinstance(value, ast.Name) and value.id in tainted_aliases
+            ) or (
+                isinstance(value, ast.Attribute) and value.attr in {"open", "dlopen", "__import__"}
+            )
+            if not tainted:
+                continue
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id not in tainted_aliases:
+                    tainted_aliases.add(target.id)
+                    changed = True
+    numeric_attribute_allowlist = {
+        "np": {"asarray", "dot", "exp", "float32", "float64", "isfinite", "mean", "ndarray", "sqrt", "stack", "zeros"},
+        "mx": {"array", "eval", "transpose"},
+    }
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             if any(alias.name.split(".")[0] not in allowed_imports for alias in node.names):
@@ -69,10 +97,7 @@ def validate_pure_core(path: Path, role: str) -> None:
             if node.level != 0 or (node.module or "").split(".")[0] not in allowed_imports:
                 raise ValueError(f"{role} pure-core import")
         if isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name) and node.func.id in {
-                "open", "compile", "exec", "eval", "__import__", "getattr",
-                "globals", "locals", "vars",
-            }:
+            if isinstance(node.func, ast.Name) and node.func.id in tainted_aliases:
                 raise ValueError(f"{role} pure-core call")
             if isinstance(node.func, ast.Attribute) and node.func.attr in {
                 "open", "dlopen", "__import__",
@@ -80,6 +105,14 @@ def validate_pure_core(path: Path, role: str) -> None:
                 raise ValueError(f"{role} pure-core attribute call")
         if isinstance(node, ast.Name) and node.id == "__builtins__":
             raise ValueError(f"{role} pure-core builtins escape")
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            root = node.value.id
+            if root in numeric_attribute_allowlist and node.attr not in numeric_attribute_allowlist[root]:
+                raise ValueError(f"{role} pure-core numerical module capability")
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for decorator in node.decorator_list:
+                if isinstance(decorator, ast.Name) and decorator.id in tainted_aliases:
+                    raise ValueError(f"{role} pure-core decorator escape")
     forbidden_names = {"AUTH_SCHEMA", "StreamingCatalogSource", "CatalogStore", "main"}
     if symbols(text) & forbidden_names: raise ValueError(f"{role} pure-core target symbol")
 
@@ -108,6 +141,8 @@ def main() -> int:
         }
         if target_functions & graph_arithmetic:
             raise ValueError(f"target source contains graph arithmetic: {sorted(target_functions & graph_arithmetic)}")
+        if symbols(target.read_text()) & graph_arithmetic:
+            raise ValueError("target source contains assigned graph arithmetic surface")
         if target_functions != target_method_census[target.name]:
             raise ValueError(f"target source function census drift: {target.name}")
     inventory = json_value(CONTRACTS / "f017-corrected-oracle-numerical-source-inventory-v1.json")

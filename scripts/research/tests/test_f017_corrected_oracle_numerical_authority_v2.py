@@ -89,6 +89,8 @@ def test_pure_core_import_policy_is_allowlist_not_denylist() -> None:
             "from . import os\n",
             "def f():\n    return builtins.__import__('os')\n",
             "def f():\n    return __builtins__['__import__']('os')\n",
+            "_o = open\ndef f():\n    return _o('x')\n",
+            "_e = eval\n@_e\ndef f():\n    return 1\n",
         )
         for source in escapes:
             path.write_text(source)
@@ -98,3 +100,23 @@ def test_pure_core_import_policy_is_allowlist_not_denylist() -> None:
                 pass
             else:
                 raise AssertionError(f"pure-core escape accepted: {source!r}")
+
+
+def test_secondary_numeric_modules_expose_only_reviewed_arithmetic_attributes() -> None:
+    module = validator_module()
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "secondary.py"
+        path.write_text("import numpy as np\ndef f(x):\n    return np.asarray(x, dtype=np.float32)\n")
+        module.validate_pure_core(path, "secondary")
+        for expression in (
+            "np.load('x')", "np.fromfile('x')", "np.memmap('x')", "np.save('x', [])",
+            "mx.load('x')", "mx.export_function('x')",
+        ):
+            module_name = "mlx.core as mx" if expression.startswith("mx.") else "numpy as np"
+            path.write_text(f"import {module_name}\ndef f():\n    return {expression}\n")
+            try:
+                module.validate_pure_core(path, "secondary")
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"numeric-module file capability accepted: {expression}")
