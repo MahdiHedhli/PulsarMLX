@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-review/1.0.0",
+  "reviewer": {"model": "claude-opus-5", "effort": "high", "session": "4b065848-5a7f-4902-961c-b4857c455fe1"},
+  "reviewed_head": "efe2ae4908dd5e04c948ded37326bc95c40b119c",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [
+    {"id": "F5-R4", "summary": "NUMERICAL_MODULE_CAPABILITY_POLICY_IS_NAME_BOUND_NOT_VALUE_BOUND"}
+  ],
+  "defense_in_depth_findings": ["DID-1", "DID-2"],
+  "formula_change_required": false,
+  "threshold_change_required": false,
+  "original_checkpoint_access_required": false,
+  "independence_loss_required": false,
+  "verdict": "REJECT",
+  "safety": {"event_04_authorization_created": false, "event_04_executed": false, "historical_master_ledger": 175, "original_checkpoint_access": 0, "p1_attempt_2_executed": false, "primary_real_oracle_executions": 0, "secondary_real_oracle_executions": 0}
+}
