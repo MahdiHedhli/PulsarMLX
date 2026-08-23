@@ -3,7 +3,7 @@
   "status": "PRE_REVIEW_IMPLEMENTATION_AUTHORITY",
   "branch": "feat/017-rust-native-inference-runtime",
   "starting_head": "d40af431511fca1a3f213db57085071d45cb9d13",
-  "implementation_head": "132e45e95a39ef40b9de4cf0b8c9bcdc04c327d4",
+  "implementation_head": "546e7aa6cbdf03317c363f752e824868ca01d32f",
   "root_defect": "AUTHORIZATION_TO_CONSUMER_SCHEMA_INSTANTIABILITY_DEFECT",
   "event_02": {
     "failure_summary_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-execution-failure-summary-v1.json",
@@ -21,11 +21,11 @@
     {"role": "PRIMARY_CAPABILITY", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v1.json", "sha256": "f90a85ac12740d6f5e4fc5318e2f39cc9be2504ebe01a5347b69845bf296f397"},
     {"role": "SECONDARY_CAPABILITY", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v1.json", "sha256": "7b778766630451483fe443180be63faf2bb676a551adb43b1d5a4bd9f2ea9102"},
     {"role": "TWO_PHASE_AUTHORIZER", "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py", "sha256": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6"},
-    {"role": "HANDSHAKE_COORDINATOR", "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py", "sha256": "9efeabb2a0981e1a7c88c2db4a8865fecd2bb581628de92cd8abb520a473b188"},
-    {"role": "SCIENTIFIC_ACCESS_CONTRACT", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json", "sha256": "a384c845574b2ee629ad00db8609b7ab8743a4a61e37108c74fb68fc011f2cb0"},
-    {"role": "INERT_AUTHORIZATION", "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v3.json", "sha256": "6ee327a12bba1587e12c30b85f7243c71d9bbd4fd31e1adf03426d98fef99527"},
+    {"role": "HANDSHAKE_COORDINATOR", "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py", "sha256": "738bbc139be79d75635bf5c012e6e4422d22a906e9274584db49d0146749b556"},
+    {"role": "SCIENTIFIC_ACCESS_CONTRACT", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v3.json", "sha256": "1bcddb151676210e2168f40663090af988e97ee4b825f2a40dafd59107b783f0"},
+    {"role": "INERT_AUTHORIZATION", "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v3.json", "sha256": "9c3a36b6feb84eda088d06a6d4f88ff69510a4a8e3471be0a7311db69855d1fd"},
     {"role": "EVENT_ACCOUNTING", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v3.json", "sha256": "5897dc6a70325ddaf93a3033dacd33dda201536500e5e76b1deab353aaa76349"},
-    {"role": "SYNTHETIC_INSTANTIABILITY", "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-authorization-consumer-instantiability-qualification-v1.json", "sha256": "903a0ce883edd307efd614b0bbe62cb8507706e39f11d747c956d149040efd98"}
+    {"role": "SYNTHETIC_INSTANTIABILITY", "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-authorization-consumer-instantiability-qualification-v1.json", "sha256": "9faa32b90c4fdae29e41d103330bbfd39f799c33eed7811bf16ba785f1e5bf62"}
   ],
   "unchanged_numerical_authorities": [
     {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json", "sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4"},

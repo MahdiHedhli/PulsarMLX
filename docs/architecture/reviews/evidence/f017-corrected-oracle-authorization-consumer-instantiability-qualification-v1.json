@@ -2,14 +2,14 @@
   "schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-instantiability-qualification/1.0.0",
   "result": "PASS",
   "classification": "SYNTHETIC_FILE_BACKED_NO_ORIGINAL_CHECKPOINT_ACCESS",
-  "implementation_head": "132e45e95a39ef40b9de4cf0b8c9bcdc04c327d4",
+  "implementation_head": "546e7aa6cbdf03317c363f752e824868ca01d32f",
   "test_authority": {
     "path": "scripts/research/tests/test_f017_corrected_oracle_instantiability_v3.py",
-    "sha256": "b08ca472cfb97576f4f809858822ca50f753996d3b4c91e219e0d5e429ad8643",
+    "sha256": "164fd3184d5477eee5bb7fb95e78537b8c5b0f5a3f672ac8fc088d8fbda58dca",
     "command": ".venv/bin/python -m pytest -q scripts/research/tests/test_f017_corrected_oracle_instantiability_v3.py",
-    "tests_passed": 13,
+    "tests_passed": 14,
     "subtests_passed": 28,
-    "duration_seconds": 11.02
+    "duration_seconds": 11.22
   },
   "authorization_chain": {
     "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
@@ -26,7 +26,8 @@
     "reused_primary_event_id_rejected": true,
     "reused_secondary_event_id_rejected": true,
     "both_consumer_validations_mandatory": true,
-    "capability_mismatch_fails_before_state": true
+    "capability_mismatch_fails_before_state": true,
+    "secondary_runtime_isolated_from_native_rust_mlx_linkage": true
   },
   "synthetic_package": {
     "shard_count": 6,

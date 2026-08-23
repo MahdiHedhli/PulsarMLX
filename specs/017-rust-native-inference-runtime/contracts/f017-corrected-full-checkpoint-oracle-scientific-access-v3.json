@@ -8,7 +8,7 @@
     "reason": "AUTHORIZATION_TO_CONSUMER_SCHEMA_INSTANTIABILITY_REPAIR"
   },
   "branch": "feat/017-rust-native-inference-runtime",
-  "implementation_head": "132e45e95a39ef40b9de4cf0b8c9bcdc04c327d4",
+  "implementation_head": "546e7aa6cbdf03317c363f752e824868ca01d32f",
   "bindings": {
     "authorization_interface": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v1.json", "sha256": "7fe819de2e139ffdff36568b9805e83b75f8c1c400afee6061377e5e14d36d64"},
     "shared_authorization_parser": {"path": "scripts/research/f017_corrected_oracle_authorization_v3.py", "sha256": "875330d68a77165943fce2a11ade5ae824a61d9b0ba4734179190186fc308c65"},
@@ -16,7 +16,7 @@
     "primary_decoders": {"path": "scripts/research/f017_oracle_primary_decoders.py", "sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"},
     "secondary": {"path": "scripts/research/f017_corrected_oracle_secondary_v3.py", "sha256": "941f1cb5e62c61997e11043e4cec0bd20398dba7fdb2c710740f6f49a8396aed"},
     "secondary_decoder_authority": {"path": "scripts/research/qualify_f017_quantization_matrix_v1.py", "sha256": "ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53"},
-    "event_coordinator": {"path": "scripts/research/execute_f017_corrected_oracle_event_v3.py", "sha256": "9efeabb2a0981e1a7c88c2db4a8865fecd2bb581628de92cd8abb520a473b188"},
+    "event_coordinator": {"path": "scripts/research/execute_f017_corrected_oracle_event_v3.py", "sha256": "738bbc139be79d75635bf5c012e6e4422d22a906e9274584db49d0146749b556"},
     "authorizer_validator": {"path": "scripts/research/validate_f017_corrected_oracle_access_v3.py", "sha256": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6"},
     "memory_observer": {"path": "scripts/research/f017_macos_memory_observation_v1.py", "sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477"},
     "memory_parser_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-macos-memory-observation-contract-v1.json", "sha256": "e89a473140d927fdb62aec50443d6fb9864ff8047244301cea91659b4440fd2d"},
@@ -40,7 +40,7 @@
   "authorization_bindings": {
     "interface_sha256": "7fe819de2e139ffdff36568b9805e83b75f8c1c400afee6061377e5e14d36d64",
     "authorizer_sha256": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6",
-    "event_coordinator_sha256": "9efeabb2a0981e1a7c88c2db4a8865fecd2bb581628de92cd8abb520a473b188",
+    "event_coordinator_sha256": "738bbc139be79d75635bf5c012e6e4422d22a906e9274584db49d0146749b556",
     "memory_observer_sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477",
     "memory_parser_contract_sha256": "e89a473140d927fdb62aec50443d6fb9864ff8047244301cea91659b4440fd2d",
     "geometry_sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a",
