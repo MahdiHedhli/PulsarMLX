@@ -195,11 +195,22 @@ class CoordinatorPreflightTests(unittest.TestCase):
                 coordinator.preflight(contract(root / "contract.json"), root / "report.json")
 
     @unittest.skipUnless(platform.system() == "Darwin", "macOS-only host qualification")
-    def test_current_host_preflight_is_observational_only(self):
+    def test_live_macos_memory_preflight_is_observational_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             report = root / "report.json"
-            with self.patched_authority():
+            machine_command = mock.Mock(
+                run=mock.Mock(
+                    return_value=subprocess.CompletedProcess(
+                        [], 0, stdout="Apple M1 Ultra\n", stderr=""
+                    )
+                )
+            )
+            # Only the admission identity is simulated on generic Apple CI.
+            # The observer module still executes the real /usr/bin/vm_stat.
+            with self.patched_authority(), mock.patch.object(
+                coordinator, "subprocess", machine_command
+            ), mock.patch.object(coordinator.platform, "machine", return_value="arm64"):
                 value = coordinator.preflight(contract(root / "contract.json"), report)
             self.assertEqual(value["result"], "PASS")
             self.assertGreaterEqual(value["observation"]["available_bytes"], 17179869184)
