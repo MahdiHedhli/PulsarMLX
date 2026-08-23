@@ -15,7 +15,7 @@
     "secondary": {"path": "scripts/research/f017_corrected_oracle_secondary.py", "sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29"},
     "secondary_decoder_authority": {"path": "scripts/research/qualify_f017_quantization_matrix_v1.py", "sha256": "ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53"},
     "event_coordinator": {"path": "scripts/research/execute_f017_corrected_oracle_event_v2.py", "sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f"},
-    "authorizer_validator": {"path": "scripts/research/validate_f017_corrected_oracle_access_v2.py", "sha256": "bd0c2cb0f447ae31178e5c8dab9ee0661db4f5edfdcaf4cdd403149d42495595"},
+    "authorizer_validator": {"path": "scripts/research/validate_f017_corrected_oracle_access_v2.py", "sha256": "f00146a622f890b7d565e7b83f0a229300c69e7935a718820c95851ec5a78520"},
     "memory_observer": {"path": "scripts/research/f017_macos_memory_observation_v1.py", "sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477"},
     "memory_parser_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-macos-memory-observation-contract-v1.json", "sha256": "e89a473140d927fdb62aec50443d6fb9864ff8047244301cea91659b4440fd2d"},
     "geometry": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json", "sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a"},

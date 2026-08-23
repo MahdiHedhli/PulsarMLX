@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validator and future operator-only authorizer for corrected-oracle v2."""
 from __future__ import annotations
-import argparse,hashlib,json,os,re,time
+import argparse,hashlib,json,os,re,subprocess,sys,time
 from pathlib import Path
 
 SCHEMA="pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/2.0.0"
@@ -9,6 +9,7 @@ PREFLIGHT_SCHEMA="pulsarmlx.f017.corrected-oracle-memory-preflight/2.0.0"
 HEX=re.compile(r"[0-9a-f]{64}\Z")
 SAFE_ID=re.compile(r"[A-Z0-9][A-Z0-9-]{0,126}[A-Z0-9]\Z")
 AUTH_KEYS={"schema","state","live","authorization_id","branch","implementation_head","contract_sha256","primary_sha256","secondary_sha256","event_coordinator_sha256","memory_observer_sha256","memory_parser_contract_sha256","geometry_sha256","numerical_contract_sha256","synthetic_qualification_sha256","checkpoint_root","checkpoint_manifest_sha256","checkpoint_catalog_sha256","checkpoint_set_sha256","shards","prompt_token","position","top_n","attempts","retries","resume","consumers","state_root","output_root","historical_master_ledger_sha256","historical_master_terminal","historical_master_delta","oracle_event_delta","p1_authority","operator_approval_sha256","memory_preflight_sha256","memory_observed_at_unix_ns","memory_available_bytes"}
+CONTRACT_RELATIVE=Path("specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json")
 
 def strict(path):
  def hook(items):
@@ -19,6 +20,13 @@ def strict(path):
   return value
  return json.loads(path.read_text(),object_pairs_hook=hook)
 def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+def exact_contract(path,repo):
+ expected=(repo/CONTRACT_RELATIVE).absolute()
+ supplied=(path if path.is_absolute() else repo/path).absolute()
+ if supplied!=expected or any(item.is_symlink() for item in (supplied,*supplied.parents)):
+  raise ValueError("canonical scientific contract path required")
+ canonical=supplied.resolve(strict=True)
+ return canonical,strict(canonical)
 def safe_absent_root(value):
  path=Path(value)
  if not path.is_absolute() or path.exists() or path.is_symlink(): raise ValueError("unused absolute root required")
@@ -50,7 +58,7 @@ def validate(auth,contract,repo,require_live=False):
   for binding in contract.get(group,[]):
    path=repo/binding["path"]
    if not path.is_file() or path.is_symlink() or sha(path)!=binding["sha256"]: raise ValueError(f"transitive binding {binding['path']}")
- contract_path=repo/"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
+ contract_path=repo/CONTRACT_RELATIVE
  if auth["contract_sha256"]!=sha(contract_path): raise ValueError("contract binding")
  for key,role in (("primary_sha256","primary"),("secondary_sha256","secondary"),("event_coordinator_sha256","event_coordinator"),("memory_observer_sha256","memory_observer"),("memory_parser_contract_sha256","memory_parser_contract"),("geometry_sha256","geometry"),("numerical_contract_sha256","numerical_contract"),("synthetic_qualification_sha256","synthetic_qualification")):
   if auth[key]!=contract["bindings"][role]["sha256"]: raise ValueError(f"authority binding {role}")
@@ -69,6 +77,23 @@ def validate(auth,contract,repo,require_live=False):
   if auth["checkpoint_root"]!="INERT_NO_CHECKPOINT_PATH" or auth["state_root"]!="INERT_NO_STATE_ROOT" or auth["output_root"]!="INERT_NO_OUTPUT_ROOT": raise ValueError("inert root boundary")
   if auth["memory_preflight_sha256"]!="0"*64 or auth["memory_observed_at_unix_ns"]!=0 or auth["memory_available_bytes"]!=0: raise ValueError("inert memory boundary")
  return True
+
+def collect_preflight(contract_path,output,contract,repo):
+ if output.exists() or output.is_symlink(): raise ValueError("unused preflight output required")
+ coordinator=(repo/contract["bindings"]["event_coordinator"]["path"]).resolve(strict=True)
+ subprocess.run(
+  [sys.executable,str(coordinator),"preflight",str(contract_path),str(output)],
+  cwd=repo,
+  stdin=subprocess.DEVNULL,
+  stdout=subprocess.PIPE,
+  stderr=subprocess.PIPE,
+  timeout=30,
+  check=True,
+  shell=False,
+ )
+ if not output.is_file() or output.is_symlink(): raise ValueError("coordinator preflight report absent")
+ report=strict(output);validate_preflight(report,contract,repo)
+ return report
 
 def validate_preflight(report,contract,repo):
  expected={"schema","result","branch","implementation_head","git_head","local_remote_parity","worktree_clean","contract_sha256","coordinator_sha256","memory_observer_sha256","machine_brand","architecture","minimum_free_bytes","observation","state_created","authorization_created","checkpoint_shard_opens","checkpoint_payload_reads"}
@@ -94,11 +119,12 @@ def main():
  parser=argparse.ArgumentParser();sub=parser.add_subparsers(dest="cmd",required=True)
  check=sub.add_parser("validate");check.add_argument("authorization",type=Path);check.add_argument("contract",type=Path);check.add_argument("repo",type=Path);check.add_argument("--require-live",action="store_true")
  mint=sub.add_parser("authorize-live");mint.add_argument("inert",type=Path);mint.add_argument("contract",type=Path);mint.add_argument("repo",type=Path);mint.add_argument("operator_approval",type=Path);mint.add_argument("preflight_report",type=Path);mint.add_argument("checkpoint_root",type=Path);mint.add_argument("state_root",type=Path);mint.add_argument("output",type=Path)
- args=parser.parse_args();contract=strict(args.contract);repo=args.repo.resolve()
+ args=parser.parse_args();repo=args.repo.resolve();contract_path,contract=exact_contract(args.contract,repo)
  if args.cmd=="validate": validate(strict(args.authorization),contract,repo,args.require_live);print("PASS");return 0
  if os.environ.get("F017_OPERATOR_MINT_CORRECTED_ORACLE_V2")!="I_UNDERSTAND_THIS_OPENS_THE_ORIGINAL_CHECKPOINT_ON_EXECUTION": raise SystemExit("operator mint environment missing")
- auth=strict(args.inert);validate(auth,contract,repo);approval=strict(args.operator_approval);preflight=strict(args.preflight_report)
+ auth=strict(args.inert);validate(auth,contract,repo);approval=strict(args.operator_approval)
  if approval.get("decision")!="GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_V2" or approval.get("contract_sha256")!=auth["contract_sha256"]: raise SystemExit("operator approval mismatch")
+ preflight=collect_preflight(contract_path,args.preflight_report,contract,repo)
  observed_at,available=validate_preflight(preflight,contract,repo);state_root=safe_absent_root(str(args.state_root))
  auth.update(state="AUTHORIZED",live=True,checkpoint_root=str(args.checkpoint_root.resolve(strict=True)),state_root=str(state_root),output_root=str(state_root),operator_approval_sha256=sha(args.operator_approval),memory_preflight_sha256=sha(args.preflight_report),memory_observed_at_unix_ns=observed_at,memory_available_bytes=available)
  validate(auth,contract,repo,True)

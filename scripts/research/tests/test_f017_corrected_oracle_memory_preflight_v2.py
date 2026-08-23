@@ -7,6 +7,7 @@ import platform
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -112,6 +113,55 @@ class CoordinatorPreflightTests(unittest.TestCase):
             report["observation"]["observed_at_unix_ns"] = 1
             with self.assertRaisesRegex(ValueError, "stale"):
                 access_v2.validate_preflight(report, value, ROOT)
+
+    def test_authorizer_collects_preflight_from_bound_coordinator_no_replace(self):
+        contract_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
+        value = access_v2.strict(contract_path)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "preflight.json"
+            fresh_observation = observation().as_dict()
+            fresh_observation["observed_at_unix_ns"] = time.time_ns()
+            report = {
+                "schema": access_v2.PREFLIGHT_SCHEMA,
+                "result": "PASS",
+                "branch": value["branch"],
+                "implementation_head": value["implementation_head"],
+                "git_head": "f" * 40,
+                "local_remote_parity": True,
+                "worktree_clean": True,
+                "contract_sha256": digest(contract_path),
+                "coordinator_sha256": value["bindings"]["event_coordinator"]["sha256"],
+                "memory_observer_sha256": value["bindings"]["memory_observer"]["sha256"],
+                "machine_brand": "Apple M1 Ultra",
+                "architecture": "arm64",
+                "minimum_free_bytes": 17179869184,
+                "observation": fresh_observation,
+                "state_created": False,
+                "authorization_created": False,
+                "checkpoint_shard_opens": 0,
+                "checkpoint_payload_reads": 0,
+            }
+
+            def coordinator_run(command, **kwargs):
+                self.assertEqual(command[0], sys.executable)
+                self.assertEqual(command[1], str((ROOT / value["bindings"]["event_coordinator"]["path"]).resolve()))
+                self.assertEqual(command[2], "preflight")
+                Path(command[4]).write_text(json.dumps(report) + "\n")
+                return subprocess.CompletedProcess(command, 0, b"", b"")
+
+            with mock.patch.object(access_v2.subprocess, "run", side_effect=coordinator_run):
+                observed = access_v2.collect_preflight(contract_path, output, value, ROOT)
+            self.assertEqual(observed["observation"]["available_bytes"], 20 * 1024**3)
+            with self.assertRaisesRegex(ValueError, "unused preflight"):
+                access_v2.collect_preflight(contract_path, output, value, ROOT)
+
+    def test_noncanonical_contract_path_rejected(self):
+        canonical = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
+        with tempfile.TemporaryDirectory() as directory:
+            alternate = Path(directory) / canonical.name
+            alternate.write_bytes(canonical.read_bytes())
+            with self.assertRaisesRegex(ValueError, "canonical"):
+                access_v2.exact_contract(alternate, ROOT)
 
     def test_preflight_pass_banks_report_without_state_authorization_or_checkpoint(self):
         with tempfile.TemporaryDirectory() as directory:

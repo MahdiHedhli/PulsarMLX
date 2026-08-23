@@ -5,7 +5,7 @@
   "authorization_id": "F017-CORRECTED-ORACLE-INERT-FIXTURE-2",
   "branch": "feat/017-rust-native-inference-runtime",
   "implementation_head": "0f6983bcb700ab111ef8a3ee15d44f48e8fe84c3",
-  "contract_sha256": "ce7354e25144e79342f9879ee689fdce79270d6707ee533747a141fcdab03560",
+  "contract_sha256": "b158ea54dabad6f8eb3a98dd244ca8ae3f033922ca00546945f00610438f73bd",
   "primary_sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
   "secondary_sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
   "event_coordinator_sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f",
