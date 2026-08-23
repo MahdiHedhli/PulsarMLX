@@ -19,7 +19,7 @@
     "workspace_baseline": "PASS",
     "pinned_native_mlx": "PASS",
     "native_producer_targets": "PASS",
-    "research_unittest_count": 462,
+    "research_unittest_count": 463,
     "research_unittest_result": "PASS",
     "corrected_oracle_preaccess_pytest_count": 56,
     "corrected_oracle_preaccess_subtest_count": 28,
