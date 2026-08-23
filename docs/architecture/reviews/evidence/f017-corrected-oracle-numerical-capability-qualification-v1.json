@@ -460,7 +460,7 @@
         "zip"
       ],
       "module_aliases": {},
-      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
+      "path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
     },
     "secondary": {
       "approved_module_uses": [
@@ -2083,7 +2083,7 @@
         "mx": "PYTHON_MODULE_MLX_CORE",
         "np": "PYTHON_MODULE_NUMPY"
       },
-      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
+      "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
     }
   },
   "analyzer_sha256": "94b314078fb6b5280ea6da82a55093e8fea765e85a4cfcb4a8c11fc299d72f2b",
@@ -2100,13 +2100,13 @@
   "independent_checker": {
     "primary": {
       "approved_use_count": 0,
-      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+      "path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
       "result": "PASS",
       "semantic_aliases": {}
     },
     "secondary": {
       "approved_use_count": 81,
-      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
       "result": "PASS",
       "semantic_aliases": {
         "mx": "PYTHON_MODULE_MLX_CORE",

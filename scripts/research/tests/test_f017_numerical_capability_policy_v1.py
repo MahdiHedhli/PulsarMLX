@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -55,3 +57,16 @@ def test_mutation_census_is_substantive() -> None:
     cases = qualifier.mutation_cases()
     assert len(cases) >= 120
     assert len({case["source"] for case in cases}) == len(cases)
+
+
+def test_qualification_bytes_are_cwd_independent() -> None:
+    qualifier = RESEARCH / "qualify_f017_numerical_capability_policy_v1.py"
+    with tempfile.TemporaryDirectory(prefix="f017-capability-cwd-") as directory:
+        scratch = Path(directory)
+        first = scratch / "first.json"
+        second = scratch / "second.json"
+        subprocess.run([sys.executable, str(qualifier), "--output", str(first)], cwd=ROOT, check=True)
+        subprocess.run([sys.executable, str(qualifier), "--output", str(second)], cwd=scratch, check=True)
+        assert first.read_bytes() == second.read_bytes()
+        text = first.read_text()
+        assert str(ROOT) not in text

@@ -181,11 +181,21 @@ def main() -> int:
     analyzer = load("f017_capability_analysis_qualification", RESEARCH / "f017_numerical_capability_analysis_v1.py")
     checker = load("f017_capability_checker_qualification", RESEARCH / "check_f017_numerical_capabilities_independent_v1.py")
     policy = json.loads(POLICY.read_text())
-    accepted = {
-        "primary": analyzer.CapabilityAnalyzer(policy, role="primary", path=str(PRIMARY)).analyze(PRIMARY.read_text()).as_json(),
-        "secondary": analyzer.CapabilityAnalyzer(policy, role="secondary", path=str(SECONDARY)).analyze(SECONDARY.read_text()).as_json(),
+    source_paths = {
+        "primary": PRIMARY.relative_to(ROOT),
+        "secondary": SECONDARY.relative_to(ROOT),
     }
-    independent = {role: checker.check(path, policy) for role, path in (("primary", PRIMARY), ("secondary", SECONDARY))}
+    accepted = {
+        role: analyzer.CapabilityAnalyzer(policy, role=role, path=relative.as_posix())
+        .analyze((ROOT / relative).read_text())
+        .as_json()
+        for role, relative in source_paths.items()
+    }
+    independent = {}
+    for role, relative in source_paths.items():
+        report = checker.check(ROOT / relative, policy)
+        report["path"] = relative.as_posix()
+        independent[role] = report
     cases = mutation_cases()
     baseline = SECONDARY.read_text()
     observed = []
