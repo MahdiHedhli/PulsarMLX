@@ -134,16 +134,28 @@ def runtime_proxy_qualification(policy: dict, work: Path) -> dict:
     result = secondary.execute(fixture, use_mlx=False)
     if result["layer_count"] != fixture["geometry"]["layers"]:
         raise ValueError("runtime proxy incomplete graph")
-    import mlx
-    import mlx.core as real_mx
     observed_mlx: set[str] = set()
     mlx_allowed = set(policy["semantic_modules"]["PYTHON_MODULE_MLX_CORE"]["direct_callable_members"])
-    mlx_proxy = ModuleProxy("mlx.core", real_mx, mlx_allowed, observed_mlx)
+    # Exercise the pure core's real ``import mlx.core`` and member-use surface
+    # without loading the platform MLX extension.  CI also links pinned native
+    # MLX libraries for Rust/C qualification; those libraries need not be ABI
+    # compatible with the separately locked Python wheel.  A tiny semantic
+    # target keeps this control a capability census (not an MLX correctness
+    # test) and makes it deterministic on every qualification host.
+    fake_mx = types.SimpleNamespace(
+        array=lambda value: secondary.np.asarray(value),
+        eval=lambda value: None,
+        transpose=lambda value: secondary.np.asarray(value).T,
+    )
+    mlx_proxy = ModuleProxy("mlx.core", fake_mx, mlx_allowed, observed_mlx)
+    mlx_package = types.ModuleType("mlx")
+    mlx_package.__path__ = []
+    mlx_package.core = mlx_proxy
+    previous_package = sys.modules.get("mlx")
     previous_module = sys.modules.get("mlx.core")
-    previous_attribute = mlx.core
     try:
+        sys.modules["mlx"] = mlx_package
         sys.modules["mlx.core"] = mlx_proxy
-        mlx.core = mlx_proxy
         vector = secondary.np.asarray([1.0, -2.0], dtype=secondary.np.float32)
         matrix = secondary.np.asarray([[1.0, 0.5], [-0.25, 2.0]], dtype=secondary.np.float32)
         secondary.mv(matrix, vector, use_mlx=True)
@@ -153,7 +165,10 @@ def runtime_proxy_qualification(policy: dict, work: Path) -> dict:
             sys.modules["mlx.core"] = previous_module
         else:
             sys.modules.pop("mlx.core", None)
-        mlx.core = previous_attribute
+        if previous_package is not None:
+            sys.modules["mlx"] = previous_package
+        else:
+            sys.modules.pop("mlx", None)
     if observed_mlx != mlx_allowed:
         raise ValueError(f"runtime MLX capability census: {sorted(observed_mlx)}")
     return {"result": "PASS", "numpy_members_observed": sorted(observed_numpy), "mlx_members_observed": sorted(observed_mlx), "subset_of_contract": True}
