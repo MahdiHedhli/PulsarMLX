@@ -518,6 +518,35 @@ class AuthorizationConsumerInstantiabilityV3(unittest.TestCase):
             self.assertTrue(receipt["primary"]["started"])
             self.assertFalse(receipt["secondary"]["started"])
 
+    def test_secondary_runtime_does_not_inherit_native_rust_mlx_linkage(self):
+        with self.temporary() as directory:
+            package = SyntheticPackage(Path(directory), 58)
+            package.mint()
+            arguments = SimpleNamespace(
+                authorization=package.installed, contract=package.contract, catalog=package.catalog,
+                checkpoint_root=package.checkpoint, geometry=package.geometry,
+                package_root=package.package_root, handshake_output=package.root / "handshake.json",
+            )
+            real_run = subprocess.run
+            observed = []
+            def inspect_secondary(command, *args, **kwargs):
+                if "f017_corrected_oracle_secondary_v3.py" in str(command[1]) and "target" in command:
+                    environment = kwargs["env"]
+                    observed.append(environment["F017_ORACLE_SECONDARY_RUNTIME"])
+                    for variable in ("DYLD_LIBRARY_PATH", "MLX_C_PREFIX", "MLX_PREFIX", "RUSTFLAGS"):
+                        self.assertNotIn(variable, environment)
+                return real_run(command, *args, **kwargs)
+            contaminated = {
+                "DYLD_LIBRARY_PATH": "/synthetic/incompatible/native-mlx",
+                "MLX_C_PREFIX": "/synthetic/native-mlx",
+                "MLX_PREFIX": "/synthetic/native-mlx",
+                "RUSTFLAGS": "-C link-arg=/synthetic/native-mlx",
+            }
+            with mock.patch.dict(os.environ, contaminated), \
+                 mock.patch.object(coordinator.subprocess, "run", side_effect=inspect_secondary):
+                self.assertEqual(coordinator.execute_event(arguments, scope="SYNTHETIC_QUALIFICATION"), 0)
+            self.assertEqual(observed, ["LOCKFILE_PYTHON_MLX"])
+
     def test_candidate_install_byte_mismatch_is_detected(self):
         with self.temporary() as directory:
             package = SyntheticPackage(Path(directory), 60)

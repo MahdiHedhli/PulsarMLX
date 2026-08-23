@@ -370,6 +370,15 @@ def execute_event(arguments, *, scope: str) -> int:
             environment = os.environ.copy()
             environment["F017_ORACLE_ACCESS_EVENT_DIR"] = str(consumer_root / "access-events")
             environment["F017_ORACLE_CHECKPOINT_IDENTITY"] = str(package_root / "checkpoint-identity.json")
+            if name == "secondary":
+                # The accelerated Python oracle is lockfile-bound to the MLX
+                # wheel.  Native Rust CI exports a separately constructed
+                # libmlx through DYLD_LIBRARY_PATH; inheriting it can bind the
+                # Python extension to an ABI-incompatible dylib.  Keep the two
+                # reviewed runtimes isolated without changing oracle math.
+                for variable in ("DYLD_LIBRARY_PATH", "MLX_C_PREFIX", "MLX_PREFIX", "RUSTFLAGS"):
+                    environment.pop(variable, None)
+                environment["F017_ORACLE_SECONDARY_RUNTIME"] = "LOCKFILE_PYTHON_MLX"
             script = ROOT / grant["producer_path"]
             try:
                 subprocess.run(
