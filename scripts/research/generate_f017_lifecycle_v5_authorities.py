@@ -66,6 +66,28 @@ def authorization_identities(model: dict[str, Any]) -> set[str]:
     return result
 
 
+def authorization_json_path(model: dict[str, Any], name: str) -> str:
+    document = model["authorization_document"]
+    aliases = {
+        "authorization_schema": "$.schema",
+        "authorization_state": "$.state",
+        "authorization_live": "$.live",
+    }
+    if name in aliases:
+        return aliases[name]
+    if name in document["top_level_keys"]:
+        return f"$.{name}"
+    for prefix, keys in (("package", document["package_keys"]), ("primary", document["consumer_keys"]), ("secondary", document["consumer_keys"])):
+        marker = f"{prefix}_"
+        if name.startswith(marker) and name[len(marker):] in keys:
+            return f"$.{prefix}.{name[len(marker):]}"
+    if name in document["context_keys"]:
+        return f"$.context.{name}"
+    if name in document["limits_keys"]:
+        return f"$.limits.{name}"
+    raise ValueError(f"authorization identity has no JSON path: {name}")
+
+
 def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     transitions = {item["id"]: item for item in model["transitions"]}
     base = authorization_identities(model)
@@ -107,7 +129,7 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
     for name in sorted(all_identities):
         kind = identity_type(name)
         consumers = {
-            artifact: sorted(outcomes)
+            artifact: sorted(outcome for outcome, values in outcomes.items() if name in values)
             for artifact, outcomes in artifact_outcome_bindings.items()
             if any(name in values for values in outcomes.values())
         }
@@ -142,9 +164,12 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
             )
             if outcomes:
                 required_cells += 1
+            json_path = None
+            if outcomes:
+                json_path = authorization_json_path(model, name) if artifact in {"candidate_authorization", "installed_authorization"} and name in base else f"$.bindings.{name}"
             cells[artifact] = {
                 "required_outcomes": outcomes,
-                "json_path": f"$.bindings.{name}" if outcomes else None,
+                "json_path": json_path,
                 "type": identity["type"] if outcomes else None,
                 "source": identity["authority_source"] if outcomes else None,
                 "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION" if outcomes else None,
@@ -166,11 +191,16 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
     for artifact, meta in model["artifact_classes"].items():
         outcomes = artifact_outcome_bindings.get(artifact, {})
         identity_union = sorted(set().union(*outcomes.values()) if outcomes else set())
+        authorization_artifact = artifact in {"candidate_authorization", "installed_authorization"}
+        identity_paths = {
+            name: authorization_json_path(model, name) if authorization_artifact and name in base else f"$.bindings.{name}"
+            for name in identity_union
+        }
         schemas[artifact] = {
             "artifact_schema_id": meta["schema"],
-            "top_level_keys": ["schema", "bindings", "payload"],
-            "payload_key_census": artifact_payload_keys(artifact),
-            "identity_paths": {name: f"$.bindings.{name}" for name in identity_union},
+            "top_level_keys": model["authorization_document"]["top_level_keys"] if authorization_artifact else ["schema", "bindings", "payload"],
+            "payload_key_census": model["artifact_payload_key_census"][artifact],
+            "identity_paths": identity_paths,
             "identity_required_outcomes": {
                 name: sorted(outcome for outcome, values in outcomes.items() if name in values)
                 for name in identity_union
@@ -184,21 +214,6 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
         "status": "GENERATED_VIEW_NOT_PRIMARY_AUTHORITY",
     }
     return registry, matrix, schema_view
-
-
-def artifact_payload_keys(artifact: str) -> list[str]:
-    special = {
-        "package_receipt": ["outcome", "primary_disposition", "secondary_disposition", "primary_receipt_sha256", "primary_terminal_sha256", "secondary_receipt_sha256", "secondary_terminal_sha256", "actual_deltas"],
-        "package_terminal": ["outcome", "result", "package_receipt_sha256", "mandatory_stop"],
-        "primary_receipt": ["result", "durable_start_sha256", "ledger_entry_sha256", "access_census_sha256", "output_manifest_sha256"],
-        "secondary_receipt": ["result", "durable_start_sha256", "ledger_entry_sha256", "access_census_sha256", "output_manifest_sha256"],
-        "primary_terminal": ["result", "receipt_sha256", "mandatory_stop"],
-        "secondary_terminal": ["result", "receipt_sha256", "mandatory_stop"],
-        "package_ledger_entry": ["target", "delta", "durable_start_sha256", "sequence", "prior_entry_sha256"],
-        "primary_ledger_entry": ["target", "delta", "durable_start_sha256", "sequence", "prior_entry_sha256"],
-        "secondary_ledger_entry": ["target", "delta", "durable_start_sha256", "sequence", "prior_entry_sha256"],
-    }
-    return special.get(artifact, ["result"])
 
 
 def derive_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[str, Any]:

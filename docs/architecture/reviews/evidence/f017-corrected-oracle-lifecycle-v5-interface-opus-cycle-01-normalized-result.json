@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-interface-review-normalized-result/1.0.0",
+  "cycle": 1,
+  "reviewer": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "d91528b646e8cea8ef6aff41fc304c0e84f8f67b",
+  "request_sha256": "180ed494570850b6b55c86fec378fab4f52e260298561687550eb7bade8d1357",
+  "response_sha256": "a6a40aaf2fd72079a456e25e13b57a6a2740eae80bbcd7454747f09367192b6f",
+  "blocking": [
+    "B-1_INTERFACE_OUTSIDE_VALIDATED_SURFACE",
+    "B-2_GENERATED_CONDITIONAL_BINDINGS_UNVALIDATED",
+    "B-3_ARTIFACT_PATH_TIMING_UNSATISFIABLE",
+    "B-4_AUTHORIZATION_LAYOUTS_MUTUALLY_EXCLUSIVE",
+    "B-5_FAILURE_VARIANTS_FOLLOWED_WRONG_SOURCE_STATE"
+  ],
+  "non_blocking_required": [
+    "N-1_PAYLOAD_KEY_CENSUS_UNFROZEN",
+    "N-2_LEDGER_INDEX_ARTIFACTS_UNDEFINED",
+    "N-3_RESERVATION_EXECUTION_SEMANTICS_UNPINNED",
+    "N-4_FINAL_DECLARATION_ORPHAN_ARTIFACT"
+  ],
+  "defense_in_depth": [
+    "D-1_NONFINITE_PARSE_STAGE",
+    "D-2_ROOT_RELATION_ROLE_CENSUS_NARROW",
+    "D-3_POST_CREATE_ANCESTRY_RULES",
+    "D-4_CANDIDATE_TEMPORARY_FILE_PERSISTS",
+    "D-5_MEASUREMENT_MANIFEST_ENTRY_CENSUS"
+  ],
+  "verdict": "REJECT",
+  "prohibited_actions_observed": 0,
+  "original_checkpoint_access": 0
+}

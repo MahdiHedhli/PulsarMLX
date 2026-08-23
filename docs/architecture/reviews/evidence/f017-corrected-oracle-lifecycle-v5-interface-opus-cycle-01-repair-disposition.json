@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-interface-review-repair-disposition/1.0.0",
+  "cycle": 1,
+  "status": "REPAIRED_PENDING_CYCLE_2_REVIEW",
+  "repairs": {
+    "B-1": "independent validator now reconstructs and exact-compares the complete interface, including every pin, side-effect limit, authority requirement, context/limit census, and P1 prohibition",
+    "B-2": "independent validator now recomputes each registry binding, matrix outcome cell, JSON path, type, and artifact-schema channel from lifecycle traces and rejects coordinated omissions",
+    "B-3": "artifact paths are distinct per artifact class and automatically created by the producing transition; legal traces mechanically prove every required artifact exists and every forbidden consumer artifact is absent",
+    "B-4": "candidate and installed authorization artifacts use the one flat authorization-document census and exact field paths; generic bindings/payload layout applies only to non-authorization artifacts",
+    "B-5": "failure variants now use graph-derived shortest legal traces to each transition source, preserving actual durable artifacts and start-derived ledger deltas",
+    "N-1": "exact payload key census moved into the compact semantic model and is independently validated",
+    "N-2": "package, primary, and secondary ledger indices are typed artifact classes created and bound with their durable starts",
+    "N-3": "reservation-versus-execution semantics moved into the compact model and are independently fixed",
+    "N-4": "post-review final declaration removed from the execution lifecycle artifact census",
+    "D-1": "strict parser now rejects nonfinite constants at parse time",
+    "D-2": "root-relation matrix expanded to all nine directory roles and all 36 exact pairs",
+    "D-3": "every created root and file carries explicit post-create no-symlink validation semantics",
+    "D-4": "candidate temporary bytes are removed by authorization installation and path simulation proves absence afterward",
+    "D-5": "implementation measurement manifest now has an exact required path census"
+  },
+  "new_permanent_mutation_count": 30,
+  "event_04_authorization_created": false,
+  "event_04_executed": false,
+  "new_original_checkpoint_access": 0
+}

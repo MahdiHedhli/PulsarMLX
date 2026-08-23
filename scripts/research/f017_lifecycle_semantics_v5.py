@@ -28,10 +28,26 @@ def _pairs(items: Iterable[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def _reject_constant(value: str) -> None:
+    raise ValueError(f"nonfinite JSON number: {value}")
+
+
 def load_json(path: Path) -> dict[str, Any]:
-    value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_pairs)
+    return strict_json_bytes(path.read_bytes())
+
+
+def strict_json_bytes(data: bytes, *, require_canonical: bool = False, maximum: int = 16 * 1024 * 1024) -> dict[str, Any]:
+    if len(data) > maximum or data.startswith(b"\xef\xbb\xbf"):
+        raise ValueError("bounded BOM-free JSON bytes required")
+    value = json.loads(
+        data.decode("utf-8"),
+        object_pairs_hook=_pairs,
+        parse_constant=_reject_constant,
+    )
     if not isinstance(value, dict):
-        raise ValueError(f"expected JSON object: {path}")
+        raise ValueError("expected JSON object")
+    if require_canonical and data != canonical_json_bytes(value):
+        raise ValueError("noncanonical JSON authority bytes")
     return value
 
 
@@ -95,6 +111,7 @@ def simulate_trace(model: dict[str, Any], trace: list[str]) -> TraceResult:
         role: descriptor["initial_predicate"]
         for role, descriptor in model["path_roles"].items()
     }
+    path_states.update({f"ARTIFACT::{name}": "MUST_NOT_EXIST" for name in model["artifact_path_descriptors"]})
     for tid in trace:
         transition = transitions.get(tid)
         if transition is None:
@@ -113,9 +130,24 @@ def simulate_trace(model: dict[str, Any], trace: list[str]) -> TraceResult:
                 if path_states[role] != "MUST_NOT_EXIST":
                     raise ValueError(f"unsatisfiable directory creation: {tid}/{role}")
                 path_states[role] = "MUST_EXIST_DIRECTORY"
+            elif effect["effect"] == "REMOVE_FILE":
+                if path_states[role] != "MUST_EXIST_REGULAR_FILE":
+                    raise ValueError(f"unsatisfiable file removal: {tid}/{role}")
+                path_states[role] = "MUST_NOT_EXIST"
             else:
                 raise ValueError(f"unknown path effect: {effect}")
-        artifacts.update(transition["artifacts_created"])
+        for artifact in transition["artifacts_created"]:
+            key = f"ARTIFACT::{artifact}"
+            if key not in path_states or path_states[key] != "MUST_NOT_EXIST":
+                raise ValueError(f"unsatisfiable artifact creation: {tid}/{artifact}")
+            path_states[key] = "MUST_EXIST_REGULAR_FILE"
+            artifacts.add(artifact)
+        for artifact in model["artifact_removals"].get(tid, []):
+            key = f"ARTIFACT::{artifact}"
+            if path_states.get(key) != "MUST_EXIST_REGULAR_FILE":
+                raise ValueError(f"unsatisfiable artifact removal: {tid}/{artifact}")
+            path_states[key] = "MUST_NOT_EXIST"
+            artifacts.discard(artifact)
         identities.update(transition["identities_introduced"])
         for target, delta in transition["ledger_effects"].items():
             if type(delta) is not int or delta < 0 or target not in ledgers:
@@ -162,6 +194,7 @@ def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
             consumer_evidence = {
                 f"{consumer}_durable_start",
                 f"{consumer}_ledger_entry",
+                f"{consumer}_ledger_index",
                 f"{consumer}_receipt",
                 f"{consumer}_terminal",
             }
@@ -195,25 +228,36 @@ def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
 
     failure_variants = []
     transitions = _index_transitions(model)
-    success_prefix: list[str] = []
+
+    def shortest_trace_to(target_state: str) -> list[str]:
+        queue: list[tuple[str, list[str]]] = [(model["initial_state"], [])]
+        seen = {model["initial_state"]}
+        while queue:
+            state, trace = queue.pop(0)
+            if state == target_state:
+                return trace
+            for transition in model["transitions"]:
+                if transition["source"] == state and transition["destination"] not in seen:
+                    seen.add(transition["destination"])
+                    queue.append((transition["destination"], trace + [transition["id"]]))
+        raise ValueError(f"unreachable transition source: {target_state}")
+
     for transition in model["transitions"]:
         outcome = transition["failure_outcome"]
-        prefix_result = simulate_trace(model, success_prefix)
+        prefix = shortest_trace_to(transition["source"])
+        prefix_result = simulate_trace(model, prefix)
         failure_variants.append(
             {
                 "failed_transition": transition["id"],
                 "failure_outcome": outcome,
                 "state_before_failure": prefix_result.state,
+                "trace_before_failure": prefix,
                 "durable_artifacts_before_failure": sorted(prefix_result.artifacts),
                 "ledger_deltas_before_failure": prefix_result.ledgers,
                 "failed_transition_artifacts_not_claimed": transition["artifacts_created"],
                 "prohibited_side_effects": transition["prohibited_side_effects"],
             }
         )
-        # Only advance the canonical success spine. Branch transitions are not
-        # prefixes for later success transitions.
-        if transition["source"] == prefix_result.state and not transition["id"].endswith("FAILURE") and "F_" not in transition["id"]:
-            success_prefix.append(transition["id"])
     return {
         "schema": "pulsarmlx.f017.corrected-oracle-outcome-obligations/5.0.0",
         "semantic_model_sha256": canonical_sha256(model),
@@ -236,9 +280,7 @@ def derive_accounting(model: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema": "pulsarmlx.f017.corrected-oracle-event-accounting/5.0.0",
         "semantic_model_sha256": canonical_sha256(model),
-        "authorization_mint_execution_delta": 0,
-        "consumer_grant_is_start": False,
-        "reservation_is_execution": False,
+        **model["accounting_semantics"],
         "targets": targets,
         "outcome_deltas": {name: value["ledger_deltas"] for name, value in obligations.items()},
         "same_commit_banking": {
@@ -268,6 +310,7 @@ def derive_path_timing(model: dict[str, Any]) -> dict[str, Any]:
         "schema": "pulsarmlx.f017.corrected-oracle-path-timing/1.0.0",
         "semantic_model_sha256": canonical_sha256(model),
         "roles": model["path_roles"],
+        "artifact_paths": model["artifact_path_descriptors"],
         "absent_path_validation": model["absent_path_validation"],
         "root_relation_matrix": relation,
         "legal_trace_final_path_states": traces,
@@ -290,10 +333,10 @@ def derive_serialization(model: dict[str, Any]) -> dict[str, Any]:
 
 def validate_model(model: dict[str, Any]) -> dict[str, Any]:
     expected_top = {
-        "schema", "authority_generation", "status", "authorization_schema", "initial_state",
-        "states", "actors", "artifact_classes", "transitions", "terminal_outcomes",
+        "schema", "authority_generation", "status", "authorization_schema", "initial_state", "accounting_semantics",
+        "states", "actors", "artifact_classes", "artifact_payload_key_census", "artifact_removals", "transitions", "terminal_outcomes",
         "start_transition_by_actor", "ledger_targets", "authority_activation", "path_roles",
-        "absent_path_validation", "root_relation_matrix", "serialization", "measurement_authority",
+        "absent_path_validation", "root_relation_matrix", "serialization", "measurement_authority", "artifact_path_descriptors",
         "authorization_document",
         "path_timing_authority", "event_accounting_authority", "canonical_serialization_authority",
         "supersession",
@@ -307,6 +350,8 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
     transitions = _index_transitions(model)
     states = set(model["states"])
     artifacts = set(model["artifact_classes"])
+    if set(model["artifact_payload_key_census"]) != artifacts or set(model["artifact_path_descriptors"]) != artifacts:
+        raise ValueError("artifact payload/path bidirectional census")
     outcomes = set(model["terminal_outcomes"])
     for transition in transitions.values():
         if transition["source"] not in states or transition["destination"] not in states:
