@@ -74,6 +74,9 @@ def policy() -> dict:
             "__class__", "__dict__", "__getattribute__", "__globals__", "__loader__", "__spec__",
             "exec_module", "find_module", "find_spec", "load_module",
         ],
+        "prohibited_capability_member_names": [
+            "dump", "export", "export_function", "fromfile", "load", "memmap", "open_memmap", "save", "tofile",
+        ],
         "parameter_roles": {
             "primary": {
                 "_projection.source": "PROTOCOL_OBJECT:SOURCE", "_swiglu.source": "PROTOCOL_OBJECT:SOURCE",
@@ -156,7 +159,9 @@ def main() -> int:
         for module_policy in policy()["semantic_modules"].values()
         for member in (*module_policy["direct_callable_members"], *module_policy["type_dtype_members"])
     }
-    prohibited = set(policy()["prohibited_dynamic_names"]) - approved_member_names
+    prohibited = (set(policy()["prohibited_dynamic_names"]) - approved_member_names) | set(
+        policy()["prohibited_capability_member_names"]
+    )
     for analysis in analyses:
         overlap = prohibited & set(analysis["bytecode_names"])
         if overlap:

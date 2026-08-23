@@ -3140,7 +3140,7 @@
   ],
   "original_checkpoint_payload_reads": 0,
   "original_checkpoint_shard_opens": 0,
-  "policy_sha256": "eb80946e5f5ff32adff9c673bdf85b2b9c9ff73a27eba96e75ee39a107349824",
+  "policy_sha256": "c4637e72ad4287d5672370435cab694f4e353bf05b6f64ea1dc32d1a88069e46",
   "primary_pure_core_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
   "result": "PASS",
   "runtime_proxy": {
