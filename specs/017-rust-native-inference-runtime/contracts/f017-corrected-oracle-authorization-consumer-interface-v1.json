@@ -1,0 +1,71 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/1.0.0",
+  "authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
+  "version_decision": "V3_REQUIRED_BY_EXPLICIT_CONSUMER_EVENT_IDENTITIES_ROOTS_AND_ACTUAL_START_ACCOUNTING",
+  "top_level_keys": [
+    "attempts", "authorization_id", "authorizer_sha256", "authority_scope", "branch",
+    "candidate_nonce", "checkpoint_catalog_path", "checkpoint_catalog_sha256",
+    "checkpoint_manifest_sha256", "checkpoint_root", "checkpoint_set_sha256", "consumers",
+    "contract_sha256", "event_accounting", "event_coordinator_sha256", "geometry_sha256",
+    "historical_master_delta", "historical_master_ledger_sha256", "historical_master_terminal",
+    "implementation_head", "interface_sha256", "live", "memory_available_bytes",
+    "memory_observed_at_unix_ns", "memory_observer_sha256", "memory_parser_contract_sha256",
+    "memory_preflight_sha256", "numerical_contract_sha256", "operator_approval_sha256",
+    "package_output_root", "package_state_root", "p1_authority", "position", "primary",
+    "prompt_token", "resume", "retries", "schema", "secondary", "shards", "state",
+    "synthetic_qualification_sha256", "top_n"
+  ],
+  "consumer_grant_keys": [
+    "attempts", "decoder_path", "decoder_sha256", "event_id", "output_root",
+    "producer_path", "producer_sha256", "resume", "retries", "role", "state_root"
+  ],
+  "shard_keys": ["access_role", "filename", "sha256", "size_bytes"],
+  "event_accounting_keys": [
+    "authorization_mint_delta", "package_attempt_delta_on_durable_start",
+    "primary_event_delta_on_durable_start", "secondary_event_delta_on_durable_start",
+    "unstarted_consumer_delta"
+  ],
+  "strict_types": {
+    "attempts": "INTEGER_NOT_BOOLEAN",
+    "retries": "INTEGER_NOT_BOOLEAN",
+    "resume": "BOOLEAN",
+    "live": "BOOLEAN",
+    "memory_bytes_and_timestamps": "INTEGER_NOT_BOOLEAN",
+    "hashes": "LOWERCASE_HEX_SHA256",
+    "unknown_keys": "REJECT",
+    "missing_keys": "REJECT"
+  },
+  "live_identity_policy": {
+    "prohibited_markers": ["INERT", "FIXTURE", "TEST", "SYNTHETIC"],
+    "operator_approved": true,
+    "unique_and_absent_before_mint": true,
+    "primary_and_secondary_event_ids_explicit_and_distinct": true
+  },
+  "lifecycle": {
+    "authorization_mint": "NO_EVENT_LEDGER_ADVANCEMENT",
+    "package_attempt": "ADVANCE_ONLY_AT_DURABLE_PACKAGE_START",
+    "primary_event": "ADVANCE_ONLY_AT_PRIMARY_DURABLE_START",
+    "secondary_event": "ADVANCE_ONLY_AT_SECONDARY_DURABLE_START",
+    "unstarted_consumer": "ZERO_DELTA",
+    "attempts": 1,
+    "retries": 0,
+    "resume": false
+  },
+  "validation_boundary": {
+    "shared_parser_is_non_numerical": true,
+    "consumer_role_checks_are_independent": true,
+    "both_consumers_validate_candidate_before_install": true,
+    "candidate_and_install_bytes_are_identical": true,
+    "both_consumers_handshake_before_checkpoint_identity_access": true,
+    "validation_only_checkpoint_opens": 0,
+    "validation_only_checkpoint_hash_reads": 0,
+    "validation_only_mmaps": 0,
+    "validation_only_tensor_reads": 0,
+    "validation_only_numerical_operations": 0
+  },
+  "historical_master": {
+    "terminal": 175,
+    "delta": 0,
+    "relationship": "SEPARATE_FROM_PACKAGE_AND_CONSUMER_EVENT_LEDGERS"
+  }
+}
