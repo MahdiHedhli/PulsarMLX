@@ -1,0 +1,3169 @@
+{
+  "accepted_current_sources": {
+    "primary": {
+      "approved_module_uses": [],
+      "approved_receiver_uses": [
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 32,
+          "method": "update",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "_hash_f64"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 33,
+          "method": "hexdigest",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "_hash_f64"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 37,
+          "method": "hexdigest",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "_hash_json"
+        },
+        {
+          "column": 26,
+          "direct": false,
+          "expected_return_provenance": "SAFE_BYTES",
+          "line": 37,
+          "method": "encode",
+          "node_class": "Call",
+          "receiver_role": "SAFE_STRING",
+          "scope": "_hash_json"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 63,
+          "method": "issubset",
+          "node_class": "Call",
+          "receiver_role": "SAFE_SET",
+          "scope": "Geometry.from_json"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 83,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "SAFE_DICT",
+          "scope": "JsonSource._get"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 92,
+          "method": "_get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "JsonSource.vector"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 95,
+          "method": "_get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "JsonSource.matrix"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 98,
+          "method": "_get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "JsonSource.expert"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 118,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "_matvec"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 124,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "_matvec"
+        },
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 133,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "_matvec"
+        },
+        {
+          "column": 44,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 154,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "_transpose_matvec"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 182,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "_projection"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 184,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "_projection"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 205,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 34,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 210,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 21,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 211,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 23,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 212,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 20,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 214,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 21,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 215,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 42,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 216,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 238,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 240,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 250,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 250,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 253,
+          "method": "extend",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 254,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 257,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 29,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 262,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 47,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 263,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 271,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 40,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 277,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 30,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 282,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 21,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 283,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 50,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 292,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        }
+      ],
+      "bytecode_names": [
+        "Geometry",
+        "JsonSource",
+        "ORACLE_ID",
+        "Protocol",
+        "RowMatrix",
+        "Source",
+        "TOP_N",
+        "ValueError",
+        "__annotations__",
+        "__doc__",
+        "__firstlineno__",
+        "__future__",
+        "__init__",
+        "__module__",
+        "__name__",
+        "__qualname__",
+        "__static_attributes__",
+        "_get",
+        "_hash_f64",
+        "_hash_json",
+        "_matvec",
+        "_pairs",
+        "_projection",
+        "_residual",
+        "_rms",
+        "_route",
+        "_silu",
+        "_swiglu",
+        "_transpose_matvec",
+        "all",
+        "annotations",
+        "append",
+        "classmethod",
+        "columns",
+        "cos",
+        "dataclass",
+        "dataclasses",
+        "dense_ffn",
+        "dense_layers",
+        "dumps",
+        "encode",
+        "enumerate",
+        "execute",
+        "exp",
+        "expert",
+        "expert_ffn",
+        "experts",
+        "extend",
+        "float",
+        "from_json",
+        "get",
+        "hashlib",
+        "heads",
+        "hex",
+        "hexdigest",
+        "hidden",
+        "isfinite",
+        "isinstance",
+        "issubset",
+        "json",
+        "kv_rank",
+        "layers",
+        "len",
+        "list",
+        "math",
+        "matrix",
+        "max",
+        "pack",
+        "q_rank",
+        "qk_nope",
+        "qk_rope",
+        "range",
+        "rms_epsilon",
+        "rope_base",
+        "route_scale",
+        "row",
+        "rows",
+        "runtime_checkable",
+        "set",
+        "sha256",
+        "sin",
+        "sorted",
+        "sqrt",
+        "struct",
+        "sum",
+        "tensors",
+        "top_k",
+        "typing",
+        "update",
+        "value_dim",
+        "vector",
+        "vocab",
+        "zip"
+      ],
+      "module_aliases": {},
+      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
+    },
+    "secondary": {
+      "approved_module_uses": [
+        {
+          "column": 19,
+          "context_class": "DIRECT_TYPE_ANNOTATION",
+          "direct": true,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 27,
+          "member": "ndarray",
+          "node_class": "Attribute",
+          "scope": "digest",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 26,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 28,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "digest",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 56,
+          "context_class": "DIRECT_TYPE_ANNOTATION",
+          "direct": true,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 34,
+          "member": "ndarray",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 16,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 35,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 53,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 35,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 49,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 36,
+          "member": "isfinite",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 33,
+          "context_class": "DIRECT_TYPE_ANNOTATION",
+          "direct": true,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 51,
+          "member": "ndarray",
+          "node_class": "Attribute",
+          "scope": "RowMatrix.row",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 35,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "member": "sqrt",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 43,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "mean",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 60,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 105,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 125,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 66,
+          "member": "stack",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 22,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 67,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 37,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 67,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 54,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 67,
+          "member": "eval",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 83,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 67,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 106,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 67,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 19,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 68,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 43,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 68,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 15,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 27,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "dot",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 55,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 81,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 129,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 17,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 72,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 36,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 72,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 8,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 73,
+          "member": "eval",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 15,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 74,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 40,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 74,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 26,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 75,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 54,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 75,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 74,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 75,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 17,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 82,
+          "member": "zeros",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 45,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 82,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 45,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 84,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 85,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 16,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 88,
+          "member": "transpose",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 88,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 49,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 88,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 8,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 89,
+          "member": "eval",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 15,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 90,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 39,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 90,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 26,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 91,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 56,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 91,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 76,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 91,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 102,
+          "member": "exp",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 49,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 102,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 69,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 102,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 96,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 102,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 23,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 126,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 52,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 126,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 19,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 132,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 48,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 132,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 141,
+          "member": "dot",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 63,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 141,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 92,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 141,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 23,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 142,
+          "member": "dot",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 72,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 142,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 101,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 142,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 19,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 143,
+          "member": "isfinite",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 54,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 145,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 146,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 147,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 58,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 148,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 104,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 149,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 129,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 149,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 45,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 150,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 25,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 154,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 46,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 154,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 59,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 154,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 80,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 154,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 42,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 159,
+          "member": "exp",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 64,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 159,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 85,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 159,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 164,
+          "member": "zeros",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 39,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 164,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 140,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 166,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 43,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 168,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 39,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 169,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        }
+      ],
+      "approved_receiver_uses": [
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 28,
+          "method": "hexdigest",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "digest"
+        },
+        {
+          "column": 26,
+          "direct": false,
+          "expected_return_provenance": "SAFE_BYTES",
+          "line": 28,
+          "method": "tobytes",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "digest"
+        },
+        {
+          "column": 49,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 36,
+          "method": "all",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "Store.get"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 38,
+          "method": "reshape",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "Store.get"
+        },
+        {
+          "column": 38,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 39,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "Store.vector"
+        },
+        {
+          "column": 47,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 40,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "Store.matrix"
+        },
+        {
+          "column": 55,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 41,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "Store.expert"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 51,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 91,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 31,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 66,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "mv"
+        },
+        {
+          "column": 69,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 67,
+          "method": "extend",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "mv"
+        },
+        {
+          "column": 34,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 34,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "mv"
+        },
+        {
+          "column": 67,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 75,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 75,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "mv"
+        },
+        {
+          "column": 40,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 75,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 84,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 84,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 85,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 91,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 91,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 42,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 91,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 19,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 97,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "swiglu.projection"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 99,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "swiglu.projection"
+        },
+        {
+          "column": 14,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 102,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "swiglu"
+        },
+        {
+          "column": 50,
+          "direct": false,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 109,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "SAFE_DICT",
+          "scope": "execute"
+        },
+        {
+          "column": 13,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 111,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 13,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 111,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 114,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 115,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 116,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 117,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 119,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 120,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 37,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 121,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 19,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 122,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 23,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 138,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 139,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 141,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 76,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 141,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 30,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 142,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 85,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 142,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 145,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 145,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 148,
+          "method": "extend",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 26,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 148,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 23,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 149,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 17,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 150,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 151,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 152,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 24,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 158,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 159,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 19,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 160,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 166,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 18,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 168,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 17,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 169,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 170,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 51,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 174,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 29,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 178,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 179,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 65,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 185,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        }
+      ],
+      "bytecode_names": [
+        "ORACLE_ID",
+        "Protocol",
+        "RowMatrix",
+        "Store",
+        "T",
+        "TOP_N",
+        "ValueError",
+        "__annotations__",
+        "__doc__",
+        "__firstlineno__",
+        "__future__",
+        "__init__",
+        "__module__",
+        "__name__",
+        "__qualname__",
+        "__static_attributes__",
+        "_pairs",
+        "all",
+        "annotations",
+        "append",
+        "array",
+        "asarray",
+        "astype",
+        "cols",
+        "copy",
+        "core",
+        "cos",
+        "digest",
+        "dot",
+        "eval",
+        "execute",
+        "exp",
+        "expert",
+        "extend",
+        "float",
+        "float32",
+        "float64",
+        "get",
+        "hashlib",
+        "hex",
+        "hexdigest",
+        "int",
+        "isfinite",
+        "isinstance",
+        "len",
+        "math",
+        "matrix",
+        "max",
+        "mean",
+        "min",
+        "mlx.core",
+        "mv",
+        "np",
+        "numpy",
+        "pack",
+        "prod",
+        "range",
+        "reshape",
+        "rms",
+        "row",
+        "rows",
+        "runtime_checkable",
+        "sha256",
+        "sin",
+        "size",
+        "sorted",
+        "sqrt",
+        "stack",
+        "struct",
+        "sum",
+        "swiglu",
+        "tensors",
+        "tobytes",
+        "transpose",
+        "transpose_mv",
+        "typing",
+        "vector",
+        "zeros",
+        "zip"
+      ],
+      "module_aliases": {
+        "mx": "PYTHON_MODULE_MLX_CORE",
+        "np": "PYTHON_MODULE_NUMPY"
+      },
+      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
+    }
+  },
+  "analyzer_sha256": "94b314078fb6b5280ea6da82a55093e8fea765e85a4cfcb4a8c11fc299d72f2b",
+  "category_census": {
+    "CONTAINER_RECEIVER": 10,
+    "DYNAMIC_ACCESS": 20,
+    "F5_R4": 1,
+    "IMPORT_REPRESENTATION": 10,
+    "MEMBER_ESCAPE": 60,
+    "MODULE_ESCAPE": 40,
+    "UNKNOWN_RECEIVER": 29
+  },
+  "exact_f5_r4_rejected": true,
+  "independent_checker": {
+    "primary": {
+      "approved_use_count": 0,
+      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+      "result": "PASS",
+      "semantic_aliases": {}
+    },
+    "secondary": {
+      "approved_use_count": 81,
+      "path": "/Users/mhedhli/Documents/Coding/PulsarMLX/scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "result": "PASS",
+      "semantic_aliases": {
+        "mx": "PYTHON_MODULE_MLX_CORE",
+        "np": "PYTHON_MODULE_NUMPY"
+      }
+    }
+  },
+  "independent_checker_sha256": "9ee21cb8d11f99b03957307dc81bf6b48bc0467bf190260c460d07a69858c2f1",
+  "mutation_count": 170,
+  "mutations": [
+    {
+      "category": "F5_R4",
+      "id": "CAP-001",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-002",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-003",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-004",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-005",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-006",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-007",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-008",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-009",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-010",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-011",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-012",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-013",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-014",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-015",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-016",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-017",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-018",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-019",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-020",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-021",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-022",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-023",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-024",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-025",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-026",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-027",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-028",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-029",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-030",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-031",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-032",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-033",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-034",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-035",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-036",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-037",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-038",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-039",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-040",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "id": "CAP-041",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-042",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-043",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-044",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-045",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-046",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-047",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-048",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-049",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-050",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-051",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-052",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-053",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-054",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-055",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-056",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-057",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-058",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-059",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-060",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-061",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-062",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-063",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-064",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-065",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-066",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-067",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-068",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-069",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-070",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-071",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-072",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-073",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-074",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-075",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-076",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-077",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-078",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-079",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-080",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-081",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-082",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-083",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-084",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-085",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-086",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-087",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-088",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-089",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-090",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-091",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-092",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-093",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-094",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-095",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-096",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-097",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-098",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-099",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-100",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "id": "CAP-101",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-102",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-103",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-104",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-105",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-106",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-107",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-108",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-109",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-110",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-111",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-112",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-113",
+      "rejection": "CAPABILITY_ATTRIBUTE_CHAIN",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-114",
+      "rejection": "UNAPPROVED_MODULE_MEMBER_CONTEXT",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-115",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-116",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-117",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-118",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-119",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-120",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "id": "CAP-121",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-122",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-123",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-124",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-125",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-126",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-127",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-128",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-129",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-130",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-131",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-132",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-133",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-134",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-135",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-136",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-137",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-138",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-139",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-140",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-141",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-142",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-143",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-144",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-145",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-146",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-147",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-148",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-149",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "id": "CAP-150",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-151",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-152",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-153",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-154",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-155",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-156",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-157",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-158",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-159",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "id": "CAP-160",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-161",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-162",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-163",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-164",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-165",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-166",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-167",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-168",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-169",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "id": "CAP-170",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED"
+    }
+  ],
+  "original_checkpoint_payload_reads": 0,
+  "original_checkpoint_shard_opens": 0,
+  "policy_sha256": "eb80946e5f5ff32adff9c673bdf85b2b9c9ff73a27eba96e75ee39a107349824",
+  "primary_pure_core_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+  "result": "PASS",
+  "runtime_proxy": {
+    "mlx_members_observed": [
+      "array",
+      "eval",
+      "transpose"
+    ],
+    "numpy_members_observed": [
+      "asarray",
+      "dot",
+      "exp",
+      "float32",
+      "float64",
+      "isfinite",
+      "mean",
+      "sqrt",
+      "zeros"
+    ],
+    "result": "PASS",
+    "subset_of_contract": true
+  },
+  "schema": "pulsarmlx.f017.numerical-capability-qualification/1.0.0",
+  "secondary_pure_core_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+  "unexpected_pass_count": 0
+}

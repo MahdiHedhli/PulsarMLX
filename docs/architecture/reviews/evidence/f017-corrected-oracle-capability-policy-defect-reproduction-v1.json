@@ -1,0 +1,42 @@
+{
+  "affected_validator": {
+    "path": "scripts/research/validate_f017_corrected_oracle_numerical_authority_v2.py",
+    "sha256": "1570c1d81ce69be3a817f1f30930e486f7d66fb7ecb94b072845160ecc188e52"
+  },
+  "classification": "NUMERICAL_MODULE_CAPABILITY_POLICY_IS_NAME_BOUND_NOT_VALUE_BOUND",
+  "current_pure_cores_contain_escape": false,
+  "finding_id": "F5-R4",
+  "historical_master_ledger": 175,
+  "mutations": [
+    {
+      "id": "F5-R4",
+      "old_validator_result": "PASS",
+      "source": "_backend = np\ndef probe(): return _backend.memmap(\"x\")\n"
+    },
+    {
+      "id": "CHAINED_MODULE_ALIAS",
+      "old_validator_result": "PASS",
+      "source": "_backend = np\n_other = _backend\ndef probe(): return _other.memmap(\"x\")\n"
+    },
+    {
+      "id": "CONTAINER_MODULE_ALIAS",
+      "old_validator_result": "PASS",
+      "source": "_box = [np]\ndef probe(): return _box[0].memmap(\"x\")\n"
+    },
+    {
+      "id": "DEFAULT_ARGUMENT_ALIAS",
+      "old_validator_result": "PASS",
+      "source": "def probe(_backend=np): return _backend.memmap(\"x\")\n"
+    },
+    {
+      "id": "ALLOWED_MEMBER_ALIAS",
+      "old_validator_result": "PASS",
+      "source": "_convert = np.asarray\ndef probe(x): return _convert(x)\n"
+    }
+  ],
+  "new_original_checkpoint_access": 0,
+  "numerical_formulas_invalidated": false,
+  "numerical_outputs_invalidated": false,
+  "result": "REPRODUCED",
+  "schema": "pulsarmlx.f017.numerical-capability-policy-defect-reproduction/1.0.0"
+}
