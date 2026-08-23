@@ -83,6 +83,15 @@ class CoordinatorPreflightTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("HISTORICAL_ONLY", result.stderr)
 
+    def test_workflow_qualifies_only_current_v2_scientific_authority(self):
+        workflow = (ROOT / ".github/workflows/macos.yml").read_text()
+        self.assertIn("validate_f017_corrected_oracle_access_v2.py validate", workflow)
+        self.assertIn("f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json", workflow)
+        self.assertIn("f017-corrected-full-checkpoint-oracle-scientific-access-v2.json", workflow)
+        active_block = workflow.split("Qualify corrected oracle pre-access domain", 1)[1].split("Qualify vectorized", 1)[0]
+        self.assertNotIn("validate_f017_corrected_oracle_access.py validate", active_block)
+        self.assertNotIn("scientific-access-v1.json", active_block)
+
     def test_validation_cannot_mint_and_operator_command_requires_explicit_environment(self):
         contract_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
         inert_path = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json"

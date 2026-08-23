@@ -317,9 +317,9 @@ jobs:
           cargo test -p stream p1_domain --no-default-features
           .venv/bin/python scripts/research/qualify_f017_corrected_oracles.py \
             --output "$RUNNER_TEMP/f017-corrected-oracle-qualification.json"
-          .venv/bin/python scripts/research/validate_f017_corrected_oracle_access.py validate \
-            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v1.json \
-            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json \
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_access_v2.py validate \
+            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json \
             .
           .venv/bin/python scripts/research/validate_f017_corrected_oracle_geometry.py \
             specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json \
