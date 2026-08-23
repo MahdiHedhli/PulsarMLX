@@ -1,0 +1,111 @@
+{
+  "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-event-final-declaration/1.0.0",
+  "declaration": "F017_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_02: TERMINAL_FAILURE_EVIDENCE_ACCEPTED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_evidence_head": "f51f1b33e8a3340d57421f9a59036f08b97ddc07",
+  "implementation_head": "2fc212ff1ccde542fb70f327f20704f5ec294d5f",
+  "execution_code_head": "b92ba90a5b401fe44aa4c7dbe3c62cc6e23c3ddd",
+  "authorization_banked_head": "4e53703bf5bf5364d775fb8bb4f25e25889c8d8d",
+  "terminal_evidence_head": "f69b7e3680d6a35bf5b43a596ee788417c2f2bfc",
+  "review_packet_head": "eecfcbf732101d3539797c24bbd86bacc1fab206",
+  "authority": {
+    "scientific_access_contract_sha256": "ae39f31c5f1b8df06bfe6893a24de91e7926ae6e05b9a2e8bc8e51eadf519046",
+    "numerical_methodology_sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4",
+    "coordinator_v2_sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f",
+    "primary_oracle_sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+    "secondary_oracle_sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+    "primary_decoder_sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+    "operator_approval_sha256": "aa02ee1c217807e4f758ae95a9b13bb5913cdedaff609e2b795d2da2a246b64d",
+    "live_authorization_sha256": "553a4f315a0d177b9a7997a62abe7f447ba0861a3b62a0b97c713153d50a8e04"
+  },
+  "event": {
+    "event_id": "F017-CORRECTED-ORACLE-EVENT-02",
+    "authorization_id": "F017-CORRECTED-ORACLE-INERT-FIXTURE-2",
+    "new_operator_go": true,
+    "old_operator_go_reused": false,
+    "attempts": 1,
+    "retries": 0,
+    "resume": false,
+    "mandatory_terminal": true,
+    "package_event_executed": true,
+    "primary_process_invoked": true,
+    "primary_numerical_execution_started": false,
+    "secondary_process_invoked": false,
+    "secondary_numerical_execution_started": false,
+    "classification": "ORACLE_EXECUTION_FAILURE"
+  },
+  "checkpoint_access": {
+    "authorized_identity_opens": 6,
+    "authorized_identity_hash_reads": 6,
+    "identity_events": 30,
+    "read_only_mappings": 0,
+    "tensor_resolutions": 0,
+    "tensor_first_uses": 0,
+    "unexpected_accesses": 0,
+    "fallback_attempts": 0,
+    "checkpoint_identity_sha256": "9c5c4532fe99d90596f8bde3846a15382a4c73790e477e03e59479188137e473"
+  },
+  "terminal_evidence": {
+    "execution_failure_summary_sha256": "617cb92605eb93cba3f24e7395a1a12ba0797ac2130213e2a72b5e83b87381eb",
+    "claim_sha256": "ffd696e39359746ac55a265a36f0ec2dc11298da7b7ac856a49577f0c6a8c3c3",
+    "durable_start_sha256": "ffd696e39359746ac55a265a36f0ec2dc11298da7b7ac856a49577f0c6a8c3c3",
+    "receipt_sha256": "63cf8bf4f018426751796c1bef48c5ab9df0dcdebcb6c1e1a58eb99e2f482e7d",
+    "oracle_event_ledger_entry_sha256": "f4877338ce508c104e414d8d531181cfc0aa2225e80c27716c30fa95303a44e4",
+    "terminal_sha256": "11a8cde63f5ddae42cbf020691c04d240ce89d210b744127525b0ab82ab3c69a",
+    "receipt_terminal_binding": "PASS"
+  },
+  "root_cause": {
+    "classification": "PROVEN_EXECUTION_AUTHORITY_SCHEMA_INCOMPATIBILITY",
+    "primary_expected_authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/1.0.0",
+    "supplied_authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/2.0.0",
+    "secondary_has_same_v1_schema_constant": true,
+    "repair_under_current_go": "PROHIBITED",
+    "rerun_under_current_authorization": "PROHIBITED"
+  },
+  "accounting": {
+    "historical_master_before": 175,
+    "historical_master_after": 175,
+    "historical_master_delta": 0,
+    "recorded_oracle_event_delta": 2
+  },
+  "reviews": {
+    "gemini": {
+      "model": "gemini-3.1-pro-high",
+      "request_sha256": "b141a04655c29e6e774aef9cf5591c4e90b351c200603524e4cb249b976bb19b",
+      "response_sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db",
+      "normalized_result_sha256": "d0764ec35f60fa754c295e242b27250f3044f16712be8c07f84b3b2aaee24ee1",
+      "verdict": "ACCEPT",
+      "material_disagreement": false
+    },
+    "opus": {
+      "model": "claude-opus-5",
+      "request_sha256": "5e17ee78e42141389858ed695ee7dd179ef14ec81df791cf05cf53334ecf35cc",
+      "response_sha256": "71e12cd479d68128cadb1111f19e4f12acde69b00a6a2d1cd189e50531f56ed0",
+      "normalized_result_sha256": "f2a7c5aff6fbb53bc2b8ff97ad6fc91b107f540ba3c8abdee2cfee45ab98fd53",
+      "blocking_findings": 0,
+      "non_blocking_required_findings": 0,
+      "defense_in_depth_findings": 6,
+      "verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVIDENCE"
+    }
+  },
+  "ci": {
+    "terminal_evidence_run_id": 32616025531,
+    "review_packet_run_id": 32616851562,
+    "mode": "EVIDENCE_ONLY",
+    "conclusion": "success",
+    "native_jobs_launched": 0
+  },
+  "safety": {
+    "CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTED": "YES",
+    "CORRECTED_FULL_CHECKPOINT_ORACLE_NUMERICAL_RESULT_PRODUCED": "NO",
+    "P1_ATTEMPT_1_RETRY": "NO",
+    "P1_ATTEMPT_2_EXECUTED": "NO",
+    "LIVE_P1_ATTEMPT_2_AUTHORIZATION_CREATED": "NO",
+    "FURTHER_REAL_INFERENCE_EXECUTED": "NO",
+    "HISTORICAL_MASTER_LEDGER": 175
+  },
+  "readiness": {
+    "READY_TO_PREPARE_P1_ATTEMPT_2_AUTHORIZATION": "NO",
+    "smallest_blocker": "Both oracle producers freeze authorization schema 1.0.0 and reject the reviewed live v2 authorization before numerical execution. Repair requires new source authority, FULL_NATIVE CI, fresh independent review, and a new operator GO."
+  }
+}
