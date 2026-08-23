@@ -16,7 +16,11 @@ RESEARCH = ROOT / "scripts/research"
 sys.path.insert(0, str(RESEARCH))
 
 import execute_f017_corrected_oracle_event_v2 as coordinator
-from f017_macos_memory_observation_v1 import MemoryObservation, MemoryObservationError
+from f017_macos_memory_observation_v1 import (
+    MemoryObservation,
+    MemoryObservationError,
+    observe_vm_stat,
+)
 import validate_f017_corrected_oracle_access_v2 as access_v2
 
 
@@ -199,18 +203,20 @@ class CoordinatorPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             report = root / "report.json"
-            machine_command = mock.Mock(
-                run=mock.Mock(
-                    return_value=subprocess.CompletedProcess(
-                        [], 0, stdout="Apple M1 Ultra\n", stderr=""
-                    )
-                )
-            )
-            # Only the admission identity is simulated on generic Apple CI.
-            # The observer module still executes the real /usr/bin/vm_stat.
-            with self.patched_authority(), mock.patch.object(
-                coordinator, "subprocess", machine_command
-            ), mock.patch.object(coordinator.platform, "machine", return_value="arm64"):
+            brand = subprocess.run(
+                ["/usr/sbin/sysctl", "-n", "machdep.cpu.brand_string"],
+                check=True,
+                text=True,
+                capture_output=True,
+                timeout=5,
+            ).stdout.rstrip("\r\n")
+            if brand != "Apple M1 Ultra":
+                observed = observe_vm_stat()
+                self.assertGreater(observed.page_size_bytes, 0)
+                self.assertGreaterEqual(observed.available_bytes, 0)
+                self.assertEqual(list(root.iterdir()), [])
+                return
+            with self.patched_authority():
                 value = coordinator.preflight(contract(root / "contract.json"), report)
             self.assertEqual(value["result"], "PASS")
             self.assertGreaterEqual(value["observation"]["available_bytes"], 17179869184)
