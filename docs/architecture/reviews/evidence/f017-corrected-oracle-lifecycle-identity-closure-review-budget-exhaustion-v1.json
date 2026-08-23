@@ -1,0 +1,88 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-identity-closure-review-budget-exhaustion/1.0.0",
+  "program": "F017 Corrected Oracle Lifecycle-Identity Closure and Event-04 Readiness Graph",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "b25a66d8eaa24a284b5befd37e820c066b1fbe5c",
+  "terminal_reviewed_head": "5be2917007de6800337965e22621a2ded6c82b37",
+  "classification": "INTERFACE_REVIEW_BUDGET_EXHAUSTED_WITH_PREVENTING_FINDINGS",
+  "review_budget": {
+    "maximum_cycles": 3,
+    "cycles_used": 3,
+    "exhausted": true,
+    "reviewer": "claude-opus-5",
+    "effort": "high",
+    "sessions": [
+      {
+        "cycle": 1,
+        "reviewed_head": "874920a21e162bc604e50d9abba51bd7707a1dab",
+        "session_id": "9179ac06-ddd7-42c5-b66c-8c833342906e",
+        "request_sha256": "b4ed3d3ff5bdc04ba78bec6400708cde6f9c1256352e8a5697c0e99ec8f90e29",
+        "verdict": "REJECT"
+      },
+      {
+        "cycle": 2,
+        "reviewed_head": "09b50ba30ba7ae41453d25e5f1402144ce119124",
+        "session_id": "986dc554-766a-47c9-9971-4cf6b6962a91",
+        "request_sha256": "b0cd87d41c454d4a969c28d7394ed4caed0cee79b8dba74ff277871a96f65a0a",
+        "verdict": "REJECT"
+      },
+      {
+        "cycle": 3,
+        "reviewed_head": "5be2917007de6800337965e22621a2ded6c82b37",
+        "session_id": "e06f89ff-c387-4c9a-9f65-469184be831d",
+        "request_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-interface-opus-cycle-03-request-v1.md",
+        "request_sha256": "abfdaa04e1b223b34acbcf8dd94dec94311f52bf6e909236e40528385e636944",
+        "normalized_result_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-interface-opus-cycle-03-normalized-result-v1.json",
+        "normalized_result_sha256": "85f4432664a09d9ddaf42a9118217a1a5933322500b7ad74f443010062d49314",
+        "blocking_findings": 6,
+        "non_blocking_required_findings": 7,
+        "defense_in_depth_findings": 3,
+        "verdict": "REJECT"
+      }
+    ]
+  },
+  "mechanical_progress": {
+    "event_03_postmortem_banked": true,
+    "identity_count": 129,
+    "artifact_boundaries": 21,
+    "always_required_binding_cells": 2296,
+    "semantic_drift_mutations_rejected": 10,
+    "candidate_and_installed_identity_census_equal": true,
+    "numerical_authorities_changed": false
+  },
+  "smallest_true_blocker": {
+    "finding": "C3-B-1",
+    "statement": "The independent lifecycle validator does not load or pin event-accounting v4, so material changes to unstarted-consumer delta and reservation-versus-execution semantics still validate as PASS."
+  },
+  "additional_preventing_classes": [
+    "OUTCOME_CONDITIONAL_BINDINGS_NOT_CROSS_VALIDATED",
+    "PATH_EXISTENCE_TIMING_UNSATISFIABLE",
+    "MEASUREMENT_HEAD_AND_PATH_SHA_BINDINGS_UNSPECIFIED",
+    "READBACK_SHA_SERIALIZATION_UNSPECIFIED",
+    "V2_V3_LIVE_MINT_SURFACES_NOT_TRUTHFULLY_RETIRED"
+  ],
+  "implementation_phase_entered": false,
+  "synthetic_event_executed": false,
+  "full_native_ci_acceptance_claimed": false,
+  "gemini_whole_domain_review_executed": false,
+  "opus_whole_domain_final_review_executed": false,
+  "event_02_retry": false,
+  "event_03_retry": false,
+  "event_03_resume": false,
+  "event_04_executed": false,
+  "live_event_04_authorization_created": false,
+  "primary_real_oracle_executions": 0,
+  "secondary_real_oracle_executions": 0,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_mmaps": 0,
+  "new_original_checkpoint_tensor_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "live_p1_attempt_2_authorization_created": false,
+  "historical_master_ledger": 175,
+  "verdict": "REJECT",
+  "ready_for_corrected_full_checkpoint_oracle_event_04_go": false,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "exact_next_safe_action": "Open a newly budgeted lifecycle-contract repair program beginning with event-accounting validation integration and a coherent readback/path/retirement model; obtain a fresh interface review before implementation."
+}
