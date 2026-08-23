@@ -1,7 +1,9 @@
 {
   "grammars": {
     "ABSOLUTE_PATH": {
-      "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+      "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+      "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+      "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
     },
     "ACCOUNTING_CLASS": {
       "description": "closed durable-start accounting class",
@@ -10,6 +12,22 @@
         "PRIMARY_CONSUMER_DURABLE_START",
         "SECONDARY_CONSUMER_DURABLE_START"
       ]
+    },
+    "AUTHORITY_SCOPE": {
+      "description": "closed scientific scope",
+      "enum": [
+        "F017_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT"
+      ]
+    },
+    "AUTHORIZATION_STATE": {
+      "description": "closed installed/candidate state",
+      "enum": [
+        "CANDIDATE",
+        "AUTHORIZED"
+      ]
+    },
+    "BOOLEAN": {
+      "description": "JSON boolean; integers prohibited"
     },
     "BRANCH": {
       "description": "exact authoritative branch"
@@ -22,6 +40,24 @@
       "description": "JSON integer; boolean prohibited",
       "minimum": 0
     },
+    "LEDGER_EVENT_CLASS": {
+      "description": "closed ledger event class",
+      "enum": [
+        "PACKAGE_ATTEMPT",
+        "PRIMARY_CONSUMER",
+        "SECONDARY_CONSUMER"
+      ]
+    },
+    "LEDGER_PREDECESSOR": {
+      "description": "lowercase SHA-256 or literal GENESIS",
+      "pattern": "^(?:[0-9a-f]{64}|GENESIS)$"
+    },
+    "LEDGER_RESULT": {
+      "description": "closed ledger result",
+      "enum": [
+        "DURABLE_START"
+      ]
+    },
     "LIVE_ID": {
       "description": "ASCII live identifier",
       "forbidden_markers": [
@@ -31,6 +67,16 @@
         "SYNTHETIC"
       ],
       "pattern": "^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$"
+    },
+    "P1_AUTHORITY": {
+      "description": "closed P1 prohibition",
+      "enum": [
+        "PROHIBITED"
+      ]
+    },
+    "REPO_RELATIVE_PATH": {
+      "description": "NFC repository-relative path without traversal, NUL, backslash, or Unicode separators",
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
     },
     "ROLE": {
       "description": "closed consumer role",
@@ -45,6 +91,13 @@
     "SHA256": {
       "description": "lowercase hexadecimal SHA-256",
       "pattern": "^[0-9a-f]{64}$"
+    },
+    "START_DISPOSITION": {
+      "description": "actual consumer start disposition",
+      "enum": [
+        "STARTED",
+        "UNSTARTED"
+      ]
     }
   },
   "identities": [
@@ -55,7 +108,7 @@
         "final_declaration": "$.bindings.operator_approval_id",
         "installation_receipt": "$.bindings.operator_approval_id",
         "installed_authorization": "$.operator_approval_id",
-        "operator_approval": "$.bindings.operator_approval_id",
+        "operator_approval": "$.artifact_id",
         "package_claim": "$.bindings.operator_approval_id",
         "package_durable_start": "$.bindings.operator_approval_id",
         "package_ledger_entry": "$.bindings.operator_approval_id",
@@ -73,6 +126,7 @@
         "secondary_terminal": "$.bindings.operator_approval_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -146,6 +200,7 @@
         "secondary_terminal": "$.bindings.authorization_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -219,6 +274,7 @@
         "secondary_terminal": "$.bindings.package_attempt_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -292,6 +348,7 @@
         "secondary_terminal": "$.bindings.primary_event_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -365,6 +422,7 @@
         "secondary_terminal": "$.bindings.secondary_event_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -426,7 +484,7 @@
         "package_ledger_entry": "$.bindings.primary_candidate_validation_report_id",
         "package_receipt": "$.bindings.primary_candidate_validation_report_id",
         "package_terminal": "$.bindings.primary_candidate_validation_report_id",
-        "primary_candidate_validation_report": "$.bindings.primary_candidate_validation_report_id",
+        "primary_candidate_validation_report": "$.artifact_id",
         "primary_durable_start": "$.bindings.primary_candidate_validation_report_id",
         "primary_ledger_entry": "$.bindings.primary_candidate_validation_report_id",
         "primary_receipt": "$.bindings.primary_candidate_validation_report_id",
@@ -438,6 +496,7 @@
         "secondary_terminal": "$.bindings.primary_candidate_validation_report_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -504,13 +563,14 @@
         "primary_ledger_entry": "$.bindings.secondary_candidate_validation_report_id",
         "primary_receipt": "$.bindings.secondary_candidate_validation_report_id",
         "primary_terminal": "$.bindings.secondary_candidate_validation_report_id",
-        "secondary_candidate_validation_report": "$.bindings.secondary_candidate_validation_report_id",
+        "secondary_candidate_validation_report": "$.artifact_id",
         "secondary_durable_start": "$.bindings.secondary_candidate_validation_report_id",
         "secondary_ledger_entry": "$.bindings.secondary_candidate_validation_report_id",
         "secondary_receipt": "$.bindings.secondary_candidate_validation_report_id",
         "secondary_terminal": "$.bindings.secondary_candidate_validation_report_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -564,7 +624,7 @@
         "candidate_authorization": "$.lifecycle_plan.installation_receipt_id",
         "coordinator_handshake": "$.bindings.installation_receipt_id",
         "final_declaration": "$.bindings.installation_receipt_id",
-        "installation_receipt": "$.bindings.installation_receipt_id",
+        "installation_receipt": "$.artifact_id",
         "installed_authorization": "$.lifecycle_plan.installation_receipt_id",
         "operator_approval": "$.bindings.installation_receipt_id",
         "package_claim": "$.bindings.installation_receipt_id",
@@ -584,6 +644,7 @@
         "secondary_terminal": "$.bindings.installation_receipt_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -635,7 +696,7 @@
     {
       "artifact_json_paths": {
         "candidate_authorization": "$.lifecycle_plan.coordinator_handshake_id",
-        "coordinator_handshake": "$.bindings.coordinator_handshake_id",
+        "coordinator_handshake": "$.artifact_id",
         "final_declaration": "$.bindings.coordinator_handshake_id",
         "installation_receipt": "$.bindings.coordinator_handshake_id",
         "installed_authorization": "$.lifecycle_plan.coordinator_handshake_id",
@@ -657,6 +718,7 @@
         "secondary_terminal": "$.bindings.coordinator_handshake_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -713,7 +775,7 @@
         "installation_receipt": "$.bindings.package_claim_id",
         "installed_authorization": "$.lifecycle_plan.package_claim_id",
         "operator_approval": "$.bindings.package_claim_id",
-        "package_claim": "$.bindings.package_claim_id",
+        "package_claim": "$.artifact_id",
         "package_durable_start": "$.bindings.package_claim_id",
         "package_ledger_entry": "$.bindings.package_claim_id",
         "package_receipt": "$.bindings.package_claim_id",
@@ -730,6 +792,7 @@
         "secondary_terminal": "$.bindings.package_claim_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -787,7 +850,7 @@
         "installed_authorization": "$.lifecycle_plan.package_durable_start_id",
         "operator_approval": "$.bindings.package_durable_start_id",
         "package_claim": "$.bindings.package_durable_start_id",
-        "package_durable_start": "$.bindings.package_durable_start_id",
+        "package_durable_start": "$.artifact_id",
         "package_ledger_entry": "$.bindings.package_durable_start_id",
         "package_receipt": "$.bindings.package_durable_start_id",
         "package_terminal": "$.bindings.package_durable_start_id",
@@ -803,6 +866,7 @@
         "secondary_terminal": "$.bindings.package_durable_start_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -861,7 +925,7 @@
         "operator_approval": "$.bindings.package_ledger_entry_id",
         "package_claim": "$.bindings.package_ledger_entry_id",
         "package_durable_start": "$.bindings.package_ledger_entry_id",
-        "package_ledger_entry": "$.bindings.package_ledger_entry_id",
+        "package_ledger_entry": "$.artifact_id",
         "package_receipt": "$.bindings.package_ledger_entry_id",
         "package_terminal": "$.bindings.package_ledger_entry_id",
         "primary_candidate_validation_report": "$.bindings.package_ledger_entry_id",
@@ -876,6 +940,7 @@
         "secondary_terminal": "$.bindings.package_ledger_entry_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -935,7 +1000,7 @@
         "package_claim": "$.bindings.package_receipt_id",
         "package_durable_start": "$.bindings.package_receipt_id",
         "package_ledger_entry": "$.bindings.package_receipt_id",
-        "package_receipt": "$.bindings.package_receipt_id",
+        "package_receipt": "$.artifact_id",
         "package_terminal": "$.bindings.package_receipt_id",
         "primary_candidate_validation_report": "$.bindings.package_receipt_id",
         "primary_durable_start": "$.bindings.package_receipt_id",
@@ -949,6 +1014,7 @@
         "secondary_terminal": "$.bindings.package_receipt_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1009,7 +1075,7 @@
         "package_durable_start": "$.bindings.package_terminal_id",
         "package_ledger_entry": "$.bindings.package_terminal_id",
         "package_receipt": "$.bindings.package_terminal_id",
-        "package_terminal": "$.bindings.package_terminal_id",
+        "package_terminal": "$.artifact_id",
         "primary_candidate_validation_report": "$.bindings.package_terminal_id",
         "primary_durable_start": "$.bindings.package_terminal_id",
         "primary_ledger_entry": "$.bindings.package_terminal_id",
@@ -1022,6 +1088,7 @@
         "secondary_terminal": "$.bindings.package_terminal_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1084,7 +1151,7 @@
         "package_receipt": "$.bindings.primary_durable_start_id",
         "package_terminal": "$.bindings.primary_durable_start_id",
         "primary_candidate_validation_report": "$.bindings.primary_durable_start_id",
-        "primary_durable_start": "$.bindings.primary_durable_start_id",
+        "primary_durable_start": "$.artifact_id",
         "primary_ledger_entry": "$.bindings.primary_durable_start_id",
         "primary_receipt": "$.bindings.primary_durable_start_id",
         "primary_terminal": "$.bindings.primary_durable_start_id",
@@ -1095,6 +1162,7 @@
         "secondary_terminal": "$.bindings.primary_durable_start_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1158,7 +1226,7 @@
         "package_terminal": "$.bindings.primary_ledger_entry_id",
         "primary_candidate_validation_report": "$.bindings.primary_ledger_entry_id",
         "primary_durable_start": "$.bindings.primary_ledger_entry_id",
-        "primary_ledger_entry": "$.bindings.primary_ledger_entry_id",
+        "primary_ledger_entry": "$.artifact_id",
         "primary_receipt": "$.bindings.primary_ledger_entry_id",
         "primary_terminal": "$.bindings.primary_ledger_entry_id",
         "secondary_candidate_validation_report": "$.bindings.primary_ledger_entry_id",
@@ -1168,6 +1236,7 @@
         "secondary_terminal": "$.bindings.primary_ledger_entry_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1232,7 +1301,7 @@
         "primary_candidate_validation_report": "$.bindings.primary_receipt_id",
         "primary_durable_start": "$.bindings.primary_receipt_id",
         "primary_ledger_entry": "$.bindings.primary_receipt_id",
-        "primary_receipt": "$.bindings.primary_receipt_id",
+        "primary_receipt": "$.artifact_id",
         "primary_terminal": "$.bindings.primary_receipt_id",
         "secondary_candidate_validation_report": "$.bindings.primary_receipt_id",
         "secondary_durable_start": "$.bindings.primary_receipt_id",
@@ -1241,6 +1310,7 @@
         "secondary_terminal": "$.bindings.primary_receipt_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1306,7 +1376,7 @@
         "primary_durable_start": "$.bindings.primary_terminal_id",
         "primary_ledger_entry": "$.bindings.primary_terminal_id",
         "primary_receipt": "$.bindings.primary_terminal_id",
-        "primary_terminal": "$.bindings.primary_terminal_id",
+        "primary_terminal": "$.artifact_id",
         "secondary_candidate_validation_report": "$.bindings.primary_terminal_id",
         "secondary_durable_start": "$.bindings.primary_terminal_id",
         "secondary_ledger_entry": "$.bindings.primary_terminal_id",
@@ -1314,6 +1384,7 @@
         "secondary_terminal": "$.bindings.primary_terminal_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1381,12 +1452,13 @@
         "primary_receipt": "$.bindings.secondary_durable_start_id",
         "primary_terminal": "$.bindings.secondary_durable_start_id",
         "secondary_candidate_validation_report": "$.bindings.secondary_durable_start_id",
-        "secondary_durable_start": "$.bindings.secondary_durable_start_id",
+        "secondary_durable_start": "$.artifact_id",
         "secondary_ledger_entry": "$.bindings.secondary_durable_start_id",
         "secondary_receipt": "$.bindings.secondary_durable_start_id",
         "secondary_terminal": "$.bindings.secondary_durable_start_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1455,11 +1527,12 @@
         "primary_terminal": "$.bindings.secondary_ledger_entry_id",
         "secondary_candidate_validation_report": "$.bindings.secondary_ledger_entry_id",
         "secondary_durable_start": "$.bindings.secondary_ledger_entry_id",
-        "secondary_ledger_entry": "$.bindings.secondary_ledger_entry_id",
+        "secondary_ledger_entry": "$.artifact_id",
         "secondary_receipt": "$.bindings.secondary_ledger_entry_id",
         "secondary_terminal": "$.bindings.secondary_ledger_entry_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1529,10 +1602,11 @@
         "secondary_candidate_validation_report": "$.bindings.secondary_receipt_id",
         "secondary_durable_start": "$.bindings.secondary_receipt_id",
         "secondary_ledger_entry": "$.bindings.secondary_receipt_id",
-        "secondary_receipt": "$.bindings.secondary_receipt_id",
+        "secondary_receipt": "$.artifact_id",
         "secondary_terminal": "$.bindings.secondary_receipt_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1603,9 +1677,10 @@
         "secondary_durable_start": "$.bindings.secondary_terminal_id",
         "secondary_ledger_entry": "$.bindings.secondary_terminal_id",
         "secondary_receipt": "$.bindings.secondary_terminal_id",
-        "secondary_terminal": "$.bindings.secondary_terminal_id"
+        "secondary_terminal": "$.artifact_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1658,7 +1733,7 @@
       "artifact_json_paths": {
         "candidate_authorization": "$.lifecycle_plan.final_declaration_id",
         "coordinator_handshake": "$.bindings.final_declaration_id",
-        "final_declaration": "$.bindings.final_declaration_id",
+        "final_declaration": "$.artifact_id",
         "installation_receipt": "$.bindings.final_declaration_id",
         "installed_authorization": "$.lifecycle_plan.final_declaration_id",
         "operator_approval": "$.bindings.final_declaration_id",
@@ -1679,6 +1754,7 @@
         "secondary_terminal": "$.bindings.final_declaration_id"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1752,6 +1828,7 @@
         "secondary_terminal": "$.bindings.authorization_schema"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1818,6 +1895,7 @@
         "secondary_terminal": "$.bindings.authorization_interface_sha256"
       },
       "authority_source": "committed interface v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1885,6 +1963,7 @@
         "secondary_terminal": "$.bindings.branch"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -1951,6 +2030,7 @@
         "secondary_terminal": "$.bindings.implementation_head"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2018,6 +2098,7 @@
         "secondary_terminal": "$.bindings.contract_sha256"
       },
       "authority_source": "committed scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2085,6 +2166,7 @@
         "secondary_terminal": "$.bindings.coordinator_sha256"
       },
       "authority_source": "committed coordinator v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2152,6 +2234,7 @@
         "secondary_terminal": "$.bindings.authorizer_sha256"
       },
       "authority_source": "committed authorizer v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2219,6 +2302,7 @@
         "secondary_terminal": "$.bindings.numerical_methodology_sha256"
       },
       "authority_source": "frozen numerical contract",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2286,6 +2370,7 @@
         "secondary_terminal": "$.bindings.checkpoint_manifest_sha256"
       },
       "authority_source": "committed checkpoint manifest",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2353,6 +2438,7 @@
         "secondary_terminal": "$.bindings.checkpoint_catalog_sha256"
       },
       "authority_source": "committed checkpoint catalog",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2420,6 +2506,7 @@
         "secondary_terminal": "$.bindings.checkpoint_set_sha256"
       },
       "authority_source": "committed checkpoint set",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2487,6 +2574,7 @@
         "secondary_terminal": "$.bindings.historical_ledger_sha256"
       },
       "authority_source": "historical branch authority",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2554,6 +2642,7 @@
         "secondary_terminal": "$.bindings.historical_ledger_terminal"
       },
       "authority_source": "historical branch authority",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2621,6 +2710,7 @@
         "secondary_terminal": "$.bindings.historical_ledger_delta"
       },
       "authority_source": "event-accounting v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2688,6 +2778,7 @@
         "secondary_terminal": "$.bindings.candidate_nonce"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2761,6 +2852,7 @@
         "secondary_terminal": "$.bindings.canonical_install_path"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2789,7 +2881,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "canonical_install_path",
@@ -2827,6 +2921,7 @@
         "secondary_terminal": "$.bindings.checkpoint_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2855,7 +2950,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "checkpoint_root",
@@ -2893,6 +2990,7 @@
         "secondary_terminal": "$.bindings.package_state_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2921,7 +3019,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "package_state_root",
@@ -2959,6 +3059,7 @@
         "secondary_terminal": "$.bindings.package_output_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -2987,7 +3088,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "package_output_root",
@@ -3025,6 +3128,7 @@
         "secondary_terminal": "$.bindings.primary_state_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3053,7 +3157,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "primary_state_root",
@@ -3091,6 +3197,7 @@
         "secondary_terminal": "$.bindings.primary_output_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3119,7 +3226,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "primary_output_root",
@@ -3157,6 +3266,7 @@
         "secondary_terminal": "$.bindings.secondary_state_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3185,7 +3295,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "secondary_state_root",
@@ -3223,6 +3335,7 @@
         "secondary_terminal": "$.bindings.secondary_output_root"
       },
       "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3251,7 +3364,9 @@
       "equality_rule": "EXACT_CANONICAL_PATH_AND_DECLARED_PAIRWISE_RELATION",
       "first_introduction": "operator_approval",
       "grammar": {
-        "description": "canonical absolute non-symlink path without NUL or Unicode separators"
+        "description": "NFC canonical absolute non-symlink path without traversal, NUL, or Unicode separators",
+        "pattern": "^/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._ /-]+$",
+        "resolution": "Path.resolve(strict=True); every ancestor lstat regular-directory and not symlink"
       },
       "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
       "name": "secondary_output_root",
@@ -3289,6 +3404,7 @@
         "secondary_terminal": "$.bindings.primary_consumer_role"
       },
       "authority_source": "interface v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3359,6 +3475,7 @@
         "secondary_terminal": "$.bindings.secondary_consumer_role"
       },
       "authority_source": "interface v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3429,6 +3546,7 @@
         "secondary_terminal": "$.bindings.primary_producer_sha256"
       },
       "authority_source": "committed primary wrapper v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3496,6 +3614,7 @@
         "secondary_terminal": "$.bindings.primary_capability_sha256"
       },
       "authority_source": "committed primary capability v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3563,6 +3682,7 @@
         "secondary_terminal": "$.bindings.primary_decoder_sha256"
       },
       "authority_source": "frozen primary decoder",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3630,6 +3750,7 @@
         "secondary_terminal": "$.bindings.secondary_producer_sha256"
       },
       "authority_source": "committed secondary wrapper v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3697,6 +3818,7 @@
         "secondary_terminal": "$.bindings.secondary_capability_sha256"
       },
       "authority_source": "committed secondary capability v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3764,6 +3886,7 @@
         "secondary_terminal": "$.bindings.secondary_decoder_sha256"
       },
       "authority_source": "frozen secondary decoder dispatch",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3831,6 +3954,7 @@
         "secondary_terminal": "$.bindings.memory_preflight_sha256"
       },
       "authority_source": "fresh reviewed memory preflight",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3898,6 +4022,7 @@
         "secondary_terminal": "$.bindings.package_accounting_class"
       },
       "authority_source": "event-accounting v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -3969,6 +4094,7 @@
         "secondary_terminal": "$.bindings.primary_accounting_class"
       },
       "authority_source": "event-accounting v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4040,6 +4166,7 @@
         "secondary_terminal": "$.bindings.secondary_accounting_class"
       },
       "authority_source": "event-accounting v4",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4088,6 +4215,2516 @@
     },
     {
       "artifact_json_paths": {
+        "candidate_authorization": "$.authority_head",
+        "coordinator_handshake": "$.bindings.authority_head",
+        "final_declaration": "$.bindings.authority_head",
+        "installation_receipt": "$.bindings.authority_head",
+        "installed_authorization": "$.authority_head",
+        "operator_approval": "$.bindings.authority_head",
+        "package_claim": "$.bindings.authority_head",
+        "package_durable_start": "$.bindings.authority_head",
+        "package_ledger_entry": "$.bindings.authority_head",
+        "package_receipt": "$.bindings.authority_head",
+        "package_terminal": "$.bindings.authority_head",
+        "primary_candidate_validation_report": "$.bindings.authority_head",
+        "primary_durable_start": "$.bindings.authority_head",
+        "primary_ledger_entry": "$.bindings.authority_head",
+        "primary_receipt": "$.bindings.authority_head",
+        "primary_terminal": "$.bindings.authority_head",
+        "secondary_candidate_validation_report": "$.bindings.authority_head",
+        "secondary_durable_start": "$.bindings.authority_head",
+        "secondary_ledger_entry": "$.bindings.authority_head",
+        "secondary_receipt": "$.bindings.authority_head",
+        "secondary_terminal": "$.bindings.authority_head"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "lowercase 40-character Git object ID",
+        "pattern": "^[0-9a-f]{40}$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "authority_head",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "GIT_COMMIT",
+      "uniqueness_scope": "EXACT_AUTHORITY_HEAD_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.prompt_token",
+        "coordinator_handshake": "$.bindings.prompt_token",
+        "final_declaration": "$.bindings.prompt_token",
+        "installation_receipt": "$.bindings.prompt_token",
+        "installed_authorization": "$.prompt_token",
+        "operator_approval": "$.bindings.prompt_token",
+        "package_claim": "$.bindings.prompt_token",
+        "package_durable_start": "$.bindings.prompt_token",
+        "package_ledger_entry": "$.bindings.prompt_token",
+        "package_receipt": "$.bindings.prompt_token",
+        "package_terminal": "$.bindings.prompt_token",
+        "primary_candidate_validation_report": "$.bindings.prompt_token",
+        "primary_durable_start": "$.bindings.prompt_token",
+        "primary_ledger_entry": "$.bindings.prompt_token",
+        "primary_receipt": "$.bindings.prompt_token",
+        "primary_terminal": "$.bindings.prompt_token",
+        "secondary_candidate_validation_report": "$.bindings.prompt_token",
+        "secondary_durable_start": "$.bindings.prompt_token",
+        "secondary_ledger_entry": "$.bindings.prompt_token",
+        "secondary_receipt": "$.bindings.prompt_token",
+        "secondary_terminal": "$.bindings.prompt_token"
+      },
+      "authority_source": "frozen scientific-access contract",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "prompt_token",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.position",
+        "coordinator_handshake": "$.bindings.position",
+        "final_declaration": "$.bindings.position",
+        "installation_receipt": "$.bindings.position",
+        "installed_authorization": "$.position",
+        "operator_approval": "$.bindings.position",
+        "package_claim": "$.bindings.position",
+        "package_durable_start": "$.bindings.position",
+        "package_ledger_entry": "$.bindings.position",
+        "package_receipt": "$.bindings.position",
+        "package_terminal": "$.bindings.position",
+        "primary_candidate_validation_report": "$.bindings.position",
+        "primary_durable_start": "$.bindings.position",
+        "primary_ledger_entry": "$.bindings.position",
+        "primary_receipt": "$.bindings.position",
+        "primary_terminal": "$.bindings.position",
+        "secondary_candidate_validation_report": "$.bindings.position",
+        "secondary_durable_start": "$.bindings.position",
+        "secondary_ledger_entry": "$.bindings.position",
+        "secondary_receipt": "$.bindings.position",
+        "secondary_terminal": "$.bindings.position"
+      },
+      "authority_source": "frozen scientific-access contract",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "position",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.top_n",
+        "coordinator_handshake": "$.bindings.top_n",
+        "final_declaration": "$.bindings.top_n",
+        "installation_receipt": "$.bindings.top_n",
+        "installed_authorization": "$.top_n",
+        "operator_approval": "$.bindings.top_n",
+        "package_claim": "$.bindings.top_n",
+        "package_durable_start": "$.bindings.top_n",
+        "package_ledger_entry": "$.bindings.top_n",
+        "package_receipt": "$.bindings.top_n",
+        "package_terminal": "$.bindings.top_n",
+        "primary_candidate_validation_report": "$.bindings.top_n",
+        "primary_durable_start": "$.bindings.top_n",
+        "primary_ledger_entry": "$.bindings.top_n",
+        "primary_receipt": "$.bindings.top_n",
+        "primary_terminal": "$.bindings.top_n",
+        "secondary_candidate_validation_report": "$.bindings.top_n",
+        "secondary_durable_start": "$.bindings.top_n",
+        "secondary_ledger_entry": "$.bindings.top_n",
+        "secondary_receipt": "$.bindings.top_n",
+        "secondary_terminal": "$.bindings.top_n"
+      },
+      "authority_source": "frozen numerical methodology",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "top_n",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.geometry_sha256",
+        "coordinator_handshake": "$.bindings.geometry_sha256",
+        "final_declaration": "$.bindings.geometry_sha256",
+        "installation_receipt": "$.bindings.geometry_sha256",
+        "installed_authorization": "$.geometry_sha256",
+        "operator_approval": "$.bindings.geometry_sha256",
+        "package_claim": "$.bindings.geometry_sha256",
+        "package_durable_start": "$.bindings.geometry_sha256",
+        "package_ledger_entry": "$.bindings.geometry_sha256",
+        "package_receipt": "$.bindings.geometry_sha256",
+        "package_terminal": "$.bindings.geometry_sha256",
+        "primary_candidate_validation_report": "$.bindings.geometry_sha256",
+        "primary_durable_start": "$.bindings.geometry_sha256",
+        "primary_ledger_entry": "$.bindings.geometry_sha256",
+        "primary_receipt": "$.bindings.geometry_sha256",
+        "primary_terminal": "$.bindings.geometry_sha256",
+        "secondary_candidate_validation_report": "$.bindings.geometry_sha256",
+        "secondary_durable_start": "$.bindings.geometry_sha256",
+        "secondary_ledger_entry": "$.bindings.geometry_sha256",
+        "secondary_receipt": "$.bindings.geometry_sha256",
+        "secondary_terminal": "$.bindings.geometry_sha256"
+      },
+      "authority_source": "committed geometry authority",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "lowercase hexadecimal SHA-256",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "geometry_sha256",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SHA256",
+      "uniqueness_scope": "CONTENT_ADDRESS",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.checkpoint_catalog_path",
+        "coordinator_handshake": "$.bindings.checkpoint_catalog_path",
+        "final_declaration": "$.bindings.checkpoint_catalog_path",
+        "installation_receipt": "$.bindings.checkpoint_catalog_path",
+        "installed_authorization": "$.checkpoint_catalog_path",
+        "operator_approval": "$.bindings.checkpoint_catalog_path",
+        "package_claim": "$.bindings.checkpoint_catalog_path",
+        "package_durable_start": "$.bindings.checkpoint_catalog_path",
+        "package_ledger_entry": "$.bindings.checkpoint_catalog_path",
+        "package_receipt": "$.bindings.checkpoint_catalog_path",
+        "package_terminal": "$.bindings.checkpoint_catalog_path",
+        "primary_candidate_validation_report": "$.bindings.checkpoint_catalog_path",
+        "primary_durable_start": "$.bindings.checkpoint_catalog_path",
+        "primary_ledger_entry": "$.bindings.checkpoint_catalog_path",
+        "primary_receipt": "$.bindings.checkpoint_catalog_path",
+        "primary_terminal": "$.bindings.checkpoint_catalog_path",
+        "secondary_candidate_validation_report": "$.bindings.checkpoint_catalog_path",
+        "secondary_durable_start": "$.bindings.checkpoint_catalog_path",
+        "secondary_ledger_entry": "$.bindings.checkpoint_catalog_path",
+        "secondary_receipt": "$.bindings.checkpoint_catalog_path",
+        "secondary_terminal": "$.bindings.checkpoint_catalog_path"
+      },
+      "authority_source": "committed scientific-access contract",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "NFC repository-relative path without traversal, NUL, backslash, or Unicode separators",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "checkpoint_catalog_path",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "REPO_RELATIVE_PATH",
+      "uniqueness_scope": "EXACT_CHECKPOINT_CATALOG_PATH_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.p1_authority",
+        "coordinator_handshake": "$.bindings.p1_authority",
+        "final_declaration": "$.bindings.p1_authority",
+        "installation_receipt": "$.bindings.p1_authority",
+        "installed_authorization": "$.p1_authority",
+        "operator_approval": "$.bindings.p1_authority",
+        "package_claim": "$.bindings.p1_authority",
+        "package_durable_start": "$.bindings.p1_authority",
+        "package_ledger_entry": "$.bindings.p1_authority",
+        "package_receipt": "$.bindings.p1_authority",
+        "package_terminal": "$.bindings.p1_authority",
+        "primary_candidate_validation_report": "$.bindings.p1_authority",
+        "primary_durable_start": "$.bindings.p1_authority",
+        "primary_ledger_entry": "$.bindings.p1_authority",
+        "primary_receipt": "$.bindings.p1_authority",
+        "primary_terminal": "$.bindings.p1_authority",
+        "secondary_candidate_validation_report": "$.bindings.p1_authority",
+        "secondary_durable_start": "$.bindings.p1_authority",
+        "secondary_ledger_entry": "$.bindings.p1_authority",
+        "secondary_receipt": "$.bindings.p1_authority",
+        "secondary_terminal": "$.bindings.p1_authority"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "closed P1 prohibition",
+        "enum": [
+          "PROHIBITED"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "p1_authority",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "P1_AUTHORITY",
+      "uniqueness_scope": "EXACT_P1_AUTHORITY_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.memory_observed_at_unix_ns",
+        "coordinator_handshake": "$.bindings.memory_observed_at_unix_ns",
+        "final_declaration": "$.bindings.memory_observed_at_unix_ns",
+        "installation_receipt": "$.bindings.memory_observed_at_unix_ns",
+        "installed_authorization": "$.memory_observed_at_unix_ns",
+        "operator_approval": "$.bindings.memory_observed_at_unix_ns",
+        "package_claim": "$.bindings.memory_observed_at_unix_ns",
+        "package_durable_start": "$.bindings.memory_observed_at_unix_ns",
+        "package_ledger_entry": "$.bindings.memory_observed_at_unix_ns",
+        "package_receipt": "$.bindings.memory_observed_at_unix_ns",
+        "package_terminal": "$.bindings.memory_observed_at_unix_ns",
+        "primary_candidate_validation_report": "$.bindings.memory_observed_at_unix_ns",
+        "primary_durable_start": "$.bindings.memory_observed_at_unix_ns",
+        "primary_ledger_entry": "$.bindings.memory_observed_at_unix_ns",
+        "primary_receipt": "$.bindings.memory_observed_at_unix_ns",
+        "primary_terminal": "$.bindings.memory_observed_at_unix_ns",
+        "secondary_candidate_validation_report": "$.bindings.memory_observed_at_unix_ns",
+        "secondary_durable_start": "$.bindings.memory_observed_at_unix_ns",
+        "secondary_ledger_entry": "$.bindings.memory_observed_at_unix_ns",
+        "secondary_receipt": "$.bindings.memory_observed_at_unix_ns",
+        "secondary_terminal": "$.bindings.memory_observed_at_unix_ns"
+      },
+      "authority_source": "fresh memory preflight",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "memory_observed_at_unix_ns",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.memory_available_bytes",
+        "coordinator_handshake": "$.bindings.memory_available_bytes",
+        "final_declaration": "$.bindings.memory_available_bytes",
+        "installation_receipt": "$.bindings.memory_available_bytes",
+        "installed_authorization": "$.memory_available_bytes",
+        "operator_approval": "$.bindings.memory_available_bytes",
+        "package_claim": "$.bindings.memory_available_bytes",
+        "package_durable_start": "$.bindings.memory_available_bytes",
+        "package_ledger_entry": "$.bindings.memory_available_bytes",
+        "package_receipt": "$.bindings.memory_available_bytes",
+        "package_terminal": "$.bindings.memory_available_bytes",
+        "primary_candidate_validation_report": "$.bindings.memory_available_bytes",
+        "primary_durable_start": "$.bindings.memory_available_bytes",
+        "primary_ledger_entry": "$.bindings.memory_available_bytes",
+        "primary_receipt": "$.bindings.memory_available_bytes",
+        "primary_terminal": "$.bindings.memory_available_bytes",
+        "secondary_candidate_validation_report": "$.bindings.memory_available_bytes",
+        "secondary_durable_start": "$.bindings.memory_available_bytes",
+        "secondary_ledger_entry": "$.bindings.memory_available_bytes",
+        "secondary_receipt": "$.bindings.memory_available_bytes",
+        "secondary_terminal": "$.bindings.memory_available_bytes"
+      },
+      "authority_source": "fresh memory preflight",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "memory_available_bytes",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.memory_observer_sha256",
+        "coordinator_handshake": "$.bindings.memory_observer_sha256",
+        "final_declaration": "$.bindings.memory_observer_sha256",
+        "installation_receipt": "$.bindings.memory_observer_sha256",
+        "installed_authorization": "$.memory_observer_sha256",
+        "operator_approval": "$.bindings.memory_observer_sha256",
+        "package_claim": "$.bindings.memory_observer_sha256",
+        "package_durable_start": "$.bindings.memory_observer_sha256",
+        "package_ledger_entry": "$.bindings.memory_observer_sha256",
+        "package_receipt": "$.bindings.memory_observer_sha256",
+        "package_terminal": "$.bindings.memory_observer_sha256",
+        "primary_candidate_validation_report": "$.bindings.memory_observer_sha256",
+        "primary_durable_start": "$.bindings.memory_observer_sha256",
+        "primary_ledger_entry": "$.bindings.memory_observer_sha256",
+        "primary_receipt": "$.bindings.memory_observer_sha256",
+        "primary_terminal": "$.bindings.memory_observer_sha256",
+        "secondary_candidate_validation_report": "$.bindings.memory_observer_sha256",
+        "secondary_durable_start": "$.bindings.memory_observer_sha256",
+        "secondary_ledger_entry": "$.bindings.memory_observer_sha256",
+        "secondary_receipt": "$.bindings.memory_observer_sha256",
+        "secondary_terminal": "$.bindings.memory_observer_sha256"
+      },
+      "authority_source": "reviewed memory observer",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "lowercase hexadecimal SHA-256",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "memory_observer_sha256",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SHA256",
+      "uniqueness_scope": "CONTENT_ADDRESS",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.memory_parser_contract_sha256",
+        "coordinator_handshake": "$.bindings.memory_parser_contract_sha256",
+        "final_declaration": "$.bindings.memory_parser_contract_sha256",
+        "installation_receipt": "$.bindings.memory_parser_contract_sha256",
+        "installed_authorization": "$.memory_parser_contract_sha256",
+        "operator_approval": "$.bindings.memory_parser_contract_sha256",
+        "package_claim": "$.bindings.memory_parser_contract_sha256",
+        "package_durable_start": "$.bindings.memory_parser_contract_sha256",
+        "package_ledger_entry": "$.bindings.memory_parser_contract_sha256",
+        "package_receipt": "$.bindings.memory_parser_contract_sha256",
+        "package_terminal": "$.bindings.memory_parser_contract_sha256",
+        "primary_candidate_validation_report": "$.bindings.memory_parser_contract_sha256",
+        "primary_durable_start": "$.bindings.memory_parser_contract_sha256",
+        "primary_ledger_entry": "$.bindings.memory_parser_contract_sha256",
+        "primary_receipt": "$.bindings.memory_parser_contract_sha256",
+        "primary_terminal": "$.bindings.memory_parser_contract_sha256",
+        "secondary_candidate_validation_report": "$.bindings.memory_parser_contract_sha256",
+        "secondary_durable_start": "$.bindings.memory_parser_contract_sha256",
+        "secondary_ledger_entry": "$.bindings.memory_parser_contract_sha256",
+        "secondary_receipt": "$.bindings.memory_parser_contract_sha256",
+        "secondary_terminal": "$.bindings.memory_parser_contract_sha256"
+      },
+      "authority_source": "reviewed memory-observation contract",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "lowercase hexadecimal SHA-256",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "memory_parser_contract_sha256",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SHA256",
+      "uniqueness_scope": "CONTENT_ADDRESS",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.synthetic_qualification_sha256",
+        "coordinator_handshake": "$.bindings.synthetic_qualification_sha256",
+        "final_declaration": "$.bindings.synthetic_qualification_sha256",
+        "installation_receipt": "$.bindings.synthetic_qualification_sha256",
+        "installed_authorization": "$.synthetic_qualification_sha256",
+        "operator_approval": "$.bindings.synthetic_qualification_sha256",
+        "package_claim": "$.bindings.synthetic_qualification_sha256",
+        "package_durable_start": "$.bindings.synthetic_qualification_sha256",
+        "package_ledger_entry": "$.bindings.synthetic_qualification_sha256",
+        "package_receipt": "$.bindings.synthetic_qualification_sha256",
+        "package_terminal": "$.bindings.synthetic_qualification_sha256",
+        "primary_candidate_validation_report": "$.bindings.synthetic_qualification_sha256",
+        "primary_durable_start": "$.bindings.synthetic_qualification_sha256",
+        "primary_ledger_entry": "$.bindings.synthetic_qualification_sha256",
+        "primary_receipt": "$.bindings.synthetic_qualification_sha256",
+        "primary_terminal": "$.bindings.synthetic_qualification_sha256",
+        "secondary_candidate_validation_report": "$.bindings.synthetic_qualification_sha256",
+        "secondary_durable_start": "$.bindings.synthetic_qualification_sha256",
+        "secondary_ledger_entry": "$.bindings.synthetic_qualification_sha256",
+        "secondary_receipt": "$.bindings.synthetic_qualification_sha256",
+        "secondary_terminal": "$.bindings.synthetic_qualification_sha256"
+      },
+      "authority_source": "accepted checkpoint-free qualification",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "lowercase hexadecimal SHA-256",
+        "pattern": "^[0-9a-f]{64}$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "synthetic_qualification_sha256",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SHA256",
+      "uniqueness_scope": "CONTENT_ADDRESS",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.state",
+        "coordinator_handshake": "$.bindings.authorization_state",
+        "final_declaration": "$.bindings.authorization_state",
+        "installation_receipt": "$.bindings.authorization_state",
+        "installed_authorization": "$.state",
+        "operator_approval": "$.bindings.authorization_state",
+        "package_claim": "$.bindings.authorization_state",
+        "package_durable_start": "$.bindings.authorization_state",
+        "package_ledger_entry": "$.bindings.authorization_state",
+        "package_receipt": "$.bindings.authorization_state",
+        "package_terminal": "$.bindings.authorization_state",
+        "primary_candidate_validation_report": "$.bindings.authorization_state",
+        "primary_durable_start": "$.bindings.authorization_state",
+        "primary_ledger_entry": "$.bindings.authorization_state",
+        "primary_receipt": "$.bindings.authorization_state",
+        "primary_terminal": "$.bindings.authorization_state",
+        "secondary_candidate_validation_report": "$.bindings.authorization_state",
+        "secondary_durable_start": "$.bindings.authorization_state",
+        "secondary_ledger_entry": "$.bindings.authorization_state",
+        "secondary_receipt": "$.bindings.authorization_state",
+        "secondary_terminal": "$.bindings.authorization_state"
+      },
+      "authority_source": "authorizer",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "closed installed/candidate state",
+        "enum": [
+          "CANDIDATE",
+          "AUTHORIZED"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "authorization_state",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "AUTHORIZATION_STATE",
+      "uniqueness_scope": "EXACT_AUTHORIZATION_STATE_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.live",
+        "coordinator_handshake": "$.bindings.authorization_live",
+        "final_declaration": "$.bindings.authorization_live",
+        "installation_receipt": "$.bindings.authorization_live",
+        "installed_authorization": "$.live",
+        "operator_approval": "$.bindings.authorization_live",
+        "package_claim": "$.bindings.authorization_live",
+        "package_durable_start": "$.bindings.authorization_live",
+        "package_ledger_entry": "$.bindings.authorization_live",
+        "package_receipt": "$.bindings.authorization_live",
+        "package_terminal": "$.bindings.authorization_live",
+        "primary_candidate_validation_report": "$.bindings.authorization_live",
+        "primary_durable_start": "$.bindings.authorization_live",
+        "primary_ledger_entry": "$.bindings.authorization_live",
+        "primary_receipt": "$.bindings.authorization_live",
+        "primary_terminal": "$.bindings.authorization_live",
+        "secondary_candidate_validation_report": "$.bindings.authorization_live",
+        "secondary_durable_start": "$.bindings.authorization_live",
+        "secondary_ledger_entry": "$.bindings.authorization_live",
+        "secondary_receipt": "$.bindings.authorization_live",
+        "secondary_terminal": "$.bindings.authorization_live"
+      },
+      "authority_source": "authorizer",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON boolean; integers prohibited"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "authorization_live",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "BOOLEAN",
+      "uniqueness_scope": "EXACT_AUTHORIZATION_LIVE_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.authority_scope",
+        "coordinator_handshake": "$.bindings.authority_scope",
+        "final_declaration": "$.bindings.authority_scope",
+        "installation_receipt": "$.bindings.authority_scope",
+        "installed_authorization": "$.authority_scope",
+        "operator_approval": "$.bindings.authority_scope",
+        "package_claim": "$.bindings.authority_scope",
+        "package_durable_start": "$.bindings.authority_scope",
+        "package_ledger_entry": "$.bindings.authority_scope",
+        "package_receipt": "$.bindings.authority_scope",
+        "package_terminal": "$.bindings.authority_scope",
+        "primary_candidate_validation_report": "$.bindings.authority_scope",
+        "primary_durable_start": "$.bindings.authority_scope",
+        "primary_ledger_entry": "$.bindings.authority_scope",
+        "primary_receipt": "$.bindings.authority_scope",
+        "primary_terminal": "$.bindings.authority_scope",
+        "secondary_candidate_validation_report": "$.bindings.authority_scope",
+        "secondary_durable_start": "$.bindings.authority_scope",
+        "secondary_ledger_entry": "$.bindings.authority_scope",
+        "secondary_receipt": "$.bindings.authority_scope",
+        "secondary_terminal": "$.bindings.authority_scope"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "closed scientific scope",
+        "enum": [
+          "F017_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "authority_scope",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "AUTHORITY_SCOPE",
+      "uniqueness_scope": "EXACT_AUTHORITY_SCOPE_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.package.attempts",
+        "coordinator_handshake": "$.bindings.package_attempts",
+        "final_declaration": "$.bindings.package_attempts",
+        "installation_receipt": "$.bindings.package_attempts",
+        "installed_authorization": "$.package.attempts",
+        "operator_approval": "$.bindings.package_attempts",
+        "package_claim": "$.bindings.package_attempts",
+        "package_durable_start": "$.bindings.package_attempts",
+        "package_ledger_entry": "$.bindings.package_attempts",
+        "package_receipt": "$.bindings.package_attempts",
+        "package_terminal": "$.bindings.package_attempts",
+        "primary_candidate_validation_report": "$.bindings.package_attempts",
+        "primary_durable_start": "$.bindings.package_attempts",
+        "primary_ledger_entry": "$.bindings.package_attempts",
+        "primary_receipt": "$.bindings.package_attempts",
+        "primary_terminal": "$.bindings.package_attempts",
+        "secondary_candidate_validation_report": "$.bindings.package_attempts",
+        "secondary_durable_start": "$.bindings.package_attempts",
+        "secondary_ledger_entry": "$.bindings.package_attempts",
+        "secondary_receipt": "$.bindings.package_attempts",
+        "secondary_terminal": "$.bindings.package_attempts"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_attempts",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.package.retries",
+        "coordinator_handshake": "$.bindings.package_retries",
+        "final_declaration": "$.bindings.package_retries",
+        "installation_receipt": "$.bindings.package_retries",
+        "installed_authorization": "$.package.retries",
+        "operator_approval": "$.bindings.package_retries",
+        "package_claim": "$.bindings.package_retries",
+        "package_durable_start": "$.bindings.package_retries",
+        "package_ledger_entry": "$.bindings.package_retries",
+        "package_receipt": "$.bindings.package_retries",
+        "package_terminal": "$.bindings.package_retries",
+        "primary_candidate_validation_report": "$.bindings.package_retries",
+        "primary_durable_start": "$.bindings.package_retries",
+        "primary_ledger_entry": "$.bindings.package_retries",
+        "primary_receipt": "$.bindings.package_retries",
+        "primary_terminal": "$.bindings.package_retries",
+        "secondary_candidate_validation_report": "$.bindings.package_retries",
+        "secondary_durable_start": "$.bindings.package_retries",
+        "secondary_ledger_entry": "$.bindings.package_retries",
+        "secondary_receipt": "$.bindings.package_retries",
+        "secondary_terminal": "$.bindings.package_retries"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_retries",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.package.resume",
+        "coordinator_handshake": "$.bindings.package_resume",
+        "final_declaration": "$.bindings.package_resume",
+        "installation_receipt": "$.bindings.package_resume",
+        "installed_authorization": "$.package.resume",
+        "operator_approval": "$.bindings.package_resume",
+        "package_claim": "$.bindings.package_resume",
+        "package_durable_start": "$.bindings.package_resume",
+        "package_ledger_entry": "$.bindings.package_resume",
+        "package_receipt": "$.bindings.package_resume",
+        "package_terminal": "$.bindings.package_resume",
+        "primary_candidate_validation_report": "$.bindings.package_resume",
+        "primary_durable_start": "$.bindings.package_resume",
+        "primary_ledger_entry": "$.bindings.package_resume",
+        "primary_receipt": "$.bindings.package_resume",
+        "primary_terminal": "$.bindings.package_resume",
+        "secondary_candidate_validation_report": "$.bindings.package_resume",
+        "secondary_durable_start": "$.bindings.package_resume",
+        "secondary_ledger_entry": "$.bindings.package_resume",
+        "secondary_receipt": "$.bindings.package_resume",
+        "secondary_terminal": "$.bindings.package_resume"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON boolean; integers prohibited"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_resume",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "BOOLEAN",
+      "uniqueness_scope": "EXACT_PACKAGE_RESUME_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.package.durable_start_schema",
+        "coordinator_handshake": "$.bindings.package_durable_start_schema",
+        "final_declaration": "$.bindings.package_durable_start_schema",
+        "installation_receipt": "$.bindings.package_durable_start_schema",
+        "installed_authorization": "$.package.durable_start_schema",
+        "operator_approval": "$.bindings.package_durable_start_schema",
+        "package_claim": "$.bindings.package_durable_start_schema",
+        "package_durable_start": "$.bindings.package_durable_start_schema",
+        "package_ledger_entry": "$.bindings.package_durable_start_schema",
+        "package_receipt": "$.bindings.package_durable_start_schema",
+        "package_terminal": "$.bindings.package_durable_start_schema",
+        "primary_candidate_validation_report": "$.bindings.package_durable_start_schema",
+        "primary_durable_start": "$.bindings.package_durable_start_schema",
+        "primary_ledger_entry": "$.bindings.package_durable_start_schema",
+        "primary_receipt": "$.bindings.package_durable_start_schema",
+        "primary_terminal": "$.bindings.package_durable_start_schema",
+        "secondary_candidate_validation_report": "$.bindings.package_durable_start_schema",
+        "secondary_durable_start": "$.bindings.package_durable_start_schema",
+        "secondary_ledger_entry": "$.bindings.package_durable_start_schema",
+        "secondary_receipt": "$.bindings.package_durable_start_schema",
+        "secondary_terminal": "$.bindings.package_durable_start_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_durable_start_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_PACKAGE_DURABLE_START_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.package.receipt_schema",
+        "coordinator_handshake": "$.bindings.package_receipt_schema",
+        "final_declaration": "$.bindings.package_receipt_schema",
+        "installation_receipt": "$.bindings.package_receipt_schema",
+        "installed_authorization": "$.package.receipt_schema",
+        "operator_approval": "$.bindings.package_receipt_schema",
+        "package_claim": "$.bindings.package_receipt_schema",
+        "package_durable_start": "$.bindings.package_receipt_schema",
+        "package_ledger_entry": "$.bindings.package_receipt_schema",
+        "package_receipt": "$.bindings.package_receipt_schema",
+        "package_terminal": "$.bindings.package_receipt_schema",
+        "primary_candidate_validation_report": "$.bindings.package_receipt_schema",
+        "primary_durable_start": "$.bindings.package_receipt_schema",
+        "primary_ledger_entry": "$.bindings.package_receipt_schema",
+        "primary_receipt": "$.bindings.package_receipt_schema",
+        "primary_terminal": "$.bindings.package_receipt_schema",
+        "secondary_candidate_validation_report": "$.bindings.package_receipt_schema",
+        "secondary_durable_start": "$.bindings.package_receipt_schema",
+        "secondary_ledger_entry": "$.bindings.package_receipt_schema",
+        "secondary_receipt": "$.bindings.package_receipt_schema",
+        "secondary_terminal": "$.bindings.package_receipt_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_receipt_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_PACKAGE_RECEIPT_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.package.terminal_schema",
+        "coordinator_handshake": "$.bindings.package_terminal_schema",
+        "final_declaration": "$.bindings.package_terminal_schema",
+        "installation_receipt": "$.bindings.package_terminal_schema",
+        "installed_authorization": "$.package.terminal_schema",
+        "operator_approval": "$.bindings.package_terminal_schema",
+        "package_claim": "$.bindings.package_terminal_schema",
+        "package_durable_start": "$.bindings.package_terminal_schema",
+        "package_ledger_entry": "$.bindings.package_terminal_schema",
+        "package_receipt": "$.bindings.package_terminal_schema",
+        "package_terminal": "$.bindings.package_terminal_schema",
+        "primary_candidate_validation_report": "$.bindings.package_terminal_schema",
+        "primary_durable_start": "$.bindings.package_terminal_schema",
+        "primary_ledger_entry": "$.bindings.package_terminal_schema",
+        "primary_receipt": "$.bindings.package_terminal_schema",
+        "primary_terminal": "$.bindings.package_terminal_schema",
+        "secondary_candidate_validation_report": "$.bindings.package_terminal_schema",
+        "secondary_durable_start": "$.bindings.package_terminal_schema",
+        "secondary_ledger_entry": "$.bindings.package_terminal_schema",
+        "secondary_receipt": "$.bindings.package_terminal_schema",
+        "secondary_terminal": "$.bindings.package_terminal_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_terminal_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_PACKAGE_TERMINAL_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.producer_path",
+        "coordinator_handshake": "$.bindings.primary_producer_path",
+        "final_declaration": "$.bindings.primary_producer_path",
+        "installation_receipt": "$.bindings.primary_producer_path",
+        "installed_authorization": "$.primary.producer_path",
+        "operator_approval": "$.bindings.primary_producer_path",
+        "package_claim": "$.bindings.primary_producer_path",
+        "package_durable_start": "$.bindings.primary_producer_path",
+        "package_ledger_entry": "$.bindings.primary_producer_path",
+        "package_receipt": "$.bindings.primary_producer_path",
+        "package_terminal": "$.bindings.primary_producer_path",
+        "primary_candidate_validation_report": "$.bindings.primary_producer_path",
+        "primary_durable_start": "$.bindings.primary_producer_path",
+        "primary_ledger_entry": "$.bindings.primary_producer_path",
+        "primary_receipt": "$.bindings.primary_producer_path",
+        "primary_terminal": "$.bindings.primary_producer_path",
+        "secondary_candidate_validation_report": "$.bindings.primary_producer_path",
+        "secondary_durable_start": "$.bindings.primary_producer_path",
+        "secondary_ledger_entry": "$.bindings.primary_producer_path",
+        "secondary_receipt": "$.bindings.primary_producer_path",
+        "secondary_terminal": "$.bindings.primary_producer_path"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "NFC repository-relative path without traversal, NUL, backslash, or Unicode separators",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_producer_path",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "REPO_RELATIVE_PATH",
+      "uniqueness_scope": "EXACT_PRIMARY_PRODUCER_PATH_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.decoder_path",
+        "coordinator_handshake": "$.bindings.primary_decoder_path",
+        "final_declaration": "$.bindings.primary_decoder_path",
+        "installation_receipt": "$.bindings.primary_decoder_path",
+        "installed_authorization": "$.primary.decoder_path",
+        "operator_approval": "$.bindings.primary_decoder_path",
+        "package_claim": "$.bindings.primary_decoder_path",
+        "package_durable_start": "$.bindings.primary_decoder_path",
+        "package_ledger_entry": "$.bindings.primary_decoder_path",
+        "package_receipt": "$.bindings.primary_decoder_path",
+        "package_terminal": "$.bindings.primary_decoder_path",
+        "primary_candidate_validation_report": "$.bindings.primary_decoder_path",
+        "primary_durable_start": "$.bindings.primary_decoder_path",
+        "primary_ledger_entry": "$.bindings.primary_decoder_path",
+        "primary_receipt": "$.bindings.primary_decoder_path",
+        "primary_terminal": "$.bindings.primary_decoder_path",
+        "secondary_candidate_validation_report": "$.bindings.primary_decoder_path",
+        "secondary_durable_start": "$.bindings.primary_decoder_path",
+        "secondary_ledger_entry": "$.bindings.primary_decoder_path",
+        "secondary_receipt": "$.bindings.primary_decoder_path",
+        "secondary_terminal": "$.bindings.primary_decoder_path"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "NFC repository-relative path without traversal, NUL, backslash, or Unicode separators",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_decoder_path",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "REPO_RELATIVE_PATH",
+      "uniqueness_scope": "EXACT_PRIMARY_DECODER_PATH_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.attempts",
+        "coordinator_handshake": "$.bindings.primary_attempts",
+        "final_declaration": "$.bindings.primary_attempts",
+        "installation_receipt": "$.bindings.primary_attempts",
+        "installed_authorization": "$.primary.attempts",
+        "operator_approval": "$.bindings.primary_attempts",
+        "package_claim": "$.bindings.primary_attempts",
+        "package_durable_start": "$.bindings.primary_attempts",
+        "package_ledger_entry": "$.bindings.primary_attempts",
+        "package_receipt": "$.bindings.primary_attempts",
+        "package_terminal": "$.bindings.primary_attempts",
+        "primary_candidate_validation_report": "$.bindings.primary_attempts",
+        "primary_durable_start": "$.bindings.primary_attempts",
+        "primary_ledger_entry": "$.bindings.primary_attempts",
+        "primary_receipt": "$.bindings.primary_attempts",
+        "primary_terminal": "$.bindings.primary_attempts",
+        "secondary_candidate_validation_report": "$.bindings.primary_attempts",
+        "secondary_durable_start": "$.bindings.primary_attempts",
+        "secondary_ledger_entry": "$.bindings.primary_attempts",
+        "secondary_receipt": "$.bindings.primary_attempts",
+        "secondary_terminal": "$.bindings.primary_attempts"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_attempts",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.retries",
+        "coordinator_handshake": "$.bindings.primary_retries",
+        "final_declaration": "$.bindings.primary_retries",
+        "installation_receipt": "$.bindings.primary_retries",
+        "installed_authorization": "$.primary.retries",
+        "operator_approval": "$.bindings.primary_retries",
+        "package_claim": "$.bindings.primary_retries",
+        "package_durable_start": "$.bindings.primary_retries",
+        "package_ledger_entry": "$.bindings.primary_retries",
+        "package_receipt": "$.bindings.primary_retries",
+        "package_terminal": "$.bindings.primary_retries",
+        "primary_candidate_validation_report": "$.bindings.primary_retries",
+        "primary_durable_start": "$.bindings.primary_retries",
+        "primary_ledger_entry": "$.bindings.primary_retries",
+        "primary_receipt": "$.bindings.primary_retries",
+        "primary_terminal": "$.bindings.primary_retries",
+        "secondary_candidate_validation_report": "$.bindings.primary_retries",
+        "secondary_durable_start": "$.bindings.primary_retries",
+        "secondary_ledger_entry": "$.bindings.primary_retries",
+        "secondary_receipt": "$.bindings.primary_retries",
+        "secondary_terminal": "$.bindings.primary_retries"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_retries",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.resume",
+        "coordinator_handshake": "$.bindings.primary_resume",
+        "final_declaration": "$.bindings.primary_resume",
+        "installation_receipt": "$.bindings.primary_resume",
+        "installed_authorization": "$.primary.resume",
+        "operator_approval": "$.bindings.primary_resume",
+        "package_claim": "$.bindings.primary_resume",
+        "package_durable_start": "$.bindings.primary_resume",
+        "package_ledger_entry": "$.bindings.primary_resume",
+        "package_receipt": "$.bindings.primary_resume",
+        "package_terminal": "$.bindings.primary_resume",
+        "primary_candidate_validation_report": "$.bindings.primary_resume",
+        "primary_durable_start": "$.bindings.primary_resume",
+        "primary_ledger_entry": "$.bindings.primary_resume",
+        "primary_receipt": "$.bindings.primary_resume",
+        "primary_terminal": "$.bindings.primary_resume",
+        "secondary_candidate_validation_report": "$.bindings.primary_resume",
+        "secondary_durable_start": "$.bindings.primary_resume",
+        "secondary_ledger_entry": "$.bindings.primary_resume",
+        "secondary_receipt": "$.bindings.primary_resume",
+        "secondary_terminal": "$.bindings.primary_resume"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON boolean; integers prohibited"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_resume",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "BOOLEAN",
+      "uniqueness_scope": "EXACT_PRIMARY_RESUME_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.durable_start_schema",
+        "coordinator_handshake": "$.bindings.primary_durable_start_schema",
+        "final_declaration": "$.bindings.primary_durable_start_schema",
+        "installation_receipt": "$.bindings.primary_durable_start_schema",
+        "installed_authorization": "$.primary.durable_start_schema",
+        "operator_approval": "$.bindings.primary_durable_start_schema",
+        "package_claim": "$.bindings.primary_durable_start_schema",
+        "package_durable_start": "$.bindings.primary_durable_start_schema",
+        "package_ledger_entry": "$.bindings.primary_durable_start_schema",
+        "package_receipt": "$.bindings.primary_durable_start_schema",
+        "package_terminal": "$.bindings.primary_durable_start_schema",
+        "primary_candidate_validation_report": "$.bindings.primary_durable_start_schema",
+        "primary_durable_start": "$.bindings.primary_durable_start_schema",
+        "primary_ledger_entry": "$.bindings.primary_durable_start_schema",
+        "primary_receipt": "$.bindings.primary_durable_start_schema",
+        "primary_terminal": "$.bindings.primary_durable_start_schema",
+        "secondary_candidate_validation_report": "$.bindings.primary_durable_start_schema",
+        "secondary_durable_start": "$.bindings.primary_durable_start_schema",
+        "secondary_ledger_entry": "$.bindings.primary_durable_start_schema",
+        "secondary_receipt": "$.bindings.primary_durable_start_schema",
+        "secondary_terminal": "$.bindings.primary_durable_start_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_durable_start_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_PRIMARY_DURABLE_START_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.receipt_schema",
+        "coordinator_handshake": "$.bindings.primary_receipt_schema",
+        "final_declaration": "$.bindings.primary_receipt_schema",
+        "installation_receipt": "$.bindings.primary_receipt_schema",
+        "installed_authorization": "$.primary.receipt_schema",
+        "operator_approval": "$.bindings.primary_receipt_schema",
+        "package_claim": "$.bindings.primary_receipt_schema",
+        "package_durable_start": "$.bindings.primary_receipt_schema",
+        "package_ledger_entry": "$.bindings.primary_receipt_schema",
+        "package_receipt": "$.bindings.primary_receipt_schema",
+        "package_terminal": "$.bindings.primary_receipt_schema",
+        "primary_candidate_validation_report": "$.bindings.primary_receipt_schema",
+        "primary_durable_start": "$.bindings.primary_receipt_schema",
+        "primary_ledger_entry": "$.bindings.primary_receipt_schema",
+        "primary_receipt": "$.bindings.primary_receipt_schema",
+        "primary_terminal": "$.bindings.primary_receipt_schema",
+        "secondary_candidate_validation_report": "$.bindings.primary_receipt_schema",
+        "secondary_durable_start": "$.bindings.primary_receipt_schema",
+        "secondary_ledger_entry": "$.bindings.primary_receipt_schema",
+        "secondary_receipt": "$.bindings.primary_receipt_schema",
+        "secondary_terminal": "$.bindings.primary_receipt_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_receipt_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_PRIMARY_RECEIPT_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.primary.terminal_schema",
+        "coordinator_handshake": "$.bindings.primary_terminal_schema",
+        "final_declaration": "$.bindings.primary_terminal_schema",
+        "installation_receipt": "$.bindings.primary_terminal_schema",
+        "installed_authorization": "$.primary.terminal_schema",
+        "operator_approval": "$.bindings.primary_terminal_schema",
+        "package_claim": "$.bindings.primary_terminal_schema",
+        "package_durable_start": "$.bindings.primary_terminal_schema",
+        "package_ledger_entry": "$.bindings.primary_terminal_schema",
+        "package_receipt": "$.bindings.primary_terminal_schema",
+        "package_terminal": "$.bindings.primary_terminal_schema",
+        "primary_candidate_validation_report": "$.bindings.primary_terminal_schema",
+        "primary_durable_start": "$.bindings.primary_terminal_schema",
+        "primary_ledger_entry": "$.bindings.primary_terminal_schema",
+        "primary_receipt": "$.bindings.primary_terminal_schema",
+        "primary_terminal": "$.bindings.primary_terminal_schema",
+        "secondary_candidate_validation_report": "$.bindings.primary_terminal_schema",
+        "secondary_durable_start": "$.bindings.primary_terminal_schema",
+        "secondary_ledger_entry": "$.bindings.primary_terminal_schema",
+        "secondary_receipt": "$.bindings.primary_terminal_schema",
+        "secondary_terminal": "$.bindings.primary_terminal_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_terminal_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_PRIMARY_TERMINAL_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.producer_path",
+        "coordinator_handshake": "$.bindings.secondary_producer_path",
+        "final_declaration": "$.bindings.secondary_producer_path",
+        "installation_receipt": "$.bindings.secondary_producer_path",
+        "installed_authorization": "$.secondary.producer_path",
+        "operator_approval": "$.bindings.secondary_producer_path",
+        "package_claim": "$.bindings.secondary_producer_path",
+        "package_durable_start": "$.bindings.secondary_producer_path",
+        "package_ledger_entry": "$.bindings.secondary_producer_path",
+        "package_receipt": "$.bindings.secondary_producer_path",
+        "package_terminal": "$.bindings.secondary_producer_path",
+        "primary_candidate_validation_report": "$.bindings.secondary_producer_path",
+        "primary_durable_start": "$.bindings.secondary_producer_path",
+        "primary_ledger_entry": "$.bindings.secondary_producer_path",
+        "primary_receipt": "$.bindings.secondary_producer_path",
+        "primary_terminal": "$.bindings.secondary_producer_path",
+        "secondary_candidate_validation_report": "$.bindings.secondary_producer_path",
+        "secondary_durable_start": "$.bindings.secondary_producer_path",
+        "secondary_ledger_entry": "$.bindings.secondary_producer_path",
+        "secondary_receipt": "$.bindings.secondary_producer_path",
+        "secondary_terminal": "$.bindings.secondary_producer_path"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "NFC repository-relative path without traversal, NUL, backslash, or Unicode separators",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_producer_path",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "REPO_RELATIVE_PATH",
+      "uniqueness_scope": "EXACT_SECONDARY_PRODUCER_PATH_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.decoder_path",
+        "coordinator_handshake": "$.bindings.secondary_decoder_path",
+        "final_declaration": "$.bindings.secondary_decoder_path",
+        "installation_receipt": "$.bindings.secondary_decoder_path",
+        "installed_authorization": "$.secondary.decoder_path",
+        "operator_approval": "$.bindings.secondary_decoder_path",
+        "package_claim": "$.bindings.secondary_decoder_path",
+        "package_durable_start": "$.bindings.secondary_decoder_path",
+        "package_ledger_entry": "$.bindings.secondary_decoder_path",
+        "package_receipt": "$.bindings.secondary_decoder_path",
+        "package_terminal": "$.bindings.secondary_decoder_path",
+        "primary_candidate_validation_report": "$.bindings.secondary_decoder_path",
+        "primary_durable_start": "$.bindings.secondary_decoder_path",
+        "primary_ledger_entry": "$.bindings.secondary_decoder_path",
+        "primary_receipt": "$.bindings.secondary_decoder_path",
+        "primary_terminal": "$.bindings.secondary_decoder_path",
+        "secondary_candidate_validation_report": "$.bindings.secondary_decoder_path",
+        "secondary_durable_start": "$.bindings.secondary_decoder_path",
+        "secondary_ledger_entry": "$.bindings.secondary_decoder_path",
+        "secondary_receipt": "$.bindings.secondary_decoder_path",
+        "secondary_terminal": "$.bindings.secondary_decoder_path"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "NFC repository-relative path without traversal, NUL, backslash, or Unicode separators",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_decoder_path",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "REPO_RELATIVE_PATH",
+      "uniqueness_scope": "EXACT_SECONDARY_DECODER_PATH_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.attempts",
+        "coordinator_handshake": "$.bindings.secondary_attempts",
+        "final_declaration": "$.bindings.secondary_attempts",
+        "installation_receipt": "$.bindings.secondary_attempts",
+        "installed_authorization": "$.secondary.attempts",
+        "operator_approval": "$.bindings.secondary_attempts",
+        "package_claim": "$.bindings.secondary_attempts",
+        "package_durable_start": "$.bindings.secondary_attempts",
+        "package_ledger_entry": "$.bindings.secondary_attempts",
+        "package_receipt": "$.bindings.secondary_attempts",
+        "package_terminal": "$.bindings.secondary_attempts",
+        "primary_candidate_validation_report": "$.bindings.secondary_attempts",
+        "primary_durable_start": "$.bindings.secondary_attempts",
+        "primary_ledger_entry": "$.bindings.secondary_attempts",
+        "primary_receipt": "$.bindings.secondary_attempts",
+        "primary_terminal": "$.bindings.secondary_attempts",
+        "secondary_candidate_validation_report": "$.bindings.secondary_attempts",
+        "secondary_durable_start": "$.bindings.secondary_attempts",
+        "secondary_ledger_entry": "$.bindings.secondary_attempts",
+        "secondary_receipt": "$.bindings.secondary_attempts",
+        "secondary_terminal": "$.bindings.secondary_attempts"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_attempts",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.retries",
+        "coordinator_handshake": "$.bindings.secondary_retries",
+        "final_declaration": "$.bindings.secondary_retries",
+        "installation_receipt": "$.bindings.secondary_retries",
+        "installed_authorization": "$.secondary.retries",
+        "operator_approval": "$.bindings.secondary_retries",
+        "package_claim": "$.bindings.secondary_retries",
+        "package_durable_start": "$.bindings.secondary_retries",
+        "package_ledger_entry": "$.bindings.secondary_retries",
+        "package_receipt": "$.bindings.secondary_retries",
+        "package_terminal": "$.bindings.secondary_retries",
+        "primary_candidate_validation_report": "$.bindings.secondary_retries",
+        "primary_durable_start": "$.bindings.secondary_retries",
+        "primary_ledger_entry": "$.bindings.secondary_retries",
+        "primary_receipt": "$.bindings.secondary_retries",
+        "primary_terminal": "$.bindings.secondary_retries",
+        "secondary_candidate_validation_report": "$.bindings.secondary_retries",
+        "secondary_durable_start": "$.bindings.secondary_retries",
+        "secondary_ledger_entry": "$.bindings.secondary_retries",
+        "secondary_receipt": "$.bindings.secondary_retries",
+        "secondary_terminal": "$.bindings.secondary_retries"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_retries",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.resume",
+        "coordinator_handshake": "$.bindings.secondary_resume",
+        "final_declaration": "$.bindings.secondary_resume",
+        "installation_receipt": "$.bindings.secondary_resume",
+        "installed_authorization": "$.secondary.resume",
+        "operator_approval": "$.bindings.secondary_resume",
+        "package_claim": "$.bindings.secondary_resume",
+        "package_durable_start": "$.bindings.secondary_resume",
+        "package_ledger_entry": "$.bindings.secondary_resume",
+        "package_receipt": "$.bindings.secondary_resume",
+        "package_terminal": "$.bindings.secondary_resume",
+        "primary_candidate_validation_report": "$.bindings.secondary_resume",
+        "primary_durable_start": "$.bindings.secondary_resume",
+        "primary_ledger_entry": "$.bindings.secondary_resume",
+        "primary_receipt": "$.bindings.secondary_resume",
+        "primary_terminal": "$.bindings.secondary_resume",
+        "secondary_candidate_validation_report": "$.bindings.secondary_resume",
+        "secondary_durable_start": "$.bindings.secondary_resume",
+        "secondary_ledger_entry": "$.bindings.secondary_resume",
+        "secondary_receipt": "$.bindings.secondary_resume",
+        "secondary_terminal": "$.bindings.secondary_resume"
+      },
+      "authority_source": "operator",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "JSON boolean; integers prohibited"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_resume",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "BOOLEAN",
+      "uniqueness_scope": "EXACT_SECONDARY_RESUME_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.durable_start_schema",
+        "coordinator_handshake": "$.bindings.secondary_durable_start_schema",
+        "final_declaration": "$.bindings.secondary_durable_start_schema",
+        "installation_receipt": "$.bindings.secondary_durable_start_schema",
+        "installed_authorization": "$.secondary.durable_start_schema",
+        "operator_approval": "$.bindings.secondary_durable_start_schema",
+        "package_claim": "$.bindings.secondary_durable_start_schema",
+        "package_durable_start": "$.bindings.secondary_durable_start_schema",
+        "package_ledger_entry": "$.bindings.secondary_durable_start_schema",
+        "package_receipt": "$.bindings.secondary_durable_start_schema",
+        "package_terminal": "$.bindings.secondary_durable_start_schema",
+        "primary_candidate_validation_report": "$.bindings.secondary_durable_start_schema",
+        "primary_durable_start": "$.bindings.secondary_durable_start_schema",
+        "primary_ledger_entry": "$.bindings.secondary_durable_start_schema",
+        "primary_receipt": "$.bindings.secondary_durable_start_schema",
+        "primary_terminal": "$.bindings.secondary_durable_start_schema",
+        "secondary_candidate_validation_report": "$.bindings.secondary_durable_start_schema",
+        "secondary_durable_start": "$.bindings.secondary_durable_start_schema",
+        "secondary_ledger_entry": "$.bindings.secondary_durable_start_schema",
+        "secondary_receipt": "$.bindings.secondary_durable_start_schema",
+        "secondary_terminal": "$.bindings.secondary_durable_start_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_durable_start_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_SECONDARY_DURABLE_START_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.receipt_schema",
+        "coordinator_handshake": "$.bindings.secondary_receipt_schema",
+        "final_declaration": "$.bindings.secondary_receipt_schema",
+        "installation_receipt": "$.bindings.secondary_receipt_schema",
+        "installed_authorization": "$.secondary.receipt_schema",
+        "operator_approval": "$.bindings.secondary_receipt_schema",
+        "package_claim": "$.bindings.secondary_receipt_schema",
+        "package_durable_start": "$.bindings.secondary_receipt_schema",
+        "package_ledger_entry": "$.bindings.secondary_receipt_schema",
+        "package_receipt": "$.bindings.secondary_receipt_schema",
+        "package_terminal": "$.bindings.secondary_receipt_schema",
+        "primary_candidate_validation_report": "$.bindings.secondary_receipt_schema",
+        "primary_durable_start": "$.bindings.secondary_receipt_schema",
+        "primary_ledger_entry": "$.bindings.secondary_receipt_schema",
+        "primary_receipt": "$.bindings.secondary_receipt_schema",
+        "primary_terminal": "$.bindings.secondary_receipt_schema",
+        "secondary_candidate_validation_report": "$.bindings.secondary_receipt_schema",
+        "secondary_durable_start": "$.bindings.secondary_receipt_schema",
+        "secondary_ledger_entry": "$.bindings.secondary_receipt_schema",
+        "secondary_receipt": "$.bindings.secondary_receipt_schema",
+        "secondary_terminal": "$.bindings.secondary_receipt_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_receipt_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_SECONDARY_RECEIPT_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "candidate_authorization": "$.secondary.terminal_schema",
+        "coordinator_handshake": "$.bindings.secondary_terminal_schema",
+        "final_declaration": "$.bindings.secondary_terminal_schema",
+        "installation_receipt": "$.bindings.secondary_terminal_schema",
+        "installed_authorization": "$.secondary.terminal_schema",
+        "operator_approval": "$.bindings.secondary_terminal_schema",
+        "package_claim": "$.bindings.secondary_terminal_schema",
+        "package_durable_start": "$.bindings.secondary_terminal_schema",
+        "package_ledger_entry": "$.bindings.secondary_terminal_schema",
+        "package_receipt": "$.bindings.secondary_terminal_schema",
+        "package_terminal": "$.bindings.secondary_terminal_schema",
+        "primary_candidate_validation_report": "$.bindings.secondary_terminal_schema",
+        "primary_durable_start": "$.bindings.secondary_terminal_schema",
+        "primary_ledger_entry": "$.bindings.secondary_terminal_schema",
+        "primary_receipt": "$.bindings.secondary_terminal_schema",
+        "primary_terminal": "$.bindings.secondary_terminal_schema",
+        "secondary_candidate_validation_report": "$.bindings.secondary_terminal_schema",
+        "secondary_durable_start": "$.bindings.secondary_terminal_schema",
+        "secondary_ledger_entry": "$.bindings.secondary_terminal_schema",
+        "secondary_receipt": "$.bindings.secondary_terminal_schema",
+        "secondary_terminal": "$.bindings.secondary_terminal_schema"
+      },
+      "authority_source": "scientific-access contract v4",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "operator_approval",
+        "candidate_authorization",
+        "primary_candidate_validation_report",
+        "secondary_candidate_validation_report",
+        "installed_authorization",
+        "installation_receipt",
+        "coordinator_handshake",
+        "package_claim",
+        "package_durable_start",
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "operator_approval",
+      "grammar": {
+        "description": "exact committed schema identifier"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_terminal_schema",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "SCHEMA_ID",
+      "uniqueness_scope": "EXACT_SECONDARY_TERMINAL_SCHEMA_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
         "candidate_authorization": "$.operator_approval_sha256",
         "coordinator_handshake": "$.bindings.operator_approval_sha256",
         "final_declaration": "$.bindings.operator_approval_sha256",
@@ -4110,6 +6747,7 @@
         "secondary_terminal": "$.bindings.operator_approval_sha256"
       },
       "authority_source": "banked operator approval bytes",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4156,7 +6794,6 @@
         "coordinator_handshake": "$.bindings.candidate_sha256",
         "final_declaration": "$.bindings.candidate_sha256",
         "installation_receipt": "$.bindings.candidate_sha256",
-        "installed_authorization": "$.lifecycle_plan.candidate_sha256",
         "package_claim": "$.bindings.candidate_sha256",
         "package_durable_start": "$.bindings.candidate_sha256",
         "package_ledger_entry": "$.bindings.candidate_sha256",
@@ -4174,12 +6811,12 @@
         "secondary_terminal": "$.bindings.candidate_sha256"
       },
       "authority_source": "authorizer candidate bytes",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
         "primary_candidate_validation_report",
         "secondary_candidate_validation_report",
-        "installed_authorization",
         "installation_receipt",
         "coordinator_handshake",
         "package_claim",
@@ -4219,7 +6856,6 @@
         "coordinator_handshake": "$.bindings.primary_candidate_validation_report_sha256",
         "final_declaration": "$.bindings.primary_candidate_validation_report_sha256",
         "installation_receipt": "$.bindings.primary_candidate_validation_report_sha256",
-        "installed_authorization": "$.lifecycle_plan.primary_candidate_validation_report_sha256",
         "package_claim": "$.bindings.primary_candidate_validation_report_sha256",
         "package_durable_start": "$.bindings.primary_candidate_validation_report_sha256",
         "package_ledger_entry": "$.bindings.primary_candidate_validation_report_sha256",
@@ -4236,11 +6872,11 @@
         "secondary_terminal": "$.bindings.primary_candidate_validation_report_sha256"
       },
       "authority_source": "primary validation-report readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
         "secondary_candidate_validation_report",
-        "installed_authorization",
         "installation_receipt",
         "coordinator_handshake",
         "package_claim",
@@ -4295,6 +6931,7 @@
         "secondary_terminal": "$.bindings.secondary_candidate_validation_report_sha256"
       },
       "authority_source": "secondary validation-report readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4352,6 +6989,7 @@
         "secondary_terminal": "$.bindings.installed_authorization_sha256"
       },
       "authority_source": "descriptor-relative installed authorization readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4408,6 +7046,7 @@
         "secondary_terminal": "$.bindings.installation_receipt_sha256"
       },
       "authority_source": "installation-receipt readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4462,6 +7101,7 @@
         "secondary_terminal": "$.bindings.coordinator_handshake_sha256"
       },
       "authority_source": "coordinator-handshake readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4514,6 +7154,7 @@
         "secondary_terminal": "$.bindings.package_claim_sha256"
       },
       "authority_source": "package-claim readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4564,6 +7205,7 @@
         "secondary_terminal": "$.bindings.package_durable_start_sha256"
       },
       "authority_source": "package durable-start readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4612,6 +7254,7 @@
         "secondary_terminal": "$.bindings.package_ledger_entry_sha256"
       },
       "authority_source": "package-ledger readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4646,9 +7289,6 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.primary_durable_start_sha256",
-        "package_receipt": "$.bindings.primary_durable_start_sha256",
-        "package_terminal": "$.bindings.primary_durable_start_sha256",
         "primary_ledger_entry": "$.bindings.primary_durable_start_sha256",
         "primary_receipt": "$.bindings.primary_durable_start_sha256",
         "primary_terminal": "$.bindings.primary_durable_start_sha256",
@@ -4658,6 +7298,7 @@
         "secondary_terminal": "$.bindings.primary_durable_start_sha256"
       },
       "authority_source": "primary durable-start readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4667,10 +7308,7 @@
         "secondary_durable_start",
         "secondary_ledger_entry",
         "secondary_receipt",
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "primary_ledger_entry",
@@ -4691,9 +7329,6 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.primary_ledger_entry_sha256",
-        "package_receipt": "$.bindings.primary_ledger_entry_sha256",
-        "package_terminal": "$.bindings.primary_ledger_entry_sha256",
         "primary_receipt": "$.bindings.primary_ledger_entry_sha256",
         "primary_terminal": "$.bindings.primary_ledger_entry_sha256",
         "secondary_durable_start": "$.bindings.primary_ledger_entry_sha256",
@@ -4702,6 +7337,7 @@
         "secondary_terminal": "$.bindings.primary_ledger_entry_sha256"
       },
       "authority_source": "primary-ledger readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4710,10 +7346,7 @@
         "secondary_durable_start",
         "secondary_ledger_entry",
         "secondary_receipt",
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "primary_receipt",
@@ -4734,9 +7367,6 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.primary_receipt_sha256",
-        "package_receipt": "$.bindings.primary_receipt_sha256",
-        "package_terminal": "$.bindings.primary_receipt_sha256",
         "primary_terminal": "$.bindings.primary_receipt_sha256",
         "secondary_durable_start": "$.bindings.primary_receipt_sha256",
         "secondary_ledger_entry": "$.bindings.primary_receipt_sha256",
@@ -4744,6 +7374,7 @@
         "secondary_terminal": "$.bindings.primary_receipt_sha256"
       },
       "authority_source": "primary-receipt readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4751,10 +7382,7 @@
         "secondary_durable_start",
         "secondary_ledger_entry",
         "secondary_receipt",
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "primary_terminal",
@@ -4775,25 +7403,29 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.primary_terminal_sha256",
-        "package_receipt": "$.bindings.primary_terminal_sha256",
-        "package_terminal": "$.bindings.primary_terminal_sha256",
         "secondary_durable_start": "$.bindings.primary_terminal_sha256",
         "secondary_ledger_entry": "$.bindings.primary_terminal_sha256",
         "secondary_receipt": "$.bindings.primary_terminal_sha256",
         "secondary_terminal": "$.bindings.primary_terminal_sha256"
       },
       "authority_source": "primary-terminal readback",
+      "conditional_artifact_json_paths": {
+        "package_receipt": {
+          "json_path": "$.bindings.primary_terminal_sha256",
+          "required_outcomes": [
+            "SUCCESS",
+            "ABORT_BEFORE_SECONDARY_START",
+            "ABORT_AFTER_SECONDARY_START"
+          ]
+        }
+      },
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
         "secondary_durable_start",
         "secondary_ledger_entry",
         "secondary_receipt",
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "secondary_durable_start",
@@ -4814,23 +7446,18 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.secondary_durable_start_sha256",
-        "package_receipt": "$.bindings.secondary_durable_start_sha256",
-        "package_terminal": "$.bindings.secondary_durable_start_sha256",
         "secondary_ledger_entry": "$.bindings.secondary_durable_start_sha256",
         "secondary_receipt": "$.bindings.secondary_durable_start_sha256",
         "secondary_terminal": "$.bindings.secondary_durable_start_sha256"
       },
       "authority_source": "secondary durable-start readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
         "secondary_ledger_entry",
         "secondary_receipt",
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "secondary_ledger_entry",
@@ -4851,21 +7478,16 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.secondary_ledger_entry_sha256",
-        "package_receipt": "$.bindings.secondary_ledger_entry_sha256",
-        "package_terminal": "$.bindings.secondary_ledger_entry_sha256",
         "secondary_receipt": "$.bindings.secondary_ledger_entry_sha256",
         "secondary_terminal": "$.bindings.secondary_ledger_entry_sha256"
       },
       "authority_source": "secondary-ledger readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
         "secondary_receipt",
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "secondary_receipt",
@@ -4886,19 +7508,14 @@
     },
     {
       "artifact_json_paths": {
-        "final_declaration": "$.bindings.secondary_receipt_sha256",
-        "package_receipt": "$.bindings.secondary_receipt_sha256",
-        "package_terminal": "$.bindings.secondary_receipt_sha256",
         "secondary_terminal": "$.bindings.secondary_receipt_sha256"
       },
       "authority_source": "secondary-receipt readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
-        "secondary_terminal",
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
+        "secondary_terminal"
       ],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "secondary_terminal",
@@ -4918,19 +7535,20 @@
       ]
     },
     {
-      "artifact_json_paths": {
-        "final_declaration": "$.bindings.secondary_terminal_sha256",
-        "package_receipt": "$.bindings.secondary_terminal_sha256",
-        "package_terminal": "$.bindings.secondary_terminal_sha256"
-      },
+      "artifact_json_paths": {},
       "authority_source": "secondary-terminal readback",
+      "conditional_artifact_json_paths": {
+        "package_receipt": {
+          "json_path": "$.bindings.secondary_terminal_sha256",
+          "required_outcomes": [
+            "SUCCESS",
+            "ABORT_AFTER_SECONDARY_START"
+          ]
+        }
+      },
       "derivation_permitted": false,
       "derivation_rule": null,
-      "downstream_artifacts": [
-        "package_receipt",
-        "package_terminal",
-        "final_declaration"
-      ],
+      "downstream_artifacts": [],
       "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
       "first_introduction": "package_receipt",
       "grammar": {
@@ -4954,6 +7572,7 @@
         "package_terminal": "$.bindings.package_receipt_sha256"
       },
       "authority_source": "package-receipt readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -4982,6 +7601,7 @@
         "final_declaration": "$.bindings.package_terminal_sha256"
       },
       "authority_source": "package-terminal readback",
+      "conditional_artifact_json_paths": {},
       "derivation_permitted": false,
       "derivation_rule": null,
       "downstream_artifacts": [
@@ -5003,8 +7623,632 @@
         "validate_f017_corrected_oracle_lifecycle_v4.py",
         "v4_artifact_schema_validator"
       ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.package_ledger_event_class",
+        "package_ledger_entry": "$.bindings.package_ledger_event_class",
+        "package_receipt": "$.bindings.package_ledger_event_class",
+        "package_terminal": "$.bindings.package_ledger_event_class",
+        "primary_durable_start": "$.bindings.package_ledger_event_class",
+        "primary_ledger_entry": "$.bindings.package_ledger_event_class",
+        "primary_receipt": "$.bindings.package_ledger_event_class",
+        "primary_terminal": "$.bindings.package_ledger_event_class",
+        "secondary_durable_start": "$.bindings.package_ledger_event_class",
+        "secondary_ledger_entry": "$.bindings.package_ledger_event_class",
+        "secondary_receipt": "$.bindings.package_ledger_event_class",
+        "secondary_terminal": "$.bindings.package_ledger_event_class"
+      },
+      "authority_source": "durable-start accounting",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "package_ledger_entry",
+      "grammar": {
+        "description": "closed ledger event class",
+        "enum": [
+          "PACKAGE_ATTEMPT",
+          "PRIMARY_CONSUMER",
+          "SECONDARY_CONSUMER"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_ledger_event_class",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_EVENT_CLASS",
+      "uniqueness_scope": "EXACT_PACKAGE_LEDGER_EVENT_CLASS_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.package_ledger_sequence",
+        "package_ledger_entry": "$.bindings.package_ledger_sequence",
+        "package_receipt": "$.bindings.package_ledger_sequence",
+        "package_terminal": "$.bindings.package_ledger_sequence",
+        "primary_durable_start": "$.bindings.package_ledger_sequence",
+        "primary_ledger_entry": "$.bindings.package_ledger_sequence",
+        "primary_receipt": "$.bindings.package_ledger_sequence",
+        "primary_terminal": "$.bindings.package_ledger_sequence",
+        "secondary_durable_start": "$.bindings.package_ledger_sequence",
+        "secondary_ledger_entry": "$.bindings.package_ledger_sequence",
+        "secondary_receipt": "$.bindings.package_ledger_sequence",
+        "secondary_terminal": "$.bindings.package_ledger_sequence"
+      },
+      "authority_source": "append-only ledger sequence",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "package_ledger_entry",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_ledger_sequence",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.package_ledger_prior_entry",
+        "package_ledger_entry": "$.bindings.package_ledger_prior_entry",
+        "package_receipt": "$.bindings.package_ledger_prior_entry",
+        "package_terminal": "$.bindings.package_ledger_prior_entry",
+        "primary_durable_start": "$.bindings.package_ledger_prior_entry",
+        "primary_ledger_entry": "$.bindings.package_ledger_prior_entry",
+        "primary_receipt": "$.bindings.package_ledger_prior_entry",
+        "primary_terminal": "$.bindings.package_ledger_prior_entry",
+        "secondary_durable_start": "$.bindings.package_ledger_prior_entry",
+        "secondary_ledger_entry": "$.bindings.package_ledger_prior_entry",
+        "secondary_receipt": "$.bindings.package_ledger_prior_entry",
+        "secondary_terminal": "$.bindings.package_ledger_prior_entry"
+      },
+      "authority_source": "append-only ledger chain",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "package_ledger_entry",
+      "grammar": {
+        "description": "lowercase SHA-256 or literal GENESIS",
+        "pattern": "^(?:[0-9a-f]{64}|GENESIS)$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_ledger_prior_entry",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_PREDECESSOR",
+      "uniqueness_scope": "EXACT_PACKAGE_LEDGER_PRIOR_ENTRY_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.package_ledger_result",
+        "package_ledger_entry": "$.bindings.package_ledger_result",
+        "package_receipt": "$.bindings.package_ledger_result",
+        "package_terminal": "$.bindings.package_ledger_result",
+        "primary_durable_start": "$.bindings.package_ledger_result",
+        "primary_ledger_entry": "$.bindings.package_ledger_result",
+        "primary_receipt": "$.bindings.package_ledger_result",
+        "primary_terminal": "$.bindings.package_ledger_result",
+        "secondary_durable_start": "$.bindings.package_ledger_result",
+        "secondary_ledger_entry": "$.bindings.package_ledger_result",
+        "secondary_receipt": "$.bindings.package_ledger_result",
+        "secondary_terminal": "$.bindings.package_ledger_result"
+      },
+      "authority_source": "durable-start accounting",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "package_ledger_entry",
+        "primary_durable_start",
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "package_ledger_entry",
+      "grammar": {
+        "description": "closed ledger result",
+        "enum": [
+          "DURABLE_START"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "package_ledger_result",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_RESULT",
+      "uniqueness_scope": "EXACT_PACKAGE_LEDGER_RESULT_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.primary_ledger_event_class",
+        "package_receipt": "$.bindings.primary_ledger_event_class",
+        "package_terminal": "$.bindings.primary_ledger_event_class",
+        "primary_ledger_entry": "$.bindings.primary_ledger_event_class",
+        "primary_receipt": "$.bindings.primary_ledger_event_class",
+        "primary_terminal": "$.bindings.primary_ledger_event_class",
+        "secondary_durable_start": "$.bindings.primary_ledger_event_class",
+        "secondary_ledger_entry": "$.bindings.primary_ledger_event_class",
+        "secondary_receipt": "$.bindings.primary_ledger_event_class",
+        "secondary_terminal": "$.bindings.primary_ledger_event_class"
+      },
+      "authority_source": "durable-start accounting",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "primary_ledger_entry",
+      "grammar": {
+        "description": "closed ledger event class",
+        "enum": [
+          "PACKAGE_ATTEMPT",
+          "PRIMARY_CONSUMER",
+          "SECONDARY_CONSUMER"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_ledger_event_class",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_EVENT_CLASS",
+      "uniqueness_scope": "EXACT_PRIMARY_LEDGER_EVENT_CLASS_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.primary_ledger_sequence",
+        "package_receipt": "$.bindings.primary_ledger_sequence",
+        "package_terminal": "$.bindings.primary_ledger_sequence",
+        "primary_ledger_entry": "$.bindings.primary_ledger_sequence",
+        "primary_receipt": "$.bindings.primary_ledger_sequence",
+        "primary_terminal": "$.bindings.primary_ledger_sequence",
+        "secondary_durable_start": "$.bindings.primary_ledger_sequence",
+        "secondary_ledger_entry": "$.bindings.primary_ledger_sequence",
+        "secondary_receipt": "$.bindings.primary_ledger_sequence",
+        "secondary_terminal": "$.bindings.primary_ledger_sequence"
+      },
+      "authority_source": "append-only ledger sequence",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "primary_ledger_entry",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_ledger_sequence",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.primary_ledger_prior_entry",
+        "package_receipt": "$.bindings.primary_ledger_prior_entry",
+        "package_terminal": "$.bindings.primary_ledger_prior_entry",
+        "primary_ledger_entry": "$.bindings.primary_ledger_prior_entry",
+        "primary_receipt": "$.bindings.primary_ledger_prior_entry",
+        "primary_terminal": "$.bindings.primary_ledger_prior_entry",
+        "secondary_durable_start": "$.bindings.primary_ledger_prior_entry",
+        "secondary_ledger_entry": "$.bindings.primary_ledger_prior_entry",
+        "secondary_receipt": "$.bindings.primary_ledger_prior_entry",
+        "secondary_terminal": "$.bindings.primary_ledger_prior_entry"
+      },
+      "authority_source": "append-only ledger chain",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "primary_ledger_entry",
+      "grammar": {
+        "description": "lowercase SHA-256 or literal GENESIS",
+        "pattern": "^(?:[0-9a-f]{64}|GENESIS)$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_ledger_prior_entry",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_PREDECESSOR",
+      "uniqueness_scope": "EXACT_PRIMARY_LEDGER_PRIOR_ENTRY_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.primary_ledger_result",
+        "package_receipt": "$.bindings.primary_ledger_result",
+        "package_terminal": "$.bindings.primary_ledger_result",
+        "primary_ledger_entry": "$.bindings.primary_ledger_result",
+        "primary_receipt": "$.bindings.primary_ledger_result",
+        "primary_terminal": "$.bindings.primary_ledger_result",
+        "secondary_durable_start": "$.bindings.primary_ledger_result",
+        "secondary_ledger_entry": "$.bindings.primary_ledger_result",
+        "secondary_receipt": "$.bindings.primary_ledger_result",
+        "secondary_terminal": "$.bindings.primary_ledger_result"
+      },
+      "authority_source": "durable-start accounting",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "primary_ledger_entry",
+        "primary_receipt",
+        "primary_terminal",
+        "secondary_durable_start",
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "primary_ledger_entry",
+      "grammar": {
+        "description": "closed ledger result",
+        "enum": [
+          "DURABLE_START"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_ledger_result",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_RESULT",
+      "uniqueness_scope": "EXACT_PRIMARY_LEDGER_RESULT_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.secondary_ledger_event_class",
+        "package_receipt": "$.bindings.secondary_ledger_event_class",
+        "package_terminal": "$.bindings.secondary_ledger_event_class",
+        "secondary_ledger_entry": "$.bindings.secondary_ledger_event_class",
+        "secondary_receipt": "$.bindings.secondary_ledger_event_class",
+        "secondary_terminal": "$.bindings.secondary_ledger_event_class"
+      },
+      "authority_source": "durable-start accounting",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "secondary_ledger_entry",
+      "grammar": {
+        "description": "closed ledger event class",
+        "enum": [
+          "PACKAGE_ATTEMPT",
+          "PRIMARY_CONSUMER",
+          "SECONDARY_CONSUMER"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_ledger_event_class",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_EVENT_CLASS",
+      "uniqueness_scope": "EXACT_SECONDARY_LEDGER_EVENT_CLASS_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.secondary_ledger_sequence",
+        "package_receipt": "$.bindings.secondary_ledger_sequence",
+        "package_terminal": "$.bindings.secondary_ledger_sequence",
+        "secondary_ledger_entry": "$.bindings.secondary_ledger_sequence",
+        "secondary_receipt": "$.bindings.secondary_ledger_sequence",
+        "secondary_terminal": "$.bindings.secondary_ledger_sequence"
+      },
+      "authority_source": "append-only ledger sequence",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_JSON_INTEGER_AND_DECLARED_MONOTONIC_RULE",
+      "first_introduction": "secondary_ledger_entry",
+      "grammar": {
+        "description": "JSON integer; boolean prohibited",
+        "minimum": 0
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_ledger_sequence",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "INTEGER",
+      "uniqueness_scope": "DECLARED_LEDGER_OR_LIFECYCLE_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.secondary_ledger_prior_entry",
+        "package_receipt": "$.bindings.secondary_ledger_prior_entry",
+        "package_terminal": "$.bindings.secondary_ledger_prior_entry",
+        "secondary_ledger_entry": "$.bindings.secondary_ledger_prior_entry",
+        "secondary_receipt": "$.bindings.secondary_ledger_prior_entry",
+        "secondary_terminal": "$.bindings.secondary_ledger_prior_entry"
+      },
+      "authority_source": "append-only ledger chain",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "secondary_ledger_entry",
+      "grammar": {
+        "description": "lowercase SHA-256 or literal GENESIS",
+        "pattern": "^(?:[0-9a-f]{64}|GENESIS)$"
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_ledger_prior_entry",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_PREDECESSOR",
+      "uniqueness_scope": "EXACT_SECONDARY_LEDGER_PRIOR_ENTRY_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.secondary_ledger_result",
+        "package_receipt": "$.bindings.secondary_ledger_result",
+        "package_terminal": "$.bindings.secondary_ledger_result",
+        "secondary_ledger_entry": "$.bindings.secondary_ledger_result",
+        "secondary_receipt": "$.bindings.secondary_ledger_result",
+        "secondary_terminal": "$.bindings.secondary_ledger_result"
+      },
+      "authority_source": "durable-start accounting",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "secondary_ledger_entry",
+        "secondary_receipt",
+        "secondary_terminal",
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "secondary_ledger_entry",
+      "grammar": {
+        "description": "closed ledger result",
+        "enum": [
+          "DURABLE_START"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_ledger_result",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "LEDGER_RESULT",
+      "uniqueness_scope": "EXACT_SECONDARY_LEDGER_RESULT_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.primary_start_disposition",
+        "package_receipt": "$.bindings.primary_start_disposition",
+        "package_terminal": "$.bindings.primary_start_disposition"
+      },
+      "authority_source": "actual package execution",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "package_receipt",
+      "grammar": {
+        "description": "actual consumer start disposition",
+        "enum": [
+          "STARTED",
+          "UNSTARTED"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "primary_start_disposition",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "START_DISPOSITION",
+      "uniqueness_scope": "EXACT_PRIMARY_START_DISPOSITION_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
+    },
+    {
+      "artifact_json_paths": {
+        "final_declaration": "$.bindings.secondary_start_disposition",
+        "package_receipt": "$.bindings.secondary_start_disposition",
+        "package_terminal": "$.bindings.secondary_start_disposition"
+      },
+      "authority_source": "actual package execution",
+      "conditional_artifact_json_paths": {},
+      "derivation_permitted": false,
+      "derivation_rule": null,
+      "downstream_artifacts": [
+        "package_receipt",
+        "package_terminal",
+        "final_declaration"
+      ],
+      "equality_rule": "EXACT_TYPED_EQUALITY_TO_FIRST_INTRODUCTION",
+      "first_introduction": "package_receipt",
+      "grammar": {
+        "description": "actual consumer start disposition",
+        "enum": [
+          "STARTED",
+          "UNSTARTED"
+        ]
+      },
+      "mismatch_behavior": "FAIL_CLOSED_BEFORE_NEXT_LIFECYCLE_TRANSITION",
+      "name": "secondary_start_disposition",
+      "repetition_permitted": true,
+      "terminal_failure_class": "LIFECYCLE_IDENTITY_BINDING_FAILURE",
+      "type": "START_DISPOSITION",
+      "uniqueness_scope": "EXACT_SECONDARY_START_DISPOSITION_AUTHORITY_SCOPE",
+      "validators": [
+        "validate_f017_corrected_oracle_lifecycle_v4.py",
+        "v4_artifact_schema_validator"
+      ]
     }
   ],
-  "identity_count": 78,
+  "identity_count": 129,
   "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-identity-registry/1.1.0"
 }

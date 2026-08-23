@@ -2,6 +2,7 @@
   "schema": "pulsarmlx.f017.corrected-oracle-v3-lifecycle-authority-supersession/1.0.0",
   "classification": "V3_HISTORICAL_ONLY_AFTER_EVENT_03_PRE_MINT_INTERFACE_FAILURE",
   "event_03_failure": "PACKAGE_ATTEMPT_IDENTITY_NOT_REPRESENTABLE",
+  "authority_head": "09b50ba30ba7ae41453d25e5f1402144ce119124",
   "superseded_authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
   "successor_authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/4.0.0",
   "v3_disposition": {
@@ -11,11 +12,31 @@
     "future_target_execution": false,
     "event_04_authority": false
   },
-  "required_implementation_controls": [
-    "V3_AUTHORIZER_REJECTS_LIVE_MINT",
-    "V3_COORDINATOR_REJECTS_NEW_PACKAGE_EXECUTION",
+  "retired_authorities": [
+    {
+      "path": "scripts/research/validate_f017_corrected_oracle_access_v3.py",
+      "sha256_at_supersession": "5c70f386922b14d166d4aa73529ffb994c88ebbd6755c140e00b9f6eafc16fd6",
+      "required_behavior": "V3_AUTHORIZER_REJECTS_LIVE_MINT"
+    },
+    {
+      "path": "scripts/research/execute_f017_corrected_oracle_event_v3.py",
+      "sha256_at_supersession": "738bbc139be79d75635bf5c012e6e4422d22a906e9274584db49d0146749b556",
+      "required_behavior": "V3_COORDINATOR_REJECTS_NEW_PACKAGE_EXECUTION"
+    },
+    {
+      "path": "scripts/research/f017_corrected_oracle_primary_v3.py",
+      "sha256_at_supersession": "d52c27af336e20dce1a88ca7ddcc0778ead871aa0d25bc1bd9fc34aac5a5b444",
+      "required_behavior": "HISTORICAL_VALIDATION_ONLY"
+    },
+    {
+      "path": "scripts/research/f017_corrected_oracle_secondary_v3.py",
+      "sha256_at_supersession": "941f1cb5e62c61997e11043e4cec0bd20398dba7fdb2c710740f6f49a8396aed",
+      "required_behavior": "HISTORICAL_VALIDATION_ONLY"
+    }
+  ],
+  "successor_controls": [
     "V4_CAPABILITIES_ACCEPT_ONLY_AUTHORIZATION_SCHEMA_V4_FOR_LIVE_EXECUTION",
-    "V1_V2_V3_CONSUMERS_ARE_HISTORICAL_ONLY"
+    "V4_COORDINATOR_REQUIRES_INSTALLATION_RECEIPT_AND_BOTH_INSTALLED_AUTH_REPORTS"
   ],
   "numerical_authority_changed": false,
   "event_03_artifacts_changed": false,
