@@ -140,6 +140,8 @@ def target(arguments) -> int:
         arguments.authorization, arguments.contract, arguments.catalog,
         arguments.checkpoint_root, root_phase="POST_PACKAGE_START",
     )
+    if authority.document["authority_scope"] == "PRODUCTION":
+        raise ValueError("HISTORICAL_ONLY: v3 secondary production target is permanently retired")
     if sha256_path(arguments.geometry.resolve(strict=True)) != authority.document["geometry_sha256"]:
         raise ValueError("geometry identity mismatch")
     store = CatalogStoreV3(authority, arguments.catalog, arguments.checkpoint_root)

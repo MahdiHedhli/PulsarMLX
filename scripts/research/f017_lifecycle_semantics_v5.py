@@ -163,23 +163,75 @@ def simulate_trace(model: dict[str, Any], trace: list[str]) -> TraceResult:
     )
 
 
+def _started_flags(trace: list[str]) -> dict[str, bool]:
+    return {
+        "package": "T11_START_PACKAGE" in trace,
+        "primary": "T12_START_PRIMARY" in trace,
+        "secondary": "T14_START_SECONDARY" in trace,
+        "comparison": "T16_COMPARE_SUCCESS" in trace or "T16F_COMPARE_FAILURE" in trace,
+    }
+
+
+def _variant_obligation(
+    model: dict[str, Any],
+    *,
+    variant_id: str,
+    outcome_class: str,
+    trace: list[str],
+    terminalized: bool,
+    failed_transition: str | None,
+) -> dict[str, Any]:
+    result = simulate_trace(model, trace)
+    starts = _started_flags(trace)
+    required = set(result.artifacts)
+    forbidden = set(model["artifact_classes"]) - required
+    for consumer in ("primary", "secondary"):
+        consumer_evidence = {
+            f"{consumer}_durable_start",
+            f"{consumer}_ledger_entry",
+            f"{consumer}_ledger_index",
+            f"{consumer}_receipt",
+            f"{consumer}_terminal",
+        }
+        if starts[consumer] and terminalized and result.state in {
+            "PACKAGE_TERMINAL_SUCCESS", "PACKAGE_TERMINAL_FAILURE"
+        }:
+            if not consumer_evidence.issubset(required):
+                raise ValueError(f"started consumer evidence missing: {variant_id}/{consumer}")
+        if not starts[consumer] and required & consumer_evidence:
+            raise ValueError(f"unstarted consumer evidence fabricated: {variant_id}/{consumer}")
+    return {
+        "variant_id": variant_id,
+        "outcome_class": outcome_class,
+        "trace": trace,
+        "state_reached": result.state,
+        "terminalized": terminalized,
+        "failed_transition": failed_transition,
+        "started": starts,
+        "required_artifacts": sorted(required),
+        "forbidden_artifacts": sorted(forbidden),
+        "nullable_package_receipt_fields": sorted(
+            field
+            for consumer in ("primary", "secondary")
+            if not starts[consumer]
+            for field in (f"{consumer}_receipt_sha256", f"{consumer}_terminal_sha256")
+        ),
+        "package_consumer_disposition": {
+            consumer: "STARTED" if starts[consumer] else "NOT_STARTED"
+            for consumer in ("primary", "secondary")
+        },
+        "ledger_deltas": result.ledgers,
+    }
+
+
 def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
-    derived: dict[str, Any] = {}
-    for name, outcome in model["terminal_outcomes"].items():
+    variants: dict[str, Any] = {}
+    for name, outcome in model["terminal_branches"].items():
         trace = outcome["trace"]
-        if name == "EVIDENCE_BANKING_FAILURE":
-            # These are families parameterized by the transition that failed.
-            # Their per-transition obligations are emitted separately below.
-            continue
         result = simulate_trace(model, trace)
         if result.state != outcome["terminal_state"]:
             raise ValueError(f"terminal state mismatch: {name}")
-        starts = {
-            "package": "T11_START_PACKAGE" in trace,
-            "primary": "T12_START_PRIMARY" in trace,
-            "secondary": "T14_START_SECONDARY" in trace,
-            "comparison": "T16_COMPARE_SUCCESS" in trace or "T16F_COMPARE_FAILURE" in trace,
-        }
+        starts = _started_flags(trace)
         declared = {
             "package": outcome["package_started"],
             "primary": outcome["primary_started"],
@@ -188,46 +240,17 @@ def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
         }
         if starts != declared:
             raise ValueError(f"started flags are not transition-derived: {name}")
-        required = set(result.artifacts)
-        forbidden: set[str] = set()
-        for consumer in ("primary", "secondary"):
-            consumer_evidence = {
-                f"{consumer}_durable_start",
-                f"{consumer}_ledger_entry",
-                f"{consumer}_ledger_index",
-                f"{consumer}_receipt",
-                f"{consumer}_terminal",
-            }
-            if starts[consumer]:
-                if not consumer_evidence.issubset(required):
-                    raise ValueError(f"started consumer evidence missing: {name}/{consumer}")
-            else:
-                forbidden.update(consumer_evidence)
-                if required & consumer_evidence:
-                    raise ValueError(f"unstarted consumer evidence fabricated: {name}/{consumer}")
         if name == "COMPLETE_SUCCESS" and not all(starts.values()):
             raise ValueError("complete success without all phases")
-        derived[name] = {
-            "trace": trace,
-            "terminal_state": result.state,
-            "started": starts,
-            "required_artifacts": sorted(required),
-            "forbidden_artifacts": sorted(forbidden),
-            "nullable_package_receipt_fields": sorted(
-                field
-                for consumer in ("primary", "secondary")
-                if not starts[consumer]
-                for field in (f"{consumer}_receipt_sha256", f"{consumer}_terminal_sha256")
-            ),
-            "package_consumer_disposition": {
-                consumer: "STARTED" if starts[consumer] else "NOT_STARTED"
-                for consumer in ("primary", "secondary")
-            },
-            "ledger_deltas": result.ledgers,
-        }
-
-    failure_variants = []
-    transitions = _index_transitions(model)
+        variant_id = f"TERMINAL::{name}"
+        variants[variant_id] = _variant_obligation(
+            model,
+            variant_id=variant_id,
+            outcome_class=name,
+            trace=trace,
+            terminalized=True,
+            failed_transition=None,
+        )
 
     def shortest_trace_to(target_state: str) -> list[str]:
         queue: list[tuple[str, list[str]]] = [(model["initial_state"], [])]
@@ -243,26 +266,27 @@ def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"unreachable transition source: {target_state}")
 
     for transition in model["transitions"]:
-        outcome = transition["failure_outcome"]
         prefix = shortest_trace_to(transition["source"])
-        prefix_result = simulate_trace(model, prefix)
-        failure_variants.append(
-            {
-                "failed_transition": transition["id"],
-                "failure_outcome": outcome,
-                "state_before_failure": prefix_result.state,
-                "trace_before_failure": prefix,
-                "durable_artifacts_before_failure": sorted(prefix_result.artifacts),
-                "ledger_deltas_before_failure": prefix_result.ledgers,
-                "failed_transition_artifacts_not_claimed": transition["artifacts_created"],
-                "prohibited_side_effects": transition["prohibited_side_effects"],
-            }
+        variant_id = f"FAILED::{transition['id']}"
+        variants[variant_id] = _variant_obligation(
+            model,
+            variant_id=variant_id,
+            outcome_class=transition["failure_outcome"],
+            trace=prefix,
+            terminalized=False,
+            failed_transition=transition["id"],
         )
+        variants[variant_id]["failed_transition_artifacts_not_claimed"] = transition["artifacts_created"]
+        variants[variant_id]["prohibited_side_effects"] = transition["prohibited_side_effects"]
+
+    by_class: dict[str, list[str]] = {name: [] for name in model["outcome_classes"]}
+    for variant_id, variant in variants.items():
+        by_class[variant["outcome_class"]].append(variant_id)
     return {
         "schema": "pulsarmlx.f017.corrected-oracle-outcome-obligations/5.0.0",
         "semantic_model_sha256": canonical_sha256(model),
-        "outcomes": derived,
-        "failure_variants": failure_variants,
+        "variants": variants,
+        "variants_by_outcome_class": {name: sorted(values) for name, values in by_class.items()},
     }
 
 
@@ -276,13 +300,13 @@ def derive_accounting(model: dict[str, Any]) -> dict[str, Any]:
             if transition is None or transition["ledger_effects"].get(name) != target["delta"]:
                 raise ValueError(f"accounting/model mismatch: {name}")
         targets[name] = target
-    obligations = derive_outcome_obligations(model)["outcomes"]
+    obligations = derive_outcome_obligations(model)["variants"]
     return {
         "schema": "pulsarmlx.f017.corrected-oracle-event-accounting/5.0.0",
         "semantic_model_sha256": canonical_sha256(model),
         **model["accounting_semantics"],
         "targets": targets,
-        "outcome_deltas": {name: value["ledger_deltas"] for name, value in obligations.items()},
+        "variant_deltas": {name: value["ledger_deltas"] for name, value in obligations.items()},
         "same_commit_banking": {
             "required": True,
             "package": ["package_durable_start", "package_ledger_entry", "package_ledger_index"],
@@ -301,9 +325,7 @@ def derive_path_timing(model: dict[str, Any]) -> dict[str, Any]:
     if actual_pairs != expected_pairs or len(actual_pairs) != len(relation["pairs"]):
         raise ValueError("root relation pair matrix is incomplete or duplicated")
     traces = {}
-    for name, outcome in model["terminal_outcomes"].items():
-        if not outcome["trace"]:
-            continue
+    for name, outcome in derive_outcome_obligations(model)["variants"].items():
         result = simulate_trace(model, outcome["trace"])
         traces[name] = dict(result.path_states)
     return {
@@ -311,6 +333,7 @@ def derive_path_timing(model: dict[str, Any]) -> dict[str, Any]:
         "semantic_model_sha256": canonical_sha256(model),
         "roles": model["path_roles"],
         "artifact_paths": model["artifact_path_descriptors"],
+        "artifact_file_validation": model["artifact_file_validation"],
         "absent_path_validation": model["absent_path_validation"],
         "root_relation_matrix": relation,
         "legal_trace_final_path_states": traces,
@@ -334,7 +357,7 @@ def derive_serialization(model: dict[str, Any]) -> dict[str, Any]:
 def validate_model(model: dict[str, Any]) -> dict[str, Any]:
     expected_top = {
         "schema", "authority_generation", "status", "authorization_schema", "initial_state", "accounting_semantics",
-        "states", "actors", "artifact_classes", "artifact_payload_key_census", "artifact_removals", "transitions", "terminal_outcomes",
+        "states", "actors", "artifact_classes", "artifact_payload_key_census", "artifact_removals", "artifact_self_sha_identities", "artifact_file_validation", "transitions", "outcome_classes", "terminal_branches",
         "start_transition_by_actor", "ledger_targets", "authority_activation", "path_roles",
         "absent_path_validation", "root_relation_matrix", "serialization", "measurement_authority", "artifact_path_descriptors",
         "authorization_document",
@@ -350,9 +373,21 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
     transitions = _index_transitions(model)
     states = set(model["states"])
     artifacts = set(model["artifact_classes"])
-    if set(model["artifact_payload_key_census"]) != artifacts or set(model["artifact_path_descriptors"]) != artifacts:
-        raise ValueError("artifact payload/path bidirectional census")
-    outcomes = set(model["terminal_outcomes"])
+    if (
+        set(model["artifact_payload_key_census"]) != artifacts
+        or set(model["artifact_path_descriptors"]) != artifacts
+        or set(model["artifact_self_sha_identities"]) != artifacts
+    ):
+        raise ValueError("artifact payload/path/self-SHA bidirectional census")
+    if model["artifact_file_validation"] != {
+        "create_mode": "EXCLUSIVE_NO_REPLACE",
+        "file_type": "REGULAR_FILE_NOFOLLOW",
+        "parent_validation": "STRICT_CANONICAL_NONSYMLINK_ANCESTRY",
+        "post_create_validation": "DESCRIPTOR_RELATIVE_REGULAR_FILE_NOFOLLOW",
+        "durability_and_readback": "F017_CANONICAL_JSON_BYTES_V1_READBACK_SEQUENCE",
+    }:
+        raise ValueError("artifact post-create validation authority")
+    outcomes = set(model["outcome_classes"])
     for transition in transitions.values():
         if transition["source"] not in states or transition["destination"] not in states:
             raise ValueError(f"transition state: {transition['id']}")
@@ -374,8 +409,8 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
         "semantic_model_sha256": canonical_sha256(model),
         "state_count": len(states),
         "transition_count": len(transitions),
-        "terminal_outcome_count": len(model["terminal_outcomes"]),
-        "failure_point_count": len(obligations["failure_variants"]),
+        "terminal_outcome_count": len(model["outcome_classes"]),
+        "failure_point_count": sum(1 for name in obligations["variants"] if name.startswith("FAILED::")),
         "artifact_class_count": len(artifacts),
         "accounting_target_count": len(accounting["targets"]),
         "root_relation_pair_count": len(paths["root_relation_matrix"]["pairs"]),

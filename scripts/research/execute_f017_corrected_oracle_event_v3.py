@@ -480,6 +480,8 @@ def main() -> int:
         run.add_argument("package_root", type=Path)
         run.add_argument("handshake_output", type=Path)
     arguments = parser.parse_args()
+    if arguments.command == "execute" or (arguments.command == "handshake" and arguments.scope == "PRODUCTION"):
+        raise SystemExit("HISTORICAL_ONLY: v3 production execution is permanently retired")
     if arguments.command == "preflight":
         preflight(arguments.contract, arguments.output)
         return 0

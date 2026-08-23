@@ -95,7 +95,8 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
     artifact_outcome_paths: dict[str, dict[str, str]] = defaultdict(dict)
     all_identities = set(base)
 
-    for outcome_name, outcome in obligations["outcomes"].items():
+    authorization_artifacts = {"candidate_authorization", "installed_authorization"}
+    for outcome_name, outcome in obligations["variants"].items():
         visible = set(base)
         for transition_id in outcome["trace"]:
             transition = transitions[transition_id]
@@ -105,8 +106,8 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
                 # An artifact cannot contain the SHA of its own bytes.  That SHA
                 # becomes available only after durable readback and is carried by
                 # the next artifact or an external measurement manifest.
-                own_sha = f"{artifact}_sha256"
-                bindings = (visible | introduced) - {own_sha}
+                own_sha = model["artifact_self_sha_identities"][artifact]
+                bindings = base if artifact in authorization_artifacts else (visible | introduced) - {own_sha}
                 artifact_outcome_bindings[artifact][outcome_name] = bindings
                 artifact_outcome_paths[artifact][outcome_name] = f"$.bindings"
             visible.update(introduced)
@@ -191,15 +192,21 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
     for artifact, meta in model["artifact_classes"].items():
         outcomes = artifact_outcome_bindings.get(artifact, {})
         identity_union = sorted(set().union(*outcomes.values()) if outcomes else set())
-        authorization_artifact = artifact in {"candidate_authorization", "installed_authorization"}
+        authorization_artifact = artifact in authorization_artifacts
         identity_paths = {
             name: authorization_json_path(model, name) if authorization_artifact and name in base else f"$.bindings.{name}"
             for name in identity_union
+        }
+        payload_equality = {
+            key: identity_paths[key]
+            for key in model["artifact_payload_key_census"][artifact]
+            if key in identity_paths
         }
         schemas[artifact] = {
             "artifact_schema_id": meta["schema"],
             "top_level_keys": model["authorization_document"]["top_level_keys"] if authorization_artifact else ["schema", "bindings", "payload"],
             "payload_key_census": model["artifact_payload_key_census"][artifact],
+            "payload_binding_equality": payload_equality,
             "identity_paths": identity_paths,
             "identity_required_outcomes": {
                 name: sorted(outcome for outcome, values in outcomes.items() if name in values)
@@ -234,6 +241,8 @@ def derive_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[str
         "candidate_authority": False,
         "live_authority_requirements": ["CANONICAL_INSTALL_PATH", "CANDIDATE_INSTALL_BYTE_IDENTITY", "INSTALLATION_RECEIPT", "OPERATOR_APPROVAL", "DUAL_CONSUMER_VALIDATION", "UNUSED_ROOTS"],
         "target_mode_requires_installation_receipt": True,
+        "candidate_path_descriptor": {**model["artifact_path_descriptors"]["candidate_authorization"], "authority": False},
+        "installed_path_descriptor": {**model["artifact_path_descriptors"]["installed_authorization"], "authorization_field": "canonical_install_path", "exact_path_equality": True},
         "expected_token_field_permitted": False,
         "validation_side_effect_limits": {"checkpoint_opens": 0, "checkpoint_reads": 0, "checkpoint_mmaps": 0, "state_roots_created": 0, "numerical_operations": 0},
     }

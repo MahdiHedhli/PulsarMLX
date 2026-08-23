@@ -70,10 +70,11 @@ class CoordinatorPreflightTests(unittest.TestCase):
             return_value={"git_head": "f" * 40, "local_remote_parity": True, "worktree_clean": True},
         )
 
-    def test_committed_v2_authority_and_inert_fixture_validate(self):
+    def test_committed_v2_authority_is_historical_and_no_longer_current(self):
         contract_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
         inert_path = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json"
-        access_v2.validate(access_v2.strict(inert_path), access_v2.strict(contract_path), ROOT)
+        with self.assertRaisesRegex(ValueError, "binding event_coordinator"):
+            access_v2.validate(access_v2.strict(inert_path), access_v2.strict(contract_path), ROOT)
 
     def test_v1_coordinator_is_historical_only_and_cannot_satisfy_v1_binding(self):
         old = ROOT / "scripts/research/execute_f017_corrected_oracle_event.py"
@@ -92,7 +93,7 @@ class CoordinatorPreflightTests(unittest.TestCase):
         self.assertNotIn("validate_f017_corrected_oracle_access.py validate", active_block)
         self.assertNotIn("scientific-access-v1.json", active_block)
 
-    def test_validation_cannot_mint_and_operator_command_requires_explicit_environment(self):
+    def test_validation_cannot_mint_and_v2_operator_command_is_historical_only(self):
         contract_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
         inert_path = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json"
         with tempfile.TemporaryDirectory() as directory:
@@ -101,9 +102,9 @@ class CoordinatorPreflightTests(unittest.TestCase):
                 [sys.executable, str(RESEARCH / "validate_f017_corrected_oracle_access_v2.py"), "validate", str(inert_path), str(contract_path), str(ROOT)],
                 text=True,
                 capture_output=True,
-                check=True,
             )
-            self.assertIn("PASS", result.stdout)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("binding event_coordinator", result.stderr)
             self.assertFalse(output.exists())
             attempted = subprocess.run(
                 [sys.executable, str(RESEARCH / "validate_f017_corrected_oracle_access_v2.py"), "authorize-live", str(inert_path), str(contract_path), str(ROOT), "missing-approval", "missing-preflight", "missing-checkpoint", str(Path(directory) / "state"), str(output)],
@@ -112,20 +113,17 @@ class CoordinatorPreflightTests(unittest.TestCase):
                 env={},
             )
             self.assertNotEqual(attempted.returncode, 0)
-            self.assertIn("operator mint environment missing", attempted.stderr)
+            self.assertIn("HISTORICAL_ONLY", attempted.stderr)
             self.assertFalse(output.exists())
 
-    def test_stale_preflight_cannot_authorize(self):
+    def test_v2_preflight_cannot_become_current_authority(self):
         contract_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"
         value = access_v2.strict(contract_path)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             completed = subprocess.CompletedProcess([], 0, stdout="Apple M1 Ultra\n", stderr="")
-            with self.patched_authority(), mock.patch.object(coordinator, "observe_vm_stat", return_value=observation()), mock.patch.object(coordinator.subprocess, "run", return_value=completed), mock.patch.object(coordinator.platform, "machine", return_value="arm64"):
-                report = coordinator.preflight(contract_path)
-            report["observation"]["observed_at_unix_ns"] = 1
-            with self.assertRaisesRegex(ValueError, "stale"):
-                access_v2.validate_preflight(report, value, ROOT)
+            with self.patched_authority(), mock.patch.object(coordinator, "observe_vm_stat", return_value=observation()), mock.patch.object(coordinator.subprocess, "run", return_value=completed), mock.patch.object(coordinator.platform, "machine", return_value="arm64"), self.assertRaisesRegex(ValueError, "coordinator identity"):
+                coordinator.preflight(contract_path)
 
     def test_authorizer_collects_preflight_from_bound_coordinator_no_replace(self):
         contract_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json"

@@ -53,6 +53,57 @@ EXPECTED_SERIALIZATION = {
     "self_sha_inside_artifact": False,
 }
 
+# These fixed digests are the independent reviewed semantic anchor.  Generated
+# views may change only when this validator is deliberately revised and reviewed;
+# regenerating documents from a coordinated model mutation is insufficient.
+EXPECTED_SEMANTIC_PROJECTION_SHAS = {
+    "authorization_document": "2c70b27182a9c5c6a1e77f56056fd0ec6a89e7ac64139b9be14ca2edc0e8a63a",
+    "transitions": "4f5d08ac6c5e2a963581285dc7abdaa91853cc181d06a8a87c327e5f3655197c",
+    "outcomes": "73d636a9b24e1d317c8870dbe90b47d06d1cff7559bb25983309175f70ba7494",
+    "artifact_authority": "f13cabf377fe9ad2312b95adf25830ce7852a07b409733759dd6eb04f019235c",
+    "path_authority": "12c215e3aa2f4d8f734e5f93daf8ff3360c49d1f4abd84a7c3f8a274523add74",
+    "serialization": "24fff464845971036876016a93401fee9bb239d08f5111798ae7eeabba857975",
+    "measurement_authority": "aedc88f53bdfcffa7e0ef2e950d822540c54afd18459a1f2518b415847684d71",
+    "accounting": "1de6086dade7f80c32d0b1f855137c7c21d41edc06cbfb8b4d01884a5daf98e9",
+    "activation_supersession": "78a4e2e8e25e462fd6c7bc1e1ca04f0c90dc924314bd79861a583263cfb10fae",
+    "registry_grammars": "4b822649c36b1fc5e75bd600a0266cf2f93607720a3063f3dc74af3ca66f2129",
+}
+
+
+def _semantic_projections(model: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "authorization_document": model["authorization_document"],
+        "transitions": model["transitions"],
+        "outcomes": {
+            "outcome_classes": model["outcome_classes"],
+            "terminal_branches": model["terminal_branches"],
+        },
+        "artifact_authority": {
+            "artifact_classes": model["artifact_classes"],
+            "artifact_payload_key_census": model["artifact_payload_key_census"],
+            "artifact_self_sha_identities": model["artifact_self_sha_identities"],
+            "artifact_file_validation": model["artifact_file_validation"],
+            "artifact_path_descriptors": model["artifact_path_descriptors"],
+            "artifact_removals": model["artifact_removals"],
+        },
+        "path_authority": {
+            "path_roles": model["path_roles"],
+            "absent_path_validation": model["absent_path_validation"],
+            "root_relation_matrix": model["root_relation_matrix"],
+        },
+        "serialization": model["serialization"],
+        "measurement_authority": model["measurement_authority"],
+        "accounting": {
+            "accounting_semantics": model["accounting_semantics"],
+            "ledger_targets": model["ledger_targets"],
+            "start_transition_by_actor": model["start_transition_by_actor"],
+        },
+        "activation_supersession": {
+            "authority_activation": model["authority_activation"],
+            "supersession": model["supersession"],
+        },
+    }
+
 
 def _identity_type(name: str) -> str:
     if name.endswith("_sha256"): return "SHA256"
@@ -96,14 +147,16 @@ def _expected_binding_surface(model: dict[str, Any], obligations: dict[str, Any]
     base = _authorization_identities(model)
     all_names = set(base)
     by_artifact: dict[str, dict[str, set[str]]] = {name: {} for name in model["artifact_classes"]}
-    for outcome_name, outcome in obligations["outcomes"].items():
+    authorization_artifacts = {"candidate_authorization", "installed_authorization"}
+    for outcome_name, outcome in obligations["variants"].items():
         visible = set(base)
         for tid in outcome["trace"]:
             transition = transitions[tid]
             introduced = set(transition["identities_introduced"])
             all_names.update(introduced)
             for artifact in transition["artifacts_created"]:
-                by_artifact[artifact][outcome_name] = (visible | introduced) - {f"{artifact}_sha256"}
+                own_sha = model["artifact_self_sha_identities"][artifact]
+                by_artifact[artifact][outcome_name] = base if artifact in authorization_artifacts else (visible | introduced) - {own_sha}
             visible.update(introduced)
     for transition in model["transitions"]:
         all_names.update(transition["identities_introduced"])
@@ -128,6 +181,8 @@ def _expected_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[
         "candidate_authority": False,
         "live_authority_requirements": ["CANONICAL_INSTALL_PATH", "CANDIDATE_INSTALL_BYTE_IDENTITY", "INSTALLATION_RECEIPT", "OPERATOR_APPROVAL", "DUAL_CONSUMER_VALIDATION", "UNUSED_ROOTS"],
         "target_mode_requires_installation_receipt": True,
+        "candidate_path_descriptor": {**model["artifact_path_descriptors"]["candidate_authorization"], "authority": False},
+        "installed_path_descriptor": {**model["artifact_path_descriptors"]["installed_authorization"], "authorization_field": "canonical_install_path", "exact_path_equality": True},
         "expected_token_field_permitted": False,
         "validation_side_effect_limits": {"checkpoint_opens": 0, "checkpoint_reads": 0, "checkpoint_mmaps": 0, "state_roots_created": 0, "numerical_operations": 0},
     }
@@ -140,6 +195,9 @@ def _exact_canonical(path: Path, value: Any) -> None:
 
 def validate_semantics(model: dict[str, Any]) -> None:
     validate_model(model)
+    for name, projection in _semantic_projections(model).items():
+        if canonical_sha256(projection) != EXPECTED_SEMANTIC_PROJECTION_SHAS[name]:
+            raise ValueError(f"independently anchored semantic projection drift: {name}")
     if model["authorization_schema"] != "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/5.0.0":
         raise ValueError("authorization generation")
     if model["supersession"] != {
@@ -178,6 +236,14 @@ def validate_semantics(model: dict[str, Any]) -> None:
         "scripts/research/f017_lifecycle_semantics_v5.py",
         "scripts/research/generate_f017_lifecycle_v5_authorities.py",
         "scripts/research/validate_f017_lifecycle_semantic_authority_v5.py",
+        "scripts/research/validate_f017_corrected_oracle_access.py",
+        "scripts/research/execute_f017_corrected_oracle_event.py",
+        "scripts/research/validate_f017_corrected_oracle_access_v2.py",
+        "scripts/research/execute_f017_corrected_oracle_event_v2.py",
+        "scripts/research/validate_f017_corrected_oracle_access_v3.py",
+        "scripts/research/execute_f017_corrected_oracle_event_v3.py",
+        "scripts/research/f017_corrected_oracle_primary_v3.py",
+        "scripts/research/f017_corrected_oracle_secondary_v3.py",
         "scripts/research/f017_corrected_oracle_authorization_v5.py",
         "scripts/research/f017_corrected_oracle_primary_v5.py",
         "scripts/research/f017_corrected_oracle_secondary_v5.py",
@@ -194,6 +260,20 @@ def validate_semantics(model: dict[str, Any]) -> None:
     }
     if set(model["measurement_authority"].get("required_entries", [])) != required_measurements:
         raise ValueError("implementation measurement entry census")
+    retirement_sentinels = {
+        "scripts/research/validate_f017_corrected_oracle_access.py": "HISTORICAL_ONLY: v1 live mint is permanently retired",
+        "scripts/research/execute_f017_corrected_oracle_event.py": "HISTORICAL_ONLY: corrected-oracle coordinator v1 is superseded and ineligible for live authority",
+        "scripts/research/validate_f017_corrected_oracle_access_v2.py": "HISTORICAL_ONLY: v2 live mint is permanently retired",
+        "scripts/research/execute_f017_corrected_oracle_event_v2.py": "HISTORICAL_ONLY: v2 execution is permanently retired",
+        "scripts/research/validate_f017_corrected_oracle_access_v3.py": "HISTORICAL_ONLY: v3 live mint is permanently retired",
+        "scripts/research/execute_f017_corrected_oracle_event_v3.py": "HISTORICAL_ONLY: v3 production execution is permanently retired",
+        "scripts/research/f017_corrected_oracle_primary_v3.py": "HISTORICAL_ONLY: v3 primary production target is permanently retired",
+        "scripts/research/f017_corrected_oracle_secondary_v3.py": "HISTORICAL_ONLY: v3 secondary production target is permanently retired",
+    }
+    for relative, sentinel in retirement_sentinels.items():
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        if sentinel not in source:
+            raise ValueError(f"historical live surface remains reachable: {relative}")
 
 
 def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]]) -> dict[str, int]:
@@ -219,14 +299,25 @@ def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]])
     names = [item.get("name") for item in identities]
     if len(names) != len(set(names)) or set(names) != expected_names:
         raise ValueError("identity registry completeness")
+    if canonical_sha256(registry.get("grammars")) != EXPECTED_SEMANTIC_PROJECTION_SHAS["registry_grammars"]:
+        raise ValueError("independently anchored registry grammar drift")
+    identity_key_census = {
+        "name", "type", "grammar", "authority_source", "derivation_permitted",
+        "mismatch_behavior", "bound_artifact_outcomes",
+    }
+    authorization_names = _authorization_identities(model)
     for identity in identities:
+        if set(identity) != identity_key_census:
+            raise ValueError(f"identity record key census: {identity.get('name')}")
         name = identity["name"]
         expected_bound = {
             artifact: sorted(outcome for outcome, values in outcomes.items() if name in values)
             for artifact, outcomes in expected_bindings.items()
             if any(name in values for values in outcomes.values())
         }
-        if identity.get("type") != _identity_type(name) or identity.get("derivation_permitted") is not False or identity.get("mismatch_behavior") != "FAIL_CLOSED_BEFORE_NEXT_TRANSITION" or identity.get("bound_artifact_outcomes") != expected_bound:
+        expected_source = "AUTHORIZATION_DOCUMENT" if name in authorization_names else "SEMANTIC_TRANSITION_READBACK"
+        expected_grammar = registry["grammars"][_identity_type(name)]
+        if identity.get("type") != _identity_type(name) or identity.get("grammar") != expected_grammar or identity.get("authority_source") != expected_source or identity.get("derivation_permitted") is not False or identity.get("mismatch_behavior") != "FAIL_CLOSED_BEFORE_NEXT_TRANSITION" or identity.get("bound_artifact_outcomes") != expected_bound:
             raise ValueError(f"identity semantic drift: {name}")
     artifact_names = set(model["artifact_classes"])
     if matrix.get("columns") != sorted(artifact_names) or matrix.get("row_count") != len(matrix.get("rows", [])):
@@ -262,6 +353,8 @@ def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]])
         if schema.get("top_level_keys") != expected_top or schema.get("payload_key_census") != model["artifact_payload_key_census"][artifact]:
             raise ValueError(f"artifact key census: {artifact}")
         expected_identity_names = sorted(set().union(*expected_bindings[artifact].values()) if expected_bindings[artifact] else set())
+        if authorization_artifact and set(expected_identity_names) != _authorization_identities(model):
+            raise ValueError(f"authorization document contains non-document lifecycle bindings: {artifact}")
         expected_paths = {
             name: _authorization_json_path(model, name) if authorization_artifact and name in _authorization_identities(model) else f"$.bindings.{name}"
             for name in expected_identity_names
@@ -270,15 +363,22 @@ def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]])
             name: sorted(outcome for outcome, values in expected_bindings[artifact].items() if name in values)
             for name in expected_identity_names
         }
-        if schema.get("identity_paths") != expected_paths or schema.get("identity_required_outcomes") != expected_required:
+        expected_payload_equality = {
+            key: expected_paths[key]
+            for key in model["artifact_payload_key_census"][artifact]
+            if key in expected_paths
+        }
+        if schema.get("identity_paths") != expected_paths or schema.get("identity_required_outcomes") != expected_required or schema.get("payload_binding_equality") != expected_payload_equality:
             raise ValueError(f"artifact binding channel drift: {artifact}")
+        if authorization_artifact and any(path.startswith("$.bindings") for path in schema["identity_paths"].values()):
+            raise ValueError(f"authorization document has unrealizable bindings channel: {artifact}")
     if interface != _expected_interface(model, schemas):
         raise ValueError("authorization interface semantic drift")
     accounting = documents["accounting"]
     if accounting.get("authorization_mint_execution_delta") != 0 or accounting.get("consumer_grant_is_start") is not False or accounting.get("reservation_is_execution") is not False:
         raise ValueError("reservation/execution semantic drift")
     paths = documents["paths"]
-    for outcome_name, obligation in expected["outcomes"]["outcomes"].items():
+    for outcome_name, obligation in expected["outcomes"]["variants"].items():
         final = paths["legal_trace_final_path_states"][outcome_name]
         for artifact in obligation["required_artifacts"]:
             if final.get(f"ARTIFACT::{artifact}") != "MUST_EXIST_REGULAR_FILE":
@@ -299,8 +399,8 @@ def assert_mutations_rejected(model: dict[str, Any], docs: dict[str, dict[str, A
     add_model(lambda m: m["ledger_targets"]["CORRECTED_ORACLE_SECONDARY_EVENT_LEDGER"].update(delta=0))
     add_model(lambda m: m["ledger_targets"]["HISTORICAL_REAL_PAYLOAD_LEDGER"].update(after=176, delta=1))
     add_model(lambda m: m["ledger_targets"]["CORRECTED_ORACLE_PACKAGE_ATTEMPT_LEDGER"].update(advance_transition="T06_INSTALL_AUTHORIZATION"))
-    add_model(lambda m: m["terminal_outcomes"]["SECONDARY_PRE_START_FAILURE"].update(secondary_started=True))
-    add_model(lambda m: m["terminal_outcomes"]["COMPLETE_SUCCESS"].update(primary_started=False))
+    add_model(lambda m: m["terminal_branches"]["SECONDARY_PRE_START_FAILURE"].update(secondary_started=True))
+    add_model(lambda m: m["terminal_branches"]["COMPLETE_SUCCESS"].update(primary_started=False))
     add_model(lambda m: m["absent_path_validation"].update(resolve_absent_leaf_strictly=True))
     add_model(lambda m: m["root_relation_matrix"]["pairs"].pop())
     add_model(lambda m: m["serialization"].update(sort_keys=False))
@@ -312,9 +412,19 @@ def assert_mutations_rejected(model: dict[str, Any], docs: dict[str, dict[str, A
     add_model(lambda m: m["artifact_path_descriptors"].pop("package_terminal"))
     add_model(lambda m: m["artifact_removals"].clear())
     add_model(lambda m: m["measurement_authority"].update(required_entries=[]))
-    add_doc("accounting", lambda d: d["outcome_deltas"]["SECONDARY_PRE_START_FAILURE"].update(CORRECTED_ORACLE_SECONDARY_EVENT_LEDGER=1))
-    add_doc("outcomes", lambda d: d["outcomes"]["SECONDARY_PRE_START_FAILURE"]["forbidden_artifacts"].remove("secondary_terminal"))
-    add_doc("outcomes", lambda d: d["outcomes"]["PRIMARY_POST_START_FAILURE"]["required_artifacts"].remove("primary_receipt"))
+    add_model(lambda m: m["transitions"][1].update(preconditions=[]))
+    add_model(lambda m: m["transitions"][1].update(prohibited_side_effects=[]))
+    add_model(lambda m: m["states"].append("P1_EXECUTION_AUTHORIZED"))
+    add_model(lambda m: m["authorization_document"]["pinned_values"].update(prompt_token=9704))
+    add_model(lambda m: m["root_relation_matrix"]["pairs"][0].update(relation="EQUAL"))
+    add_model(lambda m: m["serialization"]["readback_sequence"].remove("DESCRIPTOR_RELATIVE_REOPEN"))
+    add_model(lambda m: m["measurement_authority"].update(measurement_head_semantics="UNDEFINED"))
+    add_model(lambda m: m["start_transition_by_actor"].update(secondary="T12_START_PRIMARY"))
+    add_model(lambda m: m["artifact_file_validation"].update(post_create_validation="NONE"))
+    add_model(lambda m: m["artifact_self_sha_identities"].update(candidate_authorization="installed_authorization_sha256"))
+    add_doc("accounting", lambda d: d["variant_deltas"]["TERMINAL::SECONDARY_PRE_START_FAILURE"].update(CORRECTED_ORACLE_SECONDARY_EVENT_LEDGER=1))
+    add_doc("outcomes", lambda d: d["variants"]["TERMINAL::SECONDARY_PRE_START_FAILURE"]["forbidden_artifacts"].remove("secondary_terminal"))
+    add_doc("outcomes", lambda d: d["variants"]["TERMINAL::PRIMARY_POST_START_FAILURE"]["required_artifacts"].remove("primary_receipt"))
     add_doc("schemas", lambda d: d["artifacts"]["package_terminal"].update(artifact_schema_id="forged/1.0.0"))
     add_doc("interface", lambda d: d["top_level_keys"].append("unknown"))
     add_doc("interface", lambda d: d["pinned_values"].update(p1_authority="PERMITTED"))
@@ -325,6 +435,12 @@ def assert_mutations_rejected(model: dict[str, Any], docs: dict[str, dict[str, A
     add_doc("serialization", lambda d: d.update(artifact_sha256_domain="UNDEFINED"))
     add_doc("registry", lambda d: d["identities"][0].update(derivation_permitted=True, mismatch_behavior="IGNORE"))
     add_doc("schemas", lambda d: d["artifacts"]["package_terminal"].update(payload_key_census=["result"]))
+    add_doc("schemas", lambda d: d["artifacts"]["candidate_authorization"]["identity_paths"].update(candidate_sha256="$.bindings.candidate_sha256"))
+    add_doc("outcomes", lambda d: d["variants"]["FAILED::T07_BANK_INSTALL_RECEIPT"]["required_artifacts"].remove("installed_authorization"))
+    add_doc("outcomes", lambda d: d["variants"]["TERMINAL::SECONDARY_PRE_START_FAILURE"]["required_artifacts"].append("secondary_terminal"))
+    add_doc("paths", lambda d: d["artifact_file_validation"].update(create_mode="REPLACE_ALLOWED"))
+    add_doc("registry", lambda d: d["grammars"]["LIVE_ID"].update(pattern=".*"))
+    add_doc("registry", lambda d: d["identities"][0].pop("authority_source"))
     bad_docs = copy.deepcopy(docs)
     removed = "primary_terminal_sha256"
     bad_docs["registry"]["identities"] = [item for item in bad_docs["registry"]["identities"] if item["name"] != removed]

@@ -158,6 +158,7 @@ def main():
  check=sub.add_parser("preflight");check.add_argument("contract",type=Path);check.add_argument("output",type=Path)
  run=sub.add_parser("execute");run.add_argument("authorization",type=Path);run.add_argument("contract",type=Path);run.add_argument("catalog",type=Path);run.add_argument("checkpoint_root",type=Path);run.add_argument("geometry",type=Path);run.add_argument("state_root",type=Path)
  args=parser.parse_args()
+ if args.command=="execute": raise SystemExit("HISTORICAL_ONLY: v2 execution is permanently retired")
  if args.command=="preflight": preflight(args.contract,args.output);return 0
  return execute(args)
 if __name__=="__main__": raise SystemExit(main())

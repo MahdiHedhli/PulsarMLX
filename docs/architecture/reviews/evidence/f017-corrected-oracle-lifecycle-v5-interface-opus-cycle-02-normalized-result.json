@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-interface-opus-normalized-result/1.0.0",
+  "cycle": 2,
+  "reviewer": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "af77aace06f591770c07f85b29f369db9feb33b3",
+  "request_sha256": "733de34873bbc0d322de81002379bf89ac4322f7b4c2fd2a43799502ba9dbb04",
+  "response_sha256": "0ae7afc4333c6514aa6c7dcd68c7036c325facb2cddc12d79c49733a9bfce1a4",
+  "blocking": [
+    "C2-B-1_UNANCHORED_AUTHORIZATION_AND_TRANSITION_SEMANTICS",
+    "C2-B-2_UNREALIZABLE_AUTHORIZATION_BINDINGS_LAYOUT",
+    "C2-B-3_CANDIDATE_INSTALLED_IDENTITY_CONTRADICTION",
+    "C2-B-4_CANDIDATE_SELF_SHA_FIXED_POINT",
+    "C2-B-5_BROAD_OUTCOME_DURABLE_STATE_CONTRADICTION"
+  ],
+  "non_blocking_required": [
+    "C2-N-1_PAYLOAD_CENSUS_NOT_INDEPENDENTLY_ANCHORED",
+    "C2-N-2_FORBIDDEN_ARTIFACTS_INCOMPLETE",
+    "C2-N-3_ROOT_RELATION_AUTHORITY_UNANCHORED",
+    "C2-N-4_READBACK_AND_MEASUREMENT_SEMANTICS_UNANCHORED"
+  ],
+  "defense_in_depth": [
+    "C2-D-1_ARTIFACT_POST_CREATE_VALIDATION_INCOMPLETE",
+    "C2-D-2_AUTHORIZATION_FILE_DESCRIPTORS_UNBOUND",
+    "C2-D-3_REGISTRY_GRAMMAR_AND_RECORD_CENSUS_UNVALIDATED",
+    "C2-D-4_START_TRANSITION_AND_UNREACHABLE_STATE",
+    "C2-D-5_SELF_MUTATION_TAUTOLOGY"
+  ],
+  "verdict": "REJECT",
+  "prohibited_actions_observed": false
+}

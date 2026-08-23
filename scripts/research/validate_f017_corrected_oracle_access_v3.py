@@ -145,6 +145,8 @@ def _require_unused_live_identities(approval: dict, approval_path: Path) -> None
 def build_candidate(inert: dict, contract_path: Path, contract: dict, approval_path: Path,
                     preflight_path: Path, checkpoint_root: Path, package_root: Path,
                     *, scope: str) -> dict:
+    if scope == "PRODUCTION":
+        raise ValueError("HISTORICAL_ONLY: v3 production candidate construction is permanently retired")
     validate_document(inert, contract, ROOT, require_live=False, expected_scope=scope,
                       contract_sha256=sha256_path(contract_path))
     approval = strict_path(approval_path)
@@ -303,6 +305,8 @@ def main() -> int:
     mint.add_argument("evidence_output", type=Path)
     mint.add_argument("report_directory", type=Path)
     arguments = parser.parse_args()
+    if arguments.command == "authorize-live":
+        raise SystemExit("HISTORICAL_ONLY: v3 live mint is permanently retired")
     repo = arguments.repo.resolve()
     if repo != ROOT:
         raise SystemExit("repository root mismatch")

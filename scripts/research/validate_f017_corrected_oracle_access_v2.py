@@ -119,7 +119,9 @@ def main():
  parser=argparse.ArgumentParser();sub=parser.add_subparsers(dest="cmd",required=True)
  check=sub.add_parser("validate");check.add_argument("authorization",type=Path);check.add_argument("contract",type=Path);check.add_argument("repo",type=Path);check.add_argument("--require-live",action="store_true")
  mint=sub.add_parser("authorize-live");mint.add_argument("inert",type=Path);mint.add_argument("contract",type=Path);mint.add_argument("repo",type=Path);mint.add_argument("operator_approval",type=Path);mint.add_argument("preflight_report",type=Path);mint.add_argument("checkpoint_root",type=Path);mint.add_argument("state_root",type=Path);mint.add_argument("output",type=Path)
- args=parser.parse_args();repo=args.repo.resolve();contract_path,contract=exact_contract(args.contract,repo)
+ args=parser.parse_args()
+ if args.cmd=="authorize-live": raise SystemExit("HISTORICAL_ONLY: v2 live mint is permanently retired")
+ repo=args.repo.resolve();contract_path,contract=exact_contract(args.contract,repo)
  if args.cmd=="validate": validate(strict(args.authorization),contract,repo,args.require_live);print("PASS");return 0
  if os.environ.get("F017_OPERATOR_MINT_CORRECTED_ORACLE_V2")!="I_UNDERSTAND_THIS_OPENS_THE_ORIGINAL_CHECKPOINT_ON_EXECUTION": raise SystemExit("operator mint environment missing")
  auth=strict(args.inert);validate(auth,contract,repo);approval=strict(args.operator_approval)

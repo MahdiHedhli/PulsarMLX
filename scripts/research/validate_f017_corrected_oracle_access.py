@@ -71,7 +71,9 @@ def main():
     p=argparse.ArgumentParser();sub=p.add_subparsers(dest="cmd",required=True)
     v=sub.add_parser("validate");v.add_argument("authorization",type=Path);v.add_argument("contract",type=Path);v.add_argument("repo",type=Path);v.add_argument("--require-live",action="store_true")
     a=sub.add_parser("authorize-live");a.add_argument("inert",type=Path);a.add_argument("contract",type=Path);a.add_argument("repo",type=Path);a.add_argument("operator_approval",type=Path);a.add_argument("checkpoint_root",type=Path);a.add_argument("state_root",type=Path);a.add_argument("output",type=Path)
-    x=p.parse_args();contract=strict(x.contract)
+    x=p.parse_args()
+    if x.cmd=="authorize-live": raise SystemExit("HISTORICAL_ONLY: v1 live mint is permanently retired")
+    contract=strict(x.contract)
     if x.cmd=="validate": validate(strict(x.authorization),contract,x.repo.resolve(),x.require_live);print("PASS");return 0
     # Deliberately separate operator-only command; validation cannot mint.
     if os.environ.get("F017_OPERATOR_MINT_CORRECTED_ORACLE")!="I_UNDERSTAND_THIS_OPENS_THE_ORIGINAL_CHECKPOINT_ON_EXECUTION": raise SystemExit("operator mint environment missing")
