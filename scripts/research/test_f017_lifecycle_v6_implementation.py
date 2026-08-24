@@ -177,7 +177,7 @@ class LifecycleV6ImplementationTests(unittest.TestCase):
                 "entry_count": len(entries),
                 "evidence_descendant_may_not_change_measured_bytes": True,
                 "parent_measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v4.json",
-                "parent_measurement_manifest_sha256": "a" * 64,
+                "parent_measurement_manifest_sha256": hashlib.sha256((ROOT / "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v4.json").read_bytes()).hexdigest(),
             }
             manifest_path = Path(temporary) / "measurement.json"
             manifest_path.write_bytes(canonical_bytes(manifest))

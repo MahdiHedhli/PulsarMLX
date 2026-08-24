@@ -173,6 +173,7 @@ def validate_implementation_measurement(document: dict, manifest_path: Path) -> 
         or not manifest["entries"]
         or manifest["parent_measurement_manifest_path"] != "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v4.json"
         or not re.fullmatch(r"[0-9a-f]{64}", manifest["parent_measurement_manifest_sha256"])
+        or sha256_path(ROOT / manifest["parent_measurement_manifest_path"]) != manifest["parent_measurement_manifest_sha256"]
     ):
         raise ValueError("implementation measurement authority")
     seen: set[str] = set()
