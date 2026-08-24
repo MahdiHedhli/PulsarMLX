@@ -17,17 +17,72 @@ from typing import Any
 
 from f017_corrected_oracle_authorization_v6 import canonical_bytes, read_regular_nofollow, strict_bytes
 from f017_corrected_oracle_wrapper_support_v6 import ROOT, bank, require_active
-from f017_lifecycle_artifact_v6 import authorization_bindings, bank_artifact
+from f017_lifecycle_artifact_v6 import SCHEMAS, SUCCESS_OUTCOME, authorization_bindings, bank_artifact
 
 INTERFACE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json"
 INERT = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6.json"
 PRIMARY = ROOT / "scripts/research/f017_corrected_oracle_primary_v6.py"
 SECONDARY = ROOT / "scripts/research/f017_corrected_oracle_secondary_v6.py"
 INSTALL_RECEIPT_SCHEMA = "pulsarmlx.f017.corrected-oracle-authorization-installation-receipt/6.0.0"
+OPERATOR_APPROVAL_SCHEMA = "pulsarmlx.f017.corrected-oracle-operator-approval/6.0.0"
 
 
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def validate_operator_approval(
+    document: dict[str, Any],
+    approval_path: Path | None,
+    expected_sha256: str,
+    *,
+    allow_synthetic: bool,
+    allow_rehearsal: bool,
+) -> None:
+    """Require explicit GO semantics before a production install can exist."""
+    scope = document["authority_scope"]
+    if scope == "SYNTHETIC_QUALIFICATION" and allow_synthetic:
+        return
+    if approval_path is None:
+        raise ValueError("operator approval bytes required")
+    approval_bytes = read_regular_nofollow(approval_path)
+    if sha256_bytes(approval_bytes) != expected_sha256 or document["operator_approval_sha256"] != expected_sha256:
+        raise ValueError("operator approval byte identity")
+    approval = strict_bytes(approval_bytes)
+    if scope == "PRODUCTION_SHAPED_REHEARSAL" and allow_rehearsal:
+        if approval != {
+            "schema": "pulsarmlx.f017.corrected-oracle-rehearsal-approval/6.0.0",
+            "authority": False,
+            "operator_go": False,
+            "event_04_authorization_permitted": False,
+            "purpose": "PRODUCTION_SHAPED_NO_ACCESS_REHEARSAL",
+        }:
+            raise ValueError("rehearsal approval semantics")
+        return
+    if scope != "PRODUCTION":
+        raise ValueError("unsupported operator approval scope")
+    if set(approval) != {"schema", "bindings", "payload"} or approval["schema"] != OPERATOR_APPROVAL_SCHEMA:
+        raise ValueError("production operator approval schema")
+    payload = approval["payload"]
+    if set(payload) != {"decision", "approved_at_utc", "operator_identity", "new_go", "prior_go_reused", "p1_attempt_2"}:
+        raise ValueError("production operator approval payload census")
+    if (
+        payload["decision"] != "GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04"
+        or payload["new_go"] is not True
+        or payload["prior_go_reused"] is not False
+        or payload["p1_attempt_2"] is not False
+        or type(payload["operator_identity"]) is not str
+        or not payload["operator_identity"].strip()
+        or type(payload["approved_at_utc"]) is not str
+        or not payload["approved_at_utc"].endswith("Z")
+    ):
+        raise ValueError("fresh Event-04 operator GO required")
+    schema = strict_bytes(read_regular_nofollow(SCHEMAS))["artifacts"]["operator_approval"]
+    bindings = authorization_bindings(document)
+    required = sorted(name for name, outcomes in schema["identity_required_outcomes"].items() if SUCCESS_OUTCOME in outcomes)
+    expected_bindings = {name: bindings[name] for name in required}
+    if approval["bindings"] != expected_bindings:
+        raise ValueError("operator approval lifecycle binding")
 
 
 def construct_candidate_from_inert(replacements: dict[str, Any], inert_path: Path = INERT) -> dict[str, Any]:
@@ -143,12 +198,20 @@ def install_candidate(
     handshake: dict[str, Any],
     *,
     operator_approval_sha256: str,
+    operator_approval_path: Path | None = None,
     allow_synthetic: bool = False,
     allow_rehearsal: bool = False,
 ) -> dict[str, Any]:
     """Exclusively install byte-identical candidate and bank its receipt."""
     data = read_regular_nofollow(candidate)
     document = strict_bytes(data)
+    validate_operator_approval(
+        document,
+        operator_approval_path,
+        operator_approval_sha256,
+        allow_synthetic=allow_synthetic,
+        allow_rehearsal=allow_rehearsal,
+    )
     if document["authority_scope"] == "SYNTHETIC_QUALIFICATION":
         if not allow_synthetic:
             raise ValueError("synthetic installation requires explicit qualification boundary")

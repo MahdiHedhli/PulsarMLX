@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 import tempfile
 import unittest
@@ -13,6 +14,7 @@ from f017_corrected_oracle_wrapper_support_v6 import require_active
 from f017_lifecycle_semantics_v6 import MODEL_PATH, derive_outcome_obligations, load_json
 from qualify_f017_lifecycle_v6 import execute_failure_variant, qualify_outcomes, run_package
 from qualify_f017_corrected_oracle_target_adapters_v6 import run_once as run_adapter
+from validate_f017_corrected_oracle_access_v6 import validate_operator_approval
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -125,6 +127,33 @@ class LifecycleV6ImplementationTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "canonical production primary capability path"):
             validate_authority_bindings(document, interface, interface_path)
+
+    def test_false_operator_go_cannot_install_production_authority(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="f017-v6-false-go-") as temporary:
+            approval_path = Path(temporary) / "approval.json"
+            approval = {
+                "schema": "pulsarmlx.f017.corrected-oracle-operator-approval/6.0.0",
+                "bindings": {},
+                "payload": {
+                    "decision": "GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04",
+                    "approved_at_utc": "2026-08-24T00:00:00Z",
+                    "operator_identity": "synthetic-negative-test",
+                    "new_go": False,
+                    "prior_go_reused": False,
+                    "p1_attempt_2": False,
+                },
+            }
+            approval_path.write_bytes(canonical_bytes(approval))
+            approval_sha = hashlib.sha256(approval_path.read_bytes()).hexdigest()
+            document = {"authority_scope": "PRODUCTION", "operator_approval_sha256": approval_sha}
+            with self.assertRaisesRegex(ValueError, "fresh Event-04 operator GO required"):
+                validate_operator_approval(
+                    document,
+                    approval_path,
+                    approval_sha,
+                    allow_synthetic=False,
+                    allow_rehearsal=False,
+                )
 
     def test_only_reviewed_v6_production_generation_is_active(self) -> None:
         require_active("PRODUCTION")

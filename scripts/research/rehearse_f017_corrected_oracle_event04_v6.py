@@ -144,7 +144,15 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
         report_root = work / "candidate-reports"; report_root.mkdir()
         candidate_handshake = validate_candidate(candidate, interface_path, checkpoint_root, report_root)
         receipt_path = work / "installation-receipt.json"
-        install_candidate(candidate, installed, receipt_path, candidate_handshake, operator_approval_sha256=approval_sha, allow_rehearsal=True)
+        install_candidate(
+            candidate,
+            installed,
+            receipt_path,
+            candidate_handshake,
+            operator_approval_sha256=approval_sha,
+            operator_approval_path=approval_path,
+            allow_rehearsal=True,
+        )
         installed_root = work / "installed-handshake"; installed_root.mkdir()
         handshake = installed_handshake(installed, interface_path, checkpoint_root, receipt_path, installed_root)
         roots = [Path(replacements[name][kind]) for name in ("package", "primary", "secondary") for kind in ("state_root", "output_root")]
