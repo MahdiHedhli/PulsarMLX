@@ -181,11 +181,19 @@ def parse_authorization(
             "schema", "result", "authorization_id", "package_attempt_id",
             "primary_event_id", "secondary_event_id", "candidate_sha256",
             "installed_authorization_sha256", "installation_path",
+            "primary_validation_report_sha256", "secondary_validation_report_sha256",
+            "operator_approval_sha256", "installation_timestamp_unix_ns",
             "candidate_install_byte_identity",
         }
         if set(receipt) != required or receipt["result"] != "PASS":
             raise ValueError("installation receipt census")
-        if receipt["authorization_id"] != document["authorization_id"] or receipt["package_attempt_id"] != document["package_attempt_id"]:
+        if (
+            receipt["authorization_id"] != document["authorization_id"]
+            or receipt["package_attempt_id"] != document["package_attempt_id"]
+            or receipt["primary_event_id"] != document["primary_event_id"]
+            or receipt["secondary_event_id"] != document["secondary_event_id"]
+            or receipt["operator_approval_sha256"] != document["operator_approval_sha256"]
+        ):
             raise ValueError("installation receipt identity")
         if receipt["installed_authorization_sha256"] != hashlib.sha256(data).hexdigest() or receipt["candidate_install_byte_identity"] is not True:
             raise ValueError("installed authorization readback")

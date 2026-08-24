@@ -482,13 +482,14 @@ EXPECTED_SERIALIZATION = {
 # views may change only when this validator is deliberately revised and reviewed;
 # regenerating documents from a coordinated model mutation is insufficient.
 EXPECTED_SEMANTIC_PROJECTION_SHAS = {
+    "complete_model": "502c147407be3e0e2e3e8a8d97f4d20264a27c7c97ba2064ef971047d9d2da51",
     "authorization_document": "79776a1c1ac0f1aa72ae626feaf575aa0e4d02720059b94ea612ebf0f937d415",
     "transitions": "4f5d08ac6c5e2a963581285dc7abdaa91853cc181d06a8a87c327e5f3655197c",
     "outcomes": "73d636a9b24e1d317c8870dbe90b47d06d1cff7559bb25983309175f70ba7494",
     "artifact_authority": "6cc201896e67f3d5558f4d84302e810b449185d05c7db2d7a105f801c031b48e",
     "path_authority": "12c215e3aa2f4d8f734e5f93daf8ff3360c49d1f4abd84a7c3f8a274523add74",
     "serialization": "24fff464845971036876016a93401fee9bb239d08f5111798ae7eeabba857975",
-    "measurement_authority": "9f039d605b43b723cc96feed486a12de7cde2526a6593f0c18c8b5e23de13ac7",
+    "measurement_authority": "4e95a4464cd6abb37c3cda83e7463e6af53ac3d0e6d2621080018e51e440f0af",
     "accounting": "1de6086dade7f80c32d0b1f855137c7c21d41edc06cbfb8b4d01884a5daf98e9",
     "activation_supersession": "6b3bfeb3b7262a19c27fe41614e11f5b4c85a4bcf0f2001467fab5fafdf5a46b",
     "registry_grammars": "4b822649c36b1fc5e75bd600a0266cf2f93607720a3063f3dc74af3ca66f2129",
@@ -496,20 +497,21 @@ EXPECTED_SEMANTIC_PROJECTION_SHAS = {
 }
 
 EXPECTED_AUTHORITY_FILE_SHAS = {
-    "model": "54fb83da40f953ee5bad66c8076245a974f2aefa0215eea49df2b17f6442fc12",
-    "outcomes": "e9de4660d1994e91224f1363044ad9df7bca1f96ed95269ef863c76385fbbf9a",
-    "accounting": "049815711b9bc22cfce9e8737e8028134f1f77306f2f5b8625c5821d75f982d1",
-    "paths": "363b5a7f15e12cafd6f67bb8838786e212ea80c0789ddaf9c0a43874ad484ea4",
-    "serialization": "de301340c82d1eba7fb49abbcafaea8bb248ab0b6602b0c876ccd2d7c27eee1f",
-    "interface": "8313cf6d56f5a5a45bb42641eb463fce20c788136cc95bfe4213d72a9964c577",
-    "registry": "581e7fb2328f6433fe283e3fc6680d6ab7877fa18170f93852963f0cee3caac7",
-    "matrix": "c20c2b7688ea8a94ba4d7a2e06073736d3849c4396c10212a253715456fcba9c",
-    "schemas": "189eeea17975f0c11300b9bb4e5d294772d3591ede3f12e07bad562227a2664d",
+    "model": "502c147407be3e0e2e3e8a8d97f4d20264a27c7c97ba2064ef971047d9d2da51",
+    "outcomes": "87c7a986b239164e8e957ae9dc2e7df99d01b767f6e8be785d2a81f564f9a761",
+    "accounting": "71f65e56c8b5122c2d74a59201305c19ca7e180040c768279f0912eada9a72f8",
+    "paths": "44b8c2facd5bbdf74d612e8ef0447b45eccd86c26f6879025d882cbdb6dac83b",
+    "serialization": "450d1b79ab7bb35de1c268aef60481413983c5bd37213733633606121f0e0da2",
+    "interface": "a0e93fadc24b06f9514e234c5fff474c895d2054b09b44be3a9f58b43066b932",
+    "registry": "87d3f9805cd2699a3d6d8d5bb868cd49c8a9998b82ea26b52b240919374d63da",
+    "matrix": "d0aa3d7bf8a21a020131a48e478d1718002715751932ceb917e5ccfa64211b7c",
+    "schemas": "2bf49ffdb9a013990463bda38ea7185e1312a2fb96fdd423428b658910bb8cd0",
 }
 
 
 def _semantic_projections(model: dict[str, Any]) -> dict[str, Any]:
     return {
+        "complete_model": model,
         "authorization_document": model["authorization_document"],
         "transitions": model["transitions"],
         "outcomes": {
@@ -593,9 +595,11 @@ def _expected_binding_surface(model: dict[str, Any], obligations: dict[str, Any]
             transition = transitions[tid]
             introduced = set(transition["identities_introduced"])
             all_names.update(introduced)
+            available = set(visible)
             for artifact in transition["artifacts_created"]:
                 own_sha = model["artifact_self_sha_identities"][artifact]
-                by_artifact[artifact][outcome_name] = base if artifact in authorization_artifacts else (visible | introduced) - {own_sha}
+                by_artifact[artifact][outcome_name] = base if artifact in authorization_artifacts else available - {own_sha}
+                available.add(own_sha)
             visible.update(introduced)
     for transition in model["transitions"]:
         all_names.update(transition["identities_introduced"])
@@ -726,8 +730,14 @@ def validate_semantics(model: dict[str, Any]) -> None:
         "scripts/research/f017_corrected_oracle_primary_v6.py",
         "scripts/research/f017_corrected_oracle_secondary_v6.py",
         "scripts/research/f017_corrected_oracle_wrapper_support_v6.py",
+        "scripts/research/f017_corrected_oracle_compare_v6.py",
         "scripts/research/validate_f017_corrected_oracle_access_v6.py",
         "scripts/research/execute_f017_corrected_oracle_event_v6.py",
+        "scripts/research/generate_f017_corrected_oracle_inert_v6.py",
+        "scripts/research/generate_f017_corrected_oracle_scientific_access_v6.py",
+        "scripts/research/qualify_f017_corrected_oracle_target_adapters_v6.py",
+        "scripts/research/qualify_f017_lifecycle_v6.py",
+        "scripts/research/rehearse_f017_corrected_oracle_event04_v6.py",
         "scripts/research/f017_corrected_oracle_primary.py",
         "scripts/research/f017_corrected_oracle_secondary.py",
         "scripts/research/f017_oracle_primary_decoders.py",
@@ -737,13 +747,19 @@ def validate_semantics(model: dict[str, Any]) -> None:
         "scripts/research/f017_corrected_oracle_primary_target_source_v6.py",
         "scripts/research/f017_corrected_oracle_secondary_target_source_v6.py",
         "scripts/research/f017_numerical_capability_analysis_v1.py",
-        "scripts/research/f017_numerical_capability_structural_check_v1.py",
+        "scripts/research/generate_f017_numerical_capability_authorities_v1.py",
+        "scripts/research/qualify_f017_numerical_capability_policy_v1.py",
         "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-semantic-model-v6.json",
         "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json",
         "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v6.json",
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v1.json",
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v6.json",
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v6.json",
         "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
         "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
         "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+        "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6.json",
+        "specs/017-rust-native-inference-runtime/templates/f017-corrected-oracle-event-04-operator-go-template-v1.json",
     }
     if set(model["measurement_authority"].get("required_entries", [])) != required_measurements:
         raise ValueError("implementation measurement entry census")
@@ -757,8 +773,21 @@ def validate_semantics(model: dict[str, Any]) -> None:
         "scripts/research/f017_corrected_oracle_primary_v3.py": "V3_PRIMARY_TARGET",
         "scripts/research/f017_corrected_oracle_secondary_v3.py": "V3_SECONDARY_TARGET",
     }
+    retirement_sha256 = {
+        "scripts/research/validate_f017_corrected_oracle_access.py": "51e9c6fda5ffdf2bea8154964be0542d72934e8ce304076a29d2410b01bb21eb",
+        "scripts/research/execute_f017_corrected_oracle_event.py": "a7baebb1c7eba1c9162fd9d72c306afdaaec55e357e9ee8cce864b64c5816a57",
+        "scripts/research/validate_f017_corrected_oracle_access_v2.py": "2b1c93b08a887c29665a5af0d4fe177e6d014331a5d5413138ef322e92db9a28",
+        "scripts/research/execute_f017_corrected_oracle_event_v2.py": "2742b1ecb521af763f1bde34f244e367cab90ed91c97805ec8f55c116c5fae31",
+        "scripts/research/validate_f017_corrected_oracle_access_v3.py": "7f1da454f46409e1fd8184a2a68e28387f3a001d64ff1564826d3daec6c22513",
+        "scripts/research/execute_f017_corrected_oracle_event_v3.py": "e0a1e8918045f76807ee45de47da45f87742852145fe3981835118b03b3ccee6",
+        "scripts/research/f017_corrected_oracle_primary_v3.py": "a491c4c32e6e2847b2f5d429d2df735a4549ec8f2f101b22274fee32c6e235e9",
+        "scripts/research/f017_corrected_oracle_secondary_v3.py": "abce0a9b11b294ad00b7f35bd94fdf3e74b450674ff865004db5c087eceba941",
+    }
     for relative, sentinel in retirement_sentinels.items():
-        source = (ROOT / relative).read_text(encoding="utf-8")
+        path = ROOT / relative
+        source = path.read_text(encoding="utf-8")
+        if sha256_bytes(path.read_bytes()) != retirement_sha256[relative]:
+            raise ValueError(f"historical tombstone byte drift: {relative}")
         if not all(marker in source for marker in (
             "HISTORICAL_ONLY", sentinel,
             "84f0d1dc3e60a4151329ed82773880951ee3e618",
@@ -783,11 +812,11 @@ def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]])
         if name in {"registry", "matrix", "schemas", "interface"} and document.get("semantic_model_sha256") != model_sha:
             raise ValueError(f"unbound semantic model: {name}")
     registry, matrix, schemas, interface = (documents[name] for name in ("registry", "matrix", "schemas", "interface"))
-    if set(registry) != {"schema", "semantic_model_sha256", "grammars", "identity_count", "identities", "status"} or registry.get("status") != "GENERATED_VIEW_NOT_PRIMARY_AUTHORITY":
+    if set(registry) != {"schema", "semantic_model_sha256", "grammars", "identity_count", "identities", "status"} or registry.get("status") != "GENERATED_VIEW_NOT_PRIMARY_AUTHORITY" or registry.get("schema") != "pulsarmlx.f017.corrected-oracle-lifecycle-identity-registry/6.0.0":
         raise ValueError("identity registry authority/key census")
     if set(matrix) != {"schema", "semantic_model_sha256", "columns", "row_count", "required_cell_count", "rows", "status", "authority_status"}:
         raise ValueError("binding matrix top-level key census")
-    if matrix.get("authority_status") != "GENERATED_VIEW_NOT_PRIMARY_AUTHORITY":
+    if matrix.get("authority_status") != "GENERATED_VIEW_NOT_PRIMARY_AUTHORITY" or matrix.get("schema") != "pulsarmlx.f017.corrected-oracle-lifecycle-binding-matrix/6.0.0":
         raise ValueError("binding matrix authority status")
     expected_names, expected_bindings = _expected_binding_surface(model, expected["outcomes"])
     identities = registry.get("identities")
@@ -855,6 +884,29 @@ def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]])
                 raise ValueError(f"spurious optional binding cell: {row['identity']}/{artifact}")
     if matrix.get("required_cell_count") != required_cells or matrix.get("status") != "LIFECYCLE_BINDING_COVERAGE: COMPLETE":
         raise ValueError("binding coverage count/status")
+    sha_owner = {value: artifact for artifact, value in model["artifact_self_sha_identities"].items()}
+    reference_edges = {artifact: set() for artifact in artifact_names}
+    for row in matrix["rows"]:
+        referenced = sha_owner.get(row["identity"])
+        if referenced is None:
+            continue
+        for artifact, cell in row["cells"].items():
+            if cell["required_outcomes"]:
+                reference_edges[artifact].add(referenced)
+    visiting: set[str] = set()
+    visited: set[str] = set()
+    def visit(artifact: str) -> None:
+        if artifact in visiting:
+            raise ValueError(f"cyclic artifact SHA binding: {artifact}")
+        if artifact in visited:
+            return
+        visiting.add(artifact)
+        for dependency in reference_edges[artifact]:
+            visit(dependency)
+        visiting.remove(artifact)
+        visited.add(artifact)
+    for artifact in sorted(artifact_names):
+        visit(artifact)
     artifact_schemas = schemas.get("artifacts")
     if not isinstance(artifact_schemas, dict) or set(artifact_schemas) != artifact_names:
         raise ValueError("artifact schema bidirectional census")
@@ -960,7 +1012,9 @@ def assert_mutations_rejected(model: dict[str, Any], docs: dict[str, dict[str, A
     add_doc("matrix", lambda d: d["rows"][0].update(attacker_extra=True))
     add_doc("matrix", lambda d: next(iter(d["rows"][0]["cells"].values())).update(attacker_extra=True))
     add_doc("matrix", lambda d: d.update(authority_status="FORGED_ACTIVE_AUTHORITY"))
+    add_doc("matrix", lambda d: d.update(schema="forged/9.9.9"))
     add_doc("registry", lambda d: d.update(status="FORGED_ACTIVE_AUTHORITY"))
+    add_doc("registry", lambda d: d.update(schema="forged/9.9.9"))
     add_doc("serialization", lambda d: d.update(artifact_sha256_domain="UNDEFINED"))
     add_doc("registry", lambda d: d["identities"][0].update(derivation_permitted=True, mismatch_behavior="IGNORE"))
     add_doc("schemas", lambda d: d["artifacts"]["package_terminal"].update(payload_key_census=["result"]))

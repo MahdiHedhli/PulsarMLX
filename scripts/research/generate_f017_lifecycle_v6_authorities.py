@@ -103,14 +103,19 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
             transition = transitions[transition_id]
             introduced = set(transition["identities_introduced"])
             all_identities.update(introduced)
+            available = set(visible)
             for artifact in transition["artifacts_created"]:
                 # An artifact cannot contain the SHA of its own bytes.  That SHA
                 # becomes available only after durable readback and is carried by
                 # the next artifact or an external measurement manifest.
                 own_sha = model["artifact_self_sha_identities"][artifact]
-                bindings = base if artifact in authorization_artifacts else (visible | introduced) - {own_sha}
+                # Artifacts in one transition are banked in declared order.
+                # Only the SHA of an earlier durable sibling is available; a
+                # later sibling's SHA cannot be embedded without a hash cycle.
+                bindings = base if artifact in authorization_artifacts else available - {own_sha}
                 artifact_outcome_bindings[artifact][outcome_name] = bindings
                 artifact_outcome_paths[artifact][outcome_name] = f"$.bindings"
+                available.add(own_sha)
             visible.update(introduced)
 
     # All transition-introduced identities remain part of the registry even when

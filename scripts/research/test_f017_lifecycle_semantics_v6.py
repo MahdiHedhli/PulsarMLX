@@ -105,6 +105,18 @@ class LifecycleSemanticsV6Tests(unittest.TestCase):
         self.assertNotIn("primary_candidate_validation_report_sha256", candidate["identity_paths"])
         self.assertFalse(any(path.startswith("$.bindings") for path in candidate["identity_paths"].values()))
 
+    def test_same_transition_sha_bindings_follow_declared_bank_order(self) -> None:
+        matrix = load_json(PATHS["matrix"])
+        rows = {row["identity"]: row["cells"] for row in matrix["rows"]}
+        self.assertEqual(rows["package_ledger_entry_sha256"]["package_durable_start"]["required_outcomes"], [])
+        self.assertTrue(rows["package_durable_start_sha256"]["package_ledger_entry"]["required_outcomes"])
+        self.assertEqual(rows["primary_terminal_sha256"]["primary_receipt"]["required_outcomes"], [])
+        self.assertTrue(rows["primary_receipt_sha256"]["primary_terminal"]["required_outcomes"])
+
+    def test_generated_registry_and_matrix_schema_ids_are_exact(self) -> None:
+        self.assertEqual(load_json(PATHS["registry"])["schema"], "pulsarmlx.f017.corrected-oracle-lifecycle-identity-registry/6.0.0")
+        self.assertEqual(load_json(PATHS["matrix"])["schema"], "pulsarmlx.f017.corrected-oracle-lifecycle-binding-matrix/6.0.0")
+
     def test_failure_variant_preserves_exact_durable_prefix(self) -> None:
         variants = derive_outcome_obligations(self.model)["variants"]
         after_install = variants["FAILED::T07_BANK_INSTALL_RECEIPT"]

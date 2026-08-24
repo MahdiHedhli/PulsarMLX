@@ -18,6 +18,7 @@ sys.path.insert(0, str(RESEARCH))
 import f017_corrected_oracle_primary_numerics_v2 as primary_numerical
 import f017_corrected_oracle_secondary_numerics_v2 as secondary_numerical
 from f017_corrected_oracle_authorization_v6 import canonical_bytes, sha256_path
+from validate_f017_corrected_oracle_access_v6 import construct_candidate_from_inert, install_candidate, render_candidate, validate_candidate
 from generate_f017_corrected_oracle_fixtures import fixture
 
 ZERO = "0" * 64
@@ -103,7 +104,8 @@ def grant(role: str, event: str, wrapper: Path, target: Path, numerical: Path, d
         "target_source_path": target.relative_to(ROOT).as_posix(), "target_source_sha256": sha(target),
         "numerical_path": numerical.relative_to(ROOT).as_posix(), "numerical_sha256": sha(numerical),
         "decoder_path": decoder.relative_to(ROOT).as_posix(), "decoder_sha256": sha(decoder),
-        "state_root": str(work / f"{prefix.lower()}-state"), "output_root": str(work / f"{prefix.lower()}-output"),
+        "state_root": str(work / "package-state" / prefix.lower()),
+        "output_root": str(work / "package-output" / prefix.lower()),
         "attempts": 1, "retries": 0, "resume": False, "accounting_class": f"{prefix}_EVENT",
         "receipt_schema": "pulsarmlx.f017.corrected-oracle-consumer-receipt/6.0.0",
         "terminal_schema": "pulsarmlx.f017.corrected-oracle-consumer-terminal/6.0.0",
@@ -163,20 +165,13 @@ def run_once(work: Path, seed: int) -> dict:
         "secondary": grant("INDEPENDENT_ACCELERATED_CROSS_CHECK", "F017-QUALIFICATION-SECONDARY-06", secondary_wrapper, secondary_target, secondary_core, secondary_decoder, "SECONDARY", work),
         "context": interface["pinned_context"], "limits": limits,
     }
-    bank(candidate, auth)
-    reports = []
-    for role, wrapper in (("primary", primary_wrapper), ("secondary", secondary_wrapper)):
-        report = work / f"{role}-candidate-report.json"
-        subprocess.run([sys.executable, str(wrapper), "validate-authorization-candidate", str(candidate), str(synthetic_interface), str(root), str(report)], check=True, cwd=ROOT)
-        reports.append(sha(report))
-    installed.write_bytes(candidate.read_bytes())
+    auth = construct_candidate_from_inert({key: value for key, value in auth.items() if key not in {"schema", "authority_generation"}})
+    render_candidate(auth, candidate)
+    report_root = work / "candidate-reports"; report_root.mkdir()
+    handshake = validate_candidate(candidate, synthetic_interface, root, report_root)
+    reports = [handshake["primary"]["sha256"], handshake["secondary"]["sha256"]]
     receipt = work / "installation-receipt.json"
-    installed_sha = sha(installed)
-    bank(receipt, {"schema": "pulsarmlx.f017.corrected-oracle-authorization-installation-receipt/6.0.0", "result": "PASS",
-                   "authorization_id": auth["authorization_id"], "package_attempt_id": auth["package_attempt_id"],
-                   "primary_event_id": auth["primary_event_id"], "secondary_event_id": auth["secondary_event_id"],
-                   "candidate_sha256": sha(candidate), "installed_authorization_sha256": installed_sha,
-                   "installation_path": str(installed.resolve()), "candidate_install_byte_identity": True})
+    install_candidate(candidate, installed, receipt, handshake, operator_approval_sha256=ZERO, allow_synthetic=True)
     identity = work / "identity.json"; bank(identity, {"authorization_id": auth["authorization_id"], "result": "PASS", "shards": shards})
     outputs = {}
     for role, wrapper in (("primary", primary_wrapper), ("secondary", secondary_wrapper)):

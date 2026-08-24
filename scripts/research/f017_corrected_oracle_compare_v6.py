@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+"""Frozen offline comparison for terminal V6 corrected-oracle results."""
+from __future__ import annotations
+
+import math
+from typing import Any
+
+MAX_ABS = 0.0065169706285814755
+RMSE_MAX = 0.003463567697419031
+COSINE_MIN = 0.9999999985448085
+TOP_N = 32
+
+
+def _token(result: dict[str, Any]) -> int:
+    for key in ("selected_token", "token"):
+        if type(result.get(key)) is int:
+            return result[key]
+    raise ValueError("selected token missing")
+
+
+def _routes(result: dict[str, Any]) -> list[Any]:
+    routes = []
+    for layer in result.get("layers", []):
+        routes.append(layer.get("selected_expert_ids", layer.get("selected_experts")))
+    return routes
+
+
+def compare(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any]:
+    left = primary.get("full_logits")
+    right = secondary.get("full_logits")
+    if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right) or not left:
+        raise ValueError("complete matching logits required")
+    diffs = [abs(float(a) - float(b)) for a, b in zip(left, right, strict=True)]
+    max_abs = max(diffs)
+    rmse = math.sqrt(sum(value * value for value in diffs) / len(diffs))
+    dot = sum(float(a) * float(b) for a, b in zip(left, right, strict=True))
+    norm_left = math.sqrt(sum(float(value) ** 2 for value in left))
+    norm_right = math.sqrt(sum(float(value) ** 2 for value in right))
+    cosine = dot / (norm_left * norm_right) if norm_left and norm_right else 1.0 if left == right else 0.0
+    route_match = _routes(primary) == _routes(secondary)
+    primary_token = _token(primary)
+    secondary_token = _token(secondary)
+    bounds = max_abs <= MAX_ABS and rmse <= RMSE_MAX and cosine >= COSINE_MIN
+    if not route_match or not bounds:
+        classification = "ORACLE_DISAGREEMENT"
+    elif primary_token == secondary_token:
+        classification = "EXACT_EXPECTED_TOKEN_STABLE"
+    else:
+        primary_top = sorted(range(len(left)), key=lambda index: (-float(left[index]), index))[:TOP_N]
+        secondary_top = sorted(range(len(right)), key=lambda index: (-float(right[index]), index))[:TOP_N]
+        classification = "NUMERICALLY_STABLE_TOP_K_ONLY" if primary_top == secondary_top else "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
+    return {
+        "classification": classification,
+        "route_structure": "MATCH" if route_match else "MISMATCH",
+        "max_absolute_error": max_abs,
+        "rmse": rmse,
+        "cosine_similarity": cosine,
+        "primary_selected_token": primary_token,
+        "secondary_selected_token": secondary_token,
+        "thresholds": {"max_absolute_error": MAX_ABS, "rmse": RMSE_MAX, "minimum_cosine_similarity": COSINE_MIN, "top_n": TOP_N},
+    }
