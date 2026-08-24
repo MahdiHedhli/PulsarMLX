@@ -1,0 +1,102 @@
+{
+  "schema": "pulsarmlx.f017.event04-load-bearing-authority-binding-conflict/1.0.0",
+  "declaration": "F017_EVENT04_LOAD_BEARING_AUTHORITY_BINDING_CONFLICT: CONFIRMED",
+  "classification": "SCIENTIFIC_ACCESS_INTERNAL_BINDINGS_STALE",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "inspection_head": "5eb7b1b2a939d41e231649fef2097bba1dbcb5ed",
+  "implementation_measurement_head": "12d2b91671368af89ca1367bd959b3f142cc58c1",
+  "implementation_tree": "a495393c399c7a17416bb08e7e5919a0a1f0a95d",
+  "source_of_truth": "EXACT_GIT_BYTES_AT_ACCEPTED_IMPLEMENTATION_MEASUREMENT_HEAD",
+  "authorities": {
+    "measurement_manifest": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v3.json",
+      "sha256": "88c4d91cc134d39ff2c6fc32d79bbb1da5d17809e7c94a929c28c048a60895ed"
+    },
+    "lifecycle_declaration": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-semantic-authority-declaration-v1.json",
+      "sha256": "5b5eb941d93d4f04f7c70b7c54690bd8a224f87733fb16ae9a39e6d5d05423d0"
+    },
+    "numerical_declaration": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-and-authority-declaration-v1.json",
+      "sha256": "47ff7efb7ff71c3676eac695eeddc8b2e61ec78ea68506aae953dbc64bf8601a"
+    },
+    "scientific_access_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
+      "sha256": "469a793352486d9f0010d2b11593789309b049f107a021682f8776976c2f9d13"
+    },
+    "prior_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event04-production-shaped-rehearsal-v5.json",
+      "sha256": "8d5d5603b28506a25bd57f1d173b2eedef7f62bd31e3470ef104128233044b59",
+      "disposition": "DOES_NOT_PROVE_INTERNAL_SCIENTIFIC_ACCESS_BINDING_CONSISTENCY"
+    },
+    "prior_readiness_declaration": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-semantic-authority-declaration-v1.json",
+      "disposition": "SUPERSEDED_FOR_EVENT04_GO_READINESS_PENDING_RECONCILIATION"
+    }
+  },
+  "affected_paths": [
+    {
+      "semantic_role": "PARSER",
+      "path": "scripts/research/f017_corrected_oracle_authorization_v6.py",
+      "measurement_git_blob_sha": "741eb18ca63b5f2b2863cdb600064a75fe89a39a",
+      "git_sha256": "3bf8fad9ec3ae1a02f1281acdd53b870160b384532315d0152604695864e0d8d",
+      "working_tree_sha256": "3bf8fad9ec3ae1a02f1281acdd53b870160b384532315d0152604695864e0d8d",
+      "measurement_manifest_sha256": "3bf8fad9ec3ae1a02f1281acdd53b870160b384532315d0152604695864e0d8d",
+      "lifecycle_declaration_sha256": "3bf8fad9ec3ae1a02f1281acdd53b870160b384532315d0152604695864e0d8d",
+      "scientific_access_internal_sha256": "be4a52a0a8b8fdc7e146fffcdbce1b41f70130816db49542e4d3c2cf78e2981a",
+      "measured_authorities_agree": true,
+      "scientific_access_agrees": false
+    },
+    {
+      "semantic_role": "COORDINATOR",
+      "path": "scripts/research/execute_f017_corrected_oracle_event_v6.py",
+      "measurement_git_blob_sha": "823b5646b07000ddb55460bb9a0ed588de353b03",
+      "git_sha256": "89a1881e992d8b6364dc80fc621bc54c97c874f32542f83d004f493d74203744",
+      "working_tree_sha256": "89a1881e992d8b6364dc80fc621bc54c97c874f32542f83d004f493d74203744",
+      "measurement_manifest_sha256": "89a1881e992d8b6364dc80fc621bc54c97c874f32542f83d004f493d74203744",
+      "lifecycle_declaration_sha256": "89a1881e992d8b6364dc80fc621bc54c97c874f32542f83d004f493d74203744",
+      "scientific_access_internal_sha256": "5c80525fdf018c34d22a1bbf4ca2b1eec2c7d80ff3e743155262a2fddea4f673",
+      "measured_authorities_agree": true,
+      "scientific_access_agrees": false
+    }
+  ],
+  "root_cause": {
+    "classification": "STALE_GENERATED_SCIENTIFIC_ACCESS_BINDINGS",
+    "generator_path": "scripts/research/generate_f017_corrected_oracle_scientific_access_v6.py",
+    "generator_sha256": "a8d810135ca227a6b0291765f44d94500fe7c9cda84669dfb3e50680f4a621f6",
+    "explanation": "THE_CONTRACT_WAS_GENERATED_BEFORE_LATER_REVIEWED_PARSER_AND_COORDINATOR_REPAIRS_AND_WAS_NOT_REGENERATED",
+    "implementation_manifest_stale": false,
+    "lifecycle_declaration_stale_for_IMPLEMENTATION_BYTES": false,
+    "scientific_access_internal_bindings_stale": true
+  },
+  "validator_gap": {
+    "parser_path": "scripts/research/f017_corrected_oracle_authorization_v6.py",
+    "parser_sha256": "3bf8fad9ec3ae1a02f1281acdd53b870160b384532315d0152604695864e0d8d",
+    "authorizer_path": "scripts/research/validate_f017_corrected_oracle_access_v6.py",
+    "authorizer_sha256": "ead56e3484320670b68d27d8ecad9878c0c1ad1cc20871c4ff245854c1c22be6",
+    "behavior": "VALIDATES_OUTER_SCIENTIFIC_ACCESS_FILE_SHA_BUT_DOES_NOT_LOAD_AND_COMPARE_INTERNAL_IMPLEMENTATION_BINDINGS_TO_MEASUREMENT_MANIFEST",
+    "current_inconsistent_bundle_accepted_by_no_access_rehearsal": true,
+    "reproduction_candidate_sha256": "1110d15903bba724500f6d585f8af058291071a4a0cb01fd5ea0e90bb3b810f9",
+    "reproduction_result_sha256": "6d5b14550a0b927e5b22410dac57f80eb6b8d2201458a2992c90e0ddea08d1b9",
+    "reproduction_result": "PASS_DESPITE_STALE_INTERNAL_BINDINGS",
+    "reproduction_state_created": false,
+    "reproduction_checkpoint_shard_opens": 0,
+    "reproduction_checkpoint_payload_reads": 0,
+    "reproduction_numerical_operations": 0
+  },
+  "safety": {
+    "event_04_operator_go_exists": false,
+    "event_04_authorization_created": false,
+    "event_04_executed": false,
+    "primary_real_oracle_executions": 0,
+    "secondary_real_oracle_executions": 0,
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_identity_hash_reads": 0,
+    "new_original_checkpoint_mmaps": 0,
+    "new_original_checkpoint_tensor_reads": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "p1_attempt_2_executed": false,
+    "historical_master_ledger": 175
+  },
+  "result": "CONFIRMED"
+}
