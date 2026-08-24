@@ -16,7 +16,7 @@ from construct_f017_lifecycle_v8_symbolically import canonical, construct_outcom
 from check_f017_transitive_artifact_closure_v8 import validate_package
 
 STATIC_DESIGN_MUTATIONS = 179
-RUNTIME_CLOSURE_MUTATIONS = 32
+RUNTIME_CLOSURE_MUTATIONS = 37
 
 
 class CausalDesignTests(unittest.TestCase):
@@ -230,8 +230,13 @@ class CausalDesignTests(unittest.TestCase):
             ("DIRECTORY_DESCRIPTOR_MODE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 0o40755)),
             ("NEGATIVE_DESCRIPTOR_TIMESTAMP", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mtime_ns", -1)),
             ("UNBOUND_PRIMARY_OUTPUT_DIGEST", "comparison_receipt", lambda v: v["payload"].__setitem__("primary_output_digest", "0" * 64)),
+            ("NEGATIVE_DESCRIPTOR_MODE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", -1)),
+            ("OVERSIZED_DESCRIPTOR_MODE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 2**32 + 0o100644)),
+            ("WHITESPACE_DESCRIPTOR_LEASE_ID", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("lease_id", " ")),
+            ("LOWERCASE_DESCRIPTOR_LEASE_ID", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("lease_id", "lease-2")),
+            ("MULTI_DEVICE_DESCRIPTOR_SET", "descriptor_lease_manifest", lambda v: [item.__setitem__("device", index) for index, item in enumerate(v["payload"]["descriptor_identities"], start=1)]),
         ]
-        self.assertEqual(len(attacks), 26)
+        self.assertEqual(len(attacks), 31)
         self.assertEqual(RUNTIME_CLOSURE_MUTATIONS, len(attacks) + 6)
         for attack_id, target_id, mutate in attacks:
             with self.subTest(attack_id=attack_id), tempfile.TemporaryDirectory() as raw_root:

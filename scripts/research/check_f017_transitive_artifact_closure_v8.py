@@ -93,9 +93,11 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                         or any(type(item) is not dict or set(item) != fields or item["role"] != "GRAPH_PAYLOAD"
                                or any(type(item[field]) is not int for field in integer_fields)
                                or item["device"] < 0 or item["inode"] < 0 or item["size"] < 0 or item["mtime_ns"] < 0 or item["ctime_ns"] < 0
+                               or item["mode"] < 0 or item["mode"] >= 2**32
                                or not stat.S_ISREG(item["mode"])
-                               or type(item["lease_id"]) is not str or not item["lease_id"] for item in observed)
-                        or len({(item["device"], item["inode"]) for item in observed}) != len(observed)):
+                               or type(item["lease_id"]) is not str or re.fullmatch(r"[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?", item["lease_id"]) is None for item in observed)
+                        or len({(item["device"], item["inode"]) for item in observed}) != len(observed)
+                        or len({item["device"] for item in observed}) != 1):
                     raise ValueError(f"descriptor identity array mismatch: {artifact_id}:{key}")
             if kind == "ARTIFACT_SHA256":
                 reference_path = package_root / f"{rule['artifact_id']}.json"

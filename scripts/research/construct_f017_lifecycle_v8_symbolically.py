@@ -162,6 +162,9 @@ def validate_all(output_root: Path | None = None) -> dict:
         package = root / outcome.lower()
         package.mkdir(parents=True, exist_ok=False)
         results.append(construct_outcome(outcome, package, dag, schemas, obligations))
+    rank_by_id = {item["artifact_id"]: item["creation_rank"] for item in dag["nodes"]}
+    self_references = sum(dependency == item["artifact_id"] for item in dag["nodes"] for dependency in item["dependencies"])
+    future_references = sum(rank_by_id[dependency] >= item["creation_rank"] for item in dag["nodes"] for dependency in item["dependencies"])
     summary = {
         "schema": "pulsarmlx.f017.v8-symbolic-construction-result/1.0.0",
         "result": "PASS",
@@ -170,8 +173,8 @@ def validate_all(output_root: Path | None = None) -> dict:
         "real_artifacts_created": sum(item["artifact_count"] for item in results),
         "canonical_shas_computed": sum(item["artifact_count"] for item in results),
         "unsatisfied_outcomes": 0,
-        "self_references": 0,
-        "future_references": 0,
+        "self_references": self_references,
+        "future_references": future_references,
         "strict_rank_edges_validated": sum(item["closure"]["strict_rank_edges_validated"] for item in results),
         "maximum_closure_depth": max(item["closure"]["maximum_closure_depth"] for item in results),
         "original_checkpoint_access": 0,
