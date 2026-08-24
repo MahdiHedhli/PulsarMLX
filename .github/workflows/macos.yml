@@ -375,6 +375,8 @@ jobs:
           .venv/bin/python scripts/research/generate_f017_lifecycle_v6_authorities.py --check
           .venv/bin/python scripts/research/validate_f017_lifecycle_semantic_authority_v6.py
           .venv/bin/python scripts/research/check_f017_lifecycle_v6_independent.py
+          .venv/bin/python scripts/research/validate_f017_event04_authority_reconciliation_v1.py \
+            --run-mutations
           .venv/bin/python -m pytest -q \
             scripts/research/test_f017_lifecycle_semantics_v6.py \
             scripts/research/test_f017_lifecycle_v6_implementation.py
@@ -385,15 +387,15 @@ jobs:
             --success-repeats 10 \
             --failure-repeats 5 \
             --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v6.json"
-          .venv/bin/python scripts/research/rehearse_f017_corrected_oracle_event04_v6.py \
-            --output "$RUNNER_TEMP/f017-corrected-oracle-event04-rehearsal-v6.json"
+          .venv/bin/python scripts/research/rehearse_f017_event04_authority_reconciliation_v1.py \
+            --output "$RUNNER_TEMP/f017-event04-authority-reconciliation-rehearsal-v1.json"
           .venv/bin/python - <<'PY'
           import json
           import os
           from pathlib import Path
           root = Path(os.environ["RUNNER_TEMP"])
           lifecycle = json.loads((root / "f017-corrected-oracle-lifecycle-v6.json").read_text())
-          rehearsal = json.loads((root / "f017-corrected-oracle-event04-rehearsal-v6.json").read_text())
+          rehearsal = json.loads((root / "f017-event04-authority-reconciliation-rehearsal-v1.json").read_text())
           assert lifecycle["result"] == "PASS"
           assert lifecycle["successful_package_count"] == 10
           assert lifecycle["failure_trace_count"] >= 195
@@ -403,6 +405,8 @@ jobs:
           assert rehearsal["checkpoint_payload_reads"] == 0
           assert rehearsal["numerical_operations"] == 0
           assert rehearsal["event_04_authorization_created"] is False
+          assert rehearsal["authority_reconciliation_result"] == "PASS"
+          assert rehearsal["all_implementation_bindings_equal_measurement_manifest"] is True
           PY
           .venv/bin/python scripts/research/qualify_f017_quantization_matrix_v1.py \
             --binary target/release/quant_native_matvec_probe \
