@@ -14,7 +14,11 @@ from pathlib import Path
 
 
 def semantic_import(module: str, identities: dict[str, str]) -> str | None:
-    matches = [name for name in identities if module == name or module.startswith(name + ".")]
+    matches = [
+        name
+        for name in identities
+        if module == name or module.startswith(name + ".") or name.startswith(module + ".")
+    ]
     if not matches:
         return None
     return identities[max(matches, key=len)]
@@ -37,8 +41,11 @@ def check(path: Path, policy: dict) -> dict:
                     if alias.name not in canonical_modules:
                         raise ValueError(f"independent checker: capability submodule {alias.name}")
                     aliases[alias.asname or alias.name.split(".")[0]] = semantic
-        if isinstance(node, ast.ImportFrom) and node.module and semantic_import(node.module, policy["module_identities"]):
-            raise ValueError("independent checker: import-from capability")
+        if isinstance(node, ast.ImportFrom):
+            if node.level > 0:
+                raise ValueError("independent checker: relative import")
+            if node.module and semantic_import(node.module, policy["module_identities"]):
+                raise ValueError("independent checker: import-from capability")
     uses = 0
     for node in ast.walk(tree):
         if isinstance(node, ast.Name) and node.id in policy["prohibited_dynamic_names"]:

@@ -2086,8 +2086,9 @@
       "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
     }
   },
-  "analyzer_sha256": "923c66e189f4e39ce1cfaeec73f8ece8c3f5b5ee0369b6183cabf44286bb9f0d",
+  "analyzer_sha256": "8c95d8f4d0f40a7889f3079f97756f109f30e0d34c0541657e07f4a900e8b3b6",
   "category_census": {
+    "ANCESTOR_IDENTITY": 6,
     "CONTAINER_RECEIVER": 10,
     "DECLARED_BINDING_FORM": 4,
     "DYNAMIC_ACCESS": 20,
@@ -2117,8 +2118,8 @@
       }
     }
   },
-  "independent_checker_sha256": "573a022d44f5bb109238a77d43a9e51bd3510e7996e8bc10601600ecf07b9d91",
-  "mutation_count": 181,
+  "independent_checker_sha256": "962591b51656bf3660c82c320c49d85f85410a6cabeb49c4636feb0a1b414783",
+  "mutation_count": 187,
   "mutations": [
     {
       "category": "F5_R4",
@@ -4543,21 +4544,77 @@
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
-      "category": "RECEIVER_SHADOWING",
+      "category": "ANCESTOR_IDENTITY",
       "expected_rejection_classes": [
-        "UNAPPROVED_RECEIVER_METHOD"
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
       ],
       "id": "CAP-175",
-      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
     },
     {
-      "category": "RECEIVER_SHADOWING",
+      "category": "ANCESTOR_IDENTITY",
       "expected_rejection_classes": [
-        "UNAPPROVED_RECEIVER_METHOD"
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
       ],
       "id": "CAP-176",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-177",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-178",
+      "rejection": "CAPABILITY_RELATIVE_IMPORT_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-179",
+      "rejection": "CAPABILITY_RELATIVE_IMPORT_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-180",
+      "rejection": "CAPABILITY_RELATIVE_IMPORT_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-181",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
@@ -4567,7 +4624,17 @@
       "expected_rejection_classes": [
         "UNAPPROVED_RECEIVER_METHOD"
       ],
-      "id": "CAP-177",
+      "id": "CAP-182",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-183",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
@@ -4579,7 +4646,7 @@
         "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
         "UNAPPROVED_RECEIVER_METHOD"
       ],
-      "id": "CAP-178",
+      "id": "CAP-184",
       "rejection": "CAPABILITY_DECORATOR_ESCAPE",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
@@ -4591,7 +4658,7 @@
         "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
         "UNAPPROVED_RECEIVER_METHOD"
       ],
-      "id": "CAP-179",
+      "id": "CAP-185",
       "rejection": "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
@@ -4603,7 +4670,7 @@
         "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
         "UNAPPROVED_RECEIVER_METHOD"
       ],
-      "id": "CAP-180",
+      "id": "CAP-186",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
@@ -4615,7 +4682,7 @@
         "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
         "UNAPPROVED_RECEIVER_METHOD"
       ],
-      "id": "CAP-181",
+      "id": "CAP-187",
       "rejection": "UNAPPROVED_RECEIVER_METHOD",
       "result": "REJECTED",
       "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
@@ -4623,7 +4690,7 @@
   ],
   "original_checkpoint_payload_reads": 0,
   "original_checkpoint_shard_opens": 0,
-  "policy_sha256": "dca9b2d7ff8c64785bc5e84e9c3a6cd8d38c31bcdfd85c131f62aa2f36857f4f",
+  "policy_sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13",
   "primary_pure_core_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
   "rejection_control_census": {
     "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE": 6,
@@ -4633,9 +4700,10 @@
     "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE": 1,
     "CAPABILITY_DECORATOR_ESCAPE": 1,
     "CAPABILITY_DEFAULT_CAPTURE": 12,
-    "CAPABILITY_IMPORT_CENSUS": 9,
+    "CAPABILITY_IMPORT_CENSUS": 12,
     "CAPABILITY_IMPORT_FROM_PROHIBITED": 5,
     "CAPABILITY_NAMED_EXPRESSION_ESCAPE": 6,
+    "CAPABILITY_RELATIVE_IMPORT_PROHIBITED": 3,
     "CAPABILITY_RETURN_ESCAPE": 24,
     "DYNAMIC_CAPABILITY_SURFACE": 5,
     "META_CAPABILITY_SURFACE": 5,
@@ -4667,6 +4735,6 @@
   },
   "schema": "pulsarmlx.f017.numerical-capability-qualification/1.0.0",
   "secondary_pure_core_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
-  "transport_rejection_count": 119,
+  "transport_rejection_count": 122,
   "unexpected_pass_count": 0
 }

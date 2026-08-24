@@ -46,6 +46,7 @@ def mutation_cases() -> list[dict]:
         "CONTAINER_RECEIVER": ["UNAPPROVED_RECEIVER_METHOD", "DYNAMIC_CAPABILITY_SURFACE"],
         "IMPORT_REPRESENTATION": ["CAPABILITY_IMPORT_CENSUS", "CAPABILITY_IMPORT_FROM_PROHIBITED", "CAPABILITY_STAR_IMPORT_PROHIBITED", "CAPABILITY_RETURN_ESCAPE"],
         "SUBMODULE_IDENTITY": ["CAPABILITY_IMPORT_CENSUS", "CAPABILITY_IMPORT_FROM_PROHIBITED"],
+        "ANCESTOR_IDENTITY": ["CAPABILITY_IMPORT_CENSUS", "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"],
         "RECEIVER_SHADOWING": ["UNAPPROVED_RECEIVER_METHOD"],
         "DECLARED_BINDING_FORM": ["CAPABILITY_DECORATOR_ESCAPE", "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE", "UNAPPROVED_RECEIVER_METHOD"],
     }
@@ -125,6 +126,15 @@ def mutation_cases() -> list[dict]:
         "import mlx.core.fast as _fast",
     ):
         add("SUBMODULE_IDENTITY", source)
+    for source in (
+        "import mlx\n_f = mlx.core.savez\ndef probe(a):\n    return _f('out.npz', a)",
+        "import mlx\n_m = mlx.core\ndef probe():\n    return _m.import_function",
+        "import mlx as package\ndef probe():\n    return package.core.savez",
+        "from . import numpy",
+        "from .. import mlx",
+        "from .backend import value",
+    ):
+        add("ANCESTOR_IDENTITY", source)
     for source in (
         "_scratch = np.zeros(4)\ndef probe(_scratch):\n    return _scratch.tobytes()",
         "class Probe:\n    tensors = np.zeros(2)\n    def method(self, tensors):\n        return tensors.tobytes()",

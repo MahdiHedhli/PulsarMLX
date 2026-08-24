@@ -101,3 +101,25 @@ def test_parameter_shadowing_never_inherits_receiver_provenance(probe: str) -> N
     baseline = (RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py").read_text()
     with pytest.raises(analyzer.CapabilityViolation, match="UNAPPROVED_RECEIVER_METHOD"):
         analyzer.CapabilityAnalyzer(policy, role="secondary", path="probe.py").analyze(baseline + "\n" + probe)
+
+
+@pytest.mark.parametrize("probe", [
+    "import mlx\n_f = mlx.core.savez\ndef probe(a): return _f('out.npz', a)",
+    "import mlx\n_m = mlx.core\ndef probe(): return _m.import_function",
+    "import mlx as package\ndef probe(): return package.core.savez",
+    "from . import numpy",
+    "from .. import mlx",
+])
+def test_capability_ancestor_and_relative_imports_fail_closed(probe: str) -> None:
+    analyzer = load(f"f017_capability_ancestor_{abs(hash(probe))}", RESEARCH / "f017_numerical_capability_analysis_v1.py")
+    checker = load(f"f017_capability_ancestor_checker_{abs(hash(probe))}", RESEARCH / "check_f017_numerical_capabilities_independent_v1.py")
+    policy = json.loads(POLICY.read_text())
+    baseline = (RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py").read_text()
+    source = baseline + "\n" + probe
+    with pytest.raises(analyzer.CapabilityViolation):
+        analyzer.CapabilityAnalyzer(policy, role="secondary", path="probe.py").analyze(source)
+    with tempfile.TemporaryDirectory(prefix="f017-capability-ancestor-") as directory:
+        path = Path(directory) / "probe.py"
+        path.write_text(source)
+        with pytest.raises(ValueError):
+            checker.check(path, policy)

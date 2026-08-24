@@ -33,7 +33,8 @@ def policy() -> dict:
         "schema": "pulsarmlx.f017.numerical-capability-policy/1.0.0",
         "status": "FROZEN",
         "semantic_identity_basis": "IMPORT_RESOLUTION_NOT_LOCAL_SPELLING",
-        "semantic_identity_matching": "EXACT_MODULE_OR_DOTTED_DESCENDANT",
+        "semantic_identity_matching": "EXACT_DESCENDANT_OR_ANCESTOR_PACKAGE_FAIL_CLOSED",
+        "relative_import_policy": "REJECT_ALL_UNRESOLVABLE_RELATIVE_IMPORTS",
         "module_identities": {"numpy": "PYTHON_MODULE_NUMPY", "mlx.core": "PYTHON_MODULE_MLX_CORE"},
         "exact_capability_imports": {
             "primary": [],

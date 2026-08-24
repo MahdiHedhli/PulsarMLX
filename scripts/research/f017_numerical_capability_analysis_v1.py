@@ -56,8 +56,12 @@ def _scope_name(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str:
 
 
 def _semantic_import(module: str, identities: dict[str, str]) -> str | None:
-    """Resolve a capability module by semantic package ancestry."""
-    matches = [name for name in identities if module == name or module.startswith(name + ".")]
+    """Resolve exact, descendant, or ancestor imports of a capability module."""
+    matches = [
+        name
+        for name in identities
+        if module == name or module.startswith(name + ".") or name.startswith(module + ".")
+    ]
     if not matches:
         return None
     return identities[max(matches, key=len)]
@@ -195,6 +199,8 @@ class CapabilityAnalyzer:
                         self.module_aliases[local] = semantic
                         self.bindings[(_scope_name(node, self.parents), local)] = semantic
             elif isinstance(node, ast.ImportFrom):
+                if node.level > 0:
+                    self._error(node, "CAPABILITY_RELATIVE_IMPORT_PROHIBITED", ast.unparse(node))
                 if node.module and _semantic_import(node.module, identities):
                     self._error(node, "CAPABILITY_IMPORT_FROM_PROHIBITED", node.module or "")
                 if node.names and any(alias.name == "*" for alias in node.names):
