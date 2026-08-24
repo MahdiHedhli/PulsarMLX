@@ -1,0 +1,115 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-capability-and-authority-declaration/1.0.0",
+  "capability_declaration": "F017_CORRECTED_ORACLE_NUMERICAL_CAPABILITY_POLICY: ACCEPTED",
+  "numerical_declaration": "F017_CORRECTED_ORACLE_NUMERICAL_AUTHORITY_SUPERSESSION: ACCEPTED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "program_starting_head": "cb98e105c37a310d1ae7635326cb0f3a9ebb97a5",
+  "accepted_numerical_review_head": "a49a906c9f0e29429cb6101c26b5b7f334fb14bd",
+  "pure_cores": {
+    "primary": {
+      "path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+      "sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767"
+    },
+    "secondary": {
+      "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791"
+    }
+  },
+  "target_adapters": {
+    "primary": {
+      "path": "scripts/research/f017_corrected_oracle_primary_target_source_v6.py",
+      "sha256": "68986960ea618d3433db86dd20626e3522f32b1519ba9a3dd0975800e851ad79"
+    },
+    "secondary": {
+      "path": "scripts/research/f017_corrected_oracle_secondary_target_source_v6.py",
+      "sha256": "e09b98f551b8bd87c7b990b6359552defa08c36d77851d80310f13b61c37e584"
+    }
+  },
+  "capability_authority": {
+    "policy": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+      "sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13"
+    },
+    "value_flow_analyzer": {
+      "path": "scripts/research/f017_numerical_capability_analysis_v1.py",
+      "sha256": "8c95d8f4d0f40a7889f3079f97756f109f30e0d34c0541657e07f4a900e8b3b6"
+    },
+    "independent_checker": {
+      "path": "scripts/research/check_f017_numerical_capabilities_independent_v1.py",
+      "sha256": "962591b51656bf3660c82c320c49d85f85410a6cabeb49c4636feb0a1b414783"
+    },
+    "receiver_provenance": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-receiver-provenance-v1.json",
+      "sha256": "a7d9b95b4e9433d000d59f322767f663880491ca87459eb8fec226ff4d5bf75c"
+    },
+    "use_manifest": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-use-manifest-v1.json",
+      "sha256": "cf50a7b0ce15416a6c286858b74571aeb11c722484724f4976d6d41059d5f878"
+    },
+    "bytecode_audit": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-bytecode-audit-v1.json",
+      "sha256": "4f2918e4d3a59094178bd2d52aac9818710c5c86454202143e8b6a0e122bc521"
+    },
+    "qualification": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-qualification-v1.json",
+      "sha256": "ece8f2fa66f9d8df19954d7bdac7abe860cd94d5f98900bdf86d85f9bb9b71ba",
+      "mutation_count": 187,
+      "unexpected_passes": 0
+    }
+  },
+  "numerical_authority": {
+    "historical_manifest": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-historical-numerical-authority-manifest-v1.json",
+      "sha256": "09461bee1dc91fda48c17f84a26cff9a57fc08d763e11dd56370165c1cc9884e"
+    },
+    "contract_v3": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+      "sha256": "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"
+    },
+    "requalification_v3": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json",
+      "sha256": "5a0257803d7af03f091c0dfc438be0727dc567b465c82a8dfcdf83f847e80c49",
+      "result": "PASS",
+      "historical_successor_equivalence_cases": 24,
+      "formats": 11,
+      "packed_decoder_cases": 44,
+      "numerical_mutations": 16,
+      "capability_mutations": 187,
+      "target_adapter_fresh_processes": 10
+    },
+    "decoder": {
+      "path": "scripts/research/f017_oracle_primary_decoders.py",
+      "sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"
+    }
+  },
+  "reviews": {
+    "gemini": {
+      "normalized_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-capability-closure-gemini-cycle-03-normalized-result.json",
+      "normalized_sha256": "fd8e4839cb0fc6e1f21259111d99778ff854e80ff8b47d3f503b2acce9f08d99",
+      "reviewed_head": "a49a906c9f0e29429cb6101c26b5b7f334fb14bd",
+      "request_sha256": "c9177c235da522aab00081e4d73beccf0f74ef2997c8a05c0a2433e7c1eb03fd",
+      "response_sha256": "14d3d76fce242ccea9eadb3e84e8c4934f2ecd4eee61e98d97bb1c773fa2294a",
+      "verdict": "ACCEPT",
+      "material_disagreement": "none"
+    },
+    "opus": {
+      "normalized_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-capability-closure-opus-cycle-03-normalized-result.json",
+      "normalized_sha256": "bfc96a5b93eca41d6b27bf70bba1d42e2f51a35fc7850f8b7d82cd0a27706052",
+      "reviewed_head": "a49a906c9f0e29429cb6101c26b5b7f334fb14bd",
+      "request_sha256": "99bf7004b4439609b58e42868f0941ed108853a954f1375b17bf03998d820d71",
+      "response_sha256": "103aa74e591c9506cb8c38b3e88142582bf33316fa81d9babdf40a8350476b20",
+      "blocking": 0,
+      "non_blocking_required": 0,
+      "verdict": "ACCEPT_CORRECTED_ORACLE_NUMERICAL_AUTHORITY_SUPERSESSION"
+    }
+  },
+  "NUMERICAL_FORMULAS_CHANGED": "NO",
+  "NUMERICAL_METHODOLOGY_CHANGED": "NO",
+  "NUMERICAL_THRESHOLDS_CHANGED": "NO",
+  "PURE_CORE_BYTES_CHANGED": "NO",
+  "ORIGINAL_CHECKPOINT_READS": 0,
+  "EVENT_04_EXECUTED": "NO",
+  "LIVE_EVENT_04_AUTHORIZATION_CREATED": "NO",
+  "P1_ATTEMPT_2_EXECUTED": "NO",
+  "HISTORICAL_MASTER_LEDGER": 175
+}

@@ -1,0 +1,187 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-semantic-authority-declaration/1.0.0",
+  "declaration": "F017_CORRECTED_ORACLE_LIFECYCLE_SEMANTIC_AUTHORITY: ACCEPTED",
+  "program_verdict": "F017_CORRECTED_ORACLE_CAPABILITY_AND_LIFECYCLE_CLOSURE: ACCEPTED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "program_starting_head": "cb98e105c37a310d1ae7635326cb0f3a9ebb97a5",
+  "implementation_head": "12d2b91671368af89ca1367bd959b3f142cc58c1",
+  "implementation_tree": "a495393c399c7a17416bb08e7e5919a0a1f0a95d",
+  "numerical_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-and-authority-declaration-v1.json",
+    "sha256": "47ff7efb7ff71c3676eac695eeddc8b2e61ec78ea68506aae953dbc64bf8601a"
+  },
+  "numerical_contract_v3": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+    "sha256": "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"
+  },
+  "semantic_authority": {
+    "model": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-semantic-model-v6.json",
+      "sha256": "b7e954e654a54fc51735086642a639f8af24485b074642eefeb56d2ef6acc1be",
+      "states": 26,
+      "transitions": 36
+    },
+    "identity_registry": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-identity-registry-v6.json",
+      "sha256": "68fc2851d500aea968130b3f4a1f749d8cbf2c1ef5c447960e25f1004b9164fd",
+      "identities": 163
+    },
+    "binding_matrix": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-binding-matrix-v6.json",
+      "sha256": "49a5debb6a6177e55acc40540019a7e7d106f14f6f7df99e91f23e68147ba9a7",
+      "required_cells": 3918,
+      "semantic_columns_exact_validated": true
+    },
+    "artifact_schemas": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-artifact-schemas-v6.json",
+      "sha256": "276f4c0fb5c13b0d6fb84ed625d3982d2ebc6eb679666743a6ea16870aeadd52"
+    },
+    "outcome_obligations": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-outcome-obligations-v6.json",
+      "sha256": "d339a00b8988a638fcb1cbbcf94da78f79a0a6458c62defcc5b59eb9d56b0949"
+    },
+    "accounting": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v6.json",
+      "sha256": "7eb3f5caa3fb0592f0153448bb0466b210dad46ca80d032ba0d537486f1085fa"
+    },
+    "path_timing": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v6.json",
+      "sha256": "a625c2d0f9c909b4399ce1625d30bf5ba7c9dae9c5556d021c87e8bea4885bd5"
+    },
+    "serialization": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-json-bytes-v6.json",
+      "sha256": "71f8f0e6d22e46fa0df241ac04d3646feb37e67472f57bfad4ce7373fc424831"
+    },
+    "authorization_interface": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json",
+      "sha256": "3ba2f5b6391dba0a3cc589c692cae45a19b405c2999c6c246be289ebc38160b2"
+    },
+    "scientific_access": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
+      "sha256": "469a793352486d9f0010d2b11593789309b049f107a021682f8776976c2f9d13"
+    }
+  },
+  "implementation": {
+    "shared_parser": {
+      "path": "scripts/research/f017_corrected_oracle_authorization_v6.py",
+      "sha256": "3bf8fad9ec3ae1a02f1281acdd53b870160b384532315d0152604695864e0d8d"
+    },
+    "authorizer": {
+      "path": "scripts/research/validate_f017_corrected_oracle_access_v6.py",
+      "sha256": "ead56e3484320670b68d27d8ecad9878c0c1ad1cc20871c4ff245854c1c22be6"
+    },
+    "primary_consumer": {
+      "path": "scripts/research/f017_corrected_oracle_primary_v6.py",
+      "sha256": "1ba890354c1fcf85c5dfb87edce300028427df36d4e9bad248cade30aeb074ac"
+    },
+    "secondary_consumer": {
+      "path": "scripts/research/f017_corrected_oracle_secondary_v6.py",
+      "sha256": "36a5d2b4ac247573b62b486ba516238a4bc7cdb925f260e1adbe339853d9ff8b"
+    },
+    "coordinator": {
+      "path": "scripts/research/execute_f017_corrected_oracle_event_v6.py",
+      "sha256": "89a1881e992d8b6364dc80fc621bc54c97c874f32542f83d004f493d74203744"
+    },
+    "inert_fixture": {
+      "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6.json",
+      "sha256": "1b6a59a081b49b152411f48c74a36367aebb7c22757ba5c37f275e33849d80af"
+    },
+    "measurement_manifest": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v3.json",
+      "sha256": "88c4d91cc134d39ff2c6fc32d79bbb1da5d17809e7c94a929c28c048a60895ed",
+      "entries": 61,
+      "implementation_head": "12d2b91671368af89ca1367bd959b3f142cc58c1"
+    },
+    "active_generation": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v1.json",
+      "sha256": "14e3331ba788c9537efe62ba6e536ccb26df3466113b9f89238a070285ff1750",
+      "value": "V6"
+    },
+    "independent_validator": {
+      "path": "scripts/research/check_f017_lifecycle_v6_independent.py",
+      "sha256": "8afff07c73a6a8806f2e6b6d0ad52142b15f7cd2c794ae0c7a58804dc015dff7",
+      "imports_generator_or_derivation_helpers": false
+    }
+  },
+  "qualification": {
+    "synthetic": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-synthetic-qualification-v1.json",
+      "sha256": "2f635470bb1b01ae30d7519f6efaf985c7853d6c998eadf6ea7ebe218239d0f3",
+      "successful_packages": 10,
+      "failure_traces": 225,
+      "candidate_dual_validation_processes": 20,
+      "original_checkpoint_access": 0
+    },
+    "production_shaped_rehearsal": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event04-production-shaped-rehearsal-v5.json",
+      "sha256": "8d5d5603b28506a25bd57f1d173b2eedef7f62bd31e3470ef104128233044b59",
+      "state_created": false,
+      "checkpoint_opens": 0,
+      "checkpoint_reads": 0,
+      "numerical_operations": 0,
+      "result": "PASS"
+    },
+    "drift_mutations_rejected": 56
+  },
+  "ci": {
+    "census": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event04-readiness-ci-census-v5.json",
+      "sha256": "88e11e29bf2072f530648b5df118d58b90ad61e812d325a7bd6418488e8384c5"
+    },
+    "full_native": {
+      "head": "12d2b91671368af89ca1367bd959b3f142cc58c1",
+      "run_id": 32689603653,
+      "mode": "FULL_NATIVE",
+      "result": "PASS",
+      "required_native_skips": 0
+    },
+    "final_review_banking": {
+      "head": "bdcbb1f5c9c5b11a0dd0f37ee356bf5b405f2e14",
+      "run_id": 32693477671,
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "native_mlx_jobs_launched": 0
+    }
+  },
+  "reviews": {
+    "lifecycle_design_opus": {
+      "normalized_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-opus-design-cycle-04-normalized-result.json",
+      "normalized_sha256": "92321070501ad36f479326bea3a4575f6021bc51b166c4801f2f4819a31a03e8",
+      "verdict": "ACCEPT_LIFECYCLE_V6_SEMANTIC_DESIGN_FOR_IMPLEMENTATION"
+    },
+    "whole_domain_gemini": {
+      "normalized_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event04-readiness-gemini-cycle-03-normalized-result.json",
+      "normalized_sha256": "6ffbab9fd1ba54762c74da3e654431e1d68b18db46187199f48bf214c2328e35",
+      "reviewed_head": "2591ffcd93bf74b8494e2046e8c53dd06db1d18a",
+      "request_sha256": "ec7767acfe36c6bb88d7526f416295714a26086361abf6e447e8bf18659ce071",
+      "response_sha256": "361ee31ec433e05631729a1d633b491d94060b194ec8f3e717deb0a8c925fd5a",
+      "verdict": "ACCEPT",
+      "material_disagreement": "none"
+    },
+    "whole_domain_opus": {
+      "normalized_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event04-readiness-opus-cycle-02-normalized-result.json",
+      "normalized_sha256": "83a47992ad62b0edf340ce3d02e1d8bd3c71a9a8dd2d7f17f31498d077605b7a",
+      "reviewed_head": "0c09e8ecc9f4002d5a29b4bc7765441ede87de9b",
+      "request_sha256": "57d6d9b1a6e1b7ea4310446883c308f784824ecb426a41adfa62b831ef192fd9",
+      "response_sha256": "e4e01da29e7fd690a4b8fa04ea4af3f10d02ec034b83008155c007e61a6b4052",
+      "blocking": 0,
+      "non_blocking_required": 0,
+      "defense_in_depth": 3,
+      "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_AUTHORIZATION_PREPARATION"
+    }
+  },
+  "ACTIVE_CORRECTED_ORACLE_GENERATION": "V6",
+  "EVENT_02_RETRY": "NO",
+  "EVENT_03_RETRY": "NO",
+  "EVENT_04_EXECUTED": "NO",
+  "LIVE_EVENT_04_AUTHORIZATION_CREATED": "NO",
+  "PRIMARY_REAL_ORACLE_EXECUTIONS": 0,
+  "SECONDARY_REAL_ORACLE_EXECUTIONS": 0,
+  "NEW_ORIGINAL_CHECKPOINT_SHARD_OPENS": 0,
+  "NEW_ORIGINAL_CHECKPOINT_PAYLOAD_READS": 0,
+  "P1_ATTEMPT_2_EXECUTED": "NO",
+  "FURTHER_REAL_INFERENCE_EXECUTED": "NO",
+  "HISTORICAL_MASTER_LEDGER": 175,
+  "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_GO": "YES",
+  "READY_TO_PREPARE_P1_ATTEMPT_2_AUTHORIZATION": "NO"
+}
