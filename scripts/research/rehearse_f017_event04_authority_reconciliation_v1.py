@@ -8,6 +8,7 @@ from pathlib import Path
 
 import rehearse_f017_corrected_oracle_event04_v6 as base
 from f017_corrected_oracle_authorization_v6 import ROOT, canonical_bytes, sha256_path
+from validate_f017_corrected_oracle_access_v6 import construct_candidate_from_inert as construct_candidate
 from validate_f017_event04_authority_reconciliation_v1 import (
     DEFAULT_ACTIVE,
     DEFAULT_DECLARATION,
@@ -30,6 +31,7 @@ def rehearse(output: Path | None) -> dict:
     }
     reconciliation, _, _ = validate_paths(paths)
     base.SCIENTIFIC = DEFAULT_SCIENTIFIC
+    base.construct_candidate_from_inert = lambda replacements: construct_candidate(replacements, DEFAULT_INERT)
     result = base.rehearse(None, DEFAULT_MEASUREMENT)
     scientific = json.loads(DEFAULT_SCIENTIFIC.read_text())
     measured = reconciliation["measured_bindings"]

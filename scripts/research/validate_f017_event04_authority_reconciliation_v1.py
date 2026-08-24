@@ -287,10 +287,15 @@ def run_mutations(documents: dict[str, dict[str, Any]], file_shas: dict[str, str
         d["inert"]["scientific_access_contract_sha256"] = s["scientific_sha256"]
         d["authority_manifest"]["authorities"]["scientific_access"]["sha256"] = s["scientific_sha256"]
     @case("M06_MANIFEST_AND_CONTRACT_CONSISTENT")
-    def _(d, _s):
+    def _(d, s):
         for entry in d["measurement"]["entries"]:
             if entry["path"] == MEASURED_BINDINGS["parser"]: entry["sha256"] = "2" * 64
         d["scientific"]["bindings"]["parser"]["sha256"] = "2" * 64
+        changed_manifest_sha = sha256_bytes(canonical_bytes(d["measurement"]))
+        s["measurement_sha256"] = changed_manifest_sha
+        d["scientific"]["source_of_truth"]["implementation_measurement_manifest_sha256"] = changed_manifest_sha
+        d["inert"]["implementation_measurement_manifest_sha256"] = changed_manifest_sha
+        d["authority_manifest"]["authorities"]["measurement_manifest"]["sha256"] = changed_manifest_sha
     @case("M07_MEASUREMENT_HEAD")
     def _(d, _s): d["measurement"]["implementation_head"] = "0" * 40
     @case("M08_IMPLEMENTATION_TREE")
