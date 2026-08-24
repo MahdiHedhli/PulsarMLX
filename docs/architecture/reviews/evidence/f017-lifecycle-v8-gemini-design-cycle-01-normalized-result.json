@@ -1,0 +1,1 @@
+{"cycle":1,"findings":["MUTATION_CENSUS_STATIC_RUNTIME_ACCOUNTING_AMBIGUOUS"],"material_disagreement":"QUALIFICATION_REPORTED_128_WHILE_STATIC_LIST_ASSERTED_126","model":"gemini-3.1-pro-high","original_checkpoint_access":0,"reviewed_head":"b56acbe4","schema":"pulsarmlx.f017.lifecycle-v8-gemini-design-review/1.0.0","verdict":"REJECT"}
