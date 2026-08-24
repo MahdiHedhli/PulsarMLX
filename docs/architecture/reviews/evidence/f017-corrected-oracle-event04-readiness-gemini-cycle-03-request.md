@@ -1,0 +1,11 @@
+# F017 Event-04 Readiness Whole-Domain Gemini Review Cycle 03
+
+Use a fresh `gemini-3.1-pro-high` AGY session at high effort. Review exact committed bytes at evidence head `2591ffcd93bf74b8494e2046e8c53dd06db1d18a`, with measured implementation head `2d6c5e69c73b235a68e49c34ca2c16f68ef308f6`. Repository bytes outrank this request. Do not modify files, access original checkpoint shard payloads, mint or execute Event 04, run a real oracle, or execute P1 attempt 2.
+
+Cycle 02's only material disagreement was that final-packet run `32687667688` was not bound in CI census v2. Verify CI census v3 now binds FULL_NATIVE run `32686907019` at implementation head `2d6c5e69c73b235a68e49c34ca2c16f68ef308f6`, EVIDENCE_ONLY run `32687614532` at `e15ba84a8d6b32bd3f1f36dc452aa1a6624c9946`, and EVIDENCE_ONLY final-packet run `32687667688` at `fcd69b5eae24413a3e32d72c3abdea5918943e1e`, with zero native jobs in both evidence-only runs. The evidence-only commit containing census v3 itself passed run `32688076328` with native jobs skipped; that run is corroborating current-packet telemetry and is not recursively required as an input to its own committed census.
+
+Reconfirm Cycle 01's operator-approval repair remains complete: production installation reads the exact operator-approval bytes and requires the V6 approval schema, decision `GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04`, `new_go: true`, prior-GO nonreuse, P1 prohibition, nonempty operator identity/timestamp, and exact lifecycle-binding correspondence before creating installed authorization. Re-run a false-GO attack.
+
+Then re-audit the whole numerical-capability and lifecycle closure: 187 capability mutations; unchanged pure-core numerical bytes/formulas/thresholds; numerical contract/requalification v3; tombstones; V6 states/outcomes/accounting/paths/serialization; registry/matrix/model anchors; independent checker; two-phase install and handshake; receipts/terminals; active-generation V6; 61-entry measurement; synthetic qualification; no-access production rehearsal; historical ledger 175; Event 02/03 immutability; no original checkpoint access; no Event 04 authority/execution; and no P1 attempt 2.
+
+Classify findings as `BLOCKING`, `NON_BLOCKING_REQUIRED`, or `DEFENSE_IN_DEPTH`. Return exactly `ACCEPT` or `REJECT`, and state material disagreement explicitly.
