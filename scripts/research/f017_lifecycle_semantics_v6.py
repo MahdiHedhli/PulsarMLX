@@ -137,6 +137,9 @@ def simulate_trace(model: dict[str, Any], trace: list[str]) -> TraceResult:
             else:
                 raise ValueError(f"unknown path effect: {effect}")
         for artifact in transition["artifacts_created"]:
+            parent_role = model["artifact_path_descriptors"][artifact]["parent_role"]
+            if path_states.get(parent_role) != "MUST_EXIST_DIRECTORY":
+                raise ValueError(f"artifact parent role unavailable: {tid}/{artifact}/{parent_role}")
             key = f"ARTIFACT::{artifact}"
             if key not in path_states or path_states[key] != "MUST_NOT_EXIST":
                 raise ValueError(f"unsatisfiable artifact creation: {tid}/{artifact}")
@@ -210,12 +213,15 @@ def _variant_obligation(
         "started": starts,
         "required_artifacts": sorted(required),
         "forbidden_artifacts": sorted(forbidden),
-        "nullable_package_receipt_fields": sorted(
-            field
+        "package_receipt_conditional_fields": {
+            f"{consumer}_{kind}_sha256": (
+                f"MUST_EQUAL_{consumer.upper()}_{kind.upper()}_SHA256"
+                if starts[consumer]
+                else "MUST_BE_JSON_NULL"
+            )
             for consumer in ("primary", "secondary")
-            if not starts[consumer]
-            for field in (f"{consumer}_receipt_sha256", f"{consumer}_terminal_sha256")
-        ),
+            for kind in ("receipt", "terminal")
+        },
         "package_consumer_disposition": {
             consumer: "STARTED" if starts[consumer] else "NOT_STARTED"
             for consumer in ("primary", "secondary")
@@ -265,15 +271,18 @@ def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
                     queue.append((transition["destination"], trace + [transition["id"]]))
         raise ValueError(f"unreachable transition source: {target_state}")
 
+    failure_routes = model["failure_routes"]
     for transition in model["transitions"]:
         prefix = shortest_trace_to(transition["source"])
         variant_id = f"FAILED::{transition['id']}"
+        failure_transition = failure_routes.get(transition["id"])
+        trace = prefix + ([failure_transition] if failure_transition else [])
         variants[variant_id] = _variant_obligation(
             model,
             variant_id=variant_id,
             outcome_class=transition["failure_outcome"],
-            trace=prefix,
-            terminalized=False,
+            trace=trace,
+            terminalized=failure_transition is not None,
             failed_transition=transition["id"],
         )
         variants[variant_id]["failed_transition_artifacts_not_claimed"] = transition["artifacts_created"]
@@ -360,7 +369,7 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
         "states", "actors", "artifact_classes", "artifact_payload_key_census", "artifact_removals", "artifact_self_sha_identities", "artifact_file_validation", "transitions", "outcome_classes", "terminal_branches",
         "start_transition_by_actor", "ledger_targets", "authority_activation", "path_roles",
         "absent_path_validation", "root_relation_matrix", "serialization", "measurement_authority", "artifact_path_descriptors",
-        "authorization_document",
+        "authorization_document", "failure_routes", "artifact_bank_order_semantics",
         "path_timing_authority", "event_accounting_authority", "canonical_serialization_authority",
         "supersession", "numerical_authority",
     }
@@ -410,6 +419,18 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
     }:
         raise ValueError("artifact post-create validation authority")
     outcomes = set(model["outcome_classes"])
+    historical = model["ledger_targets"]["HISTORICAL_REAL_PAYLOAD_LEDGER"]
+    if historical.get("authority_commit") != "96503db702e95c7a08746924a208304819139803" or historical.get("authority_sha256") != "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e":
+        raise ValueError("historical ledger Git authority")
+    if model["artifact_bank_order_semantics"] != "DECLARED_LIST_ORDER_IS_DURABLE_ORDER_LATER_BINDS_ALL_EARLIER_SIBLING_SHAS":
+        raise ValueError("artifact bank order semantics")
+    for transition_id, failure_id in model["failure_routes"].items():
+        transition = transitions.get(transition_id)
+        failure = transitions.get(failure_id)
+        if transition is None or failure is None or failure["source"] != transition["source"]:
+            raise ValueError(f"failure-route totality: {transition_id}")
+        if failure["destination"] not in states or not failure["destination"].endswith("TERMINAL_FAILURE"):
+            raise ValueError(f"failure-route terminality: {transition_id}")
     for transition in transitions.values():
         if transition["source"] not in states or transition["destination"] not in states:
             raise ValueError(f"transition state: {transition['id']}")
@@ -417,6 +438,8 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"transition artifact: {transition['id']}")
         if transition["failure_outcome"] not in outcomes:
             raise ValueError(f"transition failure outcome: {transition['id']}")
+        if transition["failure_outcome"] != "EVIDENCE_BANKING_FAILURE" and transition["id"] not in model["failure_routes"]:
+            raise ValueError(f"non-total load-bearing failure: {transition['id']}")
     obligations = derive_outcome_obligations(model)
     accounting = derive_accounting(model)
     paths = derive_path_timing(model)

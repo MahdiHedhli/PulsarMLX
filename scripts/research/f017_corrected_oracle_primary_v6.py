@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 import f017_corrected_oracle_primary_numerics_v2 as numerical
-from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, parse_authorization, sha256_path
+from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, parse_authorization, sha256_path, validate_checkpoint_root_descriptor
 from f017_corrected_oracle_primary_target_source_v6 import PrimaryTargetSourceV6
 from f017_corrected_oracle_wrapper_support_v6 import ROOT, bank, require_active
 
@@ -56,8 +56,7 @@ def validate(arguments, installed: bool) -> tuple[object, dict]:
         raise ValueError("primary numerical authority")
     if grant["decoder_path"] != DECODER_PATH.relative_to(ROOT).as_posix() or grant["decoder_sha256"] != sha256_path(DECODER_PATH):
         raise ValueError("primary decoder authority")
-    if Path(authority.document["checkpoint_root"]).resolve(strict=True) != arguments.checkpoint_root.resolve(strict=True):
-        raise ValueError("primary checkpoint root descriptor")
+    validate_checkpoint_root_descriptor(authority.document, arguments.checkpoint_root)
     report = {
         "schema": VALIDATION_SCHEMA,
         "result": "PASS",

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 HISTORICAL_COMMIT = '84f0d1dc3e60a4151329ed82773880951ee3e618'
 HISTORICAL_SURFACE = 'V1_COORDINATOR'
+HISTORICAL_COMPATIBILITY_SENTINEL = 'HISTORICAL_ONLY: corrected-oracle coordinator v1 is superseded and ineligible for live authority'
 
 
 def main() -> int:

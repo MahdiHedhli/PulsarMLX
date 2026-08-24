@@ -98,12 +98,16 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
 
     authorization_artifacts = {"candidate_authorization", "installed_authorization"}
     for outcome_name, outcome in obligations["variants"].items():
-        visible = set(base)
+        visible: set[str] = set()
         for transition_id in outcome["trace"]:
             transition = transitions[transition_id]
             introduced = set(transition["identities_introduced"])
             all_identities.update(introduced)
-            available = set(visible)
+            sibling_shas = {
+                model["artifact_self_sha_identities"][artifact]
+                for artifact in transition["artifacts_created"]
+            }
+            available = visible | (introduced - sibling_shas)
             for artifact in transition["artifacts_created"]:
                 # An artifact cannot contain the SHA of its own bytes.  That SHA
                 # becomes available only after durable readback and is carried by
@@ -124,7 +128,7 @@ def derive_binding_views(model: dict[str, Any], obligations: dict[str, Any]) -> 
         all_identities.update(transition["identities_introduced"])
 
     grammar = {
-        "LIVE_ID": {"pattern": "^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$", "forbidden_markers": ["INERT", "FIXTURE", "TEST", "SYNTHETIC"]},
+        "LIVE_ID": {"pattern": "^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$", "forbidden_markers": model["authorization_document"]["live_id_forbidden_markers"]},
         "SHA256": {"pattern": "^[0-9a-f]{64}$"},
         "PATH_DESCRIPTOR": {"semantics": "PHASE_AWARE_PATH_DESCRIPTOR_NOT_GENERIC_STRICT_RESOLUTION"},
         "GIT_COMMIT": {"pattern": "^[0-9a-f]{40}$"},
@@ -243,6 +247,7 @@ def derive_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[str
         "context_keys": document["context_keys"],
         "limits_keys": document["limits_keys"],
         "shard_keys": document["shard_keys"],
+        "live_id_forbidden_markers": document["live_id_forbidden_markers"],
         "pinned_values": document["pinned_values"],
         "pinned_context": {
             key: document["pinned_values"][key]

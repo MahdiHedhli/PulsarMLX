@@ -17,6 +17,7 @@ from typing import Any
 
 from f017_corrected_oracle_authorization_v6 import canonical_bytes, read_regular_nofollow, strict_bytes
 from f017_corrected_oracle_wrapper_support_v6 import ROOT, bank, require_active
+from f017_lifecycle_artifact_v6 import authorization_bindings, bank_artifact
 
 INTERFACE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json"
 INERT = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6.json"
@@ -48,7 +49,7 @@ def construct_candidate_from_inert(replacements: dict[str, Any], inert_path: Pat
     if set(replacements) != expected:
         raise ValueError(f"candidate replacement census: {sorted(set(replacements) ^ expected)}")
     candidate = {"schema": inert["schema"], "authority_generation": 6, **replacements}
-    if any(marker in candidate["authorization_id"] for marker in ("INERT", "FIXTURE", "TEST", "SYNTHETIC")):
+    if any(marker in candidate["authorization_id"] for marker in ("INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL")):
         raise ValueError("inert identity promotion")
     return candidate
 
@@ -90,14 +91,17 @@ def validate_candidate(
     """Run both exact consumer candidate boundaries in fresh processes."""
     candidate_sha = sha256_bytes(read_regular_nofollow(candidate))
     reports: dict[str, Any] = {}
+    bindings = authorization_bindings(strict_bytes(read_regular_nofollow(candidate)))
+    bindings["candidate_sha256"] = candidate_sha
     for role, consumer in (("primary", PRIMARY), ("secondary", SECONDARY)):
+        raw = report_root / f"{role}-candidate-validation-raw.json"
         report = report_root / f"{role}-candidate-validation.json"
         subprocess.run(
-            [sys.executable, str(consumer), "validate-authorization-candidate", str(candidate), str(interface), str(checkpoint_root), str(report)],
+            [sys.executable, str(consumer), "validate-authorization-candidate", str(candidate), str(interface), str(checkpoint_root), str(raw)],
             cwd=ROOT,
             check=True,
         )
-        value = strict_bytes(read_regular_nofollow(report))
+        value = strict_bytes(read_regular_nofollow(raw))
         if value.get("result") != "PASS" or value.get("authorization_sha256") != candidate_sha:
             raise ValueError(f"{role} candidate validation binding")
         if any(value.get(key) not in (0, False) for key in (
@@ -106,9 +110,19 @@ def validate_candidate(
             "numerical_operations", "state_created",
         )):
             raise ValueError(f"{role} candidate validation side effect")
+        payload = {
+            "result": "PASS", "candidate_sha256": candidate_sha,
+            f"{role}_role": value["consumer_role"],
+            "side_effects": {key: value[key] for key in (
+                "checkpoint_shard_opens", "checkpoint_identity_hash_reads", "checkpoint_mmaps",
+                "checkpoint_tensor_reads", "numerical_operations", "state_created",
+            )},
+        }
+        report_sha = bank_artifact(report, f"{role}_candidate_validation_report", bindings, payload)
+        bindings[f"{role}_candidate_validation_report_sha256"] = report_sha
         reports[role] = {
             "path": str(report),
-            "sha256": sha256_bytes(read_regular_nofollow(report)),
+            "sha256": report_sha,
             "event_id": value["event_id"],
         }
     return {
@@ -162,24 +176,25 @@ def install_candidate(
     if installed_bytes != data or strict_bytes(installed_bytes) != document:
         raise ValueError("candidate/install byte identity")
     installed_sha = sha256_bytes(installed_bytes)
-    receipt = {
-        "schema": INSTALL_RECEIPT_SCHEMA,
-        "result": "PASS",
-        "authorization_id": document["authorization_id"],
-        "package_attempt_id": document["package_attempt_id"],
-        "primary_event_id": document["primary_event_id"],
-        "secondary_event_id": document["secondary_event_id"],
+    bindings = authorization_bindings(document)
+    bindings.update({
         "candidate_sha256": handshake["candidate_sha256"],
         "installed_authorization_sha256": installed_sha,
         "primary_validation_report_sha256": handshake["primary"]["sha256"],
         "secondary_validation_report_sha256": handshake["secondary"]["sha256"],
-        "operator_approval_sha256": operator_approval_sha256,
-        "installation_path": str(installed),
-        "installation_timestamp_unix_ns": time.time_ns(),
+        "primary_candidate_validation_report_sha256": handshake["primary"]["sha256"],
+        "secondary_candidate_validation_report_sha256": handshake["secondary"]["sha256"],
+    })
+    if bindings["operator_approval_sha256"] != operator_approval_sha256:
+        raise ValueError("operator approval binding")
+    payload = {
+        "result": "PASS", "candidate_sha256": handshake["candidate_sha256"],
+        "installed_authorization_sha256": installed_sha,
         "candidate_install_byte_identity": True,
+        "installation_path": str(installed),
     }
-    bank(receipt_path, receipt)
-    return receipt
+    receipt_sha = bank_artifact(receipt_path, "installation_receipt", bindings, payload)
+    return {"sha256": receipt_sha, "bindings": bindings, "payload": payload, "installation_timestamp_unix_ns": time.time_ns()}
 
 
 def main() -> int:

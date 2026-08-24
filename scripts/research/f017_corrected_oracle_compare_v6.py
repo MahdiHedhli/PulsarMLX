@@ -30,6 +30,8 @@ def compare(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any
     right = secondary.get("full_logits")
     if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right) or not left:
         raise ValueError("complete matching logits required")
+    if not all(math.isfinite(float(value)) for value in [*left, *right]):
+        raise ValueError("finite complete logits required")
     diffs = [abs(float(a) - float(b)) for a, b in zip(left, right, strict=True)]
     max_abs = max(diffs)
     rmse = math.sqrt(sum(value * value for value in diffs) / len(diffs))
@@ -40,15 +42,20 @@ def compare(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any
     route_match = _routes(primary) == _routes(secondary)
     primary_token = _token(primary)
     secondary_token = _token(secondary)
+    primary_top = sorted(range(len(left)), key=lambda index: (-float(left[index]), index))[:TOP_N]
+    secondary_top = sorted(range(len(right)), key=lambda index: (-float(right[index]), index))[:TOP_N]
+    primary_margin = float(primary.get("top_1_margin", float(left[primary_top[0]]) - float(left[primary_top[1]])))
+    secondary_margin = float(secondary.get("top_1_margin", float(right[secondary_top[0]]) - float(right[secondary_top[1]])))
+    margin_requirement = 2.0 * MAX_ABS
     bounds = max_abs <= MAX_ABS and rmse <= RMSE_MAX and cosine >= COSINE_MIN
     if not route_match or not bounds:
         classification = "ORACLE_DISAGREEMENT"
-    elif primary_token == secondary_token:
+    elif primary_token == secondary_token and min(primary_margin, secondary_margin) > margin_requirement:
         classification = "EXACT_EXPECTED_TOKEN_STABLE"
+    elif primary_top == secondary_top:
+        classification = "NUMERICALLY_STABLE_TOP_K_ONLY"
     else:
-        primary_top = sorted(range(len(left)), key=lambda index: (-float(left[index]), index))[:TOP_N]
-        secondary_top = sorted(range(len(right)), key=lambda index: (-float(right[index]), index))[:TOP_N]
-        classification = "NUMERICALLY_STABLE_TOP_K_ONLY" if primary_top == secondary_top else "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
+        classification = "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
     return {
         "classification": classification,
         "route_structure": "MATCH" if route_match else "MISMATCH",
@@ -57,5 +64,12 @@ def compare(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any
         "cosine_similarity": cosine,
         "primary_selected_token": primary_token,
         "secondary_selected_token": secondary_token,
+        "primary_top_32": primary_top,
+        "secondary_top_32": secondary_top,
+        "top_32_relationship": "EXACT_ORDER" if primary_top == secondary_top else "DIFFERENT",
+        "primary_top_1_margin": primary_margin,
+        "secondary_top_1_margin": secondary_margin,
+        "frozen_margin_requirement": margin_requirement,
+        "margin_stable": min(primary_margin, secondary_margin) > margin_requirement,
         "thresholds": {"max_absolute_error": MAX_ABS, "rmse": RMSE_MAX, "minimum_cosine_similarity": COSINE_MIN, "top_n": TOP_N},
     }

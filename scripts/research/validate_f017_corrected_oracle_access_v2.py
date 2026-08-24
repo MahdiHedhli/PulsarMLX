@@ -4,6 +4,7 @@ from __future__ import annotations
 
 HISTORICAL_COMMIT = '84f0d1dc3e60a4151329ed82773880951ee3e618'
 HISTORICAL_SURFACE = 'V2_LIVE_MINT'
+HISTORICAL_COMPATIBILITY_SENTINEL = 'HISTORICAL_ONLY: v2 live mint is permanently retired'
 
 
 def main() -> int:

@@ -42,8 +42,24 @@ def _canonical_nonsymlink_directory(path: Path) -> Path:
     return canonical
 
 
+def _replace_inert_ids(value: object, prefix: str = "ROOT") -> None:
+    if type(value) is dict:
+        for key, nested in value.items():
+            if key.endswith("_id") and type(nested) is str and "INERT" in nested:
+                value[key] = f"F017-E04-SHADOW-{prefix}-{key[:-3].upper().replace('_', '-')}"
+            else:
+                _replace_inert_ids(nested, f"{prefix}-{key.upper().replace('_', '-')}")
+    elif type(value) is list:
+        for index, nested in enumerate(value):
+            _replace_inert_ids(nested, f"{prefix}-{index}")
+
+
 def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
-    checkpoint_root = _canonical_nonsymlink_directory(CHECKPOINT_ROOT)
+    checkpoint_root = CHECKPOINT_ROOT
+    checkpoint_root_ancestry_verified = False
+    if checkpoint_root.exists():
+        checkpoint_root = _canonical_nonsymlink_directory(checkpoint_root)
+        checkpoint_root_ancestry_verified = True
     observation = observe_vm_stat()
     if observation.available_bytes < THRESHOLD:
         raise ValueError("rehearsal memory threshold")
@@ -54,6 +70,7 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
         interface_path = work / "interface.json"
         interface = strict_bytes(INTERFACE.read_bytes())
         interface["interface_scope"] = "PRODUCTION_SHAPED_REHEARSAL"
+        interface["pinned_values"] = {**interface["pinned_values"], "authority_scope": "PRODUCTION_SHAPED_REHEARSAL"}
         bank(interface_path, interface)
         approval_path = work / "rehearsal-approval.json"
         approval = {
@@ -72,12 +89,12 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
         replacements = {key: value for key, value in doc.items() if key not in {"schema", "authority_generation"}}
         replacements.update({
             "state": "AUTHORIZED", "live": True, "authority_scope": "PRODUCTION_SHAPED_REHEARSAL",
-            "authorization_id": "F017-EVENT-04-REHEARSAL-AUTHORIZATION",
-            "operator_approval_id": "F017-EVENT-04-REHEARSAL-APPROVAL",
+            "authorization_id": "F017-EVENT-04-SHADOW-AUTHORIZATION",
+            "operator_approval_id": "F017-EVENT-04-SHADOW-APPROVAL",
             "operator_approval_sha256": approval_sha,
-            "package_attempt_id": "F017-EVENT-04-REHEARSAL-PACKAGE",
-            "primary_event_id": "F017-EVENT-04-REHEARSAL-PRIMARY",
-            "secondary_event_id": "F017-EVENT-04-REHEARSAL-SECONDARY",
+            "package_attempt_id": "F017-EVENT-04-SHADOW-PACKAGE",
+            "primary_event_id": "F017-EVENT-04-SHADOW-PRIMARY",
+            "secondary_event_id": "F017-EVENT-04-SHADOW-SECONDARY",
             "branch": "feat/017-rust-native-inference-runtime",
             "implementation_measurement_head": head,
             "implementation_measurement_manifest_sha256": sha256_path(measurement_manifest) if measurement_manifest else "0" * 64,
@@ -98,6 +115,7 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
             replacements[section]["output_root"] = str(work / "future-output" / role.lower())
         replacements["primary"]["event_id"] = replacements["primary_event_id"]
         replacements["secondary"]["event_id"] = replacements["secondary_event_id"]
+        _replace_inert_ids(replacements)
         document = construct_candidate_from_inert(replacements)
         candidate_sha = render_candidate(document, candidate)
         report_root = work / "candidate-reports"; report_root.mkdir()
@@ -122,6 +140,8 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
             "installed_handshake_sha256": _sha_bytes(canonical_bytes(handshake)),
             "checkpoint_set_sha256": scientific["production_checkpoint"]["checkpoint_set_sha256"],
             "checkpoint_shard_metadata": scientific["production_checkpoint"]["shards"],
+            "checkpoint_root_descriptor": str(checkpoint_root),
+            "checkpoint_root_ancestry_verified_on_host": checkpoint_root_ancestry_verified,
             "package_attempt_id_represented": True, "consumer_event_ids_represented": True,
             "candidate_installed_at_canonical_production_path": False,
             "state_created": False, "checkpoint_shard_opens": 0, "checkpoint_payload_reads": 0,

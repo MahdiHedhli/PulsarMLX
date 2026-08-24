@@ -17,7 +17,7 @@ INTERFACE_SCHEMA = "pulsarmlx.f017.corrected-oracle-authorization-consumer-inter
 PRIMARY_ROLE = "INDEPENDENT_CPU_REFERENCE"
 SECONDARY_ROLE = "INDEPENDENT_ACCELERATED_CROSS_CHECK"
 ID_PATTERN = re.compile(r"^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$")
-FORBIDDEN_ID_PARTS = ("INERT", "FIXTURE", "TEST", "SYNTHETIC")
+FORBIDDEN_ID_PARTS = ("INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL")
 
 
 def _pairs(items):
@@ -80,6 +80,35 @@ def sha256_path(path: Path) -> str:
     return digest.hexdigest()
 
 
+def validate_checkpoint_root_descriptor(document: dict, supplied: Path) -> None:
+    """Validate the checkpoint-root descriptor without opening any shard."""
+    declared = Path(document["checkpoint_root"])
+    if (
+        not declared.is_absolute()
+        or not supplied.is_absolute()
+        or ".." in declared.parts
+        or ".." in supplied.parts
+    ):
+        raise ValueError("absolute checkpoint root descriptor")
+    # A production-shaped rehearsal remains non-authoritative and must run on
+    # CI hosts where the production volume is intentionally absent.  Preserve
+    # the exact path text there; if the root exists, apply the production check.
+    if document["authority_scope"] == "PRODUCTION_SHAPED_REHEARSAL":
+        if str(declared) != str(supplied):
+            raise ValueError("checkpoint root descriptor text")
+        if not supplied.exists():
+            return
+    declared_canonical = declared.resolve(strict=True)
+    supplied_canonical = supplied.resolve(strict=True)
+    if declared_canonical != supplied_canonical:
+        raise ValueError("canonical checkpoint root descriptor")
+    cursor = Path(supplied_canonical.anchor)
+    for component in supplied_canonical.parts[1:]:
+        cursor /= component
+        if cursor.is_symlink() or not cursor.is_dir():
+            raise ValueError("checkpoint root nonsymlink ancestry")
+
+
 def _exact_keys(value: dict, expected: list[str], label: str) -> None:
     if type(value) is not dict or set(value) != set(expected) or len(value) != len(expected):
         raise ValueError(f"{label} key census")
@@ -92,6 +121,31 @@ def _live_id(value: object, label: str) -> str:
     if any(part in upper for part in FORBIDDEN_ID_PARTS):
         raise ValueError(f"{label} inert/test identity")
     return value
+
+
+def _validate_all_live_ids(value: object, prefix: str = "$") -> None:
+    if type(value) is dict:
+        for key, nested in value.items():
+            if key.endswith("_id"):
+                _live_id(nested, f"{prefix}.{key}")
+            _validate_all_live_ids(nested, f"{prefix}.{key}")
+    elif type(value) is list:
+        for index, nested in enumerate(value):
+            _validate_all_live_ids(nested, f"{prefix}[{index}]")
+
+
+def _pinned_value(document: dict, name: str) -> object:
+    if name in document:
+        return document[name]
+    for section in ("package", "primary", "secondary"):
+        prefix = section + "_"
+        if name.startswith(prefix) and name[len(prefix):] in document[section]:
+            return document[section][name[len(prefix):]]
+    if name in document["context"]:
+        return document["context"][name]
+    if name in document["limits"]:
+        return document["limits"][name]
+    raise ValueError(f"pinned value has no authorization field: {name}")
 
 
 def load_interface(path: Path) -> dict:
@@ -143,6 +197,10 @@ def parse_authorization(
         raise ValueError("canonical production interface required")
     if document["state"] != "AUTHORIZED" or document["live"] is not True:
         raise ValueError("authorized document required")
+    for name, expected in interface["pinned_values"].items():
+        if type(_pinned_value(document, name)) is not type(expected) or _pinned_value(document, name) != expected:
+            raise ValueError(f"pinned authorization value: {name}")
+    _validate_all_live_ids(document)
     identifiers = [
         _live_id(document["authorization_id"], "authorization_id"),
         _live_id(document["package_attempt_id"], "package_attempt_id"),
@@ -177,24 +235,20 @@ def parse_authorization(
             raise ValueError("canonical installation path")
         receipt_data = read_regular_nofollow(installation_receipt_path)
         receipt = strict_bytes(receipt_data)
-        required = {
-            "schema", "result", "authorization_id", "package_attempt_id",
-            "primary_event_id", "secondary_event_id", "candidate_sha256",
-            "installed_authorization_sha256", "installation_path",
-            "primary_validation_report_sha256", "secondary_validation_report_sha256",
-            "operator_approval_sha256", "installation_timestamp_unix_ns",
-            "candidate_install_byte_identity",
-        }
-        if set(receipt) != required or receipt["result"] != "PASS":
+        if set(receipt) != {"schema", "bindings", "payload"} or receipt["schema"] != "pulsarmlx.f017.corrected-oracle-authorization-installation-receipt/6.0.0":
             raise ValueError("installation receipt census")
+        receipt_bindings = receipt["bindings"]
+        receipt_payload = receipt["payload"]
+        if receipt_payload.get("result") != "PASS":
+            raise ValueError("installation receipt result")
         if (
-            receipt["authorization_id"] != document["authorization_id"]
-            or receipt["package_attempt_id"] != document["package_attempt_id"]
-            or receipt["primary_event_id"] != document["primary_event_id"]
-            or receipt["secondary_event_id"] != document["secondary_event_id"]
-            or receipt["operator_approval_sha256"] != document["operator_approval_sha256"]
+            receipt_bindings["authorization_id"] != document["authorization_id"]
+            or receipt_bindings["package_attempt_id"] != document["package_attempt_id"]
+            or receipt_bindings["primary_event_id"] != document["primary_event_id"]
+            or receipt_bindings["secondary_event_id"] != document["secondary_event_id"]
+            or receipt_bindings["operator_approval_sha256"] != document["operator_approval_sha256"]
         ):
             raise ValueError("installation receipt identity")
-        if receipt["installed_authorization_sha256"] != hashlib.sha256(data).hexdigest() or receipt["candidate_install_byte_identity"] is not True:
+        if receipt_payload["installed_authorization_sha256"] != hashlib.sha256(data).hexdigest() or receipt_payload["candidate_install_byte_identity"] is not True:
             raise ValueError("installed authorization readback")
     return ParsedAuthorization(document, hashlib.sha256(data).hexdigest(), role, grant)

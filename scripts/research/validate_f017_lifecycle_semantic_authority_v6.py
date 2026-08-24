@@ -12,6 +12,7 @@ import argparse
 import copy
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
@@ -139,6 +140,9 @@ def simulate_trace(model: dict[str, Any], trace: list[str]) -> TraceResult:
             else:
                 raise ValueError(f"unknown path effect: {effect}")
         for artifact in transition["artifacts_created"]:
+            parent_role = model["artifact_path_descriptors"][artifact]["parent_role"]
+            if path_states.get(parent_role) != "MUST_EXIST_DIRECTORY":
+                raise ValueError(f"artifact parent role unavailable: {tid}/{artifact}/{parent_role}")
             key = f"ARTIFACT::{artifact}"
             if key not in path_states or path_states[key] != "MUST_NOT_EXIST":
                 raise ValueError(f"unsatisfiable artifact creation: {tid}/{artifact}")
@@ -212,12 +216,15 @@ def _variant_obligation(
         "started": starts,
         "required_artifacts": sorted(required),
         "forbidden_artifacts": sorted(forbidden),
-        "nullable_package_receipt_fields": sorted(
-            field
+        "package_receipt_conditional_fields": {
+            f"{consumer}_{kind}_sha256": (
+                f"MUST_EQUAL_{consumer.upper()}_{kind.upper()}_SHA256"
+                if starts[consumer]
+                else "MUST_BE_JSON_NULL"
+            )
             for consumer in ("primary", "secondary")
-            if not starts[consumer]
-            for field in (f"{consumer}_receipt_sha256", f"{consumer}_terminal_sha256")
-        ),
+            for kind in ("receipt", "terminal")
+        },
         "package_consumer_disposition": {
             consumer: "STARTED" if starts[consumer] else "NOT_STARTED"
             for consumer in ("primary", "secondary")
@@ -267,15 +274,18 @@ def derive_outcome_obligations(model: dict[str, Any]) -> dict[str, Any]:
                     queue.append((transition["destination"], trace + [transition["id"]]))
         raise ValueError(f"unreachable transition source: {target_state}")
 
+    failure_routes = model["failure_routes"]
     for transition in model["transitions"]:
         prefix = shortest_trace_to(transition["source"])
         variant_id = f"FAILED::{transition['id']}"
+        failure_transition = failure_routes.get(transition["id"])
+        trace = prefix + ([failure_transition] if failure_transition else [])
         variants[variant_id] = _variant_obligation(
             model,
             variant_id=variant_id,
             outcome_class=transition["failure_outcome"],
-            trace=prefix,
-            terminalized=False,
+            trace=trace,
+            terminalized=failure_transition is not None,
             failed_transition=transition["id"],
         )
         variants[variant_id]["failed_transition_artifacts_not_claimed"] = transition["artifacts_created"]
@@ -362,7 +372,7 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
         "states", "actors", "artifact_classes", "artifact_payload_key_census", "artifact_removals", "artifact_self_sha_identities", "artifact_file_validation", "transitions", "outcome_classes", "terminal_branches",
         "start_transition_by_actor", "ledger_targets", "authority_activation", "path_roles",
         "absent_path_validation", "root_relation_matrix", "serialization", "measurement_authority", "artifact_path_descriptors",
-        "authorization_document",
+        "authorization_document", "failure_routes", "artifact_bank_order_semantics",
         "path_timing_authority", "event_accounting_authority", "canonical_serialization_authority",
         "supersession", "numerical_authority",
     }
@@ -412,6 +422,15 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
     }:
         raise ValueError("artifact post-create validation authority")
     outcomes = set(model["outcome_classes"])
+    if model["artifact_bank_order_semantics"] != "DECLARED_LIST_ORDER_IS_DURABLE_ORDER_LATER_BINDS_ALL_EARLIER_SIBLING_SHAS":
+        raise ValueError("artifact bank order semantics")
+    for transition_id, failure_id in model["failure_routes"].items():
+        transition = transitions.get(transition_id)
+        failure = transitions.get(failure_id)
+        if transition is None or failure is None or failure["source"] != transition["source"]:
+            raise ValueError(f"failure-route totality: {transition_id}")
+        if failure["destination"] not in states or not failure["destination"].endswith("TERMINAL_FAILURE"):
+            raise ValueError(f"failure-route terminality: {transition_id}")
     for transition in transitions.values():
         if transition["source"] not in states or transition["destination"] not in states:
             raise ValueError(f"transition state: {transition['id']}")
@@ -419,6 +438,8 @@ def validate_model(model: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"transition artifact: {transition['id']}")
         if transition["failure_outcome"] not in outcomes:
             raise ValueError(f"transition failure outcome: {transition['id']}")
+        if transition["failure_outcome"] != "EVIDENCE_BANKING_FAILURE" and transition["id"] not in model["failure_routes"]:
+            raise ValueError(f"non-total load-bearing failure: {transition['id']}")
     obligations = derive_outcome_obligations(model)
     accounting = derive_accounting(model)
     paths = derive_path_timing(model)
@@ -476,36 +497,37 @@ EXPECTED_SERIALIZATION = {
     "trailing_newline_count": 1,
     "artifact_sha256_domain": "SHA256_EXACT_CANONICAL_BYTES_OF_COMPLETE_ARTIFACT",
     "self_sha_inside_artifact": False,
+    "finite_float_encoding": "IEEE754_BINARY64_HEX_STRING_LOWERCASE",
 }
 
 # These fixed digests are the independent reviewed semantic anchor.  Generated
 # views may change only when this validator is deliberately revised and reviewed;
 # regenerating documents from a coordinated model mutation is insufficient.
 EXPECTED_SEMANTIC_PROJECTION_SHAS = {
-    "complete_model": "502c147407be3e0e2e3e8a8d97f4d20264a27c7c97ba2064ef971047d9d2da51",
-    "authorization_document": "79776a1c1ac0f1aa72ae626feaf575aa0e4d02720059b94ea612ebf0f937d415",
-    "transitions": "4f5d08ac6c5e2a963581285dc7abdaa91853cc181d06a8a87c327e5f3655197c",
+    "complete_model": "e5f9deaa2b619dced1d1e07c0f3068ce054f687da6ef8ce4e75ce1f3acc25fab",
+    "authorization_document": "c0e97d0b4affa72326814882bd4b0954ceb38bb0b6b8c50b0a7a3e7c953c6141",
+    "transitions": "66093d63a593dce52be2d43199006ace94598a5c184317962fc74d2768f451f4",
     "outcomes": "73d636a9b24e1d317c8870dbe90b47d06d1cff7559bb25983309175f70ba7494",
-    "artifact_authority": "6cc201896e67f3d5558f4d84302e810b449185d05c7db2d7a105f801c031b48e",
+    "artifact_authority": "fc889804d8a2d1e1579c1d008fb2dab20b782cf2ac95f47b82829a6737bfc688",
     "path_authority": "12c215e3aa2f4d8f734e5f93daf8ff3360c49d1f4abd84a7c3f8a274523add74",
-    "serialization": "24fff464845971036876016a93401fee9bb239d08f5111798ae7eeabba857975",
-    "measurement_authority": "4e95a4464cd6abb37c3cda83e7463e6af53ac3d0e6d2621080018e51e440f0af",
-    "accounting": "1de6086dade7f80c32d0b1f855137c7c21d41edc06cbfb8b4d01884a5daf98e9",
+    "serialization": "17affe92132d3889fc431b7648e27daf886f639d5ec07bf8908d93e6ab7506bd",
+    "measurement_authority": "109b30becbb8c69fefb20c3512b136774b53b54d8a54b572a848aee82c81857b",
+    "accounting": "852b50115fc0c9c4e316ac735724929c2cd5602040591d00dc2afd848eb4f310",
     "activation_supersession": "6b3bfeb3b7262a19c27fe41614e11f5b4c85a4bcf0f2001467fab5fafdf5a46b",
-    "registry_grammars": "4b822649c36b1fc5e75bd600a0266cf2f93607720a3063f3dc74af3ca66f2129",
+    "registry_grammars": "0c44c43dbb4696c4ebebc1197d324f82247957ad29e3a0f9187d8c240e31e0e0",
     "numerical_authority": "d60a187fbac7a762e2db49eb4f3ef761ba68c9fee45df94a3a0b08d13ba12d8a",
 }
 
 EXPECTED_AUTHORITY_FILE_SHAS = {
-    "model": "502c147407be3e0e2e3e8a8d97f4d20264a27c7c97ba2064ef971047d9d2da51",
-    "outcomes": "87c7a986b239164e8e957ae9dc2e7df99d01b767f6e8be785d2a81f564f9a761",
-    "accounting": "71f65e56c8b5122c2d74a59201305c19ca7e180040c768279f0912eada9a72f8",
-    "paths": "44b8c2facd5bbdf74d612e8ef0447b45eccd86c26f6879025d882cbdb6dac83b",
-    "serialization": "450d1b79ab7bb35de1c268aef60481413983c5bd37213733633606121f0e0da2",
-    "interface": "a0e93fadc24b06f9514e234c5fff474c895d2054b09b44be3a9f58b43066b932",
-    "registry": "87d3f9805cd2699a3d6d8d5bb868cd49c8a9998b82ea26b52b240919374d63da",
-    "matrix": "d0aa3d7bf8a21a020131a48e478d1718002715751932ceb917e5ccfa64211b7c",
-    "schemas": "2bf49ffdb9a013990463bda38ea7185e1312a2fb96fdd423428b658910bb8cd0",
+    "model": "e5f9deaa2b619dced1d1e07c0f3068ce054f687da6ef8ce4e75ce1f3acc25fab",
+    "outcomes": "e83a643fc5da953d401701731cf99b4323148863b5cd91209bd76304ce902fbf",
+    "accounting": "a57d3341c3f53a8ad8ba3742982b90cdfd80fff744f3b0db3896d613f26fcf89",
+    "paths": "82ae4afcf1a0c5666875567daeea7940a1cdf3a0aa52a2c2b0647c087dcd1a95",
+    "serialization": "877a18a20ef1dfa05e32adb1405c7c178c42c6bc7d73af93e5680f39f2ae5d5f",
+    "interface": "b13657ac7f72cd874d92246ba5c696e66ad89a47edb86e6f2d312b75aa95bc0c",
+    "registry": "131c817fe6938cc329c38a0b36c4d5b1a59a8a994e60cead999c76e09a812869",
+    "matrix": "f536af1c08e3294d55650504a12d1b97ea370b09e7bf708e4fa2de593d902d15",
+    "schemas": "e65fea970ce84461832cb481bd1148b512769d963ba1e1a24a8078ea3a256326",
 }
 
 
@@ -590,12 +612,16 @@ def _expected_binding_surface(model: dict[str, Any], obligations: dict[str, Any]
     by_artifact: dict[str, dict[str, set[str]]] = {name: {} for name in model["artifact_classes"]}
     authorization_artifacts = {"candidate_authorization", "installed_authorization"}
     for outcome_name, outcome in obligations["variants"].items():
-        visible = set(base)
+        visible: set[str] = set()
         for tid in outcome["trace"]:
             transition = transitions[tid]
             introduced = set(transition["identities_introduced"])
             all_names.update(introduced)
-            available = set(visible)
+            sibling_shas = {
+                model["artifact_self_sha_identities"][artifact]
+                for artifact in transition["artifacts_created"]
+            }
+            available = visible | (introduced - sibling_shas)
             for artifact in transition["artifacts_created"]:
                 own_sha = model["artifact_self_sha_identities"][artifact]
                 by_artifact[artifact][outcome_name] = base if artifact in authorization_artifacts else available - {own_sha}
@@ -620,6 +646,7 @@ def _expected_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[
         "context_keys": doc["context_keys"],
         "limits_keys": doc["limits_keys"],
         "shard_keys": doc["shard_keys"],
+        "live_id_forbidden_markers": doc["live_id_forbidden_markers"],
         "pinned_values": doc["pinned_values"],
         "pinned_context": {
             key: doc["pinned_values"][key]
@@ -695,8 +722,14 @@ def validate_semantics(model: dict[str, Any]) -> None:
         if actual is None or actual.get("advance_transition") != transition or actual.get("delta") != delta:
             raise ValueError(f"accounting semantic drift: {target}")
     historical = model["ledger_targets"]["HISTORICAL_REAL_PAYLOAD_LEDGER"]
-    if historical.get("before") != 175 or historical.get("after") != 175 or historical.get("authority_sha256") != "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e":
+    if historical.get("before") != 175 or historical.get("after") != 175 or historical.get("authority_sha256") != "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e" or historical.get("authority_commit") != "96503db702e95c7a08746924a208304819139803":
         raise ValueError("historical ledger drift")
+    historical_bytes = subprocess.check_output(
+        ["git", "show", f"{historical['authority_commit']}:{historical['authority_path']}"],
+        cwd=ROOT,
+    )
+    if sha256_bytes(historical_bytes) != historical["authority_sha256"]:
+        raise ValueError("historical ledger Git-object binding")
     if any(model["serialization"].get(key) != value for key, value in EXPECTED_SERIALIZATION.items()):
         raise ValueError("serialization semantic drift")
     absent = model["absent_path_validation"]
@@ -711,10 +744,27 @@ def validate_semantics(model: dict[str, Any]) -> None:
         raise ValueError("expected-token quarantine drift")
     if doc["pinned_values"].get("p1_authority") != "PROHIBITED" or doc["pinned_values"].get("authority_generation") != 6:
         raise ValueError("generation/P1 authority drift")
+    if doc["pinned_values"].get("authority_scope") != "PRODUCTION":
+        raise ValueError("production authority scope drift")
+    if doc["pinned_values"].get("package_accounting_class") != "CORRECTED_ORACLE_PACKAGE_ATTEMPT_LEDGER" or doc["pinned_values"].get("primary_accounting_class") != "CORRECTED_ORACLE_PRIMARY_EVENT_LEDGER" or doc["pinned_values"].get("secondary_accounting_class") != "CORRECTED_ORACLE_SECONDARY_EVENT_LEDGER":
+        raise ValueError("authorization accounting-class drift")
+    if doc.get("live_id_forbidden_markers") != ["INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL"]:
+        raise ValueError("live identity forbidden-marker drift")
     if set(model["artifact_payload_key_census"]) != set(model["artifact_classes"]):
         raise ValueError("payload census authority")
     required_measurements = {
         "scripts/research/f017_lifecycle_semantics_v6.py",
+        "scripts/research/f017_lifecycle_artifact_v6.py",
+        "scripts/research/test_f017_lifecycle_semantics_v6.py",
+        "scripts/research/test_f017_lifecycle_v6_implementation.py",
+        "scripts/research/update_f017_lifecycle_v6_measurement_census.py",
+        "scripts/research/extract_f017_corrected_oracle_target_sources_v6.py",
+        "scripts/research/retire_f017_corrected_oracle_legacy_surfaces_v6.py",
+        "scripts/research/validate_f017_historical_corrected_oracle_authorities_v6.py",
+        "scripts/research/generate_f017_lifecycle_v5_authorities.py",
+        "scripts/research/validate_f017_lifecycle_semantic_authority_v5.py",
+        "scripts/research/generate_f017_corrected_oracle_lifecycle_v4_specs.py",
+        "scripts/research/validate_f017_corrected_oracle_lifecycle_v4.py",
         "scripts/research/generate_f017_lifecycle_v6_authorities.py",
         "scripts/research/generate_f017_corrected_oracle_interface_v6.py",
         "scripts/research/validate_f017_lifecycle_semantic_authority_v6.py",
@@ -774,14 +824,14 @@ def validate_semantics(model: dict[str, Any]) -> None:
         "scripts/research/f017_corrected_oracle_secondary_v3.py": "V3_SECONDARY_TARGET",
     }
     retirement_sha256 = {
-        "scripts/research/validate_f017_corrected_oracle_access.py": "51e9c6fda5ffdf2bea8154964be0542d72934e8ce304076a29d2410b01bb21eb",
-        "scripts/research/execute_f017_corrected_oracle_event.py": "a7baebb1c7eba1c9162fd9d72c306afdaaec55e357e9ee8cce864b64c5816a57",
-        "scripts/research/validate_f017_corrected_oracle_access_v2.py": "2b1c93b08a887c29665a5af0d4fe177e6d014331a5d5413138ef322e92db9a28",
-        "scripts/research/execute_f017_corrected_oracle_event_v2.py": "2742b1ecb521af763f1bde34f244e367cab90ed91c97805ec8f55c116c5fae31",
-        "scripts/research/validate_f017_corrected_oracle_access_v3.py": "7f1da454f46409e1fd8184a2a68e28387f3a001d64ff1564826d3daec6c22513",
-        "scripts/research/execute_f017_corrected_oracle_event_v3.py": "e0a1e8918045f76807ee45de47da45f87742852145fe3981835118b03b3ccee6",
-        "scripts/research/f017_corrected_oracle_primary_v3.py": "a491c4c32e6e2847b2f5d429d2df735a4549ec8f2f101b22274fee32c6e235e9",
-        "scripts/research/f017_corrected_oracle_secondary_v3.py": "abce0a9b11b294ad00b7f35bd94fdf3e74b450674ff865004db5c087eceba941",
+        "scripts/research/validate_f017_corrected_oracle_access.py": "9389c76b86d39689c7db86b0dd67cc47408e9c0db4b86c57f79a81df9c243984",
+        "scripts/research/execute_f017_corrected_oracle_event.py": "07d46c3496fa80ebffaaad769f60c66dfd370d4ab0312115f491be332a2d4e1a",
+        "scripts/research/validate_f017_corrected_oracle_access_v2.py": "9c02c3fda704449012194d13f994c9e14d3db378650117a4d927078812596f53",
+        "scripts/research/execute_f017_corrected_oracle_event_v2.py": "cde1fc43422b31db8746070b0639521489c3c05ae35feb0a81a3b30529806743",
+        "scripts/research/validate_f017_corrected_oracle_access_v3.py": "8a51eda8583e949cf5d572e675be8cdb3cad4cd19b016797972e8ed4607381d3",
+        "scripts/research/execute_f017_corrected_oracle_event_v3.py": "116c0ec89db9e3b9ee383c4b73a14f7e33b1d93ada30af1f39ea50867adfe54a",
+        "scripts/research/f017_corrected_oracle_primary_v3.py": "8fbf15e2ccae365a53b7e7e8ec2312023a0d1325808f80a749ba1d4e6fe8dda0",
+        "scripts/research/f017_corrected_oracle_secondary_v3.py": "a441bafeea9e7a26eca2b603e1edd53562e97e4dde571f35797b88d710994b2c",
     }
     for relative, sentinel in retirement_sentinels.items():
         path = ROOT / relative
@@ -907,6 +957,36 @@ def validate_bundle(model: dict[str, Any], documents: dict[str, dict[str, Any]])
         visited.add(artifact)
     for artifact in sorted(artifact_names):
         visit(artifact)
+
+    # Acyclicity proves only that some topological order exists.  The semantic
+    # model declares the durable sibling order in artifacts_created, so enforce
+    # that exact order exhaustively for every trace containing the transition.
+    rows_by_identity = {row["identity"]: row["cells"] for row in matrix["rows"]}
+    outcome_traces = {
+        outcome_name: set(obligation["trace"])
+        for outcome_name, obligation in expected["outcomes"]["variants"].items()
+    }
+    for transition in model["transitions"]:
+        ordered = transition["artifacts_created"]
+        applicable_outcomes = {
+            outcome_name
+            for outcome_name, trace in outcome_traces.items()
+            if transition["id"] in trace
+        }
+        for earlier_index, earlier in enumerate(ordered):
+            earlier_sha = model["artifact_self_sha_identities"][earlier]
+            for later in ordered[earlier_index + 1:]:
+                later_sha = model["artifact_self_sha_identities"][later]
+                later_bindings = set(rows_by_identity[earlier_sha][later]["required_outcomes"])
+                earlier_bindings = set(rows_by_identity[later_sha][earlier]["required_outcomes"])
+                if not applicable_outcomes.issubset(later_bindings):
+                    raise ValueError(
+                        f"declared bank order omits earlier SHA: {transition['id']}/{earlier}->{later}"
+                    )
+                if applicable_outcomes & earlier_bindings:
+                    raise ValueError(
+                        f"declared bank order references future SHA: {transition['id']}/{earlier}->{later}"
+                    )
     artifact_schemas = schemas.get("artifacts")
     if not isinstance(artifact_schemas, dict) or set(artifact_schemas) != artifact_names:
         raise ValueError("artifact schema bidirectional census")
@@ -1081,6 +1161,7 @@ def validate() -> dict[str, Any]:
         "whole_model_byte_anchor": "PASS",
         "registry_matrix_byte_anchors": "PASS",
         "semantic_columns_exact": "PASS",
+        "declared_bank_order": "PASS",
         "independent_derivation_imports_generator": False,
     }
 

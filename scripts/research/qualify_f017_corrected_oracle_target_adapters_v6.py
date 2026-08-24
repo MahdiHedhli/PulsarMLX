@@ -106,7 +106,8 @@ def grant(role: str, event: str, wrapper: Path, target: Path, numerical: Path, d
         "decoder_path": decoder.relative_to(ROOT).as_posix(), "decoder_sha256": sha(decoder),
         "state_root": str(work / "package-state" / prefix.lower()),
         "output_root": str(work / "package-output" / prefix.lower()),
-        "attempts": 1, "retries": 0, "resume": False, "accounting_class": f"{prefix}_EVENT",
+        "attempts": 1, "retries": 0, "resume": False,
+        "accounting_class": f"CORRECTED_ORACLE_{prefix}_EVENT_LEDGER",
         "receipt_schema": "pulsarmlx.f017.corrected-oracle-consumer-receipt/6.0.0",
         "terminal_schema": "pulsarmlx.f017.corrected-oracle-consumer-terminal/6.0.0",
     }
@@ -117,8 +118,19 @@ def run_once(work: Path, seed: int) -> dict:
     root, catalog, geometry, shards, decoded = checkpoint(work, document)
     synthetic_interface = work / "interface.json"
     interface = json.loads(INTERFACE.read_text()); interface["interface_scope"] = "SYNTHETIC_QUALIFICATION"
+    interface["pinned_values"] = {
+        **interface["pinned_values"],
+        "authority_scope": "SYNTHETIC_QUALIFICATION",
+        "prompt_token": document["token"],
+        "position": document["position"],
+    }
     interface["pinned_context"] = {**interface["pinned_context"], "prompt_token": document["token"], "position": document["position"]}
     interface["pinned_limits"] = {**interface["pinned_limits"], "graph_tensor_count": len(json.loads(catalog.read_text())["tensors"]), "non_access_tensor_count": 0}
+    interface["pinned_values"] = {
+        **interface["pinned_values"],
+        "graph_tensor_count": interface["pinned_limits"]["graph_tensor_count"],
+        "non_access_tensor_count": 0,
+    }
     bank(synthetic_interface, interface)
     installed = work / "authorization.json"
     candidate = work / "candidate.json"
@@ -159,7 +171,7 @@ def run_once(work: Path, seed: int) -> dict:
                     "ledger_entry_id": "F017-QUALIFICATION-PACKAGE-LEDGER-06", "ledger_index_id": "F017-QUALIFICATION-PACKAGE-INDEX-06",
                     "receipt_id": "F017-QUALIFICATION-PACKAGE-RECEIPT-06", "terminal_id": "F017-QUALIFICATION-PACKAGE-TERMINAL-06",
                     "state_root": str(work/"package-state"), "output_root": str(work/"package-output"), "attempts": 1, "retries": 0,
-                    "resume": False, "accounting_class": "PACKAGE_ATTEMPT", "receipt_schema": "pulsarmlx.f017.corrected-oracle-package-receipt/6.0.0",
+                    "resume": False, "accounting_class": "CORRECTED_ORACLE_PACKAGE_ATTEMPT_LEDGER", "receipt_schema": "pulsarmlx.f017.corrected-oracle-package-receipt/6.0.0",
                     "terminal_schema": "pulsarmlx.f017.corrected-oracle-package-terminal/6.0.0"},
         "primary": grant("INDEPENDENT_CPU_REFERENCE", "F017-QUALIFICATION-PRIMARY-06", primary_wrapper, primary_target, primary_core, primary_decoder, "PRIMARY", work),
         "secondary": grant("INDEPENDENT_ACCELERATED_CROSS_CHECK", "F017-QUALIFICATION-SECONDARY-06", secondary_wrapper, secondary_target, secondary_core, secondary_decoder, "SECONDARY", work),
@@ -189,6 +201,7 @@ def run_once(work: Path, seed: int) -> dict:
         first_layer = next((index for index, (left, right) in enumerate(zip(outputs["primary"]["layers"], expected_primary["layers"], strict=True)) if left != right), None)
         raise ValueError(f"target adapter numerical equivalence: primary={primary_drift}; secondary={secondary_drift}; first_primary_layer={first_layer}; observed={outputs['primary']['layers'][first_layer] if first_layer is not None else None}; expected={expected_primary['layers'][first_layer] if first_layer is not None else None}")
     return {"candidate_validation_reports": reports, "candidate_installed_byte_identity": candidate.read_bytes() == installed.read_bytes(),
+            "process_census": {"candidate_validation": len(reports), "primary_target": 1, "secondary_target": 1},
             "primary_result_sha256": sha(work/"primary-result.json"), "secondary_result_sha256": sha(work/"secondary-result.json"),
             "primary_access_events": len(list((work/"primary-events").glob("*.json"))),
             "secondary_access_events": len(list((work/"secondary-events").glob("*.json"))),

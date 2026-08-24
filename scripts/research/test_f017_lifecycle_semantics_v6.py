@@ -113,6 +113,23 @@ class LifecycleSemanticsV6Tests(unittest.TestCase):
         self.assertEqual(rows["primary_terminal_sha256"]["primary_receipt"]["required_outcomes"], [])
         self.assertTrue(rows["primary_receipt_sha256"]["primary_terminal"]["required_outcomes"])
 
+    def test_every_transition_follows_declared_bank_order_for_every_trace(self) -> None:
+        matrix = load_json(PATHS["matrix"])
+        rows = {row["identity"]: row["cells"] for row in matrix["rows"]}
+        outcomes = derive_outcome_obligations(self.model)["variants"]
+        for transition in self.model["transitions"]:
+            applicable = {
+                name for name, obligation in outcomes.items()
+                if transition["id"] in obligation["trace"]
+            }
+            ordered = transition["artifacts_created"]
+            for index, earlier in enumerate(ordered):
+                earlier_sha = self.model["artifact_self_sha_identities"][earlier]
+                for later in ordered[index + 1:]:
+                    later_sha = self.model["artifact_self_sha_identities"][later]
+                    self.assertTrue(applicable.issubset(rows[earlier_sha][later]["required_outcomes"]))
+                    self.assertTrue(applicable.isdisjoint(rows[later_sha][earlier]["required_outcomes"]))
+
     def test_generated_registry_and_matrix_schema_ids_are_exact(self) -> None:
         self.assertEqual(load_json(PATHS["registry"])["schema"], "pulsarmlx.f017.corrected-oracle-lifecycle-identity-registry/6.0.0")
         self.assertEqual(load_json(PATHS["matrix"])["schema"], "pulsarmlx.f017.corrected-oracle-lifecycle-binding-matrix/6.0.0")
