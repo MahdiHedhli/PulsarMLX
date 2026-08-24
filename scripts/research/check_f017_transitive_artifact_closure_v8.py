@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
+import stat
 from pathlib import Path
 
 
@@ -21,6 +23,7 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
     maximum_depth = 0
     package_attempt_id: str | None = None
     authorization_id: str | None = None
+    strict_rank_edges_validated = 0
     node_map = {item["artifact_id"]: item for item in dag["nodes"]}
     expected_roots = {key: item["sha256"] for key, item in roots.items()}
     if required != {artifact_id for artifact_id, node in node_map.items() if outcome in node["outcome_applicability"]}:
@@ -30,7 +33,7 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
         raise ValueError(f"package artifact census mismatch: missing={sorted(required-actual_files)} unexpected={sorted(actual_files-required)}")
 
     def walk(artifact_id: str, expected_sha: str | None, depth: int) -> None:
-        nonlocal maximum_depth, package_attempt_id, authorization_id
+        nonlocal maximum_depth, package_attempt_id, authorization_id, strict_rank_edges_validated
         maximum_depth = max(maximum_depth, depth)
         path = package_root / f"{artifact_id}.json"
         if not path.is_file():
@@ -69,12 +72,16 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                 raise ValueError(f"payload type mismatch: {artifact_id}:{key}")
             if kind == "NONNEGATIVE_INTEGER" and (type(observed) is not int or observed < 0):
                 raise ValueError(f"payload nonnegative integer mismatch: {artifact_id}:{key}")
-            if kind == "NONEMPTY_STRING" and (type(observed) is not str or not observed):
+            if kind == "NONEMPTY_STRING" and (type(observed) is not str or re.fullmatch(r"[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?", observed) is None):
                 raise ValueError(f"payload nonempty string mismatch: {artifact_id}:{key}")
             if kind == "SHA256" and (type(observed) is not str or len(observed) != 64 or any(character not in "0123456789abcdef" for character in observed)):
                 raise ValueError(f"payload sha256 mismatch: {artifact_id}:{key}")
             if kind == "ENUM" and observed not in rule["values"]:
                 raise ValueError(f"payload enum mismatch: {artifact_id}:{key}")
+            if kind == "OUTCOME_CLASSIFICATION_ENUM":
+                permitted = rule["success_values"] if outcome == "COMPLETE_SUCCESS" else rule["failure_values"]
+                if observed not in permitted:
+                    raise ValueError(f"payload outcome classification mismatch: {artifact_id}:{key}")
             if kind == "ARRAY_EXACT_LENGTH" and (type(observed) is not list or len(observed) != rule["length"]):
                 raise ValueError(f"payload array length mismatch: {artifact_id}:{key}")
             if kind == "DESCRIPTOR_IDENTITY_ARRAY":
@@ -85,6 +92,8 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                         or [item.get("size") for item in observed] != rule["sizes"]
                         or any(type(item) is not dict or set(item) != fields or item["role"] != "GRAPH_PAYLOAD"
                                or any(type(item[field]) is not int for field in integer_fields)
+                               or item["device"] < 0 or item["inode"] < 0 or item["size"] < 0 or item["mtime_ns"] < 0 or item["ctime_ns"] < 0
+                               or not stat.S_ISREG(item["mode"])
                                or type(item["lease_id"]) is not str or not item["lease_id"] for item in observed)
                         or len({(item["device"], item["inode"]) for item in observed}) != len(observed)):
                     raise ValueError(f"descriptor identity array mismatch: {artifact_id}:{key}")
@@ -119,9 +128,7 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
             if payload["atomic_terminalization"] != "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC":
                 raise ValueError("failure capsule is not atomic")
             if (payload["attempted_closures"] != payload["successful_closures"] + payload["duplicate_closures"] + payload["unknown_leases"]
-                    or payload["live_leases_after_release"] != payload["expected_leases"] - payload["successful_closures"] - payload["duplicate_closures"]
-                    or payload["unknown_leases"] != 0
-                    or (payload["expected_leases"] == 0 and payload["attempted_closures"] != 0)):
+                    or payload["live_leases_after_release"] != payload["expected_leases"] - payload["successful_closures"] - payload["duplicate_closures"]):
                 raise ValueError("failure capsule closure accounting mismatch")
             if payload["expected_leases"] != len(payload["lease_ordinals"]) or payload["expected_leases"] != len(payload["lease_evidence_artifact_ids"]):
                 raise ValueError("failure capsule lease census mismatch")
@@ -145,6 +152,7 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
             dependency_value = json.loads(dependency_path.read_bytes())
             if type(dependency_value.get("creation_rank")) is not int or dependency_value["creation_rank"] >= value["creation_rank"]:
                 raise ValueError(f"noncausal dependency rank: {artifact_id}:{dependency_id}")
+            strict_rank_edges_validated += 1
             walk(dependency_id, dependency_sha, depth + 1)
         visited.add(artifact_id)
 
@@ -152,7 +160,21 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
     missing = required - visited
     if missing:
         raise ValueError(f"required artifact outside terminal closure: {sorted(missing)}")
-    return {"result": "PASS", "terminal_id": terminal_id, "artifacts_reached": len(visited), "maximum_closure_depth": maximum_depth, "cycles": 0}
+    identity_values = [authorization_id, package_attempt_id]
+    identity_sources = [
+        ("operator_approval", "operator_approval_id"),
+        ("package_claim", "owner_nonce"),
+        ("package_durable_start", "package_ledger_entry_id"),
+        ("primary_durable_start", "event_id"),
+        ("secondary_durable_start", "event_id"),
+    ]
+    for source_id, field in identity_sources:
+        source_path = package_root / f"{source_id}.json"
+        if source_path.is_file():
+            identity_values.append(json.loads(source_path.read_bytes())["payload"][field])
+    if any(type(item) is not str or re.fullmatch(r"[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?", item) is None for item in identity_values) or len(set(identity_values)) != len(identity_values):
+        raise ValueError("package identifier grammar or uniqueness mismatch")
+    return {"result": "PASS", "terminal_id": terminal_id, "artifacts_reached": len(visited), "maximum_closure_depth": maximum_depth, "strict_rank_edges_validated": strict_rank_edges_validated}
 
 
 def main() -> None:

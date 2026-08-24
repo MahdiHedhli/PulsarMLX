@@ -16,26 +16,37 @@ from construct_f017_lifecycle_v8_symbolically import canonical, construct_outcom
 from check_f017_transitive_artifact_closure_v8 import validate_package
 
 STATIC_DESIGN_MUTATIONS = 179
-RUNTIME_CLOSURE_MUTATIONS = 26
+RUNTIME_CLOSURE_MUTATIONS = 32
 
 
 class CausalDesignTests(unittest.TestCase):
     @staticmethod
     def _rehash_descendants(package: Path, docs: dict, changed_id: str) -> None:
-        changed = {changed_id: hashlib.sha256((package / f"{changed_id}.json").read_bytes()).hexdigest()}
         for node in sorted(docs["artifact_dag"]["nodes"], key=lambda item: item["creation_rank"]):
             path = package / f"{node['artifact_id']}.json"
-            if not path.is_file() or node["artifact_id"] == changed_id:
+            if not path.is_file():
                 continue
             value = json.loads(path.read_bytes())
             touched = False
             for dependency_id in list(value["dependencies"]):
-                if dependency_id in changed:
-                    value["dependencies"][dependency_id] = changed[dependency_id]
+                expected = hashlib.sha256((package / f"{dependency_id}.json").read_bytes()).hexdigest()
+                if value["dependencies"][dependency_id] != expected:
+                    value["dependencies"][dependency_id] = expected
                     touched = True
+            if node["artifact_id"] != changed_id:
+                for key, rule in docs["artifact_schemas"]["artifacts"][node["artifact_id"]]["payload_rules"].items():
+                    expected = None
+                    if rule["kind"] == "ARTIFACT_SHA256":
+                        expected = hashlib.sha256((package / f"{rule['artifact_id']}.json").read_bytes()).hexdigest()
+                    elif rule["kind"] == "ARTIFACT_SHA256_SEQUENCE":
+                        expected = [hashlib.sha256((package / f"{artifact_id}.json").read_bytes()).hexdigest() for artifact_id in rule["artifact_ids"]]
+                    elif rule["kind"] == "EQUAL_ARTIFACT_PAYLOAD_FIELD":
+                        expected = json.loads((package / f"{rule['artifact_id']}.json").read_bytes())["payload"][rule["field"]]
+                    if expected is not None and value["payload"][key] != expected:
+                        value["payload"][key] = expected
+                        touched = True
             if touched:
                 path.write_bytes(canonical(value))
-                changed[node["artifact_id"]] = hashlib.sha256(path.read_bytes()).hexdigest()
 
     def test_complete_design_and_symbolic_packages(self):
         result = validator.validate_documents(validator.load_documents())
@@ -140,7 +151,7 @@ class CausalDesignTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     validator.validate_documents(docs)
 
-    def test_cross_package_splice_and_artifact_cycle_fail_closed(self):
+    def test_cross_package_splice_and_dependency_census_fail_closed(self):
         docs = validator.load_documents()
         required = set(docs["outcomes"]["outcomes"]["COMPLETE_SUCCESS"]["required"])
         with tempfile.TemporaryDirectory() as raw_root:
@@ -215,8 +226,13 @@ class CausalDesignTests(unittest.TestCase):
             ("CANDIDATE_PACKAGE_ID_DIVERGENCE", "candidate_authorization", lambda v: v["payload"].__setitem__("package_attempt_id", "ATTACKER-PACKAGE")),
             ("PRIMARY_TERMINAL_EVENT_DIVERGENCE", "primary_terminal", lambda v: v["payload"].__setitem__("event_id", "ATTACKER-EVENT")),
             ("EMPTY_OWNER_NONCE", "package_claim", lambda v: v["payload"].__setitem__("owner_nonce", "")),
+            ("WHITESPACE_OWNER_NONCE", "package_claim", lambda v: v["payload"].__setitem__("owner_nonce", " ")),
+            ("DIRECTORY_DESCRIPTOR_MODE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 0o40755)),
+            ("NEGATIVE_DESCRIPTOR_TIMESTAMP", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mtime_ns", -1)),
+            ("UNBOUND_PRIMARY_OUTPUT_DIGEST", "comparison_receipt", lambda v: v["payload"].__setitem__("primary_output_digest", "0" * 64)),
         ]
-        self.assertEqual(len(attacks), 22)
+        self.assertEqual(len(attacks), 26)
+        self.assertEqual(RUNTIME_CLOSURE_MUTATIONS, len(attacks) + 6)
         for attack_id, target_id, mutate in attacks:
             with self.subTest(attack_id=attack_id), tempfile.TemporaryDirectory() as raw_root:
                 package = Path(raw_root)
@@ -277,6 +293,41 @@ class CausalDesignTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "closure accounting"):
                 validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
 
+    def test_unknown_extra_closure_is_recordable(self):
+        docs = validator.load_documents()
+        outcome = "CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_014"
+        required = set(docs["outcomes"]["outcomes"][outcome]["required"])
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            built = construct_outcome(outcome, package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            terminal_id = built["terminal_id"]
+            path = package / f"{terminal_id}.json"
+            value = json.loads(path.read_bytes())
+            value["payload"].update({"attempted_closures": 2, "successful_closures": 1, "duplicate_closures": 0, "unknown_leases": 1})
+            path.write_bytes(canonical(value))
+            result = validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
+            self.assertEqual(result["result"], "PASS")
+
+    def test_package_identifier_classes_are_pairwise_distinct(self):
+        docs = validator.load_documents()
+        required = set(docs["outcomes"]["outcomes"]["COMPLETE_SUCCESS"]["required"])
+        attacks = (("package_claim", "owner_nonce", "F017-V8-SYMBOLIC-OPERATOR-APPROVAL"), ("secondary_durable_start", "event_id", "F017-V8-SYMBOLIC-PRIMARY-EVENT"))
+        for target_id, field, forged in attacks:
+            with self.subTest(target_id=target_id), tempfile.TemporaryDirectory() as raw_root:
+                package = Path(raw_root)
+                construct_outcome("COMPLETE_SUCCESS", package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+                affected = [target_id]
+                if target_id == "secondary_durable_start":
+                    affected.extend(["secondary_ledger_entry", "secondary_execution_evidence", "secondary_receipt", "secondary_terminal"])
+                for artifact_id in affected:
+                    path = package / f"{artifact_id}.json"
+                    value = json.loads(path.read_bytes())
+                    value["payload"][field] = forged
+                    path.write_bytes(canonical(value))
+                    self._rehash_descendants(package, docs, artifact_id)
+                with self.assertRaisesRegex(ValueError, "identifier grammar or uniqueness"):
+                    validate_package(package, "final_declaration", required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], "COMPLETE_SUCCESS")
+
     def test_top1_uncertainty_is_success_compatible(self):
         docs = validator.load_documents()
         required = set(docs["outcomes"]["outcomes"]["COMPLETE_SUCCESS"]["required"])
@@ -290,6 +341,21 @@ class CausalDesignTests(unittest.TestCase):
                 path.write_bytes(canonical(value))
                 self._rehash_descendants(package, docs, artifact_id)
             result = validate_package(package, "final_declaration", required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], "COMPLETE_SUCCESS")
+            self.assertEqual(result["result"], "PASS")
+
+    def test_oracle_disagreement_is_failure_outcome_compatible(self):
+        docs = validator.load_documents()
+        outcome = "COMPARISON_FAILURE__AFTER_RANK_041"
+        required = set(docs["outcomes"]["outcomes"][outcome]["required"])
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            built = construct_outcome(outcome, package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            path = package / "comparison_receipt.json"
+            value = json.loads(path.read_bytes())
+            value["payload"]["classification"] = "ORACLE_DISAGREEMENT"
+            path.write_bytes(canonical(value))
+            self._rehash_descendants(package, docs, "comparison_receipt")
+            result = validate_package(package, built["terminal_id"], required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
             self.assertEqual(result["result"], "PASS")
 
     def test_durable_prefix_bytes_do_not_depend_on_future_outcome(self):

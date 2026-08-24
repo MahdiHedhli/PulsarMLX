@@ -35,7 +35,7 @@ def payload_for(artifact_id: str, keys: list[str], outcome: str, constants: dict
         elif key == "lease_ids":
             value[key] = [f"LEASE-{ordinal}" for ordinal in range(2, 7)]
         elif key == "descriptor_identities":
-            value[key] = [{"device": ordinal, "inode": 1000 + ordinal, "mode": 33024, "size": GRAPH_SHARD_SIZES[ordinal], "mtime_ns": 1, "ctime_ns": 1, "shard_ordinal": ordinal, "role": "GRAPH_PAYLOAD", "lease_id": f"LEASE-{ordinal}"} for ordinal in range(2, 7)]
+            value[key] = [{"device": 1, "inode": 1000 + ordinal, "mode": 33024, "size": GRAPH_SHARD_SIZES[ordinal], "mtime_ns": 1, "ctime_ns": 1, "shard_ordinal": ordinal, "role": "GRAPH_PAYLOAD", "lease_id": f"LEASE-{ordinal}"} for ordinal in range(2, 7)]
         elif key in {"expected_total_bytes", "observed_total_bytes"}:
             value[key] = 238458632928
         elif key == "event_count":
@@ -44,6 +44,8 @@ def payload_for(artifact_id: str, keys: list[str], outcome: str, constants: dict
             ordinal = int(artifact_id.rsplit("_", 1)[-1]) if artifact_id[-1].isdigit() else 0
             value[key] = ordinal * 4096
         elif key in {"expected_checkpoint_digest", "observed_checkpoint_digest", "prior_event_digest", "terminal_event_digest", "candidate_digest", "installed_digest", "checkpoint_set_digest"}:
+            value[key] = hashlib.sha256(f"{artifact_id}:{key}".encode()).hexdigest()
+        elif "digest" in key:
             value[key] = hashlib.sha256(f"{artifact_id}:{key}".encode()).hexdigest()
         elif key == "ordered_shard_receipt_digests":
             value[key] = [hashlib.sha256(f"receipt:{ordinal}".encode()).hexdigest() for ordinal in range(1, 7)]
@@ -55,6 +57,14 @@ def payload_for(artifact_id: str, keys: list[str], outcome: str, constants: dict
             value[key] = True
         elif key == "frozen_thresholds":
             value[key] = {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32}
+        elif key == "operator_approval_id":
+            value[key] = "F017-V8-SYMBOLIC-OPERATOR-APPROVAL"
+        elif key == "owner_nonce":
+            value[key] = "F017-V8-SYMBOLIC-OWNER-NONCE"
+        elif key == "package_ledger_entry_id":
+            value[key] = "F017-V8-SYMBOLIC-PACKAGE-LEDGER"
+        elif key == "event_id":
+            value[key] = f"F017-V8-SYMBOLIC-{'PRIMARY' if artifact_id.startswith('primary') else 'SECONDARY'}-EVENT"
         else:
             value[key] = f"{artifact_id}:{key}"
     value.update(constants or {})
@@ -105,8 +115,8 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
                 value["payload"][key] = created[rule["artifact_id"]]
             elif rule["kind"] == "ARTIFACT_SHA256_SEQUENCE":
                 value["payload"][key] = [created[item] for item in rule["artifact_ids"]]
-            elif rule["kind"] == "ENUM":
-                value["payload"][key] = rule["values"][0]
+            elif rule["kind"] == "OUTCOME_CLASSIFICATION_ENUM":
+                value["payload"][key] = rule["success_values"][0] if outcome == "COMPLETE_SUCCESS" else rule["failure_values"][0]
             elif rule["kind"] == "EQUAL_ENVELOPE_FIELD":
                 value["payload"][key] = value[rule["field"]]
         if list(value) != descriptor["keys"]:
@@ -162,7 +172,7 @@ def validate_all(output_root: Path | None = None) -> dict:
         "unsatisfied_outcomes": 0,
         "self_references": 0,
         "future_references": 0,
-        "artifact_cycles": 0,
+        "strict_rank_edges_validated": sum(item["closure"]["strict_rank_edges_validated"] for item in results),
         "maximum_closure_depth": max(item["closure"]["maximum_closure_depth"] for item in results),
         "original_checkpoint_access": 0,
         "outcomes": results,

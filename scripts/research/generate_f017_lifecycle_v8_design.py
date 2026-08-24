@@ -121,6 +121,9 @@ def failure_class_for_rank(rank: int) -> str:
     return "EVIDENCE_BANKING_FAILURE"
 
 _CHECKPOINT_METADATA = json.loads((ROOT / "docs/validation/glm52-checkpoint.json").read_bytes())
+_NUMERICAL_CONTRACT = json.loads((ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json").read_bytes())
+_ALL_COMPARISON_CLASSIFICATIONS = list(_NUMERICAL_CONTRACT["future_p1_consequence"])
+_SUCCESS_COMPARISON_CLASSIFICATIONS = [name for name in _ALL_COMPARISON_CLASSIFICATIONS if _NUMERICAL_CONTRACT["future_p1_consequence"][name] != "ATTEMPT_2_BLOCKED"]
 SHARDS = [
     {
         **record,
@@ -157,16 +160,16 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         ("primary_descriptor_continuity_report", "PRIMARY_CONSUMER", ["consumer_role", "descriptor_count", "ordinals", "lease_ids", "descriptor_identities", "path_reopen_count"]),
         ("primary_durable_start", "PRIMARY_CONSUMER", ["event_id"]),
         ("primary_ledger_entry", "PRIMARY_CONSUMER", ["delta", "event_id"]),
-        ("primary_execution_evidence", "PRIMARY_CONSUMER", ["synthetic_only", "layers_completed"]),
+        ("primary_execution_evidence", "PRIMARY_CONSUMER", ["consumer_role", "event_id", "numerical_output_digest", "synthetic_only", "layers_completed"]),
         ("primary_receipt", "PRIMARY_CONSUMER", ["event_id", "result"]),
         ("primary_terminal", "PRIMARY_CONSUMER", ["event_id", "result"]),
         ("secondary_descriptor_continuity_report", "SECONDARY_CONSUMER", ["consumer_role", "descriptor_count", "ordinals", "lease_ids", "descriptor_identities", "path_reopen_count"]),
         ("secondary_durable_start", "SECONDARY_CONSUMER", ["event_id"]),
         ("secondary_ledger_entry", "SECONDARY_CONSUMER", ["delta", "event_id"]),
-        ("secondary_execution_evidence", "SECONDARY_CONSUMER", ["synthetic_only", "layers_completed"]),
+        ("secondary_execution_evidence", "SECONDARY_CONSUMER", ["consumer_role", "event_id", "numerical_output_digest", "synthetic_only", "layers_completed"]),
         ("secondary_receipt", "SECONDARY_CONSUMER", ["event_id", "result"]),
         ("secondary_terminal", "SECONDARY_CONSUMER", ["event_id", "result"]),
-        ("comparison_receipt", "COMPARATOR", ["classification", "frozen_thresholds"]),
+        ("comparison_receipt", "COMPARATOR", ["classification", "primary_output_digest", "secondary_output_digest", "frozen_thresholds"]),
         ("comparison_terminal", "COMPARATOR", ["classification", "result"]),
         ("descriptor_release_start", "COORDINATOR", ["expected_leases"]),
         ("descriptor_release_report", "COORDINATOR", ["attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "lease_ids"]),
@@ -217,7 +220,7 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         elif artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"}:
             constants = {"consumer_role": "PRIMARY" if artifact_id.startswith("primary") else "SECONDARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "path_reopen_count": 0}
         elif artifact_id in {"primary_execution_evidence", "secondary_execution_evidence"}:
-            constants = {"synthetic_only": True, "layers_completed": 79}
+            constants = {"consumer_role": "PRIMARY" if artifact_id.startswith("primary") else "SECONDARY", "synthetic_only": True, "layers_completed": 79}
         elif artifact_id in {"primary_receipt", "primary_terminal", "secondary_receipt", "secondary_terminal"}:
             constants = {"result": "COMPLETE"}
         elif artifact_id == "comparison_receipt":
@@ -267,7 +270,9 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         if artifact_id == "descriptor_release_report":
             built["payload_rules"]["lease_ids"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
         if artifact_id == "comparison_receipt":
-            built["payload_rules"]["classification"] = {"kind": "ENUM", "values": ["EXACT_EXPECTED_TOKEN_STABLE", "NUMERICALLY_STABLE_TOP_K_ONLY", "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"]}
+            built["payload_rules"]["classification"] = {"kind": "OUTCOME_CLASSIFICATION_ENUM", "success_values": _SUCCESS_COMPARISON_CLASSIFICATIONS, "failure_values": _ALL_COMPARISON_CLASSIFICATIONS}
+            built["payload_rules"]["primary_output_digest"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "primary_execution_evidence", "field": "numerical_output_digest"}
+            built["payload_rules"]["secondary_output_digest"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "secondary_execution_evidence", "field": "numerical_output_digest"}
         if artifact_id == "comparison_terminal":
             built["payload_rules"]["classification"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "comparison_receipt", "field": "classification"}
         if artifact_id == "operator_approval":
@@ -287,7 +292,7 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
             durable_start = f"{role}_durable_start"
             if artifact_id == durable_start:
                 built["payload_rules"]["event_id"] = {"kind": "NONEMPTY_STRING"}
-            if artifact_id in {f"{role}_ledger_entry", f"{role}_receipt", f"{role}_terminal"}:
+            if artifact_id in {f"{role}_ledger_entry", f"{role}_execution_evidence", f"{role}_receipt", f"{role}_terminal"}:
                 built["payload_rules"]["event_id"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": durable_start, "field": "event_id"}
         nodes.append(built)
         previous = artifact_id
