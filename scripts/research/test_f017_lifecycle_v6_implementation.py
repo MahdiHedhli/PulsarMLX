@@ -106,6 +106,12 @@ class LifecycleV6ImplementationTests(unittest.TestCase):
                 absent,
             )
 
+    def test_shadow_rehearsal_cannot_turn_low_memory_into_authority(self) -> None:
+        source = (ROOT / "scripts/research/rehearse_f017_corrected_oracle_event04_v6.py").read_text(encoding="utf-8")
+        self.assertIn('future_memory_gate = "PASS" if observation.available_bytes >= THRESHOLD else "FAIL_CLOSED"', source)
+        self.assertIn('"event_04_authorization_created": False', source)
+        self.assertIn('"operator_go": False', source)
+
     def test_authorizer_and_coordinator_do_not_import_numerical_cores(self) -> None:
         for relative in (
             "scripts/research/validate_f017_corrected_oracle_access_v6.py",

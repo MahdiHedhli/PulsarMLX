@@ -61,8 +61,11 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
         checkpoint_root = _canonical_nonsymlink_directory(checkpoint_root)
         checkpoint_root_ancestry_verified = True
     observation = observe_vm_stat()
-    if observation.available_bytes < THRESHOLD:
-        raise ValueError("rehearsal memory threshold")
+    # A shadow rehearsal observes and records the real preflight decision but
+    # never converts it into authority. Shared CI runners are permitted to be
+    # below the future live-event floor; a future production mint remains
+    # fail-closed on the same observation through the real preflight gate.
+    future_memory_gate = "PASS" if observation.available_bytes >= THRESHOLD else "FAIL_CLOSED"
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     scientific = strict_bytes(SCIENTIFIC.read_bytes())
     with tempfile.TemporaryDirectory(prefix="f017-event04-rehearsal-") as temporary:
@@ -134,6 +137,7 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
             "machine_brand": subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip(),
             "architecture": platform.machine(), "memory_page_size_bytes": observation.page_size_bytes,
             "memory_available_bytes": observation.available_bytes, "memory_threshold_bytes": THRESHOLD,
+            "future_production_memory_gate": future_memory_gate,
             "candidate_sha256": candidate_sha, "candidate_installed_byte_identity": candidate.read_bytes() == installed.read_bytes(),
             "primary_candidate_validation_sha256": candidate_handshake["primary"]["sha256"],
             "secondary_candidate_validation_sha256": candidate_handshake["secondary"]["sha256"],
