@@ -164,6 +164,16 @@ def validate_documents(
         raise ValidationError("Git measurement tree")
 
     entries = _measurement_entries(measurement)
+    if measurement.get("result") != "PASS" or measurement.get("branch") != "feat/017-rust-native-inference-runtime":
+        raise ValidationError("measurement authority status")
+    for path, entry in entries.items():
+        exact_bytes = git_bytes(measurement_head, path)
+        if entry["sha256"] != sha256_bytes(exact_bytes):
+            raise ValidationError(f"measurement entry SHA: {path}")
+        if entry["git_blob_sha"] != git_blob(measurement_head, path):
+            raise ValidationError(f"measurement entry Git blob: {path}")
+        if check_worktree and (ROOT / path).read_bytes() != exact_bytes:
+            raise ValidationError(f"measured working-tree drift: {path}")
     bindings = scientific.get("bindings")
     if type(bindings) is not dict:
         raise ValidationError("scientific bindings object")
@@ -316,6 +326,14 @@ def run_mutations(documents: dict[str, dict[str, Any]], file_shas: dict[str, str
     def _(d, _s): d["scientific"]["bindings"]["parser"]["sha256"] = "be4a52a0a8b8fdc7e146fffcdbce1b41f70130816db49542e4d3c2cf78e2981a"
     @case("M16_COORDINATOR_STALE_WITH_VALID_OUTER")
     def _(d, _s): d["scientific"]["bindings"]["coordinator"]["sha256"] = "5c80525fdf018c34d22a1bbf4ca2b1eec2c7d80ff3e743155262a2fddea4f673"
+    @case("M17_UNBOUND_MEASUREMENT_ENTRY_SHA")
+    def _(d, _s):
+        target = next(entry for entry in d["measurement"]["entries"] if entry["path"] not in set(MEASURED_BINDINGS.values()))
+        target["sha256"] = "4" * 64
+    @case("M18_UNBOUND_MEASUREMENT_ENTRY_BLOB")
+    def _(d, _s):
+        target = next(entry for entry in d["measurement"]["entries"] if entry["path"] not in set(MEASURED_BINDINGS.values()))
+        target["git_blob_sha"] = "5" * 40
 
     rejected: list[str] = []
     for name, mutate in cases:

@@ -376,6 +376,11 @@ jobs:
           .venv/bin/python scripts/research/validate_f017_lifecycle_semantic_authority_v6.py
           .venv/bin/python scripts/research/check_f017_lifecycle_v6_independent.py
           .venv/bin/python scripts/research/validate_f017_event04_authority_reconciliation_v1.py \
+            --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v2.json \
+            --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v4.json \
+            --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v1.json \
+            --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v2.json \
+            --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v2.json \
             --run-mutations
           .venv/bin/python -m pytest -q \
             scripts/research/test_f017_lifecycle_semantics_v6.py \
@@ -388,6 +393,11 @@ jobs:
             --failure-repeats 5 \
             --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v6.json"
           .venv/bin/python scripts/research/rehearse_f017_event04_authority_reconciliation_v1.py \
+            --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v2.json \
+            --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v4.json \
+            --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v1.json \
+            --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v2.json \
+            --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v2.json \
             --output "$RUNNER_TEMP/f017-event04-authority-reconciliation-rehearsal-v1.json"
           .venv/bin/python - <<'PY'
           import json
