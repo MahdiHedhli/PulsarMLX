@@ -13,10 +13,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import validate_f017_lifecycle_causal_design_v8 as validator
 from construct_f017_lifecycle_v8_symbolically import validate_all
 from construct_f017_lifecycle_v8_symbolically import canonical, construct_outcome
-from check_f017_transitive_artifact_closure_v8 import validate_package
+from check_f017_transitive_artifact_closure_v8 import _validate_descriptor_identities, _validate_lease_id, validate_package
+from check_f017_descriptor_type_safety_v8 import validate_package as validate_descriptor_types
 
 STATIC_DESIGN_MUTATIONS = 179
-RUNTIME_CLOSURE_MUTATIONS = 37
+RUNTIME_CLOSURE_MUTATIONS = 77
 
 
 class CausalDesignTests(unittest.TestCase):
@@ -235,8 +236,51 @@ class CausalDesignTests(unittest.TestCase):
             ("WHITESPACE_DESCRIPTOR_LEASE_ID", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("lease_id", " ")),
             ("LOWERCASE_DESCRIPTOR_LEASE_ID", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("lease_id", "lease-2")),
             ("MULTI_DEVICE_DESCRIPTOR_SET", "descriptor_lease_manifest", lambda v: [item.__setitem__("device", index) for index, item in enumerate(v["payload"]["descriptor_identities"], start=1)]),
+            # C7-N1: portable 16-bit mode domain and strict scalar typing.
+            ("C7_N1_MODE_0O1100644", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 0o1100644)),
+            ("C7_N1_MODE_65536", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 65536)),
+            ("C7_N1_MODE_2_POW_31", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 2**31)),
+            ("C7_N1_MODE_TRUE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", True)),
+            ("C7_N1_MODE_FALSE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", False)),
+            ("C7_N1_MODE_FLOAT", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", 1.0)),
+            ("C7_N1_MODE_STRING", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", "33188")),
+            ("C7_N1_MODE_NONE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", None)),
+            ("C7_N1_MODE_LIST", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", [])),
+            ("C7_N1_MODE_DICT", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mode", {})),
+            # C7-N2: descriptor entry type/census precedes every semantic read.
+            ("C7_N2_DESCRIPTOR_NONE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"].__setitem__(0, None)),
+            ("C7_N2_DESCRIPTOR_INTEGER", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"].__setitem__(0, 0)),
+            ("C7_N2_DESCRIPTOR_BOOL", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"].__setitem__(0, True)),
+            ("C7_N2_DESCRIPTOR_STRING", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"].__setitem__(0, "")),
+            ("C7_N2_DESCRIPTOR_LIST", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"].__setitem__(0, [])),
+            ("C7_N2_DESCRIPTOR_MISSING_KEY", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].pop("ctime_ns")),
+            ("C7_N2_DESCRIPTOR_EXTRA_KEY", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("attacker", 1)),
+            ("C7_N2_DEVICE_BOOL", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("device", True)),
+            ("C7_N2_INODE_FLOAT", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("inode", 1.0)),
+            ("C7_N2_SIZE_NONE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("size", None)),
+            ("C7_N2_MTIME_STRING", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("mtime_ns", "1")),
+            ("C7_N2_CTIME_BOOL", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("ctime_ns", False)),
+            ("C7_N2_ORDINAL_FLOAT", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("shard_ordinal", 2.0)),
+            ("C7_N2_ROLE_LIST", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("role", [])),
+            ("C7_N2_LEASE_FIELD_DICT", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("lease_id", {})),
+            # Lease collection typing occurs before deduplication/set construction.
+            ("C7_N2_LEASE_LIST", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, [])),
+            ("C7_N2_LEASE_DICT", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, {})),
+            ("C7_N2_LEASE_BOOL", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, True)),
+            ("C7_N2_LEASE_INTEGER", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, 2)),
+            ("C7_N2_LEASE_FLOAT", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, 2.0)),
+            ("C7_N2_LEASE_NONE", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, None)),
+            ("C7_N2_LEASE_EMPTY", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, "")),
+            ("C7_N2_LEASE_INVALID_CHAR", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, "LEASE/2")),
+            ("C7_N2_LEASE_OVERLENGTH", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, "L" * 129)),
+            ("C7_N2_LEASE_INERT_MARKER", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, "INERT")),
+            ("C7_N2_LEASE_FIXTURE_MARKER", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(0, "FIXTURE")),
+            ("C7_N2_LEASE_DUPLICATE", "descriptor_lease_manifest", lambda v: v["payload"]["lease_ids"].__setitem__(1, v["payload"]["lease_ids"][0])),
+            ("C7_N2_DESCRIPTOR_ROLE_INTEGER", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("role", 1)),
+            ("C7_N2_DESCRIPTOR_NESTED_LIST", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"].__setitem__(4, [[]])),
+            ("C7_N2_DESCRIPTOR_LEASE_ID_NONE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][4].__setitem__("lease_id", None)),
         ]
-        self.assertEqual(len(attacks), 31)
+        self.assertEqual(len(attacks), 71)
         self.assertEqual(RUNTIME_CLOSURE_MUTATIONS, len(attacks) + 6)
         for attack_id, target_id, mutate in attacks:
             with self.subTest(attack_id=attack_id), tempfile.TemporaryDirectory() as raw_root:
@@ -249,6 +293,38 @@ class CausalDesignTests(unittest.TestCase):
                 self._rehash_descendants(package, docs, target_id)
                 with self.assertRaises(ValueError):
                     validate_package(package, "final_declaration", required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], "COMPLETE_SUCCESS")
+
+    def test_independent_descriptor_checker_and_import_separation(self):
+        docs = validator.load_documents()
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            construct_outcome("COMPLETE_SUCCESS", package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            self.assertEqual(validate_descriptor_types(package)["result"], "PASS")
+            manifest_path = package / "descriptor_lease_manifest.json"
+            value = json.loads(manifest_path.read_bytes())
+            value["payload"]["descriptor_identities"][0]["mode"] = 0o1100644
+            manifest_path.write_bytes(canonical(value))
+            with self.assertRaises(ValueError):
+                validate_descriptor_types(package)
+        checker_source = (Path(__file__).resolve().parent / "check_f017_descriptor_type_safety_v8.py").read_text()
+        forbidden_imports = (
+            "check_f017_transitive_artifact_closure_v8",
+            "generate_f017_lifecycle_v8_design",
+            "validate_f017_lifecycle_causal_design_v8",
+        )
+        self.assertFalse(any(name in checker_source for name in forbidden_imports))
+
+    def test_non_json_descriptor_scalar_shapes_fail_as_value_error(self):
+        rule = {"length": 5, "ordinals": [2, 3, 4, 5, 6], "sizes": [1, 1, 1, 1, 1]}
+        for value in (b"LEASE-2", (), set(), object()):
+            with self.subTest(value_type=type(value).__name__), self.assertRaises(ValueError):
+                _validate_lease_id(value, "direct-runtime-probe")
+        valid = [{"device": 1, "inode": index, "mode": 0o100644, "size": 1, "mtime_ns": 1, "ctime_ns": 1, "shard_ordinal": index, "role": "GRAPH_PAYLOAD", "lease_id": f"LEASE-{index}"} for index in range(2, 7)]
+        for malformed in (None, 0, True, "", b"", (), set()):
+            candidate = list(valid)
+            candidate[0] = malformed
+            with self.subTest(descriptor_type=type(malformed).__name__), self.assertRaises(ValueError):
+                _validate_descriptor_identities(candidate, rule, "direct-runtime-probe")
 
     def test_identity_prefix_release_is_exact_and_never_duplicated(self):
         docs = validator.load_documents()

@@ -374,6 +374,45 @@ def main() -> None:
     }
     bank(CONTRACTS / "f017-corrected-oracle-descriptor-continuity-v8.json", continuity)
 
+    descriptor_scalars = {
+        "schema": "pulsarmlx.f017.corrected-oracle-descriptor-scalar-contract/8.0.0",
+        "status": STATUS,
+        "controlled_failure_class": "ValueError",
+        "descriptor_collection": {"type": "EXACT_LIST", "count": 5},
+        "descriptor_entry": {
+            "type": "EXACT_DICT",
+            "unknown_keys": "REJECT",
+            "keys": ["device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal", "role", "lease_id"],
+        },
+        "fields": {
+            "device": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "inode": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "mode": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0, "exclusive_maximum": 65536, "semantic": "POSIX_16_BIT_MODE_T_REGULAR_FILE"},
+            "size": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "mtime_ns": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "ctime_ns": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "shard_ordinal": {"type": "EXACT_INT_NOT_BOOL", "values": [2, 3, 4, 5, 6]},
+            "role": {"type": "EXACT_STRING", "values": ["GRAPH_PAYLOAD"]},
+            "lease_id": {"type": "EXACT_STRING", "grammar": "[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?", "forbidden_markers": ["INERT", "FIXTURE", "TEST", "SYNTHETIC"]},
+        },
+        "validation_order": [
+            "DESCRIPTOR_COLLECTION_TYPE_AND_COUNT",
+            "DESCRIPTOR_ENTRY_EXACT_TYPE",
+            "DESCRIPTOR_ENTRY_EXACT_KEY_CENSUS",
+            "FIELD_EXACT_TYPES",
+            "FIELD_RANGES_AND_ENUMERATIONS",
+            "LEASE_ID_GRAMMAR",
+            "MODE_REGULAR_FILE_SEMANTIC",
+            "EXACT_AUTHORITY_EQUALITY",
+            "DUPLICATE_DETECTION",
+        ],
+        "mode_semantic_precondition": "STAT_S_ISREG_CALLED_ONLY_AFTER_EXACT_INT_AND_0_LE_MODE_LT_65536",
+        "lease_deduplication_precondition": "SET_CONSTRUCTION_ONLY_AFTER_ALL_LEASE_IDS_ARE_VALID_STRINGS",
+        "ordinals": [2, 3, 4, 5, 6],
+        "roles": ["GRAPH_PAYLOAD"],
+    }
+    bank(CONTRACTS / "f017-corrected-oracle-descriptor-scalar-contract-v8.json", descriptor_scalars)
+
     envelope_keys = ["schema", "artifact_id", "artifact_kind", "authorization_id", "package_attempt_id", "outcome", "creation_rank", "dependencies", "root_authorities", "payload", "result"]
     schemas = {
         "schema": "pulsarmlx.f017.corrected-oracle-artifact-schema-registry/8.0.0",
@@ -536,6 +575,7 @@ def main() -> None:
         "artifact_schemas": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-artifact-schemas-v8.json",
         "checkpoint_identity": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-v8.json",
         "continuity": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-descriptor-continuity-v8.json",
+        "descriptor_scalars": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-descriptor-scalar-contract-v8.json",
         "lifecycle_model": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-semantic-model-v8.json",
         "outcomes": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-outcome-obligations-v8.json",
         "path_timing": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v8.json",
@@ -544,10 +584,13 @@ def main() -> None:
         "serialization": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-canonical-serialization-v8.json",
         "interface": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v8.json",
         "finding_reproduction": "docs/architecture/reviews/evidence/f017-corrected-oracle-v7-cycle05-findings-reproduction-v1.json",
+        "cycle07_type_safety_reproduction": "docs/architecture/reviews/evidence/f017-lifecycle-v8-cycle07-required-finding-reproduction-v1.json",
+        "descriptor_type_safety_mutation_qualification": "docs/architecture/reviews/evidence/f017-lifecycle-v8-descriptor-type-safety-mutation-qualification-v1.json",
         "mechanical_qualification": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v8-mechanical-qualification-v1.json",
         "design_generator": "scripts/research/generate_f017_lifecycle_v8_design.py",
         "symbolic_constructor": "scripts/research/construct_f017_lifecycle_v8_symbolically.py",
         "transitive_closure_validator": "scripts/research/check_f017_transitive_artifact_closure_v8.py",
+        "independent_type_safety_validator": "scripts/research/check_f017_descriptor_type_safety_v8.py",
         "independent_validator": "scripts/research/validate_f017_lifecycle_causal_design_v8.py",
         "design_mutation_suite": "scripts/research/test_f017_lifecycle_causal_design_v8.py",
         "design_qualifier": "scripts/research/qualify_f017_lifecycle_v8_design.py",

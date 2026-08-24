@@ -22,6 +22,7 @@ FILENAMES = {
     "artifact_schemas": "f017-corrected-oracle-artifact-schemas-v8.json",
     "checkpoint_identity": "f017-corrected-oracle-checkpoint-identity-v8.json",
     "continuity": "f017-corrected-oracle-descriptor-continuity-v8.json",
+    "descriptor_scalars": "f017-corrected-oracle-descriptor-scalar-contract-v8.json",
     "lifecycle_model": "f017-corrected-oracle-lifecycle-semantic-model-v8.json",
     "outcomes": "f017-corrected-oracle-outcome-obligations-v8.json",
     "path_timing": "f017-corrected-oracle-path-timing-v8.json",
@@ -180,6 +181,7 @@ def validate_documents(docs: dict[str, dict]) -> dict:
     schemas = docs["artifact_schemas"]
     identity = docs["checkpoint_identity"]
     continuity = docs["continuity"]
+    descriptor_scalars = docs["descriptor_scalars"]
     model = docs["lifecycle_model"]
     obligations = docs["outcomes"]
     path_timing = docs["path_timing"]
@@ -298,6 +300,31 @@ def validate_documents(docs: dict[str, dict]) -> dict:
             raise ValueError(f"{role.upper()}_CONTINUITY_CENSUS")
     if continuity["release"] != {"expected_leases": 5, "duplicate_closures": 0, "unknown_leases": 0, "live_leases_after_success": 0, "package_terminal_after_release": True}:
         raise ValueError("DESCRIPTOR_RELEASE")
+    expected_descriptor_scalars = {
+        "schema": "pulsarmlx.f017.corrected-oracle-descriptor-scalar-contract/8.0.0",
+        "status": STATUS,
+        "controlled_failure_class": "ValueError",
+        "descriptor_collection": {"type": "EXACT_LIST", "count": 5},
+        "descriptor_entry": {"type": "EXACT_DICT", "unknown_keys": "REJECT", "keys": expected_fields},
+        "fields": {
+            "device": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "inode": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "mode": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0, "exclusive_maximum": 65536, "semantic": "POSIX_16_BIT_MODE_T_REGULAR_FILE"},
+            "size": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "mtime_ns": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "ctime_ns": {"type": "EXACT_INT_NOT_BOOL", "minimum": 0},
+            "shard_ordinal": {"type": "EXACT_INT_NOT_BOOL", "values": [2, 3, 4, 5, 6]},
+            "role": {"type": "EXACT_STRING", "values": ["GRAPH_PAYLOAD"]},
+            "lease_id": {"type": "EXACT_STRING", "grammar": "[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?", "forbidden_markers": ["INERT", "FIXTURE", "TEST", "SYNTHETIC"]},
+        },
+        "validation_order": ["DESCRIPTOR_COLLECTION_TYPE_AND_COUNT", "DESCRIPTOR_ENTRY_EXACT_TYPE", "DESCRIPTOR_ENTRY_EXACT_KEY_CENSUS", "FIELD_EXACT_TYPES", "FIELD_RANGES_AND_ENUMERATIONS", "LEASE_ID_GRAMMAR", "MODE_REGULAR_FILE_SEMANTIC", "EXACT_AUTHORITY_EQUALITY", "DUPLICATE_DETECTION"],
+        "mode_semantic_precondition": "STAT_S_ISREG_CALLED_ONLY_AFTER_EXACT_INT_AND_0_LE_MODE_LT_65536",
+        "lease_deduplication_precondition": "SET_CONSTRUCTION_ONLY_AFTER_ALL_LEASE_IDS_ARE_VALID_STRINGS",
+        "ordinals": [2, 3, 4, 5, 6],
+        "roles": ["GRAPH_PAYLOAD"],
+    }
+    if descriptor_scalars != expected_descriptor_scalars:
+        raise ValueError("DESCRIPTOR_SCALAR_CONTRACT")
 
     if set(schemas) != {"schema", "status", "strict_key_census", "unknown_fields", "canonical_serialization", "outcome_field_semantics", "result_field_semantics", "artifacts"} or set(schemas["artifacts"]) != set(node_map) or schemas["strict_key_census"] is not True or schemas["unknown_fields"] != "REJECT":
         raise ValueError("SCHEMA_COVERAGE")
@@ -473,7 +500,7 @@ def validate(run_symbolic: bool = True) -> dict:
     manifest = json.loads(raw_manifest)
     if raw_manifest != canonical(manifest) or manifest["status"] != STATUS or manifest["active_live_generation"] != "NONE" or manifest["implementation_phase_entered"] is not False:
         raise ValueError("MANIFEST_POSTURE")
-    expected_authorities = set(FILENAMES) | {"finding_reproduction", "mechanical_qualification", "design_generator", "symbolic_constructor", "transitive_closure_validator", "independent_validator", "design_mutation_suite", "design_qualifier", "active_generation"}
+    expected_authorities = set(FILENAMES) | {"finding_reproduction", "cycle07_type_safety_reproduction", "descriptor_type_safety_mutation_qualification", "mechanical_qualification", "design_generator", "symbolic_constructor", "transitive_closure_validator", "independent_type_safety_validator", "independent_validator", "design_mutation_suite", "design_qualifier", "active_generation"}
     if set(manifest["authorities"]) != expected_authorities:
         raise ValueError("MANIFEST_CENSUS")
     for binding in list(manifest["authorities"].values()) + list(manifest["root_authorities"].values()):

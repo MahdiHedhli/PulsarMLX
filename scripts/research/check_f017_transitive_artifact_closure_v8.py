@@ -10,6 +10,72 @@ import stat
 from pathlib import Path
 
 
+DESCRIPTOR_FIELDS = {
+    "device",
+    "inode",
+    "mode",
+    "size",
+    "mtime_ns",
+    "ctime_ns",
+    "shard_ordinal",
+    "role",
+    "lease_id",
+}
+DESCRIPTOR_INTEGER_FIELDS = {
+    "device",
+    "inode",
+    "mode",
+    "size",
+    "mtime_ns",
+    "ctime_ns",
+    "shard_ordinal",
+}
+LIVE_ID_PATTERN = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?")
+FORBIDDEN_LIVE_ID_MARKERS = ("INERT", "FIXTURE", "TEST", "SYNTHETIC")
+
+
+def _validate_lease_id(value: object, context: str) -> str:
+    if (type(value) is not str or LIVE_ID_PATTERN.fullmatch(value) is None
+            or any(marker in value for marker in FORBIDDEN_LIVE_ID_MARKERS)):
+        raise ValueError(f"lease id type or grammar mismatch: {context}")
+    return value
+
+
+def _validate_descriptor_identities(observed: object, rule: dict, context: str) -> list[dict]:
+    """Validate untrusted descriptor bytes in type/census/semantic order."""
+    if type(observed) is not list or len(observed) != rule["length"]:
+        raise ValueError(f"descriptor identity array mismatch: {context}")
+    if any(type(item) is not dict for item in observed):
+        raise ValueError(f"descriptor identity entry type mismatch: {context}")
+    entries: list[dict] = observed
+    if any(set(item) != DESCRIPTOR_FIELDS for item in entries):
+        raise ValueError(f"descriptor identity key census mismatch: {context}")
+    for item in entries:
+        if any(type(item[field]) is not int for field in DESCRIPTOR_INTEGER_FIELDS):
+            raise ValueError(f"descriptor identity integer type mismatch: {context}")
+        if any(item[field] < 0 for field in ("device", "inode", "size", "mtime_ns", "ctime_ns")):
+            raise ValueError(f"descriptor identity integer range mismatch: {context}")
+        mode = item["mode"]
+        if mode < 0 or mode >= 2**16:
+            raise ValueError(f"descriptor mode domain mismatch: {context}")
+        # S_ISREG is deliberately unreachable until the portable mode_t domain
+        # has been established.  Darwin raises OverflowError outside it.
+        if not stat.S_ISREG(mode):
+            raise ValueError(f"descriptor mode is not regular: {context}")
+        if type(item["role"]) is not str or item["role"] != "GRAPH_PAYLOAD":
+            raise ValueError(f"descriptor role mismatch: {context}")
+        _validate_lease_id(item["lease_id"], context)
+    if [item["shard_ordinal"] for item in entries] != rule["ordinals"]:
+        raise ValueError(f"descriptor ordinal mismatch: {context}")
+    if [item["size"] for item in entries] != rule["sizes"]:
+        raise ValueError(f"descriptor size mismatch: {context}")
+    if len({(item["device"], item["inode"]) for item in entries}) != len(entries):
+        raise ValueError(f"descriptor identity duplicate mismatch: {context}")
+    if len({item["device"] for item in entries}) != 1:
+        raise ValueError(f"descriptor device-set mismatch: {context}")
+    return entries
+
+
 def canonical(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode() + b"\n"
 
@@ -85,20 +151,7 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
             if kind == "ARRAY_EXACT_LENGTH" and (type(observed) is not list or len(observed) != rule["length"]):
                 raise ValueError(f"payload array length mismatch: {artifact_id}:{key}")
             if kind == "DESCRIPTOR_IDENTITY_ARRAY":
-                fields = {"device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal", "role", "lease_id"}
-                integer_fields = {"device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal"}
-                if (type(observed) is not list or len(observed) != rule["length"]
-                        or [item.get("shard_ordinal") for item in observed] != rule["ordinals"]
-                        or [item.get("size") for item in observed] != rule["sizes"]
-                        or any(type(item) is not dict or set(item) != fields or item["role"] != "GRAPH_PAYLOAD"
-                               or any(type(item[field]) is not int for field in integer_fields)
-                               or item["device"] < 0 or item["inode"] < 0 or item["size"] < 0 or item["mtime_ns"] < 0 or item["ctime_ns"] < 0
-                               or item["mode"] < 0 or item["mode"] >= 2**32
-                               or not stat.S_ISREG(item["mode"])
-                               or type(item["lease_id"]) is not str or re.fullmatch(r"[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?", item["lease_id"]) is None for item in observed)
-                        or len({(item["device"], item["inode"]) for item in observed}) != len(observed)
-                        or len({item["device"] for item in observed}) != 1):
-                    raise ValueError(f"descriptor identity array mismatch: {artifact_id}:{key}")
+                _validate_descriptor_identities(observed, rule, f"{artifact_id}:{key}")
             if kind == "ARTIFACT_SHA256":
                 reference_path = package_root / f"{rule['artifact_id']}.json"
                 if not reference_path.is_file() or observed != digest(reference_path):
@@ -141,7 +194,14 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                 raise ValueError("failure capsule safety mismatch")
         if artifact_id == "descriptor_lease_manifest":
             payload = value["payload"]
-            if payload["lease_count"] != len(payload["lease_ids"]) or payload["lease_count"] != len(payload["descriptor_identities"]) or len(set(payload["lease_ids"])) != payload["lease_count"] or [item["lease_id"] for item in payload["descriptor_identities"]] != payload["lease_ids"]:
+            lease_ids = payload["lease_ids"]
+            if type(lease_ids) is not list:
+                raise ValueError("descriptor lease manifest lease-id collection type mismatch")
+            checked_lease_ids = [_validate_lease_id(item, "descriptor_lease_manifest:lease_ids") for item in lease_ids]
+            if (payload["lease_count"] != len(checked_lease_ids)
+                    or payload["lease_count"] != len(payload["descriptor_identities"])
+                    or len(set(checked_lease_ids)) != payload["lease_count"]
+                    or [item["lease_id"] for item in payload["descriptor_identities"]] != checked_lease_ids):
                 raise ValueError("descriptor lease manifest semantic mismatch")
         if artifact_id in visited:
             return
