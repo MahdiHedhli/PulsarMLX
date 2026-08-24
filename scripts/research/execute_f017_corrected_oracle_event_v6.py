@@ -104,8 +104,7 @@ def execute_synthetic(
     secondary_backend: str = "numpy",
 ) -> dict[str, Any]:
     document = strict_bytes(read_regular_nofollow(authorization))
-    if document["authority_scope"] != "SYNTHETIC_QUALIFICATION":
-        require_active(document["authority_scope"])
+    require_active(document["authority_scope"])
     for root in (Path(document["package"]["state_root"]), Path(document["package"]["output_root"]), Path(document["primary"]["state_root"]), Path(document["primary"]["output_root"]), Path(document["secondary"]["state_root"]), Path(document["secondary"]["output_root"])):
         if root.exists() or root.is_symlink():
             raise ValueError("unused state/output roots required")

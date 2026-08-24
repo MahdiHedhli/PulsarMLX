@@ -20,7 +20,7 @@ SECONDARY_ROLE = "INDEPENDENT_ACCELERATED_CROSS_CHECK"
 ID_PATTERN = re.compile(r"^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$")
 FORBIDDEN_ID_PARTS = ("INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL")
 PRODUCTION_AUTHORITY_PATHS = {
-    "implementation_measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v1.json",
+    "implementation_measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v3.json",
     "authorization_interface_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json",
     "scientific_access_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
     "event_accounting_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v6.json",
@@ -140,6 +140,60 @@ def _authority_path(value: str) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
+def validate_implementation_measurement(document: dict, manifest_path: Path) -> None:
+    """Bind production authority to one exact measured implementation head."""
+    manifest = strict_bytes(read_regular_nofollow(manifest_path))
+    expected_keys = {
+        "schema", "result", "branch", "implementation_head", "git_tree_sha",
+        "entry_count", "entries", "evidence_descendant_may_not_change_measured_bytes",
+    }
+    if set(manifest) != expected_keys:
+        raise ValueError("implementation measurement manifest census")
+    if (
+        manifest["schema"] != "pulsarmlx.f017.corrected-oracle-implementation-measurement-manifest/1.0.0"
+        or manifest["result"] != "PASS"
+        or manifest["branch"] != document["branch"]
+        or manifest["implementation_head"] != document["implementation_measurement_head"]
+        or not re.fullmatch(r"[0-9a-f]{40}", manifest["implementation_head"])
+        or not re.fullmatch(r"[0-9a-f]{40}", manifest["git_tree_sha"])
+        or manifest["evidence_descendant_may_not_change_measured_bytes"] is not True
+        or type(manifest["entry_count"]) is not int
+        or type(manifest["entries"]) is not list
+        or manifest["entry_count"] != len(manifest["entries"])
+        or not manifest["entries"]
+    ):
+        raise ValueError("implementation measurement authority")
+    seen: set[str] = set()
+    entry_keys = {"path", "git_blob_sha", "sha256", "semantic_role"}
+    for entry in manifest["entries"]:
+        if type(entry) is not dict or set(entry) != entry_keys:
+            raise ValueError("implementation measurement entry census")
+        relative = entry["path"]
+        if (
+            type(relative) is not str
+            or relative in seen
+            or Path(relative).is_absolute()
+            or ".." in Path(relative).parts
+            or entry["semantic_role"] != "LOAD_BEARING_ACTIVE_OR_RETIREMENT_AUTHORITY"
+            or not re.fullmatch(r"[0-9a-f]{40}", entry["git_blob_sha"])
+            or not re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])
+        ):
+            raise ValueError("implementation measurement entry identity")
+        seen.add(relative)
+        measured_path = (ROOT / relative).resolve(strict=True)
+        if not measured_path.is_relative_to(ROOT.resolve(strict=True)):
+            raise ValueError("implementation measurement path escape")
+        measured_bytes = read_regular_nofollow(measured_path)
+        git_blob = hashlib.sha1(f"blob {len(measured_bytes)}\0".encode("ascii") + measured_bytes).hexdigest()
+        if hashlib.sha256(measured_bytes).hexdigest() != entry["sha256"] or git_blob != entry["git_blob_sha"]:
+            raise ValueError(f"implementation measurement byte substitution: {relative}")
+    model_path = ROOT / PRODUCTION_AUTHORITY_PATHS["lifecycle_semantic_model_path"]
+    model = strict_bytes(read_regular_nofollow(model_path))
+    required_entries = model.get("measurement_authority", {}).get("required_entries")
+    if type(required_entries) is not list or set(required_entries) != seen or len(required_entries) != len(seen):
+        raise ValueError("implementation measurement required-entry census")
+
+
 def validate_authority_bindings(document: dict, interface: dict, interface_path: Path) -> None:
     """Verify every path/SHA pair against exact bytes before installation."""
     pairs = interface.get("authority_path_sha_pairs")
@@ -167,6 +221,8 @@ def validate_authority_bindings(document: dict, interface: dict, interface_path:
             raise ValueError("authorization interface path identity")
         if sha256_path(path.resolve(strict=True)) != expected_sha:
             raise ValueError(f"authority byte binding: {path_field}")
+        if document["authority_scope"] == "PRODUCTION" and path_field == "implementation_measurement_manifest_path":
+            validate_implementation_measurement(document, path)
     for role in ("primary", "secondary"):
         grant = document[role]
         capability = _authority_path(grant["capability_path"])

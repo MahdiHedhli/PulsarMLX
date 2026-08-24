@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 from f017_corrected_oracle_compare_v6 import MAX_ABS, RMSE_MAX, COSINE_MIN, TOP_N, compare
-from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, PRODUCTION_GEOMETRY_PATH, canonical_bytes, load_interface, parse_authorization, validate_authority_bindings, validate_checkpoint_root_descriptor
+from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, PRODUCTION_GEOMETRY_PATH, canonical_bytes, load_interface, parse_authorization, validate_authority_bindings, validate_checkpoint_root_descriptor, validate_implementation_measurement
 from f017_corrected_oracle_wrapper_support_v6 import require_active
 from f017_lifecycle_semantics_v6 import MODEL_PATH, derive_outcome_obligations, load_json
 from qualify_f017_lifecycle_v6 import execute_failure_variant, qualify_outcomes, run_package
@@ -154,6 +154,48 @@ class LifecycleV6ImplementationTests(unittest.TestCase):
                     allow_synthetic=False,
                     allow_rehearsal=False,
                 )
+
+    def test_measurement_manifest_binds_head_and_current_load_bearing_bytes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="f017-v6-measurement-substitution-") as temporary:
+            prior = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v2.json").read_text(encoding="utf-8"))
+            entries = []
+            for prior_entry in prior["entries"]:
+                data = (ROOT / prior_entry["path"]).read_bytes()
+                entries.append({
+                    **prior_entry,
+                    "git_blob_sha": hashlib.sha1(f"blob {len(data)}\0".encode("ascii") + data).hexdigest(),
+                    "sha256": hashlib.sha256(data).hexdigest(),
+                })
+            manifest = {
+                **prior,
+                "implementation_head": "1" * 40,
+                "git_tree_sha": "2" * 40,
+                "entries": entries,
+                "entry_count": len(entries),
+            }
+            manifest_path = Path(temporary) / "measurement.json"
+            manifest_path.write_bytes(canonical_bytes(manifest))
+            document = {
+                "branch": manifest["branch"],
+                "implementation_measurement_head": manifest["implementation_head"],
+            }
+            validate_implementation_measurement(document, manifest_path)
+            forged_head = dict(document)
+            forged_head["implementation_measurement_head"] = "0" * 40
+            with self.assertRaisesRegex(ValueError, "implementation measurement authority"):
+                validate_implementation_measurement(forged_head, manifest_path)
+            forged_manifest = dict(manifest)
+            forged_manifest["entries"] = [dict(entry) for entry in manifest["entries"]]
+            forged_manifest["entries"][0]["sha256"] = "0" * 64
+            forged_path = Path(temporary) / "forged-measurement.json"
+            forged_path.write_bytes(canonical_bytes(forged_manifest))
+            with self.assertRaisesRegex(ValueError, "implementation measurement byte substitution"):
+                validate_implementation_measurement(document, forged_path)
+
+    def test_synthetic_coordinator_obeys_active_generation_kill_switch(self) -> None:
+        source = (ROOT / "scripts/research/execute_f017_corrected_oracle_event_v6.py").read_text(encoding="utf-8")
+        self.assertNotIn('if document["authority_scope"] != "SYNTHETIC_QUALIFICATION"', source)
+        self.assertIn('require_active(document["authority_scope"])', source)
 
     def test_only_reviewed_v6_production_generation_is_active(self) -> None:
         require_active("PRODUCTION")
