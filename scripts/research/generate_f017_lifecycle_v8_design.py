@@ -253,7 +253,12 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
             built["payload_rules"]["terminal_event_digest"] = {"kind": "ARTIFACT_SHA256", "artifact_id": "checkpoint_shard_receipt_6"}
         if artifact_id == "descriptor_lease_manifest":
             built["payload_rules"]["lease_ids"] = {"kind": "ARRAY_EXACT_LENGTH", "length": 5}
-            built["payload_rules"]["descriptor_identities"] = {"kind": "DESCRIPTOR_IDENTITY_ARRAY", "length": 5, "ordinals": [2, 3, 4, 5, 6]}
+            built["payload_rules"]["descriptor_identities"] = {
+                "kind": "DESCRIPTOR_IDENTITY_ARRAY",
+                "length": 5,
+                "ordinals": [2, 3, 4, 5, 6],
+                "sizes": [SHARDS[ordinal - 1]["size_bytes"] for ordinal in range(2, 7)],
+            }
         if artifact_id == "checkpoint_identity_manifest":
             built["payload_rules"]["ordered_shard_receipt_digests"] = {"kind": "ARTIFACT_SHA256_SEQUENCE", "artifact_ids": [f"checkpoint_shard_receipt_{ordinal}" for ordinal in range(1, 7)]}
         if artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"}:
@@ -262,9 +267,28 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         if artifact_id == "descriptor_release_report":
             built["payload_rules"]["lease_ids"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
         if artifact_id == "comparison_receipt":
-            built["payload_rules"]["classification"] = {"kind": "ENUM", "values": ["EXACT_EXPECTED_TOKEN_STABLE", "NUMERICALLY_STABLE_TOP_K_ONLY", "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY", "ORACLE_DISAGREEMENT", "ORACLE_EXECUTION_FAILURE"]}
+            built["payload_rules"]["classification"] = {"kind": "ENUM", "values": ["EXACT_EXPECTED_TOKEN_STABLE", "NUMERICALLY_STABLE_TOP_K_ONLY", "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"]}
         if artifact_id == "comparison_terminal":
             built["payload_rules"]["classification"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "comparison_receipt", "field": "classification"}
+        if artifact_id == "operator_approval":
+            built["payload_rules"]["operator_approval_id"] = {"kind": "NONEMPTY_STRING"}
+        if artifact_id == "candidate_authorization":
+            built["payload_rules"]["authorization_id"] = {"kind": "EQUAL_ENVELOPE_FIELD", "field": "authorization_id"}
+            built["payload_rules"]["package_attempt_id"] = {"kind": "EQUAL_ENVELOPE_FIELD", "field": "package_attempt_id"}
+        if artifact_id == "installed_authorization":
+            built["payload_rules"]["authorization_id"] = {"kind": "EQUAL_ENVELOPE_FIELD", "field": "authorization_id"}
+        if artifact_id == "package_claim":
+            built["payload_rules"]["owner_nonce"] = {"kind": "NONEMPTY_STRING"}
+        if artifact_id == "package_durable_start":
+            built["payload_rules"]["package_ledger_entry_id"] = {"kind": "NONEMPTY_STRING"}
+        if artifact_id == "package_ledger_entry":
+            built["payload_rules"]["prior_entry_id"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "package_durable_start", "field": "package_ledger_entry_id"}
+        for role in ("primary", "secondary"):
+            durable_start = f"{role}_durable_start"
+            if artifact_id == durable_start:
+                built["payload_rules"]["event_id"] = {"kind": "NONEMPTY_STRING"}
+            if artifact_id in {f"{role}_ledger_entry", f"{role}_receipt", f"{role}_terminal"}:
+                built["payload_rules"]["event_id"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": durable_start, "field": "event_id"}
         nodes.append(built)
         previous = artifact_id
     success_ids = [item["artifact_id"] for item in nodes]

@@ -69,6 +69,8 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                 raise ValueError(f"payload type mismatch: {artifact_id}:{key}")
             if kind == "NONNEGATIVE_INTEGER" and (type(observed) is not int or observed < 0):
                 raise ValueError(f"payload nonnegative integer mismatch: {artifact_id}:{key}")
+            if kind == "NONEMPTY_STRING" and (type(observed) is not str or not observed):
+                raise ValueError(f"payload nonempty string mismatch: {artifact_id}:{key}")
             if kind == "SHA256" and (type(observed) is not str or len(observed) != 64 or any(character not in "0123456789abcdef" for character in observed)):
                 raise ValueError(f"payload sha256 mismatch: {artifact_id}:{key}")
             if kind == "ENUM" and observed not in rule["values"]:
@@ -77,7 +79,14 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                 raise ValueError(f"payload array length mismatch: {artifact_id}:{key}")
             if kind == "DESCRIPTOR_IDENTITY_ARRAY":
                 fields = {"device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal", "role", "lease_id"}
-                if type(observed) is not list or len(observed) != rule["length"] or [item.get("shard_ordinal") for item in observed] != rule["ordinals"] or any(set(item) != fields or item["role"] != "GRAPH_PAYLOAD" for item in observed):
+                integer_fields = {"device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal"}
+                if (type(observed) is not list or len(observed) != rule["length"]
+                        or [item.get("shard_ordinal") for item in observed] != rule["ordinals"]
+                        or [item.get("size") for item in observed] != rule["sizes"]
+                        or any(type(item) is not dict or set(item) != fields or item["role"] != "GRAPH_PAYLOAD"
+                               or any(type(item[field]) is not int for field in integer_fields)
+                               or type(item["lease_id"]) is not str or not item["lease_id"] for item in observed)
+                        or len({(item["device"], item["inode"]) for item in observed}) != len(observed)):
                     raise ValueError(f"descriptor identity array mismatch: {artifact_id}:{key}")
             if kind == "ARTIFACT_SHA256":
                 reference_path = package_root / f"{rule['artifact_id']}.json"
@@ -93,6 +102,8 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
                 reference_path = package_root / f"{rule['artifact_id']}.json"
                 if not reference_path.is_file() or observed != json.loads(reference_path.read_bytes())["payload"][rule["field"]]:
                     raise ValueError(f"payload artifact equality mismatch: {artifact_id}:{key}")
+            if kind == "EQUAL_ENVELOPE_FIELD" and observed != value[rule["field"]]:
+                raise ValueError(f"payload envelope equality mismatch: {artifact_id}:{key}")
         if value["artifact_id"] != artifact_id:
             raise ValueError(f"artifact identity mismatch: {artifact_id}")
         if package_attempt_id is None:
@@ -107,7 +118,10 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
             payload = value["payload"]
             if payload["atomic_terminalization"] != "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC":
                 raise ValueError("failure capsule is not atomic")
-            if payload["attempted_closures"] != payload["expected_leases"] or payload["attempted_closures"] != payload["successful_closures"] + payload["duplicate_closures"] + payload["unknown_leases"]:
+            if (payload["attempted_closures"] != payload["successful_closures"] + payload["duplicate_closures"] + payload["unknown_leases"]
+                    or payload["live_leases_after_release"] != payload["expected_leases"] - payload["successful_closures"] - payload["duplicate_closures"]
+                    or payload["unknown_leases"] != 0
+                    or (payload["expected_leases"] == 0 and payload["attempted_closures"] != 0)):
                 raise ValueError("failure capsule closure accounting mismatch")
             if payload["expected_leases"] != len(payload["lease_ordinals"]) or payload["expected_leases"] != len(payload["lease_evidence_artifact_ids"]):
                 raise ValueError("failure capsule lease census mismatch")

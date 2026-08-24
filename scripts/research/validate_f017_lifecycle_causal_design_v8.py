@@ -279,6 +279,12 @@ def validate_documents(docs: dict[str, dict]) -> dict:
     expected_shards = [{**record, "ordinal": ordinal, "role": "IDENTITY_ONLY" if ordinal == 1 else "GRAPH_PAYLOAD"} for ordinal, record in enumerate(checkpoint_metadata["files"], start=1)]
     if shard_records != expected_shards or checkpoint_metadata["total_bytes"] != derived["expected_total_bytes"]:
         raise ValueError("CHECKPOINT_METADATA_SHARD_BINDING")
+    numerical_path = ROOT / dag["root_authorities"]["numerical_contract"]["path"]
+    numerical_contract = json.loads(numerical_path.read_bytes())
+    success_classifications = [
+        name for name, consequence in numerical_contract["future_p1_consequence"].items()
+        if consequence != "ATTEMPT_2_BLOCKED"
+    ]
 
     expected_fields = ["device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal", "role", "lease_id"]
     if continuity["descriptor_transport"] != "SUBPROCESS_PASS_FDS_EXPLICIT" or continuity["path_reopen_permitted"] is not False or continuity["path_reopen_count"] != 0 or continuity["identity_only_descriptor_permitted"] is not False:
@@ -300,7 +306,7 @@ def validate_documents(docs: dict[str, dict]) -> dict:
         if set(descriptor) != {"schema_id", "keys", "payload_keys", "payload_constants", "payload_rules", "creation_rank"} or descriptor["keys"] != ENVELOPE_KEYS or descriptor["creation_rank"] != node_map[artifact_id]["creation_rank"] or descriptor["schema_id"] != node_map[artifact_id]["schema_id"] or descriptor["payload_keys"] != node_map[artifact_id]["payload_keys"] or descriptor["payload_constants"] != node_map[artifact_id]["payload_constants"] or descriptor["payload_rules"] != node_map[artifact_id]["payload_rules"]:
             raise ValueError("SCHEMA_EXACT_BINDING")
         for key, rule in descriptor["payload_rules"].items():
-            if rule.get("kind") not in {"EXACT_CONSTANT", "TYPE", "NONNEGATIVE_INTEGER", "SHA256", "ENUM", "ARRAY_EXACT_LENGTH", "DESCRIPTOR_IDENTITY_ARRAY", "ARTIFACT_SHA256", "ARTIFACT_SHA256_SEQUENCE", "EQUAL_PAYLOAD_FIELD", "EQUAL_ARTIFACT_PAYLOAD_FIELD"}:
+            if rule.get("kind") not in {"EXACT_CONSTANT", "TYPE", "NONNEGATIVE_INTEGER", "NONEMPTY_STRING", "SHA256", "ENUM", "ARRAY_EXACT_LENGTH", "DESCRIPTOR_IDENTITY_ARRAY", "ARTIFACT_SHA256", "ARTIFACT_SHA256_SEQUENCE", "EQUAL_PAYLOAD_FIELD", "EQUAL_ARTIFACT_PAYLOAD_FIELD", "EQUAL_ENVELOPE_FIELD"}:
                 raise ValueError("PAYLOAD_RULE_KIND")
             if key in descriptor["payload_constants"] and rule != {"kind": "EXACT_CONSTANT", "value": descriptor["payload_constants"][key]}:
                 raise ValueError("PAYLOAD_CONSTANT_RULE_BINDING")
@@ -314,12 +320,21 @@ def validate_documents(docs: dict[str, dict]) -> dict:
                 ordinal = int(artifact_id.rsplit("_", 1)[1]); override = {"kind": "ARTIFACT_SHA256", "artifact_id": "checkpoint_identity_durable_start" if ordinal == 1 else f"checkpoint_shard_receipt_{ordinal - 1}"}
             if artifact_id == "checkpoint_access_journal_terminal" and key == "terminal_event_digest": override = {"kind": "ARTIFACT_SHA256", "artifact_id": "checkpoint_shard_receipt_6"}
             if artifact_id == "descriptor_lease_manifest" and key == "lease_ids": override = {"kind": "ARRAY_EXACT_LENGTH", "length": 5}
-            if artifact_id == "descriptor_lease_manifest" and key == "descriptor_identities": override = {"kind": "DESCRIPTOR_IDENTITY_ARRAY", "length": 5, "ordinals": [2, 3, 4, 5, 6]}
+            if artifact_id == "descriptor_lease_manifest" and key == "descriptor_identities": override = {"kind": "DESCRIPTOR_IDENTITY_ARRAY", "length": 5, "ordinals": [2, 3, 4, 5, 6], "sizes": [item["size_bytes"] for item in expected_shards[1:]]}
             if artifact_id == "checkpoint_identity_manifest" and key == "ordered_shard_receipt_digests": override = {"kind": "ARTIFACT_SHA256_SEQUENCE", "artifact_ids": [f"checkpoint_shard_receipt_{ordinal}" for ordinal in range(1, 7)]}
             if artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"} and key in {"lease_ids", "descriptor_identities"}: override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": key}
             if artifact_id == "descriptor_release_report" and key == "lease_ids": override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
-            if artifact_id == "comparison_receipt" and key == "classification": override = {"kind": "ENUM", "values": ["EXACT_EXPECTED_TOKEN_STABLE", "NUMERICALLY_STABLE_TOP_K_ONLY", "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY", "ORACLE_DISAGREEMENT", "ORACLE_EXECUTION_FAILURE"]}
+            if artifact_id == "comparison_receipt" and key == "classification": override = {"kind": "ENUM", "values": success_classifications}
             if artifact_id == "comparison_terminal" and key == "classification": override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "comparison_receipt", "field": "classification"}
+            if artifact_id == "operator_approval" and key == "operator_approval_id": override = {"kind": "NONEMPTY_STRING"}
+            if artifact_id == "candidate_authorization" and key in {"authorization_id", "package_attempt_id"}: override = {"kind": "EQUAL_ENVELOPE_FIELD", "field": key}
+            if artifact_id == "installed_authorization" and key == "authorization_id": override = {"kind": "EQUAL_ENVELOPE_FIELD", "field": "authorization_id"}
+            if artifact_id == "package_claim" and key == "owner_nonce": override = {"kind": "NONEMPTY_STRING"}
+            if artifact_id == "package_durable_start" and key == "package_ledger_entry_id": override = {"kind": "NONEMPTY_STRING"}
+            if artifact_id == "package_ledger_entry" and key == "prior_entry_id": override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "package_durable_start", "field": "package_ledger_entry_id"}
+            if artifact_id in {"primary_durable_start", "secondary_durable_start"} and key == "event_id": override = {"kind": "NONEMPTY_STRING"}
+            for role in ("primary", "secondary"):
+                if artifact_id in {f"{role}_ledger_entry", f"{role}_receipt", f"{role}_terminal"} and key == "event_id": override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": f"{role}_durable_start", "field": "event_id"}
             if artifact_id.startswith("failure_terminal_capsule__") and key in {"attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases"}: override = {"kind": "NONNEGATIVE_INTEGER"}
             if rule != (override or expected_default_rule(key, descriptor["payload_constants"])):
                 raise ValueError("PAYLOAD_RULE_EXACT_SEMANTICS")
@@ -363,6 +378,12 @@ def validate_documents(docs: dict[str, dict]) -> dict:
         expected_receipt = {"ordinal": ordinal, "role": shard["role"], "expected_size": shard["size_bytes"], "expected_checkpoint_digest": shard["sha256"], "retain_disposition": "CLOSE_AFTER_IDENTITY_VERIFICATION" if ordinal == 1 else "RETAIN_AS_PACKAGE_OWNED_DESCRIPTOR_LEASE"}
         if receipt["payload_constants"] != expected_receipt or receipt["payload_rules"]["observed_size"] != {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_size"} or receipt["payload_rules"]["observed_checkpoint_digest"] != {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_checkpoint_digest"}:
             raise ValueError("SHARD_RECEIPT_SEMANTICS")
+    constants_checked = set(critical_constants) | {f"checkpoint_access_event_{ordinal}" for ordinal in range(1, 7)} | {f"checkpoint_shard_receipt_{ordinal}" for ordinal in range(1, 7)}
+    for artifact_id, node_value in node_map.items():
+        if artifact_id.startswith("failure_terminal_capsule__") or artifact_id in constants_checked:
+            continue
+        if node_value["payload_constants"] != {}:
+            raise ValueError(f"UNDECLARED_PAYLOAD_CONSTANT:{artifact_id}")
     for report_id in ("primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"):
         if node_map[report_id]["payload_rules"]["lease_ids"] != {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"} or node_map[report_id]["payload_rules"]["descriptor_identities"] != {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "descriptor_identities"}:
             raise ValueError("CONTINUITY_PAYLOAD_SEMANTICS")

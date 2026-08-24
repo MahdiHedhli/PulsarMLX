@@ -13,6 +13,8 @@ from check_f017_transitive_artifact_closure_v8 import validate_package
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = ROOT / "specs/017-rust-native-inference-runtime/contracts"
+CHECKPOINT_METADATA = json.loads((ROOT / "docs/validation/glm52-checkpoint.json").read_bytes())
+GRAPH_SHARD_SIZES = {ordinal: record["size_bytes"] for ordinal, record in enumerate(CHECKPOINT_METADATA["files"], start=1) if ordinal >= 2}
 
 
 def canonical(value: object) -> bytes:
@@ -33,7 +35,7 @@ def payload_for(artifact_id: str, keys: list[str], outcome: str, constants: dict
         elif key == "lease_ids":
             value[key] = [f"LEASE-{ordinal}" for ordinal in range(2, 7)]
         elif key == "descriptor_identities":
-            value[key] = [{"device": 1, "inode": 1000 + ordinal, "mode": 33024, "size": ordinal * 4096, "mtime_ns": 1, "ctime_ns": 1, "shard_ordinal": ordinal, "role": "GRAPH_PAYLOAD", "lease_id": f"LEASE-{ordinal}"} for ordinal in range(2, 7)]
+            value[key] = [{"device": ordinal, "inode": 1000 + ordinal, "mode": 33024, "size": GRAPH_SHARD_SIZES[ordinal], "mtime_ns": 1, "ctime_ns": 1, "shard_ordinal": ordinal, "role": "GRAPH_PAYLOAD", "lease_id": f"LEASE-{ordinal}"} for ordinal in range(2, 7)]
         elif key in {"expected_total_bytes", "observed_total_bytes"}:
             value[key] = 238458632928
         elif key == "event_count":
@@ -105,6 +107,8 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
                 value["payload"][key] = [created[item] for item in rule["artifact_ids"]]
             elif rule["kind"] == "ENUM":
                 value["payload"][key] = rule["values"][0]
+            elif rule["kind"] == "EQUAL_ENVELOPE_FIELD":
+                value["payload"][key] = value[rule["field"]]
         if list(value) != descriptor["keys"]:
             raise ValueError(f"schema key order mismatch: {artifact_id}")
         if sorted(value["payload"]) != sorted(descriptor["payload_keys"]):

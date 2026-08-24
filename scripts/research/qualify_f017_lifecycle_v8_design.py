@@ -9,6 +9,7 @@ from pathlib import Path
 
 from construct_f017_lifecycle_v8_symbolically import validate_all
 from validate_f017_lifecycle_causal_design_v8 import canonical, load_documents, validate_documents
+from test_f017_lifecycle_causal_design_v8 import RUNTIME_CLOSURE_MUTATIONS, STATIC_DESIGN_MUTATIONS
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,10 +44,10 @@ def main() -> None:
         "path_timing_coverage": "100_PERCENT",
         "descriptor_release_terminal_closure": "PASS",
         "expected_byte_census_derived": 238458632928,
-        "static_design_mutations_rejected": 178,
-        "runtime_closure_mutations_rejected": 16,
-        "design_mutations_rejected": 194,
-        "design_mutation_accounting": "178_STATIC_PLUS_16_RUNTIME_AUTHORITY_CLOSURE_ATTACKS",
+        "static_design_mutations_rejected": STATIC_DESIGN_MUTATIONS,
+        "runtime_closure_mutations_rejected": RUNTIME_CLOSURE_MUTATIONS,
+        "design_mutations_rejected": STATIC_DESIGN_MUTATIONS + RUNTIME_CLOSURE_MUTATIONS,
+        "design_mutation_accounting": f"{STATIC_DESIGN_MUTATIONS}_STATIC_PLUS_{RUNTIME_CLOSURE_MUTATIONS}_RUNTIME_AUTHORITY_CLOSURE_ATTACKS",
         "mutation_unexpected_passes": 0,
         "test_result": "PASS" if tests.returncode == 0 else "FAIL",
         "original_checkpoint_access": 0,

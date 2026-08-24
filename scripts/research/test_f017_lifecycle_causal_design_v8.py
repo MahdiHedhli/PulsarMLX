@@ -15,6 +15,9 @@ from construct_f017_lifecycle_v8_symbolically import validate_all
 from construct_f017_lifecycle_v8_symbolically import canonical, construct_outcome
 from check_f017_transitive_artifact_closure_v8 import validate_package
 
+STATIC_DESIGN_MUTATIONS = 179
+RUNTIME_CLOSURE_MUTATIONS = 26
+
 
 class CausalDesignTests(unittest.TestCase):
     @staticmethod
@@ -127,8 +130,9 @@ class CausalDesignTests(unittest.TestCase):
             ("PAYLOAD_RULE_REMOVED", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "checkpoint_shard_receipt_4")["payload_rules"].pop("observed_checkpoint_digest")),
             ("ACCESS_RECEIPT_ORDER", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "checkpoint_access_event_2").__setitem__("dependencies", ["checkpoint_access_event_1"])),
             ("PRIMARY_TERMINAL_FAIL", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "primary_terminal")["payload_constants"].__setitem__("result", "FAIL")),
+            ("COORDINATED_OPAQUE_ID_CONSTANT", lambda d: [next(item for item in d[name]["nodes"] if item["artifact_id"] == "package_claim")["payload_constants"].__setitem__("owner_nonce", "PINNED") if name == "artifact_dag" else d[name]["artifacts"]["package_claim"]["payload_constants"].__setitem__("owner_nonce", "PINNED") for name in ("artifact_dag", "artifact_schemas")]),
         ])
-        self.assertEqual(len(mutations), 178)
+        self.assertEqual(len(mutations), STATIC_DESIGN_MUTATIONS)
         for mutation_id, mutate in mutations:
             with self.subTest(mutation_id=mutation_id):
                 docs = copy.deepcopy(baseline)
@@ -202,7 +206,17 @@ class CausalDesignTests(unittest.TestCase):
             ("EMPTY_DESCRIPTOR_IDENTITIES", "descriptor_lease_manifest", lambda v: v["payload"].__setitem__("descriptor_identities", [])),
             ("EMPTY_RECEIPT_DIGESTS", "checkpoint_identity_manifest", lambda v: v["payload"].__setitem__("ordered_shard_receipt_digests", [])),
             ("PRIMARY_RESULT_FAIL", "primary_terminal", lambda v: v["payload"].__setitem__("result", "FAIL")),
+            ("DUPLICATE_DESCRIPTOR_IDENTITY", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][1].update({"device": v["payload"]["descriptor_identities"][0]["device"], "inode": v["payload"]["descriptor_identities"][0]["inode"]})),
+            ("WRONG_DESCRIPTOR_SIZE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("size", 1)),
+            ("STRING_DESCRIPTOR_DEVICE", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("device", "1")),
+            ("EMPTY_DESCRIPTOR_LEASE_ID", "descriptor_lease_manifest", lambda v: v["payload"]["descriptor_identities"][0].__setitem__("lease_id", "")),
+            ("BLOCKED_DISAGREEMENT_ON_SUCCESS", "comparison_receipt", lambda v: v["payload"].__setitem__("classification", "ORACLE_DISAGREEMENT")),
+            ("BLOCKED_EXECUTION_FAILURE_ON_SUCCESS", "comparison_receipt", lambda v: v["payload"].__setitem__("classification", "ORACLE_EXECUTION_FAILURE")),
+            ("CANDIDATE_PACKAGE_ID_DIVERGENCE", "candidate_authorization", lambda v: v["payload"].__setitem__("package_attempt_id", "ATTACKER-PACKAGE")),
+            ("PRIMARY_TERMINAL_EVENT_DIVERGENCE", "primary_terminal", lambda v: v["payload"].__setitem__("event_id", "ATTACKER-EVENT")),
+            ("EMPTY_OWNER_NONCE", "package_claim", lambda v: v["payload"].__setitem__("owner_nonce", "")),
         ]
+        self.assertEqual(len(attacks), 22)
         for attack_id, target_id, mutate in attacks:
             with self.subTest(attack_id=attack_id), tempfile.TemporaryDirectory() as raw_root:
                 package = Path(raw_root)
@@ -248,17 +262,52 @@ class CausalDesignTests(unittest.TestCase):
             result = validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
             self.assertEqual(result["result"], "PASS")
 
+    def test_unknown_lease_cannot_discharge_live_lease_obligation(self):
+        docs = validator.load_documents()
+        outcome = "CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_022"
+        required = set(docs["outcomes"]["outcomes"][outcome]["required"])
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            built = construct_outcome(outcome, package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            terminal_id = built["terminal_id"]
+            path = package / f"{terminal_id}.json"
+            value = json.loads(path.read_bytes())
+            value["payload"].update({"attempted_closures": 5, "successful_closures": 0, "duplicate_closures": 0, "unknown_leases": 5})
+            path.write_bytes(canonical(value))
+            with self.assertRaisesRegex(ValueError, "closure accounting"):
+                validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
+
+    def test_top1_uncertainty_is_success_compatible(self):
+        docs = validator.load_documents()
+        required = set(docs["outcomes"]["outcomes"]["COMPLETE_SUCCESS"]["required"])
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            construct_outcome("COMPLETE_SUCCESS", package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            for artifact_id in ("comparison_receipt", "comparison_terminal"):
+                path = package / f"{artifact_id}.json"
+                value = json.loads(path.read_bytes())
+                value["payload"]["classification"] = "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
+                path.write_bytes(canonical(value))
+                self._rehash_descendants(package, docs, artifact_id)
+            result = validate_package(package, "final_declaration", required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], "COMPLETE_SUCCESS")
+            self.assertEqual(result["result"], "PASS")
+
     def test_durable_prefix_bytes_do_not_depend_on_future_outcome(self):
         docs = validator.load_documents()
         with tempfile.TemporaryDirectory() as raw_root:
             root = Path(raw_root)
-            failure = root / "failure"; success = root / "success"
-            failure.mkdir(); success.mkdir()
-            construct_outcome("CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_022", failure, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            success = root / "success"
+            success.mkdir()
             construct_outcome("COMPLETE_SUCCESS", success, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
-            for node in docs["artifact_dag"]["nodes"]:
-                if node["creation_rank"] <= 22:
-                    self.assertEqual((failure / f"{node['artifact_id']}.json").read_bytes(), (success / f"{node['artifact_id']}.json").read_bytes())
+            for outcome, obligation in docs["outcomes"]["outcomes"].items():
+                if outcome == "COMPLETE_SUCCESS":
+                    continue
+                failure = root / outcome.lower()
+                failure.mkdir()
+                construct_outcome(outcome, failure, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+                for node in docs["artifact_dag"]["nodes"]:
+                    if node["creation_rank"] <= obligation["durable_prefix_rank"] and not node["artifact_id"].startswith("failure_terminal_capsule__"):
+                        self.assertEqual((failure / f"{node['artifact_id']}.json").read_bytes(), (success / f"{node['artifact_id']}.json").read_bytes(), f"{outcome}:{node['artifact_id']}")
 
     def test_capsule_cleanup_count_must_equal_expected_leases(self):
         docs = validator.load_documents()
