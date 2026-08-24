@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from f017_corrected_oracle_authorization_v6 import decode_canonical_floats
+
 MAX_ABS = 0.0065169706285814755
 RMSE_MAX = 0.003463567697419031
 COSINE_MIN = 0.9999999985448085
@@ -12,9 +14,15 @@ TOP_N = 32
 
 
 def _number(value: Any) -> float:
-    if type(value) is str and value.startswith(("0x", "-0x")):
-        return float.fromhex(value)
-    return float(value)
+    if type(value) in {int, float}:
+        result = float(value)
+    else:
+        result = decode_canonical_floats(value)
+        if type(result) is not float:
+            raise ValueError("canonical numerical scalar required")
+    if not math.isfinite(result):
+        raise ValueError("finite numerical scalar required")
+    return result
 
 
 def _token(result: dict[str, Any]) -> int:

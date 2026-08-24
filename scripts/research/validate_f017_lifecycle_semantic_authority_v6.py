@@ -717,6 +717,15 @@ def _expected_authority_manifest(model: dict[str, Any], documents: dict[str, dic
 
 
 def validate_semantics(model: dict[str, Any]) -> None:
+    active_registry = load_json(ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v1.json")
+    if active_registry != {
+        "schema": "pulsarmlx.f017.corrected-oracle-active-generation/1.0.0",
+        "active_live_generation": "V6",
+        "synthetic_qualification_generation": "V6",
+        "historical_live_generations": ["V1", "V2", "V3"],
+        "rejected_design_generations": ["V4", "V5"],
+    }:
+        raise ValueError("active generation registry drift")
     validate_model(model)
     for name, projection in _semantic_projections(model).items():
         if canonical_sha256(projection) != EXPECTED_SEMANTIC_PROJECTION_SHAS[name]:

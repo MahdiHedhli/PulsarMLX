@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from f017_corrected_oracle_compare_v6 import MAX_ABS, RMSE_MAX, COSINE_MIN, TOP_N, compare
-from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, canonical_bytes, parse_authorization, validate_checkpoint_root_descriptor
+from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, PRODUCTION_GEOMETRY_PATH, canonical_bytes, load_interface, parse_authorization, validate_authority_bindings, validate_checkpoint_root_descriptor
 from f017_corrected_oracle_wrapper_support_v6 import require_active
 from f017_lifecycle_semantics_v6 import MODEL_PATH, derive_outcome_obligations, load_json
 from qualify_f017_lifecycle_v6 import execute_failure_variant, qualify_outcomes, run_package
@@ -113,9 +113,21 @@ class LifecycleV6ImplementationTests(unittest.TestCase):
                     require_installed=False,
                 )
 
-    def test_production_is_inactive_before_final_acceptance(self) -> None:
-        with self.assertRaises(ValueError):
-            require_active("PRODUCTION")
+    def test_production_capability_and_geometry_paths_are_canonical(self) -> None:
+        interface_path = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json"
+        interface = load_interface(interface_path)
+        document = {
+            "authority_scope": "PRODUCTION",
+            "geometry_path": PRODUCTION_GEOMETRY_PATH,
+            "lifecycle_semantic_model_sha256": interface["semantic_model_sha256"],
+            "primary": {"capability_path": "README.md"},
+            "secondary": {"capability_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v6.json"},
+        }
+        with self.assertRaisesRegex(ValueError, "canonical production primary capability path"):
+            validate_authority_bindings(document, interface, interface_path)
+
+    def test_only_reviewed_v6_production_generation_is_active(self) -> None:
+        require_active("PRODUCTION")
 
     def test_no_access_rehearsal_accepts_absent_production_path_descriptor(self) -> None:
         absent = Path("/Users/runner/f017-production-checkpoint-intentionally-absent")

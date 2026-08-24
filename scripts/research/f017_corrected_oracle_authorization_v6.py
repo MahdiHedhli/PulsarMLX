@@ -34,6 +34,11 @@ PRODUCTION_AUTHORITY_PATHS = {
     "checkpoint_manifest_path": "docs/validation/glm52-checkpoint.json",
     "checkpoint_catalog_path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
 }
+PRODUCTION_CAPABILITY_PATHS = {
+    "primary": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v6.json",
+    "secondary": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v6.json",
+}
+PRODUCTION_GEOMETRY_PATH = "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json"
 
 
 def _pairs(items):
@@ -81,6 +86,16 @@ def decode_canonical_floats(value: Any) -> Any:
     if type(value) is dict:
         return {key: decode_canonical_floats(item) for key, item in value.items()}
     return value
+
+
+def _typed_equal(left: Any, right: Any) -> bool:
+    if type(left) is not type(right):
+        return False
+    if type(left) is dict:
+        return set(left) == set(right) and all(_typed_equal(left[key], right[key]) for key in left)
+    if type(left) is list:
+        return len(left) == len(right) and all(_typed_equal(a, b) for a, b in zip(left, right, strict=True))
+    return left == right
 
 
 def strict_bytes(data: bytes, *, require_canonical: bool = True) -> dict:
@@ -132,6 +147,14 @@ def validate_authority_bindings(document: dict, interface: dict, interface_path:
         raise ValueError("authority path/SHA registry")
     if document["authority_scope"] == "PRODUCTION" and set(pairs) != set(PRODUCTION_AUTHORITY_PATHS):
         raise ValueError("production authority path census")
+    if document["authority_scope"] == "PRODUCTION":
+        if document["geometry_path"] != PRODUCTION_GEOMETRY_PATH:
+            raise ValueError("canonical production geometry path")
+        for role, expected_path in PRODUCTION_CAPABILITY_PATHS.items():
+            if document[role]["capability_path"] != expected_path:
+                raise ValueError(f"canonical production {role} capability path")
+        if document["lifecycle_semantic_model_sha256"] != interface["semantic_model_sha256"]:
+            raise ValueError("reviewed lifecycle model binding")
     for path_field, sha_field in pairs.items():
         declared = document[path_field]
         expected_sha = document[sha_field]
@@ -310,7 +333,7 @@ def parse_authorization(
         raise ValueError("consumer producer binding")
     if grant["target_source_path"] != target_source.relative_to(ROOT).as_posix() or grant["target_source_sha256"] != sha256_path(target_source):
         raise ValueError("target source binding")
-    if document["context"] != interface["pinned_context"] or document["limits"] != interface["pinned_limits"]:
+    if not _typed_equal(document["context"], interface["pinned_context"]) or not _typed_equal(document["limits"], interface["pinned_limits"]):
         raise ValueError("context or limits binding")
     validate_authority_bindings(document, interface, interface_path)
     if require_installed:
