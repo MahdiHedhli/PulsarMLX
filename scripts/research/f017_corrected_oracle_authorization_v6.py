@@ -20,9 +20,9 @@ SECONDARY_ROLE = "INDEPENDENT_ACCELERATED_CROSS_CHECK"
 ID_PATTERN = re.compile(r"^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$")
 FORBIDDEN_ID_PARTS = ("INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL")
 PRODUCTION_AUTHORITY_PATHS = {
-    "implementation_measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v3.json",
+    "implementation_measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json",
     "authorization_interface_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json",
-    "scientific_access_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
+    "scientific_access_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json",
     "event_accounting_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v6.json",
     "path_timing_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v6.json",
     "canonical_serialization_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-json-bytes-v6.json",
@@ -33,6 +33,15 @@ PRODUCTION_AUTHORITY_PATHS = {
     "numerical_methodology_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
     "checkpoint_manifest_path": "docs/validation/glm52-checkpoint.json",
     "checkpoint_catalog_path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+}
+RECONCILIATION_MEASUREMENT_ADDITIONS = {
+    "scripts/research/generate_f017_event04_reconciliation_measurement_v4.py",
+    "scripts/research/generate_f017_event04_reconciliation_measurement_v5.py",
+    "scripts/research/rehearse_f017_event04_authority_reconciliation_v1.py",
+    "scripts/research/validate_f017_event04_authority_reconciliation_v1.py",
+    "specs/017-rust-native-inference-runtime/contracts/f017-canonical-json-bytes-v6.json",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-v6-authority-manifest.json",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v6.json",
 }
 PRODUCTION_CAPABILITY_PATHS = {
     "primary": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v6.json",
@@ -146,11 +155,12 @@ def validate_implementation_measurement(document: dict, manifest_path: Path) -> 
     expected_keys = {
         "schema", "result", "branch", "implementation_head", "git_tree_sha",
         "entry_count", "entries", "evidence_descendant_may_not_change_measured_bytes",
+        "parent_measurement_manifest_path", "parent_measurement_manifest_sha256",
     }
     if set(manifest) != expected_keys:
         raise ValueError("implementation measurement manifest census")
     if (
-        manifest["schema"] != "pulsarmlx.f017.corrected-oracle-implementation-measurement-manifest/1.0.0"
+        manifest["schema"] != "pulsarmlx.f017.corrected-oracle-implementation-measurement/5.0.0"
         or manifest["result"] != "PASS"
         or manifest["branch"] != document["branch"]
         or manifest["implementation_head"] != document["implementation_measurement_head"]
@@ -161,6 +171,8 @@ def validate_implementation_measurement(document: dict, manifest_path: Path) -> 
         or type(manifest["entries"]) is not list
         or manifest["entry_count"] != len(manifest["entries"])
         or not manifest["entries"]
+        or manifest["parent_measurement_manifest_path"] != "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v4.json"
+        or not re.fullmatch(r"[0-9a-f]{64}", manifest["parent_measurement_manifest_sha256"])
     ):
         raise ValueError("implementation measurement authority")
     seen: set[str] = set()
@@ -190,7 +202,8 @@ def validate_implementation_measurement(document: dict, manifest_path: Path) -> 
     model_path = ROOT / PRODUCTION_AUTHORITY_PATHS["lifecycle_semantic_model_path"]
     model = strict_bytes(read_regular_nofollow(model_path))
     required_entries = model.get("measurement_authority", {}).get("required_entries")
-    if type(required_entries) is not list or set(required_entries) != seen or len(required_entries) != len(seen):
+    expected_entries = set(required_entries or ()) | RECONCILIATION_MEASUREMENT_ADDITIONS
+    if type(required_entries) is not list or expected_entries != seen or len(expected_entries) != len(seen):
         raise ValueError("implementation measurement required-entry census")
 
 

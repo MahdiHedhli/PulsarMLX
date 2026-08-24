@@ -17,11 +17,11 @@ from typing import Any, Callable
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SCIENTIFIC = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v1.json"
-DEFAULT_MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v3.json"
-DEFAULT_DECLARATION = ROOT / "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-semantic-authority-declaration-v1.json"
-DEFAULT_INERT = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v1.json"
-DEFAULT_MANIFEST = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v1.json"
+DEFAULT_SCIENTIFIC = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json"
+DEFAULT_MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json"
+DEFAULT_DECLARATION = ROOT / "docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json"
+DEFAULT_INERT = ROOT / "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json"
+DEFAULT_MANIFEST = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json"
 DEFAULT_ACTIVE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v1.json"
 
 MEASURED_BINDINGS = {
@@ -36,6 +36,9 @@ MEASURED_BINDINGS = {
     "secondary_numerical": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
     "primary_capability": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v6.json",
     "secondary_capability": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v6.json",
+    "path_timing": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v6.json",
+    "serialization": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-json-bytes-v6.json",
+    "lifecycle_manifest": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-v6-authority-manifest.json",
 }
 
 DECLARATION_BINDINGS = {
@@ -178,8 +181,8 @@ def validate_documents(
     if type(bindings) is not dict:
         raise ValidationError("scientific bindings object")
     expected_binding_names = set(MEASURED_BINDINGS) | {
-        "active_generation", "accounting", "capability_policy", "interface", "lifecycle_manifest",
-        "lifecycle_model", "numerical_contract", "path_timing", "serialization",
+        "active_generation", "accounting", "capability_policy", "interface",
+        "lifecycle_model", "numerical_contract",
     }
     if set(bindings) != expected_binding_names:
         raise ValidationError("scientific binding census")
@@ -244,6 +247,9 @@ def validate_documents(
         target = ROOT / path
         if not target.is_file() or target.is_symlink() or sha256_path(target) != declared_sha:
             raise ValidationError(f"authority manifest file: {name}")
+    for name, binding in bindings.items():
+        if manifest_authorities.get(name) != binding:
+            raise ValidationError(f"authority manifest scientific binding: {name}")
 
     return {
         "result": "PASS",
@@ -281,6 +287,17 @@ def run_mutations(documents: dict[str, dict[str, Any]], file_shas: dict[str, str
         def register(function: Callable[[dict[str, dict[str, Any]], dict[str, str]], None]):
             cases.append((name, function)); return function
         return register
+
+    def close_measurement_and_scientific(d, s):
+        changed_measurement_sha = sha256_bytes(canonical_bytes(d["measurement"]))
+        s["measurement_sha256"] = changed_measurement_sha
+        d["scientific"]["source_of_truth"]["implementation_measurement_manifest_sha256"] = changed_measurement_sha
+        d["inert"]["implementation_measurement_manifest_sha256"] = changed_measurement_sha
+        d["authority_manifest"]["authorities"]["measurement_manifest"]["sha256"] = changed_measurement_sha
+        changed_scientific_sha = sha256_bytes(canonical_bytes(d["scientific"]))
+        s["scientific_sha256"] = changed_scientific_sha
+        d["inert"]["scientific_access_contract_sha256"] = changed_scientific_sha
+        d["authority_manifest"]["authorities"]["scientific_access"]["sha256"] = changed_scientific_sha
 
     @case("M01_PARSER_SHA_ONLY")
     def _(d, _s): d["scientific"]["bindings"]["parser"]["sha256"] = "0" * 64
@@ -334,6 +351,28 @@ def run_mutations(documents: dict[str, dict[str, Any]], file_shas: dict[str, str
     def _(d, _s):
         target = next(entry for entry in d["measurement"]["entries"] if entry["path"] not in set(MEASURED_BINDINGS.values()))
         target["git_blob_sha"] = "5" * 40
+    @case("M19_PATH_TIMING_FULLY_COORDINATED")
+    def _(d, s):
+        d["scientific"]["bindings"]["path_timing"]["sha256"] = "6" * 64
+        next(entry for entry in d["measurement"]["entries"] if entry["path"] == MEASURED_BINDINGS["path_timing"])["sha256"] = "6" * 64
+        d["authority_manifest"]["authorities"]["path_timing"]["sha256"] = "6" * 64
+        close_measurement_and_scientific(d, s)
+    @case("M20_SERIALIZATION_FULLY_COORDINATED")
+    def _(d, s):
+        d["scientific"]["bindings"]["serialization"]["sha256"] = "7" * 64
+        next(entry for entry in d["measurement"]["entries"] if entry["path"] == MEASURED_BINDINGS["serialization"])["sha256"] = "7" * 64
+        d["authority_manifest"]["authorities"]["serialization"]["sha256"] = "7" * 64
+        close_measurement_and_scientific(d, s)
+    @case("M21_LIFECYCLE_MANIFEST_FULLY_COORDINATED")
+    def _(d, s):
+        d["scientific"]["bindings"]["lifecycle_manifest"]["sha256"] = "8" * 64
+        next(entry for entry in d["measurement"]["entries"] if entry["path"] == MEASURED_BINDINGS["lifecycle_manifest"])["sha256"] = "8" * 64
+        d["authority_manifest"]["authorities"]["lifecycle_manifest"]["sha256"] = "8" * 64
+        close_measurement_and_scientific(d, s)
+    @case("M22_MANIFEST_OMITS_PRIMARY_NUMERICAL")
+    def _(d, _s): del d["authority_manifest"]["authorities"]["primary_numerical"]
+    @case("M23_MANIFEST_OMITS_SECONDARY_TARGET")
+    def _(d, _s): del d["authority_manifest"]["authorities"]["secondary_target_source"]
 
     rejected: list[str] = []
     for name, mutate in cases:
