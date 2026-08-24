@@ -34,7 +34,7 @@ def authority(path: str) -> dict[str, str]:
     return {"path": path, "sha256": sha(ROOT / path)}
 
 
-def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str], outcomes: list[str], payload_keys: list[str], actor: str) -> dict:
+def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str], outcomes: list[str], payload_keys: list[str], actor: str, payload_constants: dict | None = None) -> dict:
     return {
         "actor": actor,
         "artifact_id": artifact_id,
@@ -43,12 +43,13 @@ def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str
         "dependencies": dependencies,
         "outcome_applicability": outcomes,
         "payload_keys": payload_keys,
+        "payload_constants": payload_constants or {},
         "producer_transition_id": transition_id,
         "schema_id": f"pulsarmlx.f017.v8.artifact.{artifact_id}/1.0.0",
     }
 
 
-OUTCOMES = [
+OUTCOME_CLASSES = [
     "PRE_MINT_FAILURE",
     "AUTHORIZATION_INSTALLATION_FAILURE",
     "COORDINATOR_HANDSHAKE_FAILURE",
@@ -66,17 +67,49 @@ OUTCOMES = [
     "COMPLETE_SUCCESS",
 ]
 
+
+def failure_class_for_rank(rank: int) -> str:
+    """Classify every durable success-prefix rank into one terminal class."""
+    if rank == 1:
+        return "PRE_MINT_FAILURE"
+    if rank <= 6:
+        return "AUTHORIZATION_INSTALLATION_FAILURE"
+    if rank == 7:
+        return "COORDINATOR_HANDSHAKE_FAILURE"
+    if rank == 8:
+        return "PACKAGE_PRE_START_FAILURE"
+    if rank <= 10:
+        return "PACKAGE_POST_CLAIM_PRE_START_FAILURE"
+    if rank == 11:
+        return "CHECKPOINT_IDENTITY_PRE_START_FAILURE"
+    if rank <= 23:
+        return "CHECKPOINT_IDENTITY_FAILURE"
+    if rank <= 28:
+        return "DESCRIPTOR_LEASE_ACTIVATION_FAILURE"
+    if rank == 29:
+        return "PRIMARY_PRE_START_FAILURE"
+    if rank <= 34:
+        return "PRIMARY_POST_START_FAILURE"
+    if rank == 35:
+        return "SECONDARY_PRE_START_FAILURE"
+    if rank <= 40:
+        return "SECONDARY_POST_START_FAILURE"
+    if rank <= 42:
+        return "COMPARISON_FAILURE"
+    return "EVIDENCE_BANKING_FAILURE"
+
+_CHECKPOINT_METADATA = json.loads((ROOT / "docs/validation/glm52-checkpoint.json").read_bytes())
 SHARDS = [
-    {"filename": "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf", "ordinal": 1, "role": "IDENTITY_ONLY", "sha256": "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18", "size_bytes": 9423744},
-    {"filename": "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", "ordinal": 2, "role": "GRAPH_PAYLOAD", "sha256": "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36", "size_bytes": 49105028960},
-    {"filename": "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf", "ordinal": 3, "role": "GRAPH_PAYLOAD", "sha256": "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b", "size_bytes": 49143176640},
-    {"filename": "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf", "ordinal": 4, "role": "GRAPH_PAYLOAD", "sha256": "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e", "size_bytes": 49143176640},
-    {"filename": "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf", "ordinal": 5, "role": "GRAPH_PAYLOAD", "sha256": "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d", "size_bytes": 49143176640},
-    {"filename": "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf", "ordinal": 6, "role": "GRAPH_PAYLOAD", "sha256": "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d", "size_bytes": 41914650304},
+    {
+        **record,
+        "ordinal": ordinal,
+        "role": "IDENTITY_ONLY" if ordinal == 1 else "GRAPH_PAYLOAD",
+    }
+    for ordinal, record in enumerate(_CHECKPOINT_METADATA["files"], start=1)
 ]
 
 
-def build_nodes() -> tuple[list[dict], dict[str, int]]:
+def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
     success = [
         ("operator_approval", "OPERATOR", ["operator_approval_id"]),
         ("candidate_authorization", "AUTHORIZER", ["authorization_id", "package_attempt_id"]),
@@ -120,23 +153,11 @@ def build_nodes() -> tuple[list[dict], dict[str, int]]:
         ("package_terminal", "EVIDENCE_BANKER", ["classification", "mandatory_stop"]),
         ("final_declaration", "EVIDENCE_BANKER", ["active_generation", "event_04_executed", "original_checkpoint_access"]),
     ])
-    cuts = {
-        "PRE_MINT_FAILURE": 1,
-        "AUTHORIZATION_INSTALLATION_FAILURE": 4,
-        "COORDINATOR_HANDSHAKE_FAILURE": 6,
-        "PACKAGE_PRE_START_FAILURE": 7,
-        "PACKAGE_POST_CLAIM_PRE_START_FAILURE": 8,
-        "CHECKPOINT_IDENTITY_PRE_START_FAILURE": 10,
-        "CHECKPOINT_IDENTITY_FAILURE": 13,
-        "DESCRIPTOR_LEASE_ACTIVATION_FAILURE": 28,
-        "PRIMARY_PRE_START_FAILURE": 29,
-        "PRIMARY_POST_START_FAILURE": 32,
-        "SECONDARY_PRE_START_FAILURE": 35,
-        "SECONDARY_POST_START_FAILURE": 38,
-        "COMPARISON_FAILURE": 40,
-        "EVIDENCE_BANKING_FAILURE": 45,
-        "COMPLETE_SUCCESS": len(success),
+    failure_variants = {
+        f"{failure_class_for_rank(rank)}__AFTER_RANK_{rank:03d}": rank
+        for rank in range(1, len(success))
     }
+    cuts = {**failure_variants, "COMPLETE_SUCCESS": len(success)}
     nodes: list[dict] = []
     previous: str | None = None
     for rank, (artifact_id, actor, payload_keys) in enumerate(success, start=1):
@@ -151,33 +172,57 @@ def build_nodes() -> tuple[list[dict], dict[str, int]]:
         if artifact_id == "secondary_durable_start":
             dependencies.append("secondary_descriptor_continuity_report")
         dependencies = list(dict.fromkeys(dependencies))
-        nodes.append(node(artifact_id, rank, f"T{rank:03d}", dependencies, applicable, payload_keys, actor))
+        constants: dict[str, object] = {}
+        if artifact_id == "package_receipt":
+            constants = {"package_delta": 1, "primary_delta": 1, "secondary_delta": 1}
+        elif artifact_id == "package_terminal":
+            constants = {"classification": "COMPLETE_SUCCESS", "mandatory_stop": True}
+        elif artifact_id == "final_declaration":
+            constants = {"active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0}
+        nodes.append(node(artifact_id, rank, f"T{rank:03d}", dependencies, applicable, payload_keys, actor, constants))
         previous = artifact_id
     success_ids = [item["artifact_id"] for item in nodes]
     rank = len(nodes) + 1
-    for outcome in OUTCOMES[:-1]:
+    for outcome in failure_variants:
         prefix = success_ids[cuts[outcome] - 1]
+        failure_class = outcome.split("__AFTER_RANK_", 1)[0]
+        retained_ordinals = [ordinal for ordinal, receipt_rank in zip(range(2, 7), (15, 17, 19, 21, 23)) if receipt_rank <= cuts[outcome]]
+        if cuts[outcome] >= 44:
+            retained_ordinals = []
         failure_id = f"failure_evidence__{outcome.lower()}"
-        nodes.append(node(failure_id, rank, f"F_{outcome}_EVIDENCE", [prefix], [outcome], ["failed_transition_id", "last_completed_transition_id", "durable_prefix_id", "failure_class"], "EVIDENCE_BANKER")); rank += 1
+        prefix_transition = next(item["producer_transition_id"] for item in nodes if item["artifact_id"] == prefix)
+        nodes.append(node(failure_id, rank, f"F_{outcome}_EVIDENCE", [prefix], [outcome], ["failed_transition_id", "last_completed_transition_id", "durable_prefix_id", "failure_class"], "EVIDENCE_BANKER", {"failed_transition_id": f"FAIL_{outcome}", "last_completed_transition_id": prefix_transition, "failure_class": failure_class, "durable_prefix_id": prefix})); rank += 1
         tail = failure_id
-        if cuts[outcome] >= 26:
-            for suffix, keys in (
-                ("descriptor_release_start", ["expected_leases"]),
-                ("descriptor_release_report", ["attempted_closures", "successful_closures", "live_leases_after_release", "lease_ids"]),
-                ("descriptor_release_terminal", ["live_leases_after_release", "result"]),
-            ):
+        release_suffixes: list[tuple[str, list[str]]] = []
+        if retained_ordinals and cuts[outcome] < 43:
+            release_suffixes.append(("descriptor_release_start", ["expected_leases"]))
+        if retained_ordinals and cuts[outcome] < 44:
+            release_suffixes.append(("descriptor_release_report", ["attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "lease_ids"]))
+        if retained_ordinals and cuts[outcome] < 45:
+            release_suffixes.append(("descriptor_release_terminal", ["live_leases_after_release", "result"]))
+        for suffix, keys in release_suffixes:
                 artifact_id = f"{suffix}__{outcome.lower()}"
-                nodes.append(node(artifact_id, rank, f"F_{outcome}_{suffix.upper()}", [tail], [outcome], keys, "COORDINATOR")); rank += 1
+                constants: dict[str, object] = {}
+                if suffix == "descriptor_release_start":
+                    constants["expected_leases"] = len(retained_ordinals)
+                elif suffix == "descriptor_release_report":
+                    constants.update({"attempted_closures": len(retained_ordinals), "successful_closures": len(retained_ordinals), "duplicate_closures": 0, "unknown_leases": 0, "live_leases_after_release": 0, "lease_ids": [f"LEASE-{ordinal}" for ordinal in retained_ordinals]})
+                else:
+                    constants.update({"live_leases_after_release": 0, "result": "PASS"})
+                nodes.append(node(artifact_id, rank, f"F_{outcome}_{suffix.upper()}", [tail], [outcome], keys, "COORDINATOR", constants)); rank += 1
                 tail = artifact_id
         receipt_id = f"package_receipt__{outcome.lower()}"
         terminal_id = f"package_terminal__{outcome.lower()}"
-        nodes.append(node(receipt_id, rank, f"F_{outcome}_PACKAGE_RECEIPT", [tail], [outcome], ["package_delta", "primary_delta", "secondary_delta", "failure_class"], "EVIDENCE_BANKER")); rank += 1
-        nodes.append(node(terminal_id, rank, f"F_{outcome}_PACKAGE_TERMINAL", [receipt_id], [outcome], ["classification", "mandatory_stop"], "EVIDENCE_BANKER")); rank += 1
-    return nodes, cuts
+        declaration_id = f"final_declaration__{outcome.lower()}"
+        deltas = {"package_delta": int(cuts[outcome] >= 9), "primary_delta": int(cuts[outcome] >= 30), "secondary_delta": int(cuts[outcome] >= 36)}
+        nodes.append(node(receipt_id, rank, f"F_{outcome}_PACKAGE_RECEIPT", [tail], [outcome], ["package_delta", "primary_delta", "secondary_delta", "failure_class"], "EVIDENCE_BANKER", {**deltas, "failure_class": failure_class})); rank += 1
+        nodes.append(node(terminal_id, rank, f"F_{outcome}_PACKAGE_TERMINAL", [receipt_id], [outcome], ["classification", "mandatory_stop"], "EVIDENCE_BANKER", {"classification": failure_class, "mandatory_stop": True})); rank += 1
+        nodes.append(node(declaration_id, rank, f"F_{outcome}_FINAL_DECLARATION", [terminal_id], [outcome], ["active_generation", "event_04_executed", "original_checkpoint_access"], "EVIDENCE_BANKER", {"active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0})); rank += 1
+    return nodes, cuts, {name: ("COMPLETE_SUCCESS" if name == "COMPLETE_SUCCESS" else name.split("__AFTER_RANK_", 1)[0]) for name in cuts}
 
 
 def main() -> None:
-    nodes, cuts = build_nodes()
+    nodes, cuts, outcome_classes = build_nodes()
     node_map = {item["artifact_id"]: item for item in nodes}
     roots = {
         "checkpoint_metadata": authority("docs/validation/glm52-checkpoint.json"),
@@ -240,19 +285,20 @@ def main() -> None:
         "strict_key_census": True,
         "unknown_fields": "REJECT",
         "canonical_serialization": "F017_CANONICAL_JSON_BYTES_V1",
-        "artifacts": {item["artifact_id"]: {"schema_id": item["schema_id"], "keys": envelope_keys, "payload_keys": item["payload_keys"], "creation_rank": item["creation_rank"]} for item in nodes},
+        "artifacts": {item["artifact_id"]: {"schema_id": item["schema_id"], "keys": envelope_keys, "payload_keys": item["payload_keys"], "payload_constants": item["payload_constants"], "creation_rank": item["creation_rank"]} for item in nodes},
     }
     bank(CONTRACTS / "f017-corrected-oracle-artifact-schemas-v8.json", schemas)
 
     obligations = {}
     all_ids = set(node_map)
-    for outcome in OUTCOMES:
+    for outcome in cuts:
         required = sorted(item["artifact_id"] for item in nodes if outcome in item["outcome_applicability"])
         forbidden = sorted(all_ids - set(required))
         cut = cuts[outcome]
         obligations[outcome] = {
             "durable_prefix_rank": cut,
             "failed_transition_id": None if outcome == "COMPLETE_SUCCESS" else f"FAIL_{outcome}",
+            "outcome_class": outcome_classes[outcome],
             "last_completed_artifact_id": [item["artifact_id"] for item in nodes if item["creation_rank"] == cut][0],
             "required": required,
             "forbidden": forbidden,
@@ -273,58 +319,58 @@ def main() -> None:
     bank(CONTRACTS / "f017-corrected-oracle-path-timing-v8.json", path_timing)
 
     expected_invariants = [
-        ("NO_EVENT04_AUTHORIZATION", "/event_04_authorization_created", False),
-        ("NO_EVENT04_EXECUTION", "/event_04_executed", False),
-        ("NO_ORIGINAL_CHECKPOINT_ACCESS", "/original_checkpoint_access", 0),
-        ("HISTORICAL_LEDGER_STABLE", "/historical_master_ledger", 175),
-        ("IDENTITY_AFTER_PACKAGE_START", "/identity_after_package_start", True),
-        ("PRIMARY_AFTER_IDENTITY_TERMINAL", "/primary_after_identity_terminal", True),
-        ("SECONDARY_AFTER_PRIMARY_TERMINAL", "/secondary_after_primary_terminal", True),
-        ("UNSTARTED_PRIMARY_DELTA_ZERO", "/unstarted_primary_delta", 0),
-        ("UNSTARTED_SECONDARY_DELTA_ZERO", "/unstarted_secondary_delta", 0),
-        ("IDENTITY_ONLY_NOT_RETAINED", "/identity_only_retained", 0),
-        ("GRAPH_LEASE_COUNT", "/graph_lease_count", 5),
-        ("PRIMARY_DESCRIPTOR_COUNT", "/primary_descriptor_count", 5),
-        ("SECONDARY_DESCRIPTOR_COUNT", "/secondary_descriptor_count", 5),
-        ("PATH_REOPEN_COUNT", "/path_reopen_count", 0),
-        ("PACKAGE_TERMINAL_AFTER_RELEASE", "/package_terminal_after_release", True),
-        ("NO_LIVE_LEASES_AT_TERMINAL", "/live_leases_at_terminal", 0),
-        ("NO_SELF_SHA", "/self_references", 0),
-        ("NO_FUTURE_SHA", "/future_references", 0),
-        ("NO_ARTIFACT_CYCLES", "/artifact_cycles", 0),
-        ("NO_P1_TRANSITION", "/p1_transition_present", False),
-        ("RETRY_DISABLED", "/retry", False),
-        ("RESUME_DISABLED", "/resume", False),
-        ("IDENTITY_HASH_EXACT_BYTES", "/identity_hash_exact_bytes", True),
-        ("IDENTITY_DESCRIPTOR_STABLE", "/identity_descriptor_stable", True),
-        ("EVIDENCE_APPEND_ONLY", "/evidence_append_only", True),
+        ("NO_EVENT04_AUTHORIZATION", "lifecycle_model", "/unconditional_invariants/no_event04_authorization", False),
+        ("NO_EVENT04_EXECUTION", "lifecycle_model", "/unconditional_invariants/no_event04_execution", False),
+        ("NO_ORIGINAL_CHECKPOINT_ACCESS", "checkpoint_identity", "/original_checkpoint_access_during_design", 0),
+        ("HISTORICAL_LEDGER_STABLE", "accounting", "/historical_real_payload_ledger/after", 175),
+        ("IDENTITY_AFTER_PACKAGE_START", "interface", "/identity_producer_invoked_after_package_durable_start", True),
+        ("PRIMARY_AFTER_IDENTITY_TERMINAL", "lifecycle_model", "/unconditional_invariants/primary_after_identity_terminal", True),
+        ("SECONDARY_AFTER_PRIMARY_TERMINAL", "lifecycle_model", "/unconditional_invariants/secondary_after_primary_terminal", True),
+        ("UNSTARTED_PRIMARY_DELTA_ZERO", "accounting", "/unstarted_consumer_delta", 0),
+        ("UNSTARTED_SECONDARY_DELTA_ZERO", "accounting", "/unstarted_consumer_delta", 0),
+        ("IDENTITY_ONLY_NOT_RETAINED", "checkpoint_identity", "/identity_only_disposition", "CLOSE_AFTER_IDENTITY_VERIFICATION"),
+        ("GRAPH_LEASE_COUNT", "checkpoint_identity", "/derived_census/expected_retained_lease_count", 5),
+        ("PRIMARY_DESCRIPTOR_COUNT", "continuity", "/success_reports/primary/count", 5),
+        ("SECONDARY_DESCRIPTOR_COUNT", "continuity", "/success_reports/secondary/count", 5),
+        ("PATH_REOPEN_COUNT", "continuity", "/path_reopen_count", 0),
+        ("PACKAGE_TERMINAL_AFTER_RELEASE", "continuity", "/release/package_terminal_after_release", True),
+        ("NO_LIVE_LEASES_AT_TERMINAL", "continuity", "/release/live_leases_after_success", 0),
+        ("NO_SELF_SHA", "artifact_dag", "/self_references_permitted", False),
+        ("NO_FUTURE_SHA", "artifact_dag", "/future_references_permitted", False),
+        ("NO_ARTIFACT_CYCLES", "artifact_dag", "/conditional_cycles_permitted", False),
+        ("NO_P1_TRANSITION", "lifecycle_model", "/unconditional_invariants/no_p1_transition", False),
+        ("RETRY_DISABLED", "interface", "/retries", 0),
+        ("RESUME_DISABLED", "interface", "/resume", False),
+        ("IDENTITY_HASH_EXACT_BYTES", "checkpoint_identity", "/processing/exact_byte_count", True),
+        ("IDENTITY_DESCRIPTOR_STABLE", "checkpoint_identity", "/processing/pre_post_fstat_equal", True),
+        ("EVIDENCE_APPEND_ONLY", "lifecycle_model", "/unconditional_invariants/evidence_append_only", True),
     ]
-    invariants = [{"id": item[0], "scope": "V8_DESIGN_AND_SYNTHETIC", "source_json_pointer": item[1], "operation": "EXACT_EQUAL", "expected": item[2], "validator_id": f"VALIDATE_{item[0]}", "failure_class": "SAFETY_INVARIANT_FAILURE", "mutation_id": f"MUTATE_{item[0]}"} for item in expected_invariants]
+    invariants = [{"id": item[0], "scope": "V8_DESIGN_AND_SYNTHETIC", "source_authority": item[1], "source_json_pointer": item[2], "operation": "EXACT_EQUAL", "expected": item[3], "validator_id": f"VALIDATE_{item[0]}", "failure_class": "SAFETY_INVARIANT_FAILURE", "mutation_id": f"MUTATE_{item[0]}"} for item in expected_invariants]
     bank(CONTRACTS / "f017-corrected-oracle-safety-invariants-v8.json", {"schema": "pulsarmlx.f017.corrected-oracle-safety-invariants/8.0.0", "status": STATUS, "invariants": invariants})
 
     transitions = []
-    prior_state = "DESIGN_ONLY"
-    states = [prior_state]
+    states = ["DESIGN_ONLY"]
     for item in nodes:
-        if "COMPLETE_SUCCESS" not in item["outcome_applicability"]:
-            continue
-        state = f"AFTER__{item['artifact_id'].upper()}"
+        state = f"ARTIFACT_BANKED__{item['artifact_id'].upper()}"
         states.append(state)
-        transitions.append({"id": item["producer_transition_id"], "actor": item["actor"], "from": prior_state, "to": state, "artifact_created": item["artifact_id"]})
-        prior_state = state
-    for outcome in OUTCOMES[:-1]:
-        states.append(f"TERMINAL__{outcome}")
-        transitions.append({"id": f"FAIL_{outcome}", "actor": "EVIDENCE_BANKER", "from_rank": cuts[outcome], "to": f"TERMINAL__{outcome}", "outcome": outcome})
-    safety_projection = {item[1].removeprefix("/"): item[2] for item in expected_invariants}
+        transitions.append({"id": item["producer_transition_id"], "actor": item["actor"], "artifact_created": item["artifact_id"], "creation_rank": item["creation_rank"], "outcome_applicability": item["outcome_applicability"], "to": state})
+    unconditional = {
+        "no_event04_authorization": False,
+        "no_event04_execution": False,
+        "primary_after_identity_terminal": True,
+        "secondary_after_primary_terminal": True,
+        "no_p1_transition": False,
+        "evidence_append_only": True,
+    }
     model = {
         "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-semantic-model/8.0.0",
         "status": STATUS,
         "states": sorted(set(states)),
         "transitions": transitions,
-        "outcomes": OUTCOMES,
+        "outcome_classes": OUTCOME_CLASSES,
+        "outcomes": list(cuts),
         "success_artifact_order": [item["artifact_id"] for item in nodes if "COMPLETE_SUCCESS" in item["outcome_applicability"]],
-        "unconditional_invariants": {item[0].lower(): item[2] for item in expected_invariants},
-        "safety_projection": safety_projection,
+        "unconditional_invariants": unconditional,
         "numerical_contract": roots["numerical_contract"],
     }
     bank(CONTRACTS / "f017-corrected-oracle-lifecycle-semantic-model-v8.json", model)
@@ -338,7 +384,7 @@ def main() -> None:
         "primary_start_rank": node_map["primary_durable_start"]["creation_rank"],
         "secondary_start_rank": node_map["secondary_durable_start"]["creation_rank"],
         "unstarted_consumer_delta": 0,
-        "outcome_deltas": {name: {key: obligations[name][key] for key in ("package_delta", "primary_delta", "secondary_delta")} for name in OUTCOMES},
+        "outcome_deltas": {name: {key: obligations[name][key] for key in ("package_delta", "primary_delta", "secondary_delta")} for name in cuts},
     }
     bank(CONTRACTS / "f017-corrected-oracle-event-accounting-v8.json", accounting)
 
@@ -410,7 +456,7 @@ def main() -> None:
     }
     manifest = {"schema": "pulsarmlx.f017.corrected-oracle-v8-design-authority-manifest/8.0.0", "status": STATUS, "generation": 8, "active_live_generation": "NONE", "implementation_phase_entered": False, "authorities": {name: authority(path) for name, path in paths.items()}, "root_authorities": roots}
     bank(CONTRACTS / "f017-corrected-oracle-v8-design-authority-manifest.json", manifest)
-    print(json.dumps({"result": "PASS", "artifact_count": len(nodes), "outcome_count": len(OUTCOMES)}, sort_keys=True))
+    print(json.dumps({"result": "PASS", "artifact_count": len(nodes), "outcome_count": len(cuts)}, sort_keys=True))
 
 
 if __name__ == "__main__":

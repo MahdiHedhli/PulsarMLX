@@ -19,7 +19,7 @@ def canonical(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode() + b"\n"
 
 
-def payload_for(artifact_id: str, keys: list[str], outcome: str) -> dict:
+def payload_for(artifact_id: str, keys: list[str], outcome: str, constants: dict | None = None) -> dict:
     value: dict[str, object] = {}
     for key in keys:
         if key in {"descriptor_count", "inherited_descriptor_count", "lease_count", "retained_lease_count", "expected_leases", "attempted_closures", "successful_closures"}:
@@ -55,6 +55,7 @@ def payload_for(artifact_id: str, keys: list[str], outcome: str) -> dict:
             value[key] = {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32}
         else:
             value[key] = f"{artifact_id}:{key}:{outcome}"
+    value.update(constants or {})
     return value
 
 
@@ -85,7 +86,7 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
             "creation_rank": node["creation_rank"],
             "dependencies": dependency_shas,
             "root_authorities": {key: item["sha256"] for key, item in roots.items()},
-            "payload": payload_for(artifact_id, descriptor["payload_keys"], outcome),
+            "payload": payload_for(artifact_id, descriptor["payload_keys"], outcome, descriptor.get("payload_constants")),
             "result": "PASS" if outcome == "COMPLETE_SUCCESS" else "FAILURE_EVIDENCE",
         }
         if list(value) != descriptor["keys"]:
@@ -96,9 +97,9 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
         path = package_root / f"{artifact_id}.json"
         path.write_bytes(raw)
         created[artifact_id] = hashlib.sha256(raw).hexdigest()
-    unexpected = {path.stem for path in package_root.glob("*.json")} & forbidden
-    if unexpected:
-        raise ValueError(f"forbidden artifacts exist: {outcome}:{sorted(unexpected)}")
+    actual = {path.stem for path in package_root.glob("*.json")}
+    if actual != required:
+        raise ValueError(f"artifact set mismatch: {outcome}:missing={sorted(required-actual)}:unexpected={sorted(actual-required)}")
     if "descriptor_lease_manifest" in created:
         lease_payload = json.loads((package_root / "descriptor_lease_manifest.json").read_bytes())["payload"]
         for report_id in ("primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"):
@@ -109,13 +110,21 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
                 raise ValueError(f"continuity report census: {outcome}:{report_id}")
             if report_payload["lease_ids"] != lease_payload["lease_ids"] or report_payload["descriptor_identities"] != lease_payload["descriptor_identities"]:
                 raise ValueError(f"continuity report identity mismatch: {outcome}:{report_id}")
+        for report_id in created:
+            if not report_id.startswith("descriptor_release_report"):
+                continue
+            report_payload = json.loads((package_root / f"{report_id}.json").read_bytes())["payload"]
+            if not set(report_payload["lease_ids"]).issubset(set(lease_payload["lease_ids"])):
+                raise ValueError(f"release report unknown lease: {outcome}:{report_id}")
+            if report_payload["duplicate_closures"] != 0 or report_payload["unknown_leases"] != 0:
+                raise ValueError(f"release report closure census: {outcome}:{report_id}")
     if outcome == "COMPLETE_SUCCESS":
         terminals = ["final_declaration"] if "final_declaration" in required else []
     else:
-        terminals = [item for item in required if item.startswith("package_terminal__")]
+        terminals = [item for item in required if item.startswith("final_declaration__")]
     if len(terminals) != 1:
         raise ValueError(f"terminal census: {outcome}:{terminals}")
-    closure = validate_package(package_root, terminals[0], required, roots)
+    closure = validate_package(package_root, terminals[0], required, roots, dag, schemas, outcome)
     return {"outcome": outcome, "artifact_count": len(created), "terminal_id": terminals[0], "terminal_sha256": created[terminals[0]], "closure": closure}
 
 

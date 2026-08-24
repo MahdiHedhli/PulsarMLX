@@ -1,0 +1,7 @@
+# F017 lifecycle V8 causal design — Opus design review cycle 01
+
+Use a fresh `claude-opus-5` session at high effort. Review exact committed bytes at `dcf032a5` in a detached read-only worktree. Repository evidence outranks this request. Do not modify files, open/hash/mmap/pread original checkpoint shards, mint Event-04 authority, execute a real oracle, or execute P1 attempt 2.
+
+Independently reconstruct every terminal V7 cycle-05 finding and the two Gemini V8 cycles. Topologically sort the full artifact DAG; search for self, future, inherited, conditional, and outcome-specific cycles; run the symbolic constructor for all 15 outcomes; recursively validate terminal closure; attempt one-level and consistently rehashed transitive mutations and cross-package splices; verify exact five-descriptor primary and secondary reports, continuity timing, no self SHA, durable-start report binding, unstarted-consumer prohibitions, durable-prefix accounting, all 25 safety invariants and source projections, 100-percent path timing, unique transition IDs, release-before-terminal closure, derived six-shard byte census, 128 mutation accounting, independent-validator import separation, numerical V3 isolation, original access zero, and active generation `NONE`.
+
+Report `BLOCKING`, `NON_BLOCKING_REQUIRED`, and `DEFENSE_IN_DEPTH` separately. Both blocking and non-blocking-required findings prevent implementation. Required verdict: `ACCEPT_CHECKPOINT_IDENTITY_CAUSAL_DESIGN_V8_FOR_IMPLEMENTATION` or `REJECT`; no conditional acceptance.

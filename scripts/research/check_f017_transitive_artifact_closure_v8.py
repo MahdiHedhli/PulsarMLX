@@ -16,12 +16,19 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate_package(package_root: Path, terminal_id: str, required: set[str], roots: dict[str, dict[str, str]]) -> dict:
+def validate_package(package_root: Path, terminal_id: str, required: set[str], roots: dict[str, dict[str, str]], dag: dict, schemas: dict, outcome: str) -> dict:
     visiting: set[str] = set()
     visited: set[str] = set()
     maximum_depth = 0
     package_attempt_id: str | None = None
     authorization_id: str | None = None
+    node_map = {item["artifact_id"]: item for item in dag["nodes"]}
+    expected_roots = {key: item["sha256"] for key, item in roots.items()}
+    if required != {artifact_id for artifact_id, node in node_map.items() if outcome in node["outcome_applicability"]}:
+        raise ValueError("required set does not conform to DAG outcome applicability")
+    actual_files = {path.stem for path in package_root.glob("*.json")}
+    if actual_files != required:
+        raise ValueError(f"package artifact census mismatch: missing={sorted(required-actual_files)} unexpected={sorted(actual_files-required)}")
 
     def walk(artifact_id: str, expected_sha: str | None, depth: int) -> None:
         nonlocal maximum_depth, package_attempt_id, authorization_id
@@ -38,6 +45,21 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
         actual_sha = hashlib.sha256(raw).hexdigest()
         if expected_sha is not None and actual_sha != expected_sha:
             raise ValueError(f"artifact sha mismatch: {artifact_id}")
+        if artifact_id not in node_map or artifact_id not in schemas["artifacts"]:
+            raise ValueError(f"undeclared artifact: {artifact_id}")
+        node = node_map[artifact_id]
+        descriptor = schemas["artifacts"][artifact_id]
+        if set(value) != set(descriptor["keys"]) or set(value["payload"]) != set(descriptor["payload_keys"]):
+            raise ValueError(f"artifact key census mismatch: {artifact_id}")
+        if value["schema"] != descriptor["schema_id"] or value["artifact_kind"] != node["artifact_kind"] or value["creation_rank"] != node["creation_rank"]:
+            raise ValueError(f"artifact schema binding mismatch: {artifact_id}")
+        if value["outcome"] != outcome:
+            raise ValueError(f"artifact outcome mismatch: {artifact_id}")
+        if value["payload"] | descriptor.get("payload_constants", {}) != value["payload"]:
+            raise ValueError(f"payload constant mismatch: {artifact_id}")
+        for key, expected in descriptor.get("payload_constants", {}).items():
+            if value["payload"].get(key) != expected:
+                raise ValueError(f"payload constant mismatch: {artifact_id}:{key}")
         if value["artifact_id"] != artifact_id:
             raise ValueError(f"artifact identity mismatch: {artifact_id}")
         if package_attempt_id is None:
@@ -48,9 +70,10 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
         if artifact_id in visited:
             return
         visiting.add(artifact_id)
-        for root_id, root_sha in value["root_authorities"].items():
-            if root_id not in roots or roots[root_id]["sha256"] != root_sha:
-                raise ValueError(f"root authority mismatch: {artifact_id}:{root_id}")
+        if value["root_authorities"] != expected_roots:
+            raise ValueError(f"root authority census mismatch: {artifact_id}")
+        if set(value["dependencies"]) != set(node["dependencies"]):
+            raise ValueError(f"dependency census mismatch: {artifact_id}")
         for dependency_id, dependency_sha in value["dependencies"].items():
             dependency_path = package_root / f"{dependency_id}.json"
             dependency_value = json.loads(dependency_path.read_bytes())
@@ -73,10 +96,15 @@ def main() -> None:
     parser.add_argument("--terminal-id", required=True)
     parser.add_argument("--required-json", type=Path, required=True)
     parser.add_argument("--roots-json", type=Path, required=True)
+    parser.add_argument("--dag-json", type=Path, required=True)
+    parser.add_argument("--schemas-json", type=Path, required=True)
+    parser.add_argument("--outcome", required=True)
     args = parser.parse_args()
     required = set(json.loads(args.required_json.read_bytes()))
     roots = json.loads(args.roots_json.read_bytes())
-    print(json.dumps(validate_package(args.package_root, args.terminal_id, required, roots), sort_keys=True, separators=(",", ":")))
+    dag = json.loads(args.dag_json.read_bytes())
+    schemas = json.loads(args.schemas_json.read_bytes())
+    print(json.dumps(validate_package(args.package_root, args.terminal_id, required, roots, dag, schemas, args.outcome), sort_keys=True, separators=(",", ":")))
 
 
 if __name__ == "__main__":
