@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 import f017_corrected_oracle_primary_numerics_v2 as numerical
-from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, parse_authorization, sha256_path, validate_checkpoint_root_descriptor
+from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, decode_canonical_floats, parse_authorization, sha256_path, validate_checkpoint_root_descriptor
 from f017_corrected_oracle_primary_target_source_v6 import PrimaryTargetSourceV6
 from f017_corrected_oracle_wrapper_support_v6 import ROOT, bank, require_active
 
@@ -91,8 +91,11 @@ def target(arguments) -> int:
         arguments.access_event_root,
     )
     try:
-        geometry = numerical.Geometry.from_json(json.loads(arguments.geometry.read_text()))
+        geometry = numerical.Geometry.from_json(decode_canonical_floats(json.loads(arguments.geometry.read_text())))
         result = numerical.execute(source, geometry, authority.document["context"]["prompt_token"], authority.document["context"]["position"])
+        # The pure-core compatibility digest is retained by the pure numerical
+        # API, but an authority artifact never embeds a digest of itself.
+        result.pop("result_sha256", None)
     finally:
         source.close()
     bank(arguments.output, result)

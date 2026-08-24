@@ -247,6 +247,7 @@ def derive_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[str
         "context_keys": document["context_keys"],
         "limits_keys": document["limits_keys"],
         "shard_keys": document["shard_keys"],
+        "authority_path_sha_pairs": document["authority_path_sha_pairs"],
         "live_id_forbidden_markers": document["live_id_forbidden_markers"],
         "pinned_values": document["pinned_values"],
         "pinned_context": {

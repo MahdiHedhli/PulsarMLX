@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from f017_corrected_oracle_authorization_v6 import ROOT, canonical_bytes, sha256_path, strict_bytes
+from f017_corrected_oracle_authorization_v6 import PRODUCTION_AUTHORITY_PATHS, ROOT, canonical_bytes, sha256_path, strict_bytes
 
 INTERFACE = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json"
 SCIENTIFIC = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json"
@@ -57,6 +57,7 @@ def generate() -> dict:
         "coordinator_handshake_id": "F017-INERT-HANDSHAKE-V6", "comparison_receipt_id": "F017-INERT-COMPARISON-RECEIPT-V6",
         "comparison_terminal_id": "F017-INERT-COMPARISON-TERMINAL-V6", "branch": scientific["branch"],
         "implementation_measurement_head": ZERO[:40], "implementation_measurement_manifest_sha256": ZERO,
+        **PRODUCTION_AUTHORITY_PATHS,
         "authorization_interface_sha256": sha256_path(INTERFACE), "scientific_access_contract_sha256": sha256_path(SCIENTIFIC),
         "event_accounting_contract_sha256": scientific["bindings"]["accounting"]["sha256"],
         "path_timing_contract_sha256": scientific["bindings"]["path_timing"]["sha256"],

@@ -12,6 +12,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 import subprocess
 from dataclasses import dataclass
 from itertools import combinations
@@ -54,11 +55,23 @@ def strict_json_bytes(data: bytes, *, require_canonical: bool = False, maximum: 
     return value
 
 
+def _canonical_value(value: Any) -> Any:
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("nonfinite JSON number")
+        return value.hex()
+    if type(value) is list:
+        return [_canonical_value(item) for item in value]
+    if type(value) is dict:
+        return {key: _canonical_value(item) for key, item in value.items()}
+    return value
+
+
 def canonical_json_bytes(value: Any) -> bytes:
     """Return the sole accepted authority serialization."""
     return (
         json.dumps(
-            value,
+            _canonical_value(value),
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=True,
@@ -498,20 +511,22 @@ EXPECTED_SERIALIZATION = {
     "artifact_sha256_domain": "SHA256_EXACT_CANONICAL_BYTES_OF_COMPLETE_ARTIFACT",
     "self_sha_inside_artifact": False,
     "finite_float_encoding": "IEEE754_BINARY64_HEX_STRING_LOWERCASE",
+    "finite_float_scope": "ALL_AUTHORITY_AND_NUMERICAL_RESULT_BYTES",
+    "serializer_applies_float_encoding_recursively": True,
 }
 
 # These fixed digests are the independent reviewed semantic anchor.  Generated
 # views may change only when this validator is deliberately revised and reviewed;
 # regenerating documents from a coordinated model mutation is insufficient.
 EXPECTED_SEMANTIC_PROJECTION_SHAS = {
-    "complete_model": "e5f9deaa2b619dced1d1e07c0f3068ce054f687da6ef8ce4e75ce1f3acc25fab",
-    "authorization_document": "c0e97d0b4affa72326814882bd4b0954ceb38bb0b6b8c50b0a7a3e7c953c6141",
-    "transitions": "66093d63a593dce52be2d43199006ace94598a5c184317962fc74d2768f451f4",
+    "complete_model": "b7e954e654a54fc51735086642a639f8af24485b074642eefeb56d2ef6acc1be",
+    "authorization_document": "9350c1c2e2d08ecd433c767c372497a55f08c44b44a8077191d36d7ccbdf0572",
+    "transitions": "aef3c06983ccf06b79f2b5d8ed483f2bee7659e972a29c1c4b305751a0c8c95a",
     "outcomes": "73d636a9b24e1d317c8870dbe90b47d06d1cff7559bb25983309175f70ba7494",
     "artifact_authority": "fc889804d8a2d1e1579c1d008fb2dab20b782cf2ac95f47b82829a6737bfc688",
     "path_authority": "12c215e3aa2f4d8f734e5f93daf8ff3360c49d1f4abd84a7c3f8a274523add74",
-    "serialization": "17affe92132d3889fc431b7648e27daf886f639d5ec07bf8908d93e6ab7506bd",
-    "measurement_authority": "109b30becbb8c69fefb20c3512b136774b53b54d8a54b572a848aee82c81857b",
+    "serialization": "0b41a0ca891d77593f69dc707983a54ced017d40c05e8740ad1d40896d3a12ae",
+    "measurement_authority": "9d47c692c716a1ab6d8e0b9e64229a1d4186c9400067189b5c50dabc22b7d476",
     "accounting": "852b50115fc0c9c4e316ac735724929c2cd5602040591d00dc2afd848eb4f310",
     "activation_supersession": "6b3bfeb3b7262a19c27fe41614e11f5b4c85a4bcf0f2001467fab5fafdf5a46b",
     "registry_grammars": "0c44c43dbb4696c4ebebc1197d324f82247957ad29e3a0f9187d8c240e31e0e0",
@@ -519,15 +534,15 @@ EXPECTED_SEMANTIC_PROJECTION_SHAS = {
 }
 
 EXPECTED_AUTHORITY_FILE_SHAS = {
-    "model": "e5f9deaa2b619dced1d1e07c0f3068ce054f687da6ef8ce4e75ce1f3acc25fab",
-    "outcomes": "e83a643fc5da953d401701731cf99b4323148863b5cd91209bd76304ce902fbf",
-    "accounting": "a57d3341c3f53a8ad8ba3742982b90cdfd80fff744f3b0db3896d613f26fcf89",
-    "paths": "82ae4afcf1a0c5666875567daeea7940a1cdf3a0aa52a2c2b0647c087dcd1a95",
-    "serialization": "877a18a20ef1dfa05e32adb1405c7c178c42c6bc7d73af93e5680f39f2ae5d5f",
-    "interface": "b13657ac7f72cd874d92246ba5c696e66ad89a47edb86e6f2d312b75aa95bc0c",
-    "registry": "131c817fe6938cc329c38a0b36c4d5b1a59a8a994e60cead999c76e09a812869",
-    "matrix": "f536af1c08e3294d55650504a12d1b97ea370b09e7bf708e4fa2de593d902d15",
-    "schemas": "e65fea970ce84461832cb481bd1148b512769d963ba1e1a24a8078ea3a256326",
+    "model": "b7e954e654a54fc51735086642a639f8af24485b074642eefeb56d2ef6acc1be",
+    "outcomes": "d339a00b8988a638fcb1cbbcf94da78f79a0a6458c62defcc5b59eb9d56b0949",
+    "accounting": "7eb3f5caa3fb0592f0153448bb0466b210dad46ca80d032ba0d537486f1085fa",
+    "paths": "a625c2d0f9c909b4399ce1625d30bf5ba7c9dae9c5556d021c87e8bea4885bd5",
+    "serialization": "71f8f0e6d22e46fa0df241ac04d3646feb37e67472f57bfad4ce7373fc424831",
+    "interface": "3ba2f5b6391dba0a3cc589c692cae45a19b405c2999c6c246be289ebc38160b2",
+    "registry": "68fc2851d500aea968130b3f4a1f749d8cbf2c1ef5c447960e25f1004b9164fd",
+    "matrix": "49a5debb6a6177e55acc40540019a7e7d106f14f6f7df99e91f23e68147ba9a7",
+    "schemas": "276f4c0fb5c13b0d6fb84ed625d3982d2ebc6eb679666743a6ea16870aeadd52",
 }
 
 
@@ -646,6 +661,7 @@ def _expected_interface(model: dict[str, Any], schemas: dict[str, Any]) -> dict[
         "context_keys": doc["context_keys"],
         "limits_keys": doc["limits_keys"],
         "shard_keys": doc["shard_keys"],
+        "authority_path_sha_pairs": doc["authority_path_sha_pairs"],
         "live_id_forbidden_markers": doc["live_id_forbidden_markers"],
         "pinned_values": doc["pinned_values"],
         "pinned_context": {
@@ -750,14 +766,38 @@ def validate_semantics(model: dict[str, Any]) -> None:
         raise ValueError("authorization accounting-class drift")
     if doc.get("live_id_forbidden_markers") != ["INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL"]:
         raise ValueError("live identity forbidden-marker drift")
+    expected_authority_pairs = {
+        "implementation_measurement_manifest_path": "implementation_measurement_manifest_sha256",
+        "authorization_interface_path": "authorization_interface_sha256",
+        "scientific_access_contract_path": "scientific_access_contract_sha256",
+        "event_accounting_contract_path": "event_accounting_contract_sha256",
+        "path_timing_contract_path": "path_timing_contract_sha256",
+        "canonical_serialization_contract_path": "canonical_serialization_contract_sha256",
+        "lifecycle_semantic_model_path": "lifecycle_semantic_model_sha256",
+        "numerical_contract_path": "numerical_contract_sha256",
+        "numerical_capability_policy_path": "numerical_capability_policy_sha256",
+        "numerical_requalification_path": "numerical_requalification_sha256",
+        "numerical_methodology_path": "numerical_methodology_sha256",
+        "checkpoint_manifest_path": "checkpoint_manifest_sha256",
+        "checkpoint_catalog_path": "checkpoint_catalog_sha256",
+    }
+    if doc.get("authority_path_sha_pairs") != expected_authority_pairs:
+        raise ValueError("authorization authority path/SHA pair drift")
+    for transition in model["transitions"]:
+        if transition["id"] in {"T03_RENDER_CANDIDATE", "T04_PRIMARY_VALIDATE_CANDIDATE", "T05_SECONDARY_VALIDATE_CANDIDATE", "T06_INSTALL_AUTHORIZATION"} and "ALL_AUTHORITY_PATH_SHA_PAIRS_MATCH_EXACT_READBACK_BYTES" not in transition["preconditions"]:
+            raise ValueError("authority byte precondition missing")
     if set(model["artifact_payload_key_census"]) != set(model["artifact_classes"]):
         raise ValueError("payload census authority")
     required_measurements = {
+        ".github/workflows/macos.yml",
         "scripts/research/f017_lifecycle_semantics_v6.py",
         "scripts/research/f017_lifecycle_artifact_v6.py",
         "scripts/research/test_f017_lifecycle_semantics_v6.py",
         "scripts/research/test_f017_lifecycle_v6_implementation.py",
         "scripts/research/update_f017_lifecycle_v6_measurement_census.py",
+        "scripts/research/apply_f017_lifecycle_v6_cycle03_authority_repairs.py",
+        "scripts/research/generate_f017_lifecycle_v6_measurement_manifest.py",
+        "scripts/research/check_f017_lifecycle_v6_independent.py",
         "scripts/research/extract_f017_corrected_oracle_target_sources_v6.py",
         "scripts/research/retire_f017_corrected_oracle_legacy_surfaces_v6.py",
         "scripts/research/validate_f017_historical_corrected_oracle_authorities_v6.py",

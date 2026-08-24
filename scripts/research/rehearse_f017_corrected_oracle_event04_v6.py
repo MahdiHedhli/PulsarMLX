@@ -88,6 +88,25 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
         memory_sha = bank(memory_path, {"schema": "pulsarmlx.f017.memory-observation/1.0.0", **observation.as_dict()})
         installed = work / "rehearsal-authorization.json"
         candidate = work / "candidate.json"
+        effective_measurement = measurement_manifest
+        if effective_measurement is None:
+            effective_measurement = work / "rehearsal-measurement.json"
+            bank(effective_measurement, {"schema": "pulsarmlx.f017.rehearsal-measurement/1.0.0", "authority": False, "implementation_head": head})
+        authority_paths = {
+            "implementation_measurement_manifest_path": str(effective_measurement),
+            "authorization_interface_path": str(interface_path),
+            "scientific_access_contract_path": str(SCIENTIFIC.relative_to(ROOT)),
+            "event_accounting_contract_path": str(ACCOUNTING.relative_to(ROOT)),
+            "path_timing_contract_path": str(PATHS.relative_to(ROOT)),
+            "canonical_serialization_contract_path": str(SERIALIZATION.relative_to(ROOT)),
+            "lifecycle_semantic_model_path": str(MODEL.relative_to(ROOT)),
+            "numerical_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+            "numerical_capability_policy_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+            "numerical_requalification_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json",
+            "numerical_methodology_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
+            "checkpoint_manifest_path": "docs/validation/glm52-checkpoint.json",
+            "checkpoint_catalog_path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+        }
         doc = inert_document()
         replacements = {key: value for key, value in doc.items() if key not in {"schema", "authority_generation"}}
         replacements.update({
@@ -100,7 +119,8 @@ def rehearse(output: Path | None, measurement_manifest: Path | None) -> dict:
             "secondary_event_id": "F017-EVENT-04-SHADOW-SECONDARY",
             "branch": "feat/017-rust-native-inference-runtime",
             "implementation_measurement_head": head,
-            "implementation_measurement_manifest_sha256": sha256_path(measurement_manifest) if measurement_manifest else "0" * 64,
+            **authority_paths,
+            "implementation_measurement_manifest_sha256": sha256_path(effective_measurement),
             "authorization_interface_sha256": sha256_path(interface_path),
             "scientific_access_contract_sha256": sha256_path(SCIENTIFIC),
             "event_accounting_contract_sha256": sha256_path(ACCOUNTING),

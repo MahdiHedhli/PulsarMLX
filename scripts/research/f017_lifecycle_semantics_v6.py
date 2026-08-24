@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 from itertools import combinations
 from pathlib import Path
@@ -51,11 +52,23 @@ def strict_json_bytes(data: bytes, *, require_canonical: bool = False, maximum: 
     return value
 
 
+def _canonical_value(value: Any) -> Any:
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("nonfinite JSON number")
+        return value.hex()
+    if type(value) is list:
+        return [_canonical_value(item) for item in value]
+    if type(value) is dict:
+        return {key: _canonical_value(item) for key, item in value.items()}
+    return value
+
+
 def canonical_json_bytes(value: Any) -> bytes:
     """Return the sole accepted authority serialization."""
     return (
         json.dumps(
-            value,
+            _canonical_value(value),
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=True,

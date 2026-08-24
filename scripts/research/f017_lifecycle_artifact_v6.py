@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import math
 from typing import Any
 
 from f017_corrected_oracle_authorization_v6 import ROOT, strict_bytes
@@ -11,18 +10,6 @@ from f017_corrected_oracle_wrapper_support_v6 import bank
 
 SCHEMAS = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-artifact-schemas-v6.json"
 SUCCESS_OUTCOME = "TERMINAL::COMPLETE_SUCCESS"
-
-
-def _canonical_scalar_encoding(value: Any) -> Any:
-    if type(value) is float:
-        if not math.isfinite(value):
-            raise ValueError("nonfinite lifecycle payload")
-        return value.hex()
-    if type(value) is list:
-        return [_canonical_scalar_encoding(item) for item in value]
-    if type(value) is dict:
-        return {key: _canonical_scalar_encoding(item) for key, item in value.items()}
-    return value
 
 
 def authorization_bindings(document: dict[str, Any]) -> dict[str, Any]:
@@ -64,7 +51,6 @@ def artifact_document(
     if missing:
         raise ValueError(f"missing lifecycle bindings for {kind}: {missing}")
     selected = {name: bindings[name] for name in required}
-    payload = _canonical_scalar_encoding(payload)
     if set(payload) != set(schema["payload_key_census"]):
         raise ValueError(f"payload key census for {kind}")
     for key, path in schema["payload_binding_equality"].items():

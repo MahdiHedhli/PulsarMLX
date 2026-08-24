@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 import f017_corrected_oracle_secondary_numerics_v2 as numerical
-from f017_corrected_oracle_authorization_v6 import SECONDARY_ROLE, parse_authorization, sha256_path, validate_checkpoint_root_descriptor
+from f017_corrected_oracle_authorization_v6 import SECONDARY_ROLE, decode_canonical_floats, parse_authorization, sha256_path, validate_checkpoint_root_descriptor
 from f017_corrected_oracle_secondary_target_source_v6 import SecondaryTargetSourceV6
 from f017_corrected_oracle_wrapper_support_v6 import ROOT, bank, require_active
 
@@ -93,7 +93,7 @@ def target(arguments) -> int:
     try:
         result = numerical.execute(
             {
-                "geometry": json.loads(arguments.geometry.read_text()),
+                "geometry": decode_canonical_floats(json.loads(arguments.geometry.read_text())),
                 "token": authority.document["context"]["prompt_token"],
                 "position": authority.document["context"]["position"],
             },

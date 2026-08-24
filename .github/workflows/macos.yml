@@ -374,6 +374,7 @@ jobs:
             docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json
           .venv/bin/python scripts/research/generate_f017_lifecycle_v6_authorities.py --check
           .venv/bin/python scripts/research/validate_f017_lifecycle_semantic_authority_v6.py
+          .venv/bin/python scripts/research/check_f017_lifecycle_v6_independent.py
           .venv/bin/python -m pytest -q \
             scripts/research/test_f017_lifecycle_semantics_v6.py \
             scripts/research/test_f017_lifecycle_v6_implementation.py

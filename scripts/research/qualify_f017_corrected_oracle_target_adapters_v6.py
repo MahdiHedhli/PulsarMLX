@@ -95,12 +95,12 @@ def checkpoint(work: Path, document: dict) -> tuple[Path, Path, Path, list[dict]
     return root, catalog, geometry, shards, decoded
 
 
-def grant(role: str, event: str, wrapper: Path, target: Path, numerical: Path, decoder: Path, prefix: str, work: Path) -> dict:
+def grant(role: str, event: str, wrapper: Path, capability_path: Path, target: Path, numerical: Path, decoder: Path, prefix: str, work: Path) -> dict:
     return {
         "event_id": event, "durable_start_id": f"{prefix}-START", "ledger_entry_id": f"{prefix}-LEDGER",
         "ledger_index_id": f"{prefix}-INDEX", "receipt_id": f"{prefix}-RECEIPT", "terminal_id": f"{prefix}-TERMINAL",
         "role": role, "producer_path": wrapper.relative_to(ROOT).as_posix(), "producer_sha256": sha(wrapper),
-        "capability_path": wrapper.relative_to(ROOT).as_posix(), "capability_sha256": sha(wrapper),
+        "capability_path": str(capability_path), "capability_sha256": sha(capability_path),
         "target_source_path": target.relative_to(ROOT).as_posix(), "target_source_sha256": sha(target),
         "numerical_path": numerical.relative_to(ROOT).as_posix(), "numerical_sha256": sha(numerical),
         "decoder_path": decoder.relative_to(ROOT).as_posix(), "decoder_sha256": sha(decoder),
@@ -142,6 +142,27 @@ def run_once(work: Path, seed: int) -> dict:
     secondary_core = RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py"
     primary_decoder = RESEARCH / "f017_oracle_primary_decoders.py"
     secondary_decoder = RESEARCH / "qualify_f017_quantization_matrix_v1.py"
+    primary_capability = work / "primary-capability.json"
+    secondary_capability = work / "secondary-capability.json"
+    subprocess.run([sys.executable, str(primary_wrapper), "capability", str(synthetic_interface), str(primary_capability)], check=True, cwd=ROOT)
+    subprocess.run([sys.executable, str(secondary_wrapper), "capability", str(synthetic_interface), str(secondary_capability)], check=True, cwd=ROOT)
+    measurement = work / "measurement.json"; bank(measurement, {"schema": "synthetic-measurement/1", "authority": False})
+    checkpoint_manifest = work / "checkpoint-manifest.json"; bank(checkpoint_manifest, {"schema": "synthetic-checkpoint-manifest/1", "shards": shards})
+    authority_paths = {
+        "implementation_measurement_manifest_path": str(measurement),
+        "authorization_interface_path": str(synthetic_interface),
+        "scientific_access_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
+        "event_accounting_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v6.json",
+        "path_timing_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v6.json",
+        "canonical_serialization_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-json-bytes-v6.json",
+        "lifecycle_semantic_model_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-semantic-model-v6.json",
+        "numerical_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+        "numerical_capability_policy_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+        "numerical_requalification_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json",
+        "numerical_methodology_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
+        "checkpoint_manifest_path": str(checkpoint_manifest),
+        "checkpoint_catalog_path": str(catalog),
+    }
     limits = interface["pinned_limits"]
     auth = {
         "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/6.0.0",
@@ -154,14 +175,19 @@ def run_once(work: Path, seed: int) -> dict:
         "primary_installed_validation_report_id": "F017-QUALIFICATION-PIV-06", "secondary_installed_validation_report_id": "F017-QUALIFICATION-SIV-06",
         "coordinator_handshake_id": "F017-QUALIFICATION-HANDSHAKE-06", "comparison_receipt_id": "F017-QUALIFICATION-COMPARE-RECEIPT-06",
         "comparison_terminal_id": "F017-QUALIFICATION-COMPARE-TERMINAL-06", "branch": "CHECKPOINT-FREE-QUALIFICATION",
-        "implementation_measurement_head": "84f0d1dc3e60a4151329ed82773880951ee3e618", "implementation_measurement_manifest_sha256": ZERO,
-        "authorization_interface_sha256": sha(synthetic_interface), "scientific_access_contract_sha256": ZERO,
-        "event_accounting_contract_sha256": ZERO, "path_timing_contract_sha256": ZERO, "canonical_serialization_contract_sha256": ZERO,
-        "lifecycle_semantic_model_sha256": ZERO,
+        "implementation_measurement_head": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+        **authority_paths,
+        "implementation_measurement_manifest_sha256": sha(measurement),
+        "authorization_interface_sha256": sha(synthetic_interface),
+        "scientific_access_contract_sha256": sha(ROOT / authority_paths["scientific_access_contract_path"]),
+        "event_accounting_contract_sha256": sha(ROOT / authority_paths["event_accounting_contract_path"]),
+        "path_timing_contract_sha256": sha(ROOT / authority_paths["path_timing_contract_path"]),
+        "canonical_serialization_contract_sha256": sha(ROOT / authority_paths["canonical_serialization_contract_path"]),
+        "lifecycle_semantic_model_sha256": sha(ROOT / authority_paths["lifecycle_semantic_model_path"]),
         "numerical_contract_sha256": "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9",
         "numerical_capability_policy_sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13",
         "numerical_requalification_sha256": "5a0257803d7af03f091c0dfc438be0727dc567b465c82a8dfcdf83f847e80c49",
-        "numerical_methodology_sha256": ZERO, "checkpoint_manifest_sha256": ZERO,
+        "numerical_methodology_sha256": sha(ROOT / authority_paths["numerical_methodology_path"]), "checkpoint_manifest_sha256": sha(checkpoint_manifest),
         "checkpoint_catalog_sha256": sha(catalog), "checkpoint_set_sha256": ZERO, "historical_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
         "historical_ledger_terminal": 175, "historical_ledger_delta": 0, "memory_preflight_sha256": ZERO,
         "memory_observed_at_unix_ns": 1, "memory_sample_max_age_ns": 1, "checkpoint_catalog_path": str(catalog),
@@ -173,8 +199,8 @@ def run_once(work: Path, seed: int) -> dict:
                     "state_root": str(work/"package-state"), "output_root": str(work/"package-output"), "attempts": 1, "retries": 0,
                     "resume": False, "accounting_class": "CORRECTED_ORACLE_PACKAGE_ATTEMPT_LEDGER", "receipt_schema": "pulsarmlx.f017.corrected-oracle-package-receipt/6.0.0",
                     "terminal_schema": "pulsarmlx.f017.corrected-oracle-package-terminal/6.0.0"},
-        "primary": grant("INDEPENDENT_CPU_REFERENCE", "F017-QUALIFICATION-PRIMARY-06", primary_wrapper, primary_target, primary_core, primary_decoder, "PRIMARY", work),
-        "secondary": grant("INDEPENDENT_ACCELERATED_CROSS_CHECK", "F017-QUALIFICATION-SECONDARY-06", secondary_wrapper, secondary_target, secondary_core, secondary_decoder, "SECONDARY", work),
+        "primary": grant("INDEPENDENT_CPU_REFERENCE", "F017-QUALIFICATION-PRIMARY-06", primary_wrapper, primary_capability, primary_target, primary_core, primary_decoder, "PRIMARY", work),
+        "secondary": grant("INDEPENDENT_ACCELERATED_CROSS_CHECK", "F017-QUALIFICATION-SECONDARY-06", secondary_wrapper, secondary_capability, secondary_target, secondary_core, secondary_decoder, "SECONDARY", work),
         "context": interface["pinned_context"], "limits": limits,
     }
     auth = construct_candidate_from_inert({key: value for key, value in auth.items() if key not in {"schema", "authority_generation"}})
@@ -194,7 +220,10 @@ def run_once(work: Path, seed: int) -> dict:
         outputs[role] = json.loads(output.read_text())
     decoded_document = {**document, "tensors": decoded}
     expected_primary = primary_numerical.execute(primary_numerical.JsonSource(decoded), primary_numerical.Geometry.from_json(document["geometry"]), document["token"], document["position"])
+    expected_primary.pop("result_sha256", None)
     expected_secondary = secondary_numerical.execute(decoded_document, False)
+    expected_primary = json.loads(canonical_bytes(expected_primary))
+    expected_secondary = json.loads(canonical_bytes(expected_secondary))
     if outputs["primary"] != expected_primary or outputs["secondary"] != expected_secondary:
         primary_drift = sorted(key for key in set(outputs["primary"]) | set(expected_primary) if outputs["primary"].get(key) != expected_primary.get(key))
         secondary_drift = sorted(key for key in set(outputs["secondary"]) | set(expected_secondary) if outputs["secondary"].get(key) != expected_secondary.get(key))

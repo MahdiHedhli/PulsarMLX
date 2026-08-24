@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import ast
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from f017_corrected_oracle_compare_v6 import MAX_ABS, RMSE_MAX, COSINE_MIN, TOP_N, compare
-from f017_corrected_oracle_authorization_v6 import validate_checkpoint_root_descriptor
+from f017_corrected_oracle_authorization_v6 import PRIMARY_ROLE, canonical_bytes, parse_authorization, validate_checkpoint_root_descriptor
 from f017_corrected_oracle_wrapper_support_v6 import require_active
 from f017_lifecycle_semantics_v6 import MODEL_PATH, derive_outcome_obligations, load_json
 from qualify_f017_lifecycle_v6 import execute_failure_variant, qualify_outcomes, run_package
+from qualify_f017_corrected_oracle_target_adapters_v6 import run_once as run_adapter
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -88,6 +90,28 @@ class LifecycleV6ImplementationTests(unittest.TestCase):
         )
         self.assertEqual(result["classification"], "EXACT_EXPECTED_TOKEN_STABLE")
         self.assertEqual((MAX_ABS, RMSE_MAX, COSINE_MIN, TOP_N), (0.0065169706285814755, 0.003463567697419031, 0.9999999985448085, 32))
+
+    def test_canonical_serializer_hex_encodes_every_float(self) -> None:
+        encoded = canonical_bytes({"nested": [{"value": 0.5}], "negative": -0.0})
+        self.assertEqual(encoded, b'{"negative":"-0x0.0p+0","nested":[{"value":"0x1.0000000000000p-1"}]}\n')
+
+    def test_candidate_rejects_false_authority_sha_before_install(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="f017-v6-authority-binding-") as temporary:
+            work = Path(temporary)
+            run_adapter(work, 18101)
+            document = json.loads((work / "candidate.json").read_text(encoding="utf-8"))
+            document["lifecycle_semantic_model_sha256"] = "0" * 64
+            forged = work / "forged-candidate.json"
+            forged.write_bytes(canonical_bytes(document))
+            with self.assertRaisesRegex(ValueError, "authority byte binding"):
+                parse_authorization(
+                    forged,
+                    work / "interface.json",
+                    role=PRIMARY_ROLE,
+                    executing_path=ROOT / "scripts/research/f017_corrected_oracle_primary_v6.py",
+                    target_source_path=ROOT / "scripts/research/f017_corrected_oracle_primary_target_source_v6.py",
+                    require_installed=False,
+                )
 
     def test_production_is_inactive_before_final_acceptance(self) -> None:
         with self.assertRaises(ValueError):

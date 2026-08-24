@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import stat
@@ -18,6 +19,21 @@ PRIMARY_ROLE = "INDEPENDENT_CPU_REFERENCE"
 SECONDARY_ROLE = "INDEPENDENT_ACCELERATED_CROSS_CHECK"
 ID_PATTERN = re.compile(r"^[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?$")
 FORBIDDEN_ID_PARTS = ("INERT", "FIXTURE", "TEST", "SYNTHETIC", "REHEARSAL")
+PRODUCTION_AUTHORITY_PATHS = {
+    "implementation_measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v1.json",
+    "authorization_interface_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v6.json",
+    "scientific_access_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6.json",
+    "event_accounting_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event-accounting-v6.json",
+    "path_timing_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-path-timing-v6.json",
+    "canonical_serialization_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-canonical-json-bytes-v6.json",
+    "lifecycle_semantic_model_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-lifecycle-semantic-model-v6.json",
+    "numerical_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+    "numerical_capability_policy_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+    "numerical_requalification_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json",
+    "numerical_methodology_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
+    "checkpoint_manifest_path": "docs/validation/glm52-checkpoint.json",
+    "checkpoint_catalog_path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+}
 
 
 def _pairs(items):
@@ -33,14 +49,38 @@ def _reject_constant(value: str) -> None:
     raise ValueError(f"nonfinite JSON number: {value}")
 
 
+def _canonical_value(value: Any) -> Any:
+    """Map every finite float to its one cross-runtime authority spelling."""
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("nonfinite JSON number")
+        return value.hex()
+    if type(value) is list:
+        return [_canonical_value(item) for item in value]
+    if type(value) is dict:
+        return {key: _canonical_value(item) for key, item in value.items()}
+    return value
+
+
 def canonical_bytes(value: Any) -> bytes:
     return json.dumps(
-        value,
+        _canonical_value(value),
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=True,
         allow_nan=False,
     ).encode("utf-8") + b"\n"
+
+
+def decode_canonical_floats(value: Any) -> Any:
+    """Decode only the frozen hexadecimal float spelling at numerical edges."""
+    if type(value) is str and re.fullmatch(r"-?0x[0-9a-f]+(?:\.[0-9a-f]*)?p[+-][0-9]+", value):
+        return float.fromhex(value)
+    if type(value) is list:
+        return [decode_canonical_floats(item) for item in value]
+    if type(value) is dict:
+        return {key: decode_canonical_floats(item) for key, item in value.items()}
+    return value
 
 
 def strict_bytes(data: bytes, *, require_canonical: bool = True) -> dict:
@@ -78,6 +118,51 @@ def sha256_path(path: Path) -> str:
         while chunk := source.read(1024 * 1024):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _authority_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else ROOT / path
+
+
+def validate_authority_bindings(document: dict, interface: dict, interface_path: Path) -> None:
+    """Verify every path/SHA pair against exact bytes before installation."""
+    pairs = interface.get("authority_path_sha_pairs")
+    if type(pairs) is not dict or not pairs:
+        raise ValueError("authority path/SHA registry")
+    if document["authority_scope"] == "PRODUCTION" and set(pairs) != set(PRODUCTION_AUTHORITY_PATHS):
+        raise ValueError("production authority path census")
+    for path_field, sha_field in pairs.items():
+        declared = document[path_field]
+        expected_sha = document[sha_field]
+        if type(declared) is not str or type(expected_sha) is not str or not re.fullmatch(r"[0-9a-f]{64}", expected_sha):
+            raise ValueError(f"authority path/SHA types: {path_field}")
+        if document["authority_scope"] == "PRODUCTION" and declared != PRODUCTION_AUTHORITY_PATHS[path_field]:
+            raise ValueError(f"canonical production authority path: {path_field}")
+        path = _authority_path(declared)
+        if path_field == "authorization_interface_path" and path.resolve(strict=True) != interface_path.resolve(strict=True):
+            raise ValueError("authorization interface path identity")
+        if sha256_path(path.resolve(strict=True)) != expected_sha:
+            raise ValueError(f"authority byte binding: {path_field}")
+    for role in ("primary", "secondary"):
+        grant = document[role]
+        capability = _authority_path(grant["capability_path"])
+        if sha256_path(capability.resolve(strict=True)) != grant["capability_sha256"]:
+            raise ValueError(f"{role} capability byte binding")
+    if document["authority_scope"] == "SYNTHETIC_QUALIFICATION":
+        checkpoint_root = Path(document["checkpoint_root"])
+        catalog = Path(document["checkpoint_catalog_path"])
+        manifest = Path(document["checkpoint_manifest_path"])
+        if (
+            not checkpoint_root.is_absolute()
+            or checkpoint_root.name != "checkpoint"
+            or not catalog.is_absolute()
+            or not manifest.is_absolute()
+            or catalog.parent.resolve(strict=True) != checkpoint_root.parent.resolve(strict=True)
+            or manifest.parent.resolve(strict=True) != checkpoint_root.parent.resolve(strict=True)
+            or any(not shard["filename"].startswith("synthetic-") for shard in document["shards"])
+        ):
+            raise ValueError("synthetic checkpoint is not structurally isolated")
 
 
 def validate_checkpoint_root_descriptor(document: dict, supplied: Path) -> None:
@@ -227,6 +312,7 @@ def parse_authorization(
         raise ValueError("target source binding")
     if document["context"] != interface["pinned_context"] or document["limits"] != interface["pinned_limits"]:
         raise ValueError("context or limits binding")
+    validate_authority_bindings(document, interface, interface_path)
     if require_installed:
         if installation_receipt_path is None:
             raise ValueError("installation receipt required")

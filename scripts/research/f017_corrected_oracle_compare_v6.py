@@ -11,6 +11,12 @@ COSINE_MIN = 0.9999999985448085
 TOP_N = 32
 
 
+def _number(value: Any) -> float:
+    if type(value) is str and value.startswith(("0x", "-0x")):
+        return float.fromhex(value)
+    return float(value)
+
+
 def _token(result: dict[str, Any]) -> int:
     for key in ("selected_token", "token"):
         if type(result.get(key)) is int:
@@ -30,22 +36,22 @@ def compare(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any
     right = secondary.get("full_logits")
     if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right) or not left:
         raise ValueError("complete matching logits required")
-    if not all(math.isfinite(float(value)) for value in [*left, *right]):
+    if not all(math.isfinite(_number(value)) for value in [*left, *right]):
         raise ValueError("finite complete logits required")
-    diffs = [abs(float(a) - float(b)) for a, b in zip(left, right, strict=True)]
+    diffs = [abs(_number(a) - _number(b)) for a, b in zip(left, right, strict=True)]
     max_abs = max(diffs)
     rmse = math.sqrt(sum(value * value for value in diffs) / len(diffs))
-    dot = sum(float(a) * float(b) for a, b in zip(left, right, strict=True))
-    norm_left = math.sqrt(sum(float(value) ** 2 for value in left))
-    norm_right = math.sqrt(sum(float(value) ** 2 for value in right))
+    dot = sum(_number(a) * _number(b) for a, b in zip(left, right, strict=True))
+    norm_left = math.sqrt(sum(_number(value) ** 2 for value in left))
+    norm_right = math.sqrt(sum(_number(value) ** 2 for value in right))
     cosine = dot / (norm_left * norm_right) if norm_left and norm_right else 1.0 if left == right else 0.0
     route_match = _routes(primary) == _routes(secondary)
     primary_token = _token(primary)
     secondary_token = _token(secondary)
-    primary_top = sorted(range(len(left)), key=lambda index: (-float(left[index]), index))[:TOP_N]
-    secondary_top = sorted(range(len(right)), key=lambda index: (-float(right[index]), index))[:TOP_N]
-    primary_margin = float(primary.get("top_1_margin", float(left[primary_top[0]]) - float(left[primary_top[1]])))
-    secondary_margin = float(secondary.get("top_1_margin", float(right[secondary_top[0]]) - float(right[secondary_top[1]])))
+    primary_top = sorted(range(len(left)), key=lambda index: (-_number(left[index]), index))[:TOP_N]
+    secondary_top = sorted(range(len(right)), key=lambda index: (-_number(right[index]), index))[:TOP_N]
+    primary_margin = _number(primary.get("top_1_margin", _number(left[primary_top[0]]) - _number(left[primary_top[1]])))
+    secondary_margin = _number(secondary.get("top_1_margin", _number(right[secondary_top[0]]) - _number(right[secondary_top[1]])))
     margin_requirement = 2.0 * MAX_ABS
     bounds = max_abs <= MAX_ABS and rmse <= RMSE_MAX and cosine >= COSINE_MIN
     if not route_match or not bounds:

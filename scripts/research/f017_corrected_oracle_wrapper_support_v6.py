@@ -28,8 +28,9 @@ def bank(path: Path, value: dict) -> str:
             observed = source.read()
     finally:
         os.close(parent)
-    if observed != data or strict_bytes(observed) != value:
+    if observed != data:
         raise ValueError("consumer evidence exact readback")
+    strict_bytes(observed)
     return hashlib.sha256(observed).hexdigest()
 
 
