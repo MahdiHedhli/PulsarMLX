@@ -125,8 +125,10 @@ class CausalDesignTests(unittest.TestCase):
             ("FINAL_EVENT04_TRUE", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "final_declaration")["payload_constants"].__setitem__("event_04_executed", True)),
             ("FINAL_ACCESS_42", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "final_declaration")["payload_constants"].__setitem__("original_checkpoint_access", 42)),
             ("PAYLOAD_RULE_REMOVED", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "checkpoint_shard_receipt_4")["payload_rules"].pop("observed_checkpoint_digest")),
+            ("ACCESS_RECEIPT_ORDER", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "checkpoint_access_event_2").__setitem__("dependencies", ["checkpoint_access_event_1"])),
+            ("PRIMARY_TERMINAL_FAIL", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "primary_terminal")["payload_constants"].__setitem__("result", "FAIL")),
         ])
-        self.assertEqual(len(mutations), 176)
+        self.assertEqual(len(mutations), 178)
         for mutation_id, mutate in mutations:
             with self.subTest(mutation_id=mutation_id):
                 docs = copy.deepcopy(baseline)
@@ -163,7 +165,7 @@ class CausalDesignTests(unittest.TestCase):
                 validate_package(package, "final_declaration", required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], "COMPLETE_SUCCESS")
 
             target = json.loads(target_path.read_bytes())
-            target["package_attempt_id"] = "F017-V8-SYMBOLIC-COMPLETE_SUCCESS"
+            target["package_attempt_id"] = "F017-V8-SYMBOLIC-PACKAGE"
             target["dependencies"][target_id] = "0" * 64
             target_path.write_bytes(canonical(target))
             changed = {target_id: hashlib.sha256(target_path.read_bytes()).hexdigest()}
@@ -196,6 +198,10 @@ class CausalDesignTests(unittest.TestCase):
             ("NOT_SYNTHETIC", "primary_execution_evidence", lambda v: v["payload"].__setitem__("synthetic_only", False)),
             ("OBSERVED_TOTAL", "checkpoint_identity_manifest", lambda v: v["payload"].__setitem__("observed_total_bytes", 1)),
             ("OBSERVED_DIGEST", "checkpoint_shard_receipt_4", lambda v: v["payload"].__setitem__("observed_checkpoint_digest", "0" * 64)),
+            ("EMPTY_LEASE_IDS", "descriptor_lease_manifest", lambda v: v["payload"].__setitem__("lease_ids", [])),
+            ("EMPTY_DESCRIPTOR_IDENTITIES", "descriptor_lease_manifest", lambda v: v["payload"].__setitem__("descriptor_identities", [])),
+            ("EMPTY_RECEIPT_DIGESTS", "checkpoint_identity_manifest", lambda v: v["payload"].__setitem__("ordered_shard_receipt_digests", [])),
+            ("PRIMARY_RESULT_FAIL", "primary_terminal", lambda v: v["payload"].__setitem__("result", "FAIL")),
         ]
         for attack_id, target_id, mutate in attacks:
             with self.subTest(attack_id=attack_id), tempfile.TemporaryDirectory() as raw_root:
@@ -241,6 +247,33 @@ class CausalDesignTests(unittest.TestCase):
             path.write_bytes(canonical(value))
             result = validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
             self.assertEqual(result["result"], "PASS")
+
+    def test_durable_prefix_bytes_do_not_depend_on_future_outcome(self):
+        docs = validator.load_documents()
+        with tempfile.TemporaryDirectory() as raw_root:
+            root = Path(raw_root)
+            failure = root / "failure"; success = root / "success"
+            failure.mkdir(); success.mkdir()
+            construct_outcome("CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_022", failure, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            construct_outcome("COMPLETE_SUCCESS", success, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            for node in docs["artifact_dag"]["nodes"]:
+                if node["creation_rank"] <= 22:
+                    self.assertEqual((failure / f"{node['artifact_id']}.json").read_bytes(), (success / f"{node['artifact_id']}.json").read_bytes())
+
+    def test_capsule_cleanup_count_must_equal_expected_leases(self):
+        docs = validator.load_documents()
+        outcome = "CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_022"
+        required = set(docs["outcomes"]["outcomes"][outcome]["required"])
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            built = construct_outcome(outcome, package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            terminal_id = built["terminal_id"]
+            path = package / f"{terminal_id}.json"
+            value = json.loads(path.read_bytes())
+            value["payload"].update({"attempted_closures": 0, "successful_closures": 0, "duplicate_closures": 0, "unknown_leases": 0})
+            path.write_bytes(canonical(value))
+            with self.assertRaisesRegex(ValueError, "closure accounting"):
+                validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
 
 
 if __name__ == "__main__":

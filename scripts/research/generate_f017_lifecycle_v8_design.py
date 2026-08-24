@@ -37,7 +37,7 @@ def authority(path: str) -> dict[str, str]:
 def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str], outcomes: list[str], payload_keys: list[str], actor: str, payload_constants: dict | None = None) -> dict:
     constants = payload_constants or {}
     integer_keys = {"side_effect_count", "checkpoint_opens", "checkpoint_reads", "delta", "expected_total_bytes", "observed_total_bytes", "ordinal", "expected_size", "observed_size", "event_count", "lease_count", "retained_lease_count", "identity_only_retained_count", "descriptor_count", "path_reopen_count", "layers_completed", "expected_leases", "attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "package_delta", "primary_delta", "secondary_delta", "original_checkpoint_access"}
-    boolean_keys = {"synthetic_only", "mandatory_stop", "event_04_executed", "cleanup_anomaly"}
+    boolean_keys = {"synthetic_only", "mandatory_stop", "event_04_executed"}
     array_keys = {"ordinals", "lease_ids", "descriptor_identities", "ordered_shard_receipt_digests", "lease_ordinals", "lease_evidence_artifact_ids"}
     object_keys = {"frozen_thresholds"}
     rules = {}
@@ -52,6 +52,8 @@ def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str
             rules[key] = {"kind": "TYPE", "type": "ARRAY"}
         elif key in object_keys:
             rules[key] = {"kind": "TYPE", "type": "OBJECT"}
+        elif "digest" in key:
+            rules[key] = {"kind": "SHA256"}
         else:
             rules[key] = {"kind": "TYPE", "type": "STRING"}
     return {
@@ -185,12 +187,6 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         dependencies = [previous] if previous else []
         if artifact_id == "candidate_authorization":
             dependencies = ["operator_approval"]
-        if artifact_id == "primary_durable_start":
-            dependencies.append("primary_descriptor_continuity_report")
-        if artifact_id == "secondary_descriptor_continuity_report":
-            dependencies.append("primary_terminal")
-        if artifact_id == "secondary_durable_start":
-            dependencies.append("secondary_descriptor_continuity_report")
         dependencies = list(dict.fromkeys(dependencies))
         constants: dict[str, object] = {}
         if artifact_id in {"primary_candidate_validation", "secondary_candidate_validation"}:
@@ -221,7 +217,9 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         elif artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"}:
             constants = {"consumer_role": "PRIMARY" if artifact_id.startswith("primary") else "SECONDARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "path_reopen_count": 0}
         elif artifact_id in {"primary_execution_evidence", "secondary_execution_evidence"}:
-            constants = {"synthetic_only": True}
+            constants = {"synthetic_only": True, "layers_completed": 79}
+        elif artifact_id in {"primary_receipt", "primary_terminal", "secondary_receipt", "secondary_terminal"}:
+            constants = {"result": "COMPLETE"}
         elif artifact_id == "comparison_receipt":
             constants = {"frozen_thresholds": {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32}}
         elif artifact_id == "descriptor_release_start":
@@ -230,6 +228,8 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
             constants = {"attempted_closures": 5, "successful_closures": 5, "duplicate_closures": 0, "unknown_leases": 0, "live_leases_after_release": 0}
         elif artifact_id == "descriptor_release_terminal":
             constants = {"live_leases_after_release": 0, "result": "PASS"}
+        elif artifact_id == "comparison_terminal":
+            constants = {"result": "COMPLETE"}
         elif artifact_id == "package_receipt":
             constants = {"package_delta": 1, "primary_delta": 1, "secondary_delta": 1}
         elif artifact_id == "package_terminal":
@@ -237,14 +237,34 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
         elif artifact_id == "final_declaration":
             constants = {"active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0}
         built = node(artifact_id, rank, f"T{rank:03d}", dependencies, applicable, payload_keys, actor, constants)
+        if artifact_id == "installed_authorization":
+            built["payload_rules"]["candidate_digest"] = {"kind": "ARTIFACT_SHA256", "artifact_id": "candidate_authorization"}
+        if artifact_id == "installation_receipt":
+            built["payload_rules"]["candidate_digest"] = {"kind": "ARTIFACT_SHA256", "artifact_id": "candidate_authorization"}
+            built["payload_rules"]["installed_digest"] = {"kind": "ARTIFACT_SHA256", "artifact_id": "installed_authorization"}
+        if artifact_id.startswith("checkpoint_access_event_"):
+            ordinal = int(artifact_id.rsplit("_", 1)[1])
+            prior_id = "checkpoint_identity_durable_start" if ordinal == 1 else f"checkpoint_shard_receipt_{ordinal - 1}"
+            built["payload_rules"]["prior_event_digest"] = {"kind": "ARTIFACT_SHA256", "artifact_id": prior_id}
         if artifact_id.startswith("checkpoint_shard_receipt_"):
             built["payload_rules"]["observed_size"] = {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_size"}
             built["payload_rules"]["observed_checkpoint_digest"] = {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_checkpoint_digest"}
+        if artifact_id == "checkpoint_access_journal_terminal":
+            built["payload_rules"]["terminal_event_digest"] = {"kind": "ARTIFACT_SHA256", "artifact_id": "checkpoint_shard_receipt_6"}
+        if artifact_id == "descriptor_lease_manifest":
+            built["payload_rules"]["lease_ids"] = {"kind": "ARRAY_EXACT_LENGTH", "length": 5}
+            built["payload_rules"]["descriptor_identities"] = {"kind": "DESCRIPTOR_IDENTITY_ARRAY", "length": 5, "ordinals": [2, 3, 4, 5, 6]}
+        if artifact_id == "checkpoint_identity_manifest":
+            built["payload_rules"]["ordered_shard_receipt_digests"] = {"kind": "ARTIFACT_SHA256_SEQUENCE", "artifact_ids": [f"checkpoint_shard_receipt_{ordinal}" for ordinal in range(1, 7)]}
         if artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"}:
             built["payload_rules"]["lease_ids"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
             built["payload_rules"]["descriptor_identities"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "descriptor_identities"}
         if artifact_id == "descriptor_release_report":
             built["payload_rules"]["lease_ids"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
+        if artifact_id == "comparison_receipt":
+            built["payload_rules"]["classification"] = {"kind": "ENUM", "values": ["EXACT_EXPECTED_TOKEN_STABLE", "NUMERICALLY_STABLE_TOP_K_ONLY", "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY", "ORACLE_DISAGREEMENT", "ORACLE_EXECUTION_FAILURE"]}
+        if artifact_id == "comparison_terminal":
+            built["payload_rules"]["classification"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "comparison_receipt", "field": "classification"}
         nodes.append(built)
         previous = artifact_id
     success_ids = [item["artifact_id"] for item in nodes]
@@ -332,6 +352,8 @@ def main() -> None:
         "strict_key_census": True,
         "unknown_fields": "REJECT",
         "canonical_serialization": "F017_CANONICAL_JSON_BYTES_V1",
+        "outcome_field_semantics": {"durable_prefix": "PENDING_IMMUTABLE", "terminal_artifact": "EXACT_TERMINAL_OUTCOME"},
+        "result_field_semantics": {"ordinary_artifact": "PASS", "failure_terminal_capsule": "FAILURE_EVIDENCE"},
         "artifacts": {item["artifact_id"]: {"schema_id": item["schema_id"], "keys": envelope_keys, "payload_keys": item["payload_keys"], "payload_constants": item["payload_constants"], "payload_rules": item["payload_rules"], "creation_rank": item["creation_rank"]} for item in nodes},
     }
     bank(CONTRACTS / "f017-corrected-oracle-artifact-schemas-v8.json", schemas)
@@ -439,7 +461,7 @@ def main() -> None:
     serialization = {"schema": "pulsarmlx.f017.canonical-json-bytes/1.0.0", "status": STATUS, "encoding": "UTF-8", "bom": False, "sort_keys": True, "separators": [",", ":"], "ensure_ascii": True, "allow_nan": False, "trailing_newline_count": 1, "duplicate_keys": "REJECT", "artifact_contains_own_sha256": False}
     bank(CONTRACTS / "f017-corrected-oracle-canonical-serialization-v8.json", serialization)
 
-    interface = {"schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/8.0.0", "status": STATUS, "active_live_generation": "NONE", "external_checkpoint_identity_path_permitted": False, "identity_producer_invoked_after_package_durable_start": True, "graph_path_reopen_permitted": False, "descriptor_transport": "SUBPROCESS_PASS_FDS_EXPLICIT", "lease_inception": "SUCCESSFUL_GRAPH_PAYLOAD_CHECKPOINT_ACCESS_EVENT_OPEN", "failure_terminalization": "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC", "failure_terminalization_partial_authority": "NONE", "failure_terminalization_failure_recursion_terminator": "NO_NEW_DURABLE_PREFIX_AND_PROCESS_EXIT_DESCRIPTOR_CLOSE", "attempts": 1, "retries": 0, "resume": False}
+    interface = {"schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/8.0.0", "status": STATUS, "active_live_generation": "NONE", "external_checkpoint_identity_path_permitted": False, "identity_producer_invoked_after_package_durable_start": True, "graph_path_reopen_permitted": False, "descriptor_transport": "SUBPROCESS_PASS_FDS_EXPLICIT", "lease_inception": "SUCCESSFUL_GRAPH_PAYLOAD_CHECKPOINT_ACCESS_EVENT_OPEN", "failure_terminalization": "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC", "failure_terminalization_partial_authority": "NONE", "failure_terminalization_failure_recursion_terminator": "NO_NEW_DURABLE_PREFIX_AND_PROCESS_EXIT_DESCRIPTOR_CLOSE", "absent_capsule_after_process_exit": "UNBANKED_TERMINALIZATION_FAILURE_HUMAN_STOP_NO_RETRY", "attempts": 1, "retries": 0, "resume": False}
     bank(CONTRACTS / "f017-corrected-oracle-authorization-consumer-interface-v8.json", interface)
 
     active_generation = {

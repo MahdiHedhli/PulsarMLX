@@ -54,7 +54,7 @@ def payload_for(artifact_id: str, keys: list[str], outcome: str, constants: dict
         elif key == "frozen_thresholds":
             value[key] = {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32}
         else:
-            value[key] = f"{artifact_id}:{key}:{outcome}"
+            value[key] = f"{artifact_id}:{key}"
     value.update(constants or {})
     return value
 
@@ -76,18 +76,19 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
                 raise ValueError(f"future or absent dependency: {outcome}:{artifact_id}:{dependency_id}")
             dependency_shas[dependency_id] = created[dependency_id]
         descriptor = schemas["artifacts"][artifact_id]
+        terminal_artifact = artifact_id == "final_declaration" or artifact_id.startswith("failure_terminal_capsule__")
         value = {
             "schema": descriptor["schema_id"],
             "artifact_id": artifact_id,
             "artifact_kind": node["artifact_kind"],
             "authorization_id": "F017-V8-SYMBOLIC-AUTHORIZATION",
-            "package_attempt_id": f"F017-V8-SYMBOLIC-{outcome}",
-            "outcome": outcome,
+            "package_attempt_id": "F017-V8-SYMBOLIC-PACKAGE",
+            "outcome": outcome if terminal_artifact else "PENDING",
             "creation_rank": node["creation_rank"],
             "dependencies": dependency_shas,
             "root_authorities": {key: item["sha256"] for key, item in roots.items()},
             "payload": payload_for(artifact_id, descriptor["payload_keys"], outcome, descriptor.get("payload_constants")),
-            "result": "PASS" if outcome == "COMPLETE_SUCCESS" else "FAILURE_EVIDENCE",
+            "result": "FAILURE_EVIDENCE" if artifact_id.startswith("failure_terminal_capsule__") else "PASS",
         }
         if artifact_id.startswith("failure_terminal_capsule__"):
             expected = value["payload"]["expected_leases"]
@@ -98,6 +99,12 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
             elif rule["kind"] == "EQUAL_ARTIFACT_PAYLOAD_FIELD":
                 referenced = json.loads((package_root / f"{rule['artifact_id']}.json").read_bytes())
                 value["payload"][key] = referenced["payload"][rule["field"]]
+            elif rule["kind"] == "ARTIFACT_SHA256":
+                value["payload"][key] = created[rule["artifact_id"]]
+            elif rule["kind"] == "ARTIFACT_SHA256_SEQUENCE":
+                value["payload"][key] = [created[item] for item in rule["artifact_ids"]]
+            elif rule["kind"] == "ENUM":
+                value["payload"][key] = rule["values"][0]
         if list(value) != descriptor["keys"]:
             raise ValueError(f"schema key order mismatch: {artifact_id}")
         if sorted(value["payload"]) != sorted(descriptor["payload_keys"]):
