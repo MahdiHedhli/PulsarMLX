@@ -55,11 +55,27 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
             raise ValueError(f"artifact schema binding mismatch: {artifact_id}")
         if value["outcome"] != outcome:
             raise ValueError(f"artifact outcome mismatch: {artifact_id}")
-        if value["payload"] | descriptor.get("payload_constants", {}) != value["payload"]:
-            raise ValueError(f"payload constant mismatch: {artifact_id}")
+        if set(descriptor.get("payload_rules", {})) != set(descriptor["payload_keys"]):
+            raise ValueError(f"payload rule census mismatch: {artifact_id}")
         for key, expected in descriptor.get("payload_constants", {}).items():
             if value["payload"].get(key) != expected:
                 raise ValueError(f"payload constant mismatch: {artifact_id}:{key}")
+        type_names = {"STRING": str, "INTEGER": int, "BOOLEAN": bool, "ARRAY": list, "OBJECT": dict}
+        for key, rule in descriptor["payload_rules"].items():
+            observed = value["payload"][key]
+            kind = rule["kind"]
+            if kind == "EXACT_CONSTANT" and observed != rule["value"]:
+                raise ValueError(f"payload rule constant mismatch: {artifact_id}:{key}")
+            if kind == "TYPE" and type(observed) is not type_names[rule["type"]]:
+                raise ValueError(f"payload type mismatch: {artifact_id}:{key}")
+            if kind == "NONNEGATIVE_INTEGER" and (type(observed) is not int or observed < 0):
+                raise ValueError(f"payload nonnegative integer mismatch: {artifact_id}:{key}")
+            if kind == "EQUAL_PAYLOAD_FIELD" and observed != value["payload"][rule["field"]]:
+                raise ValueError(f"payload field equality mismatch: {artifact_id}:{key}")
+            if kind == "EQUAL_ARTIFACT_PAYLOAD_FIELD":
+                reference_path = package_root / f"{rule['artifact_id']}.json"
+                if not reference_path.is_file() or observed != json.loads(reference_path.read_bytes())["payload"][rule["field"]]:
+                    raise ValueError(f"payload artifact equality mismatch: {artifact_id}:{key}")
         if value["artifact_id"] != artifact_id:
             raise ValueError(f"artifact identity mismatch: {artifact_id}")
         if package_attempt_id is None:
@@ -67,6 +83,22 @@ def validate_package(package_root: Path, terminal_id: str, required: set[str], r
             authorization_id = value["authorization_id"]
         if value["package_attempt_id"] != package_attempt_id or value["authorization_id"] != authorization_id:
             raise ValueError(f"cross-package artifact splice: {artifact_id}")
+        expected_result = "PASS" if outcome == "COMPLETE_SUCCESS" else "FAILURE_EVIDENCE"
+        if value["result"] != expected_result:
+            raise ValueError(f"artifact result mismatch: {artifact_id}")
+        if artifact_id.startswith("failure_terminal_capsule__"):
+            payload = value["payload"]
+            if payload["atomic_terminalization"] != "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC":
+                raise ValueError("failure capsule is not atomic")
+            if payload["attempted_closures"] != payload["successful_closures"] + payload["duplicate_closures"] + payload["unknown_leases"]:
+                raise ValueError("failure capsule closure accounting mismatch")
+            if payload["expected_leases"] != len(payload["lease_ordinals"]) or payload["expected_leases"] != len(payload["lease_evidence_artifact_ids"]):
+                raise ValueError("failure capsule lease census mismatch")
+            expected_evidence = [f"checkpoint_access_event_{ordinal}" for ordinal in payload["lease_ordinals"]]
+            if payload["lease_evidence_artifact_ids"] != expected_evidence or not set(expected_evidence).issubset(required):
+                raise ValueError("failure capsule lease authority mismatch")
+            if payload["live_leases_after_release"] != 0 or payload["event_04_executed"] is not False or payload["original_checkpoint_access"] != 0 or payload["active_generation"] != "NONE":
+                raise ValueError("failure capsule safety mismatch")
         if artifact_id in visited:
             return
         visiting.add(artifact_id)

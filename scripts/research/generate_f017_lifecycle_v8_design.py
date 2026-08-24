@@ -35,6 +35,25 @@ def authority(path: str) -> dict[str, str]:
 
 
 def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str], outcomes: list[str], payload_keys: list[str], actor: str, payload_constants: dict | None = None) -> dict:
+    constants = payload_constants or {}
+    integer_keys = {"side_effect_count", "checkpoint_opens", "checkpoint_reads", "delta", "expected_total_bytes", "observed_total_bytes", "ordinal", "expected_size", "observed_size", "event_count", "lease_count", "retained_lease_count", "identity_only_retained_count", "descriptor_count", "path_reopen_count", "layers_completed", "expected_leases", "attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "package_delta", "primary_delta", "secondary_delta", "original_checkpoint_access"}
+    boolean_keys = {"synthetic_only", "mandatory_stop", "event_04_executed", "cleanup_anomaly"}
+    array_keys = {"ordinals", "lease_ids", "descriptor_identities", "ordered_shard_receipt_digests", "lease_ordinals", "lease_evidence_artifact_ids"}
+    object_keys = {"frozen_thresholds"}
+    rules = {}
+    for key in payload_keys:
+        if key in constants:
+            rules[key] = {"kind": "EXACT_CONSTANT", "value": constants[key]}
+        elif key in integer_keys:
+            rules[key] = {"kind": "TYPE", "type": "INTEGER"}
+        elif key in boolean_keys:
+            rules[key] = {"kind": "TYPE", "type": "BOOLEAN"}
+        elif key in array_keys:
+            rules[key] = {"kind": "TYPE", "type": "ARRAY"}
+        elif key in object_keys:
+            rules[key] = {"kind": "TYPE", "type": "OBJECT"}
+        else:
+            rules[key] = {"kind": "TYPE", "type": "STRING"}
     return {
         "actor": actor,
         "artifact_id": artifact_id,
@@ -43,8 +62,9 @@ def node(artifact_id: str, rank: int, transition_id: str, dependencies: list[str
         "dependencies": dependencies,
         "outcome_applicability": outcomes,
         "payload_keys": payload_keys,
-        "payload_constants": payload_constants or {},
+        "payload_constants": constants,
         "producer_transition_id": transition_id,
+        "payload_rules": rules,
         "schema_id": f"pulsarmlx.f017.v8.artifact.{artifact_id}/1.0.0",
     }
 
@@ -173,51 +193,78 @@ def build_nodes() -> tuple[list[dict], dict[str, int], dict[str, str]]:
             dependencies.append("secondary_descriptor_continuity_report")
         dependencies = list(dict.fromkeys(dependencies))
         constants: dict[str, object] = {}
-        if artifact_id == "package_receipt":
+        if artifact_id in {"primary_candidate_validation", "secondary_candidate_validation"}:
+            constants = {"consumer_role": "PRIMARY" if artifact_id.startswith("primary") else "SECONDARY", "side_effect_count": 0}
+        elif artifact_id == "coordinator_handshake":
+            constants = {"checkpoint_opens": 0, "checkpoint_reads": 0}
+        elif artifact_id == "checkpoint_identity_durable_start":
+            constants = {"expected_total_bytes": _CHECKPOINT_METADATA["total_bytes"], "checkpoint_set_digest": _CHECKPOINT_METADATA["checkpoint_set_sha256"]}
+        elif artifact_id.startswith("checkpoint_access_event_"):
+            ordinal = int(artifact_id.rsplit("_", 1)[1])
+            constants = {"ordinal": ordinal, "operation": "ROOT_RELATIVE_NOFOLLOW_OPEN_AND_COMPLETE_SHA256"}
+        elif artifact_id.startswith("checkpoint_shard_receipt_"):
+            ordinal = int(artifact_id.rsplit("_", 1)[1])
+            shard = SHARDS[ordinal - 1]
+            constants = {"ordinal": ordinal, "role": shard["role"], "expected_size": shard["size_bytes"], "expected_checkpoint_digest": shard["sha256"], "retain_disposition": "CLOSE_AFTER_IDENTITY_VERIFICATION" if ordinal == 1 else "RETAIN_AS_PACKAGE_OWNED_DESCRIPTOR_LEASE"}
+        elif artifact_id == "checkpoint_access_journal_terminal":
+            constants = {"event_count": 6}
+        elif artifact_id == "descriptor_lease_manifest":
+            constants = {"lease_count": 5, "ordinals": [2, 3, 4, 5, 6]}
+        elif artifact_id == "checkpoint_identity_manifest":
+            constants = {"expected_total_bytes": _CHECKPOINT_METADATA["total_bytes"], "observed_total_bytes": _CHECKPOINT_METADATA["total_bytes"]}
+        elif artifact_id == "checkpoint_identity_receipt":
+            constants = {"retained_lease_count": 5, "identity_only_retained_count": 0}
+        elif artifact_id == "checkpoint_identity_terminal":
+            constants = {"mandatory_transition": "COMPLETE", "retained_lease_count": 5}
+        elif artifact_id in {"package_ledger_entry", "primary_ledger_entry", "secondary_ledger_entry"}:
+            constants = {"delta": 1}
+        elif artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"}:
+            constants = {"consumer_role": "PRIMARY" if artifact_id.startswith("primary") else "SECONDARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "path_reopen_count": 0}
+        elif artifact_id in {"primary_execution_evidence", "secondary_execution_evidence"}:
+            constants = {"synthetic_only": True}
+        elif artifact_id == "comparison_receipt":
+            constants = {"frozen_thresholds": {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32}}
+        elif artifact_id == "descriptor_release_start":
+            constants = {"expected_leases": 5}
+        elif artifact_id == "descriptor_release_report":
+            constants = {"attempted_closures": 5, "successful_closures": 5, "duplicate_closures": 0, "unknown_leases": 0, "live_leases_after_release": 0}
+        elif artifact_id == "descriptor_release_terminal":
+            constants = {"live_leases_after_release": 0, "result": "PASS"}
+        elif artifact_id == "package_receipt":
             constants = {"package_delta": 1, "primary_delta": 1, "secondary_delta": 1}
         elif artifact_id == "package_terminal":
             constants = {"classification": "COMPLETE_SUCCESS", "mandatory_stop": True}
         elif artifact_id == "final_declaration":
             constants = {"active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0}
-        nodes.append(node(artifact_id, rank, f"T{rank:03d}", dependencies, applicable, payload_keys, actor, constants))
+        built = node(artifact_id, rank, f"T{rank:03d}", dependencies, applicable, payload_keys, actor, constants)
+        if artifact_id.startswith("checkpoint_shard_receipt_"):
+            built["payload_rules"]["observed_size"] = {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_size"}
+            built["payload_rules"]["observed_checkpoint_digest"] = {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_checkpoint_digest"}
+        if artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"}:
+            built["payload_rules"]["lease_ids"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
+            built["payload_rules"]["descriptor_identities"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "descriptor_identities"}
+        if artifact_id == "descriptor_release_report":
+            built["payload_rules"]["lease_ids"] = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
+        nodes.append(built)
         previous = artifact_id
     success_ids = [item["artifact_id"] for item in nodes]
     rank = len(nodes) + 1
     for outcome in failure_variants:
         prefix = success_ids[cuts[outcome] - 1]
         failure_class = outcome.split("__AFTER_RANK_", 1)[0]
-        retained_ordinals = [ordinal for ordinal, receipt_rank in zip(range(2, 7), (15, 17, 19, 21, 23)) if receipt_rank <= cuts[outcome]]
+        access_ranks = {ordinal: next(item["creation_rank"] for item in nodes if item["artifact_id"] == f"checkpoint_access_event_{ordinal}") for ordinal in range(2, 7)}
+        retained_ordinals = [ordinal for ordinal, access_rank in access_ranks.items() if access_rank <= cuts[outcome]]
         if cuts[outcome] >= 44:
             retained_ordinals = []
-        failure_id = f"failure_evidence__{outcome.lower()}"
+        failure_id = f"failure_terminal_capsule__{outcome.lower()}"
         prefix_transition = next(item["producer_transition_id"] for item in nodes if item["artifact_id"] == prefix)
-        nodes.append(node(failure_id, rank, f"F_{outcome}_EVIDENCE", [prefix], [outcome], ["failed_transition_id", "last_completed_transition_id", "durable_prefix_id", "failure_class"], "EVIDENCE_BANKER", {"failed_transition_id": f"FAIL_{outcome}", "last_completed_transition_id": prefix_transition, "failure_class": failure_class, "durable_prefix_id": prefix})); rank += 1
-        tail = failure_id
-        release_suffixes: list[tuple[str, list[str]]] = []
-        if retained_ordinals and cuts[outcome] < 43:
-            release_suffixes.append(("descriptor_release_start", ["expected_leases"]))
-        if retained_ordinals and cuts[outcome] < 44:
-            release_suffixes.append(("descriptor_release_report", ["attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "lease_ids"]))
-        if retained_ordinals and cuts[outcome] < 45:
-            release_suffixes.append(("descriptor_release_terminal", ["live_leases_after_release", "result"]))
-        for suffix, keys in release_suffixes:
-                artifact_id = f"{suffix}__{outcome.lower()}"
-                constants: dict[str, object] = {}
-                if suffix == "descriptor_release_start":
-                    constants["expected_leases"] = len(retained_ordinals)
-                elif suffix == "descriptor_release_report":
-                    constants.update({"attempted_closures": len(retained_ordinals), "successful_closures": len(retained_ordinals), "duplicate_closures": 0, "unknown_leases": 0, "live_leases_after_release": 0, "lease_ids": [f"LEASE-{ordinal}" for ordinal in retained_ordinals]})
-                else:
-                    constants.update({"live_leases_after_release": 0, "result": "PASS"})
-                nodes.append(node(artifact_id, rank, f"F_{outcome}_{suffix.upper()}", [tail], [outcome], keys, "COORDINATOR", constants)); rank += 1
-                tail = artifact_id
-        receipt_id = f"package_receipt__{outcome.lower()}"
-        terminal_id = f"package_terminal__{outcome.lower()}"
-        declaration_id = f"final_declaration__{outcome.lower()}"
         deltas = {"package_delta": int(cuts[outcome] >= 9), "primary_delta": int(cuts[outcome] >= 30), "secondary_delta": int(cuts[outcome] >= 36)}
-        nodes.append(node(receipt_id, rank, f"F_{outcome}_PACKAGE_RECEIPT", [tail], [outcome], ["package_delta", "primary_delta", "secondary_delta", "failure_class"], "EVIDENCE_BANKER", {**deltas, "failure_class": failure_class})); rank += 1
-        nodes.append(node(terminal_id, rank, f"F_{outcome}_PACKAGE_TERMINAL", [receipt_id], [outcome], ["classification", "mandatory_stop"], "EVIDENCE_BANKER", {"classification": failure_class, "mandatory_stop": True})); rank += 1
-        nodes.append(node(declaration_id, rank, f"F_{outcome}_FINAL_DECLARATION", [terminal_id], [outcome], ["active_generation", "event_04_executed", "original_checkpoint_access"], "EVIDENCE_BANKER", {"active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0})); rank += 1
+        keys = ["failed_transition_id", "last_completed_transition_id", "durable_prefix_id", "failure_class", "atomic_terminalization", "package_delta", "primary_delta", "secondary_delta", "expected_leases", "attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "lease_ordinals", "lease_evidence_artifact_ids", "classification", "mandatory_stop", "active_generation", "event_04_executed", "original_checkpoint_access"]
+        constants = {"failed_transition_id": f"FAIL_{outcome}", "last_completed_transition_id": prefix_transition, "durable_prefix_id": prefix, "failure_class": failure_class, "atomic_terminalization": "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC", **deltas, "expected_leases": len(retained_ordinals), "live_leases_after_release": 0, "lease_ordinals": retained_ordinals, "lease_evidence_artifact_ids": [f"checkpoint_access_event_{ordinal}" for ordinal in retained_ordinals], "classification": failure_class, "mandatory_stop": True, "active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0}
+        capsule = node(failure_id, rank, f"F_{outcome}_ATOMIC_TERMINALIZATION", [prefix], [outcome], keys, "EVIDENCE_BANKER", constants)
+        for observable in ("attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases"):
+            capsule["payload_rules"][observable] = {"kind": "NONNEGATIVE_INTEGER"}
+        nodes.append(capsule); rank += 1
     return nodes, cuts, {name: ("COMPLETE_SUCCESS" if name == "COMPLETE_SUCCESS" else name.split("__AFTER_RANK_", 1)[0]) for name in cuts}
 
 
@@ -285,7 +332,7 @@ def main() -> None:
         "strict_key_census": True,
         "unknown_fields": "REJECT",
         "canonical_serialization": "F017_CANONICAL_JSON_BYTES_V1",
-        "artifacts": {item["artifact_id"]: {"schema_id": item["schema_id"], "keys": envelope_keys, "payload_keys": item["payload_keys"], "payload_constants": item["payload_constants"], "creation_rank": item["creation_rank"]} for item in nodes},
+        "artifacts": {item["artifact_id"]: {"schema_id": item["schema_id"], "keys": envelope_keys, "payload_keys": item["payload_keys"], "payload_constants": item["payload_constants"], "payload_rules": item["payload_rules"], "creation_rank": item["creation_rank"]} for item in nodes},
     }
     bank(CONTRACTS / "f017-corrected-oracle-artifact-schemas-v8.json", schemas)
 
@@ -326,8 +373,8 @@ def main() -> None:
         ("IDENTITY_AFTER_PACKAGE_START", "interface", "/identity_producer_invoked_after_package_durable_start", True),
         ("PRIMARY_AFTER_IDENTITY_TERMINAL", "lifecycle_model", "/unconditional_invariants/primary_after_identity_terminal", True),
         ("SECONDARY_AFTER_PRIMARY_TERMINAL", "lifecycle_model", "/unconditional_invariants/secondary_after_primary_terminal", True),
-        ("UNSTARTED_PRIMARY_DELTA_ZERO", "accounting", "/unstarted_consumer_delta", 0),
-        ("UNSTARTED_SECONDARY_DELTA_ZERO", "accounting", "/unstarted_consumer_delta", 0),
+        ("UNSTARTED_PRIMARY_DELTA_ZERO", "accounting", "/unstarted_primary_delta", 0),
+        ("UNSTARTED_SECONDARY_DELTA_ZERO", "accounting", "/unstarted_secondary_delta", 0),
         ("IDENTITY_ONLY_NOT_RETAINED", "checkpoint_identity", "/identity_only_disposition", "CLOSE_AFTER_IDENTITY_VERIFICATION"),
         ("GRAPH_LEASE_COUNT", "checkpoint_identity", "/derived_census/expected_retained_lease_count", 5),
         ("PRIMARY_DESCRIPTOR_COUNT", "continuity", "/success_reports/primary/count", 5),
@@ -383,7 +430,8 @@ def main() -> None:
         "package_start_rank": node_map["package_durable_start"]["creation_rank"],
         "primary_start_rank": node_map["primary_durable_start"]["creation_rank"],
         "secondary_start_rank": node_map["secondary_durable_start"]["creation_rank"],
-        "unstarted_consumer_delta": 0,
+        "unstarted_primary_delta": 0,
+        "unstarted_secondary_delta": 0,
         "outcome_deltas": {name: {key: obligations[name][key] for key in ("package_delta", "primary_delta", "secondary_delta")} for name in cuts},
     }
     bank(CONTRACTS / "f017-corrected-oracle-event-accounting-v8.json", accounting)
@@ -391,7 +439,7 @@ def main() -> None:
     serialization = {"schema": "pulsarmlx.f017.canonical-json-bytes/1.0.0", "status": STATUS, "encoding": "UTF-8", "bom": False, "sort_keys": True, "separators": [",", ":"], "ensure_ascii": True, "allow_nan": False, "trailing_newline_count": 1, "duplicate_keys": "REJECT", "artifact_contains_own_sha256": False}
     bank(CONTRACTS / "f017-corrected-oracle-canonical-serialization-v8.json", serialization)
 
-    interface = {"schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/8.0.0", "status": STATUS, "active_live_generation": "NONE", "external_checkpoint_identity_path_permitted": False, "identity_producer_invoked_after_package_durable_start": True, "graph_path_reopen_permitted": False, "descriptor_transport": "SUBPROCESS_PASS_FDS_EXPLICIT", "attempts": 1, "retries": 0, "resume": False}
+    interface = {"schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/8.0.0", "status": STATUS, "active_live_generation": "NONE", "external_checkpoint_identity_path_permitted": False, "identity_producer_invoked_after_package_durable_start": True, "graph_path_reopen_permitted": False, "descriptor_transport": "SUBPROCESS_PASS_FDS_EXPLICIT", "lease_inception": "SUCCESSFUL_GRAPH_PAYLOAD_CHECKPOINT_ACCESS_EVENT_OPEN", "failure_terminalization": "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC", "failure_terminalization_partial_authority": "NONE", "failure_terminalization_failure_recursion_terminator": "NO_NEW_DURABLE_PREFIX_AND_PROCESS_EXIT_DESCRIPTOR_CLOSE", "attempts": 1, "retries": 0, "resume": False}
     bank(CONTRACTS / "f017-corrected-oracle-authorization-consumer-interface-v8.json", interface)
 
     active_generation = {

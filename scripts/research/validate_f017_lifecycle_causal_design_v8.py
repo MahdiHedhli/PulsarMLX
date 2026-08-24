@@ -38,6 +38,65 @@ OUTCOME_CLASSES = {
     "COMPARISON_FAILURE", "EVIDENCE_BANKING_FAILURE", "COMPLETE_SUCCESS",
 }
 ENVELOPE_KEYS = ["schema", "artifact_id", "artifact_kind", "authorization_id", "package_attempt_id", "outcome", "creation_rank", "dependencies", "root_authorities", "payload", "result"]
+FAILURE_CAPSULE_KEYS = ["failed_transition_id", "last_completed_transition_id", "durable_prefix_id", "failure_class", "atomic_terminalization", "package_delta", "primary_delta", "secondary_delta", "expected_leases", "attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "lease_ordinals", "lease_evidence_artifact_ids", "classification", "mandatory_stop", "active_generation", "event_04_executed", "original_checkpoint_access"]
+ROOT_AUTHORITY_PATHS = {
+    "checkpoint_metadata": "docs/validation/glm52-checkpoint.json",
+    "historical_master_ledger": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+    "numerical_contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+    "numerical_requalification": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json",
+    "v7_budget_closeout": "docs/architecture/reviews/evidence/f017-checkpoint-identity-v7-design-review-budget-exhaustion-v1.json",
+}
+
+
+def expected_actor(artifact_id: str) -> str:
+    if artifact_id == "operator_approval": return "OPERATOR"
+    if artifact_id in {"candidate_authorization", "installed_authorization", "installation_receipt"}: return "AUTHORIZER"
+    if artifact_id.startswith("primary_"): return "PRIMARY_CONSUMER"
+    if artifact_id.startswith("secondary_"): return "SECONDARY_CONSUMER"
+    if artifact_id.startswith("checkpoint_") or artifact_id == "descriptor_lease_manifest": return "CHECKPOINT_IDENTITY_PRODUCER"
+    if artifact_id.startswith("comparison_"): return "COMPARATOR"
+    if artifact_id.startswith("package_receipt") or artifact_id.startswith("package_terminal") or artifact_id.startswith("final_declaration") or artifact_id.startswith("failure_terminal_capsule__"): return "EVIDENCE_BANKER"
+    return "COORDINATOR"
+
+
+def expected_payload_keys(artifact_id: str) -> list[str]:
+    fixed = {
+        "operator_approval": ["operator_approval_id"], "candidate_authorization": ["authorization_id", "package_attempt_id"],
+        "primary_candidate_validation": ["consumer_role", "side_effect_count"], "secondary_candidate_validation": ["consumer_role", "side_effect_count"],
+        "installed_authorization": ["authorization_id", "candidate_digest"], "installation_receipt": ["candidate_digest", "installed_digest"],
+        "coordinator_handshake": ["checkpoint_opens", "checkpoint_reads"], "package_claim": ["owner_nonce"],
+        "package_durable_start": ["package_ledger_entry_id"], "package_ledger_entry": ["delta", "prior_entry_id"],
+        "checkpoint_identity_durable_start": ["expected_total_bytes", "checkpoint_set_digest"],
+        "checkpoint_access_journal_terminal": ["event_count", "terminal_event_digest"],
+        "descriptor_lease_manifest": ["lease_count", "ordinals", "lease_ids", "descriptor_identities"],
+        "checkpoint_identity_manifest": ["expected_total_bytes", "observed_total_bytes", "ordered_shard_receipt_digests"],
+        "checkpoint_identity_receipt": ["retained_lease_count", "identity_only_retained_count"],
+        "checkpoint_identity_terminal": ["mandatory_transition", "retained_lease_count"],
+        "primary_descriptor_continuity_report": ["consumer_role", "descriptor_count", "ordinals", "lease_ids", "descriptor_identities", "path_reopen_count"],
+        "primary_durable_start": ["event_id"], "primary_ledger_entry": ["delta", "event_id"], "primary_execution_evidence": ["synthetic_only", "layers_completed"], "primary_receipt": ["event_id", "result"], "primary_terminal": ["event_id", "result"],
+        "secondary_descriptor_continuity_report": ["consumer_role", "descriptor_count", "ordinals", "lease_ids", "descriptor_identities", "path_reopen_count"],
+        "secondary_durable_start": ["event_id"], "secondary_ledger_entry": ["delta", "event_id"], "secondary_execution_evidence": ["synthetic_only", "layers_completed"], "secondary_receipt": ["event_id", "result"], "secondary_terminal": ["event_id", "result"],
+        "comparison_receipt": ["classification", "frozen_thresholds"], "comparison_terminal": ["classification", "result"],
+        "descriptor_release_start": ["expected_leases"], "descriptor_release_report": ["attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "lease_ids"], "descriptor_release_terminal": ["live_leases_after_release", "result"],
+        "package_receipt": ["package_delta", "primary_delta", "secondary_delta"], "package_terminal": ["classification", "mandatory_stop"], "final_declaration": ["active_generation", "event_04_executed", "original_checkpoint_access"],
+    }
+    if artifact_id.startswith("checkpoint_access_event_"): return ["ordinal", "operation", "prior_event_digest"]
+    if artifact_id.startswith("checkpoint_shard_receipt_"): return ["ordinal", "role", "expected_size", "observed_size", "expected_checkpoint_digest", "observed_checkpoint_digest", "retain_disposition"]
+    if artifact_id.startswith("failure_terminal_capsule__"): return FAILURE_CAPSULE_KEYS
+    return fixed[artifact_id]
+
+
+def expected_default_rule(key: str, constants: dict) -> dict:
+    if key in constants:
+        return {"kind": "EXACT_CONSTANT", "value": constants[key]}
+    integer_keys = {"side_effect_count", "checkpoint_opens", "checkpoint_reads", "delta", "expected_total_bytes", "observed_total_bytes", "ordinal", "expected_size", "observed_size", "event_count", "lease_count", "retained_lease_count", "identity_only_retained_count", "descriptor_count", "path_reopen_count", "layers_completed", "expected_leases", "attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases", "live_leases_after_release", "package_delta", "primary_delta", "secondary_delta", "original_checkpoint_access"}
+    boolean_keys = {"synthetic_only", "mandatory_stop", "event_04_executed", "cleanup_anomaly"}
+    array_keys = {"ordinals", "lease_ids", "descriptor_identities", "ordered_shard_receipt_digests", "lease_ordinals", "lease_evidence_artifact_ids"}
+    if key in integer_keys: return {"kind": "TYPE", "type": "INTEGER"}
+    if key in boolean_keys: return {"kind": "TYPE", "type": "BOOLEAN"}
+    if key in array_keys: return {"kind": "TYPE", "type": "ARRAY"}
+    if key == "frozen_thresholds": return {"kind": "TYPE", "type": "OBJECT"}
+    return {"kind": "TYPE", "type": "STRING"}
 EXPECTED_INVARIANTS = {
     "NO_EVENT04_AUTHORIZATION": ("lifecycle_model", "/unconditional_invariants/no_event04_authorization", False),
     "NO_EVENT04_EXECUTION": ("lifecycle_model", "/unconditional_invariants/no_event04_execution", False),
@@ -46,8 +105,8 @@ EXPECTED_INVARIANTS = {
     "IDENTITY_AFTER_PACKAGE_START": ("interface", "/identity_producer_invoked_after_package_durable_start", True),
     "PRIMARY_AFTER_IDENTITY_TERMINAL": ("lifecycle_model", "/unconditional_invariants/primary_after_identity_terminal", True),
     "SECONDARY_AFTER_PRIMARY_TERMINAL": ("lifecycle_model", "/unconditional_invariants/secondary_after_primary_terminal", True),
-    "UNSTARTED_PRIMARY_DELTA_ZERO": ("accounting", "/unstarted_consumer_delta", 0),
-    "UNSTARTED_SECONDARY_DELTA_ZERO": ("accounting", "/unstarted_consumer_delta", 0),
+    "UNSTARTED_PRIMARY_DELTA_ZERO": ("accounting", "/unstarted_primary_delta", 0),
+    "UNSTARTED_SECONDARY_DELTA_ZERO": ("accounting", "/unstarted_secondary_delta", 0),
     "IDENTITY_ONLY_NOT_RETAINED": ("checkpoint_identity", "/identity_only_disposition", "CLOSE_AFTER_IDENTITY_VERIFICATION"),
     "GRAPH_LEASE_COUNT": ("checkpoint_identity", "/derived_census/expected_retained_lease_count", 5),
     "PRIMARY_DESCRIPTOR_COUNT": ("continuity", "/success_reports/primary/count", 5),
@@ -152,14 +211,16 @@ def validate_documents(docs: dict[str, dict]) -> dict:
     for item in nodes:
         if item["artifact_kind"] != item["artifact_id"] or item["schema_id"] != f"pulsarmlx.f017.v8.artifact.{item['artifact_id']}/1.0.0":
             raise ValueError("ARTIFACT_IDENTITY")
-        if set(item) != {"actor", "artifact_id", "artifact_kind", "creation_rank", "dependencies", "outcome_applicability", "payload_keys", "payload_constants", "producer_transition_id", "schema_id"}:
+        if set(item) != {"actor", "artifact_id", "artifact_kind", "creation_rank", "dependencies", "outcome_applicability", "payload_keys", "payload_constants", "payload_rules", "producer_transition_id", "schema_id"}:
             raise ValueError("DAG_NODE_KEY_CENSUS")
-        if item["actor"] not in {"OPERATOR", "AUTHORIZER", "PRIMARY_CONSUMER", "SECONDARY_CONSUMER", "COORDINATOR", "CHECKPOINT_IDENTITY_PRODUCER", "COMPARATOR", "EVIDENCE_BANKER"}:
+        if item["actor"] != expected_actor(item["artifact_id"]):
             raise ValueError("DAG_NODE_ACTOR")
         if not set(item["outcome_applicability"]).issubset(expected_outcomes) or not item["outcome_applicability"]:
             raise ValueError("OUTCOME_APPLICABILITY")
         if set(item["payload_constants"]) - set(item["payload_keys"]):
             raise ValueError("PAYLOAD_CONSTANT_CENSUS")
+        if item["payload_keys"] != expected_payload_keys(item["artifact_id"]) or set(item["payload_rules"]) != set(item["payload_keys"]):
+            raise ValueError("PAYLOAD_SEMANTIC_CENSUS")
         for dependency in item["dependencies"]:
             edges += 1
             if dependency == item["artifact_id"]:
@@ -184,6 +245,12 @@ def validate_documents(docs: dict[str, dict]) -> dict:
         visited.add(artifact_id)
     for artifact_id in node_map:
         visit(artifact_id)
+    if set(dag["root_authorities"]) != set(ROOT_AUTHORITY_PATHS):
+        raise ValueError("ROOT_AUTHORITY_CENSUS")
+    for authority_id, expected_path in ROOT_AUTHORITY_PATHS.items():
+        binding = dag["root_authorities"][authority_id]
+        if binding["path"] != expected_path or sha(ROOT / expected_path) != binding["sha256"]:
+            raise ValueError("ROOT_AUTHORITY_BINDING")
 
     success_order = [item["artifact_id"] for item in success_nodes]
     required_subsequence = [
@@ -239,10 +306,59 @@ def validate_documents(docs: dict[str, dict]) -> dict:
     if set(schemas["artifacts"]) != set(node_map) or schemas["strict_key_census"] is not True or schemas["unknown_fields"] != "REJECT":
         raise ValueError("SCHEMA_COVERAGE")
     for artifact_id, descriptor in schemas["artifacts"].items():
-        if set(descriptor) != {"schema_id", "keys", "payload_keys", "payload_constants", "creation_rank"} or descriptor["keys"] != ENVELOPE_KEYS or descriptor["creation_rank"] != node_map[artifact_id]["creation_rank"] or descriptor["schema_id"] != node_map[artifact_id]["schema_id"] or descriptor["payload_keys"] != node_map[artifact_id]["payload_keys"] or descriptor["payload_constants"] != node_map[artifact_id]["payload_constants"]:
+        if set(descriptor) != {"schema_id", "keys", "payload_keys", "payload_constants", "payload_rules", "creation_rank"} or descriptor["keys"] != ENVELOPE_KEYS or descriptor["creation_rank"] != node_map[artifact_id]["creation_rank"] or descriptor["schema_id"] != node_map[artifact_id]["schema_id"] or descriptor["payload_keys"] != node_map[artifact_id]["payload_keys"] or descriptor["payload_constants"] != node_map[artifact_id]["payload_constants"] or descriptor["payload_rules"] != node_map[artifact_id]["payload_rules"]:
             raise ValueError("SCHEMA_EXACT_BINDING")
+        for key, rule in descriptor["payload_rules"].items():
+            if rule.get("kind") not in {"EXACT_CONSTANT", "TYPE", "NONNEGATIVE_INTEGER", "EQUAL_PAYLOAD_FIELD", "EQUAL_ARTIFACT_PAYLOAD_FIELD"}:
+                raise ValueError("PAYLOAD_RULE_KIND")
+            if key in descriptor["payload_constants"] and rule != {"kind": "EXACT_CONSTANT", "value": descriptor["payload_constants"][key]}:
+                raise ValueError("PAYLOAD_CONSTANT_RULE_BINDING")
+            override = None
+            if artifact_id.startswith("checkpoint_shard_receipt_") and key == "observed_size": override = {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_size"}
+            if artifact_id.startswith("checkpoint_shard_receipt_") and key == "observed_checkpoint_digest": override = {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_checkpoint_digest"}
+            if artifact_id in {"primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"} and key in {"lease_ids", "descriptor_identities"}: override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": key}
+            if artifact_id == "descriptor_release_report" and key == "lease_ids": override = {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"}
+            if artifact_id.startswith("failure_terminal_capsule__") and key in {"attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases"}: override = {"kind": "NONNEGATIVE_INTEGER"}
+            if rule != (override or expected_default_rule(key, descriptor["payload_constants"])):
+                raise ValueError("PAYLOAD_RULE_EXACT_SEMANTICS")
         if any(key.endswith("_sha256") and key == f"{artifact_id}_sha256" for key in descriptor["payload_keys"]):
             raise ValueError("PAYLOAD_SELF_SHA")
+    critical_constants = {
+        "primary_candidate_validation": {"consumer_role": "PRIMARY", "side_effect_count": 0},
+        "secondary_candidate_validation": {"consumer_role": "SECONDARY", "side_effect_count": 0},
+        "coordinator_handshake": {"checkpoint_opens": 0, "checkpoint_reads": 0},
+        "checkpoint_identity_durable_start": {"expected_total_bytes": checkpoint_metadata["total_bytes"], "checkpoint_set_digest": checkpoint_metadata["checkpoint_set_sha256"]},
+        "checkpoint_access_journal_terminal": {"event_count": 6},
+        "descriptor_lease_manifest": {"lease_count": 5, "ordinals": [2, 3, 4, 5, 6]},
+        "checkpoint_identity_manifest": {"expected_total_bytes": checkpoint_metadata["total_bytes"], "observed_total_bytes": checkpoint_metadata["total_bytes"]},
+        "checkpoint_identity_receipt": {"retained_lease_count": 5, "identity_only_retained_count": 0},
+        "checkpoint_identity_terminal": {"mandatory_transition": "COMPLETE", "retained_lease_count": 5},
+        "package_ledger_entry": {"delta": 1}, "primary_ledger_entry": {"delta": 1}, "secondary_ledger_entry": {"delta": 1},
+        "primary_descriptor_continuity_report": {"consumer_role": "PRIMARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "path_reopen_count": 0},
+        "secondary_descriptor_continuity_report": {"consumer_role": "SECONDARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "path_reopen_count": 0},
+        "primary_execution_evidence": {"synthetic_only": True}, "secondary_execution_evidence": {"synthetic_only": True},
+        "comparison_receipt": {"frozen_thresholds": {"max_abs": 0.0065169706285814755, "rmse": 0.003463567697419031, "cosine_min": 0.9999999985448085, "top_n": 32}},
+        "descriptor_release_start": {"expected_leases": 5},
+        "descriptor_release_report": {"attempted_closures": 5, "successful_closures": 5, "duplicate_closures": 0, "unknown_leases": 0, "live_leases_after_release": 0},
+        "descriptor_release_terminal": {"live_leases_after_release": 0, "result": "PASS"},
+        "package_receipt": {"package_delta": 1, "primary_delta": 1, "secondary_delta": 1},
+        "package_terminal": {"classification": "COMPLETE_SUCCESS", "mandatory_stop": True},
+        "final_declaration": {"active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0},
+    }
+    for artifact_id, expected in critical_constants.items():
+        if node_map[artifact_id]["payload_constants"] != expected:
+            raise ValueError(f"CRITICAL_PAYLOAD_CONSTANTS:{artifact_id}")
+    for ordinal, shard in enumerate(expected_shards, start=1):
+        access = node_map[f"checkpoint_access_event_{ordinal}"]
+        receipt = node_map[f"checkpoint_shard_receipt_{ordinal}"]
+        if access["payload_constants"] != {"ordinal": ordinal, "operation": "ROOT_RELATIVE_NOFOLLOW_OPEN_AND_COMPLETE_SHA256"}:
+            raise ValueError("ACCESS_EVENT_CONSTANTS")
+        expected_receipt = {"ordinal": ordinal, "role": shard["role"], "expected_size": shard["size_bytes"], "expected_checkpoint_digest": shard["sha256"], "retain_disposition": "CLOSE_AFTER_IDENTITY_VERIFICATION" if ordinal == 1 else "RETAIN_AS_PACKAGE_OWNED_DESCRIPTOR_LEASE"}
+        if receipt["payload_constants"] != expected_receipt or receipt["payload_rules"]["observed_size"] != {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_size"} or receipt["payload_rules"]["observed_checkpoint_digest"] != {"kind": "EQUAL_PAYLOAD_FIELD", "field": "expected_checkpoint_digest"}:
+            raise ValueError("SHARD_RECEIPT_SEMANTICS")
+    for report_id in ("primary_descriptor_continuity_report", "secondary_descriptor_continuity_report"):
+        if node_map[report_id]["payload_rules"]["lease_ids"] != {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "lease_ids"} or node_map[report_id]["payload_rules"]["descriptor_identities"] != {"kind": "EQUAL_ARTIFACT_PAYLOAD_FIELD", "artifact_id": "descriptor_lease_manifest", "field": "descriptor_identities"}:
+            raise ValueError("CONTINUITY_PAYLOAD_SEMANTICS")
 
     if set(obligations["outcomes"]) != expected_outcomes or obligations["derivation"] != "CAUSAL_DAG_OUTCOME_APPLICABILITY":
         raise ValueError("OUTCOME_CENSUS")
@@ -267,19 +383,18 @@ def validate_documents(docs: dict[str, dict]) -> dict:
         if obligation["live_leases_at_terminal"] != 0:
             raise ValueError("OUTCOME_LIVE_LEASES")
         if outcome != "COMPLETE_SUCCESS":
-            declarations = [item for item in derived_required if item.startswith("final_declaration__")]
-            if len(declarations) != 1:
-                raise ValueError("FAILURE_FINAL_DECLARATION")
-            retained = sum(receipt_rank <= cut for receipt_rank in (15, 17, 19, 21, 23)) if cut < 44 else 0
-            release_reports = [item for item in derived_required if item.startswith("descriptor_release_report")]
-            if cut >= 45 and len(release_reports) != 1:
-                raise ValueError("DUPLICATE_RELEASE_CHAIN")
-            if retained and len(release_reports) != 1:
-                raise ValueError("MISSING_RELEASE_CHAIN")
-            for report_id in release_reports:
-                keys = node_map[report_id]["payload_keys"]
-                if not {"duplicate_closures", "unknown_leases"}.issubset(keys):
-                    raise ValueError("RELEASE_OBSERVABILITY")
+            capsules = [item for item in derived_required if item.startswith("failure_terminal_capsule__")]
+            if len(capsules) != 1 or len(derived_required) != cut + 1:
+                raise ValueError("ATOMIC_FAILURE_TERMINALIZATION_CENSUS")
+            capsule = node_map[capsules[0]]
+            access_ranks = {ordinal: node_map[f"checkpoint_access_event_{ordinal}"]["creation_rank"] for ordinal in range(2, 7)}
+            retained_ordinals = [ordinal for ordinal, access_rank in access_ranks.items() if access_rank <= cut] if cut < node_map["descriptor_release_report"]["creation_rank"] else []
+            expected_constants = {"failed_transition_id": f"FAIL_{outcome}", "last_completed_transition_id": node_map[expected_last]["producer_transition_id"], "durable_prefix_id": expected_last, "failure_class": expected_class, "atomic_terminalization": "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC", "package_delta": obligation["package_delta"], "primary_delta": obligation["primary_delta"], "secondary_delta": obligation["secondary_delta"], "expected_leases": len(retained_ordinals), "live_leases_after_release": 0, "lease_ordinals": retained_ordinals, "lease_evidence_artifact_ids": [f"checkpoint_access_event_{ordinal}" for ordinal in retained_ordinals], "classification": expected_class, "mandatory_stop": True, "active_generation": "NONE", "event_04_executed": False, "original_checkpoint_access": 0}
+            if capsule["payload_constants"] != expected_constants:
+                raise ValueError("ATOMIC_FAILURE_TERMINALIZATION_SEMANTICS")
+            for observable in ("attempted_closures", "successful_closures", "duplicate_closures", "unknown_leases"):
+                if capsule["payload_rules"][observable] != {"kind": "NONNEGATIVE_INTEGER"}:
+                    raise ValueError("CLEANUP_OBSERVABILITY")
 
     if path_timing["production_exception_count"] != 0 or path_timing["artifact_schema_count"] != len(node_map) or set(path_timing["paths"]) != set(node_map):
         raise ValueError("PATH_TIMING_COVERAGE")
@@ -297,7 +412,7 @@ def validate_documents(docs: dict[str, dict]) -> dict:
         if resolve_pointer(docs[source_authority], source_pointer) != expected:
             raise ValueError("SAFETY_INVARIANT_SOURCE")
 
-    if accounting["authorization_mint_delta"] != 0 or accounting["unstarted_consumer_delta"] != 0 or accounting["historical_real_payload_ledger"]["before"] != 175 or accounting["historical_real_payload_ledger"]["after"] != 175 or accounting["historical_real_payload_ledger"]["delta"] != 0:
+    if accounting["authorization_mint_delta"] != 0 or accounting["unstarted_primary_delta"] != 0 or accounting["unstarted_secondary_delta"] != 0 or accounting["historical_real_payload_ledger"]["before"] != 175 or accounting["historical_real_payload_ledger"]["after"] != 175 or accounting["historical_real_payload_ledger"]["delta"] != 0:
         raise ValueError("ACCOUNTING_ROOT")
     if accounting["package_start_rank"] != node_map["package_durable_start"]["creation_rank"] or accounting["primary_start_rank"] != node_map["primary_durable_start"]["creation_rank"] or accounting["secondary_start_rank"] != node_map["secondary_durable_start"]["creation_rank"]:
         raise ValueError("ACCOUNTING_START_RANKS")
@@ -309,7 +424,7 @@ def validate_documents(docs: dict[str, dict]) -> dict:
             raise ValueError("ACCOUNTING_OUTCOME")
     if serialization != {"schema": "pulsarmlx.f017.canonical-json-bytes/1.0.0", "status": STATUS, "encoding": "UTF-8", "bom": False, "sort_keys": True, "separators": [",", ":"], "ensure_ascii": True, "allow_nan": False, "trailing_newline_count": 1, "duplicate_keys": "REJECT", "artifact_contains_own_sha256": False}:
         raise ValueError("CANONICAL_SERIALIZATION")
-    if interface != {"schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/8.0.0", "status": STATUS, "active_live_generation": "NONE", "external_checkpoint_identity_path_permitted": False, "identity_producer_invoked_after_package_durable_start": True, "graph_path_reopen_permitted": False, "descriptor_transport": "SUBPROCESS_PASS_FDS_EXPLICIT", "attempts": 1, "retries": 0, "resume": False}:
+    if interface != {"schema": "pulsarmlx.f017.corrected-oracle-authorization-consumer-interface/8.0.0", "status": STATUS, "active_live_generation": "NONE", "external_checkpoint_identity_path_permitted": False, "identity_producer_invoked_after_package_durable_start": True, "graph_path_reopen_permitted": False, "descriptor_transport": "SUBPROCESS_PASS_FDS_EXPLICIT", "lease_inception": "SUCCESSFUL_GRAPH_PAYLOAD_CHECKPOINT_ACCESS_EVENT_OPEN", "failure_terminalization": "SINGLE_CANONICAL_TEMP_WRITE_FSYNC_EXCLUSIVE_RENAME_DIRECTORY_FSYNC", "failure_terminalization_partial_authority": "NONE", "failure_terminalization_failure_recursion_terminator": "NO_NEW_DURABLE_PREFIX_AND_PROCESS_EXIT_DESCRIPTOR_CLOSE", "attempts": 1, "retries": 0, "resume": False}:
         raise ValueError("AUTHORIZATION_INTERFACE")
     expected_transitions = [{"id": item["producer_transition_id"], "actor": item["actor"], "artifact_created": item["artifact_id"], "creation_rank": item["creation_rank"], "outcome_applicability": item["outcome_applicability"], "to": f"ARTIFACT_BANKED__{item['artifact_id'].upper()}"} for item in nodes]
     expected_states = sorted({"DESIGN_ONLY"} | {item["to"] for item in expected_transitions})

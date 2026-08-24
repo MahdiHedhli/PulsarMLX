@@ -89,6 +89,15 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
             "payload": payload_for(artifact_id, descriptor["payload_keys"], outcome, descriptor.get("payload_constants")),
             "result": "PASS" if outcome == "COMPLETE_SUCCESS" else "FAILURE_EVIDENCE",
         }
+        if artifact_id.startswith("failure_terminal_capsule__"):
+            expected = value["payload"]["expected_leases"]
+            value["payload"].update({"attempted_closures": expected, "successful_closures": expected, "duplicate_closures": 0, "unknown_leases": 0})
+        for key, rule in descriptor["payload_rules"].items():
+            if rule["kind"] == "EQUAL_PAYLOAD_FIELD":
+                value["payload"][key] = value["payload"][rule["field"]]
+            elif rule["kind"] == "EQUAL_ARTIFACT_PAYLOAD_FIELD":
+                referenced = json.loads((package_root / f"{rule['artifact_id']}.json").read_bytes())
+                value["payload"][key] = referenced["payload"][rule["field"]]
         if list(value) != descriptor["keys"]:
             raise ValueError(f"schema key order mismatch: {artifact_id}")
         if sorted(value["payload"]) != sorted(descriptor["payload_keys"]):
@@ -110,18 +119,10 @@ def construct_outcome(outcome: str, package_root: Path, dag: dict, schemas: dict
                 raise ValueError(f"continuity report census: {outcome}:{report_id}")
             if report_payload["lease_ids"] != lease_payload["lease_ids"] or report_payload["descriptor_identities"] != lease_payload["descriptor_identities"]:
                 raise ValueError(f"continuity report identity mismatch: {outcome}:{report_id}")
-        for report_id in created:
-            if not report_id.startswith("descriptor_release_report"):
-                continue
-            report_payload = json.loads((package_root / f"{report_id}.json").read_bytes())["payload"]
-            if not set(report_payload["lease_ids"]).issubset(set(lease_payload["lease_ids"])):
-                raise ValueError(f"release report unknown lease: {outcome}:{report_id}")
-            if report_payload["duplicate_closures"] != 0 or report_payload["unknown_leases"] != 0:
-                raise ValueError(f"release report closure census: {outcome}:{report_id}")
     if outcome == "COMPLETE_SUCCESS":
         terminals = ["final_declaration"] if "final_declaration" in required else []
     else:
-        terminals = [item for item in required if item.startswith("final_declaration__")]
+        terminals = [item for item in required if item.startswith("failure_terminal_capsule__")]
     if len(terminals) != 1:
         raise ValueError(f"terminal census: {outcome}:{terminals}")
     closure = validate_package(package_root, terminals[0], required, roots, dag, schemas, outcome)

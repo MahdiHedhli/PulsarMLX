@@ -120,8 +120,13 @@ class CausalDesignTests(unittest.TestCase):
             ("MODEL_INVARIANT", lambda d: d["lifecycle_model"]["unconditional_invariants"].__setitem__("evidence_append_only", False)),
             ("ACCOUNTING_PACKAGE_RANK", lambda d: d["accounting"].__setitem__("package_start_rank", 1)),
             ("INVARIANT_SOURCE_POINTER", lambda d: d["safety_invariants"]["invariants"][0].__setitem__("source_json_pointer", "/processing/hash")),
+            ("ALL_ACTORS_OPERATOR", lambda d: [item.__setitem__("actor", "OPERATOR") for item in d["artifact_dag"]["nodes"]]),
+            ("ROOT_AUTHORITY_REMOVED", lambda d: d["artifact_dag"]["root_authorities"].pop("v7_budget_closeout")),
+            ("FINAL_EVENT04_TRUE", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "final_declaration")["payload_constants"].__setitem__("event_04_executed", True)),
+            ("FINAL_ACCESS_42", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "final_declaration")["payload_constants"].__setitem__("original_checkpoint_access", 42)),
+            ("PAYLOAD_RULE_REMOVED", lambda d: next(item for item in d["artifact_dag"]["nodes"] if item["artifact_id"] == "checkpoint_shard_receipt_4")["payload_rules"].pop("observed_checkpoint_digest")),
         ])
-        self.assertGreaterEqual(len(mutations), 170)
+        self.assertEqual(len(mutations), 176)
         for mutation_id, mutate in mutations:
             with self.subTest(mutation_id=mutation_id):
                 docs = copy.deepcopy(baseline)
@@ -186,6 +191,11 @@ class CausalDesignTests(unittest.TestCase):
             ("FORGED_OUTCOME", "package_terminal", lambda v: v.__setitem__("outcome", "PRE_MINT_FAILURE")),
             ("EXTRA_PAYLOAD", "descriptor_release_report", lambda v: v["payload"].__setitem__("attacker", True)),
             ("DROPPED_ROOT", "operator_approval", lambda v: v["root_authorities"].pop("numerical_contract")),
+            ("LIVE_LEASES", "descriptor_release_report", lambda v: v["payload"].__setitem__("live_leases_after_release", 5)),
+            ("PATH_REOPEN", "primary_descriptor_continuity_report", lambda v: v["payload"].__setitem__("path_reopen_count", 7)),
+            ("NOT_SYNTHETIC", "primary_execution_evidence", lambda v: v["payload"].__setitem__("synthetic_only", False)),
+            ("OBSERVED_TOTAL", "checkpoint_identity_manifest", lambda v: v["payload"].__setitem__("observed_total_bytes", 1)),
+            ("OBSERVED_DIGEST", "checkpoint_shard_receipt_4", lambda v: v["payload"].__setitem__("observed_checkpoint_digest", "0" * 64)),
         ]
         for attack_id, target_id, mutate in attacks:
             with self.subTest(attack_id=attack_id), tempfile.TemporaryDirectory() as raw_root:
@@ -201,21 +211,36 @@ class CausalDesignTests(unittest.TestCase):
 
     def test_identity_prefix_release_is_exact_and_never_duplicated(self):
         docs = validator.load_documents()
-        for rank, expected_leases in ((14, 0), (15, 1), (17, 2), (19, 3), (21, 4), (23, 5)):
+        for rank, expected_leases in ((13, 0), (14, 1), (16, 2), (18, 3), (20, 4), (22, 5)):
             outcome = f"CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_{rank:03d}"
             obligation = docs["outcomes"]["outcomes"][outcome]
-            reports = [item for item in obligation["required"] if item.startswith("descriptor_release_report")]
-            if expected_leases == 0:
-                self.assertEqual(reports, [])
-            else:
-                self.assertEqual(len(reports), 1)
-                node = next(item for item in docs["artifact_dag"]["nodes"] if item["artifact_id"] == reports[0])
-                self.assertEqual(node["payload_constants"]["attempted_closures"], expected_leases)
-                self.assertEqual(node["payload_constants"]["duplicate_closures"], 0)
-                self.assertEqual(node["payload_constants"]["unknown_leases"], 0)
+            capsules = [item for item in obligation["required"] if item.startswith("failure_terminal_capsule__")]
+            self.assertEqual(len(capsules), 1)
+            node = next(item for item in docs["artifact_dag"]["nodes"] if item["artifact_id"] == capsules[0])
+            self.assertEqual(node["payload_constants"]["expected_leases"], expected_leases)
+            self.assertEqual(node["payload_constants"]["lease_ordinals"], list(range(2, 2 + expected_leases)))
+            self.assertEqual(node["payload_rules"]["duplicate_closures"], {"kind": "NONNEGATIVE_INTEGER"})
+            self.assertEqual(node["payload_rules"]["unknown_leases"], {"kind": "NONNEGATIVE_INTEGER"})
         outcome = "EVIDENCE_BANKING_FAILURE__AFTER_RANK_045"
-        reports = [item for item in docs["outcomes"]["outcomes"][outcome]["required"] if item.startswith("descriptor_release_report")]
-        self.assertEqual(reports, ["descriptor_release_report"])
+        capsules = [item for item in docs["outcomes"]["outcomes"][outcome]["required"] if item.startswith("failure_terminal_capsule__")]
+        self.assertEqual(len(capsules), 1)
+        node = next(item for item in docs["artifact_dag"]["nodes"] if item["artifact_id"] == capsules[0])
+        self.assertEqual(node["payload_constants"]["expected_leases"], 0)
+
+    def test_cleanup_anomaly_is_recordable_in_atomic_terminal_capsule(self):
+        docs = validator.load_documents()
+        outcome = "CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_014"
+        required = set(docs["outcomes"]["outcomes"][outcome]["required"])
+        with tempfile.TemporaryDirectory() as raw_root:
+            package = Path(raw_root)
+            built = construct_outcome(outcome, package, docs["artifact_dag"], docs["artifact_schemas"], docs["outcomes"])
+            terminal_id = built["terminal_id"]
+            path = package / f"{terminal_id}.json"
+            value = json.loads(path.read_bytes())
+            value["payload"].update({"attempted_closures": 1, "successful_closures": 0, "duplicate_closures": 1, "unknown_leases": 0})
+            path.write_bytes(canonical(value))
+            result = validate_package(package, terminal_id, required, docs["artifact_dag"]["root_authorities"], docs["artifact_dag"], docs["artifact_schemas"], outcome)
+            self.assertEqual(result["result"], "PASS")
 
 
 if __name__ == "__main__":
