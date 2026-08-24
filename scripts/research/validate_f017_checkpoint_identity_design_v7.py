@@ -51,9 +51,14 @@ def validate() -> dict:
             raise ValueError(f"missing lifecycle state: {required}")
     if accounting["authorization_mint_delta"] != 0 or accounting["checkpoint_identity_stage"] != {"delta": 0, "ledger_entry_reference": "EXISTING_PACKAGE_LEDGER_ENTRY_ID", "new_ledger_entry_permitted": False} or accounting["historical_real_payload_ledger"]["delta"] != 0:
         raise ValueError("accounting")
+    ledger_binding = accounting["historical_real_payload_ledger"]
+    ledger_path = ROOT / ledger_binding["path"]
+    ledger = json.loads(ledger_path.read_bytes())
+    if sha(ledger_path) != ledger_binding["sha256"] or ledger["receipt_chain"]["terminal_count"] != 175 or ledger_binding["before"] != 175 or ledger_binding["after"] != 175:
+        raise ValueError("historical ledger authority")
     if set(outcomes["outcomes"]) != set(model["outcomes"]):
         raise ValueError("outcome coverage")
-    required_outcomes = {"PRE_MINT_FAILURE", "AUTHORIZATION_INSTALLATION_FAILURE", "PACKAGE_PRE_START_FAILURE", "PACKAGE_POST_CLAIM_PRE_START_FAILURE", "CHECKPOINT_IDENTITY_FAILURE", "DESCRIPTOR_LEASE_ACTIVATION_FAILURE", "PRIMARY_PRE_START_FAILURE", "PRIMARY_POST_START_FAILURE", "SECONDARY_PRE_START_FAILURE", "SECONDARY_POST_START_FAILURE", "COMPARISON_FAILURE", "EVIDENCE_BANKING_FAILURE", "COMPLETE_SUCCESS"}
+    required_outcomes = {"PRE_MINT_FAILURE", "AUTHORIZATION_INSTALLATION_FAILURE", "COORDINATOR_HANDSHAKE_FAILURE", "PACKAGE_PRE_START_FAILURE", "PACKAGE_POST_CLAIM_PRE_START_FAILURE", "CHECKPOINT_IDENTITY_PRE_START_FAILURE", "CHECKPOINT_IDENTITY_FAILURE", "DESCRIPTOR_LEASE_ACTIVATION_FAILURE", "PRIMARY_PRE_START_FAILURE", "PRIMARY_POST_START_FAILURE", "SECONDARY_PRE_START_FAILURE", "SECONDARY_POST_START_FAILURE", "COMPARISON_FAILURE", "EVIDENCE_BANKING_FAILURE", "COMPLETE_SUCCESS"}
     if set(model["outcomes"]) != required_outcomes:
         raise ValueError("exact outcome census")
     for name, obligation in outcomes["outcomes"].items():
@@ -74,6 +79,10 @@ def validate() -> dict:
             raise ValueError(f"primary back-reference closure: {name}")
         if obligation["secondary_delta"] == 1 and not {"secondary_receipt", "secondary_terminal"}.issubset(obligation["required"]):
             raise ValueError(f"secondary back-reference closure: {name}")
+        if obligation["primary_delta"] == 1 and not {"primary_durable_start", "primary_ledger_entry"}.issubset(obligation["required"]):
+            raise ValueError(f"primary accounting evidence: {name}")
+        if obligation["secondary_delta"] == 1 and not {"secondary_durable_start", "secondary_ledger_entry"}.issubset(obligation["required"]):
+            raise ValueError(f"secondary accounting evidence: {name}")
     transition_keys = {"actor", "from", "name", "to"}
     actors = set(model["actors"])
     reached = {"DESIGN_ONLY"}
@@ -98,7 +107,7 @@ def validate() -> dict:
             node = pending.pop()
             if node in visited: continue
             visited.add(node); pending.extend(edges.get(node, ()))
-        if "PACKAGE_TERMINAL_SUCCESS" in visited or (transition["failure_outcome"] not in {"PRE_MINT_FAILURE", "AUTHORIZATION_INSTALLATION_FAILURE", "PACKAGE_PRE_START_FAILURE"} and "PACKAGE_TERMINAL_FAILURE" not in visited):
+        if "PACKAGE_TERMINAL_SUCCESS" in visited or (transition["failure_outcome"] not in {"PRE_MINT_FAILURE", "AUTHORIZATION_INSTALLATION_FAILURE", "COORDINATOR_HANDSHAKE_FAILURE", "PACKAGE_PRE_START_FAILURE"} and "PACKAGE_TERMINAL_FAILURE" not in visited):
             raise ValueError(f"failure terminal routing: {transition['failure_outcome']}")
     if not any(item.get("failure_outcome") == "PRIMARY_PRE_START_FAILURE" and item["from"] == "DESCRIPTOR_LEASES_ACTIVE" for item in model["transitions"]):
         raise ValueError("primary pre-start failure route")
@@ -112,6 +121,10 @@ def validate() -> dict:
         raise ValueError("post-claim pre-start failure route")
     if not any(item.get("failure_outcome") == "DESCRIPTOR_LEASE_ACTIVATION_FAILURE" and item["from"] == "CHECKPOINT_IDENTITY_TERMINAL_SUCCESS" for item in model["transitions"]):
         raise ValueError("lease activation failure route")
+    if not any(item.get("failure_outcome") == "COORDINATOR_HANDSHAKE_FAILURE" and item["from"] == "INSTALLATION_RECEIPT_BANKED" for item in model["transitions"]):
+        raise ValueError("coordinator handshake failure route")
+    if not any(item.get("failure_outcome") == "CHECKPOINT_IDENTITY_PRE_START_FAILURE" and item["from"] == "PACKAGE_DURABLE_STARTED" for item in model["transitions"]):
+        raise ValueError("identity pre-start failure route")
     if model["package_terminal_semantics"] != {"PACKAGE_TERMINAL_FAILURE": "PACKAGE_EVIDENCE_COMPLETE_WITH_DECLARED_FAILURE_OUTCOME", "PACKAGE_TERMINAL_SUCCESS": "PACKAGE_EVIDENCE_COMPLETE_AND_ORACLE_COMPLETE_SUCCESS", "terminal_state_must_match_declared_outcome": True}:
         raise ValueError("package terminal semantics")
     iteration = model.get("identity_hash_iteration")
@@ -139,6 +152,8 @@ def validate() -> dict:
         raise ValueError("post-primary continuity evidence")
     artifact_namespace = set(schemas["artifacts"]) | set(lifecycle_schemas["artifacts"])
     ignored_path_artifacts = {"checkpoint_identity_access_journal", "checkpoint_identity_state_root", "candidate", "package_state_root", "primary_state_root", "secondary_state_root"}
+    if not set(path_timing["paths"]).issubset(artifact_namespace | ignored_path_artifacts):
+        raise ValueError("path timing artifact namespace")
     for outcome_name, obligation in outcomes["outcomes"].items():
         required_set = set(obligation["required"])
         for artifact_name in obligation["required"] + obligation["forbidden"]:
@@ -160,23 +175,55 @@ def validate() -> dict:
     activation = [item for item in model["transitions"] if item["name"] == "ACTIVATE_GRAPH_DESCRIPTOR_LEASES"]
     if len(activation) != 1 or activation[0]["actor"] != "COORDINATOR":
         raise ValueError("lease activation actor")
+    release = [item for item in model["transitions"] if item["name"] == "RELEASE_DESCRIPTOR_LEASES"]
+    if not release or any(item["actor"] != "COORDINATOR" for item in release):
+        raise ValueError("lease release actor")
+    required_checks = {"FSTAT_MATCHES_IDENTITY_MANIFEST", "LEASE_ID_MATCH", "PACKAGE_ATTEMPT_MATCH", "READ_ONLY_ACCESS_MODE", "NO_DUPLICATE_FILE_IDENTITY", "NO_UNDECLARED_DESCRIPTOR"}
+    boundary = continuity["consumer_boundary"]
+    if boundary["descriptor_transport"] != "SUBPROCESS_PASS_FDS_EXPLICIT" or boundary["durable_identity_uses_raw_fd_number"] is not False or boundary["identity_only_descriptor_permitted"] is not False or set(boundary["required_checks"]) != required_checks:
+        raise ValueError("descriptor transport security surface")
+    if continuity["failure"]["close_all_live_descriptors"] is not True or continuity["terminal"] != {"duplicate_closures": 0, "expected_closures": 5, "live_leases_after_close": 0, "unknown_leases": 0}:
+        raise ValueError("descriptor terminal security surface")
+    historical_binding = identity["historical_master_ledger"]
+    if identity["identity_only"]["graph_access_permitted"] is not False or identity["hash"]["complete_file_required"] is not True or identity["hash"]["descriptor_pre_post_stability_required"] is not True or identity["hash"]["exact_byte_count_required"] is not True or {key: historical_binding[key] for key in ("after", "before", "delta")} != {"after": 175, "before": 175, "delta": 0}:
+        raise ValueError("checkpoint identity security surface")
+    if accounting["unstarted_consumer_delta"] != 0:
+        raise ValueError("unstarted consumer accounting")
     if lifecycle_schemas.get("strict_key_census") is not True or lifecycle_schemas.get("unknown_fields") != "REJECT":
         raise ValueError("lifecycle artifact schema posture")
+    for registry in (schemas, lifecycle_schemas):
+        global_bindings = registry.get("sha256_field_bindings", {})
+        for artifact_name, descriptor in registry["artifacts"].items():
+            local_bindings = descriptor.get("back_references", {})
+            for key in descriptor.get("keys", ()):
+                if key.endswith("_sha256") and key not in local_bindings and key not in global_bindings:
+                    raise ValueError(f"unbound sha256 field: {artifact_name}:{key}")
     lease_count = schemas["artifacts"]["checkpoint_descriptor_lease_manifest"]["nested"]["leases"]["count"]
     ordered_count = schemas["artifacts"]["checkpoint_identity_manifest"]["nested"]["ordered_shards"]["count"]
     receipt_count = schemas["artifacts"]["checkpoint_identity_manifest"]["nested"]["shard_receipt_sha256s"]["count"]
     if lease_count != identity["expected"]["graph_payload_descriptor_leases"] or ordered_count != identity["expected"]["identity_hashes"] or receipt_count != identity["expected"]["identity_hashes"]:
         raise ValueError("nested count authority binding")
+    continuity_count = schemas["artifacts"]["checkpoint_descriptor_continuity_report"]["nested"]["descriptor_identities"]["count"]
+    if continuity_count != identity["expected"]["graph_payload_descriptor_leases"]:
+        raise ValueError("continuity descriptor count")
     if "secondary_descriptor_continuity_failure" not in outcomes["outcomes"]["SECONDARY_PRE_START_FAILURE"]["required"]:
         raise ValueError("secondary continuity failure evidence")
+    secondary_failure_schema = lifecycle_schemas["artifacts"]["secondary_descriptor_continuity_failure"]
+    if secondary_failure_schema.get("conditional_nullability", {}).get("failed_check") != "NULL_IFF_FAILURE_DOMAIN_IS_NOT_CONTINUITY" or secondary_failure_schema.get("nested", {}).get("descriptor_identities", {}).get("maximum_count") != 5:
+        raise ValueError("secondary continuity failure schema")
     for name, binding in manifest["authorities"].items():
         path = ROOT / binding["path"]
         if not path.is_file() or sha(path) != binding["sha256"]:
             raise ValueError(f"manifest binding: {name}")
-    if set(manifest["authorities"]) != {"accounting", "active_generation", "artifact_schemas", "checkpoint_identity", "descriptor_continuity", "interface", "lifecycle_artifact_schemas", "lifecycle_model", "numerical_contract", "outcome_obligations", "path_timing", "v6_defect_reproduction", "v6_live_revocation"}:
+    if set(manifest["authorities"]) != {"accounting", "active_generation", "artifact_schemas", "checkpoint_identity", "descriptor_continuity", "historical_master_ledger", "interface", "lifecycle_artifact_schemas", "lifecycle_model", "numerical_contract", "outcome_obligations", "path_timing", "v6_defect_reproduction", "v6_live_revocation"}:
         raise ValueError("manifest authority census")
     if manifest.get("status") != "DESIGN_FROZEN_NOT_LIVE" or manifest.get("implementation_phase_entered") is not False:
         raise ValueError("design freeze posture")
+    for document in (identity, continuity, schemas, model, accounting, interface, outcomes, path_timing, lifecycle_schemas, active):
+        if document.get("status") != "DESIGN_FROZEN_NOT_LIVE":
+            raise ValueError("contract freeze posture")
+    if model["numerical_contract"] != manifest["authorities"]["numerical_contract"]:
+        raise ValueError("numerical contract double binding")
     return {"result": "PASS", "generation": 7, "expected_identity_hash_bytes": 238458632928, "outcome_count": len(outcomes["outcomes"]), "transition_count": len(model["transitions"]), "original_checkpoint_access": 0}
 
 
