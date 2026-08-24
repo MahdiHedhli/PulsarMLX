@@ -1,0 +1,12 @@
+REJECT
+
+**BLOCKING:**
+* **Incomplete CI Census Repair**: The committed CI census v2 (`docs/architecture/reviews/evidence/f017-corrected-oracle-event04-readiness-ci-census-v2.json`) successfully binds FULL_NATIVE run `32686907019` at implementation head `2d6c5e69c73b235a68e49c34ca2c16f68ef308f6` and EVIDENCE_ONLY run `32687614532` at `e15ba84a8d6b32bd3f1f36dc452aa1a6624c9946`. However, it completely fails to bind the final packet run `32687667688` at evidence head `fcd69b5eae24413a3e32d72c3abdea5918943e1e`. The run ID `32687667688` is entirely absent from the repository bytes, preventing verification that it launched zero native jobs.
+
+**Verified / Resolved:**
+* **Operator Approval Hardening (Cycle 01 Repair)**: The production installation logic in `scripts/research/validate_f017_corrected_oracle_access_v6.py` successfully reads the exact operator-approval bytes. It strictly requires the V6 approval schema, the `GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04` decision, `new_go: True`, `prior_go_reused: False`, `p1_attempt_2: False`, a nonempty operator identity and timestamp, and exact lifecycle-binding correspondence before creating the installed authorization. The re-run of the false-GO attack via `test_false_operator_go_cannot_install_production_authority` in the V6 lifecycle test suite successfully rejects non-compliant inputs.
+* **Numerical-Capability & Lifecycle Closure**: The whole domain audit passes. There are exactly 187 capability mutations successfully verified (`qualify_f017_numerical_capability_policy_v1.py`), with unchanged pure-core numerical bytes/formulas/thresholds. The audit confirms active-generation V6, historical ledger 175, no original checkpoint access, zero live Event 04 authorization/execution (`live_event_04_authorization_created: false`), and no P1 attempt 2 executed.
+
+**Material Disagreement:**
+I state a material disagreement with the Cycle 01 repair: the author failed to fully repair the first blocker by entirely omitting the final packet run binding (`32687667688`) in the V2 census, leaving the repository unable to prove zero native jobs at the evidence head.
+The background task confirming the search for `32687667688` has completed, and it validates our finding. The run ID is indeed only present in the review request files and entirely absent from the `ci-census-v2.json` or any other tracked evidence files. This confirms the material disagreement and the `REJECT` classification provided above.
