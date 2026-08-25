@@ -171,7 +171,10 @@ def _validate_operator_authorities(approval: object, readiness: object, readines
             or approval["authority_manifest_sha256"] != manifest_sha
             or not 0 <= now - readiness["accepted_at_unix_ns"] <= READINESS_MAX_AGE_NS):
         raise ValueError("accepted implementation authority binding")
-    _validate_implementation_authority(readiness["accepted_implementation_head"], manifest_sha)
+    try:
+        _validate_implementation_authority(readiness["accepted_implementation_head"], manifest_sha)
+    except ValueError as exc:
+        raise ValueError("accepted implementation authority binding") from exc
     _canonical_future_path(approval["checkpoint_root"], "checkpoint_root")
     path_fields = ("canonical_authorization_path", "installation_receipt_path", "emergency_evidence_root",
                    "terminal_fallback_evidence_root")
