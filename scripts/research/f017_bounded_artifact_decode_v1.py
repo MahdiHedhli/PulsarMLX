@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import math
 import os
 from pathlib import Path
 from typing import Final
@@ -25,12 +26,13 @@ class ArtifactLimits:
     max_array_elements: int
     max_string_chars: int
     max_integer_digits: int
+    max_number_chars: int
     require_canonical_bytes: bool = True
 
     def __post_init__(self) -> None:
         for name in (
             "max_bytes", "max_depth", "max_object_keys", "max_array_elements",
-            "max_string_chars", "max_integer_digits",
+            "max_string_chars", "max_integer_digits", "max_number_chars",
         ):
             value = getattr(self, name)
             if type(value) is not int or value <= 0:
@@ -46,6 +48,7 @@ DEFAULT_LIMITS: Final = ArtifactLimits(
     max_array_elements=16_384,
     max_string_chars=524_288,
     max_integer_digits=128,
+    max_number_chars=256,
 )
 
 
@@ -99,6 +102,15 @@ def _bounded_integer(token: str, maximum_digits: int) -> int:
     return int(token)
 
 
+def _bounded_float(token: str, maximum_chars: int) -> float:
+    if len(token) > maximum_chars:
+        raise ArtifactDecodeError("artifact float exceeds lexical bound")
+    value = float(token)
+    if not math.isfinite(value):
+        raise ArtifactDecodeError("artifact float is nonfinite")
+    return value
+
+
 def _decode(raw: bytes, limits: ArtifactLimits) -> object:
     if type(raw) is not bytes:
         raise ArtifactDecodeError("artifact input must be bytes")
@@ -129,6 +141,7 @@ def _decode(raw: bytes, limits: ArtifactLimits) -> object:
                 ArtifactDecodeError(f"nonfinite JSON number: {item}")
             ),
             parse_int=lambda item: _bounded_integer(item, limits.max_integer_digits),
+            parse_float=lambda item: _bounded_float(item, limits.max_number_chars),
         )
     except ArtifactDecodeError:
         raise

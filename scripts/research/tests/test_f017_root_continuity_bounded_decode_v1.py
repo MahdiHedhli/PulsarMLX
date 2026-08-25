@@ -176,6 +176,9 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "import json\nglobals()['json'].loads(b'{}')\n",
         "import importlib\nimportlib.import_module('json').loads(b'{}')\n",
         "import json\njson.load(None)\n",
+        "import sys\nsys.modules['json'].loads(b'{}')\n",
+        "import sys\ngetattr(sys.modules['json'], 'loads')(b'{}')\n",
+        "import builtins\nbuiltins.__import__('json').loads(b'{}')\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
@@ -219,6 +222,33 @@ def test_depth_boundary_and_string_brackets_are_exact() -> None:
 def test_malformed_artifacts_have_one_controlled_failure_class(raw: bytes) -> None:
     with pytest.raises(ArtifactDecodeError):
         parse_artifact_bytes(raw)
+
+
+@pytest.mark.parametrize("length", [257, 10_000, 1_000_000])
+def test_float_token_is_lexically_bounded_before_conversion(length: int) -> None:
+    raw = (b"1." + b"0" * length + b"\n")
+    with pytest.raises(ArtifactDecodeError, match="float exceeds lexical bound"):
+        parse_artifact_bytes(raw, expected_top_level=None)
+
+
+def test_journal_in_place_truncation_cannot_reduce_start_lower_bound(tmp_path: Path) -> None:
+    authority = _authority(tmp_path)
+    try:
+        _bank_starts(authority, primary=True, secondary=True)
+        for leaf in ("package-durable-start.json", "primary-durable-start.json", "secondary-durable-start.json"):
+            os.unlink(leaf, dir_fd=authority.primary_fd)
+        os.ftruncate(authority._journal_fd, 0)
+        os.fsync(authority._journal_fd)
+        first = authority.accounting_lower_bound()
+        second = authority.accounting_lower_bound()
+        assert first["journal_observation"] == "AUTHORITY_CORRUPT"
+        assert (first["package"], first["primary"], first["secondary"]) == (1, 1, 1)
+        assert (second["package"], second["primary"], second["secondary"]) == (1, 1, 1)
+
+    finally:
+        authority.close()
+
+
 
 
 def test_deep_durable_start_decode_cannot_escape_recursion_error(tmp_path: Path) -> None:

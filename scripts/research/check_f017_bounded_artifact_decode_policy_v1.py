@@ -79,6 +79,20 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             "globals", "locals", "__import__",
         }:
             violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
+        if (
+            isinstance(node, ast.Attribute)
+            and node.attr == "modules"
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "sys"
+        ):
+            violations.append({"path": relative, "line": node.lineno, "reason": "MODULE_REGISTRY_RESOLUTION"})
+        if (
+            isinstance(node, ast.Attribute)
+            and node.attr == "__import__"
+            and isinstance(node.value, ast.Name)
+            and node.value.id in {"builtins", "__builtins__"}
+        ):
+            violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_BUILTIN"})
         if not isinstance(node, ast.Name) or node.id != "json":
             continue
         parent = parents.get(node)

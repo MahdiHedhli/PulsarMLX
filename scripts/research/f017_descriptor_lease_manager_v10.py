@@ -11,7 +11,8 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
+from f017_bounded_artifact_decode_v1 import read_artifact_at
+from f017_canonical_serialization_v10 import canonical_bytes
 from typing import Callable
 
 
@@ -201,11 +202,20 @@ def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict]:
         raise ValueError("synthetic root manifest location") from exc
     if manifest_parent != resolved or manifest_path.is_symlink():
         raise ValueError("synthetic root manifest location")
-    try: raw = manifest_path.read_bytes()
-    except OSError as exc: raise ValueError("synthetic root manifest read") from exc
+    try:
+        manifest_root_fd = os.open(
+            resolved,
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
+        )
+        try:
+            manifest = read_artifact_at(manifest_root_fd, manifest_path.name)
+        finally:
+            os.close(manifest_root_fd)
+        raw = canonical_bytes(manifest)
+    except (OSError, ValueError) as exc:
+        raise ValueError("synthetic root manifest read") from exc
     if hashlib.sha256(raw).hexdigest() != candidate["synthetic_root_manifest_sha256"]:
         raise ValueError("synthetic root manifest digest")
-    manifest = parse_artifact_bytes(raw)
     expected = {"schema", "purpose", "production_access", "synthetic_package_id", "root_canonical_path", "shards", "catalog_sha256"}
     if type(manifest) is not dict or set(manifest) != expected:
         raise ValueError("synthetic root manifest census")

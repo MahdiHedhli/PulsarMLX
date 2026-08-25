@@ -16,6 +16,7 @@
     "maximum_bytes": 1048576,
     "maximum_integer_digits": 128,
     "maximum_nesting_depth": 64,
+    "maximum_number_characters": 256,
     "maximum_object_keys": 4096,
     "maximum_string_characters": 524288
   },

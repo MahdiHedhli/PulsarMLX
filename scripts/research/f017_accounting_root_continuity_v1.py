@@ -151,6 +151,7 @@ class AccountingRootAuthority:
         self._previous_sha256 = ZERO_SHA256
         self._last_completed = "INSTALLATION_RECEIPT_BANKED"
         self._starts = {"package": 0, "primary": 0, "secondary": 0}
+        self._monotonic_lower_bound = {"package": 0, "primary": 0, "secondary": 0}
 
     @classmethod
     def create(cls, primary: Path, fallback: Path, package_attempt_id: str,
@@ -232,6 +233,7 @@ class AccountingRootAuthority:
         role = START_TRANSITIONS.get(transition_id)
         if role is not None:
             self._starts[role] = 1
+            self._monotonic_lower_bound[role] = 1
         return {**record, "record_sha256": digest}
 
     def bank_artifact(self, leaf: str, kind: str, payload: dict,
@@ -325,7 +327,8 @@ class AccountingRootAuthority:
             return "AUTHORITY_UNAVAILABLE", starts, ZERO_SHA256
         previous = ZERO_SHA256
         previous_rank = -1
-        for sequence, line in enumerate(bytes(raw).splitlines(keepends=True)):
+        lines = bytes(raw).splitlines(keepends=True)
+        for sequence, line in enumerate(lines):
             try:
                 record = parse_artifact_bytes(line)
             except ArtifactDecodeError:
@@ -358,6 +361,8 @@ class AccountingRootAuthority:
             role = START_TRANSITIONS.get(transition)
             if role is not None:
                 starts[role] = 1
+        if len(lines) != self._sequence or previous != self._previous_sha256:
+            return "AUTHORITY_CORRUPT", starts, previous
         return "OBSERVED_PRESENT", starts, previous
 
     def accounting_lower_bound(self) -> dict:
@@ -378,6 +383,9 @@ class AccountingRootAuthority:
                 values[role] = max(self._starts[role], journal_starts[role])
         if (values["primary"] or values["secondary"]) and not values["package"]:
             values["package"] = 1
+        for role in values:
+            values[role] = max(values[role], self._monotonic_lower_bound[role])
+            self._monotonic_lower_bound[role] = values[role]
         return {
             "authorization": 0,
             **values,

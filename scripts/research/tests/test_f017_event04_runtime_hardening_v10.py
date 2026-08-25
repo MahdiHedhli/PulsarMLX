@@ -355,7 +355,9 @@ def test_immutable_memory_gate_scalars_are_exact(field: str, value: object) -> N
         _memory_gate(gate, live_posture=True)
 
 
-def test_synthetic_manifest_catalog_binding_and_hardlinks_fail_closed(tmp_path: Path) -> None:
+def test_synthetic_manifest_catalog_binding_and_hardlinks_fail_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     package_root = tmp_path / "package"; package_root.mkdir()
     checkpoint, shards, catalog, manifest = prepare(package_root, 18101, "ISOLATION", True)
     candidate_path = tmp_path / "candidate.json"
@@ -368,11 +370,37 @@ def test_synthetic_manifest_catalog_binding_and_hardlinks_fail_closed(tmp_path: 
     with pytest.raises(ValueError, match="synthetic catalog binding"):
         acquire_synthetic_leases(candidate)
 
+    # A final-component replacement cannot race the manifest check/read: the
+    # manifest is opened relative to the already-bound root descriptor with
+    # O_NOFOLLOW.
+    manifest_value["catalog_sha256"] = candidate["tensor_catalog_sha256"]
+    manifest.write_bytes(canonical_bytes(manifest_value))
+    candidate["synthetic_root_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    real_manifest = tmp_path / "relocated-manifest.json"
+    manifest.rename(real_manifest)
+    manifest.symlink_to(real_manifest)
+    monkeypatch.setattr(Path, "is_symlink", lambda _path: False)
+    with pytest.raises(ValueError, match="synthetic root manifest read"):
+        acquire_synthetic_leases(candidate)
+    manifest.unlink()
+    real_manifest.rename(manifest)
+
     # Restore the valid manifest binding and prove a second hardlink to any
     # shard makes the file-backed synthetic authority fail closed.
     manifest_value["catalog_sha256"] = candidate["tensor_catalog_sha256"]
     manifest.write_bytes(canonical_bytes(manifest_value))
     candidate["synthetic_root_manifest_sha256"] = hashlib.sha256(manifest.read_bytes()).hexdigest()
     os.link(checkpoint / shards[1]["filename"], tmp_path / "hardlink-to-shard-2")
+    with pytest.raises(ValueError, match="synthetic shard hardlink prohibited"):
+        acquire_synthetic_leases(candidate)
+    (tmp_path / "hardlink-to-shard-2").unlink()
+
+    # A hardlink imported from outside the bound synthetic root has the same
+    # bytes and digest but is rejected by the single-link inode policy.
+    shard_path = checkpoint / shards[1]["filename"]
+    outside = tmp_path / "outside-payload.bin"
+    outside.write_bytes(shard_path.read_bytes())
+    shard_path.unlink()
+    os.link(outside, shard_path)
     with pytest.raises(ValueError, match="synthetic shard hardlink prohibited"):
         acquire_synthetic_leases(candidate)
