@@ -1,0 +1,18 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v7.json"],
+  "claims_closed": ["C-IMPL-001", "C-IMPL-002", "C-IMPL-004"],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": ["generate_f017_v10_implementation_measurement_v1.py", "validate_f017_event04_implementation_measurement_v10.py"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"runtime_manifest": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v10.json"},
+  "input_head": "3f138d50014db76f7591281c96a7f3d8da6c2253",
+  "next_eligible_edges": ["R4"],
+  "node_id": "R3",
+  "output_head": "3f138d50014db76f7591281c96a7f3d8da6c2253",
+  "result": "PASS",
+  "result_counts": {"implementation_bindings": 43, "runtime_import_closure": 32, "working_tree_mismatches": 0},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["exact Git blob and SHA measurement", "numerical authority byte isolation"]
+}

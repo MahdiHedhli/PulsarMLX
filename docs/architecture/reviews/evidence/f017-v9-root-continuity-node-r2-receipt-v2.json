@@ -1,0 +1,19 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["scripts/research/f017_bounded_artifact_decode_v1.py", "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json"],
+  "claims_closed": ["C-JSON-002", "C-JSON-005"],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": ["check_f017_bounded_artifact_decode_policy_v1.py", "pytest bounded-decode regressions"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"decode_contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json"},
+  "input_head": "aa3447ee30c9766b5058453d3c37cd53df05e192",
+  "next_eligible_edges": ["R3"],
+  "node_id": "R2",
+  "output_head": "3f138d50014db76f7591281c96a7f3d8da6c2253",
+  "repair": "G_C01_005_G_C01_006",
+  "result": "PASS",
+  "result_counts": {"direct_decode_sites": 2, "float_lexical_bound": 256, "new_dynamic_resolution_mutations": 3, "policy_violations": 0},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["float token lengths 257, 10000, 1000000", "sys.modules and builtins import bypasses"]
+}

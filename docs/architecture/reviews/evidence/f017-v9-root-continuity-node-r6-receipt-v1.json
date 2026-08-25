@@ -1,0 +1,18 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-v9-root-continuity-gemini-challenge-cycle-01-exact-response.json", "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v1.json"],
+  "claims_closed": [],
+  "claims_introduced": [],
+  "claims_invalidated": ["C-ROOT-001", "C-ROOT-002", "C-ROOT-004", "C-JSON-002", "C-JSON-005", "C-QUAL-005"],
+  "commands_executed": ["agy --model gemini-3.1-pro-high --effort high --mode plan --sandbox"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"authority_manifest": "docs/architecture/reviews/evidence/f017-v9-root-continuity-authority-manifest-v2.json", "challenge_request": "docs/architecture/reviews/evidence/f017-v9-root-continuity-gemini-challenge-cycle-01-request.md"},
+  "input_head": "be5466479cda2a02bc5f23bcabd0c03a09862f7f",
+  "next_eligible_edges": ["R7"],
+  "node_id": "R6",
+  "output_head": "aa3447ee30c9766b5058453d3c37cd53df05e192",
+  "result": "PASS",
+  "result_counts": {"attacked_claims": 6, "blocking_challenges": 7, "challenge_rows": 7},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["read-only committed-byte adversarial challenge review"]
+}
