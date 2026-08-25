@@ -1,0 +1,60 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+    "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+    "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json"
+  ],
+  "claims_closed": [
+    "C-QUAL-001",
+    "C-QUAL-002",
+    "C-QUAL-003",
+    "C-QUAL-004",
+    "C-QUAL-005"
+  ],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": [
+    "run root continuity and bounded decode qualification",
+    "run retained runtime qualification",
+    "run production-shaped no-access rehearsal"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "measurement_v17": "826928fecad2c209ce25c5a8e393d2663f21cd24de1d517e6d9c4cf248fbba1d",
+    "root_decode_qualification_v16": "65f96e938af6faed4b805a52b6786357e72120b8a96b7044e4fbdf9e4db36c9c",
+    "runtime_qualification_v16": "92e89d4b897d0fa427a093ea68be3a578311ff14a66bf12da3e1b3b1fee2046f",
+    "rehearsal_v17": "d884c46c96d68f0aaaa7e17c578e8fa5194cbf1587832762f91340026844ab6b"
+  },
+  "input_head": "07ebd970fb1fd4ad8c89194d0a589443859d2ad4",
+  "next_eligible_edges": [
+    "R5",
+    "R7",
+    "R8_CYCLE_07"
+  ],
+  "node_id": "R4",
+  "output_head": "07ebd970fb1fd4ad8c89194d0a589443859d2ad4",
+  "result": "PASS",
+  "result_counts": {
+    "decode_cases": 204,
+    "modeled_root_decode_executions": 235,
+    "retained_runtime_executions": 201,
+    "root_cases": 252,
+    "runtime_outcomes": 47,
+    "successful_packages": 110
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "252 root attacks",
+    "204 decode attacks",
+    "235 modeled root/decode outcomes",
+    "201 runtime failures across 47 outcomes",
+    "50 retained runtime packages",
+    "1410 tensor plan and 399 denials"
+  ],
+  "supersedes": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r4-receipt-v14.json"
+}

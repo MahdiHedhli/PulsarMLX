@@ -1,0 +1,50 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-06-exact-response.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v6.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v11.json"
+  ],
+  "claims_closed": [],
+  "claims_introduced": [],
+  "claims_invalidated": [
+    "C-JSON-005",
+    "C-IMPL-002"
+  ],
+  "commands_executed": [
+    "fresh claude-opus-5 high-effort detached read-only executable review"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "authority_manifest_v12": "5eb445dfbfa06e9ca583f121f90ddf981f00c6e1678df1858a4876b1420915df"
+  },
+  "input_head": "573d9f803c5124d553762f05ded4b3a05418ee52",
+  "next_eligible_edges": [
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8_CYCLE_07"
+  ],
+  "node_id": "R8",
+  "output_head": "07ebd970fb1fd4ad8c89194d0a589443859d2ad4",
+  "result": "REPAIR_REQUIRED",
+  "result_counts": {
+    "accepted_claims": 23,
+    "rejected_claims": 2,
+    "unresolved_claims": 0,
+    "findings": 4
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "22 cycle-05 repaired bypasses",
+    "typing deferred annotation capability acquisition",
+    "root/decode qualifications",
+    "all 25 claim verdicts"
+  ]
+}

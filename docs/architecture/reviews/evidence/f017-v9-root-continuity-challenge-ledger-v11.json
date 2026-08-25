@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-challenge-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 6,
+  "reviewer_model": "claude-opus-5",
+  "reviewed_head": "573d9f803c5124d553762f05ded4b3a05418ee52",
+  "exact_response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-06-exact-response.json",
+  "exact_response_sha256": "ffedfedc0bc9d05837a16822e5d0c082f83c10246254a3643dca53dacdcc66b5",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v10.json",
+  "original_checkpoint_access_observed": 0,
+  "challenges": [
+    {
+      "challenge_id": "O-C06-001",
+      "claim_id": "C-JSON-005",
+      "attack": "Deferred annotation evaluation through approved typing surfaces acquired genuine unbounded json.loads.",
+      "mutation_or_trace": "typing.get_type_hints and ForwardRef over return, parameter, class, dataclass, and f-string annotations",
+      "expected_behavior": "Capability acquisition rejects by value shape before an acquired callable can be invoked.",
+      "observed_behavior": "Six spellings and an f-string variant passed policy and exposed raw RecursionError.",
+      "severity": "BLOCKING",
+      "affected_artifacts": ["scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "fa3daeaf37425cc7aeeab05bcc5fb7b74c7a7e28"
+    },
+    {
+      "challenge_id": "O-C06-002",
+      "claim_id": "C-IMPL-002",
+      "attack": "The measured implementation did not enforce the bounded-decode prohibition against deferred annotation capability acquisition.",
+      "mutation_or_trace": "O-C06-001 planted end to end in the active 32-module closure",
+      "expected_behavior": "No acquired runtime value outside the canonical parser can become an unbounded JSON decoder.",
+      "observed_behavior": "Policy PASS while a bare callable name invoked genuine json.loads.",
+      "severity": "BLOCKING",
+      "affected_artifacts": ["scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "fa3daeaf37425cc7aeeab05bcc5fb7b74c7a7e28"
+    },
+    {
+      "challenge_id": "O-C06-003",
+      "claim_id": "C-JSON-005",
+      "attack": "External subprocess and os.popen command strings could invoke another interpreter's decoder.",
+      "mutation_or_trace": "subprocess.run or os.popen with inline json.loads source",
+      "expected_behavior": "No current active authority artifact is decoded through an external interpreter.",
+      "observed_behavior": "No in-process or current-byte bypass; forward defense-in-depth surface only.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": ["scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"],
+      "status": "ANSWERED_BY_EXISTING_EVIDENCE"
+    },
+    {
+      "challenge_id": "O-C06-004",
+      "claim_id": "C-IMPL-004",
+      "attack": "Measurement auxiliary assurance fields remain literal values.",
+      "mutation_or_trace": "independent reconstruction of closure count, numerical identities, and access census",
+      "expected_behavior": "All load-bearing Git byte measurements and stated values remain truthful.",
+      "observed_behavior": "All 43 bindings and auxiliary values independently reconstruct true.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": ["scripts/research/generate_f017_v10_implementation_measurement_v1.py"],
+      "status": "ANSWERED_BY_EXISTING_EVIDENCE"
+    }
+  ]
+}
