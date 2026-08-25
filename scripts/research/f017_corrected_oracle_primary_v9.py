@@ -2,13 +2,16 @@
 """V9 primary wrapper over the unchanged binary64 pure core."""
 from __future__ import annotations
 
+import argparse
 import hashlib
+import json
 from pathlib import Path
 
 import f017_corrected_oracle_primary_numerics_v2 as numerical
 from f017_corrected_oracle_authorization_v9 import parse_candidate
 from f017_corrected_oracle_primary_target_source_v9 import source_from_inherited_descriptors
 from f017_descriptor_lease_manager_v9 import validate_descriptors
+from f017_canonical_serialization_v8 import bank_exclusive
 
 ROOT = Path(__file__).resolve().parents[2]; NUMERICAL = ROOT / "scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
 
@@ -22,7 +25,29 @@ def validate_candidate(path: Path) -> dict:
 
 def execute(candidate: dict, descriptors: list[dict], file_descriptors: list[int]) -> dict:
     validate_descriptors(descriptors, [item["size_bytes"] for item in candidate["shards"][1:]])
-    source, geometry, token, position, formats, shards = source_from_inherited_descriptors(candidate, descriptors, file_descriptors)
+    source, geometry, token, position = source_from_inherited_descriptors(candidate, descriptors, file_descriptors)
     result = numerical.execute(source, geometry, token, position); result.pop("result_sha256", None)
     return {"role": "PRIMARY", "layers_completed": len(result["layers"]), "result": result, "path_reopen_count": 0,
-            "descriptor_count": 5, "format_coverage": formats, "consumed_graph_shards": shards}
+            "descriptor_count": 5, "format_coverage": sorted(source.formats), "consumed_graph_shards": sorted(source.consumed),
+            "tensor_read_operations": source.tensor_reads}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(); parser.add_argument("--execute-installed", action="store_true")
+    parser.add_argument("--authorization", type=Path); parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--descriptors", type=Path); parser.add_argument("--fds"); parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    if not args.execute_installed or None in (args.authorization, args.receipt, args.descriptors, args.fds, args.output):
+        raise ValueError("primary target command")
+    candidate, _ = parse_candidate(args.authorization)
+    from validate_f017_corrected_oracle_access_v9 import validate_installed_operator_go, validate_installed_rehearsal
+    validator = validate_installed_operator_go if candidate["scope"] == "PRODUCTION_EVENT_04" else validate_installed_rehearsal
+    handshake = validator(args.authorization, args.receipt)
+    descriptor_document = json.loads(args.descriptors.read_bytes())
+    descriptors = descriptor_document["payload"]["descriptor_identities"] if type(descriptor_document) is dict and descriptor_document.get("artifact_kind") else descriptor_document
+    fds = [int(value) for value in args.fds.split(",")]
+    result = execute(handshake["candidate"], descriptors, fds); bank_exclusive(args.output, result)
+    return 0
+
+
+if __name__ == "__main__": raise SystemExit(main())

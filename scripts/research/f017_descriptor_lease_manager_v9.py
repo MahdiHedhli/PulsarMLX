@@ -62,6 +62,8 @@ class LeaseRecord:
     close_attempt_count: int = 0
     close_result: str | None = None
     close_event_sha256: str | None = None
+    pending_close_event: dict | None = None
+    close_evidence_error: str | None = None
 
     def __post_init__(self) -> None:
         if self.state not in STATES or type(self.descriptor) is not int or self.descriptor < 0:
@@ -70,6 +72,7 @@ class LeaseRecord:
 
 CloseFunction = Callable[[int, str], None]
 EventFunction = Callable[[dict], str]
+IdentityProgress = Callable[[str, int, str], None]
 
 
 @dataclass
@@ -100,6 +103,22 @@ class LeaseSet:
         attempted = successful = duplicates = 0
         events: list[dict] = []
         for record in self.records:
+            # A prior pass may have closed the descriptor successfully while
+            # durable close-event banking failed.  Recovery banks evidence
+            # only; it never closes the descriptor again.
+            if record.state == "CLOSED" and record.pending_close_event is not None and event_function is not None:
+                pending = dict(record.pending_close_event)
+                try:
+                    record.close_event_sha256 = event_function(pending)
+                except Exception as exc:
+                    record.close_evidence_error = type(exc).__name__
+                else:
+                    record.pending_close_event = None
+                    record.close_evidence_error = None
+                pending["close_event_sha256"] = record.close_event_sha256
+                pending["evidence_result"] = "PASS" if record.pending_close_event is None else "FAIL_BANKING"
+                events.append(pending); self.journal.append(dict(pending))
+                continue
             if record.state == "CLOSED":
                 continue
             if record.state == "CLOSE_FAILED" and not retry_failed:
@@ -120,10 +139,16 @@ class LeaseSet:
                 record.close_result = "FAIL_EBADF" if exc.errno == errno.EBADF else f"FAIL_ERRNO_{exc.errno}"
             event["result"] = record.close_result; event["state"] = record.state
             if event_function is not None:
-                record.close_event_sha256 = event_function(event)
+                try:
+                    record.close_event_sha256 = event_function(event)
+                except Exception as exc:
+                    record.pending_close_event = dict(event)
+                    record.close_evidence_error = type(exc).__name__
             event["close_event_sha256"] = record.close_event_sha256
+            event["evidence_result"] = "PASS" if record.pending_close_event is None else "FAIL_BANKING"
             events.append(event); self.journal.append(dict(event))
         live = [record.identity["lease_id"] for record in self.records if record.state != "CLOSED"]
+        pending_evidence = [record.identity["lease_id"] for record in self.records if record.pending_close_event is not None]
         return {
             "release_pass": self.release_passes, "expected_leases": 5, "attempted_closures": attempted,
             "successful_closures": successful, "duplicate_closures": duplicates,
@@ -131,7 +156,8 @@ class LeaseSet:
             "live_leases_after_release": len(live), "remaining_live_lease_ids": live,
             "lease_states": {record.identity["lease_id"]: record.state for record in self.records},
             "close_events": events, "idempotent_noop": attempted == 0,
-            "result": "PASS" if not live else "PARTIAL_FAILURE",
+            "pending_close_evidence": pending_evidence, "evidence_banking_failures": len(pending_evidence),
+            "result": "PASS" if not live and not pending_evidence else ("EVIDENCE_FAILURE" if not live else "PARTIAL_FAILURE"),
         }
 
 
@@ -181,7 +207,7 @@ def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict]:
     return resolved, manifest
 
 
-def acquire_synthetic_leases(candidate: dict) -> LeaseSet:
+def acquire_synthetic_leases(candidate: dict, progress: IdentityProgress | None = None) -> LeaseSet:
     if candidate.get("scope") != "SYNTHETIC_QUALIFICATION" or candidate.get("live") is not False:
         raise ValueError("V9 qualification leases require non-live synthetic authority")
     root, _ = _validate_synthetic_root(candidate)
@@ -194,6 +220,58 @@ def acquire_synthetic_leases(candidate: dict) -> LeaseSet:
                 observed_digest, metadata = _hash_descriptor(fd, shard["size_bytes"])
                 if observed_digest != shard["sha256"]:
                     raise ValueError("shard identity hash mismatch")
+                if progress is not None:
+                    progress("ACCESS_EVENT", ordinal, observed_digest)
+                    progress("SHARD_RECEIPT", ordinal, observed_digest)
+                if ordinal == 1:
+                    identity_only_digest = observed_digest
+                else:
+                    identity = {"device": metadata.st_dev, "inode": metadata.st_ino, "mode": metadata.st_mode,
+                                "size": metadata.st_size, "mtime_ns": metadata.st_mtime_ns, "ctime_ns": metadata.st_ctime_ns,
+                                "shard_ordinal": ordinal, "role": "GRAPH_PAYLOAD",
+                                "lease_id": f"LEASE-{candidate['package_attempt_id']}-{ordinal}"}
+                    records.append(LeaseRecord(identity, fd)); fd = -1; digests.append(observed_digest)
+            finally:
+                if fd >= 0:
+                    os.close(fd)
+        validate_descriptors([record.identity for record in records], [item["size_bytes"] for item in candidate["shards"][1:]])
+        return LeaseSet(records, identity_only_digest, digests)
+    except Exception:
+        for record in records:
+            try: os.close(record.descriptor)
+            except OSError: pass
+        raise
+    finally:
+        os.close(root_fd)
+
+
+def acquire_production_leases(candidate: dict, installation_receipt_sha256: str,
+                              progress: IdentityProgress | None = None) -> LeaseSet:
+    """Acquire six production shards after installed-authority validation.
+
+    This function is intentionally unreachable from rehearsal and synthetic
+    entry points.  It is the future Event-04 identity-stage primitive and is
+    never invoked during this no-access preparation phase.
+    """
+    if (candidate.get("scope") != "PRODUCTION_EVENT_04" or candidate.get("state") != "OPERATOR_APPROVED_CANDIDATE"
+            or type(installation_receipt_sha256) is not str or re.fullmatch(r"[0-9a-f]{64}", installation_receipt_sha256) is None):
+        raise ValueError("production lease authority")
+    root = Path(candidate["checkpoint_root"])
+    if not root.is_absolute() or root.is_symlink():
+        raise ValueError("production checkpoint root")
+    resolved = root.resolve(strict=True)
+    root_fd = os.open(resolved, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
+    try:
+        for ordinal, shard in enumerate(candidate["shards"], start=1):
+            fd = os.open(shard["filename"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_fd)
+            try:
+                observed_digest, metadata = _hash_descriptor(fd, shard["size_bytes"])
+                if observed_digest != shard["sha256"]:
+                    raise ValueError("production shard identity hash mismatch")
+                if progress is not None:
+                    progress("ACCESS_EVENT", ordinal, observed_digest)
+                    progress("SHARD_RECEIPT", ordinal, observed_digest)
                 if ordinal == 1:
                     identity_only_digest = observed_digest
                 else:

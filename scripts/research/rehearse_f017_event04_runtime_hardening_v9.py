@@ -18,7 +18,7 @@ from validate_f017_corrected_oracle_access_v9 import install_rehearsal_candidate
 
 ROOT = Path(__file__).resolve().parents[2]
 CHECKPOINT_METADATA = ROOT / "docs/validation/glm52-checkpoint.json"
-CATALOG = ROOT / "docs/research/glm52/raw/f016-c01-catalog-0001.json"
+CATALOG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json"
 PRODUCTION_ROOT = Path("/Users/mhedhli/Models/PulsarMLX/GLM-5.2-UD-IQ2_XXS")
 
 

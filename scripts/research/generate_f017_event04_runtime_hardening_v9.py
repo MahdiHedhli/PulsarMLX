@@ -64,8 +64,8 @@ def render() -> dict[Path, bytes]:
              "producer": binding(wrapper), "numerical_authority": binding(numerical), "descriptor_transport": "INHERITED_FILE_DESCRIPTORS",
              "descriptor_ordinals": [2, 3, 4, 5, 6], "all_descriptors_materially_consumed": True, "path_reopen_count": 0})
     active_binding = add("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v9.json",
-        {"schema": "pulsarmlx.f017.corrected-oracle-active-generation/9.0.0", "active_corrected_oracle_generation": "V9",
-         "activation_requires_whole_domain_acceptance": True, "event_04_operator_go_present": False,
+        {"schema": "pulsarmlx.f017.corrected-oracle-active-generation/9.0.0", "active_corrected_oracle_generation": "NONE",
+         "activation_candidate": "V9", "activation_requires_whole_domain_acceptance": True, "event_04_operator_go_present": False,
          "event_04_authorization_created": False, "event_04_executed": False,
          "superseded_live_generations": ["V1", "V2", "V3", "V6", "V7", "V8"]})
     scientific = {"schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/9.0.0",

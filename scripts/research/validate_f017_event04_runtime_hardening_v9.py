@@ -43,8 +43,12 @@ def validate() -> dict:
         if hashlib.sha256((ROOT / path).read_bytes()).hexdigest() != expected: raise ValueError("numerical authority drift")
     check = subprocess.run([sys.executable, str(ROOT / "scripts/research/generate_f017_event04_runtime_hardening_v9.py"), "--check"], cwd=ROOT, capture_output=True, text=True)
     if check.returncode != 0: raise ValueError("generator drift")
+    active = _load_binding(manifest["active_generation"])
+    if active.get("active_corrected_oracle_generation") != "NONE" or active.get("activation_candidate") != "V9":
+        raise ValueError("pre-acceptance activation posture")
     return {"schema": "pulsarmlx.f017.event04-runtime-hardening-validation/9.0.0", "result": "PASS", "did_closures": 12,
-            "graph_tensors": 1410, "non_access_tensors": 399, "active_generation": "V9", "original_checkpoint_access": 0}
+            "graph_tensors": 1410, "non_access_tensors": 399, "active_generation": "NONE",
+            "activation_candidate": "V9", "original_checkpoint_access": 0}
 
 
 if __name__ == "__main__": print(json.dumps(validate(), sort_keys=True, separators=(",", ":")))

@@ -1,46 +1,116 @@
 #!/usr/bin/env python3
-"""Test-only runtime transition fault injector for every V8-modeled outcome."""
+"""Test-only driver that faults actual V9 lifecycle transitions."""
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
-from f017_canonical_serialization_v8 import bank_exclusive
-
+import execute_f017_corrected_oracle_event_v9 as coordinator
+from f017_lifecycle_artifact_v8 import bank_runtime_artifact
+from f017_synthetic_checkpoint_v9 import prepare
+from validate_f017_corrected_oracle_access_v9 import install_rehearsal_candidate, render_rehearsal_candidate
 
 ROOT = Path(__file__).resolve().parents[2]
 DAG_PATH = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-causal-artifact-dag-v8.json"
 OUTCOMES_PATH = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-outcome-obligations-v8.json"
+OUTCOMES = json.loads(OUTCOMES_PATH.read_bytes())["outcomes"]
+NODES = {node["artifact_id"]: node for node in json.loads(DAG_PATH.read_bytes())["nodes"]}
+
+
+def _artifact_id(path: Path, kind: str) -> str | None:
+    if kind == "checkpoint_access_event":
+        return path.stem.replace("checkpoint-access-event-", "checkpoint_access_event_")
+    if kind == "checkpoint_shard_receipt":
+        return path.stem.replace("checkpoint-shard-receipt-", "checkpoint_shard_receipt_")
+    return kind if kind in NODES else None
+
+
+def _early_capsule(root: Path, outcome_id: str) -> None:
+    outcome = OUTCOMES[outcome_id]
+    artifact_id = next(item for item in outcome["required"] if item.startswith("failure_terminal_capsule__"))
+    payload = {"outcome_id": outcome_id, "classification": outcome["outcome_class"],
+               "failed_transition_id": outcome["failed_transition_id"],
+               "last_completed_transition_id": outcome["last_completed_artifact_id"],
+               "accounting": {"authorization": 0, "package": 0, "primary": 0, "secondary": 0,
+                              "historical_before": 175, "historical_after": 175},
+               "package_terminal_evidence": False, "generic_fallback": False, "mandatory_stop": True}
+    bank_runtime_artifact(root / f"{artifact_id}.json", artifact_id, payload)
 
 
 def realize(outcome_id: str, output_root: Path) -> dict:
-    """Bank the real durable prefix and inject the declared transition failure.
+    """Execute real authorizer/coordinator operations and fail after one rank."""
+    if outcome_id == "COMPLETE_SUCCESS" or outcome_id not in OUTCOMES:
+        raise ValueError("failure outcome ID")
+    outcome = OUTCOMES[outcome_id]; target_rank = outcome["durable_prefix_rank"]
+    output_root.mkdir(parents=True, exist_ok=False); pre = output_root / "prestate"; pre.mkdir()
+    checkpoint, shards, catalog, manifest = prepare(output_root, 18101, f"OUTCOME-{target_rank:03d}", False)
+    candidate_path = output_root / "candidate.json"; installed = output_root / "installed" / "authorization.json"
+    receipt = output_root / "installation-receipt.json"
 
-    The fault selector is accepted only by this test-only module; production
-    coordinator entry points do not import it or expose arbitrary fault input.
-    """
-    dag = json.loads(DAG_PATH.read_bytes()); outcomes = json.loads(OUTCOMES_PATH.read_bytes())["outcomes"]
-    if outcome_id == "COMPLETE_SUCCESS" or outcome_id not in outcomes: raise ValueError("failure outcome ID")
-    outcome = outcomes[outcome_id]; output_root.mkdir(parents=True, exist_ok=False)
-    required = set(outcome["required"]); created: list[str] = []
-    nodes = {node["artifact_id"]: node for node in dag["nodes"]}
-    ordered = sorted((nodes[artifact] for artifact in required if artifact in nodes), key=lambda item: item["creation_rank"])
-    for node in ordered:
-        payload = {"schema": "pulsarmlx.f017.runtime-transition-evidence/9.0.0", "artifact_id": node["artifact_id"],
-                   "artifact_kind": node["artifact_kind"], "transition_id": node["producer_transition_id"],
-                   "creation_rank": node["creation_rank"], "outcome_id": outcome_id, "result": "DURABLE_PREFIX"}
-        bank_exclusive(output_root / f"{node['artifact_id']}.json", payload); created.append(node["artifact_id"])
-    absent_required = sorted(required - set(created))
-    if absent_required: raise ValueError(f"unrealized required artifacts: {absent_required}")
-    forbidden_present = sorted(set(outcome["forbidden"]) & set(created))
-    if forbidden_present: raise ValueError("forbidden runtime artifact")
+    bank_runtime_artifact(pre / "operator_approval.json", "operator_approval", {"scope": "SYNTHETIC_FAULT_QUALIFICATION", "result": "PASS"})
+    if target_rank == 1:
+        _early_capsule(pre, outcome_id)
+    else:
+        rendered = render_rehearsal_candidate(checkpoint, shards, catalog, candidate_path, f"OUTCOME-{target_rank:03d}",
+                                               scope="SYNTHETIC_QUALIFICATION", manifest_path=manifest)
+        bank_runtime_artifact(pre / "candidate_authorization.json", "candidate_authorization",
+                              {"candidate_sha256": rendered["candidate_sha256"], "result": "PASS"})
+        if target_rank == 2:
+            _early_capsule(pre, outcome_id)
+        else:
+            bank_runtime_artifact(pre / "primary_candidate_validation.json", "primary_candidate_validation", rendered["primary"])
+            if target_rank == 3:
+                _early_capsule(pre, outcome_id)
+            else:
+                bank_runtime_artifact(pre / "secondary_candidate_validation.json", "secondary_candidate_validation", rendered["secondary"])
+                if target_rank == 4:
+                    _early_capsule(pre, outcome_id)
+                elif target_rank == 5:
+                    installed.parent.mkdir(parents=True)
+                    raw = candidate_path.read_bytes()
+                    with installed.open("xb") as sink:
+                        sink.write(raw); sink.flush(); os.fsync(sink.fileno())
+                    bank_runtime_artifact(pre / "installed_authorization.json", "installed_authorization",
+                                          {"installed_sha256": rendered["candidate_sha256"], "result": "PASS"})
+                    _early_capsule(pre, outcome_id)
+                else:
+                    installed_receipt = install_rehearsal_candidate(candidate_path, installed, receipt)
+                    bank_runtime_artifact(pre / "installed_authorization.json", "installed_authorization",
+                                          {"installed_sha256": rendered["candidate_sha256"], "result": "PASS"})
+                    bank_runtime_artifact(pre / "installation_receipt.json", "installation_receipt", installed_receipt)
+                    if target_rank == 6:
+                        _early_capsule(pre, outcome_id)
+                    else:
+                        original_bank = coordinator.bank_runtime_artifact
+                        injected = False
+                        def fault_bank(path: Path, kind: str, payload: dict) -> str:
+                            nonlocal injected
+                            digest = original_bank(path, kind, payload); artifact_id = _artifact_id(path, kind)
+                            if not injected and artifact_id is not None and NODES[artifact_id]["creation_rank"] == target_rank:
+                                injected = True
+                                raise coordinator.ModeledTransitionFailure(outcome_id)
+                            return digest
+                        coordinator.bank_runtime_artifact = fault_bank
+                        try:
+                            result = coordinator.execute_synthetic(installed, receipt, output_root / "runtime")
+                        finally:
+                            coordinator.bank_runtime_artifact = original_bank
+                        if result.get("outcome_id") != outcome_id or result.get("generic_fallback") is not False:
+                            raise ValueError("runtime did not realize selected modeled failure")
+
+    created: set[str] = set()
+    for path in output_root.rglob("*.json"):
+        try: value = json.loads(path.read_bytes())
+        except (OSError, ValueError): continue
+        kind = value.get("artifact_kind") if type(value) is dict else None
+        artifact_id = _artifact_id(path, kind) if type(kind) is str else None
+        if artifact_id in NODES: created.add(artifact_id)
+    required = set(outcome["required"]); forbidden_present = sorted(set(outcome["forbidden"]) & created)
+    missing = sorted(required - created)
+    if missing or forbidden_present:
+        raise ValueError(f"runtime outcome artifact mismatch missing={missing} forbidden={forbidden_present}")
     accounting = {"package": outcome["package_delta"], "primary": outcome["primary_delta"], "secondary": outcome["secondary_delta"]}
-    capsule = {"schema": "pulsarmlx.f017.runtime-failure-capsule/9.0.0", "outcome_id": outcome_id,
-               "failed_transition_id": outcome["failed_transition_id"], "last_completed_artifact_id": outcome["last_completed_artifact_id"],
-               "durable_prefix_rank": outcome["durable_prefix_rank"], "accounting": accounting,
-               "required_artifacts": sorted(required), "forbidden_artifacts": sorted(outcome["forbidden"]),
-               "live_leases_at_terminal": outcome["live_leases_at_terminal"], "generic_fallback": False, "result": "MODELED_FAILURE"}
-    bank_exclusive(output_root / "runtime-failure-capsule.json", capsule)
     return {"outcome_id": outcome_id, "failed_transition_id": outcome["failed_transition_id"], "created": sorted(created),
             "required": sorted(required), "forbidden_present": forbidden_present, "accounting": accounting,
             "generic_fallback": False, "result": "PASS"}

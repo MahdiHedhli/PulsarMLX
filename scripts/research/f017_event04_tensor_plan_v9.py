@@ -12,6 +12,7 @@ from f017_oracle_primary_decoders import LAYOUT
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "docs/research/glm52/raw/f016-c01-catalog-0001.json"
+CHECKPOINT_METADATA = ROOT / "docs/validation/glm52-checkpoint.json"
 SHARD_ORDINAL = {
     f"GLM-5.2-UD-IQ2_XXS-{ordinal:05d}-of-00006.gguf": ordinal
     for ordinal in range(1, 7)
@@ -40,6 +41,10 @@ def _byte_length(record: dict) -> int:
 
 def build_plan(catalog_path: Path = CATALOG) -> dict:
     document = json.loads(catalog_path.read_bytes())
+    metadata = json.loads(CHECKPOINT_METADATA.read_bytes())
+    shard_sizes = {SHARD_ORDINAL[item["filename"]]: item["size_bytes"] for item in metadata["files"]}
+    if set(shard_sizes) != set(range(1, 7)):
+        raise ValueError("production shard-size census")
     tensors = document.get("tensors")
     if type(tensors) is not list or len(tensors) != 1809:
         raise ValueError("production catalog census")
@@ -64,6 +69,8 @@ def build_plan(catalog_path: Path = CATALOG) -> dict:
         if record["semantic_role"] == "GRAPH":
             if ordinal not in range(2, 7) or type(offset) is not int or offset < 0:
                 raise ValueError("graph tensor shard or offset")
+            if offset + length > shard_sizes[ordinal]:
+                raise ValueError("graph tensor exceeds production shard")
             intervals[ordinal].append((offset, offset + length, source["name"]))
             graph.append(record)
         else:
@@ -81,6 +88,9 @@ def build_plan(catalog_path: Path = CATALOG) -> dict:
         "schema": "pulsarmlx.f017.corrected-oracle-production-tensor-plan/9.0.0",
         "catalog_path": str(catalog_path.relative_to(ROOT)),
         "catalog_sha256": hashlib.sha256(catalog_path.read_bytes()).hexdigest(),
+        "checkpoint_metadata_path": str(CHECKPOINT_METADATA.relative_to(ROOT)),
+        "checkpoint_metadata_sha256": hashlib.sha256(CHECKPOINT_METADATA.read_bytes()).hexdigest(),
+        "graph_shard_size_bytes": {str(ordinal): shard_sizes[ordinal] for ordinal in range(2, 7)},
         "graph_tensors": graph,
         "non_access_tensors": non_access,
         "graph_tensor_count": len(graph), "non_access_tensor_count": len(non_access),
@@ -99,8 +109,13 @@ def validate_plan(plan: dict) -> dict:
         raise ValueError("non-access tensor plan census")
     if plan.get("graph_shards") != [2, 3, 4, 5, 6] or plan.get("overlap_count") != 0:
         raise ValueError("tensor plan shard coverage")
+    sizes = plan.get("graph_shard_size_bytes")
+    if type(sizes) is not dict or set(sizes) != {"2", "3", "4", "5", "6"} or any(type(value) is not int or value <= 0 for value in sizes.values()):
+        raise ValueError("tensor plan shard-size authority")
     if any(item["semantic_role"] != "GRAPH" or item["shard_ordinal"] not in range(2, 7) for item in plan["graph_tensors"]):
         raise ValueError("graph plan role")
+    if any(item["byte_offset"] + item["byte_length"] > sizes[str(item["shard_ordinal"])] for item in plan["graph_tensors"]):
+        raise ValueError("graph plan bounds")
     if any(item["semantic_role"] != "NON_ACCESS" or item["primary_consumer_use"] or item["secondary_consumer_use"] for item in plan["non_access_tensors"]):
         raise ValueError("non-access plan role")
     return plan
