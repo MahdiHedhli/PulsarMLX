@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import copy
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
+
+RESEARCH = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(RESEARCH))
 
 from check_f017_descriptor_type_safety_v9 import _validate_descriptors as independent_validate
 from f017_corrected_oracle_event_accounting_v9 import validate_snapshot
