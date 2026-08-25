@@ -19,6 +19,7 @@ from f017_bounded_artifact_decode_v1 import (
 )
 from f017_canonical_serialization_v10 import canonical_bytes
 from execute_f017_corrected_oracle_event_v10 import _terminalize
+from check_f017_bounded_artifact_decode_policy_v1 import inspect_source
 
 
 def _authority(tmp_path: Path) -> AccountingRootAuthority:
@@ -162,6 +163,24 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         assert accounting["package"] == 0
     finally:
         authority.close()
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import json as backend\nbackend.loads(b'{}')\n",
+        "from json import loads\nloads(b'{}')\n",
+        "import json\ndecoder = json.loads\ndecoder(b'{}')\n",
+        "import json\nbackend = json\nbackend.loads(b'{}')\n",
+        "import json\ngetattr(json, 'loads')(b'{}')\n",
+        "import json\nglobals()['json'].loads(b'{}')\n",
+        "import importlib\nimportlib.import_module('json').loads(b'{}')\n",
+        "import json\njson.load(None)\n",
+    ],
+)
+def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
+    violations, _ = inspect_source("scripts/research/attacker_runtime.py", source)
+    assert violations
 
 
 def _nested(depth: int) -> bytes:

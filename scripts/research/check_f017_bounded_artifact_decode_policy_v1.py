@@ -57,30 +57,61 @@ def _containing_function(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str 
     return None
 
 
+def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
+    """Reject parser capabilities by semantic import/use shape, not spelling alone."""
+    tree = ast.parse(source, filename=relative)
+    parents = _parents(tree)
+    violations: list[dict] = []
+    direct_decode_sites: list[dict] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for item in node.names:
+                if item.name == "json" and item.asname is not None:
+                    violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ALIAS"})
+                if item.name == "importlib" or item.name.startswith("importlib."):
+                    violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
+        elif isinstance(node, ast.ImportFrom):
+            if node.module == "json":
+                violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MEMBER_IMPORT"})
+            if node.module == "importlib" or (node.module or "").startswith("importlib."):
+                violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {
+            "globals", "locals", "__import__",
+        }:
+            violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
+        if not isinstance(node, ast.Name) or node.id != "json":
+            continue
+        parent = parents.get(node)
+        if not isinstance(parent, ast.Attribute) or parent.value is not node:
+            violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ESCAPE"})
+            continue
+        member = parent.attr
+        grandparent = parents.get(parent)
+        direct_call = isinstance(grandparent, ast.Call) and grandparent.func is parent
+        if member == "dumps" and direct_call:
+            continue
+        if member == "JSONDecodeError" and relative == CANONICAL_PARSER:
+            continue
+        if member in {"load", "loads"} and direct_call:
+            function = _containing_function(parent, parents)
+            site = {"path": relative, "function": function, "line": parent.lineno, "member": member}
+            direct_decode_sites.append(site)
+            if member == "loads" and (
+                relative == CANONICAL_PARSER or (relative, function) in OFFLINE_ONLY_ALLOWANCE
+            ):
+                continue
+        violations.append({"path": relative, "line": node.lineno, "reason": "UNAUTHORIZED_JSON_CAPABILITY", "member": member})
+    return violations, direct_decode_sites
+
+
 def validate() -> dict:
     closure = _closure()
     violations: list[dict] = []
     direct_decode_sites: list[dict] = []
     for relative in sorted(closure):
-        tree = ast.parse((ROOT / relative).read_text(encoding="utf-8"), filename=relative)
-        parents = _parents(tree)
-        for node in ast.walk(tree):
-            if not (
-                isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Attribute)
-                and isinstance(node.func.value, ast.Name)
-                and node.func.value.id == "json"
-                and node.func.attr in {"load", "loads"}
-            ):
-                continue
-            function = _containing_function(node, parents)
-            site = {"path": relative, "function": function, "line": node.lineno, "member": node.func.attr}
-            direct_decode_sites.append(site)
-            if relative == CANONICAL_PARSER:
-                continue
-            if (relative, function) in OFFLINE_ONLY_ALLOWANCE:
-                continue
-            violations.append(site)
+        found, sites = inspect_source(relative, (ROOT / relative).read_text(encoding="utf-8"))
+        violations.extend(found)
+        direct_decode_sites.extend(sites)
     if violations:
         raise ValueError(f"direct active-runtime JSON parser surface: {violations}")
     accounting = (RESEARCH / "f017_corrected_oracle_event_accounting_v10.py").read_text(encoding="utf-8")
