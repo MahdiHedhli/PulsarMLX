@@ -418,6 +418,47 @@ jobs:
           assert rehearsal["authority_reconciliation_result"] == "PASS"
           assert rehearsal["all_implementation_bindings_equal_measurement_manifest"] is True
           PY
+          .venv/bin/python scripts/research/generate_f017_lifecycle_v8_implementation_authorities.py
+          git diff --exit-code -- \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-v8-implementation-authority-manifest.json \
+            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v8.json
+          .venv/bin/python scripts/research/validate_f017_lifecycle_v8_implementation.py
+          .venv/bin/python scripts/research/test_f017_lifecycle_causal_design_v8.py
+          .venv/bin/python scripts/research/test_f017_lifecycle_v8_implementation.py
+          .venv/bin/python scripts/research/qualify_f017_lifecycle_v8.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v8.json"
+          .venv/bin/python scripts/research/rehearse_f017_corrected_oracle_event04_v8.py \
+            --output "$RUNNER_TEMP/f017-event04-v8-rehearsal.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          lifecycle = json.loads((root / "f017-corrected-oracle-lifecycle-v8.json").read_text())
+          rehearsal = json.loads((root / "f017-event04-v8-rehearsal.json").read_text())
+          assert lifecycle["result"] == "PASS"
+          assert lifecycle["successful_package_count"] == 20
+          assert lifecycle["minimal_f32_package_count"] == 10
+          assert lifecycle["mixed_format_package_count"] == 10
+          assert lifecycle["terminal_outcome_class_fresh_process_repetitions"] == 5
+          assert lifecycle["runtime_descriptor_mutations_rejected"] >= 40
+          assert lifecycle["total_v8_design_and_runtime_mutations_rejected"] >= 256
+          assert lifecycle["mutation_unexpected_passes"] == 0
+          assert lifecycle["original_checkpoint_shard_opens"] == 0
+          assert lifecycle["original_checkpoint_payload_reads"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["candidate_installed_byte_identity"] is True
+          assert rehearsal["type_safety_probes_rejected"] >= 40
+          assert rehearsal["state_created"] is False
+          assert rehearsal["checkpoint_shard_opens"] == 0
+          assert rehearsal["checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          assert rehearsal["event_04_authorization_created"] is False
+          PY
           .venv/bin/python scripts/research/qualify_f017_quantization_matrix_v1.py \
             --binary target/release/quant_native_matvec_probe \
             --output "$RUNNER_TEMP/f017-quant-matrix.json"
