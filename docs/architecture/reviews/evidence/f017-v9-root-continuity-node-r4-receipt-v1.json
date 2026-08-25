@@ -1,0 +1,10 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v1.json", "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10.json", "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10.json"],
+  "claims_closed": [], "claims_introduced": ["C-QUAL-001", "C-QUAL-002", "C-QUAL-003", "C-QUAL-004", "C-QUAL-005"], "claims_invalidated": [],
+  "commands_executed": ["qualify_f017_v10_root_continuity_bounded_decode_v1.py", "qualify_f017_event04_runtime_hardening_v10.py", "rehearse_f017_event04_runtime_hardening_v10.py"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01", "input_authority_shas": {"implementation_measurement": "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v2.json"},
+  "input_head": "bfc51ca95fc87d6f7f52d87860fd3260f393093d", "next_eligible_edges": ["R5"], "node_id": "R4", "output_head": "bfc51ca95fc87d6f7f52d87860fd3260f393093d", "result": "PASS",
+  "result_counts": {"cross_product_cases": 6, "decode_attack_cases": 204, "modeled_outcome_executions": 235, "modeled_outcomes_realized": 47, "root_attack_cases": 252, "root_decode_success_packages": 60, "runtime_hardening_success_packages": 50, "substantive_root_decode_cases": 757},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0", "tests_executed": ["full root continuity campaign", "full bounded decode campaign", "all modeled outcomes", "retained V9 hardening suite through V10", "production-shaped no-access rehearsal"]
+}
