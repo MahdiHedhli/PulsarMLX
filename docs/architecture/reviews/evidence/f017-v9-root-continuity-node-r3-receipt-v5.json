@@ -1,0 +1,19 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["scripts/research/execute_f017_corrected_oracle_event_v10.py", "scripts/research/f017_runtime_outcome_realizer_v10.py", "scripts/research/tests/test_f017_root_continuity_bounded_decode_v1.py", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v10.json"],
+  "claims_closed": [],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": ["generate_f017_v10_root_continuity_authority_v1.py --check", "validate_f017_event04_implementation_measurement_v10.py --head a47ad745942f412f83e15b15fd006f5915c1fc02", "check_f017_bounded_artifact_decode_policy_v1.py", "pytest V10 root/decode runtime: 80 passed"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"prior_r3_receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v4.json"},
+  "input_head": "bc0484c87fe92db2b035ab007b8839079bd23e36",
+  "next_eligible_edges": ["R4"],
+  "node_id": "R3",
+  "output_head": "a47ad745942f412f83e15b15fd006f5915c1fc02",
+  "repair": "DESCRIPTOR_RELATIVE_POST_BIND_BANKING_AND_RETAINED_ACCOUNTING_SUCCESS",
+  "result": "PASS",
+  "result_counts": {"focused_tests_passed": 80, "implementation_bindings": 43, "runtime_import_closure": 32},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["post-bind path recreation regression", "descriptor-relative lifecycle banking", "retained-root success accounting", "47-outcome causal fault injection"]
+}
