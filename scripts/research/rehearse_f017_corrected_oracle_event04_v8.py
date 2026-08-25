@@ -54,6 +54,16 @@ def rehearse(output: Path) -> dict:
         result = {
             "schema": "pulsarmlx.f017.corrected-oracle-event04-production-shaped-rehearsal/8.0.0",
             "result": "PASS",
+            "implementation_shas": {
+                name: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+                for name, relative in {
+                    "authorizer": "scripts/research/validate_f017_corrected_oracle_access_v8.py",
+                    "coordinator": "scripts/research/execute_f017_corrected_oracle_event_v8.py",
+                    "lease_manager": "scripts/research/f017_descriptor_lease_manager_v8.py",
+                    "primary_wrapper": "scripts/research/f017_corrected_oracle_primary_v8.py",
+                    "secondary_wrapper": "scripts/research/f017_corrected_oracle_secondary_v8.py",
+                }.items()
+            },
             "authority": False,
             "operator_go": False,
             "active_generation_during_rehearsal": "NONE",

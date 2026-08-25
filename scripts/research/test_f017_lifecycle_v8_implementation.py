@@ -23,6 +23,15 @@ class LifecycleV8ImplementationTests(unittest.TestCase):
                 self.assertEqual(result["release"]["live_leases_after_release"], 0)
                 self.assertEqual(result["primary"]["path_reopen_count"], 0)
                 self.assertEqual(result["secondary"]["path_reopen_count"], 0)
+                for artifact in (
+                    "package-claim.json", "package-durable-start.json", "package-ledger-entry.json",
+                    "descriptor-lease-manifest.json", "checkpoint-identity-terminal.json",
+                    "primary-durable-start.json", "primary-ledger-entry.json", "primary-receipt.json", "primary-terminal.json",
+                    "secondary-durable-start.json", "secondary-ledger-entry.json", "secondary-receipt.json", "secondary-terminal.json",
+                    "comparison-receipt.json", "comparison-terminal.json", "descriptor-release.json",
+                    "package-receipt.json", "package-terminal.json",
+                ):
+                    self.assertTrue((root / "evidence" / artifact).is_file(), artifact)
 
     def test_malformed_runtime_artifacts_are_controlled(self):
         for mutation in ("MODE_65536", "NON_DICT", "UNHASHABLE_LEASE"):
@@ -34,6 +43,16 @@ class LifecycleV8ImplementationTests(unittest.TestCase):
                 self.assertEqual(result["failure_class"], "ValueError")
                 self.assertEqual(result["accounting"]["primary"], 0)
                 self.assertEqual(result["accounting"]["secondary"], 0)
+
+    def test_filesystem_error_is_normalized(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            installed, receipt, shards = prepare(root, 18105, "FAIL-SHARD-MISSING")
+            (root / "checkpoint" / shards[2]["filename"]).unlink()
+            result = execute_synthetic(installed, receipt, root / "evidence")
+            self.assertEqual(result["result"], "CONTROLLED_FAILURE")
+            self.assertEqual(result["failure_class"], "ValueError")
+            self.assertEqual(result["source_exception_class"], "FileNotFoundError")
 
     def test_no_active_or_live_authority(self):
         with tempfile.TemporaryDirectory() as raw:

@@ -71,6 +71,16 @@ def qualify(output: Path) -> dict:
     result = {
         "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-v8-synthetic-qualification/1.0.0",
         "result": "PASS",
+        "implementation_shas": {
+            name: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+            for name, relative in {
+                "authorizer": "scripts/research/validate_f017_corrected_oracle_access_v8.py",
+                "coordinator": "scripts/research/execute_f017_corrected_oracle_event_v8.py",
+                "lease_manager": "scripts/research/f017_descriptor_lease_manager_v8.py",
+                "primary_wrapper": "scripts/research/f017_corrected_oracle_primary_v8.py",
+                "secondary_wrapper": "scripts/research/f017_corrected_oracle_secondary_v8.py",
+            }.items()
+        },
         "successful_package_count": len(packages),
         "minimal_f32_package_count": sum(item["kind"] == "MINIMAL_F32" for item in packages),
         "mixed_format_package_count": sum(item["kind"] == "MIXED_FORMAT" for item in packages),
