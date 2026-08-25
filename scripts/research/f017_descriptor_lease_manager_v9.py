@@ -219,7 +219,10 @@ def acquire_synthetic_leases(candidate: dict, progress: IdentityProgress | None 
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:
         for ordinal, shard in enumerate(candidate["shards"], start=1):
-            fd = os.open(shard["filename"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_fd)
+            try:
+                fd = os.open(shard["filename"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_fd)
+            except OSError as exc:
+                raise ValueError(f"synthetic shard open failed: {ordinal}") from exc
             try:
                 observed_digest, metadata = _hash_descriptor(fd, shard["size_bytes"], require_single_link=True)
                 if observed_digest != shard["sha256"]:
@@ -271,7 +274,10 @@ def acquire_production_leases(candidate: dict, installation_receipt_sha256: str,
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:
         for ordinal, shard in enumerate(candidate["shards"], start=1):
-            fd = os.open(shard["filename"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_fd)
+            try:
+                fd = os.open(shard["filename"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_fd)
+            except OSError as exc:
+                raise ValueError(f"production shard open failed: {ordinal}") from exc
             try:
                 observed_digest, metadata = _hash_descriptor(fd, shard["size_bytes"])
                 if observed_digest != shard["sha256"]:

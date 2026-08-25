@@ -151,25 +151,35 @@ def qualify(output: Path) -> dict:
         for outcome_id in sorted(name for name in outcomes if name != "COMPLETE_SUCCESS"):
             repeats = 5 if outcome_id in high_risk else 3
             for repetition in range(repeats): runtime_outcomes.append(realize(outcome_id, root / f"{outcome_id}-{repetition}"))
+    realized_outcomes = {item["outcome_id"] for item in runtime_outcomes}
+    coordinator_outcomes = {item["outcome_id"] for item in runtime_outcomes
+                            if item["capsule_source"] == "COORDINATOR_CAUSAL_BANK_INJECTION"}
+    authorizer_outcomes = {item["outcome_id"] for item in runtime_outcomes
+                           if item["capsule_source"] == "AUTHORIZER_PHASE_DIRECT_TERMINALIZATION"}
+    accounting_mismatches = sum(item["accounting"] != {"package": outcomes[item["outcome_id"]]["package_delta"],
+                                                        "primary": outcomes[item["outcome_id"]]["primary_delta"],
+                                                        "secondary": outcomes[item["outcome_id"]]["secondary_delta"]}
+                                for item in runtime_outcomes)
+    uncontrolled = sum(item["result"] != "PASS" or item["generic_fallback"] is not False for item in runtime_outcomes)
+    if realized_outcomes != set(outcomes) - {"COMPLETE_SUCCESS"} or len(coordinator_outcomes) + len(authorizer_outcomes) != len(realized_outcomes):
+        raise ValueError("runtime outcome realization census")
     plan = validate_plan(build_plan()); release_faults = _release_faults(); accounting = _accounting_mutations(); descriptor = _descriptor_mutations()
     result = {"schema": "pulsarmlx.f017.event04-runtime-hardening-qualification/9.0.0", "result": "PASS",
               "successful_package_count": len(success), "minimal_package_count": 15, "mixed_package_count": 15,
               "route_variation_package_count": 10, "descriptor_distribution_package_count": 10,
               "primary_consumed_shards": [2, 3, 4, 5, 6], "secondary_consumed_shards": [2, 3, 4, 5, 6],
               "formats": FORMATS, "path_reopen_count": 0, "live_leases_after_success_terminal": 0,
-              "runtime_failure_outcomes_realized": 47, "runtime_failure_executions": len(runtime_outcomes),
-              "runtime_coordinator_outcomes_realized": len({item["outcome_id"] for item in runtime_outcomes
-                                                               if item["capsule_source"] == "COORDINATOR_CAUSAL_BANK_INJECTION"}),
-              "runtime_authorizer_phase_outcomes_realized": len({item["outcome_id"] for item in runtime_outcomes
-                                                                  if item["capsule_source"] == "AUTHORIZER_PHASE_DIRECT_TERMINALIZATION"}),
+              "runtime_failure_outcomes_realized": len(realized_outcomes), "runtime_failure_executions": len(runtime_outcomes),
+              "runtime_coordinator_outcomes_realized": len(coordinator_outcomes),
+              "runtime_authorizer_phase_outcomes_realized": len(authorizer_outcomes),
               "runtime_generic_fallbacks": sum(item["generic_fallback"] for item in runtime_outcomes),
-              "runtime_accounting_mismatches": 0, "release_fault_cases": len(release_faults),
+              "runtime_accounting_mismatches": accounting_mismatches, "release_fault_cases": len(release_faults),
               "accounting_mutations_rejected": len(accounting), "multi_shard_and_descriptor_mutations_rejected": len(descriptor),
               "deterministic_core_repetitions": len(reproducibility), "deterministic_core_sha256": hashlib.sha256(core_bytes[0]).hexdigest(),
               "deterministic_core_unique_byte_sequences": len(set(core_bytes)), "volatile_envelopes_isolated": True,
               "production_graph_tensor_plan": plan["graph_tensor_count"], "non_access_tensors_rejected": plan["non_access_tensor_count"],
               "production_graph_shards": plan["graph_shards"], "production_formats": plan["formats"],
-              "independent_c7_n2_regressions": len(descriptor), "uncontrolled_modeled_failures": 0,
+              "independent_c7_n2_regressions": len(descriptor), "uncontrolled_modeled_failures": uncontrolled,
               "original_checkpoint_shard_opens": 0, "original_checkpoint_identity_hash_reads": 0,
               "original_checkpoint_payload_reads": 0, "event_04_authorization_created": False, "event_04_executed": False,
               "p1_attempt_2_executed": False}

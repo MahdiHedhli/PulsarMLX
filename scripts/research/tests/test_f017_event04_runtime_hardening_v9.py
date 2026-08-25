@@ -25,7 +25,7 @@ from f017_synthetic_checkpoint_v9 import prepare
 from execute_f017_corrected_oracle_event_v9 import execute_event04
 import validate_f017_corrected_oracle_access_v9 as authorizer
 from f017_memory_gate_v9 import THRESHOLD_BYTES
-from f017_corrected_oracle_authorization_v9 import parse_candidate_bytes, production_shards
+from f017_corrected_oracle_authorization_v9 import _memory_gate, parse_candidate_bytes, production_shards
 from f017_canonical_serialization_v8 import canonical_bytes
 
 
@@ -33,6 +33,16 @@ def descriptors() -> list[dict]:
     return [{"device": 1, "inode": 1000 + ordinal, "mode": 0o100600, "size": 10 + ordinal,
              "mtime_ns": 1, "ctime_ns": 1, "shard_ordinal": ordinal, "role": "GRAPH_PAYLOAD",
              "lease_id": f"LEASE-F017-V9-UNIT-{ordinal}"} for ordinal in range(2, 7)]
+
+
+def production_receipt(emergency: Path, fallback: Path) -> dict:
+    return {"schema": "pulsarmlx.f017.corrected-oracle-installation-receipt/9.0.0", "authority": True,
+            "installation_kind": "CANONICAL_EVENT04_NO_REPLACE", "authorization_id": "F017-EVENT04-AUTHORIZATION-04",
+            "package_attempt_id": "F017-EVENT04-PACKAGE-04", "candidate_sha256": "0" * 64,
+            "installed_sha256": "0" * 64, "installed_path": "/future/installed.json",
+            "operator_approval_sha256": "1" * 64, "execution_readiness_declaration_sha256": "2" * 64,
+            "emergency_evidence_root": str(emergency), "terminal_fallback_evidence_root": str(fallback),
+            "candidate_install_bytes_equal": True, "result": "PASS"}
 
 
 @pytest.mark.parametrize("value", [None, [], (), set(), 1, True, "", b""])
@@ -95,11 +105,31 @@ def test_accounting_snapshot_fails_closed() -> None:
 
 def test_production_preparse_failure_is_terminalized_in_bound_fallback(tmp_path: Path) -> None:
     installed = tmp_path / "installed.json"; installed.write_bytes(b"not-json\n")
-    receipt = tmp_path / "receipt.json"; receipt.write_bytes(b"not-json\n")
     fallback = tmp_path / "emergency"; fallback.mkdir(mode=0o700)
-    result = execute_event04(installed, receipt, tmp_path / "state", fallback)
+    terminal_fallback = tmp_path / "terminal-fallback"; terminal_fallback.mkdir(mode=0o700)
+    receipt = tmp_path / "receipt.json"; receipt.write_bytes(canonical_bytes(production_receipt(fallback, terminal_fallback)))
+    result = execute_event04(installed, receipt, tmp_path / "state", fallback, terminal_fallback)
     assert result["result"] == "CONTROLLED_FAILURE" and result["generic_fallback"] is True
     assert (fallback / "failure-terminal-capsule.json").is_file()
+    assert result["terminal_evidence"]["target"] == "PRIMARY"
+
+
+def test_production_terminalization_uses_second_bound_root_on_collision_or_symlink(tmp_path: Path) -> None:
+    installed = tmp_path / "installed.json"; installed.write_bytes(b"not-json\n")
+    emergency = tmp_path / "emergency"; emergency.mkdir(); (emergency / "failure-terminal-capsule.json").write_text("occupied")
+    fallback = tmp_path / "terminal-fallback"; fallback.mkdir()
+    receipt = tmp_path / "receipt.json"; receipt.write_bytes(canonical_bytes(production_receipt(emergency, fallback)))
+    result = execute_event04(installed, receipt, tmp_path / "state", emergency, fallback)
+    assert result["terminal_evidence"]["result"] == "PASS" and result["terminal_evidence"]["target"] == "FALLBACK"
+    assert (fallback / "failure-terminal-capsule.json").is_file()
+
+    second_target = tmp_path / "symlink-target"; second_target.mkdir()
+    symlink = tmp_path / "symlink-emergency"; symlink.symlink_to(second_target, target_is_directory=True)
+    second_fallback = tmp_path / "second-fallback"; second_fallback.mkdir()
+    receipt.write_bytes(canonical_bytes(production_receipt(symlink, second_fallback)))
+    result = execute_event04(installed, receipt, tmp_path / "second-state", symlink, second_fallback)
+    assert result["terminal_evidence"]["target"] == "FALLBACK"
+    assert not (second_target / "failure-terminal-capsule.json").exists()
 
 
 def test_modeled_failure_requires_independent_transition_observation() -> None:
@@ -137,8 +167,8 @@ def test_future_live_candidate_is_renderable_but_not_authority(tmp_path: Path, m
     bank_exclusive(readiness, {"schema": "pulsarmlx.f017.event04-execution-readiness-declaration/9.0.0",
                                "F017_CORRECTED_ORACLE_EVENT04_EXECUTION_READINESS": "ACCEPTED",
                                "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EXECUTION_GO": "YES",
-                               "ACTIVE_CORRECTED_ORACLE_GENERATION": "V9", "accepted_implementation_head": "f" * 40,
-                               "accepted_authority_manifest_sha256": "b" * 64, "accepted_at_unix_ns": now})
+                               "ACTIVE_CORRECTED_ORACLE_GENERATION": "V9", "accepted_implementation_head": authorizer._implementation_head(),
+                               "accepted_authority_manifest_sha256": authorizer._sha(authorizer.RUNTIME_MANIFEST), "accepted_at_unix_ns": now})
     approval = tmp_path / "approval.json"; shards = production_shards(); readiness_sha = hashlib.sha256(readiness.read_bytes()).hexdigest()
     bank_exclusive(approval, {"schema": "pulsarmlx.f017.corrected-oracle-event04-operator-approval/9.0.0",
         "result": "APPROVED_FOR_ONE_EVENT_04", "active_generation": "V9",
@@ -147,7 +177,9 @@ def test_future_live_candidate_is_renderable_but_not_authority(tmp_path: Path, m
         "checkpoint_root": "/future/operator/approved/checkpoint", "shards": shards,
         "canonical_authorization_path": str(tmp_path / "canonical" / "authorization.json"),
         "installation_receipt_path": str(tmp_path / "canonical" / "receipt.json"),
-        "emergency_evidence_root": str(tmp_path / "emergency"), "authority_manifest_sha256": "a" * 64,
+        "emergency_evidence_root": str(tmp_path / "emergency"),
+        "terminal_fallback_evidence_root": str(tmp_path / "terminal-fallback"),
+        "authority_manifest_sha256": authorizer._sha(authorizer.RUNTIME_MANIFEST),
         "readiness_declaration_sha256": readiness_sha, "approved_at_unix_ns": now,
         "approval_expires_at_unix_ns": now + 60_000_000_000})
     output = tmp_path / "candidate.json"
@@ -158,6 +190,22 @@ def test_future_live_candidate_is_renderable_but_not_authority(tmp_path: Path, m
     delayed = copy.deepcopy(result["candidate"])
     delayed["mint_memory_gate"]["observation"]["observed_at_unix_ns"] -= 120_000_000_000
     assert parse_candidate_bytes(canonical_bytes(delayed))["scope"] == "PRODUCTION_EVENT_04"
+
+    alias = Path("/tmp") / tmp_path.relative_to("/private/tmp") / "noncanonical" if str(tmp_path).startswith("/private/tmp/") else None
+    if alias is not None and str(alias.resolve(strict=False)) != str(alias):
+        alias_approval = json.loads(approval.read_bytes()); alias_approval["canonical_authorization_path"] = str(alias)
+        alias_path = tmp_path / "alias-approval.json"; bank_exclusive(alias_path, alias_approval)
+        with pytest.raises(ValueError, match="must be canonical"):
+            authorizer.render_operator_go_candidate(alias_path, readiness, plan, tmp_path / "alias-candidate.json")
+
+    bad_readiness_value = json.loads(readiness.read_bytes())
+    bad_readiness_value["accepted_implementation_head"] = "0" * 40
+    bad_readiness = tmp_path / "bad-readiness.json"; bank_exclusive(bad_readiness, bad_readiness_value)
+    rebound_approval = json.loads(approval.read_bytes())
+    rebound_approval["readiness_declaration_sha256"] = hashlib.sha256(bad_readiness.read_bytes()).hexdigest()
+    rebound_path = tmp_path / "rebound-approval.json"; bank_exclusive(rebound_path, rebound_approval)
+    with pytest.raises(ValueError, match="accepted implementation authority binding"):
+        authorizer.render_operator_go_candidate(rebound_path, bad_readiness, plan, tmp_path / "bad-head-candidate.json")
 
 
 def test_live_candidate_rejects_non_authoritative_shard_census(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -177,7 +225,8 @@ def test_live_candidate_rejects_non_authoritative_shard_census(tmp_path: Path, m
         "mint_memory_gate": {"result":"PASS","enforced":True,"threshold_bytes":THRESHOLD_BYTES,"sample_age_ns":0,"observation":gate},
         "operator_approval_path": "/future/approval", "operator_approval_sha256":"5"*64,
         "canonical_authorization_path":"/future/authorization", "installation_receipt_path":"/future/receipt",
-        "emergency_evidence_root":"/future/emergency", "authority_manifest_sha256":"6"*64,
+        "emergency_evidence_root":"/future/emergency", "terminal_fallback_evidence_root":"/future/terminal-fallback",
+        "authority_manifest_sha256":"6"*64,
         "execution_readiness_declaration_path":"/future/readiness", "execution_readiness_declaration_sha256":"7"*64}
     value["shards"][1]["size_bytes"] += 1
     with pytest.raises(ValueError, match="live checkpoint shard authority"):
@@ -196,10 +245,26 @@ def test_live_candidate_malformed_memory_gate_fails_controlled(gate: object) -> 
         "synthetic_root_manifest_sha256": None, "tensor_catalog_path": "/future/plan", "tensor_catalog_sha256": "4"*64,
         "mint_memory_gate": gate, "operator_approval_path": "/future/approval", "operator_approval_sha256":"5"*64,
         "canonical_authorization_path":"/future/authorization", "installation_receipt_path":"/future/receipt",
-        "emergency_evidence_root":"/future/emergency", "authority_manifest_sha256":"6"*64,
+        "emergency_evidence_root":"/future/emergency", "terminal_fallback_evidence_root":"/future/terminal-fallback",
+        "authority_manifest_sha256":"6"*64,
         "execution_readiness_declaration_path":"/future/readiness", "execution_readiness_declaration_sha256":"7"*64}
     with pytest.raises(ValueError):
         parse_candidate_bytes(canonical_bytes(value))
+
+
+@pytest.mark.parametrize("field,value", [("threshold_bytes", 0), ("threshold_bytes", True),
+                                           ("sample_age_ns", -1), ("sample_age_ns", True),
+                                           ("sample_age_ns", 60_000_000_001)])
+def test_immutable_memory_gate_scalars_are_exact(field: str, value: object) -> None:
+    now = __import__("time").time_ns()
+    observation = {"parser_version": "UNIT", "page_size_bytes": 16384, "pages_free": 0, "pages_inactive": 0,
+                   "pages_speculative": 0, "pages_purgeable": 0, "available_bytes": THRESHOLD_BYTES,
+                   "canonical_observation": "UNIT", "stdout_sha256": "0" * 64, "observed_at_unix_ns": now}
+    gate = {"result": "PASS", "enforced": True, "threshold_bytes": THRESHOLD_BYTES,
+            "sample_age_ns": 0, "observation": observation}
+    gate[field] = value
+    with pytest.raises(ValueError, match="scalar binding"):
+        _memory_gate(gate, live_posture=True)
 
 
 def test_synthetic_manifest_catalog_binding_and_hardlinks_fail_closed(tmp_path: Path) -> None:

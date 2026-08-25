@@ -53,6 +53,7 @@ def render() -> dict[Path, bytes]:
                "release_states": ["OPEN", "CLOSE_ATTEMPTED", "CLOSED", "CLOSE_FAILED", "UNKNOWN"],
                "release_artifacts": ["descriptor_release_start", "descriptor_close_event", "descriptor_release_report", "descriptor_release_receipt", "descriptor_release_terminal"],
                "accounting_source": "VALIDATED_DURABLE_START_ARTIFACTS", "runtime_failure_outcomes": 47,
+               "terminalization_roots": "DUAL_INSTALLER_CREATED_AUTHORIZATION_BOUND_NO_REPLACE_DIRECTORIES",
                "synthetic_root_authority": "STRUCTURAL_MANIFEST_AND_CANONICAL_ROOT", "memory_gates": ["MINT_TIME", "PACKAGE_START"],
                "numerical_semantics_changed": False, "original_checkpoint_access": 0}
     runtime_binding = add("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-hardening-v9.json", runtime)
@@ -86,6 +87,8 @@ def render() -> dict[Path, bytes]:
     template_binding = add("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-execution-go-template-v9.json",
         {"schema": "pulsarmlx.f017.corrected-oracle-event04-execution-go-template/9.0.0", "state": "INERT_TEMPLATE_NOT_APPROVAL",
          "operator_approval_id": None, "authorization_id": None, "package_attempt_id": None, "primary_event_id": None, "secondary_event_id": None,
+         "checkpoint_root": None, "shards": None, "canonical_authorization_path": None, "installation_receipt_path": None,
+         "emergency_evidence_root": None, "terminal_fallback_evidence_root": None,
          "scientific_access": scientific_binding, "runtime_hardening": runtime_binding, "attempts": 1, "retries": 0, "resume": False,
          "event_04_authorization_created": False, "event_04_executed": False})
     add("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v9.json",

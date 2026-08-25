@@ -11,6 +11,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+import subprocess
 import time
 from pathlib import Path
 
@@ -23,6 +25,8 @@ from f017_memory_gate_v9 import observe
 
 ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION_PLAN = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json"
+RUNTIME_MANIFEST = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v9.json"
+READINESS_MAX_AGE_NS = 30 * 24 * 60 * 60 * 1_000_000_000
 READINESS_KEYS = {"schema", "F017_CORRECTED_ORACLE_EVENT04_EXECUTION_READINESS",
                   "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EXECUTION_GO",
                   "ACTIVE_CORRECTED_ORACLE_GENERATION", "accepted_implementation_head",
@@ -30,6 +34,26 @@ READINESS_KEYS = {"schema", "F017_CORRECTED_ORACLE_EVENT04_EXECUTION_READINESS",
 
 
 def _sha(path: Path) -> str: return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _implementation_head() -> str:
+    manifest = strict_bytes(RUNTIME_MANIFEST.read_bytes())
+    if type(manifest) is not dict or type(manifest.get("implementation")) is not dict:
+        raise ValueError("runtime authority manifest")
+    paths = [binding["path"] for binding in manifest["implementation"].values()]
+    value = subprocess.check_output(["git", "log", "-1", "--format=%H", "--", *paths], cwd=ROOT, text=True).strip()
+    if re.fullmatch(r"[0-9a-f]{40}", value) is None:
+        raise ValueError("implementation measurement head")
+    return value
+
+
+def _canonical_future_path(value: object, name: str) -> str:
+    if type(value) is not str:
+        raise ValueError(f"{name} type")
+    path = Path(value)
+    if not path.is_absolute() or str(path.resolve(strict=False)) != value:
+        raise ValueError(f"{name} must be canonical")
+    return value
 
 
 def render_rehearsal_candidate(checkpoint_root: Path, shards: list[dict], catalog_path: Path,
@@ -112,6 +136,7 @@ def render_operator_go_candidate(approval_path: Path, readiness_path: Path, cata
     approval_keys = {"schema", "result", "active_generation", "authorization_id", "package_attempt_id",
                      "primary_event_id", "secondary_event_id", "checkpoint_root", "shards",
                      "canonical_authorization_path", "installation_receipt_path", "emergency_evidence_root",
+                     "terminal_fallback_evidence_root",
                      "authority_manifest_sha256", "readiness_declaration_sha256", "approved_at_unix_ns",
                      "approval_expires_at_unix_ns"}
     if type(approval) is not dict or set(approval) != approval_keys or approval["schema"] != "pulsarmlx.f017.corrected-oracle-event04-operator-approval/9.0.0":
@@ -136,6 +161,20 @@ def render_operator_go_candidate(approval_path: Path, readiness_path: Path, cata
         raise ValueError("operator approval freshness")
     if approval["readiness_declaration_sha256"] != readiness_sha:
         raise ValueError("operator approval/readiness binding")
+    manifest_sha = _sha(RUNTIME_MANIFEST)
+    if (type(readiness["accepted_implementation_head"]) is not str
+            or readiness["accepted_implementation_head"] != _implementation_head()
+            or type(readiness["accepted_authority_manifest_sha256"]) is not str
+            or readiness["accepted_authority_manifest_sha256"] != manifest_sha
+            or approval["authority_manifest_sha256"] != manifest_sha
+            or not 0 <= now - readiness["accepted_at_unix_ns"] <= READINESS_MAX_AGE_NS):
+        raise ValueError("accepted implementation authority binding")
+    _canonical_future_path(approval["checkpoint_root"], "checkpoint_root")
+    path_fields = ("canonical_authorization_path", "installation_receipt_path", "emergency_evidence_root",
+                   "terminal_fallback_evidence_root")
+    canonical_paths = [_canonical_future_path(approval[name], name) for name in path_fields]
+    if len(set(canonical_paths)) != len(canonical_paths):
+        raise ValueError("operator approval path uniqueness")
     if catalog_path.resolve() != PRODUCTION_PLAN.resolve() or approval["shards"] != production_shards():
         raise ValueError("operator approval checkpoint authority")
     plan_raw = catalog_path.read_bytes()
@@ -156,6 +195,7 @@ def render_operator_go_candidate(approval_path: Path, readiness_path: Path, cata
         "canonical_authorization_path": approval["canonical_authorization_path"],
         "installation_receipt_path": approval["installation_receipt_path"],
         "emergency_evidence_root": approval["emergency_evidence_root"],
+        "terminal_fallback_evidence_root": approval["terminal_fallback_evidence_root"],
         "authority_manifest_sha256": approval["authority_manifest_sha256"],
         "execution_readiness_declaration_path": str(readiness_path.resolve()),
         "execution_readiness_declaration_sha256": readiness_sha,
@@ -179,6 +219,10 @@ def install_operator_go_candidate(candidate_path: Path) -> dict:
     receipt_path = Path(candidate["installation_receipt_path"])
     if installed_path.exists() or receipt_path.exists():
         raise FileExistsError("Event-04 authority or receipt already exists")
+    emergency = Path(candidate["emergency_evidence_root"])
+    terminal_fallback = Path(candidate["terminal_fallback_evidence_root"])
+    for root in (emergency, terminal_fallback):
+        root.parent.mkdir(parents=True, exist_ok=True); root.mkdir(mode=0o700, exist_ok=False)
     raw = candidate_path.read_bytes(); installed_path.parent.mkdir(parents=True, exist_ok=True)
     with installed_path.open("xb") as sink:
         sink.write(raw); sink.flush(); os.fsync(sink.fileno())
@@ -188,8 +232,6 @@ def install_operator_go_candidate(candidate_path: Path) -> dict:
     readback = installed_path.read_bytes()
     if readback != raw or sha256_bytes(readback) != report["candidate_sha256"]:
         raise ValueError("production candidate/install byte identity")
-    emergency = Path(candidate["emergency_evidence_root"])
-    emergency.parent.mkdir(parents=True, exist_ok=True); emergency.mkdir(mode=0o700, exist_ok=False)
     receipt = {"schema": "pulsarmlx.f017.corrected-oracle-installation-receipt/9.0.0", "authority": True,
                "installation_kind": "CANONICAL_EVENT04_NO_REPLACE", "authorization_id": candidate["authorization_id"],
                "package_attempt_id": candidate["package_attempt_id"], "candidate_sha256": report["candidate_sha256"],
@@ -197,6 +239,7 @@ def install_operator_go_candidate(candidate_path: Path) -> dict:
                "operator_approval_sha256": candidate["operator_approval_sha256"],
                "execution_readiness_declaration_sha256": candidate["execution_readiness_declaration_sha256"],
                "emergency_evidence_root": str(emergency.resolve()),
+               "terminal_fallback_evidence_root": str(terminal_fallback.resolve()),
                "candidate_install_bytes_equal": True, "result": "PASS"}
     receipt_sha = bank_exclusive(receipt_path, receipt)
     return {**receipt, "receipt_sha256": receipt_sha}
@@ -209,7 +252,7 @@ def validate_installed_operator_go(installed_path: Path, receipt_path: Path) -> 
     receipt = strict_bytes(receipt_path.read_bytes())
     expected = {"schema", "authority", "installation_kind", "authorization_id", "package_attempt_id", "candidate_sha256",
                 "installed_sha256", "installed_path", "operator_approval_sha256", "execution_readiness_declaration_sha256",
-                "emergency_evidence_root",
+                "emergency_evidence_root", "terminal_fallback_evidence_root",
                 "candidate_install_bytes_equal", "result"}
     if type(receipt) is not dict or set(receipt) != expected or receipt["authority"] is not True or receipt["result"] != "PASS":
         raise ValueError("production installation receipt")
@@ -219,7 +262,8 @@ def validate_installed_operator_go(installed_path: Path, receipt_path: Path) -> 
             or receipt["package_attempt_id"] != candidate["package_attempt_id"]
             or receipt["operator_approval_sha256"] != candidate["operator_approval_sha256"]
             or receipt["execution_readiness_declaration_sha256"] != candidate["execution_readiness_declaration_sha256"]
-            or receipt["emergency_evidence_root"] != candidate["emergency_evidence_root"]):
+            or receipt["emergency_evidence_root"] != candidate["emergency_evidence_root"]
+            or receipt["terminal_fallback_evidence_root"] != candidate["terminal_fallback_evidence_root"]):
         raise ValueError("production installation binding")
     return {"result": "PASS", "authority": True, "candidate": candidate, "candidate_sha256": digest,
             "installation_receipt_sha256": sha256_bytes(receipt_path.read_bytes()), "checkpoint_opens": 0, "checkpoint_reads": 0}

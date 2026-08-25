@@ -494,6 +494,11 @@ jobs:
           rehearsal = json.loads((root / "f017-event04-runtime-hardening-rehearsal-v9.json").read_text())
           assert qualification["result"] == "PASS"
           assert qualification["runtime_failure_outcomes_realized"] == 47
+          assert qualification["runtime_coordinator_outcomes_realized"] == 41
+          assert qualification["runtime_authorizer_phase_outcomes_realized"] == 6
+          assert qualification["runtime_failure_executions"] == 201
+          assert qualification["runtime_accounting_mismatches"] == 0
+          assert qualification["uncontrolled_modeled_failures"] == 0
           assert qualification["primary_consumed_shards"] == [2, 3, 4, 5, 6]
           assert qualification["secondary_consumed_shards"] == [2, 3, 4, 5, 6]
           assert qualification["production_graph_tensor_plan"] == 1410

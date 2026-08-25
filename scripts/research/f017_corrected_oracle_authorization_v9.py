@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from f017_canonical_serialization_v8 import sha256_bytes, strict_bytes
-from f017_memory_gate_v9 import validate_observation
+from f017_memory_gate_v9 import MAX_AGE_NS, THRESHOLD_BYTES, validate_observation
 
 
 SCHEMA = "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/9.0.0"
@@ -18,6 +18,7 @@ KEYS = {"schema", "state", "live", "scope", "authority_generation", "authorizati
         "tensor_catalog_path", "tensor_catalog_sha256", "mint_memory_gate"}
 LIVE_KEYS = KEYS | {"operator_approval_path", "operator_approval_sha256", "canonical_authorization_path",
                     "installation_receipt_path", "emergency_evidence_root", "authority_manifest_sha256",
+                    "terminal_fallback_evidence_root",
                     "execution_readiness_declaration_path", "execution_readiness_declaration_sha256"}
 ID_PATTERN = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,126}[A-Z0-9])?")
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,6 +29,9 @@ def _memory_gate(value: object, *, live_posture: bool) -> None:
     keys = {"result", "enforced", "threshold_bytes", "sample_age_ns", "observation"}
     if type(value) is not dict or set(value) != keys or type(value["observation"]) is not dict:
         raise ValueError("mint memory gate census")
+    if (type(value["threshold_bytes"]) is not int or value["threshold_bytes"] != THRESHOLD_BYTES
+            or type(value["sample_age_ns"]) is not int or not 0 <= value["sample_age_ns"] <= MAX_AGE_NS):
+        raise ValueError("mint memory gate scalar binding")
     observation = value["observation"]
     if live_posture:
         if value["result"] != "PASS" or value["enforced"] is not True:
@@ -104,7 +108,8 @@ def parse_candidate_bytes(raw: bytes) -> dict:
         if value["synthetic_root_manifest_path"] is not None or value["synthetic_root_manifest_sha256"] is not None:
             raise ValueError("live authority must not carry synthetic authority")
         for name in ("operator_approval_path", "canonical_authorization_path", "installation_receipt_path",
-                     "emergency_evidence_root", "execution_readiness_declaration_path"):
+                     "emergency_evidence_root", "terminal_fallback_evidence_root",
+                     "execution_readiness_declaration_path"):
             if type(value[name]) is not str or not Path(value[name]).is_absolute():
                 raise ValueError(f"live authority path: {name}")
         for name in ("operator_approval_sha256", "authority_manifest_sha256", "execution_readiness_declaration_sha256"):
