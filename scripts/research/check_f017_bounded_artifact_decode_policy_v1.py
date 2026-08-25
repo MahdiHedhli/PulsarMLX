@@ -20,6 +20,7 @@ OFFLINE_ONLY_ALLOWANCE = {
     ("scripts/research/qualify_f017_quantization_matrix_v1.py", "invoke"),
 }
 SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
+CAPABILITY_EXPORT_NAMES = {"builtins", "importlib", "json", "os", "sys"}
 DYNAMIC_CAPABILITY_ATTRIBUTES = {
     "__bases__", "__builtins__", "__class__", "__dict__", "__getattribute__",
     "__globals__", "__mro__", "__subclasses__", "modules", "sys",
@@ -62,6 +63,23 @@ def _containing_function(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> str 
     return None
 
 
+def _name_agnostic_decode_sites(relative: str, tree: ast.AST, parents: dict[ast.AST, ast.AST]) -> list[dict]:
+    """Census direct load/loads calls without trusting receiver provenance."""
+    sites: list[dict] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Attribute) or node.attr not in {"load", "loads"}:
+            continue
+        parent = parents.get(node)
+        if isinstance(parent, ast.Call) and parent.func is node:
+            sites.append({
+                "path": relative,
+                "function": _containing_function(node, parents),
+                "line": node.lineno,
+                "member": node.attr,
+            })
+    return sites
+
+
 def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
     """Reject parser capabilities by semantic import/use shape, not spelling alone."""
     tree = ast.parse(source, filename=relative)
@@ -84,6 +102,16 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
         elif isinstance(node, ast.ImportFrom):
             if node.level != 0:
                 violations.append({"path": relative, "line": node.lineno, "reason": "RELATIVE_IMPORT_PROHIBITED"})
+            for item in node.names:
+                if item.name in CAPABILITY_EXPORT_NAMES:
+                    violations.append({
+                        "path": relative,
+                        "line": node.lineno,
+                        "reason": "CAPABILITY_REEXPORT_IMPORT",
+                        "member": item.name,
+                    })
+                    if item.name in {"json", "sys", "builtins"}:
+                        semantic_modules[item.asname or item.name] = item.name
             if node.module in {"json", "sys", "builtins"}:
                 violations.append({"path": relative, "line": node.lineno, "reason": "CAPABILITY_MEMBER_IMPORT", "module": node.module})
             if node.module == "importlib" or (node.module or "").startswith("importlib."):
@@ -165,9 +193,24 @@ def validate() -> dict:
     violations: list[dict] = []
     direct_decode_sites: list[dict] = []
     for relative in sorted(closure):
-        found, sites = inspect_source(relative, (ROOT / relative).read_text(encoding="utf-8"))
+        source = (ROOT / relative).read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=relative)
+        parents = _parents(tree)
+        found, _ = inspect_source(relative, source)
         violations.extend(found)
+        sites = _name_agnostic_decode_sites(relative, tree, parents)
         direct_decode_sites.extend(sites)
+        for site in sites:
+            if site["member"] == "loads" and (
+                relative == CANONICAL_PARSER or (relative, site["function"]) in OFFLINE_ONLY_ALLOWANCE
+            ):
+                continue
+            violations.append({
+                "path": relative,
+                "line": site["line"],
+                "reason": "NAME_AGNOSTIC_DIRECT_DECODE_SITE",
+                "member": site["member"],
+            })
     if violations:
         raise ValueError(f"direct active-runtime JSON parser surface: {violations}")
     accounting = (RESEARCH / "f017_corrected_oracle_event_accounting_v10.py").read_text(encoding="utf-8")

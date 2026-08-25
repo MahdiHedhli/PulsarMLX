@@ -12,6 +12,7 @@ sys.path.insert(0, str(RESEARCH))
 
 from f017_accounting_root_continuity_v1 import AccountingRootAuthority, open_directory_no_symlinks
 import f017_accounting_root_continuity_v1 as root_continuity
+import check_f017_bounded_artifact_decode_policy_v1 as decode_policy
 from f017_bounded_artifact_decode_v1 import (
     ArtifactDecodeError,
     ArtifactLimits,
@@ -195,11 +196,32 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "eval(compile('import json; json.loads(\\\"{}\\\")', '<x>', 'exec'))\n",
         "exec('import json; json.loads(\\\"{}\\\")')\n",
         "from .attacker import decoder\ndecoder(b'{}')\n",
+        "from f017_bounded_artifact_decode_v1 import json\njson.loads(b'{}')\n",
+        "from f017_canonical_serialization_v10 import json\njson.loads(b'{}')\n",
+        "from f017_bounded_artifact_decode_v1 import json as backend\nbackend.loads(b'{}')\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
     violations, _ = inspect_source("scripts/research/attacker_runtime.py", source)
     assert violations
+
+
+def test_direct_parser_policy_rejects_first_party_reexport_end_to_end(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    research = tmp_path / "scripts" / "research"
+    research.mkdir(parents=True)
+    (research / "entry.py").write_text("import helper\n", encoding="utf-8")
+    (research / "helper.py").write_text(
+        "from f017_bounded_artifact_decode_v1 import json\njson.loads(b'{}')\n",
+        encoding="utf-8",
+    )
+    (research / "f017_bounded_artifact_decode_v1.py").write_text("import json\n", encoding="utf-8")
+    monkeypatch.setattr(decode_policy, "ROOT", tmp_path)
+    monkeypatch.setattr(decode_policy, "RESEARCH", research)
+    monkeypatch.setattr(decode_policy, "ENTRY_PATHS", {"scripts/research/entry.py"})
+    with pytest.raises(ValueError, match="direct active-runtime JSON parser surface"):
+        decode_policy.validate()
 
 
 @pytest.mark.parametrize("source", ["import sys\nprint(sys.executable)\n", "import sys\nprint('x', file=sys.stderr)\n"])
