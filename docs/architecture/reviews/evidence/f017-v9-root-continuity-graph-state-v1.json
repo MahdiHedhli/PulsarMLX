@@ -1,5 +1,5 @@
 {
-  "active_frontier": "R5",
+  "active_frontier": "R6",
   "authoritative_branch": "feat/017-rust-native-inference-runtime",
   "authoritative_head": "90338840c94118651a85c695af22de780437663b",
   "authoritative_tree": "d6280da09a95d4e8e6684d732cbcdc242fcf950d",
@@ -11,8 +11,8 @@
     "R2": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v1.json", "status": "PASS"},
     "R3": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v6.json", "status": "PASS"},
     "R4": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r4-receipt-v5.json", "status": "PASS"},
-    "R5": {"receipt": null, "status": "RUNNING"},
-    "R6": {"receipt": null, "status": "PENDING"},
+    "R5": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v1.json", "status": "PASS"},
+    "R6": {"receipt": null, "status": "RUNNING"},
     "R7": {"receipt": null, "status": "PENDING"},
     "R8": {"receipt": null, "status": "PENDING"},
     "R9_FINAL_AUTHORITY_RECONCILIATION": {"receipt": null, "status": "PENDING"},

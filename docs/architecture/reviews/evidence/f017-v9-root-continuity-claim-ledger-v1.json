@@ -101,6 +101,15 @@
     },
     {
       "arbiter_verdict": null, "challenge_status": "NOT_REVIEWED", "claim_id": "C-QUAL-005", "depends_on": ["C-QUAL-001", "C-QUAL-002", "C-QUAL-003", "C-QUAL-004"], "introduced_by_node": "R4", "invalidates_nodes": ["R4", "R5", "R6", "R7", "R8", "R9_FINAL_AUTHORITY_RECONCILIATION"], "proof_artifacts": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v5.json", "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v5.json"], "readiness_critical": true, "scope": "CHECKPOINT_ACCESS_ISOLATION", "statement": "Original checkpoint access remains zero.", "status": "SUPPORTED", "support_status": "SUPPORTED_BY_R4", "test_evidence": ["original shard opens 0", "identity hash reads 0", "payload reads 0"]
+    },
+    {
+      "arbiter_verdict": null, "challenge_status": "NOT_REVIEWED", "claim_id": "C-CI-001", "depends_on": ["C-QUAL-001", "C-QUAL-002", "C-QUAL-003", "C-QUAL-004", "C-QUAL-005"], "introduced_by_node": "R5", "invalidates_nodes": ["R5", "R6", "R7", "R8", "R9_FINAL_AUTHORITY_RECONCILIATION"], "proof_artifacts": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v1.json"], "readiness_critical": true, "scope": "EXACT_HEAD_FULL_NATIVE_CI", "statement": "Exact-head FULL_NATIVE CI passes.", "status": "SUPPORTED", "support_status": "SUPPORTED_BY_R5", "test_evidence": ["GitHub Actions run 32846168712", "workspace and pinned native MLX jobs PASS"]
+    },
+    {
+      "arbiter_verdict": null, "challenge_status": "NOT_REVIEWED", "claim_id": "C-CI-002", "depends_on": ["C-CI-001"], "introduced_by_node": "R5", "invalidates_nodes": ["R5", "R6", "R7", "R8", "R9_FINAL_AUTHORITY_RECONCILIATION"], "proof_artifacts": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v1.json"], "readiness_critical": true, "scope": "NATIVE_SKIP_CENSUS", "statement": "Required native skips equal zero.", "status": "SUPPORTED", "support_status": "SUPPORTED_BY_R5", "test_evidence": ["PULSAR_REQUIRE_NATIVE_MLX=1 native lane PASS", "native_required_skips 0"]
+    },
+    {
+      "arbiter_verdict": null, "challenge_status": "NOT_REVIEWED", "claim_id": "C-CI-003", "depends_on": ["C-CI-001", "C-REF-003"], "introduced_by_node": "R5", "invalidates_nodes": ["R5", "R6", "R7", "R8", "R9_FINAL_AUTHORITY_RECONCILIATION"], "proof_artifacts": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v1.json"], "readiness_critical": true, "scope": "HISTORICAL_ACTIVE_CI_SEPARATION", "statement": "Historical validation and active validation remain separated.", "status": "SUPPORTED", "support_status": "SUPPORTED_BY_R5", "test_evidence": ["historical Git-object reconstruction PASS", "active V10 validation PASS"]
     }
   ],
   "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",

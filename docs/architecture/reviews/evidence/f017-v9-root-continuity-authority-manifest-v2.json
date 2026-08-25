@@ -1,0 +1,30 @@
+{
+  "artifacts": [
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-graph-state-v1.json", "role": "GRAPH_STATE_R6_ENTRY", "sha256": "0462fd9fe35205d2c93102d5e10f82af0ac8e90a78265a5a637f644dc611d04e"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v1.json", "role": "CLAIM_LEDGER_25_SUPPORTED", "sha256": "eabb2d1f3570dc00c543033f1cf79e30a82cb790c9caefd715810eb5b7df46d3"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v1.json", "role": "CHALLENGE_LEDGER_PRE_REVIEW", "sha256": "14fb4cbc23eb201b62dec0fff2fe132ae282138a7cd8a26a6dddffbc56386576"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json", "role": "SUPPORT_LEDGER_PRE_REVIEW", "sha256": "e9504919cdd5913956c79f252f8c22c30f6a40e63fcc0fa40602640f0fb5893c"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v1.json", "role": "ARBITER_LEDGER_PRE_REVIEW", "sha256": "2e097105a08e361077a40ff2d5bea73df4c9e0d379b45e4e21eadb67c74e8b22"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json", "role": "R0_RECEIPT", "sha256": "6d5e29890f61a3f3600269d99fe4cb51099324943751b35bd482a9eff5ab85b0"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r1-receipt-v1.json", "role": "R1_RECEIPT", "sha256": "6aff5552481a9024d795116c7dd3992f014930631fa74d3bbdc72575c4e832ae"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v1.json", "role": "R2_RECEIPT", "sha256": "cf648cea6736b53bac5fc1a3c2065adb69a620b6495cbdc89c54fbaf5b254893"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v6.json", "role": "R3_RECEIPT", "sha256": "ec01556ccca948bb1c2d994509b99416685f742833996312129dc630448dddb0"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r4-receipt-v5.json", "role": "R4_RECEIPT", "sha256": "bf2f1855afb927e0d23e294796e651eee2d162775458bb7f436e14dd95b55652"},
+    {"path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v1.json", "role": "R5_RECEIPT", "sha256": "3d7cc90161fbbd11f3d157acac7958e662435f0ba2c6a083fb041bee288180f4"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json", "role": "ROOT_CONTINUITY_CONTRACT", "sha256": "07be4b4d1dd36ea9ce28d36f021f009b3395f18f4f06ee9bfd620ba6ec60ca89"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json", "role": "BOUNDED_DECODE_CONTRACT", "sha256": "aac349bac8b9191561a0b4bde9cf67b1688aae7086f3660c86f7d391bb9da5e8"},
+    {"path": "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v6.json", "role": "IMPLEMENTATION_MEASUREMENT", "sha256": "0d3dc8d2a97bc8519336fc7d11ded279b7a930f1e7a757a46dab2eb82b8655d0"},
+    {"path": "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v5.json", "role": "OVERNIGHT_ROOT_DECODE_QUALIFICATION", "sha256": "76be58e7211281c4d8ca257f97c6b5d73e7cb9d47e2843525d284a4610f08e1a"},
+    {"path": "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v5.json", "role": "RETAINED_RUNTIME_QUALIFICATION", "sha256": "92e89d4b897d0fa427a093ea68be3a578311ff14a66bf12da3e1b3b1fee2046f"},
+    {"path": "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v5.json", "role": "PRODUCTION_SHAPED_NO_ACCESS_REHEARSAL", "sha256": "748409afe6b2c4b20c4b3634815fcba29e735733a0fd0b1f27912f721a0a17af"},
+    {"path": "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v1.json", "role": "EXACT_HEAD_FULL_NATIVE_CI", "sha256": "2eb34ac87ba1e2c41527cdb968ff2a21130aca3785f7ceeb990c89ad85ef7803"}
+  ],
+  "authoritative_evidence_head": "5f74e8c461f681d86b3af7068a5a96c4b2dad8c5",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "implementation_head": "ce46483776154bc92ac3b59ea339cb7fceb2f84a",
+  "implementation_tree": "80166e1ad4c77b9b3d431d5d23dd30b8def1c278",
+  "original_checkpoint_access": 0,
+  "readiness_critical_claim_count": 25,
+  "schema": "pulsarmlx.f017.v9-root-continuity-authority-manifest/2.0.0",
+  "status": "R6_CHALLENGE_PACKET_READY"
+}
