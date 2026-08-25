@@ -278,7 +278,7 @@ def test_complete_runtime_import_closure_is_byte_bound(monkeypatch: pytest.Monke
     assert len(closure) == 32 and closure.issubset(bound_paths)
     head = authorizer._implementation_head(); manifest_sha = authorizer._sha(authorizer.RUNTIME_MANIFEST)
     report = authorizer._validate_implementation_authority(head, manifest_sha)
-    assert report["runtime_import_closure_count"] == 30
+    assert report["runtime_import_closure_count"] == 32
     original = Path.read_bytes
     target = (authorizer.ROOT / "scripts/research/f017_canonical_serialization_v10.py").resolve()
     def altered(path: Path) -> bytes:
