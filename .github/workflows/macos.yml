@@ -372,33 +372,40 @@ jobs:
           cmp \
             "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v3.json" \
             docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json
-          .venv/bin/python scripts/research/generate_f017_lifecycle_v6_authorities.py --check
-          .venv/bin/python scripts/research/validate_f017_lifecycle_semantic_authority_v6.py
-          .venv/bin/python scripts/research/check_f017_lifecycle_v6_independent.py
-          .venv/bin/python scripts/research/validate_f017_event04_authority_reconciliation_v1.py \
-            --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json \
-            --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json \
-            --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json \
-            --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json \
-            --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json \
-            --run-mutations
-          .venv/bin/python -m pytest -q \
-            scripts/research/test_f017_lifecycle_semantics_v6.py \
-            scripts/research/test_f017_lifecycle_v6_implementation.py
-          .venv/bin/python scripts/research/qualify_f017_corrected_oracle_target_adapters_v6.py \
-            --repeats 10 \
-            --output "$RUNNER_TEMP/f017-corrected-oracle-target-adapters-v6.json"
-          .venv/bin/python scripts/research/qualify_f017_lifecycle_v6.py \
-            --success-repeats 10 \
-            --failure-repeats 5 \
-            --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v6.json"
-          .venv/bin/python scripts/research/rehearse_f017_event04_authority_reconciliation_v1.py \
-            --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json \
-            --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json \
-            --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json \
-            --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json \
-            --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json \
-            --output "$RUNNER_TEMP/f017-event04-authority-reconciliation-rehearsal-v1.json"
+          WORKSPACE_ROOT="$PWD"
+          V6_HISTORICAL_HEAD=ccf76d95ff33b333d2d40e29181a926528bc8ca6
+          V6_HISTORICAL_WORKTREE="$RUNNER_TEMP/f017-v6-historical"
+          git worktree add --detach "$V6_HISTORICAL_WORKTREE" "$V6_HISTORICAL_HEAD"
+          (
+            cd "$V6_HISTORICAL_WORKTREE"
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/generate_f017_lifecycle_v6_authorities.py --check
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/validate_f017_lifecycle_semantic_authority_v6.py
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/check_f017_lifecycle_v6_independent.py
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/validate_f017_event04_authority_reconciliation_v1.py \
+              --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json \
+              --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json \
+              --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json \
+              --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json \
+              --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json \
+              --run-mutations
+            "$WORKSPACE_ROOT/.venv/bin/python" -m pytest -q \
+              scripts/research/test_f017_lifecycle_semantics_v6.py \
+              scripts/research/test_f017_lifecycle_v6_implementation.py
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/qualify_f017_corrected_oracle_target_adapters_v6.py \
+              --repeats 10 \
+              --output "$RUNNER_TEMP/f017-corrected-oracle-target-adapters-v6.json"
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/qualify_f017_lifecycle_v6.py \
+              --success-repeats 10 \
+              --failure-repeats 5 \
+              --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v6.json"
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/rehearse_f017_event04_authority_reconciliation_v1.py \
+              --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json \
+              --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json \
+              --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json \
+              --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json \
+              --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json \
+              --output "$RUNNER_TEMP/f017-event04-authority-reconciliation-rehearsal-v1.json"
+          )
           .venv/bin/python - <<'PY'
           import json
           import os
