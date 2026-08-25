@@ -1,0 +1,57 @@
+{
+  "active_frontier": "R8_CYCLE_02",
+  "authoritative_branch": "feat/017-rust-native-inference-runtime",
+  "authoritative_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+  "authoritative_tree": "3ca962a7205e3dea9ca27217fce4100d87d14bfe",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "historical_master_ledger": 175,
+  "nodes": {
+    "R0": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json",
+      "status": "PASS"
+    },
+    "R1": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r1-receipt-v4.json",
+      "status": "PASS"
+    },
+    "R2": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v5.json",
+      "status": "PASS"
+    },
+    "R3": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v10.json",
+      "status": "PASS"
+    },
+    "R4": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r4-receipt-v9.json",
+      "status": "PASS"
+    },
+    "R5": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v5.json",
+      "status": "PASS"
+    },
+    "R6": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r6-receipt-v3.json",
+      "status": "PASS"
+    },
+    "R7": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r7-receipt-v4.json",
+      "status": "PASS"
+    },
+    "R8": {
+      "receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r8-receipt-v1.json",
+      "status": "RUNNING"
+    },
+    "R9_FINAL_AUTHORITY_RECONCILIATION": {
+      "receipt": null,
+      "status": "PENDING"
+    },
+    "R9_NO_GO_CLOSEOUT": {
+      "receipt": null,
+      "status": "PENDING"
+    }
+  },
+  "original_checkpoint_access": 0,
+  "schema": "pulsarmlx.f017.v9-root-continuity-graph-state/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v9-root-continuity-graph-state-v5.json"
+}

@@ -1,0 +1,76 @@
+{
+  "challenges": [
+    {
+      "affected_artifacts": ["scripts/research/f017_accounting_root_continuity_v1.py"],
+      "attack": "Non-serializable terminal payload escapes the primary and fallback terminalization arms as TypeError.",
+      "challenge_id": "O-PRE-C01-001",
+      "claim_id": "C-ROOT-005",
+      "expected_behavior": "Return the maximal constructible no-durable-write result with controlled error evidence.",
+      "mutation_or_trace": "bank_terminal_artifact(..., {\"bad\": object()})",
+      "observed_behavior": "Repaired implementation records TypeError for both bound roots and returns MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE.",
+      "repair_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "severity": "BLOCKING_CANDIDATE",
+      "status": "CLOSED_SUPPORTED"
+    },
+    {
+      "affected_artifacts": ["scripts/research/f017_accounting_root_continuity_v1.py"],
+      "attack": "Constructor failure after retaining one or two directory descriptors leaks package-lifetime authority handles.",
+      "challenge_id": "O-PRE-C01-002",
+      "claim_id": "C-IMPL-001",
+      "expected_behavior": "Constructor failure closes every descriptor acquired before the failure.",
+      "mutation_or_trace": "Inject failure from directory-identity binding after both directory opens.",
+      "observed_behavior": "Repaired constructor initializes all descriptors to -1 and closes every acquired descriptor on any construction exception.",
+      "repair_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "severity": "DEFENSE_IN_DEPTH_CANDIDATE",
+      "status": "CLOSED_SUPPORTED"
+    },
+    {
+      "affected_artifacts": ["scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"],
+      "attack": "Dynamic execution through eval, exec, or compile reconstructs an unreviewed direct JSON decoder.",
+      "challenge_id": "O-PRE-C01-003",
+      "claim_id": "C-JSON-005",
+      "expected_behavior": "Reject dynamic execution capabilities in every active runtime import-closure module.",
+      "mutation_or_trace": "eval(compile('import json; json.loads(...)', ...)) and exec(...)",
+      "observed_behavior": "Repaired source policy rejects compile, eval, and exec calls.",
+      "repair_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "severity": "BLOCKING_CANDIDATE",
+      "status": "CLOSED_SUPPORTED"
+    },
+    {
+      "affected_artifacts": ["scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"],
+      "attack": "The import-closure traversal does not follow relative imports.",
+      "challenge_id": "O-PRE-C01-004",
+      "claim_id": "C-JSON-005",
+      "expected_behavior": "No active module may introduce a relative-import edge outside the measured absolute import closure.",
+      "mutation_or_trace": "from .attacker import decoder",
+      "observed_behavior": "Relative imports are now prohibited by the independent source policy; the measured closure remains 32 modules.",
+      "repair_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "severity": "DEFENSE_IN_DEPTH_CANDIDATE",
+      "status": "CLOSED_SUPPORTED"
+    },
+    {
+      "affected_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json"
+      ],
+      "attack": "The 235 and 201 modeled-failure execution counts appear inconsistent.",
+      "challenge_id": "O-PRE-C01-005",
+      "claim_id": "C-QUAL-003",
+      "expected_behavior": "The two qualification families document their distinct repetition policies and both cover all 47 outcomes.",
+      "mutation_or_trace": "Compare modeled_outcome_executions with runtime_failure_executions.",
+      "observed_behavior": "Root/decode qualification uses exactly five executions for each of 47 outcomes (235); retained runtime qualification uses five for high-risk and three for the remaining outcomes (201); both realize 47 of 47.",
+      "repair_head": null,
+      "severity": "EVIDENCE_CLARIFICATION_CANDIDATE",
+      "status": "CLOSED_SUPPORTED"
+    }
+  ],
+  "cycle": "OPUS_PRE_ARBITER_01",
+  "exact_response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-01-exact-response.json",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "original_checkpoint_access_observed": 0,
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v4.json",
+  "reviewed_head": "1c5356adcd32895e22c14cf1423a1de25c8803ce",
+  "reviewer_model": "claude-opus-5",
+  "schema": "pulsarmlx.f017.v9-root-continuity-challenge-ledger/1.0.0",
+  "verdict_status": "NO_ARBITER_VERDICT_TOOLING_BLOCKED"
+}

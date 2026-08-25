@@ -1,0 +1,13 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-01-exact-response.json"],
+  "claims_closed": [], "claims_introduced": [], "claims_invalidated": ["C-ROOT-005", "C-IMPL-001", "C-JSON-005", "C-QUAL-003"],
+  "commands_executed": ["fresh Opus cycle 1 in detached read-only worktree"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"authority_manifest_v6": "pending historical packet"},
+  "input_head": "1c5356adcd32895e22c14cf1423a1de25c8803ce", "next_eligible_edges": ["R7", "R8_CYCLE_02"], "node_id": "R8_CYCLE_01",
+  "output_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7", "result": "REPAIR_REQUIRED",
+  "result_counts": {"candidate_findings": 5, "claim_verdicts": 0, "formal_arbiter_verdict": false},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["read-only manifest census", "read-only measurement census", "read-only CI provenance"]
+}
