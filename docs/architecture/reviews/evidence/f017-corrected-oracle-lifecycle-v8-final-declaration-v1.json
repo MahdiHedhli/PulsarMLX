@@ -1,0 +1,100 @@
+{
+  "active_corrected_oracle_generation": "V8",
+  "active_generation_authority": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v8.json",
+    "sha256": "6f31873d30121b4719849e6dea7a92141a731f7d3f9dd12430a2a7c591974b54"
+  },
+  "authority_manifest": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-v8-implementation-authority-manifest.json",
+    "sha256": "4004f474ce89da12fe019875e2103d543bc94f5883276a356f0e109c99b6a3d6"
+  },
+  "causal_authority_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-causal-artifact-authority-v8-final-declaration-v1.json",
+    "sha256": "00f55a9b07209eef2754a9d63864136ddb7c90a8d3190a20a7d972823937c2de"
+  },
+  "declaration": "F017_CORRECTED_ORACLE_LIFECYCLE_V8: ACCEPTED",
+  "defense_in_depth_findings": [
+    "DID-01-RELEASE-NOT-IDEMPOTENT",
+    "DID-02-FAILURE-ACCOUNTING-FIXED",
+    "DID-03-PRE-TRY-BANKING-UNCAPSULED",
+    "DID-04-STALE-AUTHORIZER-DOCSTRING",
+    "DID-05-SYNTHETIC-GATE-IS-DECLARATIVE",
+    "DID-06-ONE-DESCRIPTOR-CONSUMED",
+    "DID-07-GENERATOR-HAS-NO-CHECK-MODE",
+    "DID-08-QUALIFICATION-NOT-BYTE-REPRODUCIBLE",
+    "DID-09-MEMORY-GATE-ADVISORY",
+    "DID-10-INDEPENDENT-CHECKER-C7-N2-UNTESTED",
+    "DID-11-V6-WORKTREE-NOT-REMOVED",
+    "DID-12-RUNTIME-REALIZES-ONE-FAILURE-TERMINAL"
+  ],
+  "event_02_retry": "NO",
+  "event_03_retry": "NO",
+  "event_04_executed": "NO",
+  "event_04_go_template": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-operator-go-template-v8.json",
+    "sha256": "21720d10f89212c978219c21590325012c11ec89f903d17a4457560d333f937f",
+    "status": "INERT_TEMPLATE_REQUIRING_SEPARATE_HUMAN_GO"
+  },
+  "event_04_retry": "NO",
+  "full_native_ci": {
+    "head": "a740687e61e9632ea6a957f52789acfb513de5ae",
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v8-exact-head-ci-v1.json",
+    "run_id": 32795502069,
+    "sha256": "7a5ce5eda9602d83e52061c34bb2106e8b101b7c1575845bb510f56813140a87",
+    "tree": "b9fd57f0d82761b8ee7eba2cec75b0fdb0b9daa8"
+  },
+  "further_real_inference_executed": "NO",
+  "historical_master_ledger": 175,
+  "implementation_measurement": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v8-implementation-measurement-v2.json",
+    "sha256": "58fcd305afbce901a82e18aaa90cb203fdf19d2ecb28e17a35098fe727ebfd84"
+  },
+  "live_event_04_authorization_created": "NO",
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "new_original_checkpoint_shard_opens": 0,
+  "numerical_authority": {
+    "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+    "contract_sha256": "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9",
+    "primary_core_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+    "secondary_core_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791"
+  },
+  "p1_attempt_2_executed": "NO",
+  "primary_real_oracle_executions": 0,
+  "production_rehearsal": {
+    "candidate_sha256": "69dd7006d397d1345a11ec24bfe38f95ccb9f59167bb8c042cd0d9f1746d229b",
+    "checkpoint_opens": 0,
+    "checkpoint_reads": 0,
+    "numerical_operations": 0,
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event04-production-shaped-rehearsal-v8-v3.json",
+    "sha256": "055580895ce0a58dbc1359ddb3e7aed1cdd8475c1c97eb0c8af06aaf3a8e1742"
+  },
+  "ready_for_corrected_full_checkpoint_oracle_event_04_go": "YES",
+  "ready_to_prepare_p1_attempt_2_authorization": "NO",
+  "reviews": {
+    "gemini": {
+      "path": "docs/architecture/reviews/evidence/f017-lifecycle-v8-whole-domain-gemini-cycle-01-normalized-result.json",
+      "sha256": "5822d41237b89da260df117a0d6b6c219401226d88363f101dae6e31b5a7abbb",
+      "verdict": "ACCEPT"
+    },
+    "opus": {
+      "blocking": 0,
+      "non_blocking_required": 0,
+      "path": "docs/architecture/reviews/evidence/f017-lifecycle-v8-whole-domain-opus-cycle-02-normalized-result.json",
+      "sha256": "8af95d4ab68630491f49bf023bb6080a88ce369233ccabc61948d1e44ad9ec29",
+      "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_AUTHORIZATION_PREPARATION"
+    }
+  },
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-v8-final-declaration/1.0.0",
+  "scientific_access": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v8.json",
+    "sha256": "bc8c1e008850ca0f33f1d5aa705a9582c245375941fd9d60813b19d2f612047a"
+  },
+  "secondary_real_oracle_executions": 0,
+  "synthetic_qualification": {
+    "minimal_packages": 10,
+    "mixed_format_packages": 10,
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v8-synthetic-qualification-v3.json",
+    "sha256": "1a7f6bdf9456fd0aa8e3b284f7f21348a3952e13f93058aa3416728b7e01e6d4"
+  }
+}
