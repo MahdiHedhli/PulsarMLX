@@ -111,6 +111,45 @@ def test_fallback_is_evidence_sink_not_accounting_source(tmp_path: Path) -> None
         authority.close()
 
 
+def test_journal_leaf_replacement_cannot_replace_retained_accounting_authority(tmp_path: Path) -> None:
+    authority = _authority(tmp_path)
+    try:
+        _bank_starts(authority, primary=True)
+        os.unlink("accounting-transition-journal.ndjson", dir_fd=authority.primary_fd)
+        replacement = os.open(
+            "accounting-transition-journal.ndjson",
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o600,
+            dir_fd=authority.primary_fd,
+        )
+        try:
+            os.write(replacement, canonical_bytes({"attacker": "empty accounting"}))
+            os.fsync(replacement)
+        finally:
+            os.close(replacement)
+        accounting = authority.accounting_lower_bound()
+        assert accounting["journal_observation"] == "OBSERVED_PRESENT"
+        assert accounting["package"] == accounting["primary"] == 1
+        assert accounting["secondary"] == 0
+    finally:
+        authority.close()
+
+
+def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Path) -> None:
+    authority = _authority(tmp_path)
+    try:
+        authority.bank_artifact(
+            "package-durable-start.json",
+            "attacker_kind",
+            {"delta": 1},
+        )
+        accounting = authority.accounting_lower_bound()
+        assert accounting["observations"]["package"] == "AUTHORITY_CORRUPT"
+        assert accounting["package"] == 0
+    finally:
+        authority.close()
+
+
 def _nested(depth: int) -> bytes:
     value = b"0"
     for _ in range(depth):

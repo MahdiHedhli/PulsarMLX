@@ -20,6 +20,14 @@ START_TRANSITIONS: Final = {
     "PRIMARY_DURABLE_START": "primary",
     "SECONDARY_DURABLE_START": "secondary",
 }
+
+
+def _is_sha256(value: object) -> bool:
+    return (
+        type(value) is str
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
 TRANSITION_ORDER: Final = {
     "INSTALLATION_RECEIPT_BANKED": 0,
     "COORDINATOR_HANDSHAKE": 1,
@@ -133,7 +141,7 @@ class AccountingRootAuthority:
         self.installation_receipt_sha256 = installation_receipt_sha256
         self._journal_fd = os.open(
             "accounting-transition-journal.ndjson",
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_APPEND | getattr(os, "O_NOFOLLOW", 0),
+            os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_APPEND | getattr(os, "O_NOFOLLOW", 0),
             0o600,
             dir_fd=self.primary_fd,
         )
@@ -197,8 +205,10 @@ class AccountingRootAuthority:
             raise AccountingAuthorityError("transition identity")
         if TRANSITION_ORDER[transition_id] < TRANSITION_ORDER[self._last_completed]:
             raise AccountingAuthorityError("nonmonotonic transition")
-        if type(artifact_sha256) is not str or len(artifact_sha256) != 64:
+        if not _is_sha256(artifact_sha256):
             raise AccountingAuthorityError("transition artifact digest")
+        if lifecycle_outcome is not None and type(lifecycle_outcome) is not str:
+            raise AccountingAuthorityError("transition lifecycle outcome")
         record = {
             "artifact_sha256": artifact_sha256,
             "lifecycle_outcome": lifecycle_outcome,
@@ -279,21 +289,28 @@ class AccountingRootAuthority:
             return "AUTHORITY_CORRUPT"
         except OSError:
             return "AUTHORITY_UNAVAILABLE"
-        if type(value) is not dict or value.get("artifact_kind") != expected_kind:
+        expected_schema = f"pulsarmlx.f017.v10.runtime.{expected_kind}/1.0.0"
+        if (
+            type(value) is not dict
+            or set(value) != {"schema", "artifact_kind", "payload"}
+            or value.get("schema") != expected_schema
+            or value.get("artifact_kind") != expected_kind
+            or type(value.get("payload")) is not dict
+        ):
             return "AUTHORITY_CORRUPT"
         return "OBSERVED_PRESENT"
 
     def _observe_journal(self) -> tuple[str, dict[str, int], str]:
         starts = {"package": 0, "primary": 0, "secondary": 0}
+        descriptor = self._journal_fd
         try:
-            descriptor = os.open(
-                "accounting-transition-journal.ndjson",
-                os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
-                dir_fd=self.primary_fd,
-            )
-        except OSError:
-            return "AUTHORITY_UNAVAILABLE", starts, ZERO_SHA256
-        try:
+            observed = os.fstat(descriptor)
+            if (
+                observed.st_dev != self.journal_identity["device"]
+                or observed.st_ino != self.journal_identity["inode"]
+                or observed.st_mode != self.journal_identity["mode"]
+            ):
+                return "IDENTITY_MISMATCH", starts, ZERO_SHA256
             raw = bytearray()
             offset = 0
             while True:
@@ -306,8 +323,6 @@ class AccountingRootAuthority:
                     return "AUTHORITY_CORRUPT", starts, ZERO_SHA256
         except OSError:
             return "AUTHORITY_UNAVAILABLE", starts, ZERO_SHA256
-        finally:
-            os.close(descriptor)
         previous = ZERO_SHA256
         previous_rank = -1
         for sequence, line in enumerate(bytes(raw).splitlines(keepends=True)):
@@ -323,9 +338,16 @@ class AccountingRootAuthority:
                 return "AUTHORITY_CORRUPT", starts, previous
             transition = record.get("transition_id")
             if (
-                record.get("sequence") != sequence
+                type(record.get("sequence")) is not int
+                or record.get("sequence") != sequence
+                or not _is_sha256(record.get("previous_record_sha256"))
                 or record.get("previous_record_sha256") != previous
+                or not _is_sha256(record.get("artifact_sha256"))
                 or record.get("package_attempt_id") != self.package_attempt_id
+                or (
+                    record.get("lifecycle_outcome") is not None
+                    and type(record.get("lifecycle_outcome")) is not str
+                )
                 or type(transition) is not str
                 or transition not in TRANSITION_ORDER
                 or TRANSITION_ORDER[transition] < previous_rank

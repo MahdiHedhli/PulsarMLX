@@ -104,11 +104,14 @@ def _decode(raw: bytes, limits: ArtifactLimits) -> object:
         raise ArtifactDecodeError("artifact input must be bytes")
     if len(raw) > limits.max_bytes:
         raise ArtifactDecodeError("artifact bytes exceed bound")
-    _scan_structure(raw, limits)
     try:
         text = raw.decode("utf-8", errors="strict")
     except UnicodeDecodeError as exc:
         raise ArtifactDecodeError("artifact is not valid UTF-8") from exc
+    # UTF-8 validation is deliberately first: the frozen decode contract
+    # permits the structural scanner to reason only about a valid byte-to-text
+    # mapping.  The scanner still runs before recursive JSON decoding.
+    _scan_structure(raw, limits)
 
     def pairs(items: list[tuple[str, object]]) -> dict[str, object]:
         value: dict[str, object] = {}
