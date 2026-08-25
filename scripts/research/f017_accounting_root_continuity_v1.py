@@ -157,28 +157,30 @@ class AccountingRootAuthority:
             raise AccountingAuthorityError("root authority binding")
         self.primary_path = primary
         self.fallback_path = fallback
-        self.primary_fd, primary_canonical = open_directory_no_symlinks(primary)
+        self.primary_fd = -1
+        self.fallback_fd = -1
+        self._journal_fd = -1
         try:
+            self.primary_fd, primary_canonical = open_directory_no_symlinks(primary)
             self.fallback_fd, fallback_canonical = open_directory_no_symlinks(fallback)
+            self.primary_identity = _directory_identity(primary_canonical, self.primary_fd)
+            self.fallback_identity = _directory_identity(fallback_canonical, self.fallback_fd)
+            if (self.primary_identity.device, self.primary_identity.inode) == (self.fallback_identity.device, self.fallback_identity.inode):
+                raise AccountingAuthorityError("primary and fallback identities must differ")
+            self.package_attempt_id = package_attempt_id
+            self.authorization_sha256 = authorization_sha256
+            self.installation_receipt_sha256 = installation_receipt_sha256
+            self._journal_fd = os.open(
+                "accounting-transition-journal.ndjson",
+                os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_APPEND | getattr(os, "O_NOFOLLOW", 0),
+                0o600,
+                dir_fd=self.primary_fd,
+            )
+            journal_stat = os.fstat(self._journal_fd)
+            self.journal_identity = {"device": journal_stat.st_dev, "inode": journal_stat.st_ino, "mode": journal_stat.st_mode}
         except Exception:
-            os.close(self.primary_fd)
-            raise
-        self.primary_identity = _directory_identity(primary_canonical, self.primary_fd)
-        self.fallback_identity = _directory_identity(fallback_canonical, self.fallback_fd)
-        if (self.primary_identity.device, self.primary_identity.inode) == (self.fallback_identity.device, self.fallback_identity.inode):
             self.close()
-            raise AccountingAuthorityError("primary and fallback identities must differ")
-        self.package_attempt_id = package_attempt_id
-        self.authorization_sha256 = authorization_sha256
-        self.installation_receipt_sha256 = installation_receipt_sha256
-        self._journal_fd = os.open(
-            "accounting-transition-journal.ndjson",
-            os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_APPEND | getattr(os, "O_NOFOLLOW", 0),
-            0o600,
-            dir_fd=self.primary_fd,
-        )
-        journal_stat = os.fstat(self._journal_fd)
-        self.journal_identity = {"device": journal_stat.st_dev, "inode": journal_stat.st_ino, "mode": journal_stat.st_mode}
+            raise
         self._sequence = 0
         self._previous_sha256 = ZERO_SHA256
         self._last_completed = "INSTALLATION_RECEIPT_BANKED"
@@ -302,7 +304,7 @@ class AccountingRootAuthority:
         try:
             digest = self.bank_artifact(leaf, kind, payload)
             return {"result": "PASS", "target": "BOUND_PRIMARY", "sha256": digest, "errors": errors}
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, TypeError, OverflowError, RecursionError) as exc:
             errors.append({"target": "BOUND_PRIMARY", "error": type(exc).__name__})
         try:
             digest = self.bank_fallback_capsule(
@@ -310,7 +312,7 @@ class AccountingRootAuthority:
                 {"original_artifact_kind": kind, "original_payload": payload, "primary_write_errors": errors},
             )
             return {"result": "PASS", "target": "BOUND_FALLBACK", "sha256": digest, "errors": errors}
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, TypeError, OverflowError, RecursionError) as exc:
             errors.append({"target": "BOUND_FALLBACK", "error": type(exc).__name__})
             return {"result": "MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE", "target": None, "sha256": None, "errors": errors}
 

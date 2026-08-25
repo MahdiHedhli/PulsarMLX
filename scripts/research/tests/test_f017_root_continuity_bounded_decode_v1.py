@@ -11,6 +11,7 @@ RESEARCH = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RESEARCH))
 
 from f017_accounting_root_continuity_v1 import AccountingRootAuthority, open_directory_no_symlinks
+import f017_accounting_root_continuity_v1 as root_continuity
 from f017_bounded_artifact_decode_v1 import (
     ArtifactDecodeError,
     ArtifactLimits,
@@ -191,6 +192,9 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "import os\nos.sys.modules['json'].loads(b'{}')\n",
         "import os\ngetattr(os, 'sys').modules['json'].loads(b'{}')\n",
         "().__class__.__base__.__subclasses__()\n",
+        "eval(compile('import json; json.loads(\\\"{}\\\")', '<x>', 'exec'))\n",
+        "exec('import json; json.loads(\\\"{}\\\")')\n",
+        "from .attacker import decoder\ndecoder(b'{}')\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
@@ -234,6 +238,41 @@ def test_offline_accounting_uses_one_retained_root_and_no_lstat(tmp_path: Path, 
     monkeypatch.setattr(Path, "lstat", lambda self: (_ for _ in ()).throw(AssertionError("lstat forbidden")))
     accounting = derive(tmp_path / "state")
     assert accounting["package"] == 1 and accounting["primary"] == 1 and accounting["secondary"] == 0
+
+
+def test_terminal_banking_normalizes_nonserializable_payload(tmp_path: Path) -> None:
+    authority = _authority(tmp_path)
+    try:
+        result = authority.bank_terminal_artifact("terminal.json", "package_terminal", {"bad": object()})
+        assert result["result"] == "MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE"
+        assert [item["error"] for item in result["errors"]] == ["TypeError", "TypeError"]
+        assert not (tmp_path / "state" / "terminal.json").exists()
+        assert not (tmp_path / "fallback" / "terminal.json").exists()
+    finally:
+        authority.close()
+
+
+def test_constructor_closes_retained_descriptors_when_identity_binding_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    primary = tmp_path / "state"; primary.mkdir()
+    fallback = tmp_path / "fallback"; fallback.mkdir()
+    retained: list[int] = []
+    real_open = root_continuity.open_directory_no_symlinks
+
+    def tracked_open(path: Path) -> tuple[int, Path]:
+        result = real_open(path)
+        retained.append(result[0])
+        return result
+
+    monkeypatch.setattr(root_continuity, "open_directory_no_symlinks", tracked_open)
+    monkeypatch.setattr(root_continuity, "_directory_identity", lambda path, descriptor: (_ for _ in ()).throw(ValueError("injected identity failure")))
+    with pytest.raises(ValueError, match="injected identity failure"):
+        AccountingRootAuthority(primary, fallback, "F017-PACKAGE", "a" * 64, "b" * 64)
+    assert len(retained) == 2
+    for descriptor in retained:
+        with pytest.raises(OSError):
+            os.fstat(descriptor)
 
 
 def _nested(depth: int) -> bytes:

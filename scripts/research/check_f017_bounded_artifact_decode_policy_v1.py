@@ -82,12 +82,14 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                 if item.name == "importlib" or item.name.startswith("importlib."):
                     violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         elif isinstance(node, ast.ImportFrom):
+            if node.level != 0:
+                violations.append({"path": relative, "line": node.lineno, "reason": "RELATIVE_IMPORT_PROHIBITED"})
             if node.module in {"json", "sys", "builtins"}:
                 violations.append({"path": relative, "line": node.lineno, "reason": "CAPABILITY_MEMBER_IMPORT", "module": node.module})
             if node.module == "importlib" or (node.module or "").startswith("importlib."):
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            if node.func.id in {"globals", "locals", "vars", "__import__"}:
+            if node.func.id in {"compile", "eval", "exec", "globals", "locals", "vars", "__import__"}:
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
             elif node.func.id in {"getattr", "setattr"}:
                 member = node.args[1].value if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) else None
