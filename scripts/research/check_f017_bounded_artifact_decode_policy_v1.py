@@ -80,6 +80,23 @@ def _name_agnostic_decode_sites(relative: str, tree: ast.AST, parents: dict[ast.
     return sites
 
 
+def _name_agnostic_decode_member_escapes(relative: str, tree: ast.AST, parents: dict[ast.AST, ast.AST]) -> list[dict]:
+    """Reject load/loads capability members transported before invocation."""
+    violations: list[dict] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Attribute) or node.attr not in {"load", "loads"}:
+            continue
+        parent = parents.get(node)
+        if not (isinstance(parent, ast.Call) and parent.func is node):
+            violations.append({
+                "path": relative,
+                "line": node.lineno,
+                "reason": "NAME_AGNOSTIC_DECODE_MEMBER_ESCAPE",
+                "member": node.attr,
+            })
+    return violations
+
+
 def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
     """Reject parser capabilities by semantic import/use shape, not spelling alone."""
     tree = ast.parse(source, filename=relative)
@@ -121,7 +138,7 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
             elif node.func.id in {"getattr", "setattr"}:
                 member = node.args[1].value if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) else None
-                if type(member) is not str or member in DYNAMIC_CAPABILITY_ATTRIBUTES:
+                if type(member) is not str or member in DYNAMIC_CAPABILITY_ATTRIBUTES or member in {"load", "loads"}:
                     violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_ATTRIBUTE_RESOLUTION"})
         if isinstance(node, ast.Attribute) and node.attr in DYNAMIC_CAPABILITY_ATTRIBUTES:
             semantic_sys_direct = (
@@ -185,6 +202,18 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             ):
                 continue
         violations.append({"path": relative, "line": node.lineno, "reason": "UNAUTHORIZED_JSON_CAPABILITY", "member": member})
+    violations.extend(_name_agnostic_decode_member_escapes(relative, tree, parents))
+    for site in _name_agnostic_decode_sites(relative, tree, parents):
+        if site["member"] == "loads" and (
+            relative == CANONICAL_PARSER or (relative, site["function"]) in OFFLINE_ONLY_ALLOWANCE
+        ):
+            continue
+        violations.append({
+            "path": relative,
+            "line": site["line"],
+            "reason": "NAME_AGNOSTIC_DIRECT_DECODE_SITE",
+            "member": site["member"],
+        })
     return violations, direct_decode_sites
 
 
@@ -200,17 +229,6 @@ def validate() -> dict:
         violations.extend(found)
         sites = _name_agnostic_decode_sites(relative, tree, parents)
         direct_decode_sites.extend(sites)
-        for site in sites:
-            if site["member"] == "loads" and (
-                relative == CANONICAL_PARSER or (relative, site["function"]) in OFFLINE_ONLY_ALLOWANCE
-            ):
-                continue
-            violations.append({
-                "path": relative,
-                "line": site["line"],
-                "reason": "NAME_AGNOSTIC_DIRECT_DECODE_SITE",
-                "member": site["member"],
-            })
     if violations:
         raise ValueError(f"direct active-runtime JSON parser surface: {violations}")
     accounting = (RESEARCH / "f017_corrected_oracle_event_accounting_v10.py").read_text(encoding="utf-8")

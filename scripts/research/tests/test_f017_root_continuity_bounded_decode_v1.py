@@ -199,6 +199,8 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "from f017_bounded_artifact_decode_v1 import json\njson.loads(b'{}')\n",
         "from f017_canonical_serialization_v10 import json\njson.loads(b'{}')\n",
         "from f017_bounded_artifact_decode_v1 import json as backend\nbackend.loads(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\ndecoder = parser.json.loads\ndecoder(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\ngetattr(parser.json, 'loads')(b'{}')\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
