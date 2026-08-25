@@ -1,0 +1,102 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-support-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 7,
+  "prior_support_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v10.json",
+  "support": [
+    {
+      "support_id": "S-O-C07-001",
+      "challenge_id": "O-C07-001",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "No accepted shape can be supplied a genuine JSON decoder. All 22 producer compositions tested — json.loads reference, container of json.loads, functools.partial, lambda, default arg, class attribute, decorator, JSONDecoder().decode, numpy.load, mlx.core.load, bare o.loads — reject at the name-agnostic and json-capability layers. The gap weakens a forward-looking review aid, not the prohibition on the measured bytes."
+      ],
+      "tests": [
+        "22 genuine-decoder producer/consumer compositions rejected",
+        "203 combined active-authority tests",
+        "independent 32-module closure census"
+      ],
+      "remaining_uncertainty": "Taint containers whose elements are capability-shaped; treat For/comprehension/with/except targets and function parameter defaults as assignments; flag Call nodes whose func is a Subscript or Call, and add __call__ to the attribute check."
+    },
+    {
+      "support_id": "S-O-C07-002",
+      "challenge_id": "O-C07-002",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "The overstatement is in evidence narrative, not in a claim. Every claim verdict here was re-derived independently from executed bytes rather than from the ledger text."
+      ],
+      "tests": [
+        "Opus cycle 07 independent current-byte inspection"
+      ],
+      "remaining_uncertainty": "Amend the S-O-C06-001 wording to state exactly which container forms propagate and which do not, so a future cycle does not rely on the broader reading."
+    },
+    {
+      "support_id": "S-O-C07-003",
+      "challenge_id": "O-C07-003",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "The substantive counts are correct and independently confirmed against the live GitHub API: run 32886210156 exists at 07ebd970, succeeded, with 4 required jobs passed and 0 native skips."
+      ],
+      "tests": [
+        "GitHub Actions run 32886210156 independently inspected by Opus",
+        "R5 receipt v12 corrects copied command provenance"
+      ],
+      "remaining_uncertainty": "Correct commands_executed to reference 32886210156 in the next receipt bank."
+    },
+    {
+      "support_id": "S-O-C07-004",
+      "challenge_id": "O-C07-004",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "Not executable on the pinned runtime: CPython 3.13.13 reports 'typing is not a package', so any such import fails closed at import time. The dangerous typing members (get_type_hints, ForwardRef, evaluate_forward_ref, _evaluate) are also caught path-independently by CAPABILITY_REEXPORT_IMPORT."
+      ],
+      "tests": [
+        "Opus cycle 07 independent current-byte inspection"
+      ],
+      "remaining_uncertainty": "Key the vocabulary check on the import root rather than the exact module string."
+    },
+    {
+      "support_id": "S-O-C07-005",
+      "challenge_id": "O-C07-005",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "Requires operator-controlled environment rather than current bytes, and the independent closure census confirms no breakpoint/eval/exec/compile/__import__ name occurs in any of the 32 modules. Same family as the out-of-process inline decoders that item 11 directs be assessed separately."
+      ],
+      "tests": [
+        "Opus cycle 07 independent current-byte inspection"
+      ],
+      "remaining_uncertainty": "Add breakpoint (and help) to DYNAMIC_BUILTIN_NAMES."
+    },
+    {
+      "support_id": "S-O-C07-006",
+      "challenge_id": "O-C07-006",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "Assessed separately per required attack 11. No current authority artifact is decoded through an external interpreter; the only subprocess decode in the closure is the offline qualify_f017_quantization_matrix_v1.invoke probe, unreachable from the active runtime."
+      ],
+      "tests": [
+        "Opus cycle 07 independent current-byte inspection"
+      ],
+      "remaining_uncertainty": "Semantic scanning of inline -c command strings, if this class is ever to be closed."
+    },
+    {
+      "support_id": "S-O-C07-007",
+      "challenge_id": "O-C07-007",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "Requires authoring a parser, is absent from current bytes, and is not decidable by any AST-shape policy by construction. Structural, not a current-byte path."
+      ],
+      "tests": [
+        "Opus cycle 07 independent current-byte inspection"
+      ],
+      "remaining_uncertainty": "None available at the policy layer; note as a permanent limit of the approach in the bounded-decode contract."
+    }
+  ]
+}

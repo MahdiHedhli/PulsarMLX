@@ -1,0 +1,1257 @@
+{
+  "claims": [
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-REF-001",
+      "depends_on": [],
+      "introduced_by_node": "R0",
+      "invalidates_nodes": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "AUTHORITATIVE_BRANCH_LINEAGE",
+      "statement": "One and only one authoritative branch lineage exists.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "git merge-base --is-ancestor 313a4832d492c241cde738fc979d2b6890607906 90338840c94118651a85c695af22de780437663b",
+        "git rev-list --count 313a4832d492c241cde738fc979d2b6890607906..90338840c94118651a85c695af22de780437663b",
+        "git branch -a --contains 3100714e returns exactly feat/017-rust-native-inference-runtime plus its remote",
+        "All 13 lineage bases (313a4832, 0b9888ca, a3394e44, 08d14c12, 08f5c267, 7cf77a00, f92da410, 0b1d0389, 443435f0, 79367b50, bf2169e7, fa3daeaf, 07ebd970) confirmed ancestors of the reviewed head on a linear chain"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-REF-002",
+      "depends_on": [
+        "C-REF-001"
+      ],
+      "introduced_by_node": "R0",
+      "invalidates_nodes": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "GRAPH_OWNERSHIP",
+      "statement": "No compatible loop is concurrently modifying the authoritative implementation.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "git worktree list --porcelain",
+        "process and task-lock census",
+        "git worktree list: main repo at 1f3f1adf plus two detached read-only review worktrees at 3100714e; no second modifying checkout",
+        "git diff --name-only 3100714e..HEAD yields exactly one path: docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-request-v1.md",
+        "git status --porcelain empty; zero non-evidence paths changed concurrently"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-REF-003",
+      "depends_on": [
+        "C-REF-001"
+      ],
+      "introduced_by_node": "R0",
+      "invalidates_nodes": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-review-budget-exhaustion-v1.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-opus-cycle-06-normalized-result.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-05-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v16.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "TERMINAL_REVIEW_EVIDENCE",
+      "statement": "The selected head contains the complete terminal review evidence.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "sha256sum of terminal closeout",
+        "terminal Opus cycle-06 reconstruction",
+        "append-only corrected R2 receipt v10",
+        "append-only corrected R7 receipt v9",
+        "exact test path exists",
+        "focused pytest count 145",
+        "Authority manifest v13 lists 20 artifacts; all 20 present at the reviewed head with sha256 recomputed equal (0 mismatches)",
+        "Cycle-06 exact response sha256 ffedfedc0bc9d05837a16822e5d0c082f83c10246254a3643dca53dacdcc66b5 matches the challenge-ledger-v11 binding",
+        "graph-state v12, claim ledger v12, challenge ledger v11, support ledger v10, arbiter ledger v6 and receipts R2/R3/R4/R5/R7/R8 all present and hash-bound"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-ROOT-001",
+      "depends_on": [
+        "C-REF-001",
+        "C-REF-002"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json",
+        "scripts/research/f017_accounting_root_continuity_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v3.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "ACCOUNTING_ROOT_IDENTITY",
+      "statement": "Accounting is permanently bound to the original evidence-root identity.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "root identity attack matrix",
+        "descriptor-relative manifest race regression",
+        "component-relative root acquisition",
+        "descriptor-relative offline accounting",
+        "252 root attack cases re-executed at reviewed head: PASS, byte-identical to banked qualification v16",
+        "test_post_bind_artifact_banking_uses_retained_root_not_recreated_path and test_offline_accounting_uses_one_retained_root_and_no_lstat pass",
+        "deterministic_core_sha256 11dfba715517f1b0160aaa710863afa2a49c5c153b52d5ed05a4d98377b79263 reproduced exactly over 10 repetitions, 1 unique byte sequence"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-ROOT-002",
+      "depends_on": [
+        "C-ROOT-001"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/qualify_f017_v10_root_continuity_bounded_decode_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "FALSE_ZERO_PREVENTION",
+      "statement": "Root substitution or loss cannot produce a false zero.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "252 root attack executions",
+        "journal in-place truncation false-zero regression",
+        "12 parametrized cases of test_root_path_substitution_never_produces_false_zero pass",
+        "Reproduced false_zero_results: 0 across 252 root attacks",
+        "test_journal_leaf_replacement_cannot_replace_retained_accounting_authority and test_journal_in_place_truncation_cannot_reduce_start_lower_bound pass"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-ROOT-003",
+      "depends_on": [
+        "C-ROOT-001"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "FALLBACK_SEMANTICS",
+      "statement": "Fallback evidence never becomes the source of accounting truth.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "fallback substitution and unavailability attacks",
+        "test_fallback_is_evidence_sink_not_accounting_source passes",
+        "test_missing_or_corrupt_start_artifact_preserves_journal_lower_bound passes",
+        "Reproduced runtime_accounting_mismatches: 0 and runtime_generic_fallbacks: 0 in runtime qualification v16"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-ROOT-004",
+      "depends_on": [
+        "C-ROOT-001",
+        "C-ROOT-002"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/f017_accounting_root_continuity_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "MONOTONIC_TERMINAL_OBLIGATION",
+      "statement": "A verified durable start always creates a monotonic terminal obligation.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "journal plus artifact plus in-process lower-bound tests",
+        "repeated post-corruption monotonic observation",
+        "test_terminalization_uses_bound_root_and_preserves_package_obligation (3 cases) passes",
+        "test_start_artifact_requires_exact_outer_schema_before_counting passes",
+        "Reproduced successful_packages: 60 and modeled_outcome_executions: 235 with unexpected_passes: 0"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-ROOT-005",
+      "depends_on": [
+        "C-ROOT-001",
+        "C-ROOT-004"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/execute_f017_corrected_oracle_event_v10.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v4.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r1-receipt-v4.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "DEGRADED_ROOT_TERMINALIZATION",
+      "statement": "Every degraded-root outcome produces the maximal constructible capsule.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "bound-primary and bound-fallback terminal banking tests",
+        "non-serializable terminal payload normalized at both roots",
+        "Reproduced modeled_outcomes_realized: 47 of 47 with uncontrolled_modeled_failures: 0",
+        "test_terminal_banking_normalizes_nonserializable_payload and test_deep_corrupt_start_terminalizes_in_bound_root_without_raw_recursion pass",
+        "6 cross-product cases reproduced PASS"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-JSON-001",
+      "depends_on": [
+        "C-REF-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/f017_bounded_artifact_decode_v1.py",
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "CANONICAL_RUNTIME_PARSER",
+      "statement": "Every runtime authority artifact uses one bounded parser.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "32-module import-closure source policy",
+        "Independent closure census (own AST walker, not the checker's) reproduces exactly 32 modules from the 4 declared entry paths",
+        "Independent name-agnostic scan for .load/.loads/.decode/.literal_eval/.raw_decode across all 32 modules finds exactly two JSON decode call sites: f017_bounded_artifact_decode_v1.py:151 (_decode) and qualify_f017_quantization_matrix_v1.py:167 (invoke)",
+        "The 4 policy ENTRY_PATHS equal the authorizer/coordinator/primary_wrapper/secondary_wrapper roles declared in runtime authority manifest v10"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-JSON-002",
+      "depends_on": [
+        "C-JSON-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "PREDECODE_BOUNDS",
+      "statement": "Artifact nesting and size are bounded before recursive decode.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "depth 65, 128, 1024, and 10000 rejection",
+        "257, 10000, and 1000000 character float rejection",
+        "Canonical parser validates UTF-8 first, then runs _scan_structure before json.loads; parse_int/parse_float bounded by max_integer_digits/max_number_chars; object_pairs_hook rejects duplicate keys",
+        "test_depth_over_limit_is_controlled_before_json_decode (4 cases), test_depth_boundary_and_string_brackets_are_exact, test_float_token_is_lexically_bounded_before_conversion (3 cases) all pass",
+        "Post-decode stack walk re-checks container depth against limits.max_depth"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-JSON-003",
+      "depends_on": [
+        "C-JSON-002",
+        "C-ROOT-004"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/tests/test_f017_root_continuity_bounded_decode_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "RECURSION_NORMALIZATION",
+      "statement": "No raw RecursionError escapes terminalization.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "deep durable-start terminalization regression",
+        "RecursionError is caught in the canonical parser's except tuple and re-raised as ArtifactDecodeError",
+        "test_deep_durable_start_decode_cannot_escape_recursion_error and test_deep_corrupt_start_terminalizes_in_bound_root_without_raw_recursion pass",
+        "Reproduced raw_recursion_errors: 0 across 204 decode attacks"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-JSON-004",
+      "depends_on": [
+        "C-JSON-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/f017_bounded_artifact_decode_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "CONTROLLED_DECODE_FAILURE",
+      "statement": "All malformed artifacts map to stable reviewed failure classes.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "204 malformed artifact attacks",
+        "test_malformed_artifacts_have_one_controlled_failure_class (8 cases) passes",
+        "Reproduced 204 decode_attack_cases with unexpected_passes: 0",
+        "All of UnicodeDecodeError, JSONDecodeError, RecursionError, ValueError, TypeError, OverflowError normalize to ArtifactDecodeError"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-JSON-005",
+      "depends_on": [
+        "C-JSON-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v2.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v3.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v4.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v5.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v12.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v7.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v6.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v13.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v8.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v14.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v8.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-04-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v4.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v9.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v15.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v9.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-05-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v16.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-06-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "DIRECT_PARSER_PROHIBITION",
+      "statement": "Direct active-runtime JSON parsing outside the canonical parser is prohibited.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "AST direct-parser prohibition",
+        "sys.modules and builtins dynamic resolution mutations",
+        "eight reflective and aliased sys/builtins mutations",
+        "os.sys transitive export rejected",
+        "dynamic object-graph capability traversal rejected",
+        "eval compile exec and relative-import mutations rejected",
+        "active import closure count 32",
+        "first-party capability re-export regressions",
+        "non-direct member transport regressions",
+        "dynamic getattr load/loads regression",
+        "121 combined active-authority tests",
+        "FULL_NATIVE run 32864924869",
+        "capability-root traversal regressions",
+        "operator dynamic-resolution regressions",
+        "package-shaped and dotted first-party closure regressions",
+        "136 combined active-authority tests",
+        "FULL_NATIVE run 32868949412",
+        "transported dynamic builtin capability regressions",
+        "logging.sys extraction regression",
+        "eval decorator regression",
+        "99 focused root/decode tests",
+        "144 combined active-authority tests",
+        "FULL_NATIVE run 32872983381",
+        "dotted json submodule import regressions",
+        "json decoder scanner encoder tool raw_decode regressions",
+        "module loader machinery regressions",
+        "bare imported load and loads regressions",
+        "function introspection dunder regressions",
+        "122 focused root/decode tests",
+        "167 combined active-authority tests",
+        "FULL_NATIVE run 32877227000",
+        "frozen 57-root active import census",
+        "97 representation-independent parser mutations",
+        "pkgutil pydoc runpy ctypes modulefinder inspect regressions",
+        "alternate structural decoder regressions",
+        "145 focused root/decode tests",
+        "190 combined active-authority tests",
+        "deferred annotation and typing capability regressions",
+        "shape-based acquired callable invocation regressions",
+        "110 representation-independent parser mutations",
+        "158 focused root/decode tests",
+        "203 combined active-authority tests",
+        "FULL_NATIVE run 32886210156",
+        "Cycle-06 invalidation is closed: all 11 exact cycle-06 bypasses now reject — return/parameter/class/dataclass/module-level string annotations (EXECUTABLE_DEFERRED_ANNOTATION), typing.get_type_hints (TYPING_MODULE_IMPORT_PROHIBITED + TYPING_RUNTIME_CAPABILITY), from typing import get_type_hints (CAPABILITY_REEXPORT_IMPORT + UNAUTHORIZED_TYPING_MEMBER_IMPORT), ForwardRef._evaluate, evaluate_forward_ref, and both f-string annotation forms (DYNAMIC_DEFERRED_ANNOTATION)",
+        "112-case battery: 40/40 cycle-03..05 parser-policy bypasses reject except three assessed defense-in-depth surfaces and one inert bare import (import json.tool binds a name whose every use rejects with UNAUTHORIZED_JSON_CAPABILITY)",
+        "22-case producer/consumer composition: every route that produces a genuine JSON decoder rejects — json.loads reference, dict/tuple of json.loads, functools.partial, lambda, default arg, class attribute, decorator, JSONDecoder().decode, numpy.load, mlx.core.load, and untyped o.loads all trip NAME_AGNOSTIC_DECODE_MEMBER_ESCAPE / UNAUTHORIZED_JSON_CAPABILITY / NAME_AGNOSTIC_DIRECT_DECODE_SITE",
+        "The 57-root allowlist equals the used-root set exactly (USED-APPROVED empty, APPROVED-USED empty); the typing from-import vocabulary equals the 7 members actually used exactly, with zero unnecessary allowance and no bare import typing anywhere in the closure",
+        "annotationlib absent and typing is not a package on pinned CPython 3.13.13; __annotations__ under future-annotations returns raw strings with no reachable evaluator; inspect/typing_extensions imports reject",
+        "Exactly two decode sites remain; qualify_f017_quantization_matrix_v1.invoke is called only from main(), never from independent_decode (the sole symbol the active runtime imports), so the offline allowance is unreachable from the active runtime"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-IMPL-001",
+      "depends_on": [
+        "C-ROOT-001",
+        "C-ROOT-002",
+        "C-ROOT-003",
+        "C-ROOT-004",
+        "C-ROOT-005"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "ROOT_CONTINUITY_IMPLEMENTATION",
+      "statement": "The V10 implementation matches the accepted accounting-root continuity design.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "252 root attack cases",
+        "descriptor-relative terminal banking tests",
+        "constructor failure closes every retained descriptor",
+        "Root continuity qualification reproduced field-for-field against banked v16 (21/21 fields MATCH, including deterministic_core_sha256)",
+        "Contract f017-corrected-oracle-accounting-root-continuity-v1.json sha256 07be4b4d... matches manifest v13 binding",
+        "live_leases_after_success_terminal: 0 and path_reopen_count: 0 reproduced"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-IMPL-002",
+      "depends_on": [
+        "C-JSON-001",
+        "C-JSON-002",
+        "C-JSON-003",
+        "C-JSON-004",
+        "C-JSON-005"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v5.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v12.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v7.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v6.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v13.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v8.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v14.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v8.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-04-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v4.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v9.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v15.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v9.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-05-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v16.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-06-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "BOUNDED_DECODE_IMPLEMENTATION",
+      "statement": "The V10 implementation matches the accepted bounded-artifact decode design.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "204 decode attacks",
+        "direct-parser import-closure policy",
+        "first-party capability re-export regressions",
+        "non-direct member transport regressions",
+        "dynamic getattr load/loads regression",
+        "121 combined active-authority tests",
+        "FULL_NATIVE run 32864924869",
+        "capability-root traversal regressions",
+        "operator dynamic-resolution regressions",
+        "package-shaped and dotted first-party closure regressions",
+        "136 combined active-authority tests",
+        "FULL_NATIVE run 32868949412",
+        "transported dynamic builtin capability regressions",
+        "logging.sys extraction regression",
+        "eval decorator regression",
+        "99 focused root/decode tests",
+        "144 combined active-authority tests",
+        "FULL_NATIVE run 32872983381",
+        "dotted json submodule import regressions",
+        "json decoder scanner encoder tool raw_decode regressions",
+        "module loader machinery regressions",
+        "bare imported load and loads regressions",
+        "function introspection dunder regressions",
+        "122 focused root/decode tests",
+        "167 combined active-authority tests",
+        "FULL_NATIVE run 32877227000",
+        "frozen 57-root active import census",
+        "97 representation-independent parser mutations",
+        "pkgutil pydoc runpy ctypes modulefinder inspect regressions",
+        "alternate structural decoder regressions",
+        "145 focused root/decode tests",
+        "190 combined active-authority tests",
+        "deferred annotation and typing capability regressions",
+        "shape-based acquired callable invocation regressions",
+        "110 representation-independent parser mutations",
+        "158 focused root/decode tests",
+        "203 combined active-authority tests",
+        "FULL_NATIVE run 32886210156",
+        "Cycle-06 invalidation is closed at fa3daeaf: check_f017_bounded_artifact_decode_policy_v1.py now enforces TYPING_MODULE_IMPORT_PROHIBITED, UNAUTHORIZED_TYPING_MEMBER_IMPORT, EXECUTABLE_DEFERRED_ANNOTATION, DYNAMIC_DEFERRED_ANNOTATION, and the fixed-point UNPROVED_DYNAMIC_CALLABLE_INVOCATION / UNPROVED_DYNAMIC_ATTRIBUTE_INVOCATION analysis",
+        "Policy executes PASS at reviewed head with runtime_import_closure_count 32, violations [], and the two expected direct_decode_sites",
+        "Contract f017-corrected-oracle-bounded-artifact-decode-v1.json sha256 d15febf6... matches manifest v13; load-bearing integration strings read_artifact_at(directory_fd, leaf) and accounting_authority.accounting_lower_bound() both present",
+        "203 combined active-authority tests pass; 110 permanent parser mutations pass"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-IMPL-003",
+      "depends_on": [
+        "C-REF-003"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "NUMERICAL_AUTHORITY_ISOLATION",
+      "statement": "Numerical authority bytes remain unchanged.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "primary 657cdff9...",
+        "secondary e3670b22...",
+        "decoder 60a4b4e7...",
+        "validate_f017_corrected_oracle_numerical_authority_v3.py: PASS with historical_authorities 2, pure_cores 2, tombstones 10, equivalence_cases 24",
+        "Second stage PASS with capability_mutations 187, matching the FULL_NATIVE relevant_test_census",
+        "measurement v17 numerical_authority_changed: false, independently confirmed by blob-identity of all numerical bindings at fa3daeaf"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-IMPL-004",
+      "depends_on": [
+        "C-IMPL-001",
+        "C-IMPL-002"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "IMPLEMENTATION_MEASUREMENT",
+      "statement": "All load-bearing implementation bytes are measured at exact Git objects.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "43 exact path/SHA/blob bindings",
+        "32-module active runtime closure",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "All 43 measurement bindings independently verified: for each, git rev-parse fa3daeaf:<path> equals the recorded git_blob_sha, sha256 of the blob equals the recorded sha256, and the reviewed-head worktree bytes equal the blob (43/43 verified, 0 bad)",
+        "implementation_head fa3daeaf37425cc7aeeab05bcc5fb7b74c7a7e28 and implementation_tree 6c0fffdb4ab57a36bcc6444a29594003795e0d55 both confirmed by git rev-parse",
+        "generate_f017_v10_implementation_measurement_v1.py --head fa3daeaf --check against banked v17 returns {mode: CHECK, result: PASS}",
+        "binding_count 43, runtime_import_closure_count 32, working_tree_byte_identity true, original_checkpoint_access 0"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-QUAL-001",
+      "depends_on": [
+        "C-IMPL-001"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "ROOT_MUTATION_QUALIFICATION",
+      "statement": "Every qualified root mutation preserves truthful accounting.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "252 root attacks",
+        "6 combined root/decode attacks",
+        "false zero results 0",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "252 root attack cases reproduced PASS with false_zero_results 0",
+        "accounting_mutations_rejected 40 and multi_shard_and_descriptor_mutations_rejected 50 reproduced in runtime qualification v16",
+        "terminal_root_fault_cases 2 and release_fault_cases 30 reproduced"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-QUAL-002",
+      "depends_on": [
+        "C-IMPL-002"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "MALFORMED_ARTIFACT_QUALIFICATION",
+      "statement": "Every qualified malformed artifact fails through the controlled boundary.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "204 decode attacks",
+        "raw RecursionError count 0",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "204 decode attack cases reproduced PASS with unexpected_passes 0 and raw_recursion_errors 0",
+        "direct_parser_policy embedded in the reproduced qualification is PASS/32/2, identical to the banked v16",
+        "non_access_tensors_rejected 399 reproduced"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-QUAL-003",
+      "depends_on": [
+        "C-IMPL-001",
+        "C-IMPL-002"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v7.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "MODELED_RUNTIME_OUTCOMES",
+      "statement": "Every modeled runtime outcome is realized with exact accounting and no generic fallback.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "47 outcomes",
+        "235 root/decode executions",
+        "201 retained runtime-hardening executions",
+        "47 outcomes x 5 root/decode executions = 235",
+        "retained runtime high-risk/ordinary policy = 201 executions",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "Runtime hardening qualification v16 reproduced with 38/38 fields identical, including deterministic_core_sha256 a446194ffa53914702c12bd5323da113d25dd653523ed3ff1367a879384e1275",
+        "runtime_failure_executions 201, runtime_failure_outcomes_realized 47, runtime_coordinator_outcomes_realized 41, runtime_authorizer_phase_outcomes_realized 6",
+        "runtime_generic_fallbacks 0, runtime_accounting_mismatches 0, uncontrolled_modeled_failures 0"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-QUAL-004",
+      "depends_on": [
+        "C-IMPL-003"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v7.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "SUCCESS_REGRESSION",
+      "statement": "Normal five-shard numerical success behavior remains unchanged.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "110 successful package executions across both qualification suites",
+        "1410 graph tensors",
+        "399 non-access denials",
+        "all 11 formats",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "successful_package_count 50 and independent_c7_n2_regressions 50 reproduced exactly",
+        "primary_consumed_shards and secondary_consumed_shards both [2,3,4,5,6]; production_graph_tensor_plan 1410 and 11 production formats unchanged",
+        "minimal_package_count 15, mixed_package_count 15, route_variation_package_count 10, descriptor_distribution_package_count 10 all reproduced"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-QUAL-005",
+      "depends_on": [
+        "C-QUAL-001",
+        "C-QUAL-002",
+        "C-QUAL-003",
+        "C-QUAL-004"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v6.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v10.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "CHECKPOINT_ACCESS_ISOLATION",
+      "statement": "Original checkpoint access remains zero.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "original shard opens 0",
+        "identity hash reads 0",
+        "payload reads 0",
+        "external-inode hardlink rejection",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "original_checkpoint_shard_opens 0, original_checkpoint_payload_reads 0, original_checkpoint_identity_hash_reads 0 reproduced in both qualifications",
+        "Production-shaped no-access rehearsal v17 reproduced with deterministic_core byte-identical (a299298752d41e376240faf598576303866b3a42894131edb97688dbaf4d7fdd) and original_checkpoint_access 0, while still enumerating the real 6-shard 238458632928-byte checkpoint set",
+        "Evidence-wide census found no true/nonzero event_04 or p1_attempt_2 flag; Event-04 and P1 attempt-2 files present are templates only (state INERT_TEMPLATE_NOT_APPROVAL / TEMPLATE_FAILS_CLOSED_ORACLE_NOT_EXECUTED)"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-CI-001",
+      "depends_on": [
+        "C-QUAL-001",
+        "C-QUAL-002",
+        "C-QUAL-003",
+        "C-QUAL-004",
+        "C-QUAL-005"
+      ],
+      "introduced_by_node": "R5",
+      "invalidates_nodes": [
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v3.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v4.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v5.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v6.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v7.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v7.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-05-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v10.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v9.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v16.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "EXACT_HEAD_FULL_NATIVE_CI",
+      "statement": "Exact-head FULL_NATIVE CI passes.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "GitHub Actions exact-head FULL_NATIVE run 32868949412 at 0b9888ca71009f6d99e2de833d8654e9cab6d9b9",
+        "workspace baseline PASS",
+        "pinned native MLX PASS",
+        "required native skips 0",
+        "historical/active authority split PASS",
+        "AST-derived direct parser regression count 97",
+        "exact-head FULL_NATIVE run 32882085157",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "gh run view 32886210156: conclusion success, headSha 07ebd970fb1fd4ad8c89194d0a589443859d2ad4, branch feat/017-rust-native-inference-runtime, workflow macOS baseline",
+        "Job IDs match FULL_NATIVE v11 exactly: classifier 97927166605 success, Apple MLX 97927220353 success, workspace baseline 97927220404 success, aggregate 97931294647 success",
+        "CI tree 25b39a6b1baf4b48bbe762b947710d045f722c90 equals git rev-parse 07ebd970^{tree}; git diff fa3daeaf..07ebd970 touches only evidence/spec docs, and 07ebd970..3100714e touches only 14 evidence JSONs — so the CI covers the reviewed implementation bytes exactly"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-CI-002",
+      "depends_on": [
+        "C-CI-001"
+      ],
+      "introduced_by_node": "R5",
+      "invalidates_nodes": [
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v3.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v4.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v5.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v6.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v7.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "NATIVE_SKIP_CENSUS",
+      "statement": "Required native skips equal zero.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "GitHub Actions exact-head FULL_NATIVE run 32868949412 at 0b9888ca71009f6d99e2de833d8654e9cab6d9b9",
+        "workspace baseline PASS",
+        "pinned native MLX PASS",
+        "required native skips 0",
+        "historical/active authority split PASS",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "native_required_skips 0 recorded in FULL_NATIVE v11 and R5 receipt v11, with required_jobs_passed 4",
+        "Live job census confirms the only skipped jobs are the three evidence-lane jobs (Closed F017 branch guard, Evidence integrity, Documentation integrity), which are non-native by design",
+        "Both native jobs (Apple MLX small-fixture validation, Apple Silicon workspace baseline) executed to success with 774s and 107s duration"
+      ]
+    },
+    {
+      "arbiter_verdict": "ACCEPT",
+      "challenge_status": "OPUS_CYCLE_07_ARBITER_ACCEPTED",
+      "claim_id": "C-CI-003",
+      "depends_on": [
+        "C-CI-001",
+        "C-REF-003"
+      ],
+      "introduced_by_node": "R5",
+      "invalidates_nodes": [
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v3.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v4.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v5.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v5.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v6.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v7.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v16.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v17.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json"
+      ],
+      "readiness_critical": true,
+      "scope": "HISTORICAL_ACTIVE_CI_SEPARATION",
+      "statement": "Historical validation and active validation remain separated.",
+      "status": "ACCEPTED",
+      "support_status": "SUPPORTED_AND_ARBITER_ACCEPTED",
+      "test_evidence": [
+        "GitHub Actions exact-head FULL_NATIVE run 32868949412 at 0b9888ca71009f6d99e2de833d8654e9cab6d9b9",
+        "workspace baseline PASS",
+        "pinned native MLX PASS",
+        "required native skips 0",
+        "historical/active authority split PASS",
+        "203 combined active-authority tests",
+        "252 root attacks",
+        "204 decode attacks",
+        "201 runtime failure executions",
+        "50 successful runtime packages",
+        "FULL_NATIVE run 32886210156",
+        "FULL_NATIVE v11 historical_active_authority: current_v10_validation PASS, historical_git_object_validation PASS, mixed_authority_detected false",
+        "Independently re-run numerical authority validator confirms 24 historical equivalence cases and 187 capability mutations with the historical/active split intact",
+        "gh run view 32887888524: EVIDENCE_ONLY at the reviewed head 3100714e, conclusion success, with Apple MLX and Apple Silicon workspace baseline both skipped — zero native jobs executed"
+      ]
+    }
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "schema": "pulsarmlx.f017.v9-root-continuity-claim-ledger/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v12.json",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v12.json"
+}
