@@ -1,0 +1,89 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-support-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 4,
+  "prior_support_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v7.json",
+  "support": [
+    {
+      "support_id": "S-O-C04-001",
+      "challenge_id": "O-C04-001",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1",
+      "evidence": [
+        "Every ast.Import rooted at json, sys, or builtins now binds the actual local name to the semantic top-level module.",
+        "Dotted json decoder, scanner, encoder, tool, raw_decode, hook, and alias forms are permanent regressions."
+      ],
+      "tests": [
+        "122 focused root/decode tests",
+        "167 combined active-authority tests",
+        "204 decode attacks",
+        "FULL_NATIVE run 32877227000"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C04-002",
+      "challenge_id": "O-C04-002",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1",
+      "evidence": [
+        "__spec__ and __loader__ reject as bare module machinery names.",
+        "loader/create_module/exec_module/load_module/get_code/get_source and adjacent introspection members reject."
+      ],
+      "tests": [
+        "direct __spec__ and __loader__ mutations",
+        "six loader-member mutations",
+        "122 focused tests",
+        "FULL_NATIVE run 32877227000"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C04-003",
+      "challenge_id": "O-C04-003",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1",
+      "evidence": [
+        "ImportFrom of load or loads rejects from every module before local-name aliasing can hide the capability.",
+        "Direct active-runtime decode census remains independently enforced."
+      ],
+      "tests": [
+        "first-party bare loads mutation",
+        "aliased bare load/loads mutations",
+        "167 combined active-authority tests"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C04-004",
+      "challenge_id": "O-C04-004",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1",
+      "evidence": [
+        "__defaults__, __kwdefaults__, __code__, and __closure__ now reject as dynamic capability attributes."
+      ],
+      "tests": [
+        "four permanent introspection regressions",
+        "122 focused tests"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C04-005",
+      "challenge_id": "O-C04-005",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "All 43 load-bearing files are measured from exact Git bytes with blob and SHA-256 checks.",
+        "The three defense-in-depth literals were independently reconstructed as truthful: numerical bytes unchanged, closure count 32, original checkpoint access 0."
+      ],
+      "tests": [
+        "measurement validator PASS",
+        "numerical authority SHA regression PASS",
+        "runtime import closure policy PASS",
+        "original checkpoint access census 0"
+      ],
+      "remaining_uncertainty": "Future derivation hardening remains defense in depth and does not invalidate current measured bytes."
+    }
+  ]
+}

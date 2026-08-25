@@ -1,0 +1,82 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-challenge-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 4,
+  "reviewer_model": "claude-opus-5",
+  "reviewed_head": "08f5c26705968bc5878f3290ad832a7ee86b1a26",
+  "exact_response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-04-exact-response.json",
+  "exact_response_sha256": "e55145d7190786f670c1f725a734ead9a8ccd41e18517e6278918173554f8d3e",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v8.json",
+  "original_checkpoint_access_observed": 0,
+  "challenges": [
+    {
+      "challenge_id": "O-C04-001",
+      "claim_id": "C-JSON-005",
+      "attack": "Dotted json submodule imports bypassed semantic module binding.",
+      "mutation_or_trace": "import json.decoder; json.decoder.JSONDecoder().decode(raw), raw_decode, scanner, encoder, tool, and aliases",
+      "expected_behavior": "All dotted json module bindings are semantic JSON capabilities and reject outside the canonical parser.",
+      "observed_behavior": "Ten representation variants accepted at the reviewed head.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1"
+    },
+    {
+      "challenge_id": "O-C04-002",
+      "claim_id": "C-JSON-005",
+      "attack": "Module loader machinery reacquired the json module.",
+      "mutation_or_trace": "type(__spec__.loader)(name,path).load_module(); __loader__.load_module(...)",
+      "expected_behavior": "Module machinery capability names and members reject throughout the active closure.",
+      "observed_behavior": "Both loader routes accepted and enabled unbounded decode.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1"
+    },
+    {
+      "challenge_id": "O-C04-003",
+      "claim_id": "C-IMPL-002",
+      "attack": "Bare imported load or loads callable from a first-party module bypassed the attribute census.",
+      "mutation_or_trace": "from f017_oracle_primary_decoders import loads; loads(raw)",
+      "expected_behavior": "Any imported load or loads callable rejects regardless of source module or local alias.",
+      "observed_behavior": "Bare callable was accepted in the composite attack.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1"
+    },
+    {
+      "challenge_id": "O-C04-004",
+      "claim_id": "C-JSON-005",
+      "attack": "Function introspection attributes remained accepted.",
+      "mutation_or_trace": "_f.__defaults__; _f.__kwdefaults__; _f.__code__; _f.__closure__",
+      "expected_behavior": "Dynamic introspection transport surfaces reject.",
+      "observed_behavior": "No current exploit demonstrated, but the surface was accepted.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "7cf77a00201c4a2c59de8e7b8b9c43e7624d34d1"
+    },
+    {
+      "challenge_id": "O-C04-005",
+      "claim_id": "C-IMPL-004",
+      "attack": "Several measurement assurance fields were hardcoded rather than derived.",
+      "mutation_or_trace": "numerical_authority_changed, runtime_import_closure_count, original_checkpoint_access",
+      "expected_behavior": "Truthful values remain exactly bound; derivation is preferred hardening.",
+      "observed_behavior": "All three literals independently measured truthful at the reviewed head; load-bearing byte measurements are real.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [
+        "scripts/research/generate_f017_v10_implementation_measurement_v1.py"
+      ],
+      "status": "ANSWERED_BY_EXISTING_EVIDENCE"
+    }
+  ]
+}

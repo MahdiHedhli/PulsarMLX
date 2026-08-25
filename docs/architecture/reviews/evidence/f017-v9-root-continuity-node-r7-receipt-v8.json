@@ -1,0 +1,49 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py",
+    "tests/research/test_f017_root_continuity_bounded_decode.py",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v8.json"
+  ],
+  "claims_closed": [
+    "C-JSON-005",
+    "C-IMPL-002"
+  ],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": [
+    "classify all five Opus cycle-04 findings",
+    "implement three blocking and one defense-in-depth repairs",
+    "answer truthful-measurement defense finding",
+    "rerun affected graph"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "challenge_ledger_v8": "9dd1fb30605a557fed635949c2bedc3fd9f747260fdd3beee0fd7953ee4813ac",
+    "opus_cycle04_exact_response": "e55145d7190786f670c1f725a734ead9a8ccd41e18517e6278918173554f8d3e"
+  },
+  "input_head": "08f5c26705968bc5878f3290ad832a7ee86b1a26",
+  "next_eligible_edges": [
+    "R8_CYCLE_05"
+  ],
+  "node_id": "R7",
+  "output_head": "f92da41081f711e1a2aee58b20f779ef7f89ba21",
+  "result": "PASS",
+  "result_counts": {
+    "challenges_answered_by_repair": 4,
+    "challenges_answered_by_existing_evidence": 1,
+    "unresolved_challenges": 0
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "122 focused root/decode tests",
+    "167 combined active-authority tests",
+    "204 decode attacks",
+    "252 root attacks",
+    "FULL_NATIVE run 32877227000"
+  ]
+}

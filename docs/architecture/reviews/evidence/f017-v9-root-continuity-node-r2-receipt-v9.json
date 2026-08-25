@@ -1,0 +1,52 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py",
+    "tests/research/test_f017_root_continuity_bounded_decode.py",
+    "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v15.json"
+  ],
+  "claims_closed": [
+    "C-JSON-005"
+  ],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": [
+    "run 122 focused root/decode tests",
+    "run complete 204-case decode campaign",
+    "run direct-parser policy and import-closure qualification"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "gemini_cycle_04_response": "ed4f22d38f0934fb33cac9085b432f1ed5732392c5414cbb0d43979f639405d2",
+    "measurement_v15": "b167989521bd4700ca6e447db4389452aa61176c543f005b5fe5704d6beb96fc"
+  },
+  "input_head": "f92da41081f711e1a2aee58b20f779ef7f89ba21",
+  "next_eligible_edges": [
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8_CYCLE_05"
+  ],
+  "node_id": "R2",
+  "output_head": "f92da41081f711e1a2aee58b20f779ef7f89ba21",
+  "result": "PASS",
+  "result_counts": {
+    "decode_attacks": 204,
+    "focused_tests": 99,
+    "new_policy_mutations": 8,
+    "policy_violations": 0
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "dotted json module imports",
+    "module loader machinery",
+    "bare imported load/loads callables",
+    "dynamic introspection attributes",
+    "204 decode attacks"
+  ]
+}

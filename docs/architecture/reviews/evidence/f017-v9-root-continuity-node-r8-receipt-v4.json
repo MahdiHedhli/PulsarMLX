@@ -1,0 +1,51 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-04-exact-response.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v4.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v9.json"
+  ],
+  "claims_closed": [],
+  "claims_introduced": [],
+  "claims_invalidated": [
+    "C-JSON-005",
+    "C-IMPL-002"
+  ],
+  "commands_executed": [
+    "fresh claude-opus-5 high-effort detached read-only executable review"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "authority_manifest_v8": "116eadf9146689b9ea13d9b6616fd5dee0fd77509f9c46148b3e8f8fd66be8ba",
+    "authority_manifest_v10": "3473b45caaae4b9bcf0a6d33c57f59b14c0f980fe7e2f6d83c5d1ad07cba2e98"
+  },
+  "input_head": "08f5c26705968bc5878f3290ad832a7ee86b1a26",
+  "next_eligible_edges": [
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8_CYCLE_05"
+  ],
+  "node_id": "R8",
+  "output_head": "f92da41081f711e1a2aee58b20f779ef7f89ba21",
+  "result": "REPAIR_REQUIRED",
+  "result_counts": {
+    "accepted_claims": 23,
+    "rejected_claims": 2,
+    "unresolved_claims": 0,
+    "findings": 5
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "dotted json decoder variants",
+    "module loader acquisition",
+    "bare imported loads callable",
+    "all 25 claim verdicts"
+  ]
+}
