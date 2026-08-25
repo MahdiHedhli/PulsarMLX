@@ -179,6 +179,14 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "import sys\nsys.modules['json'].loads(b'{}')\n",
         "import sys\ngetattr(sys.modules['json'], 'loads')(b'{}')\n",
         "import builtins\nbuiltins.__import__('json').loads(b'{}')\n",
+        "import sys\nsys.__dict__['modules']['json'].loads(b'{}')\n",
+        "import sys\ngetattr(sys, 'modules')['json'].loads(b'{}')\n",
+        "import sys as runtime\nruntime.__dict__['modules']['json'].loads(b'{}')\n",
+        "import sys as runtime\ngetattr(runtime, 'modules')['json'].loads(b'{}')\n",
+        "from sys import modules\nmodules['json'].loads(b'{}')\n",
+        "import sys\nregistry = sys\nregistry.modules['json'].loads(b'{}')\n",
+        "import sys\nvars(sys)['modules']['json'].loads(b'{}')\n",
+        "getattr(__builtins__, '__import__')('json').loads(b'{}')\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:

@@ -19,6 +19,7 @@ CANONICAL_PARSER = "scripts/research/f017_bounded_artifact_decode_v1.py"
 OFFLINE_ONLY_ALLOWANCE = {
     ("scripts/research/qualify_f017_quantization_matrix_v1.py", "invoke"),
 }
+SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
 
 
 def _closure() -> set[str]:
@@ -63,6 +64,12 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
     parents = _parents(tree)
     violations: list[dict] = []
     direct_decode_sites: list[dict] = []
+    semantic_modules: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for item in node.names:
+                if item.name in {"json", "sys", "builtins"}:
+                    semantic_modules[item.asname or item.name] = item.name
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for item in node.names:
@@ -71,8 +78,8 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                 if item.name == "importlib" or item.name.startswith("importlib."):
                     violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         elif isinstance(node, ast.ImportFrom):
-            if node.module == "json":
-                violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MEMBER_IMPORT"})
+            if node.module in {"json", "sys", "builtins"}:
+                violations.append({"path": relative, "line": node.lineno, "reason": "CAPABILITY_MEMBER_IMPORT", "module": node.module})
             if node.module == "importlib" or (node.module or "").startswith("importlib."):
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {
@@ -93,9 +100,22 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             and node.value.id in {"builtins", "__builtins__"}
         ):
             violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_BUILTIN"})
-        if not isinstance(node, ast.Name) or node.id != "json":
+        if isinstance(node, ast.Name) and node.id == "__builtins__":
+            violations.append({"path": relative, "line": node.lineno, "reason": "BUILTINS_CAPABILITY_ESCAPE"})
+        if not isinstance(node, ast.Name) or node.id not in semantic_modules:
             continue
+        semantic_module = semantic_modules[node.id]
         parent = parents.get(node)
+        if semantic_module == "builtins":
+            violations.append({"path": relative, "line": node.lineno, "reason": "BUILTINS_MODULE_CAPABILITY"})
+            continue
+        if semantic_module == "sys":
+            if not isinstance(parent, ast.Attribute) or parent.value is not node:
+                violations.append({"path": relative, "line": node.lineno, "reason": "SYS_MODULE_ESCAPE"})
+                continue
+            if parent.attr not in SYS_ALLOWED_DIRECT_MEMBERS:
+                violations.append({"path": relative, "line": node.lineno, "reason": "UNAUTHORIZED_SYS_CAPABILITY", "member": parent.attr})
+            continue
         if not isinstance(parent, ast.Attribute) or parent.value is not node:
             violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ESCAPE"})
             continue
