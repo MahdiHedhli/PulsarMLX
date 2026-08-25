@@ -41,6 +41,8 @@ def render() -> dict[Path, bytes]:
         "memory_gate": "scripts/research/f017_memory_gate_v9.py",
         "tensor_plan_builder": "scripts/research/f017_event04_tensor_plan_v9.py",
         "independent_descriptor_checker": "scripts/research/check_f017_descriptor_type_safety_v8.py",
+        "authority_generator": "scripts/research/generate_f017_event04_runtime_hardening_v9.py",
+        "measurement_validator": "scripts/research/validate_f017_event04_implementation_measurement_v9.py",
     }.items()}
     runtime = {"schema": "pulsarmlx.f017.event04-runtime-hardening/9.0.0", "status": "IMPLEMENTED_PENDING_WHOLE_DOMAIN_ACCEPTANCE",
                "supersedes_execution_preparation": binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v8.json"),

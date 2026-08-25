@@ -479,6 +479,7 @@ jobs:
           fi
           .venv/bin/python scripts/research/generate_f017_event04_runtime_hardening_v9.py --check
           .venv/bin/python scripts/research/validate_f017_event04_runtime_hardening_v9.py
+          .venv/bin/python scripts/research/validate_f017_event04_implementation_measurement_v9.py --head "$GITHUB_SHA"
           .venv/bin/python -m pytest -q scripts/research/tests/test_f017_event04_runtime_hardening_v9.py
           .venv/bin/python scripts/research/qualify_f017_event04_runtime_hardening_v9.py \
             --output "$RUNNER_TEMP/f017-event04-runtime-hardening-v9.json"
