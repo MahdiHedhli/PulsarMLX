@@ -12,7 +12,7 @@ from pathlib import Path
 
 from f017_canonical_serialization_v8 import bank_exclusive
 from f017_event04_tensor_plan_v9 import build_plan, validate_plan
-from f017_memory_gate_v9 import observe
+from f017_memory_gate_v9 import observe, prove_enforced_policy
 from validate_f017_corrected_oracle_access_v9 import install_rehearsal_candidate, render_rehearsal_candidate, validate_installed_rehearsal
 
 
@@ -28,7 +28,7 @@ def rehearse(output: Path) -> dict:
     shards = [{"filename": item["filename"], "size_bytes": item["size_bytes"], "sha256": item["sha256"],
                "role": "IDENTITY_ONLY" if index == 1 else "GRAPH_PAYLOAD"}
               for index, item in enumerate(metadata["files"], start=1)]
-    plan = validate_plan(build_plan()); package_memory = observe(enforce=True)
+    plan = validate_plan(build_plan()); package_memory = observe(enforce=False); memory_policy = prove_enforced_policy()
     with tempfile.TemporaryDirectory(prefix="f017-event04-v9-shadow-") as raw:
         work = Path(raw); candidate = work / "candidate.json"
         rendered = render_rehearsal_candidate(PRODUCTION_ROOT, shards, CATALOG, candidate, "EVENT04-SHADOW",
@@ -41,6 +41,7 @@ def rehearse(output: Path) -> dict:
                 "non_access_tensor_count": plan["non_access_tensor_count"], "graph_shards": plan["graph_shards"], "formats": plan["formats"],
                 "candidate_validation": [rendered["primary"]["result"], rendered["secondary"]["result"]],
                 "candidate_install_bytes_equal": install["candidate_install_bytes_equal"], "installed_handshake": handshake["result"],
+                "production_memory_gate_policy": memory_policy,
                 "synthetic_root_path_used": False, "production_identity_stage_invoked": False, "state_created": False,
                 "checkpoint_shard_opens": 0, "checkpoint_identity_hash_reads": 0, "checkpoint_payload_reads": 0,
                 "numerical_operations": 0, "event_04_authorization_created": False, "event_04_executed": False}

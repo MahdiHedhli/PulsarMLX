@@ -61,7 +61,11 @@ def parse_candidate_bytes(raw: bytes) -> dict:
     else:
         if value["synthetic_root_manifest_path"] is not None or value["synthetic_root_manifest_sha256"] is not None:
             raise ValueError("shadow must not carry synthetic root authority")
-        validate_observation(value["mint_memory_gate"]["observation"], enforce=True)
+        # A shadow rehearsal records the host observation but cannot claim that
+        # an undersized CI runner is a production execution machine.  Live
+        # production authority (introduced only under a future operator GO)
+        # must use the separately enforced production posture.
+        validate_observation(value["mint_memory_gate"]["observation"], enforce=False)
     return value
 
 
