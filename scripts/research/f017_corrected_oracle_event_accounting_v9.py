@@ -25,10 +25,13 @@ def derive(evidence_root: Path) -> dict:
             "historical_before": HISTORICAL_REAL_PAYLOAD_LEDGER, "historical_after": HISTORICAL_REAL_PAYLOAD_LEDGER}
 
 
-def validate_against_outcome(accounting: dict, outcome: dict, failed_transition_id: str) -> None:
+def validate_against_outcome(accounting: dict, outcome: dict, failed_transition_id: str,
+                             last_completed_artifact_id: str) -> None:
     expected = {"package": outcome["package_delta"], "primary": outcome["primary_delta"], "secondary": outcome["secondary_delta"]}
     if any(accounting[key] != value for key, value in expected.items()): raise ValueError("runtime/outcome accounting mismatch")
     if outcome["failed_transition_id"] != failed_transition_id: raise ValueError("failed transition mismatch")
+    if outcome["last_completed_artifact_id"] != last_completed_artifact_id:
+        raise ValueError("last completed artifact mismatch")
 
 
 def validate_snapshot(actual: object, expected: dict) -> None:

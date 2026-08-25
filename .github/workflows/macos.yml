@@ -378,6 +378,10 @@ jobs:
           cleanup_v6_historical_worktree() {
             git worktree remove --force "$V6_HISTORICAL_WORKTREE" >/dev/null 2>&1 || true
             git worktree prune
+            if git worktree list --porcelain | grep -F "$V6_HISTORICAL_WORKTREE"; then
+              echo "historical validation worktree survived cleanup" >&2
+              return 1
+            fi
           }
           trap cleanup_v6_historical_worktree EXIT
           git worktree add --detach "$V6_HISTORICAL_WORKTREE" "$V6_HISTORICAL_HEAD"
@@ -473,10 +477,6 @@ jobs:
           PY
           cleanup_v6_historical_worktree
           trap - EXIT
-          if git worktree list --porcelain | grep -F "$V6_HISTORICAL_WORKTREE"; then
-            echo "historical validation worktree survived cleanup" >&2
-            exit 1
-          fi
           .venv/bin/python scripts/research/generate_f017_event04_runtime_hardening_v9.py --check
           .venv/bin/python scripts/research/validate_f017_event04_runtime_hardening_v9.py
           .venv/bin/python scripts/research/validate_f017_event04_implementation_measurement_v9.py --head "$GITHUB_SHA"

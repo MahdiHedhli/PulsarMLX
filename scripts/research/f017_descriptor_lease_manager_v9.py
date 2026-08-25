@@ -161,12 +161,14 @@ class LeaseSet:
         }
 
 
-def _hash_descriptor(descriptor: int, expected_size: int) -> tuple[str, os.stat_result]:
+def _hash_descriptor(descriptor: int, expected_size: int, *, require_single_link: bool = False) -> tuple[str, os.stat_result]:
     before = os.fstat(descriptor)
     if type(before.st_mode) is not int or before.st_mode < 0 or before.st_mode >= 2**16 or not stat.S_ISREG(before.st_mode):
         raise ValueError("opened shard mode")
     if before.st_size != expected_size:
         raise ValueError("opened shard size")
+    if require_single_link and before.st_nlink != 1:
+        raise ValueError("synthetic shard hardlink prohibited")
     digest = hashlib.sha256(); offset = 0
     while offset < expected_size:
         block = os.pread(descriptor, min(1024 * 1024, expected_size - offset), offset)
@@ -202,6 +204,8 @@ def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict]:
         raise ValueError("synthetic root authority")
     if manifest["root_canonical_path"] != str(resolved) or manifest["shards"] != candidate["shards"]:
         raise ValueError("synthetic root binding")
+    if manifest["catalog_sha256"] != candidate["tensor_catalog_sha256"]:
+        raise ValueError("synthetic catalog binding")
     if any(not item["filename"].startswith("synthetic-v9-") for item in candidate["shards"]):
         raise ValueError("production shard name rejected in synthetic mode")
     return resolved, manifest
@@ -217,7 +221,7 @@ def acquire_synthetic_leases(candidate: dict, progress: IdentityProgress | None 
         for ordinal, shard in enumerate(candidate["shards"], start=1):
             fd = os.open(shard["filename"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_fd)
             try:
-                observed_digest, metadata = _hash_descriptor(fd, shard["size_bytes"])
+                observed_digest, metadata = _hash_descriptor(fd, shard["size_bytes"], require_single_link=True)
                 if observed_digest != shard["sha256"]:
                     raise ValueError("shard identity hash mismatch")
                 if progress is not None:
@@ -260,6 +264,9 @@ def acquire_production_leases(candidate: dict, installation_receipt_sha256: str,
     if not root.is_absolute() or root.is_symlink():
         raise ValueError("production checkpoint root")
     resolved = root.resolve(strict=True)
+    temporary_authority = Path(tempfile.gettempdir()).resolve(strict=True)
+    if resolved.is_relative_to(temporary_authority) or any(item["filename"].startswith("synthetic-v9-") for item in candidate["shards"]):
+        raise ValueError("synthetic root prohibited in production")
     root_fd = os.open(resolved, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:

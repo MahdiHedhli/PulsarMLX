@@ -89,7 +89,8 @@ def realize(outcome_id: str, output_root: Path) -> dict:
                             digest = original_bank(path, kind, payload); artifact_id = _artifact_id(path, kind)
                             if not injected and artifact_id is not None and NODES[artifact_id]["creation_rank"] == target_rank:
                                 injected = True
-                                raise coordinator.ModeledTransitionFailure(outcome_id)
+                                raise coordinator.ModeledTransitionFailure(
+                                    outcome_id, outcome["failed_transition_id"], artifact_id)
                             return digest
                         coordinator.bank_runtime_artifact = fault_bank
                         try:
@@ -111,6 +112,8 @@ def realize(outcome_id: str, output_root: Path) -> dict:
     if missing or forbidden_present:
         raise ValueError(f"runtime outcome artifact mismatch missing={missing} forbidden={forbidden_present}")
     accounting = {"package": outcome["package_delta"], "primary": outcome["primary_delta"], "secondary": outcome["secondary_delta"]}
+    capsule_source = ("AUTHORIZER_PHASE_DIRECT_TERMINALIZATION" if target_rank <= 6
+                      else "COORDINATOR_CAUSAL_BANK_INJECTION")
     return {"outcome_id": outcome_id, "failed_transition_id": outcome["failed_transition_id"], "created": sorted(created),
             "required": sorted(required), "forbidden_present": forbidden_present, "accounting": accounting,
-            "generic_fallback": False, "result": "PASS"}
+            "capsule_source": capsule_source, "generic_fallback": False, "result": "PASS"}

@@ -158,6 +158,10 @@ def qualify(output: Path) -> dict:
               "primary_consumed_shards": [2, 3, 4, 5, 6], "secondary_consumed_shards": [2, 3, 4, 5, 6],
               "formats": FORMATS, "path_reopen_count": 0, "live_leases_after_success_terminal": 0,
               "runtime_failure_outcomes_realized": 47, "runtime_failure_executions": len(runtime_outcomes),
+              "runtime_coordinator_outcomes_realized": len({item["outcome_id"] for item in runtime_outcomes
+                                                               if item["capsule_source"] == "COORDINATOR_CAUSAL_BANK_INJECTION"}),
+              "runtime_authorizer_phase_outcomes_realized": len({item["outcome_id"] for item in runtime_outcomes
+                                                                  if item["capsule_source"] == "AUTHORIZER_PHASE_DIRECT_TERMINALIZATION"}),
               "runtime_generic_fallbacks": sum(item["generic_fallback"] for item in runtime_outcomes),
               "runtime_accounting_mismatches": 0, "release_fault_cases": len(release_faults),
               "accounting_mutations_rejected": len(accounting), "multi_shard_and_descriptor_mutations_rejected": len(descriptor),

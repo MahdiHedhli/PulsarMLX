@@ -25,10 +25,15 @@ SECONDARY_WRAPPER = ROOT / "scripts/research/f017_corrected_oracle_secondary_v9.
 
 
 class ModeledTransitionFailure(ValueError):
-    def __init__(self, outcome_id: str):
+    def __init__(self, outcome_id: str, observed_failed_transition_id: str,
+                 observed_last_completed_artifact_id: str):
         if outcome_id not in OUTCOMES or outcome_id == "COMPLETE_SUCCESS":
             raise ValueError("modeled failure outcome")
+        if type(observed_failed_transition_id) is not str or type(observed_last_completed_artifact_id) is not str:
+            raise ValueError("observed modeled transition identity")
         self.outcome_id = outcome_id; self.outcome = OUTCOMES[outcome_id]
+        self.observed_failed_transition_id = observed_failed_transition_id
+        self.observed_last_completed_artifact_id = observed_last_completed_artifact_id
         super().__init__(self.outcome["failed_transition_id"])
 
 
@@ -75,7 +80,8 @@ def _terminalize(root: Path, candidate: dict, exc: Exception, leases: LeaseSet |
     accounting = derive(root)
     package_started = accounting["package"] == 1
     if modeled is not None:
-        validate_against_outcome(accounting, modeled, modeled["failed_transition_id"])
+        validate_against_outcome(accounting, modeled, exc.observed_failed_transition_id,
+                                 exc.observed_last_completed_artifact_id)
         failed_transition = modeled["failed_transition_id"]
         last_completed_transition = modeled["last_completed_artifact_id"]
     capsule = {"classification": modeled["outcome_class"] if modeled is not None else failed_transition,
@@ -98,17 +104,32 @@ def _terminalize(root: Path, candidate: dict, exc: Exception, leases: LeaseSet |
 
 
 def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: Path, *, production: bool,
-                       malformed: str | None = None, close_function=None, fail_transition: str | None = None) -> dict:
-    candidate, _ = parse_candidate(installed_path)
-    expected_scope = "PRODUCTION_EVENT_04" if production else "SYNTHETIC_QUALIFICATION"
-    if candidate["scope"] != expected_scope:
-        raise ValueError("descriptor execution scope")
-    if production and (malformed is not None or fail_transition is not None or close_function is not None):
-        raise ValueError("test fault controls prohibited in production")
-    emergency_root = Path(candidate["emergency_evidence_root"]) if production else evidence_root.parent / f"{evidence_root.name}-emergency"
-    emergency_root.mkdir(parents=True, exist_ok=False)
+                       malformed: str | None = None, close_function=None, fail_transition: str | None = None,
+                       fallback_evidence_root: Path | None = None) -> dict:
+    # The emergency root is created by the no-replace production installer and
+    # passed back from the installation receipt.  This lets even a later
+    # authorization-parse failure reach durable evidence without trusting a
+    # path recovered from malformed authorization bytes.
+    emergency_root = fallback_evidence_root if production else evidence_root.parent / f"{evidence_root.name}-emergency"
+    candidate: dict = {}
     leases: LeaseSet | None = None; last = "INSTALLATION_RECEIPT_BANKED"
     try:
+        if production:
+            if (malformed is not None or fail_transition is not None or close_function is not None
+                    or not isinstance(emergency_root, Path)):
+                raise ValueError("production execution boundary")
+            resolved_emergency = emergency_root.resolve(strict=True)
+            if emergency_root.is_symlink() or not resolved_emergency.is_dir():
+                raise ValueError("production emergency evidence root")
+        else:
+            emergency_root.mkdir(parents=True, exist_ok=False)
+            resolved_emergency = emergency_root.resolve(strict=True)
+        candidate, _ = parse_candidate(installed_path)
+        expected_scope = "PRODUCTION_EVENT_04" if production else "SYNTHETIC_QUALIFICATION"
+        if candidate["scope"] != expected_scope:
+            raise ValueError("descriptor execution scope")
+        if production and resolved_emergency != Path(candidate["emergency_evidence_root"]).resolve(strict=True):
+            raise ValueError("authorization-bound emergency evidence root")
         handshake = (validate_installed_operator_go if production else validate_installed_rehearsal)(installed_path, receipt_path)
         evidence_root.mkdir(parents=True, exist_ok=False)
         bank_runtime_artifact(evidence_root / "coordinator-handshake.json", "coordinator_handshake", {"candidate_sha256": handshake["candidate_sha256"], "checkpoint_opens": 0, "checkpoint_reads": 0, "result": "PASS"}); last = "COORDINATOR_HANDSHAKE"
@@ -176,6 +197,8 @@ def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: 
                 "secondary": secondary, "comparison": comparison, "release": release, "second_release": second_release,
                 "accounting": accounting, "emergency_root": str(emergency_root), "original_checkpoint_access": 0}
     except Exception as exc:
+        if emergency_root is None:
+            raise ValueError("no terminalization root") from exc
         target = evidence_root if evidence_root.is_dir() else emergency_root
         return _terminalize(target, candidate, exc, leases, fail_transition or type(exc).__name__, last)
 
@@ -187,6 +210,8 @@ def execute_synthetic(installed_path: Path, receipt_path: Path, evidence_root: P
                               close_function=close_function, fail_transition=fail_transition)
 
 
-def execute_event04(installed_path: Path, receipt_path: Path, evidence_root: Path) -> dict:
+def execute_event04(installed_path: Path, receipt_path: Path, evidence_root: Path,
+                    fallback_evidence_root: Path) -> dict:
     """One-shot production entry; caller-provided fault selection is impossible."""
-    return _execute_installed(installed_path, receipt_path, evidence_root, production=True)
+    return _execute_installed(installed_path, receipt_path, evidence_root, production=True,
+                              fallback_evidence_root=fallback_evidence_root)
