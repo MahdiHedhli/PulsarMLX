@@ -130,9 +130,22 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
         except Exception as release_exc:
             release = {"result": "EVIDENCE_BANKING_FAILURE", "source_exception": type(release_exc).__name__,
                        "live_leases_after_release": sum(record.state != "CLOSED" for record in leases.records)}
-    accounting = derive(root) if _safe_evidence_root(root) else {"authorization": 0, "package": 0, "primary": 0,
-                                                                "secondary": 0, "historical_before": 175,
-                                                                "historical_after": 175}
+    empty_accounting = {"authorization": 0, "package": 0, "primary": 0, "secondary": 0,
+                        "historical_before": 175, "historical_after": 175}
+    accounting_derivation = {"result": "ROOT_NOT_USABLE", "source_exception_class": None}
+    if _safe_evidence_root(root):
+        try:
+            accounting = derive(root)
+            accounting_derivation = {"result": "PASS", "source_exception_class": None}
+        except (ValueError, OSError) as accounting_exc:
+            # Terminal evidence must remain constructible when the primary
+            # evidence root becomes unreadable after a durable transition.
+            # The fallback capsule reports the unavailable observation rather
+            # than allowing a raw filesystem exception to cross this boundary.
+            accounting = empty_accounting
+            accounting_derivation = {"result": "UNAVAILABLE", "source_exception_class": type(accounting_exc).__name__}
+    else:
+        accounting = empty_accounting
     package_started = accounting["package"] == 1
     if modeled is not None:
         validate_against_outcome(accounting, modeled, exc.observed_failed_transition_id,
@@ -144,7 +157,8 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
                "failed_transition_id": failed_transition,
                "last_completed_transition_id": last_completed_transition, "controlled_failure_class": "F017_CONTROLLED_RUNTIME_FAILURE",
                "source_exception_class": type(exc).__name__, "message": str(exc), "release": release,
-               "accounting": accounting, "package_terminal_evidence": package_started,
+               "accounting": accounting, "accounting_derivation": accounting_derivation,
+               "package_terminal_evidence": package_started,
                "generic_fallback": modeled is None, "mandatory_stop": True}
     if isinstance(exc, ModeledTransitionFailure):
         artifact_id = next(item for item in modeled["required"] if item.startswith("failure_terminal_capsule__"))
@@ -161,6 +175,7 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
     return {"result": "CONTROLLED_FAILURE", "failure_class": "F017_CONTROLLED_RUNTIME_FAILURE", "source_exception_class": type(exc).__name__,
             "failed_transition_id": failed_transition, "outcome_id": capsule["outcome_id"], "generic_fallback": capsule["generic_fallback"],
             "release": release, "accounting": accounting, "terminal_evidence": terminal_evidence,
+            "accounting_derivation": accounting_derivation,
             "package_terminal_evidence": package_terminal_evidence, "root_authority_status": root_authority_status,
             "original_checkpoint_access": 0}
 

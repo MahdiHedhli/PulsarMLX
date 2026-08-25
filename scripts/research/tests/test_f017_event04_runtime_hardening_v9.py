@@ -22,6 +22,7 @@ from f017_event04_tensor_plan_v9 import build_plan, validate_plan
 from f017_runtime_outcome_realizer_v9 import realize
 from f017_canonical_serialization_v8 import bank_exclusive
 from f017_synthetic_checkpoint_v9 import prepare
+import execute_f017_corrected_oracle_event_v9 as coordinator
 from execute_f017_corrected_oracle_event_v9 import execute_event04, _terminalize
 import validate_f017_corrected_oracle_access_v9 as authorizer
 from f017_memory_gate_v9 import THRESHOLD_BYTES
@@ -158,6 +159,31 @@ def test_terminalization_releases_leases_when_no_evidence_root_is_usable() -> No
         {"target": "PRIMARY", "error": "INSTALLATION_RECEIPT_UNREADABLE"},
         {"target": "FALLBACK", "error": "INSTALLATION_RECEIPT_UNREADABLE"},
     ]
+
+
+@pytest.mark.parametrize("primary_name", ["unsearchable-emergency", "unsearchable-state"])
+def test_terminalization_falls_back_when_accounting_root_is_unsearchable(tmp_path: Path,
+                                                                          primary_name: str,
+                                                                          monkeypatch: pytest.MonkeyPatch) -> None:
+    primary = tmp_path / primary_name; primary.mkdir()
+    fallback = tmp_path / f"{primary_name}-fallback"; fallback.mkdir()
+    original_bank = coordinator.bank_runtime_artifact
+    def inaccessible_accounting(_root: Path) -> dict:
+        raise PermissionError(13, "injected unsearchable accounting root")
+    def inaccessible_primary(path: Path, kind: str, payload: dict) -> str:
+        if path.parent == primary:
+            raise PermissionError(13, "injected unsearchable terminal root")
+        return original_bank(path, kind, payload)
+    monkeypatch.setattr(coordinator, "derive", inaccessible_accounting)
+    monkeypatch.setattr(coordinator, "bank_runtime_artifact", inaccessible_primary)
+    result = _terminalize(primary, fallback, {}, ValueError("injected"), None,
+                          "INTERNAL", "NONE", root_authority_status="CANDIDATE_BINDING")
+    assert result["result"] == "CONTROLLED_FAILURE"
+    assert result["accounting"] == {"authorization": 0, "package": 0, "primary": 0, "secondary": 0,
+                                    "historical_before": 175, "historical_after": 175}
+    assert result["accounting_derivation"] == {"result": "UNAVAILABLE", "source_exception_class": "PermissionError"}
+    assert result["terminal_evidence"]["target"] == "FALLBACK"
+    assert (fallback / "failure-terminal-capsule.json").is_file()
 
 
 def test_modeled_failure_requires_independent_transition_observation() -> None:

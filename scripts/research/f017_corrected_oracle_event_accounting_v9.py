@@ -10,9 +10,12 @@ HISTORICAL_REAL_PAYLOAD_LEDGER = 175
 
 
 def _valid(path: Path, kind: str) -> bool:
-    if not path.is_file() or path.is_symlink(): return False
-    try: value = json.loads(path.read_bytes())
-    except (ValueError, OSError): return False
+    try:
+        if not path.is_file() or path.is_symlink():
+            return False
+        value = json.loads(path.read_bytes())
+    except (ValueError, OSError):
+        return False
     return type(value) is dict and value.get("artifact_kind") == kind
 
 

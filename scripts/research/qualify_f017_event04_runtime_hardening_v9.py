@@ -13,7 +13,8 @@ import tempfile
 from pathlib import Path
 
 from check_f017_descriptor_type_safety_v9 import _validate_descriptors as independent_validate
-from execute_f017_corrected_oracle_event_v9 import execute_synthetic
+import execute_f017_corrected_oracle_event_v9 as coordinator
+from execute_f017_corrected_oracle_event_v9 import execute_synthetic, _terminalize
 from f017_canonical_serialization_v8 import bank_exclusive, canonical_bytes
 from f017_corrected_oracle_event_accounting_v9 import validate_snapshot
 from f017_descriptor_lease_manager_v9 import acquire_synthetic_leases, validate_descriptors
@@ -134,6 +135,35 @@ def _descriptor_mutations() -> list[dict]:
     return results
 
 
+def _terminal_root_faults() -> list[dict]:
+    results = []
+    for case_id in ("UNSEARCHABLE_EMERGENCY", "UNSEARCHABLE_STATE"):
+        with tempfile.TemporaryDirectory(prefix="f017-v9-terminal-root-") as raw:
+            work = Path(raw); primary = work / "primary"; fallback = work / "fallback"
+            primary.mkdir(); fallback.mkdir()
+            original_derive = coordinator.derive; original_bank = coordinator.bank_runtime_artifact
+            def inaccessible_accounting(_root: Path) -> dict:
+                raise PermissionError(13, "injected unsearchable accounting root")
+            def inaccessible_primary(path: Path, kind: str, payload: dict) -> str:
+                if path.parent == primary:
+                    raise PermissionError(13, "injected unsearchable terminal root")
+                return original_bank(path, kind, payload)
+            coordinator.derive = inaccessible_accounting; coordinator.bank_runtime_artifact = inaccessible_primary
+            try:
+                result = _terminalize(primary, fallback, {}, ValueError("injected root failure"), None,
+                                      "INTERNAL", "NONE", root_authority_status="CANDIDATE_BINDING")
+            finally:
+                coordinator.derive = original_derive; coordinator.bank_runtime_artifact = original_bank
+            if (result["result"] != "CONTROLLED_FAILURE"
+                    or result["terminal_evidence"]["target"] != "FALLBACK"
+                    or result["accounting_derivation"]["result"] != "UNAVAILABLE"
+                    or result["accounting_derivation"]["source_exception_class"] != "PermissionError"):
+                raise ValueError("unsearchable accounting root did not fail over")
+            results.append({"case_id": case_id, "result": "PASS", "terminal_target": "FALLBACK",
+                            "accounting_derivation": "UNAVAILABLE"})
+    return results
+
+
 def qualify(output: Path) -> dict:
     success: list[dict] = []
     for index in range(15): success.append(_subprocess_case(18101 + index % 12, False, f"MINIMAL-{index:03d}"))
@@ -165,6 +195,7 @@ def qualify(output: Path) -> dict:
     if realized_outcomes != set(outcomes) - {"COMPLETE_SUCCESS"} or len(coordinator_outcomes) + len(authorizer_outcomes) != len(realized_outcomes):
         raise ValueError("runtime outcome realization census")
     plan = validate_plan(build_plan()); release_faults = _release_faults(); accounting = _accounting_mutations(); descriptor = _descriptor_mutations()
+    terminal_root_faults = _terminal_root_faults()
     result = {"schema": "pulsarmlx.f017.event04-runtime-hardening-qualification/9.0.0", "result": "PASS",
               "successful_package_count": len(success), "minimal_package_count": 15, "mixed_package_count": 15,
               "route_variation_package_count": 10, "descriptor_distribution_package_count": 10,
@@ -175,6 +206,7 @@ def qualify(output: Path) -> dict:
               "runtime_authorizer_phase_outcomes_realized": len(authorizer_outcomes),
               "runtime_generic_fallbacks": sum(item["generic_fallback"] for item in runtime_outcomes),
               "runtime_accounting_mismatches": accounting_mismatches, "release_fault_cases": len(release_faults),
+              "terminal_root_fault_cases": len(terminal_root_faults),
               "accounting_mutations_rejected": len(accounting), "multi_shard_and_descriptor_mutations_rejected": len(descriptor),
               "deterministic_core_repetitions": len(reproducibility), "deterministic_core_sha256": hashlib.sha256(core_bytes[0]).hexdigest(),
               "deterministic_core_unique_byte_sequences": len(set(core_bytes)), "volatile_envelopes_isolated": True,
