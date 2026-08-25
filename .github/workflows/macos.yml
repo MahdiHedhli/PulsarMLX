@@ -499,6 +499,7 @@ jobs:
           assert qualification["runtime_failure_executions"] == 201
           assert qualification["runtime_accounting_mismatches"] == 0
           assert qualification["uncontrolled_modeled_failures"] == 0
+          assert qualification["terminal_root_fault_cases"] == 2
           assert qualification["primary_consumed_shards"] == [2, 3, 4, 5, 6]
           assert qualification["secondary_consumed_shards"] == [2, 3, 4, 5, 6]
           assert qualification["production_graph_tensor_plan"] == 1410
