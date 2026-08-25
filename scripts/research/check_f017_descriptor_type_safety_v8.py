@@ -66,6 +66,8 @@ def _validate_descriptors(value: object) -> list[dict]:
         raise ValueError("descriptor ordinal census mismatch")
     if len({(item["device"], item["inode"]) for item in descriptors}) != 5:
         raise ValueError("descriptor device/inode identity is not unique")
+    if len({item["lease_id"] for item in descriptors}) != 5:
+        raise ValueError("descriptor lease IDs are not unique")
     return descriptors
 
 

@@ -375,6 +375,11 @@ jobs:
           WORKSPACE_ROOT="$PWD"
           V6_HISTORICAL_HEAD=ccf76d95ff33b333d2d40e29181a926528bc8ca6
           V6_HISTORICAL_WORKTREE="$RUNNER_TEMP/f017-v6-historical"
+          cleanup_v6_historical_worktree() {
+            git worktree remove --force "$V6_HISTORICAL_WORKTREE" >/dev/null 2>&1 || true
+            git worktree prune
+          }
+          trap cleanup_v6_historical_worktree EXIT
           git worktree add --detach "$V6_HISTORICAL_WORKTREE" "$V6_HISTORICAL_HEAD"
           (
             cd "$V6_HISTORICAL_WORKTREE"
@@ -465,6 +470,39 @@ jobs:
           assert rehearsal["checkpoint_payload_reads"] == 0
           assert rehearsal["numerical_operations"] == 0
           assert rehearsal["event_04_authorization_created"] is False
+          PY
+          cleanup_v6_historical_worktree
+          trap - EXIT
+          if git worktree list --porcelain | grep -F "$V6_HISTORICAL_WORKTREE"; then
+            echo "historical validation worktree survived cleanup" >&2
+            exit 1
+          fi
+          .venv/bin/python scripts/research/generate_f017_event04_runtime_hardening_v9.py --check
+          .venv/bin/python scripts/research/validate_f017_event04_runtime_hardening_v9.py
+          .venv/bin/python -m pytest -q scripts/research/tests/test_f017_event04_runtime_hardening_v9.py
+          .venv/bin/python scripts/research/qualify_f017_event04_runtime_hardening_v9.py \
+            --output "$RUNNER_TEMP/f017-event04-runtime-hardening-v9.json"
+          .venv/bin/python scripts/research/rehearse_f017_event04_runtime_hardening_v9.py \
+            --output "$RUNNER_TEMP/f017-event04-runtime-hardening-rehearsal-v9.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          qualification = json.loads((root / "f017-event04-runtime-hardening-v9.json").read_text())
+          rehearsal = json.loads((root / "f017-event04-runtime-hardening-rehearsal-v9.json").read_text())
+          assert qualification["result"] == "PASS"
+          assert qualification["runtime_failure_outcomes_realized"] == 47
+          assert qualification["primary_consumed_shards"] == [2, 3, 4, 5, 6]
+          assert qualification["secondary_consumed_shards"] == [2, 3, 4, 5, 6]
+          assert qualification["production_graph_tensor_plan"] == 1410
+          assert qualification["non_access_tensors_rejected"] == 399
+          assert qualification["path_reopen_count"] == 0
+          assert qualification["original_checkpoint_payload_reads"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["deterministic_core"]["checkpoint_shard_opens"] == 0
+          assert rehearsal["deterministic_core"]["checkpoint_payload_reads"] == 0
+          assert rehearsal["deterministic_core"]["numerical_operations"] == 0
           PY
           .venv/bin/python scripts/research/qualify_f017_quantization_matrix_v1.py \
             --binary target/release/quant_native_matvec_probe \
