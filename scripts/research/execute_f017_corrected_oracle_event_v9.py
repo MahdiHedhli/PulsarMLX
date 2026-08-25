@@ -10,7 +10,7 @@ from pathlib import Path
 
 from f017_checkpoint_identity_producer_v9 import produce
 from f017_corrected_oracle_compare_v8 import compare
-from f017_corrected_oracle_event_accounting_v9 import derive, validate_against_outcome
+from f017_corrected_oracle_event_accounting_v9 import derive, validate_against_outcome, validate_snapshot
 from f017_descriptor_lease_manager_v9 import LeaseSet, validate_descriptors
 from f017_canonical_serialization_v8 import strict_bytes
 from f017_lifecycle_artifact_v8 import bank_runtime_artifact
@@ -146,10 +146,17 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
             accounting_derivation = {"result": "UNAVAILABLE", "source_exception_class": type(accounting_exc).__name__}
     else:
         accounting = empty_accounting
-    package_started = accounting["package"] == 1
+    # An unavailable accounting observation cannot prove that the package did
+    # not start.  Conservatively require package terminal evidence so an
+    # unreadable durable start can never be converted into retry permission.
+    package_started = accounting["package"] == 1 or accounting_derivation["result"] == "UNAVAILABLE"
     if modeled is not None:
-        validate_against_outcome(accounting, modeled, exc.observed_failed_transition_id,
-                                 exc.observed_last_completed_artifact_id)
+        if accounting_derivation["result"] == "PASS":
+            validate_against_outcome(accounting, modeled, exc.observed_failed_transition_id,
+                                     exc.observed_last_completed_artifact_id)
+        elif (modeled["failed_transition_id"] != exc.observed_failed_transition_id
+                or modeled["last_completed_artifact_id"] != exc.observed_last_completed_artifact_id):
+            raise ValueError("degraded outcome transition mismatch")
         failed_transition = modeled["failed_transition_id"]
         last_completed_transition = modeled["last_completed_artifact_id"]
     capsule = {"classification": modeled["outcome_class"] if modeled is not None else failed_transition,
@@ -274,6 +281,8 @@ def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: 
         second_release = leases.release()
         if not second_release["idempotent_noop"] or second_release["attempted_closures"] != 0: raise ValueError("release idempotency")
         accounting = derive(evidence_root)
+        validate_snapshot(accounting, {"authorization": 0, "package": 1, "primary": 1, "secondary": 1,
+                                       "historical_before": 175, "historical_after": 175})
         package_receipt = bank_runtime_artifact(evidence_root / "package-receipt.json", "package_receipt", {"accounting": accounting, "classification": comparison["classification"]})
         bank_runtime_artifact(evidence_root / "package-terminal.json", "package_terminal", {"result": "COMPLETE", "package_receipt_sha256": package_receipt, "accounting": accounting, "mandatory_stop": True})
         return {"result": "PASS", "candidate_sha256": handshake["candidate_sha256"], "identity": identity, "primary": primary,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import stat
 from pathlib import Path
 
 
@@ -11,12 +12,23 @@ HISTORICAL_REAL_PAYLOAD_LEDGER = 175
 
 def _valid(path: Path, kind: str) -> bool:
     try:
-        if not path.is_file() or path.is_symlink():
-            return False
-        value = json.loads(path.read_bytes())
-    except (ValueError, OSError):
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
         return False
-    return type(value) is dict and value.get("artifact_kind") == kind
+    # Any existing but unreadable, redirected, malformed, or wrongly typed
+    # durable-start artifact is an accounting observation failure.  Only true
+    # absence is represented by False.
+    if not stat.S_ISREG(mode):
+        raise ValueError("durable-start artifact type")
+    try:
+        value = json.loads(path.read_bytes())
+    except OSError:
+        raise
+    except (UnicodeError, ValueError) as exc:
+        raise ValueError("durable-start artifact bytes") from exc
+    if type(value) is not dict or value.get("artifact_kind") != kind:
+        raise ValueError("durable-start artifact binding")
+    return True
 
 
 def derive(evidence_root: Path) -> dict:

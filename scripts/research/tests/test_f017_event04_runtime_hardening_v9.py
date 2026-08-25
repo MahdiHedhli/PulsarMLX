@@ -21,6 +21,7 @@ from f017_descriptor_lease_manager_v9 import acquire_synthetic_leases
 from f017_event04_tensor_plan_v9 import build_plan, validate_plan
 from f017_runtime_outcome_realizer_v9 import realize
 from f017_canonical_serialization_v8 import bank_exclusive
+from f017_lifecycle_artifact_v8 import bank_runtime_artifact
 from f017_synthetic_checkpoint_v9 import prepare
 import execute_f017_corrected_oracle_event_v9 as coordinator
 from execute_f017_corrected_oracle_event_v9 import execute_event04, _terminalize
@@ -163,27 +164,27 @@ def test_terminalization_releases_leases_when_no_evidence_root_is_usable() -> No
 
 @pytest.mark.parametrize("primary_name", ["unsearchable-emergency", "unsearchable-state"])
 def test_terminalization_falls_back_when_accounting_root_is_unsearchable(tmp_path: Path,
-                                                                          primary_name: str,
-                                                                          monkeypatch: pytest.MonkeyPatch) -> None:
+                                                                          primary_name: str) -> None:
     primary = tmp_path / primary_name; primary.mkdir()
     fallback = tmp_path / f"{primary_name}-fallback"; fallback.mkdir()
-    original_bank = coordinator.bank_runtime_artifact
-    def inaccessible_accounting(_root: Path) -> dict:
-        raise PermissionError(13, "injected unsearchable accounting root")
-    def inaccessible_primary(path: Path, kind: str, payload: dict) -> str:
-        if path.parent == primary:
-            raise PermissionError(13, "injected unsearchable terminal root")
-        return original_bank(path, kind, payload)
-    monkeypatch.setattr(coordinator, "derive", inaccessible_accounting)
-    monkeypatch.setattr(coordinator, "bank_runtime_artifact", inaccessible_primary)
-    result = _terminalize(primary, fallback, {}, ValueError("injected"), None,
-                          "INTERNAL", "NONE", root_authority_status="CANDIDATE_BINDING")
+    bank_runtime_artifact(primary / "package-durable-start.json", "package_durable_start", {"delta": 1})
+    modeled = primary_name == "unsearchable-state"
+    failure = (coordinator.ModeledTransitionFailure("CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_012",
+               "FAIL_CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_012", "checkpoint_access_event_1")
+               if modeled else ValueError("injected"))
+    primary.chmod(0)
+    try:
+        result = _terminalize(primary, fallback, {}, failure, None,
+                              "INTERNAL", "NONE", root_authority_status="CANDIDATE_BINDING")
+    finally:
+        primary.chmod(0o700)
     assert result["result"] == "CONTROLLED_FAILURE"
     assert result["accounting"] == {"authorization": 0, "package": 0, "primary": 0, "secondary": 0,
                                     "historical_before": 175, "historical_after": 175}
     assert result["accounting_derivation"] == {"result": "UNAVAILABLE", "source_exception_class": "PermissionError"}
     assert result["terminal_evidence"]["target"] == "FALLBACK"
-    assert (fallback / "failure-terminal-capsule.json").is_file()
+    assert result["package_terminal_evidence"]["result"] == ("NOT_APPLICABLE" if modeled else "PASS")
+    assert any("terminal-capsule" in path.name or "terminal_capsule" in path.name for path in fallback.iterdir())
 
 
 def test_modeled_failure_requires_independent_transition_observation() -> None:

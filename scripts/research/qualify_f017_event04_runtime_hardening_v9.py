@@ -16,6 +16,7 @@ from check_f017_descriptor_type_safety_v9 import _validate_descriptors as indepe
 import execute_f017_corrected_oracle_event_v9 as coordinator
 from execute_f017_corrected_oracle_event_v9 import execute_synthetic, _terminalize
 from f017_canonical_serialization_v8 import bank_exclusive, canonical_bytes
+from f017_lifecycle_artifact_v8 import bank_runtime_artifact
 from f017_corrected_oracle_event_accounting_v9 import validate_snapshot
 from f017_descriptor_lease_manager_v9 import acquire_synthetic_leases, validate_descriptors
 from f017_event04_tensor_plan_v9 import build_plan, validate_plan
@@ -137,27 +138,25 @@ def _descriptor_mutations() -> list[dict]:
 
 def _terminal_root_faults() -> list[dict]:
     results = []
-    for case_id in ("UNSEARCHABLE_EMERGENCY", "UNSEARCHABLE_STATE"):
+    for case_id, modeled in (("UNSEARCHABLE_EMERGENCY", False), ("UNSEARCHABLE_STATE_MODELED", True)):
         with tempfile.TemporaryDirectory(prefix="f017-v9-terminal-root-") as raw:
             work = Path(raw).resolve(); primary = work / "primary"; fallback = work / "fallback"
             primary.mkdir(); fallback.mkdir()
-            original_derive = coordinator.derive; original_bank = coordinator.bank_runtime_artifact
-            def inaccessible_accounting(_root: Path) -> dict:
-                raise PermissionError(13, "injected unsearchable accounting root")
-            def inaccessible_primary(path: Path, kind: str, payload: dict) -> str:
-                if path.parent == primary:
-                    raise PermissionError(13, "injected unsearchable terminal root")
-                return original_bank(path, kind, payload)
-            coordinator.derive = inaccessible_accounting; coordinator.bank_runtime_artifact = inaccessible_primary
+            bank_runtime_artifact(primary / "package-durable-start.json", "package_durable_start", {"delta": 1})
+            failure = (coordinator.ModeledTransitionFailure("CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_012",
+                       "FAIL_CHECKPOINT_IDENTITY_FAILURE__AFTER_RANK_012", "checkpoint_access_event_1")
+                       if modeled else ValueError("injected root failure"))
+            primary.chmod(0)
             try:
-                result = _terminalize(primary, fallback, {}, ValueError("injected root failure"), None,
+                result = _terminalize(primary, fallback, {}, failure, None,
                                       "INTERNAL", "NONE", root_authority_status="CANDIDATE_BINDING")
             finally:
-                coordinator.derive = original_derive; coordinator.bank_runtime_artifact = original_bank
+                primary.chmod(0o700)
             if (result["result"] != "CONTROLLED_FAILURE"
                     or result["terminal_evidence"]["target"] != "FALLBACK"
                     or result["accounting_derivation"]["result"] != "UNAVAILABLE"
-                    or result["accounting_derivation"]["source_exception_class"] != "PermissionError"):
+                    or result["accounting_derivation"]["source_exception_class"] != "PermissionError"
+                    or (not modeled and result["package_terminal_evidence"]["result"] != "PASS")):
                 raise ValueError("unsearchable accounting root did not fail over")
             results.append({"case_id": case_id, "result": "PASS", "terminal_target": "FALLBACK",
                             "accounting_derivation": "UNAVAILABLE"})
