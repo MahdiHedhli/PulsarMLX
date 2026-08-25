@@ -231,7 +231,7 @@ class AccountingRootAuthority:
         digest = _bank_at(
             self.primary_fd,
             leaf,
-            {"schema": f"pulsarmlx.f017.v9r2.runtime.{kind}/1.0.0", "artifact_kind": kind, "payload": payload},
+            {"schema": f"pulsarmlx.f017.v10.runtime.{kind}/1.0.0", "artifact_kind": kind, "payload": payload},
         )
         if transition_id is not None:
             self.append_transition(transition_id, digest)
@@ -242,7 +242,7 @@ class AccountingRootAuthority:
             self.fallback_fd,
             leaf,
             {
-                "schema": "pulsarmlx.f017.v9r2.runtime.fallback_failure_capsule/1.0.0",
+                "schema": "pulsarmlx.f017.v10.runtime.fallback_failure_capsule/1.0.0",
                 "artifact_kind": "fallback_failure_capsule",
                 "payload": {
                     **payload,
