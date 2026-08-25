@@ -201,6 +201,19 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "from f017_bounded_artifact_decode_v1 import json as backend\nbackend.loads(b'{}')\n",
         "import f017_bounded_artifact_decode_v1 as parser\ndecoder = parser.json.loads\ndecoder(b'{}')\n",
         "import f017_bounded_artifact_decode_v1 as parser\ngetattr(parser.json, 'loads')(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nparser.json.JSONDecoder().decode(b'{}')\n",
+        "import f017_canonical_serialization_v10 as serializer\nserializer.json.JSONDecoder().decode(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nparser.json.decoder.JSONDecoder().decode(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\n_D = parser.json.JSONDecoder\n_D().decode(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nparser.json.JSONDecoder().raw_decode(b'{}')[0]\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nparser.json.JSONDecoder(object_pairs_hook=dict).decode(b'{}')\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nparser.json.decoder.scan_once(None, '', 0)\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nparser.json.scanner.make_scanner(None)\n",
+        "import f017_bounded_artifact_decode_v1 as parser\nfrom functools import partial\npartial(parser.json.JSONDecoder().decode)(b'{}')\n",
+        "import operator\nimport f017_bounded_artifact_decode_v1 as parser\noperator.attrgetter('loads')(parser.json)(b'{}')\n",
+        "import operator\nimport f017_bounded_artifact_decode_v1 as parser\noperator.attrgetter('json.loads')(parser)(b'{}')\n",
+        "import operator\nimport f017_bounded_artifact_decode_v1 as parser\noperator.methodcaller('loads', b'{}')(parser.json)\n",
+        "from operator import attrgetter\nimport f017_bounded_artifact_decode_v1 as parser\nattrgetter('json.loads')(parser)(b'{}')\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
@@ -219,6 +232,43 @@ def test_direct_parser_policy_rejects_first_party_reexport_end_to_end(
         encoding="utf-8",
     )
     (research / "f017_bounded_artifact_decode_v1.py").write_text("import json\n", encoding="utf-8")
+    monkeypatch.setattr(decode_policy, "ROOT", tmp_path)
+    monkeypatch.setattr(decode_policy, "RESEARCH", research)
+    monkeypatch.setattr(decode_policy, "ENTRY_PATHS", {"scripts/research/entry.py"})
+    with pytest.raises(ValueError, match="direct active-runtime JSON parser surface"):
+        decode_policy.validate()
+
+
+def test_direct_parser_policy_follows_package_shaped_first_party_dependency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    research = tmp_path / "scripts" / "research"
+    package = research / "f017_side_pkg"
+    package.mkdir(parents=True)
+    (research / "entry.py").write_text("import f017_side_pkg\n", encoding="utf-8")
+    (package / "__init__.py").write_text(
+        "import json\njson.loads(b'{}')\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(decode_policy, "ROOT", tmp_path)
+    monkeypatch.setattr(decode_policy, "RESEARCH", research)
+    monkeypatch.setattr(decode_policy, "ENTRY_PATHS", {"scripts/research/entry.py"})
+    with pytest.raises(ValueError, match="direct active-runtime JSON parser surface"):
+        decode_policy.validate()
+
+
+def test_direct_parser_policy_follows_dotted_first_party_package_dependency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    research = tmp_path / "scripts" / "research"
+    package = research / "f017_side_pkg"
+    package.mkdir(parents=True)
+    (research / "entry.py").write_text("import f017_side_pkg.decoder\n", encoding="utf-8")
+    (package / "__init__.py").write_text("# inspected package\n", encoding="utf-8")
+    (package / "decoder.py").write_text(
+        "import json\njson.loads(b'{}')\n",
+        encoding="utf-8",
+    )
     monkeypatch.setattr(decode_policy, "ROOT", tmp_path)
     monkeypatch.setattr(decode_policy, "RESEARCH", research)
     monkeypatch.setattr(decode_policy, "ENTRY_PATHS", {"scripts/research/entry.py"})

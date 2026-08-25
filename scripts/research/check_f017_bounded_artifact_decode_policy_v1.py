@@ -21,10 +21,32 @@ OFFLINE_ONLY_ALLOWANCE = {
 }
 SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
 CAPABILITY_EXPORT_NAMES = {"builtins", "importlib", "json", "os", "sys"}
+DYNAMIC_RESOLUTION_MODULES = {"importlib", "operator"}
 DYNAMIC_CAPABILITY_ATTRIBUTES = {
     "__bases__", "__builtins__", "__class__", "__dict__", "__getattribute__",
-    "__globals__", "__mro__", "__subclasses__", "modules", "sys",
+    "__globals__", "__mro__", "__subclasses__", "builtins", "importlib",
+    "json", "modules", "os", "sys",
 }
+
+
+def _research_module_paths(module: str) -> list[str]:
+    """Resolve every importable first-party component to inspected source bytes."""
+    parts = module.split(".")
+    found: list[str] = []
+    for length in range(1, len(parts) + 1):
+        component = RESEARCH.joinpath(*parts[:length])
+        module_file = component.with_suffix(".py")
+        package_file = component / "__init__.py"
+        if module_file.is_file():
+            found.append(str(module_file.relative_to(ROOT)))
+        if package_file.is_file():
+            found.append(str(package_file.relative_to(ROOT)))
+    return found
+
+
+def _first_party_shape_exists(module: str) -> bool:
+    top = module.split(".", 1)[0]
+    return (RESEARCH / f"{top}.py").exists() or (RESEARCH / top).exists()
 
 
 def _closure() -> set[str]:
@@ -40,13 +62,19 @@ def _closure() -> set[str]:
         for node in ast.walk(tree):
             modules: list[str] = []
             if isinstance(node, ast.Import):
-                modules = [item.name.split(".", 1)[0] for item in node.names]
+                modules = [item.name for item in node.names]
             elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                modules = [node.module.split(".", 1)[0]]
+                modules = [node.module]
+                modules.extend(
+                    f"{node.module}.{item.name}"
+                    for item in node.names
+                    if item.name != "*"
+                )
             for module in modules:
-                dependency = RESEARCH / f"{module}.py"
-                if dependency.is_file():
-                    pending.append(f"scripts/research/{module}.py")
+                dependencies = _research_module_paths(module)
+                if _first_party_shape_exists(module) and not dependencies:
+                    raise ValueError(f"unresolved first-party runtime dependency: {module}")
+                pending.extend(dependencies)
     return closure
 
 
@@ -114,7 +142,7 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             for item in node.names:
                 if item.name == "json" and item.asname is not None:
                     violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ALIAS"})
-                if item.name == "importlib" or item.name.startswith("importlib."):
+                if item.name.split(".", 1)[0] in DYNAMIC_RESOLUTION_MODULES:
                     violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         elif isinstance(node, ast.ImportFrom):
             if node.level != 0:
@@ -131,7 +159,7 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                         semantic_modules[item.asname or item.name] = item.name
             if node.module in {"json", "sys", "builtins"}:
                 violations.append({"path": relative, "line": node.lineno, "reason": "CAPABILITY_MEMBER_IMPORT", "module": node.module})
-            if node.module == "importlib" or (node.module or "").startswith("importlib."):
+            if (node.module or "").split(".", 1)[0] in DYNAMIC_RESOLUTION_MODULES:
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
             if node.func.id in {"compile", "eval", "exec", "globals", "locals", "vars", "__import__"}:
