@@ -86,21 +86,23 @@ def realize(outcome_id: str, output_root: Path) -> dict:
                     if target_rank == 6:
                         runtime_result = _early_capsule(pre, outcome_id)
                     else:
-                        original_bank = coordinator.bank_runtime_artifact
+                        original_bank = coordinator.AccountingRootAuthority.bank_artifact
                         injected = False
-                        def fault_bank(path: Path, kind: str, payload: dict) -> str:
+                        def fault_bank(authority, leaf: str, kind: str, payload: dict,
+                                       transition_id: str | None = None) -> str:
                             nonlocal injected
-                            digest = original_bank(path, kind, payload); artifact_id = _artifact_id(path, kind)
+                            digest = original_bank(authority, leaf, kind, payload, transition_id)
+                            artifact_id = _artifact_id(Path(leaf), kind)
                             if not injected and artifact_id is not None and NODES[artifact_id]["creation_rank"] == target_rank:
                                 injected = True
                                 raise coordinator.ModeledTransitionFailure(
                                     outcome_id, outcome["failed_transition_id"], artifact_id)
                             return digest
-                        coordinator.bank_runtime_artifact = fault_bank
+                        coordinator.AccountingRootAuthority.bank_artifact = fault_bank
                         try:
                             runtime_result = coordinator.execute_synthetic(installed, receipt, output_root / "runtime")
                         finally:
-                            coordinator.bank_runtime_artifact = original_bank
+                            coordinator.AccountingRootAuthority.bank_artifact = original_bank
                         if runtime_result.get("outcome_id") != outcome_id or runtime_result.get("generic_fallback") is not False:
                             raise ValueError("runtime did not realize selected modeled failure")
 

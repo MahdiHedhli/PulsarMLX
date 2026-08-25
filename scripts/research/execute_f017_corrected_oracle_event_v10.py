@@ -49,21 +49,31 @@ def _run_consumer(wrapper: Path, installed: Path, receipt: Path, descriptors: Pa
     return strict_bytes(output.read_bytes())
 
 
-def _release(leases: LeaseSet, root: Path, close_function=None) -> dict:
-    bank_runtime_artifact(root / "descriptor-release-start.json", "descriptor_release_start", {"expected_leases": 5})
+def _release(leases: LeaseSet, root: Path, close_function=None,
+             *, accounting_authority: AccountingRootAuthority | None = None) -> dict:
+    def bank(leaf: str, kind: str, payload: dict,
+             transition_id: str | None = None) -> str:
+        if accounting_authority is not None:
+            return accounting_authority.bank_artifact(leaf, kind, payload, transition_id)
+        if transition_id is not None:
+            raise ValueError("release transition requires accounting authority")
+        return bank_runtime_artifact(root / leaf, kind, payload)
+
+    bank("descriptor-release-start.json", "descriptor_release_start", {"expected_leases": 5})
     event_index = 0
     def bank_event(event: dict) -> str:
         nonlocal event_index
-        digest = bank_runtime_artifact(root / f"descriptor-close-event-{event_index:02d}.json", "descriptor_close_event", event)
+        digest = bank(f"descriptor-close-event-{event_index:02d}.json", "descriptor_close_event", event)
         event_index += 1; return digest
     report = leases.release(close_function=close_function, event_function=bank_event)
-    report_sha = bank_runtime_artifact(root / "descriptor-release-report.json", "descriptor_release_report", report)
-    receipt_sha = bank_runtime_artifact(root / "descriptor-release-receipt.json", "descriptor_release_receipt",
-                                        {"release_report_sha256": report_sha, "result": report["result"],
-                                         "live_leases_after_release": report["live_leases_after_release"]})
+    report_sha = bank("descriptor-release-report.json", "descriptor_release_report", report)
+    receipt_sha = bank("descriptor-release-receipt.json", "descriptor_release_receipt",
+                       {"release_report_sha256": report_sha, "result": report["result"],
+                        "live_leases_after_release": report["live_leases_after_release"]})
     terminal = {**report, "release_report_sha256": report_sha, "release_receipt_sha256": receipt_sha,
                 "mandatory_stop": report["result"] != "PASS"}
-    bank_runtime_artifact(root / "descriptor-release-terminal.json", "descriptor_release_terminal", terminal)
+    bank("descriptor-release-terminal.json", "descriptor_release_terminal", terminal,
+         "DESCRIPTOR_RELEASE_TERMINAL" if accounting_authority is not None else None)
     return report
 
 
@@ -130,7 +140,7 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
             # their atomic terminal capsule.  The normal release artifact
             # sequence is reserved for ranks 43-45 by the causal authority.
             release = (leases.release() if modeled is not None or not _safe_evidence_root(root)
-                       else _release(leases, root))
+                       else _release(leases, root, accounting_authority=accounting_authority))
         except Exception as release_exc:
             release = {"result": "EVIDENCE_BANKING_FAILURE", "source_exception": type(release_exc).__name__,
                        "live_leases_after_release": sum(record.state != "CLOSED" for record in leases.records)}
@@ -254,26 +264,26 @@ def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: 
             handshake["candidate_sha256"],
             handshake["installation_receipt_sha256"],
         )
-        bank_runtime_artifact(evidence_root / "accounting-root-authority.json", "accounting_root_authority",
-                              accounting_authority.authority_record())
-        bank_runtime_artifact(evidence_root / "coordinator-handshake.json", "coordinator_handshake", {"candidate_sha256": handshake["candidate_sha256"], "checkpoint_opens": 0, "checkpoint_reads": 0, "result": "PASS"}); last = "COORDINATOR_HANDSHAKE"
-        accounting_authority.append_transition("COORDINATOR_HANDSHAKE", hashlib.sha256((evidence_root / "coordinator-handshake.json").read_bytes()).hexdigest())
+        def bank_owned(leaf: str, kind: str, payload: dict,
+                       transition_id: str | None = None) -> str:
+            return accounting_authority.bank_artifact(leaf, kind, payload, transition_id)
+
+        bank_owned("accounting-root-authority.json", "accounting_root_authority",
+                   accounting_authority.authority_record())
+        bank_owned("coordinator-handshake.json", "coordinator_handshake", {"candidate_sha256": handshake["candidate_sha256"], "checkpoint_opens": 0, "checkpoint_reads": 0, "result": "PASS"}, "COORDINATOR_HANDSHAKE"); last = "COORDINATOR_HANDSHAKE"
         package_memory = observe(enforce=production)
         if fail_transition == "PACKAGE_MEMORY_GATE": raise ValueError("injected package memory gate failure")
-        bank_runtime_artifact(evidence_root / "package-claim.json", "package_claim", {"authorization_id": candidate["authorization_id"], "package_attempt_id": candidate["package_attempt_id"], "package_memory_gate": package_memory, "attempts": 1, "retries": 0, "resume": False}); last = "PACKAGE_CLAIM"
-        accounting_authority.append_transition("PACKAGE_CLAIM", hashlib.sha256((evidence_root / "package-claim.json").read_bytes()).hexdigest())
-        bank_runtime_artifact(evidence_root / "package-durable-start.json", "package_durable_start", {"package_attempt_id": candidate["package_attempt_id"], "delta": 1}); last = "PACKAGE_DURABLE_START"
-        accounting_authority.append_transition("PACKAGE_DURABLE_START", hashlib.sha256((evidence_root / "package-durable-start.json").read_bytes()).hexdigest())
-        bank_runtime_artifact(evidence_root / "package-ledger-entry.json", "package_ledger_entry", {"package_attempt_id": candidate["package_attempt_id"], "delta": 1, "historical_ledger": 175})
-        bank_runtime_artifact(evidence_root / "checkpoint-identity-durable-start.json", "checkpoint_identity_durable_start", {"expected_shards": 6, "expected_graph_descriptors": 5}); last = "CHECKPOINT_IDENTITY_START"
-        accounting_authority.append_transition("CHECKPOINT_IDENTITY_START", hashlib.sha256((evidence_root / "checkpoint-identity-durable-start.json").read_bytes()).hexdigest())
+        bank_owned("package-claim.json", "package_claim", {"authorization_id": candidate["authorization_id"], "package_attempt_id": candidate["package_attempt_id"], "package_memory_gate": package_memory, "attempts": 1, "retries": 0, "resume": False}, "PACKAGE_CLAIM"); last = "PACKAGE_CLAIM"
+        bank_owned("package-durable-start.json", "package_durable_start", {"package_attempt_id": candidate["package_attempt_id"], "delta": 1}, "PACKAGE_DURABLE_START"); last = "PACKAGE_DURABLE_START"
+        bank_owned("package-ledger-entry.json", "package_ledger_entry", {"package_attempt_id": candidate["package_attempt_id"], "delta": 1, "historical_ledger": 175})
+        bank_owned("checkpoint-identity-durable-start.json", "checkpoint_identity_durable_start", {"expected_shards": 6, "expected_graph_descriptors": 5}, "CHECKPOINT_IDENTITY_START"); last = "CHECKPOINT_IDENTITY_START"
         def identity_progress(kind: str, ordinal: int, digest: str) -> None:
             if kind == "ACCESS_EVENT":
-                bank_runtime_artifact(evidence_root / f"checkpoint-access-event-{ordinal}.json", "checkpoint_access_event",
-                                      {"shard_ordinal": ordinal, "sha256": digest})
+                bank_owned(f"checkpoint-access-event-{ordinal}.json", "checkpoint_access_event",
+                           {"shard_ordinal": ordinal, "sha256": digest})
             elif kind == "SHARD_RECEIPT":
-                bank_runtime_artifact(evidence_root / f"checkpoint-shard-receipt-{ordinal}.json", "checkpoint_shard_receipt",
-                                      {"shard_ordinal": ordinal, "sha256": digest})
+                bank_owned(f"checkpoint-shard-receipt-{ordinal}.json", "checkpoint_shard_receipt",
+                           {"shard_ordinal": ordinal, "sha256": digest})
             else:
                 raise ValueError("identity progress kind")
         leases, identity = produce(candidate, handshake.get("installation_receipt_sha256"), identity_progress)
@@ -282,55 +292,50 @@ def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: 
         elif malformed == "NON_DICT": descriptors[0] = None
         elif malformed == "UNHASHABLE_LEASE": descriptors[0]["lease_id"] = []
         validate_descriptors(descriptors, [item["size_bytes"] for item in candidate["shards"][1:]])
-        bank_runtime_artifact(evidence_root / "checkpoint-access-journal-terminal.json", "checkpoint_access_journal_terminal", {"event_count": 6, "checkpoint_shard_opens": 6, "checkpoint_identity_hash_reads": 6, "unexpected_access_count": 0})
+        bank_owned("checkpoint-access-journal-terminal.json", "checkpoint_access_journal_terminal", {"event_count": 6, "checkpoint_shard_opens": 6, "checkpoint_identity_hash_reads": 6, "unexpected_access_count": 0})
         lease_ids = [item["lease_id"] for item in descriptors]
-        bank_runtime_artifact(evidence_root / "descriptor_lease_manifest.json", "descriptor_lease_manifest", {"lease_count": 5, "ordinals": [2, 3, 4, 5, 6], "lease_ids": lease_ids, "descriptor_identities": descriptors})
-        bank_runtime_artifact(evidence_root / "checkpoint-identity-manifest.json", "checkpoint_identity_manifest",
-                              {"ordered_shard_digests": identity["ordered_shard_digests"], "descriptor_lease_count": 5,
-                               "descriptor_lease_manifest": "descriptor_lease_manifest.json"})
-        bank_runtime_artifact(evidence_root / "checkpoint-identity-receipt.json", "checkpoint_identity_receipt", identity)
-        bank_runtime_artifact(evidence_root / "checkpoint-identity-terminal.json", "checkpoint_identity_terminal", {"result": "COMPLETE", "retained_lease_count": 5}); last = "CHECKPOINT_IDENTITY_TERMINAL"
-        accounting_authority.append_transition("CHECKPOINT_IDENTITY_TERMINAL", hashlib.sha256((evidence_root / "checkpoint-identity-terminal.json").read_bytes()).hexdigest())
+        bank_owned("descriptor_lease_manifest.json", "descriptor_lease_manifest", {"lease_count": 5, "ordinals": [2, 3, 4, 5, 6], "lease_ids": lease_ids, "descriptor_identities": descriptors})
+        bank_owned("checkpoint-identity-manifest.json", "checkpoint_identity_manifest",
+                   {"ordered_shard_digests": identity["ordered_shard_digests"], "descriptor_lease_count": 5,
+                    "descriptor_lease_manifest": "descriptor_lease_manifest.json"})
+        bank_owned("checkpoint-identity-receipt.json", "checkpoint_identity_receipt", identity)
+        bank_owned("checkpoint-identity-terminal.json", "checkpoint_identity_terminal", {"result": "COMPLETE", "retained_lease_count": 5}, "CHECKPOINT_IDENTITY_TERMINAL"); last = "CHECKPOINT_IDENTITY_TERMINAL"
         primary_continuity = evidence_root / "primary_descriptor_continuity_report.json"
-        bank_runtime_artifact(primary_continuity, "primary_descriptor_continuity_report", {"consumer_role": "PRIMARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "lease_ids": lease_ids, "descriptor_identities": descriptors, "path_reopen_count": 0})
-        bank_runtime_artifact(evidence_root / "primary-durable-start.json", "primary_durable_start", {"event_id": candidate["primary_event_id"], "delta": 1}); last = "PRIMARY_DURABLE_START"
-        accounting_authority.append_transition("PRIMARY_DURABLE_START", hashlib.sha256((evidence_root / "primary-durable-start.json").read_bytes()).hexdigest())
-        bank_runtime_artifact(evidence_root / "primary-ledger-entry.json", "primary_ledger_entry", {"event_id": candidate["primary_event_id"], "delta": 1})
+        bank_owned(primary_continuity.name, "primary_descriptor_continuity_report", {"consumer_role": "PRIMARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "lease_ids": lease_ids, "descriptor_identities": descriptors, "path_reopen_count": 0})
+        bank_owned("primary-durable-start.json", "primary_durable_start", {"event_id": candidate["primary_event_id"], "delta": 1}, "PRIMARY_DURABLE_START"); last = "PRIMARY_DURABLE_START"
+        bank_owned("primary-ledger-entry.json", "primary_ledger_entry", {"event_id": candidate["primary_event_id"], "delta": 1})
         if fail_transition == "PRIMARY_EXECUTION": raise ValueError("injected primary execution failure")
         primary = _run_consumer(PRIMARY_WRAPPER, installed_path, receipt_path, primary_continuity,
                                 leases.inherited_fds(), evidence_root / "primary-consumer-output.json")
         primary_sha = hashlib.sha256(json.dumps(primary, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        bank_runtime_artifact(evidence_root / "primary-execution-evidence.json", "primary_execution_evidence", {"output_sha256": primary_sha, "consumed_graph_shards": primary["consumed_graph_shards"]})
-        primary_receipt = bank_runtime_artifact(evidence_root / "primary-receipt.json", "primary_receipt", {"result": "COMPLETE", "output_sha256": primary_sha})
-        bank_runtime_artifact(evidence_root / "primary-terminal.json", "primary_terminal", {"result": "COMPLETE", "receipt_sha256": primary_receipt}); last = "PRIMARY_TERMINAL"
-        accounting_authority.append_transition("PRIMARY_TERMINAL", hashlib.sha256((evidence_root / "primary-terminal.json").read_bytes()).hexdigest())
+        bank_owned("primary-execution-evidence.json", "primary_execution_evidence", {"output_sha256": primary_sha, "consumed_graph_shards": primary["consumed_graph_shards"]})
+        primary_receipt = bank_owned("primary-receipt.json", "primary_receipt", {"result": "COMPLETE", "output_sha256": primary_sha})
+        bank_owned("primary-terminal.json", "primary_terminal", {"result": "COMPLETE", "receipt_sha256": primary_receipt}, "PRIMARY_TERMINAL"); last = "PRIMARY_TERMINAL"
         secondary_continuity = evidence_root / "secondary_descriptor_continuity_report.json"
-        bank_runtime_artifact(secondary_continuity, "secondary_descriptor_continuity_report", {"consumer_role": "SECONDARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "lease_ids": lease_ids, "descriptor_identities": descriptors, "path_reopen_count": 0})
-        bank_runtime_artifact(evidence_root / "secondary-durable-start.json", "secondary_durable_start", {"event_id": candidate["secondary_event_id"], "delta": 1}); last = "SECONDARY_DURABLE_START"
-        accounting_authority.append_transition("SECONDARY_DURABLE_START", hashlib.sha256((evidence_root / "secondary-durable-start.json").read_bytes()).hexdigest())
-        bank_runtime_artifact(evidence_root / "secondary-ledger-entry.json", "secondary_ledger_entry", {"event_id": candidate["secondary_event_id"], "delta": 1})
+        bank_owned(secondary_continuity.name, "secondary_descriptor_continuity_report", {"consumer_role": "SECONDARY", "descriptor_count": 5, "ordinals": [2, 3, 4, 5, 6], "lease_ids": lease_ids, "descriptor_identities": descriptors, "path_reopen_count": 0})
+        bank_owned("secondary-durable-start.json", "secondary_durable_start", {"event_id": candidate["secondary_event_id"], "delta": 1}, "SECONDARY_DURABLE_START"); last = "SECONDARY_DURABLE_START"
+        bank_owned("secondary-ledger-entry.json", "secondary_ledger_entry", {"event_id": candidate["secondary_event_id"], "delta": 1})
         if fail_transition == "SECONDARY_EXECUTION": raise ValueError("injected secondary execution failure")
         secondary = _run_consumer(SECONDARY_WRAPPER, installed_path, receipt_path, secondary_continuity,
                                   leases.inherited_fds(), evidence_root / "secondary-consumer-output.json")
         secondary_sha = hashlib.sha256(json.dumps(secondary, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        bank_runtime_artifact(evidence_root / "secondary-execution-evidence.json", "secondary_execution_evidence", {"output_sha256": secondary_sha, "consumed_graph_shards": secondary["consumed_graph_shards"]})
-        secondary_receipt = bank_runtime_artifact(evidence_root / "secondary-receipt.json", "secondary_receipt", {"result": "COMPLETE", "output_sha256": secondary_sha})
-        bank_runtime_artifact(evidence_root / "secondary-terminal.json", "secondary_terminal", {"result": "COMPLETE", "receipt_sha256": secondary_receipt}); last = "SECONDARY_TERMINAL"
-        accounting_authority.append_transition("SECONDARY_TERMINAL", hashlib.sha256((evidence_root / "secondary-terminal.json").read_bytes()).hexdigest())
-        comparison = compare(primary, secondary); comparison_receipt = bank_runtime_artifact(evidence_root / "comparison-receipt.json", "comparison_receipt", comparison)
-        bank_runtime_artifact(evidence_root / "comparison-terminal.json", "comparison_terminal", {**comparison, "receipt_sha256": comparison_receipt, "result": "COMPLETE"}); last = "COMPARISON_TERMINAL"
-        accounting_authority.append_transition("COMPARISON_TERMINAL", hashlib.sha256((evidence_root / "comparison-terminal.json").read_bytes()).hexdigest())
-        release = _release(leases, evidence_root, close_function)
+        bank_owned("secondary-execution-evidence.json", "secondary_execution_evidence", {"output_sha256": secondary_sha, "consumed_graph_shards": secondary["consumed_graph_shards"]})
+        secondary_receipt = bank_owned("secondary-receipt.json", "secondary_receipt", {"result": "COMPLETE", "output_sha256": secondary_sha})
+        bank_owned("secondary-terminal.json", "secondary_terminal", {"result": "COMPLETE", "receipt_sha256": secondary_receipt}, "SECONDARY_TERMINAL"); last = "SECONDARY_TERMINAL"
+        comparison = compare(primary, secondary); comparison_receipt = bank_owned("comparison-receipt.json", "comparison_receipt", comparison)
+        bank_owned("comparison-terminal.json", "comparison_terminal", {**comparison, "receipt_sha256": comparison_receipt, "result": "COMPLETE"}, "COMPARISON_TERMINAL"); last = "COMPARISON_TERMINAL"
+        release = _release(leases, evidence_root, close_function, accounting_authority=accounting_authority)
         if release["result"] != "PASS": raise ValueError("descriptor release incomplete")
-        accounting_authority.append_transition("DESCRIPTOR_RELEASE_TERMINAL", hashlib.sha256((evidence_root / "descriptor-release-terminal.json").read_bytes()).hexdigest())
         second_release = leases.release()
         if not second_release["idempotent_noop"] or second_release["attempted_closures"] != 0: raise ValueError("release idempotency")
-        accounting = derive(evidence_root)
+        lower_bound = accounting_authority.accounting_lower_bound()
+        accounting = {key: lower_bound[key] for key in (
+            "authorization", "package", "primary", "secondary", "historical_before", "historical_after"
+        )}
         validate_snapshot(accounting, {"authorization": 0, "package": 1, "primary": 1, "secondary": 1,
                                        "historical_before": 175, "historical_after": 175})
-        package_receipt = bank_runtime_artifact(evidence_root / "package-receipt.json", "package_receipt", {"accounting": accounting, "classification": comparison["classification"]})
-        bank_runtime_artifact(evidence_root / "package-terminal.json", "package_terminal", {"result": "COMPLETE", "package_receipt_sha256": package_receipt, "accounting": accounting, "mandatory_stop": True})
-        accounting_authority.append_transition("PACKAGE_TERMINAL", hashlib.sha256((evidence_root / "package-terminal.json").read_bytes()).hexdigest())
+        package_receipt = bank_owned("package-receipt.json", "package_receipt", {"accounting": accounting, "classification": comparison["classification"]})
+        bank_owned("package-terminal.json", "package_terminal", {"result": "COMPLETE", "package_receipt_sha256": package_receipt, "accounting": accounting, "mandatory_stop": True}, "PACKAGE_TERMINAL")
         return {"result": "PASS", "candidate_sha256": handshake["candidate_sha256"], "identity": identity, "primary": primary,
                 "secondary": secondary, "comparison": comparison, "release": release, "second_release": second_release,
                 "accounting": accounting, "emergency_root": str(emergency_root), "original_checkpoint_access": 0}

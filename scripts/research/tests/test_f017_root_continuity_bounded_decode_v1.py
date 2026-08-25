@@ -135,6 +135,20 @@ def test_journal_leaf_replacement_cannot_replace_retained_accounting_authority(t
         authority.close()
 
 
+def test_post_bind_artifact_banking_uses_retained_root_not_recreated_path(tmp_path: Path) -> None:
+    authority = _authority(tmp_path)
+    retained = tmp_path / "retained-state"
+    try:
+        _bank_starts(authority)
+        (tmp_path / "state").rename(retained)
+        (tmp_path / "state").mkdir()
+        authority.bank_artifact("post-bind-failure.json", "post_bind_failure", {"result": "FAILURE"})
+        assert (retained / "post-bind-failure.json").is_file()
+        assert not (tmp_path / "state" / "post-bind-failure.json").exists()
+    finally:
+        authority.close()
+
+
 def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Path) -> None:
     authority = _authority(tmp_path)
     try:
