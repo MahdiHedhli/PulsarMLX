@@ -26,10 +26,13 @@ DYNAMIC_BUILTIN_NAMES = {
     "__import__", "compile", "eval", "exec", "getattr", "globals",
     "locals", "setattr", "vars",
 }
+MODULE_MACHINERY_NAMES = {"__loader__", "__spec__"}
 DYNAMIC_CAPABILITY_ATTRIBUTES = {
     "__bases__", "__builtins__", "__class__", "__dict__", "__getattribute__",
-    "__globals__", "__mro__", "__subclasses__", "builtins", "importlib",
-    "json", "modules", "os", "sys",
+    "__globals__", "__mro__", "__subclasses__", "__closure__", "__code__",
+    "__defaults__", "__kwdefaults__", "__loader__", "__spec__", "builtins",
+    "create_module", "exec_module", "get_code", "get_source", "importlib",
+    "json", "load_module", "modules", "os", "sys",
 }
 
 
@@ -146,10 +149,18 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                     "reason": "DYNAMIC_BUILTIN_CAPABILITY_ESCAPE",
                     "member": node.id,
                 })
+        if isinstance(node, ast.Name) and node.id in MODULE_MACHINERY_NAMES:
+            violations.append({
+                "path": relative,
+                "line": node.lineno,
+                "reason": "MODULE_MACHINERY_CAPABILITY",
+                "member": node.id,
+            })
         if isinstance(node, ast.Import):
             for item in node.names:
-                if item.name in {"json", "sys", "builtins"}:
-                    semantic_modules[item.asname or item.name] = item.name
+                top_level = item.name.split(".", 1)[0]
+                if top_level in {"json", "sys", "builtins"}:
+                    semantic_modules[item.asname or top_level] = top_level
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for item in node.names:
@@ -161,6 +172,13 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             if node.level != 0:
                 violations.append({"path": relative, "line": node.lineno, "reason": "RELATIVE_IMPORT_PROHIBITED"})
             for item in node.names:
+                if item.name in {"load", "loads"}:
+                    violations.append({
+                        "path": relative,
+                        "line": node.lineno,
+                        "reason": "NAME_AGNOSTIC_DECODE_MEMBER_IMPORT",
+                        "member": item.name,
+                    })
                 if item.name in CAPABILITY_EXPORT_NAMES:
                     violations.append({
                         "path": relative,
@@ -170,7 +188,7 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                     })
                     if item.name in {"json", "sys", "builtins"}:
                         semantic_modules[item.asname or item.name] = item.name
-            if node.module in {"json", "sys", "builtins"}:
+            if (node.module or "").split(".", 1)[0] in {"json", "sys", "builtins"}:
                 violations.append({"path": relative, "line": node.lineno, "reason": "CAPABILITY_MEMBER_IMPORT", "module": node.module})
             if (node.module or "").split(".", 1)[0] in DYNAMIC_RESOLUTION_MODULES:
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
