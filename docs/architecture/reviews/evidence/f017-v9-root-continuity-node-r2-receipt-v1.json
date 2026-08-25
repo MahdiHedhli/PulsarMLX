@@ -1,0 +1,17 @@
+{
+  "changed_paths": ["scripts/research/f017_bounded_artifact_decode_v1.py", "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json", "scripts/research/qualify_f017_v9_root_continuity_bounded_decode_v1.py"],
+  "checkpoint_access_census": {"identity_hash_reads": 0, "mmaps": 0, "payload_reads": 0, "shard_opens": 0, "tensor_reads": 0},
+  "claims_closed": ["C-JSON-001", "C-JSON-002", "C-JSON-003", "C-JSON-004", "C-JSON-005"],
+  "claims_introduced": ["C-JSON-001", "C-JSON-002", "C-JSON-003", "C-JSON-004", "C-JSON-005"],
+  "claims_invalidated": [],
+  "commands_executed": ["runtime parser inventory", "bounded parser tests", "direct-parser AST policy", "decode attack campaign quick gate"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"root_contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json"},
+  "input_head": "90338840c94118651a85c695af22de780437663b",
+  "next_eligible_edges": ["R3"],
+  "node_id": "R2",
+  "output_head": "90338840c94118651a85c695af22de780437663b",
+  "result": "PASS",
+  "result_counts": {"decode_attack_executions": 204, "direct_parser_violations": 0, "raw_recursion_errors": 0, "runtime_import_closure": 32},
+  "tests_executed": ["depth boundaries", "string-aware bracket scan", "duplicate keys", "invalid UTF-8", "nonfinite numbers", "oversized bytes and strings", "huge integers", "deep durable-start terminalization"]
+}

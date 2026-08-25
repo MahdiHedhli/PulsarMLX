@@ -1,0 +1,25 @@
+{
+  "decode_order": ["BOUNDED_BYTE_READ", "UTF8_VALIDATION", "STRING_AWARE_DEPTH_PRECHECK", "JSON_DECODE", "DUPLICATE_KEY_REJECTION", "EXACT_SCHEMA_AND_KEY_CENSUS", "STRICT_TYPE_VALIDATION"],
+  "derived_from": {
+    "largest_committed_active_runtime_authority_bytes": 484569,
+    "largest_committed_authority": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json",
+    "safety_margin": "NEXT_POWER_OF_TWO_PLUS_SCHEMA_CENSUS_MARGIN"
+  },
+  "direct_active_runtime_json_load_or_loads": "PROHIBITED_OUTSIDE_CANONICAL_PARSER",
+  "exception": {
+    "class": "ArtifactDecodeError",
+    "derived_from": "ValueError",
+    "normalized": ["UnicodeDecodeError", "JSONDecodeError", "RecursionError", "ValueError", "TypeError", "OverflowError"]
+  },
+  "limits": {
+    "maximum_array_elements": 16384,
+    "maximum_bytes": 1048576,
+    "maximum_integer_digits": 128,
+    "maximum_nesting_depth": 64,
+    "maximum_object_keys": 4096,
+    "maximum_string_characters": 524288
+  },
+  "nonfinite_numbers": "PROHIBITED",
+  "schema": "pulsarmlx.f017.bounded-artifact-decode-contract/1.0.0",
+  "utf8": "STRICT_NO_BOM"
+}

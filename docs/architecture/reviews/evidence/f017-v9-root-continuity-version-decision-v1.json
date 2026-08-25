@@ -1,0 +1,11 @@
+{
+  "active_generation_before_acceptance": "NONE",
+  "decision": "CREATE_LIFECYCLE_SUCCESSOR_V10",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "numerical_authority_changed": false,
+  "reason": ["ROOT_AUTHORITY_RECORD_SCHEMA_ADDED", "APPEND_ONLY_ACCOUNTING_JOURNAL_SCHEMA_ADDED", "TERMINAL_CAPSULE_ACCOUNTING_DERIVATION_SCHEMA_EXTENDED", "LIFECYCLE_STATE_MACHINE_UNCHANGED", "OUTCOME_OBLIGATIONS_STRENGTHENED_WITH_MONOTONIC_LOWER_BOUNDS", "NUMERICAL_AUTHORITY_UNCHANGED"],
+  "retained_numerical_contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json",
+  "schema": "pulsarmlx.f017.v9-root-continuity-version-decision/1.0.0",
+  "superseded_runtime_generation": "V9",
+  "successor_runtime_generation": "V10"
+}
