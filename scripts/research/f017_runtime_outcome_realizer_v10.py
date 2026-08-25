@@ -117,8 +117,24 @@ def realize(outcome_id: str, output_root: Path) -> dict:
     missing = sorted(required - created)
     if missing or forbidden_present:
         raise ValueError(f"runtime outcome artifact mismatch missing={missing} forbidden={forbidden_present}")
-    observed = derive((output_root / "runtime").resolve(strict=False))
-    accounting = {key: observed[key] for key in ("package", "primary", "secondary")}
+    runtime_root = output_root / "runtime"
+    expected_accounting = {
+        "package": outcome["package_delta"],
+        "primary": outcome["primary_delta"],
+        "secondary": outcome["secondary_delta"],
+    }
+    if runtime_root.exists():
+        observed = derive(runtime_root.resolve(strict=True))
+        accounting = {key: observed[key] for key in ("package", "primary", "secondary")}
+    elif expected_accounting == {"package": 0, "primary": 0, "secondary": 0}:
+        # Pre-package outcomes have no accounting-root authority to observe.
+        # This zero is supplied by the exact lifecycle outcome, never inferred
+        # from an unavailable root after a durable start.
+        accounting = dict(expected_accounting)
+    else:
+        raise ValueError("durable accounting root unavailable")
+    if accounting != expected_accounting:
+        raise ValueError("runtime outcome accounting mismatch")
     capsule_source = ("AUTHORIZER_PHASE_DIRECT_TERMINALIZATION" if target_rank <= 6
                       else "COORDINATOR_CAUSAL_BANK_INJECTION")
     return {"outcome_id": outcome_id, "failed_transition_id": outcome["failed_transition_id"], "created": sorted(created),
