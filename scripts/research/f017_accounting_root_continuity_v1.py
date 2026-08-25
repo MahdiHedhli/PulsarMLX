@@ -68,7 +68,7 @@ class DirectoryIdentity:
 
 
 def _directory_identity(path: Path, descriptor: int) -> DirectoryIdentity:
-    parent = path.parent.resolve(strict=True)
+    parent = path.parent
     if path.name in {"", ".", ".."} or "/" in path.name:
         raise AccountingAuthorityError("root leaf grammar")
     observed = os.fstat(descriptor)
@@ -77,9 +77,41 @@ def _directory_identity(path: Path, descriptor: int) -> DirectoryIdentity:
     return DirectoryIdentity(str(parent), path.name, observed.st_dev, observed.st_ino, observed.st_mode)
 
 
-def _open_directory(path: Path) -> int:
+def open_directory_no_symlinks(path: Path) -> tuple[int, Path]:
+    """Open an absolute directory by descriptor-relative component traversal.
+
+    ``Path.resolve`` is used only to select a canonical spelling.  No resolved
+    pathname is then opened as a unit: every component is opened relative to
+    the already retained parent with ``O_NOFOLLOW``.  A final pathname/handle
+    identity comparison detects replacement during acquisition.
+    """
+    if not isinstance(path, Path) or not path.is_absolute():
+        raise AccountingAuthorityError("absolute directory path required")
+    try:
+        resolved = path.resolve(strict=True)
+    except OSError as exc:
+        raise AccountingAuthorityError("directory resolution") from exc
     flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
-    return os.open(path, flags)
+    descriptor = os.open(resolved.anchor, flags)
+    try:
+        for component in resolved.parts[1:]:
+            if component in {"", ".", ".."} or "/" in component:
+                raise AccountingAuthorityError("directory component grammar")
+            child = os.open(component, flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        opened = os.fstat(descriptor)
+        named = os.stat(resolved, follow_symlinks=False)
+        if (
+            not stat.S_ISDIR(opened.st_mode)
+            or not stat.S_ISDIR(named.st_mode)
+            or (opened.st_dev, opened.st_ino) != (named.st_dev, named.st_ino)
+        ):
+            raise AccountingAuthorityError("directory identity changed during acquisition")
+        return descriptor, resolved
+    except Exception:
+        os.close(descriptor)
+        raise
 
 
 def _bank_at(directory_fd: int, leaf: str, value: dict) -> str:
@@ -125,14 +157,14 @@ class AccountingRootAuthority:
             raise AccountingAuthorityError("root authority binding")
         self.primary_path = primary
         self.fallback_path = fallback
-        self.primary_fd = _open_directory(primary)
+        self.primary_fd, primary_canonical = open_directory_no_symlinks(primary)
         try:
-            self.fallback_fd = _open_directory(fallback)
+            self.fallback_fd, fallback_canonical = open_directory_no_symlinks(fallback)
         except Exception:
             os.close(self.primary_fd)
             raise
-        self.primary_identity = _directory_identity(primary, self.primary_fd)
-        self.fallback_identity = _directory_identity(fallback, self.fallback_fd)
+        self.primary_identity = _directory_identity(primary_canonical, self.primary_fd)
+        self.fallback_identity = _directory_identity(fallback_canonical, self.fallback_fd)
         if (self.primary_identity.device, self.primary_identity.inode) == (self.fallback_identity.device, self.fallback_identity.inode):
             self.close()
             raise AccountingAuthorityError("primary and fallback identities must differ")
@@ -400,14 +432,15 @@ class AccountingRootAuthority:
         }
 
     def close(self) -> None:
-        for name in ("_journal_fd", "primary_fd", "fallback_fd"):
-            descriptor = getattr(self, name, None)
+        for descriptor in (self._journal_fd, self.primary_fd, self.fallback_fd):
             if type(descriptor) is int and descriptor >= 0:
                 try:
                     os.close(descriptor)
                 except OSError:
                     pass
-                setattr(self, name, -1)
+        self._journal_fd = -1
+        self.primary_fd = -1
+        self.fallback_fd = -1
 
     def __enter__(self) -> "AccountingRootAuthority":
         return self

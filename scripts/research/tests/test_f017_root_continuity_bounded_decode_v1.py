@@ -10,7 +10,7 @@ import pytest
 RESEARCH = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RESEARCH))
 
-from f017_accounting_root_continuity_v1 import AccountingRootAuthority
+from f017_accounting_root_continuity_v1 import AccountingRootAuthority, open_directory_no_symlinks
 from f017_bounded_artifact_decode_v1 import (
     ArtifactDecodeError,
     ArtifactLimits,
@@ -20,6 +20,7 @@ from f017_bounded_artifact_decode_v1 import (
 from f017_canonical_serialization_v10 import canonical_bytes
 from execute_f017_corrected_oracle_event_v10 import _terminalize
 from check_f017_bounded_artifact_decode_policy_v1 import inspect_source
+from f017_corrected_oracle_event_accounting_v10 import derive
 
 
 def _authority(tmp_path: Path) -> AccountingRootAuthority:
@@ -187,11 +188,52 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "import sys\nregistry = sys\nregistry.modules['json'].loads(b'{}')\n",
         "import sys\nvars(sys)['modules']['json'].loads(b'{}')\n",
         "getattr(__builtins__, '__import__')('json').loads(b'{}')\n",
+        "import os\nos.sys.modules['json'].loads(b'{}')\n",
+        "import os\ngetattr(os, 'sys').modules['json'].loads(b'{}')\n",
+        "().__class__.__base__.__subclasses__()\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
     violations, _ = inspect_source("scripts/research/attacker_runtime.py", source)
     assert violations
+
+
+@pytest.mark.parametrize("source", ["import sys\nprint(sys.executable)\n", "import sys\nprint('x', file=sys.stderr)\n"])
+def test_direct_parser_policy_retains_exact_legitimate_sys_members(source: str) -> None:
+    violations, _ = inspect_source("scripts/research/legitimate_runtime.py", source)
+    assert violations == []
+
+
+def test_componentwise_directory_open_never_reopens_resolved_absolute_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "target"; target.mkdir(); (target / "root").mkdir()
+    resolved = (target / "root").resolve(strict=True)
+    calls: list[tuple[object, object]] = []
+    real_open = os.open
+
+    def observed_open(path: object, flags: int, *args: object, **kwargs: object) -> int:
+        calls.append((path, kwargs.get("dir_fd")))
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", observed_open)
+    descriptor, opened = open_directory_no_symlinks(resolved)
+    os.close(descriptor)
+    assert opened == resolved
+    assert calls[0] == (resolved.anchor, None)
+    assert all(dir_fd is not None for _, dir_fd in calls[1:])
+    assert all(str(path) != str(resolved) for path, _ in calls)
+
+
+def test_offline_accounting_uses_one_retained_root_and_no_lstat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    authority = _authority(tmp_path)
+    try:
+        _bank_starts(authority, primary=True)
+    finally:
+        authority.close()
+    monkeypatch.setattr(Path, "lstat", lambda self: (_ for _ in ()).throw(AssertionError("lstat forbidden")))
+    accounting = derive(tmp_path / "state")
+    assert accounting["package"] == 1 and accounting["primary"] == 1 and accounting["secondary"] == 0
 
 
 def _nested(depth: int) -> bytes:

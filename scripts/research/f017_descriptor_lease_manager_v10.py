@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from f017_bounded_artifact_decode_v1 import read_artifact_at
+from f017_accounting_root_continuity_v1 import open_directory_no_symlinks
 from f017_canonical_serialization_v10 import canonical_bytes
 from typing import Callable
 
@@ -184,7 +185,7 @@ def _hash_descriptor(descriptor: int, expected_size: int, *, require_single_link
     return digest.hexdigest(), after
 
 
-def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict]:
+def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict, int]:
     root = Path(candidate["checkpoint_root"])
     if root.is_symlink():
         raise ValueError("synthetic root symlink")
@@ -202,42 +203,44 @@ def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict]:
         raise ValueError("synthetic root manifest location") from exc
     if manifest_parent != resolved or manifest_path.is_symlink():
         raise ValueError("synthetic root manifest location")
+    manifest_root_fd = -1
     try:
-        manifest_root_fd = os.open(
-            resolved,
-            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0),
-        )
+        manifest_root_fd, opened_root = open_directory_no_symlinks(resolved)
+        if opened_root != resolved:
+            raise ValueError("synthetic root canonical identity")
         try:
             manifest = read_artifact_at(manifest_root_fd, manifest_path.name)
-        finally:
+        except Exception:
             os.close(manifest_root_fd)
+            manifest_root_fd = -1
+            raise
         raw = canonical_bytes(manifest)
     except (OSError, ValueError) as exc:
         raise ValueError("synthetic root manifest read") from exc
-    if hashlib.sha256(raw).hexdigest() != candidate["synthetic_root_manifest_sha256"]:
-        raise ValueError("synthetic root manifest digest")
-    expected = {"schema", "purpose", "production_access", "synthetic_package_id", "root_canonical_path", "shards", "catalog_sha256"}
-    if type(manifest) is not dict or set(manifest) != expected:
-        raise ValueError("synthetic root manifest census")
-    if manifest["schema"] != "pulsarmlx.f017.synthetic-root-manifest/9.0.0" or manifest["purpose"] != "SYNTHETIC_QUALIFICATION" or manifest["production_access"] != "PROHIBITED":
-        raise ValueError("synthetic root authority")
-    if manifest["root_canonical_path"] != str(resolved) or manifest["shards"] != candidate["shards"]:
-        raise ValueError("synthetic root binding")
-    if manifest["catalog_sha256"] != candidate["tensor_catalog_sha256"]:
-        raise ValueError("synthetic catalog binding")
-    if any(not item["filename"].startswith("synthetic-v10-") for item in candidate["shards"]):
-        raise ValueError("production shard name rejected in synthetic mode")
-    return resolved, manifest
+    try:
+        if hashlib.sha256(raw).hexdigest() != candidate["synthetic_root_manifest_sha256"]:
+            raise ValueError("synthetic root manifest digest")
+        expected = {"schema", "purpose", "production_access", "synthetic_package_id", "root_canonical_path", "shards", "catalog_sha256"}
+        if type(manifest) is not dict or set(manifest) != expected:
+            raise ValueError("synthetic root manifest census")
+        if manifest["schema"] != "pulsarmlx.f017.synthetic-root-manifest/9.0.0" or manifest["purpose"] != "SYNTHETIC_QUALIFICATION" or manifest["production_access"] != "PROHIBITED":
+            raise ValueError("synthetic root authority")
+        if manifest["root_canonical_path"] != str(resolved) or manifest["shards"] != candidate["shards"]:
+            raise ValueError("synthetic root binding")
+        if manifest["catalog_sha256"] != candidate["tensor_catalog_sha256"]:
+            raise ValueError("synthetic catalog binding")
+        if any(not item["filename"].startswith("synthetic-v10-") for item in candidate["shards"]):
+            raise ValueError("production shard name rejected in synthetic mode")
+    except Exception:
+        os.close(manifest_root_fd)
+        raise
+    return resolved, manifest, manifest_root_fd
 
 
 def acquire_synthetic_leases(candidate: dict, progress: IdentityProgress | None = None) -> LeaseSet:
     if candidate.get("scope") != "SYNTHETIC_QUALIFICATION" or candidate.get("live") is not False:
         raise ValueError("V10 qualification leases require non-live synthetic authority")
-    root, _ = _validate_synthetic_root(candidate)
-    try:
-        root_fd = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
-    except OSError as exc:
-        raise ValueError("synthetic root open") from exc
+    _, _, root_fd = _validate_synthetic_root(candidate)
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:
         for ordinal, shard in enumerate(candidate["shards"], start=1):
@@ -296,8 +299,10 @@ def acquire_production_leases(candidate: dict, installation_receipt_sha256: str,
     if resolved.is_relative_to(temporary_authority) or any(item["filename"].startswith("synthetic-v10-") for item in candidate["shards"]):
         raise ValueError("synthetic root prohibited in production")
     try:
-        root_fd = os.open(resolved, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
-    except OSError as exc:
+        root_fd, opened_root = open_directory_no_symlinks(resolved)
+        if opened_root != resolved:
+            raise ValueError("production checkpoint root canonical identity")
+    except (OSError, ValueError) as exc:
         raise ValueError("production checkpoint root open") from exc
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:

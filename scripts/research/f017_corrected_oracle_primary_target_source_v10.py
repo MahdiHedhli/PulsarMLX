@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 import f017_corrected_oracle_primary_numerics_v2 as numerical
-from f017_bounded_artifact_decode_v1 import ArtifactLimits, DEFAULT_LIMITS, parse_artifact_bytes, read_artifact
+from f017_bounded_artifact_decode_v1 import NONCANONICAL_LIMITS, parse_artifact_bytes, read_artifact
 from f017_descriptor_lease_manager_v10 import validate_descriptors
 from f017_oracle_primary_decoders import LAYOUT, decode
 
@@ -31,7 +31,7 @@ def _catalog(candidate: dict) -> tuple[dict, list[dict]]:
     if schema == "pulsarmlx.f017.synthetic-descriptor-catalog/9.0.0":
         return document, document.get("records")
     if schema == "pulsarmlx.f017.corrected-oracle-production-tensor-plan/9.0.0":
-        geometry = read_artifact(GEOMETRY, limits=ArtifactLimits(**{**DEFAULT_LIMITS.__dict__, "require_canonical_bytes": False}))
+        geometry = read_artifact(GEOMETRY, limits=NONCANONICAL_LIMITS)
         return {"geometry": geometry, "token": 9703, "position": 0}, document.get("graph_tensors")
     raise ValueError("primary catalog schema")
 

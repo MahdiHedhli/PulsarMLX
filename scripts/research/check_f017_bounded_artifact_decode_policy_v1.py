@@ -20,6 +20,10 @@ OFFLINE_ONLY_ALLOWANCE = {
     ("scripts/research/qualify_f017_quantization_matrix_v1.py", "invoke"),
 }
 SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
+DYNAMIC_CAPABILITY_ATTRIBUTES = {
+    "__bases__", "__builtins__", "__class__", "__dict__", "__getattribute__",
+    "__globals__", "__mro__", "__subclasses__", "modules", "sys",
+}
 
 
 def _closure() -> set[str]:
@@ -82,10 +86,26 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                 violations.append({"path": relative, "line": node.lineno, "reason": "CAPABILITY_MEMBER_IMPORT", "module": node.module})
             if node.module == "importlib" or (node.module or "").startswith("importlib."):
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {
-            "globals", "locals", "__import__",
-        }:
-            violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id in {"globals", "locals", "vars", "__import__"}:
+                violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
+            elif node.func.id in {"getattr", "setattr"}:
+                member = node.args[1].value if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) else None
+                if type(member) is not str or member in DYNAMIC_CAPABILITY_ATTRIBUTES:
+                    violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_ATTRIBUTE_RESOLUTION"})
+        if isinstance(node, ast.Attribute) and node.attr in DYNAMIC_CAPABILITY_ATTRIBUTES:
+            semantic_sys_direct = (
+                node.attr in SYS_ALLOWED_DIRECT_MEMBERS
+                and isinstance(node.value, ast.Name)
+                and semantic_modules.get(node.value.id) == "sys"
+            )
+            if not semantic_sys_direct:
+                violations.append({
+                    "path": relative,
+                    "line": node.lineno,
+                    "reason": "DYNAMIC_CAPABILITY_TRAVERSAL",
+                    "member": node.attr,
+                })
         if (
             isinstance(node, ast.Attribute)
             and node.attr == "modules"
@@ -150,7 +170,7 @@ def validate() -> dict:
         raise ValueError(f"direct active-runtime JSON parser surface: {violations}")
     accounting = (RESEARCH / "f017_corrected_oracle_event_accounting_v10.py").read_text(encoding="utf-8")
     coordinator = (RESEARCH / "execute_f017_corrected_oracle_event_v10.py").read_text(encoding="utf-8")
-    if "read_artifact(path)" not in accounting or "accounting_authority.accounting_lower_bound()" not in coordinator:
+    if "read_artifact_at(directory_fd, leaf)" not in accounting or "accounting_authority.accounting_lower_bound()" not in coordinator:
         raise ValueError("load-bearing bounded-decode integration absent")
     return {
         "schema": "pulsarmlx.f017.bounded-artifact-decode-source-policy-result/1.0.0",

@@ -2,27 +2,21 @@
 """Runtime-derived V10 event accounting from validated durable evidence."""
 from __future__ import annotations
 
-import stat
+import os
 from pathlib import Path
 
-from f017_bounded_artifact_decode_v1 import ArtifactDecodeError, read_artifact
+from f017_accounting_root_continuity_v1 import open_directory_no_symlinks
+from f017_bounded_artifact_decode_v1 import ArtifactDecodeError, read_artifact_at
 
 
 HISTORICAL_REAL_PAYLOAD_LEDGER = 175
 
 
-def _valid(path: Path, kind: str) -> bool:
+def _valid(directory_fd: int, leaf: str, kind: str) -> bool:
     try:
-        mode = path.lstat().st_mode
+        value = read_artifact_at(directory_fd, leaf)
     except FileNotFoundError:
         return False
-    # Any existing but unreadable, redirected, malformed, or wrongly typed
-    # durable-start artifact is an accounting observation failure.  Only true
-    # absence is represented by False.
-    if not stat.S_ISREG(mode):
-        raise ValueError("durable-start artifact type")
-    try:
-        value = read_artifact(path)
     except OSError:
         raise
     except ArtifactDecodeError as exc:
@@ -33,9 +27,13 @@ def _valid(path: Path, kind: str) -> bool:
 
 
 def derive(evidence_root: Path) -> dict:
-    package = _valid(evidence_root / "package-durable-start.json", "package_durable_start")
-    primary = _valid(evidence_root / "primary-durable-start.json", "primary_durable_start")
-    secondary = _valid(evidence_root / "secondary-durable-start.json", "secondary_durable_start")
+    directory_fd, _ = open_directory_no_symlinks(evidence_root)
+    try:
+        package = _valid(directory_fd, "package-durable-start.json", "package_durable_start")
+        primary = _valid(directory_fd, "primary-durable-start.json", "primary_durable_start")
+        secondary = _valid(directory_fd, "secondary-durable-start.json", "secondary_durable_start")
+    finally:
+        os.close(directory_fd)
     if (primary or secondary) and not package: raise ValueError("consumer start without package start")
     return {"authorization": 0, "package": int(package), "primary": int(primary), "secondary": int(secondary),
             "historical_before": HISTORICAL_REAL_PAYLOAD_LEDGER, "historical_after": HISTORICAL_REAL_PAYLOAD_LEDGER}

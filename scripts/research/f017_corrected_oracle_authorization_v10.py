@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from f017_bounded_artifact_decode_v1 import ArtifactLimits, DEFAULT_LIMITS, parse_artifact_bytes, read_artifact
+from f017_bounded_artifact_decode_v1 import NONCANONICAL_LIMITS, parse_artifact_bytes, read_artifact
 from f017_canonical_serialization_v10 import sha256_bytes, strict_bytes
 from f017_memory_gate_v9 import MAX_AGE_NS, THRESHOLD_BYTES, validate_observation
 
@@ -49,7 +49,7 @@ def _memory_gate(value: object, *, live_posture: bool) -> None:
 def production_shards() -> list[dict]:
     metadata = read_artifact(
         CHECKPOINT_METADATA,
-        limits=ArtifactLimits(**{**DEFAULT_LIMITS.__dict__, "require_canonical_bytes": False}),
+        limits=NONCANONICAL_LIMITS,
     )
     if type(metadata) is not dict or metadata.get("file_count") != 6 or type(metadata.get("files")) is not list:
         raise ValueError("checkpoint metadata authority")

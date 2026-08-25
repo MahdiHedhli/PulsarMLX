@@ -30,11 +30,15 @@ class ArtifactLimits:
     require_canonical_bytes: bool = True
 
     def __post_init__(self) -> None:
-        for name in (
-            "max_bytes", "max_depth", "max_object_keys", "max_array_elements",
-            "max_string_chars", "max_integer_digits", "max_number_chars",
+        for name, value in (
+            ("max_bytes", self.max_bytes),
+            ("max_depth", self.max_depth),
+            ("max_object_keys", self.max_object_keys),
+            ("max_array_elements", self.max_array_elements),
+            ("max_string_chars", self.max_string_chars),
+            ("max_integer_digits", self.max_integer_digits),
+            ("max_number_chars", self.max_number_chars),
         ):
-            value = getattr(self, name)
             if type(value) is not int or value <= 0:
                 raise ValueError(f"invalid artifact limit: {name}")
         if type(self.require_canonical_bytes) is not bool:
@@ -49,6 +53,16 @@ DEFAULT_LIMITS: Final = ArtifactLimits(
     max_string_chars=524_288,
     max_integer_digits=128,
     max_number_chars=256,
+)
+NONCANONICAL_LIMITS: Final = ArtifactLimits(
+    max_bytes=DEFAULT_LIMITS.max_bytes,
+    max_depth=DEFAULT_LIMITS.max_depth,
+    max_object_keys=DEFAULT_LIMITS.max_object_keys,
+    max_array_elements=DEFAULT_LIMITS.max_array_elements,
+    max_string_chars=DEFAULT_LIMITS.max_string_chars,
+    max_integer_digits=DEFAULT_LIMITS.max_integer_digits,
+    max_number_chars=DEFAULT_LIMITS.max_number_chars,
+    require_canonical_bytes=False,
 )
 
 
