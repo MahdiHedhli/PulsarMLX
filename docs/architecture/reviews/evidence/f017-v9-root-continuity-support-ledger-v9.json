@@ -1,0 +1,104 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-support-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 5,
+  "prior_support_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v8.json",
+  "support": [
+    {
+      "support_id": "S-O-C05-001",
+      "challenge_id": "O-C05-001",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "443435f09cc5771828e298872ef8bb1b960e0239",
+      "evidence": [
+        "The 57-root active import census is frozen; every undeclared import root rejects.",
+        "pkgutil, pydoc, runpy, ctypes, modulefinder, inspect, pickle, marshal, shelve and their resolver members reject semantically.",
+        "First-party re-export and attribute transport of resolver capabilities rejects."
+      ],
+      "tests": [
+        "97 representation-independent parser mutations",
+        "145 focused root/decode tests",
+        "204 decode attacks",
+        "252 root attacks"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C05-002",
+      "challenge_id": "O-C05-002",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "443435f09cc5771828e298872ef8bb1b960e0239",
+      "evidence": [
+        "The bounded-decode enforcement is rebound in runtime authority, scientific access, inert fixture, and implementation measurement v16.",
+        "Canonical parser remains the only active runtime authority decoder; offline allowance unchanged."
+      ],
+      "tests": [
+        "190 combined active-authority tests",
+        "runtime qualification v15",
+        "production no-access rehearsal v16"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C05-003",
+      "challenge_id": "O-C05-003",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": null,
+      "evidence": [
+        "Append-only R2 receipt v10 and R7 receipt v9 use scripts/research/tests/test_f017_root_continuity_bounded_decode_v1.py.",
+        "R2 focused_tests is corrected to the current measured 145 and names the prior misstatement."
+      ],
+      "tests": [
+        "pytest focused collection 145",
+        "git path existence"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C05-004",
+      "challenge_id": "O-C05-004",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": null,
+      "evidence": [
+        "Append-only FULL_NATIVE evidence v10 records the AST-derived current parametrized regression count 97.",
+        "The previous v9 evidence remains historical and is explicitly superseded."
+      ],
+      "tests": [
+        "AST parametrized case census 97",
+        "exact-head FULL_NATIVE"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C05-005",
+      "challenge_id": "O-C05-005",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "All 43 Git blob and SHA-256 measurements remain derived and exact.",
+        "Numerical byte identity, closure count 32, and checkpoint access zero independently reconstruct true."
+      ],
+      "tests": [
+        "measurement v16 PASS",
+        "numerical byte regression PASS",
+        "closure validation PASS"
+      ],
+      "remaining_uncertainty": "Auxiliary-field derivation remains defense in depth."
+    },
+    {
+      "support_id": "S-O-C05-006",
+      "challenge_id": "O-C05-006",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "443435f09cc5771828e298872ef8bb1b960e0239",
+      "evidence": [
+        "ast.literal_eval, pickle, marshal, shelve and dynamic module resolution imports now reject.",
+        "Subprocess and os remain required runtime capabilities, but no current authority artifact is decoded through their external process surfaces."
+      ],
+      "tests": [
+        "alternate decoder mutations",
+        "frozen import-root census",
+        "independent current closure decode-site census"
+      ],
+      "remaining_uncertainty": "External command-string semantic analysis remains defense in depth; no current bypass exists."
+    }
+  ]
+}

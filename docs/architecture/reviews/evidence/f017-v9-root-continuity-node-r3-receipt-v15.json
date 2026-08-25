@@ -1,0 +1,48 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v10.json",
+    "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v16.json"
+  ],
+  "claims_closed": [
+    "C-IMPL-002",
+    "C-IMPL-004"
+  ],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": [
+    "regenerate six V10 authority artifacts",
+    "generate implementation measurement v16",
+    "validate exact Git blobs and SHA-256 bindings"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "runtime_authority_manifest": "2fcf66730299d6c32967040605b18ace0bdb30b3f550cee399801069727cd829",
+    "measurement_v16": "5fe146d4eb10fbaf98b868becffb28883d9b55a6ae48b5ac44ae7eabb2f84415"
+  },
+  "input_head": "443435f09cc5771828e298872ef8bb1b960e0239",
+  "next_eligible_edges": [
+    "R4",
+    "R5",
+    "R7",
+    "R8_CYCLE_06"
+  ],
+  "node_id": "R3",
+  "output_head": "79367b500fe80ac9af40fcc353e02cdfa4544217",
+  "result": "PASS",
+  "result_counts": {
+    "implementation_bindings": 43,
+    "runtime_import_closure_count": 32
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "43 implementation bindings",
+    "numerical authority unchanged",
+    "runtime authority manifest PASS"
+  ],
+  "supersedes": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v14.json"
+}
