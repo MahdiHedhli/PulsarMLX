@@ -22,6 +22,10 @@ OFFLINE_ONLY_ALLOWANCE = {
 SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
 CAPABILITY_EXPORT_NAMES = {"builtins", "importlib", "json", "os", "sys"}
 DYNAMIC_RESOLUTION_MODULES = {"importlib", "operator"}
+DYNAMIC_BUILTIN_NAMES = {
+    "__import__", "compile", "eval", "exec", "getattr", "globals",
+    "locals", "setattr", "vars",
+}
 DYNAMIC_CAPABILITY_ATTRIBUTES = {
     "__bases__", "__builtins__", "__class__", "__dict__", "__getattribute__",
     "__globals__", "__mro__", "__subclasses__", "builtins", "importlib",
@@ -133,6 +137,15 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
     direct_decode_sites: list[dict] = []
     semantic_modules: dict[str, str] = {}
     for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id in DYNAMIC_BUILTIN_NAMES:
+            parent = parents.get(node)
+            if not (isinstance(parent, ast.Call) and parent.func is node):
+                violations.append({
+                    "path": relative,
+                    "line": node.lineno,
+                    "reason": "DYNAMIC_BUILTIN_CAPABILITY_ESCAPE",
+                    "member": node.id,
+                })
         if isinstance(node, ast.Import):
             for item in node.names:
                 if item.name in {"json", "sys", "builtins"}:
@@ -162,7 +175,7 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             if (node.module or "").split(".", 1)[0] in DYNAMIC_RESOLUTION_MODULES:
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            if node.func.id in {"compile", "eval", "exec", "globals", "locals", "vars", "__import__"}:
+            if node.func.id in DYNAMIC_BUILTIN_NAMES - {"getattr", "setattr"}:
                 violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_GLOBAL_RESOLUTION"})
             elif node.func.id in {"getattr", "setattr"}:
                 member = node.args[1].value if len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) else None

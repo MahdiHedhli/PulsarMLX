@@ -214,6 +214,14 @@ def test_start_artifact_requires_exact_outer_schema_before_counting(tmp_path: Pa
         "import operator\nimport f017_bounded_artifact_decode_v1 as parser\noperator.attrgetter('json.loads')(parser)(b'{}')\n",
         "import operator\nimport f017_bounded_artifact_decode_v1 as parser\noperator.methodcaller('loads', b'{}')(parser.json)\n",
         "from operator import attrgetter\nimport f017_bounded_artifact_decode_v1 as parser\nattrgetter('json.loads')(parser)(b'{}')\n",
+        "my_getattr = getattr\nmy_getattr(object(), 'lo' + 'ads')\n",
+        "import logging\nmy_getattr = getattr\nsys_mod = my_getattr(logging, 'sy' + 's')\nsys_mod.modules['js' + 'on']\n",
+        "@eval\ndef bypass():\n    return 'import json'\n",
+        "alias = globals\nalias()['json'].loads(b'{}')\n",
+        "transport = [getattr]\ntransport[0](object(), 'loads')\n",
+        "def transport(resolve=getattr):\n    return resolve\n",
+        "def outer():\n    resolve = getattr\n    return lambda value: resolve(value, 'loads')\n",
+        "class Capability:\n    resolve = getattr\n",
     ],
 )
 def test_direct_parser_policy_rejects_representation_independent_bypasses(source: str) -> None:
