@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import json
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,10 +45,16 @@ APPROVED_IMPORT_ROOTS = {
     "time", "typing", "validate_f017_corrected_oracle_access_v10",
 }
 SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
-STRING_KEYED_RESOLVER_MEMBERS = {
-    "PyImport_ImportModule", "find_module", "find_spec", "literal_eval",
-    "locate", "resolve_name", "run_module", "run_path", "safeimport",
+TYPING_ALLOWED_FROM_IMPORTS = {
+    "Any", "Callable", "Final", "Iterable", "Iterator", "Protocol",
+    "runtime_checkable",
 }
+STRING_KEYED_RESOLVER_MEMBERS = {
+    "ForwardRef", "PyImport_ImportModule", "_evaluate", "evaluate_forward_ref",
+    "find_module", "find_spec", "get_type_hints", "literal_eval", "locate",
+    "resolve_name", "run_module", "run_path", "safeimport",
+}
+SAFE_FORWARD_ANNOTATION = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 DYNAMIC_RESOLUTION_MODULES = {
     "ctypes", "importlib", "inspect", "marshal", "modulefinder",
     "operator", "pickle", "pkgutil", "pydoc", "runpy", "shelve",
@@ -168,6 +175,131 @@ def _name_agnostic_decode_member_escapes(relative: str, tree: ast.AST, parents: 
     return violations
 
 
+def _target_names(target: ast.AST) -> set[str]:
+    """Return every local name introduced by an assignment target."""
+    return {node.id for node in ast.walk(target) if isinstance(node, ast.Name)}
+
+
+def _target_attributes(target: ast.AST) -> set[str]:
+    """Return attribute slots receiving a dynamically obtained value."""
+    return {node.attr for node in ast.walk(target) if isinstance(node, ast.Attribute)}
+
+
+def _complex_callable_bindings(relative: str, tree: ast.AST) -> list[dict]:
+    """Reject calling values acquired from an unproved runtime expression.
+
+    This deliberately reasons from value shape, not the spelling of a module or
+    resolver.  The accepted runtime closure has no need to call a value obtained
+    from Call/Subscript/Attribute assignment.  A future use must therefore gain
+    a reviewed, explicit allowance instead of silently acquiring a decoder.
+    """
+    candidate_names: set[str] = set()
+    candidate_attributes: set[str] = set()
+    parents = _parents(tree)
+    assignments: list[tuple[ast.AST, list[ast.AST], ast.AST]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            assignments.append((node, list(node.targets), node.value))
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            assignments.append((node, [node.target], node.value))
+        elif isinstance(node, ast.NamedExpr):
+            assignments.append((node, [node.target], node.value))
+
+    def in_class_body(node: ast.AST) -> bool:
+        current = node
+        while current in parents:
+            current = parents[current]
+            if isinstance(current, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+                return False
+            if isinstance(current, ast.ClassDef):
+                return True
+        return False
+
+    def transports_candidate(value: ast.AST) -> bool:
+        if isinstance(value, ast.Name):
+            return value.id in candidate_names
+        if isinstance(value, (ast.List, ast.Tuple, ast.Set)):
+            return any(transports_candidate(item) for item in value.elts)
+        if isinstance(value, ast.Dict):
+            return any(transports_candidate(item) for item in [*value.keys, *value.values] if item is not None)
+        if isinstance(value, ast.IfExp):
+            return transports_candidate(value.body) or transports_candidate(value.orelse)
+        if isinstance(value, ast.BoolOp):
+            return any(transports_candidate(item) for item in value.values)
+        return False
+
+    changed = True
+    while changed:
+        changed = False
+        for assignment, targets, value in assignments:
+            capability_shaped = isinstance(value, (ast.Call, ast.Subscript, ast.Attribute))
+            capability_shaped = capability_shaped or transports_candidate(value)
+            if not capability_shaped:
+                continue
+            for target in targets:
+                before_names = len(candidate_names)
+                before_attributes = len(candidate_attributes)
+                names = _target_names(target)
+                candidate_names.update(names)
+                candidate_attributes.update(_target_attributes(target))
+                if in_class_body(assignment):
+                    candidate_attributes.update(names)
+                changed = changed or len(candidate_names) != before_names
+                changed = changed or len(candidate_attributes) != before_attributes
+
+    violations: list[dict] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Name) and node.func.id in candidate_names:
+            violations.append({
+                "path": relative,
+                "line": node.lineno,
+                "reason": "UNPROVED_DYNAMIC_CALLABLE_INVOCATION",
+                "member": node.func.id,
+            })
+        elif isinstance(node.func, ast.Attribute) and node.func.attr in candidate_attributes:
+            violations.append({
+                "path": relative,
+                "line": node.lineno,
+                "reason": "UNPROVED_DYNAMIC_ATTRIBUTE_INVOCATION",
+                "member": node.func.attr,
+            })
+    return violations
+
+
+def _deferred_annotation_violations(relative: str, tree: ast.AST) -> list[dict]:
+    """Permit only inert identifier forward references; reject evaluable source."""
+    annotations: list[ast.AST] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AnnAssign):
+            annotations.append(node.annotation)
+        elif isinstance(node, ast.arg) and node.annotation is not None:
+            annotations.append(node.annotation)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.returns is not None:
+            annotations.append(node.returns)
+    violations: list[dict] = []
+    for annotation in annotations:
+        for node in ast.walk(annotation):
+            if isinstance(node, ast.JoinedStr):
+                violations.append({
+                    "path": relative,
+                    "line": node.lineno,
+                    "reason": "DYNAMIC_DEFERRED_ANNOTATION",
+                })
+            elif (
+                isinstance(node, ast.Constant)
+                and type(node.value) is str
+                and SAFE_FORWARD_ANNOTATION.fullmatch(node.value) is None
+            ):
+                violations.append({
+                    "path": relative,
+                    "line": node.lineno,
+                    "reason": "EXECUTABLE_DEFERRED_ANNOTATION",
+                })
+    return violations
+
+
 def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
     """Reject parser capabilities by semantic import/use shape, not spelling alone."""
     tree = ast.parse(source, filename=relative)
@@ -195,7 +327,7 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
         if isinstance(node, ast.Import):
             for item in node.names:
                 top_level = item.name.split(".", 1)[0]
-                if top_level in {"json", "sys", "builtins"}:
+                if top_level in {"json", "sys", "builtins", "typing"}:
                     semantic_modules[item.asname or top_level] = top_level
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -210,6 +342,8 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                     })
                 if item.name == "json" and item.asname is not None:
                     violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ALIAS"})
+                if item.name == "typing":
+                    violations.append({"path": relative, "line": node.lineno, "reason": "TYPING_MODULE_IMPORT_PROHIBITED"})
                 if item.name.split(".", 1)[0] in DYNAMIC_RESOLUTION_MODULES:
                     violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         elif isinstance(node, ast.ImportFrom):
@@ -224,6 +358,13 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             if node.level != 0:
                 violations.append({"path": relative, "line": node.lineno, "reason": "RELATIVE_IMPORT_PROHIBITED"})
             for item in node.names:
+                if node.module == "typing" and item.name not in TYPING_ALLOWED_FROM_IMPORTS:
+                    violations.append({
+                        "path": relative,
+                        "line": node.lineno,
+                        "reason": "UNAUTHORIZED_TYPING_MEMBER_IMPORT",
+                        "member": item.name,
+                    })
                 if item.name in {"load", "loads"}:
                     violations.append({
                         "path": relative,
@@ -294,6 +435,13 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
             if parent.attr not in SYS_ALLOWED_DIRECT_MEMBERS:
                 violations.append({"path": relative, "line": node.lineno, "reason": "UNAUTHORIZED_SYS_CAPABILITY", "member": parent.attr})
             continue
+        if semantic_module == "typing":
+            violations.append({
+                "path": relative,
+                "line": node.lineno,
+                "reason": "TYPING_RUNTIME_CAPABILITY",
+            })
+            continue
         if not isinstance(parent, ast.Attribute) or parent.value is not node:
             violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ESCAPE"})
             continue
@@ -314,6 +462,8 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
                 continue
         violations.append({"path": relative, "line": node.lineno, "reason": "UNAUTHORIZED_JSON_CAPABILITY", "member": member})
     violations.extend(_name_agnostic_decode_member_escapes(relative, tree, parents))
+    violations.extend(_complex_callable_bindings(relative, tree))
+    violations.extend(_deferred_annotation_violations(relative, tree))
     for site in _name_agnostic_decode_sites(relative, tree, parents):
         if site["member"] == "loads" and (
             relative == CANONICAL_PARSER or (relative, site["function"]) in OFFLINE_ONLY_ALLOWANCE
