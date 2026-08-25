@@ -40,7 +40,7 @@ def render() -> dict[Path, bytes]:
         "rehearsal": "scripts/research/rehearse_f017_event04_runtime_hardening_v9.py",
         "memory_gate": "scripts/research/f017_memory_gate_v9.py",
         "tensor_plan_builder": "scripts/research/f017_event04_tensor_plan_v9.py",
-        "independent_descriptor_checker": "scripts/research/check_f017_descriptor_type_safety_v8.py",
+        "independent_descriptor_checker": "scripts/research/check_f017_descriptor_type_safety_v9.py",
         "authority_generator": "scripts/research/generate_f017_event04_runtime_hardening_v9.py",
         "measurement_validator": "scripts/research/validate_f017_event04_implementation_measurement_v9.py",
     }.items()}

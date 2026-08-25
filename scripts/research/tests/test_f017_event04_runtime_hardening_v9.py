@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from check_f017_descriptor_type_safety_v8 import _validate_descriptors as independent_validate
+from check_f017_descriptor_type_safety_v9 import _validate_descriptors as independent_validate
 from f017_corrected_oracle_event_accounting_v9 import validate_snapshot
 from f017_descriptor_lease_manager_v9 import LeaseRecord, LeaseSet, validate_descriptors
 from f017_event04_tensor_plan_v9 import build_plan, validate_plan

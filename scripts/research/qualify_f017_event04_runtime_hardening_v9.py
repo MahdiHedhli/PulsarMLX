@@ -12,7 +12,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from check_f017_descriptor_type_safety_v8 import _validate_descriptors as independent_validate
+from check_f017_descriptor_type_safety_v9 import _validate_descriptors as independent_validate
 from execute_f017_corrected_oracle_event_v9 import execute_synthetic
 from f017_canonical_serialization_v8 import bank_exclusive, canonical_bytes
 from f017_corrected_oracle_event_accounting_v9 import validate_snapshot

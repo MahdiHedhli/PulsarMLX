@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Independent V8 descriptor type-safety and continuity checker.
+"""Independent V9 descriptor type-safety and continuity checker.
 
 This checker intentionally shares no imports or validation helpers with the
-primary transitive-closure validator or the design generator.
+production lease manager, the causal validator, or authority generators.
 """
 from __future__ import annotations
 
@@ -14,15 +14,8 @@ from pathlib import Path
 
 
 FIELDS = {
-    "device",
-    "inode",
-    "mode",
-    "size",
-    "mtime_ns",
-    "ctime_ns",
-    "shard_ordinal",
-    "role",
-    "lease_id",
+    "device", "inode", "mode", "size", "mtime_ns", "ctime_ns",
+    "shard_ordinal", "role", "lease_id",
 }
 INTEGER_FIELDS = {"device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal"}
 ORDINALS = [2, 3, 4, 5, 6]
@@ -66,6 +59,8 @@ def _validate_descriptors(value: object) -> list[dict]:
         raise ValueError("descriptor ordinal census mismatch")
     if len({(item["device"], item["inode"]) for item in descriptors}) != 5:
         raise ValueError("descriptor device/inode identity is not unique")
+    if len({item["lease_id"] for item in descriptors}) != 5:
+        raise ValueError("descriptor lease IDs are not unique")
     return descriptors
 
 
@@ -102,16 +97,12 @@ def validate_package(package_root: Path) -> dict:
         if (type(report["consumer_role"]) is not str or report["consumer_role"] != role
                 or type(report["descriptor_count"]) is not int or report["descriptor_count"] != 5
                 or type(report["path_reopen_count"]) is not int or report["path_reopen_count"] != 0
-                or report["ordinals"] != ORDINALS
-                or report["lease_ids"] != lease_ids
+                or report["ordinals"] != ORDINALS or report["lease_ids"] != lease_ids
                 or report["descriptor_identities"] != descriptors):
             raise ValueError(f"continuity report restatement mismatch: {role}")
     return {
-        "result": "PASS",
-        "descriptor_count": 5,
-        "lease_id_count": 5,
-        "ordinals": ORDINALS,
-        "mode_domain": "0<=mode<2**16",
+        "result": "PASS", "descriptor_count": 5, "lease_id_count": 5,
+        "ordinals": ORDINALS, "mode_domain": "0<=mode<2**16",
         "original_checkpoint_access": 0,
     }
 
