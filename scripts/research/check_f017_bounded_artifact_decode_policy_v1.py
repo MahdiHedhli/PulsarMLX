@@ -19,9 +19,44 @@ CANONICAL_PARSER = "scripts/research/f017_bounded_artifact_decode_v1.py"
 OFFLINE_ONLY_ALLOWANCE = {
     ("scripts/research/qualify_f017_quantization_matrix_v1.py", "invoke"),
 }
+APPROVED_IMPORT_ROOTS = {
+    "__future__", "argparse", "ast", "contextlib", "contextvars", "copy",
+    "dataclasses", "errno", "f017_accounting_root_continuity_v1",
+    "f017_bounded_artifact_decode_v1", "f017_canonical_serialization_v10",
+    "f017_checkpoint_identity_producer_v10",
+    "f017_corrected_oracle_authorization_v10",
+    "f017_corrected_oracle_compare_v8",
+    "f017_corrected_oracle_event_accounting_v10",
+    "f017_corrected_oracle_primary_numerics_v2",
+    "f017_corrected_oracle_primary_target_source_v10",
+    "f017_corrected_oracle_primary_v10",
+    "f017_corrected_oracle_secondary_numerics_v2",
+    "f017_corrected_oracle_secondary_target_source_v10",
+    "f017_corrected_oracle_secondary_v10", "f017_descriptor_lease_manager_v10",
+    "f017_lifecycle_artifact_v10", "f017_macos_memory_observation_v1",
+    "f017_memory_gate_v9", "f017_oracle_primary_decoders", "functools",
+    "ggml_kquants", "glm52_dense_primitives", "glm52_gguf_catalog",
+    "glm52_tensor_store", "hashlib", "iq2_s_dequant", "iq2_xxs_dequant",
+    "iq2_xxs_tables", "iq3_xxs_dequant", "iq3_xxs_tables",
+    "iq4_xs_dequant", "iq_extra_tables", "json", "math", "mlx", "mmap",
+    "numpy", "os", "pathlib", "qualify_f017_quantization_matrix_v1",
+    "random", "re", "stat", "struct", "subprocess", "sys", "tempfile",
+    "time", "typing", "validate_f017_corrected_oracle_access_v10",
+}
 SYS_ALLOWED_DIRECT_MEMBERS = {"executable", "stderr"}
-CAPABILITY_EXPORT_NAMES = {"builtins", "importlib", "json", "os", "sys"}
-DYNAMIC_RESOLUTION_MODULES = {"importlib", "operator"}
+STRING_KEYED_RESOLVER_MEMBERS = {
+    "PyImport_ImportModule", "find_module", "find_spec", "literal_eval",
+    "locate", "resolve_name", "run_module", "run_path", "safeimport",
+}
+DYNAMIC_RESOLUTION_MODULES = {
+    "ctypes", "importlib", "inspect", "marshal", "modulefinder",
+    "operator", "pickle", "pkgutil", "pydoc", "runpy", "shelve",
+}
+CAPABILITY_EXPORT_NAMES = {
+    "builtins", "importlib", "json", "os", "sys",
+    *DYNAMIC_RESOLUTION_MODULES,
+    *STRING_KEYED_RESOLVER_MEMBERS,
+}
 DYNAMIC_BUILTIN_NAMES = {
     "__import__", "compile", "eval", "exec", "getattr", "globals",
     "locals", "setattr", "vars",
@@ -32,7 +67,8 @@ DYNAMIC_CAPABILITY_ATTRIBUTES = {
     "__globals__", "__mro__", "__subclasses__", "__closure__", "__code__",
     "__defaults__", "__kwdefaults__", "__loader__", "__spec__", "builtins",
     "create_module", "exec_module", "get_code", "get_source", "importlib",
-    "json", "load_module", "modules", "os", "sys",
+    "json", "load_module", "modules", "os", "pythonapi", "sys",
+    *STRING_KEYED_RESOLVER_MEMBERS,
 }
 
 
@@ -164,11 +200,27 @@ def inspect_source(relative: str, source: str) -> tuple[list[dict], list[dict]]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for item in node.names:
+                import_root = item.name.split(".", 1)[0]
+                if import_root not in APPROVED_IMPORT_ROOTS:
+                    violations.append({
+                        "path": relative,
+                        "line": node.lineno,
+                        "reason": "UNAPPROVED_RUNTIME_IMPORT_ROOT",
+                        "module": import_root,
+                    })
                 if item.name == "json" and item.asname is not None:
                     violations.append({"path": relative, "line": node.lineno, "reason": "JSON_MODULE_ALIAS"})
                 if item.name.split(".", 1)[0] in DYNAMIC_RESOLUTION_MODULES:
                     violations.append({"path": relative, "line": node.lineno, "reason": "DYNAMIC_IMPORT_MODULE"})
         elif isinstance(node, ast.ImportFrom):
+            import_root = (node.module or "").split(".", 1)[0]
+            if node.level == 0 and import_root not in APPROVED_IMPORT_ROOTS:
+                violations.append({
+                    "path": relative,
+                    "line": node.lineno,
+                    "reason": "UNAPPROVED_RUNTIME_IMPORT_ROOT",
+                    "module": import_root,
+                })
             if node.level != 0:
                 violations.append({"path": relative, "line": node.lineno, "reason": "RELATIVE_IMPORT_PROHIBITED"})
             for item in node.names:
