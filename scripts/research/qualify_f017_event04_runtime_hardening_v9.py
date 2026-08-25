@@ -139,7 +139,7 @@ def _terminal_root_faults() -> list[dict]:
     results = []
     for case_id in ("UNSEARCHABLE_EMERGENCY", "UNSEARCHABLE_STATE"):
         with tempfile.TemporaryDirectory(prefix="f017-v9-terminal-root-") as raw:
-            work = Path(raw); primary = work / "primary"; fallback = work / "fallback"
+            work = Path(raw).resolve(); primary = work / "primary"; fallback = work / "fallback"
             primary.mkdir(); fallback.mkdir()
             original_derive = coordinator.derive; original_bank = coordinator.bank_runtime_artifact
             def inaccessible_accounting(_root: Path) -> dict:
