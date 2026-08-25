@@ -1,0 +1,817 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-arbiter-ledger/2.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v2.json",
+  "arbiter_cycles": [
+    {
+      "reviewed_head": "09a1122e93f38de9b8cdc6bcebe6a60ab5b71f6f",
+      "reviewer_model": "claude-opus-5",
+      "claim_verdicts": [
+        {
+          "claim_id": "C-REF-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "git merge-base --is-ancestor 313a4832..90338840 returns ancestor; rev-list --count = 21",
+            "456b5d8d confirmed descendant of 90338840",
+            "git branch -a --contains 456b5d8d yields exactly one lineage: feat/017-rust-native-inference-runtime plus its origin mirror"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-REF-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "git worktree list shows only the primary checkout and this detached read-only review worktree",
+            "branch head c93448ba is 2 commits ahead of 09a1122e; git diff --stat 09a1122e..c93448ba touches exactly 3 files, all under docs/architecture/reviews/evidence/ (cycle-02 request v1/v2 and the invalid cycle-02 response)",
+            "zero load-bearing implementation paths modified after the reviewed head"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-REF-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "both cited terminal review artifacts present and readable at the reviewed head",
+            "f017-event04-runtime-hardening-review-budget-exhaustion-v1.json records EVENT_04_EXECUTED=NO and READY_FOR_...EVENT_04_EXECUTION_GO=NO",
+            "R0 receipt present"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 3 executed: renamed the original root and recreated its pathname; verify_retained_identity() remained bound to the original inode and path_identity_status returned IDENTITY_MISMATCH while all three start observations stayed OBSERVED_PRESENT via the retained descriptor",
+            "Attack 1 (empty-directory replacement) and Attack 2 (symlink replacement) both yielded IDENTITY_MISMATCH with no loss of bound lower bounds",
+            "contract clause path_reselection_after_package_start=PROHIBITED honored: no path is reopened after binding"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 7 executed: 70-case cross product of {package,primary,secondary} start states x 14 degradations (empty dir, symlink, rename+recreate, delete, chmod 000, root-is-file, journal zero/garbage, starts deleted/corrupt/deep/wrong-kind, full wipe) produced 0 false zeros, 0 raw exceptions, 0 monotonicity violations",
+            "Attack 5: 26 journal corruption/truncation mutations produced 0 false zeros; every one classified AUTHORITY_CORRUPT",
+            "Attack 5b: journal zeroed AND all three start artifacts deleted still yielded package=primary=secondary=1 from the in-process lower bound"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 6 executed: fallback removed, chmod 000, replaced by a file, replaced by a symlink; in all four cases fallback_used_as_accounting_source remained false and primary banking still returned PASS/BOUND_PRIMARY",
+            "across all 70 Attack-7 cases and 26 Attack-5 cases fallback_used_as_accounting_source was false in every observation",
+            "contract clause fallback_semantics=EVIDENCE_SINK_NOT_ACCOUNTING_SOURCE upheld; accounting_lower_bound never reads the fallback descriptor"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 8 executed: 15 _terminalize cases across package-only, package+primary, and package+primary+secondary durable starts under 5 degradations each; every case returned CONTROLLED_FAILURE with package_terminal_evidence=PASS and original_checkpoint_access=0",
+            "monotonic lower bound never decreased across three consecutive observations in all 70 Attack-7 cases",
+            "contract monotonic_rule ONLY_OBSERVED_ABSENT_MAY_CONTRIBUTE_ZERO verified: UNAVAILABLE/CORRUPT/IDENTITY_MISMATCH all preserved the verified lower bound"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-005",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 13 executed: 10 non-serializable terminal payloads (object, set, bytes, NaN, Inf, custom class, non-str key, self-referential, 10^100000 int) all returned MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE with both BOUND_PRIMARY and BOUND_FALLBACK errors recorded and zero partial artifact files created at either root",
+            "challenge O-PRE-C01-001 repair independently confirmed at the reviewed head",
+            "Attack 6 both-roots-broken case also returned MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE with both arm errors banked"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent name-agnostic AST census of every .load/.loads attribute call across the 32-module closure returned exactly two sites: f017_bounded_artifact_decode_v1.py:151 (canonical) and qualify_f017_quantization_matrix_v1.py:167 (documented offline-only allowance, reached only via the --binary subprocess probe, not via independent_decode)",
+            "independent scan found zero first-party capability re-exports currently present in the closure",
+            "claim is true as measured on committed bytes; see finding O-C02-001 for the durability of its enforcement"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 9 executed: nesting depths 63/64/65/128/1024/10000/100000 all rejected as ArtifactDecodeError by the pre-decode structural scanner, before Python's recursive decoder runs",
+            "number bounds verified: 257/10000/1000000-char floats, 128 and 129-digit integers, 1e999999, NaN and Infinity literals, and a 2 MB string all rejected as ArtifactDecodeError",
+            "committed DEFAULT_LIMITS match the frozen decode contract limits field for field"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 12 executed: RecursionError, TypeError, OverflowError, MemoryError, KeyboardInterrupt, OSError and ValueError injected as the terminalizing exception; all seven crossed as CONTROLLED_FAILURE with terminal_evidence PASS and no raw escape",
+            "Attack 9 deep-nesting injection at all three durable-start classes (21 cases) produced AUTHORITY_CORRUPT, never a raw RecursionError",
+            "reproduced qualification records raw_recursion_errors=0"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 10 executed: 21 malformed byte patterns (empty, whitespace, unbalanced, duplicate key, noncanonical spacing/ordering, missing newline, UTF-16, invalid UTF-8, control bytes, NUL, non-dict top level, trailing comma, single quotes, NaN literal, 3 MB payload, 5000-deep) every one mapped to ArtifactDecodeError with zero raw exceptions",
+            "Attack 10 live injection: 84 cases writing those patterns into the live journal, package receipt, failure terminal capsule and package terminal produced zero false zeros and zero raw exceptions",
+            "BOM rejected as required by contract utf8=STRICT_NO_BOM"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-005",
+          "verdict": "REJECT",
+          "evidence": [
+            "Attack 11 executed: 27-mutation battery against the direct-parser prohibition; 24 rejected but 3 accepted with zero violations - 'from f017_bounded_artifact_decode_v1 import json', 'from f017_canonical_serialization_v10 import json', and the aliased form",
+            "end-to-end exploitation confirmed: with the re-export planted in an active-closure module, check_f017_bounded_artifact_decode_policy_v1.validate() still returns result=PASS, violations=[], closure=32, and its direct_decode_sites census does not even list the new site, while the module performs unbounded decodes - raw RecursionError escaped at depth 100000, NaN accepted, duplicate keys silently collapsed, noncanonical bytes accepted",
+            "root cause: semantic_modules is populated only from ast.Import of json/sys/builtins, so an ast.ImportFrom whose module is a first-party research module binds the real json module under a name the policy never tracks",
+            "the committed 25-mutation test census re-derives json only from stdlib module names and contains no first-party re-export case",
+            "falsifies decode contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER"
+          ],
+          "invalidation_disposition": [
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R7",
+            "R8",
+            "R9_FINAL_AUTHORITY_RECONCILIATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "Attack 14 executed: constructor failure injected after one directory descriptor, after two directory descriptors (via _directory_identity), at journal O_EXCL failure, and at the identical-root rejection; every genuine failure path leaked zero descriptors measured against /dev/fd",
+            "500 consecutive failed constructions leaked 0 cumulative descriptors",
+            "challenge O-PRE-C01-002 repair independently confirmed; descriptor-relative banking and root attacks (Attacks 1-8) all behaved per the accepted design"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-002",
+          "verdict": "REJECT",
+          "evidence": [
+            "check_f017_bounded_artifact_decode_policy_v1.py is one of the 43 measured implementation bindings and is the sole implementation of the frozen decode contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER",
+            "that clause is not enforced against first-party module re-export of the json capability, so the implementation does not match the accepted bounded-artifact decode design",
+            "the bounded parser itself (limits, decode order, exception normalization) does conform and reproduced correctly; the non-conformance is confined to the prohibition-enforcement surface"
+          ],
+          "invalidation_disposition": [
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R7",
+            "R8",
+            "R9_FINAL_AUTHORITY_RECONCILIATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "numerical authority sha256 prefixes verified against committed bytes: primary_numerical_core 657cdff9, secondary_numerical_core e3670b22, primary_decoder 60a4b4e7 - all three match the ledger exactly",
+            "measurement records numerical_authority_changed=false",
+            "all three blobs identical at 456b5d8d and at the reviewed head 09a1122e"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "all 43 declared bindings independently verified: file sha256, git hash-object, and git rev-parse 456b5d8d:<path> all matched for every entry with zero problems and zero duplicate paths",
+            "independent runtime import-closure enumeration (importing the 4 entry modules and reading sys.modules) returned exactly 32 modules, set-identical to the AST closure",
+            "all 20 authority-manifest v7 artifact hashes verified against committed bytes with zero mismatches"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "re-executed qualify_f017_v10_root_continuity_bounded_decode_v1.py at the reviewed head; all 21 fields reproduced bit-for-bit against the banked v9 artifact including deterministic_core_sha256 11dfba71...",
+            "root_attack_cases=252, cross_product_cases=6, false_zero_results=0 reproduced",
+            "independently corroborated by my own 70-case false-zero sweep and 26-case journal battery"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "decode_attack_cases=204 and raw_recursion_errors=0 reproduced bit-for-bit",
+            "independently corroborated by my 21-pattern malformed decode battery and 84-case live-injection battery, all mapping to ArtifactDecodeError",
+            "no uncontrolled decode or serialization exception crossed terminalization in any executed case"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "reconciled rather than conflated: derived independently from the committed outcome-obligations contract that 47 modeled failure outcomes exist; root/decode qualifier runs range(5) for each, giving 5x47=235",
+            "retained runtime qualifier applies repeats = 5 if outcome_id in high_risk else 3 with high_risk matched on PACKAGE_POST/CHECKPOINT_IDENTITY/PRIMARY_POST/SECONDARY_POST/EVIDENCE_BANKING markers; I computed 30 high-risk and 17 ordinary, giving 5x30+3x17=201 exactly",
+            "both suites re-executed: 235/47 and 201/47 reproduced bit-for-bit, with runtime_generic_fallbacks=0 and uncontrolled_modeled_failures=0",
+            "challenge O-PRE-C01-005 resolution independently confirmed"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "re-executed qualify_f017_event04_runtime_hardening_v10.py; all 38 fields reproduced bit-for-bit including deterministic_core_sha256 a446194f...",
+            "successful_package_count=50 plus successful_packages=60 in the root/decode suite = 110 successful package executions, matching the ledger",
+            "all 11 formats, 1410 graph tensors, 399 non-access denials, live_leases_after_success_terminal=0 and path_reopen_count=0 reproduced"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-005",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "re-executed the production-shaped rehearsal; deterministic_core reproduced identically including deterministic_core_sha256 a2992987...",
+            "checkpoint_shard_opens=0, checkpoint_identity_hash_reads=0, checkpoint_payload_reads=0, numerical_operations=0, state_created=false, synthetic_root_path_used=false",
+            "direct instrumentation: a sys.addaudithook over open/os.open/os.stat/listdir/scandir/Popen recorded 0 events touching /Users/mhedhli/Models, GLM-5.2 or .gguf, while confirming the real checkpoint directory IS present on this machine"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-CI-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independently verified run 32859713646 via gh: conclusion success, status completed, headSha 456b5d8d32bab01fb00fb98c25b1261be42e94e7, workflow 'macOS baseline'",
+            "live job census matches the banked v5 evidence exactly: Classify committed change 97840386048 success, Apple MLX small-fixture validation 97840445794 success, Apple Silicon workspace baseline 97840445808 success, CI aggregate status 97845327660 success",
+            "banked head and tree match manifest implementation_head/implementation_tree",
+            "see finding O-C02-004 regarding stale run identifiers in the ledger's test_evidence field"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-CI-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "banked exact-head CI evidence records native_required_skips=0 at run 32859713646",
+            "the pinned native lane 'Apple MLX small-fixture validation' concluded success in 834s rather than skipping, independently confirmed via gh",
+            "the three skipped jobs are Closed F017 branch guard, Evidence integrity and Documentation integrity - none of which are native lanes; skip census for required native work is genuinely zero"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-CI-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "banked v5 evidence records historical_git_object_validation=PASS, current_v10_validation=PASS, mixed_authority_detected=false",
+            "the CI evidence separates required lane jobs from evidence_jobs, and I confirmed the live job list matches that separation exactly",
+            "relevant_test_census distinguishes historical_equivalence_cases=24 from active_authority_pytest=115"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "finding_id": "O-C02-001",
+          "claim_id": "C-JSON-005",
+          "classification": "BLOCKING",
+          "attack": "Attack 11. Planted a first-party module re-export of the json capability into an active-closure module: 'from f017_bounded_artifact_decode_v1 import json' followed by json.loads(raw). Also tested the f017_canonical_serialization_v10 source and an aliased form. Executed against a synthetic mirror tree under /private/tmp with the repository worktree untouched.",
+          "observed": "check_f017_bounded_artifact_decode_policy_v1.inspect_source reported zero violations and validate() returned result=PASS, violations=[], runtime_import_closure_count=32, with direct_decode_sites still listing only the two known authorized sites - the planted decoder was not even enumerated. The re-exported parser then performed genuinely unbounded decodes: raw RecursionError escaped the canonical boundary at nesting depth 100000, NaN was accepted, duplicate keys were silently collapsed, noncanonical bytes and a 5 MB string were accepted. Root cause: semantic_modules is populated only from ast.Import of json/sys/builtins, so any ast.ImportFrom whose module resolves to a first-party research module binds the real capability under a name the policy never tracks; the committed 25-mutation census re-derives json only from stdlib module names and contains no first-party re-export case. This falsifies the frozen contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER and is strictly easier to exploit than O-PRE-C01-003 (eval/exec/compile), which was graded BLOCKING_CANDIDATE and repaired. The defect is latent, not active: an independent name-agnostic census confirmed the committed closure contains zero such re-exports today.",
+          "required_repair": "In inspect_source, treat any ImportFrom that binds a name matching a capability module (json, sys, builtins, importlib, os) as a capability import regardless of the source module, and register the bound name in semantic_modules so downstream .load/.loads/.modules use is flagged. Equivalently, reject first-party re-export of capability module objects outright. Add the three accepted mutations to the committed rejection census in test_direct_parser_policy_rejects_representation_independent_bypasses, and add a name-agnostic assertion that the closure contains no .load/.loads call site outside the canonical parser and the documented offline allowance."
+        },
+        {
+          "finding_id": "O-C02-002",
+          "claim_id": "C-IMPL-002",
+          "classification": "BLOCKING",
+          "attack": "Contract conformance check of the V10 implementation against specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json, combined with the executable result of O-C02-001.",
+          "observed": "check_f017_bounded_artifact_decode_policy_v1.py is one of the 43 measured implementation bindings and is the sole implementation of the contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER. That clause is not enforced for the first-party re-export class, so the implementation does not match the accepted bounded-artifact decode design. The remainder of the decode design does conform: DEFAULT_LIMITS match the contract limits field for field, decode_order (bounded byte read, UTF-8 validation, string-aware depth precheck, JSON decode, duplicate-key rejection, key census, strict typing) is implemented in that order, ArtifactDecodeError normalizes all six declared exception classes, and nonfinite numbers and BOM are rejected.",
+          "required_repair": "Land the O-C02-001 repair, then re-measure the implementation binding for check_f017_bounded_artifact_decode_policy_v1.py and re-bank the implementation measurement and the root/decode qualification at the new head."
+        },
+        {
+          "finding_id": "O-C02-003",
+          "claim_id": "C-ROOT-001",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Attack 2 variant. Called AccountingRootAuthority.bind_existing with a primary root pathname that is a symlink to a directory.",
+          "observed": "The bind succeeded. open_directory_no_symlinks calls Path.resolve(strict=True) first, which follows the symlink, then opens components of the already-resolved path with O_NOFOLLOW, so a symlinked spelling binds to the canonical target. The consequence is benign but degraded: primary_path retains the symlink spelling, so path_status() returns IDENTITY_MISMATCH for the entire package lifetime even though the retained descriptor is correct, and no false zero is possible. Not reachable in production - _execute_installed creates the evidence root itself with mkdir(exist_ok=False) immediately before binding, and _safe_evidence_root independently rejects symlinks. The root continuity contract requires identity_preserving_handle_required and prohibits path reselection after package start, neither of which is violated.",
+          "required_repair": "Optional hardening: reject a primary or fallback root whose caller-supplied pathname is itself a symlink at bind time, or record the resolved canonical spelling in primary_path so path_status() does not report a permanent mismatch for a correctly bound root."
+        },
+        {
+          "finding_id": "O-C02-004",
+          "claim_id": "C-CI-001",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Cross-checked the test_evidence run identifiers in claim ledger v6 for C-CI-001, C-CI-002 and C-CI-003 against the banked CI evidence and against the live GitHub Actions API.",
+          "observed": "The three CI claims cite only runs 32852990982 and 32856475208 in test_evidence. Those correspond to CI evidence v3 at head 3f8fa960 and v4 at head 4f47078e - both superseded, and 4f47078e is the pre-repair parent of the implementation head. The exact-head run 32859713646 appears only in proof_artifacts via full-native-ci-v5.json. Substantively harmless: the correct artifact is bound and sha256-pinned in authority manifest v7, and I independently verified run 32859713646 at head 456b5d8d via gh. But the ledger's own narrative test evidence for the CI claims names only pre-repair runs.",
+          "required_repair": "Update the test_evidence arrays for C-CI-001, C-CI-002 and C-CI-003 to cite GitHub Actions run 32859713646 at head 456b5d8d as the exact-head evidence, retaining the superseded runs only if explicitly labelled historical."
+        },
+        {
+          "finding_id": "O-C02-005",
+          "claim_id": "C-REF-003",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Queried GitHub Actions for any workflow run at the evidence head 09a1122e, and inspected the job-level conclusions of the exact-head run.",
+          "observed": "No CI run exists at 09a1122e (gh run list --commit returned an empty array). At the implementation head 456b5d8d the Evidence integrity, Documentation integrity and Closed F017 branch guard jobs were all skipped because the classifier assigned FULL_NATIVE. The net effect is that no CI gate has ever validated the banked evidence set that this arbiter packet rests on. I substituted a manual check: all 20 authority-manifest v7 artifact sha256 values verified against committed bytes with zero mismatches, and all 43 implementation bindings verified against committed Git blobs.",
+          "required_repair": "Either run the evidence-integrity workflow at the evidence head before the R9 reconciliation, or record explicitly in the manifest that evidence integrity for this packet was established by manifest hash verification rather than by a CI gate."
+        },
+        {
+          "finding_id": "O-C02-006",
+          "claim_id": "C-QUAL-003",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Attempted to reconcile runtime_failure_executions=201 against runtime_failure_outcomes_realized=47 using only the banked artifact, without reading source.",
+          "observed": "The retained runtime qualification artifact records 201 and 47 but contains no field naming the high-risk set, its cardinality, or the repetition policy. Reconciliation required reading qualify_f017_event04_runtime_hardening_v10.py:177-182 and re-deriving the marker-matched split from the outcome-obligations contract. I did so and it reconciles exactly (30 high-risk x 5 + 17 ordinary x 3 = 201), so the claim stands, but challenge O-PRE-C01-005's stated resolution that both families 'document their distinct repetition policies' is satisfied only in code, not in the evidence artifacts themselves.",
+          "required_repair": "Emit the repetition policy into the qualification artifact: high_risk_outcome_count, ordinary_outcome_count, and the per-class repetition counts, so 201 is derivable from the banked evidence alone."
+        },
+        {
+          "finding_id": "O-C02-007",
+          "claim_id": "C-QUAL-001",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Traced the provenance of the zero-valued assurance fields in both qualification result dictionaries.",
+          "observed": "raw_recursion_errors, false_zero_results, unexpected_passes, original_checkpoint_shard_opens, original_checkpoint_identity_hash_reads and original_checkpoint_payload_reads are hardcoded literals in the result dictionaries, not counters accumulated from executed cases. They are nevertheless sound, because the individual case functions raise on any unexpected behaviour (for example _cross_product_cases raises when the observed package lower bound differs from the expected one), so a violation aborts the run and no artifact is produced. They are assertions-by-construction rather than measurements, which weakens their standalone evidentiary value.",
+          "required_repair": "Accumulate these fields from the executed cases so a nonzero value is representable in a produced artifact, rather than emitting constants that can only ever be zero."
+        },
+        {
+          "finding_id": "O-C02-008",
+          "claim_id": "C-ROOT-005",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Attack 13 variant. Banked a terminal artifact whose payload nests 3000 levels deep.",
+          "observed": "The write succeeded (result PASS, target BOUND_PRIMARY) because _bank_at validates only canonical serializability and byte readback, not the decode bounds. The resulting artifact exceeds max_depth=64 and is therefore permanently undecodable by the project's own bounded reader. No accounting harm follows - such an artifact observes as AUTHORITY_CORRUPT, which the monotonic rule treats as never being evidence of absence, and the journal records only the digest so the hash chain stays decodable. The asymmetry is that the banker will durably write authority bytes that its own canonical parser must reject.",
+          "required_repair": "Optional hardening: apply the bounded-decode limits to values on the write path in _bank_at, or round-trip the banked bytes through parse_artifact_bytes as part of the existing readback verification."
+        }
+      ],
+      "accepted_claim_count": 23,
+      "rejected_claim_count": 2,
+      "unresolved_claim_count": 0,
+      "original_checkpoint_access_observed": 0,
+      "event_04_authorization_observed": false,
+      "p1_attempt_2_observed": false,
+      "global_verdict": "REJECT",
+      "cycle": 2,
+      "response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-02-exact-response.json"
+    },
+    {
+      "reviewed_head": "0e7c6970e133435f5dc78bb4af74bf05f2cd5194",
+      "reviewer_model": "claude-opus-5",
+      "claim_verdicts": [
+        {
+          "claim_id": "C-REF-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "git merge-base --is-ancestor 313a4832..90338840 returns ancestor; git rev-list --count = 21, reproducing the ledger's own test_evidence",
+            "90338840 verified ancestor of the evidence head 0e7c6970",
+            "git branch -a --contains 0e7c6970 yields exactly one lineage: feat/017-rust-native-inference-runtime plus its origin mirror"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-REF-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "git worktree list shows only the primary checkout (2ebd94e2) and this detached read-only review worktree at 0e7c6970",
+            "git diff --name-only 0e7c6970..2ebd94e2 touches exactly one file, docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-03-request-v1.md; zero paths outside the evidence directory",
+            "review worktree confirmed byte-clean (git status --porcelain empty) at end of review; all executable attacks run against copies under /private/tmp"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-REF-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "f017-event04-runtime-hardening-review-budget-exhaustion-v1.json sha256 1895c47e1728d861d7f0c44800456c955a66ade533e158a3c979c00833d899af matches the R0 receipt's pinned closeout_sha256 exactly",
+            "that closeout records EVENT_04_EXECUTED=NO, LIVE_EVENT_04_AUTHORIZATION_CREATED=NO, P1_ATTEMPT_2_EXECUTED=NO, READY_FOR_...EVENT_04_EXECUTION_GO=NO, HISTORICAL_MASTER_LEDGER=175",
+            "terminal Opus cycle-06 normalized result reconstructs to the pinned request/response hashes ae357201.../e9252a4e...",
+            "cycle-02 finding O-C02-005 is now repaired: evidence-only run 32866819097 exists at this exact evidence head with Evidence integrity = success"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent 22-case degradation battery executed against AccountingRootAuthority under /private/tmp: root replaced by empty dir, by symlink, renamed+recreated, deleted, replaced by file, chmod 000 - every case retained the bound inode and reported IDENTITY_MISMATCH or AUTHORITY_UNAVAILABLE while the bound lower bound stayed 1",
+            "500 consecutive failed constructions leaked 0 descriptors measured against /dev/fd, reconfirming the identity-preserving-handle path",
+            "banked 252-case root qualification reproduced bit-for-bit including deterministic_core_sha256 11dfba71...",
+            "direct-parser repair touched only scripts/research/check_f017_bounded_artifact_decode_policy_v1.py; git diff confirms zero root-continuity implementation bytes changed, so the cycle-02 ACCEPT's measured dependencies are intact"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent battery: 22 degradations x 3 consecutive observations produced false_zeros=0, raw_exceptions=0, monotonic_violations=0",
+            "journal zeroed, garbage, truncated, 5000-deep, duplicate-key, NaN and UTF-16 mutations all preserved package lower bound 1",
+            "full wipe of both roots still returned package=1 from the in-process monotonic lower bound",
+            "banked qualification reproduced false_zero_results=0, root_attack_cases=252, cross_product_cases=6"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "fallback removed, chmod 000, replaced by a file, replaced by a symlink to /dev/null: fallback_used_as_accounting_source remained False in every case",
+            "across all 22 independent degradation cases fallback_used_as_accounting_source was False in every one of 66 observations",
+            "source read confirms accounting_lower_bound() never reads the fallback descriptor and authority_record() pins fallback_semantics=EVIDENCE_SINK_NOT_ACCOUNTING_SOURCE"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "monotonic lower bound never decreased across three consecutive observations in all 22 independent cases (monotonic_violations=0)",
+            "accounting_lower_bound() source verified: only OBSERVED_ABSENT may contribute a value below the retained bound, and every value is clamped by max(..., self._monotonic_lower_bound[role])",
+            "banked 235-execution modeled-outcome suite reproduced bit-for-bit with unexpected_passes=0"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-ROOT-005",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent nonserializable terminalization battery: set, bytes, NaN, Inf, custom class, self-referential dict and 10^100000 int all returned MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE with both BOUND_PRIMARY and BOUND_FALLBACK errors banked and zero raw escapes",
+            "both-roots-unwritable case returned MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE with PermissionError recorded for both arms",
+            "see DEFENSE_IN_DEPTH finding O-C03-006, which does not block"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent name-agnostic AST census, written without importing the policy helper, reproduced the 32-module closure set-identically and found exactly two .load/.loads call sites: f017_bounded_artifact_decode_v1.py:151 (canonical) and qualify_f017_quantization_matrix_v1.py:167 (documented offline-only allowance), with zero non-call references",
+            "the same independent census found zero JSONDecoder, raw_decode, scan_once, decoder, scanner, attrgetter, methodcaller, literal_eval or transported-json constructs anywhere in the active closure",
+            "the claim is true as measured on committed bytes; the durability of its enforcement is C-JSON-005's scope and is rejected there, matching the cycle-02 disposition"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "all seven contract limits verified field-for-field against DEFAULT_LIMITS with zero mismatches: max_bytes 1048576, max_depth 64, max_object_keys 4096, max_array_elements 16384, max_string_chars 524288, max_integer_digits 128, max_number_chars 256; require_canonical_bytes=True",
+            "independent 24-pattern battery: depth 63 accepted and depth 65/10000/100000 rejected as ArtifactDecodeError, proving the boundary is exactly 64 and the structural precheck runs before the recursive decoder",
+            "3 MB payload, 129-digit integer and 1e999999 all rejected as ArtifactDecodeError"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent battery: nesting depths 65, 10000 and 100000 all produced ArtifactDecodeError, never a raw RecursionError; raw_escapes=0 across 24 patterns",
+            "live injection of a 100000-deep durable-start artifact and a 5000-deep journal into a bound authority produced no raw exception and no false zero",
+            "banked root/decode qualification reproduced raw_recursion_errors=0 across 235 modeled-outcome executions"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independent 24-pattern battery: empty, whitespace, unbalanced, duplicate key, noncanonical spacing, noncanonical ordering, missing newline, UTF-16, invalid UTF-8, control byte, NUL, BOM, non-dict top level, trailing comma, single quotes, NaN and Infinity all mapped to ArtifactDecodeError with zero raw exceptions",
+            "BOM rejected as required by contract utf8=STRICT_NO_BOM; nonfinite rejected as required by nonfinite_numbers=PROHIBITED",
+            "banked decode_attack_cases=204 reproduced bit-for-bit",
+            "DEFENSE_IN_DEPTH finding O-C03-005 noted; it does not block"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-JSON-005",
+          "verdict": "REJECT",
+          "evidence": [
+            "42-mutation battery executed against synthetic mirrors of the active import closure under /private/tmp; 30 rejected, but 12 accepted with zero violations across three distinct families",
+            "family 1 (10 mutations, finding O-C03-001): the repair's name-agnostic gate keys only on the attribute name load/loads, so a transported first-party json module object reached as parser.json.JSONDecoder().decode(raw), parser.json.decoder.JSONDecoder().decode(raw), raw_decode, scan_once, a hoisted _D = parser.json.JSONDecoder, functools.partial and the canonical-serializer exporter all pass with result=PASS, violations=[], closure=32",
+            "family 2 (3 mutations, finding O-C03-002): operator.attrgetter('loads')(parser.json)(raw), operator.attrgetter('json.loads')(parser)(raw) and operator.methodcaller('loads', raw)(parser.json) all accepted; required attack 4 names operator.attrgetter explicitly and the policy has no operator-module rule",
+            "family 3 (finding O-C03-004): _closure() only follows RESEARCH/<module>.py, so a package-shaped first-party module scripts/research/<pkg>/__init__.py containing plain import json; json.loads(raw) is never inspected at all - closure still reports 32",
+            "end-to-end exploitation confirmed in the mirror trees before importing the planted runtime module: raw RecursionError escaped the canonical boundary at nesting depth 100000, duplicate keys silently collapsed to {'a': 2}, NaN and Infinity accepted, noncanonical spacing/ordering accepted, 5 MB string accepted, non-dict top level accepted - all rejected as ArtifactDecodeError by the canonical parser on the same bytes",
+            "in every accepted case validate()'s direct_decode_sites census still listed only the two authorized sites and did not enumerate the planted decoder",
+            "falsifies decode contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER and the claim's own broader statement that direct active-runtime JSON parsing outside the canonical parser is prohibited",
+            "the cycle-02 repair is genuine but incomplete: all five committed regressions (three re-exports, member transport, dynamic getattr) plus the end-to-end mirror-tree test do pass, and the 32-module closure contains zero such constructs today, so the defect is latent enforcement, not active exploitation"
+          ],
+          "invalidation_disposition": [
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R7",
+            "R8",
+            "R9_FINAL_AUTHORITY_RECONCILIATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "git diff 456b5d8d..0c6a26cf confirms the repair changed only the policy checker, its test file, the runtime authority manifest and evidence artifacts; zero root-continuity implementation bytes changed, so the cycle-02 ACCEPT's measured dependencies were not invalidated",
+            "independently re-executed the descriptor-leak attack: 500 consecutive failed constructions through the identical-root rejection path leaked 0 descriptors",
+            "independent 22-case root battery and the reproduced 252-case qualification both behaved per the accepted design"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-002",
+          "verdict": "REJECT",
+          "evidence": [
+            "check_f017_bounded_artifact_decode_policy_v1.py is measured binding role=bounded_decode_policy (sha256 f3553d55..., blob 50652980) and remains the sole implementation of the frozen clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER",
+            "that clause is not enforced against the transported-member, operator-module or package-shaped-closure classes proven under C-JSON-005, so the implementation does not match the accepted bounded-artifact decode design",
+            "the remainder of the decode design does conform and was independently reproduced: all seven DEFAULT_LIMITS match the contract field-for-field, the seven-stage decode_order is implemented in the declared order, ArtifactDecodeError normalizes every injected exception class, and BOM plus nonfinite numbers are rejected",
+            "the non-conformance is confined to the prohibition-enforcement surface, exactly as in cycle 02"
+          ],
+          "invalidation_disposition": [
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R7",
+            "R8",
+            "R9_FINAL_AUTHORITY_RECONCILIATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "numerical authority sha256 verified against exact 0c6a26cf Git bytes: primary_numerical_core 657cdff9..., secondary_numerical_core e3670b22..., primary_decoder 60a4b4e7... - all three match the measurement exactly",
+            "git diff 456b5d8d..0c6a26cf over the three numerical paths is empty, so the bytes are unchanged across the repair",
+            "measurement records numerical_authority_changed=false"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-IMPL-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "all 43 declared bindings independently verified against exact 0c6a26cf:<path> Git bytes: file sha256 and git_blob_sha matched for every entry, with zero mismatches and zero duplicate paths",
+            "the repaired policy is inside the 43 bindings (role bounded_decode_policy)",
+            "generate_f017_v10_implementation_measurement_v1.py --check --head 0c6a26cf against the banked v12 artifact returns PASS byte-exactly; the earlier drift error was only the default --head HEAD pointing at the docs-only evidence head",
+            "independent runtime import-closure enumeration returned exactly 32 modules, set-identical to the AST closure",
+            "all 20 authority-manifest v8 artifact sha256 values verified against committed bytes with zero mismatches"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "re-executed qualify_f017_v10_root_continuity_bounded_decode_v1.py in a git-backed scratch clone at the evidence head under /private/tmp; every field reproduced bit-for-bit against the banked v11 artifact including deterministic_core_sha256 11dfba715517f1b0160aaa710863afa2a49c5c153b52d5ed05a4d98377b79263, with zero key or value differences",
+            "root_attack_cases=252, cross_product_cases=6, false_zero_results=0, unexpected_passes=0 reproduced",
+            "independently corroborated by my own 22-case degradation battery with 0 false zeros and 0 monotonicity violations",
+            "DEFENSE_IN_DEPTH finding O-C03-007 (cycle-02 O-C02-007 undispositioned) does not block"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "decode_attack_cases=204 and raw_recursion_errors=0 reproduced bit-for-bit",
+            "independently corroborated by my 24-pattern malformed-decode battery (23 controlled, 1 in-bounds accept at depth 63, 0 raw escapes) and by live injection of malformed bytes into the journal and durable-start artifacts of a bound authority",
+            "no uncontrolled decode or serialization exception crossed terminalization in any executed case"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "derived 47 independently rather than accepting it: the committed outcome-obligations v8 contract declares 48 outcomes of which exactly one, COMPLETE_SUCCESS, is not a failure outcome",
+            "root/decode qualifier runs range(5) per failure outcome giving 5x47=235, reproduced exactly",
+            "retained runtime qualifier applies repeats = 5 if outcome_id in high_risk else 3 with high_risk matched on PACKAGE_POST/CHECKPOINT_IDENTITY/PRIMARY_POST/SECONDARY_POST/EVIDENCE_BANKING; I recomputed 30 high-risk and 17 ordinary from the contract, giving 30x5+17x3=201 exactly",
+            "both suites re-executed with zero field differences: 235/47 and 201/47, runtime_generic_fallbacks=0, uncontrolled_modeled_failures=0, runtime_accounting_mismatches=0",
+            "DEFENSE_IN_DEPTH finding O-C03-008 does not block"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-004",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "re-executed qualify_f017_event04_runtime_hardening_v10.py; all 38 fields reproduced bit-for-bit including deterministic_core_sha256 a446194ffa53914702c12bd5323da113d25dd653523ed3ff1367a879384e1275",
+            "successful_package_count=50 plus successful_packages=60 in the root/decode suite = 110 successful package executions, matching the ledger",
+            "all 11 formats, 1410 graph tensors, 399 non-access denials, live_leases_after_success_terminal=0 and path_reopen_count=0 reproduced",
+            "121-test combined active-authority suite passed (121 passed) with pytest cache writes disabled"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-QUAL-005",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "re-executed the production-shaped rehearsal; the entire deterministic_core reproduced identically including deterministic_core_sha256 a2992987... - only the volatile envelope (head, branch, timestamps, temp root) differed, as designed",
+            "checkpoint_shard_opens=0, checkpoint_identity_hash_reads=0, checkpoint_payload_reads=0, numerical_operations=0, state_created=false, synthetic_root_path_used=false, production_identity_stage_invoked=false",
+            "1410 graph tensors resolved, 399 non-access tensors rejected, graph_shards [2,3,4,5,6] = all five graph shards consumed in plan out of checkpoint_shard_count=6",
+            "direct instrumentation: re-ran the rehearsal under a sys.addaudithook over open/os.open/os.stat/os.listdir/os.scandir/os.mkdir/subprocess.Popen and recorded 0 events touching /Users/mhedhli/Models, GLM-5.2, Models/PulsarMLX or .gguf, while confirming the real checkpoint directory IS present on this machine"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-CI-001",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "independently verified run 32864924869 via gh against MahdiHedhli/PulsarMLX: conclusion success, status completed, headSha 0c6a26cfaeebd087061d336fd0c766548d1adf5b, workflow 'macOS baseline', event push",
+            "live job census matches banked v6 exactly: Classify committed change 97857726417 success, Apple Silicon workspace baseline 97857803875 success, Apple MLX small-fixture validation 97857804010 success, CI aggregate status 97862820831 success",
+            "banked head 0c6a26cf and tree 2074cfda match the authority manifest implementation_head/implementation_tree, and 2074cfda was independently confirmed as the tree of 0c6a26cf",
+            "cycle-02 finding O-C02-004 is repaired: the ledger's test_evidence for all three CI claims now cites run 32864924869 at 0c6a26cf"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-CI-002",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "banked evidence records native_required_skips=0 at run 32864924869 and the live API confirms both native lanes concluded success rather than skipping: workspace baseline 114s, pinned native MLX 867s",
+            "the only three skipped jobs are Documentation integrity, Evidence integrity and Closed F017 branch guard - none is a native lane, so the required native skip census is genuinely zero",
+            "cross-checked against the evidence-only run 32866819097, where the inverse holds: both native lanes skipped and Evidence integrity ran, confirming the classifier genuinely gates native work"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        },
+        {
+          "claim_id": "C-CI-003",
+          "verdict": "ACCEPT",
+          "evidence": [
+            "banked v6 records historical_git_object_validation=PASS, current_v10_validation=PASS, mixed_authority_detected=false",
+            "the CI evidence separates required lane jobs from evidence_jobs and I confirmed the live job list matches that separation exactly for both runs",
+            "relevant_test_census distinguishes historical_equivalence_cases=24 from active_authority_pytest=121, and I independently reproduced the 121 active-authority tests"
+          ],
+          "invalidation_disposition": [
+            "NO_INVALIDATION"
+          ]
+        }
+      ],
+      "findings": [
+        {
+          "finding_id": "O-C03-001",
+          "claim_id": "C-JSON-005",
+          "classification": "BLOCKING",
+          "attack": "Required attacks 3 and 5. Planted ten mutations into an active-closure module (f017_lifecycle_artifact_v10.py) in synthetic mirrors of the 32-module import closure under /private/tmp, each reaching the real json module as an attribute of a first-party module and decoding through a member other than load/loads: parser.json.JSONDecoder().decode(raw); the canonical-serializer exporter _s.json.JSONDecoder().decode(raw); parser.json.decoder.JSONDecoder().decode(raw); a hoisted class _D = parser.json.JSONDecoder then _D().decode(raw); parser.json.JSONDecoder().raw_decode(raw)[0]; JSONDecoder(object_pairs_hook=dict).decode; a hoisted _dec = parser.json.decoder; scan_once; and functools.partial(parser.json.JSONDecoder().decode). Policy run before importing the planted runtime module in every case.",
+          "observed": "All ten accepted. check_f017_bounded_artifact_decode_policy_v1.validate() returned result=PASS, violations=[], runtime_import_closure_count=32, and its direct_decode_sites census still listed only the two authorized sites - the planted decoder was not enumerated. Root cause: the repair's two new helpers, _name_agnostic_decode_sites and _name_agnostic_decode_member_escapes, both filter on node.attr in {'load','loads'}, and the attribute name 'json' is absent from DYNAMIC_CAPABILITY_ATTRIBUTES, so an ast.Attribute chain rooted at a first-party module name reaches the genuine json module through a name the policy never tracks. CAPABILITY_REEXPORT_IMPORT closes only the ImportFrom spelling, not the attribute-access spelling. The planted decoders then performed genuinely unbounded decodes: raw RecursionError escaped the canonical boundary at nesting depth 100000, duplicate keys silently collapsed to {'a': 2}, NaN and Infinity were accepted, noncanonical spacing and ordering were accepted, a 5 MB string was accepted, and a non-dict top level was accepted - every one of which the canonical parser rejects as ArtifactDecodeError on the identical bytes. This falsifies the frozen contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER and is the same defect class as cycle-02 O-C02-001, one representation removed. The defect is latent, not active: an independent census found zero such constructs in the committed closure.",
+          "required_repair": "Make the gate capability-rooted rather than member-name-rooted. Track any ast.Attribute whose attr is a capability export name (json, sys, builtins, importlib, os) as binding that capability regardless of the receiver, register the resulting expression in semantic_modules, and then apply the existing json member policy to it - so parser.json.<anything> is a violation unless it is dumps in a direct call, or loads in the canonical parser or the documented offline allowance. Add the transported-JSONDecoder, transported-decoder-submodule, raw_decode, scan_once and hoisted-class forms to the committed rejection census in test_direct_parser_policy_rejects_representation_independent_bypasses, and add an assertion that the closure contains no reference to any json-module member outside the two authorized sites."
+        },
+        {
+          "finding_id": "O-C03-002",
+          "claim_id": "C-JSON-005",
+          "classification": "BLOCKING",
+          "attack": "Required attack 4, which names operator.attrgetter explicitly. Planted three operator-module retrievals into an active-closure module in synthetic mirrors: operator.attrgetter('loads')(parser.json)(raw); operator.attrgetter('json.loads')(parser)(raw); and operator.methodcaller('loads', raw)(parser.json).",
+          "observed": "All three accepted with result=PASS and violations=[]. The policy rejects getattr, setattr, vars, globals, locals, eval, exec, compile, __import__, __dict__, __getattribute__ and sys.modules, and the repair added 'load'/'loads' to the getattr member check, but there is no rule for the operator module, so attrgetter and methodcaller retrieve the identical bound method with the capability name appearing only as a plain string constant the policy never inspects. Verified end-to-end: the attrgetter and methodcaller forms both collapsed duplicate keys to {'a': 2} and accepted NaN, and accepted nesting depth 100000 that the canonical parser rejects. Note that operator.itemgetter('loads')(parser.json.__dict__) IS correctly rejected, but only incidentally, by the pre-existing __dict__ rule - not by any name-agnostic reasoning about the retrieved member.",
+          "required_repair": "Reject any call to operator.attrgetter, operator.methodcaller or operator.itemgetter in the active closure whose argument is a non-constant, or is a constant naming a capability member (load, loads, or any dotted path containing json/sys/builtins/modules). Add all three accepted forms to the committed regression census. More durably, land the capability-rooted rewrite in O-C03-001, which removes the receiver parser.json from reach and makes the operator-module route unconstructible."
+        },
+        {
+          "finding_id": "O-C03-003",
+          "claim_id": "C-IMPL-002",
+          "classification": "BLOCKING",
+          "attack": "Contract conformance check of the V10 implementation against specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json, combined with the executable results of O-C03-001, O-C03-002 and O-C03-004.",
+          "observed": "check_f017_bounded_artifact_decode_policy_v1.py is measured binding role=bounded_decode_policy (sha256 f3553d55..., git blob 50652980, verified against exact 0c6a26cf bytes) and remains the sole implementation of the contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER. Twelve accepted mutations across three families show that clause is not enforced, so the implementation does not match the accepted bounded-artifact decode design. The rest of the decode design does conform and was independently reproduced: all seven DEFAULT_LIMITS match the contract field-for-field, the seven declared decode_order stages are implemented in that order, ArtifactDecodeError normalizes every injected exception class with zero raw escapes across 24 patterns, and BOM and nonfinite numbers are rejected.",
+          "required_repair": "Land the O-C03-001, O-C03-002 and O-C03-004 repairs, then re-measure the binding for check_f017_bounded_artifact_decode_policy_v1.py and re-bank the implementation measurement, the root/decode qualification and the exact-head CI evidence at the new head."
+        },
+        {
+          "finding_id": "O-C03-004",
+          "claim_id": "C-JSON-005",
+          "classification": "BLOCKING",
+          "attack": "Required attack 5 extended to closure construction rather than closure content. Planted a package-shaped first-party module scripts/research/f017_side_pkg/__init__.py containing plain 'import json' and 'json.loads(raw)', and imported it from an active-closure module with 'import f017_side_pkg'.",
+          "observed": "Accepted: result=PASS, violations=[], runtime_import_closure_count=32 - the planted module is not merely unflagged, it is never parsed at all. _closure() extends only when RESEARCH / f'{module}.py' is a file, so any first-party dependency that resolves to a package directory, or to a dotted path whose first segment is not a research .py file, is silently outside the audited set while remaining fully importable at runtime. The planted module then collapsed duplicate keys, accepted NaN, and accepted nesting depth 100000. This is a total enforcement blind spot rather than a missed representation, and it is not covered by any committed regression. Latent: the committed closure contains no package-shaped research dependency today.",
+          "required_repair": "Extend _closure() to follow package-shaped dependencies (RESEARCH / module / '__init__.py' and submodule paths) and dotted first-party imports, and fail closed on any first-party import the closure cannot resolve to an inspected file rather than silently skipping it. Add a regression asserting that a package-shaped planted dependency raises the direct-parser policy error, mirroring the existing end-to-end mirror-tree test."
+        },
+        {
+          "finding_id": "O-C03-005",
+          "claim_id": "C-JSON-004",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Planted 'import ast' plus 'ast.literal_eval(raw)' into an active-closure module in a synthetic mirror.",
+          "observed": "Accepted with result=PASS and violations=[]. ast.literal_eval is not the json parser, so it is arguably outside the letter of the direct_active_runtime_json_load_or_loads clause, but it is an unbounded recursive structural decoder that accepts NaN and Infinity spellings and has no depth, size or duplicate-key discipline, and it would deserialize authority-shaped bytes into the same Python structures the runtime consumes. The controlled-failure boundary asserted by C-JSON-004 would not apply to bytes decoded through it. Latent: the active closure contains zero literal_eval references.",
+          "required_repair": "Optional hardening: add literal_eval, and the ast module generally, to the prohibited dynamic-evaluation set alongside eval, exec and compile, so the closure has exactly one structural decoder."
+        },
+        {
+          "finding_id": "O-C03-006",
+          "claim_id": "C-ROOT-005",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Required attack 11, deep-artifact case. Banked a terminal artifact whose payload nests 3000 levels deep through bank_terminal_artifact.",
+          "observed": "The write succeeded (result PASS, target BOUND_PRIMARY) because _bank_at validates only canonical serializability and byte readback, not the decode bounds. The resulting artifact exceeds max_depth=64 and is therefore permanently undecodable by the project's own bounded reader. No accounting harm follows - such an artifact observes as AUTHORITY_CORRUPT, which the monotonic rule treats as never being evidence of absence, and I confirmed no false zero arises. This exactly reproduces cycle-02 finding O-C02-008, which was classified DEFENSE_IN_DEPTH and remains undispositioned at this head.",
+          "required_repair": "Optional hardening: apply the bounded-decode limits to values on the write path in _bank_at, or round-trip the banked bytes through parse_artifact_bytes as part of the existing readback verification."
+        },
+        {
+          "finding_id": "O-C03-007",
+          "claim_id": "C-QUAL-001",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Re-traced the provenance of the zero-valued assurance fields in the root/decode qualification result dictionary, and re-ran the bind-time symlink case from cycle-02 O-C02-003.",
+          "observed": "raw_recursion_errors, false_zero_results, unexpected_passes and the three original_checkpoint_* fields remain hardcoded literals at qualify_f017_v10_root_continuity_bounded_decode_v1.py:278-279 and neighbours, not counters accumulated from executed cases; a nonzero value is not representable in a produced artifact. They are sound as assertions-by-construction, since the case functions raise on any unexpected behaviour and abort the run, but they are not measurements. Separately, AccountingRootAuthority.bind_existing with a symlinked primary pathname still succeeds and leaves path_status() reporting IDENTITY_MISMATCH for the package lifetime. Both are unrepaired cycle-02 DEFENSE_IN_DEPTH findings (O-C02-007 and O-C02-003); neither is reachable in production and neither can produce a false zero, which my 22-case battery confirmed.",
+          "required_repair": "Accumulate the assurance fields from the executed cases so a nonzero value is representable, and either reject a caller-supplied root pathname that is itself a symlink at bind time or record the resolved canonical spelling in primary_path."
+        },
+        {
+          "finding_id": "O-C03-008",
+          "claim_id": "C-QUAL-003",
+          "classification": "DEFENSE_IN_DEPTH",
+          "attack": "Attempted again to reconcile runtime_failure_executions=201 against runtime_failure_outcomes_realized=47 using only the banked artifact.",
+          "observed": "The retained runtime qualification v11 artifact still contains no field naming the high-risk set, its cardinality, or the repetition policy; grep for high_risk_outcome_count and ordinary_outcome_count returns zero hits. Reconciliation again required reading qualify_f017_event04_runtime_hardening_v10.py and re-deriving the marker-matched split from the outcome-obligations v8 contract. I did so independently and it reconciles exactly (30 high-risk x 5 + 17 ordinary x 3 = 201, and 47 x 5 = 235), so the claim stands. This is unrepaired cycle-02 finding O-C02-006.",
+          "required_repair": "Emit the repetition policy into the qualification artifact: high_risk_outcome_count, ordinary_outcome_count and the per-class repetition counts, so 201 is derivable from the banked evidence alone."
+        }
+      ],
+      "accepted_claim_count": 23,
+      "rejected_claim_count": 2,
+      "unresolved_claim_count": 0,
+      "original_checkpoint_access_observed": 0,
+      "event_04_authorization_observed": false,
+      "event_04_package_start_observed": false,
+      "p1_attempt_2_observed": false,
+      "global_verdict": "REJECT"
+    }
+  ],
+  "global_verdict": "REJECT"
+}

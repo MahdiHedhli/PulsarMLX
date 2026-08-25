@@ -1,0 +1,33 @@
+{
+  "artifacts":[
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-graph-state-v8.json","role":"GRAPH_STATE_GEMINI_CYCLE_04","sha256":"a3eeb801c421d9e8d34400d148779e1a65752877eac246dadab3364b74862bee"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v8.json","role":"CLAIM_LEDGER_OPUS_CYCLE_03_REPAIRS","sha256":"021565f6bb38c8fd14b81f9f75daa0c74ec78ef1b7fca834678f8f83f924b744"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v7.json","role":"OPUS_CYCLE_03_CHALLENGES","sha256":"56226cc382c5adb8ba1f345633f07519e1b8dbb1a96dd4065b0a342fe6c4ac01"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v6.json","role":"OPUS_CYCLE_03_SUPPORT","sha256":"26156d87c9a633827ecbecbe46b7ffdecad5edd1df9e85bd7806699daeda31d2"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v3.json","role":"OPUS_ARBITER_LEDGER_THROUGH_CYCLE_03","sha256":"af424bf53e16f95ab73cc769ce1f2fe4993c7dab66c4ba3c68b9e93f072de16c"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-03-exact-response.json","role":"OPUS_CYCLE_03_EXACT_RESPONSE","sha256":"8afc644b51803f9974979910e3d31915178667dbc7d8fb1a936ff33bf864b650"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v7.json","role":"R2_CAPABILITY_ROOT_REPAIR_RECEIPT","sha256":"d3d8b5ec6e2c3288be99edc9a3f95d77ba3404bbd322e9a35348c019fc92327a"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v12.json","role":"R3_FINAL_REBIND_RECEIPT","sha256":"0792e9b236a1b61ebfc07a15cc6d3ad189813497f73a17a70017414360bc1d47"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r4-receipt-v11.json","role":"R4_FINAL_QUALIFICATION_RECEIPT","sha256":"e96636a2a34cabe4ef5cfeb7c8fb1dd08bc5f575a9e625d9d6247625d00d9ea0"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v7.json","role":"R5_FINAL_FULL_NATIVE_RECEIPT","sha256":"9e5a10dc5b6c4d86c907d8f7731229f6523f0e98e73103204bec972f60ce83c2"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r7-receipt-v6.json","role":"R7_CYCLE_03_SUPPORT_RECEIPT","sha256":"0eae4dd840638fc6a8e2b1d14e60420203dc712191fb88c250850100a5789ca4"},
+    {"path":"docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r8-receipt-v3.json","role":"R8_CYCLE_03_REJECTION_RECEIPT","sha256":"32f05bd25e9479319f20adbf967e4fbe6eeba426f501753f3d0131fd220a88ca"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json","role":"ROOT_CONTINUITY_CONTRACT","sha256":"07be4b4d1dd36ea9ce28d36f021f009b3395f18f4f06ee9bfd620ba6ec60ca89"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json","role":"BOUNDED_DECODE_CONTRACT","sha256":"d15febf668c6e6b42e665860560f6de2aca368f98f7483660ac8911882f09845"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v10.json","role":"RUNTIME_AUTHORITY_MANIFEST","sha256":"5bda26b664f22e423b3b1cd3ae3d308cea88820db4a47bdf3965ee99b77c856d"},
+    {"path":"docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v13.json","role":"FINAL_IMPLEMENTATION_MEASUREMENT","sha256":"da0c11c244a9409a8983b4ff457b1d28775066efc407a362ec6f375af4246ed8"},
+    {"path":"docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v12.json","role":"FINAL_ROOT_DECODE_QUALIFICATION","sha256":"65f96e938af6faed4b805a52b6786357e72120b8a96b7044e4fbdf9e4db36c9c"},
+    {"path":"docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v12.json","role":"FINAL_RUNTIME_QUALIFICATION","sha256":"92e89d4b897d0fa427a093ea68be3a578311ff14a66bf12da3e1b3b1fee2046f"},
+    {"path":"docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v13.json","role":"FINAL_PRODUCTION_SHAPED_NO_ACCESS_REHEARSAL","sha256":"c777766e9a6a8ce80ae48bd925ff532fdfa569ff07f4101d8ab719564fe0dfc5"},
+    {"path":"docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v7.json","role":"FINAL_EXACT_HEAD_FULL_NATIVE_CI","sha256":"9649cb247f5c4912267ad71f166e17dac5006971d8936bc9b9e4352914d8e26d"}
+  ],
+  "authoritative_evidence_parent":"0b9888ca71009f6d99e2de833d8654e9cab6d9b9",
+  "graph_id":"F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "implementation_head":"0b9888ca71009f6d99e2de833d8654e9cab6d9b9",
+  "implementation_tree":"64ad6322fb111c175eb891ffda486cee121db337",
+  "original_checkpoint_access":0,
+  "readiness_critical_claim_count":25,
+  "schema":"pulsarmlx.f017.v9-root-continuity-authority-manifest/9.0.0",
+  "status":"R6_GEMINI_CHALLENGE_CYCLE_04_PACKET_READY",
+  "supersedes":"docs/architecture/reviews/evidence/f017-v9-root-continuity-authority-manifest-v8.json"
+}
