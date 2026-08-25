@@ -42,7 +42,7 @@ def render_rehearsal_candidate(checkpoint_root: Path, shards: list[dict], output
         "attempts": 1,
         "retries": 0,
         "resume": False,
-        "active_generation": "NONE",
+        "active_generation": "V8",
     }
     candidate_sha = bank_exclusive(output, candidate)
     primary = validate_primary(output)

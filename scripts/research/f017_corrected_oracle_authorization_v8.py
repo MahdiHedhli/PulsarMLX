@@ -37,8 +37,8 @@ def parse_candidate_bytes(raw: bytes) -> dict:
         raise ValueError("candidate is not non-authoritative rehearsal bytes")
     if value["attempts"] != 1 or type(value["attempts"]) is not int or value["retries"] != 0 or type(value["retries"]) is not int or value["resume"] is not False:
         raise ValueError("lifecycle limits")
-    if value["active_generation"] != "NONE":
-        raise ValueError("live generation must remain inactive during qualification")
+    if value["active_generation"] != "V8":
+        raise ValueError("rehearsal must bind the selected V8 implementation")
     identities = [_live_id(value[name], name) for name in ("authorization_id", "package_attempt_id", "primary_event_id", "secondary_event_id")]
     if len(set(identities)) != 4:
         raise ValueError("authorization identities not unique")

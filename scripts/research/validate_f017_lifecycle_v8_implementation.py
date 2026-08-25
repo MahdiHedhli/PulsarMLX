@@ -45,7 +45,7 @@ def binding(value: object) -> Path:
 def validate() -> dict:
     manifest_path = "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-v8-implementation-authority-manifest.json"
     manifest = load(manifest_path)
-    if (manifest["status"] != "IMPLEMENTED_NOT_LIVE"
+    if (manifest["status"] != "ACTIVE_IMPLEMENTATION_NO_EVENT_AUTHORITY"
             or manifest["event_04_authorization_created"] is not False
             or manifest["event_04_executed"] is not False
             or manifest["original_checkpoint_access"] != 0):
@@ -63,7 +63,7 @@ def validate() -> dict:
     for item in manifest["implementation"].values():
         binding(item)
     scientific = load(str(scientific_path.relative_to(ROOT)))
-    if scientific["status"] != "IMPLEMENTED_NOT_LIVE" or scientific["active_generation"] != "NONE":
+    if scientific["status"] != "ACTIVE_IMPLEMENTATION_NO_EVENT_AUTHORITY" or scientific["active_generation"] != "V8":
         raise ValueError("scientific authority posture")
     if scientific["implementation"] != manifest["implementation"]:
         raise ValueError("scientific implementation mismatch")
@@ -75,9 +75,10 @@ def validate() -> dict:
     ):
         binding(scientific[name])
     active = load(manifest["active_generation"]["path"])
-    if (active["active_corrected_oracle_generation"] != "NONE"
+    if (active["active_corrected_oracle_generation"] != "V8"
             or active["implemented_generation"] != "V8"
-            or active["live_authority_permitted"] is not False):
+            or active["event_04_operator_go_present"] is not False
+            or active["live_authority_without_fresh_operator_go"] is not False):
         raise ValueError("active generation posture")
     inert = load(str(inert_path.relative_to(ROOT)))
     if (inert["live"] is not False or inert["authority"] is not False
@@ -96,7 +97,7 @@ def validate() -> dict:
     subprocess.run([sys.executable, str(ROOT / "scripts/research/validate_f017_lifecycle_causal_design_v8.py")], cwd=ROOT, check=True, capture_output=True)
     subprocess.run([sys.executable, str(ROOT / "scripts/research/validate_f017_corrected_oracle_numerical_authority_v3.py")], cwd=ROOT, check=True, capture_output=True)
     return {
-        "result": "PASS", "active_generation": "NONE",
+        "result": "PASS", "active_generation": "V8",
         "implementation_binding_count": len(manifest["implementation"]),
         "scientific_access_sha256": sha(scientific_path),
         "event_04_authorization_created": False, "event_04_executed": False,

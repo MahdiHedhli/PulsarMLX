@@ -60,7 +60,7 @@ class LifecycleV8ImplementationTests(unittest.TestCase):
             installed, _, _ = prepare(root, 18104, "POSTURE-01")
             value = json.loads(installed.read_bytes())
             self.assertIs(value["live"], False)
-            self.assertEqual(value["active_generation"], "NONE")
+            self.assertEqual(value["active_generation"], "V8")
 
     def test_runtime_descriptor_mutation_campaign(self):
         result = qualify_runtime_mutations()

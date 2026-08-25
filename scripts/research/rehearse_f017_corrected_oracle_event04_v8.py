@@ -66,7 +66,7 @@ def rehearse(output: Path) -> dict:
             },
             "authority": False,
             "operator_go": False,
-            "active_generation_during_rehearsal": "NONE",
+            "active_generation_during_rehearsal": "V8",
             "branch": subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True).strip(),
             "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
             "architecture": platform.machine(),

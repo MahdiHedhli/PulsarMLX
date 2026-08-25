@@ -39,7 +39,7 @@ def generate() -> None:
     ):
         write(CONTRACTS / f"f017-corrected-oracle-{role.lower()}-capability-v8.json", {
             "schema": "pulsarmlx.f017.corrected-oracle-consumer-capability/8.0.0",
-            "status": "IMPLEMENTED_NOT_LIVE", "active_generation": "NONE", "role": role,
+            "status": "ACTIVE_IMPLEMENTATION_NO_EVENT_AUTHORITY", "active_generation": "V8", "role": role,
             "authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/8.0.0",
             "producer": binding(producer), "numerical_authority": binding(numerical),
             "descriptor_transport": "INHERITED_FILE_DESCRIPTORS", "descriptor_count": 5,
@@ -48,8 +48,9 @@ def generate() -> None:
         })
     active = {
         "schema": "pulsarmlx.f017.corrected-oracle-active-generation/8.0.0",
-        "active_corrected_oracle_generation": "NONE",
-        "implemented_generation": "V8", "live_authority_permitted": False,
+        "active_corrected_oracle_generation": "V8",
+        "implemented_generation": "V8", "event_04_operator_go_present": False,
+        "live_authority_without_fresh_operator_go": False,
         "event_04_authorization_created": False, "event_04_executed": False,
         "superseded_live_generations": ["V1", "V2", "V3", "V6", "V7"],
         "historical_reconstruction": "EXACT_GIT_OBJECTS_ONLY",
@@ -71,7 +72,7 @@ def generate() -> None:
     }
     scientific = {
         "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/8.0.0",
-        "status": "IMPLEMENTED_NOT_LIVE", "active_generation": "NONE",
+        "status": "ACTIVE_IMPLEMENTATION_NO_EVENT_AUTHORITY", "active_generation": "V8",
         "authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/8.0.0",
         "implementation": implementation,
         "primary_capability": binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v8.json"),
@@ -104,15 +105,15 @@ def generate() -> None:
     write(inert_path, inert)
     manifest = {
         "schema": "pulsarmlx.f017.corrected-oracle-v8-implementation-authority-manifest/1.0.0",
-        "status": "IMPLEMENTED_NOT_LIVE", "active_generation": binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v8.json"),
+        "status": "ACTIVE_IMPLEMENTATION_NO_EVENT_AUTHORITY", "active_generation": binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v8.json"),
         "scientific_access": binding(str(scientific_path.relative_to(ROOT))),
         "inert_authorization": binding(str(inert_path.relative_to(ROOT))),
         "implementation": implementation,
         "design_authority": binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-v8-design-authority-manifest.json"),
         "synthetic_qualifier": binding("scripts/research/qualify_f017_lifecycle_v8.py"),
-        "synthetic_qualification": binding("docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v8-synthetic-qualification-v2.json"),
+        "synthetic_qualification": binding("docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v8-synthetic-qualification-v3.json"),
         "production_shaped_rehearsal": binding("scripts/research/rehearse_f017_corrected_oracle_event04_v8.py"),
-        "production_shaped_rehearsal_evidence": binding("docs/architecture/reviews/evidence/f017-corrected-oracle-event04-production-shaped-rehearsal-v8-v2.json"),
+        "production_shaped_rehearsal_evidence": binding("docs/architecture/reviews/evidence/f017-corrected-oracle-event04-production-shaped-rehearsal-v8-v3.json"),
         "implementation_validator": binding("scripts/research/validate_f017_lifecycle_v8_implementation.py"),
         "operator_go_template": binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-operator-go-template-v8.json"),
         "event_04_authorization_created": False, "event_04_executed": False,

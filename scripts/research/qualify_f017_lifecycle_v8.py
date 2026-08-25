@@ -71,6 +71,8 @@ def qualify(output: Path) -> dict:
     result = {
         "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-v8-synthetic-qualification/1.0.0",
         "result": "PASS",
+        "active_corrected_oracle_generation": "V8",
+        "event_04_operator_go_present": False,
         "implementation_shas": {
             name: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
             for name, relative in {
