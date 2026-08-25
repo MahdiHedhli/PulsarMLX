@@ -186,14 +186,22 @@ def _validate_synthetic_root(candidate: dict) -> tuple[Path, dict]:
     root = Path(candidate["checkpoint_root"])
     if root.is_symlink():
         raise ValueError("synthetic root symlink")
-    resolved = root.resolve(strict=True)
-    temporary_authority = Path(tempfile.gettempdir()).resolve(strict=True)
+    try:
+        resolved = root.resolve(strict=True)
+        temporary_authority = Path(tempfile.gettempdir()).resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("synthetic root resolution") from exc
     if not resolved.is_relative_to(temporary_authority):
         raise ValueError("synthetic root is outside test-owned temporary authority")
     manifest_path = Path(candidate["synthetic_root_manifest_path"])
-    if manifest_path.parent.resolve(strict=True) != resolved or manifest_path.is_symlink():
+    try:
+        manifest_parent = manifest_path.parent.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("synthetic root manifest location") from exc
+    if manifest_parent != resolved or manifest_path.is_symlink():
         raise ValueError("synthetic root manifest location")
-    raw = manifest_path.read_bytes()
+    try: raw = manifest_path.read_bytes()
+    except OSError as exc: raise ValueError("synthetic root manifest read") from exc
     if hashlib.sha256(raw).hexdigest() != candidate["synthetic_root_manifest_sha256"]:
         raise ValueError("synthetic root manifest digest")
     manifest = json.loads(raw)
@@ -215,7 +223,10 @@ def acquire_synthetic_leases(candidate: dict, progress: IdentityProgress | None 
     if candidate.get("scope") != "SYNTHETIC_QUALIFICATION" or candidate.get("live") is not False:
         raise ValueError("V9 qualification leases require non-live synthetic authority")
     root, _ = _validate_synthetic_root(candidate)
-    root_fd = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        root_fd = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    except OSError as exc:
+        raise ValueError("synthetic root open") from exc
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:
         for ordinal, shard in enumerate(candidate["shards"], start=1):
@@ -266,11 +277,17 @@ def acquire_production_leases(candidate: dict, installation_receipt_sha256: str,
     root = Path(candidate["checkpoint_root"])
     if not root.is_absolute() or root.is_symlink():
         raise ValueError("production checkpoint root")
-    resolved = root.resolve(strict=True)
-    temporary_authority = Path(tempfile.gettempdir()).resolve(strict=True)
+    try:
+        resolved = root.resolve(strict=True)
+        temporary_authority = Path(tempfile.gettempdir()).resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("production checkpoint root resolution") from exc
     if resolved.is_relative_to(temporary_authority) or any(item["filename"].startswith("synthetic-v9-") for item in candidate["shards"]):
         raise ValueError("synthetic root prohibited in production")
-    root_fd = os.open(resolved, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        root_fd = os.open(resolved, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    except OSError as exc:
+        raise ValueError("production checkpoint root open") from exc
     records: list[LeaseRecord] = []; digests: list[str] = []; identity_only_digest = ""
     try:
         for ordinal, shard in enumerate(candidate["shards"], start=1):

@@ -65,39 +65,46 @@ def _release(leases: LeaseSet, root: Path, close_function=None) -> dict:
 
 
 def _safe_evidence_root(path: Path | None) -> bool:
-    return isinstance(path, Path) and path.exists() and not path.is_symlink() and path.is_dir()
+    if not isinstance(path, Path):
+        return False
+    try:
+        return (path.exists() and not path.is_symlink() and path.is_dir()
+                and str(path.resolve(strict=True)) == str(path))
+    except OSError:
+        return False
 
 
 def _terminal_roots_are_authorized(candidate: dict, receipt_path: Path,
-                                   emergency_root: Path | None, terminal_fallback_root: Path | None) -> bool:
+                                   emergency_root: Path | None, terminal_fallback_root: Path | None) -> tuple[bool, str]:
     expected = (str(emergency_root) if isinstance(emergency_root, Path) else None,
                 str(terminal_fallback_root) if isinstance(terminal_fallback_root, Path) else None)
     if (type(candidate) is dict and candidate.get("scope") == "PRODUCTION_EVENT_04"
             and (candidate.get("emergency_evidence_root"), candidate.get("terminal_fallback_evidence_root")) == expected):
-        return True
+        return True, "CANDIDATE_BINDING"
     try:
         receipt = strict_bytes(receipt_path.read_bytes())
     except (OSError, ValueError):
-        return False
+        return False, "INSTALLATION_RECEIPT_UNREADABLE"
     receipt_keys = {"schema", "authority", "installation_kind", "authorization_id", "package_attempt_id",
                     "candidate_sha256", "installed_sha256", "installed_path", "operator_approval_sha256",
                     "execution_readiness_declaration_sha256", "emergency_evidence_root",
                     "terminal_fallback_evidence_root", "candidate_install_bytes_equal", "result"}
-    return (type(receipt) is dict and set(receipt) == receipt_keys
+    accepted = (type(receipt) is dict and set(receipt) == receipt_keys
             and receipt.get("schema") == "pulsarmlx.f017.corrected-oracle-installation-receipt/9.0.0"
             and receipt.get("authority") is True and receipt.get("installation_kind") == "CANONICAL_EVENT04_NO_REPLACE"
             and receipt.get("candidate_install_bytes_equal") is True and receipt.get("result") == "PASS"
             and (receipt.get("emergency_evidence_root"), receipt.get("terminal_fallback_evidence_root")) == expected)
+    return accepted, "INSTALLATION_RECEIPT_BINDING" if accepted else "INSTALLATION_RECEIPT_BINDING_MISMATCH"
 
 
 def _bank_terminal(root: Path | None, fallback_root: Path | None, filename: str,
-                   kind: str, payload: dict) -> dict:
+                   kind: str, payload: dict, *, unavailable_reason: str = "ROOT_UNUSABLE") -> dict:
     errors: list[dict] = []
     for label, target in (("PRIMARY", root), ("FALLBACK", fallback_root)):
-        if target == root and label == "FALLBACK":
+        if isinstance(target, Path) and isinstance(root, Path) and target == root and label == "FALLBACK":
             continue
         if not _safe_evidence_root(target):
-            errors.append({"target": label, "error": "UNSAFE_OR_ABSENT_ROOT"})
+            errors.append({"target": label, "error": unavailable_reason})
             continue
         try:
             digest = bank_runtime_artifact(target / filename, kind, {**payload, "terminal_evidence_target": label})
@@ -109,7 +116,8 @@ def _bank_terminal(root: Path | None, fallback_root: Path | None, filename: str,
 
 
 def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict, exc: Exception, leases: LeaseSet | None,
-                 failed_transition: str, last_completed_transition: str) -> dict:
+                 failed_transition: str, last_completed_transition: str,
+                 *, root_authority_status: str = "AUTHORIZED") -> dict:
     release = {"attempted_closures": 0, "successful_closures": 0, "live_leases_after_release": 0, "result": "NOT_APPLICABLE"}
     modeled = exc.outcome if isinstance(exc, ModeledTransitionFailure) else None
     if leases is not None:
@@ -117,7 +125,8 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
             # Modeled early failures close inherited descriptors as part of
             # their atomic terminal capsule.  The normal release artifact
             # sequence is reserved for ranks 43-45 by the causal authority.
-            release = leases.release() if modeled is not None else _release(leases, root)
+            release = (leases.release() if modeled is not None or not _safe_evidence_root(root)
+                       else _release(leases, root))
         except Exception as release_exc:
             release = {"result": "EVIDENCE_BANKING_FAILURE", "source_exception": type(release_exc).__name__,
                        "live_leases_after_release": sum(record.state != "CLOSED" for record in leases.records)}
@@ -139,18 +148,21 @@ def _terminalize(root: Path | None, fallback_root: Path | None, candidate: dict,
                "generic_fallback": modeled is None, "mandatory_stop": True}
     if isinstance(exc, ModeledTransitionFailure):
         artifact_id = next(item for item in modeled["required"] if item.startswith("failure_terminal_capsule__"))
-        terminal_evidence = _bank_terminal(root, fallback_root, f"{artifact_id}.json", artifact_id, capsule)
+        terminal_evidence = _bank_terminal(root, fallback_root, f"{artifact_id}.json", artifact_id, capsule,
+                                           unavailable_reason=root_authority_status)
     else:
-        terminal_evidence = _bank_terminal(root, fallback_root, "failure-terminal-capsule.json", "failure_terminal_capsule", capsule)
+        terminal_evidence = _bank_terminal(root, fallback_root, "failure-terminal-capsule.json", "failure_terminal_capsule", capsule,
+                                           unavailable_reason=root_authority_status)
     if package_started and modeled is None:
         package_terminal_evidence = _bank_terminal(root, fallback_root, "package-terminal.json", "package_terminal",
-                                                   {"result": "FAILURE", **capsule})
+                                                   {"result": "FAILURE", **capsule}, unavailable_reason=root_authority_status)
     else:
         package_terminal_evidence = {"result": "NOT_APPLICABLE"}
     return {"result": "CONTROLLED_FAILURE", "failure_class": "F017_CONTROLLED_RUNTIME_FAILURE", "source_exception_class": type(exc).__name__,
             "failed_transition_id": failed_transition, "outcome_id": capsule["outcome_id"], "generic_fallback": capsule["generic_fallback"],
             "release": release, "accounting": accounting, "terminal_evidence": terminal_evidence,
-            "package_terminal_evidence": package_terminal_evidence, "original_checkpoint_access": 0}
+            "package_terminal_evidence": package_terminal_evidence, "root_authority_status": root_authority_status,
+            "original_checkpoint_access": 0}
 
 
 def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: Path, *, production: bool,
@@ -161,6 +173,8 @@ def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: 
     # passed back from the installation receipt.  This lets even a later
     # authorization-parse failure reach durable evidence without trusting a
     # path recovered from malformed authorization bytes.
+    if not production:
+        evidence_root = evidence_root.resolve(strict=False)
     emergency_root = fallback_evidence_root if production else evidence_root.parent / f"{evidence_root.name}-emergency"
     candidate: dict = {}
     leases: LeaseSet | None = None; last = "INSTALLATION_RECEIPT_BANKED"
@@ -251,12 +265,12 @@ def _execute_installed(installed_path: Path, receipt_path: Path, evidence_root: 
                 "secondary": secondary, "comparison": comparison, "release": release, "second_release": second_release,
                 "accounting": accounting, "emergency_root": str(emergency_root), "original_checkpoint_access": 0}
     except Exception as exc:
-        roots_authorized = (not production or _terminal_roots_are_authorized(
-            candidate, receipt_path, emergency_root, terminal_fallback_evidence_root))
+        roots_authorized, root_authority_status = ((True, "SYNTHETIC_AUTHORITY") if not production else
+            _terminal_roots_are_authorized(candidate, receipt_path, emergency_root, terminal_fallback_evidence_root))
         target = evidence_root if _safe_evidence_root(evidence_root) else emergency_root
         return _terminalize(target if roots_authorized else None,
                             terminal_fallback_evidence_root if roots_authorized else None, candidate, exc, leases,
-                            fail_transition or type(exc).__name__, last)
+                            fail_transition or type(exc).__name__, last, root_authority_status=root_authority_status)
 
 
 def execute_synthetic(installed_path: Path, receipt_path: Path, evidence_root: Path, *, malformed: str | None = None,

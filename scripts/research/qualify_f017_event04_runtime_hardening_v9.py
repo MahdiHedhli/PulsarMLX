@@ -160,7 +160,8 @@ def qualify(output: Path) -> dict:
                                                         "primary": outcomes[item["outcome_id"]]["primary_delta"],
                                                         "secondary": outcomes[item["outcome_id"]]["secondary_delta"]}
                                 for item in runtime_outcomes)
-    uncontrolled = sum(item["result"] != "PASS" or item["generic_fallback"] is not False for item in runtime_outcomes)
+    uncontrolled = sum(item["terminalization_result"] != "CONTROLLED_FAILURE" or item["generic_fallback"] is not False
+                       for item in runtime_outcomes)
     if realized_outcomes != set(outcomes) - {"COMPLETE_SUCCESS"} or len(coordinator_outcomes) + len(authorizer_outcomes) != len(realized_outcomes):
         raise ValueError("runtime outcome realization census")
     plan = validate_plan(build_plan()); release_faults = _release_faults(); accounting = _accounting_mutations(); descriptor = _descriptor_mutations()

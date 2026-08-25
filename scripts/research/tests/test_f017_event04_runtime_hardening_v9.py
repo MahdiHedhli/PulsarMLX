@@ -22,7 +22,7 @@ from f017_event04_tensor_plan_v9 import build_plan, validate_plan
 from f017_runtime_outcome_realizer_v9 import realize
 from f017_canonical_serialization_v8 import bank_exclusive
 from f017_synthetic_checkpoint_v9 import prepare
-from execute_f017_corrected_oracle_event_v9 import execute_event04
+from execute_f017_corrected_oracle_event_v9 import execute_event04, _terminalize
 import validate_f017_corrected_oracle_access_v9 as authorizer
 from f017_memory_gate_v9 import THRESHOLD_BYTES
 from f017_corrected_oracle_authorization_v9 import _memory_gate, parse_candidate_bytes, production_shards
@@ -132,6 +132,34 @@ def test_production_terminalization_uses_second_bound_root_on_collision_or_symli
     assert not (second_target / "failure-terminal-capsule.json").exists()
 
 
+def test_production_terminalization_rejects_replaced_symlink_ancestor(tmp_path: Path) -> None:
+    base = tmp_path.resolve(); installed = base / "installed.json"; installed.write_bytes(b"not-json\n")
+    approved_parent = base / "approved"; approved_parent.mkdir(); emergency = approved_parent / "emergency"; emergency.mkdir()
+    fallback = base / "fallback"; fallback.mkdir()
+    receipt = base / "receipt.json"; receipt.write_bytes(canonical_bytes(production_receipt(emergency, fallback)))
+    emergency.rmdir(); approved_parent.rmdir()
+    attacker_parent = base / "attacker"; attacker_parent.mkdir(); (attacker_parent / "emergency").mkdir()
+    approved_parent.symlink_to(attacker_parent, target_is_directory=True)
+    result = execute_event04(installed, receipt, base / "state", emergency, fallback)
+    assert result["terminal_evidence"]["target"] == "FALLBACK"
+    assert not (attacker_parent / "emergency" / "failure-terminal-capsule.json").exists()
+
+
+def test_terminalization_releases_leases_when_no_evidence_root_is_usable() -> None:
+    handles = [os.open(__file__, os.O_RDONLY) for _ in range(5)]
+    leases = LeaseSet([LeaseRecord(identity, descriptor) for identity, descriptor in zip(descriptors(), handles, strict=True)],
+                      "0" * 64, ["0" * 64] * 5)
+    result = _terminalize(None, None, {}, ValueError("injected"), leases, "INTERNAL", "NONE",
+                          root_authority_status="INSTALLATION_RECEIPT_UNREADABLE")
+    assert result["release"]["attempted_closures"] == 5
+    assert result["release"]["live_leases_after_release"] == 0
+    assert result["terminal_evidence"]["result"] == "MAXIMAL_CONSTRUCTIBLE_NO_DURABLE_WRITE"
+    assert result["terminal_evidence"]["errors"] == [
+        {"target": "PRIMARY", "error": "INSTALLATION_RECEIPT_UNREADABLE"},
+        {"target": "FALLBACK", "error": "INSTALLATION_RECEIPT_UNREADABLE"},
+    ]
+
+
 def test_modeled_failure_requires_independent_transition_observation() -> None:
     with tempfile.TemporaryDirectory() as raw:
         result = realize("PRIMARY_POST_START_FAILURE__AFTER_RANK_030", Path(raw) / "positive")
@@ -206,6 +234,39 @@ def test_future_live_candidate_is_renderable_but_not_authority(tmp_path: Path, m
     rebound_path = tmp_path / "rebound-approval.json"; bank_exclusive(rebound_path, rebound_approval)
     with pytest.raises(ValueError, match="accepted implementation authority binding"):
         authorizer.render_operator_go_candidate(rebound_path, bad_readiness, plan, tmp_path / "bad-head-candidate.json")
+
+    mutated = json.loads(output.read_bytes())
+    mutated["canonical_authorization_path"] = str(alias) if alias is not None else "/tmp/../tmp/f017-noncanonical.json"
+    mutated_path = tmp_path / "mutated-live-candidate.json"; mutated_path.write_bytes(canonical_bytes(mutated))
+    assert parse_candidate_bytes(mutated_path.read_bytes())["scope"] == "PRODUCTION_EVENT_04"
+    with pytest.raises(ValueError):
+        authorizer.validate_live_candidate_for_install(mutated_path)
+
+
+def test_complete_runtime_import_closure_is_byte_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    manifest = json.loads(authorizer.RUNTIME_MANIFEST.read_bytes())
+    bound_paths = {binding["path"] for binding in manifest["implementation"].values()}
+    closure = authorizer._local_import_closure()
+    assert "scripts/research/f017_canonical_serialization_v8.py" in closure
+    assert len(closure) == 30 and closure.issubset(bound_paths)
+    head = authorizer._implementation_head(); manifest_sha = authorizer._sha(authorizer.RUNTIME_MANIFEST)
+    report = authorizer._validate_implementation_authority(head, manifest_sha)
+    assert report["runtime_import_closure_count"] == 30
+    original = Path.read_bytes
+    target = (authorizer.ROOT / "scripts/research/f017_canonical_serialization_v8.py").resolve()
+    def altered(path: Path) -> bytes:
+        raw = original(path)
+        return raw + b"# injected working-tree drift\n" if path.resolve() == target else raw
+    monkeypatch.setattr(Path, "read_bytes", altered)
+    with pytest.raises(ValueError, match="implementation byte binding"):
+        authorizer._validate_implementation_authority(head, manifest_sha)
+
+
+def test_absent_synthetic_root_normalizes_to_value_error() -> None:
+    candidate = {"scope": "SYNTHETIC_QUALIFICATION", "live": False,
+                 "checkpoint_root": "/definitely/absent/f017-v9-root"}
+    with pytest.raises(ValueError, match="synthetic root resolution"):
+        acquire_synthetic_leases(candidate)
 
 
 def test_live_candidate_rejects_non_authoritative_shard_census(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

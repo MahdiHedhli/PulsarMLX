@@ -8,6 +8,7 @@ from pathlib import Path
 
 import execute_f017_corrected_oracle_event_v9 as coordinator
 from f017_lifecycle_artifact_v8 import bank_runtime_artifact
+from f017_corrected_oracle_event_accounting_v9 import derive
 from f017_synthetic_checkpoint_v9 import prepare
 from validate_f017_corrected_oracle_access_v9 import install_rehearsal_candidate, render_rehearsal_candidate
 
@@ -26,7 +27,7 @@ def _artifact_id(path: Path, kind: str) -> str | None:
     return kind if kind in NODES else None
 
 
-def _early_capsule(root: Path, outcome_id: str) -> None:
+def _early_capsule(root: Path, outcome_id: str) -> dict:
     outcome = OUTCOMES[outcome_id]
     artifact_id = next(item for item in outcome["required"] if item.startswith("failure_terminal_capsule__"))
     payload = {"outcome_id": outcome_id, "classification": outcome["outcome_class"],
@@ -36,6 +37,8 @@ def _early_capsule(root: Path, outcome_id: str) -> None:
                               "historical_before": 175, "historical_after": 175},
                "package_terminal_evidence": False, "generic_fallback": False, "mandatory_stop": True}
     bank_runtime_artifact(root / f"{artifact_id}.json", artifact_id, payload)
+    return {"result": "CONTROLLED_FAILURE", "generic_fallback": payload["generic_fallback"],
+            "outcome_id": outcome_id, "accounting": payload["accounting"]}
 
 
 def realize(outcome_id: str, output_root: Path) -> dict:
@@ -48,24 +51,25 @@ def realize(outcome_id: str, output_root: Path) -> dict:
     candidate_path = output_root / "candidate.json"; installed = output_root / "installed" / "authorization.json"
     receipt = output_root / "installation-receipt.json"
 
+    runtime_result: dict
     bank_runtime_artifact(pre / "operator_approval.json", "operator_approval", {"scope": "SYNTHETIC_FAULT_QUALIFICATION", "result": "PASS"})
     if target_rank == 1:
-        _early_capsule(pre, outcome_id)
+        runtime_result = _early_capsule(pre, outcome_id)
     else:
         rendered = render_rehearsal_candidate(checkpoint, shards, catalog, candidate_path, f"OUTCOME-{target_rank:03d}",
                                                scope="SYNTHETIC_QUALIFICATION", manifest_path=manifest)
         bank_runtime_artifact(pre / "candidate_authorization.json", "candidate_authorization",
                               {"candidate_sha256": rendered["candidate_sha256"], "result": "PASS"})
         if target_rank == 2:
-            _early_capsule(pre, outcome_id)
+            runtime_result = _early_capsule(pre, outcome_id)
         else:
             bank_runtime_artifact(pre / "primary_candidate_validation.json", "primary_candidate_validation", rendered["primary"])
             if target_rank == 3:
-                _early_capsule(pre, outcome_id)
+                runtime_result = _early_capsule(pre, outcome_id)
             else:
                 bank_runtime_artifact(pre / "secondary_candidate_validation.json", "secondary_candidate_validation", rendered["secondary"])
                 if target_rank == 4:
-                    _early_capsule(pre, outcome_id)
+                    runtime_result = _early_capsule(pre, outcome_id)
                 elif target_rank == 5:
                     installed.parent.mkdir(parents=True)
                     raw = candidate_path.read_bytes()
@@ -73,14 +77,14 @@ def realize(outcome_id: str, output_root: Path) -> dict:
                         sink.write(raw); sink.flush(); os.fsync(sink.fileno())
                     bank_runtime_artifact(pre / "installed_authorization.json", "installed_authorization",
                                           {"installed_sha256": rendered["candidate_sha256"], "result": "PASS"})
-                    _early_capsule(pre, outcome_id)
+                    runtime_result = _early_capsule(pre, outcome_id)
                 else:
                     installed_receipt = install_rehearsal_candidate(candidate_path, installed, receipt)
                     bank_runtime_artifact(pre / "installed_authorization.json", "installed_authorization",
                                           {"installed_sha256": rendered["candidate_sha256"], "result": "PASS"})
                     bank_runtime_artifact(pre / "installation_receipt.json", "installation_receipt", installed_receipt)
                     if target_rank == 6:
-                        _early_capsule(pre, outcome_id)
+                        runtime_result = _early_capsule(pre, outcome_id)
                     else:
                         original_bank = coordinator.bank_runtime_artifact
                         injected = False
@@ -94,10 +98,10 @@ def realize(outcome_id: str, output_root: Path) -> dict:
                             return digest
                         coordinator.bank_runtime_artifact = fault_bank
                         try:
-                            result = coordinator.execute_synthetic(installed, receipt, output_root / "runtime")
+                            runtime_result = coordinator.execute_synthetic(installed, receipt, output_root / "runtime")
                         finally:
                             coordinator.bank_runtime_artifact = original_bank
-                        if result.get("outcome_id") != outcome_id or result.get("generic_fallback") is not False:
+                        if runtime_result.get("outcome_id") != outcome_id or runtime_result.get("generic_fallback") is not False:
                             raise ValueError("runtime did not realize selected modeled failure")
 
     created: set[str] = set()
@@ -111,9 +115,11 @@ def realize(outcome_id: str, output_root: Path) -> dict:
     missing = sorted(required - created)
     if missing or forbidden_present:
         raise ValueError(f"runtime outcome artifact mismatch missing={missing} forbidden={forbidden_present}")
-    accounting = {"package": outcome["package_delta"], "primary": outcome["primary_delta"], "secondary": outcome["secondary_delta"]}
+    observed = derive((output_root / "runtime").resolve(strict=False))
+    accounting = {key: observed[key] for key in ("package", "primary", "secondary")}
     capsule_source = ("AUTHORIZER_PHASE_DIRECT_TERMINALIZATION" if target_rank <= 6
                       else "COORDINATOR_CAUSAL_BANK_INJECTION")
     return {"outcome_id": outcome_id, "failed_transition_id": outcome["failed_transition_id"], "created": sorted(created),
             "required": sorted(required), "forbidden_present": forbidden_present, "accounting": accounting,
-            "capsule_source": capsule_source, "generic_fallback": False, "result": "PASS"}
+            "capsule_source": capsule_source, "generic_fallback": runtime_result.get("generic_fallback"),
+            "terminalization_result": runtime_result.get("result"), "result": "PASS"}
