@@ -23,22 +23,30 @@ def main() -> int:
     if "f017_binary_comparator_v11" in imports or "compare_logits" in source:
         raise ValueError("comparison builder import separation")
     fields = contract["comparison_authority"]["rederived_fields"]
-    if len(fields) != 16 or len(set(fields)) != 16: raise ValueError("rederived field census")
+    return_keys = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "derive_summary":
+            for child in ast.walk(node):
+                if isinstance(child, ast.Return) and isinstance(child.value, ast.Dict):
+                    keys = [key.value for key in child.value.keys if isinstance(key, ast.Constant) and isinstance(key.value, str)]
+                    if "classification" in keys: return_keys = set(keys)
+    if return_keys is None or set(fields) != return_keys or len(fields) != len(set(fields)):
+        raise ValueError("rederived field census")
     artifact_source = ARTIFACTS.read_text(); bundle_source = BUNDLE.read_text()
     gates = {
         "F5-01":"independent comparison summary mismatch" in source,
-        "F5-02":"comparison receipt authority" in source,
+        "F5-02":"_bundle_identity" in {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)} and "validate_receipt" in source,
         "F5-03":"expected_package_attempt_id" in artifact_source and "expected_consumer_event_id" in artifact_source,
         "F5-04":"summary[\"package_attempt_id\"]" in artifact_source and "summary[\"consumer_event_id\"]" in artifact_source,
         "F5-05":"manifest payload inode alias" in artifact_source and "manifest payload leaf alias" in artifact_source,
-        "BUNDLE":"validate_bundle" in bundle_source and "validate_receipt" in bundle_source,
+        "BUNDLE":"compose_comparison_closure" in bundle_source and "validate_receipt" in bundle_source,
     }
     if not all(gates.values()): raise ValueError(f"authority gates: {gates}")
     result = {"schema":"pulsarmlx.f017.event05-result-authority-design-qualification/1.0.0",
         "contract_sha256":hashlib.sha256(CONTRACT.read_bytes()).hexdigest(),
         "independent_validator_sha256":hashlib.sha256(AUTHORITY.read_bytes()).hexdigest(),
         "bundle_validator_sha256":hashlib.sha256(BUNDLE.read_bytes()).hexdigest(),
-        "builder_import_separation":"PASS","rederived_field_count":16,
+        "builder_import_separation":"PASS","rederived_field_count":len(fields),
         "findings_repaired":gates,"original_checkpoint_access":0,"result":"PASS"}
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 0

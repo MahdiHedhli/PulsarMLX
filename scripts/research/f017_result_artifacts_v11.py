@@ -199,8 +199,10 @@ def validate_top32(directory: Path, logits_record: dict, summary: dict) -> dict:
     ordered = [(-neg_token, value) for value, neg_token in sorted(heap, reverse=True)]
     code = "d" if summary["role"] == "PRIMARY" else "f"; bits_key = "logit_f64_bits" if summary["role"] == "PRIMARY" else "logit_f32_bits"
     entries = [{"token_id": item[0], bits_key: struct.pack(f"<{code}", item[1]).hex()} for item in ordered]
-    if (summary["top_n"] != 32 or summary["entries"] != entries or summary["selected_token"] != ordered[0][0]
-            or type(summary["top_1_margin"]) not in (int, float) or not math.isfinite(float(summary["top_1_margin"]))
+    if (type(summary["top_n"]) is not int or type(summary["selected_token"]) is not int
+            or type(summary["top_1_margin"]) is not float
+            or summary["top_n"] != 32 or canonical_bytes(summary["entries"]) != canonical_bytes(entries) or summary["selected_token"] != ordered[0][0]
+            or not math.isfinite(summary["top_1_margin"])
             or float(summary["top_1_margin"]) != ordered[0][1] - ordered[1][1]):
         raise ResultEnvelopeError("top32 derivation")
     return {"result":"PASS","summary_sha256":_bounded(summary)}

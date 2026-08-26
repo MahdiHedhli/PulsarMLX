@@ -31,7 +31,9 @@ def _push(heap: list[tuple[float, int]], value: float, token: int) -> None:
 
 def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path, secondary_record: dict,
                    primary_routing_manifest: dict, secondary_routing_manifest: dict,
-                   primary_receipt: dict, secondary_receipt: dict,
+                   primary_manifest: dict, secondary_manifest: dict,
+                   primary_top32: dict, secondary_top32: dict,
+                   primary_receipt: dict, secondary_receipt: dict, authorization_id: str,
                    *, chunk_elements: int = 4_096) -> dict:
     if primary_record.get("role") != "PRIMARY" or primary_record.get("payload_kind") != "full_logits":
         raise ResultEnvelopeError("primary comparison payload")
@@ -79,7 +81,12 @@ def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path,
         classification = "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
     result = {
         "schema": "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0",
+        "authorization_id": authorization_id,
         "package_attempt_id": primary_record["package_attempt_id"],
+        "primary_payload_manifest_sha256": hashlib.sha256(canonical_bytes(primary_manifest)).hexdigest(),
+        "secondary_payload_manifest_sha256": hashlib.sha256(canonical_bytes(secondary_manifest)).hexdigest(),
+        "primary_top32_summary_sha256": hashlib.sha256(canonical_bytes(primary_top32)).hexdigest(),
+        "secondary_top32_summary_sha256": hashlib.sha256(canonical_bytes(secondary_top32)).hexdigest(),
         "primary_logits_payload_sha256": primary_record["sha256"],
         "secondary_logits_payload_sha256": secondary_record["sha256"],
         "primary_routing_manifest_sha256": primary_route["routing_manifest_sha256"],
@@ -104,15 +111,19 @@ def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path,
     }
     validate_comparison_summary(result, primary_dir, primary_record, secondary_dir, secondary_record,
                                 primary_routing_manifest, secondary_routing_manifest,
-                                primary_receipt, secondary_receipt, chunk_elements=chunk_elements)
+                                primary_manifest, secondary_manifest, primary_top32, secondary_top32,
+                                primary_receipt, secondary_receipt, authorization_id, chunk_elements=chunk_elements)
     return result
 
 
 def validate_comparison_summary(summary: dict, primary_dir: Path, primary_record: dict,
                                 secondary_dir: Path, secondary_record: dict,
                                 primary_routing_manifest: dict, secondary_routing_manifest: dict,
-                                primary_receipt: dict, secondary_receipt: dict,
+                                primary_manifest: dict, secondary_manifest: dict,
+                                primary_top32: dict, secondary_top32: dict,
+                                primary_receipt: dict, secondary_receipt: dict, authorization_id: str,
                                 *, chunk_elements: int = 4_096) -> dict:
     return validate_authoritative_summary(summary, primary_dir, primary_record, secondary_dir,
         secondary_record, primary_routing_manifest, secondary_routing_manifest,
-        primary_receipt, secondary_receipt, chunk_elements=chunk_elements)
+        primary_manifest, secondary_manifest, primary_top32, secondary_top32,
+        primary_receipt, secondary_receipt, authorization_id, chunk_elements=chunk_elements)

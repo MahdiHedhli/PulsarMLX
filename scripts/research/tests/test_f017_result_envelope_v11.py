@@ -17,6 +17,7 @@ from f017_result_artifacts_v11 import (build_consumer_terminal, build_manifest, 
     build_result_terminal, build_routing_manifest, build_top32, closure_root, require_primary_terminal,
     validate_manifest, validate_top32)
 from f017_event04_diagnostic_converter_v11 import convert
+from f017_result_bundle_authority_v11 import compose_comparison_closure
 from f017_result_envelope_v11 import (HIDDEN_SIZE, VOCAB_SIZE, PAYLOAD_SPECS,
     ResultEnvelopeError, bank_payload, iter_payload, payload_spec, validate_payload)
 
@@ -35,9 +36,22 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
 
     def compare(self, left: Path, p: dict, right: Path, s: dict, *, routes: bool = True, chunk_elements: int = 4096) -> tuple[dict, dict, dict, dict, dict]:
         pr = self.routing("PRIMARY"); sr = self.routing("SECONDARY", mismatch=not routes)
-        prec = self.receipt("PRIMARY", pr); srec = self.receipt("SECONDARY", sr)
-        result = compare_logits(left, p, right, s, pr, sr, prec, srec, chunk_elements=chunk_elements)
-        return result, pr, sr, prec, srec
+        def bundle(root: Path, role: str, logits: dict, routing: dict) -> tuple[dict, dict, dict]:
+            records = []
+            for kind in ("final_hidden","final_normalized"):
+                spec = payload_spec(role, kind)
+                records.append(bank_payload(root, f"{role}-{kind}.bin", spec, [0.0]*spec.element_count,
+                    package_attempt_id="PKG", consumer_event_id=role))
+            records.append(logits); manifest = build_manifest(role,"PKG",role,records); top = build_top32(root,logits)
+            digest = hashlib.sha256(b"x").hexdigest()
+            receipt = build_receipt(role,"AUTH","PKG",role,digest,digest,
+                hashlib.sha256((json.dumps(manifest,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),
+                hashlib.sha256((json.dumps(top,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),
+                hashlib.sha256((json.dumps(routing,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),digest,digest)
+            return manifest, top, receipt
+        pm, pt, prec = bundle(left,"PRIMARY",p,pr); sm, st, srec = bundle(right,"SECONDARY",s,sr)
+        result = compare_logits(left,p,right,s,pr,sr,pm,sm,pt,st,prec,srec,"AUTH",chunk_elements=chunk_elements)
+        return result, pr, sr, pm, sm, pt, st, prec, srec
 
     def test_geometry_is_derived(self) -> None:
         expected = {
@@ -152,10 +166,10 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
                 values = [0.0] * VOCAB_SIZE; values[10] = 1.0; values[11] = 1.0 - margin
                 p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
                 s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="SECONDARY")
-                result, pr, sr, prec, srec = self.compare(Path(left), p, Path(right), s, routes=routes)
+                result, pr, sr, pm, sm, pt, st, prec, srec = self.compare(Path(left), p, Path(right), s, routes=routes)
                 self.assertEqual(result["classification"], expected)
                 self.assertEqual(result["primary_logits_payload_sha256"], p["sha256"])
-                self.assertEqual(validate_comparison_summary(result, Path(left), p, Path(right), s, pr, sr, prec, srec)["result"], "PASS")
+                self.assertEqual(validate_comparison_summary(result,Path(left),p,Path(right),s,pr,sr,pm,sm,pt,st,prec,srec,"AUTH")["result"], "PASS")
 
         with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
             primary = [1.0] * VOCAB_SIZE; secondary = [1.0] * VOCAB_SIZE
@@ -163,10 +177,10 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             secondary[10] = 1.003; secondary[11] = 1.004
             p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), primary, package_attempt_id="PKG", consumer_event_id="PRIMARY")
             s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), secondary, package_attempt_id="PKG", consumer_event_id="SECONDARY")
-            result, pr, sr, prec, srec = self.compare(Path(left), p, Path(right), s)
+            result, pr, sr, pm, sm, pt, st, prec, srec = self.compare(Path(left), p, Path(right), s)
             self.assertEqual(result["classification"], "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY")
             mutant = dict(result); mutant["primary_logits_payload_sha256"] = "0" * 64
-            with self.assertRaises(ResultEnvelopeError): validate_comparison_summary(mutant, Path(left), p, Path(right), s, pr, sr, prec, srec)
+            with self.assertRaises(ResultEnvelopeError): validate_comparison_summary(mutant,Path(left),p,Path(right),s,pr,sr,pm,sm,pt,st,prec,srec,"AUTH")
 
     def test_event04_diagnostic_record_cannot_enter_manifest(self) -> None:
         raw = ROOT / "docs/architecture/reviews/evidence/f017-event04-v10-terminal-package-v1/package-evidence/primary-consumer-output.json"
@@ -193,7 +207,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             values = [float(index % 509) / 100 for index in range(VOCAB_SIZE)]
             p = bank_payload(Path(left), "p.bin", payload_spec("PRIMARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
             s = bank_payload(Path(right), "s.bin", payload_spec("SECONDARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="SECONDARY")
-            result, pr, sr, prec, srec = self.compare(Path(left), p, Path(right), s)
+            result, pr, sr, pm, sm, pt, st, prec, srec = self.compare(Path(left), p, Path(right), s)
             mutations = {"max_absolute_error":1.0,"rmse":1.0,"cosine_similarity":0.0,
                 "primary_top32_ids":[0]*32,"secondary_top32_ids":[0]*32,
                 "primary_selected_token":0,"secondary_selected_token":0,
@@ -205,7 +219,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
                 with self.subTest(field=field):
                     changed = dict(result); changed[field] = value
                     with self.assertRaises(ResultEnvelopeError):
-                        validate_comparison_summary(changed, Path(left), p, Path(right), s, pr, sr, prec, srec)
+                        validate_comparison_summary(changed,Path(left),p,Path(right),s,pr,sr,pm,sm,pt,st,prec,srec,"AUTH")
 
     def test_routing_receipt_splice_rejects(self) -> None:
         with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
@@ -213,8 +227,9 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             p = bank_payload(Path(left), "p.bin", payload_spec("PRIMARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
             s = bank_payload(Path(right), "s.bin", payload_spec("SECONDARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="SECONDARY")
             pr = self.routing("PRIMARY"); sr = self.routing("SECONDARY")
-            prec = self.receipt("PRIMARY", self.routing("PRIMARY", mismatch=True)); srec = self.receipt("SECONDARY", sr)
-            with self.assertRaises(ResultEnvelopeError): compare_logits(Path(left), p, Path(right), s, pr, sr, prec, srec)
+            result, pr, sr, pm, sm, pt, st, prec, srec = self.compare(Path(left),p,Path(right),s)
+            bad = dict(prec); bad["routing_manifest_sha256"] = "0"*64
+            with self.assertRaises(ResultEnvelopeError): compare_logits(Path(left),p,Path(right),s,pr,sr,pm,sm,pt,st,bad,srec,"AUTH")
 
     def test_top32_identity_is_payload_derived(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -236,6 +251,25 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             (root / records[1]["path_role"]).unlink(); (root / records[1]["path_role"]).hardlink_to(root / records[0]["path_role"])
             manifest = build_manifest("PRIMARY","PKG","PRIMARY",records)
             with self.assertRaises(ResultEnvelopeError): validate_manifest(root, manifest)
+
+    def test_canonical_types_and_cross_package_closure_reject(self) -> None:
+        primary = {"result":"PASS","role":"PRIMARY","authorization_id":"AUTH","package_attempt_id":"PKG",
+            "consumer_event_id":"P","manifest_sha256":"1"*64,"top32_summary_sha256":"2"*64,
+            "routing_manifest_sha256":"3"*64}
+        secondary = {"result":"PASS","role":"SECONDARY","authorization_id":"AUTH","package_attempt_id":"OTHER",
+            "consumer_event_id":"S","manifest_sha256":"4"*64,"top32_summary_sha256":"5"*64,
+            "routing_manifest_sha256":"6"*64}
+        with self.assertRaises(ResultEnvelopeError): compose_comparison_closure(primary,secondary,{})
+
+    def test_comparison_type_alias_rejects(self) -> None:
+        with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
+            values = [float(index % 101) for index in range(VOCAB_SIZE)]
+            p = bank_payload(Path(left),"p.bin",payload_spec("PRIMARY","full_logits"),values,package_attempt_id="PKG",consumer_event_id="PRIMARY")
+            s = bank_payload(Path(right),"s.bin",payload_spec("SECONDARY","full_logits"),values,package_attempt_id="PKG",consumer_event_id="SECONDARY")
+            result, pr, sr, pm, sm, pt, st, prec, srec = self.compare(Path(left),p,Path(right),s)
+            changed = dict(result); changed["top1_stable"] = int(result["top1_stable"])
+            with self.assertRaises(ResultEnvelopeError):
+                validate_comparison_summary(changed,Path(left),p,Path(right),s,pr,sr,pm,sm,pt,st,prec,srec,"AUTH")
 
     def test_diagnostic_output_cannot_enter_repository(self) -> None:
         raw = ROOT / "docs/architecture/reviews/evidence/f017-event04-v10-terminal-package-v1/package-evidence/primary-consumer-output.json"

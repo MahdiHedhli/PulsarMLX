@@ -47,3 +47,31 @@ def validate_bundle(directory: Path, *, role: str, authorization_id: str,
         "result_receipt_sha256":receipt_sha,"result_terminal_sha256":result_terminal_sha,
         "consumer_terminal_sha256":_sha(consumer_terminal),
         "payload_sha256s":[item["sha256"] for item in manifest["payloads"]],"result":"PASS"}
+
+
+def compose_comparison_closure(primary_bundle: dict, secondary_bundle: dict,
+                               comparison_summary: dict) -> dict:
+    """Only sanctioned bridge from two validated bundles into package closure."""
+    if (type(primary_bundle) is not dict or type(secondary_bundle) is not dict
+            or primary_bundle.get("result") != "PASS" or secondary_bundle.get("result") != "PASS"
+            or primary_bundle.get("role") != "PRIMARY" or secondary_bundle.get("role") != "SECONDARY"
+            or primary_bundle.get("authorization_id") != secondary_bundle.get("authorization_id")
+            or primary_bundle.get("package_attempt_id") != secondary_bundle.get("package_attempt_id")
+            or primary_bundle.get("consumer_event_id") == secondary_bundle.get("consumer_event_id")):
+        raise ResultEnvelopeError("comparison bundle closure identity")
+    expected = {
+        "authorization_id":primary_bundle["authorization_id"],
+        "package_attempt_id":primary_bundle["package_attempt_id"],
+        "primary_payload_manifest_sha256":primary_bundle["manifest_sha256"],
+        "secondary_payload_manifest_sha256":secondary_bundle["manifest_sha256"],
+        "primary_top32_summary_sha256":primary_bundle["top32_summary_sha256"],
+        "secondary_top32_summary_sha256":secondary_bundle["top32_summary_sha256"],
+        "primary_routing_manifest_sha256":primary_bundle["routing_manifest_sha256"],
+        "secondary_routing_manifest_sha256":secondary_bundle["routing_manifest_sha256"],
+    }
+    if type(comparison_summary) is not dict or any(comparison_summary.get(k) != v for k,v in expected.items()):
+        raise ResultEnvelopeError("comparison summary bundle binding")
+    return {"schema":"pulsarmlx.f017.corrected-oracle-comparison-closure/11.0.0",
+        **expected,"primary_bundle_sha256":_sha(primary_bundle),
+        "secondary_bundle_sha256":_sha(secondary_bundle),
+        "comparison_summary_sha256":_sha(comparison_summary),"result":"PASS"}
