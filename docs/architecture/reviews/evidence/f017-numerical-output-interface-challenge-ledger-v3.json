@@ -1,0 +1,13 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-challenge-ledger/3.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "cycle":2,
+  "reviewed_head":"793ef248f4577efba861cf4f2e69621c00329c3a",
+  "rows":[
+    {"challenge_id":"CHAL-02-005","claim_id":"C-PURITY-001","status":"INVALID_UNSUPPORTED","reason":"No asynchronous or caller-supplied capture callback exists or is permitted; no trace command or affected symbol was supplied."},
+    {"challenge_id":"CHAL-02-007","claim_id":"C-LEGACY-001","status":"INVALID_UNSUPPORTED","reason":"No active V11 implementation or parser trace was exercised; contract already prohibits active legacy serialization and requires strict rejection."}
+  ],
+  "other_reported_rows":"MITIGATED_OR_PROTOCOL_INVALID_NOT_OPEN_CHALLENGES",
+  "usable_open_challenges":0,
+  "result":"INVALID_PACKET_REQUIRES_FRESH_CYCLE"
+}

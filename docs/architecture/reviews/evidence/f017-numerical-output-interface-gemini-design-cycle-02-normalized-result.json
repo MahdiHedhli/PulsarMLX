@@ -1,0 +1,18 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-gemini-design-challenge/2.0.0",
+  "cycle":2,
+  "reviewer":"gemini-3.1-pro-high",
+  "reviewed_head":"793ef248f4577efba861cf4f2e69621c00329c3a",
+  "conversation_id":"cc369eff-4e48-4d72-b9ce-1e4df624b1f1",
+  "protocol_valid":false,
+  "protocol_failures":["unknown CLAIM-READINESS-* identifiers","severity values outside required enumeration","asserted runtime traces without commands or evidence","invented asynchronous capture callback absent from design","original_checkpoint_access_observed returned boolean instead of integer"],
+  "reported_rows":11,
+  "reported_vulnerable_rows":[
+    {"challenge_id":"CHAL-02-005","reported_claim_id":"CLAIM-READINESS-05","attack":"tensor protocol versus capture callback","reported_observation":"Callbacks triggered prematurely leading to incomplete tensor captures.","status":"UNSUPPORTED_NO_CALLBACK_OR_TRACE_EXISTS"},
+    {"challenge_id":"CHAL-02-007","reported_claim_id":"CLAIM-READINESS-07","attack":"offline legacy versus active V11 control JSON","reported_observation":"Legacy fields caused parsing ambiguities.","status":"UNSUPPORTED_NO_TRACE_OR_ACTIVE_V11_IMPLEMENTATION_EXISTS"}
+  ],
+  "reported_mitigated_rows":9,
+  "usable_open_challenges":0,
+  "original_checkpoint_access_observed":0,
+  "result":"INVALID_CHALLENGE_PACKET_REVIEW_CYCLE_NOT_ACCEPTANCE"
+}
