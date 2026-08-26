@@ -34,8 +34,8 @@ class EvidenceIntegrationTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def commit_evidence(self, content: str) -> str:
-        path = self.root / "docs/architecture/reviews/evidence/result.json"
+    def commit_evidence(self, content: str, name: str = "result.json") -> str:
+        path = self.root / "docs/architecture/reviews/evidence" / name
         path.parent.mkdir(parents=True)
         path.write_text(content, encoding="utf-8")
         subprocess.run(["git", "add", str(path.relative_to(self.root))], cwd=self.root, check=True)
@@ -65,6 +65,44 @@ class EvidenceIntegrationTests(unittest.TestCase):
                 branch="feat/test",
                 run_attempt1=False,
             )
+
+    def test_numerical_node_receipt_rejects_unpaired_authority_shas(self):
+        head = self.commit_evidence(
+            json.dumps({
+                "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+                "input_authority_shas": {"numerical_requalification_v4": "0" * 64},
+            }) + "\n",
+            "f017-numerical-output-interface-node-r8-receipt-v2.json",
+        )
+        with self.assertRaises(ValidationError):
+            validate_change(
+                self.root, base=self.base, head=head, branch="feat/test", run_attempt1=False
+            )
+
+    def test_numerical_node_receipt_resolves_typed_authority_bindings(self):
+        authority = self.root / "authority.json"
+        authority.write_text('{"authority":true}\n', encoding="utf-8")
+        subprocess.run(["git", "add", "authority.json"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-qm", "authority"], cwd=self.root, check=True)
+        self.base = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=self.root, text=True
+        ).strip()
+        head = self.commit_evidence(
+            json.dumps({
+                "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+                "input_authorities": {
+                    "authority": {
+                        "path": "authority.json",
+                        "sha256": hashlib.sha256(authority.read_bytes()).hexdigest(),
+                    }
+                },
+            }) + "\n",
+            "f017-numerical-output-interface-node-r8-receipt-v2.json",
+        )
+        result = validate_change(
+            self.root, base=self.base, head=head, branch="feat/test", run_attempt1=False
+        )
+        self.assertEqual(result["resolved_binding_count"], 1)
 
     def test_absolute_repository_binding_is_normalized_and_verified(self):
         authority = self.root / "authority.json"

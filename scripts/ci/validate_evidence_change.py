@@ -152,6 +152,25 @@ def _walk_bindings(repository: Path, head: str, value: Any) -> int:
     return count
 
 
+def _validate_specialized_evidence(path: str, document: Any) -> None:
+    """Reject evidence schemas whose authority SHAs cannot be resolved mechanically."""
+    name = PurePosixPath(path).name
+    if not re.fullmatch(r"f017-numerical-output-interface-node-r[0-9]+-receipt-v[0-9]+\.json", name):
+        return
+    if not isinstance(document, dict):
+        raise ValidationError(f"numerical node receipt must be an object: {path}")
+    if "input_authority_shas" in document:
+        raise ValidationError(f"unpaired input authority SHAs prohibited: {path}")
+    authorities = document.get("input_authorities")
+    if not isinstance(authorities, dict):
+        raise ValidationError(f"numerical node receipt requires input_authorities: {path}")
+    for role, binding in authorities.items():
+        if not isinstance(role, str) or not isinstance(binding, dict):
+            raise ValidationError(f"malformed numerical receipt authority: {path}")
+        if set(binding) != {"path", "sha256"}:
+            raise ValidationError(f"exact numerical receipt binding census: {path}:{role}")
+
+
 def validate_change(
     repository: Path,
     *,
@@ -199,6 +218,7 @@ def validate_change(
         if path.endswith(".json"):
             document = strict_json(data, path)
             json_count += 1
+            _validate_specialized_evidence(path, document)
             binding_count += _walk_bindings(repository, head, document)
 
     attempt1 = None
