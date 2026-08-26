@@ -117,7 +117,7 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
     if type(chunk_elements) is not int or type(chunk_elements) is bool or chunk_elements <= 0:
         raise ResultEnvelopeError("chunk element count")
     directory.mkdir(parents=True, exist_ok=True)
-    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
     descriptor = -1
     written = 0
     count = 0
@@ -208,8 +208,10 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
         raise ResultEnvelopeError("payload size or finite status")
     if record["signed_zero_policy"] != "PRESERVE_IEEE754_BITS":
         raise ResultEnvelopeError("signed-zero policy")
+    if record["producer_identity"] != f"F017_V11_{spec.role}_RESULT_ENVELOPE":
+        raise ResultEnvelopeError("payload producer identity")
     leaf = record["path_role"]; _validate_leaf(leaf)
-    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
     try:
         descriptor = os.open(leaf, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
         try:
@@ -246,21 +248,13 @@ def iter_payload(directory: Path, record: dict, *, chunk_elements: int = DEFAULT
     validate_payload(directory, record, expected_spec=spec)
     if type(chunk_elements) is not int or type(chunk_elements) is bool or chunk_elements <= 0:
         raise ResultEnvelopeError("chunk element count")
-    descriptor = os.open(directory / record["path_role"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    descriptor = os.open(record["path_role"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
     try:
-        # Verify the same retained descriptor that supplies comparison bytes.
-        # Path replacement after manifest validation cannot change this fd.
         info = os.fstat(descriptor)
         if not stat.S_ISREG(info.st_mode) or info.st_size != spec.byte_count:
             raise ResultEnvelopeError("stream payload file geometry")
         digest = hashlib.sha256(); observed = 0
-        while True:
-            raw = os.read(descriptor, 1 << 20)
-            if not raw: break
-            digest.update(raw); observed += len(raw)
-        if observed != spec.byte_count or digest.hexdigest() != record["sha256"]:
-            raise ResultEnvelopeError("stream payload identity mismatch")
-        os.lseek(descriptor, 0, os.SEEK_SET)
         remaining = spec.element_count
         while remaining:
             count = min(chunk_elements, remaining)
@@ -269,9 +263,13 @@ def iter_payload(directory: Path, record: dict, *, chunk_elements: int = DEFAULT
                 part = os.read(descriptor, count * spec.itemsize - len(raw))
                 if not part: raise ResultEnvelopeError("short payload read")
                 raw.extend(part)
+            digest.update(raw); observed += len(raw)
             yield [value[0] for value in struct.iter_unpack(f"<{spec.struct_code}", raw)]
             remaining -= count
         if os.read(descriptor, 1):
             raise ResultEnvelopeError("excess payload bytes")
+        if observed != spec.byte_count or digest.hexdigest() != record["sha256"]:
+            raise ResultEnvelopeError("stream payload identity mismatch")
     finally:
         os.close(descriptor)
+        os.close(directory_fd)

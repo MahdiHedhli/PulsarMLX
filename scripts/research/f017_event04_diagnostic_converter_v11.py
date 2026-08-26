@@ -15,16 +15,26 @@ EXPECTED_SHA256 = "17255fd412b07275ed422f827bbd884fd3a19ba8a870153ca226143c5f0ec
 def convert(raw_path: Path, output_directory: Path, grant: dict) -> dict:
     required = {"schema", "event04_package_attempt_id", "raw_output_path", "expected_size",
                 "expected_sha256", "consumer", "purpose", "checkpoint_access", "promotion",
-                "event04_receipt_creation", "event04_terminal_creation"}
+                "event04_receipt_creation", "event04_terminal_creation", "output_root_policy"}
     if (type(grant) is not dict or set(grant) != required
             or grant["consumer"] != "EVENT04_RESULT_ENVELOPE_DIAGNOSTIC_CONVERTER"
             or grant["purpose"] != "NON_AUTHORITATIVE_FORMAT_QUALIFICATION"
             or grant["checkpoint_access"] != "PROHIBITED" or grant["promotion"] != "PROHIBITED"
             or grant["event04_receipt_creation"] != "PROHIBITED"
             or grant["event04_terminal_creation"] != "PROHIBITED"
-            or grant["expected_size"] != EXPECTED_BYTES or grant["expected_sha256"] != EXPECTED_SHA256
-            or grant["raw_output_path"] != str(raw_path)):
+            or grant["output_root_policy"] != "TEMPORARY_ROOT_OUTSIDE_REPOSITORY_AND_EVENT04_TREE"
+            or grant["expected_size"] != EXPECTED_BYTES or grant["expected_sha256"] != EXPECTED_SHA256):
         raise ResultEnvelopeError("diagnostic reuse grant")
+    repository = Path(__file__).resolve().parents[2]
+    granted_raw = Path(grant["raw_output_path"])
+    if not granted_raw.is_absolute(): granted_raw = repository / granted_raw
+    if granted_raw.resolve(strict=True) != raw_path.resolve(strict=True):
+        raise ResultEnvelopeError("diagnostic raw path binding")
+    resolved_output = output_directory.resolve(strict=False)
+    raw_parent = raw_path.parent.resolve()
+    if (resolved_output == repository or repository in resolved_output.parents
+            or resolved_output == raw_parent or raw_parent in resolved_output.parents):
+        raise ResultEnvelopeError("diagnostic output root isolation")
     raw = raw_path.read_bytes()
     if len(raw) != EXPECTED_BYTES or hashlib.sha256(raw).hexdigest() != EXPECTED_SHA256:
         raise ResultEnvelopeError("diagnostic raw output identity")
@@ -37,6 +47,8 @@ def convert(raw_path: Path, output_directory: Path, grant: dict) -> dict:
         raise ResultEnvelopeError("diagnostic logits geometry")
     record = bank_payload(output_directory, "event04-primary-full-logits.f64le.bin",
                           payload_spec("PRIMARY", "full_logits"), logits)
+    record = {**record, "role":"DIAGNOSTIC_EVENT04", "payload_kind":"event04_primary_full_logits",
+              "producer_identity":"F017_V11_EVENT04_NON_AUTHORITATIVE_DIAGNOSTIC"}
     return {"schema": "pulsarmlx.f017.event04-result-envelope-diagnostic/11.0.0",
             "authority": "NON_AUTHORITATIVE_DIAGNOSTIC_ONLY", "event04_promotion": "PROHIBITED",
             "event04_receipt_created": False, "event04_terminal_created": False,

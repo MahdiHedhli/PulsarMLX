@@ -31,7 +31,7 @@ def _load(path: Path) -> dict:
 def validate_contract(value: dict) -> None:
     required = {"schema", "generation", "status", "source_event", "geometry", "encoding", "payloads",
                 "control_plane", "write_protocol", "read_protocol", "numerical_contract",
-                "numerical_formulas_changed", "numerical_thresholds_changed", "original_checkpoint_access"}
+                "numerical_formulas_changed", "numerical_methodology_changed", "numerical_thresholds_changed", "original_checkpoint_access"}
     if type(value) is not dict or set(value) != required: raise ValueError("contract key census")
     if value["schema"] != "pulsarmlx.f017.corrected-oracle-binary-result-envelope/11.0.0" or value["generation"] != "V11": raise ValueError("contract identity")
     if value["status"] != "FROZEN_BEFORE_EVENT05_AUTHORIZATION": raise ValueError("contract status")
@@ -55,7 +55,7 @@ def validate_contract(value: dict) -> None:
     control = value["control_plane"]
     if (control != {"full_numerical_arrays_in_json":"PROHIBITED","general_bounded_decoder_limits_changed":False,
                     "result_control_max_bytes":65536,"result_control_max_array_elements":64,"top_summary_elements":32}): raise ValueError("control separation")
-    if value["numerical_formulas_changed"] is not False or value["numerical_thresholds_changed"] is not False or value["original_checkpoint_access"] != 0: raise ValueError("safety")
+    if value["numerical_formulas_changed"] is not False or value["numerical_methodology_changed"] is not False or value["numerical_thresholds_changed"] is not False or value["original_checkpoint_access"] != 0: raise ValueError("safety")
     expected_write = ["EXCLUSIVE_NO_REPLACE","DETERMINISTIC_CHUNK_ORDER","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"]
     expected_read = ["NO_FOLLOW","REGULAR_FILE","EXACT_KIND","EXACT_DTYPE","EXACT_ENDIAN","EXACT_SHAPE","EXACT_ELEMENT_COUNT","EXACT_BYTE_COUNT","SHA256","FINITE_VALUES"]
     if value["write_protocol"] != expected_write or value["read_protocol"] != expected_read:
@@ -88,16 +88,38 @@ def validate_dag(value: dict) -> None:
     required_comparison = ["PRIMARY_CONSUMER_TERMINAL","SECONDARY_CONSUMER_TERMINAL",
         "BOTH_MANIFESTS_VALIDATED","ALL_SIX_PAYLOADS_VALIDATED","STRUCTURAL_ROUTING_VALIDATED",
         "STREAMING_NUMERICAL_COMPARISON","COMPARISON_SUMMARY","COMPARISON_RECEIPT",
-        "COMPARISON_TERMINAL","DESCRIPTOR_RELEASE","PACKAGE_RECEIPT","PACKAGE_TERMINAL"]
+        "COMPARISON_TERMINAL","DESCRIPTOR_RELEASE_START","DESCRIPTOR_RELEASE_REPORT",
+        "DESCRIPTOR_RELEASE_RECEIPT","DESCRIPTOR_RELEASE_TERMINAL","PACKAGE_RECEIPT","PACKAGE_TERMINAL"]
     if comparison != required_comparison: raise ValueError("comparison order")
     closure = value["package_terminal_required_closure"]
     required_closure = ["PRIMARY_FINAL_HIDDEN_PAYLOAD","PRIMARY_FINAL_NORMALIZED_PAYLOAD","PRIMARY_FULL_LOGITS_PAYLOAD",
-        "PRIMARY_PAYLOAD_MANIFEST","PRIMARY_TOP32_SUMMARY","PRIMARY_RESULT_RECEIPT","PRIMARY_CONSUMER_TERMINAL",
+        "PRIMARY_PAYLOAD_MANIFEST","PRIMARY_TOP32_SUMMARY","PRIMARY_RESULT_RECEIPT","PRIMARY_RESULT_TERMINAL","PRIMARY_CONSUMER_TERMINAL",
         "SECONDARY_FINAL_HIDDEN_PAYLOAD","SECONDARY_FINAL_NORMALIZED_PAYLOAD","SECONDARY_FULL_LOGITS_PAYLOAD",
-        "SECONDARY_PAYLOAD_MANIFEST","SECONDARY_TOP32_SUMMARY","SECONDARY_RESULT_RECEIPT","SECONDARY_CONSUMER_TERMINAL",
-        "COMPARISON_SUMMARY","COMPARISON_RECEIPT","COMPARISON_TERMINAL","DESCRIPTOR_RELEASE_REPORT",
+        "SECONDARY_PAYLOAD_MANIFEST","SECONDARY_TOP32_SUMMARY","SECONDARY_RESULT_RECEIPT","SECONDARY_RESULT_TERMINAL","SECONDARY_CONSUMER_TERMINAL",
+        "COMPARISON_SUMMARY","COMPARISON_RECEIPT","COMPARISON_TERMINAL","DESCRIPTOR_RELEASE_START","DESCRIPTOR_RELEASE_REPORT",
         "DESCRIPTOR_RELEASE_RECEIPT","DESCRIPTOR_RELEASE_TERMINAL","PACKAGE_RECEIPT"]
     if closure != required_closure: raise ValueError("closure")
+    # Derive the actual graph rather than trusting declarative counters.
+    sequences = [primary, secondary, comparison]
+    edges: set[tuple[str, str]] = set()
+    nodes: set[str] = set()
+    for sequence in sequences:
+        if len(sequence) != len(set(sequence)): raise ValueError("self reference")
+        nodes.update(sequence); edges.update(zip(sequence, sequence[1:]))
+    edges.add(("SECONDARY_ELIGIBLE", "PRIMARY_CONSUMER_TERMINAL_VALIDATED"))
+    if any(left == right for left, right in edges): raise ValueError("self reference")
+    incoming = {node: 0 for node in nodes}
+    outgoing = {node: [] for node in nodes}
+    for left, right in edges:
+        outgoing[left].append(right); incoming[right] += 1
+    frontier = [node for node, count in incoming.items() if count == 0]; visited = 0
+    while frontier:
+        node = frontier.pop(); visited += 1
+        for child in outgoing[node]:
+            incoming[child] -= 1
+            if incoming[child] == 0: frontier.append(child)
+    if visited != len(nodes): raise ValueError("cyclic result graph")
+    if not set(closure).issubset(nodes): raise ValueError("undefined closure node")
     if value["event04"] != {"diagnostic_reuse":"EXPLICIT_GRANT_ONLY","promotion":"PROHIBITED","primary_receipt_creation":"PROHIBITED","primary_terminal_creation":"PROHIBITED","comparison_creation":"PROHIBITED"}: raise ValueError("Event04 boundary")
 
 

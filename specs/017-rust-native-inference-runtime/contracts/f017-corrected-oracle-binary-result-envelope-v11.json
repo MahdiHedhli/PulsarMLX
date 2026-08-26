@@ -41,6 +41,7 @@
   "read_protocol": ["NO_FOLLOW","REGULAR_FILE","EXACT_KIND","EXACT_DTYPE","EXACT_ENDIAN","EXACT_SHAPE","EXACT_ELEMENT_COUNT","EXACT_BYTE_COUNT","SHA256","FINITE_VALUES"],
   "numerical_contract": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json","sha256":"84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"},
   "numerical_formulas_changed": false,
+  "numerical_methodology_changed": false,
   "numerical_thresholds_changed": false,
   "original_checkpoint_access": 0
 }

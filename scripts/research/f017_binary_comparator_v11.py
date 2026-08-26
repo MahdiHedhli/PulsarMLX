@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import heapq
+import hashlib
 import math
 from pathlib import Path
 
+from f017_bounded_artifact_decode_v1 import ArtifactLimits, parse_artifact_bytes
+from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_envelope_v11 import iter_payload, ResultEnvelopeError, TOP_N
 
 MAX_ABS_LIMIT = 0.0065169706285814755
 RMSE_LIMIT = 0.003463567697419031
 COSINE_MINIMUM = 0.9999999985448085
+COMPARISON_LIMITS = ArtifactLimits(max_bytes=65_536, max_depth=8, max_object_keys=64,
+                                   max_array_elements=64, max_string_chars=4_096,
+                                   max_integer_digits=32, max_number_chars=128)
 
 
 def _push(heap: list[tuple[float, int]], value: float, token: int) -> None:
@@ -22,11 +28,13 @@ def _push(heap: list[tuple[float, int]], value: float, token: int) -> None:
 
 
 def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path, secondary_record: dict,
-                   *, chunk_elements: int = 4_096) -> dict:
+                   *, route_structure_equal: bool, chunk_elements: int = 4_096) -> dict:
     if primary_record.get("role") != "PRIMARY" or primary_record.get("payload_kind") != "full_logits":
         raise ResultEnvelopeError("primary comparison payload")
     if secondary_record.get("role") != "SECONDARY" or secondary_record.get("payload_kind") != "full_logits":
         raise ResultEnvelopeError("secondary comparison payload")
+    if type(route_structure_equal) is not bool:
+        raise ResultEnvelopeError("route structure verdict")
     maximum = 0.0; square_sum = 0.0; dot = 0.0; norm_p = 0.0; norm_s = 0.0
     primary_top: list[tuple[float, int]] = []; secondary_top: list[tuple[float, int]] = []
     count = 0
@@ -47,13 +55,23 @@ def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path,
     s_order = [(-token, value) for value, token in sorted(secondary_top, reverse=True)]
     top_ids_equal = [item[0] for item in p_order] == [item[0] for item in s_order]
     top1_equal = p_order[0][0] == s_order[0][0]
+    primary_margin = p_order[0][1] - p_order[1][1]
+    secondary_margin = s_order[0][1] - s_order[1][1]
+    margin_requirement = 2.0 * MAX_ABS_LIMIT
+    margin_stable = min(primary_margin, secondary_margin) > margin_requirement
     thresholds_pass = maximum <= MAX_ABS_LIMIT and rmse <= RMSE_LIMIT and cosine >= COSINE_MINIMUM
-    classification = ("EXACT_EXPECTED_TOKEN_STABLE" if thresholds_pass and top_ids_equal and top1_equal
-                      else "NUMERICALLY_STABLE_TOP_K_ONLY" if thresholds_pass and top1_equal
-                      else "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY" if thresholds_pass
-                      else "ORACLE_DISAGREEMENT")
-    return {
+    if not route_structure_equal or not thresholds_pass:
+        classification = "ORACLE_DISAGREEMENT"
+    elif top1_equal and margin_stable:
+        classification = "EXACT_EXPECTED_TOKEN_STABLE"
+    elif top_ids_equal:
+        classification = "NUMERICALLY_STABLE_TOP_K_ONLY"
+    else:
+        classification = "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
+    result = {
         "schema": "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0",
+        "primary_logits_payload_sha256": primary_record["sha256"],
+        "secondary_logits_payload_sha256": secondary_record["sha256"],
         "element_count": count,
         "max_absolute_error": maximum,
         "rmse": rmse,
@@ -61,7 +79,44 @@ def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path,
         "thresholds": {"max_absolute_error": MAX_ABS_LIMIT, "rmse": RMSE_LIMIT, "cosine_minimum": COSINE_MINIMUM},
         "primary_top32_ids": [item[0] for item in p_order],
         "secondary_top32_ids": [item[0] for item in s_order],
+        "primary_selected_token": p_order[0][0],
+        "secondary_selected_token": s_order[0][0],
+        "primary_top_1_margin": primary_margin,
+        "secondary_top_1_margin": secondary_margin,
+        "frozen_margin_requirement": margin_requirement,
+        "margin_stable": margin_stable,
+        "route_structure_equal": route_structure_equal,
         "top32_order_equal": top_ids_equal,
         "top1_stable": top1_equal,
         "classification": classification,
     }
+    validate_comparison_summary(result, primary_record, secondary_record)
+    return result
+
+
+def validate_comparison_summary(summary: dict, primary_record: dict, secondary_record: dict) -> dict:
+    keys = {"schema","primary_logits_payload_sha256","secondary_logits_payload_sha256","element_count",
+            "max_absolute_error","rmse","cosine_similarity","thresholds","primary_top32_ids",
+            "secondary_top32_ids","primary_selected_token","secondary_selected_token","primary_top_1_margin",
+            "secondary_top_1_margin","frozen_margin_requirement","margin_stable","route_structure_equal",
+            "top32_order_equal","top1_stable","classification"}
+    if type(summary) is not dict or set(summary) != keys:
+        raise ResultEnvelopeError("comparison summary key census")
+    if (summary["schema"] != "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0"
+            or summary["primary_logits_payload_sha256"] != primary_record.get("sha256")
+            or summary["secondary_logits_payload_sha256"] != secondary_record.get("sha256")
+            or summary["element_count"] != primary_record.get("element_count")
+            or summary["element_count"] != secondary_record.get("element_count")
+            or summary["thresholds"] != {"max_absolute_error":MAX_ABS_LIMIT,"rmse":RMSE_LIMIT,"cosine_minimum":COSINE_MINIMUM}
+            or summary["frozen_margin_requirement"] != 2.0 * MAX_ABS_LIMIT
+            or type(summary["route_structure_equal"]) is not bool
+            or type(summary["primary_top32_ids"]) is not list or len(summary["primary_top32_ids"]) != TOP_N
+            or type(summary["secondary_top32_ids"]) is not list or len(summary["secondary_top32_ids"]) != TOP_N
+            or summary["classification"] not in {"EXACT_EXPECTED_TOKEN_STABLE","NUMERICALLY_STABLE_TOP_K_ONLY",
+                                                   "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY","ORACLE_DISAGREEMENT"}):
+        raise ResultEnvelopeError("comparison summary authority")
+    try:
+        raw = canonical_bytes(summary); parse_artifact_bytes(raw, limits=COMPARISON_LIMITS)
+    except (ValueError, TypeError, OverflowError) as exc:
+        raise ResultEnvelopeError("bounded comparison summary") from exc
+    return {"result":"PASS","comparison_summary_sha256":hashlib.sha256(raw).hexdigest()}

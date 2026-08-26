@@ -9,5 +9,6 @@
   "checkpoint_access": "PROHIBITED",
   "promotion": "PROHIBITED",
   "event04_receipt_creation": "PROHIBITED",
-  "event04_terminal_creation": "PROHIBITED"
+  "event04_terminal_creation": "PROHIBITED",
+  "output_root_policy": "TEMPORARY_ROOT_OUTSIDE_REPOSITORY_AND_EVENT04_TREE"
 }
