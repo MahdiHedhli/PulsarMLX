@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-output-interface-final-declaration/1.0.0",
+  "declaration": "F017_CORRECTED_ORACLE_NUMERICAL_OUTPUT_INTERFACE: ACCEPTED",
+  "numerical_formulas_changed": false,
+  "numerical_operation_order_changed": false,
+  "legacy_result_equivalence": "EXACT",
+  "one_execution_three_outputs": "PASS",
+  "authorities": {
+    "output_interface_contract": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-output-interface-v1.json", "sha256": "93f4225a76dc9a28c23fba26618f7a25bace02ac89d73255d41b57f14fe8a8fe"},
+    "formula_manifest": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-formula-manifest-v4.json", "sha256": "942949239585217942839b84817cc492f31da601b924048d13fd2e120623f5aa"},
+    "requalification": {"path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v4.json", "sha256": "0e317eeba8f13be6fc89742e8b8ad401c86c553535a34562a75516e96644b49e"},
+    "opus_arbiter": {"path": "docs/architecture/reviews/evidence/f017-numerical-output-interface-opus-numerical-cycle-02-normalized-result.json", "sha256": "af7c8b2d6898d0ec69a3cde44f616fd534bbbe946a9b98b6e5c302916edec4b0"}
+  },
+  "event_04_retry": false,
+  "event_05_executed": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "ACCEPTED"
+}

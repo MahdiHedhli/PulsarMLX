@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-graph-state/11.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-graph-state-v10.json",
+  "active_frontier": "R12",
+  "nodes": {
+    "R0": "PASS", "R1": "PASS", "R2": "PASS", "R3": "PASS",
+    "R4": "PASS", "R5": "PASS", "R6": "PASS", "R7": "PASS",
+    "R8": "PASS", "R9": "PASS", "R10": "PASS", "R11": "PASS",
+    "R12": "RUNNING", "R13": "PENDING", "R14": "PENDING",
+    "R15": "PENDING", "R16": "PENDING", "R17": "PENDING",
+    "R18": "PENDING", "R19": "PENDING", "R20": "PENDING", "R21": "PENDING"
+  },
+  "numerical_arbiter_cycles": 2,
+  "numerical_arbiter_verdict": "ACCEPT_F017_NUMERICAL_OUTPUT_INTERFACE_AND_REQUALIFICATION",
+  "c_ci_001_status": "PROPOSED_UNTIL_R17",
+  "active_corrected_oracle_generation": "NONE",
+  "event_04_retry": false,
+  "event_04_resume": false,
+  "event_05_executed": false,
+  "live_event_05_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "result": "RUNNING"
+}

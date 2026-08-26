@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R11",
+  "input_head": "ed1e8a49c0c8e3ec6a8328e7f82c9313c051dd78",
+  "output_head": "ed1e8a49c0c8e3ec6a8328e7f82c9313c051dd78",
+  "input_authorities": {
+    "numerical_contract_v4": {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json", "sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2"},
+    "requalification_v4": {"path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v4.json", "sha256": "0e317eeba8f13be6fc89742e8b8ad401c86c553535a34562a75516e96644b49e"},
+    "full_native_ci_v2": {"path": "docs/architecture/reviews/evidence/f017-numerical-output-interface-full-native-ci-v2.json", "sha256": "595bc48c9afeb6270c5484dd509f88b0fd4be94759aee56b06299d49c6fb6d22"},
+    "opus_numerical_arbiter": {"path": "docs/architecture/reviews/evidence/f017-numerical-output-interface-opus-numerical-cycle-02-normalized-result.json", "sha256": "af7c8b2d6898d0ec69a3cde44f616fd534bbbe946a9b98b6e5c302916edec4b0"}
+  },
+  "changed_paths": [],
+  "commands_executed": ["claude-opus-5 numerical arbiter cycle 02"],
+  "tests_executed": {"claim_verdicts": 12, "full_native_run": 32976273072, "evidence_only_run": 32978071844},
+  "result_counts": {"accepted": 12, "rejected": 0, "unresolved": 0},
+  "claims_introduced": [],
+  "claims_closed": [
+    "C-OUT-001", "C-OUT-002", "C-FORM-001", "C-FORM-002",
+    "C-LEGACY-001", "C-LEGACY-002", "C-BITS-001", "C-BITS-002",
+    "C-PURITY-001", "C-ONEEXEC-001", "C-INDEP-001", "C-QUAL-001"
+  ],
+  "claims_invalidated": [],
+  "deferred_claims": {"C-CI-001": "R17"},
+  "checkpoint_access_census": {"original_checkpoint_access": 0},
+  "next_eligible_edges": ["R12"],
+  "result": "PASS"
+}

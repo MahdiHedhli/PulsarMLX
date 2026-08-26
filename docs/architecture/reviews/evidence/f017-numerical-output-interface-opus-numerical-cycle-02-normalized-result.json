@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-opus-numerical-arbiter/1.0.0",
+  "cycle": 2,
+  "session_id": "4f620f8c-9a73-45ca-8f8c-703eda5d0840",
+  "reviewed_head": "ed1e8a49c0c8e3ec6a8328e7f82c9313c051dd78",
+  "reviewed_tree": "131af78d451fab30d3983759826c7a189c74dbd5",
+  "blocking": [],
+  "non_blocking_required": [],
+  "defense_in_depth": [
+    "Cycle-01 DID-001/002/003 carried to V11 integration and full-geometry qualification.",
+    "Typed numerical-receipt enforcement is prospective for newly added receipts.",
+    "FULL_NATIVE v2 labels the retained 44 decoder cases as output-interface tests; the exact local interface suites are 15 tests.",
+    "R8 v2 spans intervening evidence commits but declares only the exact code delta.",
+    "Attempt-1 immutable terminal evidence was verified from exact-head CI."
+  ],
+  "claim_verdicts": {
+    "C-OUT-001": "ACCEPT",
+    "C-OUT-002": "ACCEPT",
+    "C-FORM-001": "ACCEPT",
+    "C-FORM-002": "ACCEPT",
+    "C-LEGACY-001": "ACCEPT",
+    "C-LEGACY-002": "ACCEPT",
+    "C-BITS-001": "ACCEPT",
+    "C-BITS-002": "ACCEPT",
+    "C-PURITY-001": "ACCEPT",
+    "C-ONEEXEC-001": "ACCEPT",
+    "C-INDEP-001": "ACCEPT",
+    "C-QUAL-001": "ACCEPT"
+  },
+  "C-CI-001_stage_disposition": "PROPERLY_DEFERRED_TO_R17",
+  "original_checkpoint_access": 0,
+  "unresolved_material_disagreement": false,
+  "global_verdict": "ACCEPT_F017_NUMERICAL_OUTPUT_INTERFACE_AND_REQUALIFICATION"
+}
