@@ -1,0 +1,19 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-support-ledger/2.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "cycle":1,
+  "support":[
+    {"support_id":"SUP-AST-001","challenge_id":"CHAL-AST-001","disposition":"REPAIR_IMPLEMENTED","evidence":["graph_numerical_prefix digests now cover every V2 execute statement before result construction","validator independently recomputes both graph-prefix digests"],"repair_commit":"535c80073df09c60a1f9e5f16c518c163c05fbea","tests":["GRAPH_NUMERICAL_PREFIX_PRIMARY","GRAPH_NUMERICAL_PREFIX_SECONDARY"],"remaining_uncertainty":"Successor comparison executes after V3 source exists."},
+    {"support_id":"SUP-ALIAS-001","challenge_id":"CHAL-ALIAS-001","disposition":"REPAIR_IMPLEMENTED","evidence":["contract requires immutable bytes and tuple[frozen dataclass] nested fields","mutable list/dict output fields prohibited"],"repair_commit":"535c80073df09c60a1f9e5f16c518c163c05fbea","tests":["DEEP_IMMUTABILITY_CONTRACT"],"remaining_uncertainty":"Runtime mutations execute after V3 implementation."},
+    {"support_id":"SUP-LEAK-001","challenge_id":"CHAL-LEAK-001","disposition":"REPAIR_IMPLEMENTED","evidence":["legacy API scoped to offline Python requalification","active V11 cannot call or serialize legacy result","active serializer must reject legacy full array"],"repair_commit":"535c80073df09c60a1f9e5f16c518c163c05fbea","tests":["ACTIVE_V11_LEGACY_API_PROHIBITION"],"remaining_uncertainty":"V11 integration test remains at R12."},
+    {"support_id":"SUP-COMPAT-001","challenge_id":"CHAL-COMPAT-001","disposition":"ANSWERED_BY_EXISTING_EVIDENCE","evidence":["both V2 and V3 compatibility APIs are Python modules under the same frozen runtime","no Rust JSON equivalence is claimed","contract now says cross_language_json_equivalence_claimed false"],"repair_commit":"535c80073df09c60a1f9e5f16c518c163c05fbea","tests":["CROSS_LANGUAGE_CLAIM_ABSENCE"],"remaining_uncertainty":"None at design scope."},
+    {"support_id":"SUP-READ-001","challenge_id":"CHAL-READ-001","disposition":"ANSWERED_BY_EXISTING_EVIDENCE","evidence":["user-authorized scope explicitly requires source-read equivalence","this phase forbids source-read optimization because it would expand the formula-preserving proof surface"],"repair_commit":null,"tests":["SOURCE_READ_EQUIVALENCE_PREREGISTRATION"],"remaining_uncertainty":"None; proposed optimization is outside scope."},
+    {"support_id":"SUP-EXEC-001","challenge_id":"CHAL-EXEC-001","disposition":"REPAIR_IMPLEMENTED","evidence":["capture timing now states after final configured layer","production 79-layer geometry retained as an assertion, not a trigger"],"repair_commit":"535c80073df09c60a1f9e5f16c518c163c05fbea","tests":["FINAL_CONFIGURED_LAYER_CAPTURE_CONTRACT"],"remaining_uncertainty":"Runtime proof remains at R7."},
+    {"support_id":"SUP-DUPE-001","challenge_id":"CHAL-DUPE-001","disposition":"REPAIR_IMPLEMENTED","evidence":["offline compatibility duplication separated from active Event 05","V11 directly banks immutable payload bytes and never creates the legacy list/JSON result"],"repair_commit":"535c80073df09c60a1f9e5f16c518c163c05fbea","tests":["ACTIVE_V11_DIRECT_BINARY_CONSUMPTION"],"remaining_uncertainty":"V11 integration test remains at R12."}
+  ],
+  "answered_by_existing_evidence":2,
+  "repairs_implemented":5,
+  "conceded":0,
+  "unresolved":0,
+  "result":"PASS"
+}
