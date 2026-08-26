@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-challenge-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "challenges": [
+    {
+      "challenge_id": "E0-C01",
+      "claim_id": "E-REF-003",
+      "attack": "Pass the accepted readiness declaration to the exact measured authorizer field contract.",
+      "expected_behavior": "The declaration exposes the exact fields and values accepted by render_operator_go_candidate.",
+      "observed_behavior": "All three required uppercase readiness fields are absent; the authorizer raises ValueError before candidate construction.",
+      "severity": "BLOCKING_PRE_MINT",
+      "affected_artifacts": ["docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json", "scripts/research/validate_f017_corrected_oracle_access_v11.py"],
+      "status": "CONFIRMED"
+    }
+  ],
+  "challenge_count": 1,
+  "result": "TERMINAL_PRE_MINT_CHALLENGE"
+}
