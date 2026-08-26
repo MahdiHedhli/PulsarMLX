@@ -39,7 +39,8 @@ def validate_contract(value: dict) -> None:
     encoding = value["encoding"]
     expected_encoding = {"container":"RAW_CONTIGUOUS_IEEE754","endianness":"LITTLE","header":"NONE","padding":"NONE",
                          "embedded_path":False,"embedded_sha":False,"finite_values_only":True,
-                         "signed_zero":"PRESERVE_IEEE754_BITS","byte_count_rule":"PRODUCT_SHAPE_TIMES_DTYPE_ITEMSIZE"}
+                         "signed_zero":"PRESERVE_IEEE754_BITS","authority_binding":"PACKAGE_ATTEMPT_ID_AND_CONSUMER_EVENT_ID",
+                         "byte_count_rule":"PRODUCT_SHAPE_TIMES_DTYPE_ITEMSIZE"}
     if encoding != expected_encoding: raise ValueError("encoding")
     if type(value["payloads"]) is not list or len(value["payloads"]) != 6: raise ValueError("payload census")
     keys = {"role","kind","dtype","shape","itemsize","element_count","byte_count"}
@@ -54,7 +55,9 @@ def validate_contract(value: dict) -> None:
         if product != record["element_count"] or product * record["itemsize"] != record["byte_count"]: raise ValueError("derived bytes")
     control = value["control_plane"]
     if (control != {"full_numerical_arrays_in_json":"PROHIBITED","general_bounded_decoder_limits_changed":False,
-                    "result_control_max_bytes":65536,"result_control_max_array_elements":64,"top_summary_elements":32}): raise ValueError("control separation")
+                    "result_control_max_bytes":65536,"result_control_max_array_elements":64,
+                    "routing_manifest_max_bytes":262144,"routing_manifest_max_array_elements":256,
+                    "top_summary_elements":32}): raise ValueError("control separation")
     if value["numerical_formulas_changed"] is not False or value["numerical_methodology_changed"] is not False or value["numerical_thresholds_changed"] is not False or value["original_checkpoint_access"] != 0: raise ValueError("safety")
     expected_write = ["EXCLUSIVE_NO_REPLACE","DETERMINISTIC_CHUNK_ORDER","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"]
     expected_read = ["NO_FOLLOW","REGULAR_FILE","EXACT_KIND","EXACT_DTYPE","EXACT_ENDIAN","EXACT_SHAPE","EXACT_ELEMENT_COUNT","EXACT_BYTE_COUNT","SHA256","FINITE_VALUES"]
@@ -75,14 +78,14 @@ def validate_dag(value: dict) -> None:
     primary = value["primary_success_order"]
     required_primary = ["PRIMARY_NUMERICAL_COMPUTATION_COMPLETE","PRIMARY_FINAL_HIDDEN_PAYLOAD","PRIMARY_FINAL_NORMALIZED_PAYLOAD",
         "PRIMARY_FULL_LOGITS_PAYLOAD","PRIMARY_PAYLOAD_READBACK_COMPLETE","PRIMARY_PAYLOAD_MANIFEST","PRIMARY_TOP32_SUMMARY",
-        "PRIMARY_RESULT_RECEIPT","PRIMARY_RESULT_TERMINAL","PRIMARY_CONSUMER_TERMINAL","SECONDARY_ELIGIBLE"]
+        "PRIMARY_ROUTING_MANIFEST","PRIMARY_RESULT_RECEIPT","PRIMARY_RESULT_TERMINAL","PRIMARY_CONSUMER_TERMINAL","SECONDARY_ELIGIBLE"]
     if primary != required_primary: raise ValueError("primary causal order")
     secondary = value["secondary_success_order"]
     required_secondary = ["PRIMARY_CONSUMER_TERMINAL_VALIDATED","SECONDARY_DURABLE_START",
         "SECONDARY_NUMERICAL_COMPUTATION_COMPLETE","SECONDARY_FINAL_HIDDEN_PAYLOAD",
         "SECONDARY_FINAL_NORMALIZED_PAYLOAD","SECONDARY_FULL_LOGITS_PAYLOAD",
         "SECONDARY_PAYLOAD_READBACK_COMPLETE","SECONDARY_PAYLOAD_MANIFEST","SECONDARY_TOP32_SUMMARY",
-        "SECONDARY_RESULT_RECEIPT","SECONDARY_RESULT_TERMINAL","SECONDARY_CONSUMER_TERMINAL"]
+        "SECONDARY_ROUTING_MANIFEST","SECONDARY_RESULT_RECEIPT","SECONDARY_RESULT_TERMINAL","SECONDARY_CONSUMER_TERMINAL"]
     if secondary != required_secondary: raise ValueError("secondary gate")
     comparison = value["comparison_order"]
     required_comparison = ["PRIMARY_CONSUMER_TERMINAL","SECONDARY_CONSUMER_TERMINAL",
@@ -93,9 +96,9 @@ def validate_dag(value: dict) -> None:
     if comparison != required_comparison: raise ValueError("comparison order")
     closure = value["package_terminal_required_closure"]
     required_closure = ["PRIMARY_FINAL_HIDDEN_PAYLOAD","PRIMARY_FINAL_NORMALIZED_PAYLOAD","PRIMARY_FULL_LOGITS_PAYLOAD",
-        "PRIMARY_PAYLOAD_MANIFEST","PRIMARY_TOP32_SUMMARY","PRIMARY_RESULT_RECEIPT","PRIMARY_RESULT_TERMINAL","PRIMARY_CONSUMER_TERMINAL",
+        "PRIMARY_PAYLOAD_MANIFEST","PRIMARY_TOP32_SUMMARY","PRIMARY_ROUTING_MANIFEST","PRIMARY_RESULT_RECEIPT","PRIMARY_RESULT_TERMINAL","PRIMARY_CONSUMER_TERMINAL",
         "SECONDARY_FINAL_HIDDEN_PAYLOAD","SECONDARY_FINAL_NORMALIZED_PAYLOAD","SECONDARY_FULL_LOGITS_PAYLOAD",
-        "SECONDARY_PAYLOAD_MANIFEST","SECONDARY_TOP32_SUMMARY","SECONDARY_RESULT_RECEIPT","SECONDARY_RESULT_TERMINAL","SECONDARY_CONSUMER_TERMINAL",
+        "SECONDARY_PAYLOAD_MANIFEST","SECONDARY_TOP32_SUMMARY","SECONDARY_ROUTING_MANIFEST","SECONDARY_RESULT_RECEIPT","SECONDARY_RESULT_TERMINAL","SECONDARY_CONSUMER_TERMINAL",
         "COMPARISON_SUMMARY","COMPARISON_RECEIPT","COMPARISON_TERMINAL","DESCRIPTOR_RELEASE_START","DESCRIPTOR_RELEASE_REPORT",
         "DESCRIPTOR_RELEASE_RECEIPT","DESCRIPTOR_RELEASE_TERMINAL","PACKAGE_RECEIPT"]
     if closure != required_closure: raise ValueError("closure")

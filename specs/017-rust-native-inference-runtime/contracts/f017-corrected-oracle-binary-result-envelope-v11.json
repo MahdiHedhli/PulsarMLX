@@ -20,6 +20,7 @@
     "embedded_sha": false,
     "finite_values_only": true,
     "signed_zero": "PRESERVE_IEEE754_BITS",
+    "authority_binding": "PACKAGE_ATTEMPT_ID_AND_CONSUMER_EVENT_ID",
     "byte_count_rule": "PRODUCT_SHAPE_TIMES_DTYPE_ITEMSIZE"
   },
   "payloads": [
@@ -35,6 +36,8 @@
     "general_bounded_decoder_limits_changed": false,
     "result_control_max_bytes": 65536,
     "result_control_max_array_elements": 64,
+    "routing_manifest_max_bytes": 262144,
+    "routing_manifest_max_array_elements": 256,
     "top_summary_elements": 32
   },
   "write_protocol": ["EXCLUSIVE_NO_REPLACE","DETERMINISTIC_CHUNK_ORDER","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"],

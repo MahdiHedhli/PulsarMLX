@@ -108,16 +108,29 @@ def _write_all(descriptor: int, raw: bytes) -> None:
         offset += written
 
 
+def _open_directory(directory: Path) -> int:
+    try:
+        return os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    except OSError as exc:
+        raise ResultEnvelopeError("payload directory authority") from exc
+
+
 def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable[float],
-                 *, chunk_elements: int = DEFAULT_CHUNK_ELEMENTS) -> dict:
+                 *, package_attempt_id: str, consumer_event_id: str,
+                 chunk_elements: int = DEFAULT_CHUNK_ELEMENTS) -> dict:
     """Exclusively bank, fsync, and descriptor-readback an exact payload."""
     if not isinstance(directory, Path) or not isinstance(spec, PayloadSpec):
         raise ResultEnvelopeError("payload bank arguments")
+    if type(package_attempt_id) is not str or not package_attempt_id or type(consumer_event_id) is not str or not consumer_event_id:
+        raise ResultEnvelopeError("payload authority binding")
     _validate_leaf(leaf)
     if type(chunk_elements) is not int or type(chunk_elements) is bool or chunk_elements <= 0:
         raise ResultEnvelopeError("chunk element count")
-    directory.mkdir(parents=True, exist_ok=True)
-    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ResultEnvelopeError("payload directory creation") from exc
+    directory_fd = _open_directory(directory)
     descriptor = -1
     written = 0
     count = 0
@@ -184,6 +197,8 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
         "finite_values": True,
         "signed_zero_policy": "PRESERVE_IEEE754_BITS",
         "producer_identity": f"F017_V11_{spec.role}_RESULT_ENVELOPE",
+        "package_attempt_id": package_attempt_id,
+        "consumer_event_id": consumer_event_id,
     }
 
 
@@ -193,7 +208,7 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
         raise ResultEnvelopeError("payload record type")
     required = set((expected_spec or payload_spec(record.get("role"), record.get("payload_kind"))).record()) | {
         "path_role", "observed_byte_count", "sha256", "finite_values",
-        "signed_zero_policy", "producer_identity",
+        "signed_zero_policy", "producer_identity", "package_attempt_id", "consumer_event_id",
     }
     if type(record) is not dict or set(record) != required:
         raise ResultEnvelopeError("payload record key census")
@@ -210,8 +225,10 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
         raise ResultEnvelopeError("signed-zero policy")
     if record["producer_identity"] != f"F017_V11_{spec.role}_RESULT_ENVELOPE":
         raise ResultEnvelopeError("payload producer identity")
+    if type(record["package_attempt_id"]) is not str or not record["package_attempt_id"] or type(record["consumer_event_id"]) is not str or not record["consumer_event_id"]:
+        raise ResultEnvelopeError("payload authority binding")
     leaf = record["path_role"]; _validate_leaf(leaf)
-    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    directory_fd = _open_directory(directory)
     try:
         descriptor = os.open(leaf, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
         try:
@@ -248,9 +265,9 @@ def iter_payload(directory: Path, record: dict, *, chunk_elements: int = DEFAULT
     validate_payload(directory, record, expected_spec=spec)
     if type(chunk_elements) is not int or type(chunk_elements) is bool or chunk_elements <= 0:
         raise ResultEnvelopeError("chunk element count")
-    directory_fd = os.open(directory, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
-    descriptor = os.open(record["path_role"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
+    directory_fd = _open_directory(directory); descriptor = -1
     try:
+        descriptor = os.open(record["path_role"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd)
         info = os.fstat(descriptor)
         if not stat.S_ISREG(info.st_mode) or info.st_size != spec.byte_count:
             raise ResultEnvelopeError("stream payload file geometry")
@@ -270,6 +287,10 @@ def iter_payload(directory: Path, record: dict, *, chunk_elements: int = DEFAULT
             raise ResultEnvelopeError("excess payload bytes")
         if observed != spec.byte_count or digest.hexdigest() != record["sha256"]:
             raise ResultEnvelopeError("stream payload identity mismatch")
+    except ResultEnvelopeError:
+        raise
+    except OSError as exc:
+        raise ResultEnvelopeError("payload stream filesystem failure") from exc
     finally:
-        os.close(descriptor)
+        if descriptor >= 0: os.close(descriptor)
         os.close(directory_fd)

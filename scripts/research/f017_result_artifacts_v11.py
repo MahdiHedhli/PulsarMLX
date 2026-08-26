@@ -17,6 +17,11 @@ CONTROL_LIMITS = ArtifactLimits(
     max_array_elements=64, max_string_chars=4_096,
     max_integer_digits=32, max_number_chars=128,
 )
+ROUTING_LIMITS = ArtifactLimits(
+    max_bytes=262_144, max_depth=12, max_object_keys=512,
+    max_array_elements=256, max_string_chars=4_096,
+    max_integer_digits=32, max_number_chars=128,
+)
 
 
 def _sha(value: object) -> str:
@@ -47,6 +52,8 @@ def build_manifest(role: str, package_attempt_id: str, consumer_event_id: str,
     expected = {"final_hidden", "final_normalized", "full_logits"}
     if set(by_kind) != expected or any(record.get("role") != role for record in payload_records):
         raise ResultEnvelopeError("manifest payload identities")
+    if any(record.get("package_attempt_id") != package_attempt_id or record.get("consumer_event_id") != consumer_event_id for record in payload_records):
+        raise ResultEnvelopeError("manifest payload authority binding")
     return {
         "schema": "pulsarmlx.f017.corrected-oracle-result-manifest/11.0.0",
         "generation": "V11", "role": role,
@@ -75,6 +82,8 @@ def validate_manifest(directory: Path, manifest: dict) -> dict:
     expected_order = ["final_hidden", "final_normalized", "full_logits"]
     for record, kind in zip(payloads, expected_order, strict=True):
         validate_payload(directory, record, expected_spec=PAYLOAD_SPECS[(role, kind)])
+        if record["package_attempt_id"] != manifest["package_attempt_id"] or record["consumer_event_id"] != manifest["consumer_event_id"]:
+            raise ResultEnvelopeError("manifest payload authority binding")
     if "full_logits" in manifest or any("full_logits" in record and type(record.get("full_logits")) is list for record in payloads):
         raise ResultEnvelopeError("full logits entered control JSON")
     return {"result": "PASS", "manifest_sha256": _bounded(manifest)}
@@ -83,6 +92,52 @@ def validate_manifest(directory: Path, manifest: dict) -> dict:
 def bank_manifest(path: Path, directory: Path, manifest: dict) -> str:
     validate_manifest(directory, manifest)
     return bank_exclusive(path, manifest)
+
+
+def build_routing_manifest(role: str, package_attempt_id: str, consumer_event_id: str,
+                           layers: list[dict]) -> dict:
+    if role not in {"PRIMARY","SECONDARY"} or type(layers) is not list or len(layers) != 79:
+        raise ResultEnvelopeError("routing manifest census")
+    routes = []
+    for expected_layer, layer in enumerate(layers):
+        if type(layer) is not dict or type(layer.get("selected_expert_ids")) is not list:
+            raise ResultEnvelopeError("routing layer")
+        ids = layer["selected_expert_ids"]
+        if len(ids) > 8 or any(type(value) is not int or type(value) is bool or value < 0 for value in ids) or len(ids) != len(set(ids)):
+            raise ResultEnvelopeError("routing experts")
+        routes.append({"layer":expected_layer,"selected_expert_ids":ids})
+    value = {"schema":"pulsarmlx.f017.corrected-oracle-routing-manifest/11.0.0","role":role,
+             "package_attempt_id":package_attempt_id,"consumer_event_id":consumer_event_id,
+             "layer_count":79,"route_membership":"EXACT","route_order":"EXACT","layers":routes}
+    validate_routing_manifest(value, expected_role=role, expected_package_attempt_id=package_attempt_id,
+                              expected_consumer_event_id=consumer_event_id)
+    return value
+
+
+def validate_routing_manifest(manifest: dict, *, expected_role: str,
+                              expected_package_attempt_id: str, expected_consumer_event_id: str) -> dict:
+    keys = {"schema","role","package_attempt_id","consumer_event_id","layer_count",
+            "route_membership","route_order","layers"}
+    if (type(manifest) is not dict or set(manifest) != keys
+            or manifest.get("schema") != "pulsarmlx.f017.corrected-oracle-routing-manifest/11.0.0"
+            or manifest.get("role") != expected_role
+            or manifest.get("package_attempt_id") != expected_package_attempt_id
+            or manifest.get("consumer_event_id") != expected_consumer_event_id
+            or manifest.get("layer_count") != 79 or manifest.get("route_membership") != "EXACT"
+            or manifest.get("route_order") != "EXACT" or type(manifest.get("layers")) is not list
+            or len(manifest["layers"]) != 79):
+        raise ResultEnvelopeError("routing manifest authority")
+    for expected_layer, record in enumerate(manifest["layers"]):
+        if type(record) is not dict or set(record) != {"layer","selected_expert_ids"} or record["layer"] != expected_layer:
+            raise ResultEnvelopeError("routing layer census")
+        ids = record["selected_expert_ids"]
+        if type(ids) is not list or len(ids) > 8 or any(type(value) is not int or type(value) is bool or value < 0 for value in ids) or len(ids) != len(set(ids)):
+            raise ResultEnvelopeError("routing expert census")
+    try:
+        raw = canonical_bytes(manifest); parse_artifact_bytes(raw, limits=ROUTING_LIMITS)
+    except (ValueError, TypeError, OverflowError) as exc:
+        raise ResultEnvelopeError("bounded routing manifest") from exc
+    return {"result":"PASS","routing_manifest_sha256":hashlib.sha256(raw).hexdigest()}
 
 
 def build_top32(directory: Path, logits_record: dict, event_id: str) -> dict:
@@ -137,10 +192,10 @@ def validate_top32(directory: Path, logits_record: dict, summary: dict) -> dict:
 
 def build_receipt(role: str, authorization_id: str, package_attempt_id: str, consumer_event_id: str,
                   producer_measurement_sha256: str, numerical_contract_sha256: str,
-                  payload_manifest_sha256: str, top32_summary_sha256: str,
+                  payload_manifest_sha256: str, top32_summary_sha256: str, routing_manifest_sha256: str,
                   durable_start_sha256: str, access_census_sha256: str) -> dict:
     for name, value in (("producer", producer_measurement_sha256), ("numerical", numerical_contract_sha256),
-                        ("manifest", payload_manifest_sha256), ("summary", top32_summary_sha256),
+                        ("manifest", payload_manifest_sha256), ("summary", top32_summary_sha256), ("routing", routing_manifest_sha256),
                         ("start", durable_start_sha256), ("access", access_census_sha256)):
         _validate_sha(value, name)
     value = {"schema": "pulsarmlx.f017.corrected-oracle-result-receipt/11.0.0",
@@ -148,24 +203,26 @@ def build_receipt(role: str, authorization_id: str, package_attempt_id: str, con
             "consumer_event_id": consumer_event_id, "producer_measurement_sha256": producer_measurement_sha256,
             "numerical_contract_sha256": numerical_contract_sha256,
             "payload_manifest_sha256": payload_manifest_sha256, "top32_summary_sha256": top32_summary_sha256,
+            "routing_manifest_sha256": routing_manifest_sha256,
             "durable_start_sha256": durable_start_sha256, "access_census_sha256": access_census_sha256,
             "result_state": "COMPLETE"}
     _bounded(value); return value
 
 
 def validate_receipt(receipt: dict, *, expected_role: str, expected_manifest_sha256: str,
-                     expected_summary_sha256: str) -> dict:
+                     expected_summary_sha256: str, expected_routing_manifest_sha256: str) -> dict:
     keys = {"schema","role","authorization_id","package_attempt_id","consumer_event_id",
             "producer_measurement_sha256","numerical_contract_sha256","payload_manifest_sha256",
-            "top32_summary_sha256","durable_start_sha256","access_census_sha256","result_state"}
+            "top32_summary_sha256","routing_manifest_sha256","durable_start_sha256","access_census_sha256","result_state"}
     if (type(receipt) is not dict or set(receipt) != keys
             or receipt.get("schema") != "pulsarmlx.f017.corrected-oracle-result-receipt/11.0.0"
             or receipt.get("role") != expected_role or receipt.get("result_state") != "COMPLETE"
             or receipt.get("payload_manifest_sha256") != expected_manifest_sha256
-            or receipt.get("top32_summary_sha256") != expected_summary_sha256):
+            or receipt.get("top32_summary_sha256") != expected_summary_sha256
+            or receipt.get("routing_manifest_sha256") != expected_routing_manifest_sha256):
         raise ResultEnvelopeError("result receipt")
     for field in ("producer_measurement_sha256","numerical_contract_sha256","payload_manifest_sha256",
-                  "top32_summary_sha256","durable_start_sha256","access_census_sha256"):
+                  "top32_summary_sha256","routing_manifest_sha256","durable_start_sha256","access_census_sha256"):
         _validate_sha(receipt[field], field)
     return {"result":"PASS","receipt_sha256":_bounded(receipt)}
 
@@ -243,10 +300,12 @@ def closure_root(primary_manifest: dict, primary_receipt: dict, primary_terminal
             "primary": {"manifest_sha256": _sha(primary_manifest), "receipt_sha256": _sha(primary_receipt),
                         "terminal_sha256": _sha(primary_terminal),
                         "result_terminal_sha256": primary_result_terminal_sha256,
+                        "routing_manifest_sha256": primary_receipt["routing_manifest_sha256"],
                         "payload_sha256s": [record["sha256"] for record in primary_manifest["payloads"]]},
             "secondary": {"manifest_sha256": _sha(secondary_manifest), "receipt_sha256": _sha(secondary_receipt),
                           "terminal_sha256": _sha(secondary_terminal),
                           "result_terminal_sha256": secondary_result_terminal_sha256,
+                          "routing_manifest_sha256": secondary_receipt["routing_manifest_sha256"],
                           "payload_sha256s": [record["sha256"] for record in secondary_manifest["payloads"]]},
             "comparison": {"summary_sha256":comparison_summary_sha256,
                            "receipt_sha256":comparison_receipt_sha256,
@@ -256,3 +315,21 @@ def closure_root(primary_manifest: dict, primary_receipt: dict, primary_terminal
             "package_receipt_sha256": package_receipt_sha256,
             "payload_count": 6, "result": "COMPLETE"}
     _bounded(value); return value
+
+
+def validate_closure_root(closure: dict, primary_manifest: dict, primary_receipt: dict, primary_terminal: dict,
+                          secondary_manifest: dict, secondary_receipt: dict, secondary_terminal: dict,
+                          primary_result_terminal_sha256: str, secondary_result_terminal_sha256: str,
+                          comparison_summary_sha256: str, comparison_receipt_sha256: str,
+                          comparison_terminal_sha256: str, release_start_sha256: str,
+                          release_report_sha256: str, release_receipt_sha256: str,
+                          release_terminal_sha256: str, package_receipt_sha256: str) -> dict:
+    expected = closure_root(primary_manifest, primary_receipt, primary_terminal,
+        secondary_manifest, secondary_receipt, secondary_terminal,
+        primary_result_terminal_sha256, secondary_result_terminal_sha256,
+        comparison_summary_sha256, comparison_receipt_sha256, comparison_terminal_sha256,
+        release_start_sha256, release_report_sha256, release_receipt_sha256,
+        release_terminal_sha256, package_receipt_sha256)
+    if type(closure) is not dict or closure != expected:
+        raise ResultEnvelopeError("package result closure")
+    return {"result":"PASS","closure_sha256":_bounded(closure)}

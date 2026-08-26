@@ -46,15 +46,15 @@ def convert(raw_path: Path, output_directory: Path, grant: dict) -> dict:
     if type(logits) is not list or len(logits) != 154_880:
         raise ResultEnvelopeError("diagnostic logits geometry")
     record = bank_payload(output_directory, "event04-primary-full-logits.f64le.bin",
-                          payload_spec("PRIMARY", "full_logits"), logits)
+                          payload_spec("PRIMARY", "full_logits"), logits,
+                          package_attempt_id=grant["event04_package_attempt_id"],
+                          consumer_event_id="EVENT04_NON_AUTHORITATIVE_DIAGNOSTIC")
     record = {**record, "role":"DIAGNOSTIC_EVENT04", "payload_kind":"event04_primary_full_logits",
               "producer_identity":"F017_V11_EVENT04_NON_AUTHORITATIVE_DIAGNOSTIC"}
     return {"schema": "pulsarmlx.f017.event04-result-envelope-diagnostic/11.0.0",
             "authority": "NON_AUTHORITATIVE_DIAGNOSTIC_ONLY", "event04_promotion": "PROHIBITED",
             "event04_receipt_created": False, "event04_terminal_created": False,
             "raw_output_sha256": EXPECTED_SHA256, "payload": record,
-            "selected_token_diagnostic": result["selected_token"],
-            "top1_margin_diagnostic": result["top_1_margin"],
             "final_hidden_payload": "UNAVAILABLE_SOURCE_CONTAINS_HASH_ONLY",
             "final_normalized_payload": "UNAVAILABLE_SOURCE_CONTAINS_HASH_ONLY",
             "original_checkpoint_access": 0}

@@ -1,0 +1,20 @@
+{
+  "schema":"pulsarmlx.f017.event05-result-envelope-opus-design-arbiter/1.0.0",
+  "reviewed_head":"2b76fbbad4ad173b9a64fe265e7e8ca09c1cef1b",
+  "reviewer":"claude-opus-5",
+  "effort":"high",
+  "cycle":2,
+  "verdict":"REJECT",
+  "cycle_01_repairs_confirmed":12,
+  "findings":[
+    {"id":"NEW-01","severity":"NON_BLOCKING_REQUIRED","summary":"Structural route agreement entered comparison as an unevidenced caller boolean."},
+    {"id":"NEW-02","severity":"DEFENSE_IN_DEPTH","summary":"Diagnostic converter republished quarantined observations."},
+    {"id":"NEW-03","severity":"DEFENSE_IN_DEPTH","summary":"Parent directory open errors escaped the controlled exception boundary."},
+    {"id":"NEW-04","severity":"DEFENSE_IN_DEPTH","summary":"Threshold-breach comparator paths lacked committed tests."},
+    {"id":"NEW-05","severity":"DEFENSE_IN_DEPTH","summary":"Package result closure lacked an independent validator."},
+    {"id":"NEW-06","severity":"DEFENSE_IN_DEPTH","summary":"Producer identity alone was relabelable without event binding."}
+  ],
+  "counters":{"blocking":0,"non_blocking_required":1,"defense_in_depth":5,"accepted_claims":13,"rejected_claims":1,"unresolved_claims":0},
+  "independent_verification":{"unit_tests":"11/11 PASS","design_mutations":168,"independent_mutations":772,"original_checkpoint_access":0},
+  "global_verdict":"REJECT"
+}

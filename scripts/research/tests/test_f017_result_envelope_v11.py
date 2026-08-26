@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 
 from f017_binary_comparator_v11 import compare_logits, validate_comparison_summary
 from f017_result_artifacts_v11 import (build_consumer_terminal, build_manifest, build_receipt,
-    build_result_terminal, build_top32, closure_root, require_primary_terminal,
+    build_result_terminal, build_routing_manifest, build_top32, closure_root, require_primary_terminal,
     validate_manifest, validate_top32)
 from f017_event04_diagnostic_converter_v11 import convert
 from f017_result_envelope_v11 import (HIDDEN_SIZE, VOCAB_SIZE, PAYLOAD_SPECS,
@@ -21,6 +21,12 @@ from f017_result_envelope_v11 import (HIDDEN_SIZE, VOCAB_SIZE, PAYLOAD_SPECS,
 
 
 class ResultEnvelopeV11Tests(unittest.TestCase):
+    @staticmethod
+    def routing(role: str, *, mismatch: bool = False) -> dict:
+        layers = [{"selected_expert_ids": ([] if index < 3 else [index % 256, (index + 1) % 256])} for index in range(79)]
+        if mismatch: layers[-1] = {"selected_expert_ids":[255]}
+        return build_routing_manifest(role, "PKG", role, layers)
+
     def test_geometry_is_derived(self) -> None:
         expected = {
             ("PRIMARY", "final_hidden"): 49_152,
@@ -36,8 +42,8 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
     def test_chunking_is_byte_identical_and_signed_zero_preserved(self) -> None:
         values = [0.0, -0.0] + [float(index) / 17 for index in range(HIDDEN_SIZE - 2)]
         with tempfile.TemporaryDirectory() as first, tempfile.TemporaryDirectory() as second:
-            one = bank_payload(Path(first), "hidden.bin", payload_spec("PRIMARY", "final_hidden"), values, chunk_elements=1)
-            two = bank_payload(Path(second), "hidden.bin", payload_spec("PRIMARY", "final_hidden"), values, chunk_elements=997)
+            one = bank_payload(Path(first), "hidden.bin", payload_spec("PRIMARY", "final_hidden"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY", chunk_elements=1)
+            two = bank_payload(Path(second), "hidden.bin", payload_spec("PRIMARY", "final_hidden"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY", chunk_elements=997)
             self.assertEqual(one["sha256"], two["sha256"])
             self.assertEqual((Path(first) / "hidden.bin").read_bytes()[:16], struct.pack("<dd", 0.0, -0.0))
             self.assertEqual(validate_payload(Path(first), one)["result"], "PASS")
@@ -48,13 +54,13 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 values = [0.0] * HIDDEN_SIZE; values[12] = value
                 with self.assertRaises(ResultEnvelopeError):
-                    bank_payload(Path(directory), "payload.bin", spec, values)
+                    bank_payload(Path(directory), "payload.bin", spec, values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
 
     def test_short_extra_sha_and_record_mutations_reject(self) -> None:
         spec = payload_spec("SECONDARY", "final_hidden")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            record = bank_payload(root, "payload.bin", spec, [0.25] * HIDDEN_SIZE)
+            record = bank_payload(root, "payload.bin", spec, [0.25] * HIDDEN_SIZE, package_attempt_id="PKG", consumer_event_id="SECONDARY")
             original = (root / "payload.bin").read_bytes()
             for mutant in (original[:-1], original + b"\0"):
                 (root / "payload.bin").write_bytes(mutant)
@@ -70,13 +76,13 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             root = Path(directory); records = []
             for kind in ("final_hidden", "final_normalized", "full_logits"):
                 spec = payload_spec("PRIMARY", kind)
-                records.append(bank_payload(root, f"{kind}.bin", spec, (0.0 for _ in range(spec.element_count))))
+                records.append(bank_payload(root, f"{kind}.bin", spec, (0.0 for _ in range(spec.element_count)), package_attempt_id="PKG", consumer_event_id="PRIMARY-EVENT"))
             manifest = build_manifest("PRIMARY", "PKG", "PRIMARY-EVENT", records)
             self.assertEqual(validate_manifest(root, manifest)["result"], "PASS")
             digest = hashlib.sha256(b"x").hexdigest()
             receipt = build_receipt("PRIMARY", "AUTH", "PKG", "PRIMARY-EVENT", digest, digest,
                                     hashlib.sha256(__import__('json').dumps(manifest, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest(),
-                                    digest, digest, digest)
+                                    digest, digest, digest, digest)
             receipt_sha = hashlib.sha256(__import__('json').dumps(receipt, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest()
             result_terminal = build_result_terminal("PRIMARY", receipt_sha, receipt["payload_manifest_sha256"])
             result_terminal_sha = hashlib.sha256(__import__('json').dumps(result_terminal, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest()
@@ -91,9 +97,9 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
         primary_values = (float(index % 257) / 1000 for index in range(VOCAB_SIZE))
         secondary_values = (float(index % 257) / 1000 for index in range(VOCAB_SIZE))
         with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
-            p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), primary_values)
-            s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), secondary_values)
-            result = compare_logits(Path(left), p, Path(right), s, route_structure_equal=True, chunk_elements=977)
+            p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), primary_values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
+            s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), secondary_values, package_attempt_id="PKG", consumer_event_id="SECONDARY")
+            result = compare_logits(Path(left), p, Path(right), s, self.routing("PRIMARY"), self.routing("SECONDARY"), chunk_elements=977)
             self.assertEqual(result["element_count"], VOCAB_SIZE)
             self.assertLess(result["max_absolute_error"], 1.5e-8)
             self.assertTrue(result["top1_stable"])
@@ -106,7 +112,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
         spec = payload_spec("PRIMARY", "final_hidden")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            record = bank_payload(root, "payload.bin", spec, [1.0] * HIDDEN_SIZE)
+            record = bank_payload(root, "payload.bin", spec, [1.0] * HIDDEN_SIZE, package_attempt_id="PKG", consumer_event_id="PRIMARY")
             raw = bytearray((root / "payload.bin").read_bytes()); raw[0] ^= 1
             (root / "payload.bin").write_bytes(raw)
             with self.assertRaises(ResultEnvelopeError):
@@ -116,7 +122,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
         values = [float(index) for index in range(VOCAB_SIZE)]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            record = bank_payload(root, "logits.bin", payload_spec("PRIMARY", "full_logits"), values)
+            record = bank_payload(root, "logits.bin", payload_spec("PRIMARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
             summary = build_top32(root, record, "EVENT")
             self.assertEqual(summary["selected_token"], VOCAB_SIZE - 1)
             self.assertEqual(validate_top32(root, record, summary)["result"], "PASS")
@@ -132,23 +138,23 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
         for routes, margin, expected in cases:
             with self.subTest(expected=expected), tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
                 values = [0.0] * VOCAB_SIZE; values[10] = 1.0; values[11] = 1.0 - margin
-                p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), values)
-                s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), values)
-                result = compare_logits(Path(left), p, Path(right), s, route_structure_equal=routes)
+                p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="PRIMARY")
+                s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), values, package_attempt_id="PKG", consumer_event_id="SECONDARY")
+                result = compare_logits(Path(left), p, Path(right), s, self.routing("PRIMARY"), self.routing("SECONDARY", mismatch=not routes))
                 self.assertEqual(result["classification"], expected)
                 self.assertEqual(result["primary_logits_payload_sha256"], p["sha256"])
-                self.assertEqual(validate_comparison_summary(result, p, s)["result"], "PASS")
+                self.assertEqual(validate_comparison_summary(result, p, s, self.routing("PRIMARY"), self.routing("SECONDARY", mismatch=not routes))["result"], "PASS")
 
         with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
             primary = [1.0] * VOCAB_SIZE; secondary = [1.0] * VOCAB_SIZE
             primary[10] = 1.004; primary[11] = 1.003
             secondary[10] = 1.003; secondary[11] = 1.004
-            p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), primary)
-            s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), secondary)
-            result = compare_logits(Path(left), p, Path(right), s, route_structure_equal=True)
+            p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), primary, package_attempt_id="PKG", consumer_event_id="PRIMARY")
+            s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), secondary, package_attempt_id="PKG", consumer_event_id="SECONDARY")
+            result = compare_logits(Path(left), p, Path(right), s, self.routing("PRIMARY"), self.routing("SECONDARY"))
             self.assertEqual(result["classification"], "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY")
             mutant = dict(result); mutant["primary_logits_payload_sha256"] = "0" * 64
-            with self.assertRaises(ResultEnvelopeError): validate_comparison_summary(mutant, p, s)
+            with self.assertRaises(ResultEnvelopeError): validate_comparison_summary(mutant, p, s, self.routing("PRIMARY"), self.routing("SECONDARY"))
 
     def test_event04_diagnostic_record_cannot_enter_manifest(self) -> None:
         raw = ROOT / "docs/architecture/reviews/evidence/f017-event04-v10-terminal-package-v1/package-evidence/primary-consumer-output.json"
@@ -159,6 +165,29 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             self.assertEqual(converted["payload"]["role"], "DIAGNOSTIC_EVENT04")
             with self.assertRaises(ResultEnvelopeError):
                 build_manifest("PRIMARY", "EVENT05-PACKAGE", "EVENT05-PRIMARY", [converted["payload"]] * 3)
+
+    def test_numerical_threshold_breach_is_disagreement(self) -> None:
+        with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
+            primary = [1.0] * VOCAB_SIZE; secondary = list(primary)
+            primary[7] = 2.0; secondary[7] = 1.99
+            p = bank_payload(Path(left), "logits.bin", payload_spec("PRIMARY", "full_logits"), primary, package_attempt_id="PKG", consumer_event_id="PRIMARY")
+            s = bank_payload(Path(right), "logits.bin", payload_spec("SECONDARY", "full_logits"), secondary, package_attempt_id="PKG", consumer_event_id="SECONDARY")
+            result = compare_logits(Path(left), p, Path(right), s, self.routing("PRIMARY"), self.routing("SECONDARY"))
+            self.assertEqual(result["classification"], "ORACLE_DISAGREEMENT")
+            self.assertGreater(result["max_absolute_error"], result["thresholds"]["max_absolute_error"])
+
+    def test_diagnostic_output_cannot_enter_repository(self) -> None:
+        raw = ROOT / "docs/architecture/reviews/evidence/f017-event04-v10-terminal-package-v1/package-evidence/primary-consumer-output.json"
+        grant = __import__('json').loads((ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event04-result-envelope-diagnostic-reuse-grant-v11.json").read_text())
+        with self.assertRaises(ResultEnvelopeError):
+            convert(raw, ROOT / "docs/architecture/reviews/evidence", grant)
+
+    def test_symlinked_payload_parent_is_controlled_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); real = root / "real"; real.mkdir(); link = root / "link"; link.symlink_to(real, target_is_directory=True)
+            with self.assertRaises(ResultEnvelopeError):
+                bank_payload(link, "payload.bin", payload_spec("PRIMARY", "final_hidden"), [0.0] * HIDDEN_SIZE,
+                             package_attempt_id="PKG", consumer_event_id="PRIMARY")
 
 
 if __name__ == "__main__":
