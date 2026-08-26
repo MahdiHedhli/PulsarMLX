@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json"
+OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json"
 PATHS = (
     "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
     "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
@@ -18,8 +18,8 @@ PATHS = (
     "scripts/research/execute_f017_corrected_oracle_event_v11.py",
     "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
     "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
-    "scripts/research/f017_corrected_oracle_primary_target_source_v10.py",
-    "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py",
+    "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+    "scripts/research/f017_corrected_oracle_secondary_target_source_v11.py",
     "scripts/research/f017_result_envelope_v11.py",
     "scripts/research/f017_result_artifacts_v11.py",
     "scripts/research/f017_result_bundle_builder_v11.py",
@@ -65,8 +65,8 @@ def generate(head: str | None = None) -> dict:
             "sha256":hashlib.sha256(raw).hexdigest(),
         })
     return {
-        "schema":"pulsarmlx.f017.v11-result-envelope-implementation-measurement/2.0.0",
-        "supersedes":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v1.json",
+        "schema":"pulsarmlx.f017.v11-result-envelope-implementation-measurement/3.0.0",
+        "supersedes":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json",
         "branch":"feat/017-rust-native-inference-runtime",
         "implementation_head":head,
         "implementation_tree":tree,

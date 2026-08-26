@@ -6,7 +6,7 @@ from pathlib import Path
 import hashlib
 
 import f017_corrected_oracle_primary_numerics_v3 as primary_core
-from f017_corrected_oracle_primary_target_source_v10 import source_from_inherited_descriptors
+from f017_corrected_oracle_primary_target_source_v11 import source_from_inherited_descriptors
 from f017_descriptor_lease_manager_v10 import validate_descriptors
 from f017_result_bundle_builder_v11 import bank_output_bundle
 

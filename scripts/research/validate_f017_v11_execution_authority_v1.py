@@ -38,12 +38,22 @@ def main() -> int:
         raise ValueError("historical primary V2")
     if _sha(secondary_v2) != "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791":
         raise ValueError("historical secondary V2")
+    historical_sources = {
+        "f017_corrected_oracle_primary_target_source_v10.py": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4",
+        "f017_corrected_oracle_secondary_target_source_v10.py": "421e3c9c414257527cc20b43906326323bc22d8fc65be3e195048957f40a21b8",
+    }
+    for name, expected in historical_sources.items():
+        if _sha(RESEARCH / name) != expected:
+            raise ValueError(f"historical V10 target-source drift: {name}")
     numerical_v4 = json.loads((CONTRACTS / "f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json").read_text())
     if (numerical_v4["oracle_roles"]["primary"]["implementation_sha256"] != _sha(primary_v3)
             or numerical_v4["oracle_roles"]["secondary"]["implementation_sha256"] != _sha(secondary_v3)):
         raise ValueError("V4 successor core binding")
     primary_wrapper = RESEARCH / "f017_corrected_oracle_primary_wrapper_v11.py"
     secondary_wrapper = RESEARCH / "f017_corrected_oracle_secondary_wrapper_v11.py"
+    if ("f017_corrected_oracle_primary_target_source_v11" not in primary_wrapper.read_text()
+            or "f017_corrected_oracle_secondary_target_source_v11" not in secondary_wrapper.read_text()):
+        raise ValueError("V11 target-source separation")
     p_calls = _calls(primary_wrapper, "execute_and_bank")
     s_calls = _calls(secondary_wrapper, "execute_and_bank")
     if sum(_call_name(call) == "execute_outputs" for call in p_calls) != 1:
@@ -88,6 +98,8 @@ def main() -> int:
         "secondary_gate_before_execution":"PASS",
         "exact_immutable_payload_banking":"PASS",
         "real_core_summary_coupling":"PASS",
+        "historical_v10_target_sources":"BYTE_EXACT",
+        "v11_target_source_separation":"PASS",
         "control_plane_full_arrays":0,
         "coordinator_causal_order":"PASS",
         "event_04_retry":False,

@@ -63,8 +63,7 @@ class SecondaryDescriptorStoreV10:
                     raise ValueError("duplicate secondary tensor")
                 self.records[record["name"]] = record
         self.handles = {identity["shard_ordinal"]: (identity, fd) for identity, fd in zip(identities, descriptors, strict=True)}
-        self.consumed: set[int] = set(); self.formats: set[str] = set()
-        self.tensor_reads = 0; self.path_reopen_count = 0
+        self.consumed: set[int] = set(); self.formats: set[str] = set(); self.tensor_reads = 0
 
     def _record(self, name: str, rows: int, columns: int) -> dict:
         record = self.records.get(name)

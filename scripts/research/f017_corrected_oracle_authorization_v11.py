@@ -18,7 +18,7 @@ NUMERICAL_V4 = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-co
 PRIMARY_V3 = ROOT / "scripts/research/f017_corrected_oracle_primary_numerics_v3.py"
 SECONDARY_V3 = ROOT / "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py"
 RESULT_AUTHORITY = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json"
-IMPLEMENTATION_MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json"
+IMPLEMENTATION_MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json"
 
 
 def _sha(path: Path) -> str:

@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json"
-OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v2.json"
+MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json"
+OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v3.json"
 
 
 def _sha(path: Path) -> str:
@@ -30,11 +30,11 @@ def generate() -> dict:
     if len(implementation) != measurement["measured_path_count"]:
         raise ValueError("V11 scientific implementation role collision")
     return {
-        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.0.1",
-        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11.json",
-        "status":"V11_IMPLEMENTED_OPUS_CYCLE01_REPAIR_NO_EVENT05_AUTHORITY",
+        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.0.2",
+        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v2.json",
+        "status":"V11_IMPLEMENTED_CI_HISTORICAL_SPLIT_REPAIR_NO_EVENT05_AUTHORITY",
         "active_generation":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json"),
-        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json"),
+        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json"),
         "implementation_head":measurement["implementation_head"],
         "implementation_tree":measurement["implementation_tree"],
         "implementation":implementation,
