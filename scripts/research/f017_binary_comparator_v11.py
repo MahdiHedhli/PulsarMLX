@@ -11,6 +11,7 @@ from f017_bounded_artifact_decode_v1 import ArtifactLimits, parse_artifact_bytes
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import validate_routing_manifest
 from f017_result_envelope_v11 import iter_payload, ResultEnvelopeError, TOP_N
+from f017_binary_comparison_authority_v11 import validate_summary as validate_authoritative_summary
 
 MAX_ABS_LIMIT = 0.0065169706285814755
 RMSE_LIMIT = 0.003463567697419031
@@ -30,11 +31,14 @@ def _push(heap: list[tuple[float, int]], value: float, token: int) -> None:
 
 def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path, secondary_record: dict,
                    primary_routing_manifest: dict, secondary_routing_manifest: dict,
+                   primary_receipt: dict, secondary_receipt: dict,
                    *, chunk_elements: int = 4_096) -> dict:
     if primary_record.get("role") != "PRIMARY" or primary_record.get("payload_kind") != "full_logits":
         raise ResultEnvelopeError("primary comparison payload")
     if secondary_record.get("role") != "SECONDARY" or secondary_record.get("payload_kind") != "full_logits":
         raise ResultEnvelopeError("secondary comparison payload")
+    if primary_record.get("package_attempt_id") != secondary_record.get("package_attempt_id"):
+        raise ResultEnvelopeError("comparison package identity")
     primary_route = validate_routing_manifest(primary_routing_manifest, expected_role="PRIMARY",
         expected_package_attempt_id=primary_record["package_attempt_id"], expected_consumer_event_id=primary_record["consumer_event_id"])
     secondary_route = validate_routing_manifest(secondary_routing_manifest, expected_role="SECONDARY",
@@ -75,6 +79,7 @@ def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path,
         classification = "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY"
     result = {
         "schema": "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0",
+        "package_attempt_id": primary_record["package_attempt_id"],
         "primary_logits_payload_sha256": primary_record["sha256"],
         "secondary_logits_payload_sha256": secondary_record["sha256"],
         "primary_routing_manifest_sha256": primary_route["routing_manifest_sha256"],
@@ -97,42 +102,17 @@ def compare_logits(primary_dir: Path, primary_record: dict, secondary_dir: Path,
         "top1_stable": top1_equal,
         "classification": classification,
     }
-    validate_comparison_summary(result, primary_record, secondary_record,
-                                primary_routing_manifest, secondary_routing_manifest)
+    validate_comparison_summary(result, primary_dir, primary_record, secondary_dir, secondary_record,
+                                primary_routing_manifest, secondary_routing_manifest,
+                                primary_receipt, secondary_receipt, chunk_elements=chunk_elements)
     return result
 
 
-def validate_comparison_summary(summary: dict, primary_record: dict, secondary_record: dict,
-                                primary_routing_manifest: dict, secondary_routing_manifest: dict) -> dict:
-    primary_route = validate_routing_manifest(primary_routing_manifest, expected_role="PRIMARY",
-        expected_package_attempt_id=primary_record["package_attempt_id"], expected_consumer_event_id=primary_record["consumer_event_id"])
-    secondary_route = validate_routing_manifest(secondary_routing_manifest, expected_role="SECONDARY",
-        expected_package_attempt_id=secondary_record["package_attempt_id"], expected_consumer_event_id=secondary_record["consumer_event_id"])
-    keys = {"schema","primary_logits_payload_sha256","secondary_logits_payload_sha256",
-            "primary_routing_manifest_sha256","secondary_routing_manifest_sha256","element_count",
-            "max_absolute_error","rmse","cosine_similarity","thresholds","primary_top32_ids",
-            "secondary_top32_ids","primary_selected_token","secondary_selected_token","primary_top_1_margin",
-            "secondary_top_1_margin","frozen_margin_requirement","margin_stable","route_structure_equal",
-            "top32_order_equal","top1_stable","classification"}
-    if type(summary) is not dict or set(summary) != keys:
-        raise ResultEnvelopeError("comparison summary key census")
-    if (summary["schema"] != "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0"
-            or summary["primary_logits_payload_sha256"] != primary_record.get("sha256")
-            or summary["secondary_logits_payload_sha256"] != secondary_record.get("sha256")
-            or summary["primary_routing_manifest_sha256"] != primary_route["routing_manifest_sha256"]
-            or summary["secondary_routing_manifest_sha256"] != secondary_route["routing_manifest_sha256"]
-            or summary["element_count"] != primary_record.get("element_count")
-            or summary["element_count"] != secondary_record.get("element_count")
-            or summary["thresholds"] != {"max_absolute_error":MAX_ABS_LIMIT,"rmse":RMSE_LIMIT,"cosine_minimum":COSINE_MINIMUM}
-            or summary["frozen_margin_requirement"] != 2.0 * MAX_ABS_LIMIT
-            or summary["route_structure_equal"] is not ([item["selected_expert_ids"] for item in primary_routing_manifest["layers"]] == [item["selected_expert_ids"] for item in secondary_routing_manifest["layers"]])
-            or type(summary["primary_top32_ids"]) is not list or len(summary["primary_top32_ids"]) != TOP_N
-            or type(summary["secondary_top32_ids"]) is not list or len(summary["secondary_top32_ids"]) != TOP_N
-            or summary["classification"] not in {"EXACT_EXPECTED_TOKEN_STABLE","NUMERICALLY_STABLE_TOP_K_ONLY",
-                                                   "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY","ORACLE_DISAGREEMENT"}):
-        raise ResultEnvelopeError("comparison summary authority")
-    try:
-        raw = canonical_bytes(summary); parse_artifact_bytes(raw, limits=COMPARISON_LIMITS)
-    except (ValueError, TypeError, OverflowError) as exc:
-        raise ResultEnvelopeError("bounded comparison summary") from exc
-    return {"result":"PASS","comparison_summary_sha256":hashlib.sha256(raw).hexdigest()}
+def validate_comparison_summary(summary: dict, primary_dir: Path, primary_record: dict,
+                                secondary_dir: Path, secondary_record: dict,
+                                primary_routing_manifest: dict, secondary_routing_manifest: dict,
+                                primary_receipt: dict, secondary_receipt: dict,
+                                *, chunk_elements: int = 4_096) -> dict:
+    return validate_authoritative_summary(summary, primary_dir, primary_record, secondary_dir,
+        secondary_record, primary_routing_manifest, secondary_routing_manifest,
+        primary_receipt, secondary_receipt, chunk_elements=chunk_elements)

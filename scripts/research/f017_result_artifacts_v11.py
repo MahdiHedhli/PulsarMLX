@@ -54,6 +54,8 @@ def build_manifest(role: str, package_attempt_id: str, consumer_event_id: str,
         raise ResultEnvelopeError("manifest payload identities")
     if any(record.get("package_attempt_id") != package_attempt_id or record.get("consumer_event_id") != consumer_event_id for record in payload_records):
         raise ResultEnvelopeError("manifest payload authority binding")
+    if len({record["path_role"] for record in payload_records}) != 3:
+        raise ResultEnvelopeError("manifest payload leaf alias")
     return {
         "schema": "pulsarmlx.f017.corrected-oracle-result-manifest/11.0.0",
         "generation": "V11", "role": role,
@@ -80,10 +82,21 @@ def validate_manifest(directory: Path, manifest: dict) -> dict:
     if type(payloads) is not list or len(payloads) != 3:
         raise ResultEnvelopeError("manifest payload census")
     expected_order = ["final_hidden", "final_normalized", "full_logits"]
+    identities: set[tuple[int, int]] = set()
     for record, kind in zip(payloads, expected_order, strict=True):
         validate_payload(directory, record, expected_spec=PAYLOAD_SPECS[(role, kind)])
         if record["package_attempt_id"] != manifest["package_attempt_id"] or record["consumer_event_id"] != manifest["consumer_event_id"]:
             raise ResultEnvelopeError("manifest payload authority binding")
+        try:
+            info = (directory / record["path_role"]).lstat()
+        except OSError as exc:
+            raise ResultEnvelopeError("manifest payload identity") from exc
+        identity = (info.st_dev, info.st_ino)
+        if identity in identities:
+            raise ResultEnvelopeError("manifest payload inode alias")
+        identities.add(identity)
+    if len({record["path_role"] for record in payloads}) != 3:
+        raise ResultEnvelopeError("manifest payload leaf alias")
     if "full_logits" in manifest or any("full_logits" in record and type(record.get("full_logits")) is list for record in payloads):
         raise ResultEnvelopeError("full logits entered control JSON")
     return {"result": "PASS", "manifest_sha256": _bounded(manifest)}
@@ -140,9 +153,9 @@ def validate_routing_manifest(manifest: dict, *, expected_role: str,
     return {"result":"PASS","routing_manifest_sha256":hashlib.sha256(raw).hexdigest()}
 
 
-def build_top32(directory: Path, logits_record: dict, event_id: str) -> dict:
+def build_top32(directory: Path, logits_record: dict) -> dict:
     role = logits_record.get("role")
-    if role not in {"PRIMARY", "SECONDARY"} or logits_record.get("payload_kind") != "full_logits" or type(event_id) is not str:
+    if role not in {"PRIMARY", "SECONDARY"} or logits_record.get("payload_kind") != "full_logits":
         raise ResultEnvelopeError("top32 source")
     heap: list[tuple[float, int]] = []; token = 0
     for chunk in iter_payload(directory, logits_record):
@@ -154,7 +167,8 @@ def build_top32(directory: Path, logits_record: dict, event_id: str) -> dict:
     ordered = [(-neg_token, value) for value, neg_token in sorted(heap, reverse=True)]
     code = "d" if role == "PRIMARY" else "f"; bits_key = "logit_f64_bits" if role == "PRIMARY" else "logit_f32_bits"
     summary = {"schema": "pulsarmlx.f017.corrected-oracle-top32-summary/11.0.0", "role": role,
-            "consumer_event_id": event_id, "top_n": 32,
+            "package_attempt_id": logits_record["package_attempt_id"],
+            "consumer_event_id": logits_record["consumer_event_id"], "top_n": 32,
             "entries": [{"token_id": item[0], bits_key: struct.pack(f"<{code}", item[1]).hex()} for item in ordered],
             "selected_token": ordered[0][0], "top_1_margin": ordered[0][1] - ordered[1][1],
             "logits_payload_sha256": logits_record["sha256"],
@@ -164,11 +178,13 @@ def build_top32(directory: Path, logits_record: dict, event_id: str) -> dict:
 
 
 def validate_top32(directory: Path, logits_record: dict, summary: dict) -> dict:
-    keys = {"schema","role","consumer_event_id","top_n","entries","selected_token","top_1_margin",
+    keys = {"schema","role","package_attempt_id","consumer_event_id","top_n","entries","selected_token","top_1_margin",
             "logits_payload_sha256","historical_token_quarantine"}
     if type(summary) is not dict or set(summary) != keys or summary.get("schema") != "pulsarmlx.f017.corrected-oracle-top32-summary/11.0.0":
         raise ResultEnvelopeError("top32 key census")
-    if summary["role"] != logits_record.get("role") or summary["logits_payload_sha256"] != logits_record.get("sha256"):
+    if (summary["role"] != logits_record.get("role") or summary["logits_payload_sha256"] != logits_record.get("sha256")
+            or summary["package_attempt_id"] != logits_record.get("package_attempt_id")
+            or summary["consumer_event_id"] != logits_record.get("consumer_event_id")):
         raise ResultEnvelopeError("top32 payload binding")
     if summary["historical_token_quarantine"] != "ENFORCED_BY_NUMERICAL_CONTRACT_V3":
         raise ResultEnvelopeError("top32 quarantine")
@@ -194,6 +210,8 @@ def build_receipt(role: str, authorization_id: str, package_attempt_id: str, con
                   producer_measurement_sha256: str, numerical_contract_sha256: str,
                   payload_manifest_sha256: str, top32_summary_sha256: str, routing_manifest_sha256: str,
                   durable_start_sha256: str, access_census_sha256: str) -> dict:
+    if role not in {"PRIMARY","SECONDARY"} or any(type(value) is not str or not value for value in (authorization_id, package_attempt_id, consumer_event_id)):
+        raise ResultEnvelopeError("receipt authority identity")
     for name, value in (("producer", producer_measurement_sha256), ("numerical", numerical_contract_sha256),
                         ("manifest", payload_manifest_sha256), ("summary", top32_summary_sha256), ("routing", routing_manifest_sha256),
                         ("start", durable_start_sha256), ("access", access_census_sha256)):
@@ -210,13 +228,18 @@ def build_receipt(role: str, authorization_id: str, package_attempt_id: str, con
 
 
 def validate_receipt(receipt: dict, *, expected_role: str, expected_manifest_sha256: str,
-                     expected_summary_sha256: str, expected_routing_manifest_sha256: str) -> dict:
+                     expected_summary_sha256: str, expected_routing_manifest_sha256: str,
+                     expected_authorization_id: str, expected_package_attempt_id: str,
+                     expected_consumer_event_id: str) -> dict:
     keys = {"schema","role","authorization_id","package_attempt_id","consumer_event_id",
             "producer_measurement_sha256","numerical_contract_sha256","payload_manifest_sha256",
             "top32_summary_sha256","routing_manifest_sha256","durable_start_sha256","access_census_sha256","result_state"}
     if (type(receipt) is not dict or set(receipt) != keys
             or receipt.get("schema") != "pulsarmlx.f017.corrected-oracle-result-receipt/11.0.0"
             or receipt.get("role") != expected_role or receipt.get("result_state") != "COMPLETE"
+            or receipt.get("authorization_id") != expected_authorization_id
+            or receipt.get("package_attempt_id") != expected_package_attempt_id
+            or receipt.get("consumer_event_id") != expected_consumer_event_id
             or receipt.get("payload_manifest_sha256") != expected_manifest_sha256
             or receipt.get("top32_summary_sha256") != expected_summary_sha256
             or receipt.get("routing_manifest_sha256") != expected_routing_manifest_sha256):
