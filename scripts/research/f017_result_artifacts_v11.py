@@ -22,6 +22,7 @@ ROUTING_LIMITS = ArtifactLimits(
     max_array_elements=256, max_string_chars=4_096,
     max_integer_digits=32, max_number_chars=128,
 )
+NUMERICAL_CONTRACT_V3_SHA256 = "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"
 
 
 def _sha(value: object) -> str:
@@ -232,7 +233,8 @@ def build_receipt(role: str, authorization_id: str, package_attempt_id: str, con
 def validate_receipt(receipt: dict, *, expected_role: str, expected_manifest_sha256: str,
                      expected_summary_sha256: str, expected_routing_manifest_sha256: str,
                      expected_authorization_id: str, expected_package_attempt_id: str,
-                     expected_consumer_event_id: str) -> dict:
+                     expected_consumer_event_id: str,
+                     expected_numerical_contract_sha256: str = NUMERICAL_CONTRACT_V3_SHA256) -> dict:
     keys = {"schema","role","authorization_id","package_attempt_id","consumer_event_id",
             "producer_measurement_sha256","numerical_contract_sha256","payload_manifest_sha256",
             "top32_summary_sha256","routing_manifest_sha256","durable_start_sha256","access_census_sha256","result_state"}
@@ -242,6 +244,7 @@ def validate_receipt(receipt: dict, *, expected_role: str, expected_manifest_sha
             or receipt.get("authorization_id") != expected_authorization_id
             or receipt.get("package_attempt_id") != expected_package_attempt_id
             or receipt.get("consumer_event_id") != expected_consumer_event_id
+            or receipt.get("numerical_contract_sha256") != expected_numerical_contract_sha256
             or receipt.get("payload_manifest_sha256") != expected_manifest_sha256
             or receipt.get("top32_summary_sha256") != expected_summary_sha256
             or receipt.get("routing_manifest_sha256") != expected_routing_manifest_sha256):
@@ -355,6 +358,6 @@ def validate_closure_root(closure: dict, primary_manifest: dict, primary_receipt
         comparison_summary_sha256, comparison_receipt_sha256, comparison_terminal_sha256,
         release_start_sha256, release_report_sha256, release_receipt_sha256,
         release_terminal_sha256, package_receipt_sha256)
-    if type(closure) is not dict or closure != expected:
+    if type(closure) is not dict or canonical_bytes(closure) != canonical_bytes(expected):
         raise ResultEnvelopeError("package result closure")
     return {"result":"PASS","closure_sha256":_bounded(closure)}

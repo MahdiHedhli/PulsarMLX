@@ -14,15 +14,20 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 
 from f017_binary_comparator_v11 import compare_logits, validate_comparison_summary
 from f017_result_artifacts_v11 import (build_consumer_terminal, build_manifest, build_receipt,
-    build_result_terminal, build_routing_manifest, build_top32, closure_root, require_primary_terminal,
+    build_result_terminal, build_routing_manifest, build_top32, closure_root,
+    NUMERICAL_CONTRACT_V3_SHA256, require_primary_terminal, validate_closure_root,
     validate_manifest, validate_top32)
 from f017_event04_diagnostic_converter_v11 import convert
-from f017_result_bundle_authority_v11 import compose_comparison_closure
+from f017_result_bundle_authority_v11 import compose_comparison_closure, validate_bundle
 from f017_result_envelope_v11 import (HIDDEN_SIZE, VOCAB_SIZE, PAYLOAD_SPECS,
     ResultEnvelopeError, bank_payload, iter_payload, payload_spec, validate_payload)
 
 
 class ResultEnvelopeV11Tests(unittest.TestCase):
+    @staticmethod
+    def sha(value: dict) -> str:
+        return hashlib.sha256((json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()).hexdigest()
+
     @staticmethod
     def routing(role: str, *, mismatch: bool = False) -> dict:
         layers = [{"selected_expert_ids": ([] if index < 3 else [index % 256, (index + 1) % 256])} for index in range(79)]
@@ -44,7 +49,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
                     package_attempt_id="PKG", consumer_event_id=role))
             records.append(logits); manifest = build_manifest(role,"PKG",role,records); top = build_top32(root,logits)
             digest = hashlib.sha256(b"x").hexdigest()
-            receipt = build_receipt(role,"AUTH","PKG",role,digest,digest,
+            receipt = build_receipt(role,"AUTH","PKG",role,digest,NUMERICAL_CONTRACT_V3_SHA256,
                 hashlib.sha256((json.dumps(manifest,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),
                 hashlib.sha256((json.dumps(top,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),
                 hashlib.sha256((json.dumps(routing,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),digest,digest)
@@ -106,7 +111,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             manifest = build_manifest("PRIMARY", "PKG", "PRIMARY-EVENT", records)
             self.assertEqual(validate_manifest(root, manifest)["result"], "PASS")
             digest = hashlib.sha256(b"x").hexdigest()
-            receipt = build_receipt("PRIMARY", "AUTH", "PKG", "PRIMARY-EVENT", digest, digest,
+            receipt = build_receipt("PRIMARY", "AUTH", "PKG", "PRIMARY-EVENT", digest, NUMERICAL_CONTRACT_V3_SHA256,
                                     hashlib.sha256(__import__('json').dumps(manifest, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest(),
                                     digest, digest, digest, digest)
             receipt_sha = hashlib.sha256(__import__('json').dumps(receipt, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest()
@@ -252,14 +257,64 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             manifest = build_manifest("PRIMARY","PKG","PRIMARY",records)
             with self.assertRaises(ResultEnvelopeError): validate_manifest(root, manifest)
 
-    def test_canonical_types_and_cross_package_closure_reject(self) -> None:
-        primary = {"result":"PASS","role":"PRIMARY","authorization_id":"AUTH","package_attempt_id":"PKG",
-            "consumer_event_id":"P","manifest_sha256":"1"*64,"top32_summary_sha256":"2"*64,
-            "routing_manifest_sha256":"3"*64}
-        secondary = {"result":"PASS","role":"SECONDARY","authorization_id":"AUTH","package_attempt_id":"OTHER",
-            "consumer_event_id":"S","manifest_sha256":"4"*64,"top32_summary_sha256":"5"*64,
-            "routing_manifest_sha256":"6"*64}
-        with self.assertRaises(ResultEnvelopeError): compose_comparison_closure(primary,secondary,{})
+    def test_payload_package_identity_cannot_be_relabelled(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); spec = payload_spec("PRIMARY", "final_hidden")
+            record = bank_payload(root, "payload.bin", spec, [0.0] * HIDDEN_SIZE,
+                                  package_attempt_id="PKG-A", consumer_event_id="EVENT-A")
+            for field, value in (("package_attempt_id", "PKG-B"), ("consumer_event_id", "EVENT-B")):
+                changed = dict(record); changed[field] = value
+                with self.subTest(field=field), self.assertRaises(ResultEnvelopeError):
+                    validate_payload(root, changed)
+
+    def test_validated_bundle_composition_and_six_leaf_mutations(self) -> None:
+        with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:
+            values = [float(index % 31) for index in range(VOCAB_SIZE)]
+            p = bank_payload(Path(left), "p.bin", payload_spec("PRIMARY", "full_logits"), values,
+                             package_attempt_id="PKG", consumer_event_id="PRIMARY")
+            s = bank_payload(Path(right), "s.bin", payload_spec("SECONDARY", "full_logits"), values,
+                             package_attempt_id="PKG", consumer_event_id="SECONDARY")
+            summary, pr, sr, pm, sm, pt, st, prec, srec = self.compare(Path(left), p, Path(right), s)
+
+            def artifacts(role: str, manifest: dict, top32: dict, routing: dict, receipt: dict) -> dict:
+                receipt_sha = self.sha(receipt); manifest_sha = self.sha(manifest)
+                result_terminal = build_result_terminal(role, receipt_sha, manifest_sha)
+                consumer_terminal = build_consumer_terminal(
+                    role, self.sha(result_terminal), receipt_sha, manifest_sha)
+                return {"consumer_event_id":role, "manifest":manifest, "top32":top32,
+                        "routing":routing, "receipt":receipt, "result_terminal":result_terminal,
+                        "consumer_terminal":consumer_terminal}
+
+            pa = artifacts("PRIMARY", pm, pt, pr, prec)
+            sa = artifacts("SECONDARY", sm, st, sr, srec)
+            self.assertEqual(validate_bundle(Path(left), role="PRIMARY", authorization_id="AUTH",
+                package_attempt_id="PKG", **pa)["result"], "PASS")
+            closure = compose_comparison_closure(primary_directory=Path(left), secondary_directory=Path(right),
+                authorization_id="AUTH", package_attempt_id="PKG", primary_artifacts=pa,
+                secondary_artifacts=sa, comparison_summary=summary)
+            self.assertEqual(closure["result"], "PASS")
+            for leaf in ("manifest", "top32", "routing", "receipt", "result_terminal", "consumer_terminal"):
+                changed = json.loads(json.dumps(pa)); changed[leaf]["mutation"] = True
+                with self.subTest(leaf=leaf), self.assertRaises(ResultEnvelopeError):
+                    compose_comparison_closure(primary_directory=Path(left), secondary_directory=Path(right),
+                        authorization_id="AUTH", package_attempt_id="PKG", primary_artifacts=changed,
+                        secondary_artifacts=sa, comparison_summary=summary)
+            bad_receipt = json.loads(json.dumps(pa)); bad_receipt["receipt"]["numerical_contract_sha256"] = "f" * 64
+            with self.assertRaises(ResultEnvelopeError):
+                compose_comparison_closure(primary_directory=Path(left), secondary_directory=Path(right),
+                    authorization_id="AUTH", package_attempt_id="PKG", primary_artifacts=bad_receipt,
+                    secondary_artifacts=sa, comparison_summary=summary)
+
+    def test_closure_root_rejects_canonical_type_alias(self) -> None:
+        digest = "1" * 64
+        manifest = {"payloads":[{"sha256":digest},{"sha256":digest},{"sha256":digest}]}
+        receipt = {"routing_manifest_sha256":digest}
+        terminal = {"terminal":digest}
+        args = (manifest, receipt, terminal, manifest, receipt, terminal,
+                digest, digest, digest, digest, digest, digest, digest, digest, digest, digest)
+        closure = closure_root(*args)
+        changed = dict(closure); changed["payload_count"] = 6.0
+        with self.assertRaises(ResultEnvelopeError): validate_closure_root(changed, *args)
 
     def test_comparison_type_alias_rejects(self) -> None:
         with tempfile.TemporaryDirectory() as left, tempfile.TemporaryDirectory() as right:

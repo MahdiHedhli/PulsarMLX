@@ -6,7 +6,9 @@ import hashlib
 from pathlib import Path
 
 from f017_canonical_serialization_v10 import canonical_bytes
-from f017_result_artifacts_v11 import (validate_consumer_terminal, validate_manifest,
+from f017_binary_comparison_authority_v11 import validate_summary
+from f017_result_artifacts_v11 import (NUMERICAL_CONTRACT_V3_SHA256,
+    validate_consumer_terminal, validate_manifest,
     validate_receipt, validate_result_terminal, validate_routing_manifest, validate_top32)
 from f017_result_envelope_v11 import ResultEnvelopeError
 
@@ -18,7 +20,8 @@ def _sha(value: dict) -> str:
 def validate_bundle(directory: Path, *, role: str, authorization_id: str,
                     package_attempt_id: str, consumer_event_id: str,
                     manifest: dict, top32: dict, routing: dict, receipt: dict,
-                    result_terminal: dict, consumer_terminal: dict) -> dict:
+                    result_terminal: dict, consumer_terminal: dict,
+                    numerical_contract_sha256: str = NUMERICAL_CONTRACT_V3_SHA256) -> dict:
     if role not in {"PRIMARY","SECONDARY"}:
         raise ResultEnvelopeError("bundle role")
     validate_manifest(directory, manifest)
@@ -32,7 +35,8 @@ def validate_bundle(directory: Path, *, role: str, authorization_id: str,
     validate_receipt(receipt, expected_role=role, expected_manifest_sha256=manifest_sha,
         expected_summary_sha256=summary_sha, expected_routing_manifest_sha256=routing_sha,
         expected_authorization_id=authorization_id, expected_package_attempt_id=package_attempt_id,
-        expected_consumer_event_id=consumer_event_id)
+        expected_consumer_event_id=consumer_event_id,
+        expected_numerical_contract_sha256=numerical_contract_sha256)
     receipt_sha = _sha(receipt)
     validate_result_terminal(result_terminal, expected_role=role,
         expected_receipt_sha256=receipt_sha, expected_manifest_sha256=manifest_sha)
@@ -49,16 +53,32 @@ def validate_bundle(directory: Path, *, role: str, authorization_id: str,
         "payload_sha256s":[item["sha256"] for item in manifest["payloads"]],"result":"PASS"}
 
 
-def compose_comparison_closure(primary_bundle: dict, secondary_bundle: dict,
-                               comparison_summary: dict) -> dict:
-    """Only sanctioned bridge from two validated bundles into package closure."""
-    if (type(primary_bundle) is not dict or type(secondary_bundle) is not dict
-            or primary_bundle.get("result") != "PASS" or secondary_bundle.get("result") != "PASS"
-            or primary_bundle.get("role") != "PRIMARY" or secondary_bundle.get("role") != "SECONDARY"
-            or primary_bundle.get("authorization_id") != secondary_bundle.get("authorization_id")
-            or primary_bundle.get("package_attempt_id") != secondary_bundle.get("package_attempt_id")
-            or primary_bundle.get("consumer_event_id") == secondary_bundle.get("consumer_event_id")):
+def compose_comparison_closure(*, primary_directory: Path, secondary_directory: Path,
+                               authorization_id: str, package_attempt_id: str,
+                               primary_artifacts: dict, secondary_artifacts: dict,
+                               comparison_summary: dict,
+                               numerical_contract_sha256: str = NUMERICAL_CONTRACT_V3_SHA256) -> dict:
+    """Validate raw six-leaf bundles and comparison before composing closure."""
+    artifact_keys = {"consumer_event_id", "manifest", "top32", "routing", "receipt",
+                     "result_terminal", "consumer_terminal"}
+    if (type(primary_artifacts) is not dict or set(primary_artifacts) != artifact_keys
+            or type(secondary_artifacts) is not dict or set(secondary_artifacts) != artifact_keys):
+        raise ResultEnvelopeError("comparison raw bundle census")
+    primary_bundle = validate_bundle(primary_directory, role="PRIMARY",
+        authorization_id=authorization_id, package_attempt_id=package_attempt_id,
+        numerical_contract_sha256=numerical_contract_sha256, **primary_artifacts)
+    secondary_bundle = validate_bundle(secondary_directory, role="SECONDARY",
+        authorization_id=authorization_id, package_attempt_id=package_attempt_id,
+        numerical_contract_sha256=numerical_contract_sha256, **secondary_artifacts)
+    if primary_bundle["consumer_event_id"] == secondary_bundle["consumer_event_id"]:
         raise ResultEnvelopeError("comparison bundle closure identity")
+    validate_summary(comparison_summary, primary_directory,
+        primary_artifacts["manifest"]["payloads"][2], secondary_directory,
+        secondary_artifacts["manifest"]["payloads"][2], primary_artifacts["routing"],
+        secondary_artifacts["routing"], primary_artifacts["manifest"],
+        secondary_artifacts["manifest"], primary_artifacts["top32"],
+        secondary_artifacts["top32"], primary_artifacts["receipt"],
+        secondary_artifacts["receipt"], authorization_id)
     expected = {
         "authorization_id":primary_bundle["authorization_id"],
         "package_attempt_id":primary_bundle["package_attempt_id"],
@@ -69,7 +89,7 @@ def compose_comparison_closure(primary_bundle: dict, secondary_bundle: dict,
         "primary_routing_manifest_sha256":primary_bundle["routing_manifest_sha256"],
         "secondary_routing_manifest_sha256":secondary_bundle["routing_manifest_sha256"],
     }
-    if type(comparison_summary) is not dict or any(comparison_summary.get(k) != v for k,v in expected.items()):
+    if any(comparison_summary.get(k) != v for k,v in expected.items()):
         raise ResultEnvelopeError("comparison summary bundle binding")
     return {"schema":"pulsarmlx.f017.corrected-oracle-comparison-closure/11.0.0",
         **expected,"primary_bundle_sha256":_sha(primary_bundle),

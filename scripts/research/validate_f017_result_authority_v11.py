@@ -12,11 +12,12 @@ CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-correc
 AUTHORITY = ROOT / "scripts/research/f017_binary_comparison_authority_v11.py"
 ARTIFACTS = ROOT / "scripts/research/f017_result_artifacts_v11.py"
 BUNDLE = ROOT / "scripts/research/f017_result_bundle_authority_v11.py"
+TESTS = ROOT / "scripts/research/tests/test_f017_result_envelope_v11.py"
 
 
 def main() -> int:
     contract = json.loads(CONTRACT.read_text())
-    if contract["schema"] != "pulsarmlx.f017.corrected-oracle-result-authority/11.0.1": raise ValueError("contract schema")
+    if contract["schema"] != "pulsarmlx.f017.corrected-oracle-result-authority/11.0.2": raise ValueError("contract schema")
     source = AUTHORITY.read_text(); tree = ast.parse(source)
     imports = {alias.name for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
     imports |= {node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module}
@@ -33,13 +34,20 @@ def main() -> int:
     if return_keys is None or set(fields) != return_keys or len(fields) != len(set(fields)):
         raise ValueError("rederived field census")
     artifact_source = ARTIFACTS.read_text(); bundle_source = BUNDLE.read_text()
+    test_tree = ast.parse(TESTS.read_text())
+    test_names = {node.name for node in ast.walk(test_tree) if isinstance(node, ast.FunctionDef)}
     gates = {
         "F5-01":"independent comparison summary mismatch" in source,
         "F5-02":"_bundle_identity" in {node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)} and "validate_receipt" in source,
         "F5-03":"expected_package_attempt_id" in artifact_source and "expected_consumer_event_id" in artifact_source,
         "F5-04":"summary[\"package_attempt_id\"]" in artifact_source and "summary[\"consumer_event_id\"]" in artifact_source,
         "F5-05":"manifest payload inode alias" in artifact_source and "manifest payload leaf alias" in artifact_source,
-        "BUNDLE":"compose_comparison_closure" in bundle_source and "validate_receipt" in bundle_source,
+        "BUNDLE":("validate_bundle" in bundle_source and "validate_summary" in bundle_source
+                  and "test_validated_bundle_composition_and_six_leaf_mutations" in test_names),
+        "PACKAGE_IDENTITY":"payload_identity_sha256" in ARTIFACTS.with_name("f017_result_envelope_v11.py").read_text()
+                           and "test_payload_package_identity_cannot_be_relabelled" in test_names,
+        "CANONICAL_CLOSURE":"canonical_bytes(closure) != canonical_bytes(expected)" in artifact_source
+                            and "test_closure_root_rejects_canonical_type_alias" in test_names,
     }
     if not all(gates.values()): raise ValueError(f"authority gates: {gates}")
     result = {"schema":"pulsarmlx.f017.event05-result-authority-design-qualification/1.0.0",

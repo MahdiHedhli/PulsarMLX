@@ -7,7 +7,6 @@ import hashlib
 import math
 from pathlib import Path
 
-from f017_bounded_artifact_decode_v1 import ArtifactLimits, parse_artifact_bytes
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import validate_routing_manifest
 from f017_result_envelope_v11 import iter_payload, ResultEnvelopeError, TOP_N
@@ -16,11 +15,6 @@ from f017_binary_comparison_authority_v11 import validate_summary as validate_au
 MAX_ABS_LIMIT = 0.0065169706285814755
 RMSE_LIMIT = 0.003463567697419031
 COSINE_MINIMUM = 0.9999999985448085
-COMPARISON_LIMITS = ArtifactLimits(max_bytes=65_536, max_depth=8, max_object_keys=64,
-                                   max_array_elements=64, max_string_chars=4_096,
-                                   max_integer_digits=32, max_number_chars=128)
-
-
 def _push(heap: list[tuple[float, int]], value: float, token: int) -> None:
     item = (value, -token)
     if len(heap) < TOP_N:

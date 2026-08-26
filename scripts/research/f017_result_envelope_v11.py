@@ -27,6 +27,18 @@ TOP_N = 32
 DEFAULT_CHUNK_ELEMENTS = 4_096
 
 
+def _payload_identity_prefix(spec: "PayloadSpec", package_attempt_id: str,
+                             consumer_event_id: str) -> bytes:
+    """Canonical authority prefix mixed into the payload's package identity."""
+    from f017_canonical_serialization_v10 import canonical_bytes
+    return canonical_bytes({
+        "role": spec.role,
+        "payload_kind": spec.kind,
+        "package_attempt_id": package_attempt_id,
+        "consumer_event_id": consumer_event_id,
+    })
+
+
 @dataclass(frozen=True)
 class PayloadSpec:
     role: str
@@ -135,6 +147,8 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
     written = 0
     count = 0
     write_digest = hashlib.sha256()
+    identity_digest = hashlib.sha256(_payload_identity_prefix(
+        spec, package_attempt_id, consumer_event_id))
     try:
         descriptor = os.open(
             leaf,
@@ -149,11 +163,13 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
                 raw = _pack_chunk(chunk, spec)
                 _write_all(descriptor, raw)
                 write_digest.update(raw)
+                identity_digest.update(raw)
                 written += len(raw); count += len(chunk); chunk.clear()
         if chunk:
             raw = _pack_chunk(chunk, spec)
             _write_all(descriptor, raw)
             write_digest.update(raw)
+            identity_digest.update(raw)
             written += len(raw); count += len(chunk)
         if count != spec.element_count or written != spec.byte_count:
             raise ResultEnvelopeError("payload geometry mismatch during write")
@@ -194,6 +210,7 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
         "path_role": leaf,
         "observed_byte_count": written,
         "sha256": write_digest.hexdigest(),
+        "payload_identity_sha256": identity_digest.hexdigest(),
         "finite_values": True,
         "signed_zero_policy": "PRESERVE_IEEE754_BITS",
         "producer_identity": f"F017_V11_{spec.role}_RESULT_ENVELOPE",
@@ -209,6 +226,7 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
     required = set((expected_spec or payload_spec(record.get("role"), record.get("payload_kind"))).record()) | {
         "path_role", "observed_byte_count", "sha256", "finite_values",
         "signed_zero_policy", "producer_identity", "package_attempt_id", "consumer_event_id",
+        "payload_identity_sha256",
     }
     if type(record) is not dict or set(record) != required:
         raise ResultEnvelopeError("payload record key census")
@@ -217,7 +235,9 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
     for key, value in expected.items():
         if record.get(key) != value:
             raise ResultEnvelopeError(f"payload record mismatch: {key}")
-    if type(record["sha256"]) is not str or len(record["sha256"]) != 64:
+    if (type(record["sha256"]) is not str or len(record["sha256"]) != 64
+            or type(record["payload_identity_sha256"]) is not str
+            or len(record["payload_identity_sha256"]) != 64):
         raise ResultEnvelopeError("payload SHA")
     if record["observed_byte_count"] != spec.byte_count or record["finite_values"] is not True:
         raise ResultEnvelopeError("payload size or finite status")
@@ -235,12 +255,14 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
             info = os.fstat(descriptor)
             if not stat.S_ISREG(info.st_mode) or info.st_size != spec.byte_count:
                 raise ResultEnvelopeError("payload file geometry")
-            digest = hashlib.sha256(); finite = True; observed = 0
+            digest = hashlib.sha256(); identity_digest = hashlib.sha256(
+                _payload_identity_prefix(spec, record["package_attempt_id"], record["consumer_event_id"]))
+            finite = True; observed = 0
             carry = b""
             while True:
                 raw = os.read(descriptor, 1 << 20)
                 if not raw: break
-                digest.update(raw); observed += len(raw); raw = carry + raw
+                digest.update(raw); identity_digest.update(raw); observed += len(raw); raw = carry + raw
                 whole = len(raw) - len(raw) % spec.itemsize
                 for (value,) in struct.iter_unpack(f"<{spec.struct_code}", raw[:whole]):
                     finite = finite and math.isfinite(value)
@@ -249,6 +271,8 @@ def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpe
                 raise ResultEnvelopeError("payload content invalid")
             if digest.hexdigest() != record["sha256"]:
                 raise ResultEnvelopeError("payload SHA mismatch")
+            if identity_digest.hexdigest() != record["payload_identity_sha256"]:
+                raise ResultEnvelopeError("payload package identity mismatch")
         finally:
             os.close(descriptor)
     except ResultEnvelopeError:

@@ -1,1 +1,21 @@
-{"builder_import_separation":"PASS","bundle_validator_sha256":"951e2bd35be0926f05e59ec8b8cbfd79a6669b769b712e349a2dbdf1b831d1f1","contract_sha256":"ea70a7bac773364b1398f791214f54d6f09b13c769ff030363ceb1e2e30f63ca","findings_repaired":{"BUNDLE":true,"F5-01":true,"F5-02":true,"F5-03":true,"F5-04":true,"F5-05":true},"independent_validator_sha256":"10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352","original_checkpoint_access":0,"rederived_field_count":28,"result":"PASS","schema":"pulsarmlx.f017.event05-result-authority-design-qualification/1.0.0","unit_tests":{"passed":20,"subtests_passed":20,"failed":0}}
+{
+  "schema": "pulsarmlx.f017.event05-result-authority-design-qualification/1.0.0",
+  "contract_sha256": "07d463736ed37e9aca87bd82cf0ca56180e3d48a9598557de4cb530ef47a3aed",
+  "independent_validator_sha256": "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
+  "bundle_validator_sha256": "f69c4fb1b3f0e7add2f6d73de9e36447544acea04dd64665d0580bcc274f7ef8",
+  "builder_import_separation": "PASS",
+  "rederived_field_count": 28,
+  "findings_repaired": {
+    "F5-01": true,
+    "F5-02": true,
+    "F5-03": true,
+    "F5-04": true,
+    "F5-05": true,
+    "BUNDLE": true,
+    "PACKAGE_IDENTITY": true,
+    "CANONICAL_CLOSURE": true
+  },
+  "unit_tests": {"passed":22,"subtests_passed":22,"failed":0},
+  "original_checkpoint_access": 0,
+  "result": "PASS"
+}
