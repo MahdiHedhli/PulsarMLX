@@ -24,8 +24,8 @@ class NumericalOutputInterfaceDesignTests(unittest.TestCase):
     def test_mechanical_design_gates(self):
         result = load_validator().validate()
         self.assertEqual(result["result"], "PASS")
-        self.assertGreaterEqual(result["design_mutations_rejected"], 90)
-        self.assertEqual(result["unexpected_passes"], 0)
+        self.assertGreaterEqual(result["design_mutations_rejected"], 120)
+        self.assertEqual(result["unexpected_passes"], [])
         self.assertEqual(result["original_checkpoint_access"], 0)
 
     def test_cli_is_deterministic_json(self):

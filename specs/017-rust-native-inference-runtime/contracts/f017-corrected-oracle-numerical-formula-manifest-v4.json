@@ -15,7 +15,7 @@
     "graph_entry": "execute",
     "successor_graph_entry": "_execute_graph",
     "graph_numerical_prefix": {
-      "normalization": "rename execute to _execute_graph, remove annotations/decorators, retain every statement before assignment to result",
+      "normalization": "rename execute to _execute_graph, remove annotations/decorators, retain every statement before assignment to result or terminal legacy return",
       "statement_count": 9,
       "sha256": "7d763a502cd0bc7b5e60d7fb6acce3262b1045bc59c383100ba4a823954395ce"
     },
@@ -41,9 +41,9 @@
     "graph_entry": "execute",
     "successor_graph_entry": "_execute_graph",
     "graph_numerical_prefix": {
-      "normalization": "rename execute to _execute_graph, remove annotations/decorators, retain every statement before assignment to result",
-      "statement_count": 11,
-      "sha256": "429d06c7721564e5d843c3d034948d82f4dda297ee3b9338189423984658439a"
+      "normalization": "rename execute to _execute_graph, remove annotations/decorators, retain every statement before assignment to result or terminal legacy return",
+      "statement_count": 10,
+      "sha256": "a233729b2a9d1532c8fd9c013db669a5792c2d6a8a37ea59c599e40e610b476b"
     },
     "formula_symbols": {
       "rms": "6e325106b84513d17090ce2a6adaef8c486144f54e5a867d704440e04d784a0a",

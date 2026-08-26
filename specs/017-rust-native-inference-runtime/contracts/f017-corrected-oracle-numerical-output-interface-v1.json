@@ -9,6 +9,7 @@
       "historical_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
       "output_type": "PrimaryNumericalOutputs",
       "dtype": "f64le",
+      "geometry_scope": "PRODUCTION_V11_ENVELOPE",
       "legacy_api": "execute(source, geometry, token, position=0) -> dict",
       "output_api": "execute_outputs(source, geometry, token, position=0) -> PrimaryNumericalOutputs",
       "payloads": [
@@ -23,6 +24,7 @@
       "historical_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
       "output_type": "SecondaryNumericalOutputs",
       "dtype": "f32le",
+      "geometry_scope": "PRODUCTION_V11_ENVELOPE",
       "legacy_api": "execute(document, use_mlx=False, store=None) -> dict",
       "output_api": "execute_outputs(document, use_mlx=False, store=None) -> SecondaryNumericalOutputs",
       "payloads": [
@@ -54,6 +56,12 @@
       "scalar_metadata": "str|int|float",
       "mutable_list_or_dict_fields": "PROHIBITED"
     }
+  },
+  "qualification_geometry": {
+    "rule": "For synthetic qualification only, element counts and byte counts derive from the frozen input geometry and role dtype; live V11 accepts only the production role tables above.",
+    "primary_itemsize": 8,
+    "secondary_itemsize": 4,
+    "production_geometry_required_for_live_v11": true
   },
   "one_execution_rule": {
     "shared_internal_graph_path_per_role": true,
@@ -95,9 +103,15 @@
   },
   "prohibited_capabilities": [
     "FILE_IO", "CHECKPOINT_ACCESS", "LIFECYCLE_STATE", "AUTHORIZATION",
-    "SUBPROCESS", "DYNAMIC_IMPORT", "REFLECTION", "FRAME_INSPECTION",
-    "TRACING_HOOK", "DEBUGGER_HOOK", "CALLER_SUPPLIED_CALLBACK"
+    "SUBPROCESS", "NEW_OR_UNREVIEWED_DYNAMIC_IMPORT", "REFLECTION", "FRAME_INSPECTION",
+    "TRACING_HOOK", "DEBUGGER_HOOK", "CALLER_SUPPLIED_CAPTURE_CALLBACK"
   ],
+  "accepted_historical_scoped_capabilities": {
+    "secondary_mlx_imports": "The three existing function-scope mlx.core imports inside mv and transpose_mv remain governed by the exact frozen numerical capability policy; the successor may add no import capability.",
+    "source_store_rowmatrix_protocols": "Existing closed Source, Store, and RowMatrix tensor-access protocols are numerical inputs, not output-capture callbacks; their method sets remain governed by the exact frozen capability policy.",
+    "capability_policy_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+    "capability_policy_sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13"
+  },
   "numerical_formulas_changed": false,
   "numerical_operation_order_changed": false,
   "routing_semantics_changed": false,

@@ -1,0 +1,22 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-design-arbiter/1.0.0",
+  "cycle":1,
+  "reviewer":"claude-opus-5",
+  "reviewed_head":"3a171df2e1eb21dc8bf32454a170bbff1fb72a85",
+  "claim_verdicts":{"C-OUT-001":"ACCEPT","C-OUT-002":"REJECT","C-FORM-001":"ACCEPT","C-FORM-002":"REJECT","C-LEGACY-001":"ACCEPT","C-LEGACY-002":"ACCEPT","C-BITS-001":"ACCEPT","C-BITS-002":"UNRESOLVED","C-PURITY-001":"ACCEPT","C-ONEEXEC-001":"REJECT","C-INDEP-001":"ACCEPT"},
+  "findings":[
+    {"id":"ARB-PREFIX-001","classification":"BLOCKING","claim_id":"C-FORM-002","summary":"Secondary graph prefix included its terminal legacy Return because the normalizer stopped only at assignment to result."},
+    {"id":"ARB-INSTANTIABLE-002","classification":"BLOCKING","claim_id":"C-OUT-002","summary":"A frozen secondary prefix ending in Return left no interface suffix and recreated the instantiability blocker."},
+    {"id":"ARB-CLOSURE-003","classification":"BLOCKING","claim_id":"C-FORM-002","summary":"SUP-AST-001 was false for secondary, so unresolved challenge count zero was not proven."},
+    {"id":"ARB-MUTATION-004","classification":"NON_BLOCKING_REQUIRED","claim_id":"C-PURITY-001","summary":"The 96 recorded design mutations were tautological booleans rather than validation of perturbed documents."},
+    {"id":"ARB-DYNIMPORT-005","classification":"NON_BLOCKING_REQUIRED","claim_id":"C-PURITY-001","summary":"Flat DYNAMIC_IMPORT prohibition contradicted the three existing capability-policy-governed mlx.core imports."},
+    {"id":"ARB-CALLBACK-006","classification":"DEFENSE_IN_DEPTH","claim_id":"C-PURITY-001","summary":"Generic callback wording could be read to prohibit existing closed Source, Store, and RowMatrix protocols."},
+    {"id":"ARB-GEOMETRY-007","classification":"DEFENSE_IN_DEPTH","claim_id":"C-BITS-001","summary":"Production payload shapes were not distinguished from variable synthetic qualification geometry."},
+    {"id":"ARB-MANIFEST-008","classification":"DEFENSE_IN_DEPTH","claim_id":"C-LEGACY-001","summary":"Authority manifest labeled a prior dependency head as authority_head while packaging newer entries."}
+  ],
+  "blocking_count":3,
+  "non_blocking_required_count":2,
+  "defense_in_depth_count":3,
+  "original_checkpoint_access_observed":0,
+  "global_verdict":"REJECT"
+}

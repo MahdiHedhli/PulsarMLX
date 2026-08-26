@@ -1,0 +1,10 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-arbiter-ledger/2.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "cycle":1,
+  "reviewed_head":"3a171df2e1eb21dc8bf32454a170bbff1fb72a85",
+  "claim_verdicts":{"C-OUT-001":"ACCEPT","C-OUT-002":"REJECT","C-FORM-001":"ACCEPT","C-FORM-002":"REJECT","C-LEGACY-001":"ACCEPT","C-LEGACY-002":"ACCEPT","C-BITS-001":"ACCEPT","C-BITS-002":"UNRESOLVED","C-PURITY-001":"ACCEPT","C-ONEEXEC-001":"REJECT","C-INDEP-001":"ACCEPT"},
+  "invalidates_nodes":{"ARB-PREFIX-001":"R2","ARB-INSTANTIABLE-002":"R1","ARB-CLOSURE-003":"R4","ARB-MUTATION-004":"R2","ARB-DYNIMPORT-005":"R1"},
+  "global_verdict":"REJECT",
+  "original_checkpoint_access":0
+}
