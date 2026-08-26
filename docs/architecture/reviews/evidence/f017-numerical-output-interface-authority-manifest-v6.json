@@ -1,0 +1,30 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-authority-manifest/6.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "measured_content_head":"014369367e9f67ff72c93bad5953b05d9465a479",
+  "measured_content_tree":"706fc68cf0928236a70798edc86803c23823cc88",
+  "self_exclusion":"THIS_MANIFEST_DOES_NOT_BIND_ITS_OWN_BYTES_OR_PACKAGING_COMMIT",
+  "supersedes":"docs/architecture/reviews/evidence/f017-numerical-output-interface-authority-manifest-v5.json",
+  "entries":[
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-authority-manifest-v5.json","sha256":"095734b4262833fb9097970ae5af0ed3cdec098622ecaafcb4117a3654276193","role":"PREVIOUS_AUTHORITY"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-opus-design-cycle-02-request.md","sha256":"c4b687b4af48750ca670ccc1d202ee7199c8a15290d9855d78d1d48c4fe5ec18","role":"FINAL_OPUS_DESIGN_REQUEST"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-opus-design-cycle-02-normalized-result.json","sha256":"598eb43b369c61be57cf941a49b31e154cd4aca180bc4140cc4c1983d3e82ff0","role":"FINAL_OPUS_DESIGN_RESULT"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-arbiter-ledger-v3.json","sha256":"fdab9f0b72a447fc4e0c58bf1600e10cdcb55a4b38bf51505e2f8b0c7ad3eb03","role":"FINAL_DESIGN_ARBITER_LEDGER"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-design-acceptance-v1.json","sha256":"a70e1f733b6ce5d3276b48eb9051d5b7d3fd9a4093728c3c497241ce3900675e","role":"DESIGN_ACCEPTANCE"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-claim-ledger-v2.json","sha256":"5e19f67280eb175852b767db54db9f06ec331e363a55fdb7e463931998718944","role":"DESIGN_CLAIM_LEDGER"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-graph-state-v6.json","sha256":"a484492678cb0ad2e8e67c5d0bbdc211305f9f6846863bcd49f15812230f9f25","role":"GRAPH_STATE"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r5-receipt-v2.json","sha256":"2fa4f8be5dcb16f0eafc7b578418724fbc398e8b5f265d9971b878360509b658","role":"OPUS_DESIGN_NODE_RECEIPT"}
+  ],
+  "entry_count":8,
+  "gemini_design_cycles_used":3,
+  "opus_design_cycles_used":2,
+  "readiness_critical_design_claims_accepted":11,
+  "readiness_critical_design_claims_rejected":0,
+  "readiness_critical_design_claims_unresolved":0,
+  "blocking_findings":0,
+  "non_blocking_required_findings":0,
+  "defense_in_depth_findings":4,
+  "global_verdict":"ACCEPT_F017_NUMERICAL_OUTPUT_INTERFACE_FOR_IMPLEMENTATION",
+  "event_04_retry":false,"event_04_resume":false,"event_05_executed":false,"live_event_05_authorization_created":false,"original_checkpoint_access":0,"p1_attempt_2_executed":false,"historical_master_ledger":175,
+  "result":"PASS_READY_FOR_SUCCESSOR_CORE_IMPLEMENTATION"
+}
