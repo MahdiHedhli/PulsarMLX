@@ -1,0 +1,1 @@
+{"artifact_kind":"descriptor_release_receipt","payload":{"live_leases_after_release":0,"release_report_sha256":"e5d712b04f6032176f08754c144c1fd77d8c67353ff6c7ace3ad2eeca01ad119","result":"PASS"},"schema":"pulsarmlx.f017.v10.runtime.descriptor_release_receipt/1.0.0"}

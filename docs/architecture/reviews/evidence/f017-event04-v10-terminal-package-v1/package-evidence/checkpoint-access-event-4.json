@@ -1,0 +1,1 @@
+{"artifact_kind":"checkpoint_access_event","payload":{"sha256":"10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e","shard_ordinal":4},"schema":"pulsarmlx.f017.v10.runtime.checkpoint_access_event/1.0.0"}

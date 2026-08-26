@@ -1,0 +1,1 @@
+{"artifact_kind":"checkpoint_shard_receipt","payload":{"sha256":"40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d","shard_ordinal":5},"schema":"pulsarmlx.f017.v10.runtime.checkpoint_shard_receipt/1.0.0"}

@@ -1,0 +1,1 @@
+{"artifact_kind":"checkpoint_identity_durable_start","payload":{"expected_graph_descriptors":5,"expected_shards":6},"schema":"pulsarmlx.f017.v10.runtime.checkpoint_identity_durable_start/1.0.0"}

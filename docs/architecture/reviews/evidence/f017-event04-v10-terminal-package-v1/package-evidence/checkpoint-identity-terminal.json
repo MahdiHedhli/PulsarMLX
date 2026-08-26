@@ -1,0 +1,1 @@
+{"artifact_kind":"checkpoint_identity_terminal","payload":{"result":"COMPLETE","retained_lease_count":5},"schema":"pulsarmlx.f017.v10.runtime.checkpoint_identity_terminal/1.0.0"}
