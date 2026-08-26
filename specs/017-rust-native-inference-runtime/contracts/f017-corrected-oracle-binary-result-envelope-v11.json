@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-binary-result-envelope/11.0.0",
+  "generation": "V11",
+  "status": "FROZEN_BEFORE_EVENT05_AUTHORIZATION",
+  "source_event": {
+    "event": "EVENT_04",
+    "disposition": "IMMUTABLE_TRUTHFUL_TERMINAL_FAILURE",
+    "failure_node": "E6",
+    "failure_class": "ArtifactDecodeError",
+    "failure_message": "artifact bytes exceed bound",
+    "retroactive_closure": "PROHIBITED"
+  },
+  "geometry": {"hidden_size": 6144, "vocabulary_size": 154880, "top_n": 32},
+  "encoding": {
+    "container": "RAW_CONTIGUOUS_IEEE754",
+    "endianness": "LITTLE",
+    "header": "NONE",
+    "padding": "NONE",
+    "embedded_path": false,
+    "embedded_sha": false,
+    "finite_values_only": true,
+    "signed_zero": "PRESERVE_IEEE754_BITS",
+    "byte_count_rule": "PRODUCT_SHAPE_TIMES_DTYPE_ITEMSIZE"
+  },
+  "payloads": [
+    {"role":"PRIMARY","kind":"final_hidden","dtype":"f64le","shape":[6144],"itemsize":8,"element_count":6144,"byte_count":49152},
+    {"role":"PRIMARY","kind":"final_normalized","dtype":"f64le","shape":[6144],"itemsize":8,"element_count":6144,"byte_count":49152},
+    {"role":"PRIMARY","kind":"full_logits","dtype":"f64le","shape":[154880],"itemsize":8,"element_count":154880,"byte_count":1239040},
+    {"role":"SECONDARY","kind":"final_hidden","dtype":"f32le","shape":[6144],"itemsize":4,"element_count":6144,"byte_count":24576},
+    {"role":"SECONDARY","kind":"final_normalized","dtype":"f32le","shape":[6144],"itemsize":4,"element_count":6144,"byte_count":24576},
+    {"role":"SECONDARY","kind":"full_logits","dtype":"f32le","shape":[154880],"itemsize":4,"element_count":154880,"byte_count":619520}
+  ],
+  "control_plane": {
+    "full_numerical_arrays_in_json": "PROHIBITED",
+    "general_bounded_decoder_limits_changed": false,
+    "result_control_max_bytes": 65536,
+    "result_control_max_array_elements": 64,
+    "top_summary_elements": 32
+  },
+  "write_protocol": ["EXCLUSIVE_NO_REPLACE","DETERMINISTIC_CHUNK_ORDER","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"],
+  "read_protocol": ["NO_FOLLOW","REGULAR_FILE","EXACT_KIND","EXACT_DTYPE","EXACT_ENDIAN","EXACT_SHAPE","EXACT_ELEMENT_COUNT","EXACT_BYTE_COUNT","SHA256","FINITE_VALUES"],
+  "numerical_contract": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json","sha256":"84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"},
+  "numerical_formulas_changed": false,
+  "numerical_thresholds_changed": false,
+  "original_checkpoint_access": 0
+}

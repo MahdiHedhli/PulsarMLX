@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event04-result-envelope-diagnostic-reuse-grant/11.0.0",
+  "event04_package_attempt_id": "F017-CORRECTED-ORACLE-PACKAGE-ATTEMPT-04-V10-1",
+  "raw_output_path": "docs/architecture/reviews/evidence/f017-event04-v10-terminal-package-v1/package-evidence/primary-consumer-output.json",
+  "expected_size": 3104598,
+  "expected_sha256": "17255fd412b07275ed422f827bbd884fd3a19ba8a870153ca226143c5f0eca4a",
+  "consumer": "EVENT04_RESULT_ENVELOPE_DIAGNOSTIC_CONVERTER",
+  "purpose": "NON_AUTHORITATIVE_FORMAT_QUALIFICATION",
+  "checkpoint_access": "PROHIBITED",
+  "promotion": "PROHIBITED",
+  "event04_receipt_creation": "PROHIBITED",
+  "event04_terminal_creation": "PROHIBITED"
+}
