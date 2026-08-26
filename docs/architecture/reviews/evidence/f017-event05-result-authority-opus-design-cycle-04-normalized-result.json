@@ -1,0 +1,20 @@
+{
+  "schema":"pulsarmlx.f017.event05-v11-result-authority-design-arbiter/1.0.0",
+  "cycle":4,
+  "reviewed_head":"95fdeb57a816f3d44dbd2351e05a4796be37b78d",
+  "reviewer":"claude-opus-5",
+  "claim_verdicts":{
+    "C-BIN-002":"ACCEPT","C-CLOSURE-001":"ACCEPT","C-COMP-001":"ACCEPT",
+    "C-ROUTE-001":"ACCEPT","C-AUTH-001":"ACCEPT","C-TOP32-001":"ACCEPT",
+    "C-LEAF-001":"ACCEPT","C-BUNDLE-001":"ACCEPT"
+  },
+  "reconfirmation":{"contract_sha256":"07d463736ed37e9aca87bd82cf0ca56180e3d48a9598557de4cb530ef47a3aed","rederived_fields":28,"unit_tests":22,"builder_import_separation":"PASS","event04_containment":"PASS"},
+  "findings":[
+    {"id":"V11-08","classification":"DEFENSE_IN_DEPTH","summary":"authorization is receipt-bound rather than payload-prefix-bound","affects_verdict":false},
+    {"id":"V11-09","classification":"DEFENSE_IN_DEPTH","summary":"test helper and return annotation are cosmetic residue","affects_verdict":false}
+  ],
+  "blocking_count":0,
+  "non_blocking_required_count":0,
+  "original_checkpoint_access":0,
+  "global_verdict":"ACCEPT_F017_EVENT05_RESULT_ENVELOPE_DESIGN_FOR_IMPLEMENTATION"
+}

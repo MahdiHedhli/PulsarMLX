@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-result-authority-design-arbiter/1.0.0",
+  "cycle": 3,
+  "reviewed_head": "95fdeb57a816f3d44dbd2351e05a4796be37b78d",
+  "reviewer": "claude-opus-5",
+  "claim_verdicts": {
+    "C-BIN-002":"ACCEPT", "C-CLOSURE-001":"ACCEPT", "C-COMP-001":"ACCEPT",
+    "C-ROUTE-001":"ACCEPT", "C-AUTH-001":"ACCEPT", "C-TOP32-001":"ACCEPT",
+    "C-LEAF-001":"ACCEPT", "C-BUNDLE-001":"ACCEPT"
+  },
+  "prior_required_findings_closed": [
+    "V6-01","V6-02","V6-03","V6-04","V6-05","V6-06",
+    "V11-01","V11-02","V11-03","V11-04","V11-05"
+  ],
+  "independent_verification": {
+    "unit_tests":{"passed":22,"failed":0},
+    "adversarial_mutations":60,
+    "adversarial_escapes":0,
+    "original_checkpoint_access":0
+  },
+  "findings": [
+    {"id":"A3-01","classification":"DEFENSE_IN_DEPTH","summary":"embedded-NUL leaf failure is fail-closed but not normalized"},
+    {"id":"A3-02","classification":"DEFENSE_IN_DEPTH","summary":"comparison closure omits diagnostic classification"},
+    {"id":"A3-03","classification":"DEFENSE_IN_DEPTH","summary":"three receipt evidence SHAs are shape-checked but not caller-expected"},
+    {"id":"A3-04","classification":"DEFENSE_IN_DEPTH","summary":"qualification test counts are externally banked rather than emitted"},
+    {"id":"A3-05","classification":"DEFENSE_IN_DEPTH","summary":"authorization is receipt-bound rather than payload-prefix-bound"}
+  ],
+  "blocking_count":0,
+  "non_blocking_required_count":0,
+  "original_checkpoint_access":0,
+  "global_verdict":"ACCEPT_F017_EVENT05_RESULT_AUTHORITY_DESIGN_FOR_IMPLEMENTATION"
+}
