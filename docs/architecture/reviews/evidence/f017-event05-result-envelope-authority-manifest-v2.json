@@ -1,0 +1,23 @@
+{
+  "schema":"pulsarmlx.f017.event05-result-envelope-authority-manifest/1.0.0",
+  "graph_id":"F017-EVENT05-RESULT-ENVELOPE-GRAPH-02",
+  "status":"DESIGN_ACCEPTED_IMPLEMENTATION_INSTANTIABILITY_BLOCKED",
+  "design_head":"95fdeb57a816f3d44dbd2351e05a4796be37b78d",
+  "design_arbiter_verdict":"ACCEPT_F017_EVENT05_RESULT_ENVELOPE_DESIGN_FOR_IMPLEMENTATION",
+  "implementation_entry_head":"1810ec2ed4404477df49ec367f08d0cf6d4a26c9",
+  "artifacts":[
+    {"path":"docs/architecture/reviews/evidence/f017-event05-v11-implementation-instantiability-blocker-v1.json","sha256":"a78810465a1a97ae5311c25bccb98e86abcd1bee6fa80b804f7c61097dbae6ed"},
+    {"path":"docs/architecture/reviews/evidence/f017-event05-result-envelope-node-r11-receipt-v1.json","sha256":"0204dcb6a1533631578f44280e952fe0334c15d4af2b34bcf1c6d6312a2aed8e"},
+    {"path":"docs/architecture/reviews/evidence/f017-event05-result-envelope-graph-state-v2.json","sha256":"bcc621c6795ead9180025c379dabb14234fac1fbb2fa8dcd0e1f2910a6ec33fc"},
+    {"path":"docs/architecture/reviews/evidence/f017-event05-result-envelope-claim-ledger-v2.json","sha256":"a694565c6e2601a9be25e5ee76e325a3d0cf7d3755df7e68f8786036b49cce17"},
+    {"path":"docs/architecture/reviews/evidence/f017-event05-result-authority-opus-design-cycle-04-normalized-result.json","sha256":"9051952155abe9038b59f9522d6d11307bb86e53a4986d17c1f5e76356910602"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11.json","sha256":"a52e9474cfe0f30a849910a60e0182603c5029aae5ac934166fd6fa17ba0593b"},
+    {"path":"scripts/research/f017_corrected_oracle_primary_numerics_v2.py","sha256":"657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767"},
+    {"path":"scripts/research/f017_corrected_oracle_secondary_numerics_v2.py","sha256":"e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791"}
+  ],
+  "self_exclusion":"THIS_MANIFEST_CANNOT_HASH_BIND_ITS_OWN_BYTES",
+  "event_05_execution_authority_created":false,
+  "original_checkpoint_access":0,
+  "historical_master_ledger":175,
+  "ready_for_event05_execution_go":false
+}

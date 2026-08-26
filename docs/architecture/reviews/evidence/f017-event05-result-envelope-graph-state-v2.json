@@ -1,0 +1,28 @@
+{
+  "schema":"pulsarmlx.f017.event05-result-envelope-graph-state/1.0.0",
+  "graph_id":"F017-EVENT05-RESULT-ENVELOPE-GRAPH-02",
+  "predecessor_graph":"F017-EVENT05-RESULT-ENVELOPE-GRAPH-01",
+  "authoritative_branch":"feat/017-rust-native-inference-runtime",
+  "authoritative_head":"1810ec2ed4404477df49ec367f08d0cf6d4a26c9",
+  "authoritative_tree":"99c54e4608b056e53a59d25c0e9c42d75a86e19e",
+  "active_frontier":"STOP_R11_INSTANTIABILITY_CONFLICT",
+  "active_corrected_oracle_generation":"NONE",
+  "nodes":{
+    "R0":{"status":"PASS"},"R1":{"status":"PASS"},"R2":{"status":"PASS"},
+    "R3":{"status":"PASS"},"R4":{"status":"PASS"},"R5":{"status":"PASS"},
+    "R6":{"status":"PASS"},"R7":{"status":"PASS"},"R8":{"status":"PASS"},
+    "R9":{"status":"PASS"},"R10":{"status":"PASS","receipt":"docs/architecture/reviews/evidence/f017-event05-result-authority-opus-design-cycle-04-normalized-result.json"},
+    "R11":{"status":"BLOCKED","receipt":"docs/architecture/reviews/evidence/f017-event05-result-envelope-node-r11-receipt-v1.json"},
+    "R12":{"status":"PENDING"},"R13":{"status":"PENDING"},"R14":{"status":"PENDING"},
+    "R15":{"status":"PENDING"},"R16":{"status":"PENDING"},"R17":{"status":"PENDING"},
+    "R18":{"status":"PENDING"},"R19":{"status":"PENDING"},"R20":{"status":"PENDING"}
+  },
+  "event_04_retry":false,
+  "event_04_resume":false,
+  "event_05_executed":false,
+  "live_event_05_authorization_created":false,
+  "original_checkpoint_access":0,
+  "historical_master_ledger":175,
+  "readiness":false,
+  "verdict":"REJECT"
+}
