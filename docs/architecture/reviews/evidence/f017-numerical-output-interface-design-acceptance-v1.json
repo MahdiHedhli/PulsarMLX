@@ -1,0 +1,18 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-design-acceptance/1.0.0",
+  "declaration":"F017_CORRECTED_ORACLE_NUMERICAL_OUTPUT_INTERFACE_DESIGN: ACCEPTED",
+  "reviewed_head":"5c0739f0e4bc10034fd56fbed30f338b35111470",
+  "gemini_design_cycles":3,
+  "gemini_final_open_challenges":0,
+  "opus_design_cycles":2,
+  "opus_claims_accepted":11,
+  "opus_claims_rejected":0,
+  "opus_claims_unresolved":0,
+  "blocking_findings":0,
+  "non_blocking_required_findings":0,
+  "design_mutations_rejected":145,
+  "unexpected_mutation_passes":0,
+  "global_verdict":"ACCEPT_F017_NUMERICAL_OUTPUT_INTERFACE_FOR_IMPLEMENTATION",
+  "event_04_retry":false,"event_04_resume":false,"event_05_executed":false,"live_event_05_authorization_created":false,"original_checkpoint_access":0,"p1_attempt_2_executed":false,"historical_master_ledger":175,
+  "result":"ACCEPTED_FOR_SUCCESSOR_CORE_IMPLEMENTATION"
+}
