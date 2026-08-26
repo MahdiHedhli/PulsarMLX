@@ -1,0 +1,24 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-authority-manifest/4.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "measured_content_head":"d082c7a8aa6f28bb159b95448cd1920dbc5416c0",
+  "measured_content_tree":"82aadca634a63cdd851d9c4f644fce1c44239d4a",
+  "self_exclusion":"THIS_MANIFEST_DOES_NOT_BIND_ITS_OWN_BYTES_OR_PACKAGING_COMMIT",
+  "supersedes":"docs/architecture/reviews/evidence/f017-numerical-output-interface-authority-manifest-v3.json",
+  "entries":[
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-authority-manifest-v3.json","sha256":"fc86a55258d67e07b13d8a56aadf3e2463821a33404ed75dffe3f2695c8045ec","role":"REPAIRED_DESIGN_AUTHORITY"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-gemini-design-cycle-02-request.md","sha256":"66d6c62a1e811f6fb696665ecf667ea14dc9c14f0502698d916177de040e615f","role":"GEMINI_CYCLE02_REQUEST"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-gemini-design-cycle-02-normalized-result.json","sha256":"08e32c917b7340245d50cf29eaeda38ac2b4eb8f0aa2e3189ee3be63990a8ffa","role":"INVALID_GEMINI_CYCLE02_RESULT"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-challenge-ledger-v3.json","sha256":"52419794ffb2b55cd17ea4093cba680fe9e3b43418c47ed24c9ff4c98a771fe8","role":"CHALLENGE_PROTOCOL_TRIAGE"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-support-ledger-v4.json","sha256":"8b0cd11c0c9d702e10e32798cded0bb9e4f8b55c74a22789791cb49487e1c21a","role":"CYCLE02_SUPPORT"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-graph-state-v4.json","sha256":"736d89c3bee3d14f32d415b8d0678898b1fb72696f277a206c390b2620d8bf6d","role":"GRAPH_STATE"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r3-receipt-v2.json","sha256":"a3dc73180d98b8dd13b79d98376ca612f29db2bb8d0379539fd9c81d8f32ab7f","role":"GEMINI_NODE_RECEIPT"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r4-receipt-v2.json","sha256":"bb2fefe4b868cb9760efb8c894e90e9c6488937745b51c30009c0d06b18191d5","role":"SUPPORT_NODE_RECEIPT"}
+  ],
+  "entry_count":8,
+  "gemini_design_cycles_used":2,
+  "cycle02_packet_valid":false,
+  "usable_open_challenges":0,
+  "event_04_retry":false,"event_04_resume":false,"event_05_executed":false,"live_event_05_authorization_created":false,"original_checkpoint_access":0,"p1_attempt_2_executed":false,"historical_master_ledger":175,
+  "result":"PASS_READY_FOR_FINAL_GEMINI_DESIGN_CYCLE"
+}
