@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-node-receipt/10.0.0",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "node_id": "E13",
+  "input_head": "e49e54991e9cea88cc97d7bbd135c815ef6ed4db",
+  "output_binding_kind": "SUCCESSOR_AUTHORITY_MANIFEST_BINDS_THIS_RECEIPT",
+  "corrected_oracle_classification": "ORACLE_EXECUTION_FAILURE",
+  "event_04_package_executed": true,
+  "primary_real_oracle_executed": true,
+  "secondary_real_oracle_executed": false,
+  "p1_attempt_2_executed": false,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "node_result": "PASS",
+  "next_eligible_edges": [],
+  "terminal_action": "STOP_BEFORE_P1_ATTEMPT_2"
+}

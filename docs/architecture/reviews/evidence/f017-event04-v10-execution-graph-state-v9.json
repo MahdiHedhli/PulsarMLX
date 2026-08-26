@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-graph-state/10.0.3",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "starting_head": "3256b31d5b09bf2c71ea4e170172da6a75c89c1b",
+  "predecessor": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-graph-state-v8.json","sha256":"61f94e6be7333d953393dc115f543edd2e7aa0ee28fd178a413b420ff8c3ec55"},
+  "claim_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-claim-ledger-v9.json","sha256":"3985a50410f45cc4ecf43fd37d70b60560b152a6679adb9cc97629324e41ab4b"},
+  "arbiter_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-arbiter-ledger-v4.json","sha256":"5e3580a4bb2d63652e3fd968d74466a985af1dc4f02fe56a71eaa4df72b527a9"},
+  "covered_head_ci": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-evidence-only-ci-v3.json","sha256":"120c2767c0262ed56f2a3581bbc0a6bc3642788fe4125d4a4e52815ae7ad50e3"},
+  "active_node": null,
+  "execution_nodes_completed": ["E0","E1","E2","E3","E4","E5"],
+  "post_execution_nodes_completed": ["E9","E10","E11","E12","E13"],
+  "nodes": [
+    {"node_id":"E0","status":"PASS"},{"node_id":"E1","status":"PASS"},{"node_id":"E2","status":"PASS"},{"node_id":"E3","status":"PASS"},{"node_id":"E4","status":"PASS"},{"node_id":"E5","status":"PASS"},
+    {"node_id":"E6","status":"TERMINAL_FAILURE"},{"node_id":"E7","status":"INVALIDATED"},{"node_id":"E8","status":"TERMINAL_FAILURE"},
+    {"node_id":"E9","status":"PASS"},{"node_id":"E10","status":"PASS"},{"node_id":"E11","status":"PASS"},{"node_id":"E12","status":"PASS"},{"node_id":"E13","status":"PASS"}
+  ],
+  "terminal_failure": {
+    "classification": "ORACLE_EXECUTION_FAILURE",
+    "failed_node": "E6",
+    "no_execution_replay": true,
+    "runtime_terminal_result_sha256": "3c7b8561414ce6aeeb5e9597debd5147981af608e8bf878a4383e58360258a77",
+    "banked_terminal_result": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-terminal-execution-result-v1.json","sha256":"9ea346b6d0fa7f144799b6a9bd13dbeffba4fb816163a7e39d811d141543907d"}
+  },
+  "lease_census": {"active_at_e5":5,"live_after_e8_release":0},
+  "claim_census": {"accepted":21,"rejected":7,"unresolved":0,"pending_arbiter":0,"total":28,"result":"PASS"},
+  "global_arbiter_verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EVIDENCE",
+  "acceptance_scope": "TRUTHFUL_FAILURE_EVIDENCE_ONLY",
+  "measured_execution_bytes_changed_after_go": false,
+  "no_execution_replay": true,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "result": "TERMINAL_ORACLE_EXECUTION_FAILURE_EVIDENCE_ACCEPTED"
+}
