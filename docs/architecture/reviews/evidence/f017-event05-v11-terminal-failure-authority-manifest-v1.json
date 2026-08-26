@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-terminal-failure-authority-manifest/1.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "status": "TERMINAL_PRE_MINT_FAILURE_NO_RETRY",
+  "failure_classification": "READINESS_DECLARATION_INTERFACE_MISMATCH",
+  "authority_entry_head": "402023cfabe31cc6ed0e1bcc6dddc5a02f45d695",
+  "artifacts": [
+    {"role":"accepted_readiness_declaration","path":"docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json","sha256":"e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6"},
+    {"role":"measured_authorizer","path":"scripts/research/validate_f017_corrected_oracle_access_v11.py","sha256":"474fd9e3939a9b9b5dd93eea431f4cb73793b4b8e6511adc11fa11f67af8cc39"},
+    {"role":"pre_mint_failure","path":"docs/architecture/reviews/evidence/f017-event05-v11-pre-mint-authority-failure-v1.json","sha256":"0c9e1c402304c497dbbb8947619ca03cd7336b5d5320429160932942edc2e802"},
+    {"role":"claim_ledger","path":"docs/architecture/reviews/evidence/f017-event05-v11-execution-claim-ledger-v1.json","sha256":"6d050736bdf8b8924eb309fff9dba178505277e58ca0e689d63210f3febd2989"},
+    {"role":"challenge_ledger","path":"docs/architecture/reviews/evidence/f017-event05-v11-execution-challenge-ledger-v1.json","sha256":"4afd32a58fe1c081920615ae5e369ef309df7b953d8df6fa620c5a7b13196983"},
+    {"role":"support_ledger","path":"docs/architecture/reviews/evidence/f017-event05-v11-execution-support-ledger-v1.json","sha256":"99097946855997e5aca0915e59aedab7f1d4107c1f780a7f0a4a07c42e177e96"},
+    {"role":"arbiter_ledger","path":"docs/architecture/reviews/evidence/f017-event05-v11-execution-arbiter-ledger-v1.json","sha256":"d6b057affad4f34238d3d79ee07d4e6920e27b64c12f5cddc930bb5cdee6b1b2"},
+    {"role":"graph_state_at_failure","path":"docs/architecture/reviews/evidence/f017-event05-v11-execution-graph-state-v1.json","sha256":"a06c9d7a431a62825bb2f3117fe4b0f844d75657ec0203a53839739cbd8220e6"},
+    {"role":"e0_receipt","path":"docs/architecture/reviews/evidence/f017-event05-v11-execution-node-e0-receipt-v2.json","sha256":"e8f905c7eeaf369227d3b6655fec84bf9ce2c59c71789143f67b6406ff64f72e"}
+  ],
+  "binding_count": 9,
+  "self_exclusion": "THIS_MANIFEST_CANNOT_HASH_BIND_ITS_OWN_BYTES_OR_FUTURE_EVIDENCE_ONLY_CI_RECEIPT",
+  "operator_go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "operator_approval_created": false,
+  "live_event_05_authorization_created": false,
+  "event_05_package_executed": false,
+  "primary_real_oracle_event05_executed": false,
+  "secondary_real_oracle_event05_executed": false,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "corrected_oracle_verdict": "ORACLE_EXECUTION_FAILURE",
+  "ready_to_prepare_p1_attempt_2_authorization": false
+}
