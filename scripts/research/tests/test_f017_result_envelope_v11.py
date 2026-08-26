@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 from f017_binary_comparator_v11 import compare_logits, validate_comparison_summary
 from f017_result_artifacts_v11 import (build_consumer_terminal, build_manifest, build_receipt,
     build_result_terminal, build_routing_manifest, build_top32, closure_root,
-    NUMERICAL_CONTRACT_V3_SHA256, require_primary_terminal, validate_closure_root,
+    NUMERICAL_CONTRACT_V4_SHA256, require_primary_terminal, validate_closure_root,
     validate_manifest, validate_top32)
 from f017_event04_diagnostic_converter_v11 import convert
 from f017_result_bundle_authority_v11 import compose_comparison_closure, validate_bundle
@@ -49,7 +49,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
                     package_attempt_id="PKG", consumer_event_id=role))
             records.append(logits); manifest = build_manifest(role,"PKG",role,records); top = build_top32(root,logits)
             digest = hashlib.sha256(b"x").hexdigest()
-            receipt = build_receipt(role,"AUTH","PKG",role,digest,NUMERICAL_CONTRACT_V3_SHA256,
+            receipt = build_receipt(role,"AUTH","PKG",role,digest,NUMERICAL_CONTRACT_V4_SHA256,
                 hashlib.sha256((json.dumps(manifest,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),
                 hashlib.sha256((json.dumps(top,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),
                 hashlib.sha256((json.dumps(routing,sort_keys=True,separators=(",",":"))+"\n").encode()).hexdigest(),digest,digest)
@@ -111,7 +111,7 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
             manifest = build_manifest("PRIMARY", "PKG", "PRIMARY-EVENT", records)
             self.assertEqual(validate_manifest(root, manifest)["result"], "PASS")
             digest = hashlib.sha256(b"x").hexdigest()
-            receipt = build_receipt("PRIMARY", "AUTH", "PKG", "PRIMARY-EVENT", digest, NUMERICAL_CONTRACT_V3_SHA256,
+            receipt = build_receipt("PRIMARY", "AUTH", "PKG", "PRIMARY-EVENT", digest, NUMERICAL_CONTRACT_V4_SHA256,
                                     hashlib.sha256(__import__('json').dumps(manifest, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest(),
                                     digest, digest, digest, digest)
             receipt_sha = hashlib.sha256(__import__('json').dumps(receipt, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest()

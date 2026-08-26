@@ -7,7 +7,7 @@ from pathlib import Path
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_binary_comparison_authority_v11 import validate_summary
-from f017_result_artifacts_v11 import (NUMERICAL_CONTRACT_V3_SHA256,
+from f017_result_artifacts_v11 import (NUMERICAL_CONTRACT_V4_SHA256,
     validate_consumer_terminal, validate_manifest,
     validate_receipt, validate_result_terminal, validate_routing_manifest, validate_top32)
 from f017_result_envelope_v11 import ResultEnvelopeError
@@ -21,7 +21,7 @@ def validate_bundle(directory: Path, *, role: str, authorization_id: str,
                     package_attempt_id: str, consumer_event_id: str,
                     manifest: dict, top32: dict, routing: dict, receipt: dict,
                     result_terminal: dict, consumer_terminal: dict,
-                    numerical_contract_sha256: str = NUMERICAL_CONTRACT_V3_SHA256) -> dict:
+                    numerical_contract_sha256: str = NUMERICAL_CONTRACT_V4_SHA256) -> dict:
     if role not in {"PRIMARY","SECONDARY"}:
         raise ResultEnvelopeError("bundle role")
     validate_manifest(directory, manifest)
@@ -57,7 +57,7 @@ def compose_comparison_closure(*, primary_directory: Path, secondary_directory: 
                                authorization_id: str, package_attempt_id: str,
                                primary_artifacts: dict, secondary_artifacts: dict,
                                comparison_summary: dict,
-                               numerical_contract_sha256: str = NUMERICAL_CONTRACT_V3_SHA256) -> dict:
+                               numerical_contract_sha256: str = NUMERICAL_CONTRACT_V4_SHA256) -> dict:
     """Validate raw six-leaf bundles and comparison before composing closure."""
     artifact_keys = {"consumer_event_id", "manifest", "top32", "routing", "receipt",
                      "result_terminal", "consumer_terminal"}

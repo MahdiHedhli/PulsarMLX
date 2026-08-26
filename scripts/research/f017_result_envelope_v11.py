@@ -219,6 +219,94 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
     }
 
 
+def bank_payload_bytes(directory: Path, leaf: str, spec: PayloadSpec, payload: bytes,
+                       *, package_attempt_id: str, consumer_event_id: str) -> dict:
+    """Bank already-canonical immutable output bytes without numeric repacking.
+
+    Successor numerical cores own conversion from their frozen arithmetic dtype
+    to canonical little-endian bytes.  V11 preserves those exact bytes so a
+    result can never acquire authority through a second conversion.
+    """
+    if not isinstance(directory, Path) or not isinstance(spec, PayloadSpec):
+        raise ResultEnvelopeError("payload bank arguments")
+    if type(payload) is not bytes:
+        raise ResultEnvelopeError("canonical payload must be immutable bytes")
+    if type(package_attempt_id) is not str or not package_attempt_id:
+        raise ResultEnvelopeError("payload package binding")
+    if type(consumer_event_id) is not str or not consumer_event_id:
+        raise ResultEnvelopeError("payload consumer binding")
+    _validate_leaf(leaf)
+    if len(payload) != spec.byte_count:
+        raise ResultEnvelopeError("canonical payload byte geometry")
+    try:
+        for (value,) in struct.iter_unpack(f"<{spec.struct_code}", payload):
+            if not math.isfinite(value):
+                raise ResultEnvelopeError("payload value is not finite")
+    except struct.error as exc:
+        raise ResultEnvelopeError("canonical payload structure") from exc
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ResultEnvelopeError("payload directory creation") from exc
+    directory_fd = _open_directory(directory)
+    descriptor = -1
+    before = None
+    try:
+        descriptor = os.open(
+            leaf,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=directory_fd,
+        )
+        _write_all(descriptor, payload)
+        os.fsync(descriptor)
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_size != spec.byte_count:
+            raise ResultEnvelopeError("payload write geometry")
+        os.close(descriptor)
+        descriptor = -1
+        os.fsync(directory_fd)
+        descriptor = os.open(
+            leaf, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd
+        )
+        after = os.fstat(descriptor)
+        if (before.st_dev, before.st_ino, before.st_size) != (
+                after.st_dev, after.st_ino, after.st_size):
+            raise ResultEnvelopeError("payload identity changed before readback")
+        observed = bytearray()
+        while len(observed) < spec.byte_count:
+            part = os.read(descriptor, min(1 << 20, spec.byte_count - len(observed)))
+            if not part:
+                raise ResultEnvelopeError("short payload readback")
+            observed.extend(part)
+        if os.read(descriptor, 1) or bytes(observed) != payload:
+            raise ResultEnvelopeError("payload readback mismatch")
+    except ResultEnvelopeError:
+        raise
+    except OSError as exc:
+        raise ResultEnvelopeError("payload filesystem failure") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        os.close(directory_fd)
+    digest = hashlib.sha256(payload).hexdigest()
+    identity_digest = hashlib.sha256(
+        _payload_identity_prefix(spec, package_attempt_id, consumer_event_id) + payload
+    ).hexdigest()
+    return {
+        **spec.record(),
+        "path_role": leaf,
+        "observed_byte_count": len(payload),
+        "sha256": digest,
+        "payload_identity_sha256": identity_digest,
+        "finite_values": True,
+        "signed_zero_policy": "PRESERVE_IEEE754_BITS",
+        "producer_identity": f"F017_V11_{spec.role}_RESULT_ENVELOPE",
+        "package_attempt_id": package_attempt_id,
+        "consumer_event_id": consumer_event_id,
+    }
+
+
 def validate_payload(directory: Path, record: dict, *, expected_spec: PayloadSpec | None = None) -> dict:
     """Validate one payload and its exact geometry without following symlinks."""
     if type(record) is not dict:

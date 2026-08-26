@@ -23,6 +23,7 @@ ROUTING_LIMITS = ArtifactLimits(
     max_integer_digits=32, max_number_chars=128,
 )
 NUMERICAL_CONTRACT_V3_SHA256 = "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"
+NUMERICAL_CONTRACT_V4_SHA256 = "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2"
 
 
 def _sha(value: object) -> str:
@@ -173,7 +174,7 @@ def build_top32(directory: Path, logits_record: dict) -> dict:
             "entries": [{"token_id": item[0], bits_key: struct.pack(f"<{code}", item[1]).hex()} for item in ordered],
             "selected_token": ordered[0][0], "top_1_margin": ordered[0][1] - ordered[1][1],
             "logits_payload_sha256": logits_record["sha256"],
-            "historical_token_quarantine": "ENFORCED_BY_NUMERICAL_CONTRACT_V3"}
+            "historical_token_quarantine": "ENFORCED_BY_NUMERICAL_CONTRACT_V4"}
     validate_top32(directory, logits_record, summary)
     return summary
 
@@ -187,7 +188,7 @@ def validate_top32(directory: Path, logits_record: dict, summary: dict) -> dict:
             or summary["package_attempt_id"] != logits_record.get("package_attempt_id")
             or summary["consumer_event_id"] != logits_record.get("consumer_event_id")):
         raise ResultEnvelopeError("top32 payload binding")
-    if summary["historical_token_quarantine"] != "ENFORCED_BY_NUMERICAL_CONTRACT_V3":
+    if summary["historical_token_quarantine"] != "ENFORCED_BY_NUMERICAL_CONTRACT_V4":
         raise ResultEnvelopeError("top32 quarantine")
     # Independently derive the canonical summary without recursive validation.
     heap: list[tuple[float, int]] = []; token = 0
@@ -234,7 +235,7 @@ def validate_receipt(receipt: dict, *, expected_role: str, expected_manifest_sha
                      expected_summary_sha256: str, expected_routing_manifest_sha256: str,
                      expected_authorization_id: str, expected_package_attempt_id: str,
                      expected_consumer_event_id: str,
-                     expected_numerical_contract_sha256: str = NUMERICAL_CONTRACT_V3_SHA256) -> dict:
+                     expected_numerical_contract_sha256: str = NUMERICAL_CONTRACT_V4_SHA256) -> dict:
     keys = {"schema","role","authorization_id","package_attempt_id","consumer_event_id",
             "producer_measurement_sha256","numerical_contract_sha256","payload_manifest_sha256",
             "top32_summary_sha256","routing_manifest_sha256","durable_start_sha256","access_census_sha256","result_state"}

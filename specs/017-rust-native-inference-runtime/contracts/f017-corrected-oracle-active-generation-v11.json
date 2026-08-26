@@ -1,0 +1,1 @@
+{"activation_candidate":"V11","activation_requires_whole_domain_arbiter_acceptance":true,"active_corrected_oracle_generation":"NONE","event_04_retry":false,"event_05_authorization_created":false,"event_05_executed":false,"event_05_operator_go_present":false,"schema":"pulsarmlx.f017.corrected-oracle-active-generation/11.0.0"}

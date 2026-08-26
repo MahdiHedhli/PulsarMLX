@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11.json"
+CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11-v2.json"
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-artifact-dag-v11.json"
 
 EXPECTED_PAYLOADS = [
@@ -29,18 +29,18 @@ def _load(path: Path) -> dict:
 
 
 def validate_contract(value: dict) -> None:
-    required = {"schema", "generation", "status", "source_event", "geometry", "encoding", "payloads",
+    required = {"schema", "generation", "status", "predecessor", "source_event", "geometry", "encoding", "payloads",
                 "control_plane", "write_protocol", "read_protocol", "numerical_contract",
-                "numerical_formulas_changed", "numerical_methodology_changed", "numerical_thresholds_changed", "original_checkpoint_access"}
+                "output_interface", "numerical_formulas_changed", "numerical_methodology_changed", "numerical_thresholds_changed", "original_checkpoint_access"}
     if type(value) is not dict or set(value) != required: raise ValueError("contract key census")
-    if value["schema"] != "pulsarmlx.f017.corrected-oracle-binary-result-envelope/11.0.0" or value["generation"] != "V11": raise ValueError("contract identity")
+    if value["schema"] != "pulsarmlx.f017.corrected-oracle-binary-result-envelope/11.1.0" or value["generation"] != "V11": raise ValueError("contract identity")
     if value["status"] != "FROZEN_BEFORE_EVENT05_AUTHORIZATION": raise ValueError("contract status")
     if value["geometry"] != {"hidden_size":6144,"vocabulary_size":154880,"top_n":32}: raise ValueError("geometry")
     encoding = value["encoding"]
     expected_encoding = {"container":"RAW_CONTIGUOUS_IEEE754","endianness":"LITTLE","header":"NONE","padding":"NONE",
                          "embedded_path":False,"embedded_sha":False,"finite_values_only":True,
                          "signed_zero":"PRESERVE_IEEE754_BITS","authority_binding":"PACKAGE_ATTEMPT_ID_AND_CONSUMER_EVENT_ID",
-                         "byte_count_rule":"PRODUCT_SHAPE_TIMES_DTYPE_ITEMSIZE"}
+                         "byte_count_rule":"PRODUCT_SHAPE_TIMES_DTYPE_ITEMSIZE","successor_output_bytes":"BANK_EXACTLY_WITHOUT_REPACKING"}
     if encoding != expected_encoding: raise ValueError("encoding")
     if type(value["payloads"]) is not list or len(value["payloads"]) != 6: raise ValueError("payload census")
     keys = {"role","kind","dtype","shape","itemsize","element_count","byte_count"}
@@ -59,11 +59,11 @@ def validate_contract(value: dict) -> None:
                     "routing_manifest_max_bytes":262144,"routing_manifest_max_array_elements":256,
                     "top_summary_elements":32}): raise ValueError("control separation")
     if value["numerical_formulas_changed"] is not False or value["numerical_methodology_changed"] is not False or value["numerical_thresholds_changed"] is not False or value["original_checkpoint_access"] != 0: raise ValueError("safety")
-    expected_write = ["EXCLUSIVE_NO_REPLACE","DETERMINISTIC_CHUNK_ORDER","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"]
+    expected_write = ["EXCLUSIVE_NO_REPLACE","EXACT_IMMUTABLE_SUCCESSOR_BYTES","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"]
     expected_read = ["NO_FOLLOW","REGULAR_FILE","EXACT_KIND","EXACT_DTYPE","EXACT_ENDIAN","EXACT_SHAPE","EXACT_ELEMENT_COUNT","EXACT_BYTE_COUNT","SHA256","FINITE_VALUES"]
     if value["write_protocol"] != expected_write or value["read_protocol"] != expected_read:
         raise ValueError("I/O protocol")
-    if value["numerical_contract"] != {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json","sha256":"84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"}:
+    if value["numerical_contract"] != {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json","sha256":"a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2"}:
         raise ValueError("numerical contract")
     source = value["source_event"]
     if source != {"event":"EVENT_04","disposition":"IMMUTABLE_TRUTHFUL_TERMINAL_FAILURE","failure_node":"E6","failure_class":"ArtifactDecodeError","failure_message":"artifact bytes exceed bound","retroactive_closure":"PROHIBITED"}: raise ValueError("Event04 immutability")

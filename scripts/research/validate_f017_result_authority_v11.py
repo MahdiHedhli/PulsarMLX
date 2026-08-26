@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11.json"
+CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json"
 AUTHORITY = ROOT / "scripts/research/f017_binary_comparison_authority_v11.py"
 ARTIFACTS = ROOT / "scripts/research/f017_result_artifacts_v11.py"
 BUNDLE = ROOT / "scripts/research/f017_result_bundle_authority_v11.py"
@@ -17,7 +17,7 @@ TESTS = ROOT / "scripts/research/tests/test_f017_result_envelope_v11.py"
 
 def main() -> int:
     contract = json.loads(CONTRACT.read_text())
-    if contract["schema"] != "pulsarmlx.f017.corrected-oracle-result-authority/11.0.2": raise ValueError("contract schema")
+    if contract["schema"] != "pulsarmlx.f017.corrected-oracle-result-authority/11.0.3": raise ValueError("contract schema")
     source = AUTHORITY.read_text(); tree = ast.parse(source)
     imports = {alias.name for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
     imports |= {node.module for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module}
