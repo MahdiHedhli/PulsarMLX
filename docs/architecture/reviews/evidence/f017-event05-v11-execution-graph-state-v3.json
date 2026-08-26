@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-graph-state/3.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-v11-execution-graph-state-v2.json",
+  "active_frontier": "STOPPED_TERMINAL_NO_GO",
+  "nodes": {
+    "E0": "TERMINAL_FAILURE",
+    "E1": "INVALIDATED",
+    "E2": "INVALIDATED",
+    "E3": "INVALIDATED",
+    "E4": "INVALIDATED",
+    "E5": "INVALIDATED",
+    "E6": "INVALIDATED",
+    "E7": "INVALIDATED",
+    "E8": "INVALIDATED",
+    "E9": "INVALIDATED",
+    "E10": "INVALIDATED",
+    "E11": "INVALIDATED",
+    "E12": "INVALIDATED",
+    "E13": "INVALIDATED"
+  },
+  "terminal_failure_manifest": {
+    "path": "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-authority-manifest-v2.json",
+    "sha256": "56fc5601e3720c9c25e4d9393cf7c5343d5802f3d77614e821741d5050db2d8e"
+  },
+  "evidence_only_ci": {
+    "path": "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-evidence-only-ci-v1.json",
+    "run_id": 33017578016,
+    "result": "PASS",
+    "native_jobs_launched": 0
+  },
+  "final_no_go_declaration": "docs/architecture/reviews/evidence/f017-event05-v11-final-no-go-declaration-v1.json",
+  "terminal_failure": "READINESS_DECLARATION_INTERFACE_MISMATCH",
+  "operator_go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "event_04_retry": false,
+  "event_04_resume": false,
+  "event_05_retry": false,
+  "event_05_package_executed": false,
+  "primary_real_oracle_event05_executed": false,
+  "secondary_real_oracle_event05_executed": false,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "live_p1_attempt_2_authorization_created": false,
+  "historical_master_ledger": 175,
+  "corrected_oracle_verdict": "ORACLE_EXECUTION_FAILURE",
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "result": "TERMINAL_PRE_MINT_FAILURE_EVIDENCE_CLOSED_NO_RETRY"
+}

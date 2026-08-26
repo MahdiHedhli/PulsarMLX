@@ -1,0 +1,37 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-terminal-failure-authority-manifest/2.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-authority-manifest-v1.json",
+  "status": "TERMINAL_PRE_MINT_FAILURE_EVIDENCE_CLOSED_NO_RETRY",
+  "failure_classification": "READINESS_DECLARATION_INTERFACE_MISMATCH",
+  "terminal_failure_authority": {
+    "path": "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-authority-manifest-v1.json",
+    "sha256": "48b0b10bc992dcc3e5da63a9f2403f295110a2d9ed58f755eb5cba59fbf72e06"
+  },
+  "evidence_only_ci": {
+    "path": "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-evidence-only-ci-v1.json",
+    "sha256": "902d314e3b5e55159e4f78c64cb3afeaceb094dfca3a3337a9af8255137ee3f5"
+  },
+  "final_no_go_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-event05-v11-final-no-go-declaration-v1.json",
+    "sha256": "aa9293a9488008d8a30790befa8ad5089b0f2820e2615648a75701894d42dfe3"
+  },
+  "transitive_authority_binding_count": 11,
+  "evidence_only_run": 33017578016,
+  "evidence_only_result": "PASS",
+  "native_jobs_launched": 0,
+  "operator_go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "operator_approval_created": false,
+  "candidate_created": false,
+  "live_event_05_authorization_created": false,
+  "event_05_package_executed": false,
+  "primary_real_oracle_event05_executed": false,
+  "secondary_real_oracle_event05_executed": false,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "corrected_oracle_verdict": "ORACLE_EXECUTION_FAILURE",
+  "ready_to_prepare_p1_attempt_2_authorization": false
+}
