@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-evidence-only-ci/1.0.0",
+  "classification": "EVIDENCE_ONLY",
+  "head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "tree": "c0a18fcf6d509f4ef564bb28d2d92914e0a019f0",
+  "run_id": 32972935273,
+  "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32972935273",
+  "classifier_job": 98190685405,
+  "evidence_integrity_job": 98190740717,
+  "aggregate_job": 98190794531,
+  "native_jobs_launched": 0,
+  "workspace_baseline": "skipped",
+  "native_mlx": "skipped",
+  "evidence_validation": "PASS",
+  "result": "PASS"
+}

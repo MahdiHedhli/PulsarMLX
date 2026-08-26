@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R10",
+  "input_head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "output_head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "input_authority_shas": {},
+  "changed_paths": [],
+  "commands_executed": ["classify Gemini numerical challenges and bind support evidence"],
+  "tests_executed": {"existing_evidence_revalidated": true},
+  "result_counts": {"answered_by_existing_evidence": 1, "repairs": 0, "unresolved": 0},
+  "claims_introduced": [],
+  "claims_closed": [],
+  "claims_invalidated": [],
+  "checkpoint_access_census": {"original_checkpoint_access": 0},
+  "next_eligible_edges": ["R11"],
+  "result": "PASS"
+}
