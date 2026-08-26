@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import tempfile
@@ -64,6 +65,46 @@ class EvidenceIntegrationTests(unittest.TestCase):
                 branch="feat/test",
                 run_attempt1=False,
             )
+
+    def test_absolute_repository_binding_is_normalized_and_verified(self):
+        authority = self.root / "authority.json"
+        authority.write_text('{"authority":true}\n', encoding="utf-8")
+        subprocess.run(["git", "add", "authority.json"], cwd=self.root, check=True)
+        subprocess.run(["git", "commit", "-qm", "authority"], cwd=self.root, check=True)
+        self.base = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=self.root, text=True
+        ).strip()
+        head = self.commit_evidence(
+            json.dumps({
+                "authority_path": str(authority),
+                "authority_sha256": hashlib.sha256(authority.read_bytes()).hexdigest(),
+            }) + "\n"
+        )
+        result = validate_change(
+            self.root, base=self.base, head=head, branch="feat/test", run_attempt1=False
+        )
+        self.assertEqual(result["resolved_binding_count"], 1)
+
+    def test_external_runtime_path_is_not_misclassified_as_git_binding(self):
+        head = self.commit_evidence(
+            json.dumps({
+                "installed_path": "/runtime/event04/authority.json",
+                "installed_sha256": "0" * 64,
+            }) + "\n"
+        )
+        result = validate_change(
+            self.root, base=self.base, head=head, branch="feat/test", run_attempt1=False
+        )
+        self.assertEqual(result["resolved_binding_count"], 0)
+
+    def test_explicitly_absent_optional_binding_is_ignored(self):
+        head = self.commit_evidence(
+            json.dumps({"synthetic_manifest_path": None, "synthetic_manifest_sha256": None}) + "\n"
+        )
+        result = validate_change(
+            self.root, base=self.base, head=head, branch="feat/test", run_attempt1=False
+        )
+        self.assertEqual(result["resolved_binding_count"], 0)
 
     def test_modified_evidence_rejected(self):
         first = self.commit_evidence('{"schema":"test/1.0.0"}\n')

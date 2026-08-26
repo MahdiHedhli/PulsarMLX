@@ -78,8 +78,17 @@ def _resolve_binding(repository: Path, head: str, binding: dict[str, Any]) -> bo
     if not isinstance(path, str) or not isinstance(expected_sha, str) or not SHA256.fullmatch(expected_sha):
         raise ValidationError("malformed path/SHA binding")
     posix = PurePosixPath(path)
-    if posix.is_absolute() or ".." in posix.parts:
+    if ".." in posix.parts:
         raise ValidationError(f"unsafe bound path: {path}")
+    if posix.is_absolute():
+        try:
+            path = Path(path).resolve(strict=False).relative_to(repository).as_posix()
+        except ValueError:
+            # Absolute paths outside the checkout are runtime locations, not
+            # Git-object bindings. Their captured bytes must be bound through
+            # a repository-relative immutable evidence snapshot instead.
+            return False
+        posix = PurePosixPath(path)
     commit = binding.get("commit") or binding.get("source_commit")
     authority = str(commit) if commit is not None else head
     try:
@@ -125,6 +134,9 @@ def _walk_bindings(repository: Path, head: str, value: Any) -> int:
             prefix = key[:-5]
             sha_key = f"{prefix}_sha256"
             if sha_key not in value:
+                continue
+            if path is None and value[sha_key] is None:
+                # Explicitly absent optional path/SHA pairs are not bindings.
                 continue
             binding = {"path": path, "sha256": value[sha_key]}
             for suffix in ("field", "json_path", "value", "expected", "equals", "commit", "source_commit"):
