@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-v2-v3-source-map/1.0.0",
+  "status": "PREREGISTERED_BEFORE_SUCCESSOR_SOURCE",
+  "mappings": [
+    {"role":"PRIMARY","historical_symbol":"_matvec","successor_symbol":"_matvec","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_transpose_matvec","successor_symbol":"_transpose_matvec","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_rms","successor_symbol":"_rms","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_silu","successor_symbol":"_silu","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_residual","successor_symbol":"_residual","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_projection","successor_symbol":"_projection","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_swiglu","successor_symbol":"_swiglu","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"_route","successor_symbol":"_route","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"PRIMARY","historical_symbol":"execute","successor_symbol":"_execute_graph","formula_status":"NUMERICAL_PREFIX_EXACT_INTERFACE_SUFFIX_ONLY"},
+    {"role":"SECONDARY","historical_symbol":"rms","successor_symbol":"rms","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"SECONDARY","historical_symbol":"mv","successor_symbol":"mv","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"SECONDARY","historical_symbol":"transpose_mv","successor_symbol":"transpose_mv","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"SECONDARY","historical_symbol":"swiglu","successor_symbol":"swiglu","formula_status":"MUST_BE_AST_EXACT"},
+    {"role":"SECONDARY","historical_symbol":"execute","successor_symbol":"_execute_graph","formula_status":"NUMERICAL_PREFIX_EXACT_INTERFACE_SUFFIX_ONLY"}
+  ],
+  "allowed_successor_only_symbols": [
+    "PrimaryNumericalOutputs", "SecondaryNumericalOutputs", "_ExecutionState",
+    "_payload_f64le", "_payload_f32le", "_build_legacy_result", "execute_outputs", "execute"
+  ],
+  "interface_only_changes": [
+    "successor module and symbol versioning", "immutable payload byte construction",
+    "frozen output object construction", "legacy compatibility adapter", "output interface documentation"
+  ],
+  "numerical_expression_changes_allowed": 0,
+  "original_checkpoint_access": 0
+}

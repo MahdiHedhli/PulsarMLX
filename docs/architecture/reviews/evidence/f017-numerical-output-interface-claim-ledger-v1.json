@@ -1,0 +1,21 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-claim-ledger/1.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "claims":[
+    {"claim_id":"C-OUT-001","statement":"One successor primary execution exposes final hidden, final normalized, and full logits from the same execution.","introduced_by_node":"R1","depends_on":["C-FORM-001"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-OUT-002","statement":"One successor secondary execution exposes final hidden, final normalized, and full logits from the same execution.","introduced_by_node":"R1","depends_on":["C-FORM-002"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-FORM-001","statement":"Primary formulas and operation order are unchanged from V2.","introduced_by_node":"R2","depends_on":[],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-FORM-002","statement":"Secondary formulas and operation order are unchanged from V2.","introduced_by_node":"R2","depends_on":[],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-LEGACY-001","statement":"Primary successor legacy API is exactly V2-equivalent for every frozen input.","introduced_by_node":"R2","depends_on":["C-FORM-001"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-LEGACY-002","statement":"Secondary successor legacy API is exactly V2-equivalent for every frozen input.","introduced_by_node":"R2","depends_on":["C-FORM-002"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-BITS-001","statement":"Primary output buffers contain exact f64le bits bound to legacy hashes.","introduced_by_node":"R1","depends_on":["C-OUT-001"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-BITS-002","statement":"Secondary output buffers contain exact f32le bits bound to legacy hashes.","introduced_by_node":"R1","depends_on":["C-OUT-002"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-PURITY-001","statement":"Successor cores add no I/O, checkpoint, lifecycle, authorization, subprocess, reflection, or callback capability.","introduced_by_node":"R1","depends_on":[],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-ONEEXEC-001","statement":"Event 05 can obtain all three outputs per role from one execution.","introduced_by_node":"R1","depends_on":["C-OUT-001","C-OUT-002"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-INDEP-001","statement":"Primary and secondary numerical implementations remain independent.","introduced_by_node":"R2","depends_on":[],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-V11-001","statement":"V11 wrappers bank all six payloads without recomputation or full-array control JSON.","introduced_by_node":"R12","depends_on":["C-ONEEXEC-001"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-V11-002","statement":"V11 receipts and terminals close over exact successor payload bytes.","introduced_by_node":"R12","depends_on":["C-V11-001"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-QUAL-001","statement":"Complete numerical requalification accepts the successor interface.","introduced_by_node":"R7","depends_on":["C-LEGACY-001","C-LEGACY-002","C-BITS-001","C-BITS-002"],"readiness_critical":true,"status":"PROPOSED"},
+    {"claim_id":"C-CI-001","statement":"Exact-head FULL_NATIVE accepts V11 with zero required native skips.","introduced_by_node":"R17","depends_on":["C-V11-002","C-QUAL-001"],"readiness_critical":true,"status":"PROPOSED"}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id":"R1",
+  "input_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "output_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "changed_paths":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-output-interface-v1.json"],
+  "tests_executed":["ANALYTICAL_GEOMETRY_DERIVATION","ONE_EXECUTION_INTERFACE_CENSUS","PROHIBITED_CAPABILITY_CENSUS"],
+  "claims_introduced":["C-OUT-001","C-OUT-002","C-BITS-001","C-BITS-002","C-PURITY-001","C-ONEEXEC-001"],
+  "claims_closed":[],
+  "claims_invalidated":[],
+  "checkpoint_access_census":0,
+  "next_eligible_edges":["R2"],
+  "result":"PASS"
+}

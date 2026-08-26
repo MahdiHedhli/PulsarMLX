@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-formula-manifest/4.0.0",
+  "status": "PREREGISTERED_BEFORE_SUCCESSOR_SOURCE",
+  "comparison_method": {
+    "parser": "python_ast",
+    "ignore_only": [
+      "function_name_versioning", "result_object_construction", "compatibility_adapter",
+      "type_declarations", "immutable_output_buffer_creation", "interface_documentation"
+    ],
+    "changed_numerical_expression_policy": "FAIL"
+  },
+  "primary": {
+    "historical_path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+    "historical_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+    "graph_entry": "execute",
+    "successor_graph_entry": "_execute_graph",
+    "formula_symbols": {
+      "_matvec": "d121772145acd79f4d0dd527fa5998bf7f5e9af15ade886969a3ed7143362cdb",
+      "_transpose_matvec": "26b6c31562d0c399e5f9c42c8f62dd4bffe63a94836821b39e2e400e5d3e9779",
+      "_rms": "516f50f39209cca6c1c706a3ae5c07095fc3d950fe14a52bb182bfdc18abe2f6",
+      "_silu": "8eb9abf744a062f46ea58b47e5c63763d93646641c9335656cd5642b6f9153c8",
+      "_residual": "13c7e93c8eb9a3c0eb4cc63ba36f2a7024957cf63f480ec27503b3f81047d1e4",
+      "_projection": "6d34448b822fd5343d5ab55f41a02f12d582cc5f952c5cdc0700c4dd7153f128",
+      "_swiglu": "d6386c663bd428b5857c1098b96e5aecd6644b2bcb87a70a57a9c27ca44f06ec",
+      "_route": "691f37cfdacb3d6925b2ea6b6a1a39576e0c02f7a568edf9365d997b009ad83b"
+    },
+    "formula_surfaces": [
+      "RMSNorm", "matvec", "transpose_matvec", "RoPE", "attention_score",
+      "softmax", "residual", "SiLU", "routing", "route_normalization",
+      "expert_composition", "final_norm", "output_projection", "top_32_selection", "tie_handling"
+    ]
+  },
+  "secondary": {
+    "historical_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+    "historical_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+    "graph_entry": "execute",
+    "successor_graph_entry": "_execute_graph",
+    "formula_symbols": {
+      "rms": "6e325106b84513d17090ce2a6adaef8c486144f54e5a867d704440e04d784a0a",
+      "mv": "a2151f475d5691a94cd6ce465f3994f54ddde1170f6ebc72ce65262ff2738654",
+      "transpose_mv": "dde88a7a5622c9f99823959cea84a612ab9776eb8a7d7ab7913e009df70713b4",
+      "swiglu": "70aff6adc76a2378e0ff4c7aa54f3bdbc30362c5358e28f0c7df36cffe1b3581"
+    },
+    "formula_surfaces": [
+      "RMSNorm", "matvec", "transpose_matvec", "RoPE", "attention_score",
+      "softmax", "residual", "SiLU", "routing", "route_normalization",
+      "expert_composition", "final_norm", "output_projection", "top_32_selection", "tie_handling"
+    ]
+  },
+  "primary_secondary_graph_consolidation": "PROHIBITED",
+  "shared_non_numerical_output_protocol": "PERMITTED",
+  "original_checkpoint_access": 0
+}

@@ -1,0 +1,17 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id":"R0",
+  "input_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "output_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "input_authority_shas":["9051952155abe9038b59f9522d6d11307bb86e53a4986d17c1f5e76356910602","a78810465a1a97ae5311c25bccb98e86abcd1bee6fa80b804f7c61097dbae6ed","657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767","e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791"],
+  "changed_paths":["docs/architecture/reviews/evidence/f017-numerical-output-interface-scope-expansion-v1.json"],
+  "commands_executed":["git fetch --all --prune","git branch/head/tree/parity/status census","git worktree and process census","V2 SHA and return-surface reconstruction","Event 04/Event 05 safety reconstruction"],
+  "tests_executed":["V2_SHA_RECOMPUTATION","V11_DESIGN_ACCEPTANCE_RECOMPUTATION","R11_BLOCKER_REPRODUCTION","EVENT05_STATE_ABSENCE","ORIGINAL_CHECKPOINT_ACCESS_CENSUS"],
+  "claims_introduced":[],
+  "claims_closed":[],
+  "claims_invalidated":[],
+  "checkpoint_access_census":{"shard_opens":0,"identity_hash_reads":0,"mmaps":0,"tensor_reads":0,"payload_reads":0},
+  "next_eligible_edges":["R1"],
+  "result":"PASS"
+}
