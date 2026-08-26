@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-node-receipt/10.0.1",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "node_id": "E12",
+  "review_cycle": 2,
+  "input_head": "f659a31d6820bbd646395f475fd3b83564042031",
+  "output_binding_kind": "SUCCESSOR_COMMIT_BINDS_THIS_RECEIPT",
+  "reviewer_model": "claude-opus-5",
+  "explicit_claim_verdicts": 28,
+  "claims_accepted": 20,
+  "claims_rejected": 7,
+  "claims_unresolved": 1,
+  "unresolved_claims": ["E-CI-001"],
+  "reported_global_verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EVIDENCE",
+  "node_result": "REPAIR_REQUIRED",
+  "checkpoint_access_census": {"new_access_during_review":0},
+  "event_04_retry": false,
+  "next_eligible_edges": ["E9","E12"],
+  "reason": "COVERED_HEAD_CI_MUST_BE_COMMITTED_AND_SCOPED_EXPLICITLY"
+}
