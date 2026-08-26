@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-ci-historical-split-repair/1.0.0",
+  "failed_run": 33006756234,
+  "failed_head": "5528ae22d2bf9f9b086a1201c54cba9f05b3a2ee",
+  "failed_step": "Qualify corrected oracle historical and active authority split",
+  "failure": "V10_GENERATOR_DRIFT_AFTER_V11_TELEMETRY_WAS_ADDED_TO_HISTORICAL_V10_TARGET_SOURCES",
+  "repair_implementation_head": "025433364b45c8749447271ff1f1806a4231ffeb",
+  "repair_implementation_tree": "cc330633ae2d1185097c228ff2494487dce3eb7b",
+  "repair": {
+    "historical_v10_primary_target_source_sha256": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4",
+    "historical_v10_secondary_target_source_sha256": "421e3c9c414257527cc20b43906326323bc22d8fc65be3e195048957f40a21b8",
+    "v11_primary_target_source": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+    "v11_secondary_target_source": "scripts/research/f017_corrected_oracle_secondary_target_source_v11.py",
+    "measurement": "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json",
+    "scientific_access": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v3.json"
+  },
+  "verification": {
+    "v10_generator_check": "PASS",
+    "v10_runtime_authority_validation": "PASS",
+    "v10_measurement_binding_count": 43,
+    "v11_execution_authority_validation": "PASS",
+    "v11_full_geometry_qualification": "BYTE_IDENTICAL_PASS",
+    "full_native_run": 33008441584,
+    "full_native_result": "PASS",
+    "required_native_skips": 0
+  },
+  "numerical_core_bytes_changed": false,
+  "numerical_formulas_changed": false,
+  "event_04_retry": false,
+  "event_05_executed": false,
+  "live_event_05_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

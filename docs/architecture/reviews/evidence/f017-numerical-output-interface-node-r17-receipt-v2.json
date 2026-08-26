@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/2.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R17",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r17-receipt-v1.json",
+  "input_head": "025433364b45c8749447271ff1f1806a4231ffeb",
+  "output_head": "32a4a3ac14de3931feb6a4b09b95fb300b479dcc",
+  "input_authorities": {
+    "implementation_measurement_sha256": "a480f43888414fc866c34653511b8dc53a0a35cb04602711e78fbd6027b0b1af",
+    "scientific_access_sha256": "f38b04af187bda429467253d4de9ada8d32cbe0bd27293d1104f85238feeb6fa",
+    "full_native_run": 33008441584
+  },
+  "changed_paths": [
+    "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+    "scripts/research/f017_corrected_oracle_secondary_target_source_v11.py",
+    "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+    "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+    "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v3.json",
+    "docs/architecture/reviews/evidence/f017-v11-event05-full-native-ci-v2.json"
+  ],
+  "commands_executed": ["GitHub Actions exact-head FULL_NATIVE run 33008441584"],
+  "tests_executed": {
+    "classifier_job": 98309722216,
+    "workspace_job": 98309769357,
+    "native_mlx_job": 98309769414,
+    "aggregate_job": 98314678325
+  },
+  "result_counts": {"successful_required_jobs": 4, "required_native_skips": 0, "failed_jobs": 0},
+  "claims_introduced": [],
+  "claims_closed": ["C-CI-001"],
+  "claims_invalidated": [],
+  "checkpoint_access_census": {"original_checkpoint_access": 0},
+  "next_eligible_edges": ["R18"],
+  "result": "PASS"
+}
