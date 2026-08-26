@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R8",
+  "input_head": "858f2013829993a23508b673a4bbc1d6b8d6e243",
+  "output_head": "858f2013829993a23508b673a4bbc1d6b8d6e243",
+  "input_authority_shas": {
+    "numerical_contract_v4": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+    "numerical_requalification_v4": "0e317eebac840c3fd71fedbde58691e0f71edb837b26f196b30387dc9a04807e"
+  },
+  "changed_paths": [],
+  "commands_executed": [
+    "gh run view 32971168057 -R MahdiHedhli/PulsarMLX --json databaseId,headSha,conclusion,url,createdAt,updatedAt,jobs,event,name,workflowName"
+  ],
+  "tests_executed": {
+    "classification": "FULL_NATIVE",
+    "workspace_baseline": "PASS",
+    "native_mlx": "PASS",
+    "numerical_output_interface_authority": "PASS"
+  },
+  "result_counts": {
+    "legacy_equivalence_cases": 36,
+    "fresh_process_runs": 120,
+    "ownership_mutations_rejected": 60,
+    "capability_mutations_rejected": 187,
+    "decoder_cases": 44,
+    "formats": 11,
+    "required_native_skips": 0
+  },
+  "claims_introduced": [],
+  "claims_closed": ["C-CI-001"],
+  "claims_invalidated": [],
+  "checkpoint_access_census": {
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_mmaps": 0,
+    "original_checkpoint_tensor_reads": 0,
+    "original_checkpoint_payload_reads": 0
+  },
+  "next_eligible_edges": ["R9"],
+  "result": "PASS"
+}
