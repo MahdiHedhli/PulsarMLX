@@ -41,6 +41,28 @@ def function_hashes(path: Path) -> dict[str, str]:
     }
 
 
+def graph_prefix(path: Path) -> tuple[int, str]:
+    tree = ast.parse(path.read_text())
+    function = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "execute"
+    )
+    body = []
+    for statement in function.body:
+        if isinstance(statement, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "result"
+            for target in statement.targets
+        ):
+            break
+        body.append(statement)
+    normalized = ast.FunctionDef(
+        name="_execute_graph", args=function.args, body=body,
+        decorator_list=[], returns=None, type_comment=None, type_params=[],
+    )
+    dumped = ast.dump(normalized, annotate_fields=True, include_attributes=False)
+    return len(body), hashlib.sha256(dumped.encode()).hexdigest()
+
+
 def validate() -> dict:
     output = load(OUTPUT)
     formulas = load(FORMULAS)
@@ -65,6 +87,10 @@ def validate() -> dict:
         for symbol, expected in formulas[role]["formula_symbols"].items():
             if observed.get(symbol) != expected:
                 raise ValueError(f"formula hash: {role}/{symbol}")
+        statement_count, digest = graph_prefix(path)
+        expected_prefix = formulas[role]["graph_numerical_prefix"]
+        if statement_count != expected_prefix["statement_count"] or digest != expected_prefix["sha256"]:
+            raise ValueError(f"graph numerical prefix: {role}")
     required_prohibitions = {
         "FILE_IO", "CHECKPOINT_ACCESS", "LIFECYCLE_STATE", "AUTHORIZATION",
         "SUBPROCESS", "DYNAMIC_IMPORT", "REFLECTION", "FRAME_INSPECTION",
@@ -74,10 +100,16 @@ def validate() -> dict:
         raise ValueError("prohibited capability census")
     if output["output_object"]["payload_representation"] != "IMMUTABLE_BYTES":
         raise ValueError("payload representation")
+    if output["output_object"]["field_types"]["mutable_list_or_dict_fields"] != "PROHIBITED":
+        raise ValueError("deep immutability")
     if output["one_execution_rule"]["core_execution_count"] != 1:
         raise ValueError("one execution")
     if output["control_plane"]["full_payload_serialization"] != "PROHIBITED":
         raise ValueError("control serialization")
+    if output["legacy_compatibility"]["active_v11_calls_legacy_api"]:
+        raise ValueError("legacy API active-path leak")
+    if output["legacy_compatibility"]["cross_language_json_equivalence_claimed"]:
+        raise ValueError("unsupported cross-language claim")
     if len(source_map["mappings"]) != 14 or source_map["numerical_expression_changes_allowed"] != 0:
         raise ValueError("source map census")
     if plan["canonical_seeds"] != list(range(18101, 18113)):
@@ -114,6 +146,7 @@ def validate() -> dict:
         "historical_secondary_sha256": sha(SECONDARY_V2),
         "geometry_checks": geometry_checks,
         "formula_symbol_checks": sum(len(formulas[r]["formula_symbols"]) for r in ("primary", "secondary")),
+        "graph_prefix_checks": 2,
         "source_mappings": len(source_map["mappings"]),
         "design_mutations": len(mutations),
         "design_mutations_rejected": rejected,

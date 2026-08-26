@@ -14,6 +14,11 @@
     "historical_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
     "graph_entry": "execute",
     "successor_graph_entry": "_execute_graph",
+    "graph_numerical_prefix": {
+      "normalization": "rename execute to _execute_graph, remove annotations/decorators, retain every statement before assignment to result",
+      "statement_count": 9,
+      "sha256": "7d763a502cd0bc7b5e60d7fb6acce3262b1045bc59c383100ba4a823954395ce"
+    },
     "formula_symbols": {
       "_matvec": "d121772145acd79f4d0dd527fa5998bf7f5e9af15ade886969a3ed7143362cdb",
       "_transpose_matvec": "26b6c31562d0c399e5f9c42c8f62dd4bffe63a94836821b39e2e400e5d3e9779",
@@ -35,6 +40,11 @@
     "historical_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
     "graph_entry": "execute",
     "successor_graph_entry": "_execute_graph",
+    "graph_numerical_prefix": {
+      "normalization": "rename execute to _execute_graph, remove annotations/decorators, retain every statement before assignment to result",
+      "statement_count": 11,
+      "sha256": "429d06c7721564e5d843c3d034948d82f4dda297ee3b9338189423984658439a"
+    },
     "formula_symbols": {
       "rms": "6e325106b84513d17090ce2a6adaef8c486144f54e5a867d704440e04d784a0a",
       "mv": "a2151f475d5691a94cd6ce465f3994f54ddde1170f6ebc72ce65262ff2738654",

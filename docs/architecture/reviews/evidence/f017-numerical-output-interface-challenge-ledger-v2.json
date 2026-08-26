@@ -1,0 +1,11 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-challenge-ledger/2.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "cycle":1,
+  "reviewed_head":"350cb1a08b2db323b025744e8df934816da291bc",
+  "challenge_ids":["CHAL-AST-001","CHAL-ALIAS-001","CHAL-LEAK-001","CHAL-COMPAT-001","CHAL-READ-001","CHAL-EXEC-001","CHAL-DUPE-001"],
+  "blocking":5,
+  "non_blocking_required":2,
+  "defense_in_depth":0,
+  "status":"SUPPORT_AND_REPAIR_REQUIRED"
+}

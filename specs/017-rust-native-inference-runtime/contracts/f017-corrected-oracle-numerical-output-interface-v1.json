@@ -34,6 +34,7 @@
   },
   "output_object": {
     "frozen_dataclass": true,
+    "deep_immutability": "REQUIRED",
     "payload_representation": "IMMUTABLE_BYTES",
     "payload_endianness": "LITTLE",
     "writable_aliases": "PROHIBITED",
@@ -45,7 +46,14 @@
       "final_hidden_payload", "final_normalized_payload", "full_logits_payload",
       "final_hidden_sha256", "final_normalized_sha256", "full_logits_sha256",
       "layer_captures", "selected_token", "top_32", "top_1_margin", "tie_rule"
-    ]
+    ],
+    "field_types": {
+      "payloads": "bytes",
+      "layer_captures": "tuple[frozen_role_specific_layer_capture,...]",
+      "top_32": "tuple[frozen_role_specific_top_record,...]",
+      "scalar_metadata": "str|int|float",
+      "mutable_list_or_dict_fields": "PROHIBITED"
+    }
   },
   "one_execution_rule": {
     "shared_internal_graph_path_per_role": true,
@@ -56,17 +64,22 @@
     "reconstruct_from_hash": false,
     "legacy_adapter_reruns_graph": false,
     "capture_timing": {
-      "final_hidden": "AFTER_LAYER_79",
+      "final_hidden": "AFTER_FINAL_CONFIGURED_LAYER; production geometry completes 79 layers",
       "final_normalized": "AFTER_FINAL_RMS_NORMALIZATION",
       "full_logits": "AFTER_OUTPUT_PROJECTION"
     }
   },
   "legacy_compatibility": {
     "required": "EXACT",
+    "runtime_scope": "PYTHON_SUCCESSOR_CORE_OFFLINE_REQUALIFICATION_AND_HISTORICAL_COMPATIBILITY_ONLY",
+    "cross_language_json_equivalence_claimed": false,
+    "active_v11_calls_legacy_api": false,
+    "active_v11_serializes_legacy_result": false,
     "primary_canonical_json_bytes": "EXACT",
     "primary_result_sha256": "EXACT",
     "secondary_all_fields_and_values": "EXACT",
-    "source_read_census": "EXACT"
+    "source_read_census": "EXACT",
+    "source_read_optimization_in_this_formula_preserving_scope": "PROHIBITED"
   },
   "hash_binding": {
     "PRIMARY": "sha256(payload_bytes) equals the matching V2-compatible hash field under f64le serialization",
@@ -76,7 +89,9 @@
     "output_object_is_control_json": false,
     "full_payload_serialization": "PROHIBITED",
     "writable_array_serialization": "PROHIBITED",
-    "v11_consumption": "DIRECT_BINARY_PAYLOAD_BANKING"
+    "v11_consumption": "DIRECT_BINARY_PAYLOAD_BANKING",
+    "legacy_full_logits_dictionary_allowed_only_in_offline_requalification": true,
+    "legacy_full_logits_dictionary_rejected_by_active_control_serializer": true
   },
   "prohibited_capabilities": [
     "FILE_IO", "CHECKPOINT_ACCESS", "LIFECYCLE_STATE", "AUTHORIZATION",
