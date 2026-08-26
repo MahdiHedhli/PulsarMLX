@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-graph-state/10.0.1",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "starting_head": "3256b31d5b09bf2c71ea4e170172da6a75c89c1b",
+  "predecessor": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-graph-state-v6.json","sha256":"59cdb8a498c050514d77c435c65866cb4ccaaff02c7d441a67d2d70a22ac4a93"},
+  "claim_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-claim-ledger-v7.json","sha256":"d87236ec082913781b14d85114794650cdfd536523225bcdcbbf806604debb86"},
+  "challenge_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-challenge-ledger-v2.json","sha256":"2da8f790638349d311554426cc05e48939dfd6aa6f18cc5182200455da74c291"},
+  "support_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-support-ledger-v2.json","sha256":"c894dc37e4fe391c87bbcb3206659394eb249da0bc03705c1274e82b3c6b6e83"},
+  "arbiter_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-arbiter-ledger-v2.json","sha256":"51f6f144fdae80108b21480666d43d78f9ee15e77cfacff38ca8496b214b0842"},
+  "active_node": "E12",
+  "execution_nodes_completed": ["E0","E1","E2","E3","E4","E5"],
+  "post_execution_nodes_completed": ["E9","E10","E11"],
+  "nodes": [
+    {"node_id":"E0","status":"PASS"},
+    {"node_id":"E1","status":"PASS"},
+    {"node_id":"E2","status":"PASS"},
+    {"node_id":"E3","status":"PASS"},
+    {"node_id":"E4","status":"PASS"},
+    {"node_id":"E5","status":"PASS"},
+    {"node_id":"E6","status":"TERMINAL_FAILURE"},
+    {"node_id":"E7","status":"INVALIDATED"},
+    {"node_id":"E8","status":"TERMINAL_FAILURE"},
+    {"node_id":"E9","status":"PASS"},
+    {"node_id":"E10","status":"PASS"},
+    {"node_id":"E11","status":"PASS"},
+    {"node_id":"E12","status":"REPAIR_REQUIRED"},
+    {"node_id":"E13","status":"INVALIDATED"}
+  ],
+  "terminal_failure": {
+    "classification": "ORACLE_EXECUTION_FAILURE",
+    "failed_node": "E6",
+    "no_execution_replay": true,
+    "runtime_terminal_result_sha256": "3c7b8561414ce6aeeb5e9597debd5147981af608e8bf878a4383e58360258a77",
+    "banked_terminal_result": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-terminal-execution-result-v1.json","sha256":"9ea346b6d0fa7f144799b6a9bd13dbeffba4fb816163a7e39d811d141543907d"}
+  },
+  "lease_census": {"active_at_e5":5,"live_after_e8_release":0},
+  "claim_census": {"accepted":20,"rejected":7,"unresolved":0,"pending_arbiter":1,"total":28,"result":"PASS"},
+  "measured_execution_bytes_changed_after_go": false,
+  "no_execution_replay": true,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "next_edge": "EVIDENCE_REPAIR_COMMIT_AND_CI_THEN_FRESH_E12_ARBITER"
+}
