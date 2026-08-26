@@ -1,0 +1,44 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-claim-ledger/9.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-claim-ledger-v8.json",
+  "accepted_numerical_claims": [
+    "C-OUT-001", "C-OUT-002", "C-FORM-001", "C-FORM-002", "C-LEGACY-001",
+    "C-LEGACY-002", "C-BITS-001", "C-BITS-002", "C-PURITY-001", "C-ONEEXEC-001",
+    "C-INDEP-001", "C-QUAL-001"
+  ],
+  "supported_v11_claims": {
+    "C-V11-001": {
+      "status": "SUPPORTED_PENDING_OPUS_REREVIEW",
+      "proof": [
+        "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json",
+        "docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json",
+        "docs/architecture/reviews/evidence/f017-numerical-output-interface-opus-whole-domain-cycle-01-repair-v1.json",
+        "docs/architecture/reviews/evidence/f017-numerical-output-interface-ci-historical-split-repair-v1.json"
+      ]
+    },
+    "C-V11-002": {
+      "status": "SUPPORTED_PENDING_OPUS_REREVIEW",
+      "proof": [
+        "scripts/research/f017_result_bundle_authority_v11.py",
+        "docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json",
+        "docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v2.json"
+      ]
+    },
+    "C-CI-001": {
+      "status": "SUPPORTED_PENDING_OPUS_REREVIEW",
+      "proof": [
+        "docs/architecture/reviews/evidence/f017-v11-event05-full-native-ci-v2.json",
+        "GitHub Actions run 33008441584"
+      ]
+    }
+  },
+  "gemini_cycle_03": "NO_UNRESOLVED_MATERIAL_CHALLENGE",
+  "arbiter_status": "PENDING_R20_CYCLE_02",
+  "readiness_critical_claim_count": 15,
+  "supported_claim_count": 15,
+  "accepted_claim_count": 12,
+  "rejected_claim_count": 0,
+  "unresolved_claim_count": 0,
+  "result": "READY_FOR_OPUS_REREVIEW"
+}

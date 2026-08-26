@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-support-ledger/11.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-support-ledger-v10.json",
+  "review_stage": "GEMINI_WHOLE_DOMAIN_CYCLE_03_SUPPORT",
+  "reviewed_head": "dfdeafce6ace7f496eaa53bcf7bccbd600832d3f",
+  "challenge_rows": 0,
+  "answered_by_existing_evidence": 0,
+  "repairs": 0,
+  "conceded_claims": 0,
+  "unresolved_claims": 0,
+  "prior_opus_repairs": 4,
+  "ci_historical_split_repair": "PASS",
+  "full_native_run": 33008441584,
+  "full_native_result": "PASS",
+  "original_checkpoint_access": 0,
+  "result": "PASS_TO_R20"
+}

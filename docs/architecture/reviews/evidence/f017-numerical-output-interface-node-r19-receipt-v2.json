@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/2.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R19",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r19-receipt-v1.json",
+  "input_head": "dfdeafce6ace7f496eaa53bcf7bccbd600832d3f",
+  "output_head": "dfdeafce6ace7f496eaa53bcf7bccbd600832d3f",
+  "input_authorities": {
+    "challenge_ledger": "docs/architecture/reviews/evidence/f017-numerical-output-interface-challenge-ledger-v9.json",
+    "support_ledger": "docs/architecture/reviews/evidence/f017-numerical-output-interface-support-ledger-v11.json"
+  },
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-numerical-output-interface-support-ledger-v11.json"],
+  "commands_executed": ["Gemini cycle-03 challenge-row census and support disposition"],
+  "tests_executed": {"support_rows": 0, "unresolved_rows": 0},
+  "result_counts": {"answered_by_evidence": 0, "repairs": 0, "conceded": 0, "unresolved": 0},
+  "claims_introduced": [], "claims_closed": [], "claims_invalidated": [],
+  "checkpoint_access_census": {"original_checkpoint_access": 0},
+  "next_eligible_edges": ["R20"],
+  "result": "PASS"
+}
