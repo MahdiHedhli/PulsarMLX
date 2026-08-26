@@ -75,6 +75,13 @@ def _payload(role: str, distribution: str, count: int, seed: int) -> tuple[bytes
     return bytes(raw), decoded
 
 
+def _role_margin(role: str, first: float, second: float) -> float:
+    difference = float(first) - float(second)
+    if role == "PRIMARY":
+        return difference
+    return struct.unpack("<f", struct.pack("<f", difference))[0]
+
+
 def make_output(role: str, distribution: str, seed: int = 0) -> SyntheticNumericalOutputs:
     if role not in {"PRIMARY", "SECONDARY"} or distribution not in DISTRIBUTIONS:
         raise ValueError("synthetic output identity")
@@ -102,6 +109,6 @@ def make_output(role: str, distribution: str, seed: int = 0) -> SyntheticNumeric
         layer_captures=tuple(SyntheticLayerCapture(layer=index,
             selected_expert_ids=tuple() if index < 3 else (index % 256, (index + 1) % 256)) for index in range(79)),
         selected_token=order[0], top_32=top,
-        top_1_margin=float(decoded[order[0]] - decoded[order[1]]),
+        top_1_margin=_role_margin(role, decoded[order[0]], decoded[order[1]]),
         tie_rule=f"LOWEST_TOKEN_ID_ON_EQUAL_BINARY{'64' if role == 'PRIMARY' else '32'}_LOGIT",
     )

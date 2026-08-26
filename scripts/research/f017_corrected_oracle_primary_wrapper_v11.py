@@ -45,8 +45,10 @@ def execute_target_and_bank(candidate: dict, descriptors: list[dict], file_descr
         candidate, descriptors, file_descriptors
     )
     bundle = execute_and_bank(source, geometry, token, directory, position=position, **authority)
-    return {**bundle, "role":"PRIMARY", "layers_completed":79,
-            "path_reopen_count":0, "descriptor_count":5,
+    return {**bundle, "role":"PRIMARY",
+            "layers_completed":bundle["artifacts"]["routing"]["layer_count"],
+            "path_reopen_count":source.path_reopen_count,
+            "descriptor_count":len(descriptors),
             "format_coverage":sorted(source.formats),
             "consumed_graph_shards":sorted(source.consumed),
             "tensor_read_operations":source.tensor_reads}

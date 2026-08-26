@@ -44,6 +44,18 @@ def _bounded(value: dict) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def derive_top_1_margin(role: str, first: float, second: float) -> float:
+    """Apply the frozen role arithmetic to the bounded top-1 summary."""
+    if role == "PRIMARY":
+        return float(first - second)
+    if role == "SECONDARY":
+        # The secondary numerical authority subtracts two np.float32 values.
+        # Reproduce that binary32 rounding without adding NumPy to this
+        # control-artifact module.
+        return struct.unpack("<f", struct.pack("<f", float(first) - float(second)))[0]
+    raise ResultEnvelopeError("top32 role")
+
+
 def build_manifest(role: str, package_attempt_id: str, consumer_event_id: str,
                    payload_records: list[dict]) -> dict:
     if role not in {"PRIMARY", "SECONDARY"} or type(package_attempt_id) is not str or type(consumer_event_id) is not str:
@@ -172,7 +184,8 @@ def build_top32(directory: Path, logits_record: dict) -> dict:
             "package_attempt_id": logits_record["package_attempt_id"],
             "consumer_event_id": logits_record["consumer_event_id"], "top_n": 32,
             "entries": [{"token_id": item[0], bits_key: struct.pack(f"<{code}", item[1]).hex()} for item in ordered],
-            "selected_token": ordered[0][0], "top_1_margin": ordered[0][1] - ordered[1][1],
+            "selected_token": ordered[0][0],
+            "top_1_margin": derive_top_1_margin(role, ordered[0][1], ordered[1][1]),
             "logits_payload_sha256": logits_record["sha256"],
             "historical_token_quarantine": "ENFORCED_BY_NUMERICAL_CONTRACT_V4"}
     validate_top32(directory, logits_record, summary)
@@ -205,7 +218,9 @@ def validate_top32(directory: Path, logits_record: dict, summary: dict) -> dict:
             or type(summary["top_1_margin"]) is not float
             or summary["top_n"] != 32 or canonical_bytes(summary["entries"]) != canonical_bytes(entries) or summary["selected_token"] != ordered[0][0]
             or not math.isfinite(summary["top_1_margin"])
-            or float(summary["top_1_margin"]) != ordered[0][1] - ordered[1][1]):
+            or float(summary["top_1_margin"]) != derive_top_1_margin(
+                summary["role"], ordered[0][1], ordered[1][1]
+            )):
         raise ResultEnvelopeError("top32 derivation")
     return {"result":"PASS","summary_sha256":_bounded(summary)}
 

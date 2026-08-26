@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v1.json"
-OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11.json"
+MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json"
+OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v2.json"
 
 
 def _sha(path: Path) -> str:
@@ -30,10 +30,11 @@ def generate() -> dict:
     if len(implementation) != measurement["measured_path_count"]:
         raise ValueError("V11 scientific implementation role collision")
     return {
-        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.0.0",
-        "status":"V11_IMPLEMENTED_NO_EVENT05_AUTHORITY",
+        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.0.1",
+        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11.json",
+        "status":"V11_IMPLEMENTED_OPUS_CYCLE01_REPAIR_NO_EVENT05_AUTHORITY",
         "active_generation":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json"),
-        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v1.json"),
+        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v2.json"),
         "implementation_head":measurement["implementation_head"],
         "implementation_tree":measurement["implementation_tree"],
         "implementation":implementation,
@@ -47,9 +48,9 @@ def generate() -> dict:
         "checkpoint_catalog":_binding("docs/research/glm52/raw/f016-c01-catalog-0001.json"),
         "diagnostic_reuse_grant":_binding("specs/017-rust-native-inference-runtime/contracts/f017-event04-result-envelope-diagnostic-reuse-grant-v11.json"),
         "diagnostic_qualification":_binding("docs/architecture/reviews/evidence/f017-event04-diagnostic-fixture-qualification-v11-v1.json"),
-        "full_geometry_qualification":_binding("docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v1.json"),
-        "failure_qualification":_binding("docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v1.json"),
-        "production_shaped_rehearsal":_binding("docs/architecture/reviews/evidence/f017-event05-production-shaped-no-access-rehearsal-v11-v1.json"),
+        "full_geometry_qualification":_binding("docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json"),
+        "failure_qualification":_binding("docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v2.json"),
+        "production_shaped_rehearsal":_binding("docs/architecture/reviews/evidence/f017-event05-production-shaped-no-access-rehearsal-v11-v2.json"),
         "event05_go_template":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-execution-go-template-v11.json"),
         "limits":{"attempts":1,"retries":0,"resume":False,"event_04_retry":False,
                   "event_05_authorization_created":False,"event_05_executed":False,

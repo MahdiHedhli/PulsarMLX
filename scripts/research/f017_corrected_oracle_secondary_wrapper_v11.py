@@ -57,8 +57,10 @@ def execute_target_and_bank(candidate: dict, descriptors: list[dict], file_descr
         primary_receipt_sha256=primary_receipt_sha256,
         primary_manifest_sha256=primary_manifest_sha256, use_mlx=use_mlx,
         store=store, **authority)
-    return {**bundle, "role":"SECONDARY", "layers_completed":79,
-            "path_reopen_count":0, "descriptor_count":5,
+    return {**bundle, "role":"SECONDARY",
+            "layers_completed":bundle["artifacts"]["routing"]["layer_count"],
+            "path_reopen_count":store.path_reopen_count,
+            "descriptor_count":len(descriptors),
             "format_coverage":sorted(store.formats),
             "consumed_graph_shards":sorted(store.consumed),
             "tensor_read_operations":store.tensor_reads}

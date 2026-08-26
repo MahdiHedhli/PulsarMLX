@@ -65,11 +65,15 @@ def main() -> int:
     if positions != sorted(positions): raise ValueError("V11 causal coordinator order")
     envelope = json.loads((CONTRACTS / "f017-corrected-oracle-binary-result-envelope-v11-v2.json").read_text())
     authority = json.loads((CONTRACTS / "f017-corrected-oracle-result-authority-v11-v2.json").read_text())
+    full_geometry = json.loads((ROOT / "docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json").read_text())
     expected_numerical = {
         "path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json",
         "sha256":_sha(CONTRACTS / "f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json")}
     if envelope["numerical_contract"] != expected_numerical or authority["numerical_contract"] != expected_numerical:
         raise ValueError("V11 numerical V4 binding")
+    if (full_geometry.get("real_core_summary_coupling") != "PASS"
+            or full_geometry.get("real_core_summary_coupling_cases") != 2):
+        raise ValueError("V11 real-core banking seam")
     active = json.loads((CONTRACTS / "f017-corrected-oracle-active-generation-v11.json").read_text())
     if (active["active_corrected_oracle_generation"] != "NONE"
             or active["event_05_authorization_created"] is not False
@@ -83,6 +87,7 @@ def main() -> int:
         "secondary_execute_outputs_calls":1,
         "secondary_gate_before_execution":"PASS",
         "exact_immutable_payload_banking":"PASS",
+        "real_core_summary_coupling":"PASS",
         "control_plane_full_arrays":0,
         "coordinator_causal_order":"PASS",
         "event_04_retry":False,

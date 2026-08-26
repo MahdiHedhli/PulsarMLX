@@ -395,11 +395,11 @@ jobs:
           .venv/bin/python scripts/research/qualify_f017_v11_full_geometry_v1.py \
             --output "$RUNNER_TEMP/f017-v11-full-geometry.json"
           cmp "$RUNNER_TEMP/f017-v11-full-geometry.json" \
-            docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v1.json
+            docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json
           .venv/bin/python scripts/research/qualify_f017_v11_failure_campaign_v1.py \
             --output "$RUNNER_TEMP/f017-v11-result-failure-qualification.json"
           cmp "$RUNNER_TEMP/f017-v11-result-failure-qualification.json" \
-            docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v1.json
+            docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v2.json
           .venv/bin/python scripts/research/rehearse_f017_event05_v11.py \
             --output "$RUNNER_TEMP/f017-event05-v11-rehearsal.json"
           .venv/bin/python - <<'PY'

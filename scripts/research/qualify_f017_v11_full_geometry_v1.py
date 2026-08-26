@@ -18,7 +18,11 @@ from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import require_primary_terminal
 from f017_result_bundle_authority_v11 import compose_comparison_closure
 from f017_result_bundle_builder_v11 import bank_output_bundle
+from f017_result_bundle_builder_v11 import validate_numerical_output_summary
 from f017_v11_full_geometry_fixture import DISTRIBUTIONS, make_output
+import f017_corrected_oracle_primary_numerics_v3 as primary_core
+import f017_corrected_oracle_secondary_numerics_v3 as secondary_core
+from generate_f017_corrected_oracle_fixtures import fixture
 
 
 def _sha(value: dict) -> str:
@@ -49,6 +53,17 @@ def _fresh_fingerprint(role: str, distribution: str, seed: int) -> dict:
 
 def qualify() -> dict:
     digest = hashlib.sha256(b"F017-V11-SYNTHETIC-AUTHORITY").hexdigest()
+    coupling_document = fixture(18101)
+    primary_output = primary_core.execute_outputs(
+        primary_core.JsonSource(coupling_document["tensors"]),
+        primary_core.Geometry.from_json(coupling_document["geometry"]),
+        coupling_document["token"], coupling_document["position"],
+    )
+    secondary_output = secondary_core.execute_outputs(coupling_document, use_mlx=False)
+    real_core_summary_coupling = [
+        validate_numerical_output_summary(primary_output, "PRIMARY"),
+        validate_numerical_output_summary(secondary_output, "SECONDARY"),
+    ]
     chunk_sizes = (1, 7, 257, 4_096, 8_191, 65_536)
     classifications: dict[str, int] = {}
     package_fingerprints: list[str] = []
@@ -120,6 +135,8 @@ def qualify() -> dict:
         "fresh_process_complete": len(fresh_complete),
         "deterministic_fingerprint_count": len(set(fresh_primary + fresh_secondary + fresh_complete)),
         "package_closure_count": len(package_fingerprints),
+        "real_core_summary_coupling_cases": len(real_core_summary_coupling),
+        "real_core_summary_coupling": "PASS",
         "control_plane_full_arrays": 0,
         "original_checkpoint_access": 0,
         "result": "PASS",

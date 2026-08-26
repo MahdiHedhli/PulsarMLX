@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+import struct
 from types import SimpleNamespace
 import sys
 import tempfile
@@ -14,9 +15,12 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import require_primary_terminal
 from f017_result_bundle_builder_v11 import bank_output_bundle
+from f017_result_bundle_builder_v11 import validate_numerical_output_summary
 from f017_result_envelope_v11 import ResultEnvelopeError, payload_spec
 import f017_corrected_oracle_primary_wrapper_v11 as primary_wrapper
 import f017_corrected_oracle_secondary_wrapper_v11 as secondary_wrapper
+import f017_corrected_oracle_secondary_numerics_v3 as secondary_core
+from generate_f017_corrected_oracle_fixtures import fixture
 
 
 def output(role: str) -> SimpleNamespace:
@@ -44,6 +48,37 @@ def output(role: str) -> SimpleNamespace:
 
 
 class ResultBundleBuilderV11Tests(unittest.TestCase):
+    def test_real_secondary_core_summary_couples_to_banking_semantics(self) -> None:
+        numerical = secondary_core.execute_outputs(fixture(18101), use_mlx=False)
+        result = validate_numerical_output_summary(numerical, "SECONDARY")
+        self.assertEqual(result, {"result": "PASS", "role": "SECONDARY", "logit_count": 9})
+
+    def test_secondary_binary32_margin_banks_at_full_geometry(self) -> None:
+        candidate = output("SECONDARY")
+        values = [0.0] * 154_880
+        values[0] = 13.42855453491211
+        values[1] = 0.6478179097175598
+        logits = struct.pack(f"<{len(values)}f", *values)
+        order = sorted(range(len(values)), key=lambda index: (-values[index], index))
+        candidate.full_logits_payload = logits
+        candidate.full_logits_sha256 = hashlib.sha256(logits).hexdigest()
+        candidate.selected_token = order[0]
+        candidate.top_32 = tuple(SimpleNamespace(
+            token_id=index, logit_f32_bits=struct.pack("<f", values[index]).hex()
+        ) for index in order[:32])
+        candidate.top_1_margin = struct.unpack(
+            "<f", struct.pack("<f", values[order[0]] - values[order[1]])
+        )[0]
+        digest = "1" * 64
+        with tempfile.TemporaryDirectory() as temporary:
+            result = bank_output_bundle(
+                candidate, Path(temporary), authorization_id="AUTH",
+                package_attempt_id="PKG", consumer_event_id="SECONDARY",
+                producer_measurement_sha256=digest, durable_start_sha256=digest,
+                access_census_sha256=digest,
+            )
+        self.assertEqual(result["result"], "PASS")
+
     def test_exact_successor_bytes_close_primary_and_secondary_bundles(self) -> None:
         digest = hashlib.sha256(b"authority").hexdigest()
         with tempfile.TemporaryDirectory() as temporary:

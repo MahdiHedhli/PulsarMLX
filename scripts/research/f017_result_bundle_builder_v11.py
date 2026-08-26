@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import hashlib
+import heapq
 from pathlib import Path
+import math
+import struct
 
 from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
 from f017_result_artifacts_v11 import (
     NUMERICAL_CONTRACT_V4_SHA256,
     build_consumer_terminal,
+    derive_top_1_margin,
     build_manifest,
     build_receipt,
     build_result_terminal,
@@ -41,11 +45,58 @@ def _attribute(output: object, name: str) -> object:
         raise ResultEnvelopeError(f"numerical output field: {name}") from exc
 
 
+def validate_numerical_output_summary(output: object, role: str) -> dict:
+    """Couple a real pure-core output object to V11 summary semantics.
+
+    This check is geometry-independent so the frozen checkpoint-free numerical
+    corpus can exercise the same seam before the production geometry check.
+    """
+    if role not in {"PRIMARY", "SECONDARY"} or _attribute(output, "role") != role:
+        raise ResultEnvelopeError("numerical output summary role")
+    payload = _attribute(output, "full_logits_payload")
+    code = "d" if role == "PRIMARY" else "f"
+    item_size = 8 if role == "PRIMARY" else 4
+    if type(payload) is not bytes or len(payload) % item_size:
+        raise ResultEnvelopeError("numerical output summary payload")
+    values = [item[0] for item in struct.iter_unpack(f"<{code}", payload)]
+    if (len(values) != _attribute(output, "full_logits_element_count")
+            or hashlib.sha256(payload).hexdigest() != _attribute(output, "full_logits_sha256")
+            or len(values) < 2 or any(not math.isfinite(value) for value in values)):
+        raise ResultEnvelopeError("numerical output summary payload binding")
+    heap: list[tuple[float, int]] = []
+    for token, value in enumerate(values):
+        item = (value, -token)
+        if len(heap) < min(32, len(values)):
+            heapq.heappush(heap, item)
+        elif item > heap[0]:
+            heapq.heapreplace(heap, item)
+    ordered = [(-neg_token, value) for value, neg_token in sorted(heap, reverse=True)]
+    bits_field = "logit_f64_bits" if role == "PRIMARY" else "logit_f32_bits"
+    expected = [
+        {"token_id": token, bits_field: struct.pack(f"<{code}", value).hex()}
+        for token, value in ordered
+    ]
+    observed = [
+        {
+            "token_id": _attribute(record, "token_id"),
+            bits_field: _attribute(record, bits_field),
+        }
+        for record in _attribute(output, "top_32")
+    ]
+    if (canonical_bytes(observed) != canonical_bytes(expected)
+            or _attribute(output, "selected_token") != ordered[0][0]
+            or _attribute(output, "top_1_margin")
+            != derive_top_1_margin(role, ordered[0][1], ordered[1][1])):
+        raise ResultEnvelopeError("numerical output summary binding")
+    return {"result": "PASS", "role": role, "logit_count": len(values)}
+
+
 def _validate_output(output: object, role: str) -> dict[str, bytes]:
     dtype = "f64le" if role == "PRIMARY" else "f32le"
     if (_attribute(output, "role") != role or _attribute(output, "dtype") != dtype
             or _attribute(output, "core_execution_count") != 1):
         raise ResultEnvelopeError("numerical output authority")
+    validate_numerical_output_summary(output, role)
     payloads: dict[str, bytes] = {}
     for kind, count_field, payload_field, sha_field in (
         ("final_hidden", "final_hidden_element_count", "final_hidden_payload", "final_hidden_sha256"),
