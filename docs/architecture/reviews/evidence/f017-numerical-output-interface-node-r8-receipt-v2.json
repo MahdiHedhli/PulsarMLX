@@ -1,0 +1,56 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r8-receipt-v1.json",
+  "supersession_reason": "CORRECT_AUTHORITY_BINDING_AND_REOPEN_R17_CI_CLAIM",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R8",
+  "input_head": "858f2013829993a23508b673a4bbc1d6b8d6e243",
+  "output_head": "050e986b70e0b5253acfba68863b5c1dcabc5d24",
+  "input_authorities": {
+    "numerical_requalification_v4": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v4.json",
+      "sha256": "0e317eeba8f13be6fc89742e8b8ad401c86c553535a34562a75516e96644b49e"
+    },
+    "implementation_measurement_v2": {
+      "path": "docs/architecture/reviews/evidence/f017-numerical-output-interface-implementation-measurement-v2.json",
+      "sha256": "04e938ef1423e24b638db7994ba4a1fc58df17a13f7d18cbabc9b6615cb6b7e3"
+    },
+    "full_native_ci_v2": {
+      "path": "docs/architecture/reviews/evidence/f017-numerical-output-interface-full-native-ci-v2.json",
+      "sha256": "595bc48c9afeb6270c5484dd509f88b0fd4be94759aee56b06299d49c6fb6d22"
+    }
+  },
+  "changed_paths": [
+    "scripts/ci/validate_evidence_change.py",
+    "scripts/ci/tests/test_validate_evidence_change.py"
+  ],
+  "commands_executed": [
+    "python -m pytest -q scripts/ci/tests/test_validate_evidence_change.py",
+    "python -m pytest -q scripts/research/tests/test_f017_numerical_output_interface_implementation_v1.py",
+    "FULL_NATIVE run 32976273072"
+  ],
+  "tests_executed": {
+    "receipt_binding_validator": "10_PASS",
+    "numerical_output_interface_local": "13_PASS",
+    "full_native": "PASS"
+  },
+  "result_counts": {
+    "required_native_skips": 0,
+    "original_checkpoint_access": 0
+  },
+  "claims_introduced": [],
+  "claims_closed": [],
+  "claims_invalidated": [],
+  "deferred_claims": {
+    "C-CI-001": "PROPOSED_UNTIL_R17_AFTER_C_V11_002"
+  },
+  "checkpoint_access_census": {
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_mmaps": 0,
+    "original_checkpoint_tensor_reads": 0,
+    "original_checkpoint_payload_reads": 0
+  },
+  "next_eligible_edges": ["R11"],
+  "result": "PASS"
+}

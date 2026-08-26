@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-support-ledger/6.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-support-ledger-v5.json",
+  "review_stage": "NUMERICAL_ARBITER_CYCLE_01",
+  "responses": [
+    {
+      "support_id": "SUP-ARB-NUM-001",
+      "challenge_id": "ARB-NUM-CI-001",
+      "disposition": "CLAIM_CONCEDED",
+      "evidence": ["docs/architecture/reviews/evidence/f017-numerical-output-interface-claim-ledger-v6.json"],
+      "repair_commit": "050e986b70e0b5253acfba68863b5c1dcabc5d24",
+      "remaining_uncertainty": "C-CI-001 remains PROPOSED until R17"
+    },
+    {
+      "support_id": "SUP-ARB-NUM-002",
+      "challenge_id": "ARB-NUM-RECEIPT-001",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "evidence": [
+        "scripts/ci/validate_evidence_change.py",
+        "scripts/ci/tests/test_validate_evidence_change.py",
+        "docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r8-receipt-v2.json"
+      ],
+      "repair_commit": "050e986b70e0b5253acfba68863b5c1dcabc5d24",
+      "remaining_uncertainty": "NONE_AFTER_EXACT_HEAD_CI"
+    }
+  ],
+  "defense_in_depth_disposition": {
+    "ARB-NUM-DID-001": "DEFERRED_TO_V11_INTEGRATION_HARDENING_NO_PAYLOAD_AUTHORITY_BYPASS",
+    "ARB-NUM-DID-002": "DEFERRED_TO_FULL_GEOMETRY_V11_ROLE_CROSS_PRODUCT",
+    "ARB-NUM-DID-003": "EXPECTED_NUMERICAL_SCOPE_FULL_GEOMETRY_IS_R14"
+  },
+  "unresolved_material_findings": 0,
+  "result": "REPAIR_PENDING_EXACT_HEAD_CI"
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-full-native-ci/2.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-full-native-ci-v1.json",
+  "classification": "FULL_NATIVE",
+  "head": "050e986b70e0b5253acfba68863b5c1dcabc5d24",
+  "tree": "146d420820d9b312fd2d0acba35309cc4de099af",
+  "run_id": 32976273072,
+  "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32976273072",
+  "classifier_job": {"job_id": 98201656485, "conclusion": "success"},
+  "workspace_baseline": {"job_id": 98201699693, "conclusion": "success", "duration_seconds": 117},
+  "native_mlx": {"job_id": 98201699717, "conclusion": "success", "duration_seconds": 920},
+  "aggregate_job": {"job_id": 98206859820, "conclusion": "success"},
+  "evidence_jobs": {"evidence_integrity": "skipped", "documentation_integrity": "skipped", "closed_branch_guard": "skipped"},
+  "receipt_binding_validator_tests": 10,
+  "numerical_output_interface_tests": 44,
+  "numerical_requalification": "PASS",
+  "native_required_skips": 0,
+  "original_checkpoint_access": 0,
+  "result": "PASS"
+}
