@@ -56,8 +56,14 @@ def validate_contract(value: dict) -> None:
     if (control != {"full_numerical_arrays_in_json":"PROHIBITED","general_bounded_decoder_limits_changed":False,
                     "result_control_max_bytes":65536,"result_control_max_array_elements":64,"top_summary_elements":32}): raise ValueError("control separation")
     if value["numerical_formulas_changed"] is not False or value["numerical_thresholds_changed"] is not False or value["original_checkpoint_access"] != 0: raise ValueError("safety")
+    expected_write = ["EXCLUSIVE_NO_REPLACE","DETERMINISTIC_CHUNK_ORDER","EXACT_BYTE_COUNTER","FILE_FSYNC","PARENT_DIRECTORY_FSYNC","DESCRIPTOR_RELATIVE_READBACK","SHA256_READBACK","IDENTITY_STABILITY"]
+    expected_read = ["NO_FOLLOW","REGULAR_FILE","EXACT_KIND","EXACT_DTYPE","EXACT_ENDIAN","EXACT_SHAPE","EXACT_ELEMENT_COUNT","EXACT_BYTE_COUNT","SHA256","FINITE_VALUES"]
+    if value["write_protocol"] != expected_write or value["read_protocol"] != expected_read:
+        raise ValueError("I/O protocol")
+    if value["numerical_contract"] != {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v3.json","sha256":"84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9"}:
+        raise ValueError("numerical contract")
     source = value["source_event"]
-    if source.get("retroactive_closure") != "PROHIBITED" or source.get("disposition") != "IMMUTABLE_TRUTHFUL_TERMINAL_FAILURE": raise ValueError("Event04 immutability")
+    if source != {"event":"EVENT_04","disposition":"IMMUTABLE_TRUTHFUL_TERMINAL_FAILURE","failure_node":"E6","failure_class":"ArtifactDecodeError","failure_message":"artifact bytes exceed bound","retroactive_closure":"PROHIBITED"}: raise ValueError("Event04 immutability")
 
 
 def validate_dag(value: dict) -> None:
@@ -85,9 +91,13 @@ def validate_dag(value: dict) -> None:
         "COMPARISON_TERMINAL","DESCRIPTOR_RELEASE","PACKAGE_RECEIPT","PACKAGE_TERMINAL"]
     if comparison != required_comparison: raise ValueError("comparison order")
     closure = value["package_terminal_required_closure"]
-    if len(closure) != len(set(closure)) or not all(name in closure for name in (
-        "PRIMARY_FULL_LOGITS_PAYLOAD","SECONDARY_FULL_LOGITS_PAYLOAD","PRIMARY_RESULT_RECEIPT",
-        "SECONDARY_RESULT_RECEIPT","COMPARISON_TERMINAL","DESCRIPTOR_RELEASE_TERMINAL","PACKAGE_RECEIPT")): raise ValueError("closure")
+    required_closure = ["PRIMARY_FINAL_HIDDEN_PAYLOAD","PRIMARY_FINAL_NORMALIZED_PAYLOAD","PRIMARY_FULL_LOGITS_PAYLOAD",
+        "PRIMARY_PAYLOAD_MANIFEST","PRIMARY_TOP32_SUMMARY","PRIMARY_RESULT_RECEIPT","PRIMARY_CONSUMER_TERMINAL",
+        "SECONDARY_FINAL_HIDDEN_PAYLOAD","SECONDARY_FINAL_NORMALIZED_PAYLOAD","SECONDARY_FULL_LOGITS_PAYLOAD",
+        "SECONDARY_PAYLOAD_MANIFEST","SECONDARY_TOP32_SUMMARY","SECONDARY_RESULT_RECEIPT","SECONDARY_CONSUMER_TERMINAL",
+        "COMPARISON_SUMMARY","COMPARISON_RECEIPT","COMPARISON_TERMINAL","DESCRIPTOR_RELEASE_REPORT",
+        "DESCRIPTOR_RELEASE_RECEIPT","DESCRIPTOR_RELEASE_TERMINAL","PACKAGE_RECEIPT"]
+    if closure != required_closure: raise ValueError("closure")
     if value["event04"] != {"diagnostic_reuse":"EXPLICIT_GRANT_ONLY","promotion":"PROHIBITED","primary_receipt_creation":"PROHIBITED","primary_terminal_creation":"PROHIBITED","comparison_creation":"PROHIBITED"}: raise ValueError("Event04 boundary")
 
 
@@ -121,6 +131,20 @@ def mutation_campaign(contract: dict, dag: dict) -> list[str]:
         try: validate_contract(mutant)
         except ValueError: rejected.append(f"GLOBAL_{parent}_{field}")
         else: raise AssertionError("global mutation passed")
+    for field in ("write_protocol", "read_protocol"):
+        mutant = copy.deepcopy(contract); mutant[field] = mutant[field][:-1]
+        try: validate_contract(mutant)
+        except ValueError: rejected.append(f"PROTOCOL_{field}_REMOVED")
+        else: raise AssertionError("protocol mutation passed")
+        mutant = copy.deepcopy(contract); mutant[field][0], mutant[field][1] = mutant[field][1], mutant[field][0]
+        try: validate_contract(mutant)
+        except ValueError: rejected.append(f"PROTOCOL_{field}_ORDER")
+        else: raise AssertionError("protocol order mutation passed")
+    for field in ("path", "sha256"):
+        mutant = copy.deepcopy(contract); mutant["numerical_contract"][field] = "0" * 64
+        try: validate_contract(mutant)
+        except ValueError: rejected.append(f"NUMERICAL_CONTRACT_{field}")
+        else: raise AssertionError("numerical contract mutation passed")
     for sequence in ("primary_success_order", "secondary_success_order", "comparison_order"):
         for index in range(len(dag[sequence]) - 1):
             mutant = copy.deepcopy(dag); mutant[sequence][index], mutant[sequence][index+1] = mutant[sequence][index+1], mutant[sequence][index]
@@ -137,6 +161,11 @@ def mutation_campaign(contract: dict, dag: dict) -> list[str]:
         try: validate_dag(mutant)
         except ValueError: rejected.append(f"EVENT04_{field}")
         else: raise AssertionError("Event04 mutation passed")
+    for index in range(len(dag["package_terminal_required_closure"])):
+        mutant = copy.deepcopy(dag); del mutant["package_terminal_required_closure"][index]
+        try: validate_dag(mutant)
+        except ValueError: rejected.append(f"CLOSURE_MISSING_{index}")
+        else: raise AssertionError("closure omission passed")
     return rejected
 
 

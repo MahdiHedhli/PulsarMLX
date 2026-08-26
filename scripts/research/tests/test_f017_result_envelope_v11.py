@@ -98,6 +98,16 @@ class ResultEnvelopeV11Tests(unittest.TestCase):
         with self.assertRaises(ResultEnvelopeError):
             require_primary_terminal({"result": "COMPLETE"}, "0" * 64)
 
+    def test_stream_hash_is_revalidated(self) -> None:
+        spec = payload_spec("PRIMARY", "final_hidden")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            record = bank_payload(root, "payload.bin", spec, [1.0] * HIDDEN_SIZE)
+            raw = bytearray((root / "payload.bin").read_bytes()); raw[0] ^= 1
+            (root / "payload.bin").write_bytes(raw)
+            with self.assertRaises(ResultEnvelopeError):
+                list(iter_payload(root, record))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -248,6 +248,19 @@ def iter_payload(directory: Path, record: dict, *, chunk_elements: int = DEFAULT
         raise ResultEnvelopeError("chunk element count")
     descriptor = os.open(directory / record["path_role"], os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
+        # Verify the same retained descriptor that supplies comparison bytes.
+        # Path replacement after manifest validation cannot change this fd.
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_size != spec.byte_count:
+            raise ResultEnvelopeError("stream payload file geometry")
+        digest = hashlib.sha256(); observed = 0
+        while True:
+            raw = os.read(descriptor, 1 << 20)
+            if not raw: break
+            digest.update(raw); observed += len(raw)
+        if observed != spec.byte_count or digest.hexdigest() != record["sha256"]:
+            raise ResultEnvelopeError("stream payload identity mismatch")
+        os.lseek(descriptor, 0, os.SEEK_SET)
         remaining = spec.element_count
         while remaining:
             count = min(chunk_elements, remaining)

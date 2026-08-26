@@ -136,8 +136,10 @@ def require_primary_terminal(terminal: dict, expected_receipt_sha256: str,
 
 def closure_root(primary_manifest: dict, primary_receipt: dict, primary_terminal: dict,
                  secondary_manifest: dict, secondary_receipt: dict, secondary_terminal: dict,
-                 comparison_terminal_sha256: str, release_terminal_sha256: str) -> dict:
-    for field in (comparison_terminal_sha256, release_terminal_sha256): _validate_sha(field, "closure SHA")
+                 comparison_terminal_sha256: str, release_terminal_sha256: str,
+                 package_receipt_sha256: str) -> dict:
+    for field in (comparison_terminal_sha256, release_terminal_sha256, package_receipt_sha256):
+        _validate_sha(field, "closure SHA")
     return {"schema": "pulsarmlx.f017.corrected-oracle-package-result-closure/11.0.0",
             "primary": {"manifest_sha256": _sha(primary_manifest), "receipt_sha256": _sha(primary_receipt),
                         "terminal_sha256": _sha(primary_terminal),
@@ -147,4 +149,5 @@ def closure_root(primary_manifest: dict, primary_receipt: dict, primary_terminal
                           "payload_sha256s": [record["sha256"] for record in secondary_manifest["payloads"]]},
             "comparison_terminal_sha256": comparison_terminal_sha256,
             "release_terminal_sha256": release_terminal_sha256,
+            "package_receipt_sha256": package_receipt_sha256,
             "payload_count": 6, "result": "COMPLETE"}
