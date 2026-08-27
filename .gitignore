@@ -54,6 +54,9 @@ checkpoints/
 .pulsarmlx-local/cache/
 .pulsarmlx-local/logs/
 .pulsarmlx-local/secrets/
+.pulsarmlx-local/r001-repack/
+*.r001bundle
+*.r001bundle.partial
 
 # Versioned model admission records are documentation, not model artifacts.
 !docs/validation/models/
