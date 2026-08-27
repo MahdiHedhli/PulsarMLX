@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Same-SX8100 read-pattern benchmark for one verified R001 layer."""
 from __future__ import annotations
-import argparse,fcntl,json,os,random,resource,statistics,time
+import argparse,fcntl,json,os,random,resource,time,zlib
 from pathlib import Path
 
 F_NOCACHE=48
+
+def median(values):
+    ordered=sorted(values);middle=len(ordered)//2
+    return ordered[middle] if len(ordered)%2 else (ordered[middle-1]+ordered[middle])/2
 
 def open_nocache(path:Path):
     fd=os.open(path,os.O_RDONLY|getattr(os,"O_CLOEXEC",0)|getattr(os,"O_NOFOLLOW",0))
@@ -12,18 +16,18 @@ def open_nocache(path:Path):
     except OSError: nocache=False
     return fd,nocache
 
-def pread_exact(fd,offset,length):
-    pos=0;checksum=0
+def pread_exact(fd,offset,length,checksum):
+    pos=0
     while pos<length:
         b=os.pread(fd,min(length-pos,8*1024*1024),offset+pos)
         if not b: raise EOFError("short benchmark read")
-        checksum^=b[len(b)//2];pos+=len(b)
+        checksum=zlib.crc32(b,checksum);pos+=len(b)
     return checksum
 
 def trial(order,records,root,source_root,mode):
     source_fds={};bundle_fds={};nocache=[]
     try:
-        for r in records:
+        for r in records.values():
             for c in r["components"]:
                 name=c["source"]["shard"]
                 if name not in source_fds:
@@ -35,16 +39,18 @@ def trial(order,records,root,source_root,mode):
             r=records[eid]
             if mode=="native_components":
                 for c in r["components"]:
-                    checksum^=pread_exact(source_fds[c["source"]["shard"]],c["source"]["offset"],c["source"]["length"]);calls+=1;bytes_requested+=c["source"]["length"]
+                    checksum=pread_exact(source_fds[c["source"]["shard"]],c["source"]["offset"],c["source"]["length"],checksum);calls+=1;bytes_requested+=c["source"]["length"]
             elif mode=="bundle_components":
                 for c in r["components"]:
-                    checksum^=pread_exact(bundle_fds[eid],c["bundle_offset"],c["length"]);calls+=1;bytes_requested+=c["length"]
+                    checksum=pread_exact(bundle_fds[eid],c["bundle_offset"],c["length"],checksum);calls+=1;bytes_requested+=c["length"]
             elif mode=="bundle_combined":
                 comps=r["components"];start=comps[0]["bundle_offset"];end=comps[-1]["bundle_offset"]+comps[-1]["length"]
-                checksum^=pread_exact(bundle_fds[eid],start,end-start);calls+=1;bytes_requested+=end-start
+                checksum=pread_exact(bundle_fds[eid],start,end-start,checksum);calls+=1;bytes_requested+=end-start
             else: raise ValueError(mode)
         wall=time.perf_counter()-t0;cpu=time.process_time()-cpu0
-        return {"mode":mode,"wall_seconds":wall,"cpu_seconds":cpu,"read_calls":calls,"bytes_requested":bytes_requested,"effective_gib_s":bytes_requested/wall/(1024**3),"checksum":checksum,"f_nocache_all":all(nocache)}
+        logical=sum(c["length"] for eid in order for c in records[eid]["components"])
+        stored=None if mode=="native_components" else sum(records[eid]["stored_len"] for eid in order)
+        return {"mode":mode,"wall_seconds":wall,"cpu_seconds":cpu,"read_calls":calls,"bytes_requested":bytes_requested,"logical_payload_bytes":logical,"object_stored_bytes":stored,"read_amplification":bytes_requested/logical,"object_storage_amplification":None if stored is None else stored/logical,"effective_gib_s":bytes_requested/wall/(1024**3),"checksum_crc32":checksum,"f_nocache_all":all(nocache)}
     finally:
         for fd in list(source_fds.values())+list(bundle_fds.values()): os.close(fd)
 
@@ -58,8 +64,14 @@ def main():
     for pattern,order in orders.items():
         for mode in ("native_components","bundle_components","bundle_combined"):
             samples=[trial(order,byid,a.manifest.parent,a.source_root,mode) for _ in range(a.repeats)]
-            results.append({"pattern":pattern,"mode":mode,"samples":samples,"median_wall_seconds":statistics.median(x["wall_seconds"] for x in samples),"median_gib_s":statistics.median(x["effective_gib_s"] for x in samples),"read_calls":samples[0]["read_calls"],"bytes_requested":samples[0]["bytes_requested"],"f_nocache_all":all(x["f_nocache_all"] for x in samples)})
-    doc={"schema":"pulsarmlx.r001.same-device-benchmark.v1","status":"passed","device":"ADATA SX8100NP via OWC Envoy Express","filesystem":"APFS","thunderbolt_link":"40 Gb/s","nvme_link":"PCIe 8.0 GT/s x2","temperature":"unavailable","cache_claim":"F_NOCACHE cache-minimized where reported; not cold-cache","layer":a.layer,"expert_count":a.count,"repeats":a.repeats,"results":results,"peak_rss_bytes":resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}
+            checksums={x["checksum_crc32"] for x in samples}
+            if len(checksums)!=1: raise RuntimeError("nondeterministic benchmark checksum")
+            wall=median(x["wall_seconds"] for x in samples)
+            results.append({"pattern":pattern,"mode":mode,"samples":samples,"median_wall_seconds":wall,"median_expert_latency_ms":wall*1000/len(order),"median_gib_s":median(x["effective_gib_s"] for x in samples),"read_calls":samples[0]["read_calls"],"bytes_requested":samples[0]["bytes_requested"],"logical_payload_bytes":samples[0]["logical_payload_bytes"],"object_stored_bytes":samples[0]["object_stored_bytes"],"read_amplification":samples[0]["read_amplification"],"object_storage_amplification":samples[0]["object_storage_amplification"],"checksum_crc32":samples[0]["checksum_crc32"],"f_nocache_all":all(x["f_nocache_all"] for x in samples)})
+    for pattern in orders:
+        checksums={r["checksum_crc32"] for r in results if r["pattern"]==pattern}
+        if len(checksums)!=1: raise RuntimeError(f"layout checksum mismatch for {pattern}")
+    doc={"schema":"pulsarmlx.r001.same-device-benchmark.v1","status":"passed","device":"ADATA SX8100NP via OWC Envoy Express","filesystem":"APFS","source_container_bytes":238458632928,"thunderbolt_link":"40 Gb/s","nvme_link":"PCIe 8.0 GT/s x2","temperature":"unavailable","cache_claim":"F_NOCACHE cache-minimized where reported; not cold-cache","layer":a.layer,"expert_count":a.count,"repeats":a.repeats,"results":results,"peak_rss_bytes":resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}
     if a.out.exists(): raise SystemExit("refuse existing output")
     with a.out.open("x") as f:json.dump(doc,f,sort_keys=True,separators=(",",":"));f.write("\n");f.flush();os.fsync(f.fileno())
     print(json.dumps(doc,sort_keys=True))
