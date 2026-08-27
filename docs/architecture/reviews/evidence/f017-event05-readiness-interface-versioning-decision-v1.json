@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-versioning-decision/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node": "R1",
+  "corrected_oracle_generation": "V11",
+  "numerical_authority": "V4",
+  "numerical_semantics_changed": false,
+  "result_semantics_changed": false,
+  "lifecycle_semantics_changed": false,
+  "readiness_interface_changed": true,
+  "authorizer_behavior_changed": true,
+  "successor_readiness_schema": "pulsarmlx.f017.corrected-oracle-event05-execution-readiness-final-declaration/11.1.0",
+  "successor_scientific_access_revision": "V11_V4",
+  "successor_measurement_revision": "V4",
+  "successor_authority_manifest_revision": "V4",
+  "historical_authorizer_disposition": "EXACT_GIT_OBJECT_RETAINED_HISTORICAL_ONLY_FOR_EVENT05_LIVE_MINTING",
+  "historical_readiness_declaration_disposition": "APPEND_ONLY_SUPERSEDED_FOR_FUTURE_EVENT05_LIVE_MINTING",
+  "active_corrected_oracle_generation_during_repair": "NONE",
+  "result": "PASS"
+}

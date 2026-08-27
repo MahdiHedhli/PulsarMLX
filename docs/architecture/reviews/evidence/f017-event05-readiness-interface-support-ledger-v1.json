@@ -1,0 +1,7 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-support-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supports": [],
+  "support_count": 0,
+  "status": "AWAITING_CHALLENGES"
+}

@@ -1,0 +1,62 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-design-authority/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "nodes": ["R1", "R2"],
+  "canonical_contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json",
+  "validator_design": {
+    "path": "scripts/research/f017_event05_readiness_authority_v1.py",
+    "entrypoint": "validate_readiness_declaration",
+    "decode": "BOUNDED_CANONICAL_JSON",
+    "key_census": "EXACT",
+    "type_census": "EXACT",
+    "authority_resolution": "TRANSITIVE_BOUND_BYTES",
+    "return_type": "IMMUTABLE_VALIDATED_READINESS"
+  },
+  "authorizer_design": {
+    "path": "scripts/research/validate_f017_corrected_oracle_access_v11.py",
+    "readiness_logic": "CALL_CANONICAL_VALIDATOR_ONLY",
+    "uppercase_field_checks": 0,
+    "parallel_ad_hoc_readiness_checks": 0
+  },
+  "candidate_builder_design": {
+    "path": "scripts/research/f017_event05_candidate_builder_v1.py",
+    "entrypoint": "build_operator_go_candidate",
+    "used_by": ["VALIDATION_ONLY_INSTANTIABILITY", "FUTURE_LIVE_RENDERING"],
+    "candidate_bytes_are_non_authoritative_until_install": true,
+    "installation_requires_live_approval_revalidation": true
+  },
+  "validation_only_isolation": {
+    "approval_schema": "pulsarmlx.f017.event05-readiness-validation-only-approval/1.0.0",
+    "approval_decision": "VALIDATE_EVENT05_CANDIDATE_CONSTRUCTION_ONLY",
+    "live": false,
+    "canonical_install_permitted": false,
+    "package_state_permitted": false,
+    "checkpoint_access_permitted": false,
+    "numerical_operations_permitted": false,
+    "id_consumption_permitted": false,
+    "installation_guard": "REVALIDATE_BOUND_APPROVAL_AS_LIVE_BEFORE_INSTALL"
+  },
+  "prepared_fixture": {
+    "authority_scope": "VALIDATION_ONLY_PREPARED",
+    "final_authority": false,
+    "schema_valid": true,
+    "live_authorizer_acceptance": false,
+    "validation_only_validator_acceptance": true
+  },
+  "final_byte_gate": {
+    "authority_scope": "FINAL_EVENT05_EXECUTION_READINESS",
+    "committed_bytes_only": true,
+    "fresh_process_repetitions": 20,
+    "primary_validation": "REQUIRED",
+    "secondary_validation": "REQUIRED",
+    "side_effects": 0
+  },
+  "historical_supersession": {
+    "old_declaration": "APPEND_ONLY_HISTORICAL",
+    "old_authorizer_git_object": "APPEND_ONLY_HISTORICAL",
+    "old_uppercase_interface_live_minting": "PROHIBITED"
+  },
+  "numerical_drift_permitted": false,
+  "result_authority_drift_permitted": false,
+  "result": "READY_FOR_INDEPENDENT_DESIGN_REVIEW"
+}

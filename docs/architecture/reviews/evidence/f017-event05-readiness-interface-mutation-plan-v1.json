@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-mutation-plan/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "preregistered_before_implementation": true,
+  "minimum_substantive_cases": 200,
+  "categories": {
+    "schema": 24,
+    "types": 48,
+    "readiness_predicates": 52,
+    "authority_bindings": 32,
+    "aliases": 24,
+    "candidate_path": 24
+  },
+  "minimum_planned_cases": 204,
+  "required_unexpected_passes": 0,
+  "required_side_effects": {
+    "live_authorization_files_created": 0,
+    "package_state_roots_created": 0,
+    "checkpoint_opens": 0,
+    "checkpoint_reads": 0,
+    "numerical_operations": 0,
+    "event_05_ids_consumed": 0
+  },
+  "result": "PREREGISTERED"
+}

@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-mismatch-reproduction/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node": "R0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "57724fb9cdbe283cde557bb54c1684b2e1c986e4",
+  "starting_tree": "34f9941e1477da809fcb2aa4f55ca4eaac88485c",
+  "parity": "EXACT",
+  "worktree": "CLEAN",
+  "readiness_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json",
+    "sha256": "e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6",
+    "schema": "pulsarmlx.f017.corrected-oracle-event05-execution-readiness-final-declaration/11.0.0",
+    "field_count": 39,
+    "typed_lowercase_fields_present": [
+      "declaration",
+      "active_corrected_oracle_generation",
+      "ready_for_corrected_full_checkpoint_oracle_event_05_execution_go"
+    ],
+    "canonical_json": false
+  },
+  "measured_authorizer": {
+    "path": "scripts/research/validate_f017_corrected_oracle_access_v11.py",
+    "sha256": "474fd9e3939a9b9b5dd93eea431f4cb73793b4b8e6511adc11fa11f67af8cc39",
+    "uppercase_fields_required": [
+      "F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS",
+      "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_EXECUTION_GO",
+      "ACTIVE_CORRECTED_ORACLE_GENERATION"
+    ]
+  },
+  "observed_failures": [
+    {
+      "stage": "BOUNDED_DECODE_OF_EXACT_COMMITTED_BYTES",
+      "exception": "ArtifactDecodeError",
+      "message": "noncanonical JSON artifact bytes"
+    },
+    {
+      "stage": "FIELD_INTERFACE_AFTER_CONTENT_INJECTION",
+      "exception": "ValueError",
+      "message": "Event 05 readiness authority"
+    }
+  ],
+  "producer_count": 1,
+  "active_live_consumer_count": 1,
+  "duplicate_validator_count": 0,
+  "alias_normalization_count": 0,
+  "root_cause": "PRODUCER_AND_CONSUMER_WERE_VALIDATED_SEPARATELY_BUT_NEVER_INSTANTIATED_TOGETHER",
+  "smallest_truthful_scope": "CANONICAL_TYPED_READINESS_SCHEMA_PLUS_ONE_MEASURED_VALIDATOR_PLUS_SHARED_CANDIDATE_BUILDER_AND_AUTHORITY_REBIND",
+  "operator_approval_created": false,
+  "candidate_created": false,
+  "live_event_05_authorization_created": false,
+  "event_05_package_started": false,
+  "event_05_ids_consumed": 0,
+  "checkpoint_opens": 0,
+  "checkpoint_reads": 0,
+  "numerical_operations": 0,
+  "historical_master_ledger": 175,
+  "result": "MISMATCH_REPRODUCED_EXACTLY_WITH_EARLIER_NONCANONICAL_BYTE_FAILURE"
+}
