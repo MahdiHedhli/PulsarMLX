@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R5",
+  "input_head": "cef9dc33fb2c0f75517c77bec8bc11022edcbf81",
+  "output_head": "2984285457bdbfb3e29af30dbbd9e207269d3d0e",
+  "output_tree": "245060a7f366faa8b8ca87636b28ac8d8b6be454",
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-arbiter-ledger-v2.json",
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-graph-state-v6.json",
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-opus-design-cycle-02-normalized-result.json"
+  ],
+  "commands_executed": [
+    "claude -p --model claude-opus-5 --effort high --no-session-persistence"
+  ],
+  "tests_executed": [
+    "Opus design arbiter cycle 2"
+  ],
+  "result_counts": {
+    "claims_accepted": 12,
+    "claims_rejected": 0,
+    "claims_unresolved": 0,
+    "blocking": 0,
+    "non_blocking_required": 0,
+    "defense_in_depth": 7
+  },
+  "claims_closed": [
+    "C-SCHEMA-001",
+    "C-SCHEMA-002",
+    "C-VALIDATOR-001",
+    "C-AUTHORIZER-001",
+    "C-INSTANT-001",
+    "C-INSTANT-002",
+    "C-BIND-001",
+    "C-SAFETY-001",
+    "C-LEGACY-001",
+    "C-CI-001",
+    "C-REVIEW-001",
+    "C-GO-001"
+  ],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": [
+    "R6"
+  ],
+  "result": "PASS"
+}
