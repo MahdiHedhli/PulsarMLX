@@ -1,1 +1,30 @@
-{"schema":"pulsarmlx.f017.event06-identity-producer-challenge-ledger/3.0.0","graph_id":"F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01","supersedes":"docs/architecture/reviews/evidence/f017-event06-identity-producer-challenge-ledger-v2.json","design_cycles":2,"whole_domain_cycles":0,"challenge_rows":16,"supported":0,"repaired":0,"conceded":0,"unsupported":16,"unresolved":0,"review_quality_failures":1,"review_environment_failures":1,"result":"REPAIR_REQUIRED"}
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-challenge-ledger/3.0.0",
+  "reviewer": "gemini-3.1-pro-high",
+  "cycle": 1,
+  "reviewed_head": "63af837dbd14d4ca595a86a3a220efbe342f7653",
+  "rows": {
+    "C-SCOPE-001": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-SCOPE-002": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-INTERFACE-001": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-VALIDATE-001": "CHALLENGED_STALE_REHEARSAL_HEAD",
+    "C-VALIDATE-002": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-VALIDATE-003": "CHALLENGED_STALE_REHEARSAL_HEAD",
+    "C-RUNTIME-001": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-RUNTIME-002": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-FAIL-001": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-FAIL-002": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-FAIL-003": "CHALLENGED_STALE_QUALIFICATION_HEAD",
+    "C-HIST-001": "SUPPORTED",
+    "C-SYN-001": "CHALLENGED_STALE_REHEARSAL_HEAD",
+    "C-NOACCESS-001": "SUPPORTED",
+    "C-CI-001": "SUPPORTED",
+    "C-GO-001": "SUPPORTED"
+  },
+  "material_challenges": 12,
+  "blocking_findings": 1,
+  "non_blocking_required_findings": 0,
+  "unresolved_findings": 0,
+  "earliest_invalidated_node": "R7",
+  "result": "REPAIR_REQUIRED"
+}
