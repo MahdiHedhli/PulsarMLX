@@ -400,6 +400,10 @@ fn build_plans(
                     if t.dims.len() != 2 {
                         return Err(err(format!("bad component geometry {}", t.tensor)));
                     }
+                    let mut source_dims = t.dims.clone();
+                    if class == "routed" {
+                        source_dims.push(256);
+                    }
                     if t.dims[0] % t.type_block_elements != 0
                         || t.plane_bytes % t.type_block_bytes != 0
                     {
@@ -429,7 +433,7 @@ fn build_plans(
                         length: t.plane_bytes,
                         type_id: type_id(&t.gguf_type)?,
                         type_name: t.gguf_type.clone(),
-                        dims: t.dims.clone(),
+                        dims: source_dims,
                         block_elements: t.type_block_elements,
                         block_bytes: t.type_block_bytes,
                         row_bytes: t.row_bytes,

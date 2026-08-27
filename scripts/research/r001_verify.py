@@ -172,7 +172,8 @@ def parse_shard(path: Path, ordinal: int, shard_sha: str) -> tuple[dict[str, Any
 
 def load_admission(path: Path, root: Path) -> tuple[dict[str,Any], list[tuple[Path,dict[str,Any]]]]:
     admission=json.loads(path.read_text())
-    if admission["checkpoint_set_sha256"] != CHECKPOINT or admission["total_bytes"] != 238458632928:
+    set_sha=admission.get("checkpoint_set_sha256",admission.get("set_sha256"))
+    if set_sha != CHECKPOINT or admission["total_bytes"] != 238458632928:
         raise ValueError("checkpoint admission mismatch")
     shards=[]
     for i,s in enumerate(admission["shards"],1):
@@ -360,7 +361,7 @@ def verify_bundle(bundle:Path,record:dict[str,Any],expected:ExpectedObject,check
         source_iter=read_range(source_path,exp.offset,exp.length);bundle_iter=read_range(bundle,exp.bundle_offset,exp.length)
         for sb,bb in zip(source_iter,bundle_iter,strict=True):
             if sb!=bb: raise ValueError("source/bundle byte mismatch")
-            sh.update(sb);bh.update(bb);canonical_payload.update(bytes([index+1]));canonical_payload.update(struct.pack("<Q",len(sb))) if False else None
+            sh.update(sb);bh.update(bb)
             pos+=len(sb)
         digest=sh.hexdigest()
         if pos!=exp.length or digest!=bh.hexdigest() or digest!=claim["component_sha256"] or digest!=claim["source"]["sha256"]: raise ValueError("component byte/hash mismatch")
