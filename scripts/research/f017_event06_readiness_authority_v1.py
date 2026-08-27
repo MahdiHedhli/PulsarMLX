@@ -14,6 +14,9 @@ from f017_bounded_artifact_decode_v1 import read_artifact
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-readiness-consumer-interface-v1.json"
+SUPERSEDED_DECLARATION_SHA256S = frozenset({
+    "eca5b5d3b56a019b03654987eab512951afc08c52d805540c53e8ce77e2cdf0d",
+})
 
 
 def _sha(path: Path) -> str:
@@ -88,6 +91,9 @@ def validate_event06_readiness_value(value: object) -> dict[str, Any]:
 
 def validate_event06_readiness_declaration(path: Path, *, repository_root: Path = ROOT,
                                            expected: Mapping[str, object] | None = None) -> ValidatedEvent06Readiness:
+    source_sha256 = _sha(path)
+    if source_sha256 in SUPERSEDED_DECLARATION_SHA256S:
+        raise ValueError("Event 06 readiness declaration superseded")
     value = validate_event06_readiness_value(read_artifact(path))
     if expected is not None:
         for name, required in expected.items():
@@ -138,4 +144,4 @@ def validate_event06_readiness_declaration(path: Path, *, repository_root: Path 
             or opus.get("non_blocking_required_findings") != 0
             or opus.get("unresolved_claims") != 0):
         raise ValueError("Event 06 readiness reviewer binding")
-    return ValidatedEvent06Readiness(MappingProxyType(value), path.resolve(strict=True), _sha(path))
+    return ValidatedEvent06Readiness(MappingProxyType(value), path.resolve(strict=True), source_sha256)

@@ -15,7 +15,9 @@ from f017_checkpoint_identity_capability_v12 import validate_capability
 from f017_checkpoint_identity_producer_v12 import produce
 from f017_checkpoint_identity_lifecycle_v12 import IdentityAuthorityError
 from f017_corrected_oracle_authorization_v12 import build_identity_candidate
-from f017_event06_readiness_authority_v1 import validate_event06_readiness_value
+from f017_event06_readiness_authority_v1 import (
+    validate_event06_readiness_declaration, validate_event06_readiness_value,
+)
 from execute_f017_corrected_oracle_event_v12 import validate_package_start
 from qualify_f017_checkpoint_identity_authority_v12 import qualify
 from validate_f017_corrected_oracle_access_v12 import (
@@ -71,6 +73,15 @@ def test_candidate_is_strict_and_immutable(tmp_path: Path) -> None:
 def test_event06_readiness_value_is_exact_and_typed() -> None:
     value = readiness_value()
     assert validate_event06_readiness_value(value) == value
+
+
+def test_superseded_event06_readiness_declaration_cannot_mint() -> None:
+    path = Path(
+        "docs/architecture/reviews/evidence/"
+        "f017-corrected-oracle-event06-execution-readiness-final-declaration-v12-v1.json"
+    )
+    with pytest.raises(ValueError, match="superseded"):
+        validate_event06_readiness_declaration(path)
 
 
 def test_identity_producer_has_no_caller_callback_surface() -> None:
