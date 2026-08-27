@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-graph-state/1.4.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-graph-state-v4.json",
+  "current_node": "R5",
+  "nodes": {
+    "R0":"PASS", "R1":"PASS", "R2":"PASS", "R3":"PASS", "R4":"PASS", "R5":"RUNNING",
+    "R6":"PENDING", "R7":"PENDING", "R8":"PENDING", "R9":"PENDING", "R10":"PENDING",
+    "R11":"PENDING", "R12":"PENDING", "R13":"PENDING", "R14":"PENDING", "R15":"PENDING"
+  },
+  "gemini_design": {"cycles":3,"blocking":0,"non_blocking_required":0,"unresolved":0,"verdict":"NO_MATERIAL_CHALLENGE"},
+  "opus_design": {"cycles":1,"last_verdict":"REJECT","findings_repaired":12},
+  "checkpoint_access": 0,
+  "event_05_executed": false,
+  "live_event_05_authorization_created": false,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175
+}
