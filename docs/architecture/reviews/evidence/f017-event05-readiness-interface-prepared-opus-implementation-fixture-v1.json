@@ -1,0 +1,1 @@
+{"authority_scope":"VALIDATION_ONLY_PREPARED","final_authority":false,"global_verdict":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION","live_authority_permitted":false,"purpose":"PROVE_REAL_COMMITTED_PRODUCER_CONSUMER_INSTANTIABILITY_BEFORE_FINAL_ARBITER_ACCEPTANCE","schema":"pulsarmlx.f017.event05-readiness-interface-prepared-opus-implementation-fixture/1.0.0"}
