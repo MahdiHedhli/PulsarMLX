@@ -1,0 +1,32 @@
+```bash
+$ git rev-parse HEAD
+43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5
+```
+*(Verified exact detached committed HEAD; inspected committed bytes only, read-only)*
+
+### Whole-Domain Challenge Cycle 03 Review Rows
+
+| Challenge ID | Claim ID | Severity | Attack | Observed Evidence | Status | Required Repair |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `AUTHORIZER_CANDIDATE_FORGERY` | `live_installation_boundary_protection` | BLOCKING | Forge candidate bytes before or during installation to bypass readiness or approval constraints. | `validate_live_candidate_for_install` strictly re-reads approval and readiness declarations and rebuilds the candidate via `build_operator_go_candidate` using the immutable `PRODUCTION_CATALOG`. It compares exact `canonical_bytes` and SHA256 digests before proceeding. The `_install` function uses `O_CREAT | O_EXCL` failing atomically with zero side effects on mismatch. | DEFENDED | None |
+| `LIVE_CANDIDATE_UNINSTANTIABLE` | `two_phase_lifecycle_design` | DEFENSE_IN_DEPTH | Reject candidate bytes because they contain `live:false` prior to installation. | `build_operator_go_candidate` intentionally hardcodes `"live": False` for both rehearsal and live candidates. The V11 parser strictly separates non-authoritative candidate construction from authoritative installation via receipt binding. Demanding `live:true` in candidate bytes would violate this two-phase contract. | DEFENDED | None |
+| `EXACT_SCHEMA_AND_ALIAS_REJECTION` | `readiness_strict_typing` | BLOCKING | Supply aliased types (e.g. integer 1 for boolean True) or extra keys in readiness declaration. | `validate_readiness_value` implements strict type checking via Python's `type(value) is bool`, separating booleans from integers, ensuring precise `set(value) == set(fields)` census checks to reject unexpected properties. | DEFENDED | None |
+| `BINDING_FRAUD` | `manifest_measurement_ci_bindings` | BLOCKING | Decouple or falsify manifest measurements and CI bindings in the readiness declaration. | `_validate_bound_authority` forcefully binds `authority_manifest_sha256`, traverses the DAG, and verifies exact equality of `measured_implementation_head`, tree SHAs, `full_native_evidence_sha256`, and verdict results against nested artifact payloads. | DEFENDED | None |
+| `PARALLEL_AUTHORITY` | `single_canonical_validator` | BLOCKING | Introduce duplicate or out-of-sync readiness validation logic in the authorizer. | Authorizer scripts have exactly zero inline readiness parser logic. All references import and route through a single canonical path: `validate_readiness_declaration` in `f017_event05_readiness_authority_v1.py`. | DEFENDED | None |
+| `ASYMMETRIC_CANDIDATE` | `shared_candidate_construction` | BLOCKING | Drift candidate construction between rehearsed and live pathways. | `build_operator_go_candidate` is centrally called by both `render_rehearsal_candidate` and `render_operator_go_candidate` assuring identical topological byte construction. | DEFENDED | None |
+| `VALIDATION_ISOLATION_FAILURE` | `validation_only_isolation` | BLOCKING | Leak live state or authority via validation-only simulation. | `render_validation_only_operator_go_candidate` explicitly restricts posture to `VALIDATION_ONLY` preventing any true admission of a live approval. | DEFENDED | None |
+| `SUPERSESSION_FAILURE` | `historical_supersession` | NON-BLOCKING | Bypass or fail to historically supersede older manifest versions. | The cycle-03 manifest (`v2.json`) explicitly defines `"supersedes": "docs/.../f017-event05-readiness-interface-whole-domain-review-manifest-v1.json"`. | DEFENDED | None |
+| `MUTATION_COVERAGE` | `substantive_readiness_mutations` | BLOCKING | Submit an inadequate number of structural mutations for readiness CI verification. | `readiness_mutations` strictly reports 227 in the exact-head FULL_NATIVE CI payload. | DEFENDED | None |
+| `NATIVE_SKIP_DRIFT` | `zero_required_native_skips` | BLOCKING | Bypass CI failures via native skips in the exact-head FULL_NATIVE run. | FULL_NATIVE CI run `33038039750` at exact head `69824ea29aa354b3cf5c32ac94b2bcd9c7d3d276` reports `"required_native_skips": 0`. | DEFENDED | None |
+| `SILENT_CORRUPTION` | `numerical_and_result_drift` | BLOCKING | Introduce numerical instability or result drift in the evaluated artifacts. | FULL_NATIVE CI run explicitly records `"numerical_drift": 0` and `"result_authority_drift": 0`. | DEFENDED | None |
+| `STATE_VIOLATION` | `checkpoint_and_authority_absence` | BLOCKING | Prematurely instantiate or leak checkpoints, P1 retries, or Event 05 authorities. | CI and Manifest correctly enforce `"original_checkpoint_access": 0`, `"event_05_executed": false`, `"live_event_05_authorization_created": false`, and `"p1_attempt_2_executed": false`. | DEFENDED | None |
+
+### Summary & Verdict
+
+**Counts:**
+- BLOCKING: 10
+- NON-BLOCKING-REQUIRED: 1 (SUPERSESSION_FAILURE)
+- DEFENSE-IN-DEPTH: 1 (LIVE_CANDIDATE_UNINSTANTIABLE)
+- UNRESOLVED: 0
+
+`NO_UNRESOLVED_MATERIAL_CHALLENGE`

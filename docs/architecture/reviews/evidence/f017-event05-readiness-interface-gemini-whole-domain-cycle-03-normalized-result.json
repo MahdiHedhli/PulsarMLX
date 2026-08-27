@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-gemini-whole-domain-result/1.1.0",
+  "cycle": 3,
+  "reviewer_model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5",
+  "packet_read": true,
+  "challenge_rows": 12,
+  "attacks_defended": 12,
+  "open_blocking": 0,
+  "open_non_blocking_required": 0,
+  "open_defense_in_depth": 0,
+  "unresolved": 0,
+  "cycle_02_challenges": {
+    "AUTHORIZER_CANDIDATE_FORGERY": "DEFENDED_BY_INSTALL_TIME_EXACT_REDERIVATION",
+    "LIVE_CANDIDATE_UNINSTANTIABLE": "DEFENDED_BY_ACCEPTED_TWO_PHASE_LIFECYCLE"
+  },
+  "reviewer_reported_severity_labels": {"blocking_attacks": 10, "non_blocking_attacks": 1, "defense_in_depth_attacks": 1},
+  "normalization_note": "Reviewer severity labels describe attack rows. Every row status is DEFENDED with required repair None; therefore open finding counts are zero.",
+  "verdict": "NO_UNRESOLVED_MATERIAL_CHALLENGE",
+  "exact_response_sha256": "06ed0288f35337233ca72122c7177426bbe480656647b3cb46a15d6503659898",
+  "valid_review": true,
+  "result": "PASS"
+}

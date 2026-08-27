@@ -1,0 +1,14 @@
+{
+  "schema":"pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id":"F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id":"R9",
+  "input_head":"43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5",
+  "output_head":"43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5",
+  "commands_executed":["gemini-3.1-pro-high fresh detached read-only whole-domain cycle 03"],
+  "tests_executed":["12 adversarial attack rows","cycle-02 candidate forgery repair retest","two-phase lifecycle retest"],
+  "result_counts":{"attacks":12,"defended":12,"blocking_open":0,"non_blocking_required_open":0,"unresolved":0},
+  "claims_closed":["C-REVIEW-001"],
+  "checkpoint_access_census":0,
+  "next_eligible_edges":["R10"],
+  "result":"PASS"
+}
