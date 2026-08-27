@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v4.json"
+OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v5.json"
 PATHS = (
     "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
     "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
@@ -68,8 +68,8 @@ def generate(head: str | None = None) -> dict:
             "sha256":hashlib.sha256(raw).hexdigest(),
         })
     return {
-        "schema":"pulsarmlx.f017.v11-result-envelope-implementation-measurement/4.0.0",
-        "supersedes":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json",
+        "schema":"pulsarmlx.f017.v11-result-envelope-implementation-measurement/5.0.0",
+        "supersedes":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v4.json",
         "branch":"feat/017-rust-native-inference-runtime",
         "implementation_head":head,
         "implementation_tree":tree,
