@@ -1,0 +1,44 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-authority-design/12.0.0",
+  "status": "DESIGN_FROZEN_NOT_LIVE",
+  "canonical_authority": {
+    "candidate_schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-candidate-authority/12.0.0",
+    "installed_schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-installed-authority/12.0.0",
+    "authority_scopes": ["SYNTHETIC", "PRODUCTION"],
+    "production_operation_classes": ["CORRECTED_FULL_CHECKPOINT_ORACLE"],
+    "generations": ["V12"],
+    "event_number_capability_branches": [],
+    "unknown_fields": "REJECT",
+    "aliases": "REJECT",
+    "coercions": "REJECT"
+  },
+  "candidate_fields": [
+    "schema", "authority_scope", "operation_class", "generation",
+    "authorization_id", "package_attempt_id", "checkpoint_set_sha256",
+    "checkpoint_root", "checkpoint_identity_contract_path",
+    "checkpoint_identity_contract_sha256", "producer_capability_path",
+    "producer_capability_sha256", "measured_producer_path",
+    "measured_producer_sha256", "expected_shard_count",
+    "expected_identity_only_shard_count", "expected_graph_payload_shard_count",
+    "expected_total_bytes", "attempts", "retries", "resume",
+    "event_identity_plan_sha256"
+  ],
+  "installed_additional_fields": ["installed_authorization_sha256", "installation_receipt_sha256"],
+  "derived_checkpoint_census": {
+    "shard_count": 6,
+    "identity_only_shard_count": 1,
+    "graph_payload_shard_count": 5,
+    "total_bytes": 238458632928,
+    "derivation": "SUM_ACCEPTED_SHARD_RECORD_SIZE_BYTES"
+  },
+  "validation_only": {
+    "state_created": false,
+    "checkpoint_root_opens": 0,
+    "checkpoint_shard_opens": 0,
+    "identity_hash_reads": 0,
+    "numerical_operations": 0
+  },
+  "live_producer_input": "IMMUTABLE_VALIDATED_INSTALLED_AUTHORITY_ONLY",
+  "package_start_gate": "CANDIDATE_TRIPLE_PASS_AND_INSTALLED_AUTH_TRIPLE_PASS",
+  "result": "PASS"
+}

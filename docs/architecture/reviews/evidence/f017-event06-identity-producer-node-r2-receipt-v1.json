@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0","node":"R2","candidate_validators":3,"installed_auth_validators":3,"shared_core_validator":true,"live_input":"IMMUTABLE_VALIDATED_INSTALLED_AUTHORITY_ONLY","package_start_gate":"FAIL_CLOSED","validation_only_checkpoint_access":0,"result":"PASS"}
