@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-arbiter-ledger/4.0.0",
+  "graph_id": "F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-arbiter-ledger-v3.json",
+  "opus_whole_domain_cycle": 2,
+  "reviewed_head": "c87fbf96475425ec52a6bdfd5aa20984d6d99a13",
+  "accepted_claims": 16,
+  "rejected_claims": 0,
+  "unresolved_claims": 0,
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "carry_forward_constraints": 3,
+  "global_verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_06_EXECUTION_AUTHORIZATION_PREPARATION",
+  "result": "ACCEPT"
+}
