@@ -1,0 +1,28 @@
+# F017 Event 05 Readiness Interface Cycle 03 Repair Confirmation
+
+**HEAD Bound:** `0806e901ff04a9785292027fe3004ca254470822` (Detached read-only checkout, committed bytes only)
+
+I have independently inspected and executed the committed production-boundary instantiability path (`validate_f017_corrected_oracle_access_v11.py`), the canonical artifact checks, the 231 substantive mutations, and the exact-head FULL_NATIVE CI run 33040808487. I re-tested the install-time candidate rederivation and the accepted two-phase `live:false` lifecycle. 
+
+### Invariant and Telemetry Verification
+- **State Created:** `False`
+- **Live Event 05 Authorization Installed:** `False`
+- **Checkpoint Access:** `0` opens, `0` reads (`original_checkpoint_access: 0`)
+- **Numerical Operations:** `0` (`numerical_drift: 0`)
+- **P1 Attempt-2 Activity:** `False` (`p1_attempt_2_executed: false`)
+- **Substantive Cases:** 231 (`readiness_mutations: 231`)
+
+### Repair Findings Dispositions
+
+| Finding | Disposition | Status |
+| :--- | :--- | :--- |
+| **F-A** | The corrected boundary logic (`validate_f017_corrected_oracle_access_v11.py`) now mandates strictly `canonical_bytes()` for all transitively consumed FULL_NATIVE and EVIDENCE_ONLY results. The production-boundary fixture in `test_f017_event05_readiness_authority_v1.py` successfully binds and instantiates the real committed repository JSON artifacts using `read_artifact` (the real bounded decoder) rather than relying on synthetic stand-ins. | **RESOLVED** |
+| **F-B** | Both the exact-head FULL_NATIVE run `33040808487` and the `v6` measurement manifest definitively anchor the `measured_implementation_tree` to exactly `d7a7d72ad1f7dfaefe0157b46b384e17e61f3505`. `git cat-file -t` and the unified assertions confirm this object is a genuine, non-truncated tree within the repository. | **RESOLVED** |
+| **F-C** | The actual implementation call graph distinguishes safely between the production-shadow rehearsal helper and the live builder logic. `render_rehearsal_candidate` is strictly isolated from `_render_operator_candidate` (the Event-05 validation/live shared builder), successfully preventing unsupported traversal claims. | **RESOLVED** |
+
+### Summary Counts
+- **Open Blocking:** 0
+- **Open Non-Blocking-Required:** 0
+- **Unresolved Claims:** 0
+
+NO_UNRESOLVED_MATERIAL_CHALLENGE
