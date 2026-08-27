@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-gemini-whole-domain-challenge/1.0.0",
+  "reviewer": "gemini-3.1-pro-high",
+  "effort": "high",
+  "cycle": 3,
+  "reviewed_head": "e9f6b1323a21a5981e50e549c537a882f10cf9df",
+  "reviewed_tree": "2658a1b66b3a963409523334d0f8cb2ac8433e8e",
+  "supported_claims": 13,
+  "challenged_claims": 2,
+  "unresolved_claims": 1,
+  "material_challenges": 2,
+  "blocking_findings": 2,
+  "non_blocking_required_findings": 0,
+  "unresolved_findings": 1,
+  "execution_repair_result": "PASS",
+  "evidence_repair_required": true,
+  "earliest_invalidated_node": "R13",
+  "verdict": "MATERIAL_CHALLENGE"
+}

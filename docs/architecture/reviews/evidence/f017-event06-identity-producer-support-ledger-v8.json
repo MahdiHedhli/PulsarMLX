@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-support-ledger/8.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-support-ledger-v7.json",
+  "challenge_source": "docs/architecture/reviews/evidence/f017-event06-v12-gemini-whole-domain-cycle-03-normalized-result.json",
+  "responses": [
+    {
+      "claim_id": "C-HIST-001",
+      "disposition": "REPAIRED",
+      "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-evidence-only-ci-history-v1.json"
+    },
+    {
+      "claim_id": "C-CI-001",
+      "disposition": "REPAIRED",
+      "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-evidence-only-ci-history-v1.json"
+    },
+    {
+      "claim_id": "C-GO-001",
+      "disposition": "PENDING_FRESH_CHALLENGE_AND_ARBITRATION",
+      "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-evidence-only-ci-history-v1.json"
+    }
+  ],
+  "execution_bytes_changed": false,
+  "existing_evidence_files_modified": 0,
+  "original_checkpoint_access": 0,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "result": "REPAIRED_PENDING_REVIEW"
+}
