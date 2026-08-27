@@ -16,6 +16,12 @@ from f017_corrected_oracle_authorization_v11 import (
 from f017_corrected_oracle_primary_wrapper_v11 import validate_candidate_document as validate_primary
 from f017_corrected_oracle_secondary_wrapper_v11 import validate_candidate_document as validate_secondary
 from f017_memory_gate_v9 import observe
+from f017_event05_candidate_builder_v1 import (
+    CandidateContext,
+    build_operator_go_candidate,
+    validate_operator_approval,
+)
+from f017_event05_readiness_authority_v1 import validate_readiness_declaration
 
 ROOT = Path(__file__).resolve().parents[2]
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-artifact-dag-v11.json"
@@ -142,51 +148,60 @@ def install_operator_go_candidate(candidate_path: Path) -> dict:
     candidate, _ = parse_candidate(candidate_path)
     if set(candidate) != LIVE_KEYS:
         raise ValueError("V11 live candidate")
+    approval_path = Path(candidate["operator_approval_path"])
+    readiness_path = Path(candidate["execution_readiness_declaration_path"])
+    approval = validate_operator_approval(approval_path, "LIVE_OPERATOR_GO")
+    readiness = validate_readiness_declaration(readiness_path)
+    if (approval.source_sha256 != candidate["operator_approval_sha256"]
+            or readiness.source_sha256 != candidate["execution_readiness_declaration_sha256"]
+            or approval.values["readiness_declaration_sha256"] != readiness.source_sha256
+            or approval.values["authority_manifest_sha256"] != readiness.authority_manifest_sha256):
+        raise ValueError("V11 live approval readback")
     return _install(candidate_path, Path(candidate["canonical_authorization_path"]),
                     Path(candidate["installation_receipt_path"]), authoritative=True)
+
+
+def _candidate_context(catalog_path: Path) -> CandidateContext:
+    return CandidateContext(
+        causal_dag_sha256=_sha(DAG), numerical_contract_sha256=_sha(NUMERICAL_V4),
+        primary_numerical_sha256=_sha(PRIMARY_V3), secondary_numerical_sha256=_sha(SECONDARY_V3),
+        result_authority_sha256=_sha(RESULT_AUTHORITY),
+        implementation_measurement_sha256=_sha(IMPLEMENTATION_MEASUREMENT),
+        shards=tuple(production_shards()), tensor_catalog_path=str(catalog_path),
+        tensor_catalog_sha256=_sha(catalog_path),
+    )
+
+
+def _render_operator_candidate(approval_path: Path, readiness_path: Path,
+                               catalog_path: Path, output: Path, *, posture: str,
+                               memory_observation: dict) -> dict:
+    approval = validate_operator_approval(approval_path, posture)
+    readiness = validate_readiness_declaration(readiness_path)
+    candidate = build_operator_go_candidate(
+        approval, readiness, _candidate_context(catalog_path), memory_observation,
+    )
+    digest = bank_exclusive(output, candidate)
+    validated = _validate_document(output)
+    if digest != validated["candidate_sha256"]: raise ValueError("V11 live candidate identity")
+    return {**validated,"result":"PASS","checkpoint_opens":0,"checkpoint_reads":0,
+            "state_created":False,"numerical_operations":0,"live_authority_installed":False,
+            "event_05_ids_consumed":0}
+
+
+def render_validation_only_operator_go_candidate(approval_path: Path, readiness_path: Path,
+                                                 catalog_path: Path, output: Path,
+                                                 memory_observation: dict) -> dict:
+    """Exercise exact candidate construction without admitting a live approval."""
+    return _render_operator_candidate(
+        approval_path, readiness_path, catalog_path, output,
+        posture="VALIDATION_ONLY", memory_observation=memory_observation,
+    )
 
 
 def render_operator_go_candidate(approval_path: Path, readiness_path: Path,
                                  catalog_path: Path, output: Path) -> dict:
     """Render only after a future, separately banked Event-05 human GO."""
-    approval = read_artifact(approval_path); readiness = read_artifact(readiness_path)
-    required_approval = {"schema","decision","active_generation","authorization_id","package_attempt_id",
-        "primary_event_id","secondary_event_id","checkpoint_root","canonical_authorization_path",
-        "installation_receipt_path","emergency_evidence_root","terminal_fallback_evidence_root",
-        "authority_manifest_sha256","readiness_declaration_sha256"}
-    if (type(approval) is not dict or set(approval) != required_approval
-            or approval["schema"] != "pulsarmlx.f017.corrected-oracle-event05-operator-approval/11.0.0"
-            or approval["decision"] != "GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05"
-            or approval["active_generation"] != "V11"):
-        raise ValueError("Event 05 operator approval")
-    if (type(readiness) is not dict
-            or readiness.get("F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS") != "ACCEPTED"
-            or readiness.get("READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_EXECUTION_GO") != "YES"
-            or readiness.get("ACTIVE_CORRECTED_ORACLE_GENERATION") != "V11"
-            or _sha(readiness_path) != approval["readiness_declaration_sha256"]):
-        raise ValueError("Event 05 readiness authority")
-    candidate = {
-        "schema":SCHEMA,"state":"OPERATOR_APPROVED_CANDIDATE","live":False,
-        "scope":"PRODUCTION_EVENT_05","authority_generation":11,
-        "authorization_id":approval["authorization_id"],"package_attempt_id":approval["package_attempt_id"],
-        "primary_event_id":approval["primary_event_id"],"secondary_event_id":approval["secondary_event_id"],
-        "causal_dag_sha256":_sha(DAG),"numerical_contract_sha256":_sha(NUMERICAL_V4),
-        "primary_numerical_sha256":_sha(PRIMARY_V3),"secondary_numerical_sha256":_sha(SECONDARY_V3),
-        "result_authority_sha256":_sha(RESULT_AUTHORITY),
-        "implementation_measurement_sha256":_sha(IMPLEMENTATION_MEASUREMENT),
-        "checkpoint_root":approval["checkpoint_root"],
-        "shards":production_shards(),"attempts":1,"retries":0,"resume":False,"active_generation":"V11",
-        "synthetic_root_manifest_path":None,"synthetic_root_manifest_sha256":None,
-        "tensor_catalog_path":str(catalog_path),"tensor_catalog_sha256":_sha(catalog_path),
-        "mint_memory_gate":observe(enforce=True),"operator_approval_path":str(approval_path.resolve()),
-        "operator_approval_sha256":_sha(approval_path),"canonical_authorization_path":approval["canonical_authorization_path"],
-        "installation_receipt_path":approval["installation_receipt_path"],
-        "emergency_evidence_root":approval["emergency_evidence_root"],
-        "terminal_fallback_evidence_root":approval["terminal_fallback_evidence_root"],
-        "authority_manifest_sha256":approval["authority_manifest_sha256"],
-        "execution_readiness_declaration_path":str(readiness_path.resolve()),
-        "execution_readiness_declaration_sha256":_sha(readiness_path),
-    }
-    digest = bank_exclusive(output, candidate); validated = _validate_document(output)
-    if digest != validated["candidate_sha256"]: raise ValueError("V11 live candidate identity")
-    return {**validated,"result":"PASS","checkpoint_opens":0,"checkpoint_reads":0,"state_created":False}
+    return _render_operator_candidate(
+        approval_path, readiness_path, catalog_path, output,
+        posture="LIVE_OPERATOR_GO", memory_observation=observe(enforce=True),
+    )
