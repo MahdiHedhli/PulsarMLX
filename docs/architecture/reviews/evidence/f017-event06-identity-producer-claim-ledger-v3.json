@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-claim-ledger/3.0.0",
+  "graph_id": "F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-claim-ledger-v2.json",
+  "claims": {
+    "C-SCOPE-001": "SUPPORTED",
+    "C-SCOPE-002": "SUPPORTED",
+    "C-INTERFACE-001": "SUPPORTED",
+    "C-VALIDATE-001": "SUPPORTED",
+    "C-VALIDATE-002": "SUPPORTED",
+    "C-VALIDATE-003": "SUPPORTED",
+    "C-RUNTIME-001": "SUPPORTED",
+    "C-RUNTIME-002": "SUPPORTED",
+    "C-FAIL-001": "SUPPORTED",
+    "C-FAIL-002": "SUPPORTED",
+    "C-FAIL-003": "SUPPORTED",
+    "C-HIST-001": "SUPPORTED",
+    "C-SYN-001": "SUPPORTED",
+    "C-NOACCESS-001": "SUPPORTED",
+    "C-CI-001": "SUPPORTED",
+    "C-GO-001": "SUPPORTED"
+  },
+  "supported": 16,
+  "rejected": 0,
+  "unresolved": 0,
+  "arbiter_verdicts_pending": 16,
+  "result": "READY_FOR_WHOLE_DOMAIN_CHALLENGE"
+}
