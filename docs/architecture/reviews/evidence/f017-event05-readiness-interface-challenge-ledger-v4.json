@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-challenge-ledger/4.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-challenge-ledger-v3.json",
+  "gemini_design_challenges": 3,
+  "opus_design_findings": 12,
+  "blocking_findings": ["F-01", "F-02", "F-03"],
+  "non_blocking_required_findings": ["F-04", "F-05", "F-06", "F-07", "F-08", "F-09"],
+  "defense_in_depth_findings": ["F-10", "F-11", "F-12"],
+  "repair_status": {
+    "F-01":"REPAIRED_BY_EXACT_REVIEW_PROTOCOL",
+    "F-02":"REPAIRED_BY_EXPLICIT_REVIEW_SCOPE_SPLIT",
+    "F-03":"PENDING_AUTHORITY_MANIFEST_V2_AFTER_REPAIR_COMMIT",
+    "F-04":"REPAIRED_BY_SCHEMA_PREDICATE_AND_COVERAGE_GATE",
+    "F-05":"REPAIRED_BY_NORMALIZED_APPROVAL_INPUT_AND_DIFFERENCE_ALLOWLIST",
+    "F-06":"REPAIRED_BY_LIVE_APPROVAL_AND_EXPIRY_CONTRACT",
+    "F-07":"REPAIRED_BY_NAMED_CANONICAL_DECLARATION_EMITTER",
+    "F-08":"PENDING_VERIFIED_GEMINI_CYCLE_03",
+    "F-09":"PENDING_R3_R4_RECEIPTS_AFTER_REPAIR_COMMIT",
+    "F-10":"REPAIRED_BY_POSITIVE_RUN_ID_TYPES",
+    "F-11":"REPAIRED_BY_PREDICATE_TYPE_GATE",
+    "F-12":"REPAIRED_BY_HISTORICAL_TOMBSTONE"
+  },
+  "open_blocking": 1,
+  "open_non_blocking_required": 2,
+  "status": "REPAIR_IN_PROGRESS"
+}

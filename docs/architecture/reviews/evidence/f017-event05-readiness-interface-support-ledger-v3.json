@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-support-ledger/3.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-support-ledger-v2.json",
+  "supports": [
+    {"support_id":"SUP-OPUS-F01-F02","finding_ids":["F-01","F-02"],"disposition":"REPAIR_IMPLEMENTED","evidence":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-review-protocol-v1.json","specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"]},
+    {"support_id":"SUP-OPUS-F04-F10-F11","finding_ids":["F-04","F-10","F-11"],"disposition":"REPAIR_IMPLEMENTED","evidence":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json","scripts/research/validate_f017_event05_readiness_interface_design_v1.py","scripts/research/tests/test_f017_event05_readiness_interface_design_v1.py"]},
+    {"support_id":"SUP-OPUS-F05-F06","finding_ids":["F-05","F-06"],"disposition":"REPAIR_IMPLEMENTED","evidence":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json","docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]},
+    {"support_id":"SUP-OPUS-F07","finding_ids":["F-07"],"disposition":"REPAIR_IMPLEMENTED","evidence":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json","docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]},
+    {"support_id":"SUP-OPUS-F12","finding_ids":["F-12"],"disposition":"REPAIR_IMPLEMENTED","evidence":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-historical-tombstone-v1.json"]}
+  ],
+  "pending_supports": ["F-03", "F-08", "F-09"],
+  "unresolved": 0,
+  "status": "PARTIAL_REPAIR_PENDING_MANIFEST_RECEIPTS_AND_GEMINI_REREVIEW"
+}

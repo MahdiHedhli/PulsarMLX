@@ -23,7 +23,19 @@
     "entrypoint": "build_operator_go_candidate",
     "used_by": ["VALIDATION_ONLY_INSTANTIABILITY", "FUTURE_LIVE_RENDERING"],
     "candidate_bytes_are_non_authoritative_until_install": true,
-    "installation_requires_live_approval_revalidation": true
+    "installation_requires_live_approval_revalidation": true,
+    "input_type": "IMMUTABLE_NORMALIZED_VALIDATED_APPROVAL",
+    "approval_schema_branching_inside_builder": false,
+    "candidate_difference_allowlist": ["operator_approval_path", "operator_approval_sha256", "authorization_id", "package_attempt_id", "primary_event_id", "secondary_event_id", "canonical_authorization_path", "installation_receipt_path", "emergency_evidence_root", "terminal_fallback_evidence_root"],
+    "all_other_candidate_fields_byte_identical_between_postures": true
+  },
+  "approval_admission_design": {
+    "contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json",
+    "single_entrypoint": "validate_operator_approval",
+    "only_parameter": "expected_posture",
+    "postures": ["VALIDATION_ONLY", "LIVE_OPERATOR_GO"],
+    "normalized_return_type": "IMMUTABLE_NORMALIZED_VALIDATED_APPROVAL",
+    "live_install_requires": ["live_true", "positive_issue_time", "future_expiry", "bound_approval_sha256", "approval_readback_before_any_install_write"]
   },
   "validation_only_isolation": {
     "approval_schema": "pulsarmlx.f017.event05-readiness-validation-only-approval/1.0.0",
@@ -50,6 +62,18 @@
     "primary_validation": "REQUIRED",
     "secondary_validation": "REQUIRED",
     "side_effects": 0
+  },
+  "declaration_emitter_design": {
+    "path": "scripts/research/generate_f017_event05_readiness_declaration_v1.py",
+    "canonical_bytes_only": true,
+    "exclusive_no_replace": true,
+    "format_mutations_rejected": ["PRETTY_PRINTED", "UNSORTED_KEYS", "MISSING_TERMINAL_NEWLINE"]
+  },
+  "review_scope_design": {
+    "protocol": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-review-protocol-v1.json",
+    "final_declaration_gemini_scope": "R9_WHOLE_DOMAIN",
+    "final_declaration_opus_scope": "R11_IMPLEMENTATION_ARBITER",
+    "design_review_tokens_in_final_declaration": false
   },
   "historical_supersession": {
     "old_declaration": "APPEND_ONLY_HISTORICAL",

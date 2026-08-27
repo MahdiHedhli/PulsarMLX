@@ -41,6 +41,27 @@ class Event05ReadinessInterfaceDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "type exhaustiveness"):
             design.validate_contract(mutated)
 
+    def test_schema_requires_exact_predicate(self) -> None:
+        contract = design.load_contract()
+        mutated = copy.deepcopy(contract)
+        del mutated["exact_final_predicates"]["schema"]
+        with self.assertRaisesRegex(ValueError, "predicate coverage"):
+            design.validate_contract(mutated)
+
+    def test_predicate_type_must_match_field_type(self) -> None:
+        contract = design.load_contract()
+        mutated = copy.deepcopy(contract)
+        mutated["exact_final_predicates"]["event_05_executed"] = "false"
+        with self.assertRaisesRegex(ValueError, "predicate type"):
+            design.validate_contract(mutated)
+
+    def test_ci_run_ids_are_strictly_positive(self) -> None:
+        contract = design.load_contract()
+        self.assertEqual(
+            set(contract["exact_types"]["positive_integer_fields"]),
+            {"full_native_run", "evidence_only_run"},
+        )
+
     def test_mutation_floor_is_enforced(self) -> None:
         plan = json.loads(design.MUTATION_PLAN.read_text())
         plan["minimum_planned_cases"] = 199

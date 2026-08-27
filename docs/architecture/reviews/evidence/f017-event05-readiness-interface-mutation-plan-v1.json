@@ -2,16 +2,28 @@
   "schema": "pulsarmlx.f017.event05-readiness-interface-mutation-plan/1.0.0",
   "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
   "preregistered_before_implementation": true,
-  "minimum_substantive_cases": 200,
+  "minimum_substantive_cases": 220,
   "categories": {
-    "schema": 24,
-    "types": 48,
-    "readiness_predicates": 52,
-    "authority_bindings": 32,
+    "schema": 30,
+    "types": 52,
+    "readiness_predicates": 54,
+    "authority_bindings": 34,
     "aliases": 24,
-    "candidate_path": 24
+    "candidate_path": 32
   },
-  "minimum_planned_cases": 204,
+  "minimum_planned_cases": 226,
+  "mandatory_named_mutations": [
+    "PRETTY_PRINTED_DECLARATION",
+    "UNSORTED_DECLARATION_KEYS",
+    "MISSING_TERMINAL_NEWLINE",
+    "WRONG_SCHEMA_VALUE",
+    "ZERO_FULL_NATIVE_RUN",
+    "ZERO_EVIDENCE_ONLY_RUN",
+    "EXPIRED_LIVE_APPROVAL",
+    "FALSE_LIVE_APPROVAL",
+    "VALIDATION_ONLY_APPROVAL_INSTALL_ATTEMPT",
+    "CANDIDATE_POSTURE_NONALLOWLIST_DIVERGENCE"
+  ],
   "required_unexpected_passes": 0,
   "required_side_effects": {
     "live_authorization_files_created": 0,

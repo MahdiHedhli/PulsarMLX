@@ -49,11 +49,30 @@ def validate_contract(contract: dict) -> None:
     predicates = contract.get("exact_final_predicates")
     if type(predicates) is not dict or any(key not in fields for key in predicates):
         raise ValueError("readiness predicate census")
+    free = contract.get("free_value_fields")
+    if type(free) is not list or len(free) != len(set(free)) or any(name not in fields for name in free):
+        raise ValueError("readiness free-value census")
+    if set(predicates) & set(free) or set(predicates) | set(free) != set(fields):
+        raise ValueError("readiness predicate coverage")
+    type_map = {name: category for category, names in exact_types.items() for name in names}
+    for name, value in predicates.items():
+        category = type_map[name]
+        valid = (
+            (category == "boolean_fields" and type(value) is bool)
+            or (category == "non_boolean_nonnegative_integer_fields" and type(value) is int and type(value) is not bool and value >= 0)
+            or (category == "positive_integer_fields" and type(value) is int and type(value) is not bool and value > 0)
+            or (category in {"exact_string_fields", "sha256_fields", "git_object_fields", "repository_relative_path_fields"} and type(value) is str)
+        )
+        if not valid:
+            raise ValueError(f"readiness predicate type: {name}")
     for name in exact_types["repository_relative_path_fields"]:
         if not name.endswith("_path"):
             raise ValueError("readiness path field")
     if contract.get("canonical_serialization") != "REQUIRED" or contract.get("bounded_decode") != "REQUIRED_BEFORE_SEMANTIC_VALIDATION":
         raise ValueError("readiness decode order")
+    emitter = contract.get("declaration_emitter")
+    if type(emitter) is not dict or emitter.get("serialization") != "f017_canonical_serialization_v10.canonical_bytes":
+        raise ValueError("readiness declaration emitter")
 
 
 def validate_mutation_plan(plan: dict) -> None:

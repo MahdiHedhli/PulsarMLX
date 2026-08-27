@@ -89,9 +89,7 @@
       "ready_to_prepare_p1_attempt_2_authorization"
     ],
     "non_boolean_nonnegative_integer_fields": [
-      "full_native_run",
       "full_native_required_skips",
-      "evidence_only_run",
       "evidence_only_native_jobs",
       "blocking_findings",
       "non_blocking_required_findings",
@@ -105,6 +103,10 @@
       "new_original_checkpoint_tensor_reads",
       "new_original_checkpoint_payload_reads",
       "historical_master_ledger"
+    ],
+    "positive_integer_fields": [
+      "full_native_run",
+      "evidence_only_run"
     ],
     "sha256_fields": [
       "authority_manifest_sha256",
@@ -132,6 +134,7 @@
     ]
   },
   "exact_final_predicates": {
+    "schema": "pulsarmlx.f017.corrected-oracle-event05-execution-readiness-final-declaration/11.1.0",
     "authority_scope": "FINAL_EVENT05_EXECUTION_READINESS",
     "declaration": "F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS: ACCEPTED",
     "graph_verdict": "F017_EVENT05_READINESS_AUTHORITY_INTERFACE_GRAPH: ACCEPTED",
@@ -167,6 +170,29 @@
     "ready_to_prepare_p1_attempt_2_authorization": false,
     "exact_next_safe_action": "REQUEST_A_FRESH_HUMAN_GO_FOR_EXACTLY_ONE_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_UNDER_RECONCILED_V11_READINESS_AUTHORITY"
   },
+  "free_value_fields": [
+    "authority_manifest_path",
+    "authority_manifest_sha256",
+    "scientific_access_contract_path",
+    "scientific_access_contract_sha256",
+    "result_authority_path",
+    "result_authority_sha256",
+    "numerical_contract_path",
+    "numerical_contract_sha256",
+    "measured_implementation_head",
+    "measured_implementation_tree",
+    "full_native_evidence_path",
+    "full_native_evidence_sha256",
+    "full_native_run",
+    "evidence_only_evidence_path",
+    "evidence_only_evidence_sha256",
+    "evidence_only_run",
+    "gemini_result_path",
+    "gemini_result_sha256",
+    "opus_result_path",
+    "opus_result_sha256",
+    "defense_in_depth_findings"
+  ],
   "prepared_fixture_scope": "VALIDATION_ONLY_PREPARED",
   "alias_policy": {
     "uppercase_aliases_permitted": false,
@@ -180,7 +206,7 @@
     "read_bound_bytes": true,
     "verify_sha256": true,
     "verify_measurement_head_tree": true,
-    "verify_manifest_transitive_roles": [
+    "successor_manifest_required_roles": [
       "implementation_measurement",
       "scientific_access",
       "numerical_contract_v4",
@@ -190,6 +216,23 @@
       "gemini_whole_domain_challenge",
       "opus_whole_domain_arbiter"
     ]
+  },
+  "review_protocols": {
+    "gemini_result_scope": "READINESS_INTERFACE_WHOLE_DOMAIN_CHALLENGE_R9",
+    "gemini_exact_acceptance_token": "NO_UNRESOLVED_MATERIAL_CHALLENGE",
+    "gemini_protocol_producer": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-review-protocol-v1.json",
+    "opus_result_scope": "READINESS_INTERFACE_IMPLEMENTATION_ARBITER_R11",
+    "opus_exact_acceptance_token": "ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION",
+    "opus_protocol_producer": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-review-protocol-v1.json",
+    "design_review_results_are_final_declaration_fields": false
+  },
+  "declaration_emitter": {
+    "path": "scripts/research/generate_f017_event05_readiness_declaration_v1.py",
+    "serialization": "f017_canonical_serialization_v10.canonical_bytes",
+    "write_posture": "EXCLUSIVE_NO_REPLACE",
+    "pretty_printed_bytes_permitted": false,
+    "unsorted_keys_permitted": false,
+    "missing_terminal_newline_permitted": false
   },
   "bounded_decode": "REQUIRED_BEFORE_SEMANTIC_VALIDATION",
   "canonical_serialization": "REQUIRED",

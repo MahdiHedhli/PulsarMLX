@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event05-approval-interface/1.0.0",
+  "raw_field_count": 17,
+  "raw_fields": ["schema", "decision", "live", "approved_at_unix_ns", "approval_expires_at_unix_ns", "active_generation", "authorization_id", "package_attempt_id", "primary_event_id", "secondary_event_id", "checkpoint_root", "canonical_authorization_path", "installation_receipt_path", "emergency_evidence_root", "terminal_fallback_evidence_root", "authority_manifest_sha256", "readiness_declaration_sha256"],
+  "entrypoint": "validate_operator_approval",
+  "only_parameter": "expected_posture",
+  "postures": {
+    "VALIDATION_ONLY": {"schema":"pulsarmlx.f017.event05-readiness-validation-only-approval/1.0.0","decision":"VALIDATE_EVENT05_CANDIDATE_CONSTRUCTION_ONLY","live":false,"time_policy":"ZERO_SENTINELS","install_permitted":false},
+    "LIVE_OPERATOR_GO": {"schema":"pulsarmlx.f017.corrected-oracle-event05-operator-approval/11.1.0","decision":"GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05","live":true,"time_policy":"POSITIVE_ISSUE_AND_FUTURE_EXPIRY","install_permitted":true}
+  },
+  "normalized_output": {"type":"IMMUTABLE_NORMALIZED_VALIDATED_APPROVAL","schema_decision_and_posture_removed_before_candidate_builder":true,"builder_branching_permitted":false},
+  "install_revalidation": {"read_bound_approval":true,"verify_bound_sha256":true,"require_live_posture":true,"require_unexpired":true,"occurs_before_any_install_write":true},
+  "result": "FROZEN_FOR_DESIGN_REVIEW"
+}
