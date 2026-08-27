@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-challenge-ledger/2.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-challenge-ledger-v1.json",
+  "challenges": [
+    {"challenge_id":"CHG-READINESS-001","claim_id":"C-LEGACY-001","severity":"BLOCKING","status":"REPAIRED","repair":"Historical blob is explicitly prohibited from live minting; active path is updated."},
+    {"challenge_id":"CHG-READINESS-002","claim_id":"C-AUTHORIZER-001","severity":"BLOCKING","status":"REPAIRED","repair":"Versioning and design authority now distinguish historical blob from updated active path."},
+    {"challenge_id":"CHG-READINESS-003","claim_id":"C-SAFETY-001","severity":"BLOCKING","status":"REPAIRED","repair":"All 56 fields now have exactly one type and exact_next_safe_action is pinned."}
+  ],
+  "challenge_count": 3,
+  "open_blocking": 0,
+  "open_non_blocking_required": 0,
+  "status": "ALL_CYCLE_01_CHALLENGES_REPAIRED_PENDING_REREVIEW"
+}

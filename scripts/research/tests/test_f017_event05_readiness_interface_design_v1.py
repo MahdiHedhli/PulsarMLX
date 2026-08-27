@@ -34,6 +34,13 @@ class Event05ReadinessInterfaceDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "field count"):
             design.validate_contract(mutated)
 
+    def test_every_field_requires_one_exact_type(self) -> None:
+        contract = design.load_contract()
+        mutated = copy.deepcopy(contract)
+        mutated["exact_types"]["exact_string_fields"].remove("exact_next_safe_action")
+        with self.assertRaisesRegex(ValueError, "type exhaustiveness"):
+            design.validate_contract(mutated)
+
     def test_mutation_floor_is_enforced(self) -> None:
         plan = json.loads(design.MUTATION_PLAN.read_text())
         plan["minimum_planned_cases"] = 199

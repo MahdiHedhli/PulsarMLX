@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-support-ledger/2.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-support-ledger-v1.json",
+  "supports": [
+    {"support_id":"SUP-READINESS-001","challenge_id":"CHG-READINESS-001","disposition":"REPAIR_IMPLEMENTED","evidence":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-versioning-decision-v1.json","docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"],"remaining_uncertainty":"NONE_AT_DESIGN_LEVEL"},
+    {"support_id":"SUP-READINESS-002","challenge_id":"CHG-READINESS-002","disposition":"REPAIR_IMPLEMENTED","evidence":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-versioning-decision-v1.json","docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"],"remaining_uncertainty":"IMPLEMENTATION_PENDING"},
+    {"support_id":"SUP-READINESS-003","challenge_id":"CHG-READINESS-003","disposition":"REPAIR_IMPLEMENTED","evidence":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json","scripts/research/tests/test_f017_event05_readiness_interface_design_v1.py"],"remaining_uncertainty":"NONE_AT_DESIGN_LEVEL"}
+  ],
+  "support_count": 3,
+  "answered_by_existing_evidence": 0,
+  "repairs": 3,
+  "conceded": 0,
+  "unresolved": 0
+}

@@ -44,6 +44,8 @@ def validate_contract(contract: dict) -> None:
         typed.extend(names)
     if len(typed) != len(set(typed)) or any(name not in fields for name in typed):
         raise ValueError("readiness type overlap")
+    if set(typed) != set(fields):
+        raise ValueError("readiness type exhaustiveness")
     predicates = contract.get("exact_final_predicates")
     if type(predicates) is not dict or any(key not in fields for key in predicates):
         raise ValueError("readiness predicate census")

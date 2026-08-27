@@ -62,6 +62,19 @@
     "exact_next_safe_action"
   ],
   "exact_types": {
+    "exact_string_fields": [
+      "schema",
+      "authority_scope",
+      "declaration",
+      "graph_verdict",
+      "active_corrected_oracle_generation",
+      "numerical_authority",
+      "legacy_result_equivalence",
+      "one_execution_three_outputs",
+      "gemini_verdict",
+      "opus_verdict",
+      "exact_next_safe_action"
+    ],
     "boolean_fields": [
       "numerical_formulas_changed",
       "numerical_operation_order_changed",
@@ -151,7 +164,8 @@
     "live_p1_attempt_2_authorization_created": false,
     "historical_master_ledger": 175,
     "ready_for_corrected_full_checkpoint_oracle_event_05_execution_go": true,
-    "ready_to_prepare_p1_attempt_2_authorization": false
+    "ready_to_prepare_p1_attempt_2_authorization": false,
+    "exact_next_safe_action": "REQUEST_A_FRESH_HUMAN_GO_FOR_EXACTLY_ONE_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_UNDER_RECONCILED_V11_READINESS_AUTHORITY"
   },
   "prepared_fixture_scope": "VALIDATION_ONLY_PREPARED",
   "alias_policy": {

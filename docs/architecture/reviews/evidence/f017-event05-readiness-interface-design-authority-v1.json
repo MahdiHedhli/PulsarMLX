@@ -54,7 +54,9 @@
   "historical_supersession": {
     "old_declaration": "APPEND_ONLY_HISTORICAL",
     "old_authorizer_git_object": "APPEND_ONLY_HISTORICAL",
-    "old_uppercase_interface_live_minting": "PROHIBITED"
+    "old_uppercase_interface_live_minting": "PROHIBITED",
+    "active_authorizer_path": "UPDATED_TO_CANONICAL_VALIDATOR",
+    "historical_blob_is_active_behavior": false
   },
   "numerical_drift_permitted": false,
   "result_authority_drift_permitted": false,

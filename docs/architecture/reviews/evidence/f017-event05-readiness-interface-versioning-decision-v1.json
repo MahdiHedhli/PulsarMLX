@@ -13,7 +13,8 @@
   "successor_scientific_access_revision": "V11_V4",
   "successor_measurement_revision": "V4",
   "successor_authority_manifest_revision": "V4",
-  "historical_authorizer_disposition": "EXACT_GIT_OBJECT_RETAINED_HISTORICAL_ONLY_FOR_EVENT05_LIVE_MINTING",
+  "historical_authorizer_disposition": "EXACT_GIT_OBJECT_RETAINED_AS_HISTORICAL_EVIDENCE_AND_PROHIBITED_FROM_FUTURE_EVENT05_LIVE_MINTING",
+  "active_authorizer_path_disposition": "SAME_PATH_UPDATED_TO_CALL_CANONICAL_VALIDATOR_ONLY_WITH_OLD_BLOB_BOUND_BY_HISTORICAL_TOMBSTONE",
   "historical_readiness_declaration_disposition": "APPEND_ONLY_SUPERSEDED_FOR_FUTURE_EVENT05_LIVE_MINTING",
   "active_corrected_oracle_generation_during_repair": "NONE",
   "result": "PASS"

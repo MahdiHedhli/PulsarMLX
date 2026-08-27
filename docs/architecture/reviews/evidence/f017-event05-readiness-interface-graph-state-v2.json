@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-graph-state/2.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-graph-state-v1.json",
+  "active_frontier": "R3_GEMINI_REREVIEW",
+  "nodes": {"R0":"PASS","R1":"PASS","R2":"PASS","R3":"RUNNING","R4":"PASS","R5":"PENDING","R6":"PENDING","R7":"PENDING","R8":"PENDING","R9":"PENDING","R10":"PENDING","R11":"PENDING","R12":"PENDING","R13":"PENDING","R14":"PENDING","R15":"PENDING"},
+  "gemini_design_cycles": 1,
+  "cycle_01_challenges": 3,
+  "cycle_01_repairs": 3,
+  "expired_event05_go_reused": false,
+  "event_05_executed": false,
+  "live_event_05_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "result": "DESIGN_REPAIRED_PENDING_GEMINI_CYCLE_02"
+}
