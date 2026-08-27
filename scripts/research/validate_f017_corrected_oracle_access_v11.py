@@ -25,6 +25,7 @@ from f017_event05_readiness_authority_v1 import validate_readiness_declaration
 
 ROOT = Path(__file__).resolve().parents[2]
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-artifact-dag-v11.json"
+PRODUCTION_CATALOG = ROOT / "docs/research/glm52/raw/f016-c01-catalog-0001.json"
 
 
 def _sha(path: Path) -> str:
@@ -71,12 +72,16 @@ def render_rehearsal_candidate(checkpoint_root: Path, shards: list[dict], catalo
 
 
 def _install(candidate_path: Path, installed_path: Path, receipt_path: Path,
-             *, authoritative: bool) -> dict:
+             *, authoritative: bool, expected_candidate_sha256: str | None = None) -> dict:
     report = _validate_document(candidate_path)
     candidate = report["candidate"]
     if authoritative != (set(candidate) == LIVE_KEYS):
         raise ValueError("V11 installation posture")
+    if expected_candidate_sha256 is not None and report["candidate_sha256"] != expected_candidate_sha256:
+        raise ValueError("V11 candidate changed before installation")
     raw = candidate_path.read_bytes()
+    if sha256_bytes(raw) != report["candidate_sha256"]:
+        raise ValueError("V11 candidate changed during installation validation")
     installed_path.parent.mkdir(parents=True, exist_ok=True)
     descriptor = os.open(installed_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
@@ -145,7 +150,16 @@ def validate_installed_operator_go(installed_path: Path, receipt_path: Path) -> 
 
 
 def install_operator_go_candidate(candidate_path: Path) -> dict:
-    candidate, _ = parse_candidate(candidate_path)
+    report = validate_live_candidate_for_install(candidate_path)
+    candidate = report["candidate"]
+    return _install(candidate_path, Path(candidate["canonical_authorization_path"]),
+                    Path(candidate["installation_receipt_path"]), authoritative=True,
+                    expected_candidate_sha256=report["candidate_sha256"])
+
+
+def validate_live_candidate_for_install(candidate_path: Path) -> dict:
+    """Rederive exact future-live bytes from bound authorities before install."""
+    candidate, digest = parse_candidate(candidate_path)
     if set(candidate) != LIVE_KEYS:
         raise ValueError("V11 live candidate")
     approval_path = Path(candidate["operator_approval_path"])
@@ -157,8 +171,14 @@ def install_operator_go_candidate(candidate_path: Path) -> dict:
             or approval.values["readiness_declaration_sha256"] != readiness.source_sha256
             or approval.values["authority_manifest_sha256"] != readiness.authority_manifest_sha256):
         raise ValueError("V11 live approval readback")
-    return _install(candidate_path, Path(candidate["canonical_authorization_path"]),
-                    Path(candidate["installation_receipt_path"]), authoritative=True)
+    context = _candidate_context(PRODUCTION_CATALOG)
+    rebuilt = build_operator_go_candidate(
+        approval, readiness, context, candidate["mint_memory_gate"],
+    )
+    raw = candidate_path.read_bytes()
+    if canonical_bytes(rebuilt) != raw or sha256_bytes(raw) != digest:
+        raise ValueError("V11 live candidate rederivation")
+    return _validate_document(candidate_path)
 
 
 def _candidate_context(catalog_path: Path) -> CandidateContext:
@@ -175,6 +195,9 @@ def _candidate_context(catalog_path: Path) -> CandidateContext:
 def _render_operator_candidate(approval_path: Path, readiness_path: Path,
                                catalog_path: Path, output: Path, *, posture: str,
                                memory_observation: dict) -> dict:
+    if (posture == "LIVE_OPERATOR_GO"
+            and catalog_path.resolve(strict=True) != PRODUCTION_CATALOG.resolve(strict=True)):
+        raise ValueError("V11 production tensor catalog")
     approval = validate_operator_approval(approval_path, posture)
     readiness = validate_readiness_declaration(readiness_path)
     candidate = build_operator_go_candidate(

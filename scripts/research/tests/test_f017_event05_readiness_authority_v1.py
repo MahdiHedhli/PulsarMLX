@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts/research"))
@@ -16,6 +18,7 @@ from f017_canonical_serialization_v10 import canonical_bytes
 import f017_event05_candidate_builder_v1 as builder
 import f017_event05_readiness_authority_v1 as readiness
 import generate_f017_event05_readiness_declaration_v1 as generator
+import validate_f017_corrected_oracle_access_v11 as authorizer
 
 
 def _sha(path: Path) -> str:
@@ -158,6 +161,69 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         self.assertNotIn("F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS", source)
         self.assertNotIn("READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_EXECUTION_GO", source)
         self.assertNotIn("ACTIVE_CORRECTED_ORACLE_GENERATION", source)
+
+    def test_live_install_rederives_candidate_and_rejects_tampering(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            readiness_path, _ = self._fixture(root)
+            validated_readiness = readiness.validate_readiness_declaration(
+                readiness_path, repository_root=root,
+            )
+            now = time.time_ns()
+            approval_value = {
+                "schema":"pulsarmlx.f017.corrected-oracle-event05-operator-approval/11.1.0",
+                "decision":"GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05", "live":True,
+                "approved_at_unix_ns":now - 1, "approval_expires_at_unix_ns":now + 10_000_000_000,
+                "active_generation":"V11", "authorization_id":"F017-LIVE-AUTHORITY-05-V11-1",
+                "package_attempt_id":"F017-LIVE-PACKAGE-05-V11-1",
+                "primary_event_id":"F017-LIVE-PRIMARY-05-V11-1",
+                "secondary_event_id":"F017-LIVE-SECONDARY-05-V11-1",
+                "checkpoint_root":str(root / "checkpoint"),
+                "canonical_authorization_path":str(root / "live-authorization.json"),
+                "installation_receipt_path":str(root / "installation-receipt.json"),
+                "emergency_evidence_root":str(root / "emergency"),
+                "terminal_fallback_evidence_root":str(root / "fallback"),
+                "authority_manifest_sha256":validated_readiness.authority_manifest_sha256,
+                "readiness_declaration_sha256":_sha(readiness_path),
+            }
+            approval_path = self._bank(root, "approval.json", approval_value)
+            approval = builder.validate_operator_approval(
+                approval_path, "LIVE_OPERATOR_GO", now_ns=now,
+            )
+            context = builder.CandidateContext(
+                causal_dag_sha256=_sha(authorizer.DAG),
+                numerical_contract_sha256=_sha(authorizer.NUMERICAL_V4),
+                primary_numerical_sha256=_sha(authorizer.PRIMARY_V3),
+                secondary_numerical_sha256=_sha(authorizer.SECONDARY_V3),
+                result_authority_sha256=_sha(authorizer.RESULT_AUTHORITY),
+                implementation_measurement_sha256=_sha(authorizer.IMPLEMENTATION_MEASUREMENT),
+                shards=tuple(authorizer.production_shards()),
+                tensor_catalog_path=str(authorizer.PRODUCTION_CATALOG),
+                tensor_catalog_sha256=_sha(authorizer.PRODUCTION_CATALOG),
+            )
+            memory = {
+                "result":"PASS", "enforced":True, "threshold_bytes":17179869184,
+                "sample_age_ns":0,
+                "observation":{"parser_version":"F017_VALIDATION_ONLY_V1", "page_size_bytes":16384,
+                    "pages_free":0, "pages_inactive":0, "pages_speculative":0, "pages_purgeable":0,
+                    "available_bytes":17179869184, "canonical_observation":"VALIDATION_ONLY_NO_LIVE_AUTHORITY",
+                    "stdout_sha256":"0"*64, "observed_at_unix_ns":1},
+            }
+            candidate = builder.build_operator_go_candidate(
+                approval, validated_readiness, context, memory,
+            )
+            self.assertFalse(candidate["live"])
+            candidate_path = self._bank(root, "candidate.json", candidate)
+            with (mock.patch.object(authorizer, "validate_readiness_declaration", return_value=validated_readiness),
+                  mock.patch.object(authorizer, "_candidate_context", return_value=context)):
+                report = authorizer.validate_live_candidate_for_install(candidate_path)
+                self.assertEqual(report["candidate_sha256"], _sha(candidate_path))
+                candidate["checkpoint_root"] = str(root / "forged-checkpoint")
+                candidate_path.write_bytes(canonical_bytes(candidate))
+                with self.assertRaisesRegex(ValueError, "candidate rederivation"):
+                    authorizer.validate_live_candidate_for_install(candidate_path)
+            self.assertFalse(Path(approval_value["canonical_authorization_path"]).exists())
+            self.assertFalse(Path(approval_value["installation_receipt_path"]).exists())
 
 
 if __name__ == "__main__":

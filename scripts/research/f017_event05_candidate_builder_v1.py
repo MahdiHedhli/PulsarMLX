@@ -105,6 +105,10 @@ def build_operator_go_candidate(approval: ValidatedApproval, readiness: Validate
         raise ValueError("Event 05 candidate context")
     if type(memory_observation) is not dict or memory_observation.get("result") != "PASS":
         raise ValueError("Event 05 memory observation")
+    # Candidate bytes are intentionally non-authoritative in both postures.
+    # Authority begins only after exact no-replace installation and its bound
+    # installation receipt; setting this field true would violate the V11
+    # parser's two-phase candidate contract.
     return {
         "schema":SCHEMA, "state":"OPERATOR_APPROVED_CANDIDATE", "live":False,
         "scope":"PRODUCTION_EVENT_05", "authority_generation":11,
