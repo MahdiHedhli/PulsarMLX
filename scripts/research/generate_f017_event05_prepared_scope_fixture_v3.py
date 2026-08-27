@@ -56,7 +56,7 @@ def main() -> int:
     )
     manifest = EVIDENCE / "f017-event05-readiness-interface-prepared-runtime-authority-manifest-v6.json"
     _write(manifest, {"schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["manifest_schema"],
-        "supersedes":"docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v4.json",
+        "supersedes":"docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v5.json",
         "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
         "live_authority_permitted":False, "implementation_head":measurement["implementation_head"],
         "implementation_tree":measurement["implementation_tree"],
@@ -80,21 +80,21 @@ def main() -> int:
         "opus_result_path":_relative(opus), "opus_result_sha256":_sha(opus),
         "defense_in_depth_findings":0,
     })
-    declaration = EVIDENCE / "f017-event05-readiness-interface-prepared-declaration-v5.json"
+    declaration = EVIDENCE / "f017-event05-readiness-interface-prepared-declaration-v6.json"
     _write(declaration, value)
-    approval = EVIDENCE / "f017-event05-readiness-interface-prepared-validation-only-approval-v5.json"
+    approval = EVIDENCE / "f017-event05-readiness-interface-prepared-validation-only-approval-v6.json"
     _write(approval, {"schema":"pulsarmlx.f017.event05-readiness-validation-only-approval/1.0.0",
         "decision":"VALIDATE_EVENT05_CANDIDATE_CONSTRUCTION_ONLY", "live":False,
         "approved_at_unix_ns":0, "approval_expires_at_unix_ns":0, "active_generation":"V11",
-        "authorization_id":"F017-V11-EVENT05-PREPARED-VALIDATION-AUTH-5",
-        "package_attempt_id":"F017-V11-EVENT05-PREPARED-VALIDATION-PACKAGE-5",
-        "primary_event_id":"F017-V11-EVENT05-PREPARED-VALIDATION-PRIMARY-5",
-        "secondary_event_id":"F017-V11-EVENT05-PREPARED-VALIDATION-SECONDARY-5",
-        "checkpoint_root":"/nonexistent/f017-event05-prepared-validation-checkpoint-v5",
-        "canonical_authorization_path":"/nonexistent/f017-event05-prepared-validation-authorization-v5.json",
-        "installation_receipt_path":"/nonexistent/f017-event05-prepared-validation-receipt-v5.json",
-        "emergency_evidence_root":"/nonexistent/f017-event05-prepared-validation-emergency-v5",
-        "terminal_fallback_evidence_root":"/nonexistent/f017-event05-prepared-validation-fallback-v5",
+        "authorization_id":"F017-V11-EVENT05-PREPARED-VALIDATION-AUTH-6",
+        "package_attempt_id":"F017-V11-EVENT05-PREPARED-VALIDATION-PACKAGE-6",
+        "primary_event_id":"F017-V11-EVENT05-PREPARED-VALIDATION-PRIMARY-6",
+        "secondary_event_id":"F017-V11-EVENT05-PREPARED-VALIDATION-SECONDARY-6",
+        "checkpoint_root":"/nonexistent/f017-event05-prepared-validation-checkpoint-v6",
+        "canonical_authorization_path":"/nonexistent/f017-event05-prepared-validation-authorization-v6.json",
+        "installation_receipt_path":"/nonexistent/f017-event05-prepared-validation-receipt-v6.json",
+        "emergency_evidence_root":"/nonexistent/f017-event05-prepared-validation-emergency-v6",
+        "terminal_fallback_evidence_root":"/nonexistent/f017-event05-prepared-validation-fallback-v6",
         "authority_manifest_sha256":_sha(manifest), "readiness_declaration_sha256":_sha(declaration)})
     memory = {"result":"PASS", "enforced":True, "threshold_bytes":17179869184, "sample_age_ns":0,
         "observation":{"parser_version":"F017_VALIDATION_ONLY_V1", "page_size_bytes":16384,
@@ -103,13 +103,13 @@ def main() -> int:
             "stdout_sha256":"0"*64, "observed_at_unix_ns":1}}
     candidate_shas = []
     primary = secondary = None
-    with tempfile.TemporaryDirectory(prefix="f017-event05-prepared-v5-") as raw:
+    with tempfile.TemporaryDirectory(prefix="f017-event05-prepared-v6-") as raw:
         for index in range(20):
             output = Path(raw) / f"candidate-{index:02d}.json"
             report = render_validation_only_operator_go_candidate(approval, declaration, CATALOG, output, memory)
             candidate_shas.append(report["candidate_sha256"])
             primary = report["primary"]["result"]; secondary = report["secondary"]["result"]
-    report_path = EVIDENCE / "f017-event05-readiness-interface-prepared-production-instantiability-v5.json"
+    report_path = EVIDENCE / "f017-event05-readiness-interface-prepared-production-instantiability-v6.json"
     _write(report_path, {"schema":"pulsarmlx.f017.event05-readiness-interface-prepared-production-instantiability/1.4.0",
         "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
         "declaration_path":_relative(declaration), "declaration_sha256":_sha(declaration),

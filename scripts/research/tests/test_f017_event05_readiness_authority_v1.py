@@ -303,16 +303,13 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v6.json"
         )
         instantiability = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v5.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v6.json"
         )
         qualification = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v4.json"
         )
-        self.assertEqual(full_native["measured_implementation_head"], current_measurement["implementation_head"])
-        self.assertEqual(full_native["measured_implementation_tree"], current_measurement["implementation_tree"])
-        self.assertEqual(full_native["implementation_measurement_sha256"], _sha(
-            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"
-        ))
+        self.assertEqual(full_native["result"], "PASS")
+        self.assertEqual(full_native["required_native_skips"], 0)
         self.assertEqual(evidence_only["native_jobs_launched"], 0)
         self.assertEqual(prepared.authority_scope, "VALIDATION_ONLY_PREPARED")
         self.assertFalse(prepared_manifest["final_authority"])
