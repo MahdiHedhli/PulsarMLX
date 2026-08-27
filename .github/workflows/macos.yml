@@ -388,6 +388,12 @@ jobs:
           .venv/bin/python scripts/research/validate_f017_v11_execution_authority_v1.py
           .venv/bin/python scripts/research/generate_f017_v11_measurement_v1.py --check
           .venv/bin/python scripts/research/generate_f017_v11_authorities_v1.py --check
+          .venv/bin/python scripts/research/generate_f017_event05_readiness_interface_manifest_v1.py --check
+          .venv/bin/python scripts/research/validate_f017_event05_readiness_interface_design_v1.py
+          .venv/bin/python scripts/research/qualify_f017_event05_readiness_interface_v1.py \
+            --output "$RUNNER_TEMP/f017-event05-readiness-interface-qualification.json"
+          cmp "$RUNNER_TEMP/f017-event05-readiness-interface-qualification.json" \
+            docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v1.json
           .venv/bin/python scripts/research/qualify_f017_event04_diagnostic_v11.py \
             --output "$RUNNER_TEMP/f017-event04-diagnostic-v11.json"
           cmp "$RUNNER_TEMP/f017-event04-diagnostic-v11.json" \

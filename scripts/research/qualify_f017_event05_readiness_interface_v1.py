@@ -205,8 +205,8 @@ def run_campaign() -> dict:
     unexpected = sum(not case["rejected"] for case in cases)
     return {"schema":"pulsarmlx.f017.event05-readiness-interface-qualification/1.0.0",
         "case_count":len(cases),"categories":{name:sum(c["category"]==name for c in cases) for name in {c["category"] for c in cases}},
-        "unexpected_passes":unexpected,"valid_candidate_sha256":candidate_sha,
-        "fresh_process_repetitions":20,"fresh_process_candidate_shas":sorted(set(child_hashes)),
+        "unexpected_passes":unexpected,"candidate_determinism":"PASS" if len(set(child_hashes))==1 else "FAIL",
+        "fresh_process_repetitions":20,"fresh_process_candidate_sha_count":len(set(child_hashes)),
         "mandatory_named_mutations":mandatory,
         "primary_validation":primary["result"],"secondary_validation":secondary["result"],
         "state_created":0,"live_authorization_installed":0,"checkpoint_opens":0,"checkpoint_reads":0,
