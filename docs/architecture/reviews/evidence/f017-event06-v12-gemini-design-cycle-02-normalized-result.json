@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event06-v12-gemini-design-challenge/1.0.0","cycle":2,"model":"gemini-3.1-pro-high","effort":"high","reviewed_head":"4121e842bc235ce9611283b1a5c6a18c0d41bd0c","rows":0,"blocking":0,"non_blocking_required":0,"unresolved":0,"workspace_visibility":"FAIL","hallucinated_findings":0,"review_contract_result":"FAIL_ENVIRONMENT","result":"REPAIR_REQUIRED"}

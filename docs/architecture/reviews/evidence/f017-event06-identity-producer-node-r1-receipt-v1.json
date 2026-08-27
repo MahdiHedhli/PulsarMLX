@@ -1,1 +1,0 @@
-{"schema":"pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0","node":"R1","authority_scopes":["SYNTHETIC","PRODUCTION"],"operation_classes":["CORRECTED_FULL_CHECKPOINT_ORACLE"],"generation":"V12","event_number_capability_branches":0,"field_count_candidate":22,"field_count_installed":24,"checkpoint_total_bytes":238458632928,"result":"PASS"}
