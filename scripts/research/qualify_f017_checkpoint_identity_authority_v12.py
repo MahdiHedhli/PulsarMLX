@@ -24,23 +24,29 @@ from validate_f017_corrected_oracle_access_v12 import (
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = "specs/017-rust-native-inference-runtime/contracts/f017-synthetic-checkpoint-identity-v12.json"
+MIXED_CONTRACT = "specs/017-rust-native-inference-runtime/contracts/f017-synthetic-checkpoint-identity-mixed-v12.json"
 PLAN_SHA = hashlib.sha256(b"F017-V12-EVENT-IDENTITY-PLAN-QUALIFICATION").hexdigest()
 
 
-def _make_root(base: Path, suffix: str) -> Path:
+def _make_root(base: Path, suffix: str, *, mixed: bool = False) -> Path:
     root = base / f"root-{suffix}"
     root.mkdir()
     for ordinal in range(1, 7):
-        (root / f"synthetic-v12-shard-{ordinal}.bin").touch()
+        path = root / f"synthetic-v12-shard-{ordinal}.bin"
+        if mixed:
+            path.write_bytes(bytes([ordinal]) * ordinal)
+        else:
+            path.touch()
     return root
 
 
-def _package(base: Path, suffix: str) -> tuple[Path, Path, Path, dict]:
-    root = _make_root(base, suffix)
+def _package(base: Path, suffix: str, *, mixed: bool = False) -> tuple[Path, Path, Path, dict]:
+    root = _make_root(base, suffix, mixed=mixed)
     candidate = build_identity_candidate(
         authority_scope="SYNTHETIC", authorization_id=f"F017-V12-QUAL-AUTH-{suffix}",
         package_attempt_id=f"F017-V12-QUAL-PACKAGE-{suffix}", checkpoint_root=root,
-        checkpoint_identity_contract_path=CONTRACT, event_identity_plan_sha256=PLAN_SHA,
+        checkpoint_identity_contract_path=MIXED_CONTRACT if mixed else CONTRACT,
+        event_identity_plan_sha256=PLAN_SHA,
     )
     directory = base / f"authority-{suffix}"
     directory.mkdir()
@@ -52,8 +58,8 @@ def _package(base: Path, suffix: str) -> tuple[Path, Path, Path, dict]:
     return candidate_path, installed_path, receipt_path, candidate
 
 
-def _success_stage(base: Path, suffix: str) -> dict:
-    candidate_path, installed_path, receipt_path, candidate = _package(base, suffix)
+def _success_stage(base: Path, suffix: str, *, mixed: bool = False) -> dict:
+    candidate_path, installed_path, receipt_path, candidate = _package(base, suffix, mixed=mixed)
     gate = validate_package_start(candidate_path, installed_path, receipt_path)
     leases, report = run_identity_stage(
         gate["installed_authority"], package_attempt_id=candidate["package_attempt_id"],
@@ -132,7 +138,7 @@ def qualify() -> dict:
         stages = [_success_stage(base, f"S{i:02d}") for i in range(30)]
         event_variations = [_success_stage(base, f"E{i:02d}") for i in range(20)]
         minimal_packages = [_success_stage(base, f"M{i:02d}") for i in range(20)]
-        mixed_packages = [_success_stage(base, f"X{i:02d}") for i in range(20)]
+        mixed_packages = [_success_stage(base, f"X{i:02d}", mixed=True) for i in range(20)]
         reference_candidate = stages[0]["candidate"]
         rejected, unexpected_mutations = _mutation_cases(reference_candidate)
         filesystem_realized, filesystem_unexpected = _filesystem_faults(base)
