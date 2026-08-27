@@ -75,9 +75,27 @@ def test_event06_readiness_value_is_exact_and_typed() -> None:
 
 def test_identity_producer_has_no_caller_callback_surface() -> None:
     parameters = inspect.signature(produce).parameters
-    assert "progress" not in parameters
-    assert "callback" not in parameters
-    assert validate_capability()["caller_callback_parameters"] == 0
+    assert tuple(parameters) == (
+        "authority", "package_attempt_id", "package_durable_start", "evidence_directory",
+    )
+    report = validate_capability()
+    assert report["caller_callback_parameters"] == 0
+    assert report["producer_signature_drift"] == 0
+
+
+@pytest.mark.parametrize("source", [
+    "def produce(authority, *, package_attempt_id, package_durable_start, evidence_directory=None, on_progress=None):\n    pass\n",
+    "def produce(authority, *callbacks, package_attempt_id, package_durable_start, evidence_directory=None):\n    pass\n",
+    "def produce(authority, *, package_attempt_id, package_durable_start, evidence_directory=None, **kwargs):\n    pass\n",
+    "def produce(authority, cb, *, package_attempt_id, package_durable_start, evidence_directory=None):\n    pass\n",
+])
+def test_renamed_or_variadic_callback_capability_fails_closed(tmp_path: Path, source: str) -> None:
+    drift = tmp_path / "producer.py"
+    drift.write_text(source, encoding="utf-8")
+    with mock.patch("f017_checkpoint_identity_capability_v12.PRODUCER", drift):
+        with pytest.raises(IdentityAuthorityError) as raised:
+            validate_capability()
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_CAPABILITY_DRIFT"
 
 
 @pytest.mark.parametrize("mutation", [
