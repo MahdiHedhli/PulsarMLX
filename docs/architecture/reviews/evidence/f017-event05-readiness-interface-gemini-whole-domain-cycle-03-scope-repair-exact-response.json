@@ -1,0 +1,30 @@
+At HEAD (`4beb2bad13d0fc80aff71a8c6df7601fef950097`), I have completed the cycle-03 scope-repair confirmation in the detached checkout using committed bytes only. 
+
+All 18 SHAs listed in `docs/architecture/reviews/evidence/f017-event05-readiness-interface-scope-repair-review-packet-v1.json` were verified to perfectly match the committed bytes on disk.
+
+### Repair Confirmation
+
+**F-D (Scope Rupture):** Successfully repaired. The `f017_event05_readiness_authority_v1.py` validator now abandons the unbounded JSON parse in favor of `read_artifact(CONTRACT)` and enforces strictly separated `VALIDATION_ONLY_PREPARED` and `FINAL_EVENT05_EXECUTION_READINESS` predicate sets. At the shared candidate builder boundary, `build_operator_go_candidate` has been upgraded to explicitly raise a `ValueError` if a `LIVE_OPERATOR_GO` approval is provided without `FINAL_EVENT05_EXECUTION_READINESS`. The live authorizer `validate_f017_corrected_oracle_access_v11.py` correctly demands the `FINAL` scope before yielding authority. 
+
+**F-E (Missing Evidence Generation and Gating):** Partially repaired. The `qualify_f017_event05_readiness_interface_v1.py` qualifier now dynamically generates all 231 cases—including the five critical production-boundary cases (`BOUNDARY-001` through `BOUNDARY-005`)—and CI correctly gates this against `qualification-v3.json`. `FULL_NATIVE` run `33044253965` (v6) is correctly bound with zero required native skips, zero numerical/result drift, and zero checkpoint access. However, a residual defect from F-E remains: the repository test `test_repository_bound_artifacts_are_canonical_and_tree_exact` still fails to verify the actually bound artifacts (it is testing `v4`/`v6` rather than `v6`/`v7`) and it continues to check `git cat-file -t` rather than enforcing strict tree↔head exactness.
+
+### Readiness-Critical Claims
+
+| Challenge ID | Claim ID | Severity | Attack | Observed Evidence | Status | Required Repair |
+|---|---|---|---|---|---|---|
+| - | C-SCHEMA-001 | - | Exact schema verification | All 56 fields exist, unique, lowercase. | ACCEPT | - |
+| - | C-SCHEMA-002 | - | Predicate separation check | 35 predicates and 21 free-value fields partitioned exactly without overlap. | ACCEPT | - |
+| - | C-VALIDATOR-001 | - | Bound decode and frozen contract enforcement (F-D repair) | Validator uses `read_artifact(CONTRACT)` and enforces separated `VALIDATION_ONLY_PREPARED` and `FINAL_EVENT05_EXECUTION_READINESS` predicate sets exactly. | ACCEPT | - |
+| - | C-AUTHORIZER-001 | - | V11 logic enforcement | Authorizer properly enforces `FINAL_EVENT05_EXECUTION_READINESS` on `LIVE_OPERATOR_GO`. | ACCEPT | - |
+| - | C-INSTANT-001 | - | Shared candidate builder side-effects | Side-effects zero, identical construction logic confirmed. | ACCEPT | - |
+| - | C-INSTANT-002 | - | F-A repair confirmation | Canonical closure complete, noncanonical predecessors rejected. | ACCEPT | - |
+| **CHAL-03-BIND** | C-BIND-001 | **BLOCKING** | Verified closure bindings across all readiness artifacts | The review packet binds `full-native-ci-v6.json`, but `prepared-declaration-v4.json` and `prepared-manifest-v4.json` hardcode `full-native-ci-v5.json` and its run ID (`33043376768`). The closure is ruptured. | **REJECT** | Align the declaration and manifest to bind exactly the `full-native-ci-v6.json` artifact (run `33044253965`) present in the review packet. |
+| - | C-SAFETY-001 | - | Safety predicate enforcement | Alias and unknown keys rejected, inert GO template. | ACCEPT | - |
+| - | C-LEGACY-001 | - | Historical equivalence | E0 reproducible from committed bytes. | ACCEPT | - |
+| **CHAL-03-CI** | C-CI-001 | **NON_BLOCKING_REQUIRED** | Verifying F-E repair (qualifier CI and bound artifact tests) | Qualifier generates 231 cases and CI compares to v3. However, `test_f017_event05_readiness_authority_v1.py` still asserts against `full-native-ci-v4.json` and `measurement-v6.json` rather than the actually bound v6/v7 artifacts, and still relies on `git cat-file -t == tree` instead of tree↔head exactness. | **REJECT** | Update `test_repository_bound_artifacts_are_canonical_and_tree_exact` to read the actually bound `full-native-ci-v6.json` and `measurement-v7.json`, and assert tree↔head exactness directly. |
+| - | C-REVIEW-001 | - | F-C and F-D independent review repairs | F-C retraction is correct and F-D is successfully repaired (now enforced prior to GO). | ACCEPT | - |
+| - | C-GO-001 | - | Cross-posture scope assertion (F-D repair) | `build_operator_go_candidate` explicit rejection confirmed for `LIVE_OPERATOR_GO` lacking final readiness. | ACCEPT | - |
+
+**Counts** — open blocking: 1; open non-blocking-required: 1; defense-in-depth: 2; unresolved: 0.
+
+UNRESOLVED_MATERIAL_CHALLENGES
