@@ -18,6 +18,7 @@ def validate_capability() -> dict:
         imports: set[str] = set()
         event_branches = 0
         dynamic_callbacks = 0
+        caller_callback_parameters = 0
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 imports.update(alias.name.split(".")[0] for alias in node.names)
@@ -28,13 +29,18 @@ def validate_capability() -> dict:
                 event_branches += int(bool(__import__("re").search(r"EVENT[_-]?0?[0-9]", text)))
             elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"eval", "exec", "getattr", "setattr"}:
                 dynamic_callbacks += 1
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                names = {argument.arg for argument in (*node.args.posonlyargs, *node.args.args,
+                                                        *node.args.kwonlyargs)}
+                caller_callback_parameters += len(names & {"callback", "progress"})
         prohibited = sorted(imports & PROHIBITED_IMPORTS)
-        if prohibited or event_branches or dynamic_callbacks:
+        if prohibited or event_branches or dynamic_callbacks or caller_callback_parameters:
             raise failure("F017_V12_IDENTITY_CAPABILITY_DRIFT", "V12 identity producer capability")
         return {
             "result": "PASS", "prohibited_imports": prohibited,
             "event_number_capability_branches": event_branches,
             "reflection_or_dynamic_callbacks": dynamic_callbacks,
+            "caller_callback_parameters": caller_callback_parameters,
             "checkpoint_access_during_validation": 0,
         }
     except Exception as exc:

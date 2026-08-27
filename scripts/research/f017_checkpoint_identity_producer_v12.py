@@ -200,8 +200,8 @@ def validate_banked_identity_evidence(directory: Path, report: dict | None = Non
 
 
 def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
-            package_durable_start: bool, evidence_directory: Path | None = None,
-            progress=None) -> tuple[LeaseSet, dict]:
+            package_durable_start: bool,
+            evidence_directory: Path | None = None) -> tuple[LeaseSet, dict]:
     if package_durable_start is not True:
         raise failure("F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT", "package durable start required")
     value, contract = _runtime_revalidate(authority, package_attempt_id)
@@ -241,8 +241,6 @@ def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
                 digest, metadata = _hash_descriptor(descriptor, shard["size_bytes"], require_single_link=synthetic)
                 if digest != shard["sha256"]:
                     raise failure("F017_V12_IDENTITY_SHARD_HASH_MISMATCH", f"shard {ordinal}", checkpoint_access=opens)
-                if progress is not None:
-                    progress("SHARD_RECEIPT", ordinal, digest)
                 if shard["role"] == "IDENTITY_ONLY":
                     identity_only_digest = digest
                 else:

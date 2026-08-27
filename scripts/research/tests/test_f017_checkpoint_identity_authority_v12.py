@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import inspect
 from pathlib import Path
 from unittest import mock
 
@@ -11,6 +12,7 @@ import pytest
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import validate_candidate_bytes
 from f017_checkpoint_identity_capability_v12 import validate_capability
+from f017_checkpoint_identity_producer_v12 import produce
 from f017_checkpoint_identity_lifecycle_v12 import IdentityAuthorityError
 from f017_corrected_oracle_authorization_v12 import build_identity_candidate
 from f017_event06_readiness_authority_v1 import validate_event06_readiness_value
@@ -69,6 +71,13 @@ def test_candidate_is_strict_and_immutable(tmp_path: Path) -> None:
 def test_event06_readiness_value_is_exact_and_typed() -> None:
     value = readiness_value()
     assert validate_event06_readiness_value(value) == value
+
+
+def test_identity_producer_has_no_caller_callback_surface() -> None:
+    parameters = inspect.signature(produce).parameters
+    assert "progress" not in parameters
+    assert "callback" not in parameters
+    assert validate_capability()["caller_callback_parameters"] == 0
 
 
 @pytest.mark.parametrize("mutation", [
