@@ -15,8 +15,8 @@ from validate_f017_corrected_oracle_access_v11 import render_validation_only_ope
 ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE = ROOT / "docs/architecture/reviews/evidence"
 CONTRACTS = ROOT / "specs/017-rust-native-inference-runtime/contracts"
-MEASUREMENT = EVIDENCE / "f017-v11-result-envelope-implementation-measurement-v7.json"
-SCIENTIFIC = CONTRACTS / "f017-corrected-full-checkpoint-oracle-scientific-access-v11-v7.json"
+MEASUREMENT = EVIDENCE / "f017-v11-result-envelope-implementation-measurement-v8.json"
+SCIENTIFIC = CONTRACTS / "f017-corrected-full-checkpoint-oracle-scientific-access-v11-v8.json"
 NUMERICAL = CONTRACTS / "f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json"
 RESULT = CONTRACTS / "f017-corrected-oracle-result-authority-v11-v2.json"
 FULL_NATIVE = EVIDENCE / "f017-event05-readiness-interface-full-native-ci-v6.json"
@@ -54,7 +54,7 @@ def main() -> int:
         ("gemini_readiness_interface_challenge", gemini),
         ("opus_readiness_interface_implementation_arbiter", opus),
     )
-    manifest = EVIDENCE / "f017-event05-readiness-interface-prepared-runtime-authority-manifest-v5.json"
+    manifest = EVIDENCE / "f017-event05-readiness-interface-prepared-runtime-authority-manifest-v6.json"
     _write(manifest, {"schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["manifest_schema"],
         "supersedes":"docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v4.json",
         "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,

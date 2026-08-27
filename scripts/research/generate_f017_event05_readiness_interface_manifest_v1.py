@@ -13,8 +13,8 @@ OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-inter
 ARTIFACTS = (
     ("terminal_pre_mint_failure", "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-authority-manifest-v2.json"),
     ("accepted_predecessor_authority_manifest", "docs/architecture/reviews/evidence/f017-event05-result-envelope-authority-manifest-v3.json"),
-    ("accepted_implementation_measurement", "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v4.json"),
-    ("accepted_scientific_access", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v4.json"),
+    ("accepted_implementation_measurement", "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"),
+    ("accepted_scientific_access", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v8.json"),
     ("accepted_numerical_contract_v4", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json"),
     ("accepted_result_authority_v11", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json"),
     ("accepted_full_native_ci", "docs/architecture/reviews/evidence/f017-v11-event05-full-native-ci-v2.json"),

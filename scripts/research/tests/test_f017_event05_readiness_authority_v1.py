@@ -287,7 +287,7 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
 
     def test_repository_bound_artifacts_are_canonical_and_tree_exact(self) -> None:
         current_measurement = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v7.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"
         )
         full_native = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v6.json"
@@ -300,7 +300,7 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
             prepared_declaration, expected_scope="VALIDATION_ONLY_PREPARED",
         )
         prepared_manifest = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v5.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v6.json"
         )
         instantiability = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v5.json"
@@ -311,7 +311,7 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         self.assertEqual(full_native["measured_implementation_head"], current_measurement["implementation_head"])
         self.assertEqual(full_native["measured_implementation_tree"], current_measurement["implementation_tree"])
         self.assertEqual(full_native["implementation_measurement_sha256"], _sha(
-            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v7.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"
         ))
         self.assertEqual(evidence_only["native_jobs_launched"], 0)
         self.assertEqual(prepared.authority_scope, "VALIDATION_ONLY_PREPARED")

@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v7.json"
-OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v7.json"
+MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"
+OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v8.json"
 
 
 def _sha(path: Path) -> str:
@@ -30,11 +30,11 @@ def generate() -> dict:
     if len(implementation) != measurement["measured_path_count"]:
         raise ValueError("V11 scientific implementation role collision")
     return {
-        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.3.0",
-        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v6.json",
-        "status":"V11_READINESS_SCOPE_SEPARATED_AND_INSTALL_REDERIVED_NO_EVENT05_AUTHORITY",
+        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.4.0",
+        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v7.json",
+        "status":"V11_FINAL_REVIEW_PROVENANCE_BOUND_NO_EVENT05_AUTHORITY",
         "active_generation":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json"),
-        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v7.json"),
+        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"),
         "implementation_head":measurement["implementation_head"],
         "implementation_tree":measurement["implementation_tree"],
         "implementation":implementation,
@@ -43,7 +43,7 @@ def generate() -> dict:
         "binary_result_envelope":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11-v2.json"),
         "result_authority":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json"),
         "result_artifact_dag":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-artifact-dag-v11.json"),
-        "readiness_consumer_interface":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v2.json"),
+        "readiness_consumer_interface":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v3.json"),
         "approval_interface":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json"),
         "production_tensor_plan":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json"),
         "checkpoint_metadata":_binding("docs/validation/glm52-checkpoint.json"),
