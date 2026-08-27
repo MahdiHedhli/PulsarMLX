@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v5.json"
-OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v5.json"
+MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"
+OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v6.json"
 
 
 def _sha(path: Path) -> str:
@@ -31,10 +31,10 @@ def generate() -> dict:
         raise ValueError("V11 scientific implementation role collision")
     return {
         "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.2.0",
-        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v4.json",
+        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v5.json",
         "status":"V11_READINESS_INTERFACE_RECONCILED_WITH_INSTALL_REDERIVATION_NO_EVENT05_AUTHORITY",
         "active_generation":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json"),
-        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v5.json"),
+        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"),
         "implementation_head":measurement["implementation_head"],
         "implementation_tree":measurement["implementation_tree"],
         "implementation":implementation,

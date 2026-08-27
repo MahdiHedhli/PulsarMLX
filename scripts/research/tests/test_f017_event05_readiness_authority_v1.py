@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts/research"))
 
 from f017_canonical_serialization_v10 import canonical_bytes
+from f017_bounded_artifact_decode_v1 import read_artifact
 
 import f017_event05_candidate_builder_v1 as builder
 import f017_event05_readiness_authority_v1 as readiness
@@ -224,6 +225,30 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
                     authorizer.validate_live_candidate_for_install(candidate_path)
             self.assertFalse(Path(approval_value["canonical_authorization_path"]).exists())
             self.assertFalse(Path(approval_value["installation_receipt_path"]).exists())
+
+    def test_repository_bound_artifacts_are_canonical_and_tree_exact(self) -> None:
+        measurement = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"
+        )
+        full_native = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v3.json"
+        )
+        evidence_only = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-evidence-only-ci-v2.json"
+        )
+        gemini = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-whole-domain-cycle-03-normalized-result-v2.json"
+        )
+        self.assertEqual(full_native["measured_implementation_head"], measurement["implementation_head"])
+        self.assertEqual(full_native["measured_implementation_tree"], measurement["implementation_tree"])
+        self.assertEqual(evidence_only["native_jobs_launched"], 0)
+        self.assertEqual(gemini["verdict"], "NO_UNRESOLVED_MATERIAL_CHALLENGE")
+        object_type = subprocess.check_output(
+            ["git", "cat-file", "-t", measurement["implementation_tree"]],
+            cwd=ROOT,
+            text=True,
+        ).strip()
+        self.assertEqual(object_type, "tree")
 
 
 if __name__ == "__main__":
