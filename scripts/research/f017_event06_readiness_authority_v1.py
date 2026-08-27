@@ -97,6 +97,14 @@ def validate_event06_readiness_declaration(path: Path, *, repository_root: Path 
             or manifest.get("implementation_head") != value["implementation_head"]
             or manifest.get("implementation_tree") != value["implementation_tree"]):
         raise ValueError("Event 06 readiness implementation binding")
+    bindings = manifest.get("bindings")
+    if type(bindings) is not dict or manifest.get("binding_count") != len(bindings):
+        raise ValueError("Event 06 readiness authority manifest")
+    for path_field, sha_field in pairs:
+        if path_field == "authority_manifest_path":
+            continue
+        if bindings.get(value[path_field]) != value[sha_field]:
+            raise ValueError(f"Event 06 readiness manifest role: {path_field}")
     if subprocess.check_output(["git", "rev-parse", f"{value['implementation_head']}^{{tree}}"],
                                cwd=repository_root, text=True).strip() != value["implementation_tree"]:
         raise ValueError("Event 06 readiness Git tree")
@@ -105,9 +113,19 @@ def validate_event06_readiness_declaration(path: Path, *, repository_root: Path 
             or full_native.get("required_native_skips") != value["required_native_skips"]
             or full_native.get("result") != "PASS"):
         raise ValueError("Event 06 readiness FULL_NATIVE binding")
+    for name in ("synthetic_qualification_path", "failure_qualification_path", "no_access_rehearsal_path"):
+        evidence = read_artifact(resolved[name])
+        if evidence.get("result") != "PASS" or evidence.get("event_06_executed") is not False:
+            raise ValueError(f"Event 06 readiness qualification: {name}")
     gemini = read_artifact(resolved["gemini_result_path"])
     opus = read_artifact(resolved["opus_result_path"])
     if (gemini.get("verdict") != value["gemini_verdict"]
-            or opus.get("global_verdict") != value["opus_verdict"]):
+            or opus.get("global_verdict") != value["opus_verdict"]
+            or gemini.get("blocking_findings") != 0
+            or gemini.get("non_blocking_required_findings") != 0
+            or gemini.get("unresolved_claims") != 0
+            or opus.get("blocking_findings") != 0
+            or opus.get("non_blocking_required_findings") != 0
+            or opus.get("unresolved_claims") != 0):
         raise ValueError("Event 06 readiness reviewer binding")
     return ValidatedEvent06Readiness(MappingProxyType(value), path.resolve(strict=True), _sha(path))
