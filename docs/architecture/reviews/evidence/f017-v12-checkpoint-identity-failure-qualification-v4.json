@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.v12-checkpoint-identity-failure-qualification/1.0.3",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-failure-qualification-v3.json",
+  "implementation_head": "45647e1aadbe646e8d274ed2af8bc08ee2c2ed8b",
+  "implementation_tree": "3229479cfe76d1343dd526fe9f099ab47fb94d16",
+  "modeled_outcomes": 12,
+  "modeled_outcomes_realized": 12,
+  "live_capability_drift_raise_site": "PASS",
+  "live_producer_measurement_drift_raise_site": "PASS",
+  "modeled_failure_transition_census": "PASS",
+  "runtime_failure_executions": 300,
+  "install_boundary_failures": 20,
+  "filesystem_faults": 54,
+  "evidence_and_close_faults": 17,
+  "live_drift_faults": 2,
+  "total_substantive_failures": 393,
+  "generic_fallback_for_modeled_failures": false,
+  "unexpected_passes": 0,
+  "original_checkpoint_access": 0,
+  "result": "PASS"
+}

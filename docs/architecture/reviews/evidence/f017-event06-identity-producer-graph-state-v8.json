@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-graph-state/8.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-graph-state-v7.json",
+  "current_node": "R13",
+  "nodes": {
+    "R0": "PASS", "R1": "PASS", "R2": "PASS", "R3": "PASS", "R4": "PASS",
+    "R5": "PASS", "R6": "PASS", "R7": "PASS", "R8": "PASS", "R9": "PASS",
+    "R10": "PASS", "R11": "PASS", "R12": "PASS", "R13": "RUNNING",
+    "R14": "PENDING", "R15": "PENDING", "R16": "PENDING", "R17": "PENDING",
+    "R18": "PENDING", "R19": "PENDING"
+  },
+  "repair_cycle": 1,
+  "implementation_head": "45647e1aadbe646e8d274ed2af8bc08ee2c2ed8b",
+  "full_native_run": 33114537825,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "WHOLE_DOMAIN_REREVIEW_RUNNING"
+}

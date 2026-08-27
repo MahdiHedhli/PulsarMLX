@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.v12-checkpoint-identity-local-regression/1.0.4",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-local-regression-v4.json",
+  "implementation_head": "45647e1aadbe646e8d274ed2af8bc08ee2c2ed8b",
+  "implementation_tree": "3229479cfe76d1343dd526fe9f099ab47fb94d16",
+  "targeted_v12_tests_passed": 18,
+  "full_research_tests_passed": 830,
+  "full_research_subtests_passed": 555,
+  "install_substitution_regression": "PASS",
+  "capability_drift_regression": "PASS",
+  "producer_measurement_drift_regression": "PASS",
+  "generator_check": "PASS",
+  "original_checkpoint_access": 0,
+  "result": "PASS"
+}
