@@ -10,5 +10,5 @@
 - [x] N3: obtain adversarial design acceptance.
 - [x] N4: implement bounded Rust repacker and independent verifier.
 - [x] N5A/N5B: verify representative data and benchmark read patterns.
-- [ ] N6: obtain adversarial final acceptance.
-- [ ] N7: accepted evidence closeout.
+- [x] N6: obtain adversarial final acceptance.
+- [x] N7: accepted evidence closeout.

@@ -25,6 +25,8 @@
     "object_count": 19532
   },
   "host": "ColPanicM2",
+  "accepted_implementation_head": "4e9468d8c0d049e9ea6a70cbd056967187e62d1b",
+  "admission_v3_sha256": "22d658e67286aca79f9fdd76e44de6d93b82f79e32f29121b71ce32cedd82ec7",
   "independent_verification": {
     "negative_cases_rejected": 11,
     "object_count": 269,
@@ -39,5 +41,5 @@
     "semantic samples are mapping sanity, not decoder qualification"
   ],
   "schema": "pulsarmlx.r001.foundation-public.v1",
-  "status": "awaiting_final_adversarial_acceptance"
+  "status": "accepted"
 }
