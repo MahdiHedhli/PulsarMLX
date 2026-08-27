@@ -647,6 +647,30 @@ fn validate_partial_nonce(payload_name: &str, prefix: &str, nonce: &str) -> Resu
     Ok(())
 }
 
+fn prepare_abandoned_root(staging_root: &Path) -> Result<PathBuf> {
+    fs::create_dir_all(staging_root)?;
+    let staging_metadata = fs::symlink_metadata(staging_root)?;
+    if staging_metadata.file_type().is_symlink() || !staging_metadata.is_dir() {
+        return Err(err("staging root must be a real directory"));
+    }
+    let canonical_staging = fs::canonicalize(staging_root)?;
+    let abandoned = staging_root.join("abandoned");
+    match fs::symlink_metadata(&abandoned) {
+        Ok(metadata) => {
+            if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                return Err(err("abandoned root must be a real directory"));
+            }
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => fs::create_dir(&abandoned)?,
+        Err(error) => return Err(error.into()),
+    }
+    let canonical_abandoned = fs::canonicalize(&abandoned)?;
+    if canonical_abandoned.parent() != Some(canonical_staging.as_path()) {
+        return Err(err("abandoned root escaped canonical staging root"));
+    }
+    Ok(canonical_abandoned)
+}
+
 fn exclusive_publish(temp: &Path, final_path: &Path) -> Result<()> {
     if final_path.exists() {
         return Err(err(format!("refuse existing final {}", final_path.display())));
@@ -738,9 +762,7 @@ fn quarantine_partials(
     }
     let nonce = claim["lease_nonce_hex"].as_str().ok_or_else(|| err("partial nonce missing"))?;
     validate_partial_nonce(payload_name, &prefix, nonce)?;
-    let abandoned_root = cfg.staging_root.join("abandoned");
-    fs::create_dir_all(&abandoned_root)?;
-    let abandoned_root = fs::canonicalize(&abandoned_root)?;
+    let abandoned_root = prepare_abandoned_root(&cfg.staging_root)?;
     let abandoned = abandoned_root.join(nonce);
     if abandoned.parent() != Some(abandoned_root.as_path()) {
         return Err(err("abandoned partial escaped staging root"));
@@ -1396,5 +1418,21 @@ mod tests {
         assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "../escape").is_err());
         assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "0123456789ABCDEF0123456789ABCDEF").is_err());
         assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "fedcba9876543210fedcba9876543210").is_err());
+    }
+
+
+    #[test]
+    fn abandoned_root_symlink_is_rejected() {
+        use std::os::unix::fs::symlink;
+        let root = std::env::temp_dir().join(format!("r001-abandoned-root-test-{}", nonce_hex().unwrap()));
+        let staging = root.join("staging");
+        let outside = root.join("outside");
+        fs::create_dir_all(&staging).unwrap();
+        fs::create_dir(&outside).unwrap();
+        symlink(&outside, staging.join("abandoned")).unwrap();
+        assert!(prepare_abandoned_root(&staging).is_err());
+        assert!(outside.read_dir().unwrap().next().is_none());
+        fs::remove_file(staging.join("abandoned")).unwrap();
+        fs::remove_dir_all(root).unwrap();
     }
 }

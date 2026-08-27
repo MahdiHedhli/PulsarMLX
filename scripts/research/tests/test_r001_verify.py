@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib,json,sys,tempfile,unittest
+import hashlib,json,os,sys,tempfile,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from r001_verify import CHECKPOINT,EXPECTED_SHARDS,canonical,domain_hash,load_admission
+from r001_verify import CHECKPOINT,EXPECTED_SHARDS,Reader,canonical,descriptor_stat,domain_hash,load_admission
 
 class R001VerifierContract(unittest.TestCase):
     def test_canonical_known_answer(self):
@@ -26,5 +26,14 @@ class R001VerifierContract(unittest.TestCase):
     def test_authoritative_set_hash_definition(self):
         material="".join(f"{sha}{size}" for _,size,sha in EXPECTED_SHARDS).encode("ascii")
         self.assertEqual(hashlib.sha256(material).hexdigest(),CHECKPOINT)
+    def test_replaced_same_size_source_descriptor_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);source=root/"source.gguf";replacement=root/"replacement.gguf"
+            source.write_bytes(b"GGUF");replacement.write_bytes(b"GGUF")
+            fd=os.open(source,os.O_RDONLY)
+            try: admitted=descriptor_stat(fd)
+            finally: os.close(fd)
+            os.replace(replacement,source)
+            with self.assertRaises(ValueError): Reader(source,admitted)
 
 if __name__=="__main__":unittest.main()

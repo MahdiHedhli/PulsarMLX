@@ -81,15 +81,25 @@ def exact_read(f: BinaryIO, n: int) -> bytes:
     return b
 
 
+def descriptor_stat(fd:int)->tuple[int,int,int,int]:
+    st=os.fstat(fd)
+    return st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns
+
+
 class Reader:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, admitted_stat:tuple[int,int,int,int]):
         st = path.lstat()
         if not path.is_file() or path.is_symlink() or st.st_nlink != 1:
             raise ValueError(f"source is not an admitted regular file: {path.name}")
         flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
         self.fd = os.open(path, flags)
+        self.admitted_stat=admitted_stat
+        if descriptor_stat(self.fd)!=self.admitted_stat:
+            os.close(self.fd);raise ValueError(f"source descriptor identity mismatch: {path.name}")
         self.f = os.fdopen(self.fd, "rb", buffering=0)
         self.path = path
+    def assert_stat(self):
+        if descriptor_stat(self.fd)!=self.admitted_stat: raise ValueError(f"source descriptor changed: {self.path.name}")
     def close(self): self.f.close()
     def read(self, n: int) -> bytes: return exact_read(self.f, n)
     def u32(self) -> int: return struct.unpack("<I", self.read(4))[0]
@@ -118,7 +128,7 @@ class Reader:
 class Tensor:
     name: str; dims: tuple[int, ...]; type_id: int; type_name: str
     block_elements: int; block_bytes: int; row_bytes: int; byte_size: int
-    shard: str; shard_ordinal: int; shard_sha256: str; offset: int; end: int
+    shard: str; shard_ordinal: int; shard_sha256: str; source_stat: tuple[int,int,int,int]; offset: int; end: int
 
 
 @dataclass(frozen=True)
@@ -132,8 +142,8 @@ class ExpectedObject:
     components: tuple[ExpectedComponent, ...]
 
 
-def parse_shard(path: Path, ordinal: int, shard_sha: str) -> tuple[dict[str, Any], list[Tensor], int]:
-    r = Reader(path)
+def parse_shard(path: Path, ordinal: int, shard_sha: str, admitted_stat:tuple[int,int,int,int]) -> tuple[dict[str, Any], list[Tensor], int]:
+    r = Reader(path,admitted_stat)
     try:
         if r.read(4) != b"GGUF": raise ValueError("bad GGUF magic")
         version = r.u32()
@@ -171,10 +181,11 @@ def parse_shard(path: Path, ordinal: int, shard_sha: str) -> tuple[dict[str, Any
             for d in dims[1:]: size*=d
             off=data_start+rel; end=off+size
             if end>file_size: raise ValueError(f"tensor outside shard {name}")
-            tensors.append(Tensor(name,dims,ty,type_name,be,bb,row,size,path.name,ordinal,shard_sha,off,end))
+            tensors.append(Tensor(name,dims,ty,type_name,be,bb,row,size,path.name,ordinal,shard_sha,admitted_stat,off,end))
         byoff=sorted(tensors,key=lambda t:t.offset)
         for a,b in zip(byoff,byoff[1:]):
             if a.end>b.offset: raise ValueError(f"tensor overlap {a.name} {b.name}")
+        r.assert_stat()
         return kv,tensors,data_start
     finally: r.close()
 
@@ -197,7 +208,7 @@ def load_admission(path: Path, root: Path) -> tuple[dict[str,Any], list[tuple[Pa
         dst=s.get("destination_stat")
         got={"device":st.st_dev,"size":st.st_size,"mtime_ns":st.st_mtime_ns,"inode":st.st_ino}
         if got!=dst: raise ValueError(f"source changed since admission {name}")
-        shards.append((p,{"name":name,"size":size,"sha256":sha,"ordinal":i,"stat":(st.st_size,st.st_mtime_ns,st.st_ino)}))
+        shards.append((p,{"name":name,"size":size,"sha256":sha,"ordinal":i,"stat":(st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns)}))
     return admission,shards
 
 
@@ -205,7 +216,7 @@ def reconstruct(root: Path, admission_path: Path) -> tuple[dict[tuple[int,str,st
     _, shards=load_admission(admission_path,root)
     merged={}; tensors=[]; names=set()
     for p,s in shards:
-        kv,ts,_=parse_shard(p,s["ordinal"],s["sha256"])
+        kv,ts,_=parse_shard(p,s["ordinal"],s["sha256"],s["stat"])
         for k,v in kv.items(): merged.setdefault(k,v)
         for t in ts:
             if t.name in names: raise ValueError(f"duplicate cross-shard tensor {t.name}")
@@ -273,22 +284,26 @@ def parse_manifest(path:Path)->tuple[dict[str,Any],list[dict[str,Any]],dict[str,
     return records[0],objects,records[-1],hashlib.sha256(raw).hexdigest()
 
 
-def read_range(path:Path,offset:int,length:int):
+def read_range(path:Path,offset:int,length:int,admitted_stat:tuple[int,int,int,int]|None=None):
     fd=os.open(path,os.O_RDONLY|getattr(os,"O_CLOEXEC",0)|getattr(os,"O_NOFOLLOW",0))
     try:
+        if admitted_stat is not None and descriptor_stat(fd)!=admitted_stat: raise ValueError("source descriptor identity mismatch")
         pos=0
         while pos<length:
             b=os.pread(fd,min(CHUNK,length-pos),offset+pos)
             if not b: raise EOFError("short pread")
             yield b;pos+=len(b)
+        if admitted_stat is not None and descriptor_stat(fd)!=admitted_stat: raise ValueError("source descriptor changed during read")
     finally: os.close(fd)
 
 
-def read_one(path:Path,offset:int,length:int)->bytes:
+def read_one(path:Path,offset:int,length:int,admitted_stat:tuple[int,int,int,int]|None=None)->bytes:
     fd=os.open(path,os.O_RDONLY|getattr(os,"O_CLOEXEC",0)|getattr(os,"O_NOFOLLOW",0))
     try:
+        if admitted_stat is not None and descriptor_stat(fd)!=admitted_stat: raise ValueError("source descriptor identity mismatch")
         b=os.pread(fd,length,offset)
         if len(b)!=length: raise EOFError("short semantic pread")
+        if admitted_stat is not None and descriptor_stat(fd)!=admitted_stat: raise ValueError("source descriptor changed during read")
         return b
     finally: os.close(fd)
 
@@ -369,7 +384,7 @@ def verify_bundle(bundle:Path,record:dict[str,Any],expected:ExpectedObject,check
             if any(b for chunk in read_range(bundle,previous,exp.bundle_offset-previous) for b in chunk): raise ValueError("nonzero padding")
         source_path=checkpoint_root/t.shard
         sh=hashlib.sha256();bh=hashlib.sha256();pos=0
-        source_iter=read_range(source_path,exp.offset,exp.length);bundle_iter=read_range(bundle,exp.bundle_offset,exp.length)
+        source_iter=read_range(source_path,exp.offset,exp.length,t.source_stat);bundle_iter=read_range(bundle,exp.bundle_offset,exp.length)
         for sb,bb in zip(source_iter,bundle_iter,strict=True):
             if sb!=bb: raise ValueError("source/bundle byte mismatch")
             sh.update(sb);bh.update(bb)
@@ -389,7 +404,7 @@ def verify_bundle(bundle:Path,record:dict[str,Any],expected:ExpectedObject,check
             blocks=exp.length//t.block_bytes
             offsets.update(((seed+i*0x9E3779B97F4A7C15)%blocks)*t.block_bytes for i in range(2))
             for rel in sorted(offsets):
-                src=read_one(source_path,exp.offset+rel,t.block_bytes)
+                src=read_one(source_path,exp.offset+rel,t.block_bytes,t.source_stat)
                 bun=read_one(bundle,exp.bundle_offset+rel,t.block_bytes)
                 if src!=bun or decode_block(t.type_id,src)!=decode_block(t.type_id,bun): raise ValueError("semantic block mismatch")
             semantic_seen.add(t.type_id);sem.append(t.type_name)
