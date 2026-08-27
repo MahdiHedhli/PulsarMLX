@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v4.json"
+OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v5.json"
 ARTIFACTS = (
     ("terminal_pre_mint_failure", "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-authority-manifest-v2.json"),
     ("accepted_predecessor_authority_manifest", "docs/architecture/reviews/evidence/f017-event05-result-envelope-authority-manifest-v3.json"),
@@ -20,10 +20,10 @@ ARTIFACTS = (
     ("accepted_full_native_ci", "docs/architecture/reviews/evidence/f017-v11-event05-full-native-ci-v2.json"),
     ("mismatch_reproduction", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mismatch-reproduction-v1.json"),
     ("versioning_decision", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-versioning-decision-v1.json"),
-    ("consumer_interface", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v2.json"),
+    ("consumer_interface", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v3.json"),
     ("approval_interface", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json"),
-    ("design_authority", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v2.json"),
-    ("mutation_plan", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v2.json"),
+    ("design_authority", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v3.json"),
+    ("mutation_plan", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v3.json"),
     ("review_protocol", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-review-protocol-v1.json"),
     ("historical_tombstone", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-historical-tombstone-v1.json"),
     ("design_validator", "scripts/research/validate_f017_event05_readiness_interface_design_v1.py"),
@@ -41,8 +41,14 @@ ARTIFACTS = (
     ("opus_design_normalized_result", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-opus-design-cycle-02-normalized-result.json"),
     ("opus_implementation_cycle_02_exact_response", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-opus-implementation-cycle-02-exact-response.json"),
     ("opus_implementation_cycle_02_normalized_result", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-opus-implementation-cycle-02-normalized-result.json"),
+    ("opus_implementation_cycle_03_exact_response", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-opus-implementation-cycle-03-exact-response.json"),
+    ("opus_implementation_cycle_03_normalized_result", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-opus-implementation-cycle-03-normalized-result.json"),
     ("gemini_design_cycle_03_exact_response", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-design-cycle-03-exact-response.md"),
     ("gemini_design_cycle_03_normalized_result", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-design-cycle-03-normalized-result.json"),
+    ("gemini_whole_domain_final_exact_response", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-whole-domain-cycle-03-scope-repair-confirmation-v2-head-corrected-exact-response.json"),
+    ("gemini_whole_domain_final_normalized_result", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-whole-domain-cycle-03-scope-repair-confirmation-v2-normalized-result.json"),
+    ("readiness_qualification", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v4.json"),
+    ("latest_full_native_ci", "docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v7.json"),
     ("inert_go_template", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-execution-go-template-v11-v2.json"),
 )
 
@@ -61,8 +67,8 @@ def generate(binding_head: str | None = None) -> dict:
             raise ValueError(f"readiness manifest working-tree drift: {path}")
         artifacts.append({"role":role, "path":path, "sha256":hashlib.sha256(raw).hexdigest()})
     return {
-        "schema":"pulsarmlx.f017.event05-readiness-interface-authority-manifest/1.3.0",
-        "supersedes":"docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v3.json",
+        "schema":"pulsarmlx.f017.event05-readiness-interface-authority-manifest/1.4.0",
+        "supersedes":"docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v4.json",
         "graph_id":"F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
         "status":"DESIGN_ACCEPTED_IMPLEMENTATION_MEASURED",
         "authority_entry_head":head, "authority_entry_tree":tree,

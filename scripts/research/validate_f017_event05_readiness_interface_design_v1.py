@@ -7,11 +7,11 @@ import hashlib
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v2.json"
-DESIGN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v2.json"
-MUTATION_PLAN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v2.json"
+CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v3.json"
+DESIGN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v3.json"
+MUTATION_PLAN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v3.json"
 REPRODUCTION = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mismatch-reproduction-v1.json"
-MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v4.json"
+MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v5.json"
 
 EXPECTED_FREE_VALUE_FIELDS = {
     "authority_manifest_path", "authority_manifest_sha256", "scientific_access_contract_path",
@@ -139,7 +139,7 @@ def validate_mutation_plan(plan: dict) -> None:
     if type(categories) is not dict or any(type(value) is not int or value <= 0 for value in categories.values()):
         raise ValueError("readiness mutation categories")
     planned = sum(categories.values())
-    if (plan.get("minimum_substantive_cases") != 225 or plan.get("minimum_planned_cases") != 231
+    if (plan.get("minimum_substantive_cases") != 245 or plan.get("minimum_planned_cases") != 251
             or planned != plan.get("minimum_planned_cases") or planned < plan.get("minimum_substantive_cases")):
         raise ValueError("readiness mutation floor")
     if set(plan.get("mandatory_named_mutations", [])) != REQUIRED_NAMED_MUTATIONS:

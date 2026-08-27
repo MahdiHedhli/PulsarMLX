@@ -48,17 +48,21 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         full_native = self._bank(root, "evidence/full-native.json", {"run":101,"required_native_skips":0,"result":"PASS"})
         evidence_only = self._bank(root, "evidence/evidence-only.json", {"run":102,"native_jobs_launched":0,"result":"PASS"})
         if scope == "FINAL_EVENT05_EXECUTION_READINESS":
+            gemini_response = self._bank(root, "evidence/gemini-exact-response.json", {"review":"gemini"})
+            opus_response = self._bank(root, "evidence/opus-exact-response.json", {"review":"opus"})
             gemini = self._bank(root, "evidence/gemini.json", {
                 "schema":contract["scope_policy"][scope]["gemini_schema"], "authority_scope":scope,
                 "final_authority":True, "model":"gemini-3.1-pro-high", "reviewed_head":head,
-                "exact_response_sha256":"a"*64, "blocking_findings":0,
+                "exact_response_path":"evidence/gemini-exact-response.json",
+                "exact_response_sha256":_sha(gemini_response), "blocking_findings":0,
                 "non_blocking_required_findings":0, "unresolved_claims":0,
                 "verdict":"NO_UNRESOLVED_MATERIAL_CHALLENGE",
             })
             opus = self._bank(root, "evidence/opus.json", {
                 "schema":contract["scope_policy"][scope]["opus_schema"], "authority_scope":scope,
                 "final_authority":True, "model":"claude-opus-5", "reviewed_head":head,
-                "exact_response_sha256":"b"*64, "blocking_findings":0,
+                "exact_response_path":"evidence/opus-exact-response.json",
+                "exact_response_sha256":_sha(opus_response), "blocking_findings":0,
                 "non_blocking_required_findings":0, "unresolved_claims":0,
                 "global_verdict":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION",
             })
@@ -302,7 +306,7 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v5.json"
         )
         qualification = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v3.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v4.json"
         )
         self.assertEqual(full_native["measured_implementation_head"], current_measurement["implementation_head"])
         self.assertEqual(full_native["measured_implementation_tree"], current_measurement["implementation_tree"])
@@ -315,7 +319,9 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         self.assertFalse(prepared_manifest["live_authority_permitted"])
         self.assertEqual(instantiability["repetitions"], 20)
         self.assertEqual(instantiability["deterministic_candidate_sha_count"], 1)
-        self.assertEqual(qualification["case_count"], 231)
+        self.assertEqual(qualification["case_count"], 251)
+        self.assertEqual(qualification["categories"]["final_review_bindings"], 20)
+        self.assertEqual(qualification["final_scope_validation"], "PASS")
         self.assertEqual(qualification["unexpected_passes"], 0)
         exact_tree = subprocess.check_output(
             ["git", "rev-parse", f"{current_measurement['implementation_head']}^{{tree}}"],

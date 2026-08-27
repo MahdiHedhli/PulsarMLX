@@ -12,7 +12,7 @@ from typing import Any, Mapping
 from f017_bounded_artifact_decode_v1 import read_artifact
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v2.json"
+CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v3.json"
 
 CANONICAL_MANIFEST_ROLES = {
     "implementation_measurement",
@@ -135,7 +135,9 @@ def _git_object(object_name: str, expected_type: str) -> None:
         raise ValueError("readiness implementation git object")
 
 
-def _validate_review_artifact(value: object, *, scope: str, role: str, policy: Mapping[str, Any]) -> None:
+def _validate_review_artifact(value: object, *, scope: str, role: str,
+                              policy: Mapping[str, Any], root: Path,
+                              measured_implementation_head: str) -> None:
     if type(value) is not dict:
         raise ValueError(f"readiness {role} evidence")
     expected_schema = policy[f"{role}_schema"]
@@ -165,6 +167,17 @@ def _validate_review_artifact(value: object, *, scope: str, role: str, policy: M
         field = value.get(name)
         if type(field) is not str or len(field) != length or field != field.lower() or any(c not in "0123456789abcdef" for c in field):
             raise ValueError(f"readiness {role} final evidence")
+    reviewed_head = value["reviewed_head"]
+    _git_object(reviewed_head, "commit")
+    if subprocess.run(
+        ["git", "merge-base", "--is-ancestor", measured_implementation_head, reviewed_head],
+        cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode != 0:
+        raise ValueError(f"readiness {role} reviewed head ancestry")
+    response_path = _resolve(root, value.get("exact_response_path"))
+    if _sha(response_path) != value["exact_response_sha256"]:
+        raise ValueError(f"readiness {role} exact response binding")
 
 
 def _validate_bound_authority(values: Mapping[str, Any], root: Path, contract: Mapping[str, Any]) -> None:
@@ -231,11 +244,17 @@ def _validate_bound_authority(values: Mapping[str, Any], root: Path, contract: M
             or evidence_only.get("native_jobs_launched") != values["evidence_only_native_jobs"]
             or evidence_only.get("result") != "PASS"):
         raise ValueError("readiness EVIDENCE_ONLY evidence")
-    _validate_review_artifact(gemini, scope=scope, role="gemini", policy=policy)
-    _validate_review_artifact(opus, scope=scope, role="opus", policy=policy)
+    _validate_review_artifact(
+        gemini, scope=scope, role="gemini", policy=policy, root=root,
+        measured_implementation_head=values["measured_implementation_head"],
+    )
+    _validate_review_artifact(
+        opus, scope=scope, role="opus", policy=policy, root=root,
+        measured_implementation_head=values["measured_implementation_head"],
+    )
     if gemini.get("verdict") != values["gemini_verdict"]:
         raise ValueError("readiness Gemini evidence")
-    opus_verdict = opus.get("global_verdict", opus.get("verdict"))
+    opus_verdict = opus["global_verdict"] if scope == "FINAL_EVENT05_EXECUTION_READINESS" else opus["verdict"]
     if opus_verdict != values["opus_verdict"]:
         raise ValueError("readiness Opus evidence")
 

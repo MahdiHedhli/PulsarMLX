@@ -38,7 +38,7 @@ def _bank(root: Path, relative: str, value: dict) -> Path:
     return path
 
 
-def _fixture(root: Path) -> tuple[Path, Path, dict, dict]:
+def _fixture(root: Path, *, scope: str = "VALIDATION_ONLY_PREPARED") -> tuple[Path, Path, dict, dict, dict]:
     contract = read_artifact(CONTRACT)
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True).strip()
@@ -50,16 +50,42 @@ def _fixture(root: Path) -> tuple[Path, Path, dict, dict]:
     result = _bank(root, "contracts/result.json", {"schema":"fixture.result/1"})
     full_native = _bank(root, "evidence/full-native.json", {"run_id":33000000001,"required_native_skips":0,"result":"PASS"})
     evidence_only = _bank(root, "evidence/evidence-only.json", {"run_id":33000000002,"native_jobs_launched":0,"result":"PASS"})
-    gemini = _bank(root, "evidence/gemini.json", {
-        "schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["gemini_schema"],
-        "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
-        "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
-    })
-    opus = _bank(root, "evidence/opus.json", {
-        "schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["opus_schema"],
-        "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
-        "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
-    })
+    final = scope == "FINAL_EVENT05_EXECUTION_READINESS"
+    if scope not in contract["scope_policy"]:
+        raise ValueError("qualification readiness scope")
+    gemini_response = opus_response = None
+    if final:
+        gemini_response = _bank(root, "evidence/gemini-exact-response.json", {"review":"gemini-final-fixture"})
+        opus_response = _bank(root, "evidence/opus-exact-response.json", {"review":"opus-final-fixture"})
+        gemini_value = {
+            "schema":contract["scope_policy"][scope]["gemini_schema"],
+            "authority_scope":scope, "final_authority":True, "model":"gemini-3.1-pro-high",
+            "reviewed_head":head, "exact_response_path":"evidence/gemini-exact-response.json",
+            "exact_response_sha256":_sha(gemini_response), "blocking_findings":0,
+            "non_blocking_required_findings":0, "unresolved_claims":0,
+            "verdict":"NO_UNRESOLVED_MATERIAL_CHALLENGE",
+        }
+        opus_value = {
+            "schema":contract["scope_policy"][scope]["opus_schema"],
+            "authority_scope":scope, "final_authority":True, "model":"claude-opus-5",
+            "reviewed_head":head, "exact_response_path":"evidence/opus-exact-response.json",
+            "exact_response_sha256":_sha(opus_response), "blocking_findings":0,
+            "non_blocking_required_findings":0, "unresolved_claims":0,
+            "global_verdict":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION",
+        }
+    else:
+        gemini_value = {
+            "schema":contract["scope_policy"][scope]["gemini_schema"],
+            "authority_scope":scope, "final_authority":False,
+            "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
+        }
+        opus_value = {
+            "schema":contract["scope_policy"][scope]["opus_schema"],
+            "authority_scope":scope, "final_authority":False,
+            "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
+        }
+    gemini = _bank(root, "evidence/gemini.json", gemini_value)
+    opus = _bank(root, "evidence/opus.json", opus_value)
     bound = [
         ("implementation_measurement", measurement), ("scientific_access", scientific),
         ("numerical_contract_v4", numerical), ("result_authority", result),
@@ -67,14 +93,19 @@ def _fixture(root: Path) -> tuple[Path, Path, dict, dict]:
         ("gemini_readiness_interface_challenge", gemini),
         ("opus_readiness_interface_implementation_arbiter", opus),
     ]
-    manifest = _bank(root, "evidence/manifest.json", {
-        "schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["manifest_schema"],
-        "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
-        "live_authority_permitted":False, "implementation_head":head, "implementation_tree":tree,
+    manifest_value = {
+        "schema":contract["scope_policy"][scope]["manifest_schema"],
+        "authority_scope":scope, "final_authority":final,
+        "implementation_head":head, "implementation_tree":tree,
         "artifacts":[{"role":role,"path":str(path.relative_to(root)),"sha256":_sha(path)} for role,path in bound],
         "binding_count":8,
-    })
-    declaration_value = copy.deepcopy(contract["exact_prepared_predicates"])
+    }
+    if not final:
+        manifest_value["live_authority_permitted"] = False
+    manifest = _bank(root, "evidence/manifest.json", manifest_value)
+    declaration_value = copy.deepcopy(
+        contract["exact_final_predicates" if final else "exact_prepared_predicates"]
+    )
     declaration_value.update({
         "authority_manifest_path":"evidence/manifest.json", "authority_manifest_sha256":_sha(manifest),
         "scientific_access_contract_path":"contracts/scientific.json", "scientific_access_contract_sha256":_sha(scientific),
@@ -103,7 +134,10 @@ def _fixture(root: Path) -> tuple[Path, Path, dict, dict]:
         "authority_manifest_sha256":_sha(manifest), "readiness_declaration_sha256":_sha(declaration),
     }
     approval = _bank(root, "evidence/approval.json", approval_value)
-    return declaration, approval, declaration_value, approval_value
+    return declaration, approval, declaration_value, approval_value, {
+        "manifest":manifest, "gemini":gemini, "opus":opus,
+        "gemini_response":gemini_response, "opus_response":opus_response,
+    }
 
 
 def _context() -> CandidateContext:
@@ -151,7 +185,7 @@ def run_campaign() -> dict:
     cases = []
     with tempfile.TemporaryDirectory(prefix="f017-readiness-campaign-") as raw_root:
         root = Path(raw_root)
-        declaration, approval, base, approval_base = _fixture(root)
+        declaration, approval, base, approval_base, _ = _fixture(root)
         candidate_sha, primary, secondary = _candidate(root, declaration, approval)
 
         def record(category: str, case_id: str, action) -> None:
@@ -180,6 +214,74 @@ def run_campaign() -> dict:
         for index in range(32):
             mutated = copy.deepcopy(approval_base); mutated[f"unexpected_{index:02d}"] = index
             record("candidate_path", f"CANDIDATE-{index+1:03d}", lambda m=mutated: validate_operator_approval(_bank(root,"evidence/approval-mutated.json",m), "VALIDATION_ONLY"))
+
+        # Exercise the FINAL scope that carries the future GO. Each reviewer
+        # mutation is re-bound through a distinct manifest and declaration so
+        # the canonical validator reaches the exact final-review branch.
+        final_root = root / "final-scope"
+        final_root.mkdir()
+        final_declaration, _, final_base, _, final_files = _fixture(
+            final_root, scope="FINAL_EVENT05_EXECUTION_READINESS",
+        )
+        validate_readiness_declaration(
+            final_declaration, expected_scope="FINAL_EVENT05_EXECUTION_READINESS",
+            repository_root=final_root,
+        )
+
+        def bank_final_review_mutation(role: str, field: str, wrong: object, index: int) -> Path:
+            review = copy.deepcopy(read_artifact(final_files[role]))
+            review[field] = wrong
+            review_path = _bank(final_root, f"evidence/{role}-mutation-{index:02d}.json", review)
+            manifest = copy.deepcopy(read_artifact(final_files["manifest"]))
+            manifest_role = (
+                "gemini_readiness_interface_challenge" if role == "gemini"
+                else "opus_readiness_interface_implementation_arbiter"
+            )
+            for item in manifest["artifacts"]:
+                if item["role"] == manifest_role:
+                    item.update({
+                        "path":str(review_path.relative_to(final_root)),
+                        "sha256":_sha(review_path),
+                    })
+                    break
+            manifest_path = _bank(final_root, f"evidence/manifest-mutation-{index:02d}.json", manifest)
+            declaration_value = copy.deepcopy(final_base)
+            declaration_value.update({
+                "authority_manifest_path":str(manifest_path.relative_to(final_root)),
+                "authority_manifest_sha256":_sha(manifest_path),
+                f"{role}_result_path":str(review_path.relative_to(final_root)),
+                f"{role}_result_sha256":_sha(review_path),
+            })
+            return _bank(final_root, f"evidence/declaration-mutation-{index:02d}.json", declaration_value)
+
+        final_review_mutations = {
+            "gemini":[
+                ("authority_scope", "VALIDATION_ONLY_PREPARED"), ("final_authority", False),
+                ("model", "wrong-model"), ("verdict", "WRONG_VERDICT"),
+                ("blocking_findings", 1), ("non_blocking_required_findings", 1),
+                ("unresolved_claims", 1), ("reviewed_head", "0" * 40),
+                ("exact_response_sha256", "0" * 64),
+                ("exact_response_path", "evidence/full-native.json"),
+            ],
+            "opus":[
+                ("authority_scope", "VALIDATION_ONLY_PREPARED"), ("final_authority", False),
+                ("model", "wrong-model"), ("global_verdict", "REJECT"),
+                ("blocking_findings", 1), ("non_blocking_required_findings", 1),
+                ("unresolved_claims", 1), ("reviewed_head", "0" * 40),
+                ("exact_response_sha256", "0" * 64),
+                ("exact_response_path", "evidence/full-native.json"),
+            ],
+        }
+        final_index = 0
+        for role, mutations in final_review_mutations.items():
+            for field, wrong in mutations:
+                final_index += 1
+                mutated_declaration = bank_final_review_mutation(role, field, wrong, final_index)
+                record("final_review_bindings", f"FINAL-REVIEW-{final_index:03d}",
+                    lambda path=mutated_declaration: validate_readiness_declaration(
+                        path, expected_scope="FINAL_EVENT05_EXECUTION_READINESS",
+                        repository_root=final_root,
+                    ))
 
         # Five production-boundary cases close the exact defects identified by
         # independent review; they are generated by this qualifier, not hand-banked.
@@ -244,15 +346,15 @@ def run_campaign() -> dict:
             child_hashes.append(result)
 
     unexpected = sum(not case["rejected"] for case in cases)
-    return {"schema":"pulsarmlx.f017.event05-readiness-interface-qualification/1.1.0",
+    return {"schema":"pulsarmlx.f017.event05-readiness-interface-qualification/1.2.0",
         "case_count":len(cases),"categories":{name:sum(c["category"]==name for c in cases) for name in {c["category"] for c in cases}},
         "unexpected_passes":unexpected,"candidate_determinism":"PASS" if len(set(child_hashes))==1 else "FAIL",
         "fresh_process_repetitions":20,"fresh_process_candidate_sha_count":len(set(child_hashes)),
-        "mandatory_named_mutations":mandatory,
+        "mandatory_named_mutations":mandatory, "final_scope_validation":"PASS",
         "primary_validation":primary["result"],"secondary_validation":secondary["result"],
         "state_created":0,"live_authorization_installed":0,"checkpoint_opens":0,"checkpoint_reads":0,
         "numerical_operations":0,"event_05_ids_consumed":0,"original_checkpoint_access":0,
-        "cases":cases,"result":"PASS" if len(cases)==231 and unexpected==0 and len(set(child_hashes))==1 and set(mandatory.values())=={"PASS"} else "FAIL"}
+        "cases":cases,"result":"PASS" if len(cases)==251 and unexpected==0 and len(set(child_hashes))==1 and set(mandatory.values())=={"PASS"} else "FAIL"}
 
 
 def main() -> int:
