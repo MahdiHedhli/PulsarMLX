@@ -294,15 +294,15 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         evidence_only = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-evidence-only-ci-v2.json"
         )
-        prepared_declaration = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-declaration-v3.json"
+        prepared_declaration = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-declaration-v4.json"
         prepared = readiness.validate_readiness_declaration(
             prepared_declaration, expected_scope="VALIDATION_ONLY_PREPARED",
         )
         prepared_manifest = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v3.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v4.json"
         )
         instantiability = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v3.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v4.json"
         )
         qualification = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v3.json"
