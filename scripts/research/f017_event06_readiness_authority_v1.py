@@ -26,10 +26,20 @@ def _repo_path(value: object, root: Path) -> Path:
     pure = PurePosixPath(value)
     if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
         raise ValueError("Event 06 readiness repository path")
+    root = root.resolve(strict=True)
     target = root.joinpath(*pure.parts)
-    if target.is_symlink() or not target.is_file():
+    cursor = root
+    for part in pure.parts:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            raise ValueError("Event 06 readiness repository path")
+    try:
+        resolved = target.resolve(strict=True)
+    except OSError as exc:
+        raise ValueError("Event 06 readiness repository path") from exc
+    if root not in resolved.parents or not resolved.is_file():
         raise ValueError("Event 06 readiness repository path")
-    return target
+    return resolved
 
 
 def _valid_hex(value: object, length: int) -> bool:
