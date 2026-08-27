@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0","node":"R3","modeled_outcomes":12,"pre_candidate_outcomes":1,"post_install_outcomes":3,"post_package_outcomes":8,"generic_fallback_allowed_for_modeled_outcomes":false,"exact_transition_ids":true,"result":"PASS"}
