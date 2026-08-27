@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-support-ledger/10.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-support-ledger-v9.json",
+  "final_challenge": "docs/architecture/reviews/evidence/f017-event06-v12-gemini-whole-domain-cycle-04-normalized-result.json",
+  "supported_claims": 16,
+  "repaired_claims": 5,
+  "conceded_claims": 0,
+  "unresolved_claims": 0,
+  "execution_bytes_changed_after_full_native": false,
+  "original_checkpoint_access": 0,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "result": "PASS"
+}

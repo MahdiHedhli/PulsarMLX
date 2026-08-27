@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-challenge-ledger/7.0.0",
+  "graph_id": "F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-challenge-ledger-v6.json",
+  "gemini_whole_domain_cycles": 4,
+  "final_reviewed_head": "bf27efa2007809df8ab53cf4c5e91c52a4b2cba4",
+  "final_supported_claims": 16,
+  "final_challenged_claims": 0,
+  "final_unresolved_claims": 0,
+  "material_challenges": 0,
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "result": "NO_UNRESOLVED_MATERIAL_CHALLENGE"
+}
