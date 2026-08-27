@@ -19,6 +19,15 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 CHECKPOINT = "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee"
+INVENTORY = "ca23db7459219acd39cd047eb6490c814ab40d472dd081424624ac8bf8fc5c9b"
+EXPECTED_SHARDS = (
+    ("GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",9423744,"7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18"),
+    ("GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",49105028960,"d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"),
+    ("GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",49143176640,"1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b"),
+    ("GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",49143176640,"10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e"),
+    ("GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",49143176640,"40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d"),
+    ("GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",41914650304,"eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d"),
+)
 HEADER_LEN = 16384
 FOOTER_LEN = 16384
 ALIGNMENT = 16384
@@ -172,20 +181,22 @@ def parse_shard(path: Path, ordinal: int, shard_sha: str) -> tuple[dict[str, Any
 
 def load_admission(path: Path, root: Path) -> tuple[dict[str,Any], list[tuple[Path,dict[str,Any]]]]:
     admission=json.loads(path.read_text())
-    set_sha=admission.get("checkpoint_set_sha256",admission.get("set_sha256"))
-    if set_sha != CHECKPOINT or admission["total_bytes"] != 238458632928:
+    set_sha=admission.get("set_sha256")
+    shards_claim=admission.get("shards",[])
+    rebuilt=hashlib.sha256("".join(f'{s.get("sha256","")}{s.get("size","")}' for s in shards_claim).encode("ascii")).hexdigest()
+    if admission.get("schema")!="pulsarmlx-checkpoint-admission-v3" or set_sha != CHECKPOINT or rebuilt!=CHECKPOINT or admission.get("inventory_sha256")!=INVENTORY or admission["total_bytes"] != 238458632928 or len(shards_claim)!=6:
         raise ValueError("checkpoint admission mismatch")
     shards=[]
-    for i,s in enumerate(admission["shards"],1):
-        name=s.get("name",s.get("filename")); size=s.get("size",s.get("size_bytes")); sha=s.get("sha256",s.get("destination_sha256"))
+    for i,(s,expected) in enumerate(zip(shards_claim,EXPECTED_SHARDS,strict=True),1):
+        name=s.get("name"); size=s.get("size"); sha=s.get("sha256")
+        if s.get("index")!=i or (name,size,sha)!=expected: raise ValueError(f"checkpoint shard authority mismatch {i}")
         p=root/name
         st=p.lstat()
         if p.is_symlink() or not p.is_file() or st.st_nlink!=1 or st.st_size!=size:
             raise ValueError(f"source stat mismatch {name}")
         dst=s.get("destination_stat")
-        if dst:
-            got={"size":st.st_size,"mtime_ns":st.st_mtime_ns,"inode":st.st_ino}
-            if got!=dst: raise ValueError(f"source changed since admission {name}")
+        got={"device":st.st_dev,"size":st.st_size,"mtime_ns":st.st_mtime_ns,"inode":st.st_ino}
+        if got!=dst: raise ValueError(f"source changed since admission {name}")
         shards.append((p,{"name":name,"size":size,"sha256":sha,"ordinal":i,"stat":(st.st_size,st.st_mtime_ns,st.st_ino)}))
     return admission,shards
 

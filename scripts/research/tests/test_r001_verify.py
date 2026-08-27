@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib,json,sys,tempfile,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from r001_verify import CHECKPOINT,canonical,domain_hash,load_admission
+from r001_verify import CHECKPOINT,EXPECTED_SHARDS,canonical,domain_hash,load_admission
 
 class R001VerifierContract(unittest.TestCase):
     def test_canonical_known_answer(self):
@@ -17,13 +17,14 @@ class R001VerifierContract(unittest.TestCase):
         with self.assertRaises(ValueError): canonical({"x":None})
         with self.assertRaises(ValueError): canonical({"x":-1})
         with self.assertRaises(ValueError): canonical({"x":"non-ascii-\u00e9"})
-    def test_historical_admission_set_hash_alias(self):
+    def test_historical_admission_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/"shard.gguf").write_bytes(b"x")
             admission=root/"admission.json"
             admission.write_text(json.dumps({"set_sha256":CHECKPOINT,"total_bytes":238458632928,"shards":[{"name":"shard.gguf","size":1,"sha256":"00"*32}]}))
-            loaded,shards=load_admission(admission,root)
-            self.assertEqual(loaded["set_sha256"],CHECKPOINT)
-            self.assertEqual(shards[0][1]["size"],1)
+            with self.assertRaises(ValueError): load_admission(admission,root)
+    def test_authoritative_set_hash_definition(self):
+        material="".join(f"{sha}{size}" for _,size,sha in EXPECTED_SHARDS).encode("ascii")
+        self.assertEqual(hashlib.sha256(material).hexdigest(),CHECKPOINT)
 
 if __name__=="__main__":unittest.main()

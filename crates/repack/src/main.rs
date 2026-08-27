@@ -30,6 +30,8 @@ fn run() -> Result<()> {
     let mut summary_path = None;
     let mut shared = false;
     let mut resume = false;
+    let mut test_interrupt_after_bytes = None;
+    let mut test_interrupt_after_manifest = false;
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--checkpoint-dir" => checkpoint_dir = Some(PathBuf::from(need(&mut args, &arg)?)),
@@ -41,6 +43,18 @@ fn run() -> Result<()> {
             "--summary" => summary_path = Some(PathBuf::from(need(&mut args, &arg)?)),
             "--shared" => shared = true,
             "--resume" => resume = true,
+            "--test-interrupt-after-bytes" => {
+                if !cfg!(debug_assertions) {
+                    return Err("test interruption flags are unavailable in release builds".into());
+                }
+                test_interrupt_after_bytes = Some(need(&mut args, &arg)?.parse()?);
+            }
+            "--test-interrupt-after-manifest" => {
+                if !cfg!(debug_assertions) {
+                    return Err("test interruption flags are unavailable in release builds".into());
+                }
+                test_interrupt_after_manifest = true;
+            }
             other => return Err(format!("unknown argument {other}").into()),
         }
     }
@@ -55,6 +69,8 @@ fn run() -> Result<()> {
         summary_path: summary_path.ok_or("missing --summary")?,
         dry_run: command == "dry-run",
         resume,
+        test_interrupt_after_bytes,
+        test_interrupt_after_manifest,
     };
     println!("{}", serde_json::to_string(&run_repack(&cfg)?)?);
     Ok(())

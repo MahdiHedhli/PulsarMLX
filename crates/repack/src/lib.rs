@@ -10,7 +10,7 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
-use std::os::unix::fs::{FileExt, MetadataExt};
+use std::os::unix::fs::{FileExt, MetadataExt, OpenOptionsExt};
 use std::path::{Component, Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
@@ -23,6 +23,16 @@ const HEADER_MAGIC: &[u8; 8] = b"PMLXEX01";
 const FOOTER_MAGIC: &[u8; 8] = b"PMLXEND1";
 const CHECKPOINT_EXPECTED: &str =
     "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee";
+const INVENTORY_EXPECTED: &str =
+    "ca23db7459219acd39cd047eb6490c814ab40d472dd081424624ac8bf8fc5c9b";
+const EXPECTED_SHARDS: [(&str, u64, &str); 6] = [
+    ("GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf", 9_423_744, "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18"),
+    ("GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", 49_105_028_960, "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"),
+    ("GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf", 49_143_176_640, "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b"),
+    ("GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf", 49_143_176_640, "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e"),
+    ("GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf", 49_143_176_640, "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d"),
+    ("GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf", 41_914_650_304, "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d"),
+];
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -69,26 +79,26 @@ pub struct InventoryComponent {
 
 #[derive(Debug, Deserialize)]
 pub struct Admission {
-    #[serde(alias = "set_sha256")]
+    pub schema: String,
+    #[serde(rename = "set_sha256")]
     pub checkpoint_set_sha256: String,
+    pub inventory_sha256: String,
     pub total_bytes: u64,
     pub shards: Vec<AdmissionShard>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AdmissionShard {
-    #[serde(alias = "filename")]
+    pub index: u32,
     pub name: String,
-    #[serde(alias = "size_bytes")]
     pub size: u64,
-    #[serde(alias = "sha256")]
     pub sha256: String,
-    #[serde(default)]
-    pub destination_stat: Option<SourceStat>,
+    pub destination_stat: SourceStat,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct SourceStat {
+    pub device: u64,
     pub size: u64,
     pub mtime_ns: i128,
     pub inode: u64,
@@ -108,6 +118,7 @@ pub struct ComponentPlan {
     pub shard: String,
     pub shard_ordinal: u32,
     pub shard_sha256: String,
+    pub source_stat: SourceStat,
     pub source_offset: u64,
     pub length: u64,
     pub type_id: u32,
@@ -141,6 +152,8 @@ pub struct RepackConfig {
     pub summary_path: PathBuf,
     pub dry_run: bool,
     pub resume: bool,
+    pub test_interrupt_after_bytes: Option<u64>,
+    pub test_interrupt_after_manifest: bool,
 }
 
 #[derive(Debug)]
@@ -301,23 +314,42 @@ fn safe_relative(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn current_stat(path: &Path) -> Result<SourceStat> {
-    let symlink = fs::symlink_metadata(path)?;
-    if symlink.file_type().is_symlink() || !symlink.is_file() {
-        return Err(err(format!("source is not a regular no-follow file: {}", path.display())));
+fn stat_from_metadata(metadata: &fs::Metadata) -> SourceStat {
+    SourceStat {
+        device: metadata.dev(),
+        size: metadata.len(),
+        mtime_ns: metadata.mtime() as i128 * 1_000_000_000 + metadata.mtime_nsec() as i128,
+        inode: metadata.ino(),
     }
-    Ok(SourceStat {
-        size: symlink.len(),
-        mtime_ns: symlink.mtime() as i128 * 1_000_000_000 + symlink.mtime_nsec() as i128,
-        inode: symlink.ino(),
-    })
+}
+
+fn open_source(path: &Path) -> Result<(File, SourceStat)> {
+    let file = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW)
+        .open(path)?;
+    let metadata = file.metadata()?;
+    if !metadata.is_file() || metadata.nlink() != 1 {
+        return Err(err(format!("source is not a regular unique file: {}", path.display())));
+    }
+    Ok((file, stat_from_metadata(&metadata)))
+}
+
+fn expected_set_hash(shards: &[AdmissionShard]) -> String {
+    let mut hash = Sha256::new();
+    for shard in shards {
+        hash.update(shard.sha256.as_bytes());
+        hash.update(shard.size.to_string().as_bytes());
+    }
+    hex(&hash.finalize())
 }
 
 fn load_authority(cfg: &RepackConfig) -> Result<(Inventory, Admission, String)> {
     let inventory_bytes = fs::read(&cfg.inventory_path)?;
     let inventory_sha = sha256_bytes(&inventory_bytes);
     let inventory: Inventory = serde_json::from_slice(&inventory_bytes)?;
-    if inventory.checkpoint_set_sha256 != CHECKPOINT_EXPECTED
+    if inventory_sha != INVENTORY_EXPECTED
+        || inventory.checkpoint_set_sha256 != CHECKPOINT_EXPECTED
         || inventory.architecture != "glm-dsa"
         || inventory.expert_tensor_count != 456
         || inventory.logical_object_count != 19_532
@@ -326,22 +358,28 @@ fn load_authority(cfg: &RepackConfig) -> Result<(Inventory, Admission, String)> 
         return Err(err("inventory authority mismatch"));
     }
     let admission: Admission = serde_json::from_slice(&fs::read(&cfg.admission_path)?)?;
-    if admission.checkpoint_set_sha256 != CHECKPOINT_EXPECTED
+    if admission.schema != "pulsarmlx-checkpoint-admission-v3"
+        || admission.checkpoint_set_sha256 != CHECKPOINT_EXPECTED
+        || admission.inventory_sha256 != INVENTORY_EXPECTED
         || admission.total_bytes != 238_458_632_928
         || admission.shards.len() != 6
+        || expected_set_hash(&admission.shards) != CHECKPOINT_EXPECTED
     {
         return Err(err("checkpoint admission mismatch"));
     }
-    for shard in &admission.shards {
-        let path = cfg.checkpoint_dir.join(&shard.name);
-        let got = current_stat(&path)?;
-        if got.size != shard.size {
-            return Err(err(format!("source size changed: {}", shard.name)));
+    for (position, (shard, expected)) in admission.shards.iter().zip(EXPECTED_SHARDS).enumerate() {
+        if shard.index != position as u32 + 1
+            || shard.name != expected.0
+            || shard.size != expected.1
+            || shard.sha256 != expected.2
+            || shard.destination_stat.size != shard.size
+        {
+            return Err(err(format!("checkpoint shard authority mismatch at {}", position + 1)));
         }
-        if let Some(expected) = &shard.destination_stat {
-            if &got != expected {
-                return Err(err(format!("source stat changed: {}", shard.name)));
-            }
+        let path = cfg.checkpoint_dir.join(&shard.name);
+        let (_file, got) = open_source(&path)?;
+        if got != shard.destination_stat {
+            return Err(err(format!("source stat changed: {}", shard.name)));
         }
         decode_hex_32(&shard.sha256)?;
     }
@@ -429,6 +467,7 @@ fn build_plans(
                         shard: t.shard.clone(),
                         shard_ordinal: *ordinal,
                         shard_sha256: shard.sha256.clone(),
+                        source_stat: shard.destination_stat.clone(),
                         source_offset,
                         length: t.plane_bytes,
                         type_id: type_id(&t.gguf_type)?,
@@ -598,6 +637,16 @@ fn nonce_hex() -> Result<String> {
     Ok(hex(&b))
 }
 
+fn validate_partial_nonce(payload_name: &str, prefix: &str, nonce: &str) -> Result<()> {
+    if nonce.len() != 32
+        || !nonce.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+        || payload_name != format!("{prefix}{nonce}")
+    {
+        return Err(err("invalid or mismatched partial nonce"));
+    }
+    Ok(())
+}
+
 fn exclusive_publish(temp: &Path, final_path: &Path) -> Result<()> {
     if final_path.exists() {
         return Err(err(format!("refuse existing final {}", final_path.display())));
@@ -687,10 +736,16 @@ fn quarantine_partials(
     {
         return Err(err("partial owner claim mismatch"));
     }
-    let abandoned = cfg.staging_root.join("abandoned").join(
-        claim["lease_nonce_hex"].as_str().ok_or_else(|| err("partial nonce missing"))?,
-    );
-    fs::create_dir_all(&abandoned)?;
+    let nonce = claim["lease_nonce_hex"].as_str().ok_or_else(|| err("partial nonce missing"))?;
+    validate_partial_nonce(payload_name, &prefix, nonce)?;
+    let abandoned_root = cfg.staging_root.join("abandoned");
+    fs::create_dir_all(&abandoned_root)?;
+    let abandoned_root = fs::canonicalize(&abandoned_root)?;
+    let abandoned = abandoned_root.join(nonce);
+    if abandoned.parent() != Some(abandoned_root.as_path()) {
+        return Err(err("abandoned partial escaped staging root"));
+    }
+    fs::create_dir(&abandoned)?;
     let dst_payload = abandoned.join(payload_name);
     let dst_sidecar = abandoned.join(sidecar_name);
     if dst_payload.exists() || dst_sidecar.exists() {
@@ -729,7 +784,10 @@ fn verify_existing_source_mapping(
         {
             return Err(err("existing final does not match current plan"));
         }
-        let source = File::open(cfg.checkpoint_dir.join(&c.shard))?;
+        let (source, source_stat) = open_source(&cfg.checkpoint_dir.join(&c.shard))?;
+        if source_stat != c.source_stat {
+            return Err(err("admitted source identity changed"));
+        }
         let mut done = 0u64;
         while done < c.length {
             let n = (c.length - done).min(CHUNK as u64) as usize;
@@ -780,11 +838,7 @@ fn write_bundle(
     inventory_sha: &str,
     plan_id: &str,
 ) -> Result<CompleteObject> {
-    let test_interrupt_after = std::env::var("PULSAR_R001_TEST_INTERRUPT_AFTER_BYTES")
-        .ok()
-        .map(|value| value.parse::<u64>())
-        .transpose()
-        .map_err(|_| err("invalid PULSAR_R001_TEST_INTERRUPT_AFTER_BYTES"))?;
+    let test_interrupt_after = cfg.test_interrupt_after_bytes;
     let final_path = cfg.output_root.join(&o.relative_path);
     safe_relative(&o.relative_path)?;
     if final_path.exists() {
@@ -853,8 +907,10 @@ fn write_bundle(
         payload_hash.update([role_code(&c.role)?]);
         payload_hash.update(c.length.to_le_bytes());
         let source_path = cfg.checkpoint_dir.join(&c.shard);
-        let source = File::open(&source_path)?;
-        let before = current_stat(&source_path)?;
+        let (source, before) = open_source(&source_path)?;
+        if before != c.source_stat {
+            return Err(err(format!("source identity changed: {}", c.shard)));
+        }
         let mut ch = Sha256::new();
         let mut copied = 0u64;
         while copied < c.length {
@@ -870,7 +926,7 @@ fn write_bundle(
                 return Err(err("injected R001 test interruption"));
             }
         }
-        let after = current_stat(&source_path)?;
+        let after = stat_from_metadata(&source.metadata()?);
         if before != after {
             return Err(err(format!("source changed during copy: {}", c.shard)));
         }
@@ -1157,9 +1213,24 @@ fn publish_manifest(
     bytes.push(b'\n');
     let manifest_sha = sha256_bytes(&bytes);
     let final_path = cfg.output_root.join("manifest.jsonl");
+    let detached = cfg.output_root.join("manifest.jsonl.sha256");
+    let detached_bytes = format!("{manifest_sha}\n").into_bytes();
     if final_path.exists() {
         if fs::read(&final_path)? != bytes {
             return Err(err("existing completion manifest conflicts"));
+        }
+        if detached.exists() {
+            if fs::read(&detached)? != detached_bytes {
+                return Err(err("existing detached manifest hash conflicts"));
+            }
+        } else {
+            let nonce = nonce_hex()?;
+            let temp_hash = cfg.output_root.join(format!("manifest.jsonl.sha256.partial.{nonce}"));
+            let mut hf = OpenOptions::new().write(true).create_new(true).open(&temp_hash)?;
+            hf.write_all(&detached_bytes)?;
+            hf.sync_all()?;
+            drop(hf);
+            exclusive_publish(&temp_hash, &detached)?;
         }
         return Ok(manifest_sha);
     }
@@ -1171,11 +1242,12 @@ fn publish_manifest(
     f.sync_all()?;
     drop(f);
     exclusive_publish(&temp, &final_path)?;
-    let detached = cfg.output_root.join("manifest.jsonl.sha256");
+    if cfg.test_interrupt_after_manifest {
+        return Err(err("injected R001 test interruption after manifest publication"));
+    }
     let temp_hash = cfg.output_root.join(format!("manifest.jsonl.sha256.partial.{nonce}"));
     let mut hf = OpenOptions::new().write(true).create_new(true).open(&temp_hash)?;
-    hf.write_all(manifest_sha.as_bytes())?;
-    hf.write_all(b"\n")?;
+    hf.write_all(&detached_bytes)?;
     hf.sync_all()?;
     drop(hf);
     exclusive_publish(&temp_hash, &detached)?;
@@ -1314,5 +1386,15 @@ mod tests {
         assert!(checked_add(u64::MAX, 1, "test").is_err());
         assert!(checked_mul(u64::MAX, 2, "test").is_err());
         assert!(align_up(u64::MAX, FORMAT_ALIGNMENT).is_err());
+    }
+
+    #[test]
+    fn partial_nonce_is_lowercase_hex_and_bound_to_basename() {
+        let nonce = "0123456789abcdef0123456789abcdef";
+        let prefix = "expert-000.pmlxexp.partial.";
+        assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, nonce).is_ok());
+        assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "../escape").is_err());
+        assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "0123456789ABCDEF0123456789ABCDEF").is_err());
+        assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "fedcba9876543210fedcba9876543210").is_err());
     }
 }
