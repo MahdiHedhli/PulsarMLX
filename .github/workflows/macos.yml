@@ -594,6 +594,48 @@ jobs:
           assert json.loads((root / "f017-synthetic-family.json").read_text())["result"] == "PASS"
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify V12 checkpoint identity authority
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          .venv/bin/python scripts/research/generate_f017_checkpoint_identity_authority_v12.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_checkpoint_identity_authority_v12.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_checkpoint_identity_authority_v12.py \
+            > "$RUNNER_TEMP/f017-v12-checkpoint-identity-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/rehearse_f017_event06_no_access_v12.py \
+            > "$RUNNER_TEMP/f017-event06-v12-no-access-rehearsal.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          qualification = json.loads((root / "f017-v12-checkpoint-identity-qualification.json").read_text())
+          rehearsal = json.loads((root / "f017-event06-v12-no-access-rehearsal.json").read_text())
+          assert qualification["result"] == "PASS"
+          assert qualification["successful_identity_stages"] >= 30
+          assert qualification["minimal_six_shard_packages"] >= 20
+          assert qualification["mixed_size_six_shard_packages"] >= 20
+          assert qualification["event_identity_variations"] >= 20
+          assert qualification["candidate_fresh_process_repetitions"] >= 20
+          assert qualification["installed_fresh_process_repetitions"] >= 20
+          assert qualification["total_failure_executions"] >= 300
+          assert qualification["filesystem_faults_realized"] >= 50
+          assert qualification["unexpected_passes"] == 0
+          assert qualification["original_checkpoint_shard_opens"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["state_created"] is False
+          assert rehearsal["event_06_executed"] is False
+          assert rehearsal["live_event_06_authority_created"] is False
+          assert rehearsal["original_checkpoint_root_opens"] == 0
+          assert rehearsal["original_checkpoint_shard_opens"] == 0
+          assert rehearsal["original_checkpoint_identity_hash_reads"] == 0
+          assert rehearsal["original_checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
