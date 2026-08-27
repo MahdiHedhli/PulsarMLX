@@ -8,7 +8,7 @@ from pathlib import Path
 
 from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes, sha256_bytes
 from f017_checkpoint_identity_authority_v12 import (
-    ValidatedIdentityAuthority, installed_document, validate_candidate_path,
+    ValidatedIdentityAuthority, installed_document, installed_expected, validate_candidate_path,
     validate_installed_path,
 )
 from f017_checkpoint_identity_lifecycle_v12 import failure
@@ -53,14 +53,17 @@ def install_noncanonical_candidate(candidate_path: Path, installed_path: Path, r
             "live_authority_installed":False,"checkpoint_opens":0,"checkpoint_reads":0}
 
 
-def validate_installed_triple(installed_path: Path, receipt_path: Path) -> dict:
-    authority = validate_installed_path(installed_path)
+def validate_installed_triple(installed_path: Path, receipt_path: Path,
+                              candidate: ValidatedIdentityAuthority) -> dict:
+    authority = validate_installed_path(installed_path, installed_expected(candidate))
     receipt_raw = receipt_path.read_bytes()
     receipt_sha = sha256_bytes(receipt_raw)
     if authority.get("installation_receipt_sha256") != receipt_sha:
         raise failure("F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH", "installation receipt binding")
     receipt = __import__("f017_bounded_artifact_decode_v1").parse_artifact_bytes(receipt_raw)
     if (receipt.get("candidate_sha256") != authority.get("installed_authorization_sha256")
+            or receipt.get("authorization_id") != authority.get("authorization_id")
+            or receipt.get("package_attempt_id") != authority.get("package_attempt_id")
             or receipt.get("live_authority") is not False):
         raise failure("F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH", "installation receipt authority")
     reports = [validate_primary(authority, posture="INSTALLED"),

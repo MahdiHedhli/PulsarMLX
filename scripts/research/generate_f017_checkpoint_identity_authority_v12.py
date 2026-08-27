@@ -9,7 +9,7 @@ from pathlib import Path
 
 from f017_checkpoint_identity_authority_v12 import CANDIDATE_KEYS, INSTALLED_EXTRA_KEYS
 from f017_checkpoint_identity_capability_v12 import validate_capability
-from f017_checkpoint_identity_lifecycle_v12 import OUTCOMES
+from f017_checkpoint_identity_lifecycle_v12 import OUTCOMES, OUTCOME_DETAILS
 from f017_event06_readiness_authority_v1 import CONTRACT as READINESS_CONTRACT
 from rehearse_f017_event06_no_access_v12 import rehearse
 
@@ -25,6 +25,11 @@ def check() -> dict:
         raise ValueError("V12 installed field census")
     if set(lifecycle["modeled_outcomes"]) != set(OUTCOMES):
         raise ValueError("V12 lifecycle outcome census")
+    failure_transitions = {details[0] for details in OUTCOME_DETAILS.values()}
+    if set(lifecycle.get("modeled_failure_transitions", ())) != failure_transitions:
+        raise ValueError("V12 lifecycle failure transition census")
+    if not failure_transitions.issubset(set(lifecycle["ordered_transitions"])):
+        raise ValueError("V12 lifecycle ordered transition coverage")
     if lifecycle["modeled_outcomes_use_generic_fallback"] is not False:
         raise ValueError("V12 modeled fallback policy")
     readiness = json.loads(READINESS_CONTRACT.read_text())

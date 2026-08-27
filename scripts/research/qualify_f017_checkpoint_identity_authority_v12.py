@@ -243,6 +243,69 @@ def _scope_separation(base: Path) -> dict:
             "original_checkpoint_access":0,"result":"PASS" if rejected == 40 else "FAIL"}
 
 
+def _install_boundary_faults(base: Path) -> tuple[int, int]:
+    """Prove a digest-spliced but field-substituted install cannot cross the gate."""
+    rejected = unexpected = 0
+    for index in range(20):
+        candidate_a, _, _, _ = _package(base, f"INSTALL-A-{index:02d}", mixed=False)
+        _, installed_b, receipt_b, _ = _package(base, f"INSTALL-B-{index:02d}", mixed=True)
+        candidate_a_sha = hashlib.sha256(candidate_a.read_bytes()).hexdigest()
+        receipt = json.loads(receipt_b.read_text())
+        receipt["candidate_sha256"] = candidate_a_sha
+        receipt_b.write_bytes(canonical_bytes(receipt))
+        installed = json.loads(installed_b.read_text())
+        installed["installed_authorization_sha256"] = candidate_a_sha
+        installed["installation_receipt_sha256"] = hashlib.sha256(receipt_b.read_bytes()).hexdigest()
+        installed_b.write_bytes(canonical_bytes(installed))
+        try:
+            validate_package_start(candidate_a, installed_b, receipt_b)
+        except IdentityAuthorityError as exc:
+            if exc.outcome_id == "F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH":
+                rejected += 1
+            else:
+                unexpected += 1
+        else:
+            unexpected += 1
+    return rejected, unexpected
+
+
+def _live_drift_faults(base: Path) -> tuple[int, int, dict[str, int]]:
+    """Reach both pre-package drift outcomes through their measured validators."""
+    realized = unexpected = 0
+    counts: dict[str, int] = {}
+    drift_source = base / "producer-capability-drift.py"
+    drift_source.write_text("import subprocess\n", encoding="utf-8")
+    try:
+        with mock.patch("f017_checkpoint_identity_capability_v12.PRODUCER", drift_source):
+            validate_capability()
+    except IdentityAuthorityError as exc:
+        if exc.outcome_id == "F017_V12_IDENTITY_CAPABILITY_DRIFT":
+            realized += 1; counts[exc.outcome_id] = 1
+        else:
+            unexpected += 1
+    else:
+        unexpected += 1
+
+    candidate_path, installed_path, receipt_path, _ = _package(base, "PRODUCER-MEASUREMENT-DRIFT")
+    candidate_authority = validate_candidate_triple(candidate_path)["authority"]
+    import f017_checkpoint_identity_authority_v12 as authority_module
+    original_sha = authority_module._sha
+    measured = (ROOT / json.loads(installed_path.read_text())["measured_producer_path"]).resolve()
+    def drift_sha(path: Path) -> str:
+        return "0" * 64 if path.resolve() == measured else original_sha(path)
+    try:
+        with mock.patch("f017_checkpoint_identity_authority_v12._sha", side_effect=drift_sha):
+            validate_installed_triple(installed_path, receipt_path, candidate_authority)
+    except IdentityAuthorityError as exc:
+        if exc.outcome_id == "F017_V12_IDENTITY_PRODUCER_MEASUREMENT_DRIFT":
+            realized += 1; counts[exc.outcome_id] = 1
+        else:
+            unexpected += 1
+    else:
+        unexpected += 1
+    return realized, unexpected, counts
+
+
 def _runtime_outcome_campaign() -> tuple[int, int, dict[str, int], int]:
     executions = unexpected = fresh_processes = 0
     counts: dict[str, int] = {}
@@ -272,7 +335,10 @@ def _fresh_processes(candidate_path: Path, installed_path: Path, receipt_path: P
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(ROOT / "scripts/research")
     candidate_code = "from pathlib import Path; from validate_f017_corrected_oracle_access_v12 import validate_candidate_triple; validate_candidate_triple(Path(__import__('sys').argv[1]))"
-    installed_code = "from pathlib import Path; from validate_f017_corrected_oracle_access_v12 import validate_installed_triple; import sys; validate_installed_triple(Path(sys.argv[1]),Path(sys.argv[2]))"
+    installed_code = ("from pathlib import Path; from validate_f017_corrected_oracle_access_v12 import "
+                      "validate_candidate_triple,validate_installed_triple; import sys; "
+                      "c=validate_candidate_triple(Path(sys.argv[1]))['authority']; "
+                      "validate_installed_triple(Path(sys.argv[2]),Path(sys.argv[3]),c)")
     identity_code = ("from pathlib import Path; import sys; "
                      "from execute_f017_corrected_oracle_event_v12 import validate_package_start,run_identity_stage; "
                      "g=validate_package_start(Path(sys.argv[1]),Path(sys.argv[2]),Path(sys.argv[3])); "
@@ -284,7 +350,8 @@ def _fresh_processes(candidate_path: Path, installed_path: Path, receipt_path: P
     for index in range(20):
         subprocess.run([sys.executable, "-c", candidate_code, str(candidate_path)], check=True, env=environment, stdout=subprocess.DEVNULL)
         candidate_pass += 1
-        subprocess.run([sys.executable, "-c", installed_code, str(installed_path), str(receipt_path)], check=True, env=environment, stdout=subprocess.DEVNULL)
+        subprocess.run([sys.executable, "-c", installed_code, str(candidate_path), str(installed_path),
+                        str(receipt_path)], check=True, env=environment, stdout=subprocess.DEVNULL)
         installed_pass += 1
         subprocess.run([sys.executable, "-c", identity_code, str(candidate_path), str(installed_path),
                         str(receipt_path), package_attempt_id, str(base / f"fresh-identity-{index:02d}")],
@@ -306,11 +373,14 @@ def qualify() -> dict:
         filesystem_realized, filesystem_unexpected, filesystem_categories = _filesystem_faults(base)
         evidence_realized, evidence_unexpected, evidence_categories = _evidence_and_close_faults(base)
         scope_separation = _scope_separation(base)
+        install_rejected, install_unexpected = _install_boundary_faults(base)
+        live_drift_realized, live_drift_unexpected, live_drift_counts = _live_drift_faults(base)
         candidate_path, installed_path, receipt_path, fresh_value = _package(base, "FRESH")
         fresh_candidate, fresh_installed, fresh_identity = _fresh_processes(
             candidate_path, installed_path, receipt_path, fresh_value["package_attempt_id"], base)
         outcome_executions, outcome_unexpected, outcome_counts, outcome_fresh = _runtime_outcome_campaign()
-    unexpected = unexpected_mutations + filesystem_unexpected + evidence_unexpected + outcome_unexpected
+    unexpected = (unexpected_mutations + filesystem_unexpected + evidence_unexpected
+                  + outcome_unexpected + install_unexpected + live_drift_unexpected)
     return {
         "schema":"pulsarmlx.f017.checkpoint-identity-authority-qualification/12.0.0",
         "authority_scope":"SYNTHETIC", "operation_class":"CHECKPOINT_IDENTITY_QUALIFICATION",
@@ -324,6 +394,7 @@ def qualify() -> dict:
         "mixed_format_six_shard_packages":len(mixed_packages),
         "event_identity_variations":len(event_variations),
         "candidate_mutations":250, "candidate_mutations_rejected":rejected,
+        "install_boundary_substitutions":20,"install_boundary_substitutions_rejected":install_rejected,
         "candidate_mutation_categories":["historical_event_scope","scope","operation","generation","identity","checkpoint_set","root","contract","producer","capability","report","one_shot","alias","coercion"],
         "filesystem_fault_executions":54, "filesystem_faults_realized":filesystem_realized,
         "filesystem_fault_categories":filesystem_categories,
@@ -331,7 +402,9 @@ def qualify() -> dict:
         "evidence_and_close_fault_categories":evidence_categories,
         "runtime_failure_executions":outcome_executions,"runtime_failure_fresh_processes":outcome_fresh,
         "runtime_outcome_counts":outcome_counts,
-        "total_failure_executions":outcome_executions + filesystem_realized + evidence_realized,
+        "live_drift_faults_realized":live_drift_realized,
+        "live_drift_outcome_counts":live_drift_counts,
+        "total_failure_executions":outcome_executions + filesystem_realized + evidence_realized + install_rejected + live_drift_realized,
         "modeled_outcomes":len(OUTCOMES), "modeled_outcomes_realized":len(outcome_counts),
         "generic_fallback_for_modeled_failures":False,"scope_separation":scope_separation,
         "unexpected_passes":unexpected,
@@ -341,6 +414,7 @@ def qualify() -> dict:
         "capability":capability,
         "result":"PASS" if (outcome_executions >= 300 and filesystem_realized >= 50
                               and evidence_realized == 17 and scope_separation["result"] == "PASS"
+                              and install_rejected == 20 and live_drift_realized == 2
                               and unexpected == 0) else "FAIL",
     }
 

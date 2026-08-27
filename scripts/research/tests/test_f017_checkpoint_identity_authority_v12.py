@@ -4,15 +4,21 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import validate_candidate_bytes
+from f017_checkpoint_identity_capability_v12 import validate_capability
 from f017_checkpoint_identity_lifecycle_v12 import IdentityAuthorityError
 from f017_corrected_oracle_authorization_v12 import build_identity_candidate
 from f017_event06_readiness_authority_v1 import validate_event06_readiness_value
+from execute_f017_corrected_oracle_event_v12 import validate_package_start
 from qualify_f017_checkpoint_identity_authority_v12 import qualify
+from validate_f017_corrected_oracle_access_v12 import (
+    bank_candidate, install_noncanonical_candidate, validate_installed_triple,
+)
 
 CONTRACT = "specs/017-rust-native-inference-runtime/contracts/f017-synthetic-checkpoint-identity-v12.json"
 PLAN_SHA = hashlib.sha256(b"F017-V12-TEST-PLAN").hexdigest()
@@ -106,8 +112,66 @@ def test_overnight_qualification_census() -> None:
     assert result["runtime_failure_executions"] >= 300
     assert result["runtime_failure_fresh_processes"] >= 60
     assert result["modeled_outcomes_realized"] == result["modeled_outcomes"]
+    assert result["install_boundary_substitutions_rejected"] == 20
+    assert result["live_drift_faults_realized"] == 2
     assert result["filesystem_faults_realized"] >= 50
     assert result["evidence_and_close_faults_realized"] >= 17
     assert result["scope_separation"]["result"] == "PASS"
     assert result["unexpected_passes"] == 0
     assert result["original_checkpoint_shard_opens"] == 0
+
+
+def test_installed_field_substitution_is_rejected(tmp_path: Path) -> None:
+    path_a = tmp_path / "a"; path_a.mkdir()
+    path_b = tmp_path / "b"; path_b.mkdir()
+    candidate_a = candidate(path_a)
+    candidate_b = candidate(path_b)
+    candidate_b["authorization_id"] = "F017-V12-TEST-AUTH-02"
+    candidate_b["package_attempt_id"] = "F017-V12-TEST-PACKAGE-02"
+    candidate_a_path = tmp_path / "candidate-a.json"
+    candidate_b_path = tmp_path / "candidate-b.json"
+    installed_b_path = tmp_path / "installed-b.json"
+    receipt_b_path = tmp_path / "receipt-b.json"
+    candidate_a_sha = bank_candidate(candidate_a_path, candidate_a)
+    bank_candidate(candidate_b_path, candidate_b)
+    install_noncanonical_candidate(candidate_b_path, installed_b_path, receipt_b_path)
+    receipt = json.loads(receipt_b_path.read_text())
+    receipt["candidate_sha256"] = candidate_a_sha
+    receipt_b_path.write_bytes(canonical_bytes(receipt))
+    installed = json.loads(installed_b_path.read_text())
+    installed["installed_authorization_sha256"] = candidate_a_sha
+    installed["installation_receipt_sha256"] = hashlib.sha256(receipt_b_path.read_bytes()).hexdigest()
+    installed_b_path.write_bytes(canonical_bytes(installed))
+    with pytest.raises(IdentityAuthorityError) as raised:
+        validate_package_start(candidate_a_path, installed_b_path, receipt_b_path)
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH"
+
+
+def test_capability_drift_has_live_modeled_raise_site(tmp_path: Path) -> None:
+    drift = tmp_path / "producer.py"
+    drift.write_text("import subprocess\n", encoding="utf-8")
+    with mock.patch("f017_checkpoint_identity_capability_v12.PRODUCER", drift):
+        with pytest.raises(IdentityAuthorityError) as raised:
+            validate_capability()
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_CAPABILITY_DRIFT"
+
+
+def test_producer_measurement_drift_has_live_modeled_raise_site(tmp_path: Path) -> None:
+    candidate_path = tmp_path / "candidate.json"
+    installed_path = tmp_path / "installed.json"
+    receipt_path = tmp_path / "receipt.json"
+    value = candidate(tmp_path)
+    bank_candidate(candidate_path, value)
+    install_noncanonical_candidate(candidate_path, installed_path, receipt_path)
+    candidate_authority = validate_candidate_bytes(candidate_path.read_bytes())
+    import f017_checkpoint_identity_authority_v12 as authority_module
+    original_sha = authority_module._sha
+    measured = (authority_module.ROOT / value["measured_producer_path"]).resolve()
+    def drift_sha(path: Path) -> str:
+        return "0" * 64 if path.resolve() == measured else original_sha(path)
+    with mock.patch("f017_checkpoint_identity_authority_v12._sha", side_effect=drift_sha):
+        with pytest.raises(IdentityAuthorityError) as raised:
+            validate_installed_triple(
+                installed_path, receipt_path, candidate_authority,
+            )
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_PRODUCER_MEASUREMENT_DRIFT"

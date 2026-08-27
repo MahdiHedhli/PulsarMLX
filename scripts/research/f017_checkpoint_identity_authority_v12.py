@@ -143,6 +143,8 @@ def _validate(raw: bytes, *, installed: bool, expected: Mapping[str, object] | N
             path = _repo_path(value[key])
             digest_key = key.removesuffix("_path") + "_sha256"
             if _sha(path) != value[digest_key]:
+                if installed and key == "measured_producer_path":
+                    raise failure("F017_V12_IDENTITY_PRODUCER_MEASUREMENT_DRIFT", key)
                 raise ValueError(f"repository binding: {key}")
         contract = _contract(value)
         if contract.get("authority_scope") != value["authority_scope"]:
@@ -201,6 +203,16 @@ def installed_document(candidate: ValidatedIdentityAuthority, installation_recei
     value["installed_authorization_sha256"] = candidate.source_sha256
     value["installation_receipt_sha256"] = installation_receipt_sha256
     return value
+
+
+def installed_expected(candidate: ValidatedIdentityAuthority) -> dict:
+    """Derive every installed shared-field binding from one validated candidate."""
+    if type(candidate) is not ValidatedIdentityAuthority or candidate.posture != "CANDIDATE":
+        raise failure("F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH", "candidate authority type")
+    expected = candidate.as_dict()
+    expected.pop("schema")
+    expected["installed_authorization_sha256"] = candidate.source_sha256
+    return expected
 
 
 def canonical_candidate(value: Mapping[str, object]) -> bytes:
