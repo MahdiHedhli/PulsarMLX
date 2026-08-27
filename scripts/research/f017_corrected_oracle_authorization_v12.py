@@ -8,6 +8,9 @@ from typing import Mapping
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import CANDIDATE_SCHEMA, validate_candidate_bytes
+from f017_event06_readiness_authority_v1 import (
+    ValidatedEvent06Readiness, validate_event06_readiness_declaration,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 PRIMARY = "scripts/research/f017_corrected_oracle_primary_wrapper_v12.py"
@@ -58,3 +61,28 @@ def candidate_bytes(value: Mapping[str, object]) -> bytes:
     raw = canonical_bytes(dict(value))
     validate_candidate_bytes(raw)
     return raw
+
+
+def validate_execution_readiness(path: Path, *, expected: Mapping[str, object] | None = None,
+                                 repository_root: Path = ROOT) -> ValidatedEvent06Readiness:
+    """Measured readiness entry point used by validation-only and future live rendering."""
+    return validate_event06_readiness_declaration(path, repository_root=repository_root, expected=expected)
+
+
+def build_identity_candidate_from_readiness(readiness: ValidatedEvent06Readiness, *,
+                                            authorization_id: str, package_attempt_id: str,
+                                            checkpoint_root: Path,
+                                            event_identity_plan_sha256: str) -> dict:
+    if type(readiness) is not ValidatedEvent06Readiness:
+        raise ValueError("Event 06 validated readiness type")
+    if readiness.values["active_corrected_oracle_generation"] != "V12":
+        raise ValueError("Event 06 readiness generation")
+    return build_identity_candidate(
+        authority_scope="PRODUCTION", authorization_id=authorization_id,
+        package_attempt_id=package_attempt_id, checkpoint_root=checkpoint_root,
+        checkpoint_identity_contract_path=(
+            "specs/017-rust-native-inference-runtime/contracts/"
+            "f017-corrected-oracle-checkpoint-identity-v12.json"
+        ),
+        event_identity_plan_sha256=event_identity_plan_sha256,
+    )
