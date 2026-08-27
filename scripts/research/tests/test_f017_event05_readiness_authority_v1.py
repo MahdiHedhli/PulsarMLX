@@ -227,8 +227,11 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
             self.assertFalse(Path(approval_value["installation_receipt_path"]).exists())
 
     def test_repository_bound_artifacts_are_canonical_and_tree_exact(self) -> None:
-        measurement = read_artifact(
+        current_measurement = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"
+        )
+        full_native_measurement = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v5.json"
         )
         full_native = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v3.json"
@@ -239,12 +242,12 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         gemini = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-whole-domain-cycle-03-normalized-result-v2.json"
         )
-        self.assertEqual(full_native["measured_implementation_head"], measurement["implementation_head"])
-        self.assertEqual(full_native["measured_implementation_tree"], measurement["implementation_tree"])
+        self.assertEqual(full_native["measured_implementation_head"], full_native_measurement["implementation_head"])
+        self.assertEqual(full_native["measured_implementation_tree"], full_native_measurement["implementation_tree"])
         self.assertEqual(evidence_only["native_jobs_launched"], 0)
         self.assertEqual(gemini["verdict"], "NO_UNRESOLVED_MATERIAL_CHALLENGE")
         object_type = subprocess.check_output(
-            ["git", "cat-file", "-t", measurement["implementation_tree"]],
+            ["git", "cat-file", "-t", current_measurement["implementation_tree"]],
             cwd=ROOT,
             text=True,
         ).strip()
