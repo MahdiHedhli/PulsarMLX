@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0","graph_id":"F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01","node":"R10","status":"PASS","runtime_failure_executions":300,"filesystem_faults":50,"unexpected_passes":0,"generic_fallback_for_modeled_failures":false,"event_06_executed":false,"original_checkpoint_access":0}

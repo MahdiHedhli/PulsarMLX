@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-checkpoint-identity-authority-manifest/1.0.0",
+  "implementation_head": "4f7b5e410a8bf06d3469ac70e95a3a9dae4d2d81",
+  "implementation_tree": "8c091f994c68cd0a59093929b35f2c4a0433ab40",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-implementation-measurement-v1.json": "195b0265ea9fb4b14f5bcf421e679a2b1529945a166b64a0ea999c4e1a49edbf",
+    "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-candidate-install-instantiability-v1.json": "602de39ef7a0c7f90ec7cb875f7d9fd52ca18baa1bcf051495f0200bcd8137d0",
+    "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-synthetic-qualification-v1.json": "7761e00ee0160d2b75ca5d463ff3e915fc90416da764bc5b7266b6da73d2f14a",
+    "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-failure-qualification-v1.json": "51bf9e9b642d5010b20c5321e00a57f9259cd967cc78c1a4e8663eeead01fd35",
+    "docs/architecture/reviews/evidence/f017-event06-production-shaped-no-access-rehearsal-v12-v1.json": "da70c30b0a0b2468e93f041bd0e8751d99c70842016d88e7f8ca8932995f174b",
+    "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-local-regression-v1.json": "b8ae888aa68cc417184641a7bb8d41219e4c5bbf4538647e577d1b4b48e0f726",
+    "docs/architecture/reviews/evidence/f017-event06-v12-opus-design-cycle-02-normalized-result.json": "900e7035790f31c7952a66ff5e0a4f60ee1b2377b99f281d97d66356aa6dae2d",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-authority-v12.json": "9e6f1c5492be43fef0de82dd4051217a05222a322766ab09837e6268894631f1",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-v12.json": "fee13b771363cd29123c3e945c856560e11ca9752a0501139dd518c8aafb20f2",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v12.json": "c1c8f44cbfefaaa48bda191d7e7ce5634fd5422d2167217647140f935d0e015f"
+  },
+  "binding_count": 10,
+  "active_corrected_oracle_generation": "NONE",
+  "event_05_retry": false,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.v12-checkpoint-identity-implementation-measurement/1.0.0",
+  "implementation_head": "4f7b5e410a8bf06d3469ac70e95a3a9dae4d2d81",
+  "implementation_tree": "8c091f994c68cd0a59093929b35f2c4a0433ab40",
+  "generation": "V12",
+  "paths": {
+    "scripts/research/execute_f017_corrected_oracle_event_v12.py": "66b8b880fac1a56554e615feb1fd198fdcbd7e63764ed24f3af49fd78dd6a878",
+    "scripts/research/f017_checkpoint_identity_authority_v12.py": "8c542e323b4eb8229ea06eac2bfac2670286587c6b5dcadd7930b2f92a5b11b6",
+    "scripts/research/f017_checkpoint_identity_capability_v12.py": "7817c02dbbf0169297f9a15f625776e74650c133d91d4a01d136171a4d914900",
+    "scripts/research/f017_checkpoint_identity_lifecycle_v12.py": "9ed8f25bb6a74e665a84f157176edfe17de7b17f01b85c74946036f3ad03599c",
+    "scripts/research/f017_checkpoint_identity_producer_v12.py": "8a7f987dd27e8d99c68133c578a18e595b7022658877cf397f520cbfc8cc5ad1",
+    "scripts/research/f017_corrected_oracle_authorization_v12.py": "1013c387eef54f01382c408b4996eb5917a77cb8e2d91b344841c313208d245b",
+    "scripts/research/f017_corrected_oracle_primary_wrapper_v12.py": "6fdb6bfdd98859618cfba39859f95acfa97c75427c3d2063104fa4bbc1b00ff5",
+    "scripts/research/f017_corrected_oracle_secondary_wrapper_v12.py": "c476299cc3a7ab9baa9d81bde0da1ef6b9916de1bb7ccb58a4bbf63c90962ca8",
+    "scripts/research/qualify_f017_checkpoint_identity_authority_v12.py": "4d3facb29d0e22bf9f97fa53ecbc55e0057423ae4535fb1b2bcd47372cfd4ad6",
+    "scripts/research/rehearse_f017_event06_no_access_v12.py": "cf79357e90fcfb859e440d2dbcfc6ea1df1352f35722e70f70a57520e33b64d0",
+    "scripts/research/validate_f017_corrected_oracle_access_v12.py": "d6d4f3e3fb71a76751633d290a3c12e0c1b028aa8a79780323fe6b8875e17328",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-authority-v12.json": "9e6f1c5492be43fef0de82dd4051217a05222a322766ab09837e6268894631f1",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-capability-v12.json": "2b3f32fcc668a61e7ac619074ec8c0210a1e4e346f9c76d7b5f068fa66c90e88",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-lifecycle-outcomes-v12.json": "8877a4159b4f15f240100e02a577462e78fa2e1a53573f2aa4a8e54a8850b701",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-v12.json": "fee13b771363cd29123c3e945c856560e11ca9752a0501139dd518c8aafb20f2",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v12.json": "c1c8f44cbfefaaa48bda191d7e7ce5634fd5422d2167217647140f935d0e015f",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-interface-v12.json": "79adff5d8c16d7bf553098183cae502c213a6fa99f072016bfaca51f1066517c",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-execution-go-template-v12.json": "0d096f994bc953d80381b87bba0579a2ce6477095129f233a1b2cb8247e81d79",
+    "specs/017-rust-native-inference-runtime/contracts/f017-synthetic-checkpoint-identity-v12.json": "f649363557cdf3aaf13ae211f7e75c9535285402456f23502c5e8d28da5be88a",
+    "specs/017-rust-native-inference-runtime/contracts/f017-synthetic-checkpoint-identity-mixed-v12.json": "881358714771b4bc7aae86edfbf0bc8259a385e734e38c8d3735f11d6a7bfc11"
+  },
+  "historical_bindings": {
+    "scripts/research/f017_checkpoint_identity_producer_v10.py": "d33fd06705245b0f623e46b828bd20373fa2e691834918a2f715f50731b2cc9f",
+    "scripts/research/execute_f017_corrected_oracle_event_v11.py": "967c1d5566e9faae801d1641c9839497d9ecc79aae28b34f1d6dba6679aba1fe",
+    "scripts/research/f017_corrected_oracle_primary_numerics_v3.py": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+    "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101"
+  },
+  "numerical_drift": 0,
+  "result_authority_drift": 0,
+  "event_06_executed": false,
+  "original_checkpoint_access": 0,
+  "result": "PASS"
+}

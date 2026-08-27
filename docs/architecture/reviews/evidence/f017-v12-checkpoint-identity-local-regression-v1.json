@@ -1,0 +1,1 @@
+{"exact_implementation_head":"4f7b5e410a8bf06d3469ac70e95a3a9dae4d2d81","identity_authority_tests":8,"related_regression_tests":248,"subtests":31,"failures":0,"original_checkpoint_access":0,"python":"3.13.13","result":"PASS","schema":"pulsarmlx.f017.v12-checkpoint-identity-local-regression/1.0.0"}
