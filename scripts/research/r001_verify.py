@@ -14,7 +14,7 @@ import re
 import shutil
 import struct
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, BinaryIO
 
@@ -431,12 +431,19 @@ def negative_tests(args)->dict[str,Any]:
         except Exception as e: cases.append({"case":name,"status":"rejected","error":type(e).__name__});return
         raise AssertionError(f"negative case passed: {name}")
     expect_fail("bad_header",lambda p: _flip(p,0))
+    expect_fail("header_padding_corrupt",lambda p: _flip(p,HEADER_LEN-1))
     expect_fail("payload_corrupt",lambda p: _flip(p,HEADER_LEN))
     expect_fail("footer_corrupt",lambda p: _flip(p,p.stat().st_size-FOOTER_LEN))
+    expect_fail("footer_padding_corrupt",lambda p: _flip(p,p.stat().st_size-1))
     expect_fail("truncated",lambda p: os.truncate(p,p.stat().st_size-1))
     expect_fail("trailing",lambda p: p.open("ab").write(b"x"))
     wrong=expected_object(expert_map,exp.layer,exp.expert_class,exp.expert+1)
     expect_fail("wrong_expert",lambda p: None,wrong)
+    wrong_components=replace(exp,components=(exp.components[1],exp.components[0],exp.components[2]))
+    expect_fail("wrong_component_order",lambda p: None,wrong_components)
+    shifted=replace(exp.components[0],offset=exp.components[0].offset+exp.components[0].tensor.block_bytes)
+    wrong_offset=replace(exp,components=(shifted,exp.components[1],exp.components[2]))
+    expect_fail("wrong_source_offset",lambda p: None,wrong_offset)
     partial=args.scratch/"interrupted.partial";partial.write_bytes(source.read_bytes()[:8192])
     try: verify_bundle(partial,rec,exp,args.checkpoint_dir,set())
     except Exception as e: cases.append({"case":"interrupted_partial","status":"rejected","error":type(e).__name__})
