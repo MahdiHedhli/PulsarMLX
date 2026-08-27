@@ -39,6 +39,7 @@ class ValidatedApproval:
     values: Mapping[str, Any]
     source_path: Path
     source_sha256: str
+    posture: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +84,7 @@ def validate_operator_approval(path: Path, expected_posture: str, *, now_ns: int
     if not valid:
         raise ValueError("Event 05 approval posture")
     normalized = {name:value[name] for name in APPROVAL_FIELDS - {"schema", "decision", "live"}}
-    return ValidatedApproval(MappingProxyType(normalized), path.resolve(strict=True), _sha(path))
+    return ValidatedApproval(MappingProxyType(normalized), path.resolve(strict=True), _sha(path), expected_posture)
 
 
 def build_operator_go_candidate(approval: ValidatedApproval, readiness: ValidatedReadiness,
@@ -91,6 +92,8 @@ def build_operator_go_candidate(approval: ValidatedApproval, readiness: Validate
     """Build candidate bytes identically for validation-only and future live admission."""
     if not isinstance(approval, ValidatedApproval) or not isinstance(readiness, ValidatedReadiness):
         raise ValueError("Event 05 validated authority type")
+    if approval.posture == "LIVE_OPERATOR_GO" and readiness.authority_scope != "FINAL_EVENT05_EXECUTION_READINESS":
+        raise ValueError("Event 05 live approval requires final readiness")
     values = approval.values
     if (values["readiness_declaration_sha256"] != readiness.source_sha256
             or values["authority_manifest_sha256"] != readiness.authority_manifest_sha256):

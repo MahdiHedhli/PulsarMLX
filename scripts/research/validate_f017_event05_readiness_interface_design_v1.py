@@ -7,11 +7,11 @@ import hashlib
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"
-DESIGN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"
-MUTATION_PLAN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v1.json"
+CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v2.json"
+DESIGN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v2.json"
+MUTATION_PLAN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v2.json"
 REPRODUCTION = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mismatch-reproduction-v1.json"
-MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v3.json"
+MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v4.json"
 
 EXPECTED_FREE_VALUE_FIELDS = {
     "authority_manifest_path", "authority_manifest_sha256", "scientific_access_contract_path",
@@ -91,8 +91,11 @@ def validate_contract(contract: dict) -> None:
     if set(typed) != set(fields):
         raise ValueError("readiness type exhaustiveness")
     predicates = contract.get("exact_final_predicates")
+    prepared = contract.get("exact_prepared_predicates")
     if type(predicates) is not dict or any(key not in fields for key in predicates):
         raise ValueError("readiness predicate census")
+    if type(prepared) is not dict or set(prepared) != set(predicates):
+        raise ValueError("readiness prepared predicate census")
     free = contract.get("free_value_fields")
     if type(free) is not list or len(free) != len(set(free)) or any(name not in fields for name in free):
         raise ValueError("readiness free-value census")
@@ -114,6 +117,13 @@ def validate_contract(contract: dict) -> None:
     for name, required in EXPECTED_SAFETY_PREDICATES.items():
         if predicates.get(name) != required or type(predicates.get(name)) is not type(required):
             raise ValueError(f"readiness frozen safety predicate: {name}")
+    if (prepared.get("authority_scope") != "VALIDATION_ONLY_PREPARED"
+            or prepared.get("ready_for_corrected_full_checkpoint_oracle_event_05_execution_go") is not False
+            or prepared.get("gemini_verdict") != "VALIDATION_ONLY_PREPARED"
+            or prepared.get("opus_verdict") != "VALIDATION_ONLY_PREPARED"):
+        raise ValueError("readiness prepared scope")
+    if set(contract.get("scope_policy", {})) != {"FINAL_EVENT05_EXECUTION_READINESS", "VALIDATION_ONLY_PREPARED"}:
+        raise ValueError("readiness scope policy")
     for name in exact_types["repository_relative_path_fields"]:
         if not name.endswith("_path"):
             raise ValueError("readiness path field")
@@ -129,7 +139,7 @@ def validate_mutation_plan(plan: dict) -> None:
     if type(categories) is not dict or any(type(value) is not int or value <= 0 for value in categories.values()):
         raise ValueError("readiness mutation categories")
     planned = sum(categories.values())
-    if (plan.get("minimum_substantive_cases") != 220 or plan.get("minimum_planned_cases") != 226
+    if (plan.get("minimum_substantive_cases") != 225 or plan.get("minimum_planned_cases") != 231
             or planned != plan.get("minimum_planned_cases") or planned < plan.get("minimum_substantive_cases")):
         raise ValueError("readiness mutation floor")
     if set(plan.get("mandatory_named_mutations", [])) != REQUIRED_NAMED_MUTATIONS:

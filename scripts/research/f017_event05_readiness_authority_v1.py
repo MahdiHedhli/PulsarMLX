@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
-import json
 from pathlib import Path, PurePosixPath
+import subprocess
 from types import MappingProxyType
 from typing import Any, Mapping
 
 from f017_bounded_artifact_decode_v1 import read_artifact
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"
+CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v2.json"
 
 CANONICAL_MANIFEST_ROLES = {
     "implementation_measurement",
@@ -52,6 +52,10 @@ class ValidatedReadiness:
     values: Mapping[str, Any]
     source_path: Path
     source_sha256: str
+
+    @property
+    def authority_scope(self) -> str:
+        return str(self.values["authority_scope"])
 
     @property
     def measured_implementation_head(self) -> str:
@@ -119,7 +123,51 @@ def _require_role_binding(values: Mapping[str, Any], artifacts: Mapping[str, dic
         raise ValueError(f"readiness authority role binding: {role}")
 
 
-def _validate_bound_authority(values: Mapping[str, Any], root: Path) -> None:
+def _git_object(object_name: str, expected_type: str) -> None:
+    try:
+        actual = subprocess.check_output(
+            ["git", "cat-file", "-t", object_name], cwd=ROOT, text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError("readiness implementation git object") from exc
+    if actual != expected_type:
+        raise ValueError("readiness implementation git object")
+
+
+def _validate_review_artifact(value: object, *, scope: str, role: str, policy: Mapping[str, Any]) -> None:
+    if type(value) is not dict:
+        raise ValueError(f"readiness {role} evidence")
+    expected_schema = policy[f"{role}_schema"]
+    if value.get("schema") != expected_schema:
+        raise ValueError(f"readiness {role} evidence schema")
+    if scope == "VALIDATION_ONLY_PREPARED":
+        required = {
+            "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
+            "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
+        }
+        for name, expected in required.items():
+            if value.get(name) != expected or type(value.get(name)) is not type(expected):
+                raise ValueError(f"readiness {role} prepared evidence")
+        return
+    expected_model = "gemini-3.1-pro-high" if role == "gemini" else "claude-opus-5"
+    verdict_field = "verdict" if role == "gemini" else "global_verdict"
+    expected_verdict = "NO_UNRESOLVED_MATERIAL_CHALLENGE" if role == "gemini" else "ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION"
+    required = {
+        "authority_scope":"FINAL_EVENT05_EXECUTION_READINESS", "final_authority":True,
+        "model":expected_model, verdict_field:expected_verdict,
+        "blocking_findings":0, "non_blocking_required_findings":0, "unresolved_claims":0,
+    }
+    for name, expected in required.items():
+        if value.get(name) != expected or type(value.get(name)) is not type(expected):
+            raise ValueError(f"readiness {role} final evidence")
+    for name, length in (("reviewed_head", 40), ("exact_response_sha256", 64)):
+        field = value.get(name)
+        if type(field) is not str or len(field) != length or field != field.lower() or any(c not in "0123456789abcdef" for c in field):
+            raise ValueError(f"readiness {role} final evidence")
+
+
+def _validate_bound_authority(values: Mapping[str, Any], root: Path, contract: Mapping[str, Any]) -> None:
     path_sha_fields = (
         ("authority_manifest_path", "authority_manifest_sha256"),
         ("scientific_access_contract_path", "scientific_access_contract_sha256"),
@@ -138,6 +186,14 @@ def _validate_bound_authority(values: Mapping[str, Any], root: Path) -> None:
         resolved[path_field] = target
 
     manifest = read_artifact(resolved["authority_manifest_path"])
+    scope = values["authority_scope"]
+    policy = contract["scope_policy"][scope]
+    if (manifest.get("schema") != policy["manifest_schema"]
+            or manifest.get("authority_scope") != scope
+            or manifest.get("final_authority") is not policy["final_authority"]):
+        raise ValueError("readiness authority manifest scope")
+    if scope == "VALIDATION_ONLY_PREPARED" and manifest.get("live_authority_permitted") is not False:
+        raise ValueError("readiness authority manifest scope")
     artifacts = _artifact_map(manifest, root)
     _require_role_binding(values, artifacts, "scientific_access", "scientific_access_contract_path", "scientific_access_contract_sha256")
     _require_role_binding(values, artifacts, "result_authority", "result_authority_path", "result_authority_sha256")
@@ -155,6 +211,13 @@ def _validate_bound_authority(values: Mapping[str, Any], root: Path) -> None:
             or manifest.get("implementation_head") != values["measured_implementation_head"]
             or manifest.get("implementation_tree") != values["measured_implementation_tree"]):
         raise ValueError("readiness implementation measurement")
+    head = values["measured_implementation_head"]
+    tree = values["measured_implementation_tree"]
+    _git_object(head, "commit")
+    _git_object(tree, "tree")
+    actual_tree = subprocess.check_output(["git", "rev-parse", f"{head}^{{tree}}"], cwd=ROOT, text=True).strip()
+    if actual_tree != tree:
+        raise ValueError("readiness implementation git tree")
 
     full_native = read_artifact(resolved["full_native_evidence_path"])
     evidence_only = read_artifact(resolved["evidence_only_evidence_path"])
@@ -168,14 +231,17 @@ def _validate_bound_authority(values: Mapping[str, Any], root: Path) -> None:
             or evidence_only.get("native_jobs_launched") != values["evidence_only_native_jobs"]
             or evidence_only.get("result") != "PASS"):
         raise ValueError("readiness EVIDENCE_ONLY evidence")
+    _validate_review_artifact(gemini, scope=scope, role="gemini", policy=policy)
+    _validate_review_artifact(opus, scope=scope, role="opus", policy=policy)
     if gemini.get("verdict") != values["gemini_verdict"]:
         raise ValueError("readiness Gemini evidence")
-    if opus.get("global_verdict") != values["opus_verdict"]:
+    opus_verdict = opus.get("global_verdict", opus.get("verdict"))
+    if opus_verdict != values["opus_verdict"]:
         raise ValueError("readiness Opus evidence")
 
 
-def validate_readiness_value(value: object) -> dict[str, Any]:
-    contract = json.loads(CONTRACT.read_text())
+def validate_readiness_value(value: object, expected_scope: str | None = None) -> dict[str, Any]:
+    contract = read_artifact(CONTRACT)
     fields = contract["required_fields"]
     if type(value) is not dict or set(value) != set(fields):
         raise ValueError("readiness declaration key census")
@@ -184,20 +250,29 @@ def validate_readiness_value(value: object) -> dict[str, Any]:
         raise ValueError("readiness contract type census")
     for name in fields:
         _validate_type(name, value[name], type_map[name])
-    for name, required in contract["exact_final_predicates"].items():
+    scope = value.get("authority_scope") if type(value) is dict else None
+    predicates_name = {
+        "FINAL_EVENT05_EXECUTION_READINESS":"exact_final_predicates",
+        "VALIDATION_ONLY_PREPARED":"exact_prepared_predicates",
+    }.get(scope)
+    if predicates_name is None or (expected_scope is not None and scope != expected_scope):
+        raise ValueError("readiness authority scope")
+    for name, required in contract[predicates_name].items():
         if value[name] != required or type(value[name]) is not type(required):
             raise ValueError(f"readiness predicate: {name}")
     return dict(value)
 
 
 def validate_readiness_declaration(path: Path, expected: Mapping[str, object] | None = None,
+                                   expected_scope: str | None = None,
                                    *, repository_root: Path = ROOT) -> ValidatedReadiness:
-    value = validate_readiness_value(read_artifact(path))
+    contract = read_artifact(CONTRACT)
+    value = validate_readiness_value(read_artifact(path), expected_scope)
     if expected is not None:
         for name, required in expected.items():
             if name not in value or value[name] != required or type(value[name]) is not type(required):
                 raise ValueError(f"readiness expected binding: {name}")
-    _validate_bound_authority(value, repository_root)
+    _validate_bound_authority(value, repository_root, contract)
     return ValidatedReadiness(
         values=MappingProxyType(dict(value)),
         source_path=path.resolve(strict=True),

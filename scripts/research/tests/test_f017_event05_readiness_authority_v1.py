@@ -34,10 +34,10 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         path.write_bytes(canonical_bytes(value))
         return path
 
-    def _fixture(self, root: Path) -> tuple[Path, dict]:
-        contract = json.loads(readiness.CONTRACT.read_text())
-        head = "1" * 40
-        tree = "2" * 40
+    def _fixture(self, root: Path, scope: str = "FINAL_EVENT05_EXECUTION_READINESS") -> tuple[Path, dict]:
+        contract = read_artifact(readiness.CONTRACT)
+        head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+        tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True).strip()
         measurement = self._bank(root, "evidence/measurement.json", {
             "schema":"test.measurement/1", "implementation_head":head,
             "implementation_tree":tree,
@@ -47,8 +47,32 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         result_authority = self._bank(root, "contracts/result.json", {"schema":"test.result/1"})
         full_native = self._bank(root, "evidence/full-native.json", {"run":101,"required_native_skips":0,"result":"PASS"})
         evidence_only = self._bank(root, "evidence/evidence-only.json", {"run":102,"native_jobs_launched":0,"result":"PASS"})
-        gemini = self._bank(root, "evidence/gemini.json", {"verdict":"NO_UNRESOLVED_MATERIAL_CHALLENGE"})
-        opus = self._bank(root, "evidence/opus.json", {"global_verdict":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION"})
+        if scope == "FINAL_EVENT05_EXECUTION_READINESS":
+            gemini = self._bank(root, "evidence/gemini.json", {
+                "schema":contract["scope_policy"][scope]["gemini_schema"], "authority_scope":scope,
+                "final_authority":True, "model":"gemini-3.1-pro-high", "reviewed_head":head,
+                "exact_response_sha256":"a"*64, "blocking_findings":0,
+                "non_blocking_required_findings":0, "unresolved_claims":0,
+                "verdict":"NO_UNRESOLVED_MATERIAL_CHALLENGE",
+            })
+            opus = self._bank(root, "evidence/opus.json", {
+                "schema":contract["scope_policy"][scope]["opus_schema"], "authority_scope":scope,
+                "final_authority":True, "model":"claude-opus-5", "reviewed_head":head,
+                "exact_response_sha256":"b"*64, "blocking_findings":0,
+                "non_blocking_required_findings":0, "unresolved_claims":0,
+                "global_verdict":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION",
+            })
+        else:
+            gemini = self._bank(root, "evidence/gemini.json", {
+                "schema":contract["scope_policy"][scope]["gemini_schema"], "authority_scope":scope,
+                "final_authority":False, "live_authority_permitted":False,
+                "verdict":"VALIDATION_ONLY_PREPARED",
+            })
+            opus = self._bank(root, "evidence/opus.json", {
+                "schema":contract["scope_policy"][scope]["opus_schema"], "authority_scope":scope,
+                "final_authority":False, "live_authority_permitted":False,
+                "verdict":"VALIDATION_ONLY_PREPARED",
+            })
         artifacts = [
             ("implementation_measurement", measurement), ("scientific_access", scientific),
             ("numerical_contract_v4", numerical), ("result_authority", result_authority),
@@ -57,12 +81,14 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
             ("opus_readiness_interface_implementation_arbiter", opus),
         ]
         manifest = self._bank(root, "evidence/manifest.json", {
-            "schema":"test.manifest/1", "implementation_head":head,
+            "schema":contract["scope_policy"][scope]["manifest_schema"],
+            "authority_scope":scope, "final_authority":scope == "FINAL_EVENT05_EXECUTION_READINESS",
+            "live_authority_permitted":scope == "FINAL_EVENT05_EXECUTION_READINESS", "implementation_head":head,
             "implementation_tree":tree,
             "artifacts":[{"role":role,"path":str(path.relative_to(root)),"sha256":_sha(path)} for role,path in artifacts],
             "binding_count":len(artifacts),
         })
-        value = copy.deepcopy(contract["exact_final_predicates"])
+        value = copy.deepcopy(contract["exact_final_predicates" if scope == "FINAL_EVENT05_EXECUTION_READINESS" else "exact_prepared_predicates"])
         value.update({
             "authority_manifest_path":str(manifest.relative_to(root)), "authority_manifest_sha256":_sha(manifest),
             "scientific_access_contract_path":str(scientific.relative_to(root)), "scientific_access_contract_sha256":_sha(scientific),
@@ -84,7 +110,7 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             path, _ = self._fixture(Path(raw))
             validated = readiness.validate_readiness_declaration(path, repository_root=Path(raw))
-            self.assertEqual(validated.measured_implementation_head, "1" * 40)
+            self.assertEqual(validated.measured_implementation_head, subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip())
             self.assertEqual(validated.full_native_run, 101)
             with self.assertRaises(TypeError):
                 validated.values["event_05_executed"] = True
@@ -144,6 +170,34 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
             self.assertFalse(first["live"])
             with self.assertRaisesRegex(ValueError, "approval posture"):
                 builder.validate_operator_approval(approval_path, "LIVE_OPERATOR_GO", now_ns=1)
+
+    def test_prepared_readiness_cannot_cross_live_builder(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            readiness_path, _ = self._fixture(root, "VALIDATION_ONLY_PREPARED")
+            validated = readiness.validate_readiness_declaration(
+                readiness_path, expected_scope="VALIDATION_ONLY_PREPARED", repository_root=root,
+            )
+            now = time.time_ns()
+            approval = {
+                "schema":"pulsarmlx.f017.corrected-oracle-event05-operator-approval/11.1.0",
+                "decision":"GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05", "live":True,
+                "approved_at_unix_ns":now - 1, "approval_expires_at_unix_ns":now + 1_000_000_000,
+                "active_generation":"V11", "authorization_id":"F017-LIVE-AUTH-05-V11-PREPARED-REJECT",
+                "package_attempt_id":"F017-LIVE-PACKAGE-05-V11-PREPARED-REJECT",
+                "primary_event_id":"F017-LIVE-PRIMARY-05-V11-PREPARED-REJECT",
+                "secondary_event_id":"F017-LIVE-SECONDARY-05-V11-PREPARED-REJECT",
+                "checkpoint_root":"/nonexistent/checkpoint", "canonical_authorization_path":"/nonexistent/auth",
+                "installation_receipt_path":"/nonexistent/receipt", "emergency_evidence_root":"/nonexistent/emergency",
+                "terminal_fallback_evidence_root":"/nonexistent/fallback",
+                "authority_manifest_sha256":validated.authority_manifest_sha256,
+                "readiness_declaration_sha256":_sha(readiness_path),
+            }
+            approval_path = self._bank(root, "live-approval.json", approval)
+            admitted = builder.validate_operator_approval(approval_path, "LIVE_OPERATOR_GO", now_ns=now)
+            context = builder.CandidateContext(*(["3"*64]*6), tuple(), "/nonexistent/catalog", "4"*64)
+            with self.assertRaisesRegex(ValueError, "requires final readiness"):
+                builder.build_operator_go_candidate(admitted, validated, context, {"result":"PASS"})
 
     def test_generator_is_canonical_and_exclusive(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

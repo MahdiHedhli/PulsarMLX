@@ -9,14 +9,16 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"
+OUTPUT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v7.json"
 PATHS = (
     "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
     "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
     "scripts/research/f017_corrected_oracle_authorization_v11.py",
     "scripts/research/f017_event05_readiness_authority_v1.py",
     "scripts/research/f017_event05_candidate_builder_v1.py",
+    "scripts/research/generate_f017_event05_readiness_consumer_interface_v2.py",
     "scripts/research/generate_f017_event05_readiness_declaration_v1.py",
+    "scripts/research/qualify_f017_event05_readiness_interface_v1.py",
     "scripts/research/validate_f017_corrected_oracle_access_v11.py",
     "scripts/research/execute_f017_corrected_oracle_event_v11.py",
     "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
@@ -68,8 +70,8 @@ def generate(head: str | None = None) -> dict:
             "sha256":hashlib.sha256(raw).hexdigest(),
         })
     return {
-        "schema":"pulsarmlx.f017.v11-result-envelope-implementation-measurement/6.0.0",
-        "supersedes":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v5.json",
+        "schema":"pulsarmlx.f017.v11-result-envelope-implementation-measurement/7.0.0",
+        "supersedes":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json",
         "branch":"feat/017-rust-native-inference-runtime",
         "implementation_head":head,
         "implementation_tree":tree,

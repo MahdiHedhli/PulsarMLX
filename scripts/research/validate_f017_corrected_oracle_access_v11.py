@@ -165,7 +165,9 @@ def validate_live_candidate_for_install(candidate_path: Path) -> dict:
     approval_path = Path(candidate["operator_approval_path"])
     readiness_path = Path(candidate["execution_readiness_declaration_path"])
     approval = validate_operator_approval(approval_path, "LIVE_OPERATOR_GO")
-    readiness = validate_readiness_declaration(readiness_path)
+    readiness = validate_readiness_declaration(
+        readiness_path, expected_scope="FINAL_EVENT05_EXECUTION_READINESS",
+    )
     if (approval.source_sha256 != candidate["operator_approval_sha256"]
             or readiness.source_sha256 != candidate["execution_readiness_declaration_sha256"]
             or approval.values["readiness_declaration_sha256"] != readiness.source_sha256
@@ -199,7 +201,8 @@ def _render_operator_candidate(approval_path: Path, readiness_path: Path,
             and catalog_path.resolve(strict=True) != PRODUCTION_CATALOG.resolve(strict=True)):
         raise ValueError("V11 production tensor catalog")
     approval = validate_operator_approval(approval_path, posture)
-    readiness = validate_readiness_declaration(readiness_path)
+    expected_scope = "FINAL_EVENT05_EXECUTION_READINESS" if posture == "LIVE_OPERATOR_GO" else None
+    readiness = validate_readiness_declaration(readiness_path, expected_scope=expected_scope)
     candidate = build_operator_go_candidate(
         approval, readiness, _candidate_context(catalog_path), memory_observation,
     )

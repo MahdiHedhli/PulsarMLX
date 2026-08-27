@@ -12,6 +12,7 @@ import sys
 import tempfile
 
 from f017_canonical_serialization_v10 import canonical_bytes
+from f017_bounded_artifact_decode_v1 import read_artifact
 from f017_corrected_oracle_authorization_v11 import (
     IMPLEMENTATION_MEASUREMENT, NUMERICAL_V4, PRIMARY_V3, RESULT_AUTHORITY,
     SECONDARY_V3, parse_candidate_bytes, production_shards,
@@ -38,17 +39,27 @@ def _bank(root: Path, relative: str, value: dict) -> Path:
 
 
 def _fixture(root: Path) -> tuple[Path, Path, dict, dict]:
-    contract = json.loads(CONTRACT.read_text())
+    contract = read_artifact(CONTRACT)
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True).strip()
     measurement = _bank(root, "evidence/measurement.json", {
-        "schema":"fixture.measurement/1", "implementation_head":"1"*40, "implementation_tree":"2"*40,
+        "schema":"fixture.measurement/1", "implementation_head":head, "implementation_tree":tree,
     })
     scientific = _bank(root, "contracts/scientific.json", {"schema":"fixture.scientific/1"})
     numerical = _bank(root, "contracts/numerical.json", {"schema":"fixture.numerical/1"})
     result = _bank(root, "contracts/result.json", {"schema":"fixture.result/1"})
     full_native = _bank(root, "evidence/full-native.json", {"run_id":33000000001,"required_native_skips":0,"result":"PASS"})
     evidence_only = _bank(root, "evidence/evidence-only.json", {"run_id":33000000002,"native_jobs_launched":0,"result":"PASS"})
-    gemini = _bank(root, "evidence/gemini.json", {"verdict":"NO_UNRESOLVED_MATERIAL_CHALLENGE"})
-    opus = _bank(root, "evidence/opus.json", {"global_verdict":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION"})
+    gemini = _bank(root, "evidence/gemini.json", {
+        "schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["gemini_schema"],
+        "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
+        "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
+    })
+    opus = _bank(root, "evidence/opus.json", {
+        "schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["opus_schema"],
+        "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
+        "live_authority_permitted":False, "verdict":"VALIDATION_ONLY_PREPARED",
+    })
     bound = [
         ("implementation_measurement", measurement), ("scientific_access", scientific),
         ("numerical_contract_v4", numerical), ("result_authority", result),
@@ -57,17 +68,19 @@ def _fixture(root: Path) -> tuple[Path, Path, dict, dict]:
         ("opus_readiness_interface_implementation_arbiter", opus),
     ]
     manifest = _bank(root, "evidence/manifest.json", {
-        "schema":"fixture.manifest/1", "implementation_head":"1"*40, "implementation_tree":"2"*40,
+        "schema":contract["scope_policy"]["VALIDATION_ONLY_PREPARED"]["manifest_schema"],
+        "authority_scope":"VALIDATION_ONLY_PREPARED", "final_authority":False,
+        "live_authority_permitted":False, "implementation_head":head, "implementation_tree":tree,
         "artifacts":[{"role":role,"path":str(path.relative_to(root)),"sha256":_sha(path)} for role,path in bound],
         "binding_count":8,
     })
-    declaration_value = copy.deepcopy(contract["exact_final_predicates"])
+    declaration_value = copy.deepcopy(contract["exact_prepared_predicates"])
     declaration_value.update({
         "authority_manifest_path":"evidence/manifest.json", "authority_manifest_sha256":_sha(manifest),
         "scientific_access_contract_path":"contracts/scientific.json", "scientific_access_contract_sha256":_sha(scientific),
         "result_authority_path":"contracts/result.json", "result_authority_sha256":_sha(result),
         "numerical_contract_path":"contracts/numerical.json", "numerical_contract_sha256":_sha(numerical),
-        "measured_implementation_head":"1"*40, "measured_implementation_tree":"2"*40,
+        "measured_implementation_head":head, "measured_implementation_tree":tree,
         "full_native_evidence_path":"evidence/full-native.json", "full_native_evidence_sha256":_sha(full_native), "full_native_run":33000000001,
         "evidence_only_evidence_path":"evidence/evidence-only.json", "evidence_only_evidence_sha256":_sha(evidence_only), "evidence_only_run":33000000002,
         "gemini_result_path":"evidence/gemini.json", "gemini_result_sha256":_sha(gemini),
@@ -153,7 +166,7 @@ def run_campaign() -> dict:
         for index in range(52):
             mutated = copy.deepcopy(base); name = fields[index % len(fields)]; mutated[name] = _wrong_value(mutated[name], index + 1)
             record("types", f"TYPE-{index+1:03d}", lambda m=mutated: validate_readiness_declaration(_bank(root,"evidence/mutated.json",m), repository_root=root))
-        predicates = list(json.loads(CONTRACT.read_text())["exact_final_predicates"])
+        predicates = list(read_artifact(CONTRACT)["exact_prepared_predicates"])
         for index in range(54):
             mutated = copy.deepcopy(base); name = predicates[index % len(predicates)]; mutated[name] = _wrong_value(mutated[name], index + 1)
             record("readiness_predicates", f"PREDICATE-{index+1:03d}", lambda m=mutated: validate_readiness_declaration(_bank(root,"evidence/mutated.json",m), repository_root=root))
@@ -167,6 +180,34 @@ def run_campaign() -> dict:
         for index in range(32):
             mutated = copy.deepcopy(approval_base); mutated[f"unexpected_{index:02d}"] = index
             record("candidate_path", f"CANDIDATE-{index+1:03d}", lambda m=mutated: validate_operator_approval(_bank(root,"evidence/approval-mutated.json",m), "VALIDATION_ONLY"))
+
+        # Five production-boundary cases close the exact defects identified by
+        # independent review; they are generated by this qualifier, not hand-banked.
+        record("production_boundary", "BOUNDARY-001", lambda: validate_readiness_declaration(
+            declaration, expected_scope="FINAL_EVENT05_EXECUTION_READINESS", repository_root=root))
+        live_approval = {**approval_base,
+            "schema":"pulsarmlx.f017.corrected-oracle-event05-operator-approval/11.1.0",
+            "decision":"GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05", "live":True,
+            "approved_at_unix_ns":1, "approval_expires_at_unix_ns":3}
+        live_path = _bank(root, "evidence/live-approval.json", live_approval)
+        record("production_boundary", "BOUNDARY-002", lambda: build_operator_go_candidate(
+            validate_operator_approval(live_path, "LIVE_OPERATOR_GO", now_ns=2),
+            validate_readiness_declaration(declaration, repository_root=root), _context(), _memory()))
+        wrong_manifest = copy.deepcopy(read_artifact(root / "evidence/manifest.json")); wrong_manifest["final_authority"] = True
+        wrong_manifest_path = _bank(root, "evidence/wrong-manifest.json", wrong_manifest)
+        wrong_manifest_decl = {**base, "authority_manifest_path":"evidence/wrong-manifest.json",
+            "authority_manifest_sha256":_sha(wrong_manifest_path)}
+        record("production_boundary", "BOUNDARY-003", lambda: validate_readiness_declaration(
+            _bank(root, "evidence/wrong-manifest-declaration.json", wrong_manifest_decl), repository_root=root))
+        wrong_tree = {**base, "measured_implementation_tree":"0"*40}
+        record("production_boundary", "BOUNDARY-004", lambda: validate_readiness_declaration(
+            _bank(root, "evidence/wrong-tree.json", wrong_tree), repository_root=root))
+        wrong_review = copy.deepcopy(read_artifact(root / "evidence/gemini.json")); wrong_review["schema"] = "wrong.review/1"
+        wrong_review_path = _bank(root, "evidence/wrong-review.json", wrong_review)
+        wrong_review_decl = {**base, "gemini_result_path":"evidence/wrong-review.json",
+            "gemini_result_sha256":_sha(wrong_review_path)}
+        record("production_boundary", "BOUNDARY-005", lambda: validate_readiness_declaration(
+            _bank(root, "evidence/wrong-review-declaration.json", wrong_review_decl), repository_root=root))
 
         mandatory = {}
         def mandatory_reject(name: str, action) -> None:
@@ -203,7 +244,7 @@ def run_campaign() -> dict:
             child_hashes.append(result)
 
     unexpected = sum(not case["rejected"] for case in cases)
-    return {"schema":"pulsarmlx.f017.event05-readiness-interface-qualification/1.0.0",
+    return {"schema":"pulsarmlx.f017.event05-readiness-interface-qualification/1.1.0",
         "case_count":len(cases),"categories":{name:sum(c["category"]==name for c in cases) for name in {c["category"] for c in cases}},
         "unexpected_passes":unexpected,"candidate_determinism":"PASS" if len(set(child_hashes))==1 else "FAIL",
         "fresh_process_repetitions":20,"fresh_process_candidate_sha_count":len(set(child_hashes)),
@@ -211,7 +252,7 @@ def run_campaign() -> dict:
         "primary_validation":primary["result"],"secondary_validation":secondary["result"],
         "state_created":0,"live_authorization_installed":0,"checkpoint_opens":0,"checkpoint_reads":0,
         "numerical_operations":0,"event_05_ids_consumed":0,"original_checkpoint_access":0,
-        "cases":cases,"result":"PASS" if len(cases)==226 and unexpected==0 and len(set(child_hashes))==1 and set(mandatory.values())=={"PASS"} else "FAIL"}
+        "cases":cases,"result":"PASS" if len(cases)==231 and unexpected==0 and len(set(child_hashes))==1 and set(mandatory.values())=={"PASS"} else "FAIL"}
 
 
 def main() -> int:

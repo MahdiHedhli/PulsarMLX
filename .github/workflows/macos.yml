@@ -393,7 +393,7 @@ jobs:
           .venv/bin/python scripts/research/qualify_f017_event05_readiness_interface_v1.py \
             --output "$RUNNER_TEMP/f017-event05-readiness-interface-qualification.json"
           cmp "$RUNNER_TEMP/f017-event05-readiness-interface-qualification.json" \
-            docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v1.json
+            docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v3.json
           .venv/bin/python scripts/research/qualify_f017_event04_diagnostic_v11.py \
             --output "$RUNNER_TEMP/f017-event04-diagnostic-v11.json"
           cmp "$RUNNER_TEMP/f017-event04-diagnostic-v11.json" \
