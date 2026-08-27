@@ -11,7 +11,36 @@ CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-correc
 DESIGN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"
 MUTATION_PLAN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v1.json"
 REPRODUCTION = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mismatch-reproduction-v1.json"
-MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v2.json"
+MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v3.json"
+
+EXPECTED_FREE_VALUE_FIELDS = {
+    "authority_manifest_path", "authority_manifest_sha256", "scientific_access_contract_path",
+    "scientific_access_contract_sha256", "result_authority_path", "result_authority_sha256",
+    "numerical_contract_path", "numerical_contract_sha256", "measured_implementation_head",
+    "measured_implementation_tree", "full_native_evidence_path", "full_native_evidence_sha256",
+    "full_native_run", "evidence_only_evidence_path", "evidence_only_evidence_sha256",
+    "evidence_only_run", "gemini_result_path", "gemini_result_sha256", "opus_result_path",
+    "opus_result_sha256", "defense_in_depth_findings",
+}
+EXPECTED_SAFETY_PREDICATES = {
+    "schema":"pulsarmlx.f017.corrected-oracle-event05-execution-readiness-final-declaration/11.1.0",
+    "event_04_retry":False, "event_04_resume":False, "event_05_executed":False,
+    "live_event_05_authorization_created":False, "event_05_package_started":False,
+    "primary_real_oracle_event05_executions":0, "secondary_real_oracle_event05_executions":0,
+    "new_original_checkpoint_shard_opens":0, "new_original_checkpoint_identity_hash_reads":0,
+    "new_original_checkpoint_mmaps":0, "new_original_checkpoint_tensor_reads":0,
+    "new_original_checkpoint_payload_reads":0, "p1_attempt_2_executed":False,
+    "live_p1_attempt_2_authorization_created":False, "historical_master_ledger":175,
+    "ready_for_corrected_full_checkpoint_oracle_event_05_execution_go":True,
+    "ready_to_prepare_p1_attempt_2_authorization":False,
+    "exact_next_safe_action":"REQUEST_A_FRESH_HUMAN_GO_FOR_EXACTLY_ONE_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_UNDER_RECONCILED_V11_READINESS_AUTHORITY",
+}
+REQUIRED_NAMED_MUTATIONS = {
+    "PRETTY_PRINTED_DECLARATION", "UNSORTED_DECLARATION_KEYS", "MISSING_TERMINAL_NEWLINE",
+    "WRONG_SCHEMA_VALUE", "ZERO_FULL_NATIVE_RUN", "ZERO_EVIDENCE_ONLY_RUN",
+    "EXPIRED_LIVE_APPROVAL", "FALSE_LIVE_APPROVAL", "VALIDATION_ONLY_APPROVAL_INSTALL_ATTEMPT",
+    "CANDIDATE_POSTURE_NONALLOWLIST_DIVERGENCE",
+}
 
 REQUIRED_MANIFEST_ROLES = {
     "terminal_pre_mint_failure", "accepted_predecessor_authority_manifest",
@@ -67,6 +96,8 @@ def validate_contract(contract: dict) -> None:
     free = contract.get("free_value_fields")
     if type(free) is not list or len(free) != len(set(free)) or any(name not in fields for name in free):
         raise ValueError("readiness free-value census")
+    if set(free) != EXPECTED_FREE_VALUE_FIELDS:
+        raise ValueError("readiness frozen free-value census")
     if set(predicates) & set(free) or set(predicates) | set(free) != set(fields):
         raise ValueError("readiness predicate coverage")
     type_map = {name: category for category, names in exact_types.items() for name in names}
@@ -80,6 +111,9 @@ def validate_contract(contract: dict) -> None:
         )
         if not valid:
             raise ValueError(f"readiness predicate type: {name}")
+    for name, required in EXPECTED_SAFETY_PREDICATES.items():
+        if predicates.get(name) != required or type(predicates.get(name)) is not type(required):
+            raise ValueError(f"readiness frozen safety predicate: {name}")
     for name in exact_types["repository_relative_path_fields"]:
         if not name.endswith("_path"):
             raise ValueError("readiness path field")
@@ -95,8 +129,11 @@ def validate_mutation_plan(plan: dict) -> None:
     if type(categories) is not dict or any(type(value) is not int or value <= 0 for value in categories.values()):
         raise ValueError("readiness mutation categories")
     planned = sum(categories.values())
-    if plan.get("minimum_substantive_cases") < 200 or plan.get("minimum_planned_cases") < 200 or planned < 200:
+    if (plan.get("minimum_substantive_cases") != 220 or plan.get("minimum_planned_cases") != 226
+            or planned != plan.get("minimum_planned_cases") or planned < plan.get("minimum_substantive_cases")):
         raise ValueError("readiness mutation floor")
+    if set(plan.get("mandatory_named_mutations", [])) != REQUIRED_NAMED_MUTATIONS:
+        raise ValueError("readiness mandatory mutation census")
     if plan.get("required_unexpected_passes") != 0:
         raise ValueError("readiness mutation expectation")
     if any(value != 0 for value in plan.get("required_side_effects", {}).values()):
@@ -143,6 +180,7 @@ def validate_design() -> dict:
         design["validator_design"]["path"],
         design["authorizer_design"]["path"],
         design["candidate_builder_design"]["path"],
+        design["approval_admission_design"]["path"],
     )):
         raise ValueError("readiness design path")
     return {

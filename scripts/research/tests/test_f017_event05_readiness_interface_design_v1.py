@@ -68,6 +68,27 @@ class Event05ReadinessInterfaceDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mutation floor"):
             design.validate_mutation_plan(plan)
 
+    def test_safety_predicates_are_externally_pinned(self) -> None:
+        contract = design.load_contract()
+        mutated = copy.deepcopy(contract)
+        mutated["exact_final_predicates"]["event_05_executed"] = True
+        with self.assertRaisesRegex(ValueError, "frozen safety predicate"):
+            design.validate_contract(mutated)
+
+    def test_free_value_allowlist_is_externally_pinned(self) -> None:
+        contract = design.load_contract()
+        mutated = copy.deepcopy(contract)
+        mutated["free_value_fields"].append("event_05_executed")
+        del mutated["exact_final_predicates"]["event_05_executed"]
+        with self.assertRaisesRegex(ValueError, "frozen free-value census"):
+            design.validate_contract(mutated)
+
+    def test_named_mutations_are_frozen(self) -> None:
+        plan = json.loads(design.MUTATION_PLAN.read_text())
+        plan["mandatory_named_mutations"].pop()
+        with self.assertRaisesRegex(ValueError, "mandatory mutation census"):
+            design.validate_mutation_plan(plan)
+
     def test_authority_manifest_rejects_artifact_sha_drift(self) -> None:
         manifest = json.loads(design.MANIFEST.read_text())
         mutated = copy.deepcopy(manifest)

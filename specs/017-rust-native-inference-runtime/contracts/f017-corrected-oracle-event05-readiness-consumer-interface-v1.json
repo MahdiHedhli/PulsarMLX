@@ -213,8 +213,8 @@
       "result_authority",
       "full_native_ci",
       "evidence_only_ci",
-      "gemini_whole_domain_challenge",
-      "opus_whole_domain_arbiter"
+      "gemini_readiness_interface_challenge",
+      "opus_readiness_interface_implementation_arbiter"
     ]
   },
   "review_protocols": {

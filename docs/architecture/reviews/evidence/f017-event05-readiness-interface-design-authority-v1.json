@@ -31,6 +31,7 @@
   },
   "approval_admission_design": {
     "contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json",
+    "path": "scripts/research/f017_event05_candidate_builder_v1.py",
     "single_entrypoint": "validate_operator_approval",
     "only_parameter": "expected_posture",
     "postures": ["VALIDATION_ONLY", "LIVE_OPERATOR_GO"],

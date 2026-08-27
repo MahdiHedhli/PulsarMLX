@@ -8,8 +8,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json"
-OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v3.json"
+MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v4.json"
+OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v4.json"
 
 
 def _sha(path: Path) -> str:
@@ -30,11 +30,11 @@ def generate() -> dict:
     if len(implementation) != measurement["measured_path_count"]:
         raise ValueError("V11 scientific implementation role collision")
     return {
-        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.0.2",
-        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v2.json",
-        "status":"V11_IMPLEMENTED_CI_HISTORICAL_SPLIT_REPAIR_NO_EVENT05_AUTHORITY",
+        "schema":"pulsarmlx.f017.corrected-full-checkpoint-oracle-scientific-access/11.1.0",
+        "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v3.json",
+        "status":"V11_READINESS_INTERFACE_RECONCILED_NO_EVENT05_AUTHORITY",
         "active_generation":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json"),
-        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json"),
+        "implementation_measurement":_binding("docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v4.json"),
         "implementation_head":measurement["implementation_head"],
         "implementation_tree":measurement["implementation_tree"],
         "implementation":implementation,
@@ -43,6 +43,8 @@ def generate() -> dict:
         "binary_result_envelope":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11-v2.json"),
         "result_authority":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json"),
         "result_artifact_dag":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-artifact-dag-v11.json"),
+        "readiness_consumer_interface":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"),
+        "approval_interface":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json"),
         "production_tensor_plan":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json"),
         "checkpoint_metadata":_binding("docs/validation/glm52-checkpoint.json"),
         "checkpoint_catalog":_binding("docs/research/glm52/raw/f016-c01-catalog-0001.json"),
@@ -51,7 +53,7 @@ def generate() -> dict:
         "full_geometry_qualification":_binding("docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json"),
         "failure_qualification":_binding("docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v2.json"),
         "production_shaped_rehearsal":_binding("docs/architecture/reviews/evidence/f017-event05-production-shaped-no-access-rehearsal-v11-v2.json"),
-        "event05_go_template":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-execution-go-template-v11.json"),
+        "event05_go_template":_binding("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-execution-go-template-v11-v2.json"),
         "limits":{"attempts":1,"retries":0,"resume":False,"event_04_retry":False,
                   "event_05_authorization_created":False,"event_05_executed":False,
                   "p1_attempt_2_executed":False},
