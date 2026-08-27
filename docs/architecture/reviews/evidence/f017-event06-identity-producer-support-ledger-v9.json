@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-support-ledger/9.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-support-ledger-v8.json",
+  "gemini_cycle_3_challenges": 2,
+  "repaired_claims": ["C-HIST-001", "C-CI-001"],
+  "dependent_claim_pending": "C-GO-001",
+  "repair_evidence": "docs/architecture/reviews/evidence/f017-event06-v12-evidence-only-ci-history-v2.json",
+  "latest_evidence_only_run": 33116756921,
+  "latest_evidence_only_result": "PASS",
+  "latest_evidence_only_native_jobs": 0,
+  "execution_bytes_changed": false,
+  "original_checkpoint_access": 0,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "result": "REPAIRED_PENDING_CYCLE_4"
+}
