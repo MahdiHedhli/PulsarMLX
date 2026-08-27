@@ -283,30 +283,51 @@ class Event05ReadinessAuthorityTests(unittest.TestCase):
 
     def test_repository_bound_artifacts_are_canonical_and_tree_exact(self) -> None:
         current_measurement = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v7.json"
         )
         full_native_measurement = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v5.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v6.json"
         )
         full_native = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v3.json"
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v4.json"
         )
         evidence_only = read_artifact(
             ROOT / "docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-evidence-only-ci-v2.json"
         )
-        gemini = read_artifact(
-            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-whole-domain-cycle-03-normalized-result-v2.json"
+        prepared_declaration = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-declaration-v3.json"
+        prepared = readiness.validate_readiness_declaration(
+            prepared_declaration, expected_scope="VALIDATION_ONLY_PREPARED",
+        )
+        prepared_manifest = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-runtime-authority-manifest-v3.json"
+        )
+        instantiability = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-prepared-production-instantiability-v3.json"
+        )
+        qualification = read_artifact(
+            ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v3.json"
         )
         self.assertEqual(full_native["measured_implementation_head"], full_native_measurement["implementation_head"])
         self.assertEqual(full_native["measured_implementation_tree"], full_native_measurement["implementation_tree"])
         self.assertEqual(evidence_only["native_jobs_launched"], 0)
-        self.assertEqual(gemini["verdict"], "NO_UNRESOLVED_MATERIAL_CHALLENGE")
+        self.assertEqual(prepared.authority_scope, "VALIDATION_ONLY_PREPARED")
+        self.assertFalse(prepared_manifest["final_authority"])
+        self.assertFalse(prepared_manifest["live_authority_permitted"])
+        self.assertEqual(instantiability["repetitions"], 20)
+        self.assertEqual(instantiability["deterministic_candidate_sha_count"], 1)
+        self.assertEqual(qualification["case_count"], 231)
+        self.assertEqual(qualification["unexpected_passes"], 0)
         object_type = subprocess.check_output(
             ["git", "cat-file", "-t", current_measurement["implementation_tree"]],
             cwd=ROOT,
             text=True,
         ).strip()
         self.assertEqual(object_type, "tree")
+        exact_tree = subprocess.check_output(
+            ["git", "rev-parse", f"{current_measurement['implementation_head']}^{{tree}}"],
+            cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(exact_tree, current_measurement["implementation_tree"])
 
 
 if __name__ == "__main__":

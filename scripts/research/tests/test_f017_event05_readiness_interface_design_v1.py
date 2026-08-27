@@ -45,6 +45,7 @@ class Event05ReadinessInterfaceDesignTests(unittest.TestCase):
         contract = design.load_contract()
         mutated = copy.deepcopy(contract)
         del mutated["exact_final_predicates"]["schema"]
+        del mutated["exact_prepared_predicates"]["schema"]
         with self.assertRaisesRegex(ValueError, "predicate coverage"):
             design.validate_contract(mutated)
 
@@ -80,6 +81,7 @@ class Event05ReadinessInterfaceDesignTests(unittest.TestCase):
         mutated = copy.deepcopy(contract)
         mutated["free_value_fields"].append("event_05_executed")
         del mutated["exact_final_predicates"]["event_05_executed"]
+        del mutated["exact_prepared_predicates"]["event_05_executed"]
         with self.assertRaisesRegex(ValueError, "frozen free-value census"):
             design.validate_contract(mutated)
 
