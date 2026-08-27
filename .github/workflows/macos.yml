@@ -616,13 +616,21 @@ jobs:
           rehearsal = json.loads((root / "f017-event06-v12-no-access-rehearsal.json").read_text())
           assert qualification["result"] == "PASS"
           assert qualification["successful_identity_stages"] >= 30
+          assert qualification["identity_terminals_complete"] >= 90
           assert qualification["minimal_six_shard_packages"] >= 20
           assert qualification["mixed_size_six_shard_packages"] >= 20
+          assert qualification["mixed_format_six_shard_packages"] >= 20
           assert qualification["event_identity_variations"] >= 20
           assert qualification["candidate_fresh_process_repetitions"] >= 20
           assert qualification["installed_fresh_process_repetitions"] >= 20
+          assert qualification["identity_stage_fresh_process_repetitions"] >= 20
           assert qualification["total_failure_executions"] >= 300
+          assert qualification["runtime_failure_executions"] >= 300
+          assert qualification["runtime_failure_fresh_processes"] >= 60
+          assert qualification["modeled_outcomes_realized"] == qualification["modeled_outcomes"]
           assert qualification["filesystem_faults_realized"] >= 50
+          assert qualification["evidence_and_close_faults_realized"] >= 17
+          assert qualification["scope_separation"]["result"] == "PASS"
           assert qualification["unexpected_passes"] == 0
           assert qualification["original_checkpoint_shard_opens"] == 0
           assert rehearsal["result"] == "PASS"

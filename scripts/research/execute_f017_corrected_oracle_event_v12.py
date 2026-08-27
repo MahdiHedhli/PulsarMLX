@@ -21,6 +21,8 @@ def validate_package_start(candidate_path: Path, installed_path: Path, receipt_p
     }
 
 
-def run_identity_stage(installed_authority, *, package_attempt_id: str, package_durable_start: bool, progress=None):
+def run_identity_stage(installed_authority, *, package_attempt_id: str, package_durable_start: bool,
+                       evidence_directory: Path | None = None, progress=None):
     return produce(installed_authority, package_attempt_id=package_attempt_id,
-                   package_durable_start=package_durable_start, progress=progress)
+                   package_durable_start=package_durable_start,
+                   evidence_directory=evidence_directory, progress=progress)

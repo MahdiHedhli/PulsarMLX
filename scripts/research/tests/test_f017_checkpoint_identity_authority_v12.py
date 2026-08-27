@@ -55,7 +55,16 @@ def test_overnight_qualification_census() -> None:
     result = qualify()
     assert result["result"] == "PASS"
     assert result["successful_identity_stages"] >= 30
+    assert result["identity_terminals_complete"] >= 90
+    assert result["minimal_six_shard_packages"] >= 20
+    assert result["mixed_format_six_shard_packages"] >= 20
+    assert result["identity_stage_fresh_process_repetitions"] >= 20
     assert result["total_failure_executions"] >= 300
+    assert result["runtime_failure_executions"] >= 300
+    assert result["runtime_failure_fresh_processes"] >= 60
+    assert result["modeled_outcomes_realized"] == result["modeled_outcomes"]
     assert result["filesystem_faults_realized"] >= 50
+    assert result["evidence_and_close_faults_realized"] >= 17
+    assert result["scope_separation"]["result"] == "PASS"
     assert result["unexpected_passes"] == 0
     assert result["original_checkpoint_shard_opens"] == 0

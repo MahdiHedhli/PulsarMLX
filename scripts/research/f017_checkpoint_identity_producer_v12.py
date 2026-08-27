@@ -10,6 +10,7 @@ import tempfile
 
 from f017_accounting_root_continuity_v1 import open_directory_no_symlinks
 from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
+from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_checkpoint_identity_lifecycle_v12 import failure
 from f017_descriptor_lease_manager_v10 import LeaseRecord, LeaseSet, validate_descriptors
@@ -71,8 +72,136 @@ def _hash_descriptor(descriptor: int, expected_size: int, *, require_single_link
     return digest.hexdigest(), after
 
 
+def _bank_identity_evidence(directory: Path, authority: ValidatedIdentityAuthority,
+                            contract: dict, leases: LeaseSet, report: dict) -> dict:
+    directory.mkdir(parents=True, exist_ok=False)
+    access_journal = {
+        "schema":"pulsarmlx.f017.checkpoint-identity-access-journal/12.0.0",
+        "authorization_id":authority.get("authorization_id"),
+        "package_attempt_id":authority.get("package_attempt_id"),
+        "entries":[{"ordinal":item["ordinal"],"role":item["role"],"bytes":item["size_bytes"],"sha256":digest}
+                   for item, digest in zip(contract["shards"], report["ordered_shard_digests"], strict=True)],
+        "checkpoint_shard_opens":6,"checkpoint_identity_hash_reads":6,"result":"PASS",
+    }
+    journal_sha = bank_exclusive(directory / "access-journal.json", access_journal)
+    receipts = {
+        "schema":"pulsarmlx.f017.checkpoint-identity-shard-receipts/12.0.0",
+        "package_attempt_id":authority.get("package_attempt_id"),
+        "receipts":access_journal["entries"],"result":"PASS",
+    }
+    receipts_sha = bank_exclusive(directory / "shard-receipts.json", receipts)
+    lease_manifest = {
+        "schema":"pulsarmlx.f017.checkpoint-identity-lease-manifest/12.0.0",
+        "package_attempt_id":authority.get("package_attempt_id"),
+        "identity_only_retained_count":0,"retained_lease_count":5,
+        "descriptors":leases.descriptors,"result":"PASS",
+    }
+    lease_sha = bank_exclusive(directory / "lease-manifest.json", lease_manifest)
+    deterministic_core = {
+        "authority_scope":authority.get("authority_scope"),
+        "operation_class":authority.get("operation_class"),
+        "checkpoint_set_sha256":authority.get("checkpoint_set_sha256"),
+        "ordered_shard_digests":report["ordered_shard_digests"],
+        "shard_roles":[item["role"] for item in contract["shards"]],
+        "shard_sizes":[item["size_bytes"] for item in contract["shards"]],
+        "identity_only_retained_count":0,"retained_lease_count":5,
+    }
+    core_sha = bank_exclusive(directory / "identity-core.json", deterministic_core)
+    manifest = {
+        "schema":"pulsarmlx.f017.checkpoint-identity-manifest/12.0.0",
+        "authorization_id":authority.get("authorization_id"),
+        "package_attempt_id":authority.get("package_attempt_id"),
+        "access_journal_sha256":journal_sha,"shard_receipts_sha256":receipts_sha,
+        "lease_manifest_sha256":lease_sha,"deterministic_core_sha256":core_sha,
+        "result":"PASS",
+    }
+    manifest_sha = bank_exclusive(directory / "identity-manifest.json", manifest)
+    receipt = {
+        "schema":"pulsarmlx.f017.checkpoint-identity-receipt/12.0.0",
+        "authorization_id":authority.get("authorization_id"),
+        "package_attempt_id":authority.get("package_attempt_id"),
+        "identity_manifest_sha256":manifest_sha,"result":"PASS",
+    }
+    receipt_sha = bank_exclusive(directory / "identity-receipt.json", receipt)
+    terminal = {
+        "schema":"pulsarmlx.f017.checkpoint-identity-terminal/12.0.0",
+        "package_attempt_id":authority.get("package_attempt_id"),
+        "identity_receipt_sha256":receipt_sha,"state":"COMPLETE","result":"PASS",
+    }
+    terminal_sha = bank_exclusive(directory / "identity-terminal.json", terminal)
+    result = {"access_journal_sha256":journal_sha,"shard_receipts_sha256":receipts_sha,
+            "lease_manifest_sha256":lease_sha,"deterministic_core_sha256":core_sha,
+            "identity_manifest_sha256":manifest_sha,"identity_receipt_sha256":receipt_sha,
+            "identity_terminal_sha256":terminal_sha,"identity_terminal_state":"COMPLETE"}
+    validate_banked_identity_evidence(directory, report)
+    return result
+
+
+def validate_banked_identity_evidence(directory: Path, report: dict | None = None) -> dict:
+    """Validate the complete bounded identity-evidence closure from committed bytes."""
+    names = {
+        "access-journal.json", "shard-receipts.json", "lease-manifest.json",
+        "identity-core.json", "identity-manifest.json", "identity-receipt.json",
+        "identity-terminal.json",
+    }
+    if directory.is_symlink() or set(os.listdir(directory)) != names:
+        raise ValueError("identity evidence leaf census")
+
+    def load(name: str) -> tuple[dict, str]:
+        path = directory / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"identity evidence leaf: {name}")
+        raw = path.read_bytes()
+        value = parse_artifact_bytes(raw)
+        if type(value) is not dict:
+            raise ValueError(f"identity evidence object: {name}")
+        return value, hashlib.sha256(raw).hexdigest()
+
+    journal, journal_sha = load("access-journal.json")
+    receipts, receipts_sha = load("shard-receipts.json")
+    lease, lease_sha = load("lease-manifest.json")
+    core, core_sha = load("identity-core.json")
+    manifest, manifest_sha = load("identity-manifest.json")
+    receipt, receipt_sha = load("identity-receipt.json")
+    terminal, terminal_sha = load("identity-terminal.json")
+    entries = journal.get("entries")
+    descriptors = lease.get("descriptors")
+    if (type(entries) is not list or len(entries) != 6
+            or [item.get("ordinal") for item in entries] != [1, 2, 3, 4, 5, 6]
+            or journal.get("checkpoint_shard_opens") != 6
+            or journal.get("checkpoint_identity_hash_reads") != 6
+            or receipts.get("receipts") != entries):
+        raise ValueError("identity journal or receipt census")
+    validate_descriptors(descriptors)
+    if (lease.get("identity_only_retained_count") != 0
+            or lease.get("retained_lease_count") != 5
+            or core.get("identity_only_retained_count") != 0
+            or core.get("retained_lease_count") != 5):
+        raise ValueError("identity lease disposition")
+    expected_manifest = {
+        "access_journal_sha256":journal_sha,
+        "shard_receipts_sha256":receipts_sha,
+        "lease_manifest_sha256":lease_sha,
+        "deterministic_core_sha256":core_sha,
+    }
+    if any(manifest.get(key) != value for key, value in expected_manifest.items()):
+        raise ValueError("identity manifest closure")
+    if receipt.get("identity_manifest_sha256") != manifest_sha:
+        raise ValueError("identity receipt closure")
+    if (terminal.get("identity_receipt_sha256") != receipt_sha
+            or terminal.get("state") != "COMPLETE" or terminal.get("result") != "PASS"):
+        raise ValueError("identity terminal closure")
+    if report is not None:
+        if (core.get("ordered_shard_digests") != report.get("ordered_shard_digests")
+                or descriptors != report.get("descriptor_identities")):
+            raise ValueError("identity report closure")
+    return {"result":"PASS", "leaf_count":len(names), "terminal_sha256":terminal_sha,
+            "deterministic_core_sha256":core_sha}
+
+
 def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
-            package_durable_start: bool, progress=None) -> tuple[LeaseSet, dict]:
+            package_durable_start: bool, evidence_directory: Path | None = None,
+            progress=None) -> tuple[LeaseSet, dict]:
     if package_durable_start is not True:
         raise failure("F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT", "package durable start required")
     value, contract = _runtime_revalidate(authority, package_attempt_id)
@@ -92,6 +221,10 @@ def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
     if opened != resolved:
         os.close(root_fd)
         raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root identity", checkpoint_access=0)
+    expected_leaves = {item["filename"] for item in contract["shards"]}
+    if set(os.listdir(root_fd)) != expected_leaves:
+        os.close(root_fd)
+        raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root leaf census", checkpoint_access=0)
     records: list[LeaseRecord] = []
     digests: list[str] = []
     identity_only_digest = ""
@@ -127,7 +260,7 @@ def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
                     os.close(descriptor)
         validate_descriptors([record.identity for record in records], [item["size_bytes"] for item in contract["shards"] if item["role"] == "GRAPH_PAYLOAD"])
         leases = LeaseSet(records, identity_only_digest, digests)
-        return leases, {
+        report = {
             "result": "PASS", "authority_scope": value["authority_scope"],
             "operation_class": value["operation_class"], "generation": "V12",
             "ordered_shard_digests": [identity_only_digest, *digests],
@@ -135,6 +268,9 @@ def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
             "retained_lease_count": len(records), "identity_only_retained_count": 0,
             "descriptor_identities": leases.descriptors, "path_reopen_count": 0,
         }
+        if evidence_directory is not None:
+            report["evidence"] = _bank_identity_evidence(evidence_directory, authority, contract, leases, report)
+        return leases, report
     except Exception:
         for record in records:
             try:
