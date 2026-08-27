@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -10,6 +11,20 @@ CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-correc
 DESIGN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"
 MUTATION_PLAN = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v1.json"
 REPRODUCTION = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mismatch-reproduction-v1.json"
+MANIFEST = ROOT / "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v2.json"
+
+REQUIRED_MANIFEST_ROLES = {
+    "terminal_pre_mint_failure", "accepted_predecessor_authority_manifest",
+    "accepted_implementation_measurement", "accepted_scientific_access",
+    "accepted_numerical_contract_v4", "accepted_result_authority_v11",
+    "accepted_full_native_ci", "mismatch_reproduction", "versioning_decision",
+    "consumer_interface", "approval_interface", "design_authority",
+    "mutation_plan", "review_protocol", "historical_tombstone",
+    "design_validator", "design_tests", "claim_ledger", "challenge_ledger",
+    "support_ledger", "arbiter_ledger", "graph_state", "r1_repair_receipt",
+    "r2_repair_receipt", "r3_receipt", "r4_receipt", "opus_design_exact_response",
+    "opus_design_normalized_result",
+}
 
 
 def load_contract() -> dict:
@@ -88,13 +103,35 @@ def validate_mutation_plan(plan: dict) -> None:
         raise ValueError("readiness side-effect expectation")
 
 
+def validate_authority_manifest(manifest: dict) -> dict:
+    artifacts = manifest.get("artifacts")
+    if type(artifacts) is not list or manifest.get("binding_count") != len(artifacts):
+        raise ValueError("authority manifest binding count")
+    roles = [item.get("role") for item in artifacts if type(item) is dict]
+    if len(roles) != len(artifacts) or len(roles) != len(set(roles)):
+        raise ValueError("authority manifest role census")
+    if not REQUIRED_MANIFEST_ROLES.issubset(roles):
+        raise ValueError("authority manifest required roles")
+    for item in artifacts:
+        path = item.get("path")
+        digest = item.get("sha256")
+        if not _repository_path(path) or type(digest) is not str or len(digest) != 64:
+            raise ValueError("authority manifest artifact")
+        target = ROOT / path
+        if not target.is_file() or hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            raise ValueError(f"authority manifest sha: {item.get('role')}")
+    return {"binding_count": len(artifacts), "sha_mismatches": 0}
+
+
 def validate_design() -> dict:
     contract = load_contract()
     validate_contract(contract)
     design = json.loads(DESIGN.read_text())
     plan = json.loads(MUTATION_PLAN.read_text())
     reproduction = json.loads(REPRODUCTION.read_text())
+    manifest = json.loads(MANIFEST.read_text())
     validate_mutation_plan(plan)
+    manifest_report = validate_authority_manifest(manifest)
     if design.get("authorizer_design", {}).get("parallel_ad_hoc_readiness_checks") != 0:
         raise ValueError("parallel readiness logic")
     if design.get("validation_only_isolation", {}).get("installation_guard") != "REVALIDATE_BOUND_APPROVAL_AS_LIVE_BEFORE_INSTALL":
@@ -113,6 +150,7 @@ def validate_design() -> dict:
         "field_count":len(contract["required_fields"]),
         "uppercase_alias_fields":sum(field.upper() == field for field in contract["required_fields"]),
         "planned_mutations":sum(plan["categories"].values()),
+        "authority_bindings":manifest_report["binding_count"],
         "checkpoint_access":0,
         "result":"PASS",
     }

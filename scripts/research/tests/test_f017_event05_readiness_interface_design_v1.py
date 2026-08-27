@@ -68,6 +68,19 @@ class Event05ReadinessInterfaceDesignTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mutation floor"):
             design.validate_mutation_plan(plan)
 
+    def test_authority_manifest_rejects_artifact_sha_drift(self) -> None:
+        manifest = json.loads(design.MANIFEST.read_text())
+        mutated = copy.deepcopy(manifest)
+        mutated["artifacts"][0]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "authority manifest sha"):
+            design.validate_authority_manifest(mutated)
+
+    def test_authority_manifest_binds_required_design_roles(self) -> None:
+        manifest = json.loads(design.MANIFEST.read_text())
+        report = design.validate_authority_manifest(manifest)
+        self.assertGreaterEqual(report["binding_count"], 25)
+        self.assertEqual(report["sha_mismatches"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
