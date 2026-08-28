@@ -139,7 +139,7 @@ def predicate_provenance_contract(store: Store) -> bool:
         for key in ("request", "response", "normalized_result"):
             if digest(store.raw(ROOT / item[f"{key}_path"])) != item[f"{key}_sha256"]:
                 return False
-    return True
+    return contract["raw_provider_envelope_required"] and contract["credentials_serialized"] is False
 
 
 def predicate_graph_claim_state(store: Store) -> bool:
@@ -497,12 +497,32 @@ def mutation_suite(base: Store) -> list[dict]:
     if not all(baseline.values()):
         raise ValueError(f"positive baseline failed: {[key for key, value in baseline.items() if not value]}")
     rows = []
+    dependency_sets = {
+        "repair_ledger": {"repair_ledger", "advisory_support"},
+        "schema_externality": {"schema_externality", "advisory_support"},
+        "provenance_contract": {"provenance_contract", "advisory_support"},
+        "graph_claim_state": {"graph_claim_state", "review_head_identity"},
+        "qualification_truth": {"qualification_truth"},
+        "advisory_support": {"advisory_support"},
+        "generator_policy": {"generator_policy", "advisory_support"},
+        "generator_reproducibility": {"generator_reproducibility", "advisory_support"},
+        "review_head_identity": {"review_head_identity", "advisory_support"},
+        "alias_axes": {"alias_axes"},
+        "failure_arithmetic": {"failure_arithmetic"},
+        "outcome_mapping": {"outcome_mapping", "advisory_support"},
+        "prepared_manifest": {"prepared_manifest"},
+        "measurement_consistency": {"measurement_consistency"},
+        "no_access": {"no_access", "advisory_support"},
+    }
     for mutation_id, target, path, change in cases:
         values = evaluate(base.changed(path, change))
         failed = sorted(name for name, value in values.items() if not value)
+        expected = sorted(dependency_sets[target])
         rows.append({
             "mutation_id": mutation_id, "target": target, "failed_predicates": failed,
-            "isolated": failed == [target], "result": "PASS" if failed == [target] else "FAIL",
+            "declared_dependency_set": expected,
+            "isolated": failed == [target],
+            "result": "PASS" if failed == expected else "FAIL",
         })
     for index, row in enumerate(design.OPUS_ROWS, 1):
         finding_id = row[0]
@@ -514,9 +534,9 @@ def mutation_suite(base: Store) -> list[dict]:
             "mutation_id": f"M-ROW-{index:02d}-{finding_id}",
             "target": f"repair_row:{finding_id}",
             "failed_predicates": failed,
-            "declared_dependency_set": ["repair_ledger"],
-            "isolated": failed == ["repair_ledger"],
-            "result": "PASS" if failed == ["repair_ledger"] else "FAIL",
+            "declared_dependency_set": ["advisory_support", "repair_ledger"],
+            "isolated": False,
+            "result": "PASS" if failed == ["advisory_support", "repair_ledger"] else "FAIL",
         })
     return rows
 
