@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-evidence-only-ci-failure/1.0.0",
+  "run_id": 33219685050,
+  "head_sha": "8087b1b512d4dcf76b1feccaa495a8cdbb0e92e9",
+  "head_tree": "c4e8026c6911d92d031da5cad04334dfeb770b4d",
+  "classification": "EVIDENCE_ONLY",
+  "classifier_job_id": 99010921522,
+  "evidence_integrity_job_id": 99010945386,
+  "aggregate_job_id": 99010976567,
+  "native_jobs_launched": 0,
+  "failure": "EXTERNAL_PROMPT_BINDING_WAS_EXPRESSED_AS_A_SOURCE_REPOSITORY_GIT_OBJECT_BINDING",
+  "validator_message": "unresolved bound path for prompt-control commit and path",
+  "affected_artifact": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-authority-manifest-v1.json",
+  "repair": "APPEND_ONLY_SUCCESSOR_MANIFEST_BINDS_THE_COMMITTED_LOCAL_PROMPT_PROVENANCE_EVIDENCE_INSTEAD_OF_REINTERPRETING_THE_EXTERNAL_REPOSITORY_AS_A_LOCAL_GIT_OBJECT",
+  "implementation_bytes_changed": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event_06_executed": false,
+  "result": "FAIL_CLOSED_REPAIR_REQUIRED"
+}
