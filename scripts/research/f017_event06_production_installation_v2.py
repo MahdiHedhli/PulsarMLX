@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import pickle
 import re
 import time
 from pathlib import Path
@@ -17,11 +18,13 @@ from typing import Final, Never, Self, SupportsIndex, cast
 
 from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
 from f017_canonical_serialization_v10 import canonical_bytes
+from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_event06_durable_installation_transaction_v1 import (
     DurableTransactionResult,
     TransactionPayload,
     _commit_bound_production_transaction,
 )
+from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
 from f017_event06_production_installation_v1 import (
     FAILURE_OUTCOMES,
     PreparedProductionInstallation,
@@ -30,14 +33,11 @@ from f017_event06_production_installation_v1 import (
     prepare_production_installation,
     validate_prepared_production_installation,
 )
-from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
-from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
 from f017_event06_readiness_authority_v3 import (
     ValidatedEvent06ReadinessV3,
     _repository_delegate,
     assert_readiness_v3_sealed,
 )
-
 
 HEX64 = re.compile(r"[0-9a-f]{64}")
 TYPED_ID = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,190}[A-Z0-9])?")
@@ -137,6 +137,9 @@ class FutureGoCapabilityV2:
     def __reduce_ex__(self, protocol: SupportsIndex) -> Never:
         del protocol
         raise TypeError("future Event 06 GO capabilities cannot be pickled")
+
+
+_ISSUED_CAPABILITIES: dict[int, FutureGoCapabilityV2] = {}
 
 
 def _prepared_sha256(prepared: PreparedProductionInstallation) -> str:
@@ -252,7 +255,9 @@ def produce_future_go_capability(
         raise ProductionInstallationError(
             FAILURE_OUTCOMES["target"], "target parent identity"
         )
-    return FutureGoCapabilityV2(_CAPABILITY_SEAL, value, raw)
+    capability = FutureGoCapabilityV2(_CAPABILITY_SEAL, value, raw)
+    _ISSUED_CAPABILITIES[id(capability)] = capability
+    return capability
 
 
 def inspect_future_go_shape_without_issuing(raw: bytes) -> str:
@@ -301,6 +306,10 @@ def validate_future_go_capability(
         raise ProductionInstallationError(
             FAILURE_OUTCOMES["capability"], "sealed capability required"
         )
+    if _ISSUED_CAPABILITIES.get(id(capability)) is not capability:
+        raise ProductionInstallationError(
+            FAILURE_OUTCOMES["capability"], "capability was not producer-issued"
+        )
     validate_prepared_production_installation(prepared)
     if capability.expires_at_unix_ns <= time.time_ns():
         raise ProductionInstallationError(
@@ -320,6 +329,10 @@ def commit_production_installation_v2(
     """Real success-capable production wrapper, unreachable without fresh GO."""
 
     validated = validate_future_go_capability(capability, prepared=prepared)
+    if _ISSUED_CAPABILITIES.pop(id(validated), None) is not validated:
+        raise ProductionInstallationError(
+            FAILURE_OUTCOMES["capability"], "capability already consumed"
+        )
     payloads = (
         TransactionPayload(
             "candidate", "candidate.json", prepared.payload("candidate")
@@ -341,7 +354,7 @@ def commit_production_installation_v2(
 
 
 def assert_capability_sealed(value: FutureGoCapabilityV2) -> None:
-    for operation in (copy.copy, copy.deepcopy):
+    for operation in (copy.copy, copy.deepcopy, pickle.dumps):
         try:
             operation(value)
         except TypeError:

@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence09-review-repair-disposition/1.0.0",
+  "review_cycle": 1,
+  "reviewed_commit": "695494ae2e2a68901a34504a9ea045483413ecb5",
+  "review_verdict": "REJECT",
+  "repair_loop": 2,
+  "smallest_violated_requirements": [
+    "producer-issued future-GO capability membership",
+    "closed enumeration of capability_expiry fault stage",
+    "non-vacuous sealed-object mutation coverage",
+    "self-producing no-access interposition evidence",
+    "reproducible full-corpus path and failure census",
+    "raw external CI query evidence",
+    "review-visible policy and transition-table bytes"
+  ],
+  "findings": [
+    {"id": "F-OPUS-S9-001", "disposition": "REPAIRED_PRODUCER_ISSUANCE_REGISTRY_AND_FORGERY_REJECTION"},
+    {"id": "F-OPUS-S9-002", "disposition": "REPAIRED_CAPABILITY_EXPIRY_FAULT_EXECUTION"},
+    {"id": "F-OPUS-S9-003", "disposition": "REPAIRED_REAL_INSTANCE_COPY_PICKLE_AND_DIRECT_CONSTRUCTION_TESTS"},
+    {"id": "F-OPUS-S9-004", "disposition": "REPAIRED_COMMITTED_INTERPOSED_QUALIFICATION_PRODUCER"},
+    {"id": "F-OPUS-S9-005", "disposition": "REPAIRED_COMMITTED_REPRODUCTION_HARNESS_AND_EXACT_DIGEST_SOURCE"},
+    {"id": "F-OPUS-S9-006", "disposition": "REPAIRED_COMMITTED_599_PATH_ENUMERATOR_AND_FAILURE_LIST"},
+    {"id": "F-OPUS-S9-007", "disposition": "REPAIRED_SEAL_ASSERTION_PICKLE_COVERAGE"},
+    {"id": "F-OPUS-S9-008", "disposition": "REPAIRED_DEFAULT_READINESS_INTERFACE_TO_V12"},
+    {"id": "F-OPUS-S9-009", "disposition": "REPAIR_NEXT_REVIEW_WORDING_TO_CONTRACT_ORDER"},
+    {"id": "F-OPUS-S9-010", "disposition": "REPAIR_NEXT_REVIEW_INPUT_CENSUS"}
+  ],
+  "source_change": true,
+  "earliest_invalidated_node": "Q1_PREQUALIFICATION_REPAIR",
+  "invalidated_downstream_nodes": ["Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10"],
+  "acceptance_predicates_changed": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "live_authority_created": false,
+  "event_06_executed": false,
+  "production_commit_success_calls": 0,
+  "p1_attempt_2_executed": false,
+  "result": "REPAIR_IMPLEMENTED_DOWNSTREAM_REPLAY_REQUIRED"
+}

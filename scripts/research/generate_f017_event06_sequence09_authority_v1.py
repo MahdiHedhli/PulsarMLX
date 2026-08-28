@@ -13,7 +13,6 @@ from typing import Final
 
 from f017_canonical_serialization_v10 import canonical_bytes
 
-
 ROOT: Final = Path(__file__).resolve().parents[2]
 C = ROOT / "specs/017-rust-native-inference-runtime/contracts"
 E = ROOT / "docs/architecture/reviews/evidence"
@@ -84,6 +83,8 @@ IMPLEMENTATION_PATHS: Final = (
     "scripts/research/generate_f017_event06_sequence09_authority_v1.py",
     "scripts/research/validate_f017_event06_sequence09_authority_v1.py",
     "scripts/research/qualify_f017_event06_sequence09_no_access_v1.py",
+    "scripts/research/run_f017_event06_sequence09_interposed_qualification_v1.py",
+    "scripts/research/validate_f017_event06_sequence09_full_corpus_v1.py",
     "scripts/research/tests/test_f017_event06_sequence09_authority_v1.py",
 )
 
@@ -225,6 +226,7 @@ def build_transaction_policy() -> dict[str, object]:
         ],
         "production_success_calls_required_in_sequence09": 0,
         "production_capability_instances_required_in_sequence09": 0,
+        "capability_expiry_fault_stage": "BEFORE_AUTHORITY_CONSUMPTION_AND_TARGET_CREATION",
     }
 
 
@@ -247,6 +249,8 @@ def build_future_capability(transaction_sha: str) -> dict[str, object]:
         accepted_live_go_decision="GO_FRESH_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_06",
         inert_stale_expired_reused_mismatched_copied_pickled_caller_created_cross_posture="REJECT",
         success_capable_path="producer -> sealed capability -> checker -> production wrapper -> durable transaction engine",
+        producer_issuance_registry_required=True,
+        direct_object_new_and_object_setattr_fabrication="REJECT",
     )
     return value
 

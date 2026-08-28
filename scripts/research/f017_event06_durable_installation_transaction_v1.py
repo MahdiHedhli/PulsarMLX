@@ -11,13 +11,13 @@ from __future__ import annotations
 import copy
 import hashlib
 import os
+import pickle
 import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, Never, Self, SupportsIndex
 
 from f017_canonical_serialization_v10 import canonical_bytes
-
 
 FAILURE_OUTCOMES: Final = {
     "exclusive_create": "F017_V12_PRODUCTION_INSTALL_TARGET_EXISTS",
@@ -217,6 +217,8 @@ def _commit_no_replace(
         parent_identity = os.fstat(parent_fd)
         if not stat.S_ISDIR(parent_identity.st_mode):
             raise _fail("target_identity", "parent is not a directory")
+        if fault_stage == "capability_expiry":
+            raise _fail("capability_expiry", "injected before authority consumption")
 
         if consumption_marker is not None:
             marker = _leaf(consumption_marker)
@@ -412,7 +414,7 @@ def _commit_bound_production_transaction(
 
 
 def assert_transaction_result_sealed(value: DurableTransactionResult) -> None:
-    for operation in (copy.copy, copy.deepcopy):
+    for operation in (copy.copy, copy.deepcopy, pickle.dumps):
         try:
             operation(value)
         except TypeError:

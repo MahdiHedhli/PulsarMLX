@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import copy
+import pickle
 from pathlib import Path
 from typing import Final, Never, Self, SupportsIndex
 
@@ -13,11 +14,10 @@ from f017_event06_readiness_authority_v2 import (
     validate_event06_readiness_declaration_v2,
 )
 
-
 ROOT: Final = Path(__file__).resolve().parents[2]
 INTERFACE: Final = ROOT / (
     "specs/017-rust-native-inference-runtime/contracts/"
-    "f017-corrected-oracle-event06-readiness-consumer-interface-v11.json"
+    "f017-corrected-oracle-event06-readiness-consumer-interface-v12.json"
 )
 _SEAL = object()
 
@@ -95,7 +95,7 @@ def _repository_delegate(
 def assert_readiness_v3_copy_pickle_closed(
     value: ValidatedEvent06ReadinessV3,
 ) -> None:
-    for operation in (copy.copy, copy.deepcopy):
+    for operation in (copy.copy, copy.deepcopy, pickle.dumps):
         try:
             operation(value)
         except TypeError:

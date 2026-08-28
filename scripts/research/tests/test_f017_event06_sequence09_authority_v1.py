@@ -3,26 +3,28 @@ from __future__ import annotations
 import ast
 import copy
 import inspect
+import json
 import os
 import pickle
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
-
 from f017_event06_durable_installation_transaction_v1 import (
     RACE_FAMILIES,
     DurableTransactionResult,
 )
+from f017_event06_production_installation_v1 import ProductionInstallationError
 from f017_event06_production_installation_v2 import (
     FutureGoCapabilityV2,
     commit_production_installation_v2,
     produce_future_go_capability,
+    validate_future_go_capability,
 )
 from f017_event06_readiness_authority_v3 import ValidatedEvent06ReadinessV3
 from qualify_f017_event06_sequence09_no_access_v1 import qualify
-
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -178,8 +180,55 @@ assert census == {"open": 0, "stat": 0, "resolve": 0, "mmap": 0}
     assert completed.returncode == 0, completed.stderr
 
 
+def test_committed_interposed_qualification_harness() -> None:
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = str(ROOT / "scripts/research")
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(
+                ROOT
+                / "scripts/research/run_f017_event06_sequence09_interposed_qualification_v1.py"
+            ),
+        ],
+        text=True,
+        capture_output=True,
+        env=environment,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    result = json.loads(completed.stdout)
+    assert result["result"] == "PASS"
+    assert result["interposition_installed_before_execution_facing_imports"] is True
+    assert set(result["interposition_census"].values()) == {0}
+
+
 def test_caller_copy_pickle_and_constructor_attacks_fail() -> None:
     for cls in (FutureGoCapabilityV2, DurableTransactionResult):
-        for operation in (copy.copy, copy.deepcopy, pickle.dumps):
-            with pytest.raises(TypeError):
-                operation(cls())
+        with pytest.raises(TypeError):
+            cls()
+
+    forged = object.__new__(FutureGoCapabilityV2)
+    for name, value in {
+        "authorization_id": "F017-FORGED-AUTHORIZATION",
+        "package_attempt_id": "F017-FORGED-PACKAGE",
+        "prepared_installation_sha256": "1" * 64,
+        "readiness_sha256": "2" * 64,
+        "target_parent": Path("/tmp"),
+        "target_leaf": "forged-installation",
+        "nonce_sha256": "3" * 64,
+        "expires_at_unix_ns": 2**63 - 1,
+        "source_sha256": "4" * 64,
+        "_locked": True,
+    }.items():
+        object.__setattr__(forged, name, value)
+    for operation in (copy.copy, copy.deepcopy, pickle.dumps):
+        with pytest.raises(TypeError):
+            operation(forged)
+
+    from qualify_f017_event06_sequence09_no_access_v1 import _package
+
+    with tempfile.TemporaryDirectory(prefix="f017-forge-test-") as root:
+        package = _package(Path(root) / "fixture")
+        with pytest.raises(ProductionInstallationError, match="producer-issued"):
+            validate_future_go_capability(forged, prepared=package["prepared"])

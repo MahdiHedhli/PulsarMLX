@@ -16,6 +16,8 @@ from f017_corrected_oracle_authorization_v12_v3 import (
 )
 from f017_event06_durable_installation_transaction_v1 import (
     FAILURE_OUTCOMES as TRANSACTION_FAILURES,
+)
+from f017_event06_durable_installation_transaction_v1 import (
     RACE_FAMILIES,
     DurableTransactionError,
     TransactionPayload,
@@ -54,7 +56,6 @@ from f017_event06_sequence09_fixture_v1 import (
     build_readiness_fixture,
     execution_plan_value,
 )
-
 
 SENTINEL = Path("/NONEXISTENT/F017/EVENT06/SEQUENCE08")
 
@@ -298,10 +299,6 @@ def _transaction_campaign(root: Path) -> tuple[int, int]:
         successes += 1
     for family in RACE_FAMILIES:
         target = f"fault-{family}"
-        if family == "capability_expiry":
-            # This failure belongs to the capability checker rather than storage.
-            failures += 1
-            continue
         try:
             commit_synthetic_non_authority_transaction(
                 root, target, payloads, fault_stage=family
@@ -361,6 +358,37 @@ def _future_go_rejections(package: dict[str, object]) -> int:
         rejected += 1
     else:
         raise AssertionError("production commit succeeded without capability")
+    forged = object.__new__(FutureGoCapabilityV2)
+    for name, value in {
+        "authorization_id": "F017-FORGED-AUTHORIZATION",
+        "package_attempt_id": "F017-FORGED-PACKAGE",
+        "prepared_installation_sha256": hashlib.sha256(
+            prepared.payload("candidate")
+            + prepared.payload("receipt")
+            + prepared.payload("installed")
+        ).hexdigest(),
+        "readiness_sha256": readiness.source_sha256,
+        "target_parent": Path("/tmp"),
+        "target_leaf": "forged-installation",
+        "nonce_sha256": "3" * 64,
+        "expires_at_unix_ns": 2**63 - 1,
+        "source_sha256": "4" * 64,
+        "_locked": True,
+    }.items():
+        object.__setattr__(forged, name, value)
+    for operation in (copy.copy, copy.deepcopy, pickle.dumps):
+        try:
+            operation(forged)
+        except TypeError:
+            rejected += 1
+        else:
+            raise AssertionError("forged capability copy/pickle attack passed")
+    try:
+        commit_production_installation_v2(prepared, forged)
+    except ProductionInstallationError:
+        rejected += 1
+    else:
+        raise AssertionError("forged capability reached production commit")
     assert FutureGoCapabilityV2 not in type(prepared).__mro__
     return rejected
 
