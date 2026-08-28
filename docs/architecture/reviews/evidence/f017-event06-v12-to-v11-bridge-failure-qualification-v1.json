@@ -1,0 +1,17 @@
+{
+  "event06_executed": false,
+  "event06_ids_consumed": 0,
+  "generic_fallback": "PROHIBITED",
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "lifecycle_phases": 9,
+  "modeled_failure_classes": 38,
+  "numerical_operations": 0,
+  "original_checkpoint_access": 0,
+  "phase_specific_outcomes": "PASS",
+  "result": "PASS",
+  "resume": false,
+  "retries": 0,
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-failure-qualification/1.0.0",
+  "substantive_mutation_cases": 384,
+  "unexpected_passes": 0
+}

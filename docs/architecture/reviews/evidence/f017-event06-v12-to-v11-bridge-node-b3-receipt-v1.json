@@ -1,0 +1,8 @@
+{
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "implementation_tree": "d5bc4245ff2bf2d93a8640d8fb5e878d6ca1fbbf",
+  "node": "B3_BRIDGE_IMPLEMENTATION",
+  "output_paths": 13,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-node-receipt/1.0.0"
+}

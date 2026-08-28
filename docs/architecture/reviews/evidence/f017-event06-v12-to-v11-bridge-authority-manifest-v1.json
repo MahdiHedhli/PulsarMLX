@@ -1,0 +1,30 @@
+{
+  "artifacts": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-final-no-go-declaration-v3.json": "a4b99d92e211add78f7865263b1c214bdd13d60ca350513c2a9fb508af58562e",
+    "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json": "822752fae481657623411568d9ab4c04154af696a2ff176946f5fc68f9a56e46",
+    "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v7.json": "4d9740a55f57f331fa0f4a1662f5063e3f5ad39034f862e5b3ba3b5747ff4715",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-capability-qualification-v1.json": "437b02e09c1f087d1bba4d561130a006c1ff472e4aa3a7852b2e251dc45da0f4",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-claim-ledger-v2.json": "4718feae64fc2c06d5c1a0ca87fc9cb1fcd569abd72f3455da3915c8bbaf8841",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-authority-manifest-v3.json": "3d3c2f0eabb3fb88e627adcb81aa23c905e95796730699c619696f48bc56911a",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-failure-qualification-v1.json": "16b48d7f1b41253c32f5824d051261af0efb747344613cc8cdf494e8d340a8da",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-full-native-ci-v1.json": "47244c1f74aee2f2ff78b9f2eca3bd9b6ec8ee1ee5dbff7c39221ac83083751f",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-graph-state-v2.json": "4749f99e8970537020cde71a6dc89fd64863980e611f59044d5fb9b9201b966a",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-implementation-measurement-v1.json": "4bdb29067a44de0a740465ce9a6b05caefcbae9af8feee1c2663080412622a67",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-no-access-rehearsal-v1.json": "00083d5dc3cf1be876d2aef8e4e103dec44ffeed3b88f98371c214468aad5a64",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-node-b3-receipt-v1.json": "3e9fdb23216dbe21f08697488b1c13a08986c39e976887857d916acc16e3e093",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-node-b4-receipt-v1.json": "9bb745978e5d559a30a14b995458f1b8e385b2856671652fb1039fd6604d5af6",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-node-b5-receipt-v1.json": "4a7ad023ca3f1f5e2f9ea23b7d53b76c279399512b19f38ace23886be017737a",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-opus-design-cycle-03-normalized-result.json": "b827c03d0d19e699c0d63d20995642de2045ccca7a2c75aea2f7a68386a6f8a6",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-qualification-v1.json": "6039de4c7a21fd738bdae576406c16623e235c2ba571b862de7612db5b3cdf96",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-capability-v1.json": "b922850c1480d178df250131881c5637cf20ea1d2a0f0b5d23379b2186da5592",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v3.json": "5832eb52250bfd29ea3f31e39e250e82be4123f401616300430883b6df93d7d5",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v3.json": "774ae96a33b30a7c2906fb81f6c73a7b83de59ae6f7929b076a0e791ea9af9fe"
+  },
+  "bridge_digest": "83712e17780debafc7981b17b996ac944bda9883a35b98f682a0f0163474e88b",
+  "full_native_run": 33137473493,
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "implementation_tree": "d5bc4245ff2bf2d93a8640d8fb5e878d6ca1fbbf",
+  "original_checkpoint_access": 0,
+  "result": "WHOLE_DOMAIN_REVIEW_PENDING",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-authority-manifest/1.0.0"
+}
