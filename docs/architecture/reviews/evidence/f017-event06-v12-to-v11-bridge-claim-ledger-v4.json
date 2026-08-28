@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-claim-ledger/1.3.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-claim-ledger-v3.json",
+  "claims": [
+    {"claim_id":"C-BRIDGE-GEN-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-PROV-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DIGEST-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LEGACY-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CALLPATH-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LIFE-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CAP-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DRIFT-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-QUAL-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CI-001","state":"REPAIRED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-SAFETY-001","state":"SUPPORTED","readiness_critical":true}
+  ],
+  "readiness_critical_claims": 11,
+  "rejected_claims": 0,
+  "unresolved_claims": 0,
+  "result": "FRESH_OPUS_ARBITRATION_REQUIRED"
+}

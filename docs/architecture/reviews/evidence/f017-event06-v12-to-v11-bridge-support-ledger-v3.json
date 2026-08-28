@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-support-ledger/1.2.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-support-ledger-v2.json",
+  "review_cycle": "OPUS_WHOLE_DOMAIN_CYCLE_02",
+  "reviewed_evidence_head": "02b8668c7be99a78b3dc3ee151f15b230437e0e5",
+  "dispositions": [
+    {
+      "claim_id": "C-BRIDGE-CI-001",
+      "finding": "passed EVIDENCE_ONLY runs were named only in prose and absent from a committed CI artifact and authority-manifest binding",
+      "disposition": "REPAIRED_APPEND_ONLY",
+      "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-evidence-only-ci-history-v1.json"
+    }
+  ],
+  "execution_bytes_changed": false,
+  "full_native_rerun_required": false,
+  "rejected_evidence_preserved": true,
+  "blocking_findings_remaining": 0,
+  "required_findings_remaining": 0,
+  "unresolved_findings_remaining": 0,
+  "result": "REPAIRED_PENDING_FRESH_OPUS_ARBITRATION"
+}
