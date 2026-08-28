@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-terminal-authority-index/1.0.0",
+  "declaration": "F017_EVENT06_SEQUENCE10_TERMINAL_PRE_APPROVAL_FAILURE_EVIDENCE: COMPLETE",
+  "source_start": {
+    "head": "f4bbdcacad01d3e5cb86216010d301ff2a344b6e",
+    "tree": "8717916755bbf16d7b318307eacad71d9512ae4f"
+  },
+  "prompt_repository_commit": "c8198731fff7e73d94e28d44b8e3e2d918b1034f",
+  "prompt_digest": "23f6079c432e6012a00c4f4f9c3b59f50828bb0109d294d0e3c029fb8e185cd6",
+  "node_receipts": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-node-e0-receipt-v1.json",
+      "sha256": "ce3d1bc13581c1b6e83336bbeec4cd39f6c82bcbe73c12cd5d07db3774b35dc6"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-node-e1-receipt-v1.json",
+      "sha256": "488a3b817b623ef5b5d967eca7a6bab54bf58457a6f98337df8e266c3bb2003f"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-node-e2-receipt-v1.json",
+      "sha256": "0e5ea5cbaf437ef6465e658263661406e7163f7091a987134af8e3d7a0df0dd3"
+    }
+  ],
+  "failure": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-end-to-end-call-path-instantiability-failure-v1.json",
+    "sha256": "f7158c7812924facd6e793718a1783d207242fec530ec2e2ddee713805d09266"
+  },
+  "append_only_correction": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-human-go-digest-correction-v1.json",
+    "sha256": "637e439bda3ce19d4b3f679d8583569332b18dac834cdf833c705e155a413b37"
+  },
+  "evidence_only": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-evidence-only-ci-v1.json",
+    "sha256": "4c680b4e004286ecc8acd27a68318e46f50faccf9a801cc2a9a6d39d3a3bbac6",
+    "run": 33213515642,
+    "native_jobs": 0,
+    "result": "PASS"
+  },
+  "transition_reconciliation": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-transition-reconciliation-v1.json",
+    "sha256": "56bad5738b25818cc667439b52194a1d4006e22a2a0c2da47cf831304dcc9171"
+  },
+  "final_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-final-event06-declaration-v1.json",
+    "sha256": "981c0aa0db851d276ad030022a758cf75edd26689d9e6d3e1aa70a7d637cd746"
+  },
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "terminal_authority_index": "PASS",
+  "event06_executed": false,
+  "checkpoint_access": 0,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "result": "PASS"
+}
