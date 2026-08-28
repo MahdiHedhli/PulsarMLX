@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-preobservation-freeze/1.0.0",
+  "declaration": "F017_EVENT06_SEQUENCE11_LIVE_GO_CALL_PATH_FACTS: TEMPORALLY_FROZEN_NOT_OPERATIONALLY_RATIFIED",
+  "frozen_before_authoritative_qualification": true,
+  "requirements_locator": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-live-go-call-path-requirements-v1.json",
+  "contract_locator": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-live-go-call-path-v3.json",
+  "frozen_facts": ["field sets", "exact types", "schema identifiers", "authority DAG", "semantic owners", "failure outcomes", "one-shot posture", "zero-side-effect criteria"],
+  "unchanged_authority": ["checkpoint identity V12", "V12-to-V11 bridge", "numerical V4", "V11 result authority", "lifecycle vocabulary", "accounting units", "historical ledger 175"],
+  "operationally_ratified": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "result": "PASS"
+}
