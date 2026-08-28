@@ -2905,4 +2905,577 @@ mod tests {
             .join("manifest.jsonl.sha256")
             .exists());
     }
+
+    fn recursive_file_count(root: &Path) -> Result<u64> {
+        let mut count = 0u64;
+        let mut pending = vec![root.to_path_buf()];
+        while let Some(directory) = pending.pop() {
+            for entry in fs::read_dir(directory)? {
+                let entry = entry?;
+                let metadata = fs::symlink_metadata(entry.path())?;
+                if metadata.file_type().is_symlink() {
+                    return Err(err("unexpected symlink in complete-scope output"));
+                }
+                if metadata.is_dir() {
+                    pending.push(entry.path());
+                } else if metadata.is_file() {
+                    count = checked_add(count, 1, "recursive file count")?;
+                } else {
+                    return Err(err("unexpected output entry type"));
+                }
+            }
+        }
+        Ok(count)
+    }
+
+    fn audit_completion_manifest(
+        output_root: &Path,
+        plans: &[ObjectPlan],
+        inventory_sha: &str,
+        plan_id: &str,
+    ) -> Result<(String, u64)> {
+        let manifest = fs::read(output_root.join("manifest.jsonl"))?;
+        if !manifest.ends_with(b"\n") {
+            return Err(err("completion manifest lacks terminal newline"));
+        }
+        let lines = manifest
+            .split_inclusive(|byte| *byte == b'\n')
+            .collect::<Vec<_>>();
+        if lines.len() != plans.len() + 2 {
+            return Err(err("completion manifest row count mismatch"));
+        }
+        let parse = |line: &[u8]| -> Result<Value> {
+            let body = line
+                .strip_suffix(b"\n")
+                .ok_or_else(|| err("manifest row lacks newline"))?;
+            let value: Value = serde_json::from_slice(body)?;
+            if canonical_json(&value)? != body {
+                return Err(err("manifest row is not canonical"));
+            }
+            Ok(value)
+        };
+        let header = parse(lines[0])?;
+        if header["record_type"] != "manifest_header"
+            || header["object_count"] != plans.len() as u64
+            || header["inventory_sha256"] != inventory_sha
+            || header["manifest_plan_id"] != plan_id
+        {
+            return Err(err("completion manifest header mismatch"));
+        }
+        let mut logical = 0u64;
+        let mut stored = 0u64;
+        let mut routed = 0u64;
+        let mut shared = 0u64;
+        let mut seen = BTreeSet::new();
+        for (line, plan) in lines[1..=plans.len()].iter().zip(plans) {
+            let row = parse(line)?;
+            if row["record_type"] != "object"
+                || row["layer"] != plan.layer
+                || row["expert"] != plan.expert
+                || row["expert_class"] != plan.expert_class
+                || row["relative_path"] != plan.relative_path.to_string_lossy().as_ref()
+            {
+                return Err(err(
+                    "completion manifest object ordering or identity mismatch",
+                ));
+            }
+            let key = (plan.layer, plan.expert_class.as_str(), plan.expert);
+            if !seen.insert(key) {
+                return Err(err("duplicate completion manifest object"));
+            }
+            let bundle_path = output_root.join(&plan.relative_path);
+            let bundle = File::open(&bundle_path)?;
+            let bundle_metadata = verify_bundle_file(&bundle)?;
+            if bundle.metadata()?.len()
+                != row["stored_len"]
+                    .as_u64()
+                    .ok_or_else(|| err("invalid manifest stored length"))?
+                || full_hash_file(&bundle)?
+                    != row["stored_sha256"]
+                        .as_str()
+                        .ok_or_else(|| err("invalid manifest stored hash"))?
+                || bundle_metadata["canonical_payload_sha256"] != row["canonical_payload_sha256"]
+                || bundle_metadata["object_identity_sha256"] != row["object_identity_sha256"]
+                || bundle_metadata["components"] != row["components"]
+            {
+                return Err(err("manifest row does not reconcile with bundle bytes"));
+            }
+            logical = checked_add(
+                logical,
+                row["canonical_payload_len"]
+                    .as_u64()
+                    .ok_or_else(|| err("invalid manifest logical length"))?,
+                "manifest logical bytes",
+            )?;
+            stored = checked_add(
+                stored,
+                row["stored_len"]
+                    .as_u64()
+                    .ok_or_else(|| err("invalid manifest stored length"))?,
+                "manifest stored bytes",
+            )?;
+            if plan.expert_class == "routed" {
+                routed += 1;
+            } else {
+                shared += 1;
+            }
+        }
+        let footer_offset = lines[..=plans.len()]
+            .iter()
+            .map(|line| line.len())
+            .sum::<usize>();
+        let footer = parse(lines.last().unwrap())?;
+        if footer["record_type"] != "manifest_footer"
+            || footer["object_count"] != plans.len() as u64
+            || footer["routed_count"] != routed
+            || footer["shared_count"] != shared
+            || footer["logical_payload_bytes"] != logical
+            || footer["stored_bytes"] != stored
+            || footer["preceding_records_sha256"] != sha256_bytes(&manifest[..footer_offset])
+        {
+            return Err(err("completion manifest footer mismatch"));
+        }
+        let manifest_sha = sha256_bytes(&manifest);
+        if fs::read(output_root.join("manifest.jsonl.sha256"))?
+            != format!("{manifest_sha}\n").as_bytes()
+        {
+            return Err(err("detached completion manifest hash mismatch"));
+        }
+        Ok((manifest_sha, stored))
+    }
+
+    fn aggregate_complete_objects(completed: &[CompleteObject]) -> (String, String) {
+        let mut stored = Sha256::new();
+        stored.update(b"PULSARMLX-R001-D6-FULL-STORED-V1");
+        let mut identities = Sha256::new();
+        identities.update(b"PULSARMLX-R001-D6-FULL-OBJECTS-V1");
+        for object in completed {
+            let key = format!(
+                "{}:{}:{}",
+                object.plan.layer, object.plan.expert_class, object.plan.expert
+            );
+            stored.update((key.len() as u64).to_le_bytes());
+            stored.update(key.as_bytes());
+            stored.update(decode_hex_32(&object.stored_sha256).unwrap());
+            identities.update((key.len() as u64).to_le_bytes());
+            identities.update(key.as_bytes());
+            identities.update(decode_hex_32(&object.object_identity_sha256).unwrap());
+        }
+        (hex(&stored.finalize()), hex(&identities.finalize()))
+    }
+
+    struct CompleteScopeRoot {
+        path: PathBuf,
+        identity: DirectoryIdentity,
+        armed: bool,
+    }
+
+    impl CompleteScopeRoot {
+        fn admit_from_environment() -> Result<Self> {
+            let value = std::env::var_os("PULSARMLX_D6_TASK_ROOT")
+                .ok_or_else(|| err("PULSARMLX_D6_TASK_ROOT is required"))?;
+            let path = PathBuf::from(value);
+            let metadata = fs::symlink_metadata(&path)?;
+            let identity = directory_identity(&metadata)?;
+            if metadata.file_type().is_symlink()
+                || fs::read_dir(&path)?.next().is_some()
+                || path.starts_with(std::env::current_dir()?)
+            {
+                return Err(err(
+                    "D6 task root is unsafe, non-empty, or repository-nested",
+                ));
+            }
+            Ok(Self {
+                path,
+                identity,
+                armed: true,
+            })
+        }
+
+        fn cleanup(mut self) -> Result<()> {
+            let metadata = fs::symlink_metadata(&self.path)?;
+            if metadata.file_type().is_symlink() || directory_identity(&metadata)? != self.identity
+            {
+                return Err(err("refuse cleanup after D6 task-root identity change"));
+            }
+            fs::remove_dir_all(&self.path)?;
+            self.armed = false;
+            Ok(())
+        }
+    }
+
+    impl Drop for CompleteScopeRoot {
+        fn drop(&mut self) {
+            if !self.armed {
+                return;
+            }
+            let Ok(metadata) = fs::symlink_metadata(&self.path) else {
+                return;
+            };
+            if !metadata.file_type().is_symlink()
+                && directory_identity(&metadata).ok() == Some(self.identity)
+            {
+                let _ = fs::remove_dir_all(&self.path);
+            }
+        }
+    }
+
+    fn full_scope_component_bytes(
+        object: &InventoryObject,
+        component: &InventoryComponent,
+    ) -> Vec<u8> {
+        let class = if object.expert_class == "routed" {
+            17u64
+        } else {
+            29
+        };
+        let role = match component.role.as_str() {
+            "gate" => 3u64,
+            "up" => 5,
+            "down" => 7,
+            _ => 0,
+        };
+        (0..component.plane_bytes)
+            .map(|index| {
+                (object.layer as u64)
+                    .wrapping_mul(131)
+                    .wrapping_add(object.expert as u64 * 31)
+                    .wrapping_add(class)
+                    .wrapping_add(role)
+                    .wrapping_add(component.data_offset_abs)
+                    .wrapping_add(index) as u8
+            })
+            .collect()
+    }
+
+    fn full_scope_config(
+        root: &Path,
+        source: &Path,
+        label: &str,
+        scope: &[ScopeLayer],
+    ) -> Result<RepackConfig> {
+        let output_root = root.join(format!("{label}-output"));
+        let staging_root = root.join(format!("{label}-staging"));
+        let summary_root = root.join(format!("{label}-summary"));
+        for path in [&output_root, &staging_root, &summary_root] {
+            fs::create_dir(path)?;
+        }
+        Ok(RepackConfig {
+            checkpoint_dir: source.to_path_buf(),
+            admission_path: root.join("unused-admission"),
+            inventory_path: root.join("unused-inventory"),
+            output_root,
+            staging_root,
+            scope: scope.to_vec(),
+            summary_path: summary_root.join("summary.json"),
+            dry_run: false,
+            resume: false,
+            test_interrupt_after_bytes: None,
+            test_interrupt_after_manifest: false,
+        })
+    }
+
+    #[test]
+    fn d6_full_scope_manifest_audit_rejects_mutation() {
+        let fixture = synthetic_write_fixture("manifest-audit-negative");
+        let completed = write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+        )
+        .unwrap();
+        let paths = SafePaths::admit(&fixture.cfg).unwrap();
+        publish_manifest(
+            &fixture.cfg,
+            &paths,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+            &[completed],
+        )
+        .unwrap();
+        let manifest_path = fixture.cfg.output_root.join("manifest.jsonl");
+        let detached_path = fixture.cfg.output_root.join("manifest.jsonl.sha256");
+        let manifest = fs::read(&manifest_path).unwrap();
+        let detached = fs::read(&detached_path).unwrap();
+        assert!(audit_completion_manifest(
+            &fixture.cfg.output_root,
+            std::slice::from_ref(&fixture.plan),
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_ok());
+
+        for mutated in [
+            manifest[..manifest.len() - 1].to_vec(),
+            [manifest.as_slice(), b"{}\n"].concat(),
+            {
+                let mut lines = manifest
+                    .split_inclusive(|byte| *byte == b'\n')
+                    .collect::<Vec<_>>();
+                lines.insert(2, lines[1]);
+                lines.concat()
+            },
+        ] {
+            fs::write(&manifest_path, mutated).unwrap();
+            assert!(audit_completion_manifest(
+                &fixture.cfg.output_root,
+                std::slice::from_ref(&fixture.plan),
+                &fixture.inventory_sha,
+                &fixture.plan_id
+            )
+            .is_err());
+        }
+        fs::write(&manifest_path, &manifest).unwrap();
+        fs::write(&detached_path, b"00\n").unwrap();
+        assert!(audit_completion_manifest(
+            &fixture.cfg.output_root,
+            std::slice::from_ref(&fixture.plan),
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        fs::write(detached_path, detached).unwrap();
+    }
+
+    #[test]
+    #[ignore = "overnight complete-scope checkpoint-free D6 qualification"]
+    fn d6_full_scope_checkpoint_free_synthetic_repack() {
+        let total_started = Instant::now();
+        let task = CompleteScopeRoot::admit_from_environment().unwrap();
+        let result_path = std::env::var_os("PULSARMLX_D6_RESULT_PATH")
+            .map(PathBuf::from)
+            .expect("PULSARMLX_D6_RESULT_PATH is required");
+        assert!(!result_path.starts_with(&task.path));
+        let source_root = task.path.join("synthetic-source");
+        fs::create_dir(&source_root).unwrap();
+
+        let plan_started = Instant::now();
+        let (inventory, mut admission, scope) = synthetic_complete_authority();
+        assert_eq!(inventory.logical_object_count, 19_532);
+        assert_eq!(inventory.expert_payload_bytes, 58_596 * 66);
+        for shard in &admission.shards {
+            let path = source_root.join(&shard.name);
+            let file = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create_new(true)
+                .mode(0o600)
+                .open(path)
+                .unwrap();
+            file.set_len(shard.size).unwrap();
+        }
+        for object in &inventory.objects {
+            for component in &object.components {
+                let path = source_root.join(&component.shard);
+                assert!(path.starts_with(&source_root));
+                let file = OpenOptions::new().write(true).open(path).unwrap();
+                let bytes = full_scope_component_bytes(object, component);
+                assert_eq!(bytes.len() as u64, component.plane_bytes);
+                write_exact_at(&file, &bytes, component.data_offset_abs).unwrap();
+            }
+        }
+        for shard in &mut admission.shards {
+            let path = source_root.join(&shard.name);
+            let file = OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(path)
+                .unwrap();
+            file.sync_all().unwrap();
+            shard.destination_stat = stat_from_metadata(&file.metadata().unwrap());
+        }
+        let plans = build_plans(&inventory, &admission, &scope).unwrap();
+        assert_eq!(plans.len(), 19_532);
+        assert_eq!(
+            plans
+                .iter()
+                .map(|object| object.components.len())
+                .sum::<usize>(),
+            58_596
+        );
+        let inventory_sha = admission.inventory_sha256.clone();
+        let plan_id = plan_identity(&inventory_sha, &plans, &scope);
+        assert_eq!(
+            plan_id,
+            "350ee7d581b425658f800c96cc877abdebd56e945a560d615ddfb38091b8f75a"
+        );
+        let mut ranges = BTreeMap::<&str, Vec<(u64, u64)>>::new();
+        for plan in &plans {
+            for component in &plan.components {
+                ranges.entry(&component.shard).or_default().push((
+                    component.source_offset,
+                    checked_add(
+                        component.source_offset,
+                        component.length,
+                        "full-scope source coverage",
+                    )
+                    .unwrap(),
+                ));
+            }
+        }
+        for shard in &admission.shards {
+            let shard_ranges = ranges.get_mut(shard.name.as_str()).unwrap();
+            shard_ranges.sort_unstable();
+            assert_eq!(shard_ranges.first().unwrap().0, 0);
+            assert!(shard_ranges.windows(2).all(|pair| pair[0].1 == pair[1].0));
+            assert_eq!(shard_ranges.last().unwrap().1, shard.size);
+        }
+        let plan_seconds = plan_started.elapsed().as_secs_f64();
+
+        let first_cfg = full_scope_config(&task.path, &source_root, "first", &scope).unwrap();
+        let first_paths = SafePaths::admit(&first_cfg).unwrap();
+        let first_started = Instant::now();
+        let mut first = Vec::with_capacity(plans.len());
+        for (index, plan) in plans.iter().enumerate() {
+            let completed =
+                write_bundle_pinned(&first_cfg, &first_paths, plan, &inventory_sha, &plan_id)
+                    .unwrap();
+            let path = first_cfg.output_root.join(&plan.relative_path);
+            assert_eq!(verify_bundle(&path).unwrap(), completed.metadata);
+            let file = File::open(&path).unwrap();
+            verify_existing_source_mapping(&first_cfg, &file, plan, &completed.metadata).unwrap();
+            assert!(!path.parent().unwrap().read_dir().unwrap().any(|entry| {
+                let name = entry.unwrap().file_name();
+                let name = name.to_string_lossy();
+                name.contains(".partial.") || name.ends_with(".owner.json")
+            }));
+            first.push(completed);
+            if (index + 1) % 2048 == 0 {
+                eprintln!("d6-full-scope first {}/{}", index + 1, plans.len());
+            }
+        }
+        publish_manifest(&first_cfg, &first_paths, &inventory_sha, &plan_id, &first).unwrap();
+        let first_write_seconds = first_started.elapsed().as_secs_f64();
+        let manifest_started = Instant::now();
+        let (manifest_sha, stored_bytes) =
+            audit_completion_manifest(&first_cfg.output_root, &plans, &inventory_sha, &plan_id)
+                .unwrap();
+        assert_eq!(
+            recursive_file_count(&first_cfg.output_root).unwrap(),
+            19_534
+        );
+        assert_eq!(recursive_file_count(&first_cfg.staging_root).unwrap(), 0);
+        let manifest_audit_seconds = manifest_started.elapsed().as_secs_f64();
+        let first_aggregates = aggregate_complete_objects(&first);
+        let stable = first
+            .iter()
+            .map(|object| {
+                let metadata =
+                    fs::metadata(first_cfg.output_root.join(&object.plan.relative_path)).unwrap();
+                (
+                    metadata.dev(),
+                    metadata.ino(),
+                    metadata.len(),
+                    object.stored_sha256.clone(),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        let reuse_started = Instant::now();
+        for (index, plan) in plans.iter().enumerate() {
+            let reused =
+                write_bundle_pinned(&first_cfg, &first_paths, plan, &inventory_sha, &plan_id)
+                    .unwrap();
+            assert!(reused.reused);
+            let metadata = fs::metadata(first_cfg.output_root.join(&plan.relative_path)).unwrap();
+            assert_eq!(
+                stable[index],
+                (
+                    metadata.dev(),
+                    metadata.ino(),
+                    metadata.len(),
+                    reused.stored_sha256
+                )
+            );
+        }
+        assert_eq!(
+            publish_manifest(&first_cfg, &first_paths, &inventory_sha, &plan_id, &first).unwrap(),
+            manifest_sha
+        );
+        let reuse_seconds = reuse_started.elapsed().as_secs_f64();
+
+        let second_cfg = full_scope_config(&task.path, &source_root, "second", &scope).unwrap();
+        let second_paths = SafePaths::admit(&second_cfg).unwrap();
+        let replay_started = Instant::now();
+        let mut second = Vec::with_capacity(plans.len());
+        for (index, plan) in plans.iter().enumerate() {
+            let completed =
+                write_bundle_pinned(&second_cfg, &second_paths, plan, &inventory_sha, &plan_id)
+                    .unwrap();
+            assert_eq!(completed.stored_sha256, first[index].stored_sha256);
+            assert_eq!(
+                completed.object_identity_sha256,
+                first[index].object_identity_sha256
+            );
+            assert_eq!(
+                verify_bundle(&second_cfg.output_root.join(&plan.relative_path)).unwrap(),
+                completed.metadata
+            );
+            second.push(completed);
+            if (index + 1) % 2048 == 0 {
+                eprintln!("d6-full-scope replay {}/{}", index + 1, plans.len());
+            }
+        }
+        publish_manifest(
+            &second_cfg,
+            &second_paths,
+            &inventory_sha,
+            &plan_id,
+            &second,
+        )
+        .unwrap();
+        let (second_manifest_sha, second_stored_bytes) =
+            audit_completion_manifest(&second_cfg.output_root, &plans, &inventory_sha, &plan_id)
+                .unwrap();
+        assert_eq!(manifest_sha, second_manifest_sha);
+        assert_eq!(stored_bytes, second_stored_bytes);
+        assert_eq!(first_aggregates, aggregate_complete_objects(&second));
+        assert_eq!(
+            recursive_file_count(&second_cfg.output_root).unwrap(),
+            19_534
+        );
+        assert_eq!(recursive_file_count(&second_cfg.staging_root).unwrap(), 0);
+        let replay_seconds = replay_started.elapsed().as_secs_f64();
+
+        let source_bytes = admission.shards.iter().map(|shard| shard.size).sum::<u64>();
+        let temporary_peak_bytes = checked_add(
+            source_bytes,
+            checked_add(stored_bytes, second_stored_bytes, "two output stores").unwrap(),
+            "complete-scope owned bytes",
+        )
+        .unwrap();
+        assert!(temporary_peak_bytes <= 4 * 1024 * 1024 * 1024);
+        let cleanup_started = Instant::now();
+        task.cleanup().unwrap();
+        let cleanup_seconds = cleanup_started.elapsed().as_secs_f64();
+        assert!(!source_root.exists());
+
+        let evidence = json!({
+            "bundle_count":plans.len() as u64,
+            "component_count":58_596u64,
+            "first_write_verify_seconds_millis":(first_write_seconds*1000.0).round() as u64,
+            "fresh_replay_seconds_millis":(replay_seconds*1000.0).round() as u64,
+            "manifest_audit_seconds_millis":(manifest_audit_seconds*1000.0).round() as u64,
+            "manifest_sha256":manifest_sha,
+            "object_identity_aggregate_sha256":first_aggregates.1,
+            "peak_rss_bytes":peak_rss_bytes(),
+            "plan_identity":plan_id,
+            "plan_seconds_millis":(plan_seconds*1000.0).round() as u64,
+            "reuse_seconds_millis":(reuse_seconds*1000.0).round() as u64,
+            "schema":"pulsarmlx.f017.d6-full-scope-synthetic-result.v1",
+            "source_bytes":source_bytes,
+            "status":"passed",
+            "stored_bytes_per_replay":stored_bytes,
+            "stored_identity_aggregate_sha256":first_aggregates.0,
+            "temporary_peak_bytes":temporary_peak_bytes,
+            "total_seconds_millis":(total_started.elapsed().as_secs_f64()*1000.0).round() as u64,
+            "cleanup_seconds_millis":(cleanup_seconds*1000.0).round() as u64
+        });
+        fs::write(&result_path, canonical_json(&evidence).unwrap()).unwrap();
+        eprintln!(
+            "D6_FULL_SCOPE_RESULT={}",
+            canonical_json(&evidence).unwrap().escape_ascii()
+        );
+    }
 }
