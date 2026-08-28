@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-opus-normalized-result/1.0.0",
+  "reviewer": "OPUS_ARBITER",
+  "transport": "claude-code/2.1.235",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "60145ae35451333aba62f3027d52cfabb7718de2",
+  "reviewed_tree": "07f9ffff6f00101407254cc2d590613a4b1ca352",
+  "global_verdict": "REJECT",
+  "blocking_findings": [
+    {
+      "id": "ARB-S11-B01",
+      "claim": "NONCIRCULAR_AUTHORITY_DAG",
+      "summary": "capability issuance could splice GO A target authority onto prepared installation B because the producer did not verify their receipt binding"
+    }
+  ],
+  "required_findings": [
+    {
+      "id": "ARB-S11-R01",
+      "claim": "END_TO_END_NO_ACCESS_COMPOSITION",
+      "summary": "side-effect counters were literals rather than concrete boundary instrumentation"
+    },
+    {
+      "id": "ARB-S11-R02",
+      "claim": "NONCIRCULAR_AUTHORITY_DAG",
+      "summary": "DAG mutation cases rejected by tautological comparison rather than the exact DAG validator"
+    },
+    {
+      "id": "ARB-S11-R03",
+      "claim": "NONCIRCULAR_AUTHORITY_DAG",
+      "summary": "the transitive-reduced authority DAG lacked implementation witnesses"
+    },
+    {
+      "id": "ARB-S11-R04",
+      "claim": "PROMPT_BOUND_IDENTITY_PLAN",
+      "summary": "the exact prompt digest constant was not checked against committed prompt-authority provenance"
+    }
+  ],
+  "advisory_findings": ["ARB-S11-A01", "ARB-S11-A02", "ARB-S11-A03", "ARB-S11-A04", "ARB-S11-A05"],
+  "unresolved_findings": ["ARB-S11-U01", "ARB-S11-U02"],
+  "claim_verdicts": {
+    "CANONICAL_LIVE_GO_FIELD_SET": "ACCEPT",
+    "NONCIRCULAR_AUTHORITY_DAG": "REJECT",
+    "LIVE_GO_SEALED_TYPE_COMPATIBILITY": "ACCEPT",
+    "PROMPT_BOUND_IDENTITY_PLAN": "ACCEPT",
+    "REAL_PUBLIC_SIGNATURES_BOUND": "ACCEPT",
+    "END_TO_END_NO_ACCESS_COMPOSITION": "REJECT",
+    "SEALED_TYPE_SECURITY": "ACCEPT"
+  },
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "result": "REPAIR_REQUIRED"
+}

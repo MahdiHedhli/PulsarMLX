@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-agy-normalized-result/1.0.0",
+  "reviewer": "AGY_CHALLENGE",
+  "transport": "agy-cli/1.1.22",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "60145ae35451333aba62f3027d52cfabb7718de2",
+  "reviewed_tree": "07f9ffff6f00101407254cc2d590613a4b1ca352",
+  "delivery_attempts": 2,
+  "transport_failures": 1,
+  "transport_failure_disposition": "NOT_A_DESIGN_VERDICT_RETRIED_WITH_EXACT_WORKTREE_MOUNT",
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "required_findings": [],
+  "advisory_findings": [],
+  "unresolved_findings": [],
+  "claim_verdicts": {
+    "CANONICAL_LIVE_GO_FIELD_SET": "ACCEPT",
+    "NONCIRCULAR_AUTHORITY_DAG": "ACCEPT",
+    "LIVE_GO_SEALED_TYPE_COMPATIBILITY": "ACCEPT",
+    "PROMPT_BOUND_IDENTITY_PLAN": "ACCEPT",
+    "REAL_PUBLIC_SIGNATURES_BOUND": "ACCEPT",
+    "END_TO_END_NO_ACCESS_COMPOSITION": "ACCEPT",
+    "SEALED_TYPE_SECURITY": "ACCEPT"
+  },
+  "mutation_campaign_observed": "229/229",
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "result": "PASS"
+}

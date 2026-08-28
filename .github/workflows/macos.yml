@@ -666,9 +666,13 @@ jobs:
           assert result["result"] == "PASS"
           assert result["deterministic_reconstructions"] >= 20
           assert result["real_public_signatures"]["real_signatures_bound"] == 12
-          assert result["mutation_campaign"]["total"] >= 200
+          assert result["mutation_campaign"]["total"] >= 300
           assert result["mutation_campaign"]["rejected"] == result["mutation_campaign"]["total"]
           assert result["unexpected_passes"] == 0
+          assert result["authority_edge_witnesses"]["witnessed"] == 15
+          assert result["authority_edge_witnesses"]["total"] == 15
+          assert result["sealed_type_security"]["operation_rejections"] == 30
+          assert result["sealed_type_security"]["operation_total"] == 30
           assert all(value == 0 for value in result["side_effect_census"].values())
           assert result["event_06_executed"] is False
           assert result["live_event_06_authority_created"] is False

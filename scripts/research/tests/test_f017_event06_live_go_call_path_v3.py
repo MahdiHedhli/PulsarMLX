@@ -33,12 +33,16 @@ class LiveGoCallPathV3Tests(unittest.TestCase):
         self.assertEqual(result["result"], "PASS")
         self.assertEqual(result["real_public_signatures"]["real_signatures_bound"], 12)
         self.assertEqual(result["real_public_signatures"]["real_signature_total"], 12)
-        self.assertGreaterEqual(result["mutation_campaign"]["total"], 200)
+        self.assertGreaterEqual(result["mutation_campaign"]["total"], 300)
         self.assertEqual(
             result["mutation_campaign"]["rejected"],
             result["mutation_campaign"]["total"],
         )
         self.assertEqual(result["unexpected_passes"], 0)
+        self.assertEqual(result["authority_edge_witnesses"]["witnessed"], 15)
+        self.assertEqual(result["authority_edge_witnesses"]["total"], 15)
+        self.assertEqual(result["sealed_type_security"]["operation_rejections"], 30)
+        self.assertEqual(result["sealed_type_security"]["operation_total"], 30)
         self.assertEqual(result["checkpoint_access"], 0)
         self.assertEqual(result["numerical_operations"], 0)
 

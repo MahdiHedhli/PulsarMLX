@@ -70,6 +70,56 @@ _IDENTITY_SEAL = object()
 _PREPARED_SEAL = object()
 _CAPABILITY_SEAL = object()
 
+PREPARATION_RECEIPT_SCHEMA: Final = (
+    "pulsarmlx.f017.event06-v12-production-installation-preparation-receipt/3.1.0"
+)
+PREPARATION_RECEIPT_FIELDS: Final = (
+    "schema",
+    "candidate_sha256",
+    "readiness_sha256",
+    "live_go_envelope_sha256",
+    "operator_approval_sha256",
+    "execution_plan_sha256",
+    "event_identity_plan_sha256",
+    "prompt_repository_commit",
+    "prompt_repository_path",
+    "prompt_sha256",
+    "checkpoint_census_sha256",
+    "integration_sha256",
+    "authorization_id",
+    "package_attempt_id",
+    "target_parent",
+    "target_leaf",
+    "nonce_sha256",
+    "expires_at_unix_ns",
+    "state",
+    "live_authority",
+    "result",
+)
+PREPARATION_RECEIPT_TYPES: Final = {
+    "schema": "str",
+    "candidate_sha256": "sha256",
+    "readiness_sha256": "sha256",
+    "live_go_envelope_sha256": "sha256",
+    "operator_approval_sha256": "sha256",
+    "execution_plan_sha256": "sha256",
+    "event_identity_plan_sha256": "sha256",
+    "prompt_repository_commit": "git_object",
+    "prompt_repository_path": "repository_path",
+    "prompt_sha256": "sha256",
+    "checkpoint_census_sha256": "sha256",
+    "integration_sha256": "sha256",
+    "authorization_id": "typed_id",
+    "package_attempt_id": "typed_id",
+    "target_parent": "absolute_path",
+    "target_leaf": "safe_leaf",
+    "nonce_sha256": "sha256",
+    "expires_at_unix_ns": "non_boolean_integer",
+    "state": "str",
+    "live_authority": "bool",
+    "result": "str",
+}
+
 
 def _freeze(value: object) -> object:
     if type(value) is dict:
@@ -718,7 +768,7 @@ def prepare_production_installation_v3(
             raise installation_failure("input", detail)
     receipt = canonical_bytes(
         {
-            "schema": "pulsarmlx.f017.event06-v12-production-installation-preparation-receipt/3.0.0",
+            "schema": PREPARATION_RECEIPT_SCHEMA,
             "candidate_sha256": candidate_sha,
             "readiness_sha256": readiness.source_sha256,
             "live_go_envelope_sha256": human_go.source_sha256,
@@ -732,6 +782,10 @@ def prepare_production_installation_v3(
             "integration_sha256": integration.sha256,
             "authorization_id": candidate.get("authorization_id"),
             "package_attempt_id": candidate.get("package_attempt_id"),
+            "target_parent": human_go.get("target_parent"),
+            "target_leaf": human_go.get("target_leaf"),
+            "nonce_sha256": human_go.get("nonce_sha256"),
+            "expires_at_unix_ns": human_go.get("expires_at_unix_ns"),
             "state": "PREPARED_PRODUCTION_INSTALLATION",
             "live_authority": False,
             "result": "PASS",
@@ -754,11 +808,17 @@ def validate_prepared_production_installation_v3(
     ):
         raise installation_failure("posture", "prepared installation V3")
     candidate = validate_candidate_bytes(prepared.payload("candidate"))
-    receipt = parse_artifact_bytes(prepared.payload("receipt"))
+    receipt = _decode_exact(
+        prepared.payload("receipt"),
+        fields=PREPARATION_RECEIPT_FIELDS,
+        types=PREPARATION_RECEIPT_TYPES,
+        schema=PREPARATION_RECEIPT_SCHEMA,
+        kind="PREPARATION_RECEIPT",
+    )
     if (
-        type(receipt) is not dict
-        or receipt.get("state") != "PREPARED_PRODUCTION_INSTALLATION"
+        receipt.get("state") != "PREPARED_PRODUCTION_INSTALLATION"
         or receipt.get("live_authority") is not False
+        or receipt.get("result") != "PASS"
         or receipt.get("candidate_sha256") != candidate.source_sha256
         or hashlib.sha256(prepared.payload("receipt")).hexdigest()
         != prepared.receipt_sha256
@@ -803,27 +863,29 @@ class FutureGoCapabilityV3:
     def __init__(
         self,
         seal: object,
-        human_go: LiveHumanGoV3,
         prepared: PreparedProductionInstallationV3,
     ) -> None:
         del seal
-        object.__setattr__(
-            self, "authorization_id", cast(str, human_go.get("authorization_id"))
+        receipt = cast(
+            dict[str, object], parse_artifact_bytes(prepared.payload("receipt"))
         )
         object.__setattr__(
-            self, "package_attempt_id", cast(str, human_go.get("package_attempt_id"))
+            self, "authorization_id", cast(str, receipt["authorization_id"])
         )
-        object.__setattr__(self, "live_go_sha256", human_go.source_sha256)
+        object.__setattr__(
+            self, "package_attempt_id", cast(str, receipt["package_attempt_id"])
+        )
+        object.__setattr__(
+            self, "live_go_sha256", cast(str, receipt["live_go_envelope_sha256"])
+        )
         object.__setattr__(self, "prepared_sha256", prepared.prepared_sha256)
         object.__setattr__(
-            self, "target_parent", Path(cast(str, human_go.get("target_parent")))
+            self, "target_parent", Path(cast(str, receipt["target_parent"]))
         )
-        object.__setattr__(self, "target_leaf", cast(str, human_go.get("target_leaf")))
+        object.__setattr__(self, "target_leaf", cast(str, receipt["target_leaf"]))
+        object.__setattr__(self, "nonce_sha256", cast(str, receipt["nonce_sha256"]))
         object.__setattr__(
-            self, "nonce_sha256", cast(str, human_go.get("nonce_sha256"))
-        )
-        object.__setattr__(
-            self, "expires_at_unix_ns", cast(int, human_go.get("expires_at_unix_ns"))
+            self, "expires_at_unix_ns", cast(int, receipt["expires_at_unix_ns"])
         )
         object.__setattr__(self, "_locked", True)
 
@@ -851,26 +913,15 @@ _ISSUED_CAPABILITIES: dict[int, FutureGoCapabilityV3] = {}
 
 
 def produce_future_go_capability_v3(
-    human_go: LiveHumanGoV3,
     prepared: PreparedProductionInstallationV3,
-    approval: LiveOperatorApprovalV3,
-    event_identity: PromptBoundEventIdentityPlanV2,
 ) -> FutureGoCapabilityV3:
-    if (
-        type(human_go) is not LiveHumanGoV3
-        or type(approval) is not LiveOperatorApprovalV3
-    ):
-        raise installation_failure("capability", "exact live authority types")
-    if type(event_identity) is not PromptBoundEventIdentityPlanV2:
-        raise installation_failure("capability", "exact identity authority type")
     validate_prepared_production_installation_v3(prepared)
-    if (
-        approval.get("live_go_envelope_sha256") != human_go.source_sha256
-        or approval.get("event_identity_plan_sha256") != event_identity.source_sha256
-        or cast(int, human_go.get("expires_at_unix_ns")) <= time.time_ns()
-    ):
-        raise installation_failure("capability", "capability dependency binding")
-    capability = FutureGoCapabilityV3(_CAPABILITY_SEAL, human_go, prepared)
+    receipt = cast(dict[str, object], parse_artifact_bytes(prepared.payload("receipt")))
+    if cast(int, receipt["expires_at_unix_ns"]) <= time.time_ns():
+        raise installation_failure(
+            "capability_expired", "capability dependency binding"
+        )
+    capability = FutureGoCapabilityV3(_CAPABILITY_SEAL, prepared)
     _ISSUED_CAPABILITIES[id(capability)] = capability
     return capability
 

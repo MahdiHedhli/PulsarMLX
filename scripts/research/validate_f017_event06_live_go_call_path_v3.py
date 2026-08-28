@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import ast
 import builtins
+import copy
 import hashlib
 import inspect
 import json
 import mmap
 import os
+import pickle
 from pathlib import Path
 from unittest.mock import patch
 
@@ -28,6 +30,10 @@ CONTRACT = (
 )
 GENERATED = ROOT / "scripts/research/f017_event06_live_go_contract_v3.py"
 IMPLEMENTATION = ROOT / "scripts/research/f017_event06_production_installation_v3.py"
+PROMPT_AUTHORITY = (
+    ROOT
+    / "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-prompt-authority-snapshot-provenance-v1.json"
+)
 PROMPT_PATH = "Prompts/F017/Mac-Studio-M1-Ultra/011__F017__Mac-Studio-M1-Ultra__Event-06-V12-live-GO-call-path-contract-repair-and-no-access-requalification__prompt.md"
 PROMPT_COMMIT = "26998b7f0e840bbcdda5c792999b7eadd1ddd164"
 PROMPT_SHA256 = "3e0809171a44691f934b10ef75bdd609674e476645e2110d153f7ed13e96c624"
@@ -73,40 +79,101 @@ def _dag(edges: list[str]) -> dict[str, object]:
 
 def _annotations() -> dict[str, object]:
     expected = {
-        "render_live_go_envelope": ({"raw_human_go": "bytes"}, "bytes"),
+        "render_live_go_envelope": (
+            {
+                "raw_human_go": "bytes",
+                "authorization_id": "str",
+                "package_attempt_id": "str",
+                "readiness_sha256": "str",
+                "target_parent": "Path",
+                "target_leaf": "str",
+                "issued_at_unix_ns": "int",
+                "expires_at_unix_ns": "int",
+                "nonce_sha256": "str",
+            },
+            "bytes",
+        ),
         "inspect_live_go_envelope_without_sealing": (
-            {"raw": "bytes"},
+            {
+                "raw": "bytes",
+                "now_unix_ns": "int",
+                "expected_raw_human_go_sha256": "str",
+                "expected_authorization_id": "str",
+                "expected_package_attempt_id": "str",
+                "expected_readiness_sha256": "str",
+                "expected_target_parent": "str",
+                "expected_target_leaf": "str",
+                "expected_issued_at_unix_ns": "int",
+                "expected_expires_at_unix_ns": "int",
+                "expected_nonce_sha256": "str",
+            },
             "MappingProxyType[str, object]",
         ),
         "seal_live_go_envelope": (
-            {"raw": "bytes", "raw_human_go": "bytes"},
+            {
+                "raw": "bytes",
+                "raw_human_go": "bytes",
+                "now_unix_ns": "int | None",
+            },
             "LiveHumanGoV3",
         ),
         "inspect_prompt_bound_event_identity_plan_without_sealing": (
-            {"raw": "bytes", "prompt_bytes": "bytes"},
+            {
+                "raw": "bytes",
+                "prompt_bytes": "bytes",
+                "prompt_repository_commit": "str",
+                "prompt_repository_path": "str",
+                "expected_authorization_id": "str",
+                "expected_package_attempt_id": "str",
+                "expected_primary_event_id": "str",
+                "expected_secondary_event_id": "str",
+                "expected_execution_plan_sha256": "str",
+            },
             "MappingProxyType[str, object]",
         ),
         "seal_prompt_bound_event_identity_plan": (
-            {"raw": "bytes", "prompt_bytes": "bytes"},
+            {
+                "raw": "bytes",
+                "prompt_bytes": "bytes",
+                "prompt_repository_commit": "str",
+                "prompt_repository_path": "str",
+            },
             "PromptBoundEventIdentityPlanV2",
         ),
         "inspect_live_operator_approval_without_sealing": (
-            {"raw": "bytes"},
+            {
+                "raw": "bytes",
+                "expected_live_go_envelope_sha256": "str",
+                "expected_readiness_sha256": "str",
+                "expected_authorization_id": "str",
+                "expected_package_attempt_id": "str",
+                "expected_execution_plan_sha256": "str",
+                "expected_event_identity_plan_sha256": "str",
+                "expected_candidate_sha256": "str",
+            },
             "MappingProxyType[str, object]",
         ),
         "seal_live_operator_approval": (
             {
                 "raw": "bytes",
                 "live_go": "LiveHumanGoV3",
+                "readiness": "ValidatedEvent06ReadinessV3",
+                "execution_plan": "ValidatedExecutionPlan",
                 "event_identity": "PromptBoundEventIdentityPlanV2",
+                "candidate": "ValidatedIdentityAuthority",
             },
             "LiveOperatorApprovalV3",
         ),
         "prepare_production_installation_v3": (
             {
+                "readiness": "ValidatedEvent06ReadinessV3",
                 "human_go": "LiveHumanGoV3",
+                "execution_plan": "ValidatedExecutionPlan",
                 "approval": "LiveOperatorApprovalV3",
                 "event_identity": "PromptBoundEventIdentityPlanV2",
+                "candidate": "ValidatedIdentityAuthority",
+                "checkpoint_census": "_SealedDocument",
+                "integration": "_SealedDocument",
             },
             "PreparedProductionInstallationV3",
         ),
@@ -115,12 +182,7 @@ def _annotations() -> dict[str, object]:
             "PreparedProductionInstallationV3",
         ),
         "produce_future_go_capability_v3": (
-            {
-                "human_go": "LiveHumanGoV3",
-                "prepared": "PreparedProductionInstallationV3",
-                "approval": "LiveOperatorApprovalV3",
-                "event_identity": "PromptBoundEventIdentityPlanV2",
-            },
+            {"prepared": "PreparedProductionInstallationV3"},
             "FutureGoCapabilityV3",
         ),
         "validate_future_go_capability_v3": (
@@ -139,6 +201,8 @@ def _annotations() -> dict[str, object]:
     for name, (parameters, returned) in expected.items():
         function = getattr(implementation, name)
         signature = inspect.signature(function)
+        if set(signature.parameters) != set(parameters):
+            raise AssertionError(f"signature parameter census {name}")
         for parameter, annotation in parameters.items():
             observed = str(signature.parameters[parameter].annotation).strip("'")
             if observed != annotation:
@@ -213,6 +277,29 @@ def _fixtures(requirements: dict[str, object]) -> dict[str, object]:
         "retries": 0,
         "resume": False,
     }
+    preparation = {
+        "schema": implementation.PREPARATION_RECEIPT_SCHEMA,
+        "candidate_sha256": digests["candidate_sha256"],
+        "readiness_sha256": digests["readiness_sha256"],
+        "live_go_envelope_sha256": digests["live_go_envelope_sha256"],
+        "operator_approval_sha256": "7" * 64,
+        "execution_plan_sha256": digests["execution_plan_sha256"],
+        "event_identity_plan_sha256": digests["event_identity_plan_sha256"],
+        "prompt_repository_commit": PROMPT_COMMIT,
+        "prompt_repository_path": PROMPT_PATH,
+        "prompt_sha256": hashlib.sha256(prompt_bytes).hexdigest(),
+        "checkpoint_census_sha256": "8" * 64,
+        "integration_sha256": "9" * 64,
+        "authorization_id": identifiers["authorization_id"],
+        "package_attempt_id": identifiers["package_attempt_id"],
+        "target_parent": "/NONEXISTENT/F017/EVENT06/SEQUENCE11",
+        "target_leaf": "event06-v12-installation",
+        "nonce_sha256": digests["nonce_sha256"],
+        "expires_at_unix_ns": 30,
+        "state": "PREPARED_PRODUCTION_INSTALLATION",
+        "live_authority": False,
+        "result": "PASS",
+    }
     return {
         "raw_human_go": raw_human_go,
         "prompt_bytes": prompt_bytes,
@@ -221,6 +308,7 @@ def _fixtures(requirements: dict[str, object]) -> dict[str, object]:
         "live": live,
         "identity": identity,
         "approval": approval,
+        "preparation": preparation,
     }
 
 
@@ -256,6 +344,21 @@ def _inspect_raw(role: str, raw: bytes, fixture: dict[str, object]) -> None:
             expected_execution_plan_sha256=digests["execution_plan_sha256"],
         )
     else:
+        if role == "preparation":
+            value = implementation._decode_exact(
+                raw,
+                fields=implementation.PREPARATION_RECEIPT_FIELDS,
+                types=implementation.PREPARATION_RECEIPT_TYPES,
+                schema=implementation.PREPARATION_RECEIPT_SCHEMA,
+                kind="PREPARATION_RECEIPT",
+            )
+            expected = fixture["preparation"]
+            if any(value[name] != expected[name] for name in expected):
+                raise ProductionInstallationError(
+                    "F017_V12_PRODUCTION_INSTALL_INPUT_MISMATCH",
+                    "synthetic preparation binding",
+                )
+            return
         implementation.inspect_live_operator_approval_without_sealing(
             raw,
             expected_live_go_envelope_sha256=digests["live_go_envelope_sha256"],
@@ -310,7 +413,7 @@ def _mutations(fixture: dict[str, object]) -> dict[str, int]:
             return
         raise AssertionError(f"mutation unexpectedly passed: {role}")
 
-    for role in ("live", "identity", "approval"):
+    for role in ("live", "identity", "approval", "preparation"):
         original = fixture[role]
         for field in original:
             changed = dict(original)
@@ -343,13 +446,16 @@ def _mutations(fixture: dict[str, object]) -> dict[str, int]:
         ("identity", fixture["approval"]),
         ("approval", fixture["live"]),
         ("approval", fixture["identity"]),
+        ("preparation", fixture["live"]),
+        ("preparation", fixture["identity"]),
+        ("preparation", fixture["approval"]),
     ]
     for role, value in cross:
         reject(role, dict(value))
     return {"rejected": rejected, "total": total}
 
 
-def _security() -> dict[str, object]:
+def _security(source: str) -> dict[str, object]:
     classes = (
         implementation.LiveHumanGoV3,
         implementation.LiveOperatorApprovalV3,
@@ -358,6 +464,7 @@ def _security() -> dict[str, object]:
         implementation.FutureGoCapabilityV3,
     )
     constructor_rejections = 0
+    operation_rejections = 0
     for class_ in classes:
         try:
             class_()
@@ -365,7 +472,22 @@ def _security() -> dict[str, object]:
             constructor_rejections += 1
         else:
             raise AssertionError(f"public constructor accepted: {class_.__name__}")
-    source = IMPLEMENTATION.read_text(encoding="utf-8")
+        probe = object.__new__(class_)
+        operations = (
+            lambda p=probe: setattr(p, "injected", True),
+            lambda p=probe: delattr(p, "_locked"),
+            lambda p=probe: setattr(p, "__class__", object),
+            lambda p=probe: copy.copy(p),
+            lambda p=probe: copy.deepcopy(p),
+            lambda p=probe: pickle.dumps(p),
+        )
+        for operation in operations:
+            try:
+                operation()
+            except TypeError:
+                operation_rejections += 1
+            else:
+                raise AssertionError(f"sealed operation accepted: {class_.__name__}")
     required_methods = (
         "__setattr__",
         "__delattr__",
@@ -395,6 +517,8 @@ def _security() -> dict[str, object]:
         raise AssertionError("dynamic class reassignment surface")
     return {
         "constructor_rejections": constructor_rejections,
+        "operation_rejections": operation_rejections,
+        "operation_total": len(classes) * 6,
         "closed_types": closed,
         "result": "PASS",
     }
@@ -404,6 +528,12 @@ def _dag_mutations(edges: list[str]) -> dict[str, int]:
     rejected = 0
     total = 0
     expected = tuple(edges)
+
+    def validate_exact(changed: list[str]) -> None:
+        _dag(changed)
+        if tuple(changed) != expected:
+            raise AssertionError("exact authority DAG binding")
+
     for index, edge in enumerate(edges):
         for changed in (
             edges[:index] + edges[index + 1 :],
@@ -412,27 +542,128 @@ def _dag_mutations(edges: list[str]) -> dict[str, int]:
             + edges[index + 1 :],
         ):
             total += 1
-            if tuple(changed) != expected:
+            try:
+                validate_exact(changed)
+            except AssertionError:
                 rejected += 1
             else:
-                raise AssertionError("authority DAG mutation unexpectedly equal")
+                raise AssertionError("authority DAG mutation unexpectedly passed")
     for changed in (edges + [edges[0]], edges + ["SELF->SELF"]):
         total += 1
         try:
-            if tuple(changed) != expected:
-                if changed[-1] == "SELF->SELF":
-                    _dag(changed)
-                raise AssertionError("exact authority DAG binding rejected mutation")
+            validate_exact(changed)
         except AssertionError:
             rejected += 1
+        else:
+            raise AssertionError("authority DAG mutation unexpectedly passed")
     return {"rejected": rejected, "total": total}
+
+
+def _authority_edge_witnesses(edges: list[str], source: str) -> dict[str, object]:
+    required_tokens = {
+        "RAW_HUMAN_GO_BYTES->LIVE_GO_ENVELOPE": ("raw_human_go_sha256",),
+        "READINESS->LIVE_GO_ENVELOPE": ("readiness_sha256",),
+        "EXECUTION_PLAN->EVENT_IDENTITY_PLAN": ("execution_plan_sha256",),
+        "PROMPT_BYTES->EVENT_IDENTITY_PLAN": (
+            "prompt_repository_commit",
+            "prompt_repository_path",
+            "prompt_sha256",
+        ),
+        "EVENT_IDENTITY_PLAN->CANDIDATE": ("event_identity_plan_sha256",),
+        "LIVE_GO_ENVELOPE->OPERATOR_APPROVAL": ("live_go_envelope_sha256",),
+        "READINESS->OPERATOR_APPROVAL": ("approval readiness",),
+        "EXECUTION_PLAN->OPERATOR_APPROVAL": ("approval plan",),
+        "EVENT_IDENTITY_PLAN->OPERATOR_APPROVAL": ("approval identity",),
+        "CANDIDATE->OPERATOR_APPROVAL": ("approval candidate",),
+        "LIVE_GO_ENVELOPE->PREPARED_INSTALLATION": ("GO authorization",),
+        "OPERATOR_APPROVAL->PREPARED_INSTALLATION": ("operator_approval_sha256",),
+        "EVENT_IDENTITY_PLAN->PREPARED_INSTALLATION": ("event_identity_plan_sha256",),
+        "PREPARED_INSTALLATION->FUTURE_GO_CAPABILITY": (
+            "produce_future_go_capability_v3(\n    prepared:",
+            'receipt["live_go_envelope_sha256"]',
+            "prepared.prepared_sha256",
+        ),
+        "FUTURE_GO_CAPABILITY->DURABLE_INSTALLATION_TRANSACTION": (
+            "validate_future_go_capability_v3",
+            "_commit_bound_production_transaction",
+        ),
+    }
+    if set(required_tokens) != set(edges):
+        raise AssertionError("authority edge witness census")
+    rows = []
+    for edge in edges:
+        tokens = required_tokens[edge]
+        if any(token not in source for token in tokens):
+            raise AssertionError(f"authority edge lacks implementation witness: {edge}")
+        rows.append({"edge": edge, "tokens": list(tokens), "result": "PASS"})
+    return {
+        "semantic": "TRANSITIVE_REDUCED_AUTHORITY_CONSTRUCTION_GRAPH",
+        "witnessed": len(rows),
+        "total": len(edges),
+        "rows": rows,
+        "result": "PASS",
+    }
+
+
+def _execution_surface(source: str) -> dict[str, object]:
+    forbidden_tokens = (
+        "f017_corrected_oracle_primary_numerics",
+        "f017_corrected_oracle_secondary_numerics",
+        "execute_outputs",
+        "glm52_tensor_store",
+        "package_durable_start",
+        "descriptor_lease",
+        "checkpoint_root",
+    )
+    present = [token for token in forbidden_tokens if token in source]
+    if present:
+        raise AssertionError(f"execution-facing surface present: {present}")
+    return {
+        "forbidden_tokens": list(forbidden_tokens),
+        "present": present,
+        "numerical_callable_imports": 0,
+        "checkpoint_root_callable_imports": 0,
+        "package_start_callable_imports": 0,
+        "descriptor_lease_callable_imports": 0,
+        "result": "PASS",
+    }
 
 
 def validate() -> dict[str, object]:
     requirements = json.loads(REQUIREMENTS.read_text(encoding="utf-8"))
     contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
+    prompt_authority = json.loads(PROMPT_AUTHORITY.read_text(encoding="utf-8"))
     generated = _literal_assignments(GENERATED)
     comparisons = (
+        (
+            generated["REQUIREMENTS_RELATIVE"],
+            REQUIREMENTS.relative_to(ROOT).as_posix(),
+        ),
+        (generated["LIVE_GO_SCHEMA"], requirements["live_go"]["schema"]),
+        (generated["LIVE_GO_DECISION"], requirements["live_go"]["decision"]),
+        (generated["LIVE_GO_SCOPE"], requirements["scope"]),
+        (
+            generated["APPROVAL_SCHEMA"],
+            requirements["operator_approval"]["schema"],
+        ),
+        (
+            generated["EVENT_IDENTITY_SCHEMA"],
+            requirements["event_identity_plan"]["schema"],
+        ),
+        (contract["requirements_path"], generated["REQUIREMENTS_RELATIVE"]),
+        (contract["scope"], requirements["scope"]),
+        (contract["live_go_schema"], requirements["live_go"]["schema"]),
+        (
+            contract["operator_approval_schema"],
+            requirements["operator_approval"]["schema"],
+        ),
+        (
+            contract["event_identity_plan_schema"],
+            requirements["event_identity_plan"]["schema"],
+        ),
+        (prompt_authority["prompt_repository_commit"], PROMPT_COMMIT),
+        (prompt_authority["prompt_repository_path"], PROMPT_PATH),
+        (prompt_authority["prompt_sha256"], PROMPT_SHA256),
         (
             tuple(requirements["live_go"]["required_fields"]),
             generated["LIVE_GO_FIELDS"],
@@ -467,6 +698,11 @@ def validate() -> dict[str, object]:
     dag = _dag(requirements["authority_dag"])
     signatures = _annotations()
     fixture = _fixtures(requirements)
+    implementation_source = IMPLEMENTATION.read_text(encoding="utf-8")
+    edge_witnesses = _authority_edge_witnesses(
+        requirements["authority_dag"], implementation_source
+    )
+    execution_surface = _execution_surface(implementation_source)
     counters = {
         name: 0
         for name in (
@@ -474,40 +710,56 @@ def validate() -> dict[str, object]:
             "mmap",
             "root_resolve",
             "hash_read",
-            "tensor_read",
-            "lease",
-            "numerical",
             "capability",
             "commit",
-            "package_start",
-            "identity_instantiated",
-            "identity_consumed",
         )
     }
 
-    def forbidden(*args: object, **kwargs: object) -> object:
-        del args, kwargs
-        raise AssertionError("forbidden no-access boundary reached")
+    def forbidden(name: str) -> object:
+        def reject(*args: object, **kwargs: object) -> object:
+            del args, kwargs
+            counters[name] += 1
+            raise AssertionError(f"forbidden no-access boundary reached: {name}")
+
+        return reject
 
     with (
-        patch.object(builtins, "open", forbidden),
-        patch.object(os, "open", forbidden),
-        patch.object(mmap, "mmap", forbidden),
+        patch.object(builtins, "open", forbidden("open")),
+        patch.object(os, "open", forbidden("open")),
+        patch.object(mmap, "mmap", forbidden("mmap")),
+        patch.object(Path, "resolve", forbidden("root_resolve")),
+        patch.object(hashlib, "file_digest", forbidden("hash_read")),
+        patch.object(
+            implementation,
+            "produce_future_go_capability_v3",
+            forbidden("capability"),
+        ),
+        patch.object(
+            implementation,
+            "commit_production_installation_v3",
+            forbidden("commit"),
+        ),
+        patch.object(
+            implementation,
+            "_commit_bound_production_transaction",
+            forbidden("commit"),
+        ),
     ):
         digests: dict[str, set[str]] = {
             "live": set(),
             "identity": set(),
             "approval": set(),
+            "preparation": set(),
         }
         for _ in range(20):
             for role, values in digests.items():
                 _inspect(role, dict(fixture[role]), fixture)
                 values.add(hashlib.sha256(canonical_bytes(fixture[role])).hexdigest())
         mutations = _mutations(fixture)
+        security = _security(implementation_source)
+        dag_mutations = _dag_mutations(requirements["authority_dag"])
     if any(len(values) != 1 for values in digests.values()):
         raise AssertionError("nondeterministic reconstruction")
-    security = _security()
-    dag_mutations = _dag_mutations(requirements["authority_dag"])
     mutations = {
         "rejected": mutations["rejected"] + dag_mutations["rejected"],
         "total": mutations["total"] + dag_mutations["total"],
@@ -532,34 +784,49 @@ def validate() -> dict[str, object]:
         "unexpected_passes": 0,
         "sealed_type_security": security,
         "authority_dag": dag,
+        "authority_edge_witnesses": edge_witnesses,
+        "execution_surface_absence": execution_surface,
         "side_effect_census": counters,
+        "interposed_boundaries": sorted(counters),
         "live_human_go_documents_created": 0,
-        "future_go_capability_instances": 0,
+        "future_go_capability_instances": len(implementation._ISSUED_CAPABILITIES),
         "operator_approvals_created": 0,
         "execution_plans_created": 0,
         "event_identity_plans_created": 0,
         "candidates_created": 0,
         "live_authorizations_created": 0,
         "live_installations_created": 0,
-        "package_starts": 0,
-        "checkpoint_access": 0,
-        "numerical_operations": 0,
+        "package_starts": execution_surface["package_start_callable_imports"],
+        "checkpoint_access": sum(
+            counters[name] for name in ("open", "mmap", "root_resolve", "hash_read")
+        ),
+        "numerical_operations": execution_surface["numerical_callable_imports"],
         "event06_identities_instantiated": 0,
         "event06_identities_consumed": 0,
         "event_04_retry": False,
         "event_05_retry": False,
         "event_06_executed": False,
         "live_event_06_authority_created": False,
-        "event_06_package_started": False,
-        "primary_real_oracle_event06_executions": 0,
-        "secondary_real_oracle_event06_executions": 0,
-        "original_checkpoint_root_opens": 0,
-        "original_checkpoint_shard_opens": 0,
-        "original_checkpoint_identity_hash_reads": 0,
-        "original_checkpoint_mmaps": 0,
-        "original_checkpoint_tensor_reads": 0,
-        "original_checkpoint_payload_reads": 0,
-        "original_checkpoint_access": 0,
+        "event_06_package_started": bool(
+            execution_surface["package_start_callable_imports"]
+        ),
+        "primary_real_oracle_event06_executions": execution_surface[
+            "numerical_callable_imports"
+        ],
+        "secondary_real_oracle_event06_executions": execution_surface[
+            "numerical_callable_imports"
+        ],
+        "original_checkpoint_root_opens": counters["root_resolve"],
+        "original_checkpoint_shard_opens": counters["open"],
+        "original_checkpoint_identity_hash_reads": counters["hash_read"],
+        "original_checkpoint_mmaps": counters["mmap"],
+        "original_checkpoint_tensor_reads": execution_surface[
+            "checkpoint_root_callable_imports"
+        ],
+        "original_checkpoint_payload_reads": counters["open"],
+        "original_checkpoint_access": sum(
+            counters[name] for name in ("open", "mmap", "root_resolve", "hash_read")
+        ),
         "p1_attempt_2_executed": False,
         "live_p1_attempt_2_authorization_created": False,
         "historical_master_ledger": 175,
