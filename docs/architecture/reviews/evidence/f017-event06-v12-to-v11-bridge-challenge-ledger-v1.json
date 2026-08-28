@@ -1,0 +1,8 @@
+{
+  "cycles": 1,
+  "material_challenges": [],
+  "model": "gemini-3.1-pro-high",
+  "result": "ACCEPT_FOR_OPUS_WHOLE_DOMAIN_ARBITRATION",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-challenge-ledger/1.0.0",
+  "unresolved": 0
+}
