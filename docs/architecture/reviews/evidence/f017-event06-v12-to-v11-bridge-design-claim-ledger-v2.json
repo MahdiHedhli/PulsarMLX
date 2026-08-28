@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-design-claim-ledger/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-claim-ledger-v1.json",
+  "cycle": 1,
+  "claims": [
+    {"claim_id":"C-BRIDGE-GEN-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-PROV-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DIGEST-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LEGACY-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CALLPATH-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LIFE-001","state":"REPAIRED","readiness_critical":true,"repair":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v2.json"},
+    {"claim_id":"C-BRIDGE-CAP-001","state":"SUPPORTED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DRIFT-001","state":"SUPPORTED","readiness_critical":true}
+  ],
+  "blocking": 0,
+  "required": 0,
+  "unresolved": 0,
+  "result": "READY_FOR_OPUS_DESIGN_ARBITRATION"
+}
